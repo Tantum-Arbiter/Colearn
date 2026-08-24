@@ -896,6 +896,49 @@ describe('ScreenTimeContent', () => {
     expect(JSON.stringify(tree.toJSON())).not.toContain('screenTime.recommendedTimes');
   });
 
+  it('hides the schedule section when the host asks for usage only', async () => {
+    // the home-screen glance opens straight off the ring to answer "how long
+    // today?" -- building a schedule is a settings job, not a glance one
+    const tree = render(<ScreenTimeContent showSchedule={false} />);
+
+    await waitFor(() => expect(contentService.getScreenTimeStats).toHaveBeenCalled());
+
+    expect(byTestId(tree, 'content-reminders')).toHaveLength(0);
+    expect(byTestId(tree, 'schedule-callout-cta')).toHaveLength(0);
+    const body = JSON.stringify(tree.toJSON());
+    expect(body).not.toContain('screenTime.bedtimeGuidelines');
+    // the usage it does exist to show is still there
+    expect(byTestId(tree, 'usage-overview').length).toBeGreaterThan(0);
+  });
+
+  it('drops its own night backing when the host supplies a surface', async () => {
+    // the glance opens onto a red surface of its own; the dashboard's opaque
+    // night gradient would paint straight over it
+    const tree = render(<ScreenTimeContent showBackdrop={false} />);
+
+    await waitFor(() => expect(contentService.getScreenTimeStats).toHaveBeenCalled());
+
+    expect(byTestId(tree, 'screen-time-backdrop')).toHaveLength(0);
+    expect(byTestId(tree, 'usage-overview').length).toBeGreaterThan(0);
+  });
+
+  it('paints its own night backing by default', async () => {
+    const tree = render(<ScreenTimeContent />);
+
+    await waitFor(() => expect(contentService.getScreenTimeStats).toHaveBeenCalled());
+
+    expect(byTestId(tree, 'screen-time-backdrop').length).toBeGreaterThan(0);
+  });
+
+  it('keeps the schedule section by default', async () => {
+    const tree = render(<ScreenTimeContent />);
+
+    await waitFor(() => expect(contentService.getScreenTimeStats).toHaveBeenCalled());
+
+    expect(byTestId(tree, 'content-reminders').length).toBeGreaterThan(0);
+    expect(JSON.stringify(tree.toJSON())).toContain('screenTime.bedtimeGuidelines');
+  });
+
   it('opens the schedule as a window over the glance', async () => {
     const tree = render(<ScreenTimeContent />);
     await waitFor(() => expect(contentService.getScreenTimeStats).toHaveBeenCalled());

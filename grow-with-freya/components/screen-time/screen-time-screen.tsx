@@ -39,6 +39,14 @@ interface ScreenTimeContentProps {
   /** Fires when a reminder is created, toggled or deleted inside the schedule
    *  window, so the host can re-check its unsaved-changes state. */
   onReminderChange?: () => void;
+  /** Set false for a usage-only view -- the home-screen glance opens straight
+   *  off the ring to answer "how long today?", and building a schedule is a
+   *  settings job rather than a glance one. With no callout rendered there is
+   *  nothing left that can open the schedule window either. */
+  showSchedule?: boolean;
+  /** Set false when the host already paints a surface of its own -- the night
+   *  gradient below is opaque and would cover it. */
+  showBackdrop?: boolean;
 }
 
 // Generate star positions for background
@@ -468,7 +476,12 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
 }
 
 // Content-only component for embedding in horizontal scroll
-export function ScreenTimeContent({ paddingTop = 0, onReminderChange }: ScreenTimeContentProps) {
+export function ScreenTimeContent({
+  paddingTop = 0,
+  onReminderChange,
+  showSchedule = true,
+  showBackdrop = true,
+}: ScreenTimeContentProps) {
   const { t } = useTranslation();
   const { scaledFontSize, scaledPadding, isTablet, contentMaxWidth } = useAccessibility();
   const { childAgeInMonths } = useAppStore();
@@ -538,7 +551,13 @@ export function ScreenTimeContent({ paddingTop = 0, onReminderChange }: ScreenTi
   return (
     <View style={{ flex: 1 }}>
       {/* night backing so the dashboard reads dark regardless of the host page */}
-      <LinearGradient colors={AUTH_GRADIENT} style={StyleSheet.absoluteFill} />
+      {showBackdrop && (
+        <LinearGradient
+          testID="screen-time-backdrop"
+          colors={AUTH_GRADIENT}
+          style={StyleSheet.absoluteFill}
+        />
+      )}
       <StarBackground />
       <ScrollView
         style={styles.scrollView}
@@ -553,23 +572,25 @@ export function ScreenTimeContent({ paddingTop = 0, onReminderChange }: ScreenTi
         />
 
         {/* Create My Schedule */}
-        <View style={styles.section}>
-          <ScheduleCallout
-            testID="content-reminders"
-            stats={reminderStats}
-            onOpen={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              setScheduleOpen(true);
-            }}
-          />
+        {showSchedule && (
+          <View style={styles.section}>
+            <ScheduleCallout
+              testID="content-reminders"
+              stats={reminderStats}
+              onOpen={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setScheduleOpen(true);
+              }}
+            />
 
-          <View style={[styles.bedtimeWarning, { padding: scaledPadding(12) }]}>
-            <Text style={[styles.bedtimeWarningTitle, { fontSize: scaledFontSize(14) }]}>{t('screenTime.bedtimeGuidelines')}</Text>
-            <Text style={[styles.bedtimeWarningText, { fontSize: scaledFontSize(12) }]}>
-              {t('screenTime.bedtimeWarning')}
-            </Text>
+            <View style={[styles.bedtimeWarning, { padding: scaledPadding(12) }]}>
+              <Text style={[styles.bedtimeWarningTitle, { fontSize: scaledFontSize(14) }]}>{t('screenTime.bedtimeGuidelines')}</Text>
+              <Text style={[styles.bedtimeWarningText, { fontSize: scaledFontSize(12) }]}>
+                {t('screenTime.bedtimeWarning')}
+              </Text>
+            </View>
           </View>
-        </View>
+        )}
 
         </View>
       </ScrollView>

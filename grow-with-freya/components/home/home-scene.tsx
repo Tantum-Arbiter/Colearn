@@ -13,7 +13,7 @@ import {
   type HomeActivity,
   type TimeOfDay,
 } from '@/constants/home-scene';
-import { SCREEN_TIME_RING } from '@/constants/screen-time-ring';
+import { SCREEN_TIME_RING, ringCentre } from '@/constants/screen-time-ring';
 import { UNLOCK_PLAN } from '@/constants/unlock-plan';
 import { useTimeOfDay } from '@/hooks/use-time-of-day';
 import type { ScreenTimeAllowance } from '@/hooks/use-screen-time-allowance';
@@ -39,7 +39,8 @@ export interface HomeSceneProps {
   onContinueReading: (storyId: string) => void;
   continueReading: ContinueReadingSummary | null;
   screenTime?: ScreenTimeAllowance | null;
-  onOpenScreenTime?: () => void;
+  /** Receives the ring's centre so the glance can open out of it. */
+  onOpenScreenTime?: (origin: { x: number; y: number }) => void;
   onOpenPlans?: () => void;
   timeOfDay?: TimeOfDay;
   testID?: string;
@@ -143,7 +144,7 @@ export const HomeScene = memo(function HomeScene({
             usageSeconds={screenTime.usageSeconds}
             limitSeconds={screenTime.limitSeconds}
             tint={theme.chromeInk}
-            onPress={onOpenScreenTime}
+            onPress={onOpenScreenTime ? () => onOpenScreenTime(ringCentre(height, insets.bottom)) : undefined}
           />
         ) : null}
       </View>

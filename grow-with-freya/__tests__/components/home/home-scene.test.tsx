@@ -6,10 +6,11 @@
  */
 
 import React from 'react';
-import { StyleSheet, Text } from 'react-native';
+import { Dimensions, StyleSheet, Text } from 'react-native';
 import { render, fireEvent, type RenderResult } from '@testing-library/react-native';
 import { HomeScene } from '@/components/home/home-scene';
 import { HOME_ACTIVITIES, HOME_THEMES } from '@/constants/home-scene';
+import { ringCentre } from '@/constants/screen-time-ring';
 
 function textContents(view: RenderResult): string[] {
   return view
@@ -210,6 +211,22 @@ describe('HomeScene opening screen time', () => {
     pressTestId(view, 'screen-time-ring');
 
     expect(onOpenScreenTime).toHaveBeenCalledTimes(1);
+  });
+
+  it('should report where the ring is, so the glance can open out of it', () => {
+    const onOpenScreenTime = jest.fn();
+    const { view } = renderScene({
+      screenTime: { usageSeconds: 600, limitSeconds: 3600 },
+      onOpenScreenTime,
+    });
+
+    pressTestId(view, 'screen-time-ring');
+
+    // the ring is pinned bottom-left, so its centre follows from the layout
+    // constants and the safe-area inset (34 from the suite-wide mock) rather
+    // than a runtime measurement
+    const { height } = Dimensions.get('window');
+    expect(onOpenScreenTime).toHaveBeenCalledWith(ringCentre(height, 34));
   });
 
   it('should leave the ring inert when no handler is supplied', () => {

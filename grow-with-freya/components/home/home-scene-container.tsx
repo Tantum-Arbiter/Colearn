@@ -9,6 +9,7 @@ import { getLocalizedText } from '@/types/story';
 import type { SupportedLanguage } from '@/services/i18n';
 import { useScreenTimeAllowance } from '@/hooks/use-screen-time-allowance';
 import { useTimeOfDay } from '@/hooks/use-time-of-day';
+import { isScreenTimeExceeded } from '@/constants/screen-time-ring';
 import { ScreenTimeGlance } from './screen-time-glance';
 import { HomeScene, type ContinueReadingSummary } from './home-scene';
 
@@ -67,7 +68,13 @@ export const HomeSceneContainer = memo(function HomeSceneContainer({
     [requestGardenOpen]
   );
 
-  const openScreenTime = useCallback(() => setShowScreenTime(true), []);
+  // the ring reports its own centre, so the glance opens out of the control
+  // the parent actually pressed
+  const [screenTimeOrigin, setScreenTimeOrigin] = useState<{ x: number; y: number } | undefined>();
+  const openScreenTime = useCallback((origin: { x: number; y: number }) => {
+    setScreenTimeOrigin(origin);
+    setShowScreenTime(true);
+  }, []);
   const closeScreenTime = useCallback(() => setShowScreenTime(false), []);
   const openPlans = useCallback(() => setShowPlans(true), []);
   const closePlans = useCallback(() => setShowPlans(false), []);
@@ -91,6 +98,12 @@ export const HomeSceneContainer = memo(function HomeSceneContainer({
         visible={showScreenTime}
         timeOfDay={timeOfDay}
         onClose={closeScreenTime}
+        origin={screenTimeOrigin}
+        exceeded={
+          screenTime
+            ? isScreenTimeExceeded(screenTime.usageSeconds, screenTime.limitSeconds)
+            : false
+        }
       />
 
       <SubscriptionOverlay visible={showPlans} onClose={closePlans} />
