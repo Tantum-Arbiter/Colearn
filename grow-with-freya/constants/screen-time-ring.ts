@@ -41,15 +41,19 @@ export const SCREEN_TIME_GLANCE = {
   /** Everything outside the panel: dim night, never the alarm colour. */
   scrim: 'rgba(4, 6, 18, 0.94)',
 
-  // the open choreography, in order: spin, spiral into a line AT the ring,
-  // travel, draw the border, then settle -- the blackout and the fill
-  // arriving together. The morph spans about a turn and a half of the
-  // rotation on purpose: an ellipse narrowing across several passes while
-  // it turns is what reads as a spiral (a coin settling), where a one-pass
-  // flatten reads as a squash.
+  // the open choreography, in order: spin, spiral OUT into an arm at the
+  // ring, stretch that arm into one line, travel, draw the border, then
+  // settle -- the blackout and the fill arriving together.
+  //
+  // The spiral spans about a turn and a half of the rotation on purpose: a
+  // shape sweeping outward across several passes while it turns is what
+  // reads as a galaxy unwinding, where a one-pass change reads as a squash.
+  // The stretch is its own beat rather than part of the travel -- the line
+  // has to finish becoming a line before it starts going anywhere.
   spinDuration: 620,
-  travelDuration: 260,
   morphDuration: 460,
+  stretchDuration: 220,
+  travelDuration: 260,
   drawDuration: 480,
   settleDuration: 260,
 

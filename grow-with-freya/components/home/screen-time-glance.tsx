@@ -192,17 +192,19 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
 
       const {
         spinDuration,
-        travelDuration,
         morphDuration,
+        stretchDuration,
+        travelDuration,
         drawDuration,
         settleDuration,
         fadeDuration,
       } = SCREEN_TIME_GLANCE;
-      // one continuous gesture: the orb flattens into a line AT the ring and
-      // spins there, then the spinning line flies to the corner, arriving
-      // vertical just as the draw takes over from it
+      // one continuous gesture: the orb spirals OUTWARD into an arm at the
+      // ring, the arm stretches into a single line, and only then does the
+      // line fly to the corner and expand into the draw
       const morphStartsAt = spinDuration;
-      const travelStartsAt = morphStartsAt + morphDuration;
+      const stretchStartsAt = morphStartsAt + morphDuration;
+      const travelStartsAt = stretchStartsAt + stretchDuration;
       const drawStartsAt = travelStartsAt + travelDuration;
       const settleStartsAt = drawStartsAt + drawDuration;
 
@@ -219,21 +221,24 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
           withTiming(0, { duration: 160 })
         )
       );
-      // the pop, then the coil: the orb tightens as it spirals down into
-      // the line, the way a spinning coin settles -- radius diminishing is
-      // half of what makes the spiral read as a spiral
+      // the pop, then the sweep outward: the orb grows as it unwinds, the
+      // way a galaxy's arm sweeps out from its core. Radius increasing is
+      // half of what makes the spiral read as spiralling OUT -- the
+      // narrowing alone would only be a squash.
       spinnerScale.value = withSequence(
         withTiming(1.4, { duration: spinDuration * 0.55, easing: Easing.out(Easing.cubic) }),
         withTiming(1.1, { duration: spinDuration * 0.45 }),
-        withTiming(0.85, { duration: morphDuration, easing: Easing.inOut(Easing.cubic) })
+        withTiming(2.0, { duration: morphDuration, easing: Easing.inOut(Easing.cubic) })
       );
-      // three full turns across spin, spiral and travel under one easing
-      // curve: the rotation never breaks between phases. Most of the turning
-      // happens while the ellipse is narrowing -- that overlap IS the
+      // three full turns across the spin and the spiral, under one easing
+      // curve so the rotation never breaks between them. Most of the turning
+      // happens while the shape is sweeping outward -- that overlap IS the
       // spiral -- and the deceleration lands it at an exact multiple of a
-      // turn, vertical, before the line flies to the corner
+      // turn, vertical, exactly as the arm finishes unwinding. The spinning
+      // is over before the line stretches: it has to finish becoming a line
+      // before it does anything else.
       spinnerRotate.value = withTiming(1080, {
-        duration: drawStartsAt,
+        duration: stretchStartsAt,
         easing: Easing.inOut(Easing.cubic),
       });
       spinnerWater.value = withDelay(
@@ -241,51 +246,47 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
         withTiming(1, { duration: spinDuration * 0.65 })
       );
 
-      // 2. ...spirals into a line right there in the circle: the ellipse
-      //    narrows a little more on every pass of the continuing rotation,
-      //    winding itself down until what is left spinning is a line...
+      // 2. ...spirals outward right there in the circle: the shape sweeps
+      //    out and narrows a little more on every pass of the continuing
+      //    rotation, unwinding until what is left turning is one arm...
       spinnerSquashX.value = withDelay(
         morphStartsAt,
-        withTiming(0.13, { duration: morphDuration, easing: Easing.inOut(Easing.cubic) })
+        withTiming(0.07, { duration: morphDuration, easing: Easing.inOut(Easing.cubic) })
       );
       spinnerSquashY.value = withDelay(
         morphStartsAt,
         withSequence(
-          withTiming(1.5, { duration: morphDuration, easing: Easing.out(Easing.cubic) }),
-          // ...and stretches as the draw takes over: the line expanding into
-          // the border rather than vanishing beside it. 2.5 rather than 2.2
-          // because the coil tightened the whole orb to 0.85 -- the stretch
-          // has to make that back before it can read as growth.
-          withDelay(
-            travelDuration,
-            withTiming(2.5, { duration: 200, easing: Easing.out(Easing.cubic) })
-          )
+          withTiming(1.4, { duration: morphDuration, easing: Easing.out(Easing.cubic) }),
+          // 3. ...and once the spinning is over, the arm stretches along its
+          //    own axis into a single line -- its own beat, so the eye sees
+          //    a line being drawn out rather than a shape being dragged
+          withTiming(2.6, { duration: stretchDuration, easing: Easing.out(Easing.cubic) })
         )
       );
-      // the solid core thins as the orb becomes the line, down to roughly
-      // the drawn border's own weight -- reduced, never just deleted
+      // the nucleus collapses as the arm sweeps out of it, down past the
+      // drawn border's own weight -- reduced, never just deleted
       spinnerCore.value = withDelay(
         morphStartsAt,
-        withTiming(0.5, {
-          duration: morphDuration + travelDuration,
+        withTiming(0.32, {
+          duration: morphDuration + stretchDuration,
           easing: Easing.inOut(Easing.cubic),
         })
       );
 
-      // 3. ...the spinning line flies to the border's start, easing in and
+      // 4. ...the finished line flies to the border's start, easing in and
       //    out so it leaves and lands softly...
       spinnerTravel.value = withDelay(
         travelStartsAt,
         withTiming(1, { duration: travelDuration, easing: Easing.inOut(Easing.cubic) })
       );
 
-      // 4. ...and expands into the draw the moment it lands
+      // 5. ...and expands into the draw the moment it lands
       drawProgress.value = withDelay(
         drawStartsAt - 40,
         withTiming(1, { duration: drawDuration, easing: Easing.inOut(Easing.cubic) })
       );
 
-      // 5. the settle: the background blacks out and the fill arrives inside
+      // 6. the settle: the background blacks out and the fill arrives inside
       //    the frame at the same time, the drawn stroke handing over to the
       //    panel's own border
       scrimOpacity.value = withDelay(
