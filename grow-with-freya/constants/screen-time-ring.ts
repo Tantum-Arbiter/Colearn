@@ -48,7 +48,9 @@ export const SCREEN_TIME_GLANCE = {
   // draw rather than a moment of its own.
   spinDuration: 620,
   travelDuration: 220,
-  morphDuration: 140,
+  // long enough to be a movement rather than a cut: at 140ms the orb went
+  // from circle to line in one step, with no squash to sell the change
+  morphDuration: 340,
   drawDuration: 480,
   settleDuration: 260,
 
@@ -69,6 +71,7 @@ export const SCREEN_TIME_GLANCE = {
   // handing the corner back to the ring itself.
   dropShrink: 300,
   dropReturn: 520,
+  splashDuration: 460,
   orbReform: 320,
   dropWidth: 38,
   dropHeight: 52,
@@ -108,6 +111,54 @@ export function dropFlight(
     dx: ring.x - (bounds.left + bounds.right) / 2,
     dy: ring.y - (bounds.top + bounds.bottom) / 2,
   };
+}
+
+/** Droplets thrown up by the returning drop as it lands. */
+export const SPLASH_DROPLETS = 7;
+
+/**
+ * The splash, as one path of small circles.
+ *
+ * The droplets fan across the upward half, fly out along that fan, and are
+ * pulled back down by a gravity term that grows with the square of the
+ * progress -- so they arc rather than sliding outward in a straight line.
+ * They shrink as they go, and the caller fades the whole path out.
+ *
+ * One path rather than seven elements: it is a single animated `d` on the
+ * UI thread, where seven circles would be seven animated props.
+ */
+export function splashPath(
+  progress: number,
+  centre: number,
+  spread: number,
+  gravity: number,
+  radius: number
+): string {
+  'worklet';
+  // ease out, so the droplets leave fast and slow as they rise
+  const out = spread * (1 - (1 - progress) * (1 - progress));
+  let d = '';
+
+  for (let i = 0; i < SPLASH_DROPLETS; i++) {
+    const t = i / (SPLASH_DROPLETS - 1);
+    // the upward half in screen coordinates, nudged unevenly so the splash
+    // does not read as a clock face
+    const angle = Math.PI + t * Math.PI + ((i % 3) - 1) * 0.11;
+
+    const r = radius * (1 - progress * 0.7);
+    if (r <= 0.2) continue;
+
+    const x = centre + Math.cos(angle) * out;
+    const y = centre + Math.sin(angle) * out + gravity * progress * progress;
+
+    // a circle as two arcs, so every droplet is one subpath
+    d +=
+      `M ${(x - r).toFixed(2)} ${y.toFixed(2)} ` +
+      `a ${r.toFixed(2)} ${r.toFixed(2)} 0 1 0 ${(r * 2).toFixed(2)} 0 ` +
+      `a ${r.toFixed(2)} ${r.toFixed(2)} 0 1 0 ${(-r * 2).toFixed(2)} 0 `;
+  }
+
+  return d.trim();
 }
 
 /**

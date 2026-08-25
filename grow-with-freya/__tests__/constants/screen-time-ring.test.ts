@@ -10,6 +10,8 @@ import {
   isScreenTimeExceeded,
   panelBorderPath,
   dropFlight,
+  splashPath,
+  SPLASH_DROPLETS,
   ringCentre,
   ringDashOffset,
   screenTimeProgress,
@@ -178,5 +180,78 @@ describe('dropFlight', () => {
       expect((BOUNDS.left + BOUNDS.right) / 2 + dx).toBeCloseTo(ring.x);
       expect((BOUNDS.top + BOUNDS.bottom) / 2 + dy).toBeCloseTo(ring.y);
     }
+  });
+});
+
+describe('splashPath', () => {
+  const CENTRE = 75;
+  const SPREAD = 44;
+  const GRAVITY = 52;
+  const RADIUS = 4.5;
+
+  const splash = (progress: number) =>
+    splashPath(progress, CENTRE, SPREAD, GRAVITY, RADIUS);
+
+  /** Each droplet is one subpath, so counting moves counts droplets. */
+  const dropletCount = (d: string) => (d.match(/M/g) ?? []).length;
+
+  it('throws every droplet it is given', () => {
+    expect(dropletCount(splash(0.2))).toBe(SPLASH_DROPLETS);
+  });
+
+  it('starts them all at the point of impact', () => {
+    // at rest the droplets are stacked on the landing point -- the splash has
+    // not happened yet
+    const d = splash(0);
+    const coords = d.match(/M (-?[\d.]+) (-?[\d.]+)/g) ?? [];
+
+    for (const move of coords) {
+      const [, x, y] = move.match(/M (-?[\d.]+) (-?[\d.]+)/)!;
+      // x is offset by the droplet's own radius, y is not
+      expect(Math.abs(Number(x) - (CENTRE - RADIUS))).toBeLessThan(0.05);
+      expect(Math.abs(Number(y) - CENTRE)).toBeLessThan(0.05);
+    }
+  });
+
+  it('fans them upward, against the fall that brought the drop in', () => {
+    // early on, before gravity takes over, the droplets are above the impact
+    const ys = (splash(0.25).match(/M -?[\d.]+ (-?[\d.]+)/g) ?? []).map((m) =>
+      Number(m.split(' ')[2])
+    );
+
+    expect(Math.min(...ys)).toBeLessThan(CENTRE);
+  });
+
+  it('pulls them back down as the splash finishes', () => {
+    const highest = (progress: number) =>
+      Math.min(
+        ...(splash(progress).match(/M -?[\d.]+ (-?[\d.]+)/g) ?? []).map((m) =>
+          Number(m.split(' ')[2])
+        )
+      );
+
+    // gravity grows with the square of the progress, so what went up comes
+    // back down rather than drifting off the top
+    expect(highest(1)).toBeGreaterThan(highest(0.35));
+  });
+
+  it('shrinks the droplets as they travel', () => {
+    const radiusOf = (d: string) => Number(d.match(/a ([\d.]+) /)![1]);
+
+    expect(radiusOf(splash(0.6))).toBeLessThan(radiusOf(splash(0.1)));
+  });
+
+  it('keeps drawing them to the end -- the caller fades them out', () => {
+    // they shrink but never vanish on their own: the component fades the
+    // whole path, so the splash ends by dissolving rather than blinking out
+    expect(dropletCount(splash(1))).toBe(SPLASH_DROPLETS);
+  });
+
+  it('emits nothing at all once a droplet would be sub-pixel', () => {
+    // the guard is on size, not on progress -- a path full of invisible
+    // arcs is just work the UI thread does for nothing
+    const tiny = splashPath(1, CENTRE, SPREAD, GRAVITY, 0.5);
+
+    expect(dropletCount(tiny)).toBe(0);
   });
 });

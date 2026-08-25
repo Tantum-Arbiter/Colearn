@@ -206,7 +206,9 @@ the same time. Closing runs the open backwards: the content dims, the panel
 gathers itself in, hands over to a **true teardrop** (`DROP_PATH`, pointed
 top, round base, gloss crescent), and the drop falls **home to the ring** on
 a gravity arc — two axes with different easings, so it curves rather than
-slides. It reforms there into the orb, turning from water blue back to the
+slides. It **lands with a splash**: droplets fanned upward and out, arcing
+back down under gravity while a ring spreads from the point of impact. The
+orb emerges out of that splash, turning from water blue back to the
 ring's own colour, and the ring returns instantly underneath a dot of
 exactly its own size and colour. The corner is never empty, and the close
 lands where the open began. Reduced motion skips all of it, both ways.

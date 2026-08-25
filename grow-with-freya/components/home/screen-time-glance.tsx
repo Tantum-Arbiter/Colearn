@@ -27,6 +27,7 @@ import {
   SCREEN_TIME_RING,
   panelBorderPath,
   dropFlight,
+  splashPath,
   DROP_PATH,
   DROP_GLOSS,
   DROP_VIEWBOX,
@@ -36,6 +37,13 @@ const AnimatedPath = Animated.createAnimatedComponent(Path);
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 const SPINNER_BOX = (SCREEN_TIME_GLANCE.spinnerRadius + SCREEN_TIME_GLANCE.spinnerStroke) * 2 + 2;
+
+// the splash needs far more room than the orb: its droplets fly well clear
+// of the drop that threw them
+const SPLASH_BOX = 150;
+const SPLASH_SPREAD = 44;
+const SPLASH_GRAVITY = 52;
+const SPLASH_DROP_RADIUS = 4.5;
 
 export interface ScreenTimeGlanceProps {
   visible: boolean;
@@ -164,6 +172,8 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
   const dropStretch = useSharedValue(1);
   const dropReturnX = useSharedValue(0);
   const dropReturnY = useSharedValue(0);
+  // the splash the drop makes as it lands, and the orb that emerges from it
+  const splash = useSharedValue(0);
 
   useEffect(() => {
     if (visible) {
@@ -178,6 +188,7 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
       dropStretch.value = 1;
       dropReturnX.value = 0;
       dropReturnY.value = 0;
+      splash.value = 0;
       spinnerSquashX.value = 1;
       spinnerSquashY.value = 1;
       spinnerWater.value = 0;
@@ -252,14 +263,45 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
         withTiming(1, { duration: travelDuration, easing: Easing.in(Easing.cubic) })
       );
 
-      // 3. ...flattens into the vertical line the border grows from...
+      // 3. ...and squashes and stretches into the vertical line the border
+      //    grows from. Three beats rather than one: the orb squats wider and
+      //    shorter first, the way anything about to spring does, then throws
+      //    itself thin and tall past where it is going, then settles back.
+      //    Going straight from circle to line in a single move reads as a
+      //    cut rather than a change of shape.
       spinnerSquashX.value = withDelay(
         morphStartsAt,
-        withTiming(0.14, { duration: morphDuration, easing: Easing.in(Easing.cubic) })
+        withSequence(
+          withTiming(1.26, {
+            duration: morphDuration * 0.28,
+            easing: Easing.out(Easing.cubic),
+          }),
+          withTiming(0.1, {
+            duration: morphDuration * 0.5,
+            easing: Easing.in(Easing.cubic),
+          }),
+          withTiming(0.14, {
+            duration: morphDuration * 0.22,
+            easing: Easing.out(Easing.cubic),
+          })
+        )
       );
       spinnerSquashY.value = withDelay(
         morphStartsAt,
-        withTiming(1.5, { duration: morphDuration, easing: Easing.out(Easing.cubic) })
+        withSequence(
+          withTiming(0.76, {
+            duration: morphDuration * 0.28,
+            easing: Easing.out(Easing.cubic),
+          }),
+          withTiming(1.64, {
+            duration: morphDuration * 0.5,
+            easing: Easing.out(Easing.cubic),
+          }),
+          withTiming(1.5, {
+            duration: morphDuration * 0.22,
+            easing: Easing.out(Easing.cubic),
+          })
+        )
       );
 
       // 4. ...and the line draws the box
@@ -301,6 +343,7 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
     spinnerSquashY.value = 1;
     spinnerWater.value = 0;
     spinnerCore.value = 1;
+    splash.value = 0;
     drawProgress.value = 0;
     panelOpacity.value = 0;
     contentOpacity.value = 0;
@@ -318,11 +361,14 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
       return;
     }
 
-    const { dropShrink, dropReturn, orbReform, fadeDuration } = SCREEN_TIME_GLANCE;
+    const { dropShrink, dropReturn, splashDuration, orbReform, fadeDuration } =
+      SCREEN_TIME_GLANCE;
     const { dropScaleX: sx, dropScaleY: sy, panelW } = geometry;
     const gatherEndsAt = fadeDuration * 0.7 + dropShrink;
     const flightStartsAt = gatherEndsAt + 90;
     const landsAt = flightStartsAt + dropReturn;
+    // the orb comes out of the splash, a beat behind it
+    const orbFrom = landsAt + 90;
 
     // The orb is rebuilt where and how the drop leaves it: back at the ring
     // rather than parked at the border, round rather than flattened into the
@@ -365,7 +411,7 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
     const dropInAt = gatherEndsAt - 30;
     dropOpacity.value = withSequence(
       withDelay(dropInAt, withTiming(1, { duration: 90 })),
-      withDelay(landsAt - 40 - (dropInAt + 90), withTiming(0, { duration: 150 }))
+      withDelay(landsAt - 60 - (dropInAt + 90), withTiming(0, { duration: 110 }))
     );
 
     // ...hangs for a beat, then falls home to the ring. The two axes carry
@@ -395,27 +441,32 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
       withTiming(0, { duration: dropReturn * 0.65 })
     );
 
-    // ...and reforms into the orb where the ring lives: the drop shape hands
-    // over to the round core, which grows back to the ring's own dot size and
-    // turns from water blue to the ring's colour. One assignment per value --
-    // a second would cancel the first and the orb would never appear.
-    spinnerOpacity.value = withDelay(landsAt - 70, withTiming(1, { duration: 130 }));
+    // ...and lands with a splash: droplets thrown up and out, arcing back
+    // down under gravity, with a ring spreading from the point of impact
+    splash.value = withDelay(landsAt, withTiming(1, { duration: splashDuration }));
+
+    // ...out of which the orb emerges, growing back to the ring's own dot
+    // size and turning from water blue to the ring's colour. It starts a
+    // beat after the splash so it reads as coming out of it rather than
+    // arriving alongside it. One assignment per value -- a second would
+    // cancel the first and the orb would never appear.
+    spinnerOpacity.value = withDelay(orbFrom, withTiming(1, { duration: 120 }));
     spinnerScale.value = withDelay(
-      landsAt - 70,
+      orbFrom,
       withTiming(1, { duration: orbReform, easing: Easing.out(Easing.cubic) })
     );
     // one settling turn, the mirror of the spin that opened the window
     spinnerRotate.value = withDelay(
-      landsAt - 70,
+      orbFrom,
       withTiming(360, { duration: orbReform, easing: Easing.out(Easing.cubic) })
     );
     // blue back to red, so the orb hands the corner to a ring of its own colour
     spinnerWater.value = withDelay(
-      landsAt - 40,
+      orbFrom,
       withTiming(0, { duration: orbReform * 0.8 })
     );
     spinnerCore.value = withDelay(
-      landsAt - 70,
+      orbFrom,
       withTiming(
         1,
         { duration: orbReform, easing: Easing.out(Easing.cubic) },
@@ -480,6 +531,26 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
   const contentStyle = useAnimatedStyle(() => ({ opacity: contentOpacity.value }));
   const tintStyle = useAnimatedStyle(() => ({ opacity: dropTint.value }));
 
+  const splashProps = useAnimatedProps(() => ({
+    d: splashPath(
+      splash.value,
+      SPLASH_BOX / 2,
+      SPLASH_SPREAD,
+      SPLASH_GRAVITY,
+      SPLASH_DROP_RADIUS
+    ),
+    // gone by the time the orb has finished forming, so the corner is left
+    // with nothing but the ring
+    opacity: 1 - splash.value * splash.value,
+  }));
+
+  // the ring of impact: spreads from where the drop hit and thins as it goes
+  const splashRingProps = useAnimatedProps(() => ({
+    r: 4 + 46 * splash.value,
+    opacity: 0.85 * (1 - splash.value),
+    strokeWidth: 3 * (1 - splash.value) + 0.4,
+  }));
+
   const teardropStyle = useAnimatedStyle(() => ({
     opacity: dropOpacity.value,
     transform: [
@@ -527,6 +598,35 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
             animatedProps={drawProps}
           />
         </Svg>
+
+        {/* the splash the returning drop makes as it lands, out of which the
+            orb re-forms. Its own box because the droplets fly well clear of
+            the orb that replaces them. */}
+        <View
+          testID="screen-time-glance-splash"
+          pointerEvents="none"
+          style={[
+            styles.splash,
+            { left: centre.x - SPLASH_BOX / 2, top: centre.y - SPLASH_BOX / 2 },
+          ]}
+        >
+          <Svg width={SPLASH_BOX} height={SPLASH_BOX}>
+            <AnimatedCircle
+              testID="screen-time-glance-splash-ring"
+              cx={SPLASH_BOX / 2}
+              cy={SPLASH_BOX / 2}
+              r={4}
+              fill="none"
+              stroke={SCREEN_TIME_GLANCE.drawWater}
+              animatedProps={splashRingProps}
+            />
+            <AnimatedPath
+              testID="screen-time-glance-splash-droplets"
+              fill={SCREEN_TIME_GLANCE.drawWater}
+              animatedProps={splashProps}
+            />
+          </Svg>
+        </View>
 
         {/* the ring's echo: spins where it was pressed, then travels to the
             border's start point and hands over to the drawing */}
@@ -707,6 +807,11 @@ const styles = StyleSheet.create({
   scrim: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: SCREEN_TIME_GLANCE.scrim,
+  },
+  splash: {
+    position: 'absolute',
+    width: SPLASH_BOX,
+    height: SPLASH_BOX,
   },
   spinner: {
     position: 'absolute',
