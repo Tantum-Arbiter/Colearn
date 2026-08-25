@@ -11,6 +11,10 @@ import {
   panelBorderPath,
   dropFlight,
   splashPath,
+  orbSquash,
+  dropStretchAt,
+  ORB_LINE_WIDTH,
+  ORB_LINE_HEIGHT,
   SPLASH_DROPLETS,
   ringCentre,
   ringDashOffset,
@@ -253,5 +257,95 @@ describe('splashPath', () => {
     const tiny = splashPath(1, CENTRE, SPREAD, GRAVITY, 0.5);
 
     expect(dropletCount(tiny)).toBe(0);
+  });
+});
+
+describe('orbSquash', () => {
+  it('starts as the circle it is', () => {
+    expect(orbSquash(0).x).toBeCloseTo(1);
+    expect(orbSquash(0).y).toBeCloseTo(1);
+  });
+
+  it('ends as the line the border grows from', () => {
+    expect(orbSquash(1).x).toBeCloseTo(ORB_LINE_WIDTH);
+    expect(orbSquash(1).y).toBeCloseTo(ORB_LINE_HEIGHT);
+  });
+
+  it('squats wider and shorter before it throws itself thin', () => {
+    // the anticipation: early on the orb is broader and lower than it
+    // started, which is what sells the change of shape
+    const early = orbSquash(0.25);
+
+    expect(early.x).toBeGreaterThan(1);
+    expect(early.y).toBeLessThan(1);
+  });
+
+  it('has committed to the line by the time it is done anticipating', () => {
+    expect(orbSquash(0.7).x).toBeLessThan(orbSquash(0.25).x);
+    expect(orbSquash(0.7).y).toBeGreaterThan(orbSquash(0.25).y);
+  });
+
+  it('moves smoothly the whole way, with no step at any point', () => {
+    // The failure this replaces: three sequenced animations stopped dead at
+    // every join. Measured against the distance actually travelled -- the
+    // orb doubles back, so its path is longer than its net range -- no
+    // single step may be more than a few times the average. A pause and a
+    // jump would blow straight through this.
+    const steps = 400;
+    let previous = orbSquash(0);
+    let biggestX = 0;
+    let biggestY = 0;
+    let travelledX = 0;
+    let travelledY = 0;
+
+    for (let i = 1; i <= steps; i++) {
+      const next = orbSquash(i / steps);
+      const stepX = Math.abs(next.x - previous.x);
+      const stepY = Math.abs(next.y - previous.y);
+
+      biggestX = Math.max(biggestX, stepX);
+      biggestY = Math.max(biggestY, stepY);
+      travelledX += stepX;
+      travelledY += stepY;
+      previous = next;
+    }
+
+    expect(biggestX).toBeLessThan((travelledX / steps) * 4);
+    expect(biggestY).toBeLessThan((travelledY / steps) * 4);
+  });
+
+  it('clamps outside its own range rather than running away', () => {
+    expect(orbSquash(-1).x).toBeCloseTo(1);
+    expect(orbSquash(2).x).toBeCloseTo(ORB_LINE_WIDTH);
+  });
+});
+
+describe('dropStretchAt', () => {
+  it('is unstretched at both ends of the flight', () => {
+    expect(dropStretchAt(0)).toBeCloseTo(1);
+  });
+
+  it('is drawn out by the fall', () => {
+    expect(dropStretchAt(0.4)).toBeGreaterThan(1);
+  });
+
+  it('squashes as it lands', () => {
+    expect(dropStretchAt(1)).toBeLessThan(1);
+  });
+
+  it('never reverses direction abruptly', () => {
+    // the two-beat sequence it replaces flipped from stretching to squashing
+    // at its join, which showed as a snap
+    const steps = 300;
+    let previous = dropStretchAt(0);
+    let biggest = 0;
+
+    for (let i = 1; i <= steps; i++) {
+      const next = dropStretchAt(i / steps);
+      biggest = Math.max(biggest, Math.abs(next - previous));
+      previous = next;
+    }
+
+    expect(biggest).toBeLessThan(0.01);
   });
 });

@@ -28,6 +28,8 @@ import {
   panelBorderPath,
   dropFlight,
   splashPath,
+  orbSquash,
+  dropStretchAt,
   DROP_PATH,
   DROP_GLOSS,
   DROP_VIEWBOX,
@@ -105,7 +107,12 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
   const [tipsOpen, setTipsOpen] = useState(false);
 
   const { width, height } = Dimensions.get('window');
-  const centre = origin ?? { x: width / 2, y: height / 2 };
+  // stable identity: the drop's flight home is memoised against it, and a
+  // fresh object every render would rebuild that on every frame
+  const centre = useMemo(
+    () => origin ?? { x: width / 2, y: height / 2 },
+    [origin, width, height]
+  );
 
   const surface = exceeded ? SCREEN_TIME_GLANCE.exceededSurface : SCREEN_TIME_GLANCE.calmSurface;
   const panelBorder = exceeded ? SCREEN_TIME_GLANCE.exceededBorder : SCREEN_TIME_GLANCE.calmBorder;
@@ -138,7 +145,7 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
       dropScaleX: SCREEN_TIME_GLANCE.dropWidth / panelW,
       dropScaleY: SCREEN_TIME_GLANCE.dropHeight / panelH,
     };
-  }, [insets.top, insets.bottom, width, height, centre.x, centre.y]);
+  }, [insets.top, insets.bottom, width, height, centre]);
 
   // -- open choreography --
   const scrimOpacity = useSharedValue(0);
@@ -147,8 +154,9 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
   const spinnerScale = useSharedValue(1);
   const spinnerTravel = useSharedValue(0); // 0 at the ring, 1 at the border's start
   // the morph: the arc flattens into the vertical line the border grows from
-  const spinnerSquashX = useSharedValue(1);
-  const spinnerSquashY = useSharedValue(1);
+  // one progress, not two values: the squash and the stretch are derived
+  // from it by `orbSquash`, so they cannot drift apart or stop at a join
+  const spinnerMorph = useSharedValue(0);
   // the turn: 0 is the ring's own colour, 1 is the water blue the box is
   // drawn in -- the orb changes colour while it spins
   const spinnerWater = useSharedValue(0);
@@ -169,7 +177,6 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
   // axes rather than one: given different easings they bend the flight into
   // an arc, where a single value could only ever slide in a straight line.
   const dropOpacity = useSharedValue(0);
-  const dropStretch = useSharedValue(1);
   const dropReturnX = useSharedValue(0);
   const dropReturnY = useSharedValue(0);
   // the splash the drop makes as it lands, and the orb that emerges from it
@@ -185,12 +192,10 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
       dropRadius.value = SCREEN_TIME_GLANCE.panelRadius;
       dropTint.value = 0;
       dropOpacity.value = 0;
-      dropStretch.value = 1;
       dropReturnX.value = 0;
       dropReturnY.value = 0;
       splash.value = 0;
-      spinnerSquashX.value = 1;
-      spinnerSquashY.value = 1;
+      spinnerMorph.value = 0;
       spinnerWater.value = 0;
       spinnerCore.value = 1;
       drawProgress.value = 0;
@@ -266,38 +271,14 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
       );
 
       // 2. ...squashes and stretches into the vertical line, right where it
-      //    was pressed. Three beats rather than one: the orb squats wider
-      //    and shorter first, the way anything about to spring does, then
-      //    throws itself thin and tall past where it is going, then settles
-      //    back. Going straight from circle to line in a single move reads
-      //    as a cut rather than a change of shape.
-      spinnerSquashX.value = withDelay(
+      //    was pressed. One progress, with `orbSquash` deriving both axes
+      //    from it: the orb still squats wider and shorter before it throws
+      //    itself thin, but as one unbroken move. Sequencing those beats as
+      //    separate animations made the motion stop dead at every join,
+      //    which is what made the change of shape look stepped.
+      spinnerMorph.value = withDelay(
         morphStartsAt,
-        withSequence(
-          withTiming(1.26, {
-            duration: morphDuration * 0.3,
-            easing: Easing.inOut(Easing.quad),
-          }),
-          withTiming(0.1, {
-            duration: morphDuration * 0.48,
-            easing: Easing.inOut(Easing.cubic),
-          }),
-          withTiming(0.14, { duration: morphDuration * 0.22, easing: glide })
-        )
-      );
-      spinnerSquashY.value = withDelay(
-        morphStartsAt,
-        withSequence(
-          withTiming(0.76, {
-            duration: morphDuration * 0.3,
-            easing: Easing.inOut(Easing.quad),
-          }),
-          withTiming(1.64, {
-            duration: morphDuration * 0.48,
-            easing: Easing.inOut(Easing.cubic),
-          }),
-          withTiming(1.5, { duration: morphDuration * 0.22, easing: glide })
-        )
+        withTiming(1, { duration: morphDuration, easing: Easing.inOut(Easing.quad) })
       );
 
       // 3. ...and only then does the finished line glide to the border's
@@ -342,8 +323,7 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
     spinnerRotate.value = 0;
     spinnerScale.value = 1;
     spinnerTravel.value = 0;
-    spinnerSquashX.value = 1;
-    spinnerSquashY.value = 1;
+    spinnerMorph.value = 0;
     spinnerWater.value = 0;
     spinnerCore.value = 1;
     splash.value = 0;
@@ -379,8 +359,7 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
     // not animations -- they set the starting point the reform animates away
     // from, and the orb is invisible until it does.
     spinnerTravel.value = 0;
-    spinnerSquashX.value = 1;
-    spinnerSquashY.value = 1;
+    spinnerMorph.value = 0;
     spinnerScale.value = 0.55;
     spinnerRotate.value = 0;
 
@@ -405,16 +384,16 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
 
     // ...becomes a true teardrop -- the gathered blob hands over to the drop
     // shape in a quick crossfade at its smallest...
-    panelOpacity.value = withDelay(gatherEndsAt, withTiming(0, { duration: 90 }));
+    panelOpacity.value = withDelay(gatherEndsAt, withTiming(0, { duration: 150 }));
     // The teardrop's whole life in one sequence -- in at the crossfade, held
     // through the flight, out as it reforms into the orb. Two assignments
     // cancel each other and the drop is never seen at all: it is the same
     // bug that once kept the orb invisible through its entire spin, and the
     // gathered panel underneath is convincing enough to hide it.
-    const dropInAt = gatherEndsAt - 30;
+    const dropInAt = gatherEndsAt - 80;
     dropOpacity.value = withSequence(
-      withDelay(dropInAt, withTiming(1, { duration: 90 })),
-      withDelay(landsAt - 60 - (dropInAt + 90), withTiming(0, { duration: 110 }))
+      withDelay(dropInAt, withTiming(1, { duration: 150 })),
+      withDelay(landsAt - 10 - (dropInAt + 150), withTiming(0, { duration: 120 }))
     );
 
     // ...hangs for a beat, then falls home to the ring. The two axes carry
@@ -430,13 +409,7 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
       withTiming(1, { duration: dropReturn, easing: Easing.in(Easing.cubic) })
     );
     // stretched by the fall, squashed as it lands
-    dropStretch.value = withDelay(
-      flightStartsAt,
-      withSequence(
-        withTiming(1.18, { duration: dropReturn * 0.6 }),
-        withTiming(0.88, { duration: dropReturn * 0.4, easing: Easing.in(Easing.cubic) })
-      )
-    );
+
     // the night lifts as it travels, so the home screen is back by the time
     // the drop gets there
     scrimOpacity.value = withDelay(
@@ -487,6 +460,7 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
   const spinnerStyle = useAnimatedStyle(() => {
     const dx = (geometry.drawStart.x - centre.x) * spinnerTravel.value;
     const dy = (geometry.drawStart.y - centre.y) * spinnerTravel.value;
+    const squash = orbSquash(spinnerMorph.value);
     return {
       opacity: spinnerOpacity.value,
       transform: [
@@ -494,8 +468,8 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
         { translateY: dy },
         { rotate: `${spinnerRotate.value}deg` },
         { scale: spinnerScale.value },
-        { scaleX: spinnerSquashX.value },
-        { scaleY: spinnerSquashY.value },
+        { scaleX: squash.x },
+        { scaleY: squash.y },
       ],
     };
   });
@@ -552,7 +526,9 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
 
   // the ring of impact: spreads from where the drop hit and thins as it goes
   const splashRingProps = useAnimatedProps(() => ({
-    r: 4 + 46 * splash.value,
+    // born at roughly the drop's own width rather than at a point: a ring
+    // starting from nothing where a whole drop just was is a visible jump
+    r: 15 + 38 * splash.value,
     opacity: Math.min(1, splash.value * 10) * 0.85 * (1 - splash.value),
     strokeWidth: 3 * (1 - splash.value) + 0.4,
   }));
@@ -560,9 +536,13 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
   const teardropStyle = useAnimatedStyle(() => ({
     opacity: dropOpacity.value,
     transform: [
+      // tied to its own opacity, so the drop grows out of the gathered panel
+      // and shrinks into the splash rather than appearing and vanishing at
+      // full size -- which is what made both ends of the flight pop
+      { scale: 0.6 + 0.4 * dropOpacity.value },
       { translateX: geometry.flight.dx * dropReturnX.value },
       { translateY: geometry.flight.dy * dropReturnY.value },
-      { scaleY: dropStretch.value },
+      { scaleY: dropStretchAt(dropReturnY.value) },
     ],
   }));
 

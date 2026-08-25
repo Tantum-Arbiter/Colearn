@@ -115,6 +115,51 @@ export function dropFlight(
   };
 }
 
+/** What the orb's squash and stretch resolves to: a thin, tall line. */
+export const ORB_LINE_WIDTH = 0.14;
+export const ORB_LINE_HEIGHT = 1.5;
+
+/**
+ * The orb's squash and stretch as it becomes the line, as one smooth
+ * function of a single progress.
+ *
+ * It used to be three `withSequence` beats -- bulge, snap thin, settle --
+ * and a sequence returns to zero velocity at every join. The motion stopped
+ * dead twice on its way from circle to line, which is exactly what made the
+ * change of shape look stepped rather than smooth. One function of one
+ * progress has no joins to stop at.
+ *
+ * The shape is a settled path from circle to line, plus a single
+ * anticipation bump: `u(1-u)^3` peaks about a quarter of the way in and
+ * vanishes smoothly at both ends, so the orb still squats wider and shorter
+ * before it throws itself thin -- without ever pausing to do it.
+ */
+export function orbSquash(progress: number): { x: number; y: number } {
+  'worklet';
+  const u = progress <= 0 ? 0 : progress >= 1 ? 1 : progress;
+
+  const eased = u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2;
+  // normalised against its own peak, so the coefficients below read as the
+  // size of the bulge rather than as arbitrary numbers
+  const bump = (u * Math.pow(1 - u, 3)) / 0.10546875;
+
+  return {
+    x: 1 + (ORB_LINE_WIDTH - 1) * eased + 0.3 * bump,
+    y: 1 + (ORB_LINE_HEIGHT - 1) * eased - 0.26 * bump,
+  };
+}
+
+/**
+ * The returning drop's stretch: drawn out by the fall, squashed as it
+ * lands. One function of the flight's own progress rather than a two-beat
+ * sequence, which reversed direction abruptly at its join.
+ */
+export function dropStretchAt(progress: number): number {
+  'worklet';
+  const u = progress <= 0 ? 0 : progress >= 1 ? 1 : progress;
+  return 1 + 0.22 * Math.sin(Math.PI * u) - 0.16 * u * u;
+}
+
 /** Droplets thrown up by the returning drop as it lands. */
 export const SPLASH_DROPLETS = 7;
 
