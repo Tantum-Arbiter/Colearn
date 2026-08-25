@@ -24,6 +24,7 @@ import { Fonts } from '@/constants/theme';
 import { type TimeOfDay } from '@/constants/home-scene';
 import {
   SCREEN_TIME_GLANCE,
+  SCREEN_TIME_RING,
   panelBorderPath,
   DROP_PATH,
   DROP_GLOSS,
@@ -141,6 +142,9 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
   // the turn: 0 is the ring's own colour, 1 is the water blue the box is
   // drawn in -- the orb changes colour while it spins
   const spinnerWater = useSharedValue(0);
+  // the core: the solid dot the orb takes over from the ring. 1 is the
+  // ring's own dot; it shrinks to nothing as the orb reduces into the line
+  const spinnerCore = useSharedValue(1);
   const drawProgress = useSharedValue(0);
   const drawOpacity = useSharedValue(1);
   const panelOpacity = useSharedValue(0);
@@ -171,6 +175,7 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
       spinnerSquashX.value = 1;
       spinnerSquashY.value = 1;
       spinnerWater.value = 0;
+      spinnerCore.value = 1;
       drawProgress.value = 0;
       drawOpacity.value = 1;
 
@@ -223,6 +228,16 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
       spinnerWater.value = withDelay(
         spinDuration * 0.25,
         withTiming(1, { duration: spinDuration * 0.65 })
+      );
+      // the solid dot the orb took over from the ring reduces away while the
+      // arc travels and flattens -- by the time the line exists, only the
+      // line is left, and all of it blue
+      spinnerCore.value = withDelay(
+        spinDuration,
+        withTiming(0, {
+          duration: travelDuration + morphDuration,
+          easing: Easing.in(Easing.cubic),
+        })
       );
 
       // 2. ...travels to the border's start...
@@ -279,6 +294,7 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
     spinnerSquashX.value = 1;
     spinnerSquashY.value = 1;
     spinnerWater.value = 0;
+    spinnerCore.value = 1;
     drawProgress.value = 0;
     panelOpacity.value = 0;
     contentOpacity.value = 0;
@@ -377,6 +393,15 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
     ),
   }));
 
+  const spinnerCoreProps = useAnimatedProps(() => ({
+    r: (SCREEN_TIME_RING.size / 2) * spinnerCore.value,
+    fill: interpolateColor(
+      spinnerWater.value,
+      [0, 1],
+      [drawStroke, SCREEN_TIME_GLANCE.drawWater]
+    ),
+  }));
+
   const panelStyle = useAnimatedStyle(() => ({
     opacity: panelOpacity.value,
     borderRadius: dropRadius.value,
@@ -449,6 +474,18 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
           ]}
         >
           <Svg width={SPINNER_BOX} height={SPINNER_BOX}>
+            {/* the solid dot the orb takes over from the ring, which fades
+                itself out underneath -- one control becoming the orb, not a
+                second one appearing next to it. It turns blue with the arc,
+                then reduces away as the orb becomes the line. */}
+            <AnimatedCircle
+              testID="screen-time-glance-spinner-core"
+              cx={SPINNER_BOX / 2}
+              cy={SPINNER_BOX / 2}
+              r={SCREEN_TIME_RING.size / 2}
+              fill={drawStroke}
+              animatedProps={spinnerCoreProps}
+            />
             {/* the gap is a third of the circle so the rotation actually
                 reads as spinning rather than as a static ring */}
             <AnimatedCircle

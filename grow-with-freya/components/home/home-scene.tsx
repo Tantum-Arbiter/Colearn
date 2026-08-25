@@ -41,6 +41,9 @@ export interface HomeSceneProps {
   screenTime?: ScreenTimeAllowance | null;
   /** Receives the ring's centre so the glance can open out of it. */
   onOpenScreenTime?: (origin: { x: number; y: number }) => void;
+  /** True while the glance is open -- the ring steps aside for the orb that
+   *  rises in its place. */
+  screenTimeHidden?: boolean;
   onOpenPlans?: () => void;
   timeOfDay?: TimeOfDay;
   testID?: string;
@@ -53,6 +56,7 @@ export const HomeScene = memo(function HomeScene({
   continueReading,
   screenTime = null,
   onOpenScreenTime,
+  screenTimeHidden = false,
   onOpenPlans,
   timeOfDay,
   testID = 'home-scene',
@@ -145,6 +149,7 @@ export const HomeScene = memo(function HomeScene({
             limitSeconds={screenTime.limitSeconds}
             tint={theme.chromeInk}
             onPress={onOpenScreenTime ? () => onOpenScreenTime(ringCentre(height, insets.bottom)) : undefined}
+            hidden={screenTimeHidden}
           />
         ) : null}
       </View>

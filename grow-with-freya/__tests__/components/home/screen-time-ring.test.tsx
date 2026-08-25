@@ -131,4 +131,28 @@ describe('ScreenTimeRing', () => {
       expect(underTest.length).toBe(0);
     });
   });
+
+  describe('stepping aside for the glance', () => {
+    // while the glance is open its orb rises exactly where the ring sits;
+    // the ring hides so one control becomes the orb rather than a second
+    // red dot lingering beneath the choreography
+    it('disables its press target while hidden', () => {
+      const onPress = jest.fn();
+      const { view } = renderRing({ usageSeconds: 3600, onPress, hidden: true });
+
+      // asserted as a prop: the web-rendered Pressable under this test
+      // harness fires onPress regardless of disabled, so behaviour here
+      // would pass even without the guard
+      expect(byTestId(view, 'screen-time-ring')[0].props.disabled).toBe(true);
+    });
+
+    it('still accepts presses when visible', () => {
+      const onPress = jest.fn();
+      const { view } = renderRing({ usageSeconds: 3600, onPress });
+
+      fireEvent.press(byTestId(view, 'screen-time-ring')[0]);
+
+      expect(onPress).toHaveBeenCalledTimes(1);
+    });
+  });
 });

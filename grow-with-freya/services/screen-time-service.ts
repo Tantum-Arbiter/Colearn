@@ -58,6 +58,19 @@ export interface ScreenTimeWarning {
   message: string;
 }
 
+/**
+ * YYYY-MM-DD in the device's own timezone. A child's day is a local day:
+ * the daily limit resets at the family's midnight, not at UTC's -- keyed by
+ * `toISOString()` a London child's day rolled over at 1am in summer, and a
+ * Californian child's would have reset mid-afternoon.
+ */
+export function localDateKey(referenceMs: number = Date.now()): string {
+  const d = new Date(referenceMs);
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${month}-${day}`;
+}
+
 class ScreenTimeService {
   private static instance: ScreenTimeService;
   private currentSession: ScreenTimeSession | null = null;
@@ -93,7 +106,7 @@ class ScreenTimeService {
       startTime: now,
       duration: 0,
       activity,
-      date: new Date().toISOString().split('T')[0],
+      date: localDateKey(now),
     };
 
     // Start monitoring for warnings with child age
@@ -123,7 +136,7 @@ class ScreenTimeService {
   }
 
   async getTodayUsage(): Promise<number> {
-    const today = new Date().toISOString().split('T')[0];
+    const today = localDateKey();
     const allSessions = await this.getAllSessions();
 
     // Derived from real start/end timestamps rather than the stored date+
@@ -134,7 +147,7 @@ class ScreenTimeService {
       return total + (todaySegment?.seconds ?? 0);
     }, 0);
 
-    const elapsedToday = this.secondsSinceUtcMidnight();
+    const elapsedToday = this.secondsSinceLocalMidnight();
 
     // Belt and braces: the live session is checkpointed every 30s, but that is
     // not a guarantee. Nothing about today can exceed the time that has
@@ -143,10 +156,10 @@ class ScreenTimeService {
     return Math.min(persisted + this.getCurrentSessionDuration(), elapsedToday);
   }
 
-  private secondsSinceUtcMidnight(referenceMs: number = Date.now()): number {
+  private secondsSinceLocalMidnight(referenceMs: number = Date.now()): number {
     const now = new Date(referenceMs);
-    const utcMidnight = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
-    return Math.floor((referenceMs - utcMidnight) / 1000);
+    const localMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    return Math.floor((referenceMs - localMidnight) / 1000);
   }
 
   /**
@@ -168,7 +181,7 @@ class ScreenTimeService {
     for (let i = days - 1; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
-      const key = d.toISOString().split('T')[0];
+      const key = localDateKey(d.getTime());
       totals.push({ date: key, seconds: byDate[key] || 0 });
     }
 
@@ -191,14 +204,15 @@ class ScreenTimeService {
     let cursor = start;
     while (cursor < end) {
       const cursorDate = new Date(cursor);
-      const nextMidnight = Date.UTC(
-        cursorDate.getUTCFullYear(),
-        cursorDate.getUTCMonth(),
-        cursorDate.getUTCDate() + 1
-      );
+      // the day boundary is the device's own midnight -- see localDateKey
+      const nextMidnight = new Date(
+        cursorDate.getFullYear(),
+        cursorDate.getMonth(),
+        cursorDate.getDate() + 1
+      ).getTime();
       const segmentEnd = Math.min(end, nextMidnight);
       segments.push({
-        date: cursorDate.toISOString().split('T')[0],
+        date: localDateKey(cursor),
         seconds: Math.floor((segmentEnd - cursor) / 1000),
       });
       cursor = segmentEnd;
@@ -228,7 +242,7 @@ class ScreenTimeService {
     const remainingTime = dailyLimit - todayUsage;
 
     // Check if we already showed a warning today
-    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+    const today = localDateKey();
     if (this.lastWarningDate === today) {
       return null; // Don't show duplicate warnings on the same day
     }
@@ -270,7 +284,7 @@ class ScreenTimeService {
 
   async resetTodayUsage(): Promise<void> {
     try {
-      const today = new Date().toISOString().split('T')[0];
+      const today = localDateKey();
       const allSessions = await this.getAllSessions();
 
       // Filter out today's sessions
@@ -320,7 +334,7 @@ class ScreenTimeService {
           startTime: now,
           duration: 0,
           activity,
-          date: new Date(now).toISOString().split('T')[0],
+          date: localDateKey(now),
         };
       }
 
@@ -333,7 +347,7 @@ class ScreenTimeService {
 
   async checkAndResetDailyData(): Promise<void> {
     try {
-      const today = new Date().toISOString().split('T')[0];
+      const today = localDateKey();
       const lastResetDate = await AsyncStorage.getItem('last_daily_reset_date');
 
       if (lastResetDate !== today) {
@@ -372,7 +386,9 @@ class ScreenTimeService {
     const allSessions = await this.getAllSessions();
     
     return allSessions.filter(session => {
-      const sessionDate = new Date(session.date);
+      // a bare YYYY-MM-DD parses as UTC midnight; anchoring at local noon
+      // keeps the record on its own local day in every timezone
+      const sessionDate = new Date(`${session.date}T12:00:00`);
       return sessionDate >= weekAgo && sessionDate <= now;
     });
   }
@@ -382,7 +398,7 @@ class ScreenTimeService {
     const dailyTotals: Record<string, number[]> = {};
 
     sessions.forEach(session => {
-      const date = new Date(session.date);
+      const date = new Date(`${session.date}T12:00:00`);
       const dayName = dayNames[date.getDay()];
       
       if (!dailyTotals[dayName]) {
@@ -491,7 +507,7 @@ class ScreenTimeService {
     });
 
     this.currentSession.startTime = now;
-    this.currentSession.date = new Date(now).toISOString().split('T')[0];
+    this.currentSession.date = localDateKey(now);
   }
 
   private startWarningMonitor(childAgeInMonths: number = 24): void {

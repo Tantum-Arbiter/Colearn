@@ -187,7 +187,16 @@ line **draws the border** (a dash-offset sweep along `panelBorderPath`). The
 orb is deliberately wider than the ring's solid dot -- at the same diameter
 its red arc vanished against the red dot beneath it -- and it **turns from
 the ring's colour to water blue as it spins**, so the box is drawn in blue
-and only takes the alarm red when the fill settles in.
+and only takes the alarm red when the fill settles in. The orb carries a
+solid core the size of the ring's own dot, and the ring hides while the
+glance is open -- one control becomes the orb, rather than a second dot
+appearing beside a ring that never moved. The core reduces away as the arc
+flattens, so by the time the line exists only the line is left.
+
+Alongside this rework, `ScreenTimeService` moved from UTC to **local** day
+boundaries (`localDateKey`): keyed by `toISOString()`, a London child's day
+rolled over at 1am in summer and a Californian child's limit would have
+reset mid-afternoon.
 Nothing dims while it draws. Only once the border closes does the settle
 happen — the background blacks out and the fill arrives inside the frame at
 the same time. Closing runs in reverse register: the content dims, the panel

@@ -195,6 +195,16 @@ describe('ScreenTimeGlance', () => {
       expect(calm.props.stroke).toBe(SCREEN_TIME_GLANCE.calmDraw);
     });
 
+    it('gives the orb a solid core in the ring colour, to take over from the dot', () => {
+      const red = findByTestId(renderGlance({ exceeded: true }), 'screen-time-glance-spinner-core')[0];
+      const calm = findByTestId(renderGlance({ exceeded: false }), 'screen-time-glance-spinner-core')[0];
+
+      // the core starts as the ring's own dot -- same radius, same colour --
+      // so one control becomes the orb rather than a second one appearing
+      expect(red.props.fill).toBe(SCREEN_TIME_GLANCE.exceededDraw);
+      expect(calm.props.fill).toBe(SCREEN_TIME_GLANCE.calmDraw);
+    });
+
     it('leaves a third of the circle open so the spin can be seen', () => {
       const arc = findByTestId(renderGlance(), 'screen-time-glance-spinner-arc')[0];
       const [dash, gap] = String(arc.props.strokeDasharray).split(/[ ,]+/).map(Number);

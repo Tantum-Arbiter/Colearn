@@ -97,7 +97,9 @@ describe('ScreenTimeService', () => {
         store = value;
       });
 
-      jest.useFakeTimers({ now: new Date('2026-08-01T23:50:00.000Z') });
+      // local wall-clock, not an ISO Z-string: the day boundary under test
+      // is the device's own midnight, whatever timezone the test runs in
+      jest.useFakeTimers({ now: new Date(2026, 7, 1, 23, 50, 0) });
 
       await underTest.startSession('story');
       // 30 minutes foreground, crossing midnight, with no background/foreground
@@ -121,15 +123,15 @@ describe('ScreenTimeService', () => {
       // exact corruption a long-open session used to write to storage.
       const legacySession = {
         id: 'legacy-1',
-        startTime: new Date('2026-08-01T22:00:00.000Z').getTime(),
-        endTime: new Date('2026-08-03T02:00:00.000Z').getTime(),
+        startTime: new Date(2026, 7, 1, 22, 0, 0).getTime(),
+        endTime: new Date(2026, 7, 3, 2, 0, 0).getTime(),
         duration: 28 * 60 * 60,
         activity: 'story' as const,
         date: '2026-08-01',
       };
       (AsyncStorage.getItem as jest.Mock).mockResolvedValue(JSON.stringify([legacySession]));
 
-      jest.useFakeTimers({ now: new Date('2026-08-11T12:00:00.000Z') });
+      jest.useFakeTimers({ now: new Date(2026, 7, 11, 12, 0, 0) });
 
       const totals = await underTest.getDailyTotals(30);
       const byDate = Object.fromEntries(totals.map(t => [t.date, t.seconds]));
@@ -147,14 +149,14 @@ describe('ScreenTimeService', () => {
 
     it('caps today\'s usage at the time actually elapsed since midnight, even if the open session never got checkpointed', async () => {
       const underTest = screenTimeService;
-      jest.useFakeTimers({ now: new Date('2026-08-11T08:00:00.000Z') });
+      jest.useFakeTimers({ now: new Date(2026, 7, 11, 8, 0, 0) });
 
       await underTest.startSession('story');
 
       // Jump the clock forward 51 hours WITHOUT advancing timers, so no
       // checkpoint tick ever fires -the scenario a long-lived dev/foreground
       // session can hit despite the 30s checkpoint interval.
-      jest.setSystemTime(new Date('2026-08-13T11:00:00.000Z'));
+      jest.setSystemTime(new Date(2026, 7, 13, 11, 0, 0));
 
       const usage = await underTest.getTodayUsage();
 
@@ -164,7 +166,7 @@ describe('ScreenTimeService', () => {
 
     it('caps today\'s usage when the inflation comes from persisted records rather than the live session', async () => {
       const underTest = screenTimeService;
-      jest.useFakeTimers({ now: new Date('2026-08-13T11:00:00.000Z') });
+      jest.useFakeTimers({ now: new Date(2026, 7, 13, 11, 0, 0) });
 
       // A legacy record whose stored date says today and whose duration is a
       // physically impossible 51h -the shape behind the 51h35m ring. No live
@@ -173,8 +175,8 @@ describe('ScreenTimeService', () => {
         JSON.stringify([
           {
             id: 'legacy-today',
-            startTime: new Date('2026-08-11T08:00:00.000Z').getTime(),
-            endTime: new Date('2026-08-13T11:00:00.000Z').getTime(),
+            startTime: new Date(2026, 7, 11, 8, 0, 0).getTime(),
+            endTime: new Date(2026, 7, 13, 11, 0, 0).getTime(),
             duration: 51 * 60 * 60,
             activity: 'story' as const,
             date: '2026-08-13',
@@ -239,7 +241,7 @@ describe('ScreenTimeService', () => {
 
     it('carries a session that spans midnight onto both days after a restart', async () => {
       const underTest = screenTimeService;
-      jest.useFakeTimers({ now: new Date('2026-08-13T23:40:00.000Z') });
+      jest.useFakeTimers({ now: new Date(2026, 7, 13, 23, 40, 0) });
 
       await underTest.startSession('story');
       await jest.advanceTimersByTimeAsync(40 * 60 * 1000);
@@ -250,6 +252,32 @@ describe('ScreenTimeService', () => {
 
       expect(byDate['2026-08-13']).toBe(20 * 60);
       expect(byDate['2026-08-14']).toBe(20 * 60);
+    });
+
+    // the defect this pins: keyed by UTC, a device at 00:33 local (BST) still
+    // called the day "yesterday" -- an evening of use showed as 8h of *today*
+    // and the ring stayed red past midnight
+    it('rolls the day over at the device\'s own midnight', async () => {
+      const underTest = screenTimeService;
+      // an evening session, 16:00 to 23:50 local yesterday
+      jest.useFakeTimers({ now: new Date(2026, 7, 24, 16, 0, 0) });
+      await underTest.startSession('story');
+      await jest.advanceTimersByTimeAsync((7 * 60 + 50) * 60 * 1000);
+      await underTest.endSession();
+
+      // 00:33 local, new day
+      jest.setSystemTime(new Date(2026, 7, 25, 0, 33, 0));
+
+      // yesterday's evening contributes nothing to today...
+      await expect(underTest.getTodayUsage()).resolves.toBe(0);
+
+      // ...and the trend's last bar is the new local day, carrying nothing,
+      // with the whole evening still credited to the day it happened on
+      const totals = await underTest.getDailyTotals(2);
+      expect(totals[1].date).toBe('2026-08-25');
+      expect(totals[1].seconds).toBe(0);
+      expect(totals[0].date).toBe('2026-08-24');
+      expect(totals[0].seconds).toBe((7 * 60 + 50) * 60);
     });
 
     it('does not report negative usage when the device clock jumps backwards', async () => {
@@ -289,8 +317,8 @@ describe('ScreenTimeService', () => {
   });
 
   describe('warning system', () => {
-    // pinned mid-morning so a session fixture can never straddle UTC midnight
-    // and have part of its span fall outside "today"
+    // pinned mid-morning so a session fixture can never straddle a local
+    // midnight and have part of its span fall outside "today"
     beforeEach(() => {
       jest.useFakeTimers({ now: new Date('2026-08-13T10:00:00.000Z') });
     });

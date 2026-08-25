@@ -24,6 +24,10 @@ export interface ScreenTimeRingProps {
   limitSeconds: number;
   tint?: string;
   onPress?: () => void;
+  /** True while the glance is open. The ring steps aside for the orb that
+   *  rises in its place -- left visible it sat beneath the choreography as a
+   *  second red dot that never moved. */
+  hidden?: boolean;
   testID?: string;
 }
 
@@ -32,11 +36,17 @@ export const ScreenTimeRing = memo(function ScreenTimeRing({
   limitSeconds,
   tint = '#FFFFFF',
   onPress,
+  hidden = false,
   testID = 'screen-time-ring',
 }: ScreenTimeRingProps) {
   const { t } = useTranslation();
   const reduceMotion = useReducedMotion();
   const pulse = useSharedValue(1);
+  const presence = useSharedValue(hidden ? 0 : 1);
+
+  useEffect(() => {
+    presence.value = withTiming(hidden ? 0 : 1, { duration: 150 });
+  }, [hidden, presence]);
 
   const exceeded = isScreenTimeExceeded(usageSeconds, limitSeconds);
 
@@ -68,6 +78,7 @@ export const ScreenTimeRing = memo(function ScreenTimeRing({
   }, [exceeded, reduceMotion, pulse]);
 
   const animatedStyle = useAnimatedStyle(() => ({
+    opacity: presence.value,
     transform: [{ scale: pulse.value }],
   }));
 
@@ -155,6 +166,7 @@ export const ScreenTimeRing = memo(function ScreenTimeRing({
       accessibilityHint={t('home.screenTimeOpen')}
       hitSlop={SCREEN_TIME_RING.hitSlop}
       onPress={onPress}
+      disabled={hidden}
     >
       {dial}
     </Pressable>

@@ -91,6 +91,7 @@ export const HomeSceneContainer = memo(function HomeSceneContainer({
         screenTime={screenTime}
         timeOfDay={timeOfDay}
         onOpenScreenTime={openScreenTime}
+        screenTimeHidden={showScreenTime}
         onOpenPlans={offerPlan ? openPlans : undefined}
       />
 
