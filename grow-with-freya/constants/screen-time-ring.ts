@@ -41,29 +41,16 @@ export const SCREEN_TIME_GLANCE = {
   /** Everything outside the panel: dim night, never the alarm colour. */
   scrim: 'rgba(4, 6, 18, 0.94)',
 
-  // the open choreography, in order: the orb spins, an arm unwinds out of
-  // it as a real spiral, the spiral rotates into a flat line, the line
-  // stretches, travels, draws the border, and the panel settles.
-  //
-  // Each of those is its own beat because each is a different shape. The
-  // spiral genuinely unwinds (see spiralToLinePath) rather than being a
-  // circle squashed flat while it turns -- that only ever read as a flat
-  // thing spinning.
-  spinDuration: 560,
-  morphDuration: 480,
-  straightenDuration: 360,
-  glideDuration: 420,
+  // the open choreography, in order: spin, travel, morph into a line, draw
+  // the border, then settle -- the blackout and the fill arriving together.
+  // The spin is long enough to actually read as a spinning circle: at 360ms
+  // two turns were a blur, and the phase looked like a flicker before the
+  // draw rather than a moment of its own.
+  spinDuration: 620,
+  travelDuration: 220,
+  morphDuration: 140,
   drawDuration: 480,
   settleDuration: 260,
-
-  /** How long the finished arm is once it has landed on the border. The
-   *  border's sweep starts from exactly this much already drawn, so the two
-   *  are the same stroke at the moment of handover. */
-  armLandLength: 96,
-  /** How far the arm sweeps out from the ring while it is still a spiral. */
-  armRadius: 34,
-  /** Half the line's length while it is still at the ring. */
-  armHalfAtRing: 26,
 
   // the spinner that echoes the ring while it travels
   spinnerRadius: 15,
@@ -99,126 +86,6 @@ export const SCREEN_TIME_GLANCE = {
   exceededGlow: 'rgba(79, 168, 224, 0.55)',
   calmGlow: 'rgba(0, 0, 0, 0.45)',
 } as const;
-
-/** How many turns the arm sweeps through as it unwinds out of the core. */
-export const SPIRAL_TURNS = 2.5;
-/** Points the arm is drawn from -- enough to read as a curve at this size. */
-export const SPIRAL_STEPS = 56;
-/**
- * How much of the curve is mid-unroll at any moment, as a fraction of its
- * length. The straighten travels along the arm as a wave rather than
- * applying to every point at once: a coil pulled straight releases from its
- * loose end inward, where a curve whose every point moves together just
- * crumples into the middle.
- */
-export const SPIRAL_UNROLL_BAND = 0.42;
-
-/**
- * The arm, somewhere between a spiral and a straight line.
- *
- * `grow` unwinds it: at 0 there is nothing at the core, at 1 the full
- * Archimedean spiral has swept out to `radius` over `SPIRAL_TURNS`.
- * `straighten` then pulls that spiral onto a vertical segment of
- * `2 * halfLength`, in the same order it was traced -- so the curve unwinds
- * into a line rather than being replaced by one.
- *
- * The straighten is a wave, not a switch. It starts at the loose outer end
- * and travels inward over `SPIRAL_UNROLL_BAND` of the arm's length, so the
- * coil peels onto the line the way a rolled thing pulled from one end does.
- * Straightening every point at the same time instead makes the whole curve
- * rush at its own centre and crumple.
- *
- * This is also the difference between a spiral and a flattened circle: a
- * squashed circle spinning is only ever a flat thing turning, where a real
- * spiral has a start at the centre and an end at the rim, and can unroll.
- *
- * Runs on the UI thread as an animated `d`, so it is a worklet -- and a
- * plain function of its inputs, so it is testable without a renderer.
- */
-export interface Point {
-  x: number;
-  y: number;
-}
-
-export interface SpiralArmGeometry {
-  /** Where the spiral lives while it unwinds: the ring's own centre. */
-  centre: Point;
-  /** How far the arm sweeps out from that centre. */
-  radius: number;
-  /** Half the line's length while it is still at the ring. */
-  halfAtRing: number;
-  /** The two ends of the line once it has glided onto the panel's border,
-   *  in the same screen coordinates the border itself is drawn in. */
-  landFrom: Point;
-  landTo: Point;
-}
-
-/**
- * The arm: spiral, line, or anything between, in screen coordinates.
- *
- * Everything is one path in one space -- the same space the panel's border
- * is drawn in -- because the arm has to *become* the border's first stroke,
- * not be swapped for it. A separate element that travels and fades out over
- * the top of a second one can never line up exactly, and the join shows.
- *
- * `grow` unwinds the Archimedean spiral out of the core; `rotation` turns
- * it; `straighten` unrolls it onto a line as a wave from the loose outer end
- * inward (see SPIRAL_UNROLL_BAND); and `glide` carries that line from the
- * ring onto the border's own edge, extending it as it goes. At glide = 1 the
- * path IS the border's first `landFrom`-to-`landTo` stroke, so the border
- * can pick the sweep up from exactly there.
- */
-export function spiralArmPath(
-  geometry: SpiralArmGeometry,
-  grow: number,
-  rotation: number,
-  straighten: number,
-  glide: number
-): string {
-  'worklet';
-  const { centre, radius, halfAtRing, landFrom, landTo } = geometry;
-
-  const sweep = grow * SPIRAL_TURNS * 2 * Math.PI;
-  // the wave has to clear the whole arm, so it travels a band further than
-  // the length it is crossing
-  const front = straighten * (1 + SPIRAL_UNROLL_BAND);
-
-  // where the line lies right now: at the ring, on the border, or on its way
-  const ringFromY = centre.y - halfAtRing;
-  const ringToY = centre.y + halfAtRing;
-  const fromX = centre.x + (landFrom.x - centre.x) * glide;
-  const fromY = ringFromY + (landFrom.y - ringFromY) * glide;
-  const toX = centre.x + (landTo.x - centre.x) * glide;
-  const toY = ringToY + (landTo.y - ringToY) * glide;
-
-  let d = '';
-
-  for (let i = 0; i <= SPIRAL_STEPS; i++) {
-    const f = i / SPIRAL_STEPS;
-    const theta = f * sweep + rotation;
-    const r = radius * grow * f;
-
-    const spiralX = centre.x + r * Math.cos(theta);
-    const spiralY = centre.y + r * Math.sin(theta);
-    const lineX = fromX + (toX - fromX) * f;
-    const lineY = fromY + (toY - fromY) * f;
-
-    // how far this point in particular has been pulled straight: the outer
-    // end (f = 1) goes first, the core (f = 0) last
-    const raw = (front - (1 - f)) / SPIRAL_UNROLL_BAND;
-    const clamped = raw <= 0 ? 0 : raw >= 1 ? 1 : raw;
-    // smoothstep, so a point eases off the curve and onto the line rather
-    // than setting off and stopping abruptly
-    const t = clamped * clamped * (3 - 2 * clamped);
-
-    const x = spiralX + (lineX - spiralX) * t;
-    const y = spiralY + (lineY - spiralY) * t;
-
-    d += `${i === 0 ? 'M' : 'L'} ${x.toFixed(2)} ${y.toFixed(2)} `;
-  }
-
-  return d.trim();
-}
 
 /**
  * The falling drop, drawn as a real teardrop rather than a shrunken panel:

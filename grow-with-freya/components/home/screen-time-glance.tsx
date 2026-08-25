@@ -26,7 +26,6 @@ import {
   SCREEN_TIME_GLANCE,
   SCREEN_TIME_RING,
   panelBorderPath,
-  spiralArmPath,
   DROP_PATH,
   DROP_GLOSS,
   DROP_VIEWBOX,
@@ -97,12 +96,7 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
   const [tipsOpen, setTipsOpen] = useState(false);
 
   const { width, height } = Dimensions.get('window');
-  // stable identity: the arm's geometry is memoised against it, and a fresh
-  // object every render would rebuild that on every frame of the open
-  const centre = useMemo(
-    () => origin ?? { x: width / 2, y: height / 2 },
-    [origin, width, height]
-  );
+  const centre = origin ?? { x: width / 2, y: height / 2 };
 
   const surface = exceeded ? SCREEN_TIME_GLANCE.exceededSurface : SCREEN_TIME_GLANCE.calmSurface;
   const panelBorder = exceeded ? SCREEN_TIME_GLANCE.exceededBorder : SCREEN_TIME_GLANCE.calmBorder;
@@ -122,30 +116,11 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
     const panelW = bounds.right - bounds.left;
     const panelH = bounds.bottom - bounds.top;
 
-    // where the arm lands: the border's own first stroke, from `armLandLength`
-    // up the left edge down to the path's start point. The border's sweep
-    // then begins from exactly this much already drawn, so the arm and the
-    // border are the same stroke at the moment of handover -- never two.
-    const landTo = { x: bounds.left, y: bounds.bottom - bounds.radius };
-    const landFrom = {
-      x: bounds.left,
-      y: bounds.bottom - bounds.radius - SCREEN_TIME_GLANCE.armLandLength,
-    };
-
     return {
       bounds,
       border,
       panelW,
       panelH,
-      arm: {
-        centre,
-        radius: SCREEN_TIME_GLANCE.armRadius,
-        halfAtRing: SCREEN_TIME_GLANCE.armHalfAtRing,
-        landFrom,
-        landTo,
-      },
-      /** How much of the border the arm already accounts for. */
-      landedProgress: SCREEN_TIME_GLANCE.armLandLength / border.length,
       // where the spinner hands over to the border: the path's own start
       drawStart: { x: bounds.left, y: bounds.bottom - bounds.radius },
       // how far the drop falls to clear the bottom of the screen
@@ -153,29 +128,23 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
       dropScaleX: SCREEN_TIME_GLANCE.dropWidth / panelW,
       dropScaleY: SCREEN_TIME_GLANCE.dropHeight / panelH,
     };
-  }, [insets.top, insets.bottom, width, height, centre]);
+  }, [insets.top, insets.bottom, width, height]);
 
   // -- open choreography --
   const scrimOpacity = useSharedValue(0);
   const spinnerOpacity = useSharedValue(0);
   const spinnerRotate = useSharedValue(0);
   const spinnerScale = useSharedValue(1);
-
-  // the orb's ring, which fades as the spiral arm sweeps out through it
-  const spinnerArcOpacity = useSharedValue(1);
+  const spinnerTravel = useSharedValue(0); // 0 at the ring, 1 at the border's start
+  // the morph: the arc flattens into the vertical line the border grows from
+  const spinnerSquashX = useSharedValue(1);
+  const spinnerSquashY = useSharedValue(1);
   // the turn: 0 is the ring's own colour, 1 is the water blue the box is
   // drawn in -- the orb changes colour while it spins
   const spinnerWater = useSharedValue(0);
   // the core: the solid dot the orb takes over from the ring. 1 is the
   // ring's own dot; it shrinks to nothing as the orb reduces into the line
   const spinnerCore = useSharedValue(1);
-  // the arm: `grow` unwinds a real spiral out of the core, `straighten`
-  // unrolls that spiral onto a line, and `glide` carries the line onto the
-  // panel's border, where the border's own sweep picks it up
-  const spinnerGrow = useSharedValue(0);
-  const spinnerStraighten = useSharedValue(0);
-  const spinnerGlide = useSharedValue(0);
-  const spiralOpacity = useSharedValue(0);
   const drawProgress = useSharedValue(0);
   const drawOpacity = useSharedValue(1);
   const panelOpacity = useSharedValue(0);
@@ -203,13 +172,10 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
       dropTint.value = 0;
       dropOpacity.value = 0;
       dropStretch.value = 1;
-      spinnerArcOpacity.value = 1;
+      spinnerSquashX.value = 1;
+      spinnerSquashY.value = 1;
       spinnerWater.value = 0;
       spinnerCore.value = 1;
-      spinnerGrow.value = 0;
-      spinnerStraighten.value = 0;
-      spinnerGlide.value = 0;
-      spiralOpacity.value = 0;
       drawProgress.value = 0;
       drawOpacity.value = 1;
 
@@ -226,21 +192,16 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
 
       const {
         spinDuration,
+        travelDuration,
         morphDuration,
-        straightenDuration,
-        glideDuration,
         drawDuration,
         settleDuration,
         fadeDuration,
       } = SCREEN_TIME_GLANCE;
-      // one continuous gesture, each beat a different shape: the orb spins,
-      // an arm unwinds out of it as a spiral, the spiral unrolls into a
-      // line, and that same line glides out onto the panel's border, where
-      // the border's own sweep picks it up and carries on around
-      const morphStartsAt = spinDuration;
-      const straightenStartsAt = morphStartsAt + morphDuration;
-      const glideStartsAt = straightenStartsAt + straightenDuration;
-      const drawStartsAt = glideStartsAt + glideDuration;
+      const morphStartsAt = spinDuration + travelDuration;
+      // the line starts growing while the morph is still finishing, so the
+      // flattened arc and the border's first segment read as one stroke
+      const drawStartsAt = morphStartsAt + morphDuration * 0.5;
       const settleStartsAt = drawStartsAt + drawDuration;
 
       // 1. the ring's echo grows into a spinning circle where it was
@@ -252,108 +213,56 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
       spinnerOpacity.value = withSequence(
         withTiming(1, { duration: 120 }),
         withDelay(
-          drawStartsAt - 60,
-          withTiming(0, { duration: 160 })
+          morphStartsAt + morphDuration * 0.6 - 120,
+          withTiming(0, { duration: 140 })
         )
       );
-      // the pop, then a gentle swell as the arm sweeps out of the core
       spinnerScale.value = withSequence(
         withTiming(1.4, { duration: spinDuration * 0.55, easing: Easing.out(Easing.cubic) }),
         withTiming(1.1, { duration: spinDuration * 0.45 })
       );
-      // The rotation runs from the first frame to the moment the spiral is
-      // fully unwound, and stops there. Turning the coil while it is also
-      // being pulled straight made the two motions fight and the shape
-      // smear; the unroll wave carries the straighten on its own.
-      //
-      // A whole number of turns, always. The line the spiral unrolls into is
-      // vertical in the path's own coordinates and the rotation is applied
-      // over the top of it, so anything other than a multiple of 360 leaves
-      // the finished line lying at that angle -- 990 turned it on its side.
-      // The spiral and the line share the frame, so the loose end already
-      // points down the line without any help.
-      spinnerRotate.value = withTiming(1080, {
-        duration: straightenStartsAt,
+      spinnerRotate.value = withTiming(720, {
+        duration: morphStartsAt,
         easing: Easing.inOut(Easing.cubic),
       });
       spinnerWater.value = withDelay(
         spinDuration * 0.25,
         withTiming(1, { duration: spinDuration * 0.65 })
       );
-
-      // 2. ...an arm unwinds out of the core as a real spiral, sweeping
-      //    outward through two and a half turns while the rotation carries
-      //    on. The orb's own ring hands over to it: the arm passes through
-      //    where the ring was as the ring fades, so the shape is never
-      //    swapped, only continued.
-      spiralOpacity.value = withDelay(
-        morphStartsAt,
-        withTiming(1, { duration: morphDuration * 0.3 })
-      );
-      spinnerArcOpacity.value = withDelay(
-        morphStartsAt,
-        withTiming(0, { duration: morphDuration * 0.45 })
-      );
-      spinnerGrow.value = withDelay(
-        morphStartsAt,
-        withTiming(1, { duration: morphDuration, easing: Easing.out(Easing.cubic) })
-      );
-
-      // 3. ...the spiral unrolls into a flat line: a wave travels from the
-      //    loose outer end inward, peeling the curve onto the vertical in
-      //    the order it was traced. Linear, because the easing that shapes
-      //    this beat is the wave itself -- easing the wave too would make
-      //    it hesitate in the middle of the arm.
-      spinnerStraighten.value = withDelay(
-        straightenStartsAt,
-        withTiming(1, { duration: straightenDuration, easing: Easing.linear })
-      );
-
-
-      // The nucleus collapses as the arm sweeps out of it, and it has to be
-      // quick: at the ring's own dot size it is most of the spiral's radius,
-      // so a core that lingers hides the coil behind it and turns the unroll
-      // into a ball with a stub. It is gone before the arm is half unrolled,
-      // leaving nothing on screen but the curve being pulled straight.
+      // the solid dot the orb took over from the ring reduces away while the
+      // arc travels and flattens -- by the time the line exists, only the
+      // line is left, and all of it blue
       spinnerCore.value = withDelay(
+        spinDuration,
+        withTiming(0, {
+          duration: travelDuration + morphDuration,
+          easing: Easing.in(Easing.cubic),
+        })
+      );
+
+      // 2. ...travels to the border's start...
+      spinnerTravel.value = withDelay(
+        spinDuration,
+        withTiming(1, { duration: travelDuration, easing: Easing.in(Easing.cubic) })
+      );
+
+      // 3. ...flattens into the vertical line the border grows from...
+      spinnerSquashX.value = withDelay(
         morphStartsAt,
-        withSequence(
-          withTiming(0.28, {
-            duration: morphDuration * 0.5,
-            easing: Easing.in(Easing.cubic),
-          }),
-          withTiming(0, {
-            duration: morphDuration * 0.5 + straightenDuration * 0.35,
-            easing: Easing.inOut(Easing.cubic),
-          })
-        )
+        withTiming(0.14, { duration: morphDuration, easing: Easing.in(Easing.cubic) })
+      );
+      spinnerSquashY.value = withDelay(
+        morphStartsAt,
+        withTiming(1.5, { duration: morphDuration, easing: Easing.out(Easing.cubic) })
       );
 
-      // 4. ...and that same line glides out of the ring and onto the
-      //    panel's border, reaching to its full length as it travels. It is
-      //    one path in the border's own coordinates, so it arrives lying
-      //    exactly along the border's first stroke -- nothing is repositioned
-      //    and nothing is swapped.
-      spinnerGlide.value = withDelay(
-        glideStartsAt,
-        withTiming(1, { duration: glideDuration, easing: Easing.inOut(Easing.cubic) })
-      );
-
-      // 5. the border picks the sweep up from exactly the length the arm
-      //    already covers, so the first thing it draws is the stroke that is
-      //    already there, and carries on up and around from it
+      // 4. ...and the line draws the box
       drawProgress.value = withDelay(
         drawStartsAt,
-        withTiming(1, { duration: drawDuration, easing: Easing.out(Easing.cubic) })
-      );
-      // the arm hands over under a stroke identical to itself, so the fade
-      // has nothing to show
-      spiralOpacity.value = withDelay(
-        drawStartsAt + 40,
-        withTiming(0, { duration: 160 })
+        withTiming(1, { duration: drawDuration, easing: Easing.inOut(Easing.cubic) })
       );
 
-      // 6. the settle: the background blacks out and the fill arrives inside
+      // 5. the settle: the background blacks out and the fill arrives inside
       //    the frame at the same time, the drawn stroke handing over to the
       //    panel's own border
       scrimOpacity.value = withDelay(
@@ -381,13 +290,11 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
     spinnerOpacity.value = 0;
     spinnerRotate.value = 0;
     spinnerScale.value = 1;
-    spinnerArcOpacity.value = 1;
+    spinnerTravel.value = 0;
+    spinnerSquashX.value = 1;
+    spinnerSquashY.value = 1;
     spinnerWater.value = 0;
     spinnerCore.value = 1;
-    spinnerGrow.value = 0;
-    spinnerStraighten.value = 0;
-    spinnerGlide.value = 0;
-    spiralOpacity.value = 0;
     drawProgress.value = 0;
     panelOpacity.value = 0;
     contentOpacity.value = 0;
@@ -457,50 +364,28 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
 
   const scrimStyle = useAnimatedStyle(() => ({ opacity: scrimOpacity.value }));
 
-  // the orb stays where it was pressed: it is the core and its ring, and
-  // they only ever spin and fade. Everything that travels is the arm, which
-  // lives in the border's own coordinates.
-  const spinnerStyle = useAnimatedStyle(() => ({
-    opacity: spinnerOpacity.value,
-    transform: [
-      { rotate: `${spinnerRotate.value}deg` },
-      { scale: spinnerScale.value },
-    ],
-  }));
+  const spinnerStyle = useAnimatedStyle(() => {
+    const dx = (geometry.drawStart.x - centre.x) * spinnerTravel.value;
+    const dy = (geometry.drawStart.y - centre.y) * spinnerTravel.value;
+    return {
+      opacity: spinnerOpacity.value,
+      transform: [
+        { translateX: dx },
+        { translateY: dy },
+        { rotate: `${spinnerRotate.value}deg` },
+        { scale: spinnerScale.value },
+        { scaleX: spinnerSquashX.value },
+        { scaleY: spinnerSquashY.value },
+      ],
+    };
+  });
 
   const drawProps = useAnimatedProps(() => ({
-    // the arm has already laid down `landedProgress` of the border, so the
-    // sweep starts there rather than from nothing
-    strokeDashoffset:
-      geometry.border.length *
-      (1 - (geometry.landedProgress + (1 - geometry.landedProgress) * drawProgress.value)),
+    strokeDashoffset: geometry.border.length * (1 - drawProgress.value),
     opacity: drawOpacity.value,
   }));
 
-  const spiralProps = useAnimatedProps(() => ({
-    d: spiralArmPath(
-      geometry.arm,
-      spinnerGrow.value,
-      (spinnerRotate.value * Math.PI) / 180,
-      spinnerStraighten.value,
-      spinnerGlide.value
-    ),
-    opacity: spiralOpacity.value,
-    stroke: interpolateColor(
-      spinnerWater.value,
-      [0, 1],
-      [drawStroke, SCREEN_TIME_GLANCE.drawWater]
-    ),
-    // thins to the border's own weight as it lands, so the stroke the border
-    // continues is the stroke that was already there
-    strokeWidth:
-      SCREEN_TIME_GLANCE.spinnerStroke +
-      (SCREEN_TIME_GLANCE.panelBorderWidth - SCREEN_TIME_GLANCE.spinnerStroke) *
-        spinnerGlide.value,
-  }));
-
-  const spinnerArcProps = useAnimatedProps(() => ({
-    opacity: spinnerArcOpacity.value,
+  const spinnerColourProps = useAnimatedProps(() => ({
     stroke: interpolateColor(
       spinnerWater.value,
       [0, 1],
@@ -562,20 +447,6 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
           width={width}
           height={height}
         >
-          {/* the arm: a spiral that unwinds out of the ring, unrolls into a
-              line, and glides onto the border's own first stroke. Drawn in
-              this SVG, in these coordinates, so what lands IS the border --
-              see spiralArmPath */}
-          <AnimatedPath
-            testID="screen-time-glance-spiral"
-            fill="none"
-            stroke={drawStroke}
-            strokeWidth={SCREEN_TIME_GLANCE.spinnerStroke}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            animatedProps={spiralProps}
-          />
-
           <AnimatedPath
             testID="screen-time-glance-border"
             d={geometry.border.d}
@@ -627,9 +498,8 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
               strokeLinecap="round"
               fill="none"
               strokeDasharray={`${spinnerArc * 0.66} ${spinnerArc * 0.34}`}
-              animatedProps={spinnerArcProps}
+              animatedProps={spinnerColourProps}
             />
-
           </Svg>
         </Animated.View>
 

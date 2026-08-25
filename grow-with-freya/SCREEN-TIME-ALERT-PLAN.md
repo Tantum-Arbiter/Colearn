@@ -193,22 +193,8 @@ pressed, the alert header's badge, and the usage figure it is warning
 about — never as a surface or a frame. The orb carries a
 solid core the size of the ring's own dot, and the ring hides while the
 glance is open -- one control becomes the orb, rather than a second dot
-appearing beside a ring that never moved. The morph happens at the ring
-itself, and it is a **real spiral**: `spiralToLinePath` traces an
-Archimedean curve that unwinds out of the collapsing core over two and a
-half turns, then unrolls it onto the vertical as a
-*wave* travelling from the loose outer end inward, in the order it was
-traced — the coil peels onto the line the way a rolled thing pulled from
-one end does, rather than every point rushing at the centre at once. The
-rotation stops when the spiral is complete (and always on a whole number
-of turns, or the finished line lies at that angle), and the nucleus is
-gone before the arm is half unrolled, so nothing hides the curve. (Squashing a circle while it turns was the earlier
-attempt, and it only ever read as a flat thing spinning.) That same line then **glides**
-out of the ring and onto the panel's border, reaching to its full length as
-it travels, and the border's sweep picks up from exactly the length the arm
-already covers. The arm is drawn in the border's own coordinates, so what
-lands *is* the border's first stroke — nothing is repositioned, and the
-handover has nothing to show.
+appearing beside a ring that never moved. The core reduces away as the arc
+flattens, so by the time the line exists only the line is left.
 
 Alongside this rework, `ScreenTimeService` moved from UTC to **local** day
 boundaries (`localDateKey`): keyed by `toISOString()`, a London child's day
@@ -220,6 +206,15 @@ the same time. Closing runs in reverse register: the content dims, the panel
 gathers itself in, hands over to a **true teardrop** (`DROP_PATH`, pointed
 top, round base, gloss crescent) in the ring's colour, and the drop falls off
 the bottom of the screen. Reduced motion skips all of it, both ways.
+
+**A spiral was tried here and reverted (2026-08-25).** Five iterations took
+the orb through spinning-into-a-line, a coin-settle spiral, a galaxy sweep,
+a real Archimedean curve unrolled by a travelling wave, and finally an arm
+that landed on the border so the draw continued out of it. Each fixed the
+last one's complaint and introduced its own, and the version above -- spin,
+travel, flatten, draw -- was the one that read best in the hand. The work is
+in the history from `fe06633` to `674800d` if any of it is wanted again;
+`spiralArmPath` and its tests are the reusable part.
 
 **Tests:** panel is inset and outlined; border takes the red only when
 exceeded; the alarm fill exists exactly once and it is the panel; the border
