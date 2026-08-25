@@ -198,10 +198,12 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
         settleDuration,
         fadeDuration,
       } = SCREEN_TIME_GLANCE;
-      const morphStartsAt = spinDuration + travelDuration;
-      // the line starts growing while the morph is still finishing, so the
-      // flattened arc and the border's first segment read as one stroke
-      const drawStartsAt = morphStartsAt + morphDuration * 0.5;
+      // one continuous gesture: the orb flattens into a line AT the ring and
+      // spins there, then the spinning line flies to the corner, arriving
+      // vertical just as the draw takes over from it
+      const morphStartsAt = spinDuration;
+      const travelStartsAt = morphStartsAt + morphDuration;
+      const drawStartsAt = travelStartsAt + travelDuration;
       const settleStartsAt = drawStartsAt + drawDuration;
 
       // 1. the ring's echo grows into a spinning circle where it was
@@ -213,52 +215,66 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
       spinnerOpacity.value = withSequence(
         withTiming(1, { duration: 120 }),
         withDelay(
-          morphStartsAt + morphDuration * 0.6 - 120,
-          withTiming(0, { duration: 140 })
+          drawStartsAt - 60,
+          withTiming(0, { duration: 160 })
         )
       );
       spinnerScale.value = withSequence(
         withTiming(1.4, { duration: spinDuration * 0.55, easing: Easing.out(Easing.cubic) }),
         withTiming(1.1, { duration: spinDuration * 0.45 })
       );
-      spinnerRotate.value = withTiming(720, {
-        duration: morphStartsAt,
+      // three full turns across spin, morph and travel: the rotation never
+      // breaks between phases -- the circle spins, the line it becomes keeps
+      // spinning in the circle's place, and the deceleration lands it at an
+      // exact multiple of a turn, vertical, just as it arrives at the corner
+      spinnerRotate.value = withTiming(1080, {
+        duration: drawStartsAt,
         easing: Easing.inOut(Easing.cubic),
       });
       spinnerWater.value = withDelay(
         spinDuration * 0.25,
         withTiming(1, { duration: spinDuration * 0.65 })
       );
-      // the solid dot the orb took over from the ring reduces away while the
-      // arc travels and flattens -- by the time the line exists, only the
-      // line is left, and all of it blue
-      spinnerCore.value = withDelay(
-        spinDuration,
-        withTiming(0, {
-          duration: travelDuration + morphDuration,
-          easing: Easing.in(Easing.cubic),
-        })
-      );
 
-      // 2. ...travels to the border's start...
-      spinnerTravel.value = withDelay(
-        spinDuration,
-        withTiming(1, { duration: travelDuration, easing: Easing.in(Easing.cubic) })
-      );
-
-      // 3. ...flattens into the vertical line the border grows from...
+      // 2. ...turns into a line right there in the circle: the disc and arc
+      //    flatten together while the rotation carries on, so what spins is
+      //    now a line...
       spinnerSquashX.value = withDelay(
         morphStartsAt,
-        withTiming(0.14, { duration: morphDuration, easing: Easing.in(Easing.cubic) })
+        withTiming(0.13, { duration: morphDuration, easing: Easing.inOut(Easing.cubic) })
       );
       spinnerSquashY.value = withDelay(
         morphStartsAt,
-        withTiming(1.5, { duration: morphDuration, easing: Easing.out(Easing.cubic) })
+        withSequence(
+          withTiming(1.5, { duration: morphDuration, easing: Easing.out(Easing.cubic) }),
+          // ...and stretches as the draw takes over: the line expanding into
+          // the border rather than vanishing beside it
+          withDelay(
+            travelDuration,
+            withTiming(2.2, { duration: 200, easing: Easing.out(Easing.cubic) })
+          )
+        )
+      );
+      // the solid core thins as the orb becomes the line, down to roughly
+      // the drawn border's own weight -- reduced, never just deleted
+      spinnerCore.value = withDelay(
+        morphStartsAt,
+        withTiming(0.5, {
+          duration: morphDuration + travelDuration,
+          easing: Easing.inOut(Easing.cubic),
+        })
       );
 
-      // 4. ...and the line draws the box
+      // 3. ...the spinning line flies to the border's start, easing in and
+      //    out so it leaves and lands softly...
+      spinnerTravel.value = withDelay(
+        travelStartsAt,
+        withTiming(1, { duration: travelDuration, easing: Easing.inOut(Easing.cubic) })
+      );
+
+      // 4. ...and expands into the draw the moment it lands
       drawProgress.value = withDelay(
-        drawStartsAt,
+        drawStartsAt - 40,
         withTiming(1, { duration: drawDuration, easing: Easing.inOut(Easing.cubic) })
       );
 

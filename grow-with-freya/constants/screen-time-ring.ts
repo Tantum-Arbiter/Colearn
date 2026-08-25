@@ -41,14 +41,14 @@ export const SCREEN_TIME_GLANCE = {
   /** Everything outside the panel: dim night, never the alarm colour. */
   scrim: 'rgba(4, 6, 18, 0.94)',
 
-  // the open choreography, in order: spin, travel, morph into a line, draw
-  // the border, then settle -- the blackout and the fill arriving together.
-  // The spin is long enough to actually read as a spinning circle: at 360ms
-  // two turns were a blur, and the phase looked like a flicker before the
-  // draw rather than a moment of its own.
+  // the open choreography, in order: spin, morph into a line AT the ring
+  // (the line keeps spinning in the circle's place), travel, draw the
+  // border, then settle -- the blackout and the fill arriving together.
+  // Spin and morph are long enough to actually read: at 360ms two turns
+  // were a blur, and a 140ms morph was a flicker rather than a moment.
   spinDuration: 620,
-  travelDuration: 220,
-  morphDuration: 140,
+  travelDuration: 260,
+  morphDuration: 280,
   drawDuration: 480,
   settleDuration: 260,
 

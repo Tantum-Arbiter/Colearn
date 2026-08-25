@@ -193,8 +193,11 @@ pressed, the alert header's badge, and the usage figure it is warning
 about — never as a surface or a frame. The orb carries a
 solid core the size of the ring's own dot, and the ring hides while the
 glance is open -- one control becomes the orb, rather than a second dot
-appearing beside a ring that never moved. The core reduces away as the arc
-flattens, so by the time the line exists only the line is left.
+appearing beside a ring that never moved. The morph happens at the ring
+itself: the disc and arc flatten into a line that keeps spinning in the
+circle's place — one unbroken rotation across spin, morph and travel,
+decelerating to land vertical at the corner — and the line then expands
+into the draw the moment it arrives.
 
 Alongside this rework, `ScreenTimeService` moved from UTC to **local** day
 boundaries (`localDateKey`): keyed by `toISOString()`, a London child's day
