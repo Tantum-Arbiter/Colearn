@@ -215,11 +215,22 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
         settleDuration,
         fadeDuration,
       } = SCREEN_TIME_GLANCE;
-      const morphStartsAt = spinDuration + travelDuration;
-      // the line starts growing while the morph is still finishing, so the
-      // flattened arc and the border's first segment read as one stroke
-      const drawStartsAt = morphStartsAt + morphDuration * 0.5;
+      // The orb becomes the line where it was pressed, and only then does
+      // the line move. Travelling first and flattening on arrival made the
+      // shape change somewhere the eye was not yet looking; this way the
+      // change happens under the finger and what travels is already the
+      // thing the border is about to grow from.
+      const morphStartsAt = spinDuration;
+      const travelStartsAt = morphStartsAt + morphDuration;
+      // the border picks up just before the line settles, so the two read as
+      // one continuous stroke rather than a handover
+      const drawStartsAt = travelStartsAt + travelDuration - 60;
       const settleStartsAt = drawStartsAt + drawDuration;
+
+      // every long move runs on the same curve -- a soft start and a long
+      // glide out -- so the beats feel like one gesture rather than a series
+      // of separate animations with their own personalities
+      const glide = Easing.bezier(0.25, 0.9, 0.25, 1);
 
       // 1. the ring's echo grows into a spinning circle where it was
       //    pressed, over the live home screen -- nothing dims yet -- and
@@ -228,18 +239,18 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
       //    shared value cancels the animation already on it, which is how
       //    the orb once spent its whole spin at opacity zero.
       spinnerOpacity.value = withSequence(
-        withTiming(1, { duration: 120 }),
-        withDelay(
-          morphStartsAt + morphDuration * 0.6 - 120,
-          withTiming(0, { duration: 140 })
-        )
+        withTiming(1, { duration: 140, easing: Easing.out(Easing.quad) }),
+        withDelay(drawStartsAt + 40 - 140, withTiming(0, { duration: 180, easing: glide }))
       );
       spinnerScale.value = withSequence(
         withTiming(1.4, { duration: spinDuration * 0.55, easing: Easing.out(Easing.cubic) }),
-        withTiming(1.1, { duration: spinDuration * 0.45 })
+        withTiming(1.1, { duration: spinDuration * 0.45, easing: glide })
       );
+      // Two whole turns across the spin and the morph, on one curve, ending
+      // exactly as the line settles -- a whole number so the line is
+      // vertical, and nothing turning while it travels.
       spinnerRotate.value = withTiming(720, {
-        duration: morphStartsAt,
+        duration: spinDuration + morphDuration,
         easing: Easing.inOut(Easing.cubic),
       });
       spinnerWater.value = withDelay(
@@ -250,58 +261,50 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
       // arc travels and flattens -- by the time the line exists, only the
       // line is left, and all of it blue
       spinnerCore.value = withDelay(
-        spinDuration,
-        withTiming(0, {
-          duration: travelDuration + morphDuration,
-          easing: Easing.in(Easing.cubic),
-        })
+        morphStartsAt,
+        withTiming(0, { duration: morphDuration * 0.8, easing: glide })
       );
 
-      // 2. ...travels to the border's start...
-      spinnerTravel.value = withDelay(
-        spinDuration,
-        withTiming(1, { duration: travelDuration, easing: Easing.in(Easing.cubic) })
-      );
-
-      // 3. ...and squashes and stretches into the vertical line the border
-      //    grows from. Three beats rather than one: the orb squats wider and
-      //    shorter first, the way anything about to spring does, then throws
-      //    itself thin and tall past where it is going, then settles back.
-      //    Going straight from circle to line in a single move reads as a
-      //    cut rather than a change of shape.
+      // 2. ...squashes and stretches into the vertical line, right where it
+      //    was pressed. Three beats rather than one: the orb squats wider
+      //    and shorter first, the way anything about to spring does, then
+      //    throws itself thin and tall past where it is going, then settles
+      //    back. Going straight from circle to line in a single move reads
+      //    as a cut rather than a change of shape.
       spinnerSquashX.value = withDelay(
         morphStartsAt,
         withSequence(
           withTiming(1.26, {
-            duration: morphDuration * 0.28,
-            easing: Easing.out(Easing.cubic),
+            duration: morphDuration * 0.3,
+            easing: Easing.inOut(Easing.quad),
           }),
           withTiming(0.1, {
-            duration: morphDuration * 0.5,
-            easing: Easing.in(Easing.cubic),
+            duration: morphDuration * 0.48,
+            easing: Easing.inOut(Easing.cubic),
           }),
-          withTiming(0.14, {
-            duration: morphDuration * 0.22,
-            easing: Easing.out(Easing.cubic),
-          })
+          withTiming(0.14, { duration: morphDuration * 0.22, easing: glide })
         )
       );
       spinnerSquashY.value = withDelay(
         morphStartsAt,
         withSequence(
           withTiming(0.76, {
-            duration: morphDuration * 0.28,
-            easing: Easing.out(Easing.cubic),
+            duration: morphDuration * 0.3,
+            easing: Easing.inOut(Easing.quad),
           }),
           withTiming(1.64, {
-            duration: morphDuration * 0.5,
-            easing: Easing.out(Easing.cubic),
+            duration: morphDuration * 0.48,
+            easing: Easing.inOut(Easing.cubic),
           }),
-          withTiming(1.5, {
-            duration: morphDuration * 0.22,
-            easing: Easing.out(Easing.cubic),
-          })
+          withTiming(1.5, { duration: morphDuration * 0.22, easing: glide })
         )
+      );
+
+      // 3. ...and only then does the finished line glide to the border's
+      //    start, on the same curve as everything else
+      spinnerTravel.value = withDelay(
+        travelStartsAt,
+        withTiming(1, { duration: travelDuration, easing: glide })
       );
 
       // 4. ...and the line draws the box
@@ -531,6 +534,11 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
   const contentStyle = useAnimatedStyle(() => ({ opacity: contentOpacity.value }));
   const tintStyle = useAnimatedStyle(() => ({ opacity: dropTint.value }));
 
+  // The splash lives in the tree the whole time, so its opacity has to be
+  // zero at rest as well as at the end. Fading only on the way out left its
+  // droplets stacked on the ring at full strength whenever nothing was
+  // happening -- a blue dot sitting in the orb's place through the entire
+  // open, and through the home screen besides.
   const splashProps = useAnimatedProps(() => ({
     d: splashPath(
       splash.value,
@@ -539,15 +547,13 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
       SPLASH_GRAVITY,
       SPLASH_DROP_RADIUS
     ),
-    // gone by the time the orb has finished forming, so the corner is left
-    // with nothing but the ring
-    opacity: 1 - splash.value * splash.value,
+    opacity: Math.min(1, splash.value * 10) * (1 - splash.value * splash.value),
   }));
 
   // the ring of impact: spreads from where the drop hit and thins as it goes
   const splashRingProps = useAnimatedProps(() => ({
     r: 4 + 46 * splash.value,
-    opacity: 0.85 * (1 - splash.value),
+    opacity: Math.min(1, splash.value * 10) * 0.85 * (1 - splash.value),
     strokeWidth: 3 * (1 - splash.value) + 0.4,
   }));
 

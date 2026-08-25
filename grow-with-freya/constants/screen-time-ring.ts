@@ -47,7 +47,9 @@ export const SCREEN_TIME_GLANCE = {
   // two turns were a blur, and the phase looked like a flicker before the
   // draw rather than a moment of its own.
   spinDuration: 620,
-  travelDuration: 220,
+  // the line has further to go now that it forms at the ring rather than at
+  // the corner, and a longer glide is what keeps that read as one movement
+  travelDuration: 340,
   // long enough to be a movement rather than a cut: at 140ms the orb went
   // from circle to line in one step, with no squash to sell the change
   morphDuration: 340,
