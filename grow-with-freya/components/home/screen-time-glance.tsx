@@ -219,14 +219,19 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
           withTiming(0, { duration: 160 })
         )
       );
+      // the pop, then the coil: the orb tightens as it spirals down into
+      // the line, the way a spinning coin settles -- radius diminishing is
+      // half of what makes the spiral read as a spiral
       spinnerScale.value = withSequence(
         withTiming(1.4, { duration: spinDuration * 0.55, easing: Easing.out(Easing.cubic) }),
-        withTiming(1.1, { duration: spinDuration * 0.45 })
+        withTiming(1.1, { duration: spinDuration * 0.45 }),
+        withTiming(0.85, { duration: morphDuration, easing: Easing.inOut(Easing.cubic) })
       );
-      // three full turns across spin, morph and travel: the rotation never
-      // breaks between phases -- the circle spins, the line it becomes keeps
-      // spinning in the circle's place, and the deceleration lands it at an
-      // exact multiple of a turn, vertical, just as it arrives at the corner
+      // three full turns across spin, spiral and travel under one easing
+      // curve: the rotation never breaks between phases. Most of the turning
+      // happens while the ellipse is narrowing -- that overlap IS the
+      // spiral -- and the deceleration lands it at an exact multiple of a
+      // turn, vertical, before the line flies to the corner
       spinnerRotate.value = withTiming(1080, {
         duration: drawStartsAt,
         easing: Easing.inOut(Easing.cubic),
@@ -236,9 +241,9 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
         withTiming(1, { duration: spinDuration * 0.65 })
       );
 
-      // 2. ...turns into a line right there in the circle: the disc and arc
-      //    flatten together while the rotation carries on, so what spins is
-      //    now a line...
+      // 2. ...spirals into a line right there in the circle: the ellipse
+      //    narrows a little more on every pass of the continuing rotation,
+      //    winding itself down until what is left spinning is a line...
       spinnerSquashX.value = withDelay(
         morphStartsAt,
         withTiming(0.13, { duration: morphDuration, easing: Easing.inOut(Easing.cubic) })
@@ -248,10 +253,12 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
         withSequence(
           withTiming(1.5, { duration: morphDuration, easing: Easing.out(Easing.cubic) }),
           // ...and stretches as the draw takes over: the line expanding into
-          // the border rather than vanishing beside it
+          // the border rather than vanishing beside it. 2.5 rather than 2.2
+          // because the coil tightened the whole orb to 0.85 -- the stretch
+          // has to make that back before it can read as growth.
           withDelay(
             travelDuration,
-            withTiming(2.2, { duration: 200, easing: Easing.out(Easing.cubic) })
+            withTiming(2.5, { duration: 200, easing: Easing.out(Easing.cubic) })
           )
         )
       );

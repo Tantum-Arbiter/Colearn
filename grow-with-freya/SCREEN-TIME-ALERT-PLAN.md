@@ -194,10 +194,10 @@ about — never as a surface or a frame. The orb carries a
 solid core the size of the ring's own dot, and the ring hides while the
 glance is open -- one control becomes the orb, rather than a second dot
 appearing beside a ring that never moved. The morph happens at the ring
-itself: the disc and arc flatten into a line that keeps spinning in the
-circle's place — one unbroken rotation across spin, morph and travel,
-decelerating to land vertical at the corner — and the line then expands
-into the draw the moment it arrives.
+itself, as a **spiral**: the ellipse narrows a little more on every pass of
+one unbroken rotation while the whole orb tightens, winding itself down —
+a coin settling — until what is left spinning is a line, vertical, which
+then flies to the corner and expands into the draw the moment it arrives.
 
 Alongside this rework, `ScreenTimeService` moved from UTC to **local** day
 boundaries (`localDateKey`): keyed by `toISOString()`, a London child's day

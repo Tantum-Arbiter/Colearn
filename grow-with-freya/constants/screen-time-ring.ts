@@ -41,14 +41,15 @@ export const SCREEN_TIME_GLANCE = {
   /** Everything outside the panel: dim night, never the alarm colour. */
   scrim: 'rgba(4, 6, 18, 0.94)',
 
-  // the open choreography, in order: spin, morph into a line AT the ring
-  // (the line keeps spinning in the circle's place), travel, draw the
-  // border, then settle -- the blackout and the fill arriving together.
-  // Spin and morph are long enough to actually read: at 360ms two turns
-  // were a blur, and a 140ms morph was a flicker rather than a moment.
+  // the open choreography, in order: spin, spiral into a line AT the ring,
+  // travel, draw the border, then settle -- the blackout and the fill
+  // arriving together. The morph spans about a turn and a half of the
+  // rotation on purpose: an ellipse narrowing across several passes while
+  // it turns is what reads as a spiral (a coin settling), where a one-pass
+  // flatten reads as a squash.
   spinDuration: 620,
   travelDuration: 260,
-  morphDuration: 280,
+  morphDuration: 460,
   drawDuration: 480,
   settleDuration: 260,
 
