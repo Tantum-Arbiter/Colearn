@@ -45,7 +45,12 @@ export const ScreenTimeRing = memo(function ScreenTimeRing({
   const presence = useSharedValue(hidden ? 0 : 1);
 
   useEffect(() => {
-    presence.value = withTiming(hidden ? 0 : 1, { duration: 150 });
+    // Hiding fades, showing does not. The glance's close hands the corner
+    // back at the moment its orb has reformed into a dot the same size and
+    // colour as this ring -- so appearing instantly is what makes that
+    // handover invisible, where a fade would leave a gap with neither on
+    // screen.
+    presence.value = hidden ? withTiming(0, { duration: 150 }) : 1;
   }, [hidden, presence]);
 
   const exceeded = isScreenTimeExceeded(usageSeconds, limitSeconds);

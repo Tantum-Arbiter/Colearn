@@ -9,6 +9,7 @@ import {
   SCREEN_TIME_RING,
   isScreenTimeExceeded,
   panelBorderPath,
+  dropFlight,
   ringCentre,
   ringDashOffset,
   screenTimeProgress,
@@ -135,5 +136,41 @@ describe('panelBorderPath', () => {
     const { d } = panelBorderPath(BOUNDS);
 
     expect(d.match(/A 28 28/g)).toHaveLength(4);
+  });
+});
+
+describe('dropFlight', () => {
+  // the panel is inset from a 402x874 phone; the ring sits in the bottom-left
+  const BOUNDS = { left: 14, top: 14, right: 388, bottom: 860 };
+  const RING = { x: 33, y: 811 };
+
+  it('carries the drop from the panel it condenses out of back to the ring', () => {
+    const { dx, dy } = dropFlight(BOUNDS, RING);
+
+    expect((BOUNDS.left + BOUNDS.right) / 2 + dx).toBeCloseTo(RING.x);
+    expect((BOUNDS.top + BOUNDS.bottom) / 2 + dy).toBeCloseTo(RING.y);
+  });
+
+  it('heads down and to the left, towards the corner the glance opened from', () => {
+    // the close is the open run backwards -- the drop returns to the ring
+    // rather than falling off the bottom of the screen, which is what it
+    // used to do
+    const { dx, dy } = dropFlight(BOUNDS, RING);
+
+    expect(dx).toBeLessThan(0);
+    expect(dy).toBeGreaterThan(0);
+  });
+
+  it('lands exactly on the ring wherever the ring is', () => {
+    for (const ring of [
+      { x: 33, y: 811 },
+      { x: 33, y: 1152 },
+      { x: 200, y: 400 },
+    ]) {
+      const { dx, dy } = dropFlight(BOUNDS, ring);
+
+      expect((BOUNDS.left + BOUNDS.right) / 2 + dx).toBeCloseTo(ring.x);
+      expect((BOUNDS.top + BOUNDS.bottom) / 2 + dy).toBeCloseTo(ring.y);
+    }
   });
 });

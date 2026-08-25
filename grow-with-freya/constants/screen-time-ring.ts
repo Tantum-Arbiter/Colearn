@@ -63,9 +63,13 @@ export const SCREEN_TIME_GLANCE = {
   calmDraw: 'rgba(198, 219, 250, 0.85)',
   drawWater: WATER,
 
-  // the close: the panel gathers, becomes a true teardrop, and falls
+  // The close, which is the open run backwards: the panel gathers, becomes
+  // a true teardrop, falls back to the ring it came out of, and reforms into
+  // the orb there -- turning from water blue to the ring's own colour before
+  // handing the corner back to the ring itself.
   dropShrink: 300,
-  dropFall: 430,
+  dropReturn: 520,
+  orbReform: 320,
   dropWidth: 38,
   dropHeight: 52,
 
@@ -86,6 +90,25 @@ export const SCREEN_TIME_GLANCE = {
   exceededGlow: 'rgba(79, 168, 224, 0.55)',
   calmGlow: 'rgba(0, 0, 0, 0.45)',
 } as const;
+
+/**
+ * The drop's flight home: from the centre of the panel it condenses out of,
+ * back to the ring it came from.
+ *
+ * The close is the open run backwards, so the drop returns to the corner
+ * rather than falling off the bottom of the screen -- and it has to arrive
+ * exactly where the ring is, because what it reforms into there hands the
+ * corner back to that ring.
+ */
+export function dropFlight(
+  bounds: { left: number; top: number; right: number; bottom: number },
+  ring: { x: number; y: number }
+): { dx: number; dy: number } {
+  return {
+    dx: ring.x - (bounds.left + bounds.right) / 2,
+    dy: ring.y - (bounds.top + bounds.bottom) / 2,
+  };
+}
 
 /**
  * The falling drop, drawn as a real teardrop rather than a shrunken panel:

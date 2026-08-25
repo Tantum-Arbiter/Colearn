@@ -26,6 +26,7 @@ import {
   SCREEN_TIME_GLANCE,
   SCREEN_TIME_RING,
   panelBorderPath,
+  dropFlight,
   DROP_PATH,
   DROP_GLOSS,
   DROP_VIEWBOX,
@@ -123,12 +124,13 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
       panelH,
       // where the spinner hands over to the border: the path's own start
       drawStart: { x: bounds.left, y: bounds.bottom - bounds.radius },
-      // how far the drop falls to clear the bottom of the screen
-      fallDistance: height - (bounds.top + bounds.bottom) / 2 + 80,
+      // the drop's flight home: from the panel's centre back to the ring it
+      // came out of, so the close lands where the open began
+      flight: dropFlight(bounds, centre),
       dropScaleX: SCREEN_TIME_GLANCE.dropWidth / panelW,
       dropScaleY: SCREEN_TIME_GLANCE.dropHeight / panelH,
     };
-  }, [insets.top, insets.bottom, width, height]);
+  }, [insets.top, insets.bottom, width, height, centre.x, centre.y]);
 
   // -- open choreography --
   const scrimOpacity = useSharedValue(0);
@@ -154,11 +156,14 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
   const dropScaleX = useSharedValue(1);
   const dropScaleY = useSharedValue(1);
   const dropRadius = useSharedValue<number>(SCREEN_TIME_GLANCE.panelRadius);
-  const dropFall = useSharedValue(0);
   const dropTint = useSharedValue(0);
-  // the teardrop that takes over from the gathered panel and does the falling
+  // the teardrop that takes over from the gathered panel and flies home. Two
+  // axes rather than one: given different easings they bend the flight into
+  // an arc, where a single value could only ever slide in a straight line.
   const dropOpacity = useSharedValue(0);
   const dropStretch = useSharedValue(1);
+  const dropReturnX = useSharedValue(0);
+  const dropReturnY = useSharedValue(0);
 
   useEffect(() => {
     if (visible) {
@@ -168,10 +173,11 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
       dropScaleX.value = 1;
       dropScaleY.value = 1;
       dropRadius.value = SCREEN_TIME_GLANCE.panelRadius;
-      dropFall.value = 0;
       dropTint.value = 0;
       dropOpacity.value = 0;
       dropStretch.value = 1;
+      dropReturnX.value = 0;
+      dropReturnY.value = 0;
       spinnerSquashX.value = 1;
       spinnerSquashY.value = 1;
       spinnerWater.value = 0;
@@ -312,10 +318,22 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
       return;
     }
 
-    const { dropShrink, dropFall: fallDuration, fadeDuration } = SCREEN_TIME_GLANCE;
-    const { fallDistance, dropScaleX: sx, dropScaleY: sy, panelW } = geometry;
+    const { dropShrink, dropReturn, orbReform, fadeDuration } = SCREEN_TIME_GLANCE;
+    const { dropScaleX: sx, dropScaleY: sy, panelW } = geometry;
     const gatherEndsAt = fadeDuration * 0.7 + dropShrink;
-    const fallStartsAt = gatherEndsAt + 90;
+    const flightStartsAt = gatherEndsAt + 90;
+    const landsAt = flightStartsAt + dropReturn;
+
+    // The orb is rebuilt where and how the drop leaves it: back at the ring
+    // rather than parked at the border, round rather than flattened into the
+    // line it became, small, and still in the water blue. Plain assignments,
+    // not animations -- they set the starting point the reform animates away
+    // from, and the orb is invisible until it does.
+    spinnerTravel.value = 0;
+    spinnerSquashX.value = 1;
+    spinnerSquashY.value = 1;
+    spinnerScale.value = 0.55;
+    spinnerRotate.value = 0;
 
     // the content dims, the panel gathers in...
     contentOpacity.value = withTiming(0, { duration: fadeDuration * 0.7 });
@@ -339,26 +357,74 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
     // ...becomes a true teardrop -- the gathered blob hands over to the drop
     // shape in a quick crossfade at its smallest...
     panelOpacity.value = withDelay(gatherEndsAt, withTiming(0, { duration: 90 }));
-    dropOpacity.value = withDelay(gatherEndsAt - 30, withTiming(1, { duration: 90 }));
-
-    // ...hangs for a beat, stretches, and falls
-    dropStretch.value = withDelay(
-      fallStartsAt,
-      withTiming(1.15, { duration: fallDuration })
+    // The teardrop's whole life in one sequence -- in at the crossfade, held
+    // through the flight, out as it reforms into the orb. Two assignments
+    // cancel each other and the drop is never seen at all: it is the same
+    // bug that once kept the orb invisible through its entire spin, and the
+    // gathered panel underneath is convincing enough to hide it.
+    const dropInAt = gatherEndsAt - 30;
+    dropOpacity.value = withSequence(
+      withDelay(dropInAt, withTiming(1, { duration: 90 })),
+      withDelay(landsAt - 40 - (dropInAt + 90), withTiming(0, { duration: 150 }))
     );
-    dropFall.value = withDelay(
-      fallStartsAt,
+
+    // ...hangs for a beat, then falls home to the ring. The two axes carry
+    // different easings on purpose: the sideways travel eases out while the
+    // drop accelerates downward, which bends the flight into the arc a
+    // falling thing actually takes.
+    dropReturnX.value = withDelay(
+      flightStartsAt,
+      withTiming(1, { duration: dropReturn, easing: Easing.out(Easing.cubic) })
+    );
+    dropReturnY.value = withDelay(
+      flightStartsAt,
+      withTiming(1, { duration: dropReturn, easing: Easing.in(Easing.cubic) })
+    );
+    // stretched by the fall, squashed as it lands
+    dropStretch.value = withDelay(
+      flightStartsAt,
+      withSequence(
+        withTiming(1.18, { duration: dropReturn * 0.6 }),
+        withTiming(0.88, { duration: dropReturn * 0.4, easing: Easing.in(Easing.cubic) })
+      )
+    );
+    // the night lifts as it travels, so the home screen is back by the time
+    // the drop gets there
+    scrimOpacity.value = withDelay(
+      flightStartsAt + dropReturn * 0.35,
+      withTiming(0, { duration: dropReturn * 0.65 })
+    );
+
+    // ...and reforms into the orb where the ring lives: the drop shape hands
+    // over to the round core, which grows back to the ring's own dot size and
+    // turns from water blue to the ring's colour. One assignment per value --
+    // a second would cancel the first and the orb would never appear.
+    spinnerOpacity.value = withDelay(landsAt - 70, withTiming(1, { duration: 130 }));
+    spinnerScale.value = withDelay(
+      landsAt - 70,
+      withTiming(1, { duration: orbReform, easing: Easing.out(Easing.cubic) })
+    );
+    // one settling turn, the mirror of the spin that opened the window
+    spinnerRotate.value = withDelay(
+      landsAt - 70,
+      withTiming(360, { duration: orbReform, easing: Easing.out(Easing.cubic) })
+    );
+    // blue back to red, so the orb hands the corner to a ring of its own colour
+    spinnerWater.value = withDelay(
+      landsAt - 40,
+      withTiming(0, { duration: orbReform * 0.8 })
+    );
+    spinnerCore.value = withDelay(
+      landsAt - 70,
       withTiming(
-        fallDistance,
-        { duration: fallDuration, easing: Easing.in(Easing.cubic) },
+        1,
+        { duration: orbReform, easing: Easing.out(Easing.cubic) },
         (finished) => {
+          // the ring underneath comes back instantly and identical, so the
+          // window can close on the very frame the orb finishes reforming
           if (finished) runOnJS(finishClose)();
         }
       )
-    );
-    scrimOpacity.value = withDelay(
-      fallStartsAt + fallDuration * 0.4,
-      withTiming(0, { duration: fallDuration * 0.6 })
     );
   }, [finishClose, reduceMotion, geometry]);
 
@@ -406,7 +472,6 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
     opacity: panelOpacity.value,
     borderRadius: dropRadius.value,
     transform: [
-      { translateY: dropFall.value },
       { scaleX: dropScaleX.value },
       { scaleY: dropScaleY.value },
     ],
@@ -417,7 +482,11 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
 
   const teardropStyle = useAnimatedStyle(() => ({
     opacity: dropOpacity.value,
-    transform: [{ translateY: dropFall.value }, { scaleY: dropStretch.value }],
+    transform: [
+      { translateX: geometry.flight.dx * dropReturnX.value },
+      { translateY: geometry.flight.dy * dropReturnY.value },
+      { scaleY: dropStretch.value },
+    ],
   }));
 
   const { bounds } = geometry;

@@ -202,10 +202,14 @@ rolled over at 1am in summer and a Californian child's limit would have
 reset mid-afternoon.
 Nothing dims while it draws. Only once the border closes does the settle
 happen — the background blacks out and the fill arrives inside the frame at
-the same time. Closing runs in reverse register: the content dims, the panel
+the same time. Closing runs the open backwards: the content dims, the panel
 gathers itself in, hands over to a **true teardrop** (`DROP_PATH`, pointed
-top, round base, gloss crescent) in the ring's colour, and the drop falls off
-the bottom of the screen. Reduced motion skips all of it, both ways.
+top, round base, gloss crescent), and the drop falls **home to the ring** on
+a gravity arc — two axes with different easings, so it curves rather than
+slides. It reforms there into the orb, turning from water blue back to the
+ring's own colour, and the ring returns instantly underneath a dot of
+exactly its own size and colour. The corner is never empty, and the close
+lands where the open began. Reduced motion skips all of it, both ways.
 
 **A spiral was tried here and reverted (2026-08-25).** Five iterations took
 the orb through spinning-into-a-line, a coin-settle spiral, a galaxy sweep,

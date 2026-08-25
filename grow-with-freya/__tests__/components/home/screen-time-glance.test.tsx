@@ -24,7 +24,12 @@ import { StyleSheet } from 'react-native';
 import * as RN from 'react-native';
 
 import { ScreenTimeGlance } from '@/components/home/screen-time-glance';
-import { SCREEN_TIME_GLANCE, panelBorderPath, DROP_PATH } from '@/constants/screen-time-ring';
+import {
+  SCREEN_TIME_GLANCE,
+  SCREEN_TIME_RING,
+  panelBorderPath,
+  DROP_PATH,
+} from '@/constants/screen-time-ring';
 
 // the real Modal throws inside this jsdom test environment when visible; the
 // same patch the schedule-window tests use, for the same reason
@@ -301,6 +306,17 @@ describe('ScreenTimeGlance', () => {
       // environment provides
       expect(style.left + SCREEN_TIME_GLANCE.dropWidth / 2).toBeCloseTo(width / 2);
       expect(style.top + SCREEN_TIME_GLANCE.dropHeight / 2).toBeCloseTo(height / 2);
+    });
+
+    it('rebuilds the orb at the ring, round and at the ring dot size', () => {
+      // whatever the open left it as -- flattened into a line and parked at
+      // the border -- the orb the drop reforms into is a round dot the same
+      // size as the ring it hands the corner back to
+      const tree = renderGlance({ exceeded: true });
+      const core = findByTestId(tree, 'screen-time-glance-spinner-core')[0];
+
+      expect(core.props.r).toBe(SCREEN_TIME_RING.size / 2);
+      expect(core.props.fill).toBe(SCREEN_TIME_GLANCE.exceededDraw);
     });
   });
 
