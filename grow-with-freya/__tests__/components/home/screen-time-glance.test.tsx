@@ -237,7 +237,7 @@ describe('ScreenTimeGlance', () => {
       expect(visible).toBeCloseTo(length);
     });
 
-    it('keeps the alarm colour contained inside the panel', () => {
+    it('keeps the panel fill contained inside the panel', () => {
       const tree = renderGlance({ exceeded: true });
 
       const painted = tree.UNSAFE_root.findAll((n: any) => {
@@ -246,7 +246,8 @@ describe('ScreenTimeGlance', () => {
       });
 
       // the fill exists exactly once, and it is the panel -- nothing
-      // full-bleed behind it carries the colour
+      // full-bleed behind it carries the colour, which is what stops the
+      // window washing the whole screen in a single tone
       expect(painted.length).toBeGreaterThan(0);
       for (const node of painted) {
         expect(node.props.testID).toBe('screen-time-glance-panel');
@@ -262,21 +263,32 @@ describe('ScreenTimeGlance', () => {
       );
     });
 
-    it('carries a drop tint in the ring colour, ready for the close', () => {
+    it('carries a drop tint in the water blue, ready for the close', () => {
       const tree = renderGlance({ exceeded: true });
       const tint = findByTestId(tree, 'screen-time-glance-drop-tint')[0];
 
       expect(StyleSheet.flatten(tint.props.style).backgroundColor).toBe(
-        SCREEN_TIME_GLANCE.exceededDraw
+        SCREEN_TIME_GLANCE.drawWater
       );
     });
 
-    it('keeps a true teardrop waiting for the close, in the ring colour', () => {
-      const tree = renderGlance({ exceeded: true });
-      const shape = findByTestId(tree, 'screen-time-glance-drop-shape')[0];
+    it('drops a true teardrop of water, whatever the state', () => {
+      for (const exceeded of [true, false]) {
+        const shape = findByTestId(renderGlance({ exceeded }), 'screen-time-glance-drop-shape')[0];
 
-      expect(shape.props.d).toBe(DROP_PATH);
-      expect(shape.props.fill).toBe(SCREEN_TIME_GLANCE.exceededDraw);
+        expect(shape.props.d).toBe(DROP_PATH);
+        expect(shape.props.fill).toBe(SCREEN_TIME_GLANCE.drawWater);
+      }
+    });
+
+    it('never paints the panel or its frame in the alarm colour', () => {
+      // red survives only where it means something -- the ring, the alert
+      // header's badge, the usage figure -- never as a surface or a frame
+      const panel = findByTestId(renderGlance({ exceeded: true }), 'screen-time-glance-panel')[0];
+      const style = StyleSheet.flatten(panel.props.style);
+
+      expect(style.backgroundColor).not.toBe(SCREEN_TIME_GLANCE.exceededDraw);
+      expect(style.borderColor).not.toBe(SCREEN_TIME_GLANCE.exceededDraw);
     });
 
     it('centres the teardrop on the panel it condenses from', () => {
@@ -323,10 +335,15 @@ describe('ScreenTimeGlance', () => {
       expect(style.borderWidth).toBe(SCREEN_TIME_GLANCE.panelBorderWidth);
     });
 
-    it('takes the red border only when the ring is red', () => {
+    it('keeps the border in the water blue the line drew it in', () => {
+      // the drawn stroke fades out over a border it matches, so the frame
+      // never flips colour as the panel settles behind it
       expect(panelStyle(renderGlance({ exceeded: true })).borderColor).toBe(
-        SCREEN_TIME_GLANCE.exceededBorder
+        SCREEN_TIME_GLANCE.drawWater
       );
+    });
+
+    it('leaves the calm border the faint hairline it has always been', () => {
       expect(panelStyle(renderGlance({ exceeded: false })).borderColor).toBe(
         SCREEN_TIME_GLANCE.calmBorder
       );

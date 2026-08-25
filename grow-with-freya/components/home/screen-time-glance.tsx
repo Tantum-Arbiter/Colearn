@@ -583,15 +583,15 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
             )}
           </Animated.View>
 
-          {/* what the drop is made of: the bright ring colour washes over the
-              panel as it gathers, so the falling drop reads as the ring's
-              water rather than a shrinking page */}
+          {/* what the drop is made of: the water blue washes over the panel
+              as it gathers, so what falls reads as a drop of the same water
+              the frame was drawn in rather than a shrinking page */}
           <Animated.View
             testID="screen-time-glance-drop-tint"
             pointerEvents="none"
             style={[
               styles.dropTint,
-              { backgroundColor: drawStroke },
+              { backgroundColor: SCREEN_TIME_GLANCE.drawWater },
               tintStyle,
             ]}
           />
@@ -617,7 +617,11 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
             height={SCREEN_TIME_GLANCE.dropHeight}
             viewBox={DROP_VIEWBOX}
           >
-            <Path testID="screen-time-glance-drop-shape" d={DROP_PATH} fill={drawStroke} />
+            <Path
+              testID="screen-time-glance-drop-shape"
+              d={DROP_PATH}
+              fill={SCREEN_TIME_GLANCE.drawWater}
+            />
             {/* the highlight crescent that makes it read as water */}
             <Path d={DROP_GLOSS} fill="rgba(255, 255, 255, 0.45)" />
           </Svg>

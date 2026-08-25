@@ -13,20 +13,29 @@ export const SCREEN_TIME_RING = {
 } as const;
 
 /**
+ * The water blue the whole glance is built from: the colour the orb turns as
+ * it spins, the colour the border is drawn in, the colour that border keeps
+ * once the panel settles, and the colour of the drop it leaves as.
+ */
+const WATER = '#4FA8E0';
+
+/**
  * The glance that opens out of the ring.
  *
- * The choreography keeps the ring's identity without flooding the screen in
- * its colour: a spinning echo of the ring rises where it was pressed, travels
- * to the panel's corner and draws the border, and only then does the fill
- * arrive -- so the alarm colour stays inside the frame it drew. The fill
- * settles a long way darker than the ring itself: full-strength alarm red
- * behind a whole screen of text is neither readable nor the calm register
- * the rest of the app keeps to. Closing runs the argument in reverse: the
- * panel gathers into a drop and falls away.
+ * The window is water, not alarm. A spinning echo of the ring rises where it
+ * was pressed in the ring's own colour, turns this blue as it spins, and the
+ * line it becomes draws the border -- which stays that blue when the panel
+ * settles behind it. A whole screen in the alarm colour is neither readable
+ * nor the calm register the rest of the app keeps to, so red survives only
+ * where it means something: the ring the parent pressed, the alert header's
+ * badge, and the usage figure it is warning about. Closing runs the argument
+ * in reverse: the panel gathers into a drop of the same water and falls away.
  */
 export const SCREEN_TIME_GLANCE = {
   fadeDuration: 200,
-  exceededSurface: '#2A0A0C',
+  // deep water-ink rather than the old near-black red: the surface belongs
+  // to the same water as the frame around it
+  exceededSurface: '#071A2E',
   calmSurface: '#080A28',
 
   /** Everything outside the panel: dim night, never the alarm colour. */
@@ -47,15 +56,12 @@ export const SCREEN_TIME_GLANCE = {
   spinnerRadius: 15,
   spinnerStroke: 3,
 
-  /** Stroke the choreography works in. The orb rises in the ring's own
-   *  colour, turns water-blue as it spins, and the border is drawn in that
-   *  blue -- the box only takes the alarm red when the fill settles in and
-   *  the panel's own border fades up underneath the drawn stroke. The calm
-   *  final border is a faint hairline -- too faint to watch being drawn --
-   *  which is the other reason the drawing stroke is a colour of its own. */
+  /** Where the orb's colour turn starts: the ring's own colour, whichever
+   *  state it is in. It ends at `drawWater` in both cases, so the border is
+   *  always drawn -- and always settles -- in the water blue. */
   exceededDraw: '#E4483F',
   calmDraw: 'rgba(198, 219, 250, 0.85)',
-  drawWater: '#4FA8E0',
+  drawWater: WATER,
 
   // the close: the panel gathers, becomes a true teardrop, and falls
   dropShrink: 300,
@@ -64,20 +70,20 @@ export const SCREEN_TIME_GLANCE = {
   dropHeight: 52,
 
   /**
-   * The framed panel the reveal settles into.
+   * The framed panel the drawn line settles into.
    *
-   * The circle still opens full-bleed in the ring's colour; the panel is the
-   * outlined card that lands inside it, so the surrounding colour reads as a
-   * frame rather than as the page. The border carries the alarm at full
-   * strength precisely because it is a hairline -- a whole screen of #E4483F
-   * is neither readable nor calm, but two pixels of it are unmistakable.
+   * The exceeded border keeps the water blue the line drew it in, lit by a
+   * glow of the same colour -- the drawn stroke fades out over a border it
+   * matches, so the handover is invisible and the frame never flips colour
+   * under the parent's eye. The calm border stays the faint hairline it has
+   * always been: a lit blue frame is the alert's own signal.
    */
   panelInset: 14,
   panelRadius: 28,
   panelBorderWidth: 2,
-  exceededBorder: '#E4483F',
+  exceededBorder: WATER,
   calmBorder: 'rgba(255, 255, 255, 0.14)',
-  exceededGlow: 'rgba(228, 72, 63, 0.55)',
+  exceededGlow: 'rgba(79, 168, 224, 0.55)',
   calmGlow: 'rgba(0, 0, 0, 0.45)',
 } as const;
 

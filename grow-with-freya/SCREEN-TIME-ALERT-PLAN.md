@@ -186,8 +186,11 @@ travels to the panel's nearest corner, **flattens into a line**, and that
 line **draws the border** (a dash-offset sweep along `panelBorderPath`). The
 orb is deliberately wider than the ring's solid dot -- at the same diameter
 its red arc vanished against the red dot beneath it -- and it **turns from
-the ring's colour to water blue as it spins**, so the box is drawn in blue
-and only takes the alarm red when the fill settles in. The orb carries a
+the ring's colour to water blue as it spins**. The box is drawn in that blue
+and *keeps* it: border, glow, panel surface and the closing drop are all
+water. Red survives only where it means something — the ring the parent
+pressed, the alert header's badge, and the usage figure it is warning
+about — never as a surface or a frame. The orb carries a
 solid core the size of the ring's own dot, and the ring hides while the
 glance is open -- one control becomes the orb, rather than a second dot
 appearing beside a ring that never moved. The core reduces away as the arc
