@@ -67,11 +67,11 @@ const styles = StyleSheet.create({
   },
   label: {
     fontFamily: Fonts.rounded,
-    fontSize: 14,
+    fontSize: UNLOCK_PLAN.fontSize,
     fontWeight: '700',
     color: UNLOCK_PLAN.ink,
   },
   icon: {
-    marginLeft: 7,
+    marginLeft: 8,
   },
 });

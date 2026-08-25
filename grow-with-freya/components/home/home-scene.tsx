@@ -14,7 +14,6 @@ import {
   type TimeOfDay,
 } from '@/constants/home-scene';
 import { SCREEN_TIME_RING, ringCentre } from '@/constants/screen-time-ring';
-import { UNLOCK_PLAN } from '@/constants/unlock-plan';
 import { useTimeOfDay } from '@/hooks/use-time-of-day';
 import type { ScreenTimeAllowance } from '@/hooks/use-screen-time-allowance';
 import { NightSky } from './night-sky';
@@ -134,11 +133,19 @@ export const HomeScene = memo(function HomeScene({
             />
           </View>
         ))}
+
+        {/* the offer sits with the cards it is an offer about, rather than
+            floating over the art -- the bottom edge belongs to the ring */}
+        {onOpenPlans ? (
+          <View style={styles.planSlot}>
+            <UnlockPlanButton onPress={onOpenPlans} />
+          </View>
+        ) : null}
       </ScrollView>
 
       <View
         style={[
-          styles.screenTimeCorner,
+          styles.screenTimeBar,
           { bottom: insets.bottom + SCREEN_TIME_RING.marginBottom },
         ]}
         pointerEvents="box-none"
@@ -148,20 +155,16 @@ export const HomeScene = memo(function HomeScene({
             usageSeconds={screenTime.usageSeconds}
             limitSeconds={screenTime.limitSeconds}
             tint={theme.chromeInk}
-            onPress={onOpenScreenTime ? () => onOpenScreenTime(ringCentre(height, insets.bottom)) : undefined}
+            onPress={
+              onOpenScreenTime
+                ? () => onOpenScreenTime(ringCentre(width, height, insets.bottom))
+                : undefined
+            }
             hidden={screenTimeHidden}
           />
         ) : null}
       </View>
 
-      {onOpenPlans ? (
-        <View
-          style={[styles.planCorner, { bottom: insets.bottom + UNLOCK_PLAN.marginBottom }]}
-          pointerEvents="box-none"
-        >
-          <UnlockPlanButton onPress={onOpenPlans} />
-        </View>
-      ) : null}
     </View>
   );
 });
@@ -200,16 +203,18 @@ const styles = StyleSheet.create({
   cardSlot: {
     marginBottom: HOME_SCENE_LAYOUT.cardGap,
   },
-  screenTimeCorner: {
-    position: 'absolute',
-    left: SCREEN_TIME_RING.marginHorizontal,
-    zIndex: 10,
-  },
-  planCorner: {
+  // centred along the bottom edge: this is where the glance's orb rises
+  // from and where its closing drop falls back to, so it has to match
+  // `ringCentre`
+  screenTimeBar: {
     position: 'absolute',
     left: 0,
     right: 0,
     alignItems: 'center',
     zIndex: 10,
+  },
+  planSlot: {
+    alignItems: 'center',
+    marginTop: 6,
   },
 });

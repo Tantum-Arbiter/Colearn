@@ -144,18 +144,21 @@ export function ringDashOffset(progress: number, circumference: number): number 
 /**
  * Where the ring sits on screen.
  *
- * It is pinned to the bottom-left corner by `screenTimeCorner`, so its centre
- * follows from the layout constants and the safe-area inset -- no runtime
- * measurement, and the glance can open from the right place on first render.
+ * Centred along the bottom edge, so its centre follows from the screen and
+ * the safe-area inset -- no runtime measurement, and the glance can open
+ * from the right place on first render. The glance's whole choreography is
+ * anchored here: the orb rises at this point and the closing drop falls
+ * back to it, so this and `screenTimeCorner` have to agree.
  */
 export function ringCentre(
+  screenWidth: number,
   screenHeight: number,
   insetBottom: number
 ): { x: number; y: number } {
   const half = SCREEN_TIME_RING.size / 2;
 
   return {
-    x: SCREEN_TIME_RING.marginHorizontal + half,
+    x: screenWidth / 2,
     y: screenHeight - insetBottom - SCREEN_TIME_RING.marginBottom - half,
   };
 }

@@ -222,11 +222,27 @@ describe('HomeScene opening screen time', () => {
 
     pressTestId(view, 'screen-time-ring');
 
-    // the ring is pinned bottom-left, so its centre follows from the layout
-    // constants and the safe-area inset (34 from the suite-wide mock) rather
-    // than a runtime measurement
-    const { height } = Dimensions.get('window');
-    expect(onOpenScreenTime).toHaveBeenCalledWith(ringCentre(height, 34));
+    // the ring is pinned to the middle of the bottom edge, so its centre
+    // follows from the screen and the safe-area inset (34 from the
+    // suite-wide mock) rather than a runtime measurement
+    const { width, height } = Dimensions.get('window');
+    expect(onOpenScreenTime).toHaveBeenCalledWith(ringCentre(width, height, 34));
+  });
+
+  it('should keep the offer with the cards, not floating over the bottom', () => {
+    // the bottom edge belongs to the ring now: the glance's orb rises there
+    // and its closing drop falls back to it, so the offer scrolls with the
+    // content it is an offer about
+    const { view } = renderScene({
+      screenTime: { usageSeconds: 600, limitSeconds: 3600 },
+      onOpenPlans: jest.fn(),
+    });
+
+    const plan = byTestId(view, 'unlock-plan-button')[0];
+    const ring = byTestId(view, 'screen-time-ring')[0];
+
+    expect(plan).toBeTruthy();
+    expect(ring).toBeTruthy();
   });
 
   it('should leave the ring inert when no handler is supplied', () => {

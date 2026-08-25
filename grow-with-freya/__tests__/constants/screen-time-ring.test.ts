@@ -86,22 +86,28 @@ describe('ringDashOffset', () => {
 });
 
 describe('ringCentre', () => {
-  // the ring is pinned to the bottom-left corner, so its centre is derivable
-  // rather than something that has to be measured at runtime
-  it('sits half a ring in from the left edge', () => {
-    const { x } = ringCentre(800, 0);
+  // the ring is pinned to the middle of the bottom edge, so its centre is
+  // derivable rather than something that has to be measured at runtime --
+  // which is what lets the glance open from the right place on first render
+  it('sits in the middle of the bottom edge', () => {
+    const { x } = ringCentre(400, 800, 0);
 
-    expect(x).toBe(SCREEN_TIME_RING.marginHorizontal + SCREEN_TIME_RING.size / 2);
+    expect(x).toBe(200);
+  });
+
+  it("follows the screen's width rather than a fixed margin", () => {
+    expect(ringCentre(400, 800, 0).x).toBe(200);
+    expect(ringCentre(834, 800, 0).x).toBe(417);
   });
 
   it('sits above the bottom margin, clear of the safe area', () => {
-    const { y } = ringCentre(800, 34);
+    const { y } = ringCentre(400, 800, 34);
 
     expect(y).toBe(800 - 34 - SCREEN_TIME_RING.marginBottom - SCREEN_TIME_RING.size / 2);
   });
 
   it('rises as the bottom inset grows', () => {
-    expect(ringCentre(800, 34).y).toBeLessThan(ringCentre(800, 0).y);
+    expect(ringCentre(400, 800, 34).y).toBeLessThan(ringCentre(400, 800, 0).y);
   });
 });
 
