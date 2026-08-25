@@ -9,7 +9,7 @@ import {
   SCREEN_TIME_RING,
   isScreenTimeExceeded,
   panelBorderPath,
-  spiralToLinePath,
+  spiralArmPath,
   SPIRAL_STEPS,
   SPIRAL_TURNS,
   SPIRAL_UNROLL_BAND,
@@ -142,10 +142,27 @@ describe('panelBorderPath', () => {
   });
 });
 
-describe('spiralToLinePath', () => {
+describe('spiralArmPath', () => {
   const CENTRE = 28;
   const RADIUS = 24;
   const HALF = 24;
+
+  // the arm lands on a vertical stroke well away from the ring, the way the
+  // panel's border sits away from the corner the orb was pressed in
+  const LAND_FROM = { x: 200, y: 100 };
+  const LAND_TO = { x: 200, y: 220 };
+
+  const GEOMETRY = {
+    centre: { x: CENTRE, y: CENTRE },
+    radius: RADIUS,
+    halfAtRing: HALF,
+    landFrom: LAND_FROM,
+    landTo: LAND_TO,
+  };
+
+  /** grow, rotation, straighten, glide -- with the arm still at the ring. */
+  const arm = (grow: number, straighten: number, glide = 0, rotation = 0) =>
+    spiralArmPath(GEOMETRY, grow, rotation, straighten, glide);
 
   const points = (d: string) =>
     d
@@ -158,7 +175,7 @@ describe('spiralToLinePath', () => {
     Math.hypot(p.x - CENTRE, p.y - CENTRE);
 
   it('draws every step it promises, as one continuous stroke', () => {
-    const d = spiralToLinePath(1, 0, CENTRE, RADIUS, HALF);
+    const d = arm(1, 0);
 
     expect(points(d)).toHaveLength(SPIRAL_STEPS + 1);
     // one move, then nothing but lines -- a broken stroke would read as
@@ -167,7 +184,7 @@ describe('spiralToLinePath', () => {
   });
 
   it('sweeps outward from the core to the rim', () => {
-    const p = points(spiralToLinePath(1, 0, CENTRE, RADIUS, HALF));
+    const p = points(arm(1, 0));
 
     expect(radiusOf(p[0])).toBeCloseTo(0);
     expect(radiusOf(p[p.length - 1])).toBeCloseTo(RADIUS);
@@ -176,7 +193,7 @@ describe('spiralToLinePath', () => {
   it('grows outward monotonically -- this is what makes it a spiral', () => {
     // a squashed circle oscillates between the same two radii; a spiral only
     // ever gets further from its centre
-    const p = points(spiralToLinePath(1, 0, CENTRE, RADIUS, HALF));
+    const p = points(arm(1, 0));
 
     for (let i = 1; i < p.length; i++) {
       expect(radiusOf(p[i])).toBeGreaterThan(radiusOf(p[i - 1]) - 1e-6);
@@ -184,7 +201,7 @@ describe('spiralToLinePath', () => {
   });
 
   it('winds through every turn it is given rather than one pass', () => {
-    const p = points(spiralToLinePath(1, 0, CENTRE, RADIUS, HALF));
+    const p = points(arm(1, 0));
 
     // count sign changes of (y - centre): a full turn crosses the centre
     // line twice, so 2.5 turns must cross it at least four times
@@ -201,7 +218,7 @@ describe('spiralToLinePath', () => {
   });
 
   it('collapses onto the vertical once straightened', () => {
-    const p = points(spiralToLinePath(1, 1, CENTRE, RADIUS, HALF));
+    const p = points(arm(1, 1));
 
     for (const point of p) {
       expect(point.x).toBeCloseTo(CENTRE);
@@ -213,7 +230,7 @@ describe('spiralToLinePath', () => {
   it('keeps the traced order when it straightens, so the curve unwinds', () => {
     // every point lands further down the line than the one before it -- the
     // spiral is pulled straight, not re-sorted into a line
-    const p = points(spiralToLinePath(1, 1, CENTRE, RADIUS, HALF));
+    const p = points(arm(1, 1));
 
     for (let i = 1; i < p.length; i++) {
       expect(p[i].y).toBeGreaterThan(p[i - 1].y);
@@ -225,7 +242,7 @@ describe('spiralToLinePath', () => {
     // been pulled onto the vertical while the core is still coiled. If every
     // point straightened together the whole curve would rush at its own
     // centre, which is what made this beat look wrong.
-    const p = points(spiralToLinePath(1, 0.5, CENTRE, RADIUS, HALF));
+    const p = points(arm(1, 0.5));
 
     const outer = p[p.length - 1];
     const inner = p[Math.round(p.length * 0.25)];
@@ -234,7 +251,7 @@ describe('spiralToLinePath', () => {
   });
 
   it('leaves the core still coiled while the outer end is already straight', () => {
-    const p = points(spiralToLinePath(1, 0.35, CENTRE, RADIUS, HALF));
+    const p = points(arm(1, 0.35));
     const stillCurved = p.filter((point) => Math.abs(point.x - CENTRE) > 1);
 
     // some of the arm is off the vertical -- it is mid-unroll, not done
@@ -242,12 +259,61 @@ describe('spiralToLinePath', () => {
     expect(stillCurved.length).toBeLessThan(p.length);
   });
 
+  it('lands exactly on the border stroke it has to become', () => {
+    // the whole point of one path in one space: at the end of the glide the
+    // arm IS the border's first stroke, so the border can pick the sweep up
+    // from there with nothing repositioned and nothing swapped
+    const p = points(arm(1, 1, 1));
+
+    expect(p[0].x).toBeCloseTo(LAND_FROM.x);
+    expect(p[0].y).toBeCloseTo(LAND_FROM.y);
+    expect(p[p.length - 1].x).toBeCloseTo(LAND_TO.x);
+    expect(p[p.length - 1].y).toBeCloseTo(LAND_TO.y);
+  });
+
+  it('is still at the ring before it glides', () => {
+    const p = points(arm(1, 1, 0));
+
+    expect(p[0].y).toBeCloseTo(CENTRE - HALF);
+    expect(p[p.length - 1].y).toBeCloseTo(CENTRE + HALF);
+    for (const point of p) {
+      expect(point.x).toBeCloseTo(CENTRE);
+    }
+  });
+
+  it('travels without breaking: every point stays on the line mid-glide', () => {
+    const p = points(arm(1, 1, 0.5));
+    const first = p[0];
+    const last = p[p.length - 1];
+
+    // a straight stroke somewhere between the two positions -- not a
+    // fragment left behind at the ring
+    for (const point of p) {
+      const span = Math.hypot(last.x - first.x, last.y - first.y);
+      const toFirst = Math.hypot(point.x - first.x, point.y - first.y);
+      const toLast = Math.hypot(point.x - last.x, point.y - last.y);
+      expect(toFirst + toLast).toBeCloseTo(span, 1);
+    }
+  });
+
+  it('turns the spiral with the rotation it is given', () => {
+    const still = points(arm(1, 0, 0, 0));
+    const turned = points(arm(1, 0, 0, Math.PI / 2));
+
+    // same curve, different orientation -- the rotation lives in the path,
+    // not in a transform over the top of it
+    expect(turned[turned.length - 1].x).not.toBeCloseTo(still[still.length - 1].x);
+    expect(radiusOf(turned[turned.length - 1])).toBeCloseTo(
+      radiusOf(still[still.length - 1])
+    );
+  });
+
   it('finishes the unroll exactly as the wave clears the arm', () => {
     // the wave travels a band further than the arm's own length, so a
     // straighten of 1 has to leave nothing behind
     expect(SPIRAL_UNROLL_BAND).toBeGreaterThan(0);
 
-    const p = points(spiralToLinePath(1, 1, CENTRE, RADIUS, HALF));
+    const p = points(arm(1, 1));
 
     for (const point of p) {
       expect(point.x).toBeCloseTo(CENTRE);
@@ -255,7 +321,7 @@ describe('spiralToLinePath', () => {
   });
 
   it('is nothing at all before it starts unwinding', () => {
-    const p = points(spiralToLinePath(0, 0, CENTRE, RADIUS, HALF));
+    const p = points(arm(0, 0));
 
     for (const point of p) {
       expect(radiusOf(point)).toBeCloseTo(0);

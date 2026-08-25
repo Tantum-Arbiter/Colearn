@@ -203,9 +203,12 @@ one end does, rather than every point rushing at the centre at once. The
 rotation stops when the spiral is complete (and always on a whole number
 of turns, or the finished line lies at that angle), and the nucleus is
 gone before the arm is half unrolled, so nothing hides the curve. (Squashing a circle while it turns was the earlier
-attempt, and it only ever read as a flat thing spinning.) The line then
-**stretches** along its own axis as its own beat, before flying to the
-corner and expanding into the draw.
+attempt, and it only ever read as a flat thing spinning.) That same line then **glides**
+out of the ring and onto the panel's border, reaching to its full length as
+it travels, and the border's sweep picks up from exactly the length the arm
+already covers. The arm is drawn in the border's own coordinates, so what
+lands *is* the border's first stroke — nothing is repositioned, and the
+handover has nothing to show.
 
 Alongside this rework, `ScreenTimeService` moved from UTC to **local** day
 boundaries (`localDateKey`): keyed by `toISOString()`, a London child's day

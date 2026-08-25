@@ -52,10 +52,18 @@ export const SCREEN_TIME_GLANCE = {
   spinDuration: 560,
   morphDuration: 480,
   straightenDuration: 360,
-  stretchDuration: 200,
-  travelDuration: 240,
+  glideDuration: 420,
   drawDuration: 480,
   settleDuration: 260,
+
+  /** How long the finished arm is once it has landed on the border. The
+   *  border's sweep starts from exactly this much already drawn, so the two
+   *  are the same stroke at the moment of handover. */
+  armLandLength: 96,
+  /** How far the arm sweeps out from the ring while it is still a spiral. */
+  armRadius: 34,
+  /** Half the line's length while it is still at the ring. */
+  armHalfAtRing: 26,
 
   // the spinner that echoes the ring while it travels
   spinnerRadius: 15,
@@ -127,28 +135,73 @@ export const SPIRAL_UNROLL_BAND = 0.42;
  * Runs on the UI thread as an animated `d`, so it is a worklet -- and a
  * plain function of its inputs, so it is testable without a renderer.
  */
-export function spiralToLinePath(
+export interface Point {
+  x: number;
+  y: number;
+}
+
+export interface SpiralArmGeometry {
+  /** Where the spiral lives while it unwinds: the ring's own centre. */
+  centre: Point;
+  /** How far the arm sweeps out from that centre. */
+  radius: number;
+  /** Half the line's length while it is still at the ring. */
+  halfAtRing: number;
+  /** The two ends of the line once it has glided onto the panel's border,
+   *  in the same screen coordinates the border itself is drawn in. */
+  landFrom: Point;
+  landTo: Point;
+}
+
+/**
+ * The arm: spiral, line, or anything between, in screen coordinates.
+ *
+ * Everything is one path in one space -- the same space the panel's border
+ * is drawn in -- because the arm has to *become* the border's first stroke,
+ * not be swapped for it. A separate element that travels and fades out over
+ * the top of a second one can never line up exactly, and the join shows.
+ *
+ * `grow` unwinds the Archimedean spiral out of the core; `rotation` turns
+ * it; `straighten` unrolls it onto a line as a wave from the loose outer end
+ * inward (see SPIRAL_UNROLL_BAND); and `glide` carries that line from the
+ * ring onto the border's own edge, extending it as it goes. At glide = 1 the
+ * path IS the border's first `landFrom`-to-`landTo` stroke, so the border
+ * can pick the sweep up from exactly there.
+ */
+export function spiralArmPath(
+  geometry: SpiralArmGeometry,
   grow: number,
+  rotation: number,
   straighten: number,
-  centre: number,
-  radius: number,
-  halfLength: number
+  glide: number
 ): string {
   'worklet';
+  const { centre, radius, halfAtRing, landFrom, landTo } = geometry;
+
   const sweep = grow * SPIRAL_TURNS * 2 * Math.PI;
   // the wave has to clear the whole arm, so it travels a band further than
   // the length it is crossing
   const front = straighten * (1 + SPIRAL_UNROLL_BAND);
+
+  // where the line lies right now: at the ring, on the border, or on its way
+  const ringFromY = centre.y - halfAtRing;
+  const ringToY = centre.y + halfAtRing;
+  const fromX = centre.x + (landFrom.x - centre.x) * glide;
+  const fromY = ringFromY + (landFrom.y - ringFromY) * glide;
+  const toX = centre.x + (landTo.x - centre.x) * glide;
+  const toY = ringToY + (landTo.y - ringToY) * glide;
+
   let d = '';
 
   for (let i = 0; i <= SPIRAL_STEPS; i++) {
     const f = i / SPIRAL_STEPS;
-    const theta = f * sweep;
+    const theta = f * sweep + rotation;
     const r = radius * grow * f;
 
-    const spiralX = centre + r * Math.cos(theta);
-    const spiralY = centre + r * Math.sin(theta);
-    const lineY = centre - halfLength + 2 * halfLength * f;
+    const spiralX = centre.x + r * Math.cos(theta);
+    const spiralY = centre.y + r * Math.sin(theta);
+    const lineX = fromX + (toX - fromX) * f;
+    const lineY = fromY + (toY - fromY) * f;
 
     // how far this point in particular has been pulled straight: the outer
     // end (f = 1) goes first, the core (f = 0) last
@@ -158,7 +211,7 @@ export function spiralToLinePath(
     // than setting off and stopping abruptly
     const t = clamped * clamped * (3 - 2 * clamped);
 
-    const x = spiralX + (centre - spiralX) * t;
+    const x = spiralX + (lineX - spiralX) * t;
     const y = spiralY + (lineY - spiralY) * t;
 
     d += `${i === 0 ? 'M' : 'L'} ${x.toFixed(2)} ${y.toFixed(2)} `;
