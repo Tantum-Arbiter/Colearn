@@ -196,9 +196,13 @@ glance is open -- one control becomes the orb, rather than a second dot
 appearing beside a ring that never moved. The morph happens at the ring
 itself, and it is a **real spiral**: `spiralToLinePath` traces an
 Archimedean curve that unwinds out of the collapsing core over two and a
-half turns, then pulls every point of that curve onto the vertical, in the
-order it was traced — the spiral *rotates into* a flat line rather than
-being swapped for one. (Squashing a circle while it turns was the earlier
+half turns, then unrolls it onto the vertical as a
+*wave* travelling from the loose outer end inward, in the order it was
+traced — the coil peels onto the line the way a rolled thing pulled from
+one end does, rather than every point rushing at the centre at once. The
+rotation stops when the spiral is complete (and always on a whole number
+of turns, or the finished line lies at that angle), and the nucleus is
+gone before the arm is half unrolled, so nothing hides the curve. (Squashing a circle while it turns was the earlier
 attempt, and it only ever read as a flat thing spinning.) The line then
 **stretches** along its own axis as its own beat, before flying to the
 corner and expanding into the draw.

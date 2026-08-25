@@ -244,13 +244,19 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
         // straight off the left edge
         withTiming(1.45, { duration: morphDuration, easing: Easing.out(Easing.cubic) })
       );
-      // three full turns across the spin, the unwinding and the straighten,
-      // under one easing curve so the rotation never breaks between them.
-      // The spiral is still turning while it is pulled straight -- it
-      // ROTATES into the flat line -- and the deceleration lands it at an
-      // exact multiple of a turn, vertical, as the straighten completes.
+      // The rotation runs from the first frame to the moment the spiral is
+      // fully unwound, and stops there. Turning the coil while it is also
+      // being pulled straight made the two motions fight and the shape
+      // smear; the unroll wave carries the straighten on its own.
+      //
+      // A whole number of turns, always. The line the spiral unrolls into is
+      // vertical in the path's own coordinates and the rotation is applied
+      // over the top of it, so anything other than a multiple of 360 leaves
+      // the finished line lying at that angle -- 990 turned it on its side.
+      // The spiral and the line share the frame, so the loose end already
+      // points down the line without any help.
       spinnerRotate.value = withTiming(1080, {
-        duration: stretchStartsAt,
+        duration: straightenStartsAt,
         easing: Easing.inOut(Easing.cubic),
       });
       spinnerWater.value = withDelay(
@@ -276,13 +282,14 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
         withTiming(1, { duration: morphDuration, easing: Easing.out(Easing.cubic) })
       );
 
-      // 3. ...the spiral rotates into a flat line: every point of the curve
-      //    is drawn onto the vertical, in the order it was traced, while the
-      //    rotation settles -- the curve unwinding rather than being swapped
-      //    for a line...
+      // 3. ...the spiral unrolls into a flat line: a wave travels from the
+      //    loose outer end inward, peeling the curve onto the vertical in
+      //    the order it was traced. Linear, because the easing that shapes
+      //    this beat is the wave itself -- easing the wave too would make
+      //    it hesitate in the middle of the arm.
       spinnerStraighten.value = withDelay(
         straightenStartsAt,
-        withTiming(1, { duration: straightenDuration, easing: Easing.inOut(Easing.cubic) })
+        withTiming(1, { duration: straightenDuration, easing: Easing.linear })
       );
 
       // 4. ...and once it is a line, it stretches along its own axis -- its
@@ -292,14 +299,23 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
         stretchStartsAt,
         withTiming(2.4, { duration: stretchDuration, easing: Easing.out(Easing.cubic) })
       );
-      // the nucleus collapses as the arm sweeps out of it -- reduced, never
-      // just deleted
+      // The nucleus collapses as the arm sweeps out of it, and it has to be
+      // quick: at the ring's own dot size it is most of the spiral's radius,
+      // so a core that lingers hides the coil behind it and turns the unroll
+      // into a ball with a stub. It is gone before the arm is half unrolled,
+      // leaving nothing on screen but the curve being pulled straight.
       spinnerCore.value = withDelay(
         morphStartsAt,
-        withTiming(0.3, {
-          duration: morphDuration + straightenDuration,
-          easing: Easing.inOut(Easing.cubic),
-        })
+        withSequence(
+          withTiming(0.28, {
+            duration: morphDuration * 0.5,
+            easing: Easing.in(Easing.cubic),
+          }),
+          withTiming(0, {
+            duration: morphDuration * 0.5 + straightenDuration * 0.35,
+            easing: Easing.inOut(Easing.cubic),
+          })
+        )
       );
 
       // 5. ...the finished line flies to the border's start, easing in and

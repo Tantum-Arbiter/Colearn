@@ -51,7 +51,7 @@ export const SCREEN_TIME_GLANCE = {
   // thing spinning.
   spinDuration: 560,
   morphDuration: 480,
-  straightenDuration: 320,
+  straightenDuration: 360,
   stretchDuration: 200,
   travelDuration: 240,
   drawDuration: 480,
@@ -96,19 +96,33 @@ export const SCREEN_TIME_GLANCE = {
 export const SPIRAL_TURNS = 2.5;
 /** Points the arm is drawn from -- enough to read as a curve at this size. */
 export const SPIRAL_STEPS = 56;
+/**
+ * How much of the curve is mid-unroll at any moment, as a fraction of its
+ * length. The straighten travels along the arm as a wave rather than
+ * applying to every point at once: a coil pulled straight releases from its
+ * loose end inward, where a curve whose every point moves together just
+ * crumples into the middle.
+ */
+export const SPIRAL_UNROLL_BAND = 0.42;
 
 /**
  * The arm, somewhere between a spiral and a straight line.
  *
  * `grow` unwinds it: at 0 there is nothing at the core, at 1 the full
  * Archimedean spiral has swept out to `radius` over `SPIRAL_TURNS`.
- * `straighten` then pulls every point of that spiral onto a vertical segment
- * of `2 * halfLength`, in the same order it was traced -- so the curve
- * unwinds into a line rather than being replaced by one.
+ * `straighten` then pulls that spiral onto a vertical segment of
+ * `2 * halfLength`, in the same order it was traced -- so the curve unwinds
+ * into a line rather than being replaced by one.
  *
- * This is the difference between a spiral and a flattened circle: a squashed
- * circle spinning is only ever a flat thing turning, where a real spiral has
- * a start at the centre and an end at the rim, and can straighten out.
+ * The straighten is a wave, not a switch. It starts at the loose outer end
+ * and travels inward over `SPIRAL_UNROLL_BAND` of the arm's length, so the
+ * coil peels onto the line the way a rolled thing pulled from one end does.
+ * Straightening every point at the same time instead makes the whole curve
+ * rush at its own centre and crumple.
+ *
+ * This is also the difference between a spiral and a flattened circle: a
+ * squashed circle spinning is only ever a flat thing turning, where a real
+ * spiral has a start at the centre and an end at the rim, and can unroll.
  *
  * Runs on the UI thread as an animated `d`, so it is a worklet -- and a
  * plain function of its inputs, so it is testable without a renderer.
@@ -122,6 +136,9 @@ export function spiralToLinePath(
 ): string {
   'worklet';
   const sweep = grow * SPIRAL_TURNS * 2 * Math.PI;
+  // the wave has to clear the whole arm, so it travels a band further than
+  // the length it is crossing
+  const front = straighten * (1 + SPIRAL_UNROLL_BAND);
   let d = '';
 
   for (let i = 0; i <= SPIRAL_STEPS; i++) {
@@ -133,8 +150,16 @@ export function spiralToLinePath(
     const spiralY = centre + r * Math.sin(theta);
     const lineY = centre - halfLength + 2 * halfLength * f;
 
-    const x = spiralX + (centre - spiralX) * straighten;
-    const y = spiralY + (lineY - spiralY) * straighten;
+    // how far this point in particular has been pulled straight: the outer
+    // end (f = 1) goes first, the core (f = 0) last
+    const raw = (front - (1 - f)) / SPIRAL_UNROLL_BAND;
+    const clamped = raw <= 0 ? 0 : raw >= 1 ? 1 : raw;
+    // smoothstep, so a point eases off the curve and onto the line rather
+    // than setting off and stopping abruptly
+    const t = clamped * clamped * (3 - 2 * clamped);
+
+    const x = spiralX + (centre - spiralX) * t;
+    const y = spiralY + (lineY - spiralY) * t;
 
     d += `${i === 0 ? 'M' : 'L'} ${x.toFixed(2)} ${y.toFixed(2)} `;
   }

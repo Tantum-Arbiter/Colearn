@@ -12,6 +12,7 @@ import {
   spiralToLinePath,
   SPIRAL_STEPS,
   SPIRAL_TURNS,
+  SPIRAL_UNROLL_BAND,
   ringCentre,
   ringDashOffset,
   screenTimeProgress,
@@ -216,6 +217,40 @@ describe('spiralToLinePath', () => {
 
     for (let i = 1; i < p.length; i++) {
       expect(p[i].y).toBeGreaterThan(p[i - 1].y);
+    }
+  });
+
+  it('unrolls from the loose outer end inward, not all at once', () => {
+    // mid-unroll the arm is part line, part curve: the outer end has already
+    // been pulled onto the vertical while the core is still coiled. If every
+    // point straightened together the whole curve would rush at its own
+    // centre, which is what made this beat look wrong.
+    const p = points(spiralToLinePath(1, 0.5, CENTRE, RADIUS, HALF));
+
+    const outer = p[p.length - 1];
+    const inner = p[Math.round(p.length * 0.25)];
+
+    expect(Math.abs(outer.x - CENTRE)).toBeLessThan(Math.abs(inner.x - CENTRE));
+  });
+
+  it('leaves the core still coiled while the outer end is already straight', () => {
+    const p = points(spiralToLinePath(1, 0.35, CENTRE, RADIUS, HALF));
+    const stillCurved = p.filter((point) => Math.abs(point.x - CENTRE) > 1);
+
+    // some of the arm is off the vertical -- it is mid-unroll, not done
+    expect(stillCurved.length).toBeGreaterThan(0);
+    expect(stillCurved.length).toBeLessThan(p.length);
+  });
+
+  it('finishes the unroll exactly as the wave clears the arm', () => {
+    // the wave travels a band further than the arm's own length, so a
+    // straighten of 1 has to leave nothing behind
+    expect(SPIRAL_UNROLL_BAND).toBeGreaterThan(0);
+
+    const p = points(spiralToLinePath(1, 1, CENTRE, RADIUS, HALF));
+
+    for (const point of p) {
+      expect(point.x).toBeCloseTo(CENTRE);
     }
   });
 
