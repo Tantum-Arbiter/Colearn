@@ -41,19 +41,19 @@ export const SCREEN_TIME_GLANCE = {
   /** Everything outside the panel: dim night, never the alarm colour. */
   scrim: 'rgba(4, 6, 18, 0.94)',
 
-  // the open choreography, in order: spin, spiral OUT into an arm at the
-  // ring, stretch that arm into one line, travel, draw the border, then
-  // settle -- the blackout and the fill arriving together.
+  // the open choreography, in order: the orb spins, an arm unwinds out of
+  // it as a real spiral, the spiral rotates into a flat line, the line
+  // stretches, travels, draws the border, and the panel settles.
   //
-  // The spiral spans about a turn and a half of the rotation on purpose: a
-  // shape sweeping outward across several passes while it turns is what
-  // reads as a galaxy unwinding, where a one-pass change reads as a squash.
-  // The stretch is its own beat rather than part of the travel -- the line
-  // has to finish becoming a line before it starts going anywhere.
-  spinDuration: 620,
-  morphDuration: 460,
-  stretchDuration: 220,
-  travelDuration: 260,
+  // Each of those is its own beat because each is a different shape. The
+  // spiral genuinely unwinds (see spiralToLinePath) rather than being a
+  // circle squashed flat while it turns -- that only ever read as a flat
+  // thing spinning.
+  spinDuration: 560,
+  morphDuration: 480,
+  straightenDuration: 320,
+  stretchDuration: 200,
+  travelDuration: 240,
   drawDuration: 480,
   settleDuration: 260,
 
@@ -91,6 +91,56 @@ export const SCREEN_TIME_GLANCE = {
   exceededGlow: 'rgba(79, 168, 224, 0.55)',
   calmGlow: 'rgba(0, 0, 0, 0.45)',
 } as const;
+
+/** How many turns the arm sweeps through as it unwinds out of the core. */
+export const SPIRAL_TURNS = 2.5;
+/** Points the arm is drawn from -- enough to read as a curve at this size. */
+export const SPIRAL_STEPS = 56;
+
+/**
+ * The arm, somewhere between a spiral and a straight line.
+ *
+ * `grow` unwinds it: at 0 there is nothing at the core, at 1 the full
+ * Archimedean spiral has swept out to `radius` over `SPIRAL_TURNS`.
+ * `straighten` then pulls every point of that spiral onto a vertical segment
+ * of `2 * halfLength`, in the same order it was traced -- so the curve
+ * unwinds into a line rather than being replaced by one.
+ *
+ * This is the difference between a spiral and a flattened circle: a squashed
+ * circle spinning is only ever a flat thing turning, where a real spiral has
+ * a start at the centre and an end at the rim, and can straighten out.
+ *
+ * Runs on the UI thread as an animated `d`, so it is a worklet -- and a
+ * plain function of its inputs, so it is testable without a renderer.
+ */
+export function spiralToLinePath(
+  grow: number,
+  straighten: number,
+  centre: number,
+  radius: number,
+  halfLength: number
+): string {
+  'worklet';
+  const sweep = grow * SPIRAL_TURNS * 2 * Math.PI;
+  let d = '';
+
+  for (let i = 0; i <= SPIRAL_STEPS; i++) {
+    const f = i / SPIRAL_STEPS;
+    const theta = f * sweep;
+    const r = radius * grow * f;
+
+    const spiralX = centre + r * Math.cos(theta);
+    const spiralY = centre + r * Math.sin(theta);
+    const lineY = centre - halfLength + 2 * halfLength * f;
+
+    const x = spiralX + (centre - spiralX) * straighten;
+    const y = spiralY + (lineY - spiralY) * straighten;
+
+    d += `${i === 0 ? 'M' : 'L'} ${x.toFixed(2)} ${y.toFixed(2)} `;
+  }
+
+  return d.trim();
+}
 
 /**
  * The falling drop, drawn as a real teardrop rather than a shrunken panel:

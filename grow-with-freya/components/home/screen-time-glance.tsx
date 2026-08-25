@@ -26,6 +26,7 @@ import {
   SCREEN_TIME_GLANCE,
   SCREEN_TIME_RING,
   panelBorderPath,
+  spiralToLinePath,
   DROP_PATH,
   DROP_GLOSS,
   DROP_VIEWBOX,
@@ -136,15 +137,22 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
   const spinnerRotate = useSharedValue(0);
   const spinnerScale = useSharedValue(1);
   const spinnerTravel = useSharedValue(0); // 0 at the ring, 1 at the border's start
-  // the morph: the arc flattens into the vertical line the border grows from
-  const spinnerSquashX = useSharedValue(1);
+  // the stretch: the finished line drawn out along its own axis
   const spinnerSquashY = useSharedValue(1);
+  // the orb's ring, which fades as the spiral arm sweeps out through it
+  const spinnerArcOpacity = useSharedValue(1);
   // the turn: 0 is the ring's own colour, 1 is the water blue the box is
   // drawn in -- the orb changes colour while it spins
   const spinnerWater = useSharedValue(0);
   // the core: the solid dot the orb takes over from the ring. 1 is the
   // ring's own dot; it shrinks to nothing as the orb reduces into the line
   const spinnerCore = useSharedValue(1);
+  // the arm: `grow` unwinds a real spiral out of the core, `straighten`
+  // pulls that spiral onto a straight line, and `spiralOpacity` hands the
+  // orb's ring over to it
+  const spinnerGrow = useSharedValue(0);
+  const spinnerStraighten = useSharedValue(0);
+  const spiralOpacity = useSharedValue(0);
   const drawProgress = useSharedValue(0);
   const drawOpacity = useSharedValue(1);
   const panelOpacity = useSharedValue(0);
@@ -172,10 +180,13 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
       dropTint.value = 0;
       dropOpacity.value = 0;
       dropStretch.value = 1;
-      spinnerSquashX.value = 1;
       spinnerSquashY.value = 1;
+      spinnerArcOpacity.value = 1;
       spinnerWater.value = 0;
       spinnerCore.value = 1;
+      spinnerGrow.value = 0;
+      spinnerStraighten.value = 0;
+      spiralOpacity.value = 0;
       drawProgress.value = 0;
       drawOpacity.value = 1;
 
@@ -193,17 +204,20 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
       const {
         spinDuration,
         morphDuration,
+        straightenDuration,
         stretchDuration,
         travelDuration,
         drawDuration,
         settleDuration,
         fadeDuration,
       } = SCREEN_TIME_GLANCE;
-      // one continuous gesture: the orb spirals OUTWARD into an arm at the
-      // ring, the arm stretches into a single line, and only then does the
-      // line fly to the corner and expand into the draw
+      // one continuous gesture, each beat a different shape: the orb spins,
+      // an arm unwinds out of it as a spiral, the spiral rotates into a flat
+      // line, the line stretches, and only then does it fly to the corner
+      // and expand into the draw
       const morphStartsAt = spinDuration;
-      const stretchStartsAt = morphStartsAt + morphDuration;
+      const straightenStartsAt = morphStartsAt + morphDuration;
+      const stretchStartsAt = straightenStartsAt + straightenDuration;
       const travelStartsAt = stretchStartsAt + stretchDuration;
       const drawStartsAt = travelStartsAt + travelDuration;
       const settleStartsAt = drawStartsAt + drawDuration;
@@ -221,22 +235,20 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
           withTiming(0, { duration: 160 })
         )
       );
-      // the pop, then the sweep outward: the orb grows as it unwinds, the
-      // way a galaxy's arm sweeps out from its core. Radius increasing is
-      // half of what makes the spiral read as spiralling OUT -- the
-      // narrowing alone would only be a squash.
+      // the pop, then a gentle swell as the arm sweeps out of the core
       spinnerScale.value = withSequence(
         withTiming(1.4, { duration: spinDuration * 0.55, easing: Easing.out(Easing.cubic) }),
         withTiming(1.1, { duration: spinDuration * 0.45 }),
-        withTiming(2.0, { duration: morphDuration, easing: Easing.inOut(Easing.cubic) })
+        // 1.45 is as far as the arm can sweep and stay on screen: the orb
+        // lives in the bottom-left corner, so a wider galaxy would unwind
+        // straight off the left edge
+        withTiming(1.45, { duration: morphDuration, easing: Easing.out(Easing.cubic) })
       );
-      // three full turns across the spin and the spiral, under one easing
-      // curve so the rotation never breaks between them. Most of the turning
-      // happens while the shape is sweeping outward -- that overlap IS the
-      // spiral -- and the deceleration lands it at an exact multiple of a
-      // turn, vertical, exactly as the arm finishes unwinding. The spinning
-      // is over before the line stretches: it has to finish becoming a line
-      // before it does anything else.
+      // three full turns across the spin, the unwinding and the straighten,
+      // under one easing curve so the rotation never breaks between them.
+      // The spiral is still turning while it is pulled straight -- it
+      // ROTATES into the flat line -- and the deceleration lands it at an
+      // exact multiple of a turn, vertical, as the straighten completes.
       spinnerRotate.value = withTiming(1080, {
         duration: stretchStartsAt,
         easing: Easing.inOut(Easing.cubic),
@@ -246,47 +258,64 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
         withTiming(1, { duration: spinDuration * 0.65 })
       );
 
-      // 2. ...spirals outward right there in the circle: the shape sweeps
-      //    out and narrows a little more on every pass of the continuing
-      //    rotation, unwinding until what is left turning is one arm...
-      spinnerSquashX.value = withDelay(
+      // 2. ...an arm unwinds out of the core as a real spiral, sweeping
+      //    outward through two and a half turns while the rotation carries
+      //    on. The orb's own ring hands over to it: the arm passes through
+      //    where the ring was as the ring fades, so the shape is never
+      //    swapped, only continued.
+      spiralOpacity.value = withDelay(
         morphStartsAt,
-        withTiming(0.07, { duration: morphDuration, easing: Easing.inOut(Easing.cubic) })
+        withTiming(1, { duration: morphDuration * 0.3 })
       );
+      spinnerArcOpacity.value = withDelay(
+        morphStartsAt,
+        withTiming(0, { duration: morphDuration * 0.45 })
+      );
+      spinnerGrow.value = withDelay(
+        morphStartsAt,
+        withTiming(1, { duration: morphDuration, easing: Easing.out(Easing.cubic) })
+      );
+
+      // 3. ...the spiral rotates into a flat line: every point of the curve
+      //    is drawn onto the vertical, in the order it was traced, while the
+      //    rotation settles -- the curve unwinding rather than being swapped
+      //    for a line...
+      spinnerStraighten.value = withDelay(
+        straightenStartsAt,
+        withTiming(1, { duration: straightenDuration, easing: Easing.inOut(Easing.cubic) })
+      );
+
+      // 4. ...and once it is a line, it stretches along its own axis -- its
+      //    own beat, so the eye sees a line being drawn out rather than a
+      //    shape being dragged
       spinnerSquashY.value = withDelay(
-        morphStartsAt,
-        withSequence(
-          withTiming(1.4, { duration: morphDuration, easing: Easing.out(Easing.cubic) }),
-          // 3. ...and once the spinning is over, the arm stretches along its
-          //    own axis into a single line -- its own beat, so the eye sees
-          //    a line being drawn out rather than a shape being dragged
-          withTiming(2.6, { duration: stretchDuration, easing: Easing.out(Easing.cubic) })
-        )
+        stretchStartsAt,
+        withTiming(2.4, { duration: stretchDuration, easing: Easing.out(Easing.cubic) })
       );
-      // the nucleus collapses as the arm sweeps out of it, down past the
-      // drawn border's own weight -- reduced, never just deleted
+      // the nucleus collapses as the arm sweeps out of it -- reduced, never
+      // just deleted
       spinnerCore.value = withDelay(
         morphStartsAt,
-        withTiming(0.32, {
-          duration: morphDuration + stretchDuration,
+        withTiming(0.3, {
+          duration: morphDuration + straightenDuration,
           easing: Easing.inOut(Easing.cubic),
         })
       );
 
-      // 4. ...the finished line flies to the border's start, easing in and
+      // 5. ...the finished line flies to the border's start, easing in and
       //    out so it leaves and lands softly...
       spinnerTravel.value = withDelay(
         travelStartsAt,
         withTiming(1, { duration: travelDuration, easing: Easing.inOut(Easing.cubic) })
       );
 
-      // 5. ...and expands into the draw the moment it lands
+      // 6. ...and expands into the draw the moment it lands
       drawProgress.value = withDelay(
         drawStartsAt - 40,
         withTiming(1, { duration: drawDuration, easing: Easing.inOut(Easing.cubic) })
       );
 
-      // 6. the settle: the background blacks out and the fill arrives inside
+      // 7. the settle: the background blacks out and the fill arrives inside
       //    the frame at the same time, the drawn stroke handing over to the
       //    panel's own border
       scrimOpacity.value = withDelay(
@@ -315,10 +344,13 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
     spinnerRotate.value = 0;
     spinnerScale.value = 1;
     spinnerTravel.value = 0;
-    spinnerSquashX.value = 1;
     spinnerSquashY.value = 1;
+    spinnerArcOpacity.value = 1;
     spinnerWater.value = 0;
     spinnerCore.value = 1;
+    spinnerGrow.value = 0;
+    spinnerStraighten.value = 0;
+    spiralOpacity.value = 0;
     drawProgress.value = 0;
     panelOpacity.value = 0;
     contentOpacity.value = 0;
@@ -398,7 +430,6 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
         { translateY: dy },
         { rotate: `${spinnerRotate.value}deg` },
         { scale: spinnerScale.value },
-        { scaleX: spinnerSquashX.value },
         { scaleY: spinnerSquashY.value },
       ],
     };
@@ -409,7 +440,24 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
     opacity: drawOpacity.value,
   }));
 
-  const spinnerColourProps = useAnimatedProps(() => ({
+  const spiralProps = useAnimatedProps(() => ({
+    d: spiralToLinePath(
+      spinnerGrow.value,
+      spinnerStraighten.value,
+      SPINNER_BOX / 2,
+      SCREEN_TIME_GLANCE.spinnerRadius,
+      SCREEN_TIME_GLANCE.spinnerRadius
+    ),
+    opacity: spiralOpacity.value,
+    stroke: interpolateColor(
+      spinnerWater.value,
+      [0, 1],
+      [drawStroke, SCREEN_TIME_GLANCE.drawWater]
+    ),
+  }));
+
+  const spinnerArcProps = useAnimatedProps(() => ({
+    opacity: spinnerArcOpacity.value,
     stroke: interpolateColor(
       spinnerWater.value,
       [0, 1],
@@ -522,7 +570,20 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
               strokeLinecap="round"
               fill="none"
               strokeDasharray={`${spinnerArc * 0.66} ${spinnerArc * 0.34}`}
-              animatedProps={spinnerColourProps}
+              animatedProps={spinnerArcProps}
+            />
+
+            {/* the arm: a real spiral that unwinds out of the core and is
+                then pulled straight, point by point, onto the vertical --
+                see spiralToLinePath for why this is not a squashed circle */}
+            <AnimatedPath
+              testID="screen-time-glance-spiral"
+              fill="none"
+              stroke={drawStroke}
+              strokeWidth={SCREEN_TIME_GLANCE.spinnerStroke}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              animatedProps={spiralProps}
             />
           </Svg>
         </Animated.View>

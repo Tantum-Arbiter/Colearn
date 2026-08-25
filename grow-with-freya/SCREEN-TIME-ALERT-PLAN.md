@@ -194,12 +194,14 @@ about — never as a surface or a frame. The orb carries a
 solid core the size of the ring's own dot, and the ring hides while the
 glance is open -- one control becomes the orb, rather than a second dot
 appearing beside a ring that never moved. The morph happens at the ring
-itself, as a **spiral outward**: the shape sweeps out and narrows a little
-more on every pass of one unbroken rotation — a galaxy's arm unwinding from
-its collapsing core — until what is left turning is a single arm, vertical.
-The spinning finishes first; only then does the line **stretch** along its
-own axis, as its own beat, before flying to the corner and expanding into
-the draw.
+itself, and it is a **real spiral**: `spiralToLinePath` traces an
+Archimedean curve that unwinds out of the collapsing core over two and a
+half turns, then pulls every point of that curve onto the vertical, in the
+order it was traced — the spiral *rotates into* a flat line rather than
+being swapped for one. (Squashing a circle while it turns was the earlier
+attempt, and it only ever read as a flat thing spinning.) The line then
+**stretches** along its own axis as its own beat, before flying to the
+corner and expanding into the draw.
 
 Alongside this rework, `ScreenTimeService` moved from UTC to **local** day
 boundaries (`localDateKey`): keyed by `toISOString()`, a London child's day

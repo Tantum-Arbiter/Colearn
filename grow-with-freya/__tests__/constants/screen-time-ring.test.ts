@@ -9,6 +9,9 @@ import {
   SCREEN_TIME_RING,
   isScreenTimeExceeded,
   panelBorderPath,
+  spiralToLinePath,
+  SPIRAL_STEPS,
+  SPIRAL_TURNS,
   ringCentre,
   ringDashOffset,
   screenTimeProgress,
@@ -135,5 +138,92 @@ describe('panelBorderPath', () => {
     const { d } = panelBorderPath(BOUNDS);
 
     expect(d.match(/A 28 28/g)).toHaveLength(4);
+  });
+});
+
+describe('spiralToLinePath', () => {
+  const CENTRE = 28;
+  const RADIUS = 24;
+  const HALF = 24;
+
+  const points = (d: string) =>
+    d
+      .split(/(?=[ML])/)
+      .map((seg) => seg.trim().slice(1).trim().split(/\s+/).map(Number))
+      .filter((p) => p.length === 2 && p.every((n) => Number.isFinite(n)))
+      .map(([x, y]) => ({ x, y }));
+
+  const radiusOf = (p: { x: number; y: number }) =>
+    Math.hypot(p.x - CENTRE, p.y - CENTRE);
+
+  it('draws every step it promises, as one continuous stroke', () => {
+    const d = spiralToLinePath(1, 0, CENTRE, RADIUS, HALF);
+
+    expect(points(d)).toHaveLength(SPIRAL_STEPS + 1);
+    // one move, then nothing but lines -- a broken stroke would read as
+    // separate fragments rather than a single arm
+    expect(d.match(/M/g)).toHaveLength(1);
+  });
+
+  it('sweeps outward from the core to the rim', () => {
+    const p = points(spiralToLinePath(1, 0, CENTRE, RADIUS, HALF));
+
+    expect(radiusOf(p[0])).toBeCloseTo(0);
+    expect(radiusOf(p[p.length - 1])).toBeCloseTo(RADIUS);
+  });
+
+  it('grows outward monotonically -- this is what makes it a spiral', () => {
+    // a squashed circle oscillates between the same two radii; a spiral only
+    // ever gets further from its centre
+    const p = points(spiralToLinePath(1, 0, CENTRE, RADIUS, HALF));
+
+    for (let i = 1; i < p.length; i++) {
+      expect(radiusOf(p[i])).toBeGreaterThan(radiusOf(p[i - 1]) - 1e-6);
+    }
+  });
+
+  it('winds through every turn it is given rather than one pass', () => {
+    const p = points(spiralToLinePath(1, 0, CENTRE, RADIUS, HALF));
+
+    // count sign changes of (y - centre): a full turn crosses the centre
+    // line twice, so 2.5 turns must cross it at least four times
+    let crossings = 0;
+    for (let i = 1; i < p.length; i++) {
+      const before = p[i - 1].y - CENTRE;
+      const after = p[i].y - CENTRE;
+      if (before !== 0 && after !== 0 && Math.sign(before) !== Math.sign(after)) {
+        crossings++;
+      }
+    }
+
+    expect(crossings).toBeGreaterThanOrEqual(Math.floor(SPIRAL_TURNS * 2) - 1);
+  });
+
+  it('collapses onto the vertical once straightened', () => {
+    const p = points(spiralToLinePath(1, 1, CENTRE, RADIUS, HALF));
+
+    for (const point of p) {
+      expect(point.x).toBeCloseTo(CENTRE);
+    }
+    expect(p[0].y).toBeCloseTo(CENTRE - HALF);
+    expect(p[p.length - 1].y).toBeCloseTo(CENTRE + HALF);
+  });
+
+  it('keeps the traced order when it straightens, so the curve unwinds', () => {
+    // every point lands further down the line than the one before it -- the
+    // spiral is pulled straight, not re-sorted into a line
+    const p = points(spiralToLinePath(1, 1, CENTRE, RADIUS, HALF));
+
+    for (let i = 1; i < p.length; i++) {
+      expect(p[i].y).toBeGreaterThan(p[i - 1].y);
+    }
+  });
+
+  it('is nothing at all before it starts unwinding', () => {
+    const p = points(spiralToLinePath(0, 0, CENTRE, RADIUS, HALF));
+
+    for (const point of p) {
+      expect(radiusOf(point)).toBeCloseTo(0);
+    }
   });
 });
