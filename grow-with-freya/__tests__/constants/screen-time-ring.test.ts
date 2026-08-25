@@ -314,6 +314,19 @@ describe('orbSquash', () => {
     expect(biggestY).toBeLessThan((travelledY / steps) * 4);
   });
 
+  it('resolves to a line that can actually be seen', () => {
+    // The failure this pins: the orb flattened to a pair of hairline caps
+    // and there was nothing visible travelling to the border at all. Applied
+    // to the ring's own dot, the finished shape has to be a stroke with real
+    // width -- and several times taller than it is wide, or it is a dot.
+    const dot = SCREEN_TIME_RING.size;
+    const width = dot * orbSquash(1).x;
+    const height = dot * orbSquash(1).y;
+
+    expect(width).toBeGreaterThan(2);
+    expect(height / width).toBeGreaterThan(10);
+  });
+
   it('clamps outside its own range rather than running away', () => {
     expect(orbSquash(-1).x).toBeCloseTo(1);
     expect(orbSquash(2).x).toBeCloseTo(ORB_LINE_WIDTH);

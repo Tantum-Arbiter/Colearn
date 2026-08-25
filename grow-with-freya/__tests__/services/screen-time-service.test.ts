@@ -1,4 +1,7 @@
-import ScreenTimeService, { SCREEN_TIME_LIMITS } from '../../services/screen-time-service';
+import ScreenTimeService, {
+  SCREEN_TIME_LIMITS,
+  localDateKey,
+} from '../../services/screen-time-service';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Mock AsyncStorage
@@ -379,8 +382,20 @@ describe('ScreenTimeService', () => {
   });
 
   describe('statistics', () => {
+    // Pinned mid-morning. Today's usage is clamped to the time actually
+    // elapsed since local midnight, so a fixture built from `Date.now()`
+    // fails whenever the suite happens to run in the small hours -- ten
+    // minutes of sessions cannot fit into the two minutes since midnight.
+    beforeEach(() => {
+      jest.useFakeTimers({ now: new Date(2026, 7, 13, 10, 0, 0) });
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
     it('should calculate today usage correctly', async () => {
-      const today = new Date().toISOString().split('T')[0];
+      const today = localDateKey();
       const mockSessions = [
         {
           id: 'test-1',

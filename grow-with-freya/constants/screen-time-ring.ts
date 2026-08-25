@@ -115,9 +115,17 @@ export function dropFlight(
   };
 }
 
-/** What the orb's squash and stretch resolves to: a thin, tall line. */
-export const ORB_LINE_WIDTH = 0.14;
-export const ORB_LINE_HEIGHT = 1.5;
+/**
+ * What the orb's squash and stretch resolves to: a thin, tall line.
+ *
+ * Applied to the orb's solid core, so at the ring's own dot size these come
+ * out as a stroke a couple of pixels wide and a good forty-odd tall -- the
+ * weight of the border it is about to draw. The line has to be the core:
+ * flattening the ring's outline instead collapses it to a pair of hairline
+ * caps and leaves nothing travelling at all.
+ */
+export const ORB_LINE_WIDTH = 0.09;
+export const ORB_LINE_HEIGHT = 1.6;
 
 /**
  * The orb's squash and stretch as it becomes the line, as one smooth

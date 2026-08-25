@@ -160,6 +160,9 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
   // the turn: 0 is the ring's own colour, 1 is the water blue the box is
   // drawn in -- the orb changes colour while it spins
   const spinnerWater = useSharedValue(0);
+  // the ring's outline, which hands over to the core as the orb flattens --
+  // an outline squashed to a line is a pair of hairline caps, not a stroke
+  const spinnerArcOpacity = useSharedValue(1);
   // the core: the solid dot the orb takes over from the ring. 1 is the
   // ring's own dot; it shrinks to nothing as the orb reduces into the line
   const spinnerCore = useSharedValue(1);
@@ -197,6 +200,7 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
       splash.value = 0;
       spinnerMorph.value = 0;
       spinnerWater.value = 0;
+      spinnerArcOpacity.value = 1;
       spinnerCore.value = 1;
       drawProgress.value = 0;
       drawOpacity.value = 1;
@@ -262,12 +266,13 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
         spinDuration * 0.25,
         withTiming(1, { duration: spinDuration * 0.65 })
       );
-      // the solid dot the orb took over from the ring reduces away while the
-      // arc travels and flattens -- by the time the line exists, only the
-      // line is left, and all of it blue
-      spinnerCore.value = withDelay(
+      // The core stays: squashed and stretched, it IS the line. What goes is
+      // the ring's outline around it, which flattens to nothing useful.
+      // Shrinking the core away instead left the travel with no visible line
+      // at all -- the orb changed shape and then simply was not there.
+      spinnerArcOpacity.value = withDelay(
         morphStartsAt,
-        withTiming(0, { duration: morphDuration * 0.8, easing: glide })
+        withTiming(0, { duration: morphDuration * 0.55, easing: glide })
       );
 
       // 2. ...squashes and stretches into the vertical line, right where it
@@ -325,6 +330,7 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
     spinnerTravel.value = 0;
     spinnerMorph.value = 0;
     spinnerWater.value = 0;
+    spinnerArcOpacity.value = 1;
     spinnerCore.value = 1;
     splash.value = 0;
     drawProgress.value = 0;
@@ -362,6 +368,11 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
     spinnerMorph.value = 0;
     spinnerScale.value = 0.55;
     spinnerRotate.value = 0;
+    // the open leaves the core at full size -- it was the line -- so the
+    // reform has to start it from nothing for it to grow back out of the
+    // splash rather than snapping into place
+    spinnerCore.value = 0;
+    spinnerArcOpacity.value = 0;
 
     // the content dims, the panel gathers in...
     contentOpacity.value = withTiming(0, { duration: fadeDuration * 0.7 });
@@ -431,27 +442,36 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
       orbFrom,
       withTiming(1, { duration: orbReform, easing: Easing.out(Easing.cubic) })
     );
+    spinnerArcOpacity.value = withDelay(
+      orbFrom + 120,
+      withTiming(1, { duration: orbReform * 0.7 })
+    );
     // one settling turn, the mirror of the spin that opened the window
     spinnerRotate.value = withDelay(
       orbFrom,
       withTiming(360, { duration: orbReform, easing: Easing.out(Easing.cubic) })
     );
-    // blue back to red, so the orb hands the corner to a ring of its own colour
+    // Blue first, then red. The turn waits until the orb has finished
+    // fading up: started with the fade-in, the colour was already halfway to
+    // red before there was anything solid enough to see it on, so the orb
+    // simply arrived a muddy red. It comes back as the water it left as, and
+    // only then returns to the ring's own colour.
     spinnerWater.value = withDelay(
-      orbFrom,
-      withTiming(0, { duration: orbReform * 0.8 })
-    );
-    spinnerCore.value = withDelay(
-      orbFrom,
+      orbFrom + 170,
       withTiming(
-        1,
-        { duration: orbReform, easing: Easing.out(Easing.cubic) },
+        0,
+        { duration: orbReform * 0.9 },
         (finished) => {
-          // the ring underneath comes back instantly and identical, so the
-          // window can close on the very frame the orb finishes reforming
+          // the last thing to finish, now that the colour turn waits for the
+          // orb to be visible: closing on the core's growth instead handed
+          // the corner to a red ring while the orb was still half blue
           if (finished) runOnJS(finishClose)();
         }
       )
+    );
+    spinnerCore.value = withDelay(
+      orbFrom,
+      withTiming(1, { duration: orbReform, easing: Easing.out(Easing.cubic) })
     );
   }, [finishClose, reduceMotion, geometry]);
 
@@ -480,6 +500,7 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
   }));
 
   const spinnerColourProps = useAnimatedProps(() => ({
+    opacity: spinnerArcOpacity.value,
     stroke: interpolateColor(
       spinnerWater.value,
       [0, 1],
