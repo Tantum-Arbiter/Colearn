@@ -179,6 +179,18 @@ what it sits on, not only against itself** -- `SPIRAL_RADIUS` is now tested
 against the core's radius and the arc's, and the turn spacing against the
 stroke width.
 
+### 9. Two things deforming the same thing
+
+Once the arm becomes the line, the squash cannot stay on the spinner's view.
+A view scaled to (1.6, 0.09) turns the line the arm just laid down into a
+hairline three tenths of a pixel thick -- defect 5, arrived at from a new
+direction. `orbSquash` is gone with the design that needed it; the arm's
+unroll is now the only thing that makes the line.
+
+The general form: when one element starts producing a shape another transform
+was producing, the old transform is not merely redundant, it is actively
+destructive. **Removing it is part of the change, not cleanup afterwards.**
+
 ## Phases
 
 Each is independently shippable and independently useful. Phase 1 is worth

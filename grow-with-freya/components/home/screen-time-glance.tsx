@@ -26,10 +26,10 @@ import {
   splashPath,
   spiralArmPath,
   SPIRAL_RADIUS,
+  SPIRAL_LINE_HALF,
   splashOpacity,
   splashRing,
   dropHandoverScale,
-  orbSquash,
   dropStretchAt,
   DROP_PATH,
   DROP_GLOSS,
@@ -162,9 +162,9 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
   const spinnerRotate = useSharedValue(0);
   const spinnerScale = useSharedValue(1);
   const spinnerTravel = useSharedValue(0); // 0 at the ring, 1 at the border's start
-  // the morph: the arc flattens into the vertical line the border grows from
-  // one progress, not two values: the squash and the stretch are derived
-  // from it by `orbSquash`, so they cannot drift apart or stop at a join
+  // the morph: the progress of the wave that pulls the spiral arm straight
+  // into the line the border grows from. One progress, so the whole arm
+  // unrolls off a single clock and cannot come apart mid-way
   const spinnerMorph = useSharedValue(0);
   // the turn: 0 is the ring's own colour, 1 is the water blue the box is
   // drawn in -- the orb changes colour while it spins
@@ -317,12 +317,25 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
             { at: timeline.arcOut.at, to: 0, over: timeline.arcOut.over, easing: glide },
           ],
         },
-        { on: spinnerCore, name: 'orb core', from: 1, beats: [] },
-        // ...winding a spiral arm out of the core as it goes, and winding it
-        // back in before anything flattens. Eased on purpose: `spiralArmPath`
-        // carries no curve of its own -- radius is linear in the grow and the
-        // angle linear in the step -- so unlike `orbSquash` and `splashPath`
-        // it takes its character from whatever drives it.
+        // the solid core gives way as the arm takes over: what the border
+        // grows from is the unrolled arm, not the dot
+        {
+          on: spinnerCore,
+          name: 'orb core',
+          from: 1,
+          beats: [
+            {
+              at: timeline.morph.at,
+              to: 0,
+              over: timeline.morph.over * 0.6,
+              easing: Easing.in(Easing.quad),
+            },
+          ],
+        },
+        // ...winding a spiral arm out of the core as it goes. It does not
+        // wind back: it holds at full reach, and the morph lays it down as
+        // the line. `grow` is linear in the path so easing it is right --
+        // unlike `straighten` below, which drives the wave's own smoothstep.
         {
           on: spiralGrow,
           name: 'spiral',
@@ -334,21 +347,14 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
               over: timeline.spiralOut.over,
               easing: Easing.out(Easing.cubic),
             },
-            {
-              at: timeline.spiralIn.at,
-              to: 0,
-              over: timeline.spiralIn.over,
-              easing: Easing.in(Easing.cubic),
-            },
           ],
         },
 
-        // 2. ...squashes and stretches into the vertical line, right where it
-        //    was pressed. One progress, with `orbSquash` deriving both axes
-        //    from it: the orb still squats wider and shorter before it throws
-        //    itself thin, but as one unbroken move. Sequencing those beats as
-        //    separate animations made the motion stop dead at every join,
-        //    which is what made the change of shape look stepped.
+        // 2. ...and then lays that arm down as the line, right where it was
+        //    pressed. A wave enters at the arm's outer end and travels in, so
+        //    each point peels off the curve and onto the line in turn.
+        //    Interpolating every point at the same rate crumples the spiral
+        //    in on itself, which is what sank an earlier attempt at this.
         {
           on: spinnerMorph,
           name: 'morph',
@@ -358,10 +364,8 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
               at: timeline.morph.at,
               to: 1,
               over: timeline.morph.over,
-              // linear: `orbSquash` already carries the ease and the
-              // anticipation bump, and the bump is timed against real
-              // elapsed time. Easing this as well composes two in-out
-              // curves, which crushes the middle and distorts the bump.
+              // linear: the wave carries its own smoothstep, and easing this
+              // as well composes two curves
               easing: Easing.linear,
             },
           ],
@@ -373,9 +377,9 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
         //    rather than arriving there. Sharing the morph's window makes it
         //    one gesture: the orb pours itself down into the line.
         //
-        //    `inOut(cubic)` because that is the ease `orbSquash` carries
-        //    internally, so the descent tracks the flattening instead of
-        //    drifting against it.
+        //    `inOut(cubic)` so the descent has the same soft start and long
+        //    glide as the arm laying itself down, rather than drifting
+        //    against it.
         {
           on: spinnerTravel,
           name: 'travel',
@@ -684,7 +688,6 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
   const spinnerStyle = useAnimatedStyle(() => {
     const dx = (geometry.drawStart.x - centre.x) * spinnerTravel.value;
     const dy = (geometry.drawStart.y - centre.y) * spinnerTravel.value;
-    const squash = orbSquash(spinnerMorph.value);
     return {
       opacity: spinnerOpacity.value,
       transform: [
@@ -692,8 +695,6 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
         { translateY: dy },
         { rotate: `${spinnerRotate.value}deg` },
         { scale: spinnerScale.value },
-        { scaleX: squash.x },
-        { scaleY: squash.y },
       ],
     };
   });
@@ -713,7 +714,13 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
   }));
 
   const spiralProps = useAnimatedProps(() => ({
-    d: spiralArmPath(SPINNER_BOX / 2, SPIRAL_RADIUS, spiralGrow.value),
+    d: spiralArmPath(
+      SPINNER_BOX / 2,
+      SPIRAL_RADIUS,
+      spiralGrow.value,
+      spinnerMorph.value,
+      SPIRAL_LINE_HALF
+    ),
     opacity: spiralGrow.value,
     stroke: interpolateColor(
       spinnerWater.value,

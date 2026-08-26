@@ -12,10 +12,7 @@ import {
   panelBorderPath,
   dropFlight,
   splashPath,
-  orbSquash,
   dropStretchAt,
-  ORB_LINE_WIDTH,
-  ORB_LINE_HEIGHT,
   SPLASH_DROPLETS,
   ringCentre,
   ringDashOffset,
@@ -27,6 +24,7 @@ import {
   spiralArmPath,
   SPIRAL_STEPS,
   SPIRAL_TURNS,
+  SPIRAL_LINE_HALF,
   SPIRAL_RADIUS,
 } from '@/constants/screen-time-ring';
 import { expectSmooth } from '../utils/motion-smoothness';
@@ -283,66 +281,6 @@ describe('splashPath', () => {
   });
 });
 
-describe('orbSquash', () => {
-  it('starts as the circle it is', () => {
-    expect(orbSquash(0).x).toBeCloseTo(1);
-    expect(orbSquash(0).y).toBeCloseTo(1);
-  });
-
-  it('ends as the line the border grows from', () => {
-    expect(orbSquash(1).x).toBeCloseTo(ORB_LINE_WIDTH);
-    expect(orbSquash(1).y).toBeCloseTo(ORB_LINE_HEIGHT);
-  });
-
-  it('ends lying along the bottom edge it is about to draw', () => {
-    // the border now starts on the bottom edge, so the line has to be
-    // horizontal: a vertical line at that point is at right angles to the
-    // stroke it hands over to
-    expect(orbSquash(1).x).toBeGreaterThan(1);
-    expect(orbSquash(1).y).toBeLessThan(1);
-  });
-
-  it('draws itself up narrower and taller before it throws itself flat', () => {
-    // the anticipation: early on the orb is narrower and higher than it
-    // started, which is what sells the change of shape
-    const early = orbSquash(0.25);
-
-    expect(early.x).toBeLessThan(1);
-    expect(early.y).toBeGreaterThan(1);
-  });
-
-  it('has committed to the line by the time it is done anticipating', () => {
-    expect(orbSquash(0.7).x).toBeGreaterThan(orbSquash(0.25).x);
-    expect(orbSquash(0.7).y).toBeLessThan(orbSquash(0.25).y);
-  });
-
-  it('moves smoothly the whole way, with no step at any point', () => {
-    // The failure this replaces: three sequenced animations stopped dead at
-    // every join. `expectSmooth` measures against the distance actually
-    // travelled -- the orb doubles back, so its path is longer than its net
-    // range -- and a pause and a jump blow straight through it.
-    expectSmooth(orbSquash);
-  });
-
-  it('resolves to a line that can actually be seen', () => {
-    // The failure this pins: the orb flattened to a pair of hairline caps
-    // and there was nothing visible travelling to the border at all. Applied
-    // to the ring's own dot, the finished shape has to be a stroke with real
-    // width -- and several times taller than it is wide, or it is a dot.
-    const dot = SCREEN_TIME_RING.size;
-    const width = dot * orbSquash(1).x;
-    const height = dot * orbSquash(1).y;
-
-    expect(height).toBeGreaterThan(2);
-    expect(width / height).toBeGreaterThan(10);
-  });
-
-  it('clamps outside its own range rather than running away', () => {
-    expect(orbSquash(-1).x).toBeCloseTo(1);
-    expect(orbSquash(2).x).toBeCloseTo(ORB_LINE_WIDTH);
-  });
-});
-
 describe('dropStretchAt', () => {
   it('is unstretched at both ends of the flight', () => {
     expect(dropStretchAt(0)).toBeCloseTo(1);
@@ -484,8 +422,10 @@ describe('the ring and the border it opens into', () => {
 });
 
 describe('spiralArmPath', () => {
-  const CENTRE = 20;
-  const RADIUS = 15;
+  const CENTRE = 30;
+  // the real reach, so the line it lays down (SPIRAL_LINE_HALF) sits inside
+  // it as it does on screen
+  const RADIUS = SPIRAL_RADIUS;
 
   function points(d: string) {
     return d
@@ -501,6 +441,10 @@ describe('spiralArmPath', () => {
   // the path rounds its coordinates to two decimals, so reach is only good to
   // about a hundredth -- assert to one rather than pretending otherwise
   const PLACES = 1;
+
+  // the arm before any of it has been pulled straight
+  const arm = (grow: number, straighten = 0) =>
+    spiralArmPath(CENTRE, RADIUS, grow, straighten, SPIRAL_LINE_HALF);
 
   it('reaches clear of the orb it is swept out of', () => {
     // The defect this pins, and the one that killed the previous spiral: at
@@ -522,25 +466,25 @@ describe('spiralArmPath', () => {
   it('is nothing at all when it has not been wound out', () => {
     // an animated element must be invisible at rest, not only at the end of
     // the range you were thinking about
-    expect(spiralArmPath(CENTRE, RADIUS, 0)).toBe('');
-    expect(spiralArmPath(CENTRE, RADIUS, -1)).toBe('');
+    expect(arm(0)).toBe('');
+    expect(arm(-1)).toBe('');
   });
 
   it('starts at the core and reaches its full radius when fully wound out', () => {
-    const p = points(spiralArmPath(CENTRE, RADIUS, 1));
+    const p = points(arm(1));
 
     expect(reach(p[0])).toBeCloseTo(0);
     expect(reach(p[p.length - 1])).toBeCloseTo(RADIUS, PLACES);
   });
 
   it('scales its whole reach with the grow, so it grows out of a point', () => {
-    const half = points(spiralArmPath(CENTRE, RADIUS, 0.5));
+    const half = points(arm(0.5));
 
     expect(reach(half[half.length - 1])).toBeCloseTo(RADIUS / 2, PLACES);
   });
 
   it('winds outward the whole way, never doubling back on itself', () => {
-    const p = points(spiralArmPath(CENTRE, RADIUS, 1));
+    const p = points(arm(1));
 
     for (let i = 1; i < p.length; i++) {
       expect(reach(p[i])).toBeGreaterThan(reach(p[i - 1]));
@@ -548,7 +492,7 @@ describe('spiralArmPath', () => {
   });
 
   it('turns as many times as it says it does', () => {
-    const p = points(spiralArmPath(CENTRE, RADIUS, 1));
+    const p = points(arm(1));
     let turned = 0;
     let previous = Math.atan2(p[1].y - CENTRE, p[1].x - CENTRE);
 
@@ -565,18 +509,82 @@ describe('spiralArmPath', () => {
   });
 
   it('emits one point per step, plus the one that closes it', () => {
-    expect(points(spiralArmPath(CENTRE, RADIUS, 1))).toHaveLength(SPIRAL_STEPS + 1);
+    expect(points(arm(1))).toHaveLength(SPIRAL_STEPS + 1);
   });
 
   it('clamps outside its own range rather than running away', () => {
-    expect(spiralArmPath(CENTRE, RADIUS, 2)).toBe(spiralArmPath(CENTRE, RADIUS, 1));
+    expect(arm(2)).toBe(arm(1));
+  });
+
+  describe('laying itself down as the line', () => {
+    const onLine = (p: { x: number; y: number }) => Math.abs(p.y - CENTRE);
+
+    it('is still the spiral before the wave reaches it', () => {
+      expect(arm(1, 0)).toBe(arm(1));
+    });
+
+    it('is a straight line once the wave has passed the whole arm', () => {
+      const p = points(arm(1, 1));
+
+      p.forEach((point) => expect(onLine(point)).toBeLessThan(0.05));
+    });
+
+    it('lays the line down at the length it is told to', () => {
+      const p = points(arm(1, 1));
+      const xs = p.map((point) => point.x);
+
+      expect(Math.min(...xs)).toBeCloseTo(CENTRE - SPIRAL_LINE_HALF, PLACES);
+      expect(Math.max(...xs)).toBeCloseTo(CENTRE + SPIRAL_LINE_HALF, PLACES);
+    });
+
+    it('straightens from the outer end inward, not all at once', () => {
+      // The defect this pins: pulling every point toward the line at the same
+      // rate crumples the spiral in on itself. The wave has to arrive at the
+      // outer end first and travel in, so the core end is still on the curve
+      // while the tip is already down.
+      //
+      // Measured as each point's distance from its own place on the line --
+      // not its distance from the line's height, which the core end sits on
+      // by construction whether it has straightened or not.
+      const target = (f: number) => ({
+        x: CENTRE - SPIRAL_LINE_HALF + 2 * SPIRAL_LINE_HALF * f,
+        y: CENTRE,
+      });
+      const p = points(arm(1, 0.5));
+      const toGo = p.map((point, i) => {
+        const t = target(i / (p.length - 1));
+
+        return Math.hypot(point.x - t.x, point.y - t.y);
+      });
+
+      expect(toGo[toGo.length - 1]).toBeLessThan(toGo[0]);
+    });
+
+    it('never lets a point run past the line it is landing on', () => {
+      for (const straighten of [0.2, 0.4, 0.6, 0.8]) {
+        const p = points(arm(1, straighten));
+        const xs = p.map((point) => point.x);
+
+        expect(Math.min(...xs)).toBeGreaterThanOrEqual(CENTRE - RADIUS - 0.1);
+        expect(Math.max(...xs)).toBeLessThanOrEqual(CENTRE + RADIUS + 0.1);
+      }
+    });
+
+    it('unrolls smoothly, with no crumple at any point', () => {
+      // measured on how far the arm still is from the line overall: a wave
+      // that stalls or snaps shows up as a step in that distance
+      expectSmooth((straighten) => {
+        const p = points(arm(1, straighten));
+        return p.reduce((sum, point) => sum + onLine(point), 0) / p.length;
+      });
+    });
   });
 
   it('grows smoothly, with no jump at any point', () => {
     // the arm takes its character from whatever drives it, so the one thing
     // that has to hold here is that the reach itself has no step in it
     expectSmooth((grow) => {
-      const p = points(spiralArmPath(CENTRE, RADIUS, Math.max(grow, 1e-6)));
+      const p = points(arm(Math.max(grow, 1e-6)));
       return reach(p[p.length - 1]);
     });
   });

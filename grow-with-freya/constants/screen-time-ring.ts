@@ -113,50 +113,6 @@ export function dropFlight(
 }
 
 /**
- * What the orb's squash and stretch resolves to: a long, thin line.
- *
- * Applied to the orb's solid core, so at the ring's own dot size these come
- * out as a stroke a good forty-odd long and a couple of pixels thick -- the
- * weight of the border it is about to draw. It lies flat because the border
- * starts on the bottom edge, directly below the ring: a line standing upright
- * there would be at right angles to the stroke it hands over to. The line has
- * to be the core: flattening the ring's outline instead collapses it to a
- * pair of hairline caps and leaves nothing travelling at all.
- */
-export const ORB_LINE_WIDTH = 1.6;
-export const ORB_LINE_HEIGHT = 0.09;
-
-/**
- * The orb's squash and stretch as it becomes the line, as one smooth
- * function of a single progress.
- *
- * It used to be three `withSequence` beats -- bulge, snap thin, settle --
- * and a sequence returns to zero velocity at every join. The motion stopped
- * dead twice on its way from circle to line, which is exactly what made the
- * change of shape look stepped rather than smooth. One function of one
- * progress has no joins to stop at.
- *
- * The shape is a settled path from circle to line, plus a single
- * anticipation bump: `u(1-u)^3` peaks about a quarter of the way in and
- * vanishes smoothly at both ends, so the orb still draws itself up narrower
- * and taller before it throws itself flat -- without ever pausing to do it.
- */
-export function orbSquash(progress: number): { x: number; y: number } {
-  'worklet';
-  const u = progress <= 0 ? 0 : progress >= 1 ? 1 : progress;
-
-  const eased = u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2;
-  // normalised against its own peak, so the coefficients below read as the
-  // size of the bulge rather than as arbitrary numbers
-  const bump = (u * Math.pow(1 - u, 3)) / 0.10546875;
-
-  return {
-    x: 1 + (ORB_LINE_WIDTH - 1) * eased - 0.26 * bump,
-    y: 1 + (ORB_LINE_HEIGHT - 1) * eased + 0.3 * bump,
-  };
-}
-
-/**
  * The returning drop's stretch: drawn out by the fall, squashed as it
  * lands. One function of the flight's own progress rather than a two-beat
  * sequence, which reversed direction abruptly at its join.
@@ -167,31 +123,9 @@ export function dropStretchAt(progress: number): number {
   return 1 + 0.22 * Math.sin(Math.PI * u) - 0.16 * u * u;
 }
 
-/**
- * The spiral arm the orb winds out while it spins, and winds back in before
- * it flattens.
- *
- * An Archimedean curve -- radius growing in step with the angle -- sampled as
- * a polyline, so it is a single animated `d` rather than a stack of elements.
- * `grow` scales the whole arm from nothing to its full reach, which means the
- * arm is a point at zero and cannot be seen at rest.
- *
- * The curve carries no easing of its own: radius is linear in `grow` and the
- * angle is linear in the step. That is deliberate, and the opposite of
- * `orbSquash` and `splashPath` -- those own their curves and must be driven
- * linearly, whereas this one takes its character entirely from whatever
- * drives it, and should be eased.
- *
- * A previous attempt at a spiral was reverted (b639885). It failed for three
- * reasons: two animations on one shared value, a straighten that crumpled,
- * and illegibility at small scale. The first is now unrepresentable and the
- * second does not arise here, because this arm is never unrolled onto the
- * line -- it retracts and the core flattens as it always did. The third is
- * still a live risk at ring size, and `SPIRAL_TURNS` and `SPIRAL_RADIUS` are
- * the knobs for it. The unrolling version is preserved in history at 674800d.
- */
 export const SPIRAL_TURNS = 1.6;
-export const SPIRAL_STEPS = 48;
+export const SPIRAL_STEPS = 56;
+
 /**
  * How far the arm reaches.
  *
@@ -203,12 +137,57 @@ export const SPIRAL_STEPS = 48;
  */
 export const SPIRAL_RADIUS = 26;
 
-export function spiralArmPath(centre: number, radius: number, grow: number): string {
+/** Half the length of the line the arm lays itself down as. */
+export const SPIRAL_LINE_HALF = 24;
+
+/**
+ * How much of the arm's length the straightening wave occupies.
+ *
+ * The unroll is a wave, not a uniform blend. Interpolating every point toward
+ * the line at the same rate crumples the spiral inward on itself -- it was
+ * rebuilt as a travelling wave for exactly that reason. The wave enters at the
+ * outer end and travels inward over this fraction of the arm, so each point
+ * peels off the curve and onto the line in turn, and the core end goes last.
+ */
+export const SPIRAL_UNROLL_BAND = 0.42;
+
+/**
+ * The spiral arm the orb winds out while it spins, and then lays down as the
+ * line the border is drawn from.
+ *
+ * An Archimedean curve -- radius growing in step with the angle -- sampled as
+ * a polyline, so it is a single animated `d` rather than a stack of elements.
+ * `grow` scales the whole arm from nothing to its full reach, which means the
+ * arm is a point at zero and cannot be seen at rest. `straighten` then drives
+ * the travelling wave that pulls it flat.
+ *
+ * It carries a curve of its own -- the smoothstep in the wave -- so whatever
+ * drives `straighten` has to be linear, the same rule as `splashPath`.
+ *
+ * The arm becomes the line rather than being swapped for one. A previous
+ * attempt at this was reverted (b639885) for three reasons: two animations on
+ * one shared value, a straighten that crumpled, and illegibility at small
+ * scale. The first is now unrepresentable, the second is what the travelling
+ * wave fixes, and the third is what `SPIRAL_RADIUS` is tested against.
+ */
+export function spiralArmPath(
+  centre: number,
+  radius: number,
+  grow: number,
+  straighten: number,
+  lineHalf: number
+): string {
   'worklet';
   const g = grow <= 0 ? 0 : grow >= 1 ? 1 : grow;
-  if (g <= 0) {
+  const s = straighten <= 0 ? 0 : straighten >= 1 ? 1 : straighten;
+
+  if (g <= 0 && s <= 0) {
     return '';
   }
+
+  // the wave has to clear the whole arm, so it travels a band further than
+  // the length it is crossing
+  const front = s * (1 + SPIRAL_UNROLL_BAND);
 
   let d = '';
 
@@ -217,8 +196,24 @@ export function spiralArmPath(centre: number, radius: number, grow: number): str
     const theta = f * SPIRAL_TURNS * 2 * Math.PI;
     const r = radius * g * f;
 
-    const x = centre + r * Math.cos(theta);
-    const y = centre + r * Math.sin(theta);
+    const spiralX = centre + r * Math.cos(theta);
+    const spiralY = centre + r * Math.sin(theta);
+
+    // the line it is laying itself down as: the core end at one tip, the
+    // outer end at the other
+    const lineX = centre - lineHalf + 2 * lineHalf * f;
+    const lineY = centre;
+
+    // how far this point in particular has been pulled straight: the outer
+    // end (f = 1) goes first, the core (f = 0) last
+    const raw = (front - (1 - f)) / SPIRAL_UNROLL_BAND;
+    const clamped = raw <= 0 ? 0 : raw >= 1 ? 1 : raw;
+    // smoothstep, so a point eases off the curve and onto the line rather
+    // than setting off and stopping abruptly
+    const t = clamped * clamped * (3 - 2 * clamped);
+
+    const x = spiralX + (lineX - spiralX) * t;
+    const y = spiralY + (lineY - spiralY) * t;
 
     d += `${i === 0 ? 'M' : 'L'} ${x.toFixed(2)} ${y.toFixed(2)} `;
   }
