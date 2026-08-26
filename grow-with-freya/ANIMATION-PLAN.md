@@ -97,6 +97,26 @@ progress, so it tests the curve rather than the curve composed with whatever
 drives it. **A value feeding a hand-written curve must be driven linearly,
 and that has to be asserted on the driving easing, not on the curve.**
 
+### 2c. A join between two elements, not within one value
+
+Defect 2 is a `withSequence` stopping dead at each join. The same fault is
+possible *between* two elements, and it was there the whole time in the
+handover nobody profiled: the arm lays its line at about 380 px/s, and the
+border -- eased in-out over a whole perimeter -- leaves from a standing start
+and accelerates to 24,000. So the stroke reached the arm's tip, stopped dead,
+and exploded away at sixty times the speed it arrived at.
+
+Nothing that looked at either element on its own could show this. The arm's
+motion is smooth. The border's draw is smooth. Only their **rates either side
+of the handover** disagree, and no test in this document measured a rate until
+it measured this one.
+
+The draw's easing now leaves the tip at the rate the arm hands over at,
+derived from the two lengths and the two durations rather than written down as
+a curve, because the perimeter depends on the screen.
+
+**Where two things join, compare their velocities, not their positions.**
+
 ### 3. Elements that appear or vanish at full size
 
 Three separate pops: the teardrop appeared over the gathered panel at full

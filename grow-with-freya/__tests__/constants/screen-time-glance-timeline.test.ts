@@ -16,6 +16,8 @@ import {
   DRAW_OVERLAP,
   SETTLING_HALF_TURN,
   TURN_SETTLES_BY,
+  DRAW_PICKUP_X,
+  drawPickupSlope,
   glanceCloseTimeline,
   glanceOpenTimeline,
   type GlanceDurations,
@@ -203,5 +205,48 @@ describe('glanceCloseTimeline', () => {
 
   it('stays inside a budget a parent will wait through', () => {
     expect(close.total).toBeLessThan(2000);
+  });
+});
+
+describe('drawPickupSlope', () => {
+  // A perimeter and a pace taken from a real iPad: the border is 3840px and
+  // the arm lays 129px over the 340ms morph.
+  const LINE = 128.6;
+  const BORDER = 3840;
+
+  it('hands the border the rate the arm was laying at', () => {
+    // The defect this pins: the draw was eased in-out, so it started at zero.
+    // The stroke reached the arm's tip, stopped dead, and then accelerated to
+    // sixty times the speed it had arrived at. It is a `withSequence` join by
+    // another name -- committed between two elements rather than within one
+    // value, which is why looking at either on its own never showed it.
+    const y1 = drawPickupSlope(LINE, BORDER, 340, 480);
+
+    // a cubic bezier leaves the origin at y1/x1
+    const slope = y1 / DRAW_PICKUP_X;
+    const pxPerSecond = (slope * BORDER) / (480 / 1000);
+
+    expect(pxPerSecond).toBeCloseTo(LINE / (340 / 1000), 0);
+  });
+
+  it('gives a control point a bezier will accept', () => {
+    const y1 = drawPickupSlope(LINE, BORDER, 340, 480);
+
+    expect(y1).toBeGreaterThan(0);
+    expect(y1).toBeLessThan(1);
+  });
+
+  it('asks the border to start slower the longer it has to travel', () => {
+    // a bigger screen means more perimeter in the same time, so the pickup has
+    // to be a smaller fraction of it
+    const small = drawPickupSlope(LINE, 2000, 340, 480);
+    const large = drawPickupSlope(LINE, 6000, 340, 480);
+
+    expect(large).toBeLessThan(small);
+  });
+
+  it('does not divide by a perimeter it has not been given', () => {
+    expect(Number.isFinite(drawPickupSlope(LINE, 0, 340, 480))).toBe(true);
+    expect(Number.isFinite(drawPickupSlope(LINE, BORDER, 0, 480))).toBe(true);
   });
 });

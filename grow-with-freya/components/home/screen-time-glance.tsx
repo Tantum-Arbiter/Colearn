@@ -43,6 +43,8 @@ import {
 import {
   glanceOpenTimeline,
   glanceCloseTimeline,
+  drawPickupSlope,
+  DRAW_PICKUP_X,
 } from '@/constants/screen-time-glance-timeline';
 import { choreograph, type Track } from '@/utils/choreograph';
 
@@ -417,7 +419,15 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
           ],
         },
 
-        // 4. ...and the line draws the box
+        // 4. ...and the border carries on from the arm's tip.
+        //
+        //    Not from a standstill, which is what it used to do. The arm lays
+        //    its line at about 380 px/s; the border has a whole perimeter to
+        //    cover and averages 8000, and eased in-out it started at zero --
+        //    so the stroke reached the tip, stopped dead, and accelerated away
+        //    to sixty times the speed it arrived at. The pickup curve leaves
+        //    the tip at the rate the arm handed over and gathers pace from
+        //    there.
         {
           on: drawProgress,
           name: 'border',
@@ -427,7 +437,17 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
               at: timeline.draw.at,
               to: 1,
               over: timeline.draw.over,
-              easing: Easing.inOut(Easing.cubic),
+              easing: Easing.bezier(
+                DRAW_PICKUP_X,
+                drawPickupSlope(
+                  SPIRAL_LINE_LENGTH,
+                  geometry.border.length,
+                  timeline.morph.over,
+                  timeline.draw.over
+                ),
+                0.4,
+                1
+              ),
             },
           ],
         },

@@ -68,6 +68,45 @@ export const SETTLING_HALF_TURN = 180;
  */
 export const TURN_SETTLES_BY = 0.35;
 
+/**
+ * Where the draw's easing puts its first control point.
+ *
+ * Paired with `drawPickupSlope`, which sets the matching height. Together they
+ * make the border leave the arm's tip at the speed the arm was laying at.
+ */
+export const DRAW_PICKUP_X = 0.5;
+
+/**
+ * The height of that control point, derived so the border picks up at the arm's
+ * own rate rather than from a standstill.
+ *
+ * The arm lays its line at about 380 px/s. The border has a whole perimeter to
+ * cover and averages 8000, and eased in-out it *starts at zero* -- so the
+ * stroke reached the arm's tip, stopped dead, and then accelerated away to
+ * sixty times the speed it had arrived at. That is the same fault as a
+ * `withSequence` join, committed across two elements instead of within one
+ * value, which is why nothing that looked at either element on its own ever
+ * showed it.
+ *
+ * The perimeter depends on the screen, so this has to be worked out where the
+ * geometry is known rather than written down as a curve.
+ */
+export function drawPickupSlope(
+  lineLength: number,
+  borderLength: number,
+  layingOver: number,
+  drawOver: number
+): number {
+  if (borderLength <= 0 || layingOver <= 0) {
+    return DRAW_PICKUP_X;
+  }
+
+  // the arm's rate, expressed as this curve's slope where it leaves the origin
+  const slope = (lineLength / layingOver) * (drawOver / borderLength);
+
+  return DRAW_PICKUP_X * slope;
+}
+
 export interface GlanceOpenTimeline {
   readonly spin: Phase;
   readonly spiralOut: Phase;
