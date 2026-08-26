@@ -53,6 +53,21 @@ export const SPIRAL_OUT_SHARE = 0.45;
  */
 export const SETTLING_HALF_TURN = 180;
 
+/**
+ * How far into the flatten the turn is finished.
+ *
+ * The turn used to run the whole length of the morph, and the arm is
+ * recognisably a line well before the morph ends -- 59% laid down and still
+ * 11 degrees off level, its far tip 25px from where it lands. So the line
+ * appeared and was then swung into position, rather than appearing flat.
+ *
+ * Ending the turn early keeps the half turn happening during the flatten,
+ * which is the point of it, but confines it to the part where the arm is
+ * still a coil. A coil looks right rotating; a line looks like it is being
+ * dragged.
+ */
+export const TURN_SETTLES_BY = 0.35;
+
 export interface GlanceOpenTimeline {
   readonly spin: Phase;
   readonly spiralOut: Phase;
@@ -104,7 +119,7 @@ export function glanceOpenTimeline(
     spiralOut,
     swell,
     ease: phase(swell.ends, spinDuration - swell.over),
-    turn: phase(0, spin.over + morph.over),
+    turn: phase(0, spin.over + morph.over * TURN_SETTLES_BY),
     turns,
     rotation,
     orbIn: phase(0, ORB_FADE_IN),

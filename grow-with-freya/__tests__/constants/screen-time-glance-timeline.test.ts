@@ -15,6 +15,7 @@ import { SCREEN_TIME_GLANCE } from '@/constants/screen-time-ring';
 import {
   DRAW_OVERLAP,
   SETTLING_HALF_TURN,
+  TURN_SETTLES_BY,
   glanceCloseTimeline,
   glanceOpenTimeline,
   type GlanceDurations,
@@ -58,11 +59,14 @@ describe('glanceOpenTimeline', () => {
     expect(open.turns).toBeGreaterThan(0);
   });
 
-  it('keeps turning through the flatten, finishing exactly as the line does', () => {
-    // the arm is a coil for most of the morph and a coil looks fine rotating;
-    // by the time it is a line the turn has all but stopped
-    expect(open.turn.ends).toBe(open.morph.ends);
-    expect(open.turn.over).toBe(open.spin.over + open.morph.over);
+  it('finishes the turn while the arm is still a coil, not once it is a line', () => {
+    // The defect this pins: the turn ran the whole length of the morph, and
+    // the arm is recognisably a line long before the morph ends -- 59% laid
+    // down and still 11 degrees off level, its far tip 25px from where it
+    // lands. The line appeared and was then swung into position. A coil looks
+    // right rotating; a line looks like it is being dragged.
+    expect(open.turn.ends).toBeGreaterThan(open.morph.at);
+    expect(open.turn.ends).toBeLessThan(open.morph.at + open.morph.over * 0.5);
   });
 
   it('makes a half turn more than its whole spins, while laying the arm down', () => {
@@ -125,7 +129,8 @@ describe('glanceOpenTimeline', () => {
     expect(retimed.travel.ends).toBe(retimed.morph.ends);
     expect(retimed.draw.at).toBe(retimed.travel.ends);
     expect(retimed.settle.at).toBe(retimed.draw.ends);
-    expect(retimed.turn.ends).toBe(retimed.morph.ends);
+    expect(retimed.turn.ends).toBeLessThan(retimed.morph.ends);
+    expect(retimed.turn.ends).toBeGreaterThan(retimed.morph.at);
   });
 });
 
