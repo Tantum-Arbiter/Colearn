@@ -23,7 +23,7 @@ export interface GlanceDurations {
   orbReform: number;
 }
 
-export const DRAW_OVERLAP = 60;
+export const DRAW_OVERLAP = 0;
 
 export const ORB_FADE_IN = 140;
 export const ORB_FADE_OUT = 180;
@@ -89,7 +89,7 @@ export function glanceOpenTimeline(
     spin,
     swell,
     ease: phase(swell.ends, spinDuration - swell.over),
-    turn: phase(0, spin.over + morph.over),
+    turn: phase(0, spin.over),
     turns,
     rotation: turns * 360,
     orbIn: phase(0, ORB_FADE_IN),

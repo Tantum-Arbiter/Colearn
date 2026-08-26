@@ -35,12 +35,14 @@ describe('glanceOpenTimeline', () => {
     expect(open.morph.ends).toBeLessThanOrEqual(open.travel.at);
   });
 
-  it('picks the border up just before the line lands, not after', () => {
-    // the two have to read as one continuous stroke; a handover with a gap in
-    // it reads as two animations
-    expect(open.draw.at).toBeLessThan(open.travel.ends);
-    expect(open.draw.at).toBeGreaterThan(open.travel.at);
-    expect(open.travel.ends - open.draw.at).toBe(DRAW_OVERLAP);
+  it('starts the border exactly as the line lands, never before', () => {
+    // The defect this pins: the border used to pick up 60ms early, from when
+    // the line crossed a third of the screen and the overlap made the two
+    // read as one movement. The line now only settles 15px onto the bottom
+    // edge, so starting early drew the stroke several pixels below the line
+    // -- which reads as the line jumping into position rather than arriving.
+    expect(open.draw.at).toBe(open.travel.ends);
+    expect(DRAW_OVERLAP).toBe(0);
   });
 
   it('turns a whole number of times, so the line lands vertical', () => {
@@ -51,8 +53,14 @@ describe('glanceOpenTimeline', () => {
     expect(open.turns).toBeGreaterThan(0);
   });
 
-  it('stops turning exactly as the line settles, and never turns while travelling', () => {
-    expect(open.turn.ends).toBe(open.morph.ends);
+  it('stops turning before the orb starts to flatten', () => {
+    // The defect this pins: the turn used to run across the spin and the
+    // morph together. The squash is applied in the element's own frame and
+    // the rotation on top of it, so the orb was still 232 degrees off level
+    // when it began to flatten, and swung the remaining 128 degrees while
+    // squashing -- the line formed at an angle and slewed into place.
+    expect(open.turn.ends).toBe(open.spin.ends);
+    expect(open.turn.ends).toBeLessThanOrEqual(open.morph.at);
     expect(open.turn.ends).toBeLessThanOrEqual(open.travel.at);
   });
 
@@ -109,9 +117,9 @@ describe('glanceOpenTimeline', () => {
 
     expect(retimed.morph.at).toBe(retimed.spin.ends);
     expect(retimed.travel.at).toBe(retimed.morph.ends);
-    expect(retimed.draw.at).toBeLessThan(retimed.travel.ends);
+    expect(retimed.draw.at).toBe(retimed.travel.ends);
     expect(retimed.settle.at).toBe(retimed.draw.ends);
-    expect(retimed.turn.ends).toBe(retimed.morph.ends);
+    expect(retimed.turn.ends).toBe(retimed.spin.ends);
   });
 });
 

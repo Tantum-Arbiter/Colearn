@@ -121,6 +121,31 @@ perfectly correct in code.
 
 ---
 
+### 6. A constant that outlives the geometry it was tuned for
+
+`DRAW_OVERLAP` was 60ms because the line crossed a third of the screen to
+reach a corner, and picking the border up early made the two read as one
+movement. When the line's journey became a 15px settle, that same 60ms meant
+the border began while the line was still 6.4px above it -- the stroke drew
+itself visibly offset from the line, which reads as the line jumping into
+position rather than arriving there.
+
+Nothing was wrong with the constant. It was right for a geometry that no
+longer existed. **A tuned constant is an assertion about the layout, and it
+needs re-deriving whenever the layout moves** -- which is the same failure as
+`panelBorderPath` still starting at a corner after the ring moved to centre.
+
+### 7. Transforms composed in the wrong frame
+
+The squash is applied in the element's own frame and the rotation on top of
+it, so a rotation that is still running while the orb flattens produces a
+line at an angle that then slews level. The orb was 232 degrees off level
+when it began to flatten and swung the remaining 128 while squashing.
+
+Both halves were individually correct -- two whole turns, a smooth squash --
+and the fault only exists in their composition. **Worth checking, whenever
+two transforms overlap in time, what the second does to the first.**
+
 ## Phases
 
 Each is independently shippable and independently useful. Phase 1 is worth
