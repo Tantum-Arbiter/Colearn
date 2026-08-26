@@ -3,7 +3,8 @@
 How the app's motion is built, why the same handful of bugs keep recurring,
 and what to change so they stop.
 
-Status: **plan only — nothing below is built.**
+Status: **Phases 1–3 built and adopted in the screen-time glance. Phases 4–6
+are still plan only.**
 
 Written after taking the screen-time glance's open/close choreography
 through roughly a dozen rounds of design feedback. Every defect found in
@@ -93,7 +94,7 @@ perfectly correct in code.
 Each is independently shippable and independently useful. Phase 1 is worth
 doing even if nothing else here is.
 
-### Phase 1 — Make one-assignment-per-value structural
+### Phase 1 — Make one-assignment-per-value structural ✅ built
 
 A small `choreograph()` helper that takes a declarative map of shared value
 → keyframes and applies exactly one animation to each:
@@ -116,7 +117,22 @@ value's animation is never replaced; callbacks fire after the last keyframe.
 
 **Risk:** none to behaviour if adopted one component at a time.
 
-### Phase 2 — Make the timeline data, not arithmetic
+**Built as** [`utils/choreograph.ts`](utils/choreograph.ts). A track owns one
+shared value; a second track on the same value throws rather than cancelling
+quietly, and overlapping beats on one track throw too. Beats are placed on the
+choreography's own clock (`at: 1240`) rather than as offsets from each other,
+and are sequenced into a single animation before assignment. `onFinished` is
+attached to whichever track ends last, computed rather than named.
+
+Covered by [`__tests__/utils/choreograph.test.ts`](__tests__/utils/choreograph.test.ts)
+and, end to end on the real component, by
+[`__tests__/components/home/screen-time-glance-choreography.test.tsx`](__tests__/components/home/screen-time-glance-choreography.test.tsx),
+which renders the glance against a recording reanimated mock and asserts that
+no shared value comes out of the open or the close carrying two animations.
+That one catches a stray hand-written assignment sitting *next to* a
+`choreograph` call, which the helper itself cannot see.
+
+### Phase 2 — Make the timeline data, not arithmetic ✅ built
 
 The glance computes `morphStartsAt`, `travelStartsAt`, `drawStartsAt`,
 `settleStartsAt` by adding durations in the component. Reordering the
@@ -130,7 +146,22 @@ has landed, the rotation ends on a whole turn, the total is within budget.
 **This is where the "reordered the beats and the border came out horizontal"
 class of bug dies.**
 
-### Phase 3 — Every derived quantity becomes a pure function
+**Built as** [`constants/screen-time-glance-timeline.ts`](constants/screen-time-glance-timeline.ts):
+`glanceOpenTimeline()` and `glanceCloseTimeline()` return named phases that
+each know when they start, how long they run, and when they end. The
+millisecond literals that were scattered through the component (`- 60`,
+`+ 40`, `+ 90`, `- 80`) are named constants next to the phases they belong to.
+Totals are derived with `Math.max` rather than written out, so a reordered
+beat cannot leave a stale total behind.
+
+[`__tests__/constants/screen-time-glance-timeline.test.ts`](__tests__/constants/screen-time-glance-timeline.test.ts)
+states the invariants that were each broken by hand at least once: the phases
+are contiguous, the border picks up before the line lands, the rotation is a
+whole number of turns and stops as the line settles, the drop is at full
+opacity for the whole flight, and the close finishes on the colour turn so
+the window cannot hand the corner back while the orb is still half blue.
+
+### Phase 3 — Every derived quantity becomes a pure function ✅ built
 
 Continue what `orbSquash` and `dropStretchAt` started: any value computed
 from a progress moves out of the component into a tested pure function.
@@ -140,6 +171,19 @@ no single step exceeds a few times the average, **measured against distance
 travelled rather than net range** — a shape that doubles back travels
 further than its endpoints suggest, which is exactly what made a correct
 curve look like a failing one the first time this was written.
+
+**Built.** `splashOpacity`, `splashRing` and `dropHandoverScale` moved out of
+the component into [`constants/screen-time-ring.ts`](constants/screen-time-ring.ts),
+alongside the splash's geometry constants. Each is tested for the defect it
+encodes: invisible at *both* ends of its range, born at the drop's own width
+rather than at a point, and tied to opacity so neither end of the flight can
+pop.
+
+`expectSmooth` lives in [`__tests__/utils/motion-smoothness.ts`](__tests__/utils/motion-smoothness.ts)
+and the two hand-rolled smoothness loops in the ring's suite now call it.
+One thing it surfaced: the splash's rise is deliberately near-instant, so it
+is excluded from the smoothness range and asserted separately rather than
+hidden behind a loosened tolerance.
 
 ### Phase 4 — A way to see what changed
 

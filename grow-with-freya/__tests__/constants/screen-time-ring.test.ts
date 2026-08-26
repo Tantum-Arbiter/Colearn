@@ -19,7 +19,12 @@ import {
   ringCentre,
   ringDashOffset,
   screenTimeProgress,
+  splashOpacity,
+  splashRing,
+  dropHandoverScale,
+  SPLASH_RING_BIRTH,
 } from '@/constants/screen-time-ring';
+import { expectSmooth } from '../utils/motion-smoothness';
 
 const HOUR = 3600;
 
@@ -287,31 +292,10 @@ describe('orbSquash', () => {
 
   it('moves smoothly the whole way, with no step at any point', () => {
     // The failure this replaces: three sequenced animations stopped dead at
-    // every join. Measured against the distance actually travelled -- the
-    // orb doubles back, so its path is longer than its net range -- no
-    // single step may be more than a few times the average. A pause and a
-    // jump would blow straight through this.
-    const steps = 400;
-    let previous = orbSquash(0);
-    let biggestX = 0;
-    let biggestY = 0;
-    let travelledX = 0;
-    let travelledY = 0;
-
-    for (let i = 1; i <= steps; i++) {
-      const next = orbSquash(i / steps);
-      const stepX = Math.abs(next.x - previous.x);
-      const stepY = Math.abs(next.y - previous.y);
-
-      biggestX = Math.max(biggestX, stepX);
-      biggestY = Math.max(biggestY, stepY);
-      travelledX += stepX;
-      travelledY += stepY;
-      previous = next;
-    }
-
-    expect(biggestX).toBeLessThan((travelledX / steps) * 4);
-    expect(biggestY).toBeLessThan((travelledY / steps) * 4);
+    // every join. `expectSmooth` measures against the distance actually
+    // travelled -- the orb doubles back, so its path is longer than its net
+    // range -- and a pause and a jump blow straight through it.
+    expectSmooth(orbSquash);
   });
 
   it('resolves to a line that can actually be seen', () => {
@@ -349,16 +333,90 @@ describe('dropStretchAt', () => {
   it('never reverses direction abruptly', () => {
     // the two-beat sequence it replaces flipped from stretching to squashing
     // at its join, which showed as a snap
-    const steps = 300;
-    let previous = dropStretchAt(0);
-    let biggest = 0;
+    expectSmooth(dropStretchAt, { steps: 300 });
+  });
+});
 
-    for (let i = 1; i <= steps; i++) {
-      const next = dropStretchAt(i / steps);
-      biggest = Math.max(biggest, Math.abs(next - previous));
-      previous = next;
-    }
+describe('splashOpacity', () => {
+  it('is invisible at rest, not only at the end of the splash', () => {
+    // The defect this pins: the splash faded only on the way out, so at
+    // progress zero its droplets sat stacked on the ring at full strength --
+    // a blue dot parked on the home screen whenever nothing was happening.
+    expect(splashOpacity(0)).toBe(0);
+    expect(splashOpacity(1)).toBe(0);
+  });
 
-    expect(biggest).toBeLessThan(0.01);
+  it('is fully up within a frame or two of impact', () => {
+    // the rise is deliberately near-instant: the splash has to exist on the
+    // frame the drop lands, not fade in over the flight
+    expect(splashOpacity(0.12)).toBeGreaterThan(0.9);
+  });
+
+  it('fades away over the flight', () => {
+    expect(splashOpacity(0.8)).toBeLessThan(splashOpacity(0.4));
+  });
+
+  it('clamps outside its own range', () => {
+    expect(splashOpacity(-1)).toBe(0);
+    expect(splashOpacity(2)).toBe(0);
+  });
+
+  it('moves smoothly once it is up', () => {
+    // The rise is deliberately near-instant -- the splash has to be there on
+    // the frame of impact -- so it is excluded and asserted separately above
+    // rather than hidden behind a loose tolerance. Everything after it is
+    // held to the same bar as every other curve here.
+    expectSmooth(splashOpacity, { from: 0.1, to: 1 });
+  });
+});
+
+describe('splashRing', () => {
+  it('is invisible at both ends of its range', () => {
+    expect(splashRing(0).opacity).toBe(0);
+    expect(splashRing(1).opacity).toBe(0);
+  });
+
+  it('is born at roughly the drop’s own width rather than at a point', () => {
+    // A ring starting from nothing where a whole drop had just been is a
+    // visible jump -- the same fault as a thing appearing at full size, run
+    // backwards.
+    expect(splashRing(0).r).toBe(SPLASH_RING_BIRTH);
+    expect(splashRing(0).r).toBeGreaterThan(SCREEN_TIME_RING.size / 3);
+  });
+
+  it('is fully up within a frame or two of impact', () => {
+    expect(splashRing(0.12).opacity).toBeGreaterThan(0.7);
+  });
+
+  it('spreads and thins as it goes', () => {
+    expect(splashRing(1).r).toBeGreaterThan(splashRing(0).r);
+    expect(splashRing(1).strokeWidth).toBeLessThan(splashRing(0).strokeWidth);
+  });
+
+  it('keeps a stroke wide enough to render at the very end', () => {
+    expect(splashRing(1).strokeWidth).toBeGreaterThan(0);
+  });
+
+  it('moves smoothly once it is up', () => {
+    // same deliberate near-instant rise as the droplets, for the same reason
+    expectSmooth(splashRing, { from: 0.1, to: 1 });
+  });
+});
+
+describe('dropHandoverScale', () => {
+  it('grows out of the gathered panel rather than appearing at full size', () => {
+    expect(dropHandoverScale(0)).toBeLessThan(1);
+    expect(dropHandoverScale(1)).toBe(1);
+  });
+
+  it('is tied to opacity, so it cannot vanish in mid-air at full size', () => {
+    // both ends of the flight popped when these were animated separately
+    expect(dropHandoverScale(0.5)).toBeGreaterThan(dropHandoverScale(0));
+    expect(dropHandoverScale(0.5)).toBeLessThan(dropHandoverScale(1));
+  });
+
+  it('clamps outside its own range', () => {
+    expect(dropHandoverScale(-1)).toBe(dropHandoverScale(0));
+    expect(dropHandoverScale(2)).toBe(dropHandoverScale(1));
   });
 });

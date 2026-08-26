@@ -4,10 +4,6 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   useAnimatedProps,
-  withDelay,
-  withTiming,
-  withSequence,
-  runOnJS,
   interpolateColor,
   Easing,
 } from 'react-native-reanimated';
@@ -28,24 +24,29 @@ import {
   panelBorderPath,
   dropFlight,
   splashPath,
+  splashOpacity,
+  splashRing,
+  dropHandoverScale,
   orbSquash,
   dropStretchAt,
   DROP_PATH,
   DROP_GLOSS,
   DROP_VIEWBOX,
+  SPLASH_BOX,
+  SPLASH_SPREAD,
+  SPLASH_GRAVITY,
+  SPLASH_DROP_RADIUS,
 } from '@/constants/screen-time-ring';
+import {
+  glanceOpenTimeline,
+  glanceCloseTimeline,
+} from '@/constants/screen-time-glance-timeline';
+import { choreograph, type Track } from '@/utils/choreograph';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 const SPINNER_BOX = (SCREEN_TIME_GLANCE.spinnerRadius + SCREEN_TIME_GLANCE.spinnerStroke) * 2 + 2;
-
-// the splash needs far more room than the orb: its droplets fly well clear
-// of the drop that threw them
-const SPLASH_BOX = 150;
-const SPLASH_SPREAD = 44;
-const SPLASH_GRAVITY = 52;
-const SPLASH_DROP_RADIUS = 4.5;
 
 export interface ScreenTimeGlanceProps {
   visible: boolean;
@@ -185,157 +186,240 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
   // the splash the drop makes as it lands, and the orb that emerges from it
   const splash = useSharedValue(0);
 
+  /**
+   * Every shared value, placed at one of the two states that involve no
+   * motion: the window fully open (reduced motion) or fully closed and ready
+   * to be opened again.
+   *
+   * One list rather than two scattered blocks of assignments, so a value
+   * cannot be remembered in one branch and forgotten in the other. That is
+   * how the splash once ended up sitting on the home screen at full opacity
+   * whenever nothing was happening.
+   */
+  const atRest = useCallback(
+    ({ open }: { open: boolean }): Track[] => [
+      { on: scrimOpacity, name: 'scrim', from: open ? 1 : 0, beats: [] },
+      { on: spinnerOpacity, name: 'orb', from: 0, beats: [] },
+      { on: spinnerRotate, name: 'orb turn', from: 0, beats: [] },
+      { on: spinnerScale, name: 'orb size', from: 1, beats: [] },
+      { on: spinnerTravel, name: 'travel', from: 0, beats: [] },
+      { on: spinnerMorph, name: 'morph', from: 0, beats: [] },
+      { on: spinnerWater, name: 'orb colour', from: 0, beats: [] },
+      { on: spinnerArcOpacity, name: 'orb outline', from: 1, beats: [] },
+      { on: spinnerCore, name: 'orb core', from: 1, beats: [] },
+      { on: drawProgress, name: 'border', from: open ? 1 : 0, beats: [] },
+      { on: drawOpacity, name: 'drawn stroke', from: open ? 0 : 1, beats: [] },
+      { on: panelOpacity, name: 'panel', from: open ? 1 : 0, beats: [] },
+      { on: contentOpacity, name: 'content', from: open ? 1 : 0, beats: [] },
+      { on: dropScaleX, name: 'gather x', from: 1, beats: [] },
+      { on: dropScaleY, name: 'gather y', from: 1, beats: [] },
+      {
+        on: dropRadius,
+        name: 'gather radius',
+        from: SCREEN_TIME_GLANCE.panelRadius,
+        beats: [],
+      },
+      { on: dropTint, name: 'gather tint', from: 0, beats: [] },
+      { on: dropOpacity, name: 'teardrop', from: 0, beats: [] },
+      { on: dropReturnX, name: 'flight x', from: 0, beats: [] },
+      { on: dropReturnY, name: 'flight y', from: 0, beats: [] },
+      { on: splash, name: 'splash', from: 0, beats: [] },
+    ],
+    // shared values are stable for the life of the component
+    []
+  );
+
   useEffect(() => {
     if (visible) {
       setMounted(true);
 
-      // a re-open starts from the beginning, whatever the close left behind
-      dropScaleX.value = 1;
-      dropScaleY.value = 1;
-      dropRadius.value = SCREEN_TIME_GLANCE.panelRadius;
-      dropTint.value = 0;
-      dropOpacity.value = 0;
-      dropReturnX.value = 0;
-      dropReturnY.value = 0;
-      splash.value = 0;
-      spinnerMorph.value = 0;
-      spinnerWater.value = 0;
-      spinnerArcOpacity.value = 1;
-      spinnerCore.value = 1;
-      drawProgress.value = 0;
-      drawOpacity.value = 1;
-
       if (reduceMotion) {
-        // no travel: the window is simply there
-        scrimOpacity.value = 1;
-        spinnerOpacity.value = 0;
-        drawProgress.value = 1;
-        drawOpacity.value = 0;
-        panelOpacity.value = 1;
-        contentOpacity.value = 1;
+        // no travel: the window is simply there. Still one choreography, so
+        // every value has exactly one owner in this branch too.
+        choreograph(atRest({ open: true }));
         return;
       }
 
-      const {
-        spinDuration,
-        travelDuration,
-        morphDuration,
-        drawDuration,
-        settleDuration,
-        fadeDuration,
-      } = SCREEN_TIME_GLANCE;
-      // The orb becomes the line where it was pressed, and only then does
-      // the line move. Travelling first and flattening on arrival made the
-      // shape change somewhere the eye was not yet looking; this way the
-      // change happens under the finger and what travels is already the
-      // thing the border is about to grow from.
-      const morphStartsAt = spinDuration;
-      const travelStartsAt = morphStartsAt + morphDuration;
-      // the border picks up just before the line settles, so the two read as
-      // one continuous stroke rather than a handover
-      const drawStartsAt = travelStartsAt + travelDuration - 60;
-      const settleStartsAt = drawStartsAt + drawDuration;
-
+      const timeline = glanceOpenTimeline();
       // every long move runs on the same curve -- a soft start and a long
       // glide out -- so the beats feel like one gesture rather than a series
       // of separate animations with their own personalities
       const glide = Easing.bezier(0.25, 0.9, 0.25, 1);
 
-      // 1. the ring's echo grows into a spinning circle where it was
-      //    pressed, over the live home screen -- nothing dims yet -- and
-      //    turns from the ring's colour to the water blue as it spins.
-      //    One sequenced animation, not two assignments: reassigning a
-      //    shared value cancels the animation already on it, which is how
-      //    the orb once spent its whole spin at opacity zero.
-      spinnerOpacity.value = withSequence(
-        withTiming(1, { duration: 140, easing: Easing.out(Easing.quad) }),
-        withDelay(drawStartsAt + 40 - 140, withTiming(0, { duration: 180, easing: glide }))
-      );
-      spinnerScale.value = withSequence(
-        withTiming(1.4, { duration: spinDuration * 0.55, easing: Easing.out(Easing.cubic) }),
-        withTiming(1.1, { duration: spinDuration * 0.45, easing: glide })
-      );
-      // Two whole turns across the spin and the morph, on one curve, ending
-      // exactly as the line settles -- a whole number so the line is
-      // vertical, and nothing turning while it travels.
-      spinnerRotate.value = withTiming(720, {
-        duration: spinDuration + morphDuration,
-        easing: Easing.inOut(Easing.cubic),
-      });
-      spinnerWater.value = withDelay(
-        spinDuration * 0.25,
-        withTiming(1, { duration: spinDuration * 0.65 })
-      );
-      // The core stays: squashed and stretched, it IS the line. What goes is
-      // the ring's outline around it, which flattens to nothing useful.
-      // Shrinking the core away instead left the travel with no visible line
-      // at all -- the orb changed shape and then simply was not there.
-      spinnerArcOpacity.value = withDelay(
-        morphStartsAt,
-        withTiming(0, { duration: morphDuration * 0.55, easing: glide })
-      );
+      // One track per shared value, and `choreograph` refuses a second. The
+      // bug this shape rules out: assigning twice in one handler silently
+      // discards the first animation, which is how the orb once spent its
+      // whole spin at opacity zero, the border showed a segment early, and
+      // the closing teardrop was never seen at all.
+      choreograph([
+        // 1. the ring's echo grows into a spinning circle where it was
+        //    pressed, over the live home screen -- nothing dims yet -- and
+        //    turns from the ring's colour to the water blue as it spins
+        {
+          on: spinnerOpacity,
+          name: 'orb',
+          from: 0,
+          beats: [
+            {
+              at: timeline.orbIn.at,
+              to: 1,
+              over: timeline.orbIn.over,
+              easing: Easing.out(Easing.quad),
+            },
+            {
+              at: timeline.orbOut.at,
+              to: 0,
+              over: timeline.orbOut.over,
+              easing: glide,
+            },
+          ],
+        },
+        {
+          on: spinnerScale,
+          name: 'orb size',
+          from: 1,
+          beats: [
+            {
+              at: timeline.swell.at,
+              to: 1.4,
+              over: timeline.swell.over,
+              easing: Easing.out(Easing.cubic),
+            },
+            { at: timeline.ease.at, to: 1.1, over: timeline.ease.over, easing: glide },
+          ],
+        },
+        // Two whole turns across the spin and the morph, on one curve, ending
+        // exactly as the line settles -- a whole number so the line is
+        // vertical, and nothing turning while it travels.
+        {
+          on: spinnerRotate,
+          name: 'orb turn',
+          from: 0,
+          beats: [
+            {
+              at: timeline.turn.at,
+              to: timeline.rotation,
+              over: timeline.turn.over,
+              easing: Easing.inOut(Easing.cubic),
+            },
+          ],
+        },
+        {
+          on: spinnerWater,
+          name: 'orb colour',
+          from: 0,
+          beats: [{ at: timeline.water.at, to: 1, over: timeline.water.over }],
+        },
+        // The core stays: squashed and stretched, it IS the line. What goes is
+        // the ring's outline around it, which flattens to nothing useful.
+        // Shrinking the core away instead left the travel with no visible line
+        // at all -- the orb changed shape and then simply was not there.
+        {
+          on: spinnerArcOpacity,
+          name: 'orb outline',
+          from: 1,
+          beats: [
+            { at: timeline.arcOut.at, to: 0, over: timeline.arcOut.over, easing: glide },
+          ],
+        },
+        { on: spinnerCore, name: 'orb core', from: 1, beats: [] },
 
-      // 2. ...squashes and stretches into the vertical line, right where it
-      //    was pressed. One progress, with `orbSquash` deriving both axes
-      //    from it: the orb still squats wider and shorter before it throws
-      //    itself thin, but as one unbroken move. Sequencing those beats as
-      //    separate animations made the motion stop dead at every join,
-      //    which is what made the change of shape look stepped.
-      spinnerMorph.value = withDelay(
-        morphStartsAt,
-        withTiming(1, { duration: morphDuration, easing: Easing.inOut(Easing.quad) })
-      );
+        // 2. ...squashes and stretches into the vertical line, right where it
+        //    was pressed. One progress, with `orbSquash` deriving both axes
+        //    from it: the orb still squats wider and shorter before it throws
+        //    itself thin, but as one unbroken move. Sequencing those beats as
+        //    separate animations made the motion stop dead at every join,
+        //    which is what made the change of shape look stepped.
+        {
+          on: spinnerMorph,
+          name: 'morph',
+          from: 0,
+          beats: [
+            {
+              at: timeline.morph.at,
+              to: 1,
+              over: timeline.morph.over,
+              easing: Easing.inOut(Easing.quad),
+            },
+          ],
+        },
 
-      // 3. ...and only then does the finished line glide to the border's
-      //    start, on the same curve as everything else
-      spinnerTravel.value = withDelay(
-        travelStartsAt,
-        withTiming(1, { duration: travelDuration, easing: glide })
-      );
+        // 3. ...and only then does the finished line glide to the border's
+        //    start, on the same curve as everything else
+        {
+          on: spinnerTravel,
+          name: 'travel',
+          from: 0,
+          beats: [
+            { at: timeline.travel.at, to: 1, over: timeline.travel.over, easing: glide },
+          ],
+        },
 
-      // 4. ...and the line draws the box
-      drawProgress.value = withDelay(
-        drawStartsAt,
-        withTiming(1, { duration: drawDuration, easing: Easing.inOut(Easing.cubic) })
-      );
+        // 4. ...and the line draws the box
+        {
+          on: drawProgress,
+          name: 'border',
+          from: 0,
+          beats: [
+            {
+              at: timeline.draw.at,
+              to: 1,
+              over: timeline.draw.over,
+              easing: Easing.inOut(Easing.cubic),
+            },
+          ],
+        },
 
-      // 5. the settle: the background blacks out and the fill arrives inside
-      //    the frame at the same time, the drawn stroke handing over to the
-      //    panel's own border
-      scrimOpacity.value = withDelay(
-        settleStartsAt,
-        withTiming(1, { duration: settleDuration })
-      );
-      panelOpacity.value = withDelay(
-        settleStartsAt,
-        withTiming(1, { duration: settleDuration })
-      );
-      drawOpacity.value = withDelay(
-        settleStartsAt + settleDuration * 0.5,
-        withTiming(0, { duration: settleDuration })
-      );
-      contentOpacity.value = withDelay(
-        settleStartsAt + settleDuration * 0.7,
-        withTiming(1, { duration: fadeDuration })
-      );
+        // 5. the settle: the background blacks out and the fill arrives inside
+        //    the frame at the same time, the drawn stroke handing over to the
+        //    panel's own border
+        {
+          on: scrimOpacity,
+          name: 'scrim',
+          from: 0,
+          beats: [{ at: timeline.settle.at, to: 1, over: timeline.settle.over }],
+        },
+        {
+          on: panelOpacity,
+          name: 'panel',
+          from: 0,
+          beats: [{ at: timeline.settle.at, to: 1, over: timeline.settle.over }],
+        },
+        {
+          on: drawOpacity,
+          name: 'drawn stroke',
+          from: 1,
+          beats: [{ at: timeline.strokeOut.at, to: 0, over: timeline.strokeOut.over }],
+        },
+        {
+          on: contentOpacity,
+          name: 'content',
+          from: 0,
+          beats: [{ at: timeline.content.at, to: 1, over: timeline.content.over }],
+        },
+
+        // the close's own values, put back where a fresh open expects them --
+        // a re-open starts from the beginning, whatever the close left behind
+        { on: dropScaleX, name: 'gather x', from: 1, beats: [] },
+        { on: dropScaleY, name: 'gather y', from: 1, beats: [] },
+        {
+          on: dropRadius,
+          name: 'gather radius',
+          from: SCREEN_TIME_GLANCE.panelRadius,
+          beats: [],
+        },
+        { on: dropTint, name: 'gather tint', from: 0, beats: [] },
+        { on: dropOpacity, name: 'teardrop', from: 0, beats: [] },
+        { on: dropReturnX, name: 'flight x', from: 0, beats: [] },
+        { on: dropReturnY, name: 'flight y', from: 0, beats: [] },
+        { on: splash, name: 'splash', from: 0, beats: [] },
+      ]);
       return;
     }
 
     setMounted(false);
     setTipsOpen(false);
-    scrimOpacity.value = 0;
-    spinnerOpacity.value = 0;
-    spinnerRotate.value = 0;
-    spinnerScale.value = 1;
-    spinnerTravel.value = 0;
-    spinnerMorph.value = 0;
-    spinnerWater.value = 0;
-    spinnerArcOpacity.value = 1;
-    spinnerCore.value = 1;
-    splash.value = 0;
-    drawProgress.value = 0;
-    panelOpacity.value = 0;
-    contentOpacity.value = 0;
+    choreograph(atRest({ open: false }));
   }, [visible, reduceMotion]);
 
   const finishClose = useCallback(() => {
@@ -350,128 +434,202 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
       return;
     }
 
-    const { dropShrink, dropReturn, splashDuration, orbReform, fadeDuration } =
-      SCREEN_TIME_GLANCE;
+    const timeline = glanceCloseTimeline();
     const { dropScaleX: sx, dropScaleY: sy, panelW } = geometry;
-    const gatherEndsAt = fadeDuration * 0.7 + dropShrink;
-    const flightStartsAt = gatherEndsAt + 90;
-    const landsAt = flightStartsAt + dropReturn;
-    // the orb comes out of the splash, a beat behind it
-    const orbFrom = landsAt + 90;
 
-    // The orb is rebuilt where and how the drop leaves it: back at the ring
-    // rather than parked at the border, round rather than flattened into the
-    // line it became, small, and still in the water blue. Plain assignments,
-    // not animations -- they set the starting point the reform animates away
-    // from, and the orb is invisible until it does.
-    spinnerTravel.value = 0;
-    spinnerMorph.value = 0;
-    spinnerScale.value = 0.55;
-    spinnerRotate.value = 0;
-    // the open leaves the core at full size -- it was the line -- so the
-    // reform has to start it from nothing for it to grow back out of the
-    // splash rather than snapping into place
-    spinnerCore.value = 0;
-    spinnerArcOpacity.value = 0;
+    choreograph(
+      [
+        // the content dims, the panel gathers in...
+        {
+          on: contentOpacity,
+          name: 'content',
+          beats: [{ at: timeline.dim.at, to: 0, over: timeline.dim.over }],
+        },
+        {
+          on: dropTint,
+          name: 'gather tint',
+          beats: [{ at: timeline.tint.at, to: 1, over: timeline.tint.over }],
+        },
+        {
+          on: dropScaleX,
+          name: 'gather x',
+          beats: [
+            {
+              at: timeline.gather.at,
+              to: sx,
+              over: timeline.gather.over,
+              easing: Easing.inOut(Easing.cubic),
+            },
+          ],
+        },
+        {
+          on: dropScaleY,
+          name: 'gather y',
+          beats: [
+            {
+              at: timeline.gather.at,
+              to: sy,
+              over: timeline.gather.over,
+              easing: Easing.inOut(Easing.cubic),
+            },
+          ],
+        },
+        {
+          on: dropRadius,
+          name: 'gather radius',
+          beats: [
+            {
+              at: timeline.gather.at,
+              to: panelW / 2,
+              over: timeline.gather.over,
+              easing: Easing.inOut(Easing.cubic),
+            },
+          ],
+        },
 
-    // the content dims, the panel gathers in...
-    contentOpacity.value = withTiming(0, { duration: fadeDuration * 0.7 });
-    dropTint.value = withDelay(
-      fadeDuration * 0.7 + dropShrink * 0.4,
-      withTiming(1, { duration: dropShrink * 0.6 })
-    );
-    dropScaleX.value = withDelay(
-      fadeDuration * 0.7,
-      withTiming(sx, { duration: dropShrink, easing: Easing.inOut(Easing.cubic) })
-    );
-    dropScaleY.value = withDelay(
-      fadeDuration * 0.7,
-      withTiming(sy, { duration: dropShrink, easing: Easing.inOut(Easing.cubic) })
-    );
-    dropRadius.value = withDelay(
-      fadeDuration * 0.7,
-      withTiming(panelW / 2, { duration: dropShrink, easing: Easing.inOut(Easing.cubic) })
-    );
+        // ...becomes a true teardrop -- the gathered blob hands over to the
+        // drop shape in a quick crossfade at its smallest...
+        {
+          on: panelOpacity,
+          name: 'panel',
+          beats: [{ at: timeline.handover.at, to: 0, over: timeline.handover.over }],
+        },
+        // The teardrop's whole life in one track -- in at the crossfade, held
+        // through the flight, out as it reforms into the orb. As two separate
+        // assignments they cancelled each other and the drop was never seen
+        // at all, hidden by the gathered panel underneath.
+        {
+          on: dropOpacity,
+          name: 'teardrop',
+          beats: [
+            { at: timeline.dropIn.at, to: 1, over: timeline.dropIn.over },
+            { at: timeline.dropOut.at, to: 0, over: timeline.dropOut.over },
+          ],
+        },
 
-    // ...becomes a true teardrop -- the gathered blob hands over to the drop
-    // shape in a quick crossfade at its smallest...
-    panelOpacity.value = withDelay(gatherEndsAt, withTiming(0, { duration: 150 }));
-    // The teardrop's whole life in one sequence -- in at the crossfade, held
-    // through the flight, out as it reforms into the orb. Two assignments
-    // cancel each other and the drop is never seen at all: it is the same
-    // bug that once kept the orb invisible through its entire spin, and the
-    // gathered panel underneath is convincing enough to hide it.
-    const dropInAt = gatherEndsAt - 80;
-    dropOpacity.value = withSequence(
-      withDelay(dropInAt, withTiming(1, { duration: 150 })),
-      withDelay(landsAt - 10 - (dropInAt + 150), withTiming(0, { duration: 120 }))
-    );
+        // ...hangs for a beat, then falls home to the ring. The two axes carry
+        // different easings on purpose: the sideways travel eases out while
+        // the drop accelerates downward, which bends the flight into the arc a
+        // falling thing actually takes.
+        {
+          on: dropReturnX,
+          name: 'flight x',
+          beats: [
+            {
+              at: timeline.flight.at,
+              to: 1,
+              over: timeline.flight.over,
+              easing: Easing.out(Easing.cubic),
+            },
+          ],
+        },
+        {
+          on: dropReturnY,
+          name: 'flight y',
+          beats: [
+            {
+              at: timeline.flight.at,
+              to: 1,
+              over: timeline.flight.over,
+              easing: Easing.in(Easing.cubic),
+            },
+          ],
+        },
 
-    // ...hangs for a beat, then falls home to the ring. The two axes carry
-    // different easings on purpose: the sideways travel eases out while the
-    // drop accelerates downward, which bends the flight into the arc a
-    // falling thing actually takes.
-    dropReturnX.value = withDelay(
-      flightStartsAt,
-      withTiming(1, { duration: dropReturn, easing: Easing.out(Easing.cubic) })
-    );
-    dropReturnY.value = withDelay(
-      flightStartsAt,
-      withTiming(1, { duration: dropReturn, easing: Easing.in(Easing.cubic) })
-    );
-    // stretched by the fall, squashed as it lands
+        // the night lifts as it travels, so the home screen is back by the
+        // time the drop gets there
+        {
+          on: scrimOpacity,
+          name: 'scrim',
+          beats: [{ at: timeline.nightLifts.at, to: 0, over: timeline.nightLifts.over }],
+        },
 
-    // the night lifts as it travels, so the home screen is back by the time
-    // the drop gets there
-    scrimOpacity.value = withDelay(
-      flightStartsAt + dropReturn * 0.35,
-      withTiming(0, { duration: dropReturn * 0.65 })
-    );
+        // ...and lands with a splash: droplets thrown up and out, arcing back
+        // down under gravity, with a ring spreading from the point of impact
+        {
+          on: splash,
+          name: 'splash',
+          beats: [{ at: timeline.splash.at, to: 1, over: timeline.splash.over }],
+        },
 
-    // ...and lands with a splash: droplets thrown up and out, arcing back
-    // down under gravity, with a ring spreading from the point of impact
-    splash.value = withDelay(landsAt, withTiming(1, { duration: splashDuration }));
-
-    // ...out of which the orb emerges, growing back to the ring's own dot
-    // size and turning from water blue to the ring's colour. It starts a
-    // beat after the splash so it reads as coming out of it rather than
-    // arriving alongside it. One assignment per value -- a second would
-    // cancel the first and the orb would never appear.
-    spinnerOpacity.value = withDelay(orbFrom, withTiming(1, { duration: 120 }));
-    spinnerScale.value = withDelay(
-      orbFrom,
-      withTiming(1, { duration: orbReform, easing: Easing.out(Easing.cubic) })
-    );
-    spinnerArcOpacity.value = withDelay(
-      orbFrom + 120,
-      withTiming(1, { duration: orbReform * 0.7 })
-    );
-    // one settling turn, the mirror of the spin that opened the window
-    spinnerRotate.value = withDelay(
-      orbFrom,
-      withTiming(360, { duration: orbReform, easing: Easing.out(Easing.cubic) })
-    );
-    // Blue first, then red. The turn waits until the orb has finished
-    // fading up: started with the fade-in, the colour was already halfway to
-    // red before there was anything solid enough to see it on, so the orb
-    // simply arrived a muddy red. It comes back as the water it left as, and
-    // only then returns to the ring's own colour.
-    spinnerWater.value = withDelay(
-      orbFrom + 170,
-      withTiming(
-        0,
-        { duration: orbReform * 0.9 },
-        (finished) => {
-          // the last thing to finish, now that the colour turn waits for the
-          // orb to be visible: closing on the core's growth instead handed
-          // the corner to a red ring while the orb was still half blue
-          if (finished) runOnJS(finishClose)();
-        }
-      )
-    );
-    spinnerCore.value = withDelay(
-      orbFrom,
-      withTiming(1, { duration: orbReform, easing: Easing.out(Easing.cubic) })
+        // ...out of which the orb emerges, growing back to the ring's own dot
+        // size and turning from water blue to the ring's colour. It starts a
+        // beat after the splash so it reads as coming out of it rather than
+        // arriving alongside it.
+        //
+        // The `from`s rebuild the orb where and how the drop leaves it: back
+        // at the ring rather than parked at the border, round rather than
+        // flattened into the line it became, small, and still water blue.
+        { on: spinnerTravel, name: 'travel', from: 0, beats: [] },
+        { on: spinnerMorph, name: 'morph', from: 0, beats: [] },
+        {
+          on: spinnerOpacity,
+          name: 'orb',
+          beats: [{ at: timeline.orbIn.at, to: 1, over: timeline.orbIn.over }],
+        },
+        {
+          on: spinnerScale,
+          name: 'orb size',
+          from: 0.55,
+          beats: [
+            {
+              at: timeline.reform.at,
+              to: 1,
+              over: timeline.reform.over,
+              easing: Easing.out(Easing.cubic),
+            },
+          ],
+        },
+        // one settling turn, the mirror of the spin that opened the window
+        {
+          on: spinnerRotate,
+          name: 'orb turn',
+          from: 0,
+          beats: [
+            {
+              at: timeline.reform.at,
+              to: 360,
+              over: timeline.reform.over,
+              easing: Easing.out(Easing.cubic),
+            },
+          ],
+        },
+        {
+          on: spinnerArcOpacity,
+          name: 'orb outline',
+          from: 0,
+          beats: [{ at: timeline.arcBack.at, to: 1, over: timeline.arcBack.over }],
+        },
+        // the open leaves the core at full size -- it was the line -- so the
+        // reform has to start it from nothing for it to grow back out of the
+        // splash rather than snapping into place
+        {
+          on: spinnerCore,
+          name: 'orb core',
+          from: 0,
+          beats: [
+            {
+              at: timeline.reform.at,
+              to: 1,
+              over: timeline.reform.over,
+              easing: Easing.out(Easing.cubic),
+            },
+          ],
+        },
+        // Blue first, then red. The turn waits until the orb has finished
+        // fading up: started with the fade-in, the colour was already halfway
+        // to red before there was anything solid enough to see it on, and the
+        // orb simply arrived a muddy red.
+        {
+          on: spinnerWater,
+          name: 'orb colour',
+          beats: [{ at: timeline.water.at, to: 0, over: timeline.water.over }],
+        },
+      ],
+      // Hung on whichever track finishes last rather than on a named one --
+      // which is how the window once closed while the orb was still half
+      // blue, handing the corner back to a red ring mid-turn.
+      { onFinished: finishClose }
     );
   }, [finishClose, reduceMotion, geometry]);
 
@@ -529,11 +687,6 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
   const contentStyle = useAnimatedStyle(() => ({ opacity: contentOpacity.value }));
   const tintStyle = useAnimatedStyle(() => ({ opacity: dropTint.value }));
 
-  // The splash lives in the tree the whole time, so its opacity has to be
-  // zero at rest as well as at the end. Fading only on the way out left its
-  // droplets stacked on the ring at full strength whenever nothing was
-  // happening -- a blue dot sitting in the orb's place through the entire
-  // open, and through the home screen besides.
   const splashProps = useAnimatedProps(() => ({
     d: splashPath(
       splash.value,
@@ -542,17 +695,11 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
       SPLASH_GRAVITY,
       SPLASH_DROP_RADIUS
     ),
-    opacity: Math.min(1, splash.value * 10) * (1 - splash.value * splash.value),
+    opacity: splashOpacity(splash.value),
   }));
 
   // the ring of impact: spreads from where the drop hit and thins as it goes
-  const splashRingProps = useAnimatedProps(() => ({
-    // born at roughly the drop's own width rather than at a point: a ring
-    // starting from nothing where a whole drop just was is a visible jump
-    r: 15 + 38 * splash.value,
-    opacity: Math.min(1, splash.value * 10) * 0.85 * (1 - splash.value),
-    strokeWidth: 3 * (1 - splash.value) + 0.4,
-  }));
+  const splashRingProps = useAnimatedProps(() => splashRing(splash.value));
 
   const teardropStyle = useAnimatedStyle(() => ({
     opacity: dropOpacity.value,
@@ -560,7 +707,7 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
       // tied to its own opacity, so the drop grows out of the gathered panel
       // and shrinks into the splash rather than appearing and vanishing at
       // full size -- which is what made both ends of the flight pop
-      { scale: 0.6 + 0.4 * dropOpacity.value },
+      { scale: dropHandoverScale(dropOpacity.value) },
       { translateX: geometry.flight.dx * dropReturnX.value },
       { translateY: geometry.flight.dy * dropReturnY.value },
       { scaleY: dropStretchAt(dropReturnY.value) },
