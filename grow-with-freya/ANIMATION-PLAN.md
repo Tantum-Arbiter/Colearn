@@ -365,7 +365,31 @@ nothing — and it should be tested in both directions. Worth checking against
 the calm-UX principle in [`CLAUDE.md`](../CLAUDE.md): a child sensitive
 enough to need reduced motion is exactly the child a hard cut is worst for.
 
-### Phase 6 — Measure before optimising
+### Phase 6 — Measure before optimising ✅ partly done
+
+The path builders were measured and cut. `spiralArmPath` was recomputing a
+sine, a cosine, a square root and a logarithm for each of 57 samples, and
+allocating a closure per sample, sixty times a second -- none of which
+depended on the animation. Tabulated at module load, `toFixed` replaced with
+a tenth-of-a-point round, and the sample count taken from 56 to 40 after
+rendering 56/40/32 side by side and finding 40 indistinguishable and 32
+visibly faceted.
+
+**4.1x faster and a 42% shorter path string** (797 to 461 characters), which
+matters twice over: the JS is cheaper, and the renderer parses a shorter
+string back into a path on every frame.
+
+What is still unmeasured is the part that needs a device profiler rather than
+a benchmark: the panel gathers from full screen to a 38x52 blob over 300ms
+with its `borderRadius` animating and the entire dashboard still mounted
+inside it. That is a full-screen layer re-rasterising every frame, and it is
+a much better candidate for a visible stutter than any path string was.
+**Not fixed, because every fix trades against something** -- unmounting the
+content costs a commit at exactly the wrong moment, rasterising fights the
+changing radius, and dropping the radius animation changes how the gather
+reads.
+
+### Phase 6 (original) — Measure before optimising
 
 Everything runs on the UI thread through worklets, which is right. But
 `splashPath` builds a path string of seven circles per frame, and the glance

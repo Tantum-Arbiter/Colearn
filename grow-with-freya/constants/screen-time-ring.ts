@@ -159,7 +159,16 @@ export function dropStretchAt(progress: number): number {
  * which is what made the early unroll frames cross themselves.
  */
 export const SPIRAL_TURNS = 2;
-export const SPIRAL_STEPS = 56;
+/**
+ * How finely the arm is sampled.
+ *
+ * Forty is where it stops mattering. Fifty-six was indistinguishable from it
+ * on a sixty-point box, and thirty-two visibly facets the outer turn. Every
+ * sample is two numbers the renderer parses back into a path on every frame,
+ * so the difference between fifty-six and forty is about a third of that work
+ * for no change on screen.
+ */
+export const SPIRAL_STEPS = 40;
 
 /**
  * How far the arm reaches.
@@ -211,28 +220,60 @@ export const SPIRAL_UNROLL_BAND = 0.9;
  * wave fixes, and the third is what `SPIRAL_RADIUS` is tested against.
  */
 /**
- * How far along an Archimedean arm a point is, as a fraction of its whole
- * length.
+ * Everything about the arm that does not depend on the animation, worked out
+ * once at module load.
  *
- * The inner turns are short and the outer ones long, so the parameter that
- * draws the spiral is nowhere near proportional to distance along it. Mapping
- * the arm onto the line by that parameter instead of by length is what made
- * the unroll loop: the point at the very centre was aimed at the far end of
- * the line and had to drag sideways across the coil still wrapped around it.
+ * The angle of each sample and its distance along the arm follow from
+ * SPIRAL_TURNS and SPIRAL_STEPS alone, so recomputing them per frame bought
+ * nothing and cost a great deal: a sine, a cosine, a square root and a
+ * logarithm for every one of 57 points, plus a closure allocated per point,
+ * sixty times a second. What is left in the frame is multiply and add.
  *
- * Closed form rather than a running sum, so the worklet allocates nothing.
+ * The distance term is the arc length of an Archimedean spiral in closed
+ * form. The inner turns are short and the outer ones long, which is why the
+ * arm has to be laid onto the line by length rather than by the parameter
+ * that draws it -- by parameter, the point at the very centre was aimed at
+ * the far end of the line and dragged sideways across the coil.
  */
-function spiralArcFraction(f: number): number {
-  'worklet';
-  const b = SPIRAL_TURNS * 2 * Math.PI;
-  const at = (u: number) => {
-    const bu = b * u;
+const SPIRAL_TABLE = (() => {
+  const sweep = SPIRAL_TURNS * 2 * Math.PI;
+  const arcAt = (u: number) => {
+    const bu = sweep * u;
     const root = Math.sqrt(1 + bu * bu);
 
-    return (u * root) / 2 + Math.log(bu + root) / (2 * b);
+    return (u * root) / 2 + Math.log(bu + root) / (2 * sweep);
   };
+  const total = arcAt(1);
 
-  return at(f) / at(1);
+  const at: number[] = [];
+  const cos: number[] = [];
+  const sin: number[] = [];
+  const arc: number[] = [];
+
+  for (let i = 0; i <= SPIRAL_STEPS; i++) {
+    const u = i / SPIRAL_STEPS;
+
+    at.push(u);
+    cos.push(Math.cos(u * sweep));
+    sin.push(Math.sin(u * sweep));
+    arc.push(arcAt(u) / total);
+  }
+
+  return { at, cos, sin, arc };
+})();
+
+/**
+ * Rounds to a tenth of a point for a path string.
+ *
+ * `toFixed` formats through a far heavier path than this and was called twice
+ * per sample, 57 samples a frame. A tenth of a point is finer than anything
+ * here is drawn -- the arm lives in a box sixty points across -- and shorter
+ * numbers mean less string for the renderer to parse back into a path on
+ * every frame.
+ */
+function coord(value: number): number {
+  'worklet';
+  return Math.round(value * 10) / 10;
 }
 
 export function spiralArmPath(
@@ -254,24 +295,23 @@ export function spiralArmPath(
   // the length it is crossing
   const front = s * (1 + SPIRAL_UNROLL_BAND);
   const length = lineHalf * 2;
+  const shift = lineHalf * s;
 
   let d = '';
 
   for (let i = 0; i <= SPIRAL_STEPS; i++) {
-    const f = i / SPIRAL_STEPS;
-    const theta = f * SPIRAL_TURNS * 2 * Math.PI;
+    const f = SPIRAL_TABLE.at[i];
     const r = radius * g * f;
 
-    const spiralX = centre + r * Math.cos(theta);
-    const spiralY = centre + r * Math.sin(theta);
+    const spiralX = centre + r * SPIRAL_TABLE.cos[i];
+    const spiralY = centre + r * SPIRAL_TABLE.sin[i];
 
     // The line it lays itself down as, anchored where the core already is and
     // running out from there by length along the arm. The core end therefore
     // barely moves and the arm unwinds off it, which is what an unrolling
     // coil does -- aiming the core at a point half a line away is what made
     // it loop instead.
-    const lineX = centre + length * spiralArcFraction(f);
-    const lineY = centre;
+    const lineX = centre + length * SPIRAL_TABLE.arc[i];
 
     // how far this point in particular has been pulled straight: the outer
     // end (f = 1) goes first, the core (f = 0) last
@@ -284,10 +324,10 @@ export function spiralArmPath(
     // the finished line runs from the core rightward, so the whole arm slides
     // back by half its length as it straightens and ends up centred on the
     // point the border is drawn from
-    const x = spiralX + (lineX - spiralX) * t - lineHalf * s;
-    const y = spiralY + (lineY - spiralY) * t;
+    const x = spiralX + (lineX - spiralX) * t - shift;
+    const y = spiralY + (centre - spiralY) * t;
 
-    d += `${i === 0 ? 'M' : 'L'} ${x.toFixed(2)} ${y.toFixed(2)} `;
+    d += `${i === 0 ? 'M' : 'L'} ${coord(x)} ${coord(y)} `;
   }
 
   return d.trim();
@@ -307,6 +347,23 @@ export const SPLASH_DROPLETS = 7;
  * One path rather than seven elements: it is a single animated `d` on the
  * UI thread, where seven circles would be seven animated props.
  */
+const SPLASH_TABLE = (() => {
+  const cos: number[] = [];
+  const sin: number[] = [];
+
+  for (let i = 0; i < SPLASH_DROPLETS; i++) {
+    const t = i / (SPLASH_DROPLETS - 1);
+    // the upward half in screen coordinates, nudged unevenly so the splash
+    // does not read as a clock face
+    const angle = Math.PI + t * Math.PI + ((i % 3) - 1) * 0.11;
+
+    cos.push(Math.cos(angle));
+    sin.push(Math.sin(angle));
+  }
+
+  return { cos, sin };
+})();
+
 export function splashPath(
   progress: number,
   centre: number,
@@ -317,25 +374,28 @@ export function splashPath(
   'worklet';
   // ease out, so the droplets leave fast and slow as they rise
   const out = spread * (1 - (1 - progress) * (1 - progress));
+  // every droplet shares a radius, so it is worked out once rather than seven
+  // times, and once it is sub-pixel there is no path left to build at all
+  const r = radius * (1 - progress * 0.7);
+
+  if (r <= 0.2) {
+    return '';
+  }
+
+  const fall = gravity * progress * progress;
+  const rr = coord(r);
+  const across = coord(r * 2);
   let d = '';
 
   for (let i = 0; i < SPLASH_DROPLETS; i++) {
-    const t = i / (SPLASH_DROPLETS - 1);
-    // the upward half in screen coordinates, nudged unevenly so the splash
-    // does not read as a clock face
-    const angle = Math.PI + t * Math.PI + ((i % 3) - 1) * 0.11;
-
-    const r = radius * (1 - progress * 0.7);
-    if (r <= 0.2) continue;
-
-    const x = centre + Math.cos(angle) * out;
-    const y = centre + Math.sin(angle) * out + gravity * progress * progress;
+    const x = centre + SPLASH_TABLE.cos[i] * out;
+    const y = centre + SPLASH_TABLE.sin[i] * out + fall;
 
     // a circle as two arcs, so every droplet is one subpath
     d +=
-      `M ${(x - r).toFixed(2)} ${y.toFixed(2)} ` +
-      `a ${r.toFixed(2)} ${r.toFixed(2)} 0 1 0 ${(r * 2).toFixed(2)} 0 ` +
-      `a ${r.toFixed(2)} ${r.toFixed(2)} 0 1 0 ${(-r * 2).toFixed(2)} 0 `;
+      `M ${coord(x - r)} ${coord(y)} ` +
+      `a ${rr} ${rr} 0 1 0 ${across} 0 ` +
+      `a ${rr} ${rr} 0 1 0 ${-across} 0 `;
   }
 
   return d.trim();
