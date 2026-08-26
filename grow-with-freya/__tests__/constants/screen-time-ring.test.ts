@@ -540,33 +540,27 @@ describe('spiralArmPath', () => {
     it('straightens from the outer end inward, not all at once', () => {
       // The defect this pins: pulling every point toward the line at the same
       // rate crumples the spiral in on itself. The wave has to arrive at the
-      // outer end first and travel in, so the core end is still on the curve
-      // while the tip is already down.
-      //
-      // Measured as each point's distance from its own place on the line --
-      // not its distance from the line's height, which the core end sits on
-      // by construction whether it has straightened or not.
-      const target = (f: number) => ({
-        x: CENTRE - SPIRAL_LINE_HALF + 2 * SPIRAL_LINE_HALF * f,
-        y: CENTRE,
-      });
+      // outer end first and travel in, so the tip is already lying flat while
+      // the core end is still coiled.
       const p = points(arm(1, 0.5));
-      const toGo = p.map((point, i) => {
-        const t = target(i / (p.length - 1));
+      const inner = p.slice(0, Math.floor(p.length / 2));
 
-        return Math.hypot(point.x - t.x, point.y - t.y);
-      });
+      const tipOffLine = onLine(p[p.length - 1]);
+      const innerOffLine = Math.max(...inner.map(onLine));
 
-      expect(toGo[toGo.length - 1]).toBeLessThan(toGo[0]);
+      expect(tipOffLine).toBeLessThan(innerOffLine / 2);
     });
 
-    it('never lets a point run past the line it is landing on', () => {
-      for (const straighten of [0.2, 0.4, 0.6, 0.8]) {
-        const p = points(arm(1, straighten));
-        const xs = p.map((point) => point.x);
+    it('keeps every point within reach of the arm and the line', () => {
+      // not a tight bound, a sanity one: nothing should fly off while the
+      // wave passes, which is what a crumpling unroll looks like numerically
+      const span = RADIUS + SPIRAL_LINE_HALF + 1;
 
-        expect(Math.min(...xs)).toBeGreaterThanOrEqual(CENTRE - RADIUS - 0.1);
-        expect(Math.max(...xs)).toBeLessThanOrEqual(CENTRE + RADIUS + 0.1);
+      for (const straighten of [0.2, 0.4, 0.6, 0.8]) {
+        points(arm(1, straighten)).forEach((point) => {
+          expect(Math.abs(point.x - CENTRE)).toBeLessThanOrEqual(span);
+          expect(Math.abs(point.y - CENTRE)).toBeLessThanOrEqual(span);
+        });
       }
     });
 

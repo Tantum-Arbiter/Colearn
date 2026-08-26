@@ -123,7 +123,13 @@ export function dropStretchAt(progress: number): number {
   return 1 + 0.22 * Math.sin(Math.PI * u) - 0.16 * u * u;
 }
 
-export const SPIRAL_TURNS = 1.6;
+/**
+ * A whole number of turns, so the arm's tip finishes pointing along the line
+ * it is about to become. At 1.6 turns the tip ended at 216 degrees -- aimed
+ * away from the line -- and had to swing right across the coil to reach it,
+ * which is what made the early unroll frames cross themselves.
+ */
+export const SPIRAL_TURNS = 2;
 export const SPIRAL_STEPS = 56;
 
 /**
@@ -148,8 +154,13 @@ export const SPIRAL_LINE_HALF = 24;
  * rebuilt as a travelling wave for exactly that reason. The wave enters at the
  * outer end and travels inward over this fraction of the arm, so each point
  * peels off the curve and onto the line in turn, and the core end goes last.
+ *
+ * Wide, because a narrow wave leaves the untouched part of the coil sitting
+ * across the part already straightened and the arm crosses itself. At 0.42
+ * the mid-unroll frames were a closed loop; at 0.9 the whole arm relaxes
+ * together and the residual coil shrinks rather than knotting.
  */
-export const SPIRAL_UNROLL_BAND = 0.42;
+export const SPIRAL_UNROLL_BAND = 0.9;
 
 /**
  * The spiral arm the orb winds out while it spins, and then lays down as the
@@ -170,6 +181,31 @@ export const SPIRAL_UNROLL_BAND = 0.42;
  * scale. The first is now unrepresentable, the second is what the travelling
  * wave fixes, and the third is what `SPIRAL_RADIUS` is tested against.
  */
+/**
+ * How far along an Archimedean arm a point is, as a fraction of its whole
+ * length.
+ *
+ * The inner turns are short and the outer ones long, so the parameter that
+ * draws the spiral is nowhere near proportional to distance along it. Mapping
+ * the arm onto the line by that parameter instead of by length is what made
+ * the unroll loop: the point at the very centre was aimed at the far end of
+ * the line and had to drag sideways across the coil still wrapped around it.
+ *
+ * Closed form rather than a running sum, so the worklet allocates nothing.
+ */
+function spiralArcFraction(f: number): number {
+  'worklet';
+  const b = SPIRAL_TURNS * 2 * Math.PI;
+  const at = (u: number) => {
+    const bu = b * u;
+    const root = Math.sqrt(1 + bu * bu);
+
+    return (u * root) / 2 + Math.log(bu + root) / (2 * b);
+  };
+
+  return at(f) / at(1);
+}
+
 export function spiralArmPath(
   centre: number,
   radius: number,
@@ -188,6 +224,7 @@ export function spiralArmPath(
   // the wave has to clear the whole arm, so it travels a band further than
   // the length it is crossing
   const front = s * (1 + SPIRAL_UNROLL_BAND);
+  const length = lineHalf * 2;
 
   let d = '';
 
@@ -199,9 +236,12 @@ export function spiralArmPath(
     const spiralX = centre + r * Math.cos(theta);
     const spiralY = centre + r * Math.sin(theta);
 
-    // the line it is laying itself down as: the core end at one tip, the
-    // outer end at the other
-    const lineX = centre - lineHalf + 2 * lineHalf * f;
+    // The line it lays itself down as, anchored where the core already is and
+    // running out from there by length along the arm. The core end therefore
+    // barely moves and the arm unwinds off it, which is what an unrolling
+    // coil does -- aiming the core at a point half a line away is what made
+    // it loop instead.
+    const lineX = centre + length * spiralArcFraction(f);
     const lineY = centre;
 
     // how far this point in particular has been pulled straight: the outer
@@ -212,7 +252,10 @@ export function spiralArmPath(
     // than setting off and stopping abruptly
     const t = clamped * clamped * (3 - 2 * clamped);
 
-    const x = spiralX + (lineX - spiralX) * t;
+    // the finished line runs from the core rightward, so the whole arm slides
+    // back by half its length as it straightens and ends up centred on the
+    // point the border is drawn from
+    const x = spiralX + (lineX - spiralX) * t - lineHalf * s;
     const y = spiralY + (lineY - spiralY) * t;
 
     d += `${i === 0 ? 'M' : 'L'} ${x.toFixed(2)} ${y.toFixed(2)} `;

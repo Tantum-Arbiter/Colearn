@@ -191,6 +191,29 @@ The general form: when one element starts producing a shape another transform
 was producing, the old transform is not merely redundant, it is actively
 destructive. **Removing it is part of the change, not cleanup afterwards.**
 
+### 10. Geometry that passes every test and looks wrong
+
+The arm's unroll satisfied every assertion -- it started as a spiral, ended
+as a straight line of the right length, straightened outer end first, moved
+smoothly, stayed in bounds -- and in the mid frames it tied itself into a
+closed loop. Rendering six frames to a PNG and looking at them took two
+minutes and showed it immediately.
+
+Two causes, both invisible to the assertions:
+
+- The line position was linear in the parameter that draws the spiral. That
+  parameter is nowhere near proportional to distance along the arm, because
+  the inner turns are short and the outer ones long. The point at the very
+  centre was aimed at the far end of the line and dragged sideways across the
+  coil still wrapped around it. Mapping by **arc length**, and anchoring the
+  line where the core already is, is what an unrolling coil actually does.
+- A fractional turn count left the arm's tip pointing away from the line it
+  had to reach, so it swung right across the coil. **Whole turns** put the
+  tip on the line's own axis.
+
+**Sampling a shape's endpoints and its bounds says nothing about what it does
+in between.** Render the frames.
+
 ## Phases
 
 Each is independently shippable and independently useful. Phase 1 is worth
