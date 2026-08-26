@@ -186,16 +186,6 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
   // the splash the drop makes as it lands, and the orb that emerges from it
   const splash = useSharedValue(0);
 
-  /**
-   * Every shared value, placed at one of the two states that involve no
-   * motion: the window fully open (reduced motion) or fully closed and ready
-   * to be opened again.
-   *
-   * One list rather than two scattered blocks of assignments, so a value
-   * cannot be remembered in one branch and forgotten in the other. That is
-   * how the splash once ended up sitting on the home screen at full opacity
-   * whenever nothing was happening.
-   */
   const atRest = useCallback(
     ({ open }: { open: boolean }): Track[] => [
       { on: scrimOpacity, name: 'scrim', from: open ? 1 : 0, beats: [] },
@@ -225,7 +215,6 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
       { on: dropReturnY, name: 'flight y', from: 0, beats: [] },
       { on: splash, name: 'splash', from: 0, beats: [] },
     ],
-    // shared values are stable for the life of the component
     []
   );
 
@@ -234,8 +223,7 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
       setMounted(true);
 
       if (reduceMotion) {
-        // no travel: the window is simply there. Still one choreography, so
-        // every value has exactly one owner in this branch too.
+        // no travel: the window is simply there
         choreograph(atRest({ open: true }));
         return;
       }
@@ -246,11 +234,6 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
       // of separate animations with their own personalities
       const glide = Easing.bezier(0.25, 0.9, 0.25, 1);
 
-      // One track per shared value, and `choreograph` refuses a second. The
-      // bug this shape rules out: assigning twice in one handler silently
-      // discards the first animation, which is how the orb once spent its
-      // whole spin at opacity zero, the border showed a segment early, and
-      // the closing teardrop was never seen at all.
       choreograph([
         // 1. the ring's echo grows into a spinning circle where it was
         //    pressed, over the live home screen -- nothing dims yet -- and
@@ -494,10 +477,11 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
           name: 'panel',
           beats: [{ at: timeline.handover.at, to: 0, over: timeline.handover.over }],
         },
-        // The teardrop's whole life in one track -- in at the crossfade, held
-        // through the flight, out as it reforms into the orb. As two separate
-        // assignments they cancelled each other and the drop was never seen
-        // at all, hidden by the gathered panel underneath.
+        // The teardrop's whole life in one sequence -- in at the crossfade, held
+        // through the flight, out as it reforms into the orb. Two assignments
+        // cancel each other and the drop is never seen at all: it is the same
+        // bug that once kept the orb invisible through its entire spin, and the
+        // gathered panel underneath is convincing enough to hide it.
         {
           on: dropOpacity,
           name: 'teardrop',
@@ -626,9 +610,6 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
           beats: [{ at: timeline.water.at, to: 0, over: timeline.water.over }],
         },
       ],
-      // Hung on whichever track finishes last rather than on a named one --
-      // which is how the window once closed while the orb was still half
-      // blue, handing the corner back to a red ring mid-turn.
       { onFinished: finishClose }
     );
   }, [finishClose, reduceMotion, geometry]);

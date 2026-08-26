@@ -216,29 +216,18 @@ export function splashPath(
   return d.trim();
 }
 
-/**
- * The splash's geometry: the box it is drawn in, how far the droplets fly,
- * how hard they are pulled back down, and how big they start.
- *
- * The box is far larger than the orb's -- the droplets fly well clear of the
- * drop that threw them.
- */
+// the splash needs far more room than the orb: its droplets fly well clear
+// of the drop that threw them
 export const SPLASH_BOX = 150;
 export const SPLASH_SPREAD = 44;
 export const SPLASH_GRAVITY = 52;
 export const SPLASH_DROP_RADIUS = 4.5;
 
-/**
- * How visible the splash is at a given progress.
- *
- * It must be zero at *both* ends, not just the end you were thinking about.
- * The splash lives in the tree the whole time, and fading it only on the way
- * out left its droplets stacked on the ring at full strength whenever
- * nothing was happening -- a blue dot parked on the home screen.
- *
- * The `progress * 10` term is the quick fade up out of nothing; the squared
- * term takes it back down over the flight.
- */
+// The splash lives in the tree the whole time, so its opacity has to be
+// zero at rest as well as at the end. Fading only on the way out left its
+// droplets stacked on the ring at full strength whenever nothing was
+// happening -- a blue dot sitting in the orb's place through the entire
+// open, and through the home screen besides.
 export function splashOpacity(progress: number): number {
   'worklet';
   const u = progress <= 0 ? 0 : progress >= 1 ? 1 : progress;
@@ -271,15 +260,6 @@ export function splashRing(progress: number): {
   };
 }
 
-/**
- * The teardrop's size, tied to its own opacity rather than animated
- * separately.
- *
- * Both ends of the flight popped when these were independent: the drop
- * appeared over the gathered panel at full size, and vanished in mid-air a
- * few frames before it landed. Deriving one from the other means it can only
- * grow out of the panel and shrink into the splash.
- */
 export function dropHandoverScale(opacity: number): number {
   'worklet';
   const u = opacity <= 0 ? 0 : opacity >= 1 ? 1 : opacity;
