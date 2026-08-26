@@ -253,4 +253,51 @@ describe('the glance’s choreography', () => {
     });
 
   });
+
+  describe('the halo the orb hands over', () => {
+    // The ring wears a halo while it is over its limit -- a disc nearly twice
+    // the dial's width. The close hands the corner back the instant the orb
+    // has reformed, deliberately without a fade, so anything the ring has and
+    // the orb does not simply appears out of nowhere in that frame. The orb
+    // has to be wearing it, at full strength, before the handover.
+    function closeAndCollect(name: string) {
+      const tree = open({ exceeded: true });
+      mockTracks.length = 0;
+
+      act(() => {
+        fireEvent.press(
+          tree.UNSAFE_root.findAll(
+            (node: any) => node.props.testID === 'screen-time-glance-close'
+          )[0]
+        );
+      });
+
+      return mockTracks.filter((track) => track.name === name);
+    }
+
+    it('is at full strength by the time the close finishes', () => {
+      const beats = closeAndCollect('halo').flatMap((t) => t.beats);
+
+      expect(beats.length).toBeGreaterThan(0);
+      expect(beats[beats.length - 1].to).toBe(1);
+    });
+
+    it('grows in on the same beat as the colour, and finishes with it', () => {
+      const halo = closeAndCollect('halo').flatMap((t) => t.beats);
+      const colour = closeAndCollect('orb colour').flatMap((t) => t.beats);
+
+      const end = (b: any) => b.at + (b.over ?? 0);
+      expect(halo[0].at).toBe(colour[0].at);
+      expect(end(halo[halo.length - 1])).toBe(end(colour[colour.length - 1]));
+    });
+
+    it('is shed again on the way out, so a re-open starts from the ring', () => {
+      open({ exceeded: true });
+
+      const beats = mockTracks.filter((t) => t.name === 'halo').flatMap((t) => t.beats);
+
+      expect(mockTracks.find((t) => t.name === 'halo')?.from).toBe(1);
+      expect(beats[beats.length - 1].to).toBe(0);
+    });
+  });
 });

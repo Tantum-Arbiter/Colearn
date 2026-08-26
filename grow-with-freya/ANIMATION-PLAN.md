@@ -236,8 +236,18 @@ orb settled at exactly 1 and the ring reappeared at wherever its free-running
 pulse had got to, up to `pulseScale`, in the same frame.
 
 **Anything that repeats forever needs an answer for what it does while nobody
-can see it** -- and a handover between two elements is a claim about both of
-them, not just the one being handed to.
+can see it.**
+
+The same handover produced a second defect, which is the more general one. The
+ring wears a halo while it is over its limit -- a disc nearly twice the dial's
+width -- and the orb did not. So on the frame the corner was handed back, a
+57px glow appeared out of nothing. The orb now wears the same halo, sized from
+the same constant, and grows into it on the beat the colour returns, so the two
+are interchangeable when they swap.
+
+**A handover is a claim about both elements, not just the one being handed to.
+Anything one wears and the other does not appears from nowhere at exactly the
+moment the handover is supposed to be invisible.**
 
 ## Phases
 

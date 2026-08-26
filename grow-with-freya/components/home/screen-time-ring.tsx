@@ -113,9 +113,9 @@ export const ScreenTimeRing = memo(function ScreenTimeRing({
           style={[
             styles.halo,
             {
-              width: size * 1.9,
-              height: size * 1.9,
-              borderRadius: size * 0.95,
+              width: size * SCREEN_TIME_RING.haloScale,
+              height: size * SCREEN_TIME_RING.haloScale,
+              borderRadius: (size * SCREEN_TIME_RING.haloScale) / 2,
               backgroundColor: SCREEN_TIME_RING.exceededHalo,
             },
           ]}

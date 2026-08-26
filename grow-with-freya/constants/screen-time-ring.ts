@@ -14,6 +14,11 @@ export const SCREEN_TIME_RING = {
   arcOpacity: 0.55,
   exceededColour: '#E4483F',
   exceededHalo: 'rgba(228,72,63,0.30)',
+  /** How far the halo reaches past the dial. Shared, because the glance's
+   *  orb has to wear the same one: the close hands the corner back the
+   *  instant the orb has reformed, so anything the ring has and the orb does
+   *  not appears out of nowhere in that frame. */
+  haloScale: 1.9,
   hitSlop: 14,
 } as const;
 
@@ -68,6 +73,9 @@ export const SCREEN_TIME_GLANCE = {
   exceededDraw: '#E4483F',
   calmDraw: 'rgba(198, 219, 250, 0.85)',
   drawWater: WATER,
+  /** The halo while the orb is still water, turning to the ring's own as the
+   *  colour goes back. */
+  waterHalo: 'rgba(79, 168, 224, 0.30)',
 
   // The close, which is the open run backwards: the panel gathers, becomes
   // a true teardrop, falls back to the ring it came out of, and reforms into

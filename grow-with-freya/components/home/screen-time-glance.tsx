@@ -51,6 +51,9 @@ const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 // wide enough for whichever reaches further, the ring's echo or the spiral
 // arm it winds out, so raising SPIRAL_RADIUS cannot clip the arm
+// the same halo the ring wears, so the two are interchangeable at the handover
+const HALO_SIZE = SCREEN_TIME_RING.size * SCREEN_TIME_RING.haloScale;
+
 const SPINNER_BOX =
   (Math.max(SCREEN_TIME_GLANCE.spinnerRadius, SPIRAL_RADIUS) +
     SCREEN_TIME_GLANCE.spinnerStroke) *
@@ -181,6 +184,10 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
   // the spiral arm the orb winds out as it spins, and winds back in before it
   // flattens -- 0 is a point at the core, 1 is its full reach
   const spiralGrow = useSharedValue(0);
+  // the halo the ring wears while it is over its limit. The orb has to wear
+  // it too, and grow into it, or it arrives out of nowhere the frame the
+  // corner is handed back
+  const spinnerHalo = useSharedValue(0);
   const drawProgress = useSharedValue(0);
   const drawOpacity = useSharedValue(1);
   const panelOpacity = useSharedValue(0);
@@ -212,6 +219,7 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
       { on: spinnerArcOpacity, name: 'orb outline', from: 1, beats: [] },
       { on: spinnerCore, name: 'orb core', from: 1, beats: [] },
       { on: spiralGrow, name: 'spiral', from: 0, beats: [] },
+      { on: spinnerHalo, name: 'halo', from: 0, beats: [] },
       { on: drawProgress, name: 'border', from: open ? 1 : 0, beats: [] },
       { on: drawOpacity, name: 'drawn stroke', from: open ? 0 : 1, beats: [] },
       { on: panelOpacity, name: 'panel', from: open ? 1 : 0, beats: [] },
@@ -307,6 +315,14 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
           name: 'orb colour',
           from: 0,
           beats: [{ at: timeline.water.at, to: 1, over: timeline.water.over }],
+        },
+        // it starts wearing the ring's halo, because that is what it replaces,
+        // and sheds it on the same beat as the colour
+        {
+          on: spinnerHalo,
+          name: 'halo',
+          from: 1,
+          beats: [{ at: timeline.water.at, to: 0, over: timeline.water.over }],
         },
         // The core stays: squashed and stretched, it IS the line. What goes is
         // the ring's outline around it, which flattens to nothing useful.
@@ -681,6 +697,14 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
           name: 'orb colour',
           beats: [{ at: timeline.water.at, to: 0, over: timeline.water.over }],
         },
+        // and the halo grows in on the same beat, so the orb is wearing it at
+        // full strength on the frame the ring takes the corner back
+        {
+          on: spinnerHalo,
+          name: 'halo',
+          from: 0,
+          beats: [{ at: timeline.water.at, to: 1, over: timeline.water.over }],
+        },
       ],
       { onFinished: finishClose }
     );
@@ -710,6 +734,18 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
   const spinnerColourProps = useAnimatedProps(() => ({
     opacity: spinnerArcOpacity.value,
     stroke: interpolateColor(spinnerWater.value, water.input, water.output),
+  }));
+
+  const haloStyle = useAnimatedStyle(() => ({
+    opacity: spinnerHalo.value,
+    // tied to its own opacity, so it grows into place rather than appearing
+    // at full size
+    transform: [{ scale: 0.7 + 0.3 * spinnerHalo.value }],
+    backgroundColor: interpolateColor(
+      spinnerWater.value,
+      [0, 1],
+      [SCREEN_TIME_RING.exceededHalo, SCREEN_TIME_GLANCE.waterHalo]
+    ),
   }));
 
   const spiralProps = useAnimatedProps(() => ({
@@ -850,6 +886,13 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
             spinnerStyle,
           ]}
         >
+          {exceeded ? (
+            <Animated.View
+              testID="screen-time-glance-spinner-halo"
+              pointerEvents="none"
+              style={[styles.spinnerHalo, haloStyle]}
+            />
+          ) : null}
           <Svg width={SPINNER_BOX} height={SPINNER_BOX}>
             {/* the solid dot the orb takes over from the ring, which fades
                 itself out underneath -- one control becoming the orb, not a
@@ -1036,6 +1079,14 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: SPINNER_BOX,
     height: SPINNER_BOX,
+  },
+  spinnerHalo: {
+    position: 'absolute',
+    width: HALO_SIZE,
+    height: HALO_SIZE,
+    borderRadius: HALO_SIZE / 2,
+    left: (SPINNER_BOX - HALO_SIZE) / 2,
+    top: (SPINNER_BOX - HALO_SIZE) / 2,
   },
   panel: {
     position: 'absolute',

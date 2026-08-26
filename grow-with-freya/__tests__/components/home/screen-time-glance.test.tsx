@@ -474,4 +474,25 @@ describe('ScreenTimeGlance', () => {
       expect(onClose).not.toHaveBeenCalled();
     });
   });
+
+  describe('the halo', () => {
+    it('is the same size as the one the ring wears', () => {
+      // The two have to be interchangeable: the close hands the corner back
+      // without a fade, so a halo of a different size would be a visible jump
+      // at the exact moment the handover is supposed to be invisible.
+      const tree = renderGlance({ exceeded: true });
+      const halo = findByTestId(tree, 'screen-time-glance-spinner-halo')[0];
+      const style = StyleSheet.flatten(halo.props.style);
+
+      expect(style.width).toBe(SCREEN_TIME_RING.size * SCREEN_TIME_RING.haloScale);
+      expect(style.height).toBe(style.width);
+      expect(style.borderRadius).toBe(style.width / 2);
+    });
+
+    it('is not worn at all when the ring is not over its limit', () => {
+      const tree = renderGlance({ exceeded: false });
+
+      expect(findByTestId(tree, 'screen-time-glance-spinner-halo')).toHaveLength(0);
+    });
+  });
 });
