@@ -139,7 +139,7 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
       panelW,
       panelH,
       // where the spinner hands over to the border: the path's own start
-      drawStart: { x: bounds.left, y: bounds.bottom - bounds.radius },
+      drawStart: { x: (bounds.left + bounds.right) / 2, y: bounds.bottom },
       // the drop's flight home: from the panel's centre back to the ring it
       // came out of, so the close lands where the open began
       flight: dropFlight(bounds, centre),

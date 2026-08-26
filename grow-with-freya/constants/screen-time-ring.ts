@@ -47,9 +47,10 @@ export const SCREEN_TIME_GLANCE = {
   // two turns were a blur, and the phase looked like a flicker before the
   // draw rather than a moment of its own.
   spinDuration: 620,
-  // the line has further to go now that it forms at the ring rather than at
-  // the corner, and a longer glide is what keeps that read as one movement
-  travelDuration: 340,
+  // the line forms at the ring and the border starts on the bottom edge
+  // directly below it, so this is a 15px settle onto the frame rather than a
+  // journey: at 340ms it read as the line hanging in the air
+  travelDuration: 140,
   // long enough to be a movement rather than a cut: at 140ms the orb went
   // from circle to line in one step, with no squash to sell the change
   morphDuration: 340,
@@ -116,16 +117,18 @@ export function dropFlight(
 }
 
 /**
- * What the orb's squash and stretch resolves to: a thin, tall line.
+ * What the orb's squash and stretch resolves to: a long, thin line.
  *
  * Applied to the orb's solid core, so at the ring's own dot size these come
- * out as a stroke a couple of pixels wide and a good forty-odd tall -- the
- * weight of the border it is about to draw. The line has to be the core:
- * flattening the ring's outline instead collapses it to a pair of hairline
- * caps and leaves nothing travelling at all.
+ * out as a stroke a good forty-odd long and a couple of pixels thick -- the
+ * weight of the border it is about to draw. It lies flat because the border
+ * starts on the bottom edge, directly below the ring: a line standing upright
+ * there would be at right angles to the stroke it hands over to. The line has
+ * to be the core: flattening the ring's outline instead collapses it to a
+ * pair of hairline caps and leaves nothing travelling at all.
  */
-export const ORB_LINE_WIDTH = 0.09;
-export const ORB_LINE_HEIGHT = 1.6;
+export const ORB_LINE_WIDTH = 1.6;
+export const ORB_LINE_HEIGHT = 0.09;
 
 /**
  * The orb's squash and stretch as it becomes the line, as one smooth
@@ -139,8 +142,8 @@ export const ORB_LINE_HEIGHT = 1.6;
  *
  * The shape is a settled path from circle to line, plus a single
  * anticipation bump: `u(1-u)^3` peaks about a quarter of the way in and
- * vanishes smoothly at both ends, so the orb still squats wider and shorter
- * before it throws itself thin -- without ever pausing to do it.
+ * vanishes smoothly at both ends, so the orb still draws itself up narrower
+ * and taller before it throws itself flat -- without ever pausing to do it.
  */
 export function orbSquash(progress: number): { x: number; y: number } {
   'worklet';
@@ -152,8 +155,8 @@ export function orbSquash(progress: number): { x: number; y: number } {
   const bump = (u * Math.pow(1 - u, 3)) / 0.10546875;
 
   return {
-    x: 1 + (ORB_LINE_WIDTH - 1) * eased + 0.3 * bump,
-    y: 1 + (ORB_LINE_HEIGHT - 1) * eased - 0.26 * bump,
+    x: 1 + (ORB_LINE_WIDTH - 1) * eased - 0.26 * bump,
+    y: 1 + (ORB_LINE_HEIGHT - 1) * eased + 0.3 * bump,
   };
 }
 
@@ -325,8 +328,11 @@ export function ringCentre(
  * and its length -- the drawing is a dash-offset sweep, so the length is what
  * the dash pattern is built from.
  *
- * Starts at the left edge just above the bottom-left corner -- the nearest
- * point to the ring the spinner travels from -- and runs clockwise.
+ * Starts on the bottom edge at its centre -- directly below the ring the
+ * glance opens from -- and runs clockwise: left along the bottom, up the left
+ * edge, right along the top, down the right, and back along the bottom to
+ * where it began. The bottom edge is therefore drawn in two runs, the first
+ * and the last.
  */
 export function panelBorderPath(bounds: {
   left: number;
@@ -337,16 +343,19 @@ export function panelBorderPath(bounds: {
 }): { d: string; length: number } {
   const { left: l, top: t, right: r, bottom: b, radius: rad } = bounds;
 
+  const cx = (l + r) / 2;
+
   const d = [
-    `M ${l} ${b - rad}`,
+    `M ${cx} ${b}`,
+    `L ${l + rad} ${b}`,
+    `A ${rad} ${rad} 0 0 1 ${l} ${b - rad}`,
     `L ${l} ${t + rad}`,
     `A ${rad} ${rad} 0 0 1 ${l + rad} ${t}`,
     `L ${r - rad} ${t}`,
     `A ${rad} ${rad} 0 0 1 ${r} ${t + rad}`,
     `L ${r} ${b - rad}`,
     `A ${rad} ${rad} 0 0 1 ${r - rad} ${b}`,
-    `L ${l + rad} ${b}`,
-    `A ${rad} ${rad} 0 0 1 ${l} ${b - rad}`,
+    `L ${cx} ${b}`,
   ].join(' ');
 
   const length =

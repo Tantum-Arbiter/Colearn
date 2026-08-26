@@ -7,6 +7,7 @@
 
 import {
   SCREEN_TIME_RING,
+  SCREEN_TIME_GLANCE,
   isScreenTimeExceeded,
   panelBorderPath,
   dropFlight,
@@ -128,16 +129,29 @@ describe('panelBorderPath', () => {
   // mismatch leaves the border under- or over-drawn when the sweep finishes
   const BOUNDS = { left: 14, top: 73, right: 388, bottom: 812, radius: 28 };
 
-  it('starts just above the bottom-left corner, nearest the ring', () => {
+  const CENTRE = (BOUNDS.left + BOUNDS.right) / 2;
+
+  it('starts on the bottom edge, directly below the ring it opens from', () => {
+    // the ring sits at the bottom centre of the screen, so that is where the
+    // line the orb becomes lands -- starting at the bottom-left corner made
+    // a vertical line slide the width of the screen to get there
     const { d } = panelBorderPath(BOUNDS);
 
-    expect(d.startsWith(`M ${BOUNDS.left} ${BOUNDS.bottom - BOUNDS.radius}`)).toBe(true);
+    expect(d.startsWith(`M ${CENTRE} ${BOUNDS.bottom}`)).toBe(true);
+  });
+
+  it('runs along the bottom first, then up the left edge', () => {
+    const { d } = panelBorderPath(BOUNDS);
+
+    expect(d.startsWith(`M ${CENTRE} ${BOUNDS.bottom} L ${BOUNDS.left + BOUNDS.radius} ${BOUNDS.bottom}`)).toBe(true);
+    // and having turned the bottom-left corner it climbs to the top-left
+    expect(d).toContain(`L ${BOUNDS.left} ${BOUNDS.top + BOUNDS.radius}`);
   });
 
   it('closes back where it started', () => {
     const { d } = panelBorderPath(BOUNDS);
 
-    expect(d.endsWith(`${BOUNDS.left} ${BOUNDS.bottom - BOUNDS.radius}`)).toBe(true);
+    expect(d.endsWith(`L ${CENTRE} ${BOUNDS.bottom}`)).toBe(true);
   });
 
   it('reports the true perimeter of the rounded rect', () => {
@@ -276,18 +290,26 @@ describe('orbSquash', () => {
     expect(orbSquash(1).y).toBeCloseTo(ORB_LINE_HEIGHT);
   });
 
-  it('squats wider and shorter before it throws itself thin', () => {
-    // the anticipation: early on the orb is broader and lower than it
+  it('ends lying along the bottom edge it is about to draw', () => {
+    // the border now starts on the bottom edge, so the line has to be
+    // horizontal: a vertical line at that point is at right angles to the
+    // stroke it hands over to
+    expect(orbSquash(1).x).toBeGreaterThan(1);
+    expect(orbSquash(1).y).toBeLessThan(1);
+  });
+
+  it('draws itself up narrower and taller before it throws itself flat', () => {
+    // the anticipation: early on the orb is narrower and higher than it
     // started, which is what sells the change of shape
     const early = orbSquash(0.25);
 
-    expect(early.x).toBeGreaterThan(1);
-    expect(early.y).toBeLessThan(1);
+    expect(early.x).toBeLessThan(1);
+    expect(early.y).toBeGreaterThan(1);
   });
 
   it('has committed to the line by the time it is done anticipating', () => {
-    expect(orbSquash(0.7).x).toBeLessThan(orbSquash(0.25).x);
-    expect(orbSquash(0.7).y).toBeGreaterThan(orbSquash(0.25).y);
+    expect(orbSquash(0.7).x).toBeGreaterThan(orbSquash(0.25).x);
+    expect(orbSquash(0.7).y).toBeLessThan(orbSquash(0.25).y);
   });
 
   it('moves smoothly the whole way, with no step at any point', () => {
@@ -307,8 +329,8 @@ describe('orbSquash', () => {
     const width = dot * orbSquash(1).x;
     const height = dot * orbSquash(1).y;
 
-    expect(width).toBeGreaterThan(2);
-    expect(height / width).toBeGreaterThan(10);
+    expect(height).toBeGreaterThan(2);
+    expect(width / height).toBeGreaterThan(10);
   });
 
   it('clamps outside its own range rather than running away', () => {
@@ -418,5 +440,41 @@ describe('dropHandoverScale', () => {
   it('clamps outside its own range', () => {
     expect(dropHandoverScale(-1)).toBe(dropHandoverScale(0));
     expect(dropHandoverScale(2)).toBe(dropHandoverScale(1));
+  });
+});
+
+describe('the ring and the border it opens into', () => {
+  // The defect this pins: the ring moved to the bottom centre of the screen
+  // but the border kept starting at the bottom-left corner, so the line the
+  // orb becomes slid half the width of the screen to reach it -- and did so
+  // standing upright, at right angles to the stroke it was about to draw.
+  const SCREEN = { width: 402, height: 874, insetBottom: 34 };
+
+  function borderStart() {
+    const inset = SCREEN_TIME_GLANCE.panelInset;
+    const { d } = panelBorderPath({
+      left: inset,
+      top: 59 + inset,
+      right: SCREEN.width - inset,
+      bottom: SCREEN.height - SCREEN.insetBottom - inset,
+      radius: SCREEN_TIME_GLANCE.panelRadius,
+    });
+    const [x, y] = d.slice(2, d.indexOf(' L ')).split(' ').map(Number);
+
+    return { x, y };
+  }
+
+  it('starts the border directly below the ring, not off to one side', () => {
+    const ring = ringCentre(SCREEN.width, SCREEN.height, SCREEN.insetBottom);
+
+    expect(borderStart().x).toBe(ring.x);
+  });
+
+  it('leaves the line only a short settle onto the frame', () => {
+    const ring = ringCentre(SCREEN.width, SCREEN.height, SCREEN.insetBottom);
+    const drop = borderStart().y - ring.y;
+
+    expect(drop).toBeGreaterThan(0);
+    expect(drop).toBeLessThan(SCREEN_TIME_RING.size);
   });
 });
