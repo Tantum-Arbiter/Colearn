@@ -139,6 +139,23 @@ And when two properties are meant to read as one gesture, they need the same
 curve: the descent takes `inOut(cubic)` because that is the ease `orbSquash`
 carries internally.
 
+### 5c. A transformation that does not conserve what it should
+
+The arm's unroll was a straight interpolation from each point's place on the
+coil to its place on the line, and the line was a chosen 48px while the coil
+was 167px of stroke. So the arm shed seven tenths of its length on the way
+down. It did not unroll, it was sucked in -- and no retiming of the wave hides
+a stroke shortening by that much.
+
+The line's length is now derived from the arm's own arc length rather than
+picked, so they cannot disagree. Measured through the transition, the stroke
+now holds within about 16% of its length -- it pulls a little taut as it
+straightens and settles back, which is what a rope does.
+
+**Ask what a transformation ought to conserve, and then measure whether it
+does.** Endpoints looked right the whole time this was wrong; the length was
+never plotted until it was.
+
 ### 6. A constant that outlives the geometry it was tuned for
 
 `DRAW_OVERLAP` was 60ms because the line crossed a third of the screen to

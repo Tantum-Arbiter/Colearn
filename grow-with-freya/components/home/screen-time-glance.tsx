@@ -54,8 +54,12 @@ const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 // the same halo the ring wears, so the two are interchangeable at the handover
 const HALO_SIZE = SCREEN_TIME_RING.size * SCREEN_TIME_RING.haloScale;
 
+// Wide enough for the longest thing it holds, which is not the coil but the
+// line the coil lays down -- the arm conserves its length, so the line reaches
+// far further from the centre than the spiral ever does. Derived, so raising
+// SPIRAL_RADIUS cannot clip the longer line it produces.
 const SPINNER_BOX =
-  (Math.max(SCREEN_TIME_GLANCE.spinnerRadius, SPIRAL_RADIUS) +
+  (Math.max(SCREEN_TIME_GLANCE.spinnerRadius, SPIRAL_RADIUS, SPIRAL_LINE_LENGTH) +
     SCREEN_TIME_GLANCE.spinnerStroke) *
     2 +
   2;

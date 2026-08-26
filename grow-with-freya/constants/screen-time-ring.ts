@@ -186,22 +186,13 @@ export const SPIRAL_STEPS = 40;
  * invisible -- which is what "legible only at a corner-sized scale" meant in
  * the revert. Reaching well past the core is what makes it read as an arm
  * swept out of the orb rather than a texture on it.
+ *
+ * It also sets how long the arm is, and so how long a line it lays down --
+ * see `SPIRAL_LINE_LENGTH`. Reaching further makes the spiral more legible
+ * and the line longer, and the line has a bottom edge to fit inside.
  */
-export const SPIRAL_RADIUS = 26;
+export const SPIRAL_RADIUS = 20;
 
-/**
- * The length of the line the arm lays itself down as.
- *
- * It runs *from* the point the border is drawn from, not across it. Centred
- * on that point, half the line lay over border that would not be drawn until
- * the very end of the sweep, with nothing to explain it.
- *
- * The arm builds it rightward in its own frame. The view finishes on a half
- * turn, so on screen that is leftward -- which is the direction the border
- * runs from its start. The core end is pinned at that start point and the
- * border grows out from under the line.
- */
-export const SPIRAL_LINE_LENGTH = 48;
 
 /**
  * How much of the arm's length the straightening wave occupies.
@@ -278,8 +269,27 @@ const SPIRAL_TABLE = (() => {
     arc.push(arcAt(u) / total);
   }
 
-  return { at, cos, sin, arc };
+  // the arc length of the whole arm for a radius of one, which is what the
+  // line it lays down has to match
+  return { at, cos, sin, arc, unit: total };
 })();
+
+/**
+ * The length of the line the arm lays itself down as: its own length.
+ *
+ * Derived rather than chosen, because choosing it is what made the unroll
+ * look wrong. The coil is 129px of stroke and the line used to be 48, so the
+ * arm lost seven tenths of its length on the way down -- it did not unroll,
+ * it was sucked in, and no amount of retiming the wave hides a stroke
+ * shortening by that much. A rope laid out from a coil is as long as the
+ * rope.
+ *
+ * `SPIRAL_RADIUS` is the knob. It sets the arm's length too, and the line has
+ * to fit the bottom edge it lies along: from the centre to where the corner
+ * curve starts is 145px on the narrowest phone, so the arm cannot reach much
+ * past that without overshooting the corner.
+ */
+export const SPIRAL_LINE_LENGTH = SPIRAL_RADIUS * SPIRAL_TABLE.unit;
 
 /**
  * Rounds to a tenth of a point for a path string.

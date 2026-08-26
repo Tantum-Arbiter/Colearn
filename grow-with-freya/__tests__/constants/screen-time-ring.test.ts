@@ -587,6 +587,54 @@ describe('spiralArmPath', () => {
       }
     });
 
+    it('lays down a line as long as the arm actually is', () => {
+      // The defect this pins: the line was a chosen 48px while the coil was
+      // 129px of stroke, so the arm lost seven tenths of its length on the way
+      // down. It did not unroll, it was sucked in, and no retiming of the wave
+      // hides a stroke shortening by that much. A rope laid out from a coil is
+      // as long as the rope.
+      const strokeLength = (d: string) => {
+        const p = points(d);
+        let total = 0;
+
+        for (let i = 1; i < p.length; i++) {
+          total += Math.hypot(p[i].x - p[i - 1].x, p[i].y - p[i - 1].y);
+        }
+
+        return total;
+      };
+
+      const coiled = strokeLength(arm(1, 0));
+      const laid = strokeLength(arm(1, 1));
+
+      // as a ratio, because the coil is measured as 40 chords and chords cut
+      // corners -- the polyline reads about half a percent under the true arc
+      expect(laid / coiled).toBeGreaterThan(0.99);
+      expect(laid / coiled).toBeLessThan(1.01);
+      expect(laid).toBeCloseTo(SPIRAL_LINE_LENGTH, 1);
+    });
+
+    it('never loses or gains much length on the way', () => {
+      // it may pull a little taut as it straightens, but it must not collapse
+      const strokeLength = (d: string) => {
+        const p = points(d);
+        let total = 0;
+
+        for (let i = 1; i < p.length; i++) {
+          total += Math.hypot(p[i].x - p[i - 1].x, p[i].y - p[i - 1].y);
+        }
+
+        return total;
+      };
+
+      for (const straighten of [0.15, 0.3, 0.45, 0.6, 0.75, 0.9]) {
+        const ratio = strokeLength(arm(1, straighten)) / SPIRAL_LINE_LENGTH;
+
+        expect(ratio).toBeGreaterThan(0.9);
+        expect(ratio).toBeLessThan(1.25);
+      }
+    });
+
     it('unrolls smoothly, with no crumple at any point', () => {
       // measured on how far the arm still is from the line overall: a wave
       // that stalls or snaps shows up as a step in that distance
