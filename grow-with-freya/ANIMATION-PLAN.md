@@ -214,6 +214,31 @@ Two causes, both invisible to the assertions:
 **Sampling a shape's endpoints and its bounds says nothing about what it does
 in between.** Render the frames.
 
+### 11. Interpolating between two colours through nowhere
+
+Red to water blue, interpolated straight in RGB, passes through
+rgb(154,120,144): saturation falls from 0.72 to 0.22 and the orb arrives at a
+mauve grey before recovering. The turn did not read as a turn, it read as red,
+mud, blue. Routing it through a violet holds the minimum at 0.41.
+
+Only the exceeded state needs it -- the calm draw colour is already a pale
+blue and the direct path never leaves the blues. **A colour ramp is a curve
+like any other and wants looking at**; two endpoints say nothing about the
+middle, which is defect 10 again in a different medium.
+
+### 12. An animation left running behind a closed door
+
+The ring's pulse repeats forever and was never cancelled while the ring was
+hidden -- `hidden` was not even in the effect's dependencies. The glance's
+close hands the corner back the instant its orb has reformed, deliberately
+without a fade, so the handover only works if both are at the same size. The
+orb settled at exactly 1 and the ring reappeared at wherever its free-running
+pulse had got to, up to `pulseScale`, in the same frame.
+
+**Anything that repeats forever needs an answer for what it does while nobody
+can see it** -- and a handover between two elements is a claim about both of
+them, not just the one being handed to.
+
 ## Phases
 
 Each is independently shippable and independently useful. Phase 1 is worth

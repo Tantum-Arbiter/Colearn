@@ -5,6 +5,11 @@ export const SCREEN_TIME_RING = {
   marginBottom: 14,
   pulseScale: 1.22,
   pulseDuration: 620,
+  // The ring comes back at rest and only then starts to breathe. Left free
+  // running while hidden, the pulse was at an arbitrary scale the instant the
+  // corner was handed back, so the glance's orb settled at 1 and the ring
+  // appeared at anything up to pulseScale in the same frame.
+  pulseSettle: 260,
   trackOpacity: 0.18,
   arcOpacity: 0.55,
   exceededColour: '#E4483F',
@@ -92,6 +97,30 @@ export const SCREEN_TIME_GLANCE = {
   exceededGlow: 'rgba(79, 168, 224, 0.55)',
   calmGlow: 'rgba(0, 0, 0, 0.45)',
 } as const;
+
+/**
+ * The colour the orb passes through on its way from the ring's red to the
+ * water blue.
+ *
+ * Interpolated straight, red to blue in RGB runs through rgb(154,120,144) --
+ * saturation falls from 0.72 to 0.22 and it arrives at a muddy mauve grey
+ * before recovering. That is the whole reason the turn does not read as a
+ * turn: it goes red, mud, blue. Routing it through a violet keeps the
+ * minimum saturation at 0.41 and reads as warm cooling to cold.
+ *
+ * The calm state needs no such help: its draw colour is already a pale blue,
+ * so the direct path never leaves the blues.
+ */
+export const WATER_TURN_MID = '#9B6FD4';
+
+export function waterTurnRamp(
+  from: string,
+  exceeded: boolean
+): { input: number[]; output: string[] } {
+  return exceeded
+    ? { input: [0, 0.5, 1], output: [from, WATER_TURN_MID, SCREEN_TIME_GLANCE.drawWater] }
+    : { input: [0, 1], output: [from, SCREEN_TIME_GLANCE.drawWater] };
+}
 
 /**
  * The drop's flight home: from the centre of the panel it condenses out of,

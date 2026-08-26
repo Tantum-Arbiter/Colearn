@@ -3,6 +3,7 @@ import { View, Pressable, StyleSheet } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
+  withDelay,
   withRepeat,
   withSequence,
   withTiming,
@@ -56,31 +57,36 @@ export const ScreenTimeRing = memo(function ScreenTimeRing({
   const exceeded = isScreenTimeExceeded(usageSeconds, limitSeconds);
 
   useEffect(() => {
-    if (!exceeded || reduceMotion) {
+    if (hidden || !exceeded || reduceMotion) {
       cancelAnimation(pulse);
-      pulse.value = withTiming(1, { duration: 200 });
+      // instant while hidden: there is nothing on screen to see it settle,
+      // and it has to be back at rest before the corner is handed back
+      pulse.value = hidden ? 1 : withTiming(1, { duration: 200 });
       return;
     }
 
-    pulse.value = withRepeat(
-      withSequence(
-        withTiming(SCREEN_TIME_RING.pulseScale, {
-          duration: SCREEN_TIME_RING.pulseDuration,
-          easing: Easing.inOut(Easing.quad),
-        }),
-        withTiming(1, {
-          duration: SCREEN_TIME_RING.pulseDuration,
-          easing: Easing.inOut(Easing.quad),
-        })
-      ),
-      -1,
-      false
+    pulse.value = withDelay(
+      SCREEN_TIME_RING.pulseSettle,
+      withRepeat(
+        withSequence(
+          withTiming(SCREEN_TIME_RING.pulseScale, {
+            duration: SCREEN_TIME_RING.pulseDuration,
+            easing: Easing.inOut(Easing.quad),
+          }),
+          withTiming(1, {
+            duration: SCREEN_TIME_RING.pulseDuration,
+            easing: Easing.inOut(Easing.quad),
+          })
+        ),
+        -1,
+        false
+      )
     );
 
     return () => {
       cancelAnimation(pulse);
     };
-  }, [exceeded, reduceMotion, pulse]);
+  }, [hidden, exceeded, reduceMotion, pulse]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: presence.value,

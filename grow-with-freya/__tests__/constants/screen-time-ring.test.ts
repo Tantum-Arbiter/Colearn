@@ -25,6 +25,8 @@ import {
   SPIRAL_STEPS,
   SPIRAL_TURNS,
   SPIRAL_LINE_HALF,
+  waterTurnRamp,
+  WATER_TURN_MID,
   SPIRAL_RADIUS,
 } from '@/constants/screen-time-ring';
 import { expectSmooth } from '../utils/motion-smoothness';
@@ -581,5 +583,62 @@ describe('spiralArmPath', () => {
       const p = points(arm(Math.max(grow, 1e-6)));
       return reach(p[p.length - 1]);
     });
+  });
+});
+
+describe('waterTurnRamp', () => {
+  const rgb = (hex: string) =>
+    [1, 3, 5].map((i) => parseInt(hex.substr(i, 2), 16));
+
+  /** How far the least colourful point on a ramp falls. */
+  function lowestSaturation(stops: string[]) {
+    let lowest = 1;
+
+    for (let i = 0; i < stops.length - 1; i++) {
+      const from = rgb(stops[i]);
+      const to = rgb(stops[i + 1]);
+
+      for (let step = 0; step <= 20; step++) {
+        const c = from.map((v, k) => v + (to[k] - v) * (step / 20));
+        lowest = Math.min(lowest, (Math.max(...c) - Math.min(...c)) / Math.max(...c));
+      }
+    }
+
+    return lowest;
+  }
+
+  it('routes the exceeded turn through a colour, not through mud', () => {
+    // The defect this pins: red to blue interpolated straight in RGB passes
+    // through rgb(154,120,144) -- saturation 0.22, a mauve grey. The turn read
+    // as red, mud, blue rather than as a turn.
+    const direct = lowestSaturation([SCREEN_TIME_GLANCE.exceededDraw, SCREEN_TIME_GLANCE.drawWater]);
+    const routed = lowestSaturation(waterTurnRamp(SCREEN_TIME_GLANCE.exceededDraw, true).output);
+
+    expect(direct).toBeLessThan(0.25);
+    expect(routed).toBeGreaterThan(0.35);
+  });
+
+  it('leaves the calm turn alone, which never leaves the blues', () => {
+    const ramp = waterTurnRamp(SCREEN_TIME_GLANCE.calmDraw, false);
+
+    expect(ramp.output).toEqual([SCREEN_TIME_GLANCE.calmDraw, SCREEN_TIME_GLANCE.drawWater]);
+    expect(ramp.input).toEqual([0, 1]);
+  });
+
+  it('keeps its stops and its stations in step', () => {
+    // interpolateColor throws if these are different lengths
+    for (const exceeded of [true, false]) {
+      const ramp = waterTurnRamp(SCREEN_TIME_GLANCE.exceededDraw, exceeded);
+
+      expect(ramp.input).toHaveLength(ramp.output.length);
+    }
+  });
+
+  it('starts where it is told and always ends at the water', () => {
+    const ramp = waterTurnRamp(SCREEN_TIME_GLANCE.exceededDraw, true);
+
+    expect(ramp.output[0]).toBe(SCREEN_TIME_GLANCE.exceededDraw);
+    expect(ramp.output[ramp.output.length - 1]).toBe(SCREEN_TIME_GLANCE.drawWater);
+    expect(ramp.output).toContain(WATER_TURN_MID);
   });
 });

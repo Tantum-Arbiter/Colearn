@@ -24,6 +24,7 @@ import {
   panelBorderPath,
   dropFlight,
   splashPath,
+  waterTurnRamp,
   spiralArmPath,
   SPIRAL_RADIUS,
   SPIRAL_LINE_HALF,
@@ -127,6 +128,8 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
   const panelBorder = exceeded ? SCREEN_TIME_GLANCE.exceededBorder : SCREEN_TIME_GLANCE.calmBorder;
   const panelGlow = exceeded ? SCREEN_TIME_GLANCE.exceededGlow : SCREEN_TIME_GLANCE.calmGlow;
   const drawStroke = exceeded ? SCREEN_TIME_GLANCE.exceededDraw : SCREEN_TIME_GLANCE.calmDraw;
+  // the orb's colour turn, routed so it never passes through mud
+  const water = useMemo(() => waterTurnRamp(drawStroke, exceeded), [drawStroke, exceeded]);
 
   const geometry = useMemo(() => {
     const inset = SCREEN_TIME_GLANCE.panelInset;
@@ -706,11 +709,7 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
 
   const spinnerColourProps = useAnimatedProps(() => ({
     opacity: spinnerArcOpacity.value,
-    stroke: interpolateColor(
-      spinnerWater.value,
-      [0, 1],
-      [drawStroke, SCREEN_TIME_GLANCE.drawWater]
-    ),
+    stroke: interpolateColor(spinnerWater.value, water.input, water.output),
   }));
 
   const spiralProps = useAnimatedProps(() => ({
@@ -722,20 +721,12 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
       SPIRAL_LINE_HALF
     ),
     opacity: spiralGrow.value,
-    stroke: interpolateColor(
-      spinnerWater.value,
-      [0, 1],
-      [drawStroke, SCREEN_TIME_GLANCE.drawWater]
-    ),
+    stroke: interpolateColor(spinnerWater.value, water.input, water.output),
   }));
 
   const spinnerCoreProps = useAnimatedProps(() => ({
     r: (SCREEN_TIME_RING.size / 2) * spinnerCore.value,
-    fill: interpolateColor(
-      spinnerWater.value,
-      [0, 1],
-      [drawStroke, SCREEN_TIME_GLANCE.drawWater]
-    ),
+    fill: interpolateColor(spinnerWater.value, water.input, water.output),
   }));
 
   const panelStyle = useAnimatedStyle(() => ({
