@@ -24,6 +24,10 @@ import {
   splashRing,
   dropHandoverScale,
   SPLASH_RING_BIRTH,
+  spiralArmPath,
+  SPIRAL_STEPS,
+  SPIRAL_TURNS,
+  SPIRAL_RADIUS,
 } from '@/constants/screen-time-ring';
 import { expectSmooth } from '../utils/motion-smoothness';
 
@@ -476,5 +480,104 @@ describe('the ring and the border it opens into', () => {
 
     expect(drop).toBeGreaterThan(0);
     expect(drop).toBeLessThan(SCREEN_TIME_RING.size);
+  });
+});
+
+describe('spiralArmPath', () => {
+  const CENTRE = 20;
+  const RADIUS = 15;
+
+  function points(d: string) {
+    return d
+      .split(/(?=[ML])/)
+      .filter(Boolean)
+      .map((cmd) => cmd.trim().slice(1).trim().split(' ').map(Number))
+      .map(([x, y]) => ({ x, y }));
+  }
+
+  const reach = (p: { x: number; y: number }) =>
+    Math.hypot(p.x - CENTRE, p.y - CENTRE);
+
+  // the path rounds its coordinates to two decimals, so reach is only good to
+  // about a hundredth -- assert to one rather than pretending otherwise
+  const PLACES = 1;
+
+  it('reaches clear of the orb it is swept out of', () => {
+    // The defect this pins, and the one that killed the previous spiral: at
+    // the ring echo's own radius the entire arm sat inside the solid core
+    // dot, in the same colour, and could not be seen at all. It has to clear
+    // both the filled core and the arc around it.
+    expect(SPIRAL_RADIUS).toBeGreaterThan(SCREEN_TIME_RING.size / 2);
+    expect(SPIRAL_RADIUS).toBeGreaterThan(SCREEN_TIME_GLANCE.spinnerRadius);
+  });
+
+  it('keeps its turns far enough apart to read as separate', () => {
+    // an Archimedean arm's turns are evenly spaced; if that spacing closes on
+    // the stroke width the spiral reads as a blob
+    const spacing = SPIRAL_RADIUS / SPIRAL_TURNS;
+
+    expect(spacing).toBeGreaterThan(SCREEN_TIME_GLANCE.spinnerStroke * 2);
+  });
+
+  it('is nothing at all when it has not been wound out', () => {
+    // an animated element must be invisible at rest, not only at the end of
+    // the range you were thinking about
+    expect(spiralArmPath(CENTRE, RADIUS, 0)).toBe('');
+    expect(spiralArmPath(CENTRE, RADIUS, -1)).toBe('');
+  });
+
+  it('starts at the core and reaches its full radius when fully wound out', () => {
+    const p = points(spiralArmPath(CENTRE, RADIUS, 1));
+
+    expect(reach(p[0])).toBeCloseTo(0);
+    expect(reach(p[p.length - 1])).toBeCloseTo(RADIUS, PLACES);
+  });
+
+  it('scales its whole reach with the grow, so it grows out of a point', () => {
+    const half = points(spiralArmPath(CENTRE, RADIUS, 0.5));
+
+    expect(reach(half[half.length - 1])).toBeCloseTo(RADIUS / 2, PLACES);
+  });
+
+  it('winds outward the whole way, never doubling back on itself', () => {
+    const p = points(spiralArmPath(CENTRE, RADIUS, 1));
+
+    for (let i = 1; i < p.length; i++) {
+      expect(reach(p[i])).toBeGreaterThan(reach(p[i - 1]));
+    }
+  });
+
+  it('turns as many times as it says it does', () => {
+    const p = points(spiralArmPath(CENTRE, RADIUS, 1));
+    let turned = 0;
+    let previous = Math.atan2(p[1].y - CENTRE, p[1].x - CENTRE);
+
+    for (let i = 2; i < p.length; i++) {
+      const angle = Math.atan2(p[i].y - CENTRE, p[i].x - CENTRE);
+      let step = angle - previous;
+      if (step < -Math.PI) step += 2 * Math.PI;
+      if (step > Math.PI) step -= 2 * Math.PI;
+      turned += step;
+      previous = angle;
+    }
+
+    expect(Math.abs(turned) / (2 * Math.PI)).toBeCloseTo(SPIRAL_TURNS, 1);
+  });
+
+  it('emits one point per step, plus the one that closes it', () => {
+    expect(points(spiralArmPath(CENTRE, RADIUS, 1))).toHaveLength(SPIRAL_STEPS + 1);
+  });
+
+  it('clamps outside its own range rather than running away', () => {
+    expect(spiralArmPath(CENTRE, RADIUS, 2)).toBe(spiralArmPath(CENTRE, RADIUS, 1));
+  });
+
+  it('grows smoothly, with no jump at any point', () => {
+    // the arm takes its character from whatever drives it, so the one thing
+    // that has to hold here is that the reach itself has no step in it
+    expectSmooth((grow) => {
+      const p = points(spiralArmPath(CENTRE, RADIUS, Math.max(grow, 1e-6)));
+      return reach(p[p.length - 1]);
+    });
   });
 });

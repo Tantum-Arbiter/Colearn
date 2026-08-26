@@ -40,8 +40,13 @@ export const ORB_REFORM_FADE = 120;
 export const ARC_AFTER_ORB = 120;
 export const WATER_AFTER_ORB = 170;
 
+export const SPIRAL_OUT_SHARE = 0.45;
+export const SPIRAL_IN_STARTS_AT = 0.55;
+
 export interface GlanceOpenTimeline {
   readonly spin: Phase;
+  readonly spiralOut: Phase;
+  readonly spiralIn: Phase;
   readonly swell: Phase;
   readonly ease: Phase;
   readonly turn: Phase;
@@ -78,6 +83,8 @@ export function glanceOpenTimeline(
   const settle = phase(draw.ends, settleDuration);
 
   const swell = phase(0, spinDuration * 0.55);
+  const spiralOut = phase(0, spin.over * SPIRAL_OUT_SHARE);
+  const spiralIn = phase(spin.over * SPIRAL_IN_STARTS_AT, spin.over * SPIRAL_OUT_SHARE);
   const strokeOut = phase(settle.at + settle.over * 0.5, settleDuration);
   const content = phase(settle.at + settle.over * 0.7, fadeDuration);
 
@@ -85,6 +92,8 @@ export function glanceOpenTimeline(
 
   return {
     spin,
+    spiralOut,
+    spiralIn,
     swell,
     ease: phase(swell.ends, spinDuration - swell.over),
     turn: phase(0, spin.over),

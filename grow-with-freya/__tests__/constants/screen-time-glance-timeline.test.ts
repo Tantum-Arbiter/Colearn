@@ -55,6 +55,24 @@ describe('glanceOpenTimeline', () => {
     expect(open.turns).toBeGreaterThan(0);
   });
 
+  it('winds the spiral out and back in entirely within the spin', () => {
+    expect(open.spiralOut.at).toBe(0);
+    expect(open.spiralIn.ends).toBe(open.spin.ends);
+  });
+
+  it('has the spiral gone before anything begins to flatten', () => {
+    // "a spiral spinning effect before animating into a line" -- the arm is a
+    // thing the orb does while spinning, not something the morph inherits. It
+    // also means the squash never has to act on it: the spinner's box is
+    // scaled by `orbSquash`, and an arm still out at that point would be
+    // flattened along with everything else in there.
+    expect(open.spiralIn.ends).toBeLessThanOrEqual(open.morph.at);
+  });
+
+  it('holds the arm at full reach for a beat before winding it back', () => {
+    expect(open.spiralIn.at).toBeGreaterThan(open.spiralOut.ends);
+  });
+
   it('stops turning before the orb starts to flatten', () => {
     // The defect this pins: the turn used to run across the spin and the
     // morph together. The squash is applied in the element's own frame and

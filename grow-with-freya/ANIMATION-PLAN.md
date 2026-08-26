@@ -164,6 +164,21 @@ Both halves were individually correct -- two whole turns, a smooth squash --
 and the fault only exists in their composition. **Worth checking, whenever
 two transforms overlap in time, what the second does to the first.**
 
+### 8. An element hidden inside another element
+
+The spiral arm was first given the ring echo's own radius, which is also the
+radius of the *filled* core dot underneath it, in the same colour. The whole
+arm rendered inside the dot and was invisible -- not faint, not subtle,
+absent. It would have looked exactly like the animation failing to run.
+
+This is what "legible only at a corner-sized scale" meant when the earlier
+spiral was reverted (b639885), and it very nearly repeated: every test passed,
+because they all asserted on the path's own geometry, which was perfectly
+correct. **Reach is relative. An element's size has to be asserted against
+what it sits on, not only against itself** -- `SPIRAL_RADIUS` is now tested
+against the core's radius and the arc's, and the turn spacing against the
+stroke width.
+
 ## Phases
 
 Each is independently shippable and independently useful. Phase 1 is worth

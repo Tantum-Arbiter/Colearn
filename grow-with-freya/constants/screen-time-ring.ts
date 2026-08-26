@@ -167,6 +167,65 @@ export function dropStretchAt(progress: number): number {
   return 1 + 0.22 * Math.sin(Math.PI * u) - 0.16 * u * u;
 }
 
+/**
+ * The spiral arm the orb winds out while it spins, and winds back in before
+ * it flattens.
+ *
+ * An Archimedean curve -- radius growing in step with the angle -- sampled as
+ * a polyline, so it is a single animated `d` rather than a stack of elements.
+ * `grow` scales the whole arm from nothing to its full reach, which means the
+ * arm is a point at zero and cannot be seen at rest.
+ *
+ * The curve carries no easing of its own: radius is linear in `grow` and the
+ * angle is linear in the step. That is deliberate, and the opposite of
+ * `orbSquash` and `splashPath` -- those own their curves and must be driven
+ * linearly, whereas this one takes its character entirely from whatever
+ * drives it, and should be eased.
+ *
+ * A previous attempt at a spiral was reverted (b639885). It failed for three
+ * reasons: two animations on one shared value, a straighten that crumpled,
+ * and illegibility at small scale. The first is now unrepresentable and the
+ * second does not arise here, because this arm is never unrolled onto the
+ * line -- it retracts and the core flattens as it always did. The third is
+ * still a live risk at ring size, and `SPIRAL_TURNS` and `SPIRAL_RADIUS` are
+ * the knobs for it. The unrolling version is preserved in history at 674800d.
+ */
+export const SPIRAL_TURNS = 1.6;
+export const SPIRAL_STEPS = 48;
+/**
+ * How far the arm reaches.
+ *
+ * It has to clear the orb, not merely match it. At the ring echo's own radius
+ * the whole spiral sat inside the solid core dot, in the same colour, and was
+ * invisible -- which is what "legible only at a corner-sized scale" meant in
+ * the revert. Reaching well past the core is what makes it read as an arm
+ * swept out of the orb rather than a texture on it.
+ */
+export const SPIRAL_RADIUS = 26;
+
+export function spiralArmPath(centre: number, radius: number, grow: number): string {
+  'worklet';
+  const g = grow <= 0 ? 0 : grow >= 1 ? 1 : grow;
+  if (g <= 0) {
+    return '';
+  }
+
+  let d = '';
+
+  for (let i = 0; i <= SPIRAL_STEPS; i++) {
+    const f = i / SPIRAL_STEPS;
+    const theta = f * SPIRAL_TURNS * 2 * Math.PI;
+    const r = radius * g * f;
+
+    const x = centre + r * Math.cos(theta);
+    const y = centre + r * Math.sin(theta);
+
+    d += `${i === 0 ? 'M' : 'L'} ${x.toFixed(2)} ${y.toFixed(2)} `;
+  }
+
+  return d.trim();
+}
+
 /** Droplets thrown up by the returning drop as it lands. */
 export const SPLASH_DROPLETS = 7;
 

@@ -178,10 +178,13 @@ describe('ScreenTimeGlance', () => {
       const tree = renderGlance();
       const spinner = findByTestId(tree, 'screen-time-glance-spinner')[0];
       const style = StyleSheet.flatten(spinner.props.style);
-      const box = (SCREEN_TIME_GLANCE.spinnerRadius + SCREEN_TIME_GLANCE.spinnerStroke) * 2 + 2;
 
-      expect(style.left + box / 2).toBeCloseTo(ORIGIN.x);
-      expect(style.top + box / 2).toBeCloseTo(ORIGIN.y);
+      // the box's own size, not a second copy of the formula that computes
+      // it: what matters is that it is centred on the ring, and re-deriving
+      // the size here meant this broke when the spiral arm widened the box
+      // without moving anything
+      expect(style.left + style.width / 2).toBeCloseTo(ORIGIN.x);
+      expect(style.top + style.height / 2).toBeCloseTo(ORIGIN.y);
     });
 
     it('draws the border in the water blue, whatever the state', () => {

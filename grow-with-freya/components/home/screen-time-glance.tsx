@@ -24,6 +24,8 @@ import {
   panelBorderPath,
   dropFlight,
   splashPath,
+  spiralArmPath,
+  SPIRAL_RADIUS,
   splashOpacity,
   splashRing,
   dropHandoverScale,
@@ -46,7 +48,13 @@ import { choreograph, type Track } from '@/utils/choreograph';
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
-const SPINNER_BOX = (SCREEN_TIME_GLANCE.spinnerRadius + SCREEN_TIME_GLANCE.spinnerStroke) * 2 + 2;
+// wide enough for whichever reaches further, the ring's echo or the spiral
+// arm it winds out, so raising SPIRAL_RADIUS cannot clip the arm
+const SPINNER_BOX =
+  (Math.max(SCREEN_TIME_GLANCE.spinnerRadius, SPIRAL_RADIUS) +
+    SCREEN_TIME_GLANCE.spinnerStroke) *
+    2 +
+  2;
 
 export interface ScreenTimeGlanceProps {
   visible: boolean;
@@ -167,6 +175,9 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
   // the core: the solid dot the orb takes over from the ring. 1 is the
   // ring's own dot; it shrinks to nothing as the orb reduces into the line
   const spinnerCore = useSharedValue(1);
+  // the spiral arm the orb winds out as it spins, and winds back in before it
+  // flattens -- 0 is a point at the core, 1 is its full reach
+  const spiralGrow = useSharedValue(0);
   const drawProgress = useSharedValue(0);
   const drawOpacity = useSharedValue(1);
   const panelOpacity = useSharedValue(0);
@@ -197,6 +208,7 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
       { on: spinnerWater, name: 'orb colour', from: 0, beats: [] },
       { on: spinnerArcOpacity, name: 'orb outline', from: 1, beats: [] },
       { on: spinnerCore, name: 'orb core', from: 1, beats: [] },
+      { on: spiralGrow, name: 'spiral', from: 0, beats: [] },
       { on: drawProgress, name: 'border', from: open ? 1 : 0, beats: [] },
       { on: drawOpacity, name: 'drawn stroke', from: open ? 0 : 1, beats: [] },
       { on: panelOpacity, name: 'panel', from: open ? 1 : 0, beats: [] },
@@ -306,6 +318,30 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
           ],
         },
         { on: spinnerCore, name: 'orb core', from: 1, beats: [] },
+        // ...winding a spiral arm out of the core as it goes, and winding it
+        // back in before anything flattens. Eased on purpose: `spiralArmPath`
+        // carries no curve of its own -- radius is linear in the grow and the
+        // angle linear in the step -- so unlike `orbSquash` and `splashPath`
+        // it takes its character from whatever drives it.
+        {
+          on: spiralGrow,
+          name: 'spiral',
+          from: 0,
+          beats: [
+            {
+              at: timeline.spiralOut.at,
+              to: 1,
+              over: timeline.spiralOut.over,
+              easing: Easing.out(Easing.cubic),
+            },
+            {
+              at: timeline.spiralIn.at,
+              to: 0,
+              over: timeline.spiralIn.over,
+              easing: Easing.in(Easing.cubic),
+            },
+          ],
+        },
 
         // 2. ...squashes and stretches into the vertical line, right where it
         //    was pressed. One progress, with `orbSquash` deriving both axes
@@ -574,6 +610,7 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
         // flattened into the line it became, small, and still water blue.
         { on: spinnerTravel, name: 'travel', from: 0, beats: [] },
         { on: spinnerMorph, name: 'morph', from: 0, beats: [] },
+        { on: spiralGrow, name: 'spiral', from: 0, beats: [] },
         {
           on: spinnerOpacity,
           name: 'orb',
@@ -668,6 +705,16 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
 
   const spinnerColourProps = useAnimatedProps(() => ({
     opacity: spinnerArcOpacity.value,
+    stroke: interpolateColor(
+      spinnerWater.value,
+      [0, 1],
+      [drawStroke, SCREEN_TIME_GLANCE.drawWater]
+    ),
+  }));
+
+  const spiralProps = useAnimatedProps(() => ({
+    d: spiralArmPath(SPINNER_BOX / 2, SPIRAL_RADIUS, spiralGrow.value),
+    opacity: spiralGrow.value,
     stroke: interpolateColor(
       spinnerWater.value,
       [0, 1],
@@ -817,6 +864,17 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
               r={SCREEN_TIME_RING.size / 2}
               fill={drawStroke}
               animatedProps={spinnerCoreProps}
+            />
+            {/* the arm the orb winds out while it spins. It sits inside the
+                same rotating box as the arc and the core, so it spins with
+                them rather than needing a rotation of its own. */}
+            <AnimatedPath
+              testID="screen-time-glance-spinner-spiral"
+              fill="none"
+              strokeWidth={SCREEN_TIME_GLANCE.spinnerStroke}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              animatedProps={spiralProps}
             />
             {/* the gap is a third of the circle so the rotation actually
                 reads as spinning rather than as a static ring */}
