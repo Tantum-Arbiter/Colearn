@@ -121,6 +121,24 @@ perfectly correct in code.
 
 ---
 
+### 5b. Sequencing what should be a single gesture
+
+The orb flattened where it was pressed and only then dropped onto the border.
+Two beats, correct in isolation, and the descent read as the line *going down
+into position* rather than arriving there -- exactly the fault `withSequence`
+produces within one value, but committed across two.
+
+It was the right call when the line crossed a third of the screen: changing
+shape mid-flight would have happened where the eye was not looking. Against a
+15px settle it is wrong, and 15px is too small to rescue by retiming -- no
+duration makes a separate 15px beat read as anything but a jump. The two now
+share one window, so the orb pours itself down into the line.
+
+**A move too small to be seen as travel should not be a beat of its own.**
+And when two properties are meant to read as one gesture, they need the same
+curve: the descent takes `inOut(cubic)` because that is the ease `orbSquash`
+carries internally.
+
 ### 6. A constant that outlives the geometry it was tuned for
 
 `DRAW_OVERLAP` was 60ms because the line crossed a third of the screen to

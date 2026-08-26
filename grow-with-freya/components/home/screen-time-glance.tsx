@@ -331,14 +331,26 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
           ],
         },
 
-        // 3. ...and only then does the finished line glide to the border's
-        //    start, on the same curve as everything else
+        // 3. ...and it settles onto the border as it flattens, not after.
+        //    Flatten first and drop afterwards and the descent reads as a
+        //    second, separate beat -- the line going down into position
+        //    rather than arriving there. Sharing the morph's window makes it
+        //    one gesture: the orb pours itself down into the line.
+        //
+        //    `inOut(cubic)` because that is the ease `orbSquash` carries
+        //    internally, so the descent tracks the flattening instead of
+        //    drifting against it.
         {
           on: spinnerTravel,
           name: 'travel',
           from: 0,
           beats: [
-            { at: timeline.travel.at, to: 1, over: timeline.travel.over, easing: glide },
+            {
+              at: timeline.travel.at,
+              to: 1,
+              over: timeline.travel.over,
+              easing: Easing.inOut(Easing.cubic),
+            },
           ],
         },
 

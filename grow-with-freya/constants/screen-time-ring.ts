@@ -47,10 +47,6 @@ export const SCREEN_TIME_GLANCE = {
   // two turns were a blur, and the phase looked like a flicker before the
   // draw rather than a moment of its own.
   spinDuration: 620,
-  // the line forms at the ring and the border starts on the bottom edge
-  // directly below it, so this is a 15px settle onto the frame rather than a
-  // journey: at 340ms it read as the line hanging in the air
-  travelDuration: 140,
   // long enough to be a movement rather than a cut: at 140ms the orb went
   // from circle to line in one step, with no squash to sell the change
   morphDuration: 340,

@@ -13,7 +13,6 @@ function phase(at: number, over: number): Phase {
 export interface GlanceDurations {
   fadeDuration: number;
   spinDuration: number;
-  travelDuration: number;
   morphDuration: number;
   drawDuration: number;
   settleDuration: number;
@@ -67,7 +66,6 @@ export function glanceOpenTimeline(
   const {
     spinDuration,
     morphDuration,
-    travelDuration,
     drawDuration,
     settleDuration,
     fadeDuration,
@@ -75,7 +73,7 @@ export function glanceOpenTimeline(
 
   const spin = phase(0, spinDuration);
   const morph = phase(spin.ends, morphDuration);
-  const travel = phase(morph.ends, travelDuration);
+  const travel = phase(morph.at, morph.over);
   const draw = phase(travel.ends - DRAW_OVERLAP, drawDuration);
   const settle = phase(draw.ends, settleDuration);
 

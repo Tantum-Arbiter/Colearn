@@ -25,14 +25,16 @@ const close = glanceCloseTimeline();
 describe('glanceOpenTimeline', () => {
   it('runs its beats in order, with no gap between them', () => {
     expect(open.morph.at).toBe(open.spin.ends);
-    expect(open.travel.at).toBe(open.morph.ends);
     expect(open.settle.at).toBe(open.draw.ends);
   });
 
-  it('changes the orb’s shape under the finger, before anything travels', () => {
-    // travelling first and flattening on arrival made the shape change
-    // somewhere the eye was not yet looking
-    expect(open.morph.ends).toBeLessThanOrEqual(open.travel.at);
+  it('flattens and settles as one move rather than two beats', () => {
+    // The defect this pins: the orb flattened where it was pressed and only
+    // then dropped onto the border. Against a 15px settle that descent read
+    // as a separate beat -- the line going down into position rather than
+    // arriving there. Sharing the morph's window makes it one gesture.
+    expect(open.travel.at).toBe(open.morph.at);
+    expect(open.travel.ends).toBe(open.morph.ends);
   });
 
   it('starts the border exactly as the line lands, never before', () => {
@@ -116,7 +118,8 @@ describe('glanceOpenTimeline', () => {
     const retimed = glanceOpenTimeline(slower);
 
     expect(retimed.morph.at).toBe(retimed.spin.ends);
-    expect(retimed.travel.at).toBe(retimed.morph.ends);
+    expect(retimed.travel.at).toBe(retimed.morph.at);
+    expect(retimed.travel.ends).toBe(retimed.morph.ends);
     expect(retimed.draw.at).toBe(retimed.travel.ends);
     expect(retimed.settle.at).toBe(retimed.draw.ends);
     expect(retimed.turn.ends).toBe(retimed.spin.ends);
