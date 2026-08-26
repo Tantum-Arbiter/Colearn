@@ -14,6 +14,7 @@
 import { SCREEN_TIME_GLANCE } from '@/constants/screen-time-ring';
 import {
   DRAW_OVERLAP,
+  SETTLING_HALF_TURN,
   glanceCloseTimeline,
   glanceOpenTimeline,
   type GlanceDurations,
@@ -47,34 +48,25 @@ describe('glanceOpenTimeline', () => {
     expect(DRAW_OVERLAP).toBe(0);
   });
 
-  it('turns a whole number of times, so the line lands vertical', () => {
-    // The defect this pins: a rotation that did not land on a whole turn left
-    // the finished line lying on its side -- perfectly correct in code and
-    // plainly wrong on screen.
-    expect(open.rotation % 360).toBe(0);
+  it('lands the turn where a line looks the same, so it finishes level', () => {
+    // A line is unchanged by half a turn, which is what lets the spin keep
+    // running through the flatten. The requirement is a multiple of 180, not
+    // of 360 -- and it is a real requirement: a rotation that landed on
+    // neither left the finished line lying at an angle, correct-looking in
+    // code and plainly wrong on screen.
+    expect(open.rotation % 180).toBe(0);
     expect(open.turns).toBeGreaterThan(0);
   });
 
-  it('winds the arm out within the spin, and does not wind it back', () => {
-    // the arm is not swapped for the line, it becomes the line -- so it is
-    // still at full reach when the morph starts to lay it down
-    expect(open.spiralOut.at).toBe(0);
-    expect(open.spiralOut.ends).toBeLessThan(open.spin.ends);
+  it('keeps turning through the flatten, finishing exactly as the line does', () => {
+    // the arm is a coil for most of the morph and a coil looks fine rotating;
+    // by the time it is a line the turn has all but stopped
+    expect(open.turn.ends).toBe(open.morph.ends);
+    expect(open.turn.over).toBe(open.spin.over + open.morph.over);
   });
 
-  it('holds the arm at full reach until the morph takes it', () => {
-    expect(open.spiralOut.ends).toBeLessThanOrEqual(open.morph.at);
-  });
-
-  it('stops turning before the orb starts to flatten', () => {
-    // The defect this pins: the turn used to run across the spin and the
-    // morph together. The squash is applied in the element's own frame and
-    // the rotation on top of it, so the orb was still 232 degrees off level
-    // when it began to flatten, and swung the remaining 128 degrees while
-    // squashing -- the line formed at an angle and slewed into place.
-    expect(open.turn.ends).toBe(open.spin.ends);
-    expect(open.turn.ends).toBeLessThanOrEqual(open.morph.at);
-    expect(open.turn.ends).toBeLessThanOrEqual(open.travel.at);
+  it('makes a half turn more than its whole spins, while laying the arm down', () => {
+    expect(open.rotation - open.turns * 360).toBe(SETTLING_HALF_TURN);
   });
 
   it('finishes the orb’s colour turn while it is still spinning', () => {
@@ -133,7 +125,7 @@ describe('glanceOpenTimeline', () => {
     expect(retimed.travel.ends).toBe(retimed.morph.ends);
     expect(retimed.draw.at).toBe(retimed.travel.ends);
     expect(retimed.settle.at).toBe(retimed.draw.ends);
-    expect(retimed.turn.ends).toBe(retimed.spin.ends);
+    expect(retimed.turn.ends).toBe(retimed.morph.ends);
   });
 });
 

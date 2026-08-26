@@ -42,6 +42,17 @@ export const WATER_AFTER_ORB = 170;
 
 export const SPIRAL_OUT_SHARE = 0.45;
 
+/**
+ * The half turn the orb makes while the arm lays itself down.
+ *
+ * A line is unchanged by half a turn, so once the arm rather than a squash is
+ * what makes the line, the spin can keep running through the flatten and
+ * still finish level. It could not before: a squash produces its line in the
+ * element's own frame, so any rotation still in flight left the line at an
+ * angle, slewing into place.
+ */
+export const SETTLING_HALF_TURN = 180;
+
 export interface GlanceOpenTimeline {
   readonly spin: Phase;
   readonly spiralOut: Phase;
@@ -86,15 +97,16 @@ export function glanceOpenTimeline(
   const content = phase(settle.at + settle.over * 0.7, fadeDuration);
 
   const turns = 2;
+  const rotation = turns * 360 + SETTLING_HALF_TURN;
 
   return {
     spin,
     spiralOut,
     swell,
     ease: phase(swell.ends, spinDuration - swell.over),
-    turn: phase(0, spin.over),
+    turn: phase(0, spin.over + morph.over),
     turns,
-    rotation: turns * 360,
+    rotation,
     orbIn: phase(0, ORB_FADE_IN),
     orbOut: phase(draw.at + ORB_LEAVES_AFTER_DRAW, ORB_FADE_OUT),
     water: phase(spinDuration * 0.25, spinDuration * 0.65),
