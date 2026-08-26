@@ -24,7 +24,7 @@ import {
   spiralArmPath,
   SPIRAL_STEPS,
   SPIRAL_TURNS,
-  SPIRAL_LINE_HALF,
+  SPIRAL_LINE_LENGTH,
   waterTurnRamp,
   WATER_TURN_MID,
   SPIRAL_RADIUS,
@@ -425,7 +425,7 @@ describe('the ring and the border it opens into', () => {
 
 describe('spiralArmPath', () => {
   const CENTRE = 30;
-  // the real reach, so the line it lays down (SPIRAL_LINE_HALF) sits inside
+  // the real reach, so the line it lays down (SPIRAL_LINE_LENGTH) sits inside
   // it as it does on screen
   const RADIUS = SPIRAL_RADIUS;
 
@@ -446,7 +446,7 @@ describe('spiralArmPath', () => {
 
   // the arm before any of it has been pulled straight
   const arm = (grow: number, straighten = 0) =>
-    spiralArmPath(CENTRE, RADIUS, grow, straighten, SPIRAL_LINE_HALF);
+    spiralArmPath(CENTRE, RADIUS, grow, straighten, SPIRAL_LINE_LENGTH);
 
   it('reaches clear of the orb it is swept out of', () => {
     // The defect this pins, and the one that killed the previous spiral: at
@@ -538,12 +538,26 @@ describe('spiralArmPath', () => {
       p.forEach((point) => expect(onLine(point)).toBeLessThan(0.05));
     });
 
-    it('lays the line down at the length it is told to', () => {
+    it('runs the line from the anchor, not across it', () => {
+      // The defect this pins: the line was centred on the point the border is
+      // drawn from, so half of it lay over border that would not be drawn
+      // until the end of the sweep. It has to start at that point and run out
+      // along the stretch about to be drawn.
       const p = points(arm(1, 1));
       const xs = p.map((point) => point.x);
 
-      expect(Math.min(...xs)).toBeCloseTo(CENTRE - SPIRAL_LINE_HALF, PLACES);
-      expect(Math.max(...xs)).toBeCloseTo(CENTRE + SPIRAL_LINE_HALF, PLACES);
+      expect(Math.min(...xs)).toBeCloseTo(CENTRE, PLACES);
+      expect(Math.max(...xs)).toBeCloseTo(CENTRE + SPIRAL_LINE_LENGTH, PLACES);
+    });
+
+    it('leaves the core end exactly on the anchor throughout', () => {
+      // it is the point the border grows from, so it must not drift
+      for (const straighten of [0, 0.3, 0.6, 1]) {
+        const first = points(arm(1, straighten))[0];
+
+        expect(first.x).toBeCloseTo(CENTRE, PLACES);
+        expect(first.y).toBeCloseTo(CENTRE, PLACES);
+      }
     });
 
     it('straightens from the outer end inward, not all at once', () => {
@@ -563,7 +577,7 @@ describe('spiralArmPath', () => {
     it('keeps every point within reach of the arm and the line', () => {
       // not a tight bound, a sanity one: nothing should fly off while the
       // wave passes, which is what a crumpling unroll looks like numerically
-      const span = RADIUS + SPIRAL_LINE_HALF + 1;
+      const span = RADIUS + SPIRAL_LINE_LENGTH + 1;
 
       for (const straighten of [0.2, 0.4, 0.6, 0.8]) {
         points(arm(1, straighten)).forEach((point) => {

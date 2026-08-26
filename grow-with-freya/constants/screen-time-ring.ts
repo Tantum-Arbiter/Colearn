@@ -189,8 +189,19 @@ export const SPIRAL_STEPS = 40;
  */
 export const SPIRAL_RADIUS = 26;
 
-/** Half the length of the line the arm lays itself down as. */
-export const SPIRAL_LINE_HALF = 24;
+/**
+ * The length of the line the arm lays itself down as.
+ *
+ * It runs *from* the point the border is drawn from, not across it. Centred
+ * on that point, half the line lay over border that would not be drawn until
+ * the very end of the sweep, with nothing to explain it.
+ *
+ * The arm builds it rightward in its own frame. The view finishes on a half
+ * turn, so on screen that is leftward -- which is the direction the border
+ * runs from its start. The core end is pinned at that start point and the
+ * border grows out from under the line.
+ */
+export const SPIRAL_LINE_LENGTH = 48;
 
 /**
  * How much of the arm's length the straightening wave occupies.
@@ -289,7 +300,7 @@ export function spiralArmPath(
   radius: number,
   grow: number,
   straighten: number,
-  lineHalf: number
+  lineLength: number
 ): string {
   'worklet';
   const g = grow <= 0 ? 0 : grow >= 1 ? 1 : grow;
@@ -302,8 +313,6 @@ export function spiralArmPath(
   // the wave has to clear the whole arm, so it travels a band further than
   // the length it is crossing
   const front = s * (1 + SPIRAL_UNROLL_BAND);
-  const length = lineHalf * 2;
-  const shift = lineHalf * s;
 
   let d = '';
 
@@ -319,7 +328,7 @@ export function spiralArmPath(
     // barely moves and the arm unwinds off it, which is what an unrolling
     // coil does -- aiming the core at a point half a line away is what made
     // it loop instead.
-    const lineX = centre + length * SPIRAL_TABLE.arc[i];
+    const lineX = centre + lineLength * SPIRAL_TABLE.arc[i];
 
     // how far this point in particular has been pulled straight: the outer
     // end (f = 1) goes first, the core (f = 0) last
@@ -329,10 +338,7 @@ export function spiralArmPath(
     // than setting off and stopping abruptly
     const t = clamped * clamped * (3 - 2 * clamped);
 
-    // the finished line runs from the core rightward, so the whole arm slides
-    // back by half its length as it straightens and ends up centred on the
-    // point the border is drawn from
-    const x = spiralX + (lineX - spiralX) * t - shift;
+    const x = spiralX + (lineX - spiralX) * t;
     const y = spiralY + (centre - spiralY) * t;
 
     d += `${i === 0 ? 'M' : 'L'} ${coord(x)} ${coord(y)} `;

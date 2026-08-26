@@ -27,7 +27,7 @@ import {
   waterTurnRamp,
   spiralArmPath,
   SPIRAL_RADIUS,
-  SPIRAL_LINE_HALF,
+  SPIRAL_LINE_LENGTH,
   splashOpacity,
   splashRing,
   dropHandoverScale,
@@ -754,7 +754,7 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
       SPIRAL_RADIUS,
       spiralGrow.value,
       spinnerMorph.value,
-      SPIRAL_LINE_HALF
+      SPIRAL_LINE_LENGTH
     ),
     opacity: spiralGrow.value,
     stroke: interpolateColor(spinnerWater.value, water.input, water.output),
