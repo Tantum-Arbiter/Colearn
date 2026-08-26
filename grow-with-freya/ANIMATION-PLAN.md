@@ -57,6 +57,19 @@ first animation. Found **four separate times**:
 Every instance looked like a different bug and took a slow-motion recording
 to diagnose. **This is the single highest-value thing to make impossible.**
 
+### 1b. `undefined` passed where the key should be absent
+
+Building a config object with every key always present, and letting the
+unset ones be `undefined`, is not the same as omitting them.
+`withTiming(to, { duration, easing: undefined })` crashed the app natively --
+straight to the home screen, no red box, nothing in the device log -- the
+moment the glance opened. The hand-written code it replaced had omitted the
+key; only the rewrite started passing it explicitly.
+
+Worth naming because it is invisible to every cheap check: it type-checks, it
+passes a mocked test suite, and it reads correctly. It shows up only on a
+device, as a crash with no diagnostics.
+
 ### 2. `withSequence` stops dead at every join
 
 A sequence returns to zero velocity between beats. A three-beat squash

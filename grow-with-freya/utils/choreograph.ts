@@ -64,9 +64,13 @@ function build(beats: Beat[], onFinished?: () => void) {
     cursor = beat.at + over;
 
     const last = index === beats.length - 1;
+    const config: WithTimingConfig = { duration: over };
+    if (beat.easing) {
+      config.easing = beat.easing;
+    }
     const step = withTiming(
       beat.to,
-      { duration: over, easing: beat.easing },
+      config,
       last && onFinished
         ? (finished) => {
             'worklet';

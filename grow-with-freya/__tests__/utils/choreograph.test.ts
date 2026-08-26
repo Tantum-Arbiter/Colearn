@@ -18,6 +18,8 @@ jest.mock('react-native-reanimated', () => ({
     to,
     duration: config?.duration ?? 300,
     easing: config?.easing,
+    // the key's presence matters, not just its value -- see the easing tests
+    configKeys: config ? Object.keys(config) : [],
     callback,
   }),
   withDelay: (ms: number, animation: any) => ({ kind: 'delay', ms, animation }),
@@ -199,6 +201,55 @@ describe('choreograph', () => {
     ]);
 
     expect(total).toBe(960);
+  });
+
+  describe('easing', () => {
+    it('leaves the easing key out entirely when a beat has none', () => {
+      // The defect this pins: passing `easing: undefined` is not the same as
+      // omitting it. Reanimated crashed the app natively -- straight to the
+      // home screen, no red box -- the moment the glance opened. The original
+      // hand-written code omitted the key, and only the rewrite started
+      // passing it as undefined.
+      const value = makeValue();
+
+      choreograph([
+        { on: value, name: 'value', beats: [{ at: 0, to: 1, over: 140 }] },
+      ]);
+
+      expect(value.value.configKeys).toEqual(['duration']);
+    });
+
+    it('passes the easing through when a beat has one', () => {
+      const value = makeValue();
+      const easing = () => 0;
+
+      choreograph([
+        { on: value, name: 'value', beats: [{ at: 0, to: 1, over: 140, easing }] },
+      ]);
+
+      expect(value.value.configKeys.sort()).toEqual(['duration', 'easing']);
+      expect(value.value.easing).toBe(easing);
+    });
+
+    it('omits it per beat, so one eased beat does not force the others', () => {
+      const value = makeValue();
+      const easing = () => 0;
+
+      choreograph([
+        {
+          on: value,
+          name: 'value',
+          beats: [
+            { at: 0, to: 1, over: 140 },
+            { at: 600, to: 0, over: 180, easing },
+          ],
+        },
+      ]);
+
+      const [first, second] = value.value.animations;
+      expect(first.configKeys).toEqual(['duration']);
+      expect(second.animation.configKeys.sort()).toEqual(['duration', 'easing']);
+    });
   });
 
   describe('the finishing callback', () => {
