@@ -78,6 +78,25 @@ stepped rather than smooth. Fixed in the glance by deriving both axes from
 one progress through `orbSquash`; the same fault is latent anywhere a
 sequence is used for a single continuous gesture.
 
+### 2b. Easing a value that already carries its own curve
+
+`orbSquash` and `splashPath` are not interpolations. The first carries a
+cubic ease *plus* an anticipation bump `u(1-u)^3`; the second is ballistic --
+droplets easing outward under a term that grows with the square of the
+progress. Both are written against real elapsed time.
+
+Driving them through an eased shared value composes two curves. The middle
+gets crushed, the bump lands at the wrong moment, and the droplets stutter.
+The morph was driven `inOut(quad)` on top of its own cubic; the splash was
+driven with no easing at all, which is **not** linear -- Reanimated defaults
+to `inOut(quad)`, so the splash was eased twice without anyone writing an
+easing down.
+
+`expectSmooth` cannot see this. It samples those functions over uniform
+progress, so it tests the curve rather than the curve composed with whatever
+drives it. **A value feeding a hand-written curve must be driven linearly,
+and that has to be asserted on the driving easing, not on the curve.**
+
 ### 3. Elements that appear or vanish at full size
 
 Three separate pops: the teardrop appeared over the gathered panel at full

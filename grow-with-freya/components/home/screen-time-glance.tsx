@@ -322,7 +322,11 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
               at: timeline.morph.at,
               to: 1,
               over: timeline.morph.over,
-              easing: Easing.inOut(Easing.quad),
+              // linear: `orbSquash` already carries the ease and the
+              // anticipation bump, and the bump is timed against real
+              // elapsed time. Easing this as well composes two in-out
+              // curves, which crushes the middle and distorts the bump.
+              easing: Easing.linear,
             },
           ],
         },
@@ -533,7 +537,19 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
         {
           on: splash,
           name: 'splash',
-          beats: [{ at: timeline.splash.at, to: 1, over: timeline.splash.over }],
+          // linear for the same reason as the morph, and more so: `splashPath`
+          // is ballistic -- the droplets ease outward and fall under a term
+          // that grows with the square of the progress. Omitting the easing
+          // does not mean linear, it means Reanimated's in-out default, which
+          // is what made the droplets stutter on their way to the orb.
+          beats: [
+            {
+              at: timeline.splash.at,
+              to: 1,
+              over: timeline.splash.over,
+              easing: Easing.linear,
+            },
+          ],
         },
 
         // ...out of which the orb emerges, growing back to the ring's own dot

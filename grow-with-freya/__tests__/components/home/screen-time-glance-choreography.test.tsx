@@ -20,11 +20,26 @@ import React from 'react';
 import { render, fireEvent, act } from '@testing-library/react-native';
 import * as RN from 'react-native';
 
+import { Easing } from 'react-native-reanimated';
+
 import { ScreenTimeGlance } from '@/components/home/screen-time-glance';
+import { type Track } from '@/utils/choreograph';
 
 // jest only lets a module factory reach an out-of-scope variable whose name
 // starts with "mock", hence the prefix
 const mockValues: Array<{ assignments: unknown[] }> = [];
+const mockTracks: Track[] = [];
+
+jest.mock('@/utils/choreograph', () => {
+  const actual = jest.requireActual('@/utils/choreograph');
+  return {
+    ...actual,
+    choreograph: (tracks: any[], options: any) => {
+      mockTracks.push(...tracks);
+      return actual.choreograph(tracks, options);
+    },
+  };
+});
 
 jest.mock('react-native-reanimated', () => {
   const React = require('react');
@@ -65,6 +80,8 @@ jest.mock('react-native-reanimated', () => {
     interpolateColor: (_v: any, _r: any, colours: string[]) => colours[0],
     runOnJS: (fn: any) => fn,
     Easing: {
+      // distinct identities, so a test can tell linear from anything else
+      linear: function linear(v: number) { return v; },
       out: (e: any) => e,
       in: (e: any) => e,
       inOut: (e: any) => e,
@@ -111,6 +128,7 @@ afterAll(() => {
 
 beforeEach(() => {
   mockValues.length = 0;
+  mockTracks.length = 0;
   mockReduceMotion = false;
 });
 
@@ -192,5 +210,47 @@ describe('the glance’s choreography', () => {
     expect(doubleAnimated()).toHaveLength(0);
     expect(animated()).toHaveLength(0);
     expect(mockValues.length).toBeGreaterThan(0);
+  });
+
+  describe('values that feed a hand-written curve', () => {
+    // `orbSquash` and `splashPath` are not plain interpolations: the first
+    // carries its own ease plus an anticipation bump, the second is ballistic
+    // -- droplets easing outward under a gravity term that grows with the
+    // square of the progress. Both are written against real elapsed time, so
+    // the value driving them has to be linear. Ease it as well and the two
+    // curves compose: the middle is crushed, the bump lands at the wrong
+    // moment, and the droplets stutter.
+    //
+    // This is invisible to `expectSmooth`, which samples those functions over
+    // uniform progress -- it tests the curve, not the curve composed with
+    // whatever drives it. Hence a test on the driving easing itself.
+    //
+    // Note that omitting `easing` does NOT mean linear: Reanimated defaults to
+    // an in-out quad, which is how the splash came to be eased twice without
+    // anyone writing an easing down.
+    const DERIVED = ['morph', 'splash'];
+
+    function beatsFor(name: string) {
+      return mockTracks.filter((track) => track.name === name).flatMap((t) => t.beats);
+    }
+
+    it.each(DERIVED)('drives "%s" linearly wherever it is animated', (name) => {
+      // the splash only animates on the close, the morph on both, so the two
+      // phases are collected together and every beat found must be linear
+      const tree = open();
+
+      act(() => {
+        fireEvent.press(
+          tree.UNSAFE_root.findAll(
+            (node: any) => node.props.testID === 'screen-time-glance-close'
+          )[0]
+        );
+      });
+
+      const beats = beatsFor(name);
+      expect(beats.length).toBeGreaterThan(0);
+      beats.forEach((beat) => expect(beat.easing).toBe(Easing.linear));
+    });
+
   });
 });
