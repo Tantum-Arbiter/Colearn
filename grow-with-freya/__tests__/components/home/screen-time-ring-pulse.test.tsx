@@ -8,12 +8,12 @@
  * the whole time the ring was hidden -- the orb settled at exactly 1 and the
  * ring came back at anything up to `pulseScale` in the same frame.
  *
- * The handover itself is a dissolve rather than a cut. Cutting made it a race
- * between this view's opacity and the teardown of the modal the orb sits in,
- * with nothing ordering the two: it resolved as a frame with neither on screen
- * or a frame with both, and both is brighter rather than identical because
- * everything in the corner is translucent. Both directions therefore ramp,
- * over one shared window, so the two sides stay complementary.
+ * Taking the corner back is not animated at all. A 150ms fade-in here lost a
+ * race with an unrelated commit on device -- filmed at 47% opacity, where it
+ * stayed for seven seconds until the next commit happened to touch it -- and
+ * a crossfade of two opaque copies of the same dot dips to 75% coverage at
+ * its midpoint anyway. So the show is render-driven, in the same commit that
+ * hides the orb; only the hide, which happens under the rising orb, fades.
  *
  * The global reanimated mock flattens delays, so this file records them.
  */
@@ -123,24 +123,29 @@ describe('the ring’s pulse', () => {
 });
 
 describe('the ring taking the corner back', () => {
-  function dissolves() {
+  function timings() {
     return mockValues.flatMap((value) =>
       value.assignments.filter((a: any) => a && typeof a === 'object' && a.kind === 'timing')
     );
   }
 
-  it.each([
-    ['steps aside for the orb', true, 0],
-    ['takes the corner back', false, 1],
-  ])('ramps rather than cuts as it %s', (_case, hidden, to) => {
-    renderRing(hidden);
+  it('steps aside for the orb with a fade, under the orb rising over it', () => {
+    renderRing(true);
 
-    const underTest = dissolves();
-
-    expect(underTest).toContainEqual({
+    expect(timings()).toContainEqual({
       kind: 'timing',
-      to,
+      to: 0,
       duration: SCREEN_TIME_RING.presenceFade,
     });
+  });
+
+  it('takes the corner back with no animation at all', () => {
+    renderRing(false);
+
+    expect(
+      timings().filter((t: any) => t.duration === SCREEN_TIME_RING.presenceFade)
+    ).toHaveLength(0);
+    const snapped = mockValues.filter((v) => v.assignments.includes(1));
+    expect(snapped.length).toBeGreaterThan(0);
   });
 });

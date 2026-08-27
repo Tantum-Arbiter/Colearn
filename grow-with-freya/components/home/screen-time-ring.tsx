@@ -46,16 +46,17 @@ export const ScreenTimeRing = memo(function ScreenTimeRing({
   const presence = useSharedValue(hidden ? 0 : 1);
 
   useEffect(() => {
-    // Both directions ramp, over the window the glance's orb ramps against.
-    // Handing the corner back on a single frame is a race between two things
-    // nothing orders -- this view's opacity and the teardown of the modal the
-    // orb sits in -- and it resolves as either a frame with neither on screen
-    // or a frame with both, which is brighter rather than identical because
-    // everything here is translucent. A complementary dissolve has no frame
-    // that can go either way.
-    presence.value = withTiming(hidden ? 0 : 1, {
-      duration: SCREEN_TIME_RING.presenceFade,
-    });
+    // Showing is not animated at all -- while `hidden` is false the style
+    // reads a constant 1, so the ring is back in the very commit that hands
+    // the corner over, and there is no in-flight animation for an unrelated
+    // commit to clobber. Filmed on device: a 150ms fade-in here lost that
+    // race once and left the ring at 47% opacity for seven seconds, until
+    // the next commit that happened to touch it. Hiding still fades, under
+    // the orb rising over it; the reset to 1 is what the next hide starts
+    // from.
+    presence.value = hidden
+      ? withTiming(0, { duration: SCREEN_TIME_RING.presenceFade })
+      : 1;
   }, [hidden, presence]);
 
   const exceeded = isScreenTimeExceeded(usageSeconds, limitSeconds);
@@ -92,10 +93,13 @@ export const ScreenTimeRing = memo(function ScreenTimeRing({
     };
   }, [hidden, exceeded, reduceMotion, pulse]);
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    opacity: presence.value,
-    transform: [{ scale: pulse.value }],
-  }));
+  const animatedStyle = useAnimatedStyle(
+    () => ({
+      opacity: hidden ? presence.value : 1,
+      transform: [{ scale: pulse.value }],
+    }),
+    [hidden]
+  );
 
   if (limitSeconds <= 0) {
     return null;

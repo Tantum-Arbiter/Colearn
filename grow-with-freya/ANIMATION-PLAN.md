@@ -403,6 +403,36 @@ schedules each side; if that is two different mechanisms, dissolve between them
 rather than cutting -- a cut is only as good as a frame alignment nobody
 guaranteed.**
 
+The dissolve that fixed this was then itself found wrong, twice, on film --
+the first capture of this choreography ever made (simulator video, frames
+extracted, the dot's centre pixel read per frame).
+
+First: a complementary crossfade is only invisible for translucent layers.
+For the opaque core, coverage at the midpoint is `e + (1-e)^2` -- 75% -- and
+the captured dot dimmed from rgb(226,70,60) to rgb(182,90,98) and back inside
+120ms on every clean close. The a^2/4 arithmetic that justified the dissolve
+was done for the halo's 0.3 alpha and silently assumed for the disc.
+
+Second, and the reason the flicker "came and went": the ring's 150ms fade-in
+is an in-flight animation at exactly the moment the modal tears down, and an
+unrelated commit can clobber it. Captured once in three closes: the ring
+froze at 47% opacity -- rgb(108,30,25) -- and sat there for 7.1 seconds,
+until the next commit that happened to touch it (a screen-time warning
+appearing) re-synced it to full. The animation had already finished, so
+nothing ever re-applied its final value.
+
+So the handover now has no clock at all. The ring's show is render-driven --
+`opacity: hidden ? presence.value : 1`, a constant in the very commit that
+withdraws `visible` -- and the glance statically hides its orb in that same
+commit, so the swap of two identical images happens atomically in one frame.
+Nothing is in flight, so there is nothing to race, freeze, or dip. Only the
+ring's hide still fades, under the orb rising over it, where an interrupted
+animation costs nothing.
+
+**An animation is a promise that something will finish later, and anything
+that must be true at a boundary should not rest on a promise. State that has
+to hold at a handover belongs in render, where every commit re-asserts it.**
+
 ### 14. Motion that only makes sense in one direction
 
 The orb wears a two-thirds outline. On the open that is load-bearing: it is

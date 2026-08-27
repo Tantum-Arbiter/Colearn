@@ -555,33 +555,31 @@ describe('ScreenTimeGlance', () => {
       exceeded: false,
     };
 
-    beforeEach(() => jest.useFakeTimers());
-    afterEach(() => jest.useRealTimers());
-
-    function closeAndHandBack() {
+    it('is gone in the very commit that gives the corner back, with no timers left', () => {
+      // The swap is atomic: the same render that lets the ring show also
+      // takes the orb off screen, so no animation clock is in flight for an
+      // unrelated commit to freeze mid-value.
+      jest.useFakeTimers();
       const onClose = jest.fn();
       const tree = render(<ScreenTimeGlance {...HANDBACK} onClose={onClose} />);
 
-      fireEvent.press(findByTestId(tree, 'screen-time-glance-close')[0]);
+      act(() => {
+        fireEvent.press(findByTestId(tree, 'screen-time-glance-close')[0]);
+      });
       tree.rerender(<ScreenTimeGlance {...HANDBACK} visible={false} onClose={onClose} />);
 
-      return tree;
-    }
-
-    it('holds the orb on screen while the ring fades up under it', () => {
-      const tree = closeAndHandBack();
-
-      expect(findByTestId(tree, 'screen-time-glance-spinner').length).toBeGreaterThan(0);
+      expect(findByTestId(tree, 'screen-time-glance-spinner')).toHaveLength(0);
+      expect(jest.getTimerCount()).toBe(0);
+      jest.useRealTimers();
     });
 
-    it('tears the window down once the dissolve has run', () => {
-      const tree = closeAndHandBack();
+    it('does not statically hide the spinner while the glance is open', () => {
+      const onClose = jest.fn();
+      const tree = render(<ScreenTimeGlance {...HANDBACK} onClose={onClose} />);
+      const spinnerStyle = () =>
+        StyleSheet.flatten(findByTestId(tree, 'screen-time-glance-spinner')[0].props.style);
 
-      act(() => {
-        jest.advanceTimersByTime(SCREEN_TIME_RING.presenceFade);
-      });
-
-      expect(findByTestId(tree, 'screen-time-glance-spinner')).toHaveLength(0);
+      expect(spinnerStyle().opacity).not.toBe(0);
     });
   });
 

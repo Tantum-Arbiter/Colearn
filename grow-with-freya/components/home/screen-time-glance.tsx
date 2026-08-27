@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { View, Text, Modal, Pressable, ScrollView, StyleSheet, Dimensions } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -123,7 +123,6 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
 
   const [mounted, setMounted] = useState(visible);
   const [tipsOpen, setTipsOpen] = useState(false);
-  const wasOpen = useRef(visible);
 
   const { width, height } = Dimensions.get('window');
   // stable identity: the drop's flight home is memoised against it, and a
@@ -253,7 +252,6 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
   useEffect(() => {
     if (visible) {
       setMounted(true);
-      wasOpen.current = true;
 
       if (reduceMotion) {
         // no travel: the window is simply there
@@ -489,32 +487,14 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
       return;
     }
 
+    setMounted(false);
     setTipsOpen(false);
-
-    if (!wasOpen.current || reduceMotion) {
-      setMounted(false);
-      choreograph(atRest({ open: false }));
-      return;
-    }
-
-    wasOpen.current = false;
-    choreograph([
-      {
-        on: spinnerOpacity,
-        name: 'orb',
-        beats: [{ at: 0, to: 0, over: SCREEN_TIME_RING.presenceFade }],
-      },
-    ]);
-
-    const handback = setTimeout(() => {
-      setMounted(false);
-      choreograph(atRest({ open: false }));
-    }, SCREEN_TIME_RING.presenceFade);
-
-    return () => clearTimeout(handback);
+    choreograph(atRest({ open: false }));
   }, [visible, reduceMotion, exceeded]);
 
   const finishClose = useCallback(() => {
+    setMounted(false);
+    setTipsOpen(false);
     onClose();
   }, [onClose]);
 
@@ -906,7 +886,7 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
               left: centre.x - SPINNER_BOX / 2,
               top: centre.y - SPINNER_BOX / 2,
             },
-            spinnerStyle,
+            visible ? spinnerStyle : styles.spinnerHandedOver,
           ]}
         >
           {exceeded ? (
@@ -1102,6 +1082,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: SPINNER_BOX,
     height: SPINNER_BOX,
+  },
+  spinnerHandedOver: {
+    opacity: 0,
   },
   spinnerHalo: {
     position: 'absolute',
