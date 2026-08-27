@@ -17,6 +17,7 @@ import {
   SETTLING_HALF_TURN,
   TURN_SETTLES_BY,
   DRAW_PICKUP_X,
+  TURN_CURVE,
   drawPickupSlope,
   glanceCloseTimeline,
   glanceOpenTimeline,
@@ -205,6 +206,37 @@ describe('glanceCloseTimeline', () => {
 
   it('stays inside a budget a parent will wait through', () => {
     expect(close.total).toBeLessThan(2000);
+  });
+});
+
+describe('TURN_CURVE', () => {
+  const [x1, y1, x2, y2] = TURN_CURVE;
+
+  it('reaches its working speed rather than spiking through it', () => {
+    // The defect this pins: an in-out cubic is symmetric, so the orb peaked at
+    // 3650 deg/s a third of the way in and had coasted to a tenth of that by
+    // the time the arm began to lay down -- the spin and the line happened one
+    // after the other rather than one carrying into the other.
+    //
+    // A cubic bezier leaves the origin at y1/x1. One means it arrives at its
+    // working speed and stays there instead of accelerating through it.
+    expect(y1 / x1).toBeCloseTo(1, 1);
+  });
+
+  it('brakes to a stop rather than being cut off', () => {
+    // final slope is (1 - y2) / (1 - x2); zero means it comes to rest
+    expect(y2).toBe(1);
+  });
+
+  it('holds that speed until late, so it is still turning as the arm lays down', () => {
+    expect(x2).toBeGreaterThan(0.7);
+  });
+
+  it('is a curve a bezier easing will accept', () => {
+    [x1, x2].forEach((x) => {
+      expect(x).toBeGreaterThanOrEqual(0);
+      expect(x).toBeLessThanOrEqual(1);
+    });
   });
 });
 

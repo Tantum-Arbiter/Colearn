@@ -45,6 +45,7 @@ import {
   glanceCloseTimeline,
   drawPickupSlope,
   DRAW_PICKUP_X,
+  TURN_CURVE,
 } from '@/constants/screen-time-glance-timeline';
 import { choreograph, type Track } from '@/utils/choreograph';
 
@@ -312,7 +313,10 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
               at: timeline.turn.at,
               to: timeline.rotation,
               over: timeline.turn.over,
-              easing: Easing.inOut(Easing.cubic),
+              // up to speed, hold, brake -- so the orb is still turning at two
+              // thirds of its pace as the arm starts to lay down, rather than
+              // having drifted to a near halt first
+              easing: Easing.bezier(...TURN_CURVE),
             },
           ],
         },
@@ -337,8 +341,13 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
         {
           on: spinnerArcOpacity,
           name: 'orb outline',
-          from: 1,
+          // from nothing: the ring it rises out of is a solid dot, so an
+          // outline already there on the first frame is a shape the ring
+          // never had, appearing at the exact moment the swap is meant to be
+          // invisible
+          from: 0,
           beats: [
+            { at: timeline.orbIn.at, to: 1, over: timeline.orbIn.over },
             { at: timeline.arcOut.at, to: 0, over: timeline.arcOut.over, easing: glide },
           ],
         },
@@ -694,7 +703,12 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
           on: spinnerArcOpacity,
           name: 'orb outline',
           from: 0,
-          beats: [{ at: timeline.arcBack.at, to: 1, over: timeline.arcBack.over }],
+          beats: [
+            { at: timeline.arcBack.at, to: 1, over: timeline.arcBack.over },
+            // and away again, so what hands the corner back is the solid dot
+            // the ring is, not a dot wearing a two-thirds ring that vanishes
+            { at: timeline.arcSettle.at, to: 0, over: timeline.arcSettle.over },
+          ],
         },
         // the open leaves the core at full size -- it was the line -- so the
         // reform has to start it from nothing for it to grow back out of the

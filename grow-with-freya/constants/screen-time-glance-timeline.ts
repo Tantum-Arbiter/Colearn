@@ -74,6 +74,24 @@ export const TURN_SETTLES_BY = 0.35;
  * Paired with `drawPickupSlope`, which sets the matching height. Together they
  * make the border leave the arm's tip at the speed the arm was laying at.
  */
+/**
+ * The curve the orb turns on: up to speed, hold, then brake.
+ *
+ * It used to be an in-out cubic, which is symmetric -- it peaked at 3650
+ * deg/s a third of the way in and had coasted down to 379, a tenth of that,
+ * by the time the arm began to lay down. So the orb spun hard, drifted to a
+ * near halt, and only then unrolled: the spin and the line were sequential
+ * rather than one carrying into the other.
+ *
+ * Initial slope of one (x and y equal) means it reaches its working speed and
+ * holds it rather than spiking; the late second control point keeps it there
+ * until the brake. It is still turning at 977 deg/s -- two thirds of its peak
+ * -- when the arm starts to lay down, and stopped by the time the arm is
+ * straight. The peak is less than half what it was, so the spin reads as
+ * steady rather than as a lurch.
+ */
+export const TURN_CURVE: readonly [number, number, number, number] = [0.15, 0.15, 0.8, 1];
+
 export const DRAW_PICKUP_X = 0.5;
 
 /**
@@ -188,6 +206,7 @@ export interface GlanceCloseTimeline {
   readonly orbIn: Phase;
   readonly reform: Phase;
   readonly arcBack: Phase;
+  readonly arcSettle: Phase;
   readonly water: Phase;
   readonly total: number;
 }
@@ -205,6 +224,9 @@ export function glanceCloseTimeline(
   const water = phase(orbIn.at + WATER_AFTER_ORB, orbReform * 0.9);
   const reform = phase(orbIn.at, orbReform);
   const arcBack = phase(orbIn.at + ARC_AFTER_ORB, orbReform * 0.7);
+  // and dissolves again into the solid dot, because the ring it hands the
+  // corner back to has no such outline
+  const arcSettle = phase(arcBack.ends, Math.max(0, water.ends - arcBack.ends));
 
   return {
     dim,
@@ -219,6 +241,7 @@ export function glanceCloseTimeline(
     orbIn,
     reform,
     arcBack,
+    arcSettle,
     water,
     total: Math.max(water.ends, reform.ends, arcBack.ends, splash.ends),
   };

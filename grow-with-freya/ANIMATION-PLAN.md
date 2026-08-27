@@ -117,6 +117,14 @@ a curve, because the perimeter depends on the screen.
 
 **Where two things join, compare their velocities, not their positions.**
 
+The same measurement caught the orb's spin. An in-out cubic is symmetric, so
+it peaked at 3650 deg/s a third of the way through and had coasted to 379 --
+a tenth of that -- by the time the arm began to lay down. The spin and the
+line were sequential rather than one carrying into the other. On a
+hold-then-brake curve it is still turning at 977 deg/s as the arm starts, and
+its peak is less than half what it was, so it reads as steady rather than as
+a lurch.
+
 ### 3. Elements that appear or vanish at full size
 
 Three separate pops: the teardrop appeared over the gathered panel at full
@@ -285,6 +293,17 @@ are interchangeable when they swap.
 **A handover is a claim about both elements, not just the one being handed to.
 Anything one wears and the other does not appears from nowhere at exactly the
 moment the handover is supposed to be invisible.**
+
+Third instance, found by listing what each side is made of rather than by
+looking: the ring is a solid disc out to r15 and nothing beyond, while the orb
+carried a two-thirds outline from r13.5 to r16.5. It arrived wearing one at the
+open and handed the corner back wearing one at the close, and both times it
+vanished in a frame. The outline is what makes the orb's turn legible, so it
+now fades up with the orb and dissolves again before the swap, rather than
+being present at either boundary.
+
+**Write down what each side is actually made of. Three of these were found by
+comparing that list, and none by watching.**
 
 ## Phases
 
