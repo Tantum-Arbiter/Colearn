@@ -18,16 +18,14 @@ import {
   ringDashOffset,
   screenTimeProgress,
   splashOpacity,
+  orbSquash,
+  ORB_LINE_WIDTH,
+  ORB_LINE_HEIGHT,
   splashRing,
   dropHandoverScale,
   SPLASH_RING_BIRTH,
-  spiralArmPath,
-  SPIRAL_STEPS,
-  SPIRAL_TURNS,
-  SPIRAL_LINE_LENGTH,
   waterTurnRamp,
   WATER_TURN_MID,
-  SPIRAL_RADIUS,
 } from '@/constants/screen-time-ring';
 import { expectSmooth } from '../utils/motion-smoothness';
 
@@ -423,192 +421,66 @@ describe('the ring and the border it opens into', () => {
   });
 });
 
-describe('spiralArmPath', () => {
-  const CENTRE = 30;
-  // the real reach, so the line it lays down (SPIRAL_LINE_LENGTH) sits inside
-  // it as it does on screen
-  const RADIUS = SPIRAL_RADIUS;
-
-  function points(d: string) {
-    return d
-      .split(/(?=[ML])/)
-      .filter(Boolean)
-      .map((cmd) => cmd.trim().slice(1).trim().split(' ').map(Number))
-      .map(([x, y]) => ({ x, y }));
-  }
-
-  const reach = (p: { x: number; y: number }) =>
-    Math.hypot(p.x - CENTRE, p.y - CENTRE);
-
-  // the path rounds its coordinates to two decimals, so reach is only good to
-  // about a hundredth -- assert to one rather than pretending otherwise
-  const PLACES = 1;
-
-  // the arm before any of it has been pulled straight
-  const arm = (grow: number, flatten = 0) =>
-    spiralArmPath(CENTRE, RADIUS, grow, flatten);
-
-  it('reaches clear of the orb it is swept out of', () => {
-    // The defect this pins, and the one that killed the previous spiral: at
-    // the ring echo's own radius the entire arm sat inside the solid core
-    // dot, in the same colour, and could not be seen at all. It has to clear
-    // both the filled core and the arc around it.
-    expect(SPIRAL_RADIUS).toBeGreaterThan(SCREEN_TIME_RING.size / 2);
-    expect(SPIRAL_RADIUS).toBeGreaterThan(SCREEN_TIME_GLANCE.spinnerRadius);
+describe('orbSquash', () => {
+  it('starts as the circle it is', () => {
+    expect(orbSquash(0).x).toBeCloseTo(1);
+    expect(orbSquash(0).y).toBeCloseTo(1);
   });
 
-  it('keeps its turns far enough apart to read as separate', () => {
-    // an Archimedean arm's turns are evenly spaced; if that spacing closes on
-    // the stroke width the spiral reads as a blob
-    const spacing = SPIRAL_RADIUS / SPIRAL_TURNS;
-
-    expect(spacing).toBeGreaterThan(SCREEN_TIME_GLANCE.spinnerStroke * 2);
+  it('ends as the line the border grows from', () => {
+    expect(orbSquash(1).x).toBeCloseTo(ORB_LINE_WIDTH);
+    expect(orbSquash(1).y).toBeCloseTo(ORB_LINE_HEIGHT);
   });
 
-  it('is nothing at all when it has not been wound out', () => {
-    // an animated element must be invisible at rest, not only at the end of
-    // the range you were thinking about
-    expect(arm(0)).toBe('');
-    expect(arm(-1)).toBe('');
+  it('ends lying along the bottom edge it is about to draw', () => {
+    // the border now starts on the bottom edge, so the line has to be
+    // horizontal: a vertical line at that point is at right angles to the
+    // stroke it hands over to
+    expect(orbSquash(1).x).toBeGreaterThan(1);
+    expect(orbSquash(1).y).toBeLessThan(1);
   });
 
-  it('starts at the core and reaches its full radius when fully wound out', () => {
-    const p = points(arm(1));
+  it('draws itself up narrower and taller before it throws itself flat', () => {
+    // the anticipation: early on the orb is narrower and higher than it
+    // started, which is what sells the change of shape
+    const early = orbSquash(0.25);
 
-    expect(reach(p[0])).toBeCloseTo(0);
-    expect(reach(p[p.length - 1])).toBeCloseTo(RADIUS, PLACES);
+    expect(early.x).toBeLessThan(1);
+    expect(early.y).toBeGreaterThan(1);
   });
 
-  it('scales its whole reach with the grow, so it grows out of a point', () => {
-    const half = points(arm(0.5));
-
-    expect(reach(half[half.length - 1])).toBeCloseTo(RADIUS / 2, PLACES);
+  it('has committed to the line by the time it is done anticipating', () => {
+    expect(orbSquash(0.7).x).toBeGreaterThan(orbSquash(0.25).x);
+    expect(orbSquash(0.7).y).toBeLessThan(orbSquash(0.25).y);
   });
 
-  it('winds outward the whole way, never doubling back on itself', () => {
-    const p = points(arm(1));
-
-    for (let i = 1; i < p.length; i++) {
-      expect(reach(p[i])).toBeGreaterThan(reach(p[i - 1]));
-    }
+  it('moves smoothly the whole way, with no step at any point', () => {
+    // The failure this replaces: three sequenced animations stopped dead at
+    // every join. `expectSmooth` measures against the distance actually
+    // travelled -- the orb doubles back, so its path is longer than its net
+    // range -- and a pause and a jump blow straight through it.
+    expectSmooth(orbSquash);
   });
 
-  it('turns as many times as it says it does', () => {
-    // Measured over the outer half only. The path rounds to a tenth of a
-    // point, and near the core the radius is under a point, so the angle
-    // there is mostly rounding noise -- averaging it in drags the answer off
-    // by more than the turn count itself is uncertain by.
-    const p = points(arm(1));
-    const outer = p.slice(Math.floor(p.length / 2));
+  it('resolves to a line that can actually be seen', () => {
+    // The failure this pins: the orb flattened to a pair of hairline caps
+    // and there was nothing visible travelling to the border at all. Applied
+    // to the ring's own dot, the finished shape has to be a stroke with real
+    // width -- and several times taller than it is wide, or it is a dot.
+    const dot = SCREEN_TIME_RING.size;
+    const width = dot * orbSquash(1).x;
+    const height = dot * orbSquash(1).y;
 
-    let turned = 0;
-    let previous = Math.atan2(outer[0].y - CENTRE, outer[0].x - CENTRE);
-
-    for (let i = 1; i < outer.length; i++) {
-      const angle = Math.atan2(outer[i].y - CENTRE, outer[i].x - CENTRE);
-      let step = angle - previous;
-      if (step < -Math.PI) step += 2 * Math.PI;
-      if (step > Math.PI) step -= 2 * Math.PI;
-      turned += step;
-      previous = angle;
-    }
-
-    // the outer half of an Archimedean arm carries half its total turn
-    expect(Math.abs(turned) / (2 * Math.PI)).toBeCloseTo(SPIRAL_TURNS / 2, 1);
-  });
-
-  it('emits one point per step, plus the one that closes it', () => {
-    expect(points(arm(1))).toHaveLength(SPIRAL_STEPS + 1);
+    expect(height).toBeGreaterThan(2);
+    expect(width / height).toBeGreaterThan(10);
   });
 
   it('clamps outside its own range rather than running away', () => {
-    expect(arm(2)).toBe(arm(1));
-  });
-
-  describe('being pressed flat', () => {
-    const offLine = (q: { x: number; y: number }) => Math.abs(q.y - CENTRE);
-
-    it('is still the spiral before anything presses on it', () => {
-      expect(arm(1, 0)).toBe(arm(1));
-    });
-
-    it('is a straight line once it is fully flat', () => {
-      points(arm(1, 1)).forEach((q) => expect(offLine(q)).toBeLessThan(0.05));
-    });
-
-    it('spreads as it flattens rather than only losing height', () => {
-      // squash and stretch: a coil pressed down without spreading reads as
-      // being deleted rather than flattened
-      const width = (flatten: number) => {
-        const xs = points(arm(1, flatten)).map((q) => q.x);
-
-        return Math.max(...xs) - Math.min(...xs);
-      };
-
-      expect(width(1)).toBeGreaterThan(width(0));
-      expect(width(1)).toBeCloseTo(SPIRAL_LINE_LENGTH, 0);
-    });
-
-    it('flattens where it stands, centred on the dot it grew out of', () => {
-      // The defect this pins: an earlier version unrolled the arm outward
-      // instead, which reads as the swirl unwinding to *make* a line rather
-      // than the swirl flattening into one.
-      const xs = points(arm(1, 1)).map((q) => q.x);
-      const middle = (Math.max(...xs) + Math.min(...xs)) / 2;
-
-      expect(middle).toBeCloseTo(CENTRE, 0);
-    });
-
-    it('loses its height evenly, so it is a squashed spiral all the way down', () => {
-      // Every point keeps its angle and loses its height together, so there is
-      // never a shape part-way between a spiral and something else. Blending
-      // each point toward a place on a line is what made an earlier version
-      // ripple: a coil crosses a line's height once per turn.
-      const tallest = (flatten: number) =>
-        Math.max(...points(arm(1, flatten)).map(offLine));
-
-      let previous = tallest(0);
-
-      for (let i = 1; i <= 20; i++) {
-        const next = tallest(i / 20);
-
-        expect(next).toBeLessThanOrEqual(previous + 0.05);
-        previous = next;
-      }
-    });
-
-    it('flattens smoothly, with no jump at any point', () => {
-      // an absolute bound: once it is nearly flat the average step is below
-      // the path's own tenth-of-a-point precision, and a ratio against it
-      // would be measuring the rounding rather than the shape
-      const mean = (flatten: number) => {
-        const q = points(arm(1, flatten));
-
-        return q.reduce((sum, r) => sum + offLine(r), 0) / q.length;
-      };
-
-      let previous = mean(0);
-      let biggest = 0;
-
-      for (let i = 1; i <= 400; i++) {
-        const next = mean(i / 400);
-        biggest = Math.max(biggest, Math.abs(next - previous));
-        previous = next;
-      }
-
-      expect(biggest).toBeLessThan(0.5);
-    });
-  });
-
-  it('grows smoothly, with no jump at any point', () => {
-    // the arm takes its character from whatever drives it, so the one thing
-    // that has to hold here is that the reach itself has no step in it
-    expectSmooth((grow) => {
-      const p = points(arm(Math.max(grow, 1e-6)));
-      return reach(p[p.length - 1]);
-    });
+    expect(orbSquash(-1).x).toBeCloseTo(1);
+    expect(orbSquash(2).x).toBeCloseTo(ORB_LINE_WIDTH);
   });
 });
+
 
 describe('waterTurnRamp', () => {
   const rgb = (hex: string) =>

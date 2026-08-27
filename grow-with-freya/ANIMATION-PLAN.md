@@ -220,6 +220,14 @@ choreography was asking for.
 **Smooth is not the same as right.** Three models here were each an
 improvement on the last and only the third said the right thing.
 
+And then the spiral came out entirely, and the orb goes back to being a sphere
+that squashes into the line -- which is where it started, five models ago.
+`orbSquash` came back from history unchanged and its tests with it. Worth
+saying plainly: the spiral was explored properly, measured at every step, and
+was still the wrong idea. **Reverting to something already in history is a
+result, not a failure, and it is cheap when the thing you are reverting to was
+a tested pure function rather than a tangle inside a component.**
+
 ### 6. A constant that outlives the geometry it was tuned for
 
 `DRAW_OVERLAP` was 60ms because the line crossed a third of the screen to

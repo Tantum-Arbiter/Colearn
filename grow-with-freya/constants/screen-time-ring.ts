@@ -161,168 +161,64 @@ export function dropStretchAt(progress: number): number {
 }
 
 /**
- * A whole number of turns, so the arm's tip finishes pointing along the line
- * it is about to become. At 1.6 turns the tip ended at 216 degrees -- aimed
- * away from the line -- and had to swing right across the coil to reach it,
- * which is what made the early unroll frames cross themselves.
- */
-export const SPIRAL_TURNS = 2;
-/**
- * How finely the arm is sampled.
+ * What the orb's squash and stretch resolves to: a long, thin line.
  *
- * Forty is where it stops mattering. Fifty-six was indistinguishable from it
- * on a sixty-point box, and thirty-two visibly facets the outer turn. Every
- * sample is two numbers the renderer parses back into a path on every frame,
- * so the difference between fifty-six and forty is about a third of that work
- * for no change on screen.
+ * Applied to the orb's solid core, so at the ring's own dot size these come
+ * out as a stroke a good forty-odd long and a couple of pixels thick -- the
+ * weight of the border it is about to draw. It lies flat because the border
+ * starts on the bottom edge, directly below the ring: a line standing upright
+ * there would be at right angles to the stroke it hands over to. The line has
+ * to be the core: flattening the ring's outline instead collapses it to a
+ * pair of hairline caps and leaves nothing visible at all.
  */
-export const SPIRAL_STEPS = 40;
+export const ORB_LINE_WIDTH = 1.6;
+export const ORB_LINE_HEIGHT = 0.09;
 
-/**
- * How far the arm reaches.
- *
- * It has to clear the orb, not merely match it. At the ring echo's own radius
- * the whole spiral sat inside the solid core dot, in the same colour, and was
- * invisible -- which is what "legible only at a corner-sized scale" meant in
- * the revert. Reaching well past the core is what makes it read as an arm
- * swept out of the orb rather than a texture on it.
- *
- * It also sets how long the arm is, and so how long a line it lays down --
- * see `SPIRAL_LINE_LENGTH`. Reaching further makes the spiral more legible
- * and the line longer, and the line has a bottom edge to fit inside.
- */
-export const SPIRAL_RADIUS = 20;
-
-
+/** The line the orb becomes, at the ring's own dot size. */
+export const ORB_LINE_LENGTH = SCREEN_TIME_RING.size * ORB_LINE_WIDTH;
 
 /**
- * The spiral arm the orb winds out while it spins, and then lays down as the
- * line the border is drawn from.
+ * The orb's squash and stretch as it becomes the line, as one smooth function
+ * of a single progress.
  *
- * An Archimedean curve -- radius growing in step with the angle -- sampled as
- * a polyline, so it is a single animated `d` rather than a stack of elements.
- * `grow` scales the whole arm from nothing to its full reach, which means the
- * arm is a point at zero and cannot be seen at rest. `straighten` then drives
- * the travelling wave that pulls it flat.
+ * It was three `withSequence` beats once -- bulge, snap thin, settle -- and a
+ * sequence returns to zero velocity at every join, so the motion stopped dead
+ * twice on its way from circle to line. One function of one progress has no
+ * joins to stop at.
  *
- * It carries a curve of its own -- the smoothstep in the wave -- so whatever
- * drives `straighten` has to be linear, the same rule as `splashPath`.
+ * The shape is a settled path from circle to line, plus a single anticipation
+ * bump: `u(1-u)^3` peaks about a quarter of the way in and vanishes smoothly
+ * at both ends, so the orb draws itself up narrower and taller before it
+ * throws itself flat -- without ever pausing to do it.
  *
- * The arm becomes the line rather than being swapped for one. A previous
- * attempt at this was reverted (b639885) for three reasons: two animations on
- * one shared value, a straighten that crumpled, and illegibility at small
- * scale. The first is now unrepresentable, the second is what the travelling
- * wave fixes, and the third is what `SPIRAL_RADIUS` is tested against.
+ * It carries its own ease, so whatever drives it has to be linear.
  */
-/**
- * Where each sample sits on a unit-radius spiral, worked out once at module
- * load. It follows from SPIRAL_TURNS and SPIRAL_STEPS alone, so recomputing it
- * per frame bought nothing and cost a sine and a cosine per sample, sixty
- * times a second.
- */
-const SPIRAL_TABLE = (() => {
-  const sweep = SPIRAL_TURNS * 2 * Math.PI;
-  const px: number[] = [];
-  const py: number[] = [];
+export function orbSquash(progress: number): { x: number; y: number } {
+  'worklet';
+  const u = progress <= 0 ? 0 : progress >= 1 ? 1 : progress;
 
-  for (let i = 0; i <= SPIRAL_STEPS; i++) {
-    const f = i / SPIRAL_STEPS;
-    const theta = f * sweep;
+  const eased = u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2;
+  // normalised against its own peak, so the coefficients below read as the
+  // size of the bulge rather than as arbitrary numbers
+  const bump = (u * Math.pow(1 - u, 3)) / 0.10546875;
 
-    px.push(f * Math.cos(theta));
-    py.push(f * Math.sin(theta));
-  }
-
-  // The arm is not symmetric about its own centre -- it reaches a full radius
-  // one way and about three quarters the other -- so how wide it ends up, and
-  // where its middle is, have to be read off the shape rather than assumed.
-  let lowest = px[0];
-  let highest = px[0];
-
-  for (const x of px) {
-    lowest = Math.min(lowest, x);
-    highest = Math.max(highest, x);
-  }
-
-  return { px, py, span: highest - lowest, middle: (highest + lowest) / 2 };
-})();
-
-/**
- * How far the arm spreads sideways as it is pressed flat.
- *
- * Squash and stretch: a thing flattened has to go somewhere, and a coil
- * pressed down without spreading reads as being deleted rather than flattened.
- * It also decides how long the finished line is, since the line is just the
- * arm's width once there is no height left.
- */
-export const SPIRAL_FLAT_STRETCH = 1.6;
-
-/** The line the arm becomes: its own width, once flattened and spread. */
-export const SPIRAL_LINE_LENGTH =
-  SPIRAL_RADIUS * SPIRAL_FLAT_STRETCH * SPIRAL_TABLE.span;
+  return {
+    x: 1 + (ORB_LINE_WIDTH - 1) * eased - 0.26 * bump,
+    y: 1 + (ORB_LINE_HEIGHT - 1) * eased + 0.3 * bump,
+  };
+}
 
 /**
  * Rounds to a tenth of a point for a path string.
  *
- * `toFixed` formats through a far heavier path than this and was called twice
- * per sample. A tenth of a point is finer than anything here is drawn, and
- * shorter numbers mean less string for the renderer to parse back into a path
- * on every frame.
+ * `toFixed` formats through a far heavier path than this and was called
+ * several times per droplet. A tenth of a point is finer than anything here is
+ * drawn, and shorter numbers mean less string for the renderer to parse back
+ * into a path on every frame.
  */
 function coord(value: number): number {
   'worklet';
   return Math.round(value * 10) / 10;
-}
-
-/**
- * The spiral arm, somewhere between wound up and pressed flat.
- *
- * It flattens where it stands rather than unrolling. Every point keeps its
- * angle and loses its height together, so the arm is a spiral being squashed
- * at every moment -- never a shape part-way between a spiral and something
- * else. That distinction is the whole point: an earlier version interpolated
- * each point from its place on the coil to a place on a line, and a coil
- * crosses a line's height once per turn, so anything blended between the two
- * ripples by construction.
- *
- * A rolling unroll was tried after that. It was smooth, but it reads as the
- * swirl unwinding *outward to make* a line, where what the choreography wants
- * is the swirl flattening into a line which then draws out into the border.
- *
- * Pressed flat the arm is traced back and forth along one row, which draws as
- * a single stroke of its own width -- and that width is what the line is.
- */
-export function spiralArmPath(
-  centre: number,
-  radius: number,
-  grow: number,
-  flatten: number
-): string {
-  'worklet';
-  const g = grow <= 0 ? 0 : grow >= 1 ? 1 : grow;
-  const f = flatten <= 0 ? 0 : flatten >= 1 ? 1 : flatten;
-
-  if (g <= 0) {
-    return '';
-  }
-
-  const across = g * radius * (1 + (SPIRAL_FLAT_STRETCH - 1) * f);
-  const tall = g * radius * (1 - f);
-
-  let d = '';
-
-  // the arm's middle slides onto the centre as it flattens, so the finished
-  // line is centred on the dot rather than sitting a few points to one side
-  const recentre = SPIRAL_TABLE.middle * f;
-
-  for (let i = 0; i <= SPIRAL_STEPS; i++) {
-    const x = centre + across * (SPIRAL_TABLE.px[i] - recentre);
-    const y = centre + tall * SPIRAL_TABLE.py[i];
-
-    d += `${i === 0 ? 'M' : 'L'} ${coord(x)} ${coord(y)} `;
-  }
-
-  return d.trim();
 }
 
 /** Droplets thrown up by the returning drop as it lands. */

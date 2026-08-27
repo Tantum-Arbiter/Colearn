@@ -40,8 +40,6 @@ export const ORB_REFORM_FADE = 120;
 export const ARC_AFTER_ORB = 120;
 export const WATER_AFTER_ORB = 170;
 
-export const SPIRAL_OUT_SHARE = 0.45;
-
 /**
  * The half turn the orb makes while the arm lays itself down.
  *
@@ -86,7 +84,6 @@ export const TURN_CURVE: readonly [number, number, number, number] = [0.15, 0.15
 
 export interface GlanceOpenTimeline {
   readonly spin: Phase;
-  readonly spiralOut: Phase;
   readonly swell: Phase;
   readonly ease: Phase;
   readonly turn: Phase;
@@ -123,7 +120,6 @@ export function glanceOpenTimeline(
   const settle = phase(draw.ends, settleDuration);
 
   const swell = phase(0, spinDuration * 0.55);
-  const spiralOut = phase(0, spin.over * SPIRAL_OUT_SHARE);
   const strokeOut = phase(settle.at + settle.over * 0.5, settleDuration);
   const content = phase(settle.at + settle.over * 0.7, fadeDuration);
 
@@ -132,7 +128,6 @@ export function glanceOpenTimeline(
 
   return {
     spin,
-    spiralOut,
     swell,
     ease: phase(swell.ends, spinDuration - swell.over),
     turn: phase(0, spin.over + morph.over * TURN_SETTLES_BY),

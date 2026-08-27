@@ -25,9 +25,8 @@ import {
   dropFlight,
   splashPath,
   waterTurnRamp,
-  spiralArmPath,
-  SPIRAL_RADIUS,
-  SPIRAL_LINE_LENGTH,
+  orbSquash,
+  ORB_LINE_LENGTH,
   splashOpacity,
   splashRing,
   dropHandoverScale,
@@ -50,23 +49,18 @@ import { choreograph, type Track } from '@/utils/choreograph';
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
-// wide enough for whichever reaches further, the ring's echo or the spiral
-// arm it winds out, so raising SPIRAL_RADIUS cannot clip the arm
 // the same halo the ring wears, so the two are interchangeable at the handover
 const HALO_SIZE = SCREEN_TIME_RING.size * SCREEN_TIME_RING.haloScale;
 
-// Wide enough for the widest thing it holds: the arm once it has been pressed
-// flat and spread sideways, which reaches further than the coil ever does.
-// Derived, so changing the reach or the stretch cannot clip it.
+// Wide enough for the widest thing it holds: the halo, which reaches further
+// than the dial or the line the orb flattens into. Derived, so changing any of
+// the three cannot silently clip another.
 const SPINNER_BOX =
-  (Math.max(
-    SCREEN_TIME_GLANCE.spinnerRadius,
-    SPIRAL_RADIUS,
-    SPIRAL_LINE_LENGTH / 2
-  ) +
-    SCREEN_TIME_GLANCE.spinnerStroke) *
-    2 +
-  2;
+  Math.max(
+    (SCREEN_TIME_GLANCE.spinnerRadius + SCREEN_TIME_GLANCE.spinnerStroke) * 2 + 2,
+    ORB_LINE_LENGTH,
+    SCREEN_TIME_RING.size * SCREEN_TIME_RING.haloScale
+  );
 
 export interface ScreenTimeGlanceProps {
   visible: boolean;
@@ -176,9 +170,9 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
   const spinnerRotate = useSharedValue(0);
   const spinnerScale = useSharedValue(1);
   const spinnerTravel = useSharedValue(0); // 0 at the ring, 1 at the border's start
-  // the morph: the progress of the wave that pulls the spiral arm straight
-  // into the line the border grows from. One progress, so the whole arm
-  // unrolls off a single clock and cannot come apart mid-way
+  // the morph: the orb's squash and stretch as it becomes the line the border
+  // grows from. One progress, not two values -- `orbSquash` derives both axes
+  // from it, so they cannot drift apart or stop at a join
   const spinnerMorph = useSharedValue(0);
   // the turn: 0 is the ring's own colour, 1 is the water blue the box is
   // drawn in -- the orb changes colour while it spins
@@ -189,9 +183,6 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
   // the core: the solid dot the orb takes over from the ring. 1 is the
   // ring's own dot; it shrinks to nothing as the orb reduces into the line
   const spinnerCore = useSharedValue(1);
-  // the spiral arm the orb winds out as it spins, and winds back in before it
-  // flattens -- 0 is a point at the core, 1 is its full reach
-  const spiralGrow = useSharedValue(0);
   // the halo the ring wears while it is over its limit. The orb has to wear
   // it too, and grow into it, or it arrives out of nowhere the frame the
   // corner is handed back
@@ -226,7 +217,6 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
       { on: spinnerWater, name: 'orb colour', from: 0, beats: [] },
       { on: spinnerArcOpacity, name: 'orb outline', from: 1, beats: [] },
       { on: spinnerCore, name: 'orb core', from: 1, beats: [] },
-      { on: spiralGrow, name: 'spiral', from: 0, beats: [] },
       { on: spinnerHalo, name: 'halo', from: 0, beats: [] },
       { on: drawProgress, name: 'border', from: open ? 1 : 0, beats: [] },
       { on: drawOpacity, name: 'drawn stroke', from: open ? 0 : 1, beats: [] },
@@ -367,29 +357,12 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
             },
           ],
         },
-        // ...winding a spiral arm out of the core as it goes. It does not
-        // wind back: it holds at full reach, and the morph lays it down as
-        // the line. `grow` is linear in the path so easing it is right --
-        // unlike `straighten` below, which drives the wave's own smoothstep.
-        {
-          on: spiralGrow,
-          name: 'spiral',
-          from: 0,
-          beats: [
-            {
-              at: timeline.spiralOut.at,
-              to: 1,
-              over: timeline.spiralOut.over,
-              easing: Easing.out(Easing.cubic),
-            },
-          ],
-        },
-
-        // 2. ...and then lays that arm down as the line, right where it was
-        //    pressed. A wave enters at the arm's outer end and travels in, so
-        //    each point peels off the curve and onto the line in turn.
-        //    Interpolating every point at the same rate crumples the spiral
-        //    in on itself, which is what sank an earlier attempt at this.
+        // 2. ...and squashes and stretches into the line, right where it was
+        //    pressed. One progress, with `orbSquash` deriving both axes from
+        //    it: the orb draws itself up narrower and taller before throwing
+        //    itself flat, as one unbroken move. Sequencing those beats made
+        //    the motion stop dead at every join, which is what made the change
+        //    of shape look stepped.
         {
           on: spinnerMorph,
           name: 'morph',
@@ -655,7 +628,6 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
         // flattened into the line it became, small, and still water blue.
         { on: spinnerTravel, name: 'travel', from: 0, beats: [] },
         { on: spinnerMorph, name: 'morph', from: 0, beats: [] },
-        { on: spiralGrow, name: 'spiral', from: 0, beats: [] },
         {
           on: spinnerOpacity,
           name: 'orb',
@@ -742,6 +714,8 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
   const spinnerStyle = useAnimatedStyle(() => {
     const dx = (geometry.drawStart.x - centre.x) * spinnerTravel.value;
     const dy = (geometry.drawStart.y - centre.y) * spinnerTravel.value;
+    const squash = orbSquash(spinnerMorph.value);
+
     return {
       opacity: spinnerOpacity.value,
       transform: [
@@ -749,6 +723,8 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
         { translateY: dy },
         { rotate: `${spinnerRotate.value}deg` },
         { scale: spinnerScale.value },
+        { scaleX: squash.x },
+        { scaleY: squash.y },
       ],
     };
   });
@@ -773,12 +749,6 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
       [0, 1],
       [SCREEN_TIME_RING.exceededHalo, SCREEN_TIME_GLANCE.waterHalo]
     ),
-  }));
-
-  const spiralProps = useAnimatedProps(() => ({
-    d: spiralArmPath(SPINNER_BOX / 2, SPIRAL_RADIUS, spiralGrow.value, spinnerMorph.value),
-    opacity: spiralGrow.value,
-    stroke: interpolateColor(spinnerWater.value, water.input, water.output),
   }));
 
   const spinnerCoreProps = useAnimatedProps(() => ({
@@ -926,17 +896,6 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
               r={SCREEN_TIME_RING.size / 2}
               fill={drawStroke}
               animatedProps={spinnerCoreProps}
-            />
-            {/* the arm the orb winds out while it spins. It sits inside the
-                same rotating box as the arc and the core, so it spins with
-                them rather than needing a rotation of its own. */}
-            <AnimatedPath
-              testID="screen-time-glance-spinner-spiral"
-              fill="none"
-              strokeWidth={SCREEN_TIME_GLANCE.spinnerStroke}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              animatedProps={spiralProps}
             />
             {/* the gap is a third of the circle so the rotation actually
                 reads as spinning rather than as a static ring */}
