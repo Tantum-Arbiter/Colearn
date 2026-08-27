@@ -451,11 +451,23 @@ cross-window commit left to drop anything. The Android back button, which the
 Modal supplied through `onRequestClose`, is a `BackHandler` subscription for
 as long as the overlay is mounted.
 
+With the overlay in place the blink stopped wandering and became a
+deterministic three-frame hole at the swap itself, which is what finally
+exposed the last mechanism: **a `useAnimatedStyle` rebuilt on an existing
+view is applied asynchronously.** The commit removed the orb instantly, but
+the ring's view kept its faded-out opacity until the rebuilt worklet landed
+a few frames later. A *newly mounted* view, by contrast, evaluates its
+animated style during the render. The ring's view is therefore keyed on the
+`hidden` flip, so each handover mounts a fresh view whose opacity is right
+in the very frame the orb disappears -- verified on film: three closes,
+three opens, and not one frame off full red outside the designed colour
+turns.
+
 **When a defect is intermittent under fixes that are each individually
 verified, stop fixing and start filming: the defect class is probably below
 every layer being fixed.** Three choreography-level fixes were correct and
-none of them touched the cause. One recording of the failure, one recording
-at rest, and a frame-level diff located it in an afternoon.**
+none of them touched the cause. Two recordings of the failure, one at rest,
+and a frame-level diff located it in an afternoon.
 
 ### 14. Motion that only makes sense in one direction
 
