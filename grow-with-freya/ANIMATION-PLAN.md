@@ -184,6 +184,30 @@ straightens and settles back, which is what a rope does.
 does.** Endpoints looked right the whole time this was wrong; the length was
 never plotted until it was.
 
+### 5d. A shape part-way between two shapes
+
+The arm's unroll interpolated every point from its place on the coil to its
+place on the line, gated by a travelling wave. It wobbled, and no wave shape
+or timing removed it, because the wobble is what the model *is*: a coil
+crosses the line's height once per turn, so anything part-way between a coil
+and a line ripples by construction.
+
+It now rolls. At any moment the arm is a straight run plus the rest of it
+still coiled exactly as it was -- a rigid remainder, never an in-between --
+and the two meet tangentially. The largest step in its shape fell from 13.8x
+the average to a fifth of a pixel, and its length is now conserved outright
+rather than nearly.
+
+Two things had to be got right, both found by measuring rather than looking:
+the tip has to go down first, because the core is the tightest curvature and
+laying a hair of it swings everything still attached through 35 degrees; and
+the coil has to be held on the dot it grew out of while it is still coiled,
+because anchoring by the join alone puts an *end* of the coil on the anchor
+rather than its middle, so it would orbit rather than spin.
+
+**Interpolating between two shapes is not the same as transforming one into
+the other, and only the second can be free of artefacts.**
+
 ### 6. A constant that outlives the geometry it was tuned for
 
 `DRAW_OVERLAP` was 60ms because the line crossed a third of the screen to

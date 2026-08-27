@@ -550,41 +550,33 @@ describe('spiralArmPath', () => {
       expect(Math.max(...xs)).toBeCloseTo(CENTRE + SPIRAL_LINE_LENGTH, PLACES);
     });
 
-    it('leaves the core end exactly on the anchor throughout', () => {
-      // it is the point the border grows from, so it must not drift
-      for (const straighten of [0, 0.3, 0.6, 1]) {
-        const first = points(arm(1, straighten))[0];
+    it('keeps the end that meets the border on the anchor', () => {
+      // It is the point the border grows from, so whichever end of the arm
+      // reaches it must not drift. The arm unrolls tip first, so the tip is
+      // the end that lands there and the coil rolls away from it.
+      //
+      // From `SPIRAL_CENTRING_FADE` onward, that is: before then the arm is
+      // still held on the dot it grew out of, and there is no line to speak of
+      // to pin.
+      for (const straighten of [0.25, 0.6, 0.85, 1]) {
+        const p = points(arm(1, straighten));
+        const tip = p[p.length - 1];
 
-        expect(first.x).toBeCloseTo(CENTRE, PLACES);
-        expect(first.y).toBeCloseTo(CENTRE, PLACES);
+        expect(tip.x).toBeCloseTo(CENTRE, PLACES);
+        expect(tip.y).toBeCloseTo(CENTRE, PLACES);
       }
     });
 
-    it('straightens from the outer end inward, not all at once', () => {
-      // The defect this pins: pulling every point toward the line at the same
-      // rate crumples the spiral in on itself. The wave has to arrive at the
-      // outer end first and travel in, so the tip is already lying flat while
-      // the core end is still coiled.
-      const p = points(arm(1, 0.5));
-      const inner = p.slice(0, Math.floor(p.length / 2));
+    it('centres the coil on the dot it grew out of while it is still coiled', () => {
+      // The defect this pins: anchoring by the join alone puts an *end* of the
+      // coil on the anchor rather than its middle, so while it was still wound
+      // up it sat a radius off the dot and orbited instead of spinning when
+      // the view turned.
+      const p = points(arm(1, 0));
+      const middleX = p.reduce((sum, q) => sum + q.x, 0) / p.length;
+      const middleY = p.reduce((sum, q) => sum + q.y, 0) / p.length;
 
-      const tipOffLine = onLine(p[p.length - 1]);
-      const innerOffLine = Math.max(...inner.map(onLine));
-
-      expect(tipOffLine).toBeLessThan(innerOffLine / 2);
-    });
-
-    it('keeps every point within reach of the arm and the line', () => {
-      // not a tight bound, a sanity one: nothing should fly off while the
-      // wave passes, which is what a crumpling unroll looks like numerically
-      const span = RADIUS + SPIRAL_LINE_LENGTH + 1;
-
-      for (const straighten of [0.2, 0.4, 0.6, 0.8]) {
-        points(arm(1, straighten)).forEach((point) => {
-          expect(Math.abs(point.x - CENTRE)).toBeLessThanOrEqual(span);
-          expect(Math.abs(point.y - CENTRE)).toBeLessThanOrEqual(span);
-        });
-      }
+      expect(Math.hypot(middleX - CENTRE, middleY - CENTRE)).toBeLessThan(RADIUS / 4);
     });
 
     it('lays down a line as long as the arm actually is', () => {
@@ -636,13 +628,29 @@ describe('spiralArmPath', () => {
     });
 
     it('unrolls smoothly, with no crumple at any point', () => {
-      // measured on how far the arm still is from the line overall: a wave
-      // that stalls or snaps shows up as a step in that distance
-      expectSmooth((straighten) => {
+      // Measured as an absolute step rather than against the distance
+      // travelled: the arm barely leaves the line once it is rolling, so the
+      // average step is a fraction of the path's own precision and a ratio
+      // against it is measuring the rounding, not the shape.
+      const offLine = (straighten: number) => {
         const p = points(arm(1, straighten));
-        return p.reduce((sum, point) => sum + onLine(point), 0) / p.length;
-      });
+
+        return p.reduce((sum, q) => sum + onLine(q), 0) / p.length;
+      };
+
+      let previous = offLine(0);
+      let biggest = 0;
+
+      for (let i = 1; i <= 400; i++) {
+        const next = offLine(i / 400);
+        biggest = Math.max(biggest, Math.abs(next - previous));
+        previous = next;
+      }
+
+      // half a point on a box a few hundred across
+      expect(biggest).toBeLessThan(0.5);
     });
+
   });
 
   it('grows smoothly, with no jump at any point', () => {
