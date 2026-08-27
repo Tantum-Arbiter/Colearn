@@ -319,8 +319,9 @@ middle, which is defect 10 again in a different medium.
 
 The ring's pulse repeats forever and was never cancelled while the ring was
 hidden -- `hidden` was not even in the effect's dependencies. The glance's
-close hands the corner back the instant its orb has reformed, deliberately
-without a fade, so the handover only works if both are at the same size. The
+close hands the corner back the instant its orb has reformed -- without a
+fade, until defect 13 -- so the handover only works if both are at the same
+size. The
 orb settled at exactly 1 and the ring reappeared at wherever its free-running
 pulse had got to, up to `pulseScale`, in the same frame.
 
@@ -344,10 +345,97 @@ carried a two-thirds outline from r13.5 to r16.5. It arrived wearing one at the
 open and handed the corner back wearing one at the close, and both times it
 vanished in a frame. The outline is what makes the orb's turn legible, so it
 now fades up with the orb and dissolves again before the swap, rather than
-being present at either boundary.
+being present at either boundary. On the close it is not there at all any more
+-- see defect 14.
 
-**Write down what each side is actually made of. Three of these were found by
-comparing that list, and none by watching.**
+Fourth instance, and the one that shows the list has to be made once per
+state rather than once. Everything above was found and fixed on the
+over-limit path, where the ring is a solid disc out to r15. The calm ring is
+not a disc at all -- it is a faint track at 0.18 with a brighter progress arc
+across it and no fill -- and the calm orb was the same solid pale disc as the
+red one. So the whole class was still live on the path nobody was watching:
+the orb arrived as a disc where an outline was dissolving, and handed the
+corner back as a disc to a ring that is an outline.
+
+The orb now wears the ring's own dial, drawn from the same
+[`ScreenTimeDial`](components/home/screen-time-dial.tsx) the ring draws itself
+with rather than a second copy of the geometry, and sheds it on the beat the
+outline fades up -- the calm mirror of the disc the exceeded orb already wore.
+The two states share one set of beats; what differs is only what the ring on
+the other side is made of, named as `ringDial` and `ringCore` and read
+straight into the tracks' boundary values.
+
+**Write down what each side is actually made of. Four of these were found by
+comparing that list, and none by watching -- and a fix on one branch of a
+state is not a fix, because the same handover exists on every other state the
+control has.**
+
+### 13. A handover cut on a single frame is a race
+
+Everything above makes the two sides of the handover identical. None of it
+could fix the flash at the swap, because the flash is not a difference between
+the sides. It is a difference between two clocks.
+
+The corner changes hands on one frame. The orb's modal is torn down in a React
+commit; the ring's opacity goes from 0 to 1 in a passive effect. Nothing orders
+those two against the frame that actually gets painted, so the swap resolves as
+either a frame with neither on screen or a frame with both -- and both is not
+"the same picture twice". Everything in the corner is translucent, so drawing
+it twice composites *brighter*: the over-limit halo goes from alpha 0.30 to
+0.51, the calm track from 0.18 to 0.33. Which of the two you get is decided
+nowhere in the code.
+
+Both sides now ramp over one shared window, `SCREEN_TIME_RING.presenceFade`,
+in opposite directions: the ring fades up while the glance holds its orb and
+fades it down, and the modal is torn down only once there is nothing left in it
+to see go. A complementary dissolve between two identical images composites
+back to that image -- worst deviation `a^2/4`, which is 2.3% of alpha for the
+halo, at the midpoint -- so skew between the two clocks stops mattering rather
+than having to be prevented.
+
+The decision this replaces was right about the fade it rejected: a one-sided
+fade does leave a gap with neither on screen. What it missed is that the cut
+has that same failure mode *and* the doubled one, and that the answer was the
+two-sided fade neither had tried.
+
+**Making two things identical does not make swapping them safe. Ask what
+schedules each side; if that is two different mechanisms, dissolve between them
+rather than cutting -- a cut is only as good as a frame alignment nobody
+guaranteed.**
+
+### 14. Motion that only makes sense in one direction
+
+The orb wears a two-thirds outline. On the open that is load-bearing: it is
+what makes the spin legible while the orb turns, travels and flattens, and
+defect 12 established it has to fade up rather than be present at the boundary,
+because the ring has no outline.
+
+The close reused it, mirrored. But the close has no travel and no flatten --
+the orb grows out of the splash and stays where it is -- and the ring it hands
+back to still has no outline. So the outline could only appear and vanish
+again, inside 340ms, at r13.5-16.5 around a solid disc that ends at r15: a
+bright partial rim in the same red, standing a pixel and a half proud of the
+edge, rotating, and then gone. That is the flicker.
+
+Found by sampling rather than by watching. Writing out every quantity the orb
+is made of at each frame of the close and looking for one that is not
+monotonic: opacity, core radius and halo all rise to their final value and
+stay there; the outline rose to 0.97 and came back to zero. It was the only
+one, and **anything that appears and then leaves again before a handover is
+doing no work by definition** -- there is nothing on the other side for it to
+hand over to.
+
+The settling turn went with it. Its only job was to be seen through the
+outline, and a disc has no orientation, so with the outline gone the rotation
+was invisible -- and 18ms away from becoming visible in the wrong way, because
+the calm state's dial now fades up at 428 and the turn ended at 410. Defect 9
+again: once the thing a transform was showing is gone, removing the transform
+is part of the change.
+
+**Mirroring a piece of choreography is not reversing it. Ask what each element
+was for on the way out, and whether that reason exists on the way in.**
+Monotonicity through a settle is a cheap thing to assert and would have caught
+this without a device.
 
 ## Phases
 

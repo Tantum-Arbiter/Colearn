@@ -1,13 +1,19 @@
 /**
- * How the ring's pulse behaves across the glance opening and closing.
+ * How the ring behaves across the glance opening and closing: what its pulse
+ * does while nobody can see it, and how it takes the corner back.
  *
  * The glance's close hands the corner back at the moment its orb has reformed
- * into a dot the same size and colour as this ring, which is why the ring
- * appears instantly rather than fading -- a fade would leave a gap with
- * neither on screen. That handover only works if the ring is at rest when it
- * arrives, and the pulse used to be left free-running the whole time the ring
- * was hidden. The orb settled at exactly 1 and the ring came back at anything
- * up to `pulseScale` in the same frame.
+ * into a dot the same size and colour as this ring. That only works if the
+ * ring is at rest when it arrives, and the pulse used to be left free-running
+ * the whole time the ring was hidden -- the orb settled at exactly 1 and the
+ * ring came back at anything up to `pulseScale` in the same frame.
+ *
+ * The handover itself is a dissolve rather than a cut. Cutting made it a race
+ * between this view's opacity and the teardown of the modal the orb sits in,
+ * with nothing ordering the two: it resolved as a frame with neither on screen
+ * or a frame with both, and both is brighter rather than identical because
+ * everything in the corner is translucent. Both directions therefore ramp,
+ * over one shared window, so the two sides stay complementary.
  *
  * The global reanimated mock flattens delays, so this file records them.
  */
@@ -46,7 +52,11 @@ jest.mock('react-native-reanimated', () => {
     },
     useAnimatedStyle: () => ({}),
     useAnimatedProps: () => ({}),
-    withTiming: (to: number) => ({ kind: 'timing', to }),
+    withTiming: (to: number, config?: any) => ({
+      kind: 'timing',
+      to,
+      duration: config?.duration,
+    }),
     withDelay: (ms: number, animation: any) => ({ kind: 'delay', ms, animation }),
     withSequence: (...animations: any[]) => ({ kind: 'sequence', animations }),
     withRepeat: (animation: any, count: number) => ({ kind: 'repeat', animation, count }),
@@ -110,4 +120,27 @@ describe('the ring’s pulse', () => {
     expect(assigned.animation.kind).toBe('repeat');
   });
 
+});
+
+describe('the ring taking the corner back', () => {
+  function dissolves() {
+    return mockValues.flatMap((value) =>
+      value.assignments.filter((a: any) => a && typeof a === 'object' && a.kind === 'timing')
+    );
+  }
+
+  it.each([
+    ['steps aside for the orb', true, 0],
+    ['takes the corner back', false, 1],
+  ])('ramps rather than cuts as it %s', (_case, hidden, to) => {
+    renderRing(hidden);
+
+    const underTest = dissolves();
+
+    expect(underTest).toContainEqual({
+      kind: 'timing',
+      to,
+      duration: SCREEN_TIME_RING.presenceFade,
+    });
+  });
 });

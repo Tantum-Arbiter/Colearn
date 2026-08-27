@@ -37,7 +37,7 @@ export const PANEL_HANDOVER = 150;
 
 export const ORB_AFTER_SPLASH = 90;
 export const ORB_REFORM_FADE = 120;
-export const ARC_AFTER_ORB = 120;
+export const ORB_SETTLES_OVER = 120;
 export const WATER_AFTER_ORB = 170;
 
 /**
@@ -159,8 +159,7 @@ export interface GlanceCloseTimeline {
   readonly splash: Phase;
   readonly orbIn: Phase;
   readonly reform: Phase;
-  readonly arcBack: Phase;
-  readonly arcSettle: Phase;
+  readonly settle: Phase;
   readonly water: Phase;
   readonly total: number;
 }
@@ -177,10 +176,9 @@ export function glanceCloseTimeline(
   const orbIn = phase(splash.at + ORB_AFTER_SPLASH, ORB_REFORM_FADE);
   const water = phase(orbIn.at + WATER_AFTER_ORB, orbReform * 0.9);
   const reform = phase(orbIn.at, orbReform);
-  const arcBack = phase(orbIn.at + ARC_AFTER_ORB, orbReform * 0.7);
-  // and dissolves again into the solid dot, because the ring it hands the
-  // corner back to has no such outline
-  const arcSettle = phase(arcBack.ends, Math.max(0, water.ends - arcBack.ends));
+  // the tail of the close, where whatever the orb is wearing that the ring is
+  // not gives way to whatever the ring wears that the orb does not
+  const settle = phase(water.ends - ORB_SETTLES_OVER, ORB_SETTLES_OVER);
 
   return {
     dim,
@@ -194,9 +192,8 @@ export function glanceCloseTimeline(
     splash,
     orbIn,
     reform,
-    arcBack,
-    arcSettle,
+    settle,
     water,
-    total: Math.max(water.ends, reform.ends, arcBack.ends, splash.ends),
+    total: Math.max(water.ends, reform.ends, splash.ends),
   };
 }

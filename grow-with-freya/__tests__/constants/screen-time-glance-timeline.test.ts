@@ -177,8 +177,9 @@ describe('glanceCloseTimeline', () => {
     expect(close.orbIn.at).toBeLessThan(close.splash.ends);
   });
 
-  it('brings the outline back only once the orb is solid', () => {
-    expect(close.arcBack.at).toBeGreaterThanOrEqual(close.orbIn.ends);
+  it('settles into the ring’s own shape only once the orb has finished forming', () => {
+    expect(close.settle.at).toBeGreaterThanOrEqual(close.reform.ends);
+    expect(close.settle.ends).toBe(close.water.ends);
   });
 
   it('turns blue back to the ring’s colour only once the orb can be seen', () => {
@@ -195,7 +196,7 @@ describe('glanceCloseTimeline', () => {
     const ends = [
       close.dim, close.gather, close.tint, close.handover, close.dropIn,
       close.flight, close.dropOut, close.nightLifts, close.splash,
-      close.orbIn, close.reform, close.arcBack, close.water,
+      close.orbIn, close.reform, close.settle, close.water,
     ].map((phase) => phase.ends);
 
     expect(close.water.ends).toBe(Math.max(...ends));

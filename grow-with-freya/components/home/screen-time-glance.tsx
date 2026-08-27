@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, Modal, Pressable, ScrollView, StyleSheet, Dimensions } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -7,17 +7,18 @@ import Animated, {
   interpolateColor,
   Easing,
 } from 'react-native-reanimated';
-import Svg, { Circle, Path } from 'react-native-svg';
+import Svg, { Circle, G, Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
+import { ScreenTimeDial } from './screen-time-dial';
 import { ScreenTimeContent } from '@/components/screen-time/screen-time-screen';
 import { ScreenTimeAlertHeader } from '@/components/screen-time/screen-time-alert-header';
 import { RealWorldTips } from '@/components/screen-time/real-world-tips';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { TABLET_CONTENT_MAX_WIDTH } from '@/hooks/use-accessibility';
 import { Fonts } from '@/constants/theme';
-import { type TimeOfDay } from '@/constants/home-scene';
+import { HOME_THEMES, type TimeOfDay } from '@/constants/home-scene';
 import {
   SCREEN_TIME_GLANCE,
   SCREEN_TIME_RING,
@@ -38,6 +39,7 @@ import {
   SPLASH_SPREAD,
   SPLASH_GRAVITY,
   SPLASH_DROP_RADIUS,
+  screenTimeProgress,
 } from '@/constants/screen-time-ring';
 import {
   glanceOpenTimeline,
@@ -48,6 +50,7 @@ import { choreograph, type Track } from '@/utils/choreograph';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
+const AnimatedG = Animated.createAnimatedComponent(G);
 
 // the same halo the ring wears, so the two are interchangeable at the handover
 const HALO_SIZE = SCREEN_TIME_RING.size * SCREEN_TIME_RING.haloScale;
@@ -120,6 +123,7 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
 
   const [mounted, setMounted] = useState(visible);
   const [tipsOpen, setTipsOpen] = useState(false);
+  const wasOpen = useRef(visible);
 
   const { width, height } = Dimensions.get('window');
   // stable identity: the drop's flight home is memoised against it, and a
@@ -128,6 +132,11 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
     () => origin ?? { x: width / 2, y: height / 2 },
     [origin, width, height]
   );
+
+  const ringDial = exceeded ? 0 : 1;
+  const ringCore = exceeded ? 1 : 0;
+  const dialTint = HOME_THEMES[timeOfDay].chromeInk;
+  const dialProgress = screenTimeProgress(usageSeconds, limitSeconds);
 
   const surface = exceeded ? SCREEN_TIME_GLANCE.exceededSurface : SCREEN_TIME_GLANCE.calmSurface;
   const panelBorder = exceeded ? SCREEN_TIME_GLANCE.exceededBorder : SCREEN_TIME_GLANCE.calmBorder;
@@ -187,6 +196,7 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
   // it too, and grow into it, or it arrives out of nowhere the frame the
   // corner is handed back
   const spinnerHalo = useSharedValue(0);
+  const spinnerDial = useSharedValue(0);
   const drawProgress = useSharedValue(0);
   const drawOpacity = useSharedValue(1);
   const panelOpacity = useSharedValue(0);
@@ -218,6 +228,7 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
       { on: spinnerArcOpacity, name: 'orb outline', from: 1, beats: [] },
       { on: spinnerCore, name: 'orb core', from: 1, beats: [] },
       { on: spinnerHalo, name: 'halo', from: 0, beats: [] },
+      { on: spinnerDial, name: 'ring dial', from: 0, beats: [] },
       { on: drawProgress, name: 'border', from: open ? 1 : 0, beats: [] },
       { on: drawOpacity, name: 'drawn stroke', from: open ? 0 : 1, beats: [] },
       { on: panelOpacity, name: 'panel', from: open ? 1 : 0, beats: [] },
@@ -242,6 +253,7 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
   useEffect(() => {
     if (visible) {
       setMounted(true);
+      wasOpen.current = true;
 
       if (reduceMotion) {
         // no travel: the window is simply there
@@ -347,8 +359,9 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
         {
           on: spinnerCore,
           name: 'orb core',
-          from: 1,
+          from: ringCore,
           beats: [
+            { at: timeline.orbIn.at, to: 1, over: timeline.orbIn.over },
             {
               at: timeline.morph.at,
               to: 0,
@@ -356,6 +369,12 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
               easing: Easing.in(Easing.quad),
             },
           ],
+        },
+        {
+          on: spinnerDial,
+          name: 'ring dial',
+          from: ringDial,
+          beats: [{ at: timeline.orbIn.at, to: 0, over: timeline.orbIn.over }],
         },
         // 2. ...and squashes and stretches into the line, right where it was
         //    pressed. One progress, with `orbSquash` deriving both axes from
@@ -470,14 +489,32 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
       return;
     }
 
-    setMounted(false);
     setTipsOpen(false);
-    choreograph(atRest({ open: false }));
-  }, [visible, reduceMotion]);
+
+    if (!wasOpen.current || reduceMotion) {
+      setMounted(false);
+      choreograph(atRest({ open: false }));
+      return;
+    }
+
+    wasOpen.current = false;
+    choreograph([
+      {
+        on: spinnerOpacity,
+        name: 'orb',
+        beats: [{ at: 0, to: 0, over: SCREEN_TIME_RING.presenceFade }],
+      },
+    ]);
+
+    const handback = setTimeout(() => {
+      setMounted(false);
+      choreograph(atRest({ open: false }));
+    }, SCREEN_TIME_RING.presenceFade);
+
+    return () => clearTimeout(handback);
+  }, [visible, reduceMotion, exceeded]);
 
   const finishClose = useCallback(() => {
-    setMounted(false);
-    setTipsOpen(false);
     onClose();
   }, [onClose]);
 
@@ -646,31 +683,13 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
             },
           ],
         },
-        // one settling turn, the mirror of the spin that opened the window
-        {
-          on: spinnerRotate,
-          name: 'orb turn',
-          from: 0,
-          beats: [
-            {
-              at: timeline.reform.at,
-              to: 360,
-              over: timeline.reform.over,
-              easing: Easing.out(Easing.cubic),
-            },
-          ],
-        },
-        {
-          on: spinnerArcOpacity,
-          name: 'orb outline',
-          from: 0,
-          beats: [
-            { at: timeline.arcBack.at, to: 1, over: timeline.arcBack.over },
-            // and away again, so what hands the corner back is the solid dot
-            // the ring is, not a dot wearing a two-thirds ring that vanishes
-            { at: timeline.arcSettle.at, to: 0, over: timeline.arcSettle.over },
-          ],
-        },
+        // Nothing turns and nothing wears an outline. The outline is what makes
+        // the orb's spin legible on the way out, and the ring it hands back to
+        // has none -- so on the way in it could only appear and vanish again
+        // inside 340ms, which reads as the rim of the orb flickering. With it
+        // gone there is nothing asymmetric left for a turn to show.
+        { on: spinnerRotate, name: 'orb turn', from: 0, beats: [] },
+        { on: spinnerArcOpacity, name: 'orb outline', from: 0, beats: [] },
         // the open leaves the core at full size -- it was the line -- so the
         // reform has to start it from nothing for it to grow back out of the
         // splash rather than snapping into place
@@ -685,6 +704,15 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
               over: timeline.reform.over,
               easing: Easing.out(Easing.cubic),
             },
+            { at: timeline.settle.at, to: ringCore, over: timeline.settle.over },
+          ],
+        },
+        {
+          on: spinnerDial,
+          name: 'ring dial',
+          from: 0,
+          beats: [
+            { at: timeline.settle.at, to: ringDial, over: timeline.settle.over },
           ],
         },
         // Blue first, then red. The turn waits until the orb has finished
@@ -707,7 +735,7 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
       ],
       { onFinished: finishClose }
     );
-  }, [finishClose, reduceMotion, geometry]);
+  }, [finishClose, reduceMotion, geometry, exceeded]);
 
   const scrimStyle = useAnimatedStyle(() => ({ opacity: scrimOpacity.value }));
 
@@ -749,6 +777,10 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
       [0, 1],
       [SCREEN_TIME_RING.exceededHalo, SCREEN_TIME_GLANCE.waterHalo]
     ),
+  }));
+
+  const spinnerDialProps = useAnimatedProps(() => ({
+    opacity: spinnerDial.value,
   }));
 
   const spinnerCoreProps = useAnimatedProps(() => ({
@@ -885,6 +917,17 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
             />
           ) : null}
           <Svg width={SPINNER_BOX} height={SPINNER_BOX}>
+            {exceeded ? null : (
+              <AnimatedG animatedProps={spinnerDialProps}>
+                <ScreenTimeDial
+                  cx={SPINNER_BOX / 2}
+                  cy={SPINNER_BOX / 2}
+                  tint={dialTint}
+                  progress={dialProgress}
+                  testID="screen-time-glance-spinner-dial"
+                />
+              </AnimatedG>
+            )}
             {/* the solid dot the orb takes over from the ring, which fades
                 itself out underneath -- one control becoming the orb, not a
                 second one appearing next to it. It turns blue with the arc,

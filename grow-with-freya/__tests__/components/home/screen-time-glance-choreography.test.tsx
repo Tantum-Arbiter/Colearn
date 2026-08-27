@@ -200,6 +200,20 @@ describe('the glance’s choreography', () => {
     expect(added.filter((count) => count === 1).length).toBeGreaterThanOrEqual(8);
   });
 
+  it('cuts the window out under reduced motion, rather than holding it for a dissolve', () => {
+    mockReduceMotion = true;
+    const props = { timeOfDay: 'night' as const, onClose: jest.fn(), origin: ORIGIN };
+    const tree = render(<ScreenTimeGlance visible {...props} />);
+
+    tree.rerender(<ScreenTimeGlance visible={false} {...props} />);
+
+    expect(
+      tree.UNSAFE_root.findAll(
+        (node: any) => node.props.testID === 'screen-time-glance-spinner'
+      )
+    ).toHaveLength(0);
+  });
+
   it('opens without animating anything at all under reduced motion', () => {
     mockReduceMotion = true;
 
@@ -300,4 +314,68 @@ describe('the glance’s choreography', () => {
       expect(beats[beats.length - 1].to).toBe(0);
     });
   });
+
+  describe('what the orb is made of at the handover', () => {
+    const RING_IS = [
+      ['calm, an outlined dial', false, 1, 0],
+      ['over its limit, a solid disc', true, 0, 1],
+    ] as const;
+
+    function tracksNamed(name: string) {
+      return mockTracks.filter((track) => track.name === name);
+    }
+
+    function closeFrom(exceeded: boolean) {
+      const tree = open({ exceeded });
+      mockTracks.length = 0;
+
+      act(() => {
+        fireEvent.press(
+          tree.UNSAFE_root.findAll(
+            (node: any) => node.props.testID === 'screen-time-glance-close'
+          )[0]
+        );
+      });
+    }
+
+    const lastBeat = (name: string) => {
+      const beats = tracksNamed(name).flatMap((track) => track.beats);
+      expect(beats.length).toBeGreaterThan(0);
+      return beats[beats.length - 1];
+    };
+
+    it.each(RING_IS)('rises out of a ring that is %s', (_case, exceeded, dial, core) => {
+      open({ exceeded });
+
+      expect(tracksNamed('ring dial')[0].from).toBe(dial);
+      expect(tracksNamed('orb core')[0].from).toBe(core);
+    });
+
+    it.each(RING_IS)('hands the corner back to a ring that is %s', (_case, exceeded, dial, core) => {
+      closeFrom(exceeded);
+
+      expect(lastBeat('ring dial').to).toBe(dial);
+      expect(lastBeat('orb core').to).toBe(core);
+    });
+
+    it('takes the dial back on the same beat the core gives way', () => {
+      closeFrom(false);
+
+      const dial = lastBeat('ring dial');
+      const core = lastBeat('orb core');
+
+      expect(dial.at).toBe(core.at);
+      expect(dial.over).toBe(core.over);
+    });
+
+    it.each([
+      ['an outline', 'orb outline'],
+      ['a turn', 'orb turn'],
+    ])('never gives the reforming orb %s to shed again', (_case, name) => {
+      closeFrom(true);
+
+      expect(tracksNamed(name).flatMap((track) => track.beats)).toHaveLength(0);
+    });
+  });
+
 });

@@ -10,6 +10,11 @@ export const SCREEN_TIME_RING = {
   // corner was handed back, so the glance's orb settled at 1 and the ring
   // appeared at anything up to pulseScale in the same frame.
   pulseSettle: 260,
+  /** The cross-dissolve the ring and the glance's orb share when the corner
+   *  changes hands. Both sides ramp over it in opposite directions, so the
+   *  two are never both at full -- everything in the corner is translucent,
+   *  and drawing it twice is brighter, not identical. */
+  presenceFade: 150,
   trackOpacity: 0.18,
   arcOpacity: 0.55,
   exceededColour: '#E4483F',

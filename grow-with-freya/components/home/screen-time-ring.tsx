@@ -13,10 +13,10 @@ import Animated, {
 import { useTranslation } from 'react-i18next';
 import Svg, { Circle } from 'react-native-svg';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
+import { ScreenTimeDial } from './screen-time-dial';
 import {
   SCREEN_TIME_RING,
   isScreenTimeExceeded,
-  ringDashOffset,
   screenTimeProgress,
 } from '@/constants/screen-time-ring';
 
@@ -46,12 +46,16 @@ export const ScreenTimeRing = memo(function ScreenTimeRing({
   const presence = useSharedValue(hidden ? 0 : 1);
 
   useEffect(() => {
-    // Hiding fades, showing does not. The glance's close hands the corner
-    // back at the moment its orb has reformed into a dot the same size and
-    // colour as this ring -- so appearing instantly is what makes that
-    // handover invisible, where a fade would leave a gap with neither on
-    // screen.
-    presence.value = hidden ? withTiming(0, { duration: 150 }) : 1;
+    // Both directions ramp, over the window the glance's orb ramps against.
+    // Handing the corner back on a single frame is a race between two things
+    // nothing orders -- this view's opacity and the teardown of the modal the
+    // orb sits in -- and it resolves as either a frame with neither on screen
+    // or a frame with both, which is brighter rather than identical because
+    // everything here is translucent. A complementary dissolve has no frame
+    // that can go either way.
+    presence.value = withTiming(hidden ? 0 : 1, {
+      duration: SCREEN_TIME_RING.presenceFade,
+    });
   }, [hidden, presence]);
 
   const exceeded = isScreenTimeExceeded(usageSeconds, limitSeconds);
@@ -101,7 +105,6 @@ export const ScreenTimeRing = memo(function ScreenTimeRing({
   const stroke = SCREEN_TIME_RING.strokeWidth;
   const radius = (size - stroke) / 2;
   const centre = size / 2;
-  const circumference = 2 * Math.PI * radius;
   const progress = screenTimeProgress(usageSeconds, limitSeconds);
 
   const label = t(exceeded ? 'home.screenTimeExceeded' : 'home.screenTimeRemaining');
@@ -123,39 +126,27 @@ export const ScreenTimeRing = memo(function ScreenTimeRing({
       ) : null}
 
       <Svg width={size} height={size}>
-        <Circle
-          cx={centre}
-          cy={centre}
-          r={radius}
-          stroke={exceeded ? SCREEN_TIME_RING.exceededColour : tint}
-          strokeOpacity={exceeded ? 1 : SCREEN_TIME_RING.trackOpacity}
-          strokeWidth={stroke}
-          fill="none"
-        />
-
         {exceeded ? (
-          <Circle
-            testID="screen-time-ring-fill"
-            cx={centre}
-            cy={centre}
-            r={radius - stroke / 2}
-            fill={SCREEN_TIME_RING.exceededColour}
-          />
+          <>
+            <Circle
+              cx={centre}
+              cy={centre}
+              r={radius}
+              stroke={SCREEN_TIME_RING.exceededColour}
+              strokeWidth={stroke}
+              fill="none"
+            />
+
+            <Circle
+              testID="screen-time-ring-fill"
+              cx={centre}
+              cy={centre}
+              r={radius - stroke / 2}
+              fill={SCREEN_TIME_RING.exceededColour}
+            />
+          </>
         ) : (
-          <Circle
-            testID="screen-time-ring-arc"
-            cx={centre}
-            cy={centre}
-            r={radius}
-            stroke={tint}
-            strokeOpacity={SCREEN_TIME_RING.arcOpacity}
-            strokeWidth={stroke}
-            strokeLinecap="round"
-            fill="none"
-            strokeDasharray={`${circumference} ${circumference}`}
-            strokeDashoffset={ringDashOffset(progress, circumference)}
-            transform={`rotate(-90 ${centre} ${centre})`}
-          />
+          <ScreenTimeDial cx={centre} cy={centre} tint={tint} progress={progress} testID={testID} />
         )}
       </Svg>
     </Animated.View>

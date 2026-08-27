@@ -19,11 +19,13 @@
  */
 
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
+import { render, fireEvent, act } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
 import * as RN from 'react-native';
 
 import { ScreenTimeGlance } from '@/components/home/screen-time-glance';
+import { ScreenTimeRing } from '@/components/home/screen-time-ring';
+import { HOME_THEMES } from '@/constants/home-scene';
 import {
   SCREEN_TIME_GLANCE,
   SCREEN_TIME_RING,
@@ -94,7 +96,9 @@ jest.mock('react-native-reanimated', () => {
       return v;
     }),
     withDelay: jest.fn((_: any, v: any) => v),
+    withRepeat: jest.fn((v: any) => v),
     withSequence: jest.fn((...values: any[]) => values[values.length - 1]),
+    cancelAnimation: jest.fn(),
     useAnimatedProps: jest.fn(() => ({})),
     interpolateColor: jest.fn((_v: any, _r: any, colours: string[]) => colours[0]),
     Easing: {
@@ -495,4 +499,90 @@ describe('ScreenTimeGlance', () => {
       expect(findByTestId(tree, 'screen-time-glance-spinner-halo')).toHaveLength(0);
     });
   });
+
+  describe('the dial the calm orb hands over', () => {
+    const USAGE = 900;
+    const LIMIT = 3600;
+
+    const shape = (node: any) => ({
+      r: node.props.r,
+      stroke: node.props.stroke,
+      strokeOpacity: node.props.strokeOpacity,
+      strokeWidth: node.props.strokeWidth,
+      strokeLinecap: node.props.strokeLinecap,
+      strokeDasharray: node.props.strokeDasharray,
+      strokeDashoffset: node.props.strokeDashoffset,
+    });
+
+    function ringSide() {
+      return render(
+        <ScreenTimeRing
+          usageSeconds={USAGE}
+          limitSeconds={LIMIT}
+          tint={HOME_THEMES.day.chromeInk}
+        />
+      );
+    }
+
+    function orbSide() {
+      return renderGlance({ usageSeconds: USAGE, limitSeconds: LIMIT });
+    }
+
+    it.each([
+      ['track', 'screen-time-ring-track', 'screen-time-glance-spinner-dial-track'],
+      ['progress arc', 'screen-time-ring-arc', 'screen-time-glance-spinner-dial-arc'],
+    ])('wears the same %s the calm ring is drawn from', (_part, ringId, orbId) => {
+      const ring = shape(findByTestId(ringSide(), ringId)[0]);
+
+      const underTest = shape(findByTestId(orbSide(), orbId)[0]);
+
+      expect(underTest).toEqual(ring);
+    });
+
+    it('wears no dial at all once the ring is a solid disc instead', () => {
+      const tree = renderGlance({ exceeded: true, usageSeconds: LIMIT, limitSeconds: LIMIT });
+
+      expect(findByTestId(tree, 'screen-time-glance-spinner-dial-track')).toHaveLength(0);
+    });
+  });
+
+
+  describe('handing the corner back', () => {
+    const HANDBACK = {
+      visible: true,
+      timeOfDay: 'day' as const,
+      origin: ORIGIN,
+      exceeded: false,
+    };
+
+    beforeEach(() => jest.useFakeTimers());
+    afterEach(() => jest.useRealTimers());
+
+    function closeAndHandBack() {
+      const onClose = jest.fn();
+      const tree = render(<ScreenTimeGlance {...HANDBACK} onClose={onClose} />);
+
+      fireEvent.press(findByTestId(tree, 'screen-time-glance-close')[0]);
+      tree.rerender(<ScreenTimeGlance {...HANDBACK} visible={false} onClose={onClose} />);
+
+      return tree;
+    }
+
+    it('holds the orb on screen while the ring fades up under it', () => {
+      const tree = closeAndHandBack();
+
+      expect(findByTestId(tree, 'screen-time-glance-spinner').length).toBeGreaterThan(0);
+    });
+
+    it('tears the window down once the dissolve has run', () => {
+      const tree = closeAndHandBack();
+
+      act(() => {
+        jest.advanceTimersByTime(SCREEN_TIME_RING.presenceFade);
+      });
+
+      expect(findByTestId(tree, 'screen-time-glance-spinner')).toHaveLength(0);
+    });
+  });
+
 });
