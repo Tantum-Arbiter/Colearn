@@ -114,7 +114,13 @@ export const ScreenTimeRing = memo(function ScreenTimeRing({
   const label = t(exceeded ? 'home.screenTimeExceeded' : 'home.screenTimeRemaining');
 
   const dial = (
-    <Animated.View style={[styles.root, animatedStyle]}>
+    // Keyed on `hidden` so each flip mounts a fresh view. An animated style
+    // rebuilt on an existing view is applied asynchronously, so at the
+    // handover commit the ring kept its faded-out opacity for a few frames
+    // after the orb was already gone -- filmed as a hole exactly at the
+    // swap. A newly mounted view evaluates its animated style during the
+    // render itself, which is what makes the swap actually atomic.
+    <Animated.View key={hidden ? 'stepping-aside' : 'holding-the-corner'} style={[styles.root, animatedStyle]}>
       {exceeded ? (
         <View
           style={[
