@@ -433,6 +433,30 @@ animation costs nothing.
 that must be true at a boundary should not rest on a promise. State that has
 to hold at a handover belongs in render, where every commit re-asserts it.**
 
+And then the flicker still came back, because none of it was the flicker the
+user was reporting. Captured with the atomic swap in place: the resting ring
+-- dot and halo together -- vanished for exactly one frame, once at the frame
+the glance's Modal presented, and again a beat after the close when its
+window was actually torn down (the native dismissal trails `setMounted(false)`
+by up to a couple of seconds). Ninety-five seconds of the home screen at rest
+with no glance activity: not one dropped frame in 4,527. **Presenting or
+dismissing a Modal is a window change, and the window change itself drops a
+frame of the main window's animated views.** Every choreography fix above
+merely moved where that frame landed relative to the handover -- and the old
+in-flight fade happened to sit right on top of it, which is what froze it.
+
+The glance is now an absolutely-positioned overlay in the home screen's own
+tree, not a Modal. It mounts and unmounts inside one window, so there is no
+cross-window commit left to drop anything. The Android back button, which the
+Modal supplied through `onRequestClose`, is a `BackHandler` subscription for
+as long as the overlay is mounted.
+
+**When a defect is intermittent under fixes that are each individually
+verified, stop fixing and start filming: the defect class is probably below
+every layer being fixed.** Three choreography-level fixes were correct and
+none of them touched the cause. One recording of the failure, one recording
+at rest, and a frame-level diff located it in an afternoon.**
+
 ### 14. Motion that only makes sense in one direction
 
 The orb wears a two-thirds outline. On the open that is load-bearing: it is

@@ -547,6 +547,16 @@ describe('ScreenTimeGlance', () => {
   });
 
 
+  it('renders as an overlay in the home tree, never through a Modal', () => {
+    // Presenting or dismissing a Modal is an iOS window change, and a window
+    // change was filmed dropping one frame of the ring in the main window --
+    // the flicker that survived every choreography fix. The glance must stay
+    // inside the home screen's own window.
+    const tree = renderGlance();
+
+    expect(tree.UNSAFE_root.findAll((n: any) => n.type === MockModal)).toHaveLength(0);
+  });
+
   describe('handing the corner back', () => {
     const HANDBACK = {
       visible: true,

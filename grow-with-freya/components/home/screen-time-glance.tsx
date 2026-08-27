@@ -1,5 +1,5 @@
 import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text, Modal, Pressable, ScrollView, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, BackHandler, Pressable, ScrollView, StyleSheet, Dimensions } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -717,6 +717,19 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
     );
   }, [finishClose, reduceMotion, geometry, exceeded]);
 
+  useEffect(() => {
+    if (!mounted) {
+      return;
+    }
+
+    const back = BackHandler.addEventListener('hardwareBackPress', () => {
+      handleClose();
+      return true;
+    });
+
+    return () => back.remove();
+  }, [mounted, handleClose]);
+
   const scrimStyle = useAnimatedStyle(() => ({ opacity: scrimOpacity.value }));
 
   const spinnerStyle = useAnimatedStyle(() => {
@@ -810,16 +823,19 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
   const { bounds } = geometry;
   const spinnerArc = 2 * Math.PI * SCREEN_TIME_GLANCE.spinnerRadius;
 
+  if (!mounted) {
+    return null;
+  }
+
   return (
-    <Modal
-      testID={testID}
-      visible={mounted}
-      transparent
-      animationType="none"
-      statusBarTranslucent
-      onRequestClose={handleClose}
-    >
-      <View style={styles.root} pointerEvents="box-none">
+    // An overlay in the home screen's own tree, deliberately not a Modal.
+    // Presenting or dismissing a Modal is an iOS window change, and a window
+    // change was filmed dropping exactly one frame of the ring in the main
+    // window -- at the open's present and again at the close's deferred
+    // dismissal, which is the flicker every choreography fix before this one
+    // failed to remove. An overlay mounts and unmounts inside one window, so
+    // there is no cross-window commit left to drop anything.
+    <View testID={testID} style={styles.root} pointerEvents="box-none">
         {/* everything outside the panel: dim night, never the alarm colour */}
         <Animated.View
           testID="screen-time-glance-scrim"
@@ -1060,14 +1076,15 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
             <Path d={DROP_GLOSS} fill="rgba(255, 255, 255, 0.45)" />
           </Svg>
         </Animated.View>
-      </View>
-    </Modal>
+    </View>
   );
 });
 
 const styles = StyleSheet.create({
   root: {
-    flex: 1,
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 100,
+    elevation: 100,
   },
   scrim: {
     ...StyleSheet.absoluteFillObject,
