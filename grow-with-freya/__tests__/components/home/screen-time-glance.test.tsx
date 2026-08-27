@@ -556,6 +556,15 @@ describe('ScreenTimeGlance', () => {
   });
 
 
+  it('shields the home screen behind it from touches', () => {
+    // The Modal used to swallow taps that missed the card; as an overlay the
+    // scrim has to do it, or a stray tap lands on the home screen underneath.
+    const tree = renderGlance();
+    const scrim = findByTestId(tree, 'screen-time-glance-scrim')[0];
+
+    expect(scrim.props.pointerEvents).toBe('auto');
+  });
+
   it('renders as an overlay in the home tree, never through a Modal', () => {
     // Presenting or dismissing a Modal is an iOS window change, and a window
     // change was filmed dropping one frame of the ring in the main window --

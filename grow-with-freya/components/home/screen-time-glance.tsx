@@ -833,7 +833,7 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
         {/* everything outside the panel: dim night, never the alarm colour */}
         <Animated.View
           testID="screen-time-glance-scrim"
-          pointerEvents="none"
+          pointerEvents="auto"
           style={[styles.scrim, scrimStyle]}
         />
 
