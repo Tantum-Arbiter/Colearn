@@ -26,6 +26,7 @@ import {
   SPLASH_RING_BIRTH,
   waterTurnRamp,
   WATER_TURN_MID,
+  glancePanelBounds,
 } from '@/constants/screen-time-ring';
 import { expectSmooth } from '../utils/motion-smoothness';
 
@@ -536,5 +537,63 @@ describe('waterTurnRamp', () => {
     expect(ramp.output[0]).toBe(SCREEN_TIME_GLANCE.exceededDraw);
     expect(ramp.output[ramp.output.length - 1]).toBe(SCREEN_TIME_GLANCE.drawWater);
     expect(ramp.output).toContain(WATER_TURN_MID);
+  });
+});
+
+describe('glancePanelBounds', () => {
+  const PHONE = { width: 390, height: 844 };
+  const TABLET = { width: 834, height: 1194 };
+  const INSETS = { top: 59, bottom: 34 };
+
+  it('insets the window from every edge on a phone', () => {
+    const underTest = glancePanelBounds(PHONE.width, PHONE.height, INSETS.top, INSETS.bottom);
+
+    expect(underTest.left).toBe(SCREEN_TIME_GLANCE.panelInset);
+    expect(underTest.right).toBe(PHONE.width - SCREEN_TIME_GLANCE.panelInset);
+    expect(underTest.top).toBe(INSETS.top + SCREEN_TIME_GLANCE.panelInset);
+    expect(underTest.bottom).toBe(PHONE.height - INSETS.bottom - SCREEN_TIME_GLANCE.panelInset);
+  });
+
+  it('caps the window on a tablet instead of filling the screen', () => {
+    const underTest = glancePanelBounds(TABLET.width, TABLET.height, INSETS.top, INSETS.bottom);
+
+    expect(underTest.right - underTest.left).toBe(SCREEN_TIME_GLANCE.panelMaxWidth);
+    expect(underTest.bottom - underTest.top).toBe(SCREEN_TIME_GLANCE.panelMaxHeight);
+  });
+
+  it('keeps the capped window centred, so it still sits over the ring', () => {
+    const underTest = glancePanelBounds(TABLET.width, TABLET.height, INSETS.top, INSETS.bottom);
+
+    expect((underTest.left + underTest.right) / 2).toBe(TABLET.width / 2);
+    const safeTop = INSETS.top + SCREEN_TIME_GLANCE.panelInset;
+    const safeBottom = TABLET.height - INSETS.bottom - SCREEN_TIME_GLANCE.panelInset;
+    expect(underTest.top - safeTop).toBeCloseTo(safeBottom - underTest.bottom);
+  });
+
+  it('is wide enough for the tablet content column it holds', () => {
+    expect(SCREEN_TIME_GLANCE.panelMaxWidth).toBeGreaterThan(500);
+  });
+
+  it.each([
+    ['phone portrait', 390, 844],
+    ['phone landscape', 844, 390],
+    ['tablet portrait', 834, 1194],
+    ['tablet landscape', 1194, 834],
+    ['small phone', 320, 568],
+  ])('never escapes the safe area on a %s', (_case, width, height) => {
+    const underTest = glancePanelBounds(width, height, INSETS.top, INSETS.bottom);
+
+    expect(underTest.left).toBeGreaterThanOrEqual(0);
+    expect(underTest.top).toBeGreaterThanOrEqual(INSETS.top);
+    expect(underTest.right).toBeLessThanOrEqual(width);
+    expect(underTest.bottom).toBeLessThanOrEqual(height - INSETS.bottom);
+    expect(underTest.right - underTest.left).toBeGreaterThan(0);
+    expect(underTest.bottom - underTest.top).toBeGreaterThan(0);
+  });
+
+  it('carries the panel radius the border is drawn with', () => {
+    const underTest = glancePanelBounds(PHONE.width, PHONE.height, 0, 0);
+
+    expect(underTest.radius).toBe(SCREEN_TIME_GLANCE.panelRadius);
   });
 });

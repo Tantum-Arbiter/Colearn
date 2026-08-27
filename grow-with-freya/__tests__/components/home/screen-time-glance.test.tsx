@@ -30,6 +30,7 @@ import {
   SCREEN_TIME_GLANCE,
   SCREEN_TIME_RING,
   panelBorderPath,
+  glancePanelBounds,
   DROP_PATH,
 } from '@/constants/screen-time-ring';
 
@@ -310,11 +311,14 @@ describe('ScreenTimeGlance', () => {
       const drop = findByTestId(tree, 'screen-time-glance-drop')[0];
       const style = StyleSheet.flatten(drop.props.style);
       const { width, height } = RN.Dimensions.get('window');
+      const bounds = glancePanelBounds(width, height, 0, 0);
 
-      // panel centre for zero safe-area insets, which is what this
-      // environment provides
-      expect(style.left + SCREEN_TIME_GLANCE.dropWidth / 2).toBeCloseTo(width / 2);
-      expect(style.top + SCREEN_TIME_GLANCE.dropHeight / 2).toBeCloseTo(height / 2);
+      expect(style.left + SCREEN_TIME_GLANCE.dropWidth / 2).toBeCloseTo(
+        (bounds.left + bounds.right) / 2
+      );
+      expect(style.top + SCREEN_TIME_GLANCE.dropHeight / 2).toBeCloseTo(
+        (bounds.top + bounds.bottom) / 2
+      );
     });
 
     it('rebuilds the orb at the ring, round and at the ring dot size', () => {
@@ -333,24 +337,29 @@ describe('ScreenTimeGlance', () => {
     const panelStyle = (tree: ReturnType<typeof render>) =>
       StyleSheet.flatten(findByTestId(tree, 'screen-time-glance-panel')[0].props.style);
 
-    it('insets the panel from every edge', () => {
+    it('sits exactly where glancePanelBounds says, so all the geometry agrees', () => {
+      const { width, height } = RN.Dimensions.get('window');
+      const bounds = glancePanelBounds(width, height, 0, 0);
+
       const style = panelStyle(renderGlance());
 
-      expect(style.left).toBe(SCREEN_TIME_GLANCE.panelInset);
-      expect(style.right).toBe(SCREEN_TIME_GLANCE.panelInset);
-      expect(style.top).toBe(SCREEN_TIME_GLANCE.panelInset);
-      expect(style.bottom).toBe(SCREEN_TIME_GLANCE.panelInset);
+      expect(style.left).toBe(bounds.left);
+      expect(style.right).toBe(width - bounds.right);
+      expect(style.top).toBe(bounds.top);
+      expect(style.bottom).toBe(height - bounds.bottom);
     });
 
     it('clears the notch and the home indicator as well as the inset', () => {
       mockInsets = { top: 59, bottom: 34, left: 0, right: 0 };
+      const { width, height } = RN.Dimensions.get('window');
+      const bounds = glancePanelBounds(width, height, 59, 34);
 
       const style = panelStyle(renderGlance());
 
-      expect(style.top).toBe(59 + SCREEN_TIME_GLANCE.panelInset);
-      expect(style.bottom).toBe(34 + SCREEN_TIME_GLANCE.panelInset);
-      // the sides are already clear of both, so they take the inset alone
-      expect(style.left).toBe(SCREEN_TIME_GLANCE.panelInset);
+      expect(style.top).toBe(bounds.top);
+      expect(bounds.top).toBeGreaterThanOrEqual(59 + SCREEN_TIME_GLANCE.panelInset);
+      expect(style.bottom).toBe(height - bounds.bottom);
+      expect(height - bounds.bottom).toBeGreaterThanOrEqual(34 + SCREEN_TIME_GLANCE.panelInset);
     });
 
     it("outlines it with the design's rounded border", () => {

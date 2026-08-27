@@ -40,6 +40,7 @@ import {
   SPLASH_GRAVITY,
   SPLASH_DROP_RADIUS,
   screenTimeProgress,
+  glancePanelBounds,
 } from '@/constants/screen-time-ring';
 import {
   glanceOpenTimeline,
@@ -145,14 +146,7 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
   const water = useMemo(() => waterTurnRamp(drawStroke, exceeded), [drawStroke, exceeded]);
 
   const geometry = useMemo(() => {
-    const inset = SCREEN_TIME_GLANCE.panelInset;
-    const bounds = {
-      left: inset,
-      top: insets.top + inset,
-      right: width - inset,
-      bottom: height - insets.bottom - inset,
-      radius: SCREEN_TIME_GLANCE.panelRadius,
-    };
+    const bounds = glancePanelBounds(width, height, insets.top, insets.bottom);
     const border = panelBorderPath(bounds);
     const panelW = bounds.right - bounds.left;
     const panelH = bounds.bottom - bounds.top;

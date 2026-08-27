@@ -102,7 +102,14 @@ export const SCREEN_TIME_GLANCE = {
    * under the parent's eye. The calm border stays the faint hairline it has
    * always been: a lit blue frame is the alert's own signal.
    */
-  panelInset: 14,
+  panelInset: 20,
+  /** How large the window is allowed to grow. On a phone the insets decide
+   *  and these never bind; on a tablet they turn a full-screen sheet into a
+   *  centred card -- wide enough for the 500pt content column it holds,
+   *  small enough that the border draw still reads as a drawn frame rather
+   *  than a screen edge. */
+  panelMaxWidth: 560,
+  panelMaxHeight: 760,
   panelRadius: 28,
   panelBorderWidth: 2,
   exceededBorder: WATER,
@@ -385,6 +392,47 @@ export function ringDashOffset(progress: number, circumference: number): number 
  * anchored here: the orb rises at this point and the closing drop falls
  * back to it, so this and `screenTimeCorner` have to agree.
  */
+export interface GlanceBounds {
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+  radius: number;
+}
+
+/**
+ * Where the glance's window sits on a given screen.
+ *
+ * Inset from every edge and the safe areas on a phone; capped and centred on
+ * a tablet, horizontally over the ring the choreography anchors to. Pure, so
+ * the border path, the drop's flight and the gather all derive from one
+ * answer and cannot disagree about the panel's shape.
+ */
+export function glancePanelBounds(
+  width: number,
+  height: number,
+  insetTop: number,
+  insetBottom: number
+): GlanceBounds {
+  const inset = SCREEN_TIME_GLANCE.panelInset;
+  const safeTop = insetTop + inset;
+  const safeBottom = height - insetBottom - inset;
+
+  const panelW = Math.min(width - inset * 2, SCREEN_TIME_GLANCE.panelMaxWidth);
+  const panelH = Math.min(safeBottom - safeTop, SCREEN_TIME_GLANCE.panelMaxHeight);
+
+  const left = (width - panelW) / 2;
+  const top = safeTop + (safeBottom - safeTop - panelH) / 2;
+
+  return {
+    left,
+    top,
+    right: left + panelW,
+    bottom: top + panelH,
+    radius: SCREEN_TIME_GLANCE.panelRadius,
+  };
+}
+
 export function ringCentre(
   screenWidth: number,
   screenHeight: number,
