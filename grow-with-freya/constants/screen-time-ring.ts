@@ -215,98 +215,51 @@ export const SPIRAL_RADIUS = 20;
  * wave fixes, and the third is what `SPIRAL_RADIUS` is tested against.
  */
 /**
- * Everything about the arm that does not depend on the animation, worked out
- * once at module load.
- *
- * The angle of each sample and its distance along the arm follow from
- * SPIRAL_TURNS and SPIRAL_STEPS alone, so recomputing them per frame bought
- * nothing and cost a great deal: a sine, a cosine, a square root and a
- * logarithm for every one of 57 points, plus a closure allocated per point,
- * sixty times a second. What is left in the frame is multiply and add.
- *
- * The distance term is the arc length of an Archimedean spiral in closed
- * form. The inner turns are short and the outer ones long, which is why the
- * arm has to be laid onto the line by length rather than by the parameter
- * that draws it -- by parameter, the point at the very centre was aimed at
- * the far end of the line and dragged sideways across the coil.
- */
-/**
- * Everything about the arm that does not depend on the animation, worked out
- * once at module load: where each sample sits on a unit-radius spiral, how far
- * along the arm it is, and which way the arm points there.
- *
- * All three follow from SPIRAL_TURNS and SPIRAL_STEPS alone, so recomputing
- * them per frame bought nothing and cost a sine, a cosine, a square root and a
- * logarithm per sample, sixty times a second.
- *
- * The distance term is the arc length of an Archimedean spiral in closed form.
- * The heading is unwrapped as it is built, so it can be interpolated between
- * samples without a jump where atan2 wraps.
+ * Where each sample sits on a unit-radius spiral, worked out once at module
+ * load. It follows from SPIRAL_TURNS and SPIRAL_STEPS alone, so recomputing it
+ * per frame bought nothing and cost a sine and a cosine per sample, sixty
+ * times a second.
  */
 const SPIRAL_TABLE = (() => {
   const sweep = SPIRAL_TURNS * 2 * Math.PI;
-  const arcAt = (u: number) => {
-    const bu = sweep * u;
-    const root = Math.sqrt(1 + bu * bu);
-
-    return (u * root) / 2 + Math.log(bu + root) / (2 * sweep);
-  };
-  const total = arcAt(1);
-
   const px: number[] = [];
   const py: number[] = [];
-  const arc: number[] = [];
-  const heading: number[] = [];
-  let previous = 0;
 
   for (let i = 0; i <= SPIRAL_STEPS; i++) {
     const f = i / SPIRAL_STEPS;
     const theta = f * sweep;
-    const cos = Math.cos(theta);
-    const sin = Math.sin(theta);
 
-    px.push(f * cos);
-    py.push(f * sin);
-    arc.push(arcAt(f) / total);
-
-    let angle = Math.atan2(sin + f * sweep * cos, cos - f * sweep * sin);
-    while (angle - previous > Math.PI) angle -= 2 * Math.PI;
-    while (previous - angle > Math.PI) angle += 2 * Math.PI;
-    heading.push(angle);
-    previous = angle;
+    px.push(f * Math.cos(theta));
+    py.push(f * Math.sin(theta));
   }
 
-  return { px, py, arc, heading, unit: total };
+  // The arm is not symmetric about its own centre -- it reaches a full radius
+  // one way and about three quarters the other -- so how wide it ends up, and
+  // where its middle is, have to be read off the shape rather than assumed.
+  let lowest = px[0];
+  let highest = px[0];
+
+  for (const x of px) {
+    lowest = Math.min(lowest, x);
+    highest = Math.max(highest, x);
+  }
+
+  return { px, py, span: highest - lowest, middle: (highest + lowest) / 2 };
 })();
 
 /**
- * The length of the line the arm lays itself down as: its own length.
+ * How far the arm spreads sideways as it is pressed flat.
  *
- * Derived rather than chosen, because choosing it is what made the unroll look
- * wrong. The arm is 129px of stroke and the line used to be 48, so it lost
- * seven tenths of its length on the way down -- it did not unroll, it was
- * sucked in. A rope laid out from a coil is as long as the rope.
- *
- * `SPIRAL_RADIUS` is the knob. It sets the arm's length too, and the line has
- * to fit the bottom edge it lies along: from the centre to where the corner
- * curve starts is 145px on the narrowest phone.
+ * Squash and stretch: a thing flattened has to go somewhere, and a coil
+ * pressed down without spreading reads as being deleted rather than flattened.
+ * It also decides how long the finished line is, since the line is just the
+ * arm's width once there is no height left.
  */
-export const SPIRAL_LINE_LENGTH = SPIRAL_RADIUS * SPIRAL_TABLE.unit;
+export const SPIRAL_FLAT_STRETCH = 1.6;
 
-/**
- * How far into the unroll the coil is still held on the dot it grew out of.
- *
- * Anchoring by the join alone puts an *end* of the coil on the anchor rather
- * than its middle, so while it is still wound up it sits a radius off the dot
- * and orbits instead of spinning when the view turns. The correction that
- * fixes that moves the whole arm, though, including the end the border grows
- * from -- so it has to be gone by the time there is any line worth pinning.
- *
- * A fifth of the unroll: fully on while the arm is a coil, fully off by the
- * time a fifth of the line is down, and smooth at both ends so neither the
- * spin nor the line is handed a jolt.
- */
-export const SPIRAL_CENTRING_FADE = 0.2;
+/** The line the arm becomes: its own width, once flattened and spread. */
+export const SPIRAL_LINE_LENGTH =
+  SPIRAL_RADIUS * SPIRAL_FLAT_STRETCH * SPIRAL_TABLE.span;
 
 /**
  * Rounds to a tenth of a point for a path string.
@@ -322,100 +275,49 @@ function coord(value: number): number {
 }
 
 /**
- * The spiral arm, at some point between wound up and laid out flat.
+ * The spiral arm, somewhere between wound up and pressed flat.
  *
- * It unrolls the way a carpet does. At any moment the arm is a straight run
- * lying along the line, and the rest of it still coiled exactly as it was --
- * a rigid remainder, not a shape part-way between two others. The coil rolls
- * along the line it is laying, shrinking as it goes, and the two meet
- * tangentially so there is no kink where they join.
+ * It flattens where it stands rather than unrolling. Every point keeps its
+ * angle and loses its height together, so the arm is a spiral being squashed
+ * at every moment -- never a shape part-way between a spiral and something
+ * else. That distinction is the whole point: an earlier version interpolated
+ * each point from its place on the coil to a place on a line, and a coil
+ * crosses a line's height once per turn, so anything blended between the two
+ * ripples by construction.
  *
- * The previous version interpolated each point from its place on the coil to
- * its place on the line, gated by a travelling wave. That cannot help
- * rippling: a coil crosses the line's height once per turn, so a shape
- * part-way between the two wobbles by construction, and no wave shape or
- * timing removes it. Rolling has no in-between state to wobble.
+ * A rolling unroll was tried after that. It was smooth, but it reads as the
+ * swirl unwinding *outward to make* a line, where what the choreography wants
+ * is the swirl flattening into a line which then draws out into the border.
  *
- * It also conserves the arm's length exactly rather than nearly, because the
- * straight run is measured along the arm and the coil is untouched.
+ * Pressed flat the arm is traced back and forth along one row, which draws as
+ * a single stroke of its own width -- and that width is what the line is.
  */
 export function spiralArmPath(
   centre: number,
   radius: number,
   grow: number,
-  straighten: number,
-  lineLength: number
+  flatten: number
 ): string {
   'worklet';
   const g = grow <= 0 ? 0 : grow >= 1 ? 1 : grow;
-  const u = straighten <= 0 ? 0 : straighten >= 1 ? 1 : straighten;
+  const f = flatten <= 0 ? 0 : flatten >= 1 ? 1 : flatten;
 
-  if (g <= 0 && u <= 0) {
+  if (g <= 0) {
     return '';
   }
 
-  // The tip goes down first and the core last, the way a carpet unrolls. The
-  // other way round swings the whole arm through 35 degrees inside the first
-  // one percent of the unroll: the core is the tightest curvature there is, so
-  // laying a hair of it turns everything still attached.
-  const stillCoiled = 1 - u;
-
-  let k = 0;
-  while (k < SPIRAL_STEPS - 1 && SPIRAL_TABLE.arc[k + 1] < stillCoiled) {
-    k += 1;
-  }
-  const span = SPIRAL_TABLE.arc[k + 1] - SPIRAL_TABLE.arc[k];
-  const w = span > 0 ? (stillCoiled - SPIRAL_TABLE.arc[k]) / span : 0;
-
-  const pivotX = SPIRAL_TABLE.px[k] + (SPIRAL_TABLE.px[k + 1] - SPIRAL_TABLE.px[k]) * w;
-  const pivotY = SPIRAL_TABLE.py[k] + (SPIRAL_TABLE.py[k + 1] - SPIRAL_TABLE.py[k]) * w;
-  const pivotHeading =
-    SPIRAL_TABLE.heading[k] + (SPIRAL_TABLE.heading[k + 1] - SPIRAL_TABLE.heading[k]) * w;
-
-  // One rotation for the whole remaining coil, so it meets the laid run
-  // pointing the same way: one sine and one cosine a frame, not one a sample.
-  // Half a turn, because distance along the arm runs from the tip back toward
-  // the core while the line runs away from the anchor.
-  const turn = Math.PI - pivotHeading;
-  const turnCos = Math.cos(turn);
-  const turnSin = Math.sin(turn);
-  const joinX = centre + lineLength * u;
-
-  // Anchoring by the join alone puts an end of the coil on the anchor, not its
-  // middle -- so while it is still wound up it would sit a radius off the dot
-  // it grew out of, and orbit rather than spin when the view turns. This is the
-  // correction that keeps the coil's own centre on the dot, weighted by how
-  // much of it is still coiled, so it is exact while it is spinning and gone by
-  // the time there is no coil left to centre.
-  const pivotSX = g * radius * pivotX;
-  const pivotSY = g * radius * pivotY;
-  const originX = joinX - (pivotSX * turnCos - pivotSY * turnSin);
-  const originY = centre - (pivotSX * turnSin + pivotSY * turnCos);
-  const fade = u >= SPIRAL_CENTRING_FADE ? 1 : u / SPIRAL_CENTRING_FADE;
-  const hold = 1 - fade * fade * (3 - 2 * fade);
-  const offsetX = (centre - originX) * hold;
-  const offsetY = (centre - originY) * hold;
+  const across = g * radius * (1 + (SPIRAL_FLAT_STRETCH - 1) * f);
+  const tall = g * radius * (1 - f);
 
   let d = '';
 
+  // the arm's middle slides onto the centre as it flattens, so the finished
+  // line is centred on the dot rather than sitting a few points to one side
+  const recentre = SPIRAL_TABLE.middle * f;
+
   for (let i = 0; i <= SPIRAL_STEPS; i++) {
-    const along = SPIRAL_TABLE.arc[i];
-    let x: number;
-    let y: number;
-
-    if (along >= stillCoiled) {
-      // already laid: it lies on the line, its distance from the anchor being
-      // how far back along the arm it is from the tip
-      x = centre + lineLength * (1 - along) + offsetX;
-      y = centre + offsetY;
-    } else {
-      // still coiled, carried rigidly to the end of the laid run
-      const dx = g * radius * (SPIRAL_TABLE.px[i] - pivotX);
-      const dy = g * radius * (SPIRAL_TABLE.py[i] - pivotY);
-
-      x = joinX + dx * turnCos - dy * turnSin + offsetX;
-      y = centre + dx * turnSin + dy * turnCos + offsetY;
-    }
+    const x = centre + across * (SPIRAL_TABLE.px[i] - recentre);
+    const y = centre + tall * SPIRAL_TABLE.py[i];
 
     d += `${i === 0 ? 'M' : 'L'} ${coord(x)} ${coord(y)} `;
   }

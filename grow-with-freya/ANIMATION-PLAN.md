@@ -208,6 +208,18 @@ rather than its middle, so it would orbit rather than spin.
 **Interpolating between two shapes is not the same as transforming one into
 the other, and only the second can be free of artefacts.**
 
+The roll that replaced it was free of artefacts and still wrong, for a reason
+no measurement would have caught: it reads as the swirl unwinding *outward to
+make* a line, where the choreography wants the swirl flattening into a line
+which then draws out into the border. It is now a squash and stretch -- every
+point keeps its angle and loses its height together, spreading sideways as it
+goes, so the arm is a spiral being pressed at every moment and never a shape
+between two things. Same freedom from artefacts, and it is the beat the
+choreography was asking for.
+
+**Smooth is not the same as right.** Three models here were each an
+improvement on the last and only the third said the right thing.
+
 ### 6. A constant that outlives the geometry it was tuned for
 
 `DRAW_OVERLAP` was 60ms because the line crossed a third of the screen to

@@ -445,8 +445,8 @@ describe('spiralArmPath', () => {
   const PLACES = 1;
 
   // the arm before any of it has been pulled straight
-  const arm = (grow: number, straighten = 0) =>
-    spiralArmPath(CENTRE, RADIUS, grow, straighten, SPIRAL_LINE_LENGTH);
+  const arm = (grow: number, flatten = 0) =>
+    spiralArmPath(CENTRE, RADIUS, grow, flatten);
 
   it('reaches clear of the orb it is swept out of', () => {
     // The defect this pins, and the one that killed the previous spiral: at
@@ -525,132 +525,79 @@ describe('spiralArmPath', () => {
     expect(arm(2)).toBe(arm(1));
   });
 
-  describe('laying itself down as the line', () => {
-    const onLine = (p: { x: number; y: number }) => Math.abs(p.y - CENTRE);
+  describe('being pressed flat', () => {
+    const offLine = (q: { x: number; y: number }) => Math.abs(q.y - CENTRE);
 
-    it('is still the spiral before the wave reaches it', () => {
+    it('is still the spiral before anything presses on it', () => {
       expect(arm(1, 0)).toBe(arm(1));
     });
 
-    it('is a straight line once the wave has passed the whole arm', () => {
-      const p = points(arm(1, 1));
-
-      p.forEach((point) => expect(onLine(point)).toBeLessThan(0.05));
+    it('is a straight line once it is fully flat', () => {
+      points(arm(1, 1)).forEach((q) => expect(offLine(q)).toBeLessThan(0.05));
     });
 
-    it('runs the line from the anchor, not across it', () => {
-      // The defect this pins: the line was centred on the point the border is
-      // drawn from, so half of it lay over border that would not be drawn
-      // until the end of the sweep. It has to start at that point and run out
-      // along the stretch about to be drawn.
-      const p = points(arm(1, 1));
-      const xs = p.map((point) => point.x);
+    it('spreads as it flattens rather than only losing height', () => {
+      // squash and stretch: a coil pressed down without spreading reads as
+      // being deleted rather than flattened
+      const width = (flatten: number) => {
+        const xs = points(arm(1, flatten)).map((q) => q.x);
 
-      expect(Math.min(...xs)).toBeCloseTo(CENTRE, PLACES);
-      expect(Math.max(...xs)).toBeCloseTo(CENTRE + SPIRAL_LINE_LENGTH, PLACES);
+        return Math.max(...xs) - Math.min(...xs);
+      };
+
+      expect(width(1)).toBeGreaterThan(width(0));
+      expect(width(1)).toBeCloseTo(SPIRAL_LINE_LENGTH, 0);
     });
 
-    it('keeps the end that meets the border on the anchor', () => {
-      // It is the point the border grows from, so whichever end of the arm
-      // reaches it must not drift. The arm unrolls tip first, so the tip is
-      // the end that lands there and the coil rolls away from it.
-      //
-      // From `SPIRAL_CENTRING_FADE` onward, that is: before then the arm is
-      // still held on the dot it grew out of, and there is no line to speak of
-      // to pin.
-      for (const straighten of [0.25, 0.6, 0.85, 1]) {
-        const p = points(arm(1, straighten));
-        const tip = p[p.length - 1];
+    it('flattens where it stands, centred on the dot it grew out of', () => {
+      // The defect this pins: an earlier version unrolled the arm outward
+      // instead, which reads as the swirl unwinding to *make* a line rather
+      // than the swirl flattening into one.
+      const xs = points(arm(1, 1)).map((q) => q.x);
+      const middle = (Math.max(...xs) + Math.min(...xs)) / 2;
 
-        expect(tip.x).toBeCloseTo(CENTRE, PLACES);
-        expect(tip.y).toBeCloseTo(CENTRE, PLACES);
+      expect(middle).toBeCloseTo(CENTRE, 0);
+    });
+
+    it('loses its height evenly, so it is a squashed spiral all the way down', () => {
+      // Every point keeps its angle and loses its height together, so there is
+      // never a shape part-way between a spiral and something else. Blending
+      // each point toward a place on a line is what made an earlier version
+      // ripple: a coil crosses a line's height once per turn.
+      const tallest = (flatten: number) =>
+        Math.max(...points(arm(1, flatten)).map(offLine));
+
+      let previous = tallest(0);
+
+      for (let i = 1; i <= 20; i++) {
+        const next = tallest(i / 20);
+
+        expect(next).toBeLessThanOrEqual(previous + 0.05);
+        previous = next;
       }
     });
 
-    it('centres the coil on the dot it grew out of while it is still coiled', () => {
-      // The defect this pins: anchoring by the join alone puts an *end* of the
-      // coil on the anchor rather than its middle, so while it was still wound
-      // up it sat a radius off the dot and orbited instead of spinning when
-      // the view turned.
-      const p = points(arm(1, 0));
-      const middleX = p.reduce((sum, q) => sum + q.x, 0) / p.length;
-      const middleY = p.reduce((sum, q) => sum + q.y, 0) / p.length;
+    it('flattens smoothly, with no jump at any point', () => {
+      // an absolute bound: once it is nearly flat the average step is below
+      // the path's own tenth-of-a-point precision, and a ratio against it
+      // would be measuring the rounding rather than the shape
+      const mean = (flatten: number) => {
+        const q = points(arm(1, flatten));
 
-      expect(Math.hypot(middleX - CENTRE, middleY - CENTRE)).toBeLessThan(RADIUS / 4);
-    });
-
-    it('lays down a line as long as the arm actually is', () => {
-      // The defect this pins: the line was a chosen 48px while the coil was
-      // 129px of stroke, so the arm lost seven tenths of its length on the way
-      // down. It did not unroll, it was sucked in, and no retiming of the wave
-      // hides a stroke shortening by that much. A rope laid out from a coil is
-      // as long as the rope.
-      const strokeLength = (d: string) => {
-        const p = points(d);
-        let total = 0;
-
-        for (let i = 1; i < p.length; i++) {
-          total += Math.hypot(p[i].x - p[i - 1].x, p[i].y - p[i - 1].y);
-        }
-
-        return total;
+        return q.reduce((sum, r) => sum + offLine(r), 0) / q.length;
       };
 
-      const coiled = strokeLength(arm(1, 0));
-      const laid = strokeLength(arm(1, 1));
-
-      // as a ratio, because the coil is measured as 40 chords and chords cut
-      // corners -- the polyline reads about half a percent under the true arc
-      expect(laid / coiled).toBeGreaterThan(0.99);
-      expect(laid / coiled).toBeLessThan(1.01);
-      expect(laid).toBeCloseTo(SPIRAL_LINE_LENGTH, 1);
-    });
-
-    it('never loses or gains much length on the way', () => {
-      // it may pull a little taut as it straightens, but it must not collapse
-      const strokeLength = (d: string) => {
-        const p = points(d);
-        let total = 0;
-
-        for (let i = 1; i < p.length; i++) {
-          total += Math.hypot(p[i].x - p[i - 1].x, p[i].y - p[i - 1].y);
-        }
-
-        return total;
-      };
-
-      for (const straighten of [0.15, 0.3, 0.45, 0.6, 0.75, 0.9]) {
-        const ratio = strokeLength(arm(1, straighten)) / SPIRAL_LINE_LENGTH;
-
-        expect(ratio).toBeGreaterThan(0.9);
-        expect(ratio).toBeLessThan(1.25);
-      }
-    });
-
-    it('unrolls smoothly, with no crumple at any point', () => {
-      // Measured as an absolute step rather than against the distance
-      // travelled: the arm barely leaves the line once it is rolling, so the
-      // average step is a fraction of the path's own precision and a ratio
-      // against it is measuring the rounding, not the shape.
-      const offLine = (straighten: number) => {
-        const p = points(arm(1, straighten));
-
-        return p.reduce((sum, q) => sum + onLine(q), 0) / p.length;
-      };
-
-      let previous = offLine(0);
+      let previous = mean(0);
       let biggest = 0;
 
       for (let i = 1; i <= 400; i++) {
-        const next = offLine(i / 400);
+        const next = mean(i / 400);
         biggest = Math.max(biggest, Math.abs(next - previous));
         previous = next;
       }
 
-      // half a point on a box a few hundred across
       expect(biggest).toBeLessThan(0.5);
     });
-
   });
 
   it('grows smoothly, with no jump at any point', () => {

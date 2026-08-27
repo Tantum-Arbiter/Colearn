@@ -43,8 +43,6 @@ import {
 import {
   glanceOpenTimeline,
   glanceCloseTimeline,
-  drawPickupSlope,
-  DRAW_PICKUP_X,
   TURN_CURVE,
 } from '@/constants/screen-time-glance-timeline';
 import { choreograph, type Track } from '@/utils/choreograph';
@@ -57,12 +55,15 @@ const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 // the same halo the ring wears, so the two are interchangeable at the handover
 const HALO_SIZE = SCREEN_TIME_RING.size * SCREEN_TIME_RING.haloScale;
 
-// Wide enough for the longest thing it holds, which is not the coil but the
-// line the coil lays down -- the arm conserves its length, so the line reaches
-// far further from the centre than the spiral ever does. Derived, so raising
-// SPIRAL_RADIUS cannot clip the longer line it produces.
+// Wide enough for the widest thing it holds: the arm once it has been pressed
+// flat and spread sideways, which reaches further than the coil ever does.
+// Derived, so changing the reach or the stretch cannot clip it.
 const SPINNER_BOX =
-  (Math.max(SCREEN_TIME_GLANCE.spinnerRadius, SPIRAL_RADIUS, SPIRAL_LINE_LENGTH) +
+  (Math.max(
+    SCREEN_TIME_GLANCE.spinnerRadius,
+    SPIRAL_RADIUS,
+    SPIRAL_LINE_LENGTH / 2
+  ) +
     SCREEN_TIME_GLANCE.spinnerStroke) *
     2 +
   2;
@@ -428,15 +429,13 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
           ],
         },
 
-        // 4. ...and the border carries on from the arm's tip.
+        // 4. ...and then the line draws out into the border.
         //
-        //    Not from a standstill, which is what it used to do. The arm lays
-        //    its line at about 380 px/s; the border has a whole perimeter to
-        //    cover and averages 8000, and eased in-out it started at zero --
-        //    so the stroke reached the tip, stopped dead, and accelerated away
-        //    to sixty times the speed it arrived at. The pickup curve leaves
-        //    the tip at the rate the arm handed over and gathers pace from
-        //    there.
+        //    From rest, deliberately. The arm is pressed flat and standing
+        //    still by the time this starts, so there is no incoming speed to
+        //    match -- the line sits there flat and then draws out, which is
+        //    the beat the choreography is after. It was a pickup curve while
+        //    the arm was laying its line down at a rate; nothing lays now.
         {
           on: drawProgress,
           name: 'border',
@@ -446,17 +445,7 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
               at: timeline.draw.at,
               to: 1,
               over: timeline.draw.over,
-              easing: Easing.bezier(
-                DRAW_PICKUP_X,
-                drawPickupSlope(
-                  SPIRAL_LINE_LENGTH,
-                  geometry.border.length,
-                  timeline.morph.over,
-                  timeline.draw.over
-                ),
-                0.4,
-                1
-              ),
+              easing: Easing.inOut(Easing.cubic),
             },
           ],
         },
@@ -787,13 +776,7 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
   }));
 
   const spiralProps = useAnimatedProps(() => ({
-    d: spiralArmPath(
-      SPINNER_BOX / 2,
-      SPIRAL_RADIUS,
-      spiralGrow.value,
-      spinnerMorph.value,
-      SPIRAL_LINE_LENGTH
-    ),
+    d: spiralArmPath(SPINNER_BOX / 2, SPIRAL_RADIUS, spiralGrow.value, spinnerMorph.value),
     opacity: spiralGrow.value,
     stroke: interpolateColor(spinnerWater.value, water.input, water.output),
   }));
