@@ -3169,4 +3169,21 @@ export default {
     nextPage: 'つぎのページ',
     previousPage: 'まえのページ',
   },
+  childUi: {
+    nav: {
+      home: 'ホーム',
+      library: 'ライブラリ',
+      progress: 'せいちょう',
+      parents: '保護者',
+    },
+  },
+
+  catalogue: {
+    moreStories: 'ほかのおはなし',
+    read: 'よむ',
+    sound: 'サウンド',
+    viewToggle: 'ひょうじをかえる',
+    noResults: 'このじょうけんのおはなしはありません',
+    clearFilters: 'フィルターをクリア',
+  },
 };

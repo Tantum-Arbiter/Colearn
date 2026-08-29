@@ -1,6 +1,7 @@
 import React from 'react';
-import { StorySelectionScreen } from './story-selection-screen';
 import { StoryGardenScreen } from './story-garden/story-garden-screen';
+import { StoryCatalogueScreen } from './catalogue/story-catalogue-screen';
+import type { CatalogueMode } from './catalogue/catalogue-story';
 import { useAppStore } from '@/store/app-store';
 import { Story } from '@/types/story';
 
@@ -17,8 +18,7 @@ interface SimpleStoryScreenProps {
 
 export function SimpleStoryScreen({
   onStorySelect,
-  selectedStory,
-  onBack,
+  onBack: _onBack,
   initialMode,
   onOpenParentCorner,
 }: SimpleStoryScreenProps) {
@@ -29,9 +29,10 @@ export function SimpleStoryScreen({
   }
 
   return (
-    <StorySelectionScreen
+    <StoryCatalogueScreen
       onStorySelect={onStorySelect}
-      initialMode={initialMode as any}
+      initialMode={(initialMode as CatalogueMode | null) ?? null}
+      onOpenParentCorner={onOpenParentCorner}
     />
   );
 }

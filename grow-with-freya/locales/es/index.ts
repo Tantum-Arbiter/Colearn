@@ -3169,4 +3169,21 @@ export default {
     nextPage: 'Página siguiente',
     previousPage: 'Página anterior',
   },
+  childUi: {
+    nav: {
+      home: 'Inicio',
+      library: 'Biblioteca',
+      progress: 'Progreso',
+      parents: 'Padres',
+    },
+  },
+
+  catalogue: {
+    moreStories: 'Más cuentos',
+    read: 'Leer',
+    sound: 'Sonido',
+    viewToggle: 'Cambiar vista',
+    noResults: 'No se encontraron cuentos con estos filtros',
+    clearFilters: 'Borrar filtros',
+  },
 };

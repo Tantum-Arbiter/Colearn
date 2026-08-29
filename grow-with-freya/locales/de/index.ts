@@ -3169,4 +3169,21 @@ export default {
     nextPage: 'Nächste Seite',
     previousPage: 'Vorherige Seite',
   },
+  childUi: {
+    nav: {
+      home: 'Start',
+      library: 'Bibliothek',
+      progress: 'Fortschritt',
+      parents: 'Eltern',
+    },
+  },
+
+  catalogue: {
+    moreStories: 'Mehr Geschichten',
+    read: 'Lesen',
+    sound: 'Ton',
+    viewToggle: 'Ansicht wechseln',
+    noResults: 'Keine Geschichten mit diesen Filtern gefunden',
+    clearFilters: 'Filter zurücksetzen',
+  },
 };

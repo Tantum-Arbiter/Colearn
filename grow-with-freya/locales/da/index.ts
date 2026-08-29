@@ -3169,4 +3169,21 @@ export default {
     nextPage: 'Næste side',
     previousPage: 'Forrige side',
   },
+  childUi: {
+    nav: {
+      home: 'Hjem',
+      library: 'Bibliotek',
+      progress: 'Fremskridt',
+      parents: 'Forældre',
+    },
+  },
+
+  catalogue: {
+    moreStories: 'Flere historier',
+    read: 'Læs',
+    sound: 'Lyd',
+    viewToggle: 'Skift visning',
+    noResults: 'Ingen historier fundet med disse filtre',
+    clearFilters: 'Ryd filtre',
+  },
 };

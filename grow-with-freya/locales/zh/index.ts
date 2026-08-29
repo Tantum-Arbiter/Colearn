@@ -3169,4 +3169,21 @@ export default {
     nextPage: '下一页',
     previousPage: '上一页',
   },
+  childUi: {
+    nav: {
+      home: '首页',
+      library: '书库',
+      progress: '进度',
+      parents: '家长',
+    },
+  },
+
+  catalogue: {
+    moreStories: '更多故事',
+    read: '阅读',
+    sound: '声音',
+    viewToggle: '切换视图',
+    noResults: '没有找到符合筛选条件的故事',
+    clearFilters: '清除筛选',
+  },
 };

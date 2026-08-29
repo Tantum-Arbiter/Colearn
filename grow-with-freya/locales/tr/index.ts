@@ -3169,4 +3169,21 @@ export default {
     nextPage: 'Sonraki sayfa',
     previousPage: 'Önceki sayfa',
   },
+  childUi: {
+    nav: {
+      home: 'Ana Sayfa',
+      library: 'Kitaplık',
+      progress: 'İlerleme',
+      parents: 'Ebeveynler',
+    },
+  },
+
+  catalogue: {
+    moreStories: 'Daha Fazla Hikâye',
+    read: 'Oku',
+    sound: 'Ses',
+    viewToggle: 'Görünümü değiştir',
+    noResults: 'Bu filtrelerle hikâye bulunamadı',
+    clearFilters: 'Filtreleri temizle',
+  },
 };

@@ -3169,4 +3169,21 @@ export default {
     nextPage: 'Pagina sequens',
     previousPage: 'Pagina prior',
   },
+  childUi: {
+    nav: {
+      home: 'Domus',
+      library: 'Bibliotheca',
+      progress: 'Progressus',
+      parents: 'Parentes',
+    },
+  },
+
+  catalogue: {
+    moreStories: 'Plures fabulae',
+    read: 'Lege',
+    sound: 'Sonus',
+    viewToggle: 'Muta conspectum',
+    noResults: 'Nullae fabulae his filtris inventae',
+    clearFilters: 'Filtra purga',
+  },
 };

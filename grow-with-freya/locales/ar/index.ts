@@ -3169,4 +3169,21 @@ export default {
     nextPage: 'الصفحة التالية',
     previousPage: 'الصفحة السابقة',
   },
+  childUi: {
+    nav: {
+      home: 'الرئيسية',
+      library: 'المكتبة',
+      progress: 'التقدم',
+      parents: 'الوالدان',
+    },
+  },
+
+  catalogue: {
+    moreStories: 'المزيد من القصص',
+    read: 'اقرأ',
+    sound: 'الصوت',
+    viewToggle: 'تغيير العرض',
+    noResults: 'لم يتم العثور على قصص بهذه المرشحات',
+    clearFilters: 'مسح المرشحات',
+  },
 };

@@ -2,8 +2,8 @@
  * Tests for the Story Garden feature flag.
  *
  * SimpleStoryScreen is the single mount point for the catalogue, so it is the
- * one place that decides between the legacy grid and the Story Garden. The flag
- * must default off so the shipped experience is unchanged.
+ * one place that decides between the story catalogue and the Story Garden. The
+ * flag must default off so the shipped experience is unchanged.
  */
 
 import React from 'react';
@@ -18,11 +18,11 @@ jest.mock('@/store/app-store', () => ({
   },
 }));
 
-jest.mock('@/components/stories/story-selection-screen', () => {
+jest.mock('@/components/stories/catalogue/story-catalogue-screen', () => {
   const { View } = jest.requireActual('react-native');
   const ReactActual = jest.requireActual('react');
   return {
-    StorySelectionScreen: () => ReactActual.createElement(View, { testID: 'legacy-catalogue' }),
+    StoryCatalogueScreen: () => ReactActual.createElement(View, { testID: 'story-catalogue' }),
   };
 });
 
@@ -50,10 +50,10 @@ describe('SimpleStoryScreen', () => {
       mockUseStoryGarden = false;
     });
 
-    it('should keep showing the legacy catalogue', () => {
+    it('should keep showing the story catalogue', () => {
       const view = renderScreen();
 
-      expect(byTestId(view, 'legacy-catalogue').length).toBeGreaterThan(0);
+      expect(byTestId(view, 'story-catalogue').length).toBeGreaterThan(0);
     });
 
     it('should not mount the Story Garden', () => {
@@ -74,10 +74,10 @@ describe('SimpleStoryScreen', () => {
       expect(byTestId(view, 'story-garden').length).toBeGreaterThan(0);
     });
 
-    it('should not mount the legacy catalogue at the same time', () => {
+    it('should not mount the story catalogue at the same time', () => {
       const view = renderScreen();
 
-      expect(byTestId(view, 'legacy-catalogue')).toHaveLength(0);
+      expect(byTestId(view, 'story-catalogue')).toHaveLength(0);
     });
   });
 });

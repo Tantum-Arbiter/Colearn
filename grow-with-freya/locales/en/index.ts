@@ -2797,4 +2797,21 @@ export default {
       helper: 'This helps us suggest suitable stories and activities.',
     },
   },
+  childUi: {
+    nav: {
+      home: 'Home',
+      library: 'Library',
+      progress: 'Progress',
+      parents: 'Parents',
+    },
+  },
+
+  catalogue: {
+    moreStories: 'More Stories',
+    read: 'Read',
+    sound: 'Sound',
+    viewToggle: 'Change view',
+    noResults: 'No stories found with these filters',
+    clearFilters: 'Clear filters',
+  },
 };

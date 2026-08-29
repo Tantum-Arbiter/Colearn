@@ -3169,4 +3169,21 @@ export default {
     nextPage: 'Volgende pagina',
     previousPage: 'Vorige pagina',
   },
+  childUi: {
+    nav: {
+      home: 'Home',
+      library: 'Bibliotheek',
+      progress: 'Voortgang',
+      parents: 'Ouders',
+    },
+  },
+
+  catalogue: {
+    moreStories: 'Meer verhalen',
+    read: 'Lezen',
+    sound: 'Geluid',
+    viewToggle: 'Weergave wijzigen',
+    noResults: 'Geen verhalen gevonden met deze filters',
+    clearFilters: 'Filters wissen',
+  },
 };
