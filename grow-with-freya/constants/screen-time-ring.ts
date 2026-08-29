@@ -19,6 +19,14 @@ export const SCREEN_TIME_RING = {
   arcOpacity: 0.55,
   exceededColour: '#E4483F',
   exceededHalo: 'rgba(228,72,63,0.30)',
+  /** The guard mark on the spent circle: a lighter red, because the mark
+   *  sits on the solid fill rather than on the night behind it. At the
+   *  arc's own opacity it sank into the red and read as a smudge. */
+  exceededGuard: '#F5A6A0',
+  /** How much of the ring the guard mark takes up. Sized off the ring so
+   *  the two cannot drift apart, and kept clear of the track: a mark that
+   *  touches the arc reads as part of it. */
+  guardScale: 0.6,
   /** How far the halo reaches past the dial. Shared, because the glance's
    *  orb has to wear the same one: the close hands the corner back the
    *  instant the orb has reformed, so anything the ring has and the orb does
@@ -364,6 +372,11 @@ export const DROP_PATH =
 export const DROP_GLOSS =
   'M 30 92 C 27 110 38 122 50 125 C 36 128 22 114 25 94 Z';
 export const DROP_VIEWBOX = '0 0 100 140';
+
+/** The guard mark's side, for a ring of the given size. */
+export function screenTimeGuardSize(ringSize: number): number {
+  return Math.round(ringSize * SCREEN_TIME_RING.guardScale);
+}
 
 export function screenTimeProgress(usageSeconds: number, limitSeconds: number): number {
   if (limitSeconds <= 0 || usageSeconds <= 0) {

@@ -14,9 +14,11 @@ import { useTranslation } from 'react-i18next';
 import Svg, { Circle } from 'react-native-svg';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { ScreenTimeDial } from './screen-time-dial';
+import { ScreenTimeGuard } from './screen-time-guard';
 import {
   SCREEN_TIME_RING,
   isScreenTimeExceeded,
+  screenTimeGuardSize,
   screenTimeProgress,
 } from '@/constants/screen-time-ring';
 
@@ -159,6 +161,15 @@ export const ScreenTimeRing = memo(function ScreenTimeRing({
           <ScreenTimeDial cx={centre} cy={centre} tint={tint} progress={progress} testID={testID} />
         )}
       </Svg>
+
+      <View style={styles.guard} pointerEvents="none">
+        <ScreenTimeGuard
+          testID="screen-time-guard"
+          size={screenTimeGuardSize(size)}
+          colour={exceeded ? SCREEN_TIME_RING.exceededGuard : tint}
+          opacity={exceeded ? 1 : SCREEN_TIME_RING.arcOpacity}
+        />
+      </View>
     </Animated.View>
   );
 
@@ -192,5 +203,10 @@ const styles = StyleSheet.create({
   },
   halo: {
     position: 'absolute',
+  },
+  guard: {
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
