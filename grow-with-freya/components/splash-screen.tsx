@@ -14,11 +14,12 @@ import * as Font from 'expo-font';
 
 import { useAppStore } from '@/store/app-store';
 import { DeviceInfoService } from '@/services/device-info-service';
+import { SKY_GRADIENT_QUIET } from '@/constants/night-palette';
 
 const { width, height } = Dimensions.get('window');
 
 // Night-sky gradient per the Phase 7 design set
-const GRADIENT_COLORS: [string, string, string] = ['#050515', '#0A0F2C', '#1a1a3e'];
+const GRADIENT_COLORS = SKY_GRADIENT_QUIET;
 
 // Star configuration (matching main menu)
 const STAR_COUNT = 15;

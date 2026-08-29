@@ -66,12 +66,12 @@ This is the same grammar already argued for the home screen in
 
 Deep royal/navy illustrated sky with a **gentle vertical tonal change**, never one flat fill.
 
-| Role | Value |
+| Role | Token |
 |---|---|
-| Darkest navy (bottom) | `#071D54` |
-| Primary deep blue (mid) | `#092E8E` |
-| Brighter environmental blue (top) | `#1552B7` |
-| Accents | occasional indigo/violet |
+| Darkest navy (bottom) | `NIGHT_DEEP` |
+| Primary deep blue (mid) | `NIGHT_PRIMARY` |
+| Brighter environmental blue (top) | `NIGHT_BRIGHT` |
+| The gradient as a whole | `SKY_GRADIENT_WORLD` |
 
 Stars are scattered sparingly: mostly tiny white points, some warm gold, with the occasional
 four-point glowing star as an accent. The background must never become busy enough to compete
@@ -129,15 +129,39 @@ viewport. Vertical compactness is a requirement, not a preference.
 Centralise before writing any component. Hex values and arbitrary radii must not be scattered
 through the implementation — that is precisely how the current screen drifted (see §14).
 
-**File:** `constants/child-ui-theme.ts`
+**Colour file:** `constants/night-palette.ts` — **shipped**, and app-wide.
+**Geometry / type tokens:** land with the components that consume them (phase B onward);
+no token file is created ahead of its first consumer.
 
-### Colour
+### Colour — one ramp for the whole app
+
+The palette is a single ordered ramp, darkest to brightest. Nothing in the app may introduce a
+blue outside it.
+
+| Token | Value | Role |
+|---|---|---|
+| `NIGHT_VOID` | `#04102F` | darkest — overhead sky on quiet screens, modal floor |
+| `NIGHT_DEEP` | `#071D54` | solid backgrounds, masks, the colour artwork fades into |
+| `NIGHT_PRIMARY` | `#092E8E` | the dominant brand blue |
+| `NIGHT_BRIGHT` | `#1552B7` | atmospheric glow, brightest stop |
+
+A screen picks a **window** on the ramp and a **direction**. Direction follows the screen's
+light source — that is the whole rule:
+
+| Gradient | Stops (top → bottom) | Light source | Used by |
+|---|---|---|---|
+| `SKY_GRADIENT_WORLD` | bright → primary → deep | overhead (the planet) | story catalogue |
+| `SKY_GRADIENT_QUIET` | void → deep → primary | the horizon below | splash, auth, auth-checking, onboarding, home scene (night), main menu, privacy, terms, emotions |
+| `SKY_GRADIENT_OVERLAY` | primary → deep → void | none; it recedes | subscription overlay |
+| `SCRIM_TO_DEEP` | transparent → `NIGHT_DEEP` | — | artwork-to-surface fades |
+
+`SCRIM_TO_DEEP` fades to exactly `NIGHT_DEEP`, so a cover image meets the surface beneath it
+without a seam. That invariant is pinned by test.
+
+### Surfaces, borders, text, accents
 
 | Token | Value | Usage |
 |---|---|---|
-| `BACKGROUND_DEEP` | `#071D54` | gradient stop — bottom |
-| `BACKGROUND_PRIMARY` | `#092E8E` | gradient stop — mid, dominant screen colour |
-| `BACKGROUND_BRIGHT` | `#1552B7` | gradient stop — top, atmospheric glow |
 | `SURFACE_PRIMARY` | `rgba(80, 120, 200, 0.32)` | circular controls |
 | `SURFACE_SECONDARY` | `rgba(63, 105, 184, 0.55)` | filter pills |
 | `SURFACE_NAV` | `rgba(14, 43, 113, 0.82)` | bottom navigation container |
@@ -145,19 +169,53 @@ through the implementation — that is precisely how the current screen drifted 
 | `BORDER_ACTIVE` | `rgba(214, 230, 255, 0.62)` | selected / pressed surface edge |
 | `TEXT_PRIMARY` | `#FFFFFF` | titles, labels, active nav |
 | `TEXT_SECONDARY` | `rgba(255, 255, 255, 0.72)` | inactive nav labels |
+| `TEXT_MUTED` / `TEXT_FAINT` | `rgba(255,255,255,0.7)` / `0.5` | body copy, hints |
 | `ACCENT_GOLD` | `#E8B84B` | section stars, selected nav icon + label |
 | `ACCENT_PURPLE` | `#6D5DF5` | play / Read buttons, selected nav panel |
-| `ACCENT_BLUE` | `#1552B7` | selected nav panel gradient partner |
+| `ACCENT_BLUE` | `NIGHT_BRIGHT` | selected nav panel gradient partner |
 | `ACCENT_GREEN` | `#6FCF7F` | Calming filter icon |
 
-`ACCENT_GOLD` and `ACCENT_PURPLE` intentionally reuse the values already exported from
-`components/onboarding/onboarding-theme.ts`, so the catalogue does not introduce a second
-brand gold or a second brand purple.
+Surface opacity is ordered — navigation is the most opaque, circular controls the least — so
+the nav reads as a shelf and the controls as floating. `BORDER_ACTIVE` is brighter than
+`BORDER_DEFAULT`. Both orderings are pinned by test.
+
+`ACCENT_GOLD` and `ACCENT_PURPLE` keep the values previously held in
+`components/onboarding/onboarding-theme.ts`, so no second brand gold or purple exists.
 
 **Deliberate deviation from the brief:** the brief specifies `rgba(190,215,255,0.38)` for
 circular-control borders and `rgba(180,210,255,0.40)` for pill borders. Those differ by under
 2% and would violate the brief's own rule against unrelated blue shades per component. Both
 collapse into `BORDER_DEFAULT`.
+
+### What the palette replaced
+
+The app carried **seven** sky gradients that had drifted from near-black navy to blue-teal.
+All seven now resolve to the ramp above, each keeping its original direction:
+
+| Surface | Was | Now |
+|---|---|---|
+| Story catalogue | `['#4ECDC4','#3B82F6','#1E3A8A']` | `SKY_GRADIENT_WORLD` |
+| Main menu, privacy, terms, emotions menu, theme selection | `VISUAL_EFFECTS.GRADIENT_COLORS` `['#1E3A8A','#3B82F6','#4ECDC4']` | `SKY_GRADIENT_QUIET` |
+| Splash | `['#050515','#0A0F2C','#1a1a3e']` | `SKY_GRADIENT_QUIET` |
+| Auth | `AUTH_GRADIENT` `['#080A28','#0A0F2C','#161B4A']` | `SKY_GRADIENT_QUIET` |
+| Auth checking | `['#1a1a2e','#16213e','#0f3460']` | `SKY_GRADIENT_QUIET` |
+| Onboarding | `NIGHT_GRADIENT` `['#050515','#0A0F2C','#141A47']` | `SKY_GRADIENT_QUIET` |
+| Home scene (night) | `#0B1533 / #121B46 / #1B2A5E` | `SKY_GRADIENT_QUIET` |
+| Subscription overlay | `['#1a1a3e','#0d0d2b','#050515']` | `SKY_GRADIENT_OVERLAY` |
+
+`NIGHT_BASE`, `NIGHT_GRADIENT`, `GOLD`, `PURPLE`, `AUTH_GRADIENT` and
+`VISUAL_EFFECTS.GRADIENT_COLORS` survive as aliases onto the ramp, so no consumer churned.
+
+**One value is necessarily duplicated.** The native splash colour lives in `app.config.js`,
+which Node evaluates before TypeScript exists, so it cannot import the ramp. It is set to
+`#071D54` (`NIGHT_DEEP`) by hand — the closest flat match to what the JS splash renders over
+it. Changing the ramp means changing that line too, and it only takes effect on a rebuild.
+(`app.json` also carries a splash colour, but `app.config.js` takes precedence and does not
+read it — `app.json` is dead config.)
+
+**The most visible consequence:** every night surface moves from near-black navy to royal
+blue. Home, splash, onboarding and auth are noticeably lighter and bluer than before. That is
+the point of the overhaul, and it is one export away from being retuned.
 
 ### Radius
 
@@ -248,8 +306,7 @@ Music, Learning, Feelings and Puzzles without modification.
 
 ### 6.1 `CelestialBackground`
 
-Full-bleed vertical gradient `BACKGROUND_BRIGHT → BACKGROUND_PRIMARY → BACKGROUND_DEEP`, with a
-deterministic scattered star field above it.
+Full-bleed vertical `SKY_GRADIENT_WORLD`, with a deterministic scattered star field above it.
 
 | Prop | Type | Default |
 |---|---|---|
@@ -384,6 +441,29 @@ generation prompt, not a problem to solve with scrims later.
 
 ### 6.11 `ChildBottomNavigation` / `NavigationItem`
 
+**Scope: the navigation is not a global app tab bar.** It does not exist on splash, auth,
+onboarding, or the home screen. It appears the moment the child enters an activity journey —
+Stories today, then Music, Learning, Feelings and Puzzles — and stays for **every sub-page of
+that journey from that point on**: catalogue, filtered views, story detail, and any screen
+reached from them.
+
+This is a deliberate reading of what the navigation is for. On the home screen the child is
+choosing a world, and a tab bar would compete with that choice. Once inside a world, the child
+needs a way back out and a way across — that is exactly when the shelf appears.
+
+| Rule | Behaviour |
+|---|---|
+| Mounted by | the journey shell, not the app root |
+| Enters | when the journey is entered |
+| Persists | across every sub-page of that journey |
+| Leaves | when the journey is exited via Home |
+| Reader | hidden — the story reader is full-bleed and rotates |
+
+Consequence: this does **not** require migrating the view-switching in `app/_layout.tsx` to
+router tabs. A journey shell owns the surface and the selected item, so the nav is a
+self-contained component with a `selected` prop and an `onSelect` callback. This is what
+unblocks it from `../PHASE-7-UI-OVERHAUL.md` open decision 1.
+
 Persistent floating surface. Items: Home, Library, Progress, Parents — four equal areas.
 
 | Property | Value |
@@ -400,7 +480,10 @@ panel: linear blue gradient (`ACCENT_BLUE → ACCENT_PURPLE` at low opacity), `R
 with the icon and label in `ACCENT_GOLD`. Unselected icons and labels use `TEXT_SECONDARY`.
 Current location must be legible to a pre-reader at a glance.
 
-The navigation never overlaps catalogue content — the scroll container reserves its height plus
+Home is the way out of the journey, not a tab within it — selecting it exits the journey and
+the navigation leaves with it.
+
+The navigation never overlaps journey content — the scroll container reserves its height plus
 `SPACE_4`.
 
 ---
@@ -549,8 +632,8 @@ All references are to `mvp` at the time of writing.
 | 2 | **Cards are landscape, not portrait** | `components/stories/story-selection-screen.tsx:179-180` — `CARD_WIDTH = 176`, `CARD_HEIGHT = 132` (ratio 1.33, spec wants 0.68); `:188` grid cards are `width * 0.75` |
 | 3 | **No featured story card exists** | no featured/hero concept anywhere in `components/stories/story-selection-screen.tsx` (1684 lines) |
 | 4 | **Conventional header instead of floating controls** | `components/stories/story-selection-screen.tsx:1166` renders shared `PageHeader`; `components/ui/page-header.tsx` is an app-bar-shaped component |
-| 5 | **No bottom navigation** | no tab bar component in the repo; `app/` contains only `_layout.tsx` and `index.tsx`. Already logged as the biggest work item in `../PHASE-7-UI-OVERHAUL.md` open decision 1 |
-| 6 | **No design tokens** | `constants/theme.ts` exports only Expo-template `Colors` plus `Fonts`; the catalogue screen carries seven hardcoded hex values and radii of 16/18/20 |
+| 5 | **No journey navigation** | no navigation shelf component in the repo; `app/` contains only `_layout.tsx` and `index.tsx`. No longer blocked — see §6.11 scoping |
+| 6 | ~~**No design tokens**~~ — **closed** | `constants/night-palette.ts` now holds the ramp; the seven drifted sky gradients resolve to it (§4). Geometry tokens still to land with phases B–D; the catalogue's radii of 16/18/20 are untouched |
 | 7 | **No planet artwork layer** | assets exist (`assets/images/ui-elements/home-earth-night.webp`) but the catalogue screen does not render one |
 | 8 | **Screen is monolithic** | `story-selection-screen.tsx` is 1684 lines and `catalog-story-card.tsx` 624; the component split in §5 is a decomposition, not a greenfield build |
 
@@ -562,16 +645,16 @@ Each phase is independently shippable and independently testable.
 
 | Phase | Contents | Depends on |
 |---|---|---|
-| **A — Tokens** | `constants/child-ui-theme.ts`, `constants/child-ui-motion.ts`; migrate the catalogue screen's hardcoded values onto them. No visual change intended | — |
+| **A — Palette** ✅ **done** | `constants/night-palette.ts`; seven sky gradients migrated onto one ramp across the whole app. 23 tests pin the invariants. Deliberately *not* visually neutral — every night surface moves to royal blue | — |
 | **B — Environment** | `CelestialBackground`, `PlanetHeaderArtwork`, `CircleActionButton`, `PageTitle`; retire `PageHeader` from this screen | A |
 | **C — Cards** | `StoryCoverCard` (portrait, title-on-cover), `StoryPlayButton`, `FeaturedStoryCard`, the `CatalogueStory` mapper | A |
 | **D — Filters** | `StoryFilterBar` / `StoryFilterPill` on the new pill spec, single-line guarantee | A |
-| **E — Navigation** | `ChildBottomNavigation`; **blocked** on PHASE-7 open decision 1 | PHASE-7 §1 |
+| **E — Navigation** | `ChildBottomNavigation` + the journey shell that mounts it (§6.11). **Unblocked** — journey-scoped, so no `app/_layout.tsx` migration | — |
 | **F — Motion** | §8 microinteractions and the §9 opening transition, extending the existing transition context | B, C |
-| **G — Cleanup** | delete styles and components orphaned by B–F; fold the night palette consolidation into PHASE-7d | B–F |
+| **G — Cleanup** | delete styles and components orphaned by B–F; retire the remaining `VISUAL_EFFECTS` colour aliases now that they point at the ramp | B–F |
 
-Phases A–D and F deliver the screen. Phase E is the only externally blocked item, and the
-screen ships with the existing navigation until it unblocks.
+Phases B–D and F deliver the screen; A has shipped. Nothing is externally blocked any more —
+the two decisions that gated this work (palette, navigation scope) were taken on 2026-08-29.
 
 ---
 
@@ -593,23 +676,29 @@ Per [`AGENTS.md`](AGENTS.md) §2 the failing test comes first. For this work tha
 
 ---
 
-## 17. Open decisions
+## 17. Decisions
 
-These block parts of the build and need sign-off.
+### Resolved 2026-08-29
 
-1. **Two night palettes.** Onboarding, login and splash use a near-black navy
-   (`NIGHT_BASE = '#0A0F2C'` in `components/onboarding/onboarding-theme.ts`). This design uses
-   royal blue (`#092E8E`). Both are defensible; having both in one app is not. Decide whether
-   the catalogue pulls the whole app toward royal blue, or the catalogue darkens toward the
-   existing navy. **This decision precedes phase A**, because the tokens encode the answer.
-2. **Typography** — unresolved from PHASE-7 open decision 3. Bundled brand face
-   (Fredoka/Nunito, matching the website) versus `Fonts.primary` (SF Pro Rounded). Affects
-   every size in §4.
-3. **Bottom navigation** — PHASE-7 open decision 1. Adopting the four-tab bar means migrating
-   the view-switching in `app/_layout.tsx`. Phase E is blocked until this lands.
+1. **One night palette — royal blue wins.** The app had drifted into seven sky gradients. All
+   of them now resolve to the single ramp in §4, and the near-black navy is gone. Home, splash,
+   onboarding and auth are visibly lighter and bluer as a result. Shipped as phase A.
+2. **The navigation is journey-scoped, not global.** It appears on entering an activity journey
+   and persists across that journey's sub-pages; it does not exist on home, splash, auth or
+   onboarding. See §6.11. This supersedes `../PHASE-7-UI-OVERHAUL.md` open decision 1 and
+   removes the `app/_layout.tsx` migration from the critical path.
+
+### Still open
+
+3. **Typography** — PHASE-7 open decision 3. Bundled brand face (Fredoka/Nunito, matching the
+   website) versus `Fonts.primary` (SF Pro Rounded). Affects every size in §4. Not blocking:
+   phases B–D can ship on `Fonts.primary` and re-point at one token later.
 4. **Featured story selection.** What makes a story "featured"? Editorial flag on the catalogue
    entry, most-recently-added, or resume-in-progress. Affects the backend catalogue schema, so
    decide before phase C freezes the mapper.
 5. **Cover artwork backlog.** §6.10 requires reserved negative space in every cover. Existing
    covers were not commissioned to that rule; decide whether to re-generate the catalogue or
    accept a legibility scrim on legacy covers.
+6. **Which journeys get the navigation first.** §6.11 defines the rule; Stories is the only
+   journey being built now. Music, Learning, Feelings and Puzzles adopt the same shell, but the
+   order is a product call.

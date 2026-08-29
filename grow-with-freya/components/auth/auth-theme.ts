@@ -2,13 +2,14 @@ import { useMemo } from 'react';
 import { Dimensions, useWindowDimensions } from 'react-native';
 
 import { TABLET_CONTENT_MAX_WIDTH } from '@/hooks/use-accessibility';
+import { SKY_GRADIENT_QUIET } from '@/constants/night-palette';
 
 const { width, height } = Dimensions.get('window');
 
 export const IS_TABLET = width >= 768;
 
 /** Night sky behind every auth screen. */
-export const AUTH_GRADIENT: [string, string, string] = ['#080A28', '#0A0F2C', '#161B4A'];
+export const AUTH_GRADIENT = SKY_GRADIENT_QUIET;
 
 export const CREAM = '#F6E7C8';
 export const INK = '#1B2050';

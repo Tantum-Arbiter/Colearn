@@ -13,6 +13,7 @@ import { PrivacyPolicyContent } from '@/components/account/privacy-policy-screen
 import { TermsConditionsContent } from '@/components/account/terms-conditions-screen';
 import { useAppStore } from '@/store/app-store';
 import { mapPlanIdToPackage, purchasePackage, getOfferings, getOfferingPrices, type PlanPricing } from '@/services/subscription-service';
+import { SKY_GRADIENT_OVERLAY } from '@/constants/night-palette';
 
 type PlanId = 'monthly_basic' | 'monthly_premium' | 'yearly';
 interface Plan { id: PlanId; name: string; price: string; period: string; details: string[]; badge?: string; originalPrice?: string; }
@@ -146,7 +147,7 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
         </Pressable>
       </Animated.View>
       <Animated.View style={[st.modalWrap, modalStyle]}>
-        <LinearGradient colors={['#1a1a3e', '#0d0d2b', '#050515']}
+        <LinearGradient colors={SKY_GRADIENT_OVERLAY}
           style={[st.content, { paddingBottom: insets.bottom + 16, paddingTop: insets.top + 20 }]}>
           {/* Background art */}
           <Image
@@ -243,7 +244,7 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
         {/* Legal page slide-in */}
         {legalPage && (
           <Animated.View style={[st.legalPanel, legalStyle]}>
-            <LinearGradient colors={['#1a1a3e', '#0d0d2b', '#050515']}
+            <LinearGradient colors={SKY_GRADIENT_OVERLAY}
               style={[st.legalPanelInner, { paddingTop: insets.top + 10, paddingBottom: insets.bottom + 16 }]}>
               <Pressable style={[st.closeBtn, { top: insets.top + 10 }]} onPress={closeLegal} hitSlop={16}>
                 <Ionicons name="close" size={20} color="#FFFFFF" />

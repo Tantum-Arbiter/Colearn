@@ -17,13 +17,14 @@
 
 ## Open decisions (blocking surface 4, parts of 2)
 
-1. **Bottom tab bar** (Home / Library / Progress / Parent): adopting it means migrating
-   `app/_layout.tsx` view-switching (~900 lines) to expo-router tabs or an in-app tab bar.
-   Progress + Parent tabs imply surfacing existing screen-time / parents-only features as
-   top-level destinations. Biggest single work item in the overhaul.
+1. ~~**Bottom tab bar**~~ — **resolved 2026-08-29: journey-scoped, not global.** The bar
+   appears on entering an activity journey (Stories first) and persists across that journey's
+   sub-pages; it does not exist on home, splash, auth or onboarding. A journey shell owns it,
+   so the `app/_layout.tsx` view-switching migration is **off the critical path**. Spec:
+   [`grow-with-freya/OVERHAUL-UI.md`](grow-with-freya/OVERHAUL-UI.md) §6.11.
 2. **Resume card** ("Continue together — Page 4 of 10"): requires persisting per-story
    last-page in `app-store` and wiring the reader to update it. Small data-model addition.
-3. **Typography**: designs use a serif display face for headings ("Early Roots", "Grown-ups,
+3. **Typography** (still open): designs use a serif display face for headings ("Early Roots", "Grown-ups,
    let's get started"); the website uses Fredoka/Nunito. Decide: ship a bundled font
    (brand-consistent with website) or keep `Fonts.primary` (SF Pro Rounded). Affects every
    surface — decide before surface 2/4 work.
@@ -43,8 +44,10 @@
 - **7e**: story catalogue rebuild — see [`grow-with-freya/OVERHAUL-UI.md`](grow-with-freya/OVERHAUL-UI.md)
   for tokens, components, phases A–G and acceptance criteria. Phase E (bottom nav) is blocked
   on decision 1; everything else is independent of 7c.
-- **7d**: cleanup pass — delete dead styles/components orphaned by 7a–7c, consolidate the
-  night-sky palette into `constants/theme.ts`.
+- **7d**: cleanup pass — delete dead styles/components orphaned by 7a–7c. The night-palette
+  half is **done**: seven drifted sky gradients now resolve to one ramp in
+  `grow-with-freya/constants/night-palette.ts` (not `constants/theme.ts`, which stays the
+  Expo-template file). Every night surface moved from near-black navy to royal blue.
 
 ## What 7b actually changed
 

@@ -16,6 +16,7 @@ import {
 import { MIN_NICKNAME_LENGTH, MAX_NICKNAME_LENGTH } from '@/constants/profile';
 import { SUPPORTED_LANGUAGES, setStoredLanguage, type SupportedLanguage } from '@/services/i18n';
 import { GOLD, PURPLE, CARD_BG, CARD_BORDER, TEXT_MUTED, TEXT_FAINT, NIGHT_BASE } from './onboarding-theme';
+import { SCRIM_TO_DEEP } from '@/constants/night-palette';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 // The width every hero and grid below is sized from. It is capped, so a
@@ -138,7 +139,7 @@ export function WorldsMascot() {
         resizeMode="contain"
       />
       <LinearGradient
-        colors={['rgba(20, 26, 71, 0)', 'rgba(20, 26, 71, 0.6)', '#141A47']}
+        colors={SCRIM_TO_DEEP}
         locations={[0, 0.55, 1]}
         style={styles.mascotFade}
         pointerEvents="none"

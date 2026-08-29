@@ -38,6 +38,7 @@ import { StoryDownloadService } from '@/services/story-download-service';
 import { StoryAccessService } from '@/services/story-access-service';
 import type { SupportedLanguage } from '@/services/i18n';
 import Svg, { Rect, Path } from 'react-native-svg';
+import { SKY_GRADIENT_WORLD } from '@/constants/night-palette';
 
 /** 3-card carousel icon -center card raised */
 const CarouselIcon = memo(function CarouselIcon({ size = 18, color = '#FFFFFF' }: { size?: number; color?: string }) {
@@ -1133,7 +1134,7 @@ export function StorySelectionScreen({ onStorySelect, initialMode }: StorySelect
   // CENTERED CAROUSELS WITH STARRY BACKGROUND
   return (
     <LinearGradient
-      colors={['#4ECDC4', '#3B82F6', '#1E3A8A']}
+      colors={SKY_GRADIENT_WORLD}
       style={{ flex: 1 }}
     >
       {/* Bear top background image */}

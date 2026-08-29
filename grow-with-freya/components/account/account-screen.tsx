@@ -37,6 +37,7 @@ const log = Logger.create('Account');
 import { useTutorial } from '../../contexts/tutorial-context';
 import { SUPPORTED_LANGUAGES, setStoredLanguage, type SupportedLanguage } from '../../services/i18n';
 import * as Notifications from 'expo-notifications';
+import { NIGHT_DEEP } from '@/constants/night-palette';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -607,7 +608,7 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
         <PageHeader
           title={getSlideTitle(currentView)}
           onBack={handleBack}
-          headerBackgroundColor="#0A0F2C"
+          headerBackgroundColor={NIGHT_DEEP}
           useHomeIcon={currentView === 'main'}
           useBackArrow={currentView !== 'main'}
         />
@@ -1023,7 +1024,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: '#0A0F2C',
+    backgroundColor: NIGHT_DEEP,
     zIndex: 10,
   },
   content: {

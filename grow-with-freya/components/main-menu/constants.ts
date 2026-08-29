@@ -1,4 +1,5 @@
 import { Dimensions } from 'react-native';
+import { SKY_GRADIENT_QUIET } from '@/constants/night-palette';
 
 // Dynamic screen dimensions that update with orientation changes
 export const getScreenDimensions = () => {
@@ -85,7 +86,7 @@ export const VISUAL_EFFECTS = {
   SHIMMER_BASE_OPACITY: 0.3,
   SHIMMER_MULTIPLIER: 0.7,
   GLOW_COLOR: '#FFFF00',
-  GRADIENT_COLORS: ['#1E3A8A', '#3B82F6', '#4ECDC4'],
+  GRADIENT_COLORS: SKY_GRADIENT_QUIET,
   STAR_COUNT: 25,
   get STAR_SIZE() { return getResponsiveLayoutSize(4); },
   get STAR_BORDER_RADIUS() { return getResponsiveLayoutSize(2); },

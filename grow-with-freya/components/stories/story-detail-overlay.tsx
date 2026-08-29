@@ -13,6 +13,7 @@ import type { ReadingMode } from '@/contexts/story-transition-context';
 import { StoryDownloadService } from '@/services/story-download-service';
 import { Fonts } from '@/constants/theme';
 import { useAccessibility } from '@/hooks/use-accessibility';
+import { NIGHT_DEEP, SCRIM_TO_DEEP } from '@/constants/night-palette';
 
 const MAX_SUPPORT_TAGS = 3;
 
@@ -122,7 +123,7 @@ export function StoryDetailOverlay({
           />
         )}
         <LinearGradient
-          colors={['rgba(10, 15, 44, 0)', 'rgba(10, 15, 44, 0.55)', '#0A0F2C']}
+          colors={SCRIM_TO_DEEP}
           locations={[0, 0.72, 1]}
           style={styles.heroGradient}
           pointerEvents="none"
@@ -302,7 +303,7 @@ export function StoryDetailOverlay({
 const styles = StyleSheet.create({
   container: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#0A0F2C',
+    backgroundColor: NIGHT_DEEP,
   },
   heroContainer: {
     position: 'absolute',
