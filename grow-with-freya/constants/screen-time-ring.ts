@@ -1,5 +1,5 @@
 export const SCREEN_TIME_RING = {
-  size: 30,
+  size: 36,
   strokeWidth: 3,
   marginHorizontal: 18,
   marginBottom: 14,
@@ -26,7 +26,7 @@ export const SCREEN_TIME_RING = {
   /** How much of the ring the guard mark takes up. Sized off the ring so
    *  the two cannot drift apart, and kept clear of the track: a mark that
    *  touches the arc reads as part of it. */
-  guardScale: 0.6,
+  guardScale: 0.64,
   /** How far the halo reaches past the dial. Shared, because the glance's
    *  orb has to wear the same one: the close hands the corner back the
    *  instant the orb has reformed, so anything the ring has and the orb does
