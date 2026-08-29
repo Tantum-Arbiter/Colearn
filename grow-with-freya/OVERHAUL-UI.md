@@ -614,14 +614,14 @@ All references are to `mvp` at the time of writing.
 
 | # | Gap | Evidence |
 |---|---|---|
-| 1 | **Titles sit below thumbnails**, the explicit §12 prohibition | `components/stories/story-selection-screen.tsx:329,380` render `styles.cardTitleContainer` as a sibling *after* the card; `:1492-1500` sets `paddingTop: 6` and a 12 pt title |
-| 2 | **Cards are landscape, not portrait** | `components/stories/story-selection-screen.tsx:179-180` — `CARD_WIDTH = 176`, `CARD_HEIGHT = 132` (ratio 1.33, spec wants 0.68); `:188` grid cards are `width * 0.75` |
-| 3 | **No featured story card exists** | no featured/hero concept anywhere in `components/stories/story-selection-screen.tsx` (1684 lines) |
-| 4 | **Conventional header instead of floating controls** | `components/stories/story-selection-screen.tsx:1166` renders shared `PageHeader`; `components/ui/page-header.tsx` is an app-bar-shaped component |
-| 5 | **No journey navigation** | no navigation shelf component in the repo; `app/` contains only `_layout.tsx` and `index.tsx`. No longer blocked — see §6.11 scoping |
-| 6 | ~~**No design tokens**~~ — **closed** | `constants/night-palette.ts` now holds the ramp; the seven drifted sky gradients resolve to it (§4). Geometry tokens still to land with phases B–D; the catalogue's radii of 16/18/20 are untouched |
-| 7 | **No planet artwork layer** | assets exist (`assets/images/ui-elements/home-earth-night.webp`) but the catalogue screen does not render one |
-| 8 | **Screen is monolithic** | `story-selection-screen.tsx` is 1684 lines and `catalog-story-card.tsx` 624; the component split in §5 is a decomposition, not a greenfield build |
+| 1 | ~~**Titles sit below thumbnails**~~ — **closed** | `components/stories/catalogue/story-cover-card.tsx` renders the title on the artwork, above the play button in tree order; pinned by test |
+| 2 | ~~**Cards are landscape, not portrait**~~ — **closed** | `COVER_ASPECT_RATIO = 0.68` in `components/child-ui/tokens.ts`, consumed by `StoryCoverCard` |
+| 3 | ~~**No featured story card exists**~~ — **closed** | `components/stories/catalogue/featured-story-card.tsx`, 1.8:1, whole card tappable plus the Read button |
+| 4 | ~~**Conventional header instead of floating controls**~~ — **closed** | `StoryCatalogueScreen` renders `CircleActionButton` back/audio and `PageTitle`; `PageHeader` is no longer mounted on this screen |
+| 5 | ~~**No journey navigation**~~ — **closed** | `components/child-ui/child-bottom-navigation.tsx` + `journey-shell.tsx`; mounted by the catalogue with Library selected, Home exits the journey |
+| 6 | ~~**No design tokens**~~ — **closed** | `constants/night-palette.ts` (ramp), `components/child-ui/tokens.ts` (geometry/type), `constants/child-ui-motion.ts` (motion) |
+| 7 | ~~**No planet artwork layer**~~ — **closed** | `components/child-ui/planet-header-artwork.tsx` renders `home-earth-night.webp` cropped above the viewport, `pointerEvents="none"` |
+| 8 | ~~**Screen is monolithic**~~ — **largely closed** | `story-catalogue-screen.tsx` composes the §5 components; the download orchestration was extracted into `use-catalogue-download.ts`. The superseded `story-selection-screen.tsx` / `catalog-story-card.tsx` still exist pending the phase G deletion sign-off |
 
 ---
 
@@ -632,15 +632,17 @@ Each phase is independently shippable and independently testable.
 | Phase | Contents | Depends on |
 |---|---|---|
 | **A — Palette** ✅ **done** | `constants/night-palette.ts`; the story catalogue and both instrument screens moved onto one ramp. 16 tests pin the invariants. Scoped to the activity journeys — no other surface changed | — |
-| **B — Environment** | `CelestialBackground`, `PlanetHeaderArtwork`, `CircleActionButton`, `PageTitle`; retire `PageHeader` from this screen | A |
-| **C — Cards** | `StoryCoverCard` (portrait, title-on-cover), `StoryPlayButton`, `FeaturedStoryCard`, the `CatalogueStory` mapper | A |
-| **D — Filters** | `StoryFilterBar` / `StoryFilterPill` on the new pill spec, single-line guarantee | A |
-| **E — Navigation** | `ChildBottomNavigation` + the journey shell that mounts it (§6.11). **Unblocked** — journey-scoped, so no `app/_layout.tsx` migration | — |
-| **F — Motion** | §8 microinteractions and the §9 opening transition, extending the existing transition context | B, C |
-| **G — Cleanup** | delete styles and components orphaned by B–F; retire the remaining `VISUAL_EFFECTS` colour aliases now that they point at the ramp | B–F |
+| **B — Environment** ✅ **done** | `CelestialBackground`, `PlanetHeaderArtwork`, `CircleActionButton`, `PageTitle` under `components/child-ui/`; `PageHeader` retired from this screen. Geometry/type tokens landed in `components/child-ui/tokens.ts` | A |
+| **C — Cards** ✅ **done** | `StoryCoverCard` (portrait, title-on-cover), `StoryPlayButton`, `FeaturedStoryCard`, the `CatalogueStory` mapper in `catalogue-story.ts`; download/locked/share-to-unlock behaviour extracted from `catalog-story-card.tsx` into `use-catalogue-download.ts` | A |
+| **D — Filters** ✅ **done** | `StoryFilterBar` / `StoryFilterPill` on the new pill spec; pills page horizontally in groups of three, never wrap | A |
+| **E — Navigation** ✅ **done** | `ChildBottomNavigation` + `NavigationItem` + `JourneyShell` (§6.11), mounted by `StoryCatalogueScreen` with Library selected; Home exits the journey, Progress/Parents open the parent corner until dedicated surfaces exist | — |
+| **F — Motion** ✅ **done** | `constants/child-ui-motion.ts`; card tap / filter select / read press / nav slide microinteractions, all through `useReducedMotion()`. The §9 opening choreography continues to run through the existing `story-transition-context` — the new screen feeds it the same measured card frames | B, C |
+| **G — Cleanup** ⏳ **pending sign-off** | `story-selection-screen.tsx` and `catalog-story-card.tsx` are superseded but still referenced (`STORY_MODES` lives in the old screen; `components/stories/index.ts` re-exports it). Deleting files needs operator approval per `AGENTS.md`; move `STORY_MODES` out first. `VISUAL_EFFECTS` aliases also still to retire | B–F |
 
-Phases B–D and F deliver the screen; A has shipped. Nothing is externally blocked any more —
-the two decisions that gated this work (palette, navigation scope) were taken on 2026-08-29.
+Phases B–F shipped 2026-08-29 with `StoryCatalogueScreen`
+(`components/stories/catalogue/story-catalogue-screen.tsx`), mounted from
+`simple-story-screen.tsx` in place of `StorySelectionScreen`. Only the phase G deletion pass
+remains, gated on file-deletion approval.
 
 ---
 
@@ -681,8 +683,11 @@ Per [`AGENTS.md`](AGENTS.md) §2 the failing test comes first. For this work tha
    website) versus `Fonts.primary` (SF Pro Rounded). Affects every size in §4. Not blocking:
    phases B–D can ship on `Fonts.primary` and re-point at one token later.
 4. **Featured story selection.** What makes a story "featured"? Editorial flag on the catalogue
-   entry, most-recently-added, or resume-in-progress. Affects the backend catalogue schema, so
-   decide before phase C freezes the mapper.
+   entry, most-recently-added, or resume-in-progress. Affects the backend catalogue schema.
+   **Interim strategy shipped with phase C** in `selectFeatured()`
+   (`components/stories/catalogue/catalogue-story.ts`): the first downloaded bedtime story,
+   falling back to the first downloaded story. The mapper is the only place to change when the
+   product decision lands.
 5. **Cover artwork backlog.** §6.10 requires reserved negative space in every cover. Existing
    covers were not commissioned to that rule; decide whether to re-generate the catalogue or
    accept a legibility scrim on legacy covers.

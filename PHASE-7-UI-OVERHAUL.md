@@ -41,9 +41,12 @@
   profile page wired to the existing `setUserProfile` / `setChildAge` store actions.
 - **7c**: home overhaul — decision 1 first, then resume card (decision 2), worlds carousel
   restyle, bottom tabs.
-- **7e**: story catalogue rebuild — see [`grow-with-freya/OVERHAUL-UI.md`](grow-with-freya/OVERHAUL-UI.md)
-  for tokens, components, phases A–G and acceptance criteria. Phase E (bottom nav) is blocked
-  on decision 1; everything else is independent of 7c.
+- **7e — DONE (A–F)**: story catalogue rebuilt as `StoryCatalogueScreen` on the
+  [`grow-with-freya/OVERHAUL-UI.md`](grow-with-freya/OVERHAUL-UI.md) spec: child-ui environment
+  components, portrait title-on-cover cards, featured card, pill filter bar, journey-scoped
+  bottom navigation (decision 1 resolved journey-scoped, so no `app/_layout.tsx` migration).
+  Only the OVERHAUL-UI phase G deletion pass (old `story-selection-screen.tsx` /
+  `catalog-story-card.tsx`) remains, gated on file-deletion sign-off.
 - **7d**: cleanup pass — delete dead styles/components orphaned by 7a–7c, consolidate the
   night-sky palette. **Still open**: the app carries several sky gradients. A royal-blue ramp
   now exists in `grow-with-freya/constants/night-palette.ts` but is deliberately scoped to the
