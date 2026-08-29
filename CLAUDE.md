@@ -66,6 +66,7 @@ colearn/
 | Schedule callout / reminders window | [`grow-with-freya/SCHEDULE-WINDOW.md`](grow-with-freya/SCHEDULE-WINDOW.md) |
 | Screen time alert UI / real-world tips | [`grow-with-freya/SCREEN-TIME-ALERT-PLAN.md`](grow-with-freya/SCREEN-TIME-ALERT-PLAN.md) |
 | Story content requirements | [`grow-with-freya/story-requirements.md`](grow-with-freya/story-requirements.md) |
+| Child-facing UI / story catalogue design | [`grow-with-freya/OVERHAUL-UI.md`](grow-with-freya/OVERHAUL-UI.md) |
 | Animation / motion work | [`grow-with-freya/ANIMATION-PLAN.md`](grow-with-freya/ANIMATION-PLAN.md) |
 | Backend API / endpoints | [`gateway-service/README.md`](gateway-service/README.md) + [`gateway-service/AGENTS.md`](gateway-service/AGENTS.md) |
 | E2E / functional tests | [`func-tests/AGENTS.md`](func-tests/AGENTS.md) |

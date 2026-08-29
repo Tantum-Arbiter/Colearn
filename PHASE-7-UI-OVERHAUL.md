@@ -13,7 +13,7 @@
 | 2 | Onboarding (5 pages: Four worlds / Made for two / Calm by design / Ready anywhere / Who is exploring today?) | Full-screen paged flow ending in child profile (avatar, nickname, age range, language) | `components/onboarding/onboarding-flow.tsx` + `onboarding-screen.tsx` (flow exists); child age exists (`store/app-store.ts` `childAgeInMonths`); **no avatar/nickname profile** | **Restyle + partial build** — page content/copy rework is restyle; avatar+nickname profile is new data (store fields + persistence) |
 | 3 | Login | "Grown-ups, let's get started", white pill Apple/Google buttons, outline Guest button, "Includes two free stories. Cloud sync is unavailable in guest mode.", shield footer "No adverts. No behavioural tracking." | `components/auth/login-screen.tsx` — same three actions, night-sky background, different copy/button styling | **Restyle** (done in this phase) |
 | 4 | Home | "What shall we do together?", continue-together resume card, worlds carousel (Music & Rhymes / Storybooks / Puzzles), bottom tab bar Home / Library / Progress / Parent | `components/main-menu/` — moon + carousel of world cards exists (`menu-carousel.tsx`); **no bottom tab bar** (custom view switching in `app/_layout.tsx`, not expo-router tabs); **no per-story resume position** in store (only `lastReadDate` streak) | **Structural** — needs decisions below |
-| 5 | Story selection | (design image duplicates Screen 4 — no distinct reference provided) | Genre carousels + new detail/rotate-prompt flow (Phase 6c work, 2026-08) | **Already aligned** — re-audit when a distinct design lands |
+| 5 | Story selection | Distinct design landed 2026-08: cropped planet, floating circular controls, filter pills, full-width featured card, portrait covers with titles **on** the artwork, four-tab bottom nav | Genre carousels + detail/rotate-prompt flow (Phase 6c); landscape cards with titles **below** them, shared `PageHeader`, no featured card, no tokens | **Restyle + structural** — full build spec in [`grow-with-freya/OVERHAUL-UI.md`](grow-with-freya/OVERHAUL-UI.md) |
 
 ## Open decisions (blocking surface 4, parts of 2)
 
@@ -40,6 +40,9 @@
   profile page wired to the existing `setUserProfile` / `setChildAge` store actions.
 - **7c**: home overhaul — decision 1 first, then resume card (decision 2), worlds carousel
   restyle, bottom tabs.
+- **7e**: story catalogue rebuild — see [`grow-with-freya/OVERHAUL-UI.md`](grow-with-freya/OVERHAUL-UI.md)
+  for tokens, components, phases A–G and acceptance criteria. Phase E (bottom nav) is blocked
+  on decision 1; everything else is independent of 7c.
 - **7d**: cleanup pass — delete dead styles/components orphaned by 7a–7c, consolidate the
   night-sky palette into `constants/theme.ts`.
 
