@@ -14,6 +14,13 @@ const BADGE_SIZE = 82;
 const HALO_SIZE = 104;
 const GLOW_SIZE = 132;
 
+// the same planet the dashboard's greeting carries: the alert replaces that
+// greeting, so without it here the art disappeared from the screen the moment
+// the limit was spent. Smaller than the dashboard's, because the panel is
+// narrower than the screen and at full size it swallowed the badge
+const EARTH_WIDTH = 150;
+const EARTH_HEIGHT = Math.round(EARTH_WIDTH * (465 / 560));
+
 export interface ScreenTimeAlertHeaderProps {
   /** Seconds used today -- the figure the alert is about. */
   usageSeconds: number;
@@ -62,6 +69,19 @@ export const ScreenTimeAlertHeader = memo(function ScreenTimeAlertHeader({
       ]}
       testID={testID}
     >
+      <View
+        testID="screen-time-alert-earth-layer"
+        style={styles.earthWrap}
+        pointerEvents="none"
+      >
+        <Image
+          testID="screen-time-alert-earth"
+          source={require('@/assets/images/screen-time/dashboard-earth.webp')}
+          style={styles.earthImage}
+          resizeMode="contain"
+        />
+      </View>
+
       <View style={styles.badgeBlock}>
         {/* two concentric halos rather than a shadow: a shadow this wide
             renders as a grey smear on Android, a ring does not */}
@@ -104,6 +124,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 18,
     paddingBottom: 16,
+  },
+  // the leading corner rather than the trailing one: the panel's close control
+  // owns the top right, and art may not sit under a control. Cut by the panel
+  // edge the way the dashboard's is cut by the screen edge
+  earthWrap: {
+    position: 'absolute',
+    left: -46,
+    top: -14,
+    width: EARTH_WIDTH,
+    height: EARTH_HEIGHT,
+  },
+  earthImage: {
+    width: '100%',
+    height: '100%',
   },
   badgeBlock: {
     width: GLOW_SIZE,
