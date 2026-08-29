@@ -99,6 +99,7 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, onOpenParentC
   const [selectedTags, setSelectedTags] = useState<Set<StoryFilterTag>>(new Set());
   const [storyMode, setStoryMode] = useState<CatalogueMode | null>(initialMode ?? null);
   const [shareUnlockedIds, setShareUnlockedIds] = useState<Set<string>>(new Set());
+  const [navSection, setNavSection] = useState<'home' | 'library'>('home');
   const [showSubscription, setShowSubscription] = useState(false);
   const [previewStory, setPreviewStory] = useState<Story | null>(null);
   const [isPreviewVisible, setIsPreviewVisible] = useState(false);
@@ -182,14 +183,16 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, onOpenParentC
         shareToUnlock: !!entry.isShareToUnlock && !shareUnlockedIds.has(entry.storyId),
       }));
 
-    const all = [...downloaded, ...remote];
+    const all = navSection === 'library'
+      ? downloaded
+      : [...downloaded, ...remote];
     if (selectedTags.size === 0) return all;
     return all.filter((story) => Array.from(selectedTags).some((tag) => story.theme.includes(tag)));
-  }, [stories, catalogEntries, userAvatarType, storyMode, effectiveTier, shareUnlockedIds, selectedTags]);
+  }, [stories, catalogEntries, userAvatarType, storyMode, effectiveTier, shareUnlockedIds, selectedTags, navSection]);
 
   const featured = useMemo(
-    () => (storyViewMode === 'grid' ? null : selectFeatured(catalogueStories)),
-    [catalogueStories, storyViewMode],
+    () => (storyViewMode === 'grid' || navSection === 'library' ? null : selectFeatured(catalogueStories)),
+    [catalogueStories, storyViewMode, navSection],
   );
 
   const moreStories = useMemo(
@@ -224,13 +227,19 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, onOpenParentC
 
   const handleNavSelect = useCallback((id: ChildNavItemId) => {
     if (id === 'home') {
-      handleExitJourney();
+      setNavSection('home');
+      setStoryMode(null);
+      setSelectedTags(new Set());
       return;
     }
-    if (id === 'progress' || id === 'parents') {
+    if (id === 'library') {
+      setNavSection('library');
+      return;
+    }
+    if (id === 'progress') {
       onOpenParentCorner?.();
     }
-  }, [handleExitJourney, onOpenParentCorner]);
+  }, [onOpenParentCorner]);
 
   const openDownloadedStory = useCallback((story: Story, position: { x: number; y: number; width: number; height: number }) => {
     startTransition(story.id, position, story);
@@ -432,7 +441,10 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, onOpenParentC
   const moreSection = (
     <>
       <View style={styles.sectionHeadingSpacing}>
-        <SectionHeading label={t('catalogue.moreStories')} testID="more-section-heading" />
+        <SectionHeading
+          label={t(navSection === 'library' ? 'childUi.nav.library' : 'catalogue.moreStories')}
+          testID="more-section-heading"
+        />
       </View>
       <View style={styles.coverGrid} testID="story-cover-grid">
         {moreStories.map(renderCoverCard)}
@@ -441,7 +453,7 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, onOpenParentC
   );
 
   return (
-    <JourneyShell selected="library" onSelect={handleNavSelect} navigationHidden={interactionLocked}>
+    <JourneyShell selected={navSection} onSelect={handleNavSelect} navigationHidden={interactionLocked}>
       <CelestialBackground>
         <PlanetHeaderArtwork />
 
@@ -488,20 +500,21 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, onOpenParentC
               onToggleTag={handleToggleTag}
               gridActive={storyViewMode === 'grid'}
               onToggleView={handleToggleView}
-              pageWidth={contentWidth - 46 - SPACE_3}
             />
           </View>
 
-          {catalogueStories.length === 0 && selectedTags.size > 0 ? (
+          {catalogueStories.length === 0 ? (
             <View style={styles.noResultsContainer}>
               <Text style={[styles.noResultsText, { fontSize: scaledFontSize(16) }]}>
                 {t('catalogue.noResults')}
               </Text>
-              <Pressable style={styles.clearFilterButton} onPress={handleClearFilters}>
-                <Text style={[styles.clearFilterText, { fontSize: scaledFontSize(15) }]}>
-                  {t('catalogue.clearFilters')}
-                </Text>
-              </Pressable>
+              {selectedTags.size > 0 && (
+                <Pressable style={styles.clearFilterButton} onPress={handleClearFilters}>
+                  <Text style={[styles.clearFilterText, { fontSize: scaledFontSize(15) }]}>
+                    {t('catalogue.clearFilters')}
+                  </Text>
+                </Pressable>
+              )}
             </View>
           ) : isLandscapeTablet && featured ? (
             <View style={styles.landscapeColumns}>

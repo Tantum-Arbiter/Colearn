@@ -3174,7 +3174,6 @@ export default {
       home: 'Accueil',
       library: 'Bibliothèque',
       progress: 'Progrès',
-      parents: 'Parents',
     },
   },
 

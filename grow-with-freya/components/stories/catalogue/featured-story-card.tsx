@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: TITLE_INSET,
     left: TITLE_INSET,
-    maxWidth: '60%',
+    right: '38%',
     color: TEXT_PRIMARY,
     fontFamily: Fonts.primary,
     fontWeight: TYPE_ROLES.featuredTitle.weight,

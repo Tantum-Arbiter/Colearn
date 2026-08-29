@@ -3174,7 +3174,6 @@ export default {
       home: 'Hjem',
       library: 'Bibliotek',
       progress: 'Fremskridt',
-      parents: 'Forældre',
     },
   },
 

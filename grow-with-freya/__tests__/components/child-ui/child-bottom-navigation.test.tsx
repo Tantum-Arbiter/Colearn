@@ -18,8 +18,8 @@ function items(tree: ReturnType<typeof render>) {
 describe('ChildBottomNavigation', () => {
   beforeEach(() => jest.clearAllMocks());
 
-  it('renders the four journey areas in order', () => {
-    expect(CHILD_NAV_ITEMS.map((item) => item.id)).toEqual(['home', 'library', 'progress', 'parents']);
+  it('renders the three journey areas in order', () => {
+    expect(CHILD_NAV_ITEMS.map((item) => item.id)).toEqual(['home', 'library', 'progress']);
 
     const tree = render(<ChildBottomNavigation selected="library" onSelect={jest.fn()} />);
 

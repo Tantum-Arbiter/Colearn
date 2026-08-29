@@ -3174,7 +3174,6 @@ export default {
       home: 'Domus',
       library: 'Bibliotheca',
       progress: 'Progressus',
-      parents: 'Parentes',
     },
   },
 

@@ -1,7 +1,7 @@
 /**
- * The filter row is always a single line (§6.5): pills page horizontally
- * rather than wrapping, selection is reported per tag, and the trailing
- * toggle switches the catalogue view.
+ * The filter row is always a single line (§6.5): content-sized pills scroll
+ * horizontally rather than wrapping or shrinking their labels, selection is
+ * reported per tag, and the trailing toggle switches the catalogue view.
  */
 
 import React from 'react';
@@ -15,7 +15,6 @@ const baseProps = {
   onToggleTag: jest.fn(),
   gridActive: false,
   onToggleView: jest.fn(),
-  pageWidth: 320,
 };
 
 function byTestId(tree: ReturnType<typeof render>, testID: string) {
@@ -26,15 +25,26 @@ describe('StoryFilterBar', () => {
   beforeEach(() => jest.clearAllMocks());
 
   it.each([
-    [['calming', 'bedtime', 'adventure'] as StoryFilterTag[], 1],
-    [['calming', 'bedtime', 'adventure', 'learning', 'music'] as StoryFilterTag[], 2],
-  ])('pages %j into a single horizontal row', (tags, expectedPages) => {
+    [['calming', 'bedtime', 'adventure'] as StoryFilterTag[]],
+    [['calming', 'bedtime', 'adventure', 'learning', 'music'] as StoryFilterTag[]],
+  ])('renders %j as one horizontal row that scrolls instead of wrapping', (tags) => {
     const tree = render(<StoryFilterBar {...baseProps} tags={tags} />);
 
     const list = tree.UNSAFE_root.findAllByType(FlatList as any)[0];
     expect(list.props.horizontal).toBe(true);
-    expect(list.props.pagingEnabled).toBe(true);
-    expect(list.props.data).toHaveLength(expectedPages);
+    expect(list.props.data).toHaveLength(tags.length);
+  });
+
+  it('never shrinks a pill label to fit', () => {
+    const tree = render(<StoryFilterBar {...baseProps} tags={['learning'] as StoryFilterTag[]} />);
+
+    const labels = tree.UNSAFE_root.findAll(
+      (n: any) => n.props.children === 'stories.filterTags.learning' && n.props.style
+    );
+    expect(labels.length).toBeGreaterThan(0);
+    labels.forEach((label: any) => {
+      expect(label.props.adjustsFontSizeToFit).toBeUndefined();
+    });
   });
 
   it('reports pill taps through onToggleTag', () => {

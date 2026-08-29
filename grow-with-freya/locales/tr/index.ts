@@ -3174,7 +3174,6 @@ export default {
       home: 'Ana Sayfa',
       library: 'Kitaplık',
       progress: 'İlerleme',
-      parents: 'Ebeveynler',
     },
   },
 

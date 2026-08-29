@@ -3174,7 +3174,6 @@ export default {
       home: 'ホーム',
       library: 'ライブラリ',
       progress: 'せいちょう',
-      parents: '保護者',
     },
   },
 

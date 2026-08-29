@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect } from 'react';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { Pressable, StyleProp, StyleSheet, Text, ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming, Easing } from 'react-native-reanimated';
@@ -56,9 +56,10 @@ interface StoryFilterPillProps {
   tag: StoryFilterTag;
   selected: boolean;
   onToggle: (tag: StoryFilterTag) => void;
+  style?: StyleProp<ViewStyle>;
 }
 
-export function StoryFilterPill({ tag, selected, onToggle }: StoryFilterPillProps) {
+export function StoryFilterPill({ tag, selected, onToggle, style }: StoryFilterPillProps) {
   const { t } = useTranslation();
   const { isTablet, scaledFontSize } = useAccessibility();
   const reduceMotion = useReducedMotion();
@@ -91,6 +92,7 @@ export function StoryFilterPill({ tag, selected, onToggle }: StoryFilterPillProp
       style={[
         styles.pill,
         selected && styles.pillSelected,
+        style,
       ]}
     >
       <Animated.View style={iconStyle}>
@@ -110,6 +112,7 @@ const styles = StyleSheet.create({
   pill: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: SPACE_2,
     height: FILTER_PILL_HEIGHT,
     paddingHorizontal: FILTER_PILL_PADDING_H,
@@ -126,5 +129,6 @@ const styles = StyleSheet.create({
     color: TEXT_PRIMARY,
     fontFamily: Fonts.primary,
     fontWeight: TYPE_ROLES.filterLabel.weight,
+    flexShrink: 1,
   },
 });

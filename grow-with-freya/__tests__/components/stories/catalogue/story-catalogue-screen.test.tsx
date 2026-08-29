@@ -166,26 +166,60 @@ describe('StoryCatalogueScreen', () => {
     });
   });
 
-  it('marks Library as the selected journey area', async () => {
+  it('marks Home as the selected journey area on entry', async () => {
     const tree = render(<StoryCatalogueScreen />);
 
     await waitFor(() => {
-      const library = byTestId(tree, 'navigation-item-library')
+      const home = byTestId(tree, 'navigation-item-home')
         .find((n: any) => n.props.accessibilityRole === 'tab');
-      expect(library.props.accessibilityState.selected).toBe(true);
+      expect(home.props.accessibilityState.selected).toBe(true);
     });
   });
 
-  it('exits the journey from the Home navigation item', async () => {
-    const tree = render(<StoryCatalogueScreen />);
+  it('returns to the full catalogue home from the Home item instead of leaving the journey', async () => {
+    const tree = render(<StoryCatalogueScreen initialMode="interactive" />);
 
-    await waitFor(() => expect(byTestId(tree, 'navigation-item-home').length).toBeGreaterThan(0));
+    await waitFor(() => {
+      expect(tree.UNSAFE_root.findAll((n: any) => n.props.children === 'catalogue.noResults').length)
+        .toBeGreaterThan(0);
+    });
 
     fireEvent.press(
       byTestId(tree, 'navigation-item-home').find((n: any) => n.props.accessibilityRole === 'tab')
     );
 
-    expect(mockAppState.requestReturnToMainMenu).toHaveBeenCalledTimes(1);
+    await waitFor(() => {
+      expect(byTestId(tree, 'featured-story-card').length).toBeGreaterThan(0);
+      expect(byTestId(tree, 'page-title')[0].props.children).toBe('stories.title');
+    });
+    expect(mockAppState.requestReturnToMainMenu).not.toHaveBeenCalled();
+  });
+
+  it('shows only on-device stories in the Library section', async () => {
+    mockGetCatalog.mockResolvedValue([
+      {
+        storyId: 'remote-1',
+        title: 'Kind Moments',
+        category: 'friendship',
+        isFree: true,
+        isReferralReward: false,
+        isPremium: false,
+        thumbnailUrl: 'https://cdn/kind.jpg',
+      },
+    ]);
+    const tree = render(<StoryCatalogueScreen />);
+
+    await waitFor(() => expect(byTestId(tree, 'story-cover-card-remote-1').length).toBeGreaterThan(0));
+
+    fireEvent.press(
+      byTestId(tree, 'navigation-item-library').find((n: any) => n.props.accessibilityRole === 'tab')
+    );
+
+    await waitFor(() => {
+      expect(byTestId(tree, 'story-cover-card-remote-1')).toHaveLength(0);
+      expect(byTestId(tree, 'featured-story-card')).toHaveLength(0);
+      expect(byTestId(tree, 'story-cover-card-wombat').length).toBeGreaterThan(0);
+    });
   });
 
   it('exits the journey from the floating back control', async () => {
@@ -198,25 +232,39 @@ describe('StoryCatalogueScreen', () => {
     expect(mockAppState.requestReturnToMainMenu).toHaveBeenCalledTimes(1);
   });
 
-  it('routes the Parents navigation item to the parent corner', async () => {
+  it('routes the Progress navigation item to the parent corner', async () => {
     const onOpenParentCorner = jest.fn();
     const tree = render(<StoryCatalogueScreen onOpenParentCorner={onOpenParentCorner} />);
 
-    await waitFor(() => expect(byTestId(tree, 'navigation-item-parents').length).toBeGreaterThan(0));
+    await waitFor(() => expect(byTestId(tree, 'navigation-item-progress').length).toBeGreaterThan(0));
 
     fireEvent.press(
-      byTestId(tree, 'navigation-item-parents').find((n: any) => n.props.accessibilityRole === 'tab')
+      byTestId(tree, 'navigation-item-progress').find((n: any) => n.props.accessibilityRole === 'tab')
     );
 
     expect(onOpenParentCorner).toHaveBeenCalledTimes(1);
   });
 
+  it('shows the empty state without a clear-filters button when a mode matches nothing', async () => {
+    const tree = render(<StoryCatalogueScreen initialMode="interactive" />);
+
+    await waitFor(() => {
+      const message = tree.UNSAFE_root.findAll((n: any) => n.props.children === 'catalogue.noResults');
+      expect(message.length).toBeGreaterThan(0);
+
+      const clearButton = tree.UNSAFE_root.findAll((n: any) => n.props.children === 'catalogue.clearFilters');
+      expect(clearButton).toHaveLength(0);
+
+      expect(byTestId(tree, 'more-section-heading')).toHaveLength(0);
+    });
+  });
+
   it('shows the localised empty state when filters match nothing', async () => {
     const tree = render(<StoryCatalogueScreen />);
 
-    await waitFor(() => expect(byTestId(tree, 'story-filter-pill-fantasy').length).toBeGreaterThan(0));
+    await waitFor(() => expect(byTestId(tree, 'story-filter-pill-music').length).toBeGreaterThan(0));
 
-    fireEvent.press(byTestId(tree, 'story-filter-pill-fantasy')[0]);
+    fireEvent.press(byTestId(tree, 'story-filter-pill-music')[0]);
 
     await waitFor(() => {
       const texts = tree.UNSAFE_root.findAll((n: any) => n.props.children === 'catalogue.noResults');

@@ -2802,7 +2802,6 @@ export default {
       home: 'Home',
       library: 'Library',
       progress: 'Progress',
-      parents: 'Parents',
     },
   },
 

@@ -25,7 +25,7 @@ import {
   contentMargin,
 } from './tokens';
 
-export type ChildNavItemId = 'home' | 'library' | 'progress' | 'parents';
+export type ChildNavItemId = 'home' | 'library' | 'progress';
 
 interface ChildNavItem {
   id: ChildNavItemId;
@@ -38,7 +38,6 @@ export const CHILD_NAV_ITEMS: readonly ChildNavItem[] = [
   { id: 'home', icon: 'home-outline', selectedIcon: 'home', labelKey: 'childUi.nav.home' },
   { id: 'library', icon: 'book-outline', selectedIcon: 'book', labelKey: 'childUi.nav.library' },
   { id: 'progress', icon: 'trending-up-outline', selectedIcon: 'trending-up', labelKey: 'childUi.nav.progress' },
-  { id: 'parents', icon: 'person-outline', selectedIcon: 'person', labelKey: 'childUi.nav.parents' },
 ] as const;
 
 const PANEL_INSET = 6;

@@ -3174,7 +3174,6 @@ export default {
       home: '首页',
       library: '书库',
       progress: '进度',
-      parents: '家长',
     },
   },
 

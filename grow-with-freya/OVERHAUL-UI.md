@@ -357,8 +357,10 @@ Icons are colourful; labels stay white. Selected pills brighten slightly and tak
 `BORDER_ACTIVE` — they do not change hue. Reference set: Calming (leaf, `ACCENT_GREEN`),
 Bedtime (moon, `ACCENT_GOLD`), Adventure (rocket, `ACCENT_PURPLE`).
 
-If the tag set grows beyond three, the row **paginates horizontally**; it never wraps to a
-second line and never shrinks below the 44 dp touch minimum.
+If the tag set grows beyond three, the row **scrolls horizontally**; it never wraps to a
+second line and never shrinks below the 44 dp touch minimum. Pills are content-sized — a
+label is never squeezed or auto-shrunk to fit a fixed pill width (operator decision
+2026-08-29, replacing the earlier fixed pages-of-three reading of "paginates").
 
 ### 6.6 `SectionHeading`
 
@@ -450,7 +452,9 @@ router tabs. A journey shell owns the surface and the selected item, so the nav 
 self-contained component with a `selected` prop and an `onSelect` callback. This is what
 unblocks it from `../PHASE-7-UI-OVERHAUL.md` open decision 1.
 
-Persistent floating surface. Items: Home, Library, Progress, Parents — four equal areas.
+Persistent floating surface. Items: Home, Library, Progress — three equal areas. The
+reference screenshot showed a fourth Parents item; the operator removed it on 2026-08-29
+(parent surfaces are reached via Progress, and the parent corner keeps its own entry points).
 
 | Property | Value |
 |---|---|
@@ -466,8 +470,11 @@ panel: linear blue gradient (`ACCENT_BLUE → ACCENT_PURPLE` at low opacity), `R
 with the icon and label in `ACCENT_GOLD`. Unselected icons and labels use `TEXT_SECONDARY`.
 Current location must be legible to a pre-reader at a glance.
 
-Home is the way out of the journey, not a tab within it — selecting it exits the journey and
-the navigation leaves with it.
+**Home is the journey's home, not the way out** (operator decision 2026-08-29, revising the
+earlier reading): selecting Home returns to the full catalogue — mode and tag filters
+cleared, featured card and all stories visible. Library shows the on-device stories only.
+The way out of the journey is the floating back control, which returns to the app's main
+menu.
 
 The navigation never overlaps journey content — the scroll container reserves its height plus
 `SPACE_4`.
