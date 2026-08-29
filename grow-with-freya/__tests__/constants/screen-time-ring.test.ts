@@ -6,6 +6,7 @@
  */
 
 import { HOME_SCENE_LAYOUT } from '@/constants/home-scene';
+import { glanceCloseTimeline } from '@/constants/screen-time-glance-timeline';
 import {
   SCREEN_TIME_RING,
   SCREEN_TIME_GLANCE,
@@ -538,6 +539,23 @@ describe('waterTurnRamp', () => {
     expect(ramp.output[0]).toBe(SCREEN_TIME_GLANCE.exceededDraw);
     expect(ramp.output[ramp.output.length - 1]).toBe(SCREEN_TIME_GLANCE.drawWater);
     expect(ramp.output).toContain(WATER_TURN_MID);
+  });
+});
+
+describe('the mark returning to the ring', () => {
+  it('should arrive over a longer beat than the ring steps aside in', () => {
+    expect(SCREEN_TIME_RING.guardFade).toBeGreaterThan(SCREEN_TIME_RING.presenceFade);
+  });
+
+  it('should wait for the splash to land before it starts', () => {
+    const timeline = glanceCloseTimeline();
+
+    expect(timeline.total).toBeGreaterThanOrEqual(timeline.splash.ends);
+  });
+
+  it('should hold off briefly, but never longer than it takes to arrive', () => {
+    expect(SCREEN_TIME_RING.guardFadeDelay).toBeGreaterThan(0);
+    expect(SCREEN_TIME_RING.guardFadeDelay).toBeLessThan(SCREEN_TIME_RING.guardFade);
   });
 });
 

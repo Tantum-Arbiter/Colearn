@@ -46,6 +46,7 @@ export const ScreenTimeRing = memo(function ScreenTimeRing({
   const reduceMotion = useReducedMotion();
   const pulse = useSharedValue(1);
   const presence = useSharedValue(hidden ? 0 : 1);
+  const guardIn = useSharedValue(hidden ? 0 : 1);
 
   useEffect(() => {
     // Showing is not animated at all -- while `hidden` is false the style
@@ -60,6 +61,29 @@ export const ScreenTimeRing = memo(function ScreenTimeRing({
       ? withTiming(0, { duration: SCREEN_TIME_RING.presenceFade })
       : 1;
   }, [hidden, presence]);
+
+  useEffect(() => {
+    if (hidden) {
+      cancelAnimation(guardIn);
+      guardIn.value = 0;
+      return;
+    }
+
+    if (reduceMotion) {
+      guardIn.value = 1;
+      return;
+    }
+
+    guardIn.value = withDelay(
+      SCREEN_TIME_RING.guardFadeDelay,
+      withTiming(1, {
+        duration: SCREEN_TIME_RING.guardFade,
+        easing: Easing.out(Easing.quad),
+      })
+    );
+  }, [hidden, reduceMotion, guardIn]);
+
+  const guardStyle = useAnimatedStyle(() => ({ opacity: guardIn.value }));
 
   const exceeded = isScreenTimeExceeded(usageSeconds, limitSeconds);
 
@@ -162,14 +186,14 @@ export const ScreenTimeRing = memo(function ScreenTimeRing({
         )}
       </Svg>
 
-      <View style={styles.guard} pointerEvents="none">
+      <Animated.View style={[styles.guard, guardStyle]} pointerEvents="none">
         <ScreenTimeGuard
           testID="screen-time-guard"
           size={screenTimeGuardSize(size)}
           colour={exceeded ? SCREEN_TIME_RING.exceededGuard : tint}
           opacity={exceeded ? 1 : SCREEN_TIME_RING.arcOpacity}
         />
-      </View>
+      </Animated.View>
     </Animated.View>
   );
 

@@ -62,7 +62,7 @@ jest.mock('react-native-reanimated', () => {
     withRepeat: (animation: any, count: number) => ({ kind: 'repeat', animation, count }),
     cancelAnimation: () => {},
     interpolateColor: (_v: any, _r: any, colours: string[]) => colours[0],
-    Easing: { inOut: (e: any) => e, quad: () => {} },
+    Easing: { inOut: (e: any) => e, out: (e: any) => e, quad: () => {} },
   };
 });
 

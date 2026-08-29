@@ -27,6 +27,12 @@ export const SCREEN_TIME_RING = {
    *  the two cannot drift apart, and kept clear of the track: a mark that
    *  touches the arc reads as part of it. */
   guardScale: 0.64,
+  /** The mark does not come back with the ring. The ring's show is
+   *  render-driven and instant on purpose -- it has a handover to win --
+   *  but the mark inside it has no such duty, so it fades up once the
+   *  splash has landed rather than snapping on with the corner. */
+  guardFade: 420,
+  guardFadeDelay: 90,
   /** How far the halo reaches past the dial. Shared, because the glance's
    *  orb has to wear the same one: the close hands the corner back the
    *  instant the orb has reformed, so anything the ring has and the orb does
