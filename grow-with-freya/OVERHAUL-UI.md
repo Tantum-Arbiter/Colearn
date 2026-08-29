@@ -129,34 +129,33 @@ viewport. Vertical compactness is a requirement, not a preference.
 Centralise before writing any component. Hex values and arbitrary radii must not be scattered
 through the implementation — that is precisely how the current screen drifted (see §14).
 
-**Colour file:** `constants/night-palette.ts` — **shipped**, and app-wide.
+**Colour file:** `constants/night-palette.ts` — **shipped**, and scoped to the activity
+journeys only (story, instrument, puzzle). Every other surface keeps its own palette.
 **Geometry / type tokens:** land with the components that consume them (phase B onward);
 no token file is created ahead of its first consumer.
 
-### Colour — one ramp for the whole app
+### Colour — one ramp for the activity journeys
 
-The palette is a single ordered ramp, darkest to brightest. Nothing in the app may introduce a
-blue outside it.
+The journey sky is a single ordered ramp, darkest to brightest. Nothing inside a journey may
+introduce a blue outside it.
 
 | Token | Value | Role |
 |---|---|---|
-| `NIGHT_VOID` | `#04102F` | darkest — overhead sky on quiet screens, modal floor |
-| `NIGHT_DEEP` | `#071D54` | solid backgrounds, masks, the colour artwork fades into |
+| `NIGHT_VOID` | `#04102F` | darkest — reserved for surfaces beneath the sky |
+| `NIGHT_DEEP` | `#071D54` | the sky's floor; solid container background |
 | `NIGHT_PRIMARY` | `#092E8E` | the dominant brand blue |
-| `NIGHT_BRIGHT` | `#1552B7` | atmospheric glow, brightest stop |
+| `NIGHT_BRIGHT` | `#1552B7` | atmospheric glow at the top, under the planet |
 
-A screen picks a **window** on the ramp and a **direction**. Direction follows the screen's
-light source — that is the whole rule:
+| Gradient | Stops (top → bottom) | Used by |
+|---|---|---|
+| `SKY_GRADIENT_WORLD` | bright → primary → deep | story catalogue, instrument screens |
 
-| Gradient | Stops (top → bottom) | Light source | Used by |
-|---|---|---|---|
-| `SKY_GRADIENT_WORLD` | bright → primary → deep | overhead (the planet) | story catalogue |
-| `SKY_GRADIENT_QUIET` | void → deep → primary | the horizon below | splash, auth, auth-checking, onboarding, home scene (night), main menu, privacy, terms, emotions |
-| `SKY_GRADIENT_OVERLAY` | primary → deep → void | none; it recedes | subscription overlay |
-| `SCRIM_TO_DEEP` | transparent → `NIGHT_DEEP` | — | artwork-to-surface fades |
+The sky is lit from above because that is where the planet is. That is the whole rule.
 
-`SCRIM_TO_DEEP` fades to exactly `NIGHT_DEEP`, so a cover image meets the surface beneath it
-without a seam. That invariant is pinned by test.
+**Scope is deliberate and was set by the product owner on 2026-08-29.** An earlier revision of
+this document applied the ramp to every night surface in the app. That was wrong: splash,
+auth, onboarding, home, account and the subscription overlay keep the palettes they already
+had. The ramp belongs to the journeys, not to the app.
 
 ### Surfaces, borders, text, accents
 
@@ -169,7 +168,6 @@ without a seam. That invariant is pinned by test.
 | `BORDER_ACTIVE` | `rgba(214, 230, 255, 0.62)` | selected / pressed surface edge |
 | `TEXT_PRIMARY` | `#FFFFFF` | titles, labels, active nav |
 | `TEXT_SECONDARY` | `rgba(255, 255, 255, 0.72)` | inactive nav labels |
-| `TEXT_MUTED` / `TEXT_FAINT` | `rgba(255,255,255,0.7)` / `0.5` | body copy, hints |
 | `ACCENT_GOLD` | `#E8B84B` | section stars, selected nav icon + label |
 | `ACCENT_PURPLE` | `#6D5DF5` | play / Read buttons, selected nav panel |
 | `ACCENT_BLUE` | `NIGHT_BRIGHT` | selected nav panel gradient partner |
@@ -177,10 +175,12 @@ without a seam. That invariant is pinned by test.
 
 Surface opacity is ordered — navigation is the most opaque, circular controls the least — so
 the nav reads as a shelf and the controls as floating. `BORDER_ACTIVE` is brighter than
-`BORDER_DEFAULT`. Both orderings are pinned by test.
+`BORDER_DEFAULT`. Both orderings are pinned by test. These tokens are the catalogue's colour
+contract and are consumed by the phase B–D components.
 
-`ACCENT_GOLD` and `ACCENT_PURPLE` keep the values previously held in
-`components/onboarding/onboarding-theme.ts`, so no second brand gold or purple exists.
+`ACCENT_GOLD` and `ACCENT_PURPLE` deliberately match the values in
+`components/onboarding/onboarding-theme.ts`, so the journeys do not introduce a second brand
+gold or purple.
 
 **Deliberate deviation from the brief:** the brief specifies `rgba(190,215,255,0.38)` for
 circular-control borders and `rgba(180,210,255,0.40)` for pill borders. Those differ by under
@@ -189,33 +189,19 @@ collapse into `BORDER_DEFAULT`.
 
 ### What the palette replaced
 
-The app carried **seven** sky gradients that had drifted from near-black navy to blue-teal.
-All seven now resolve to the ramp above, each keeping its original direction:
+Three journey screens each carried their own copy of the same blue-teal gradient:
 
 | Surface | Was | Now |
 |---|---|---|
-| Story catalogue | `['#4ECDC4','#3B82F6','#1E3A8A']` | `SKY_GRADIENT_WORLD` |
-| Main menu, privacy, terms, emotions menu, theme selection | `VISUAL_EFFECTS.GRADIENT_COLORS` `['#1E3A8A','#3B82F6','#4ECDC4']` | `SKY_GRADIENT_QUIET` |
-| Splash | `['#050515','#0A0F2C','#1a1a3e']` | `SKY_GRADIENT_QUIET` |
-| Auth | `AUTH_GRADIENT` `['#080A28','#0A0F2C','#161B4A']` | `SKY_GRADIENT_QUIET` |
-| Auth checking | `['#1a1a2e','#16213e','#0f3460']` | `SKY_GRADIENT_QUIET` |
-| Onboarding | `NIGHT_GRADIENT` `['#050515','#0A0F2C','#141A47']` | `SKY_GRADIENT_QUIET` |
-| Home scene (night) | `#0B1533 / #121B46 / #1B2A5E` | `SKY_GRADIENT_QUIET` |
-| Subscription overlay | `['#1a1a3e','#0d0d2b','#050515']` | `SKY_GRADIENT_OVERLAY` |
+| Story catalogue (`story-selection-screen.tsx`) | `['#4ECDC4','#3B82F6','#1E3A8A']` | `SKY_GRADIENT_WORLD` |
+| Instruments — free play (`music/freeplay-screen.tsx`) | same, plus container `#1E3A8A` | `SKY_GRADIENT_WORLD` + `NIGHT_DEEP` |
+| Instruments — practise (`music/practise-screen.tsx`) | same, plus container `#1E3A8A` | `SKY_GRADIENT_WORLD` + `NIGHT_DEEP` |
 
-`NIGHT_BASE`, `NIGHT_GRADIENT`, `GOLD`, `PURPLE`, `AUTH_GRADIENT` and
-`VISUAL_EFFECTS.GRADIENT_COLORS` survive as aliases onto the ramp, so no consumer churned.
+The jigsaw/puzzle mode is a filter view inside the story catalogue, so it inherits the change.
 
-**One value is necessarily duplicated.** The native splash colour lives in `app.config.js`,
-which Node evaluates before TypeScript exists, so it cannot import the ramp. It is set to
-`#071D54` (`NIGHT_DEEP`) by hand — the closest flat match to what the JS splash renders over
-it. Changing the ramp means changing that line too, and it only takes effect on a rebuild.
-(`app.json` also carries a splash colour, but `app.config.js` takes precedence and does not
-read it — `app.json` is dead config.)
-
-**The most visible consequence:** every night surface moves from near-black navy to royal
-blue. Home, splash, onboarding and auth are noticeably lighter and bluer than before. That is
-the point of the overhaul, and it is one export away from being retuned.
+**Still on the old blue-teal gradient, deliberately out of scope:** main menu, privacy, terms,
+emotions, learning, story garden, story reader, spelling game, default page and the debug
+screens. Several are journey sub-pages and are candidates for a later pass — see §17.6.
 
 ### Radius
 
@@ -645,7 +631,7 @@ Each phase is independently shippable and independently testable.
 
 | Phase | Contents | Depends on |
 |---|---|---|
-| **A — Palette** ✅ **done** | `constants/night-palette.ts`; seven sky gradients migrated onto one ramp across the whole app. 23 tests pin the invariants. Deliberately *not* visually neutral — every night surface moves to royal blue | — |
+| **A — Palette** ✅ **done** | `constants/night-palette.ts`; the story catalogue and both instrument screens moved onto one ramp. 16 tests pin the invariants. Scoped to the activity journeys — no other surface changed | — |
 | **B — Environment** | `CelestialBackground`, `PlanetHeaderArtwork`, `CircleActionButton`, `PageTitle`; retire `PageHeader` from this screen | A |
 | **C — Cards** | `StoryCoverCard` (portrait, title-on-cover), `StoryPlayButton`, `FeaturedStoryCard`, the `CatalogueStory` mapper | A |
 | **D — Filters** | `StoryFilterBar` / `StoryFilterPill` on the new pill spec, single-line guarantee | A |
@@ -680,9 +666,10 @@ Per [`AGENTS.md`](AGENTS.md) §2 the failing test comes first. For this work tha
 
 ### Resolved 2026-08-29
 
-1. **One night palette — royal blue wins.** The app had drifted into seven sky gradients. All
-   of them now resolve to the single ramp in §4, and the near-black navy is gone. Home, splash,
-   onboarding and auth are visibly lighter and bluer as a result. Shipped as phase A.
+1. **Royal blue, scoped to the activity journeys.** The story catalogue and the instrument
+   screens move onto the single ramp in §4. Splash, auth, onboarding, home, account and the
+   subscription overlay keep the palettes they already had — the ramp is journey chrome, not an
+   app-wide theme. Shipped as phase A.
 2. **The navigation is journey-scoped, not global.** It appears on entering an activity journey
    and persists across that journey's sub-pages; it does not exist on home, splash, auth or
    onboarding. See §6.11. This supersedes `../PHASE-7-UI-OVERHAUL.md` open decision 1 and
@@ -699,6 +686,10 @@ Per [`AGENTS.md`](AGENTS.md) §2 the failing test comes first. For this work tha
 5. **Cover artwork backlog.** §6.10 requires reserved negative space in every cover. Existing
    covers were not commissioned to that rule; decide whether to re-generate the catalogue or
    accept a legibility scrim on legacy covers.
-6. **Which journeys get the navigation first.** §6.11 defines the rule; Stories is the only
+6. **Which journey sub-pages adopt the ramp.** Phase A covered the story catalogue and the two
+   instrument screens. The story reader, story garden, learning screen and spelling game are
+   arguably inside a journey and still carry the old blue-teal gradient. Decide which are
+   journey chrome and which are their own thing.
+7. **Which journeys get the navigation first.** §6.11 defines the rule; Stories is the only
    journey being built now. Music, Learning, Feelings and Puzzles adopt the same shell, but the
    order is a product call.

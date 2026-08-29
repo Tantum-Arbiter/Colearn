@@ -5,10 +5,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 import { useLoadingCircleAnimation, useTextFadeAnimation } from './loading-animations';
 import { StarBackground } from '../ui/star-background';
-import { SKY_GRADIENT_QUIET } from '@/constants/night-palette';
 
 // Same gradient as splash screen and startup loading screen
-const GRADIENT_COLORS = SKY_GRADIENT_QUIET;
+const GRADIENT_COLORS = ['#1a1a2e', '#16213e', '#0f3460'] as const;
 
 /**
  * AuthCheckingScreen - Simple full-screen loading shown while checking authentication

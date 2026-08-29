@@ -45,6 +45,7 @@ import type { MusicChallenge } from '@/types/story';
 import { useGlobalSound } from '@/contexts/global-sound-context';
 import { SubscriptionOverlay } from '@/components/ui/subscription-overlay';
 import { LearningTipsOverlay } from '@/components/tutorial';
+import { SKY_GRADIENT_WORLD, NIGHT_DEEP } from '@/constants/night-palette';
 
 // Pre-generate star positions at module level (same as story selection screen)
 const STAR_POSITIONS = generateStarPositions(VISUAL_EFFECTS.STAR_COUNT);
@@ -329,7 +330,7 @@ export function FreeplayScreen({ onBack, isActive = false }: FreeplayScreenProps
   const renderStoriesBackground = () => (
     <>
       <LinearGradient
-        colors={['#4ECDC4', '#3B82F6', '#1E3A8A']}
+        colors={SKY_GRADIENT_WORLD}
         style={StyleSheet.absoluteFill}
       />
       <View style={mainMenuStyles.moonContainer} pointerEvents="none">
@@ -491,7 +492,7 @@ export function FreeplayScreen({ onBack, isActive = false }: FreeplayScreenProps
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1E3A8A',
+    backgroundColor: NIGHT_DEEP,
   },
   musicChallengeOverlay: {
     position: 'absolute',

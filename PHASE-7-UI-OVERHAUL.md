@@ -44,10 +44,11 @@
 - **7e**: story catalogue rebuild — see [`grow-with-freya/OVERHAUL-UI.md`](grow-with-freya/OVERHAUL-UI.md)
   for tokens, components, phases A–G and acceptance criteria. Phase E (bottom nav) is blocked
   on decision 1; everything else is independent of 7c.
-- **7d**: cleanup pass — delete dead styles/components orphaned by 7a–7c. The night-palette
-  half is **done**: seven drifted sky gradients now resolve to one ramp in
-  `grow-with-freya/constants/night-palette.ts` (not `constants/theme.ts`, which stays the
-  Expo-template file). Every night surface moved from near-black navy to royal blue.
+- **7d**: cleanup pass — delete dead styles/components orphaned by 7a–7c, consolidate the
+  night-sky palette. **Still open**: the app carries several sky gradients. A royal-blue ramp
+  now exists in `grow-with-freya/constants/night-palette.ts` but is deliberately scoped to the
+  activity journeys (story catalogue + instrument screens); splash, auth, onboarding, home and
+  account keep their own palettes by product decision on 2026-08-29.
 
 ## What 7b actually changed
 
