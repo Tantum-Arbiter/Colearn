@@ -287,6 +287,78 @@ describe('UsageOverview', () => {
     });
   });
 
+  // with only today's data the chart was 29 empty columns and one bar, and
+  // nothing tied a clamped label to the bar it belonged to
+  describe('reading dates off the chart', () => {
+    const CHART = 280;
+
+    function withRange(days: 7 | 14 | 30) {
+      const tree = renderOverview();
+      layOutChart(tree, CHART);
+      fireEvent.press(findByTestId(tree, 'usage-range-pill')[0]);
+      fireEvent.press(findByTestId(tree, `usage-range-${days}`)[0]);
+      layOutChart(tree, CHART);
+
+      return tree;
+    }
+
+    function testIdsStartingWith(tree: ReturnType<typeof render>, prefix: string) {
+      return tree.UNSAFE_root.findAll(
+        (n: any) => typeof n.props.testID === 'string' && n.props.testID.startsWith(prefix)
+      );
+    }
+
+    it('names the span of dates it covers', () => {
+      const tree = withRange(30);
+
+      expect(findByTestId(tree, 'usage-trend-span')).toHaveLength(1);
+    });
+
+    it('gives every day a slot that can be seen, even an empty one', () => {
+      const tree = withRange(30);
+
+      const heights = testIdsStartingWith(tree, 'usage-trend-bar-').map(
+        (n: any) => n.props.height as number
+      );
+
+      expect(heights).toHaveLength(30);
+      heights.forEach((height: number) => expect(height).toBeGreaterThanOrEqual(2));
+    });
+
+    it.each([7, 14, 30] as const)('ticks the bar each label belongs to at %i days', (days) => {
+      const tree = withRange(days);
+
+      const ticks = testIdsStartingWith(tree, 'usage-trend-tick-');
+      const labels = testIdsStartingWith(tree, 'usage-trend-label-');
+
+      expect(ticks).toHaveLength(labels.length);
+    });
+
+    it('puts each tick on its own bar rather than on the label box', () => {
+      const tree = withRange(30);
+
+      const ticks = testIdsStartingWith(tree, 'usage-trend-tick-');
+      const bars = testIdsStartingWith(tree, 'usage-trend-bar-');
+      const barCentres = bars.map(
+        (b: any) => (b.props.x as number) + (b.props.width as number) / 2
+      );
+
+      expect(ticks.length).toBeGreaterThan(0);
+      ticks.forEach((tick: any) => {
+        const x = tick.props.x1 as number;
+        const nearest = Math.min(...barCentres.map((c: number) => Math.abs(c - x)));
+
+        expect(nearest).toBeLessThan(1);
+      });
+    });
+
+    it('closes the chart off with a baseline', () => {
+      const tree = withRange(30);
+
+      expect(findByTestId(tree, 'usage-trend-baseline')).toHaveLength(1);
+    });
+  });
+
   it('plots the trend chart once the chart area has a width', () => {
     const tree = renderOverview();
 

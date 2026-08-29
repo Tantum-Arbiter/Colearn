@@ -17,6 +17,8 @@ import { AVATAR_OPTIONS } from '../onboarding/onboarding-pages';
 import { formatDurationCompact } from '../../utils/time-formatting';
 import { Fonts } from '@/constants/theme';
 import {
+  AXIS_TICK_HEIGHT,
+  BAR_MIN_HEIGHT,
   axisLabelEvery,
   axisLabelLeft,
   estimateTextWidth,
@@ -132,10 +134,12 @@ export function UsageOverview({
       const isToday = fromEnd === 0;
       // the full day name/date, regardless of whether the axis tick below
       // the bar is thinned out -- used when this specific day is selected
-      const dayLabel = rangeDays === 7 ? dayNames[d.getDay()] ?? '' : formatDate(d);
+      const dateLabel = formatDate(d);
+      const dayLabel = rangeDays === 7 ? dayNames[d.getDay()] ?? '' : dateLabel;
       return {
         date: p.date,
         dayLabel,
+        dateLabel,
         isToday,
         // the stored sessions lag the live session, so today mirrors the ring
         usage: isToday ? Math.max(p.seconds, todayUsageSeconds) : p.seconds,
@@ -154,7 +158,7 @@ export function UsageOverview({
     const slot = chartWidth / trend.length;
     const barWidth = Math.max(slot * 0.55, 3);
     return trend.map((p, i) => {
-      const height = Math.max((p.usage / axisTop) * CHART_HEIGHT, p.usage > 0 ? 2 : 0);
+      const height = Math.max((p.usage / axisTop) * CHART_HEIGHT, BAR_MIN_HEIGHT);
       return {
         x: i * slot + (slot - barWidth) / 2,
         y: CHART_HEIGHT - height,
@@ -165,6 +169,9 @@ export function UsageOverview({
       };
     });
   }, [trend, chartWidth, axisTop]);
+
+  const effectiveIndex = selectedIndex ?? trend.length - 1;
+  const selected = trend[effectiveIndex] ?? null;
 
   const axisFontSize = scaledFontSize(11);
 
@@ -186,21 +193,23 @@ export function UsageOverview({
     return trend
       .map((point, index) => ({ point, index }))
       .filter(({ index }) => (trend.length - 1 - index) % every === 0)
-      .map(({ point, index }) => ({
-        date: point.date,
-        text: point.dayLabel,
-        left: axisLabelLeft(
-          bars[index].slotX + bars[index].slotWidth / 2,
-          axisLabelWidth,
-          chartWidth
-        ),
-      }));
-  }, [trend, bars, chartWidth, axisLabelWidth]);
+      .map(({ point, index }) => {
+        const centre = bars[index].x + bars[index].width / 2;
+
+        return {
+          date: point.date,
+          text: point.dayLabel,
+          x: centre,
+          isSelected: index === effectiveIndex,
+          left: axisLabelLeft(centre, axisLabelWidth, chartWidth),
+        };
+      });
+  }, [trend, bars, chartWidth, axisLabelWidth, effectiveIndex]);
+
+  const axisSpan =
+    trend.length > 0 ? `${trend[0].dateLabel} – ${trend[trend.length - 1].dateLabel}` : '';
 
   const activeRange = RANGES.find((r) => r.days === rangeDays) ?? RANGES[0];
-
-  const effectiveIndex = selectedIndex ?? trend.length - 1;
-  const selected = trend[effectiveIndex] ?? null;
 
   const hours = axisTop / 3600;
   const axisTicks = [hours, hours / 2, 0];
@@ -412,18 +421,29 @@ export function UsageOverview({
 
           {/* Selected day's own total, Apple Screen Time-style -- defaults to
               today, updates when a bar below is pressed */}
-          {selected && (
-            <Text
-              testID="usage-trend-selected"
-              style={[styles.trendSelected, { fontSize: scaledFontSize(12) }]}
-              numberOfLines={1}
-            >
-              {t('screenTime.trendDayUsage', {
-                day: selected.isToday ? t('screenTime.today') : selected.dayLabel,
-                duration: formatDurationCompact(selected.usage),
-              })}
-            </Text>
-          )}
+          <View style={styles.trendMetaRow}>
+            {selected && (
+              <Text
+                testID="usage-trend-selected"
+                style={[styles.trendSelected, { fontSize: scaledFontSize(12) }]}
+                numberOfLines={1}
+              >
+                {t('screenTime.trendDayUsage', {
+                  day: selected.isToday ? t('screenTime.today') : selected.dayLabel,
+                  duration: formatDurationCompact(selected.usage),
+                })}
+              </Text>
+            )}
+            {axisSpan !== '' && (
+              <Text
+                testID="usage-trend-span"
+                style={[styles.trendSpan, { fontSize: scaledFontSize(11) }]}
+                numberOfLines={1}
+              >
+                {axisSpan}
+              </Text>
+            )}
+          </View>
 
           <View style={styles.chartRow}>
             <View style={styles.axis}>
@@ -439,7 +459,11 @@ export function UsageOverview({
               onLayout={(e) => setChartWidth(e.nativeEvent.layout.width)}
             >
               {chartWidth > 0 && (
-                <Svg width={chartWidth} height={CHART_HEIGHT} testID="usage-trend-chart">
+                <Svg
+                  width={chartWidth}
+                  height={CHART_HEIGHT + AXIS_TICK_HEIGHT}
+                  testID="usage-trend-chart"
+                >
                   {[0.5, 1].map((f) => (
                     <Line
                       key={`grid-${f}`}
@@ -451,15 +475,46 @@ export function UsageOverview({
                       strokeWidth={1}
                     />
                   ))}
+                  <Line
+                    testID="usage-trend-baseline"
+                    x1={0}
+                    x2={chartWidth}
+                    y1={CHART_HEIGHT}
+                    y2={CHART_HEIGHT}
+                    stroke="rgba(255, 255, 255, 0.16)"
+                    strokeWidth={1}
+                  />
                   {bars.map((b, i) => (
                     <Rect
                       key={`bar-${trend[i].date}`}
+                      testID={`usage-trend-bar-${trend[i].date}`}
                       x={b.x}
                       y={b.y}
                       width={b.width}
                       height={b.height}
                       rx={Math.min(b.width / 2, 3)}
-                      fill={i === effectiveIndex ? TEAL : 'rgba(78, 205, 196, 0.32)'}
+                      fill={
+                        i === effectiveIndex
+                          ? TEAL
+                          : trend[i].usage > 0
+                            ? 'rgba(78, 205, 196, 0.32)'
+                            : 'rgba(255, 255, 255, 0.13)'
+                      }
+                    />
+                  ))}
+                  {/* a tick on the bar each label belongs to: the label box is
+                      clamped to the chart, so at the ends it no longer sits
+                      over its own bar and needs something that does */}
+                  {axisLabels.map((tick) => (
+                    <Line
+                      key={`tick-${tick.date}`}
+                      testID={`usage-trend-tick-${tick.date}`}
+                      x1={tick.x}
+                      x2={tick.x}
+                      y1={CHART_HEIGHT}
+                      y2={CHART_HEIGHT + AXIS_TICK_HEIGHT}
+                      stroke={tick.isSelected ? TEAL : 'rgba(255, 255, 255, 0.30)'}
+                      strokeWidth={1}
                     />
                   ))}
                 </Svg>
@@ -623,6 +678,18 @@ const styles = StyleSheet.create({
     gap: 18,
     marginBottom: 4,
   },
+  trendMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    gap: 10,
+    marginBottom: 8,
+  },
+  trendSpan: {
+    fontFamily: Fonts.rounded,
+    color: TEXT_FAINT,
+    flexShrink: 1,
+  },
   sectionDivider: {
     height: 1,
     backgroundColor: CARD_BORDER,
@@ -755,7 +822,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.rounded,
     fontWeight: '700',
     color: TEAL,
-    marginBottom: 8,
+    flexShrink: 1,
   },
   chartRow: {
     flexDirection: 'row',

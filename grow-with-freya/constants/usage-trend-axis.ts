@@ -1,5 +1,9 @@
 export const AXIS_LABEL_GAP = 10;
 
+export const AXIS_TICK_HEIGHT = 4;
+
+export const BAR_MIN_HEIGHT = 2;
+
 // deliberately generous. Over-estimating costs a label -- the cadence thins
 // out by one step -- while under-estimating clips the text inside its own box,
 // which is the defect this replaced dressed up as a different defect.
