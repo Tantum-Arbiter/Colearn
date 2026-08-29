@@ -16,6 +16,11 @@ import { useAccessibility } from '@/hooks/use-accessibility';
 import { AVATAR_OPTIONS } from '../onboarding/onboarding-pages';
 import { formatDurationCompact } from '../../utils/time-formatting';
 import { Fonts } from '@/constants/theme';
+import {
+  axisLabelEvery,
+  axisLabelLeft,
+  estimateTextWidth,
+} from '@/constants/usage-trend-axis';
 
 /** Palette for the parent dashboard cards, shared with the design mock. */
 const TEAL = '#4ECDC4';
@@ -113,8 +118,6 @@ export function UsageOverview({
   }, [rangeDays]);
 
   const trend = useMemo(() => {
-    // label cadence widens with the range so "30 Jul"-style labels never crowd
-    const labelEvery = rangeDays === 7 ? 1 : rangeDays === 14 ? 4 : 7;
     let formatDate = (d: Date) => `${d.getDate()}`;
     try {
       const fmt = new Intl.DateTimeFormat(i18n.language, { day: 'numeric', month: 'short' });
@@ -132,7 +135,6 @@ export function UsageOverview({
       const dayLabel = rangeDays === 7 ? dayNames[d.getDay()] ?? '' : formatDate(d);
       return {
         date: p.date,
-        label: fromEnd % labelEvery !== 0 ? '' : dayLabel,
         dayLabel,
         isToday,
         // the stored sessions lag the live session, so today mirrors the ring
@@ -163,6 +165,37 @@ export function UsageOverview({
       };
     });
   }, [trend, chartWidth, axisTop]);
+
+  const axisFontSize = scaledFontSize(11);
+
+  const axisLabelWidth = useMemo(
+    () =>
+      Math.ceil(
+        trend.reduce((widest, p) => Math.max(widest, estimateTextWidth(p.dayLabel, axisFontSize)), 0)
+      ),
+    [trend, axisFontSize]
+  );
+
+  const axisLabels = useMemo(() => {
+    if (chartWidth <= 0 || bars.length === 0 || axisLabelWidth <= 0) {
+      return [];
+    }
+
+    const every = axisLabelEvery(trend.length, chartWidth, axisLabelWidth);
+
+    return trend
+      .map((point, index) => ({ point, index }))
+      .filter(({ index }) => (trend.length - 1 - index) % every === 0)
+      .map(({ point, index }) => ({
+        date: point.date,
+        text: point.dayLabel,
+        left: axisLabelLeft(
+          bars[index].slotX + bars[index].slotWidth / 2,
+          axisLabelWidth,
+          chartWidth
+        ),
+      }));
+  }, [trend, bars, chartWidth, axisLabelWidth]);
 
   const activeRange = RANGES.find((r) => r.days === rangeDays) ?? RANGES[0];
 
@@ -221,9 +254,11 @@ export function UsageOverview({
         </View>
       </View>
 
-      {/* Today's Screen Time + Screen Time Trend, sharing a row per the design */}
-      <View style={styles.statsRow}>
-        <View style={[styles.card, styles.statCard]} testID="usage-today-card">
+      {/* Today's screen time and the trend share one window. Two tiles gave the
+          chart half the width, which is not enough for its x axis to label
+          itself in a language with longer dates than English. */}
+      <View style={[styles.card, styles.statsCard]} testID="usage-stats-card">
+        <View testID="usage-today-card">
           <View style={styles.cardHeader}>
             <View style={[styles.iconChip, { backgroundColor: 'rgba(78, 205, 196, 0.16)' }]}>
               <Ionicons name="time-outline" size={scaledFontSize(14)} color={TEAL} />
@@ -241,6 +276,7 @@ export function UsageOverview({
             />
           </View>
 
+          <View style={styles.todayRow}>
           <View style={styles.ringWrap}>
             <Svg width={RING_SIZE} height={RING_SIZE} testID="usage-ring">
               <Defs>
@@ -311,9 +347,12 @@ export function UsageOverview({
               </Text>
             </View>
           </View>
+          </View>
         </View>
 
-        <View style={[styles.card, styles.statCard]} testID="usage-trend-card">
+        <View style={styles.sectionDivider} />
+
+        <View testID="usage-trend-card">
           <View style={styles.cardHeader}>
             <View style={[styles.iconChip, { backgroundColor: 'rgba(109, 93, 245, 0.18)' }]}>
               <Ionicons name="calendar-outline" size={scaledFontSize(13)} color={PURPLE} />
@@ -444,13 +483,18 @@ export function UsageOverview({
                   ))}
                 </View>
               )}
-              <View style={styles.chartLabels}>
-                {trend.map((p) => (
+              <View style={[styles.chartLabels, { height: axisFontSize * 1.5 }]}>
+                {axisLabels.map((label) => (
                   <Text
-                    key={`day-${p.date}`}
-                    style={[styles.chartLabel, { fontSize: scaledFontSize(8) }]}
+                    key={`day-${label.date}`}
+                    testID={`usage-trend-label-${label.date}`}
+                    numberOfLines={1}
+                    style={[
+                      styles.chartLabel,
+                      { fontSize: axisFontSize, left: label.left, width: axisLabelWidth },
+                    ]}
                   >
-                    {p.label}
+                    {label.text}
                   </Text>
                 ))}
               </View>
@@ -570,6 +614,20 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.rounded,
     color: TEXT_DIM,
   },
+  statsCard: {
+    marginBottom: 14,
+  },
+  todayRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 18,
+    marginBottom: 4,
+  },
+  sectionDivider: {
+    height: 1,
+    backgroundColor: CARD_BORDER,
+    marginVertical: 14,
+  },
   statsRow: {
     flexDirection: 'row',
     gap: 12,
@@ -653,8 +711,6 @@ const styles = StyleSheet.create({
   ringWrap: {
     width: RING_SIZE,
     height: RING_SIZE,
-    alignSelf: 'center',
-    marginBottom: 10,
   },
   ringCentre: {
     ...StyleSheet.absoluteFillObject,
@@ -672,6 +728,7 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   legend: {
+    flex: 1,
     gap: 6,
   },
   legendRow: {
@@ -720,14 +777,17 @@ const styles = StyleSheet.create({
   },
   chartArea: {
     flex: 1,
-    paddingRight: 14,
   },
+  // labels are placed under their own bar and clamped to the chart rather
+  // than spread by `space-between`, which spread them by the gaps between the
+  // unlabelled days and pushed the last one off the end of the card
   chartLabels: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 5,
+    marginTop: 6,
   },
   chartLabel: {
+    position: 'absolute',
+    top: 0,
+    textAlign: 'center',
     fontFamily: Fonts.rounded,
     color: TEXT_FAINT,
   },

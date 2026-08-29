@@ -156,8 +156,13 @@ describe('UsageOverview', () => {
     expect(body).not.toMatch(/"-\d/);
   });
 
+  // the axis places each label under its own bar, so it needs the chart's
+  // width before it can render any of them
   it('labels all seven days at the default range', () => {
-    const body = toStr(renderOverview());
+    const tree = renderOverview();
+    layOutChart(tree);
+
+    const body = toStr(tree);
 
     for (const label of DAY_NAMES) {
       expect(body).toContain(label);
@@ -203,6 +208,84 @@ describe('UsageOverview', () => {
       });
     });
   }
+
+  // the axis used to spread its labels with `space-between` over one empty
+  // Text per unlabelled day, which pushed the last one off the end of the card
+  // at 14 and 30 days
+  describe('the x axis labels', () => {
+    const CHART = 280;
+
+    function axisLabels(tree: ReturnType<typeof render>) {
+      return tree.UNSAFE_root.findAll(
+        (n: any) => typeof n.props.testID === 'string' && n.props.testID.startsWith('usage-trend-label-')
+      );
+    }
+
+    interface LabelBox {
+      left: number;
+      width: number;
+    }
+
+    function boxOf(node: any): LabelBox {
+      const style = Array.isArray(node.props.style)
+        ? Object.assign({}, ...node.props.style.filter(Boolean))
+        : node.props.style;
+
+      return { left: style.left as number, width: style.width as number };
+    }
+
+    function openRange(tree: ReturnType<typeof render>, days: 7 | 14 | 30) {
+      fireEvent.press(findByTestId(tree, 'usage-range-pill')[0]);
+      fireEvent.press(findByTestId(tree, `usage-range-${days}`)[0]);
+    }
+
+    it.each([7, 14, 30] as const)('stay inside the chart across %i days', (days) => {
+      const tree = renderOverview();
+      layOutChart(tree, CHART);
+      openRange(tree, days);
+      layOutChart(tree, CHART);
+
+      const boxes = axisLabels(tree).map(boxOf);
+
+      expect(boxes.length).toBeGreaterThan(0);
+      boxes.forEach(({ left, width }: LabelBox) => {
+        expect(left).toBeGreaterThanOrEqual(0);
+        expect(left + width).toBeLessThanOrEqual(CHART);
+      });
+    });
+
+    it.each([14, 30] as const)('never overlap each other across %i days', (days) => {
+      const tree = renderOverview();
+      layOutChart(tree, CHART);
+      openRange(tree, days);
+      layOutChart(tree, CHART);
+
+      const boxes = axisLabels(tree)
+        .map(boxOf)
+        .sort((a: LabelBox, b: LabelBox) => a.left - b.left);
+
+      boxes.slice(1).forEach((box: LabelBox, i: number) => {
+        expect(box.left).toBeGreaterThanOrEqual(boxes[i].left + boxes[i].width);
+      });
+    });
+
+    it('keeps every label the same size rather than shrinking them to fit', () => {
+      const tree = renderOverview();
+      layOutChart(tree, CHART);
+      openRange(tree, 30);
+      layOutChart(tree, CHART);
+
+      const sizes = axisLabels(tree).map((n: any) => {
+        const style = Array.isArray(n.props.style)
+          ? Object.assign({}, ...n.props.style.filter(Boolean))
+          : n.props.style;
+        return style.fontSize as number;
+      });
+
+      expect(new Set(sizes).size).toBe(1);
+      expect(sizes[0]).toBeGreaterThanOrEqual(11);
+    });
+  });
 
   it('plots the trend chart once the chart area has a width', () => {
     const tree = renderOverview();
