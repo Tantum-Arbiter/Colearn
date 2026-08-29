@@ -1,0 +1,109 @@
+/**
+ * The Progress screen composes the §2 hierarchy: planet artwork, floating
+ * controls, title and subtitle, weekly card, milestones, badges — and a
+ * badge tap opens the detail sheet where the recommendation lives.
+ */
+
+import React from 'react';
+import { render, fireEvent, waitFor } from '@testing-library/react-native';
+import { ProgressScreen } from '@/components/progress/progress-screen';
+
+jest.mock('@/data/stories', () => ({
+  ALL_STORIES: [],
+}));
+
+const mockAppState = {
+  readStoryIds: ['a', 'b'],
+  childAgeInMonths: 36,
+};
+jest.mock('@/store/app-store', () => ({
+  useAppStore: (selector?: (state: any) => any) =>
+    selector ? selector(mockAppState) : mockAppState,
+}));
+
+jest.mock('@/services/story-loader', () => ({
+  StoryLoader: {
+    getCachedStories: jest.fn(() => null),
+  },
+}));
+
+jest.mock('@/services/screen-time-service', () => ({
+  __esModule: true,
+  default: {
+    getInstance: () => ({
+      getScreenTimeStats: jest.fn().mockResolvedValue({ weeklyUsage: [] }),
+    }),
+  },
+}));
+
+function byTestId(tree: ReturnType<typeof render>, testID: string) {
+  return tree.UNSAFE_root.findAll((n: any) => n.props.testID === testID);
+}
+
+function textByTestId(tree: ReturnType<typeof render>, testID: string) {
+  return byTestId(tree, testID).find((n: any) => typeof n.props.children === 'string');
+}
+
+describe('ProgressScreen', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it('composes planet, controls, heading, weekly card, milestones and badges', async () => {
+    const tree = render(<ProgressScreen onBack={jest.fn()} />);
+
+    await waitFor(() => {
+      expect(byTestId(tree, 'planet-header-artwork').length).toBeGreaterThan(0);
+      expect(byTestId(tree, 'circle-action-back').length).toBeGreaterThan(0);
+      expect(byTestId(tree, 'circle-action-audio').length).toBeGreaterThan(0);
+      expect(textByTestId(tree, 'progress-title').props.children).toBe('progress.title');
+      expect(textByTestId(tree, 'progress-subtitle').props.children).toBe('progress.subtitle');
+      expect(byTestId(tree, 'progress-hero-card').length).toBeGreaterThan(0);
+      expect(byTestId(tree, 'milestone-row').length).toBeGreaterThan(0);
+      expect(byTestId(tree, 'badge-row').length).toBeGreaterThan(0);
+    });
+  });
+
+  it('renders all three milestones and a horizontally scrolling badge row', async () => {
+    const tree = render(<ProgressScreen onBack={jest.fn()} />);
+
+    await waitFor(() => {
+      expect(byTestId(tree, 'milestone-row')[0].props.children).toHaveLength(3);
+      const badgeRow = byTestId(tree, 'badge-row').find((n: any) => n.props.horizontal !== undefined);
+      expect(badgeRow.props.horizontal).toBe(true);
+      expect(badgeRow.props.data).toHaveLength(4);
+    });
+  });
+
+  it('heads both sections through translation keys', async () => {
+    const tree = render(<ProgressScreen onBack={jest.fn()} />);
+
+    await waitFor(() => {
+      expect(tree.UNSAFE_root.findAll((n: any) => n.props.children === 'progress.milestonesHeading').length).toBeGreaterThan(0);
+      expect(tree.UNSAFE_root.findAll((n: any) => n.props.children === 'progress.badgesHeading').length).toBeGreaterThan(0);
+    });
+  });
+
+  it('reports the back control', async () => {
+    const onBack = jest.fn();
+    const tree = render(<ProgressScreen onBack={onBack} />);
+
+    await waitFor(() => expect(byTestId(tree, 'circle-action-back').length).toBeGreaterThan(0));
+    fireEvent.press(byTestId(tree, 'circle-action-back')[0]);
+
+    expect(onBack).toHaveBeenCalledTimes(1);
+  });
+
+  it('opens the detail sheet from a badge tap and routes its recommendation', async () => {
+    const onRecommend = jest.fn();
+    const tree = render(<ProgressScreen onBack={jest.fn()} onRecommend={onRecommend} />);
+
+    await waitFor(() => expect(byTestId(tree, 'badge-card-calm-champion').length).toBeGreaterThan(0));
+
+    fireEvent.press(byTestId(tree, 'badge-card-calm-champion')[0]);
+
+    await waitFor(() => expect(byTestId(tree, 'badge-detail-sheet').length).toBeGreaterThan(0));
+
+    fireEvent.press(byTestId(tree, 'badge-detail-recommendation')[0]);
+
+    expect(onRecommend).toHaveBeenCalledWith('calming');
+  });
+});

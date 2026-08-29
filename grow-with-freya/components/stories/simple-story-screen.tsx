@@ -32,7 +32,6 @@ export function SimpleStoryScreen({
     <StoryCatalogueScreen
       onStorySelect={onStorySelect}
       initialMode={(initialMode as CatalogueMode | null) ?? null}
-      onOpenParentCorner={onOpenParentCorner}
     />
   );
 }

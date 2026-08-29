@@ -44,6 +44,7 @@ import {
   SPACE_5,
   contentMargin,
 } from '@/components/child-ui/tokens';
+import { ProgressScreen } from '@/components/progress/progress-screen';
 import { StoryPreviewModal } from '../story-preview-modal';
 import {
   CatalogueMode,
@@ -70,10 +71,9 @@ const COVER_COLUMNS = 3;
 interface StoryCatalogueScreenProps {
   onStorySelect?: (story: Story) => void;
   initialMode?: CatalogueMode | null;
-  onOpenParentCorner?: () => void;
 }
 
-export function StoryCatalogueScreen({ onStorySelect, initialMode, onOpenParentCorner }: StoryCatalogueScreenProps) {
+export function StoryCatalogueScreen({ onStorySelect, initialMode }: StoryCatalogueScreenProps) {
   const insets = useSafeAreaInsets();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const { requestReturnToMainMenu, setShowLoginAfterOnboarding, getEffectiveTier, storyViewMode, setStoryViewMode } = useAppStore();
@@ -99,7 +99,8 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, onOpenParentC
   const [selectedTags, setSelectedTags] = useState<Set<StoryFilterTag>>(new Set());
   const [storyMode, setStoryMode] = useState<CatalogueMode | null>(initialMode ?? null);
   const [shareUnlockedIds, setShareUnlockedIds] = useState<Set<string>>(new Set());
-  const [navSection, setNavSection] = useState<'home' | 'library'>('home');
+  const [navSection, setNavSection] = useState<ChildNavItemId>('home');
+  const [badgeDetailOpen, setBadgeDetailOpen] = useState(false);
   const [showSubscription, setShowSubscription] = useState(false);
   const [previewStory, setPreviewStory] = useState<Story | null>(null);
   const [isPreviewVisible, setIsPreviewVisible] = useState(false);
@@ -227,19 +228,17 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, onOpenParentC
 
   const handleNavSelect = useCallback((id: ChildNavItemId) => {
     if (id === 'home') {
-      setNavSection('home');
       setStoryMode(null);
       setSelectedTags(new Set());
-      return;
     }
-    if (id === 'library') {
-      setNavSection('library');
-      return;
-    }
-    if (id === 'progress') {
-      onOpenParentCorner?.();
-    }
-  }, [onOpenParentCorner]);
+    setNavSection(id);
+  }, []);
+
+  const handleRecommend = useCallback((tag: StoryFilterTag | null) => {
+    setNavSection('home');
+    setStoryMode(null);
+    setSelectedTags(tag ? new Set([tag]) : new Set());
+  }, []);
 
   const openDownloadedStory = useCallback((story: Story, position: { x: number; y: number; width: number; height: number }) => {
     startTransition(story.id, position, story);
@@ -451,6 +450,18 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, onOpenParentC
       </View>
     </>
   );
+
+  if (navSection === 'progress') {
+    return (
+      <JourneyShell selected={navSection} onSelect={handleNavSelect} navigationHidden={badgeDetailOpen}>
+        <ProgressScreen
+          onBack={() => handleNavSelect('home')}
+          onRecommend={handleRecommend}
+          onDetailVisibleChange={setBadgeDetailOpen}
+        />
+      </JourneyShell>
+    );
+  }
 
   return (
     <JourneyShell selected={navSection} onSelect={handleNavSelect} navigationHidden={interactionLocked}>

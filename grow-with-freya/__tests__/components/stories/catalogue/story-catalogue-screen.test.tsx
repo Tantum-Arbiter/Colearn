@@ -46,6 +46,8 @@ const mockAppState = {
   favoriteStoryIds: [] as string[],
   toggleFavoriteStory: jest.fn(),
   userAvatarType: null,
+  readStoryIds: [] as string[],
+  childAgeInMonths: 36,
 };
 jest.mock('@/store/app-store', () => ({
   useAppStore: (selector?: (state: any) => any) =>
@@ -90,6 +92,15 @@ jest.mock('@/services/story-download-service', () => ({
 
 jest.mock('@/services/api-client', () => ({
   ApiClient: { isAuthenticated: jest.fn().mockResolvedValue(true) },
+}));
+
+jest.mock('@/services/screen-time-service', () => ({
+  __esModule: true,
+  default: {
+    getInstance: () => ({
+      getScreenTimeStats: jest.fn().mockResolvedValue({ weeklyUsage: [] }),
+    }),
+  },
 }));
 
 jest.mock('@/components/ui/subscription-overlay', () => ({
@@ -232,9 +243,8 @@ describe('StoryCatalogueScreen', () => {
     expect(mockAppState.requestReturnToMainMenu).toHaveBeenCalledTimes(1);
   });
 
-  it('routes the Progress navigation item to the parent corner', async () => {
-    const onOpenParentCorner = jest.fn();
-    const tree = render(<StoryCatalogueScreen onOpenParentCorner={onOpenParentCorner} />);
+  it('opens the Progress journey page from the Progress item and returns home from its back control', async () => {
+    const tree = render(<StoryCatalogueScreen />);
 
     await waitFor(() => expect(byTestId(tree, 'navigation-item-progress').length).toBeGreaterThan(0));
 
@@ -242,7 +252,18 @@ describe('StoryCatalogueScreen', () => {
       byTestId(tree, 'navigation-item-progress').find((n: any) => n.props.accessibilityRole === 'tab')
     );
 
-    expect(onOpenParentCorner).toHaveBeenCalledTimes(1);
+    await waitFor(() => {
+      expect(byTestId(tree, 'progress-title').length).toBeGreaterThan(0);
+      expect(byTestId(tree, 'child-bottom-navigation').length).toBeGreaterThan(0);
+      expect(byTestId(tree, 'featured-story-card')).toHaveLength(0);
+    });
+
+    fireEvent.press(byTestId(tree, 'circle-action-back')[0]);
+
+    await waitFor(() => {
+      expect(byTestId(tree, 'featured-story-card').length).toBeGreaterThan(0);
+    });
+    expect(mockAppState.requestReturnToMainMenu).not.toHaveBeenCalled();
   });
 
   it('shows the empty state without a clear-filters button when a mode matches nothing', async () => {
