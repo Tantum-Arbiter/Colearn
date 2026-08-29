@@ -110,7 +110,7 @@ export const SCREEN_TIME_GLANCE = {
    * under the parent's eye. The calm border stays the faint hairline it has
    * always been: a lit blue frame is the alert's own signal.
    */
-  panelInset: 20,
+  panelInset: 6,
   /** How large the window is allowed to grow. On a phone the insets decide
    *  and these never bind; on a tablet they turn a full-screen sheet into a
    *  centred card -- wide enough for the 500pt content column it holds,
@@ -428,8 +428,8 @@ export function glancePanelBounds(
   insetBottom: number
 ): GlanceBounds {
   const inset = SCREEN_TIME_GLANCE.panelInset;
-  const safeTop = insetTop + inset;
-  const safeBottom = height - insetBottom - inset;
+  const safeTop = insetTop;
+  const safeBottom = height - insetBottom;
 
   const panelW = Math.min(width - inset * 2, SCREEN_TIME_GLANCE.panelMaxWidth);
   const panelH = Math.min(safeBottom - safeTop, SCREEN_TIME_GLANCE.panelMaxHeight);

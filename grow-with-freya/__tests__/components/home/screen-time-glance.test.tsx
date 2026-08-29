@@ -239,14 +239,9 @@ describe('ScreenTimeGlance', () => {
       // jest, so the invariant is agreement, not magnitude: dash, gap and the
       // path the border was built from must all describe the same length.
       const { width, height } = RN.Dimensions.get('window');
-      const inset = SCREEN_TIME_GLANCE.panelInset;
-      const { length } = panelBorderPath({
-        left: inset,
-        top: inset,
-        right: width - inset,
-        bottom: height - inset,
-        radius: SCREEN_TIME_GLANCE.panelRadius,
-      });
+      const { length } = panelBorderPath(
+        glancePanelBounds(width, height, mockInsets.top, mockInsets.bottom)
+      );
 
       expect(visible).toBeCloseTo(gap);
       expect(visible).toBeCloseTo(length);
@@ -349,7 +344,10 @@ describe('ScreenTimeGlance', () => {
       expect(style.bottom).toBe(height - bounds.bottom);
     });
 
-    it('clears the notch and the home indicator as well as the inset', () => {
+    // the frame runs along the safe area rather than inside it, so the border
+    // drawn on it passes outside the home scene's chrome; it still may not
+    // cross the notch or the home indicator
+    it('clears the notch and the home indicator', () => {
       mockInsets = { top: 59, bottom: 34, left: 0, right: 0 };
       const { width, height } = RN.Dimensions.get('window');
       const bounds = glancePanelBounds(width, height, 59, 34);
@@ -357,9 +355,9 @@ describe('ScreenTimeGlance', () => {
       const style = panelStyle(renderGlance());
 
       expect(style.top).toBe(bounds.top);
-      expect(bounds.top).toBeGreaterThanOrEqual(59 + SCREEN_TIME_GLANCE.panelInset);
+      expect(bounds.top).toBeGreaterThanOrEqual(59);
       expect(style.bottom).toBe(height - bounds.bottom);
-      expect(height - bounds.bottom).toBeGreaterThanOrEqual(34 + SCREEN_TIME_GLANCE.panelInset);
+      expect(height - bounds.bottom).toBeGreaterThanOrEqual(34);
     });
 
     it("outlines it with the design's rounded border", () => {

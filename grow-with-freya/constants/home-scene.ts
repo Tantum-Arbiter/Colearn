@@ -163,6 +163,7 @@ export const HOME_SCENE_PALETTE = HOME_THEMES.night;
 
 export const HOME_SCENE_LAYOUT = {
   screenMargin: 14,
+  chromeTop: 8,
   continueInset: 39,
   cardRadius: 26,
   cardGap: 14,

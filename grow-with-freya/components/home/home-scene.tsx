@@ -93,7 +93,7 @@ export const HomeScene = memo(function HomeScene({
         <SkyFace size={skyFaceSize} timeOfDay={activeTimeOfDay} />
       </View>
 
-      <View style={[styles.chrome, { top: insets.top + 8 }]}>
+      <View style={[styles.chrome, { top: insets.top + HOME_SCENE_LAYOUT.chromeTop }]}>
         <GrownUpsPill timeOfDay={activeTimeOfDay} onPress={onOpenGrownUps} />
         <MusicControl />
       </View>

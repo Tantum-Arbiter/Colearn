@@ -5,6 +5,7 @@
  * is used, and only when it is full does it become something a parent notices.
  */
 
+import { HOME_SCENE_LAYOUT } from '@/constants/home-scene';
 import {
   SCREEN_TIME_RING,
   SCREEN_TIME_GLANCE,
@@ -540,18 +541,57 @@ describe('waterTurnRamp', () => {
   });
 });
 
+describe('the frame the glance draws over the home scene', () => {
+  const PHONE = { width: 390, height: 844 };
+  const INSETS = { top: 59, bottom: 34 };
+  const half = SCREEN_TIME_GLANCE.panelBorderWidth / 2;
+
+  const frame = () =>
+    glancePanelBounds(PHONE.width, PHONE.height, INSETS.top, INSETS.bottom);
+
+  it('should run outside the home content rather than through it', () => {
+    const underTest = frame();
+
+    expect(underTest.left + half).toBeLessThan(HOME_SCENE_LAYOUT.screenMargin);
+    expect(underTest.right - half).toBeGreaterThan(
+      PHONE.width - HOME_SCENE_LAYOUT.screenMargin
+    );
+  });
+
+  it('should run above the row the grown-ups control sits in', () => {
+    const underTest = frame();
+
+    expect(underTest.top + half).toBeLessThan(INSETS.top + HOME_SCENE_LAYOUT.chromeTop);
+  });
+
+  it('should stay inside the safe area it is drawn in', () => {
+    const underTest = frame();
+
+    expect(underTest.top - half).toBeGreaterThanOrEqual(0);
+    expect(underTest.bottom + half).toBeLessThanOrEqual(PHONE.height);
+  });
+});
+
 describe('glancePanelBounds', () => {
   const PHONE = { width: 390, height: 844 };
   const TABLET = { width: 834, height: 1194 };
   const INSETS = { top: 59, bottom: 34 };
 
-  it('insets the window from every edge on a phone', () => {
+  // the window is inset from the sides and runs along the safe area top and
+  // bottom, so the border drawn on it passes outside the home scene's own
+  // chrome rather than through it
+  it('insets the window from the sides on a phone', () => {
     const underTest = glancePanelBounds(PHONE.width, PHONE.height, INSETS.top, INSETS.bottom);
 
     expect(underTest.left).toBe(SCREEN_TIME_GLANCE.panelInset);
     expect(underTest.right).toBe(PHONE.width - SCREEN_TIME_GLANCE.panelInset);
-    expect(underTest.top).toBe(INSETS.top + SCREEN_TIME_GLANCE.panelInset);
-    expect(underTest.bottom).toBe(PHONE.height - INSETS.bottom - SCREEN_TIME_GLANCE.panelInset);
+  });
+
+  it('runs along the safe area top and bottom on a phone', () => {
+    const underTest = glancePanelBounds(PHONE.width, PHONE.height, INSETS.top, INSETS.bottom);
+
+    expect(underTest.top).toBe(INSETS.top);
+    expect(underTest.bottom).toBe(PHONE.height - INSETS.bottom);
   });
 
   it('caps the window on a tablet instead of filling the screen', () => {
