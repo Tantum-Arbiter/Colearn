@@ -255,7 +255,7 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
   // This prevents the user tapping a button before the tutorial overlay mounts.
   const { shouldShowTutorial, isLoaded: tutorialLoaded } = useTutorial();
   const [tutorialFinished, setTutorialFinished] = useState(false);
-  const isTutorialPending = !disableTutorial && tutorialLoaded && shouldShowTutorial('main_menu_tour') && !tutorialFinished;
+  const isTutorialPending = !useHomeScene && !disableTutorial && tutorialLoaded && shouldShowTutorial('main_menu_tour') && !tutorialFinished;
 
   // Use a ref so guardedOnNavigate keeps a stable reference -avoids re-rendering
   // MenuCarousel (React.memo) when isTutorialPending changes, which would cause a flicker.
