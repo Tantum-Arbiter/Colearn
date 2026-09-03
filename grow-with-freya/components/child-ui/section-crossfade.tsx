@@ -1,4 +1,4 @@
-import React, { ReactNode, useEffect, useRef, useState } from 'react';
+import React, { Fragment, ReactNode, useEffect, useRef, useState } from 'react';
 import { StyleSheet } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
 
@@ -14,21 +14,25 @@ interface SectionCrossfadeProps {
   testID?: string;
 }
 
-interface Shown {
+interface Outgoing {
   key: string;
   node: ReactNode;
 }
 
 export function SectionCrossfade({ sectionKey, children, testID = 'section-crossfade' }: SectionCrossfadeProps) {
-  const [shown, setShown] = useState<Shown>({ key: sectionKey, node: children });
+  const [shownKey, setShownKey] = useState(sectionKey);
   const latest = useRef<ReactNode>(children);
+  const outgoing = useRef<Outgoing | null>(null);
   const opacity = useSharedValue(1);
   const lift = useSharedValue(0);
-  const settled = shown.key === sectionKey;
+  const settled = shownKey === sectionKey;
 
-  useEffect(() => {
+  if (settled) {
     latest.current = children;
-  });
+    outgoing.current = null;
+  } else if (!outgoing.current || outgoing.current.key !== shownKey) {
+    outgoing.current = { key: shownKey, node: latest.current };
+  }
 
   useEffect(() => {
     if (settled) {
@@ -37,7 +41,7 @@ export function SectionCrossfade({ sectionKey, children, testID = 'section-cross
     opacity.value = withTiming(0, { duration: SECTION_CROSSFADE.outMs, easing: Easing.in(Easing.quad) });
     lift.value = withTiming(-SECTION_CROSSFADE.lift, { duration: SECTION_CROSSFADE.outMs, easing: Easing.in(Easing.quad) });
     const swap = setTimeout(() => {
-      setShown({ key: sectionKey, node: latest.current });
+      setShownKey(sectionKey);
       lift.value = SECTION_CROSSFADE.lift;
       opacity.value = withTiming(1, { duration: SECTION_CROSSFADE.inMs, easing: Easing.out(Easing.cubic) });
       lift.value = withTiming(0, { duration: SECTION_CROSSFADE.inMs, easing: Easing.out(Easing.cubic) });
@@ -53,7 +57,11 @@ export function SectionCrossfade({ sectionKey, children, testID = 'section-cross
 
   return (
     <Animated.View testID={testID} style={[styles.fill, style]} pointerEvents={settled ? 'auto' : 'none'}>
-      {settled ? children : shown.node}
+      {settled ? (
+        <Fragment key={sectionKey}>{children}</Fragment>
+      ) : (
+        <Fragment key={outgoing.current?.key}>{outgoing.current?.node}</Fragment>
+      )}
     </Animated.View>
   );
 }

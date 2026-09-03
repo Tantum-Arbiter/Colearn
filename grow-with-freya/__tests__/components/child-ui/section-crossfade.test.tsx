@@ -117,6 +117,56 @@ describe('SectionCrossfade', () => {
     expect(underTest).toEqual(['Bedtime Stories']);
   });
 
+  it('should fade out the section as it last looked, not as it first appeared', () => {
+    const view = render(
+      <SectionCrossfade sectionKey="home">
+        <Text>Stories</Text>
+      </SectionCrossfade>
+    );
+    view.rerender(
+      <SectionCrossfade sectionKey="home">
+        <Text>Bedtime Stories</Text>
+      </SectionCrossfade>
+    );
+
+    view.rerender(
+      <SectionCrossfade sectionKey="progress">
+        <Text>Progress</Text>
+      </SectionCrossfade>
+    );
+
+    const underTest = texts(view);
+
+    expect(underTest).toEqual(['Bedtime Stories']);
+  });
+
+  it('should keep the outgoing section steady even if the parent re-renders mid-fade', () => {
+    const view = render(
+      <SectionCrossfade sectionKey="home">
+        <Text>Stories</Text>
+      </SectionCrossfade>
+    );
+    view.rerender(
+      <SectionCrossfade sectionKey="progress">
+        <Text>Progress</Text>
+      </SectionCrossfade>
+    );
+
+    view.rerender(
+      <SectionCrossfade sectionKey="progress">
+        <Text>Progress with badges</Text>
+      </SectionCrossfade>
+    );
+
+    expect(texts(view)).toEqual(['Stories']);
+
+    act(() => {
+      jest.advanceTimersByTime(SECTION_CROSSFADE.outMs);
+    });
+
+    expect(texts(view)).toEqual(['Progress with badges']);
+  });
+
   it('should land on the last section asked for when taps come quickly', () => {
     const view = render(
       <SectionCrossfade sectionKey="home">
