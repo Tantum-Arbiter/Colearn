@@ -476,8 +476,11 @@ cleared, featured card and all stories visible. Library shows the on-device stor
 Progress opens the in-journey Progress page (see [`PROGRESS-UI.md`](PROGRESS-UI.md)). The
 way out of the journey is the floating back control, which returns to the app's main menu.
 
-The navigation never overlaps journey content — the scroll container reserves its height plus
-`SPACE_4`.
+The navigation never overlaps journey content — the scroll container ends above it
+(`marginBottom: navClearance(insets.bottom)`), so nothing is ever drawn beneath the shelf,
+not even before the first scroll. The shelf sits low: `navBottomOffset` tucks it to
+`insets.bottom − 8` with a 10 dp floor. Its width is capped at `NAV_MAX_WIDTH` (520) and
+centred, so tablets get margin rather than a stretched bar (operator revision 2026-08-29).
 
 ---
 

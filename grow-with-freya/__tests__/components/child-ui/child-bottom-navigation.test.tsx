@@ -6,8 +6,14 @@
 
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
-import { ChildBottomNavigation, CHILD_NAV_ITEMS, navClearance } from '@/components/child-ui/child-bottom-navigation';
-import { NAV_HEIGHT } from '@/components/child-ui/tokens';
+import {
+  ChildBottomNavigation,
+  CHILD_NAV_ITEMS,
+  navBottomOffset,
+  navClearance,
+  navWidth,
+} from '@/components/child-ui/child-bottom-navigation';
+import { NAV_HEIGHT, NAV_MAX_WIDTH } from '@/components/child-ui/tokens';
 
 function items(tree: ReturnType<typeof render>) {
   return CHILD_NAV_ITEMS.map((item) =>
@@ -51,8 +57,19 @@ describe('ChildBottomNavigation', () => {
     expect(onSelect).toHaveBeenCalledWith('home');
   });
 
-  it('reserves scroll clearance for its full height plus breathing room', () => {
-    expect(navClearance(0)).toBeGreaterThan(NAV_HEIGHT);
-    expect(navClearance(20)).toBe(navClearance(0) + 20);
+  it('reserves scroll clearance for its full height, its bottom offset and breathing room', () => {
+    expect(navClearance(0)).toBeGreaterThan(NAV_HEIGHT + navBottomOffset(0));
+    expect(navClearance(34)).toBe(NAV_HEIGHT + navBottomOffset(34) + (navClearance(0) - NAV_HEIGHT - navBottomOffset(0)));
+  });
+
+  it('sits low on the screen: tucked toward the home indicator but never below a small floor', () => {
+    expect(navBottomOffset(0)).toBeGreaterThan(0);
+    expect(navBottomOffset(34)).toBeLessThan(34);
+    expect(navBottomOffset(34)).toBeGreaterThan(navBottomOffset(0));
+  });
+
+  it('caps its width on wide screens instead of stretching', () => {
+    expect(navWidth(393, false)).toBeLessThan(393);
+    expect(navWidth(1024, true)).toBe(NAV_MAX_WIDTH);
   });
 });

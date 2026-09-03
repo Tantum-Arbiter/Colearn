@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming, Easing } from 'react-native-reanimated';
@@ -18,6 +18,8 @@ import { NavigationItem } from './navigation-item';
 import {
   NAV_BOTTOM_MARGIN,
   NAV_HEIGHT,
+  NAV_HOME_INDICATOR_OVERLAP,
+  NAV_MAX_WIDTH,
   RADIUS_NAV,
   RADIUS_NAV_ITEM,
   SPACE_2,
@@ -43,8 +45,16 @@ export const CHILD_NAV_ITEMS: readonly ChildNavItem[] = [
 const PANEL_INSET = 6;
 const SELECTED_PANEL_GRADIENT = [`${ACCENT_BLUE}73`, `${ACCENT_PURPLE}73`] as const;
 
+export function navBottomOffset(safeAreaBottom: number): number {
+  return Math.max(safeAreaBottom - NAV_HOME_INDICATOR_OVERLAP, NAV_BOTTOM_MARGIN);
+}
+
 export function navClearance(safeAreaBottom: number): number {
-  return NAV_HEIGHT + NAV_BOTTOM_MARGIN + safeAreaBottom + SPACE_4;
+  return NAV_HEIGHT + navBottomOffset(safeAreaBottom) + SPACE_4;
+}
+
+export function navWidth(windowWidth: number, isTablet: boolean): number {
+  return Math.min(windowWidth - contentMargin(isTablet) * 2, NAV_MAX_WIDTH);
 }
 
 interface ChildBottomNavigationProps {
@@ -54,6 +64,7 @@ interface ChildBottomNavigationProps {
 
 export function ChildBottomNavigation({ selected, onSelect }: ChildBottomNavigationProps) {
   const insets = useSafeAreaInsets();
+  const { width: windowWidth } = useWindowDimensions();
   const { isTablet } = useAccessibility();
   const reduceMotion = useReducedMotion();
   const { t } = useTranslation();
@@ -77,16 +88,14 @@ export function ChildBottomNavigation({ selected, onSelect }: ChildBottomNavigat
 
   return (
     <View
-      testID="child-bottom-navigation"
-      accessibilityRole="tablist"
-      style={[
-        styles.container,
-        {
-          marginHorizontal: contentMargin(isTablet),
-          bottom: NAV_BOTTOM_MARGIN + insets.bottom,
-        },
-      ]}
+      style={[styles.positioner, { bottom: navBottomOffset(insets.bottom) }]}
+      pointerEvents="box-none"
     >
+      <View
+        testID="child-bottom-navigation"
+        accessibilityRole="tablist"
+        style={[styles.container, { width: navWidth(windowWidth, isTablet) }]}
+      >
       <View
         style={styles.row}
         onLayout={(event) => setRowWidth(event.nativeEvent.layout.width)}
@@ -117,15 +126,19 @@ export function ChildBottomNavigation({ selected, onSelect }: ChildBottomNavigat
           />
         ))}
       </View>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  positioner: {
     position: 'absolute',
     left: 0,
     right: 0,
+    alignItems: 'center',
+  },
+  container: {
     height: NAV_HEIGHT,
     borderRadius: RADIUS_NAV,
     backgroundColor: SURFACE_NAV,

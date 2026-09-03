@@ -380,17 +380,21 @@ class ScreenTimeService {
     }
   }
 
-  private async getWeeklyUsage(): Promise<ScreenTimeSession[]> {
+  async getRecentUsage(days: number): Promise<ScreenTimeSession[]> {
     const now = new Date();
-    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const windowStart = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
     const allSessions = await this.getAllSessions();
-    
+
     return allSessions.filter(session => {
       // a bare YYYY-MM-DD parses as UTC midnight; anchoring at local noon
       // keeps the record on its own local day in every timezone
       const sessionDate = new Date(`${session.date}T12:00:00`);
-      return sessionDate >= weekAgo && sessionDate <= now;
+      return sessionDate >= windowStart && sessionDate <= now;
     });
+  }
+
+  private getWeeklyUsage(): Promise<ScreenTimeSession[]> {
+    return this.getRecentUsage(7);
   }
 
   private calculateDailyAverages(sessions: ScreenTimeSession[]): Record<string, number> {

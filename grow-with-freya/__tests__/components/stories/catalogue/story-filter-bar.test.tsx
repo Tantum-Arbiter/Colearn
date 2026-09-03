@@ -18,7 +18,9 @@ const baseProps = {
 };
 
 function byTestId(tree: ReturnType<typeof render>, testID: string) {
-  return tree.UNSAFE_root.findAll((n: any) => n.props.testID === testID);
+  return tree.UNSAFE_root.findAll(
+    (n: any) => n.props.testID === testID && n.props.accessibilityRole === 'button'
+  );
 }
 
 describe('StoryFilterBar', () => {

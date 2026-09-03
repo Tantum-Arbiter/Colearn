@@ -1,33 +1,10 @@
-import React, { useCallback, useEffect } from 'react';
-import { Pressable, StyleProp, StyleSheet, Text, ViewStyle } from 'react-native';
+import React, { useCallback } from 'react';
+import { StyleProp, ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
-import Animated, { useAnimatedStyle, useSharedValue, withTiming, Easing } from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
 import { STORY_FILTER_TAGS, StoryFilterTag } from '@/types/story';
-import {
-  ACCENT_GOLD,
-  ACCENT_GREEN,
-  ACCENT_PURPLE,
-  BORDER_ACTIVE,
-  BORDER_DEFAULT,
-  SURFACE_SECONDARY,
-  TEXT_PRIMARY,
-} from '@/constants/night-palette';
-import { Fonts } from '@/constants/theme';
-import { CHILD_UI_MOTION, CHILD_UI_SCALE, motionDuration } from '@/constants/child-ui-motion';
-import { useAccessibility } from '@/hooks/use-accessibility';
-import { useReducedMotion } from '@/hooks/use-reduced-motion';
-import {
-  FILTER_PILL_HEIGHT,
-  FILTER_PILL_PADDING_H,
-  RADIUS_CONTROL,
-  SPACE_2,
-  TYPE_ROLES,
-  typeSize,
-} from '@/components/child-ui/tokens';
-
-const SELECTED_SURFACE = 'rgba(85, 131, 214, 0.68)';
+import { ACCENT_GOLD, ACCENT_GREEN, ACCENT_PURPLE } from '@/constants/night-palette';
+import { FilterPill } from '@/components/child-ui/filter-pill';
 
 interface PillIconSpec {
   icon: keyof typeof Ionicons.glyphMap;
@@ -61,74 +38,21 @@ interface StoryFilterPillProps {
 
 export function StoryFilterPill({ tag, selected, onToggle, style }: StoryFilterPillProps) {
   const { t } = useTranslation();
-  const { isTablet, scaledFontSize } = useAccessibility();
-  const reduceMotion = useReducedMotion();
-  const iconShift = useSharedValue(0);
   const spec = FILTER_PILL_ICONS[tag];
 
-  useEffect(() => {
-    iconShift.value = withTiming(selected ? -CHILD_UI_SCALE.filterIconShift : 0, {
-      duration: motionDuration(CHILD_UI_MOTION.filterSelect, reduceMotion),
-      easing: Easing.out(Easing.ease),
-    });
-  }, [selected, reduceMotion, iconShift]);
-
-  const iconStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: iconShift.value }],
-  }));
-
   const handlePress = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onToggle(tag);
   }, [onToggle, tag]);
 
   return (
-    <Pressable
+    <FilterPill
       testID={`story-filter-pill-${tag}`}
-      accessibilityRole="button"
-      accessibilityLabel={t(STORY_FILTER_TAGS[tag].labelKey)}
-      accessibilityState={{ selected }}
+      icon={spec.icon}
+      iconColor={spec.color}
+      label={t(STORY_FILTER_TAGS[tag].labelKey)}
+      selected={selected}
       onPress={handlePress}
-      style={[
-        styles.pill,
-        selected && styles.pillSelected,
-        style,
-      ]}
-    >
-      <Animated.View style={iconStyle}>
-        <Ionicons name={spec.icon} size={18} color={spec.color} />
-      </Animated.View>
-      <Text
-        style={[styles.label, { fontSize: scaledFontSize(typeSize('filterLabel', isTablet)) }]}
-        numberOfLines={1}
-      >
-        {t(STORY_FILTER_TAGS[tag].labelKey)}
-      </Text>
-    </Pressable>
+      style={style}
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  pill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: SPACE_2,
-    height: FILTER_PILL_HEIGHT,
-    paddingHorizontal: FILTER_PILL_PADDING_H,
-    borderRadius: RADIUS_CONTROL,
-    backgroundColor: SURFACE_SECONDARY,
-    borderWidth: 1,
-    borderColor: BORDER_DEFAULT,
-  },
-  pillSelected: {
-    backgroundColor: SELECTED_SURFACE,
-    borderColor: BORDER_ACTIVE,
-  },
-  label: {
-    color: TEXT_PRIMARY,
-    fontFamily: Fonts.primary,
-    fontWeight: TYPE_ROLES.filterLabel.weight,
-    flexShrink: 1,
-  },
-});

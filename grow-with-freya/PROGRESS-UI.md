@@ -29,9 +29,31 @@ tomorrow", "keep your streak", "only 2 more!").
 
 Planet artwork → back / sound controls → `Progress` + "Little steps, big progress." →
 Weekly Progress card (participation ring + time together + stories / music / calm metrics)
-→ ⭐ Little Milestones (3 across) → 🏅 Badges to crack (horizontally scrollable, ~2.6
-visible on phones) → journey navigation (Home / Library / Progress, Progress selected;
-Parents removed by operator decision 2026-08-29).
+→ ⭐ Little adventures (one weekly + one monthly challenge card) → ⭐ Little Milestones
+(3 across) → 🏅 Badges to crack ("n of m discovered" summary, category pill bar, full badge
+grid — 2 columns on phones, 4 on tablets) → journey navigation (Home / Library / Progress,
+Progress selected; Parents removed by operator decision 2026-08-29).
+
+The content column is capped at 720 dp and centred so tablets get margin, not stretch.
+
+## Finding badges and what is left (operator revision 2026-08-29)
+
+The badge library is browsed, not glimpsed: every badge sits in a vertical grid under a
+category bar (All · Stories · Music · Calm · Kindness · Exploring) and a descriptive summary
+("3 of 16 discovered"). The grid is sorted for discovery — badges coming alive
+(`in_progress`, then `started`) first, then the undiscovered possibilities, with earned
+badges settling at the end as warm memories. `sortBadgesForDiscovery`, `filterBadges` and
+`summariseBadges` in `progress-model.ts` own those rules.
+
+## Little adventures — weekly and monthly challenges
+
+Two challenge cards, one per period, chosen deterministically from small pools by ISO week
+and by calendar month (`buildChallenges` in `progress-model.ts`): the pick is stable for
+every day of its period and rotates between periods. Challenges are `Badge`-shaped
+(`Challenge extends Badge { period }`), so they render through the same state language and
+open the same detail sheet with an activity-driven recommendation. Copy is an invitation,
+never a countdown: "Share three story times together this week". Progress derives from the
+7-day (weekly) and 30-day (monthly) session windows — `ScreenTimeService.getRecentUsage(days)`.
 
 ## Badge state language (§15–§21 of the operator spec)
 
@@ -63,7 +85,9 @@ hides while the sheet is open.
 | Data derivation | `components/progress/use-progress-data.ts` |
 | Weekly card / ring / metric | `progress-hero-card.tsx`, `progress-ring.tsx`, `activity-metric.tsx` |
 | Milestones | `milestone-card.tsx` |
-| Badges | `badge-card.tsx`, `badge-artwork.tsx`, `badge-progress.tsx`, `badge-detail-sheet.tsx` |
+| Adventures | `challenge-card.tsx` |
+| Badges | `badge-card.tsx`, `badge-artwork.tsx`, `badge-progress.tsx`, `badge-category-bar.tsx`, `badge-detail-sheet.tsx` |
+| Filter pill (shared with the catalogue) | `components/child-ui/filter-pill.tsx` |
 
 Mounted by `StoryCatalogueScreen` inside the `JourneyShell` when the Progress nav item is
 selected; its back control returns to the catalogue home. Reuses `CelestialBackground`,
@@ -83,8 +107,9 @@ minutes and music/calm/morning session counts from `ScreenTimeService` weekly se
 - **Artwork is stood in** by existing emotion/home assets (bear, moon, cloud, loving
   animal, sun) — the reference's bespoke illustrations (bear reading, rabbit with heart,
   seedling) are not in the repo. Commission and swap in `progress-model.ts` definitions.
-- **Initial badge library is the reference four** (Morning Explorer, Story Adventurer,
-  Calm Champion, Kind Heart). The §24 groups extend by adding definitions — no UI changes.
+- **Badge library is sixteen badges across the five §24 groups** (Stories, Music, Calm,
+  Kindness, Exploration), every one with progress derivable from the counters. Adding more
+  is a definition in `progress-model.ts` plus its two i18n keys — no UI changes.
 - **Milestone thresholds** chosen at build time: 5 stories, 3 bedtime stories, 1
   kindness-themed story.
 - **React Native `Modal` is broken under Jest** in this repo, so the detail sheet is an

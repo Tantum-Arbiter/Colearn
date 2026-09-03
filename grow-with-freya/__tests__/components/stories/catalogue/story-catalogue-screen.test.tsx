@@ -98,7 +98,7 @@ jest.mock('@/services/screen-time-service', () => ({
   __esModule: true,
   default: {
     getInstance: () => ({
-      getScreenTimeStats: jest.fn().mockResolvedValue({ weeklyUsage: [] }),
+      getRecentUsage: jest.fn().mockResolvedValue([]),
     }),
   },
 }));

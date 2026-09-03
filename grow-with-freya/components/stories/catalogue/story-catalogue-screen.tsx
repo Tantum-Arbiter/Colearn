@@ -494,12 +494,12 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode }: StoryCatalo
         </View>
 
         <ScrollView
-          style={styles.scroll}
+          style={[styles.scroll, { marginBottom: navClearance(insets.bottom) }]}
           contentContainerStyle={[
             styles.scrollContent,
             {
               paddingHorizontal: margin,
-              paddingBottom: navClearance(insets.bottom) + (textSizeScale - 1) * 40,
+              paddingBottom: SPACE_4 + (textSizeScale - 1) * 40,
             },
           ]}
           scrollEnabled={!interactionLocked}

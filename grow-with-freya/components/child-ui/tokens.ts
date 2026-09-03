@@ -50,8 +50,10 @@ export const FEATURED_ASPECT_RATIO = 1.8;
 export const COVER_ASPECT_RATIO = 0.68;
 export const COVER_GRID_GAP = 12;
 
-export const NAV_HEIGHT = 88;
-export const NAV_BOTTOM_MARGIN = 14;
+export const NAV_HEIGHT = 84;
+export const NAV_BOTTOM_MARGIN = 10;
+export const NAV_HOME_INDICATOR_OVERLAP = 8;
+export const NAV_MAX_WIDTH = 520;
 
 export const PLAY_DIAMETER_FEATURED = 68;
 export const PLAY_DIAMETER_CARD = 44;
