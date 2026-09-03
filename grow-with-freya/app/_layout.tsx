@@ -14,6 +14,7 @@ import '@/services/i18n';
 import '@/services/notification-service';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAppStore } from '@/store/app-store';
+import { useShallow } from 'zustand/react/shallow';
 import { Logger } from '@/utils/logger';
 import { useBackgroundMusic } from '@/hooks/use-background-music';
 import { applyDefaultOrientation } from '@/hooks/use-story-orientation';
@@ -38,6 +39,7 @@ import { ScreenTimeProvider } from '@/components/screen-time/screen-time-provide
 import { Story } from '@/types/story';
 import { preloadCriticalImages, preloadSecondaryImages } from '@/services/image-preloader';
 import { EnhancedPageTransition } from '@/components/ui/enhanced-page-transition';
+import { PAGE_TRANSITION_DURATION_MS } from '@/constants/page-transition';
 import { StoryTransitionProvider, useStoryTransition } from '@/contexts/story-transition-context';
 import { ActivityTransitionProvider, useActivityTransition } from '@/contexts/ActivityTransitionContext';
 import { GlobalSoundProvider } from '@/contexts/global-sound-context';
@@ -140,9 +142,24 @@ function AppContent() {
     setCurrentScreen,
     shouldReturnToMainMenu,
     clearReturnToMainMenu
-  } = useAppStore();
+  } = useAppStore(
+    useShallow((state) => ({
+      isAppReady: state.isAppReady,
+      hasHydrated: state.hasHydrated,
+      hasCompletedOnboarding: state.hasCompletedOnboarding,
+      showLoginAfterOnboarding: state.showLoginAfterOnboarding,
+      isGuestMode: state.isGuestMode,
+      crashReportingEnabled: state.crashReportingEnabled,
+      setOnboardingComplete: state.setOnboardingComplete,
+      setShowLoginAfterOnboarding: state.setShowLoginAfterOnboarding,
+      setGuestMode: state.setGuestMode,
+      setCurrentScreen: state.setCurrentScreen,
+      shouldReturnToMainMenu: state.shouldReturnToMainMenu,
+      clearReturnToMainMenu: state.clearReturnToMainMenu,
+    }))
+  );
 
-  const { consentTimestamp } = useAppStore();
+  const consentTimestamp = useAppStore((state) => state.consentTimestamp);
 
   // Initialize or disable Sentry based on user consent
   // This runs after store hydration and whenever consent changes
@@ -922,10 +939,10 @@ function AppContent() {
                 isActive={currentPage === 'spelling-game'}
               />
             ) : null,
-            feelings: <EmotionsScreen onBack={handleBackToLearning} />,
+            feelings: <EmotionsScreen onBack={handleBackToLearning} isActive={currentPage === 'feelings'} />,
             account: <AccountScreen onBack={handleAccountBack} isActive={currentPage === 'account'} />,
           }}
-          duration={800}
+          duration={PAGE_TRANSITION_DURATION_MS}
           animate={animatePageTransition}
         />
 

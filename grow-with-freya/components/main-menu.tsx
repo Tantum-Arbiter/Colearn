@@ -29,6 +29,7 @@ import * as Haptics from 'expo-haptics';
 import { STORY_MODES, type StoryMode } from '@/components/stories/story-selection-screen';
 import { Fonts } from '@/constants/theme';
 import { HomeSceneContainer } from '@/components/home';
+import { spinStars, useAmbientLoop, type AmbientStarter } from '@/hooks/use-ambient-animation';
 
 
 import { ErrorBoundary } from './error-boundary';
@@ -54,6 +55,23 @@ import {
 } from './main-menu/index';
 
 import { createCloudAnimationNew } from './main-menu/cloud-animations';
+
+const SPIN_STARS = spinStars(20000);
+const PULSE_UNLOCK: AmbientStarter = (value) => {
+  value.value = withRepeat(
+    withSequence(
+      withTiming(1.05, { duration: 1200, easing: ReanimatedEasing.inOut(ReanimatedEasing.ease) }),
+      withTiming(1, { duration: 1200, easing: ReanimatedEasing.inOut(ReanimatedEasing.ease) }),
+    ),
+    -1, true
+  );
+};
+const SHIMMER_UNLOCK: AmbientStarter = (value) => {
+  value.value = withRepeat(
+    withTiming(1, { duration: 2000, easing: ReanimatedEasing.inOut(ReanimatedEasing.ease) }),
+    -1, false
+  );
+};
 
 // PERFORMANCE: Generate star positions once at module level to prevent recalculation on every mount
 // This is safe because star positions are random and don't need to change between mounts
@@ -114,7 +132,7 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
   const { scaledButtonSize, scaledFontSize } = useAccessibility();
 
   // Subscription state
-  const { getEffectiveTier } = useAppStore();
+  const getEffectiveTier = useAppStore((state) => state.getEffectiveTier);
   const effectiveTier: SubscriptionTier = getEffectiveTier();
   const isPremium = effectiveTier === 'premium';
   const [showSubscription, setShowSubscription] = useState(false);
@@ -124,21 +142,9 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
   const unlockShimmer = useSharedValue(0);
   const unlockSlideY = useSharedValue(0);
 
-  useEffect(() => {
-    // Gentle scale pulse
-    unlockPulse.value = withRepeat(
-      withSequence(
-        withTiming(1.05, { duration: 1200, easing: ReanimatedEasing.inOut(ReanimatedEasing.ease) }),
-        withTiming(1, { duration: 1200, easing: ReanimatedEasing.inOut(ReanimatedEasing.ease) }),
-      ),
-      -1, true
-    );
-    // Shimmer sweep every 3s
-    unlockShimmer.value = withRepeat(
-      withTiming(1, { duration: 2000, easing: ReanimatedEasing.inOut(ReanimatedEasing.ease) }),
-      -1, false
-    );
-  }, []);
+  const ambientActive = !useHomeScene && Boolean(isActive);
+  useAmbientLoop(ambientActive, unlockPulse, PULSE_UNLOCK, 1);
+  useAmbientLoop(ambientActive, unlockShimmer, SHIMMER_UNLOCK, 0);
 
   const unlockBtnAnimStyle = useAnimatedStyle(() => ({
     transform: [
@@ -313,16 +319,7 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
   }, [containerOpacity, skipFadeIn]);
 
   // Star twinkle rotation (matches story selection / practise screens)
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      starRotation.value = withRepeat(
-        withTiming(360, { duration: 20000, easing: ReanimatedEasing.linear }),
-        -1,
-        false,
-      );
-    }, 300);
-    return () => clearTimeout(timeoutId);
-  }, []);
+  useAmbientLoop(ambientActive, starRotation, SPIN_STARS, 0);
 
   const containerAnimatedStyle = useAnimatedStyle(() => ({
     opacity: containerOpacity.value,
@@ -465,7 +462,7 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
   if (useHomeScene) {
     return (
       <>
-        <HomeSceneContainer onNavigate={guardedOnNavigate} onOpenGrownUps={openGrownUpsCorner} />
+        <HomeSceneContainer onNavigate={guardedOnNavigate} onOpenGrownUps={openGrownUpsCorner} isActive={isActive !== false} />
         <ParentsOnlyModal
           visible={parentsOnly.isVisible}
           challenge={parentsOnly.challenge}

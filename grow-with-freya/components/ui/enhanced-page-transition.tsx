@@ -8,6 +8,7 @@ import Animated, {
   Easing,
   SharedValue,
 } from 'react-native-reanimated';
+
 import { getScreenDimensions } from '@/components/main-menu/constants';
 
 interface EnhancedPageTransitionProps {
@@ -23,13 +24,11 @@ interface AnimatedPageProps {
   pageComponent: React.ReactNode;
   isActive: boolean;
   animationValue: SharedValue<number>;
-  /** When true, block all touch input (transition in progress) */
-  touchDisabled: boolean;
 }
 
 // Memoized page component to prevent unnecessary re-renders
 const AnimatedPage: React.FC<AnimatedPageProps> = memo(function AnimatedPage({
-  pageKey, pageComponent, isActive, animationValue, touchDisabled,
+  pageKey, pageComponent, isActive, animationValue,
 }) {
   // Normal slide animation
   const slideStyle = useAnimatedStyle(() => ({
@@ -44,7 +43,7 @@ const AnimatedPage: React.FC<AnimatedPageProps> = memo(function AnimatedPage({
         slideStyle,
         { zIndex: isActive ? 1 : 0 },
       ]}
-      pointerEvents={isActive && !touchDisabled ? 'auto' : 'none'}
+      pointerEvents={isActive ? 'auto' : 'none'}
     >
       {pageComponent || (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'red' }}>
@@ -238,10 +237,15 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
             pageComponent={pageComponent}
             isActive={isActive}
             animationValue={pageAnimations[pageKey]}
-            touchDisabled={isTransitioning}
           />
         );
       })}
+      {/* swallows touches while pages slide, without re-rendering the pages themselves */}
+      <View
+        testID="page-transition-touch-guard"
+        style={styles.touchGuard}
+        pointerEvents={isTransitioning ? 'auto' : 'none'}
+      />
     </LinearGradient>
   );
 };
@@ -257,5 +261,13 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
+  },
+  touchGuard: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 2,
   },
 });

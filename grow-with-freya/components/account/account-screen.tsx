@@ -4,9 +4,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming } from 'react-native-reanimated';
+import { useAmbientLoop, type AmbientStarter } from '@/hooks/use-ambient-animation';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppStore, type SubscriptionTier } from '../../store/app-store';
+import { useShallow } from 'zustand/react/shallow';
 import { restorePurchases, isDevMode } from '@/services/subscription-service';
 import { MoonBottomImage } from '../main-menu/animated-components';
 import { mainMenuStyles } from '../main-menu/styles';
@@ -37,6 +39,10 @@ const log = Logger.create('Account');
 import { useTutorial } from '../../contexts/tutorial-context';
 import { SUPPORTED_LANGUAGES, setStoredLanguage, type SupportedLanguage } from '../../services/i18n';
 import * as Notifications from 'expo-notifications';
+
+const BREATHE_STARS: AmbientStarter = (value) => {
+  value.value = withRepeat(withTiming(0.8, { duration: 2000 }), -1, true);
+};
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -141,7 +147,33 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
     getEffectiveTier,
     _devSubscriptionOverride,
     setDevSubscriptionOverride,
-  } = useAppStore();
+  } = useAppStore(
+    useShallow((state) => ({
+      userNickname: state.userNickname,
+      userAvatarType: state.userAvatarType,
+      textSizeScale: state.textSizeScale,
+      isGuestMode: state.isGuestMode,
+      crashReportingEnabled: state.crashReportingEnabled,
+      screenTimeEnabled: state.screenTimeEnabled,
+      notificationsEnabled: state.notificationsEnabled,
+      hasRequestedNotificationPermission: state.hasRequestedNotificationPermission,
+      setScreenTimeEnabled: state.setScreenTimeEnabled,
+      setNotificationsEnabled: state.setNotificationsEnabled,
+      setNotificationPermissionRequested: state.setNotificationPermissionRequested,
+      setTextSizeScale: state.setTextSizeScale,
+      setCrashReportingEnabled: state.setCrashReportingEnabled,
+      setOnboardingComplete: state.setOnboardingComplete,
+      setLoginComplete: state.setLoginComplete,
+      setAppReady: state.setAppReady,
+      setShowLoginAfterOnboarding: state.setShowLoginAfterOnboarding,
+      setGuestMode: state.setGuestMode,
+      clearPersistedStorage: state.clearPersistedStorage,
+      clearUserProfile: state.clearUserProfile,
+      getEffectiveTier: state.getEffectiveTier,
+      _devSubscriptionOverride: state._devSubscriptionOverride,
+      setDevSubscriptionOverride: state.setDevSubscriptionOverride,
+    }))
+  );
 
   // Screen time context for resetting today's usage
   const { todayUsage, refreshUsage } = useScreenTime();
@@ -214,17 +246,7 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
   // PERFORMANCE: Use module-level memoized star positions
   const stars = MEMOIZED_ACCOUNT_STAR_POSITIONS;
 
-  // PERFORMANCE: Defer star animation until after page transition to prevent jitter
-  React.useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      starOpacity.value = withRepeat(
-        withTiming(0.8, { duration: 2000 }),
-        -1,
-        true
-      );
-    }, 600); // Wait for page transition (500ms + 100ms buffer)
-    return () => clearTimeout(timeoutId);
-  }, [starOpacity]);
+  useAmbientLoop(isActive, starOpacity, BREATHE_STARS, 0.4);
 
   const starAnimatedStyle = useAnimatedStyle(() => ({
     opacity: starOpacity.value,

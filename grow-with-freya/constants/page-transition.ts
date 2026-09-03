@@ -1,0 +1,1 @@
+export const PAGE_TRANSITION_DURATION_MS = 800;

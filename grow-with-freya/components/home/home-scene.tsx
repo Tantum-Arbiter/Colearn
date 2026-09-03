@@ -45,6 +45,7 @@ export interface HomeSceneProps {
   screenTimeHidden?: boolean;
   onOpenPlans?: () => void;
   timeOfDay?: TimeOfDay;
+  isActive?: boolean;
   testID?: string;
 }
 
@@ -58,6 +59,7 @@ export const HomeScene = memo(function HomeScene({
   screenTimeHidden = false,
   onOpenPlans,
   timeOfDay,
+  isActive = true,
   testID = 'home-scene',
 }: HomeSceneProps) {
   const { t } = useTranslation();
@@ -87,7 +89,7 @@ export const HomeScene = memo(function HomeScene({
 
   return (
     <View testID={testID} style={[styles.root, { backgroundColor: theme.skyTop }]}>
-      <NightSky width={width} height={height} timeOfDay={activeTimeOfDay} />
+      <NightSky width={width} height={height} timeOfDay={activeTimeOfDay} active={isActive} />
 
       <View style={[styles.moon, { top: insets.top + 6 }]} pointerEvents="none">
         <SkyFace size={skyFaceSize} timeOfDay={activeTimeOfDay} />

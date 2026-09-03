@@ -32,6 +32,7 @@ jest.mock('react-native-reanimated', () => {
     useAnimatedStyle: jest.fn(() => ({})),
     withTiming: jest.fn((v: any) => v),
     withRepeat: jest.fn((a: any) => a),
+    cancelAnimation: jest.fn(),
     Easing: { out: jest.fn((e: any) => e), in: jest.fn((e: any) => e), cubic: jest.fn() },
     runOnJS: jest.fn((fn: any) => fn),
   };

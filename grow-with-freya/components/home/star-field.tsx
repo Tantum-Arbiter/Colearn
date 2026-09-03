@@ -136,6 +136,7 @@ const Sparkle = memo(function Sparkle({
 });
 
 export interface StarFieldProps {
+  active?: boolean;
   width: number;
   height: number;
   colour: string;
@@ -145,6 +146,7 @@ export interface StarFieldProps {
 }
 
 export const StarField = memo(function StarField({
+  active = true,
   width,
   height,
   colour,
@@ -167,7 +169,7 @@ export const StarField = memo(function StarField({
           seed={seed}
           colour={colour}
           intensity={intensity}
-          animated={!reduceMotion}
+          animated={!reduceMotion && active}
         />
       ))}
 
@@ -179,7 +181,7 @@ export const StarField = memo(function StarField({
           size={sparkle.size}
           colour={sparkleColour}
           intensity={intensity}
-          animated={!reduceMotion}
+          animated={!reduceMotion && active}
           index={index}
         />
       ))}

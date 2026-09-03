@@ -16,11 +16,13 @@ import { HomeScene, type ContinueReadingSummary } from './home-scene';
 export interface HomeSceneContainerProps {
   onNavigate: (destination: string) => void;
   onOpenGrownUps: () => void;
+  isActive?: boolean;
 }
 
 export const HomeSceneContainer = memo(function HomeSceneContainer({
   onNavigate,
   onOpenGrownUps,
+  isActive = true,
 }: HomeSceneContainerProps) {
   const { i18n } = useTranslation();
   const storyProgress = useAppStore((state) => state.storyProgress);
@@ -93,6 +95,7 @@ export const HomeSceneContainer = memo(function HomeSceneContainer({
         onOpenScreenTime={openScreenTime}
         screenTimeHidden={showScreenTime}
         onOpenPlans={offerPlan ? openPlans : undefined}
+        isActive={isActive}
       />
 
       <ScreenTimeGlance

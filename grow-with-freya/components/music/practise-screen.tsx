@@ -24,7 +24,6 @@ import { useTranslation } from 'react-i18next';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  withRepeat,
   withTiming,
   Easing,
 } from 'react-native-reanimated';
@@ -36,6 +35,7 @@ import { InstrumentCarousel } from '@/components/music/instrument-carousel';
 import { MusicControl } from '@/components/ui/music-control';
 import { PageHeader } from '@/components/ui/page-header';
 import { EarthHorizon } from '@/components/ui/earth-horizon';
+import { spinStars, useAmbientLoop } from '@/hooks/use-ambient-animation';
 import { VISUAL_EFFECTS } from '@/components/main-menu/constants';
 import { generateStarPositions } from '@/components/main-menu/utils';
 import { useAccessibility } from '@/hooks/use-accessibility';
@@ -54,6 +54,8 @@ import { SubscriptionOverlay } from '@/components/ui/subscription-overlay';
 import { StoryAccessService } from '@/services/story-access-service';
 import { LearningTipsOverlay } from '@/components/tutorial';
 import { SKY_GRADIENT_WORLD, NIGHT_DEEP } from '@/constants/night-palette';
+
+const SPIN_STARS = spinStars(20000);
 
 // Pre-generate star positions at module level (same as story selection screen)
 const STAR_POSITIONS = generateStarPositions(VISUAL_EFFECTS.STAR_COUNT);
@@ -392,16 +394,7 @@ export function PractiseScreen({ onBack, isActive = false }: PractiseScreenProps
 
   // Star rotation animation (same as story selection page)
   const starRotation = useSharedValue(0);
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      starRotation.value = withRepeat(
-        withTiming(360, { duration: 20000, easing: Easing.linear }),
-        -1,
-        false
-      );
-    }, 600);
-    return () => clearTimeout(timeoutId);
-  }, []);
+  useAmbientLoop(isActive, starRotation, SPIN_STARS, 0);
   const starAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${starRotation.value}deg` }],
   }));

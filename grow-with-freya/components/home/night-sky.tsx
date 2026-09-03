@@ -4,6 +4,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { HOME_THEMES, type TimeOfDay } from '@/constants/home-scene';
 import { useShootingStar } from '@/hooks/use-shooting-star';
+import { useSettledAfterTransition } from '@/hooks/use-ambient-animation';
 import { EarthHorizon } from '@/components/ui/earth-horizon';
 import { StarField } from './star-field';
 import { ShootingStar } from './shooting-star';
@@ -17,6 +18,7 @@ export interface NightSkyProps {
   width: number;
   height: number;
   timeOfDay: TimeOfDay;
+  active?: boolean;
   testID?: string;
 }
 
@@ -24,11 +26,13 @@ export const NightSky = memo(function NightSky({
   width,
   height,
   timeOfDay,
+  active = true,
   testID = 'night-sky',
 }: NightSkyProps) {
   const theme = HOME_THEMES[timeOfDay];
   const starIntensity = Number(theme.starOpacity);
-  const flight = useShootingStar({ enabled: timeOfDay === 'night' });
+  const settled = useSettledAfterTransition(active);
+  const flight = useShootingStar({ enabled: timeOfDay === 'night' && settled });
   // sized explicitly -- aspectRatio on images proved unreliable (see AuthSky)
   const cloudWidth = Math.round(width * 0.55);
   const cloudHeight = Math.round(cloudWidth * (616 / 531));
@@ -47,6 +51,7 @@ export const NightSky = memo(function NightSky({
         colour={theme.star}
         sparkleColour={theme.ribbonStar}
         intensity={starIntensity}
+        active={settled}
       />
 
       {timeOfDay === 'night' ? (

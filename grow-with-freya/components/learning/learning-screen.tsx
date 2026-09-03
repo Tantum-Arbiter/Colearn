@@ -24,7 +24,6 @@ import { useTranslation } from 'react-i18next';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  withRepeat,
   withTiming,
   withSpring,
   withSequence,
@@ -37,6 +36,7 @@ import Svg, { Rect } from 'react-native-svg';
 import { type AgeRange } from '@/components/learning/age-range-carousel';
 import { PageHeader } from '@/components/ui/page-header';
 import { EarthHorizon } from '@/components/ui/earth-horizon';
+import { spinStars, useAmbientLoop } from '@/hooks/use-ambient-animation';
 import { VISUAL_EFFECTS } from '@/components/main-menu/constants';
 import { generateStarPositions } from '@/components/main-menu/utils';
 import { useAccessibility } from '@/hooks/use-accessibility';
@@ -47,6 +47,8 @@ import { LearningTipsOverlay } from '@/components/tutorial';
 import { TutorialId } from '@/contexts/tutorial-context';
 import { useAppStore, type StoryViewMode } from '@/store/app-store';
 import { useActivityTransition, type TransitionActivity } from '@/contexts/ActivityTransitionContext';
+
+const SLOW_SPIN_STARS = spinStars(120000);
 
 const STAR_POSITIONS = generateStarPositions(VISUAL_EFFECTS.STAR_COUNT);
 
@@ -278,7 +280,8 @@ export function LearningScreen({ mode, onBack, onActivitySelect, isActive = fals
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { scaledFontSize, scaledButtonSize, textSizeScale } = useAccessibility();
-  const { learningViewMode, setLearningViewMode } = useAppStore();
+  const learningViewMode = useAppStore((s) => s.learningViewMode);
+  const setLearningViewMode = useAppStore((s) => s.setLearningViewMode);
   const favoriteActivityIds = useAppStore((s) => s.favoriteActivityIds);
   const toggleFavoriteActivity = useAppStore((s) => s.toggleFavoriteActivity);
   const [selectedRange, setSelectedRange] = useState<AgeRange>('all');
@@ -305,9 +308,7 @@ export function LearningScreen({ mode, onBack, onActivitySelect, isActive = fals
 
   // Star rotation
   const starRotation = useSharedValue(0);
-  React.useEffect(() => {
-    starRotation.value = withRepeat(withTiming(360, { duration: 120000, easing: Easing.linear }), -1, false);
-  }, [starRotation]);
+  useAmbientLoop(isActive, starRotation, SLOW_SPIN_STARS, 0);
   const starAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${starRotation.value}deg` }],
   }));
