@@ -32,10 +32,22 @@ describe('earthCap', () => {
     expect(underTest).toBe(Math.round(TABLET_LANDSCAPE.height * EARTH.rise.heightRatio));
   });
 
-  it.each(SCREENS)('should show more of the globe rising on the home page than hanging above %s', (_case, screen) => {
-    const underTest = earthCap(screen.width, screen.height, 'bottom');
+  it.each(SCREENS)('should hang deeper than it rises on %s, since the header floats over the underside', (_case, screen) => {
+    const underTest = earthCap(screen.width, screen.height, 'top');
 
-    expect(underTest).toBeGreaterThan(earthCap(screen.width, screen.height, 'top'));
+    expect(underTest).toBeGreaterThan(earthCap(screen.width, screen.height, 'bottom'));
+  });
+
+  it.each([
+    ['a phone', PHONE],
+    ['a tablet', TABLET],
+  ] as const)('should bulge well past the screen edges on %s rather than sit flat like a lid', (_case, screen) => {
+    const diameter = earthDiameter(screen.width, screen.height);
+    const cap = earthCap(screen.width, screen.height, 'top');
+
+    const underTest = earthChord(diameter, cap * 0.65);
+
+    expect(underTest).toBeGreaterThanOrEqual(screen.width);
   });
 });
 

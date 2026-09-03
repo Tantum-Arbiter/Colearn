@@ -4,7 +4,7 @@ export const EARTH = {
   overhang: 1.18,
   maxDiameterRatio: 2.2,
   rise: { widthRatio: 0.34, heightRatio: 0.17 },
-  hang: { widthRatio: 0.24, heightRatio: 0.12 },
+  hang: { widthRatio: 0.38, heightRatio: 0.2 },
 } as const;
 
 export interface EarthLayout {
