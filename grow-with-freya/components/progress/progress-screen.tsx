@@ -15,6 +15,7 @@ import { SectionHeading } from '@/components/child-ui/section-heading';
 import { navClearance } from '@/components/child-ui/child-bottom-navigation';
 import {
   COVER_GRID_GAP,
+  SPACE_1,
   SPACE_2,
   SPACE_3,
   SPACE_4,
@@ -151,10 +152,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     zIndex: 10,
+    paddingBottom: SPACE_3,
   },
   titleWrapper: {
     flex: 1,
-    gap: SPACE_2,
+    gap: SPACE_1,
   },
   subtitle: {
     color: LAVENDER_TEXT,
