@@ -55,7 +55,7 @@ jest.mock('@/store/app-store', () => ({
 jest.mock('@/services/story-loader', () => ({
   StoryLoader: {
     getCachedStories: jest.fn(() => null),
-    getStories: jest.fn().mockResolvedValue([]),
+    getStories: jest.fn(() => Promise.resolve(jest.requireMock('@/data/stories').ALL_STORIES)),
     invalidateCache: jest.fn(),
     isLocalStory: jest.fn(() => false),
   },
@@ -240,6 +240,7 @@ describe('StoryCatalogueScreen', () => {
       byTestId(tree, 'navigation-item-library').find((n: any) => n.props.accessibilityRole === 'tab')
     );
     await waitFor(() => expect(byTestId(tree, 'library-section-onThisDevice').length).toBeGreaterThan(0));
+    await waitFor(() => expect(byTestId(tree, 'section-crossfade-leaving')).toHaveLength(0), { timeout: 4000 });
 
     expect(byTestId(tree, 'story-cover-card-remote-1')).toHaveLength(0);
     expect(byTestId(tree, 'featured-story-card')).toHaveLength(0);
@@ -308,17 +309,16 @@ describe('StoryCatalogueScreen', () => {
       byTestId(tree, 'navigation-item-progress').find((n: any) => n.props.accessibilityRole === 'tab')
     );
 
-    await waitFor(() => {
-      expect(byTestId(tree, 'progress-title').length).toBeGreaterThan(0);
-      expect(byTestId(tree, 'child-bottom-navigation').length).toBeGreaterThan(0);
-      expect(byTestId(tree, 'featured-story-card')).toHaveLength(0);
-    });
+    await waitFor(() => expect(byTestId(tree, 'progress-title').length).toBeGreaterThan(0));
+    await waitFor(() => expect(byTestId(tree, 'section-crossfade-leaving')).toHaveLength(0), { timeout: 4000 });
+    expect(byTestId(tree, 'child-bottom-navigation').length).toBeGreaterThan(0);
+    expect(byTestId(tree, 'featured-story-card')).toHaveLength(0);
 
     fireEvent.press(byTestId(tree, 'circle-action-back')[0]);
 
     await waitFor(() => {
       expect(byTestId(tree, 'featured-story-card').length).toBeGreaterThan(0);
-    });
+    }, { timeout: 4000 });
     expect(mockAppState.requestReturnToMainMenu).not.toHaveBeenCalled();
   });
 
