@@ -341,7 +341,9 @@ controls.
 
 ### 6.5 `StoryFilterBar` / `StoryFilterPill`
 
-One row, always one line: three pills plus a trailing grid-view toggle.
+One row, always one line of pills. The reference's trailing grid-view toggle was removed by
+operator decision on 2026-08-29 — the catalogue has one layout (featured card + cover grid),
+so a view switch had nothing left to switch.
 
 | Property | Value |
 |---|---|
@@ -472,7 +474,9 @@ Current location must be legible to a pre-reader at a glance.
 
 **Home is the journey's home, not the way out** (operator decision 2026-08-29, revising the
 earlier reading): selecting Home returns to the full catalogue — mode and tag filters
-cleared, featured card and all stories visible. Library shows the on-device stories only.
+cleared, featured card and all stories visible. Library shows the on-device stories in the
+sections a phone media library is expected to have — Recently read, Favourites, New to you,
+On this device — each rendered in the same cover-card grid and hidden when empty.
 Progress opens the in-journey Progress page (see [`PROGRESS-UI.md`](PROGRESS-UI.md)). The
 way out of the journey is the floating back control, which returns to the app's main menu.
 

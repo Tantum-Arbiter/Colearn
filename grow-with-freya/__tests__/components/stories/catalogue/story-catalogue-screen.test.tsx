@@ -41,8 +41,6 @@ const mockAppState = {
   requestReturnToMainMenu: jest.fn(),
   setShowLoginAfterOnboarding: jest.fn(),
   getEffectiveTier: () => 'free' as const,
-  storyViewMode: 'carousel',
-  setStoryViewMode: jest.fn(),
   favoriteStoryIds: [] as string[],
   toggleFavoriteStory: jest.fn(),
   userAvatarType: null,
@@ -119,6 +117,22 @@ describe('StoryCatalogueScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockGetCatalog.mockResolvedValue([]);
+    mockAppState.readStoryIds = [];
+    mockAppState.favoriteStoryIds = [];
+  });
+
+  it('carries no view toggle in the filter row', async () => {
+    const tree = render(<StoryCatalogueScreen />);
+
+    await waitFor(() => expect(byTestId(tree, 'story-filter-bar').length).toBeGreaterThan(0));
+
+    expect(byTestId(tree, 'story-view-toggle')).toHaveLength(0);
+  });
+
+  it('always shows the featured card on the catalogue home', async () => {
+    const tree = render(<StoryCatalogueScreen />);
+
+    await waitFor(() => expect(byTestId(tree, 'featured-story-card').length).toBeGreaterThan(0));
   });
 
   it('composes environment, controls, filters, featured card, grid and navigation', async () => {
@@ -231,6 +245,49 @@ describe('StoryCatalogueScreen', () => {
       expect(byTestId(tree, 'featured-story-card')).toHaveLength(0);
       expect(byTestId(tree, 'story-cover-card-wombat').length).toBeGreaterThan(0);
     });
+  });
+
+  async function openLibrary() {
+    const tree = render(<StoryCatalogueScreen />);
+    await waitFor(() => expect(byTestId(tree, 'navigation-item-library').length).toBeGreaterThan(0));
+    fireEvent.press(
+      byTestId(tree, 'navigation-item-library').find((n: any) => n.props.accessibilityRole === 'tab')
+    );
+    await waitFor(() => expect(byTestId(tree, 'library-section-onThisDevice').length).toBeGreaterThan(0));
+    return tree;
+  }
+
+  it('gives the Library the sections a phone media library expects, hiding empty ones', async () => {
+    mockAppState.readStoryIds = ['bear'];
+    mockAppState.favoriteStoryIds = ['whale'];
+
+    const tree = await openLibrary();
+
+    ['recentlyRead', 'favourites', 'newToYou', 'onThisDevice'].forEach((section) => {
+      expect(byTestId(tree, `library-section-${section}`).length).toBeGreaterThan(0);
+      const heading = byTestId(tree, `library-heading-${section}`)[0];
+      const label = heading.findAll((n: any) => typeof n.props.children === 'string').map((n: any) => n.props.children).join(' ');
+      expect(label).toContain(`catalogue.library.${section}`);
+    });
+
+    const recent = byTestId(tree, 'library-section-recentlyRead')[0];
+    expect(recent.findAll((n: any) => n.props.testID === 'story-cover-card-bear').length).toBeGreaterThan(0);
+    expect(recent.findAll((n: any) => n.props.testID === 'story-cover-card-wombat')).toHaveLength(0);
+
+    const newToYou = byTestId(tree, 'library-section-newToYou')[0];
+    expect(newToYou.findAll((n: any) => n.props.testID === 'story-cover-card-bear')).toHaveLength(0);
+    expect(newToYou.findAll((n: any) => n.props.testID === 'story-cover-card-wombat').length).toBeGreaterThan(0);
+
+    const favourites = byTestId(tree, 'library-section-favourites')[0];
+    expect(favourites.findAll((n: any) => n.props.testID === 'story-cover-card-whale').length).toBeGreaterThan(0);
+  });
+
+  it('hides Recently read and Favourites in the Library when nothing has been read or favourited', async () => {
+    const tree = await openLibrary();
+
+    expect(byTestId(tree, 'library-section-recentlyRead')).toHaveLength(0);
+    expect(byTestId(tree, 'library-section-favourites')).toHaveLength(0);
+    expect(byTestId(tree, 'library-section-newToYou').length).toBeGreaterThan(0);
   });
 
   it('exits the journey from the floating back control', async () => {

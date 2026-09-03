@@ -3181,9 +3181,14 @@ export default {
     moreStories: 'Daha Fazla Hikâye',
     read: 'Oku',
     sound: 'Ses',
-    viewToggle: 'Görünümü değiştir',
     noResults: 'Bu filtrelerle hikâye bulunamadı',
     clearFilters: 'Filtreleri temizle',
+    library: {
+      recentlyRead: 'Son okunanlar',
+      favourites: 'Favoriler',
+      newToYou: 'Senin için yeni',
+      onThisDevice: 'Bu cihazda',
+    },
   },
 
   progress: {

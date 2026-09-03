@@ -3181,9 +3181,14 @@ export default {
     moreStories: 'Meer verhalen',
     read: 'Lezen',
     sound: 'Geluid',
-    viewToggle: 'Weergave wijzigen',
     noResults: 'Geen verhalen gevonden met deze filters',
     clearFilters: 'Filters wissen',
+    library: {
+      recentlyRead: 'Recent gelezen',
+      favourites: 'Favorieten',
+      newToYou: 'Nieuw voor jou',
+      onThisDevice: 'Op dit apparaat',
+    },
   },
 
   progress: {

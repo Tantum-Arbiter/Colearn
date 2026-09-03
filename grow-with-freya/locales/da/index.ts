@@ -3181,9 +3181,14 @@ export default {
     moreStories: 'Flere historier',
     read: 'Læs',
     sound: 'Lyd',
-    viewToggle: 'Skift visning',
     noResults: 'Ingen historier fundet med disse filtre',
     clearFilters: 'Ryd filtre',
+    library: {
+      recentlyRead: 'Senest læst',
+      favourites: 'Favoritter',
+      newToYou: 'Nyt for dig',
+      onThisDevice: 'På denne enhed',
+    },
   },
 
   progress: {

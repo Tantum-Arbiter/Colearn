@@ -67,6 +67,7 @@ const FILTER_TAG_SET: StoryFilterTag[] = [
 ];
 
 const COVER_COLUMNS = 3;
+const LIBRARY_RECENT_LIMIT = 6;
 
 interface StoryCatalogueScreenProps {
   onStorySelect?: (story: Story) => void;
@@ -76,8 +77,9 @@ interface StoryCatalogueScreenProps {
 export function StoryCatalogueScreen({ onStorySelect, initialMode }: StoryCatalogueScreenProps) {
   const insets = useSafeAreaInsets();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
-  const { requestReturnToMainMenu, setShowLoginAfterOnboarding, getEffectiveTier, storyViewMode, setStoryViewMode } = useAppStore();
+  const { requestReturnToMainMenu, setShowLoginAfterOnboarding, getEffectiveTier } = useAppStore();
   const favoriteStoryIds = useAppStore((state) => state.favoriteStoryIds);
+  const readStoryIds = useAppStore((state) => state.readStoryIds);
   const toggleFavoriteStory = useAppStore((state) => state.toggleFavoriteStory);
   const userAvatarType = useAppStore((state) => state.userAvatarType);
   const effectiveTier: SubscriptionTier = getEffectiveTier();
@@ -192,8 +194,8 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode }: StoryCatalo
   }, [stories, catalogEntries, userAvatarType, storyMode, effectiveTier, shareUnlockedIds, selectedTags, navSection]);
 
   const featured = useMemo(
-    () => (storyViewMode === 'grid' || navSection === 'library' ? null : selectFeatured(catalogueStories)),
-    [catalogueStories, storyViewMode, navSection],
+    () => (navSection === 'library' ? null : selectFeatured(catalogueStories)),
+    [catalogueStories, navSection],
   );
 
   const moreStories = useMemo(
@@ -214,10 +216,6 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode }: StoryCatalo
       return next;
     });
   }, []);
-
-  const handleToggleView = useCallback(() => {
-    setStoryViewMode(storyViewMode === 'grid' ? 'carousel' : 'grid');
-  }, [storyViewMode, setStoryViewMode]);
 
   const handleExitJourney = useCallback(() => {
     const now = Date.now();
@@ -440,14 +438,43 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode }: StoryCatalo
   const moreSection = (
     <>
       <View style={styles.sectionHeadingSpacing}>
-        <SectionHeading
-          label={t(navSection === 'library' ? 'childUi.nav.library' : 'catalogue.moreStories')}
-          testID="more-section-heading"
-        />
+        <SectionHeading label={t('catalogue.moreStories')} testID="more-section-heading" />
       </View>
       <View style={styles.coverGrid} testID="story-cover-grid">
         {moreStories.map(renderCoverCard)}
       </View>
+    </>
+  );
+
+  const librarySections = useMemo(() => {
+    if (navSection !== 'library') return [];
+    const byId = new Map(catalogueStories.map((story) => [story.id, story]));
+    const recentlyRead = [...readStoryIds]
+      .reverse()
+      .map((id) => byId.get(id))
+      .filter((story): story is CatalogueStory => story !== undefined)
+      .slice(0, LIBRARY_RECENT_LIMIT);
+    const favourites = catalogueStories.filter((story) => favoriteStoryIds.includes(story.id));
+    const newToYou = catalogueStories.filter((story) => !readStoryIds.includes(story.id));
+
+    return [
+      { id: 'recentlyRead', labelKey: 'catalogue.library.recentlyRead', stories: recentlyRead },
+      { id: 'favourites', labelKey: 'catalogue.library.favourites', stories: favourites },
+      { id: 'newToYou', labelKey: 'catalogue.library.newToYou', stories: newToYou },
+      { id: 'onThisDevice', labelKey: 'catalogue.library.onThisDevice', stories: catalogueStories },
+    ].filter((section) => section.stories.length > 0);
+  }, [navSection, catalogueStories, readStoryIds, favoriteStoryIds]);
+
+  const librarySectionsView = (
+    <>
+      {librarySections.map((section) => (
+        <View key={section.id} testID={`library-section-${section.id}`}>
+          <View style={styles.sectionHeadingSpacing}>
+            <SectionHeading label={t(section.labelKey)} testID={`library-heading-${section.id}`} />
+          </View>
+          <View style={styles.coverGrid}>{section.stories.map(renderCoverCard)}</View>
+        </View>
+      ))}
     </>
   );
 
@@ -509,8 +536,6 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode }: StoryCatalo
               tags={FILTER_TAG_SET}
               selectedTags={selectedTags}
               onToggleTag={handleToggleTag}
-              gridActive={storyViewMode === 'grid'}
-              onToggleView={handleToggleView}
             />
           </View>
 
@@ -527,6 +552,8 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode }: StoryCatalo
                 </Pressable>
               )}
             </View>
+          ) : navSection === 'library' ? (
+            librarySectionsView
           ) : isLandscapeTablet && featured ? (
             <View style={styles.landscapeColumns}>
               <View style={styles.landscapeFeaturedColumn}>{featuredSection}</View>

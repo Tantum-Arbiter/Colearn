@@ -3181,9 +3181,14 @@ export default {
     moreStories: 'ほかのおはなし',
     read: 'よむ',
     sound: 'サウンド',
-    viewToggle: 'ひょうじをかえる',
     noResults: 'このじょうけんのおはなしはありません',
     clearFilters: 'フィルターをクリア',
+    library: {
+      recentlyRead: 'さいきんよんだ',
+      favourites: 'おきにいり',
+      newToYou: 'まだよんでいない',
+      onThisDevice: 'このたんまつにあるおはなし',
+    },
   },
 
   progress: {

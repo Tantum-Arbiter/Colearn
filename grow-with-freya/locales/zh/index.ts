@@ -3181,9 +3181,14 @@ export default {
     moreStories: '更多故事',
     read: '阅读',
     sound: '声音',
-    viewToggle: '切换视图',
     noResults: '没有找到符合筛选条件的故事',
     clearFilters: '清除筛选',
+    library: {
+      recentlyRead: '最近阅读',
+      favourites: '收藏',
+      newToYou: '还没读过',
+      onThisDevice: '本设备上的故事',
+    },
   },
 
   progress: {

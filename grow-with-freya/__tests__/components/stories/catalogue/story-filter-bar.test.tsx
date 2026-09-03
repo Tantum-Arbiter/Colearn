@@ -1,7 +1,8 @@
 /**
  * The filter row is always a single line (§6.5): content-sized pills scroll
- * horizontally rather than wrapping or shrinking their labels, selection is
- * reported per tag, and the trailing toggle switches the catalogue view.
+ * horizontally rather than wrapping or shrinking their labels, and
+ * selection is reported per tag. There is no view toggle — the catalogue
+ * has one layout (operator decision 2026-08-29).
  */
 
 import React from 'react';
@@ -13,8 +14,6 @@ import { StoryFilterTag } from '@/types/story';
 const baseProps = {
   selectedTags: new Set<StoryFilterTag>(),
   onToggleTag: jest.fn(),
-  gridActive: false,
-  onToggleView: jest.fn(),
 };
 
 function byTestId(tree: ReturnType<typeof render>, testID: string) {
@@ -69,19 +68,13 @@ describe('StoryFilterBar', () => {
       />
     );
 
-    const pill = byTestId(tree, 'story-filter-pill-bedtime')[0];
-    expect(pill.props.accessibilityState.selected).toBe(true);
+    expect(byTestId(tree, 'story-filter-pill-bedtime')[0].props.accessibilityState.selected).toBe(true);
   });
 
-  it('reports the view toggle', () => {
-    const onToggleView = jest.fn();
-    const tree = render(
-      <StoryFilterBar {...baseProps} tags={['calming', 'bedtime', 'adventure']} onToggleView={onToggleView} />
-    );
+  it('carries no view toggle', () => {
+    const tree = render(<StoryFilterBar {...baseProps} tags={['calming'] as StoryFilterTag[]} />);
 
-    fireEvent.press(byTestId(tree, 'story-view-toggle')[0]);
-
-    expect(onToggleView).toHaveBeenCalledTimes(1);
+    expect(tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'story-view-toggle')).toHaveLength(0);
   });
 
   it('labels pills through their translation keys', () => {

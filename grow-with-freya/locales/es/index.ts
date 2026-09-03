@@ -3181,9 +3181,14 @@ export default {
     moreStories: 'Más cuentos',
     read: 'Leer',
     sound: 'Sonido',
-    viewToggle: 'Cambiar vista',
     noResults: 'No se encontraron cuentos con estos filtros',
     clearFilters: 'Borrar filtros',
+    library: {
+      recentlyRead: 'Leídos recientemente',
+      favourites: 'Favoritos',
+      newToYou: 'Nuevos para ti',
+      onThisDevice: 'En este dispositivo',
+    },
   },
 
   progress: {

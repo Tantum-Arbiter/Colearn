@@ -3181,9 +3181,14 @@ export default {
     moreStories: 'Plures fabulae',
     read: 'Lege',
     sound: 'Sonus',
-    viewToggle: 'Muta conspectum',
     noResults: 'Nullae fabulae his filtris inventae',
     clearFilters: 'Filtra purga',
+    library: {
+      recentlyRead: 'Recens lectae',
+      favourites: 'Dilectae',
+      newToYou: 'Nova tibi',
+      onThisDevice: 'In hoc instrumento',
+    },
   },
 
   progress: {

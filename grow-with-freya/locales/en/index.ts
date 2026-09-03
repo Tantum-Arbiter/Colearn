@@ -2809,9 +2809,14 @@ export default {
     moreStories: 'More Stories',
     read: 'Read',
     sound: 'Sound',
-    viewToggle: 'Change view',
     noResults: 'No stories found with these filters',
     clearFilters: 'Clear filters',
+    library: {
+      recentlyRead: 'Recently read',
+      favourites: 'Favourites',
+      newToYou: 'New to you',
+      onThisDevice: 'On this device',
+    },
   },
 
   progress: {

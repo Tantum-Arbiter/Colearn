@@ -3181,9 +3181,14 @@ export default {
     moreStories: 'Altre storie',
     read: 'Leggi',
     sound: 'Suono',
-    viewToggle: 'Cambia vista',
     noResults: 'Nessuna storia trovata con questi filtri',
     clearFilters: 'Cancella filtri',
+    library: {
+      recentlyRead: 'Letti di recente',
+      favourites: 'Preferiti',
+      newToYou: 'Nuovi per te',
+      onThisDevice: 'Su questo dispositivo',
+    },
   },
 
   progress: {

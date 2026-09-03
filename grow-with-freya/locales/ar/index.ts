@@ -3181,9 +3181,14 @@ export default {
     moreStories: 'المزيد من القصص',
     read: 'اقرأ',
     sound: 'الصوت',
-    viewToggle: 'تغيير العرض',
     noResults: 'لم يتم العثور على قصص بهذه المرشحات',
     clearFilters: 'مسح المرشحات',
+    library: {
+      recentlyRead: 'قُرئت مؤخرًا',
+      favourites: 'المفضلة',
+      newToYou: 'جديد لك',
+      onThisDevice: 'على هذا الجهاز',
+    },
   },
 
   progress: {
