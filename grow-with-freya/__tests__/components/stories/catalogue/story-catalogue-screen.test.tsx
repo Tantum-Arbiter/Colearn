@@ -239,12 +239,11 @@ describe('StoryCatalogueScreen', () => {
     fireEvent.press(
       byTestId(tree, 'navigation-item-library').find((n: any) => n.props.accessibilityRole === 'tab')
     );
+    await waitFor(() => expect(byTestId(tree, 'library-section-onThisDevice').length).toBeGreaterThan(0));
 
-    await waitFor(() => {
-      expect(byTestId(tree, 'story-cover-card-remote-1')).toHaveLength(0);
-      expect(byTestId(tree, 'featured-story-card')).toHaveLength(0);
-      expect(byTestId(tree, 'story-cover-card-wombat').length).toBeGreaterThan(0);
-    });
+    expect(byTestId(tree, 'story-cover-card-remote-1')).toHaveLength(0);
+    expect(byTestId(tree, 'featured-story-card')).toHaveLength(0);
+    expect(byTestId(tree, 'story-cover-card-wombat').length).toBeGreaterThan(0);
   });
 
   async function openLibrary() {

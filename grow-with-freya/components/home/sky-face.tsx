@@ -1,5 +1,5 @@
-import React, { memo, useEffect } from 'react';
-import { StyleSheet } from 'react-native';
+import React, { memo, useCallback, useEffect, useState } from 'react';
+import { Pressable, StyleSheet } from 'react-native';
 import { Image } from 'expo-image';
 import Animated, {
   useSharedValue,
@@ -14,6 +14,7 @@ import type { TimeOfDay } from '@/constants/home-scene';
 import { useSkyFace } from '@/hooks/use-sky-face';
 
 const AnimatedImage = Animated.createAnimatedComponent(Image);
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 const SKY_FACE_ART = {
   day: {
@@ -40,7 +41,9 @@ export const SkyFace = memo(function SkyFace({
   testID = 'sky-face',
 }: SkyFaceProps) {
   const { t } = useTranslation();
-  const expression = useSkyFace({ enabled: animated });
+  const [nudges, setNudges] = useState(0);
+  const expression = useSkyFace({ enabled: animated, nudge: nudges });
+  const handlePress = useCallback(() => setNudges((count) => count + 1), []);
   const laughOpacity = useSharedValue(0);
   const giggle = useSharedValue(0);
 
@@ -74,10 +77,11 @@ export const SkyFace = memo(function SkyFace({
   const dimensions = { width: size, height: size };
 
   return (
-    <Animated.View
+    <AnimatedPressable
       testID={testID}
-      accessibilityRole="image"
+      accessibilityRole="button"
       accessibilityLabel={t(timeOfDay === 'day' ? 'home.sun' : 'home.moon')}
+      onPress={handlePress}
       style={[dimensions, giggleStyle]}
     >
       <Image
@@ -95,7 +99,7 @@ export const SkyFace = memo(function SkyFace({
         contentFit="contain"
         transition={0}
       />
-    </Animated.View>
+    </AnimatedPressable>
   );
 });
 

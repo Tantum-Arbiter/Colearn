@@ -41,9 +41,10 @@ interface ProgressScreenProps {
   onBack: () => void;
   onRecommend?: (tag: StoryFilterTag | null) => void;
   onDetailVisibleChange?: (visible: boolean) => void;
+  embedded?: boolean;
 }
 
-export function ProgressScreen({ onBack, onRecommend, onDetailVisibleChange }: ProgressScreenProps) {
+export function ProgressScreen({ onBack, onRecommend, onDetailVisibleChange, embedded = false }: ProgressScreenProps) {
   const insets = useSafeAreaInsets();
   const { width: windowWidth } = useWindowDimensions();
   const { isTablet, scaledFontSize } = useAccessibility();
@@ -80,9 +81,8 @@ export function ProgressScreen({ onBack, onRecommend, onDetailVisibleChange }: P
     onRecommend?.(badge.recommendation?.tag ?? null);
   }, [onRecommend, onDetailVisibleChange]);
 
-  return (
-    <CelestialBackground>
-      <PlanetHeaderArtwork />
+  const body = (
+    <>
 
       <View style={[styles.headerRow, { marginTop: insets.top + SPACE_2, marginHorizontal: margin }]}>
         <CircleActionButton type="back" onPress={onBack} accessibilityLabel={t('common.back')} />
@@ -143,11 +143,25 @@ export function ProgressScreen({ onBack, onRecommend, onDetailVisibleChange }: P
       </ScrollView>
 
       <BadgeDetailSheet badge={selectedBadge} onClose={handleCloseSheet} onRecommend={handleRecommend} />
+    </>
+  );
+
+  if (embedded) {
+    return <View style={styles.fill}>{body}</View>;
+  }
+
+  return (
+    <CelestialBackground>
+      <PlanetHeaderArtwork />
+      {body}
     </CelestialBackground>
   );
 }
 
 const styles = StyleSheet.create({
+  fill: {
+    flex: 1,
+  },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',

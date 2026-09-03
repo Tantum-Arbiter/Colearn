@@ -103,3 +103,60 @@ describe('useSkyFace', () => {
     expect(() => advance(SKY_FACE_RHYTHM.restMaxMs * 4)).not.toThrow();
   });
 });
+
+describe('useSkyFace when the face is tapped', () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+    useReducedMotion.mockReturnValue(false);
+    jest.spyOn(Math, 'random').mockReturnValue(ROLL);
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+    jest.restoreAllMocks();
+  });
+
+  it('should laugh straight away', () => {
+    const underTest = renderHook(({ nudge }: { nudge: number }) => useSkyFace({ nudge }), {
+      initialProps: { nudge: 0 },
+    });
+
+    underTest.rerender({ nudge: 1 });
+
+    expect(underTest.result.current).toBe('laughing');
+  });
+
+  it('should settle again after one laugh', () => {
+    const underTest = renderHook(({ nudge }: { nudge: number }) => useSkyFace({ nudge }), {
+      initialProps: { nudge: 0 },
+    });
+    underTest.rerender({ nudge: 1 });
+
+    advance(SKY_FACE_RHYTHM.laughMs);
+
+    expect(underTest.result.current).toBe('resting');
+  });
+
+  it('should keep laughing on demand', () => {
+    const underTest = renderHook(({ nudge }: { nudge: number }) => useSkyFace({ nudge }), {
+      initialProps: { nudge: 0 },
+    });
+    underTest.rerender({ nudge: 1 });
+    advance(SKY_FACE_RHYTHM.laughMs);
+
+    underTest.rerender({ nudge: 2 });
+
+    expect(underTest.result.current).toBe('laughing');
+  });
+
+  it('should stay still for a child who asked for less motion', () => {
+    useReducedMotion.mockReturnValue(true);
+    const underTest = renderHook(({ nudge }: { nudge: number }) => useSkyFace({ nudge }), {
+      initialProps: { nudge: 0 },
+    });
+
+    underTest.rerender({ nudge: 1 });
+
+    expect(underTest.result.current).toBe('resting');
+  });
+});

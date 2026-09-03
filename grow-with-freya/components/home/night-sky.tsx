@@ -2,11 +2,9 @@ import React, { memo } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { HOME_THEMES, type TimeOfDay } from '@/constants/home-scene';
-import { useShootingStar } from '@/hooks/use-shooting-star';
 import { useSettledAfterTransition } from '@/hooks/use-ambient-animation';
 import { EarthHorizon } from '@/components/ui/earth-horizon';
 import { StarField } from './star-field';
-import { ShootingStar } from './shooting-star';
 
 
 export interface NightSkyProps {
@@ -27,7 +25,6 @@ export const NightSky = memo(function NightSky({
   const theme = HOME_THEMES[timeOfDay];
   const starIntensity = Number(theme.starOpacity);
   const settled = useSettledAfterTransition(active);
-  const flight = useShootingStar({ enabled: timeOfDay === 'night' && settled });
 
   return (
     <View testID={testID} style={StyleSheet.absoluteFill} pointerEvents="none">
@@ -44,10 +41,6 @@ export const NightSky = memo(function NightSky({
         intensity={starIntensity}
         active={settled}
       />
-
-      {timeOfDay === 'night' ? (
-        <ShootingStar flight={flight} width={width} height={height} colour={theme.star} />
-      ) : null}
 
       <EarthHorizon testID="home-horizon" edge="bottom" width={width} height={height} timeOfDay={timeOfDay} />
     </View>

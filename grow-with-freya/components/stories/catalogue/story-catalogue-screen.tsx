@@ -30,6 +30,7 @@ import type { SupportedLanguage } from '@/services/i18n';
 import { SubscriptionOverlay } from '@/components/ui/subscription-overlay';
 import { CelestialBackground } from '@/components/child-ui/celestial-background';
 import { PlanetHeaderArtwork } from '@/components/child-ui/planet-header-artwork';
+import { SectionCrossfade } from '@/components/child-ui/section-crossfade';
 import { CircleActionButton } from '@/components/child-ui/circle-action-button';
 import { PageTitle } from '@/components/child-ui/page-title';
 import { SectionHeading } from '@/components/child-ui/section-heading';
@@ -478,94 +479,107 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode }: StoryCatalo
     </>
   );
 
-  if (navSection === 'progress') {
-    return (
-      <JourneyShell selected={navSection} onSelect={handleNavSelect} navigationHidden={badgeDetailOpen}>
-        <ProgressScreen
-          onBack={() => handleNavSelect('home')}
-          onRecommend={handleRecommend}
-          onDetailVisibleChange={setBadgeDetailOpen}
-        />
-      </JourneyShell>
-    );
-  }
-
   return (
-    <JourneyShell selected={navSection} onSelect={handleNavSelect} navigationHidden={interactionLocked}>
+    <JourneyShell
+      selected={navSection}
+      onSelect={handleNavSelect}
+      navigationHidden={navSection === 'progress' ? badgeDetailOpen : interactionLocked}
+    >
       <CelestialBackground>
         <PlanetHeaderArtwork />
 
-        <View
-          style={[
-            styles.headerRow,
-            {
-              marginTop: insets.top + SPACE_2,
-              marginHorizontal: margin,
-            },
-          ]}
-        >
-          <CircleActionButton
-            type="back"
-            onPress={handleExitJourney}
-            accessibilityLabel={t('common.back')}
-          />
-          <View style={styles.titleWrapper}>
-            <PageTitle title={storyMode ? t(`storyModes.${storyMode}`) : t('stories.title')} />
-          </View>
-          <CircleActionButton
-            type="audio"
-            muted={isMuted}
-            onPress={() => { void toggleMute(); }}
-            accessibilityLabel={t('catalogue.sound')}
-          />
-        </View>
-
-        <ScrollView
-          style={[styles.scroll, { marginBottom: navClearance(insets.bottom) }]}
-          contentContainerStyle={[
-            styles.scrollContent,
-            {
-              paddingHorizontal: margin,
-              paddingBottom: SPACE_4 + (textSizeScale - 1) * 40,
-            },
-          ]}
-          scrollEnabled={!interactionLocked}
-        >
-          <View style={styles.filterBarSpacing}>
-            <StoryFilterBar
-              tags={FILTER_TAG_SET}
-              selectedTags={selectedTags}
-              onToggleTag={handleToggleTag}
+        <SectionCrossfade sectionKey={navSection}>
+          {navSection === 'progress' ? (
+            <ProgressScreen
+              embedded
+              onBack={() => handleNavSelect('home')}
+              onRecommend={handleRecommend}
+              onDetailVisibleChange={setBadgeDetailOpen}
             />
-          </View>
-
-          {catalogueStories.length === 0 ? (
-            <View style={styles.noResultsContainer}>
-              <Text style={[styles.noResultsText, { fontSize: scaledFontSize(16) }]}>
-                {t('catalogue.noResults')}
-              </Text>
-              {selectedTags.size > 0 && (
-                <Pressable style={styles.clearFilterButton} onPress={handleClearFilters}>
-                  <Text style={[styles.clearFilterText, { fontSize: scaledFontSize(15) }]}>
-                    {t('catalogue.clearFilters')}
-                  </Text>
-                </Pressable>
-              )}
-            </View>
-          ) : navSection === 'library' ? (
-            librarySectionsView
-          ) : isLandscapeTablet && featured ? (
-            <View style={styles.landscapeColumns}>
-              <View style={styles.landscapeFeaturedColumn}>{featuredSection}</View>
-              <View style={styles.landscapeGridColumn}>{moreSection}</View>
-            </View>
           ) : (
             <>
-              {featuredSection}
-              {moreSection}
+            <View
+              style={[
+                styles.headerRow,
+                {
+                  marginTop: insets.top + SPACE_2,
+                  marginHorizontal: margin,
+                },
+              ]}
+            >
+              <CircleActionButton
+                type="back"
+                onPress={handleExitJourney}
+                accessibilityLabel={t('common.back')}
+              />
+              <View style={styles.titleWrapper}>
+                <PageTitle
+                  title={
+                    storyMode
+                      ? t(`storyModes.${storyMode}`)
+                      : navSection === 'library'
+                        ? t('childUi.nav.library')
+                        : t('stories.title')
+                  }
+                />
+              </View>
+              <CircleActionButton
+                type="audio"
+                muted={isMuted}
+                onPress={() => { void toggleMute(); }}
+                accessibilityLabel={t('catalogue.sound')}
+              />
+            </View>
+
+            <ScrollView
+              style={[styles.scroll, { marginBottom: navClearance(insets.bottom) }]}
+              contentContainerStyle={[
+                styles.scrollContent,
+                {
+                  paddingHorizontal: margin,
+                  paddingBottom: SPACE_4 + (textSizeScale - 1) * 40,
+                },
+              ]}
+              scrollEnabled={!interactionLocked}
+            >
+              <View style={styles.filterBarSpacing}>
+                <StoryFilterBar
+                  tags={FILTER_TAG_SET}
+                  selectedTags={selectedTags}
+                  onToggleTag={handleToggleTag}
+                />
+              </View>
+
+              {catalogueStories.length === 0 ? (
+                <View style={styles.noResultsContainer}>
+                  <Text style={[styles.noResultsText, { fontSize: scaledFontSize(16) }]}>
+                    {t('catalogue.noResults')}
+                  </Text>
+                  {selectedTags.size > 0 && (
+                    <Pressable style={styles.clearFilterButton} onPress={handleClearFilters}>
+                      <Text style={[styles.clearFilterText, { fontSize: scaledFontSize(15) }]}>
+                        {t('catalogue.clearFilters')}
+                      </Text>
+                    </Pressable>
+                  )}
+                </View>
+              ) : navSection === 'library' ? (
+                librarySectionsView
+              ) : isLandscapeTablet && featured ? (
+                <View style={styles.landscapeColumns}>
+                  <View style={styles.landscapeFeaturedColumn}>{featuredSection}</View>
+                  <View style={styles.landscapeGridColumn}>{moreSection}</View>
+                </View>
+              ) : (
+                <>
+                  {featuredSection}
+                  {moreSection}
+                </>
+              )}
+            </ScrollView>
             </>
           )}
-        </ScrollView>
+        </SectionCrossfade>
 
         <StoryPreviewModal
           story={previewStory}

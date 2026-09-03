@@ -8,7 +8,7 @@
 
 import React from 'react';
 import { StyleSheet } from 'react-native';
-import { render, type RenderResult } from '@testing-library/react-native';
+import { fireEvent, render, type RenderResult } from '@testing-library/react-native';
 import { SkyFace } from '@/components/home/sky-face';
 
 function byTestId(view: RenderResult, testID: string) {
@@ -48,5 +48,15 @@ describe('SkyFace', () => {
     const underTest = byTestId(view, 'sky-face')[0];
 
     expect(StyleSheet.flatten(underTest.props.style)).toEqual(expect.objectContaining({ width: 96, height: 96 }));
+  });
+
+  it('should be a button a child can tap to make it laugh', () => {
+    const { view } = renderFace();
+
+    const underTest = byTestId(view, 'sky-face');
+    const host = underTest[underTest.length - 1];
+
+    expect(host.props.accessibilityRole).toBe('button');
+    expect(() => fireEvent.press(host)).not.toThrow();
   });
 });

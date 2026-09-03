@@ -1,18 +1,16 @@
 /**
  * Tests for the night sky behind the home scene.
  *
- * Stars sit in the upper reaches and shooting stars are rare. The earth on
- * the horizon has its own rules in earth.test.ts.
+ * Stars sit in the upper reaches and twinkle quietly. The earth on the
+ * horizon has its own rules in earth.test.ts.
  */
 
 import {
   CLOUD_LAYER,
   cloudBandTop,
-  SHOOTING_STAR,
   STAR_FIELD,
   buildStarField,
   isWideScreen,
-  nextShootingStarDelay,
 } from '@/constants/night-sky';
 
 const PHONE = 390;
@@ -71,29 +69,6 @@ describe('buildStarField', () => {
     const underTest = buildStarField(PHONE, HEIGHT);
 
     expect(underTest).toEqual(buildStarField(PHONE, HEIGHT));
-  });
-});
-
-describe('nextShootingStarDelay', () => {
-  it.each([
-    ['the shortest roll', 0, SHOOTING_STAR.restMinMs],
-    ['the longest roll', 1, SHOOTING_STAR.restMaxMs],
-  ])('should return %s', (_case, roll, expected) => {
-    const underTest = nextShootingStarDelay(roll);
-
-    expect(underTest).toBe(expected);
-  });
-
-  it('should let the first one come sooner', () => {
-    const underTest = nextShootingStarDelay(0, true);
-
-    expect(underTest).toBeLessThan(nextShootingStarDelay(0));
-  });
-
-  it('should stay rare enough to be a treat rather than a tic', () => {
-    const underTest = SHOOTING_STAR.restMinMs;
-
-    expect(underTest).toBeGreaterThan(SHOOTING_STAR.flightMs * 15);
   });
 });
 

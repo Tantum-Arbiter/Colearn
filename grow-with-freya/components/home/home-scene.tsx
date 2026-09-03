@@ -91,7 +91,7 @@ export const HomeScene = memo(function HomeScene({
     <View testID={testID} style={[styles.root, { backgroundColor: theme.skyTop }]}>
       <NightSky width={width} height={height} timeOfDay={activeTimeOfDay} active={isActive} />
 
-      <View style={[styles.moon, { top: insets.top + 6 }]} pointerEvents="none">
+      <View style={[styles.moon, { top: insets.top + 6 }]} pointerEvents="box-none">
         <SkyFace size={skyFaceSize} timeOfDay={activeTimeOfDay} />
       </View>
 
@@ -178,6 +178,7 @@ const styles = StyleSheet.create({
   moon: {
     position: 'absolute',
     alignSelf: 'center',
+    zIndex: 10,
   },
   chrome: {
     position: 'absolute',

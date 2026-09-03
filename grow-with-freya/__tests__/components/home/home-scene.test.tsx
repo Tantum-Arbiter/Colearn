@@ -284,18 +284,6 @@ describe('HomeScene sky dressing', () => {
     expect(underTest.length).toBeGreaterThan(0);
   });
 
-  it('should send shooting stars only after dark', () => {
-    const night = renderScene({ timeOfDay: 'night' });
-    const day = renderScene({ timeOfDay: 'day' });
-
-    const underTest = [
-      byTestId(night.view, 'shooting-star').length,
-      byTestId(day.view, 'shooting-star').length,
-    ];
-
-    expect(underTest[0]).toBeGreaterThan(0);
-    expect(underTest[1]).toBe(0);
-  });
 });
 
 describe('HomeScene the plan offer', () => {

@@ -4,9 +4,10 @@ import { useReducedMotion } from '@/hooks/use-reduced-motion';
 
 export interface SkyFaceOptions {
   enabled?: boolean;
+  nudge?: number;
 }
 
-export function useSkyFace({ enabled = true }: SkyFaceOptions = {}): SkyFaceExpression {
+export function useSkyFace({ enabled = true, nudge = 0 }: SkyFaceOptions = {}): SkyFaceExpression {
   const [expression, setExpression] = useState<SkyFaceExpression>('resting');
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reduceMotion = useReducedMotion();
@@ -41,6 +42,7 @@ export function useSkyFace({ enabled = true }: SkyFaceOptions = {}): SkyFaceExpr
         return;
       }
 
+      clear();
       setExpression('laughing');
       timerRef.current = setTimeout(settle, SKY_FACE_RHYTHM.laughMs);
     };
@@ -51,13 +53,17 @@ export function useSkyFace({ enabled = true }: SkyFaceOptions = {}): SkyFaceExpr
       timerRef.current = setTimeout(laugh, delay);
     };
 
-    schedule();
+    if (nudge > 0) {
+      laugh();
+    } else {
+      schedule();
+    }
 
     return () => {
       cancelled = true;
       clear();
     };
-  }, [enabled, reduceMotion]);
+  }, [enabled, reduceMotion, nudge]);
 
   return expression;
 }

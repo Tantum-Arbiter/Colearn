@@ -14,16 +14,6 @@ export const STAR_FIELD = {
   twinkleFloor: 0.42,
 } as const;
 
-export const SHOOTING_STAR = {
-  restMinMs: 26000,
-  restMaxMs: 62000,
-  firstRestMinMs: 11000,
-  flightMs: 1250,
-  trailLength: 96,
-  angleDegrees: 26,
-  travelRatio: 0.52,
-} as const;
-
 export const CLOUD_LAYER = {
   topRatio: 0.5,
   featherHeight: 64,
@@ -35,13 +25,6 @@ export function cloudBandTop(height: number): number {
 
 export function isWideScreen(width: number): boolean {
   return width >= TABLET_MIN_WIDTH;
-}
-
-export function nextShootingStarDelay(roll: number, isFirst = false): number {
-  const clamped = Math.min(Math.max(roll, 0), 1);
-  const min = isFirst ? SHOOTING_STAR.firstRestMinMs : SHOOTING_STAR.restMinMs;
-
-  return Math.round(min + clamped * (SHOOTING_STAR.restMaxMs - min));
 }
 
 export interface StarSeed {

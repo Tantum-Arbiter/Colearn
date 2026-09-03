@@ -1,6 +1,5 @@
 export { UnlockPlanButton } from './unlock-plan-button';
 export { StarField } from './star-field';
-export { ShootingStar } from './shooting-star';
 export { ScreenTimeGlance } from './screen-time-glance';
 export { ScreenTimeRing } from './screen-time-ring';
 export { HomeSceneContainer } from './home-scene-container';
