@@ -154,8 +154,12 @@ The sky is lit from above because that is where the planet is. That is the whole
 
 **Scope is deliberate and was set by the product owner on 2026-08-29.** An earlier revision of
 this document applied the ramp to every night surface in the app. That was wrong: splash,
-auth, onboarding, home, account and the subscription overlay keep the palettes they already
-had. The ramp belongs to the journeys, not to the app.
+auth, onboarding, account and the subscription overlay keep the palettes they already had.
+The ramp belongs to the journeys — **and, by a later product decision the same day, to the
+home scene**, whose sky (`constants/home-scene.ts`) now draws from the same ramp but
+**inverted**: darkest at the top, brightest at the bottom, because on home the planet sits at
+the bottom of the screen. Night runs void → deep → primary; day lifts one step to
+deep → primary → bright, so the two skies stay distinct while staying inside the ramp.
 
 ### Surfaces, borders, text, accents
 

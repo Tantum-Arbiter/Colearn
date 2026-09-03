@@ -6,6 +6,9 @@
  */
 
 import { resolveTimeOfDay, HOME_THEMES, type TimeOfDay } from '@/constants/home-scene';
+import { NIGHT_RAMP } from '@/constants/night-palette';
+
+const rampIndex = (stop: string) => NIGHT_RAMP.indexOf(stop as (typeof NIGHT_RAMP)[number]);
 
 function at(hour: number): Date {
   return new Date(2026, 6, 29, hour, 30, 0);
@@ -77,5 +80,15 @@ describe('HOME_THEMES', () => {
     const underTest = [HOME_THEMES.day.skyTop, HOME_THEMES.night.skyTop];
 
     expect(underTest[0]).not.toBe(underTest[1]);
+    expect(rampIndex(underTest[0])).toBeGreaterThan(rampIndex(underTest[1]));
+  });
+
+  it.each(['day', 'night'] as const)('should paint the %s sky from the journey ramp, darkest at the top', (timeOfDay) => {
+    const { skyTop, skyMid, skyBottom } = HOME_THEMES[timeOfDay];
+    const indices = [skyTop, skyMid, skyBottom].map(rampIndex);
+
+    indices.forEach((index) => expect(index).toBeGreaterThanOrEqual(0));
+    expect(indices[0]).toBeLessThan(indices[1]);
+    expect(indices[1]).toBeLessThan(indices[2]);
   });
 });

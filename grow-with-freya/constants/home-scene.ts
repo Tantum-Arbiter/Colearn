@@ -1,3 +1,5 @@
+import { NIGHT_BRIGHT, NIGHT_DEEP, NIGHT_PRIMARY, NIGHT_VOID } from '@/constants/night-palette';
+
 export type HomeActivityId = 'interactive' | 'music' | 'jigsaw';
 
 
@@ -84,9 +86,9 @@ export interface HomeTheme {
 
 export const HOME_THEMES = {
   night: {
-    skyTop: '#0B1533',
-    skyMid: '#121B46',
-    skyBottom: '#1B2A5E',
+    skyTop: NIGHT_VOID,
+    skyMid: NIGHT_DEEP,
+    skyBottom: NIGHT_PRIMARY,
     panelTop: 'rgba(38,48,102,0.78)',
     panelBottom: 'rgba(23,30,72,0.88)',
     panelEdge: 'rgba(255,255,255,0.14)',
@@ -121,9 +123,9 @@ export const HOME_THEMES = {
     cloudOpacity: '0.62',
   },
   day: {
-    skyTop: '#22406F',
-    skyMid: '#3A66AC',
-    skyBottom: '#6E9FDD',
+    skyTop: NIGHT_DEEP,
+    skyMid: NIGHT_PRIMARY,
+    skyBottom: NIGHT_BRIGHT,
     panelTop: 'rgba(74,110,175,0.62)',
     panelBottom: 'rgba(42,72,132,0.78)',
     panelEdge: 'rgba(255,255,255,0.22)',
