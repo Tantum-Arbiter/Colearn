@@ -6,7 +6,7 @@
  * between them scrolls past a single whole world rather than two crops.
  */
 
-import { EARTH, earthCap, earthDiameter, earthLayout } from '@/constants/earth';
+import { EARTH, EARTH_CLOUDS, cloudLayout, earthCap, earthDiameter, earthLayout } from '@/constants/earth';
 
 const PHONE = { width: 390, height: 844 };
 const SMALL_PHONE = { width: 375, height: 667 };
@@ -94,5 +94,20 @@ describe('earthLayout', () => {
 
     expect(underTest).toBe(rising.diameter);
     expect(hanging.left).toBe(rising.left);
+  });
+});
+
+describe('cloudLayout', () => {
+  it('should size each bank from the width with the art\'s own aspect', () => {
+    const underTest = cloudLayout(PHONE.width, PHONE.height);
+
+    expect(underTest.width).toBe(Math.round(PHONE.width * EARTH_CLOUDS.widthRatio));
+    expect(underTest.height).toBe(Math.round(underTest.width * EARTH_CLOUDS.aspect));
+  });
+
+  it('should keep the mist to the lower part of the screen', () => {
+    const underTest = cloudLayout(PHONE.width, PHONE.height).mistHeight;
+
+    expect(underTest).toBeLessThan(PHONE.height * 0.3);
   });
 });

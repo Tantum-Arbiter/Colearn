@@ -6,6 +6,28 @@ export const EARTH = {
   riseFraction: 0.5,
 } as const;
 
+export const EARTH_CLOUDS = {
+  widthRatio: 0.55,
+  aspect: 616 / 531,
+  mistRatio: 0.24,
+} as const;
+
+export interface CloudLayout {
+  width: number;
+  height: number;
+  mistHeight: number;
+}
+
+export function cloudLayout(width: number, height: number): CloudLayout {
+  const cloudWidth = Math.round(width * EARTH_CLOUDS.widthRatio);
+
+  return {
+    width: cloudWidth,
+    height: Math.round(cloudWidth * EARTH_CLOUDS.aspect),
+    mistHeight: Math.round(height * EARTH_CLOUDS.mistRatio),
+  };
+}
+
 export interface EarthLayout {
   diameter: number;
   cap: number;

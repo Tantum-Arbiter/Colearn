@@ -75,6 +75,32 @@ describe('EarthHorizon', () => {
     expect(underTest).toBe('none');
   });
 
+  it.each(['bottom', 'top'] as const)('should bring the cloud banks along for the %s edge', (edge) => {
+    const view = renderEarth({ edge });
+
+    const underTest = byTestId(view, 'earth-horizon-clouds');
+
+    expect(underTest.length).toBeGreaterThan(0);
+  });
+
+  it('should hang the clouds upside down over a page below', () => {
+    const view = renderEarth({ edge: 'top' });
+
+    const underTest = flatStyle(view, 'earth-horizon-clouds');
+
+    expect(underTest.transform).toEqual([{ scaleY: -1 }]);
+    expect(underTest.top).toBe(0);
+  });
+
+  it('should keep the clouds the right way up on the home page', () => {
+    const view = renderEarth({ edge: 'bottom' });
+
+    const underTest = flatStyle(view, 'earth-horizon-clouds');
+
+    expect(underTest.transform).toBeUndefined();
+    expect(underTest.bottom).toBe(0);
+  });
+
   it('should fall back to the window when no size is given', () => {
     const view = render(<EarthHorizon edge="top" />);
     const { width, height } = require('react-native').Dimensions.get('window');

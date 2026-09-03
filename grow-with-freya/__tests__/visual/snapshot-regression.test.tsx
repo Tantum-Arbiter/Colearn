@@ -193,6 +193,7 @@ describe('Visual Regression Tests', () => {
 
       expect(structure(tree)).toEqual([
         'earth-horizon',
+        'earth-horizon-clouds',
         'earth-horizon-globe',
         'icon-Ionicons-arrow-back',
         'linear-gradient',

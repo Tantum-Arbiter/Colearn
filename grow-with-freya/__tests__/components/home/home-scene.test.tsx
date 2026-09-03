@@ -271,7 +271,7 @@ describe('HomeScene sky dressing', () => {
   it.each(['day', 'night'] as const)('should lay clouds over the %s sky', (timeOfDay) => {
     const { view } = renderScene({ timeOfDay });
 
-    const underTest = byTestId(view, 'home-clouds');
+    const underTest = byTestId(view, 'home-horizon-clouds');
 
     expect(underTest.length).toBeGreaterThan(0);
   });
