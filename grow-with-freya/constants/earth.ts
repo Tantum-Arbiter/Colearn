@@ -1,10 +1,9 @@
 export type EarthEdge = 'top' | 'bottom';
 
 export const EARTH = {
-  overhang: 1.18,
-  maxDiameterRatio: 2.2,
-  rise: { widthRatio: 0.34, heightRatio: 0.17 },
-  hang: { widthRatio: 0.38, heightRatio: 0.2 },
+  diameterWidthRatio: 0.92,
+  diameterHeightRatio: 0.44,
+  riseFraction: 0.5,
 } as const;
 
 export interface EarthLayout {
@@ -14,26 +13,15 @@ export interface EarthLayout {
   top: number;
 }
 
-export function earthCap(width: number, height: number, edge: EarthEdge): number {
-  const ratios = edge === 'bottom' ? EARTH.rise : EARTH.hang;
-
-  return Math.round(Math.min(width * ratios.widthRatio, height * ratios.heightRatio));
-}
-
 export function earthDiameter(width: number, height: number): number {
-  const cap = earthCap(width, height, 'bottom');
-  const halfChord = (width * EARTH.overhang) / 2;
-  const radius = (halfChord * halfChord + cap * cap) / (2 * cap);
-
-  return Math.round(Math.min(radius * 2, width * EARTH.maxDiameterRatio));
+  return Math.floor(Math.min(width * EARTH.diameterWidthRatio, height * EARTH.diameterHeightRatio));
 }
 
-export function earthChord(diameter: number, cap: number): number {
-  const radius = diameter / 2;
-  const depth = Math.min(cap, diameter);
-  const halfChordSquared = radius * radius - (radius - depth) * (radius - depth);
+export function earthCap(width: number, height: number, edge: EarthEdge): number {
+  const diameter = earthDiameter(width, height);
+  const rise = Math.round(diameter * EARTH.riseFraction);
 
-  return 2 * Math.sqrt(Math.max(halfChordSquared, 0));
+  return edge === 'bottom' ? rise : diameter - rise;
 }
 
 export function earthLayout(width: number, height: number, edge: EarthEdge): EarthLayout {

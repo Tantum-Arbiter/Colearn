@@ -1,97 +1,63 @@
 /**
- * Tests for the shared earth that rises from the bottom of the home page and
- * hangs from the top of every page underneath it.
+ * Tests for the one earth shared between the home page and the pages below.
  *
- * The two edges have to describe one globe so the slide between pages reads
- * as scrolling past the same world, and the visible slice has to stay a
- * horizon on every screen shape rather than a small ball.
+ * The home page shows the top of the globe rising from its bottom edge and
+ * the page underneath shows the rest hanging from its top edge, so the slide
+ * between them scrolls past a single whole world rather than two crops.
  */
 
-import { EARTH, earthCap, earthChord, earthDiameter, earthLayout } from '@/constants/earth';
+import { EARTH, earthCap, earthDiameter, earthLayout } from '@/constants/earth';
 
 const PHONE = { width: 390, height: 844 };
+const SMALL_PHONE = { width: 375, height: 667 };
 const TABLET = { width: 834, height: 1194 };
 const TABLET_LANDSCAPE = { width: 1194, height: 834 };
 
 const SCREENS = [
   ['a phone', PHONE],
+  ['a small phone', SMALL_PHONE],
   ['a tablet', TABLET],
   ['a tablet on its side', TABLET_LANDSCAPE],
 ] as const;
 
-describe('earthCap', () => {
+describe('earthDiameter', () => {
+  it.each(SCREENS)('should fit the whole globe inside the width of %s', (_case, screen) => {
+    const underTest = earthDiameter(screen.width, screen.height);
+
+    expect(underTest).toBeLessThanOrEqual(screen.width);
+  });
+
+  it.each(SCREENS)('should leave most of %s to the page rather than the globe', (_case, screen) => {
+    const underTest = earthDiameter(screen.width, screen.height);
+
+    expect(underTest).toBeLessThanOrEqual(screen.height * EARTH.diameterHeightRatio);
+  });
+
   it('should follow the width on a phone', () => {
+    const underTest = earthDiameter(PHONE.width, PHONE.height);
+
+    expect(underTest).toBe(Math.floor(PHONE.width * EARTH.diameterWidthRatio));
+  });
+
+  it('should follow the height on a tablet on its side', () => {
+    const underTest = earthDiameter(TABLET_LANDSCAPE.width, TABLET_LANDSCAPE.height);
+
+    expect(underTest).toBe(Math.floor(TABLET_LANDSCAPE.height * EARTH.diameterHeightRatio));
+  });
+});
+
+describe('earthCap', () => {
+  it.each(SCREENS)('should add up to one whole globe across the two edges on %s', (_case, screen) => {
+    const underTest =
+      earthCap(screen.width, screen.height, 'bottom') + earthCap(screen.width, screen.height, 'top');
+
+    expect(underTest).toBe(earthDiameter(screen.width, screen.height));
+  });
+
+  it('should raise the top half on the home page', () => {
     const underTest = earthCap(PHONE.width, PHONE.height, 'bottom');
 
-    expect(underTest).toBe(Math.round(PHONE.width * EARTH.rise.widthRatio));
-  });
-
-  it('should follow the height on a tablet on its side so the globe does not swallow the page', () => {
-    const underTest = earthCap(TABLET_LANDSCAPE.width, TABLET_LANDSCAPE.height, 'bottom');
-
-    expect(underTest).toBe(Math.round(TABLET_LANDSCAPE.height * EARTH.rise.heightRatio));
-  });
-
-  it.each(SCREENS)('should hang deeper than it rises on %s, since the header floats over the underside', (_case, screen) => {
-    const underTest = earthCap(screen.width, screen.height, 'top');
-
-    expect(underTest).toBeGreaterThan(earthCap(screen.width, screen.height, 'bottom'));
-  });
-
-  it.each([
-    ['a phone', PHONE],
-    ['a tablet', TABLET],
-  ] as const)('should bulge well past the screen edges on %s rather than sit flat like a lid', (_case, screen) => {
-    const diameter = earthDiameter(screen.width, screen.height);
-    const cap = earthCap(screen.width, screen.height, 'top');
-
-    const underTest = earthChord(diameter, cap * 0.65);
-
-    expect(underTest).toBeGreaterThanOrEqual(screen.width);
-  });
-});
-
-describe('earthDiameter', () => {
-  it.each(SCREENS)('should overhang %s so the earth reads as a horizon, not a ball', (_case, screen) => {
-    const underTest = earthDiameter(screen.width, screen.height);
-
-    expect(underTest).toBeGreaterThan(screen.width);
-  });
-
-  it.each(SCREENS)('should never grow past the ceiling on %s', (_case, screen) => {
-    const underTest = earthDiameter(screen.width, screen.height);
-
-    expect(underTest).toBeLessThanOrEqual(Math.round(screen.width * EARTH.maxDiameterRatio));
-  });
-
-  it('should be cut by the home page edge at a chord wider than the phone', () => {
-    const diameter = earthDiameter(PHONE.width, PHONE.height);
-
-    const underTest = earthChord(diameter, earthCap(PHONE.width, PHONE.height, 'bottom'));
-
-    expect(underTest).toBeCloseTo(PHONE.width * EARTH.overhang, 0);
-  });
-
-  it.each(SCREENS)('should still span the whole width where a page below cuts it on %s', (_case, screen) => {
-    const diameter = earthDiameter(screen.width, screen.height);
-
-    const underTest = earthChord(diameter, earthCap(screen.width, screen.height, 'top'));
-
-    expect(underTest).toBeGreaterThanOrEqual(screen.width * 0.84);
-  });
-});
-
-describe('earthChord', () => {
-  it('should be the full diameter at the equator', () => {
-    const underTest = earthChord(500, 250);
-
-    expect(underTest).toBe(500);
-  });
-
-  it('should vanish when nothing is cut', () => {
-    const underTest = earthChord(500, 0);
-
-    expect(underTest).toBe(0);
+    expect(underTest).toBe(Math.round(earthDiameter(PHONE.width, PHONE.height) * EARTH.riseFraction));
   });
 });
 
@@ -118,5 +84,15 @@ describe('earthLayout', () => {
     const underTest = earthLayout(PHONE.width, PHONE.height, 'top');
 
     expect(underTest.top + underTest.diameter).toBe(underTest.cap);
+  });
+
+  it('should continue exactly where the home page left off', () => {
+    const rising = earthLayout(PHONE.width, PHONE.height, 'bottom');
+    const hanging = earthLayout(PHONE.width, PHONE.height, 'top');
+
+    const underTest = rising.cap + hanging.cap;
+
+    expect(underTest).toBe(rising.diameter);
+    expect(hanging.left).toBe(rising.left);
   });
 });

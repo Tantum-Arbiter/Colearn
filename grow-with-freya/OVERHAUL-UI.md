@@ -85,8 +85,8 @@ cropped, so the UI reads as existing underneath a larger magical world.
 | Property | Value |
 |---|---|
 | Horizontal position | centred |
-| Width | the same globe as the home page: overhangs the screen (see `constants/earth.ts`) |
-| Visible portion | lower curved section only — 0.38× width on phones, 0.2× height on tablets |
+| Width | the same globe as the home page: 92% of the width, capped at 44% of the height (see `constants/earth.ts`) |
+| Visible portion | the lower half — the home page shows the upper half, so together they make one whole globe |
 | Vertical position | top edge above the viewport, extending behind the status bar |
 | Treatment | painterly blue oceans, soft green land, warm highlights, soft atmospheric edge glow |
 
