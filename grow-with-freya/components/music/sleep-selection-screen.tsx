@@ -20,8 +20,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { VISUAL_EFFECTS } from '@/components/main-menu/constants';
 import { generateStarPositions } from '@/components/main-menu/utils';
-import { BearTopImage } from '@/components/main-menu/animated-components';
-import { mainMenuStyles } from '@/components/main-menu/styles';
+import { EarthHorizon } from '@/components/ui/earth-horizon';
 import { PageHeader } from '@/components/ui/page-header';
 import { getTracksByCategory, getTrackById } from '@/data/music';
 import { MusicTrack } from '@/types/music';
@@ -212,10 +211,7 @@ export function SleepSelectionScreen({ onTrackSelect, onBack, skipBackground }: 
     <Container {...containerProps as any}>
       {!skipBackground && (
         <>
-          {/* Bear top background image */}
-          <View style={mainMenuStyles.moonContainer} pointerEvents="none">
-            <BearTopImage />
-          </View>
+          <EarthHorizon edge="top" />
 
           {/* Animated stars background */}
           {starPositions.map((star) => (

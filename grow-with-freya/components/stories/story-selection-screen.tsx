@@ -26,9 +26,8 @@ import { StoryLoader } from '@/services/story-loader';
 import { CatalogService } from '@/services/catalog-service';
 import { VISUAL_EFFECTS } from '@/components/main-menu/constants';
 import { generateStarPositions } from '@/components/main-menu/utils';
-import { BearTopImage } from '@/components/main-menu/animated-components';
+import { EarthHorizon } from '@/components/ui/earth-horizon';
 
-import { mainMenuStyles } from '@/components/main-menu/styles';
 import { useStoryTransition } from '@/contexts/story-transition-context';
 import { PageHeader } from '@/components/ui/page-header';
 import { useAccessibility } from '@/hooks/use-accessibility';
@@ -1137,10 +1136,7 @@ export function StorySelectionScreen({ onStorySelect, initialMode }: StorySelect
       colors={SKY_GRADIENT_WORLD}
       style={{ flex: 1 }}
     >
-      {/* Bear top background image */}
-      <View style={mainMenuStyles.moonContainer} pointerEvents="none">
-        <BearTopImage />
-      </View>
+      <EarthHorizon edge="top" />
 
       {/* Animated Stars */}
       {starPositions.map((star, index) => (

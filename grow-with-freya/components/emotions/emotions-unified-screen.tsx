@@ -18,10 +18,9 @@ import { EmotionTheme } from '@/types/emotion';
 import { getThemeById, EMOTION_THEMES } from '@/data/emotion-themes';
 import { VISUAL_EFFECTS } from '@/components/main-menu/constants';
 import { generateStarPositions } from '@/components/main-menu/utils';
-import { BearTopImage } from '@/components/main-menu/animated-components';
+import { EarthHorizon } from '@/components/ui/earth-horizon';
 import { EmotionCardsTipsOverlay } from '@/components/tutorial';
 
-import { mainMenuStyles } from '@/components/main-menu/styles';
 import { useAccessibility } from '@/hooks/use-accessibility';
 
 interface EmotionsUnifiedScreenProps {
@@ -151,10 +150,7 @@ export function EmotionsUnifiedScreen({ onStartGame, onNavigateToParents, onBack
     <Container {...containerProps as any}>
       {!skipBackground && (
         <>
-          {/* Bear top background image */}
-          <View style={mainMenuStyles.moonContainer} pointerEvents="none">
-            <BearTopImage />
-          </View>
+          <EarthHorizon edge="top" />
 
           {/* Animated stars background (matching stories pattern) */}
           {starPositions.map((star) => (

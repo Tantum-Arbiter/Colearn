@@ -52,7 +52,6 @@ jest.mock('react-native-safe-area-context', () => ({
 }));
 jest.mock('../../components/main-menu/animated-components', () => ({
   MoonBottomImage: 'MoonBottomImage',
-  BearTopImage: 'BearTopImage',
 }));
 jest.mock('../../components/ui/music-control', () => ({
   MusicControl: 'MusicControl',

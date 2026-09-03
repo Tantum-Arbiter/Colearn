@@ -19,8 +19,7 @@ import { PageHeader } from '@/components/ui/page-header';
 import { EmotionTheme } from '@/types/emotion';
 import { VISUAL_EFFECTS } from '@/components/main-menu/constants';
 import { generateStarPositions } from '@/components/main-menu/utils';
-import { BearTopImage } from '@/components/main-menu/animated-components';
-import { mainMenuStyles } from '@/components/main-menu/styles';
+import { EarthHorizon } from '@/components/ui/earth-horizon';
 
 // Gradient colour sets
 const FEELINGS_COLORS = ['#4ECDC4', '#3B82F6', '#1E3A8A'] as const;
@@ -173,10 +172,7 @@ export function EmotionsScreen({ onBack }: EmotionsScreenProps) {
         />
       </Animated.View>
 
-      {/* Shared bear image — persistent, never reloads */}
-      <View style={mainMenuStyles.moonContainer} pointerEvents="none">
-        <BearTopImage />
-      </View>
+      <EarthHorizon edge="top" />
 
       {/* Shared animated stars */}
       {starPositions.map((star) => (

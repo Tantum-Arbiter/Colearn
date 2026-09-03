@@ -3,15 +3,10 @@ import { View, StyleSheet } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { HOME_THEMES, type TimeOfDay } from '@/constants/home-scene';
-import { horizonSize } from '@/constants/night-sky';
 import { useShootingStar } from '@/hooks/use-shooting-star';
+import { EarthHorizon } from '@/components/ui/earth-horizon';
 import { StarField } from './star-field';
 import { ShootingStar } from './shooting-star';
-
-const HORIZON_ART = {
-  night: require('../../assets/images/ui-elements/home-earth-night.webp'),
-  day: require('../../assets/images/ui-elements/home-earth-day.webp'),
-} as const;
 
 // one dusk-purple pair for both times of day; the theme's cloudOpacity still
 // softens them further in daylight
@@ -33,7 +28,6 @@ export const NightSky = memo(function NightSky({
 }: NightSkyProps) {
   const theme = HOME_THEMES[timeOfDay];
   const starIntensity = Number(theme.starOpacity);
-  const horizon = horizonSize(width);
   const flight = useShootingStar({ enabled: timeOfDay === 'night' });
   // sized explicitly -- aspectRatio on images proved unreliable (see AuthSky)
   const cloudWidth = Math.round(width * 0.55);
@@ -80,16 +74,12 @@ export const NightSky = memo(function NightSky({
         />
       </View>
 
-      <Image
+      <EarthHorizon
         testID="home-horizon"
-        source={HORIZON_ART[timeOfDay]}
-        style={[
-          styles.horizon,
-          { width: horizon.width, height: horizon.height, left: (width - horizon.width) / 2 },
-        ]}
-        contentFit="cover"
-        contentPosition="top"
-        transition={0}
+        edge="bottom"
+        width={width}
+        height={height}
+        scrim={theme.earthScrim}
       />
     </View>
   );
@@ -113,10 +103,6 @@ const styles = StyleSheet.create({
   cloudRight: {
     position: 'absolute',
     right: 0,
-    bottom: 0,
-  },
-  horizon: {
-    position: 'absolute',
     bottom: 0,
   },
 });

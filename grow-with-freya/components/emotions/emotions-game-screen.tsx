@@ -19,8 +19,7 @@ import { getThemeNameKey, getThemeName } from '@/data/emotion-themes';
 import { Fonts } from '@/constants/theme';
 
 import * as Haptics from 'expo-haptics';
-import { BearTopImage } from '@/components/main-menu/animated-components';
-import { mainMenuStyles } from '@/components/main-menu/styles';
+import { EarthHorizon } from '@/components/ui/earth-horizon';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { PageHeader } from '@/components/ui/page-header';
 import { VISUAL_EFFECTS } from '@/components/main-menu/constants';
@@ -324,10 +323,7 @@ export function EmotionsGameScreen({ onBack, onGameComplete, selectedTheme = 'em
         style={styles.container}
       >
 
-        {/* Bear top background image */}
-        <View style={mainMenuStyles.moonContainer} pointerEvents="none">
-          <BearTopImage />
-        </View>
+        <EarthHorizon edge="top" />
 
         {/* Animated stars background (matching unified screen pattern) */}
         {starPositions.map((star) => (

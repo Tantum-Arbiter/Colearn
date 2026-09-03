@@ -35,10 +35,9 @@ import { MusicSheetOverlay } from '@/components/stories/music-sheet-overlay';
 import { InstrumentCarousel } from '@/components/music/instrument-carousel';
 import { MusicControl } from '@/components/ui/music-control';
 import { PageHeader } from '@/components/ui/page-header';
-import { BearTopImage } from '@/components/main-menu/animated-components';
+import { EarthHorizon } from '@/components/ui/earth-horizon';
 import { VISUAL_EFFECTS } from '@/components/main-menu/constants';
 import { generateStarPositions } from '@/components/main-menu/utils';
-import { mainMenuStyles } from '@/components/main-menu/styles';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { useMusicChallenge } from '@/hooks/use-music-challenge';
 import { useBreathDetector } from '@/hooks/use-breath-detector';
@@ -414,10 +413,7 @@ export function PractiseScreen({ onBack, isActive = false }: PractiseScreenProps
         colors={SKY_GRADIENT_WORLD}
         style={StyleSheet.absoluteFill}
       />
-      {/* Bear top background image */}
-      <View style={mainMenuStyles.moonContainer} pointerEvents="none">
-        <BearTopImage />
-      </View>
+      <EarthHorizon edge="top" />
       {/* Animated stars */}
       {STAR_POSITIONS.map((star) => (
         <Animated.View

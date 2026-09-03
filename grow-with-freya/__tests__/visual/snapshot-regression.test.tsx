@@ -192,6 +192,8 @@ describe('Visual Regression Tests', () => {
       const tree = render(<StorySelectionScreen />);
 
       expect(structure(tree)).toEqual([
+        'earth-horizon',
+        'earth-horizon-globe',
         'icon-Ionicons-arrow-back',
         'linear-gradient',
         'music-control-button',

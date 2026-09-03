@@ -31,10 +31,9 @@ import Animated, {
 import { InstrumentPickerOverlay } from '@/components/stories/instrument-picker-overlay';
 import { MusicChallengeUI } from '@/components/stories/music-challenge-ui';
 import { MusicControl } from '@/components/ui/music-control';
-import { BearTopImage } from '@/components/main-menu/animated-components';
+import { EarthHorizon } from '@/components/ui/earth-horizon';
 import { VISUAL_EFFECTS } from '@/components/main-menu/constants';
 import { generateStarPositions } from '@/components/main-menu/utils';
-import { mainMenuStyles } from '@/components/main-menu/styles';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { useMusicChallenge } from '@/hooks/use-music-challenge';
 import { useBreathDetector } from '@/hooks/use-breath-detector';
@@ -333,9 +332,7 @@ export function FreeplayScreen({ onBack, isActive = false }: FreeplayScreenProps
         colors={SKY_GRADIENT_WORLD}
         style={StyleSheet.absoluteFill}
       />
-      <View style={mainMenuStyles.moonContainer} pointerEvents="none">
-        <BearTopImage />
-      </View>
+      <EarthHorizon edge="top" />
       {STAR_POSITIONS.map((star) => (
         <Animated.View
           key={`star-${star.id}`}

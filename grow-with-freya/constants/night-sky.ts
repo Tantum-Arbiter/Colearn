@@ -42,24 +42,8 @@ export function cloudBandTop(height: number): number {
   return Math.round(height * CLOUD_LAYER.topRatio);
 }
 
-export const HORIZON = {
-  phoneWidthRatio: 1.4,
-  tabletWidthRatio: 2.2,
-  phoneHeightRatio: 0.34,
-  tabletHeightRatio: 0.22,
-} as const;
-
 export function isWideScreen(width: number): boolean {
   return width >= TABLET_MIN_WIDTH;
-}
-
-export function horizonSize(width: number): { width: number; height: number } {
-  const wide = isWideScreen(width);
-
-  return {
-    width: Math.round(width * (wide ? HORIZON.tabletWidthRatio : HORIZON.phoneWidthRatio)),
-    height: Math.round(width * (wide ? HORIZON.tabletHeightRatio : HORIZON.phoneHeightRatio)),
-  };
 }
 
 export function nextShootingStarDelay(roll: number, isFirst = false): number {

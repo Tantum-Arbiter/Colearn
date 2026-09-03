@@ -58,6 +58,7 @@ components/
 ├── account/                ← Settings, language, screen time, profile
 ├── tutorial/               ← Contextual tip overlays
 └── ui/                     ← Shared UI components
+    └── earth-horizon.tsx        ← One globe: rises from the home page's bottom edge, hangs from the top of every page below (`constants/earth.ts` owns the geometry)
 
 services/
 ├── api-client.ts           ← HTTP client: auth headers, token refresh, timeouts

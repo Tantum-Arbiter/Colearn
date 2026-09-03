@@ -1,18 +1,16 @@
 /**
  * Tests for the night sky behind the home scene.
  *
- * Stars sit in the upper reaches, the horizon has to stay a horizon on a wide
- * screen rather than becoming a small planet, and shooting stars are rare.
+ * Stars sit in the upper reaches and shooting stars are rare. The earth on
+ * the horizon has its own rules in earth.test.ts.
  */
 
 import {
   CLOUD_LAYER,
   cloudBandTop,
-  HORIZON,
   SHOOTING_STAR,
   STAR_FIELD,
   buildStarField,
-  horizonSize,
   isWideScreen,
   nextShootingStarDelay,
 } from '@/constants/night-sky';
@@ -31,35 +29,6 @@ describe('isWideScreen', () => {
     const underTest = isWideScreen(width);
 
     expect(underTest).toBe(expected);
-  });
-});
-
-describe('horizonSize', () => {
-  it('should overhang the screen so the earth reads as a horizon, not a ball', () => {
-    const underTest = horizonSize(PHONE);
-
-    expect(underTest.width).toBeGreaterThan(PHONE);
-  });
-
-  it('should overhang much further on a wide screen', () => {
-    const underTest = horizonSize(TABLET).width / TABLET;
-
-    expect(underTest).toBeGreaterThan(horizonSize(PHONE).width / PHONE);
-  });
-
-  it('should keep the arc shallower on a wide screen', () => {
-    const underTest = horizonSize(TABLET).height / TABLET;
-
-    expect(underTest).toBeLessThan(horizonSize(PHONE).height / PHONE);
-  });
-
-  it.each([
-    ['phone', PHONE, HORIZON.phoneWidthRatio],
-    ['tablet', TABLET, HORIZON.tabletWidthRatio],
-  ])('should scale the %s horizon from its ratio', (_case, width, ratio) => {
-    const underTest = horizonSize(width).width;
-
-    expect(underTest).toBe(Math.round(width * ratio));
   });
 });
 

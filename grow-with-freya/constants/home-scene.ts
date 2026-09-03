@@ -82,6 +82,7 @@ export interface HomeTheme {
   chromeInk: string;
   artScrim: string;
   cloudOpacity: string;
+  earthScrim: string;
 }
 
 export const HOME_THEMES = {
@@ -121,6 +122,7 @@ export const HOME_THEMES = {
     chromeInk: '#FFFFFF',
     artScrim: 'rgba(10,21,51,0.26)',
     cloudOpacity: '0.62',
+    earthScrim: 'rgba(11,21,51,0.34)',
   },
   day: {
     skyTop: NIGHT_DEEP,
@@ -158,6 +160,7 @@ export const HOME_THEMES = {
     chromeInk: '#FFFFFF',
     artScrim: 'rgba(20,44,94,0.16)',
     cloudOpacity: '0.78',
+    earthScrim: 'rgba(34,64,111,0.06)',
   },
 } as const satisfies Record<TimeOfDay, HomeTheme>;
 
@@ -186,7 +189,6 @@ export const HOME_SCENE_LAYOUT = {
   ribbonHeight: 37,
   skyFaceSizeRatio: 0.30,
   starCount: 34,
-  horizonHeightRatio: 0.34,
 } as const;
 
 export const HOME_SCENE_TYPE = {
