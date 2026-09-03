@@ -3,9 +3,9 @@ import { StyleSheet, View } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withDelay, withTiming, Easing } from 'react-native-reanimated';
 
 export const SECTION_CROSSFADE = {
-  outMs: 180,
-  inMs: 260,
-  overlapMs: 180,
+  outMs: 200,
+  inMs: 280,
+  overlapMs: 40,
   lift: 10,
 } as const;
 

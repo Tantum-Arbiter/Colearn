@@ -11,6 +11,8 @@ import Animated, {
 
 import { getScreenDimensions } from '@/components/main-menu/constants';
 
+const ALWAYS_MOUNTED = 'main';
+
 interface EnhancedPageTransitionProps {
   currentPage: string;
   pages: Record<string, React.ReactNode>;
@@ -72,6 +74,17 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
   const [isTransitioning, setIsTransitioning] = useState(false);
   const transitionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevPageRef = useRef(currentPage);
+  const [slide, setSlide] = useState<{ from: string | null; to: string; recent: string | null }>({
+    from: null,
+    to: currentPage,
+    recent: null,
+  });
+  if (slide.to !== currentPage) {
+    setSlide({ from: slide.to, to: currentPage, recent: slide.recent === currentPage ? slide.from : slide.recent });
+  }
+  const mounted = new Set(
+    [ALWAYS_MOUNTED, currentPage, slide.from, slide.recent].filter((key): key is string => key !== null)
+  );
 
   // Update screen height when dimensions change (orientation changes)
   useEffect(() => {
@@ -173,13 +186,21 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
     };
 
     // Block touch input while the slide animation is in progress
-    if (animate && prevPageRef.current !== currentPage) {
+    if (prevPageRef.current !== currentPage) {
+      const leaving = prevPageRef.current;
       if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
-      setIsTransitioning(true);
+      if (animate) {
+        setIsTransitioning(true);
+      }
       transitionTimerRef.current = setTimeout(() => {
         setIsTransitioning(false);
         transitionTimerRef.current = null;
-      }, duration);
+        setSlide((current) => ({
+          ...current,
+          from: current.from === leaving ? null : current.from,
+          recent: leaving === ALWAYS_MOUNTED ? current.recent : leaving,
+        }));
+      }, animate ? duration : 0);
     }
     prevPageRef.current = currentPage;
 
@@ -223,8 +244,10 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
       style={styles.container}
     >
       {Object.entries(pages).map(([pageKey, pageComponent]) => {
-        // Only render pages that have animation values
-        if (!pageAnimations[pageKey]) {
+        // Only render pages that have animation values, and only the ones in play:
+        // home, the page showing, the page it is sliding away from, and the last
+        // one left so a bounce back is instant. Everything else is unmounted.
+        if (!pageAnimations[pageKey] || !mounted.has(pageKey)) {
           return null;
         }
 

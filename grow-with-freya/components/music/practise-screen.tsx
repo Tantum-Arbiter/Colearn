@@ -443,7 +443,11 @@ export function PractiseScreen({ onBack, isActive = false }: PractiseScreenProps
         {/* Static blur overlay -always visible, no fade, no rotation.
             pointerEvents="none" so touches pass through to the rotated instrument view. */}
         <View style={styles.musicChallengeOverlay} pointerEvents="none">
-          <BlurView intensity={40} style={StyleSheet.absoluteFill} tint="dark" />
+          {isActive ? (
+            <BlurView intensity={40} style={StyleSheet.absoluteFill} tint="dark" />
+          ) : (
+            <View style={[StyleSheet.absoluteFill, styles.restingScrim]} />
+          )}
         </View>
 
         {/* Rotated instrument content -fades in over the static blur */}
@@ -620,6 +624,7 @@ export function PractiseScreen({ onBack, isActive = false }: PractiseScreenProps
         selectedInstrumentId={selectedInstrumentId}
         onSelect={handleInlineInstrumentChange}
         onLockedPress={() => setShowSubscription(true)}
+        active={isActive}
       />
 
       <FlatList
@@ -716,6 +721,9 @@ export function PractiseScreen({ onBack, isActive = false }: PractiseScreenProps
 }
 
 const styles = StyleSheet.create({
+  restingScrim: {
+    backgroundColor: 'rgba(0, 0, 0, 0.35)',
+  },
   container: {
     flex: 1,
     backgroundColor: NIGHT_DEEP,

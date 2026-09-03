@@ -24,6 +24,13 @@ const PAGES = {
   account: <Page name="account" />,
 };
 
+function shown(view: ReturnType<typeof render>): string[] {
+  return view
+    .UNSAFE_queryAllByType(Text)
+    .map((node) => String(node.props.children))
+    .sort();
+}
+
 function guard(view: ReturnType<typeof render>) {
   const matches = view.UNSAFE_root.findAll((node: any) => node.props.testID === 'page-transition-touch-guard');
 
@@ -64,9 +71,9 @@ describe('EnhancedPageTransition', () => {
 
   it('should not re-render the pages when the slide starts or ends', () => {
     const view = render(<EnhancedPageTransition currentPage="main" pages={PAGES} duration={800} />);
+    view.rerender(<EnhancedPageTransition currentPage="stories" pages={PAGES} duration={800} />);
     const afterMount = { ...renders };
 
-    view.rerender(<EnhancedPageTransition currentPage="stories" pages={PAGES} duration={800} />);
     act(() => {
       jest.advanceTimersByTime(800);
     });
@@ -74,6 +81,50 @@ describe('EnhancedPageTransition', () => {
     const underTest = renders;
 
     expect(underTest).toEqual(afterMount);
+  });
+
+  it('should mount only the home page and the page showing', () => {
+    render(<EnhancedPageTransition currentPage="main" pages={PAGES} duration={800} />);
+
+    const underTest = Object.keys(renders).sort();
+
+    expect(underTest).toEqual(['main']);
+  });
+
+  it('should mount the destination before sliding to it', () => {
+    const view = render(<EnhancedPageTransition currentPage="main" pages={PAGES} duration={800} />);
+
+    view.rerender(<EnhancedPageTransition currentPage="stories" pages={PAGES} duration={800} />);
+
+    const underTest = Object.keys(renders).sort();
+
+    expect(underTest).toEqual(['main', 'stories']);
+  });
+
+  it('should keep the page it is leaving mounted until the slide has finished', () => {
+    const view = render(<EnhancedPageTransition currentPage="stories" pages={PAGES} duration={800} />);
+
+    view.rerender(<EnhancedPageTransition currentPage="account" pages={PAGES} duration={800} />);
+
+    const underTest = shown(view);
+
+    expect(underTest).toEqual(['account', 'main', 'stories']);
+  });
+
+  it('should keep the page it has just left, and let older ones go', () => {
+    const view = render(<EnhancedPageTransition currentPage="stories" pages={PAGES} duration={800} />);
+    view.rerender(<EnhancedPageTransition currentPage="account" pages={PAGES} duration={800} />);
+    act(() => {
+      jest.advanceTimersByTime(800);
+    });
+    view.rerender(<EnhancedPageTransition currentPage="main" pages={PAGES} duration={800} />);
+    act(() => {
+      jest.advanceTimersByTime(800);
+    });
+
+    const underTest = shown(view);
+
+    expect(underTest).toEqual(['account', 'main']);
   });
 
   it('should not slide when animation is switched off', () => {

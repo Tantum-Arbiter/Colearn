@@ -361,7 +361,11 @@ export function FreeplayScreen({ onBack, isActive = false }: FreeplayScreenProps
       {/* Static blur overlay -always mounted, never fades.
           pointerEvents="none" so touches pass through to the rotated instrument view. */}
       <View style={styles.musicChallengeOverlay} pointerEvents="none">
-        <BlurView intensity={40} style={StyleSheet.absoluteFill} tint="dark" />
+        {isActive ? (
+          <BlurView intensity={40} style={StyleSheet.absoluteFill} tint="dark" />
+        ) : (
+          <View style={[StyleSheet.absoluteFill, styles.restingScrim]} />
+        )}
       </View>
 
       {/* Instrument rotated content -renders when instrument selected, fades in/out */}
@@ -480,6 +484,9 @@ export function FreeplayScreen({ onBack, isActive = false }: FreeplayScreenProps
 }
 
 const styles = StyleSheet.create({
+  restingScrim: {
+    backgroundColor: 'rgba(0, 0, 0, 0.35)',
+  },
   container: {
     flex: 1,
     backgroundColor: NIGHT_DEEP,

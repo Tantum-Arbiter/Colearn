@@ -13,11 +13,27 @@ import Animated, {
   useSharedValue, useAnimatedStyle, withRepeat, withSequence,
   withTiming, interpolate, Extrapolation, Easing, SharedValue, runOnJS,
 } from 'react-native-reanimated';
+import { useAmbientLoop, type AmbientStarter } from '@/hooks/use-ambient-animation';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { getAvailableInstrumentIds, getInstrument, InstrumentDefinition } from '@/services/music-asset-registry';
 import { StoryAccessService } from '@/services/story-access-service';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { Fonts } from '@/constants/theme';
+
+const PULSE_SCALE: AmbientStarter = (value) => {
+  value.value = withRepeat(withSequence(
+    withTiming(1, { duration: 0 }),
+    withTiming(1.2, { duration: 900, easing: Easing.out(Easing.ease) }),
+    withTiming(1, { duration: 900, easing: Easing.inOut(Easing.ease) }),
+  ), -1, false);
+};
+const PULSE_OPACITY: AmbientStarter = (value) => {
+  value.value = withRepeat(withSequence(
+    withTiming(0.6, { duration: 0 }),
+    withTiming(0.15, { duration: 900, easing: Easing.out(Easing.ease) }),
+    withTiming(0.6, { duration: 900, easing: Easing.inOut(Easing.ease) }),
+  ), -1, false);
+};
 
 // Slightly smaller than the full-screen picker overlay, tuned for inline use
 const BASE_RADIUS = 150;
@@ -30,9 +46,10 @@ interface Props {
   onSelect: (id: string) => void;
   /** Called when user tries to select a locked instrument */
   onLockedPress?: () => void;
+  active?: boolean;
 }
 
-export const InstrumentCarousel = React.memo(function InstrumentCarousel({ selectedInstrumentId, onSelect, onLockedPress }: Props) {
+export const InstrumentCarousel = React.memo(function InstrumentCarousel({ selectedInstrumentId, onSelect, onLockedPress, active = true }: Props) {
   const { scaledButtonSize, scaledFontSize } = useAccessibility();
   const { width: windowWidth } = useWindowDimensions();
   const imageSize = scaledButtonSize(BASE_IMAGE_SIZE);
@@ -119,7 +136,7 @@ export const InstrumentCarousel = React.memo(function InstrumentCarousel({ selec
           <View style={[st.cContainer, { height: carouselHeight }]}>
             <Animated.View style={st.carousel}>
               {instruments.map((inst, i) => (
-                <CarouselItem key={inst.id} instrument={inst} index={i} anglePerItem={anglePerItem}
+                <CarouselItem key={inst.id} active={active} instrument={inst} index={i} anglePerItem={anglePerItem}
                   rotation={rotation} imageSize={imageSize} radius={radius}
                   nameFontSize={scaledFontSize(16)} descFontSize={scaledFontSize(12)}
                   isLocked={!StoryAccessService.isInstrumentUnlocked(inst.id)}
@@ -146,24 +163,15 @@ interface ItemProps {
   rotation: SharedValue<number>; imageSize: number; radius: number;
   nameFontSize: number; descFontSize: number;
   isLocked?: boolean; onLockedPress?: () => void;
+  active: boolean;
 }
 
-function CarouselItem({ instrument, index, anglePerItem, rotation, imageSize, radius, nameFontSize, descFontSize, isLocked = false, onLockedPress }: ItemProps) {
+function CarouselItem({ instrument, index, anglePerItem, rotation, imageSize, radius, nameFontSize, descFontSize, isLocked = false, onLockedPress, active }: ItemProps) {
   const pulseScale = useSharedValue(1);
   const pulseOpacity = useSharedValue(0);
 
-  useEffect(() => {
-    pulseScale.value = withRepeat(withSequence(
-      withTiming(1, { duration: 0 }),
-      withTiming(1.2, { duration: 900, easing: Easing.out(Easing.ease) }),
-      withTiming(1, { duration: 900, easing: Easing.inOut(Easing.ease) }),
-    ), -1, false);
-    pulseOpacity.value = withRepeat(withSequence(
-      withTiming(0.6, { duration: 0 }),
-      withTiming(0.15, { duration: 900, easing: Easing.out(Easing.ease) }),
-      withTiming(0.6, { duration: 900, easing: Easing.inOut(Easing.ease) }),
-    ), -1, false);
-  }, [pulseScale, pulseOpacity]);
+  useAmbientLoop(active, pulseScale, PULSE_SCALE, 1);
+  useAmbientLoop(active, pulseOpacity, PULSE_OPACITY, 0);
 
   const itemStyle = useAnimatedStyle(() => {
     const th = ((rotation.value + index * anglePerItem) * Math.PI) / 180;
