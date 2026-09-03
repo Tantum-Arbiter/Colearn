@@ -85,16 +85,16 @@ cropped, so the UI reads as existing underneath a larger magical world.
 | Property | Value |
 |---|---|
 | Horizontal position | centred |
-| Width | 55–65% of screen width |
-| Visible portion | lower curved section only |
+| Width | the same globe as the home page: overhangs the screen (see `constants/earth.ts`) |
+| Visible portion | lower curved section only — 0.38× width on phones, 0.2× height on tablets |
 | Vertical position | top edge above the viewport, extending behind the status bar |
 | Treatment | painterly blue oceans, soft green land, warm highlights, soft atmospheric edge glow |
 
 This is **environmental artwork, not a card**. It has no border, no surface, no press target.
 
-Asset slot: `assets/images/ui-elements/home-earth-night.webp` already exists in the repo and is
-the intended source; a higher-resolution crop may be substituted without changing the component
-contract.
+Asset: `assets/images/ui-elements/shared-earth.webp`, the one globe shared with the home page,
+where its top rises from the bottom edge. Because both pages draw the same sphere at the same
+diameter, the slide between them reads as scrolling past one world.
 
 ### Layer 3 — Functional UI
 
@@ -311,11 +311,9 @@ text regions. Reuse the existing `generateStarPositions` helper from
 
 ### 6.2 `PlanetHeaderArtwork`
 
-| Prop | Type | Default |
-|---|---|---|
-| `source` | `ImageSource` | `home-earth-night.webp` |
-| `widthRatio` | `number` | `0.60` (clamped 0.55–0.65) |
-| `topOffsetRatio` | `number` | `-0.34` (fraction of its own height above the viewport) |
+No props. It renders `<EarthHorizon edge="top" />` (`components/ui/earth-horizon.tsx`), the
+shared globe whose geometry lives in `constants/earth.ts`; the home page renders the same
+component with `edge="bottom"`.
 
 `pointerEvents="none"`. Ignores safe-area insets by design — it must extend behind the status
 bar. Renders below all Layer-3 content in z-order.
