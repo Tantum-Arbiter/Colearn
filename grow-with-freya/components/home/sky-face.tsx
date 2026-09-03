@@ -1,7 +1,13 @@
 import React, { memo, useEffect } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { Image } from 'expo-image';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSequence,
+  withTiming,
+  Easing,
+} from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
 import { SKY_FACE_RHYTHM } from '@/constants/sky-face';
 import type { TimeOfDay } from '@/constants/home-scene';
@@ -36,25 +42,43 @@ export const SkyFace = memo(function SkyFace({
   const { t } = useTranslation();
   const expression = useSkyFace({ enabled: animated });
   const laughOpacity = useSharedValue(0);
+  const giggle = useSharedValue(0);
 
   useEffect(() => {
-    laughOpacity.value = withTiming(expression === 'laughing' ? 1 : 0, {
+    const laughing = expression === 'laughing';
+    laughOpacity.value = withTiming(laughing ? 1 : 0, {
       duration: SKY_FACE_RHYTHM.crossFadeMs,
       easing: Easing.inOut(Easing.quad),
     });
-  }, [expression, laughOpacity]);
+    if (!laughing) {
+      giggle.value = withTiming(0, { duration: SKY_FACE_RHYTHM.crossFadeMs, easing: Easing.out(Easing.quad) });
+      return;
+    }
+    const beat = SKY_FACE_RHYTHM.laughMs / 5;
+    const sway = Easing.inOut(Easing.sin);
+    giggle.value = withSequence(
+      withTiming(1, { duration: beat, easing: sway }),
+      withTiming(-1, { duration: beat, easing: sway }),
+      withTiming(0.6, { duration: beat, easing: sway }),
+      withTiming(-0.4, { duration: beat, easing: sway }),
+      withTiming(0, { duration: beat, easing: sway })
+    );
+  }, [expression, laughOpacity, giggle]);
 
   const laughStyle = useAnimatedStyle(() => ({ opacity: laughOpacity.value }));
+  const giggleStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${giggle.value * SKY_FACE_RHYTHM.giggleDegrees}deg` }],
+  }));
 
   const art = SKY_FACE_ART[timeOfDay];
   const dimensions = { width: size, height: size };
 
   return (
-    <View
+    <Animated.View
       testID={testID}
       accessibilityRole="image"
       accessibilityLabel={t(timeOfDay === 'day' ? 'home.sun' : 'home.moon')}
-      style={dimensions}
+      style={[dimensions, giggleStyle]}
     >
       <Image
         testID="sky-face-resting"
@@ -71,7 +95,7 @@ export const SkyFace = memo(function SkyFace({
         contentFit="contain"
         transition={0}
       />
-    </View>
+    </Animated.View>
   );
 });
 

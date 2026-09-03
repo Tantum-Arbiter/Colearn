@@ -49,7 +49,6 @@ export const NightSky = memo(function NightSky({
         width={width}
         height={height}
         colour={theme.star}
-        sparkleColour={theme.ribbonStar}
         intensity={starIntensity}
         active={settled}
       />
@@ -79,13 +78,7 @@ export const NightSky = memo(function NightSky({
         />
       </View>
 
-      <EarthHorizon
-        testID="home-horizon"
-        edge="bottom"
-        width={width}
-        height={height}
-        scrim={theme.earthScrim}
-      />
+      <EarthHorizon testID="home-horizon" edge="bottom" width={width} height={height} />
     </View>
   );
 });

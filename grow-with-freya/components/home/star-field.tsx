@@ -10,8 +10,7 @@ import Animated, {
   cancelAnimation,
   Easing,
 } from 'react-native-reanimated';
-import Svg, { Polygon } from 'react-native-svg';
-import { SPARKLES, STAR_FIELD, buildStarField, type StarSeed } from '@/constants/night-sky';
+import { STAR_FIELD, buildStarField, type StarSeed } from '@/constants/night-sky';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
 
 interface TwinklingStarProps {
@@ -76,71 +75,11 @@ const TwinklingStar = memo(function TwinklingStar({
   );
 });
 
-interface SparkleProps {
-  x: number;
-  y: number;
-  size: number;
-  colour: string;
-  intensity: number;
-  animated: boolean;
-  index: number;
-}
-
-const Sparkle = memo(function Sparkle({
-  x,
-  y,
-  size,
-  colour,
-  intensity,
-  animated,
-  index,
-}: SparkleProps) {
-  const glow = useSharedValue(1);
-
-  useEffect(() => {
-    if (!animated) {
-      cancelAnimation(glow);
-      glow.value = 1;
-      return;
-    }
-
-    const duration = 3200 + index * 480;
-
-    glow.value = withDelay(
-      index * 720,
-      withRepeat(
-        withSequence(
-          withTiming(0.45, { duration, easing: Easing.inOut(Easing.sin) }),
-          withTiming(1, { duration, easing: Easing.inOut(Easing.sin) })
-        ),
-        -1,
-        false
-      )
-    );
-
-    return () => {
-      cancelAnimation(glow);
-    };
-  }, [animated, glow, index]);
-
-  const style = useAnimatedStyle(() => ({ opacity: intensity * glow.value }));
-  const points = `${size},0 ${size * 1.18},${size * 0.82} ${size * 2},${size} ${size * 1.18},${size * 1.18} ${size},${size * 2} ${size * 0.82},${size * 1.18} 0,${size} ${size * 0.82},${size * 0.82}`;
-
-  return (
-    <Animated.View style={[styles.sparkle, { left: x, top: y }, style]}>
-      <Svg width={size * 2} height={size * 2}>
-        <Polygon points={points} fill={colour} />
-      </Svg>
-    </Animated.View>
-  );
-});
-
 export interface StarFieldProps {
   active?: boolean;
   width: number;
   height: number;
   colour: string;
-  sparkleColour: string;
   intensity: number;
   testID?: string;
 }
@@ -150,7 +89,6 @@ export const StarField = memo(function StarField({
   width,
   height,
   colour,
-  sparkleColour,
   intensity,
   testID = 'star-field',
 }: StarFieldProps) {
@@ -172,28 +110,12 @@ export const StarField = memo(function StarField({
           animated={!reduceMotion && active}
         />
       ))}
-
-      {SPARKLES.map((sparkle, index) => (
-        <Sparkle
-          key={`sparkle-${index}`}
-          x={sparkle.xRatio * width}
-          y={sparkle.yRatio * height}
-          size={sparkle.size}
-          colour={sparkleColour}
-          intensity={intensity}
-          animated={!reduceMotion && active}
-          index={index}
-        />
-      ))}
     </View>
   );
 });
 
 const styles = StyleSheet.create({
   star: {
-    position: 'absolute',
-  },
-  sparkle: {
     position: 'absolute',
   },
 });

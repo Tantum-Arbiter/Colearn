@@ -6,6 +6,7 @@ export const SKY_FACE_RHYTHM = {
   laughMs: 1400,
   crossFadeMs: 260,
   firstRestMinMs: 8000,
+  giggleDegrees: 3,
 } as const;
 
 export function nextRestDelay(roll: number, isFirst = false): number {

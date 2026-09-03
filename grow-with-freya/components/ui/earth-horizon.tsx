@@ -9,7 +9,6 @@ export interface EarthHorizonProps {
   edge: EarthEdge;
   width?: number;
   height?: number;
-  scrim?: string;
   testID?: string;
 }
 
@@ -17,7 +16,6 @@ export const EarthHorizon = memo(function EarthHorizon({
   edge,
   width: widthProp,
   height: heightProp,
-  scrim,
   testID = 'earth-horizon',
 }: EarthHorizonProps) {
   const window = useWindowDimensions();
@@ -45,7 +43,6 @@ export const EarthHorizon = memo(function EarthHorizon({
         contentFit="contain"
         transition={0}
       />
-      {scrim ? <View testID={`${testID}-scrim`} style={[styles.globe, globe, { backgroundColor: scrim }]} /> : null}
     </View>
   );
 });

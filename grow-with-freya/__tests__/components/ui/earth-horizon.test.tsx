@@ -3,7 +3,7 @@
  *
  * The same globe rises from the bottom of the home page and hangs from the
  * top of the pages beneath it, clipped to a window so nothing spills over the
- * page while the two slide past each other.
+ * page while the two slide past each other. The art is never tinted.
  */
 
 import React from 'react';
@@ -73,25 +73,6 @@ describe('EarthHorizon', () => {
     const underTest = byTestId(view, 'earth-horizon')[0].props.pointerEvents;
 
     expect(underTest).toBe('none');
-  });
-
-  it('should show no scrim unless asked', () => {
-    const view = renderEarth();
-
-    const underTest = byTestId(view, 'earth-horizon-scrim');
-
-    expect(underTest).toHaveLength(0);
-  });
-
-  it('should lay a round scrim over the globe when given one', () => {
-    const view = renderEarth({ scrim: 'rgba(11,21,51,0.34)' });
-    const layout = earthLayout(WIDTH, HEIGHT, 'bottom');
-
-    const underTest = flatStyle(view, 'earth-horizon-scrim');
-
-    expect(underTest.backgroundColor).toBe('rgba(11,21,51,0.34)');
-    expect(underTest.borderRadius).toBe(layout.diameter / 2);
-    expect(underTest.width).toBe(layout.diameter);
   });
 
   it('should fall back to the window when no size is given', () => {

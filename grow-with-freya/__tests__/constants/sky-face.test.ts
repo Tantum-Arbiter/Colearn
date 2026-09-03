@@ -64,3 +64,12 @@ describe('laughsPerMinute', () => {
     expect(underTest).toBeLessThan(0.06);
   });
 });
+
+describe('giggle', () => {
+  it('should sway the face gently rather than shake it', () => {
+    const underTest = SKY_FACE_RHYTHM.giggleDegrees;
+
+    expect(underTest).toBeGreaterThan(0);
+    expect(underTest).toBeLessThanOrEqual(4);
+  });
+});

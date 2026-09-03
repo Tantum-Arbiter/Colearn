@@ -14,15 +14,6 @@ export const STAR_FIELD = {
   twinkleFloor: 0.42,
 } as const;
 
-export const SPARKLES = [
-  { xRatio: 0.09, yRatio: 0.19, size: 15 },
-  { xRatio: 0.83, yRatio: 0.12, size: 11 },
-  { xRatio: 0.93, yRatio: 0.24, size: 14 },
-  { xRatio: 0.18, yRatio: 0.31, size: 10 },
-  { xRatio: 0.71, yRatio: 0.29, size: 13 },
-  { xRatio: 0.35, yRatio: 0.09, size: 9 },
-] as const;
-
 export const SHOOTING_STAR = {
   restMinMs: 26000,
   restMaxMs: 62000,

@@ -2,10 +2,12 @@
  * Tests for the face in the sky.
  *
  * Day brings the sun, night brings the moon, and both wear a resting smile with
- * a laughing frame stacked over it that fades in and out.
+ * a laughing frame stacked over it that fades in and out while the whole face
+ * gives a small giggle.
  */
 
 import React from 'react';
+import { StyleSheet } from 'react-native';
 import { render, type RenderResult } from '@testing-library/react-native';
 import { SkyFace } from '@/components/home/sky-face';
 
@@ -45,6 +47,6 @@ describe('SkyFace', () => {
 
     const underTest = byTestId(view, 'sky-face')[0];
 
-    expect(underTest.props.style).toEqual(expect.objectContaining({ width: 96, height: 96 }));
+    expect(StyleSheet.flatten(underTest.props.style)).toEqual(expect.objectContaining({ width: 96, height: 96 }));
   });
 });
