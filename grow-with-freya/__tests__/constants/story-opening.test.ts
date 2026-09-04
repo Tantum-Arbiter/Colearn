@@ -8,7 +8,7 @@
  * book re-entering afterwards rather than jumping.
  */
 
-import { STORY_OPENING, needsGuidedTurn, openingSeat, placementIsStale, storyOpeningTimeline, type OpeningStepName } from '@/constants/story-opening';
+import { STORY_OPENING, needsGuidedTurn, openingSeat, placementIsStale, seatTransform, storyOpeningTimeline, type OpeningStepName } from '@/constants/story-opening';
 
 function names(needsRotation: boolean): OpeningStepName[] {
   return storyOpeningTimeline(needsRotation).steps.map((step) => step.name);
@@ -181,5 +181,41 @@ describe('placementIsStale', () => {
     const underTest = placementIsStale(PORTRAIT, { width: 402, height: 800 });
 
     expect(underTest).toBe(true);
+  });
+});
+
+describe('seatTransform', () => {
+  const CARD = { x: 20, y: 300, width: 300, height: 200 };
+  const PORTRAIT = { width: 402, height: 874 };
+  const LANDSCAPE = { width: 874, height: 402 };
+
+  it.each([
+    ['upright', PORTRAIT],
+    ['sideways', LANDSCAPE],
+  ])('should carry the card to the centre of a phone held %s', (_held, screen) => {
+    const underTest = seatTransform(screen, CARD);
+
+    expect(CARD.x + CARD.width / 2 + underTest.moveX).toBeCloseTo(screen.width / 2, 5);
+    expect(CARD.y + CARD.height / 2 + underTest.moveY).toBeCloseTo(screen.height / 2, 5);
+  });
+
+  it('should keep the book at the centre of whichever screen it is on across a turn', () => {
+    const before = seatTransform(PORTRAIT, CARD);
+    const after = seatTransform(LANDSCAPE, CARD);
+
+    const centreBefore = { x: CARD.x + CARD.width / 2 + before.moveX, y: CARD.y + CARD.height / 2 + before.moveY };
+    const centreAfter = { x: CARD.x + CARD.width / 2 + after.moveX, y: CARD.y + CARD.height / 2 + after.moveY };
+
+    expect(centreBefore).toEqual({ x: PORTRAIT.width / 2, y: PORTRAIT.height / 2 });
+    expect(centreAfter).toEqual({ x: LANDSCAPE.width / 2, y: LANDSCAPE.height / 2 });
+  });
+
+  it('should describe the same seat the opening uses', () => {
+    const seat = openingSeat(LANDSCAPE, CARD);
+
+    const underTest = seatTransform(LANDSCAPE, CARD);
+
+    expect(underTest.rect).toEqual({ x: seat.x, y: seat.y, width: seat.width, height: seat.height });
+    expect(underTest.scale).toBeCloseTo(seat.scale, 5);
   });
 });

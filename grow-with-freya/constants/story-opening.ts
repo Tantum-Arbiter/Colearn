@@ -108,10 +108,10 @@ export function needsGuidedTurn(device: {
 /**
  * Whether the book's recorded placement still means anything.
  *
- * A placement is worked out against one screen -- the rotate prompt seats the
- * book 42% down a portrait phone. Turn the phone and that spot is somewhere
- * else entirely, so the book must be seated outright rather than glided from a
- * position it never really occupied.
+ * A placement is worked out against one screen: its offsets carry the card from
+ * where it was tapped to the centre of that screen. Turn the phone and the same
+ * offsets point somewhere else entirely, so the book must be seated outright
+ * rather than glided from a position it never really occupied.
  */
 export function placementIsStale(
   placedOn: { width: number; height: number } | null,
@@ -122,4 +122,25 @@ export function placementIsStale(
   }
 
   return placedOn.width !== screen.width || placedOn.height !== screen.height;
+}
+
+/**
+ * The transform that carries the card from where it was tapped to the opening
+ * seat on the given screen. Recomputed for every screen the book finds itself
+ * on: a phone turned mid-prompt gets a fresh one for the landscape screen, so
+ * the book is at the centre of both layouts iOS blends between and never seems
+ * to move.
+ */
+export function seatTransform(
+  screen: { width: number; height: number },
+  card: { x: number; y: number; width: number; height: number }
+): { moveX: number; moveY: number; scale: number; rect: { x: number; y: number; width: number; height: number } } {
+  const seat = openingSeat(screen, card);
+
+  return {
+    moveX: screen.width / 2 - (card.x + card.width / 2),
+    moveY: screen.height / 2 - (card.y + card.height / 2),
+    scale: seat.scale,
+    rect: { x: seat.x, y: seat.y, width: seat.width, height: seat.height },
+  };
 }

@@ -33,14 +33,12 @@ import { useTutorial } from '@/contexts/tutorial-context';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppStore } from '@/store/app-store';
-import { STORY_OPENING, needsGuidedTurn, openingSeat, placementIsStale } from '@/constants/story-opening';
+import { STORY_OPENING, needsGuidedTurn, openingSeat, placementIsStale, seatTransform } from '@/constants/story-opening';
 import { allowTurnForPrompt, applyDefaultOrientation } from '@/hooks/use-story-orientation';
 
 // Animation timing constants
 const HERO_GLIDE_DURATION = 1000; // Glide from tile into the detail-view hero area
 const HERO_HEIGHT_RATIO = 0.44; // Portion of the screen the detail hero occupies
-const PROMPT_BOOK_WIDTH_RATIO = 0.52; // Book width on the rotate-prompt screen
-const PROMPT_BOOK_CENTER_Y_RATIO = 0.42; // Vertical centre of the book on the rotate-prompt screen
 const PROMPT_GLIDE_DURATION = 450; // Glide from hero into the rotate-prompt book position
 const LANDSCAPE_DIMENSIONS_TIMEOUT_MS = 800; // Fallback if the dimension-change event never fires
 
@@ -127,12 +125,16 @@ interface StoryTransitionProviderProps {
 export function StoryTransitionProvider({ children }: StoryTransitionProviderProps) {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [phase, setPhase] = useState<TransitionPhase>(null);
+  const phaseRef = useRef(phase);
+  phaseRef.current = phase;
   const showModeSelection = phase === 'detail';
   const [selectedStoryId, setSelectedStoryId] = useState<string | null>(null);
   const [gardenOpenRequest, setGardenOpenRequest] = useState<GardenOpenRequest | null>(null);
   const [selectedStory, setSelectedStory] = useState<Story | null>(null);
   const [selectedMode, setSelectedMode] = useState<ReadingMode>('read');
   const [cardPosition, setCardPosition] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
+  const cardPositionRef = useRef(cardPosition);
+  cardPositionRef.current = cardPosition;
   const [originalCardPosition, setOriginalCardPosition] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
   const [targetBookPosition, setTargetBookPosition] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
   const [shouldShowStoryReader, setShouldShowStoryReader] = useState(false);
@@ -206,6 +208,25 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   useEffect(() => {
     const subscription = Dimensions.addEventListener('change', ({ window }) => {
       setScreenDimensions(window);
+
+      // A phone turned while the prompt is up: reseat the book for the screen
+      // it is now on, at once and without animating, so the layout iOS is
+      // turning towards already has the book at its centre. Then the book is
+      // at the centre of both layouts the system blends between, and to the
+      // child it simply stays where it is while the screen turns around it.
+      const card = cardPositionRef.current;
+      if (phaseRef.current === 'prompt' && card && !isOpeningRef.current) {
+        const seat = seatTransform(window, card);
+        cancelAnimation(transitionX);
+        cancelAnimation(transitionY);
+        cancelAnimation(transitionScale);
+        transitionX.value = seat.moveX;
+        transitionY.value = seat.moveY;
+        transitionScale.value = seat.scale;
+        openingTransformRef.current = { moveX: seat.moveX, moveY: seat.moveY, scale: seat.scale };
+        transformScreenRef.current = { width: window.width, height: window.height };
+        setTargetBookPosition(seat.rect);
+      }
     });
     return () => subscription?.remove();
   }, []);
@@ -347,32 +368,14 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   };
 
   // Compute the transform that centers the card on the rotate-prompt screen
+  // The prompt parks the book in the very seat the opening uses -- the exact
+  // centre of the screen. A phone turned mid-prompt is rotated by iOS about the
+  // screen centre, so a book sitting there stays put through the turn.
   const computePromptTransform = (
     cardLayout: { x: number; y: number; width: number; height: number },
     width: number,
     height: number
-  ) => {
-    const targetWidth = width * PROMPT_BOOK_WIDTH_RATIO;
-    const targetScale = targetWidth / cardLayout.width;
-    const targetCenterX = width / 2;
-    const targetCenterY = height * PROMPT_BOOK_CENTER_Y_RATIO;
-    const currentCenterX = cardLayout.x + cardLayout.width / 2;
-    const currentCenterY = cardLayout.y + cardLayout.height / 2;
-    const moveX = targetCenterX - currentCenterX;
-    const moveY = targetCenterY - currentCenterY;
-    const scaledHeight = cardLayout.height * targetScale;
-    return {
-      moveX,
-      moveY,
-      scale: targetScale,
-      rect: {
-        x: targetCenterX - targetWidth / 2,
-        y: targetCenterY - scaledHeight / 2,
-        width: targetWidth,
-        height: scaledHeight,
-      },
-    };
-  };
+  ) => seatTransform({ width, height }, cardLayout);
 
   // Animate the card from its tile into the detail-view hero area
   const animateToHero = (

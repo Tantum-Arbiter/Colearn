@@ -50,11 +50,17 @@ locks orientation goes through one of those two, so a tablet is never locked any
   overlaps the breath and the grow, and it is only revealed by the dissolve. Without this, the
   reader (which sits above the overlay) appeared the instant it had rendered and cut the grow
   short on any fast device.
-- **A placement belongs to the screen that produced it** (`placementIsStale`). The prompt seats
-  the book 42% down a portrait phone; turn the phone and that spot is somewhere else entirely.
-  When the screen has changed shape since the book was placed, the book is seated outright
-  rather than glided from a position it never really occupied -- otherwise it appears a third of
-  a screen off centre and slides into place, which reads as the book being in the wrong spot.
+- **The book never leaves the centre while the screen turns.** The prompt parks the book in the
+  very seat the opening uses -- the exact centre of the screen (`seatTransform`) -- and the
+  moment the window changes size mid-prompt the seat is recomputed for the new screen and
+  applied at once, without animating. iOS turns the interface about the screen centre and
+  blends the old layout into the new; with the book at the centre of both, it simply stays
+  where it is while the screen turns around it. Filmed: within 2px of centre in every frame,
+  the mid-rotation frame included.
+- **A placement belongs to the screen that produced it** (`placementIsStale`). The offsets that
+  centred the book on one screen point somewhere else on another, so if the screen has changed
+  shape since the book was placed it is seated outright rather than glided from a position it
+  never really occupied.
 - **The turn is acted on only once the system has finished making it** (`TURN_SETTLE_MS`).
   iOS reports the new window size as it *starts* animating the interface round, not when it
   lands. Opening on that first report ran the whole book-opening on top of the system's own
