@@ -17,6 +17,7 @@ import { renderHook, act, waitFor } from '@testing-library/react-native';
 import { Dimensions } from 'react-native';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import {
+  allowTurnForPrompt,
   applyDefaultOrientation,
   isTabletDevice,
   useStoryOrientation,
@@ -247,5 +248,38 @@ describe('isTabletDevice', () => {
     const underTest = isTabletDevice();
 
     expect(underTest).toBe(expected);
+  });
+});
+
+describe('allowTurnForPrompt', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.restoreAllMocks();
+  });
+
+  it('should let the device follow the child while they are being asked to turn it', async () => {
+    setWindowSize(390, 844);
+
+    await allowTurnForPrompt();
+
+    expect(mockedOrientation.lockAsync).toHaveBeenCalledWith(ScreenOrientation.OrientationLock.DEFAULT);
+  });
+
+  it('should not leave a phone upside down as one of the ways it may be held', async () => {
+    setWindowSize(390, 844);
+
+    await allowTurnForPrompt();
+
+    expect(mockedOrientation.lockAsync).not.toHaveBeenCalledWith(ScreenOrientation.OrientationLock.ALL);
+  });
+
+  it('should be undone by the default orientation, which locks a phone back to portrait', async () => {
+    setWindowSize(390, 844);
+    await allowTurnForPrompt();
+    mockedOrientation.lockAsync.mockClear();
+
+    await applyDefaultOrientation();
+
+    expect(mockedOrientation.lockAsync).toHaveBeenCalledWith(ScreenOrientation.OrientationLock.PORTRAIT_UP);
   });
 });

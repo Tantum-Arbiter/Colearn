@@ -34,6 +34,7 @@ import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppStore } from '@/store/app-store';
 import { STORY_OPENING, needsGuidedTurn, openingSeat } from '@/constants/story-opening';
+import { allowTurnForPrompt, applyDefaultOrientation } from '@/hooks/use-story-orientation';
 
 // Animation timing constants
 const HERO_GLIDE_DURATION = 1000; // Glide from tile into the detail-view hero area
@@ -497,6 +498,11 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
     setPhase('prompt');
 
+    // Let the phone follow the child now that we are asking them to turn it.
+    // Until this, iOS held the interface in portrait and the prompt could only
+    // be answered by the accelerometer -- which a simulator never provides.
+    allowTurnForPrompt().catch((error) => log.warn('Failed to allow turning:', error));
+
     const prompt = computePromptTransform(cardPosition, dims.width, dims.height);
     openingTransformRef.current = { moveX: prompt.moveX, moveY: prompt.moveY, scale: prompt.scale };
     setTargetBookPosition(prompt.rect);
@@ -523,6 +529,9 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   const returnToDetailFromPrompt = () => {
     if (isOpeningRef.current) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+    // The child changed their mind, so take the freedom to turn back away
+    applyDefaultOrientation().catch((error) => log.warn('Failed to restore orientation:', error));
 
     cancelAnimation(levitationY);
     levitationY.value = withTiming(0, { duration: 200, easing: Easing.out(Easing.quad) });

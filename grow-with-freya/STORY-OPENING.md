@@ -50,6 +50,12 @@ locks orientation goes through one of those two, so a tablet is never locked any
   overlaps the breath and the grow, and it is only revealed by the dissolve. Without this, the
   reader (which sits above the overlay) appeared the instant it had rendered and cut the grow
   short on any fast device.
+- **The phone is unlocked while it is being asked to turn** (`allowTurnForPrompt`). Without
+  this the prompt was deaf to the very thing it asked for: iOS held the interface in portrait,
+  so nothing about turning the phone reached the app except raw accelerometer gravity, which a
+  simulator never provides and which reads nothing at all from a device lying flat. Now iOS
+  turns the interface, the screen visibly follows the child, and the dimension change opens the
+  book. The portrait lock comes back on the way out of the prompt.
 - **Only phones are asked to turn** (`needsGuidedTurn`). A phone is locked to portrait
   everywhere outside the reader, so its interface cannot follow the device: the pair have to be
   asked, and then the screen is turned for them behind the veil. The book goes into the veil and

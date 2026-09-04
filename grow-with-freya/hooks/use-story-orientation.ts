@@ -38,6 +38,17 @@ export function isTabletDevice(): boolean {
   return Math.min(width, height) >= TABLET_SHORT_EDGE;
 }
 
+/**
+ * Let the device follow the child while the "turn the screen together" prompt is
+ * up. A phone is portrait-locked everywhere else, which means iOS will not turn
+ * its interface however the phone is held -- so without this the prompt is deaf
+ * to the very thing it is asking for, and only the tap fallback works. DEFAULT
+ * allows portrait and both landscapes, but not upside down.
+ */
+export async function allowTurnForPrompt(): Promise<void> {
+  await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.DEFAULT);
+}
+
 export async function applyDefaultOrientation(): Promise<void> {
   if (isTabletDevice()) {
     await ScreenOrientation.unlockAsync();
