@@ -8,7 +8,7 @@
  * book re-entering afterwards rather than jumping.
  */
 
-import { STORY_OPENING, needsGuidedTurn, openingSeat, placementIsStale, seatTransform, storyOpeningTimeline, type OpeningStepName } from '@/constants/story-opening';
+import { STORY_DETAIL_OPENING, STORY_OPENING, heroFadeDelay, needsGuidedTurn, openingSeat, placementIsStale, seatTransform, storyOpeningTimeline, type OpeningStepName } from '@/constants/story-opening';
 
 function names(needsRotation: boolean): OpeningStepName[] {
   return storyOpeningTimeline(needsRotation).steps.map((step) => step.name);
@@ -217,5 +217,31 @@ describe('seatTransform', () => {
 
     expect(underTest.rect).toEqual({ x: seat.x, y: seat.y, width: seat.width, height: seat.height });
     expect(underTest.scale).toBeCloseTo(seat.scale, 5);
+  });
+});
+
+describe('tile to detail', () => {
+  it('should have the sheet rising while the book is still in flight', () => {
+    const underTest = STORY_DETAIL_OPENING.sheetMountAt;
+
+    expect(underTest).toBeGreaterThan(0);
+    expect(underTest).toBeLessThan(STORY_DETAIL_OPENING.liftMs);
+  });
+
+  it('should fade the sheet\'s hero in only once the book has landed', () => {
+    const heroStartsAt = STORY_DETAIL_OPENING.sheetMountAt + heroFadeDelay();
+
+    expect(heroStartsAt).toBeGreaterThanOrEqual(STORY_DETAIL_OPENING.liftMs);
+  });
+
+  it('should have the sky settled before the book lands', () => {
+    expect(STORY_DETAIL_OPENING.skySettleMs).toBeLessThanOrEqual(STORY_DETAIL_OPENING.liftMs);
+  });
+
+  it('should be over within a second, buttons included', () => {
+    const { sheetMountAt, sheetRiseMs, staggerMs, contentMs } = STORY_DETAIL_OPENING;
+    const lastContentSettles = sheetMountAt + Math.max(sheetRiseMs, 3 * staggerMs + contentMs);
+
+    expect(lastContentSettles).toBeLessThan(1000);
   });
 });

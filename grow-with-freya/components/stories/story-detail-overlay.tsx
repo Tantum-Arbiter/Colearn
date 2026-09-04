@@ -4,6 +4,7 @@ import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeIn, FadeInDown, FadeOut, SlideInDown, SlideOutDown, Easing } from 'react-native-reanimated';
+import { STORY_DETAIL_OPENING, heroFadeDelay } from '@/constants/story-opening';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
@@ -103,7 +104,7 @@ export function StoryDetailOverlay({
   return (
     <View style={styles.container} pointerEvents="box-none">
       <Animated.View
-        entering={FadeIn.duration(350)}
+        entering={FadeIn.delay(heroFadeDelay()).duration(STORY_DETAIL_OPENING.heroFadeMs)}
         exiting={FadeOut.duration(250)}
         style={[styles.heroContainer, { height: heroHeight }]}
         pointerEvents="box-none"
@@ -117,9 +118,12 @@ export function StoryDetailOverlay({
             priority="high"
           />
         )}
+        {/* Only the lower band fades into the sheet; the top half of the art
+            stays as bright as the book that just landed there, so the hero's
+            arrival reads as a settle rather than the picture dimming. */}
         <LinearGradient
-          colors={['rgba(10, 15, 44, 0)', 'rgba(10, 15, 44, 0.55)', '#0A0F2C']}
-          locations={[0, 0.72, 1]}
+          colors={['rgba(10, 15, 44, 0)', 'rgba(10, 15, 44, 0)', 'rgba(10, 15, 44, 0.55)', '#0A0F2C']}
+          locations={[0, 0.5, 0.82, 1]}
           style={styles.heroGradient}
           pointerEvents="none"
         />
@@ -140,7 +144,7 @@ export function StoryDetailOverlay({
       </Animated.View>
 
       <Animated.View
-        entering={FadeIn.duration(300)}
+        entering={FadeIn.delay(heroFadeDelay()).duration(STORY_DETAIL_OPENING.heroFadeMs)}
         exiting={FadeOut.duration(200)}
         style={[styles.topBar, { top: insets.top + scaledPadding(8) }]}
         pointerEvents="box-none"
@@ -171,7 +175,7 @@ export function StoryDetailOverlay({
       </Animated.View>
 
       <Animated.View
-        entering={SlideInDown.duration(450).easing(Easing.out(Easing.cubic))}
+        entering={SlideInDown.duration(STORY_DETAIL_OPENING.sheetRiseMs).easing(Easing.out(Easing.cubic))}
         exiting={SlideOutDown.duration(280)}
         style={[styles.sheet, { top: heroHeight - scaledPadding(24) }]}
       >
@@ -180,7 +184,7 @@ export function StoryDetailOverlay({
           showsVerticalScrollIndicator={false}
           bounces={false}
         >
-          <Animated.View entering={FadeInDown.delay(80).duration(400)}>
+          <Animated.View entering={FadeInDown.delay(STORY_DETAIL_OPENING.staggerMs).duration(STORY_DETAIL_OPENING.contentMs)}>
             <Text style={[styles.title, { fontSize: scaledFontSize(26) }]}>{displayTitle}</Text>
 
             <View style={styles.chipRow}>
@@ -231,7 +235,7 @@ export function StoryDetailOverlay({
 
           </Animated.View>
 
-          <Animated.View entering={FadeInDown.delay(160).duration(400)} style={styles.modeRow}>
+          <Animated.View entering={FadeInDown.delay(STORY_DETAIL_OPENING.staggerMs * 2).duration(STORY_DETAIL_OPENING.contentMs)} style={styles.modeRow}>
             {MODE_OPTIONS.map((option) => {
               const isSelected = selectedMode === option.mode;
               return (
@@ -258,7 +262,7 @@ export function StoryDetailOverlay({
             })}
           </Animated.View>
 
-          <Animated.View entering={FadeInDown.delay(240).duration(400)}>
+          <Animated.View entering={FadeInDown.delay(STORY_DETAIL_OPENING.staggerMs * 3).duration(STORY_DETAIL_OPENING.contentMs)}>
             <Pressable
               style={[styles.readNowButton, { borderRadius: scaledButtonSize(16), paddingVertical: scaledPadding(14) }]}
               onPress={() => {
@@ -289,7 +293,10 @@ export function StoryDetailOverlay({
 const styles = StyleSheet.create({
   container: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#0A0F2C',
+    // Transparent on purpose: the transition's night sky is already beneath.
+    // An opaque ground here blacked the whole screen out the frame the sheet
+    // mounted, then faded the hero back in -- the "boom" at the end.
+    backgroundColor: 'transparent',
   },
   heroContainer: {
     position: 'absolute',

@@ -33,11 +33,10 @@ import { useTutorial } from '@/contexts/tutorial-context';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppStore } from '@/store/app-store';
-import { STORY_OPENING, needsGuidedTurn, openingSeat, placementIsStale, seatTransform } from '@/constants/story-opening';
+import { STORY_DETAIL_OPENING, STORY_OPENING, needsGuidedTurn, openingSeat, placementIsStale, seatTransform } from '@/constants/story-opening';
 import { allowTurnForPrompt, applyDefaultOrientation } from '@/hooks/use-story-orientation';
 
 // Animation timing constants
-const HERO_GLIDE_DURATION = 1000; // Glide from tile into the detail-view hero area
 const HERO_HEIGHT_RATIO = 0.44; // Portion of the screen the detail hero occupies
 const PROMPT_GLIDE_DURATION = 450; // Glide from hero into the rotate-prompt book position
 const LANDSCAPE_DIMENSIONS_TIMEOUT_MS = 800; // Fallback if the dimension-change event never fires
@@ -241,6 +240,8 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   // Background image slide animation (children art texture)
   // Slides down from above viewport on entry, slides back up on exit
   const backgroundSlideY = useSharedValue(-screenHeight);
+  // The night sky settles in on entry rather than dropping like a curtain
+  const backgroundOpacity = useSharedValue(0);
 
   // Book page flip and expansion animation values
   const pageFlipProgress = useSharedValue(0); // 0 = closed, 1 = open (cover rotated away)
@@ -389,39 +390,24 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     noteTransformScreen();
     setTargetBookPosition(hero.rect);
 
-    // Smooth bezier curve -gentle acceleration then long, soft deceleration
-    const glideEasing = Easing.bezier(0.25, 0.1, 0.25, 1);
+    // The book lifts out of the catalogue and decelerates into the hero
+    const lift = { duration: STORY_DETAIL_OPENING.liftMs, easing: Easing.out(Easing.cubic) };
+    transitionX.value = withTiming(hero.moveX, lift);
+    transitionY.value = withTiming(hero.moveY, lift);
+    transitionScale.value = withTiming(hero.scale, lift);
+    overlayOpacity.value = withTiming(1, { duration: STORY_DETAIL_OPENING.skySettleMs, easing: Easing.out(Easing.quad) });
 
-    transitionX.value = withTiming(hero.moveX, {
-      duration: HERO_GLIDE_DURATION,
-      easing: glideEasing,
-    });
+    // The night sky settles in behind the rising book, dimming the catalogue
+    // beneath as it comes -- no curtain edge sweeping past a page still awake
+    const settle = { duration: STORY_DETAIL_OPENING.skySettleMs, easing: Easing.out(Easing.cubic) };
+    backgroundSlideY.value = -STORY_DETAIL_OPENING.skyLift;
+    backgroundSlideY.value = withTiming(0, settle);
+    backgroundOpacity.value = withTiming(1, settle);
 
-    transitionY.value = withTiming(hero.moveY, {
-      duration: HERO_GLIDE_DURATION,
-      easing: glideEasing,
-    });
-
-    transitionScale.value = withTiming(hero.scale, {
-      duration: HERO_GLIDE_DURATION,
-      easing: glideEasing,
-    });
-
-    // Fade in the shadow overlay (slightly faster so it's settled before the book lands)
-    overlayOpacity.value = withTiming(1, {
-      duration: HERO_GLIDE_DURATION * 0.7,
-      easing: Easing.out(Easing.quad),
-    });
-
-    // Slide the night-sky background down into view behind the detail sheet
-    backgroundSlideY.value = withTiming(0, {
-      duration: HERO_GLIDE_DURATION * 1.2,
-      easing: glideEasing,
-    });
-
+    // The sheet mounts while the book is still in flight and rises to meet it
     setTimeout(() => {
       setPhase('detail');
-    }, HERO_GLIDE_DURATION + 100);
+    }, STORY_DETAIL_OPENING.sheetMountAt);
   };
 
   const startTransition = async (storyId: string, cardLayout: { x: number; y: number; width: number; height: number }, story?: Story) => {
@@ -433,7 +419,8 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     transitionY.value = 0;
     transitionOpacity.value = 1;
     overlayOpacity.value = 0;
-    backgroundSlideY.value = -screenHeight; // Start above viewport
+    backgroundSlideY.value = -STORY_DETAIL_OPENING.skyLift;
+    backgroundOpacity.value = 0;
     cancelAnimation(levitationY);
     levitationY.value = 0;
 
@@ -861,6 +848,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
       overlayOpacity.value = 0;
       rotationMaskOpacity.value = 0;
       backgroundSlideY.value = -screenHeight;
+      backgroundOpacity.value = 0;
       pageFlipProgress.value = 0;
       bookExpansion.value = 0;
       bookRotation.value = 0;
@@ -896,6 +884,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
       pageFlipProgress.value = 0;
       bookExpansion.value = 0;
       backgroundSlideY.value = -screenHeight;
+      backgroundOpacity.value = 0;
     }, 50);
   };
 
@@ -1349,6 +1338,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
   const backgroundSlideAnimatedStyle = useAnimatedStyle(() => {
     return {
+      opacity: backgroundOpacity.value,
       transform: [{ translateY: backgroundSlideY.value }],
     };
   });

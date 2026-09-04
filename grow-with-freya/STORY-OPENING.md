@@ -28,6 +28,24 @@ Every step hands the book to the next one. Nothing appears or vanishes in a sing
 
 Total: about 1.6s on a tablet, about 2.6s on a phone including the turn.
 
+## Tile to detail
+
+Tapping a tile used to be three things in a row: the book glided to the hero over a second,
+a navy curtain dropped over a catalogue that stayed bright beneath it, and then the detail
+sheet mounted with an opaque ground -- blacking the screen out for a frame before fading its
+own hero back in. Filmed, the hero went from 162 to 39 brightness in one frame.
+
+It is now one motion (`STORY_DETAIL_OPENING`):
+
+| From | What happens |
+|---|---|
+| 0ms | The book lifts out of the catalogue and decelerates into the hero (620ms). The night sky fades in and settles a few points behind it (420ms), dimming the catalogue as it comes. |
+| 300ms | The sheet mounts while the book is still in flight and rises to meet it (420ms); title, chips, description and buttons follow in turn (60ms apart, 320ms each). |
+| 620ms | The book lands. The sheet's own hero fades in over it (220ms) -- the same art in the same place, so all that visibly arrives is the soft gradient beneath the title. |
+
+Everything has settled by about 900ms. The sheet's ground is transparent: the transition's
+night sky is already beneath it, so mounting it changes nothing on screen.
+
 ## Orientation, by device
 
 | | Phone | Tablet (iOS and Android) |

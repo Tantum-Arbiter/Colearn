@@ -144,3 +144,34 @@ export function seatTransform(
     rect: { x: seat.x, y: seat.y, width: seat.width, height: seat.height },
   };
 }
+
+/**
+ * Tile to detail: the book lifts from its tile into the hero while the night
+ * sky settles in behind it and the catalogue falls away beneath, and the
+ * detail sheet rises to meet the book as it lands. One motion, not three.
+ *
+ * - liftMs      the book's flight from tile to hero, decelerating into place
+ * - skySettleMs the night sky fading in and settling down a few points
+ * - sheetMountAt when the sheet mounts, part-way through the flight, so it is
+ *                rising while the book is still moving
+ * - heroFadeMs  the sheet's own hero fading in over the landed book -- the
+ *                same art in the same place, so nothing visibly changes but
+ *                the soft gradient beneath the title
+ * - sheetRiseMs the sheet body rising into place
+ * - staggerMs / contentMs   title, chips, description and buttons in turn
+ */
+export const STORY_DETAIL_OPENING = {
+  liftMs: 620,
+  skySettleMs: 420,
+  skyLift: 28,
+  sheetMountAt: 300,
+  heroFadeMs: 220,
+  sheetRiseMs: 420,
+  staggerMs: 60,
+  contentMs: 320,
+} as const;
+
+/** How long the sheet's hero waits after mounting, so it fades over a landed book. */
+export function heroFadeDelay(): number {
+  return Math.max(0, STORY_DETAIL_OPENING.liftMs - STORY_DETAIL_OPENING.sheetMountAt);
+}
