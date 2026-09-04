@@ -33,7 +33,7 @@ import { useTutorial } from '@/contexts/tutorial-context';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppStore } from '@/store/app-store';
-import { STORY_OPENING } from '@/constants/story-opening';
+import { STORY_OPENING, openSpreadShift, openingSeat } from '@/constants/story-opening';
 
 // Animation timing constants
 const HERO_GLIDE_DURATION = 1000; // Glide from tile into the detail-view hero area
@@ -599,10 +599,23 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
     bookExpansion.value = 0;
     pageFlipProgress.value = 0;
-    await new Promise(resolve => setTimeout(resolve, STORY_OPENING.settleMs));
 
     const dims = Dimensions.get('window');
     const needsRotation = dims.width <= dims.height;
+
+    if (!needsRotation && cardPosition) {
+      // Already sideways: glide into the opening seat while the book settles
+      const seat = openingSeat(dims, cardPosition);
+      const moveX = dims.width / 2 - (cardPosition.x + cardPosition.width / 2);
+      const moveY = dims.height / 2 - (cardPosition.y + cardPosition.height / 2);
+      const glide = { duration: STORY_OPENING.settleMs, easing: Easing.out(Easing.cubic) };
+      transitionX.value = withTiming(moveX, glide);
+      transitionY.value = withTiming(moveY, glide);
+      transitionScale.value = withTiming(seat.scale, glide);
+      openingTransformRef.current = { moveX, moveY, scale: seat.scale };
+      setTargetBookPosition({ x: seat.x, y: seat.y, width: seat.width, height: seat.height });
+    }
+    await new Promise(resolve => setTimeout(resolve, STORY_OPENING.settleMs));
 
     if (needsRotation && cardPosition) {
       rotationMaskOpacity.value = withTiming(1, {
@@ -629,19 +642,13 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
       log.debug('Landscape dims:', newDims.width, '×', newDims.height);
       setScreenDimensions(newDims);
 
-      // Recenter the book on the landscape screen while it's hidden by the mask
-      const targetWidth = newDims.width * 0.55;
-      const targetScale = targetWidth / cardPosition.width;
-      const targetHeight = cardPosition.height * targetScale;
+      // Seat the book on the landscape screen while it's hidden by the veil
+      const seat = openingSeat(newDims, cardPosition);
+      const targetScale = seat.scale;
       const targetCenterX = newDims.width / 2;
       const targetCenterY = newDims.height / 2;
 
-      setTargetBookPosition({
-        x: targetCenterX - targetWidth / 2,
-        y: targetCenterY - targetHeight / 2,
-        width: targetWidth,
-        height: targetHeight,
-      });
+      setTargetBookPosition({ x: seat.x, y: seat.y, width: seat.width, height: seat.height });
 
       const cardCenterX = cardPosition.x + cardPosition.width / 2;
       const cardCenterY = cardPosition.y + cardPosition.height / 2;
@@ -1272,10 +1279,13 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     // Compensate border radius for scale to keep visual radius consistent
     // When element is scaled up, we need to reduce border radius proportionally
     const compensatedBorderRadius = bookBorderRadius / transitionScale.value;
+    const spreadShift = cardPosition
+      ? openSpreadShift(pageFlipProgress.value, cardPosition.width, transitionScale.value)
+      : 0;
 
     return {
       transform: [
-        { translateX: transitionX.value },
+        { translateX: transitionX.value + spreadShift },
         { translateY: transitionY.value + levitationY.value },
         { scale: transitionScale.value },
         { rotate: `${bookRotation.value}deg` }
@@ -1452,9 +1462,12 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
       // Update shared value for child views to use
       currentCompensatedBorderRadius.value = currentBorderRadius;
 
+      const spreadShift = openSpreadShift(pageFlipProgress.value, exitCardWidth.value, transitionScale.value)
+        * (1 - bookExpansion.value);
+
       return {
         transform: [
-          { translateX: currentTranslateX },
+          { translateX: currentTranslateX + spreadShift },
           { translateY: currentTranslateY },
           { scale: currentScale }
         ],
@@ -1488,10 +1501,14 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     currentCompensatedBorderRadius.value = currentBorderRadius;
 
     // MUST include the position transforms from transitionAnimatedStyle
-    // because this style will override them when active
+    // because this style will override them when active. The spread shift
+    // eases away as the page grows to fill the screen on its own.
+    const spreadShift = openSpreadShift(pageFlipProgress.value, targetBookPosition.width / transitionScale.value, transitionScale.value)
+      * (1 - bookExpansion.value);
+
     return {
       transform: [
-        { translateX: transitionX.value },
+        { translateX: transitionX.value + spreadShift },
         { translateY: transitionY.value },
         { scale: combinedScale }
       ],

@@ -13,6 +13,7 @@ export const STORY_OPENING = {
   reenterScale: 0.94,
   pageShadeAtRest: 0.42,
   coverShadeWhenTurned: 0.4,
+  seatWidthRatio: 0.46,
 } as const;
 
 export type OpeningStepName =
@@ -58,4 +59,38 @@ export function storyOpeningTimeline(needsRotation: boolean): OpeningTimeline {
   add('dissolve', STORY_OPENING.dissolveMs);
 
   return { steps, readerMountsAt, total: at };
+}
+
+/**
+ * How far the page has to slide right so the open spread -- cover flap on the
+ * left, page on the right -- stays centred on the screen. The flap only reaches
+ * past the spine once the cover has swung beyond a right angle.
+ */
+export function openSpreadShift(progress: number, cardWidth: number, scale: number): number {
+  'worklet';
+  const angle = (progress * STORY_OPENING.coverLiftDegrees * Math.PI) / 180;
+  const flap = Math.max(0, -Math.cos(angle));
+
+  return (flap * cardWidth * scale) / 2;
+}
+
+/**
+ * Where the book sits while its cover lifts: centred, at a width that leaves
+ * the whole open spread -- flap and page -- inside the screen with a margin.
+ */
+export function openingSeat(
+  screen: { width: number; height: number },
+  card: { width: number; height: number }
+): { x: number; y: number; width: number; height: number; scale: number } {
+  const width = screen.width * STORY_OPENING.seatWidthRatio;
+  const scale = width / card.width;
+  const height = card.height * scale;
+
+  return {
+    x: screen.width / 2 - width / 2,
+    y: screen.height / 2 - height / 2,
+    width,
+    height,
+    scale,
+  };
 }

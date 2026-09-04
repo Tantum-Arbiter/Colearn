@@ -17,7 +17,7 @@ Every step hands the book to the next one. Nothing appears or vanishes in a sing
 
 | Step | Phone | Tablet | What a child sees |
 |---|---|---|---|
-| Settle | 260ms | 260ms | The floating book comes to rest; the prompt's words and arrows fade. |
+| Settle | 260ms | 260ms | The floating book comes to rest and glides into its opening seat; the prompt's words and arrows fade. |
 | Veil in | 220ms | – | A night-navy veil rises and the book dips into it. |
 | Turn | ~300ms | – | The screen turns to landscape behind the veil, never on show. |
 | Re-enter | 460ms | – | The veil lifts as the book rises into its seat, a touch small and low, growing to size. |
@@ -47,5 +47,8 @@ Total: about 1.6s on a tablet, about 2.6s on a phone including the turn.
 - **The turn hides in navy.** The root view behind every React view is the same night navy as
   the veil (`backgroundColor` in `app.config.js`, and `expo-system-ui` at launch for dev
   clients), so the corners iOS reveals while it turns the screen are navy on navy, not black.
+- **The open spread stays centred.** The cover flap swings out to the left of the spine, so the
+  page slides right by half the flap as the cover opens (`openSpreadShift`) and back as it grows.
+  The seat is 46% of the screen width (`openingSeat`) so flap and page both fit inside the screen.
 - **Closing is the same book in reverse.** The exit animation drives the same shared values
   (`pageFlipProgress`, `bookExpansion`) backwards, so the shading reads correctly both ways.
