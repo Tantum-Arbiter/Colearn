@@ -82,3 +82,25 @@ export function openingSeat(
     scale,
   };
 }
+
+/**
+ * Whether a story needs the "turn the screen together" ritual before it opens.
+ *
+ * Only phones do. A phone is locked to portrait everywhere outside the reader,
+ * so its interface cannot follow the device and the pair have to be asked, then
+ * the screen is turned for them behind the veil. Tablets are unlocked on both
+ * iOS and Android -- a child turns them whenever they like and the interface
+ * follows -- so a tablet is never asked and never has its orientation taken
+ * away; the book simply opens whichever way the tablet is being held.
+ */
+export function needsGuidedTurn(device: {
+  isTablet: boolean;
+  width: number;
+  height: number;
+}): boolean {
+  if (device.isTablet) {
+    return false;
+  }
+
+  return device.width <= device.height;
+}

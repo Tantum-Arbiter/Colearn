@@ -33,7 +33,7 @@ import { useTutorial } from '@/contexts/tutorial-context';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppStore } from '@/store/app-store';
-import { STORY_OPENING, openingSeat } from '@/constants/story-opening';
+import { STORY_OPENING, needsGuidedTurn, openingSeat } from '@/constants/story-opening';
 
 // Animation timing constants
 const HERO_GLIDE_DURATION = 1000; // Glide from tile into the detail-view hero area
@@ -488,8 +488,9 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
+    // Tablets are never asked to turn -- they are unlocked, so the book just opens
     const dims = Dimensions.get('window');
-    if (dims.width > dims.height) {
+    if (!needsGuidedTurn({ isTablet, width: dims.width, height: dims.height })) {
       beginStory();
       return;
     }
@@ -601,10 +602,10 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     pageFlipProgress.value = 0;
 
     const dims = Dimensions.get('window');
-    const needsRotation = dims.width <= dims.height;
+    const needsRotation = needsGuidedTurn({ isTablet, width: dims.width, height: dims.height });
 
     if (!needsRotation && cardPosition) {
-      // Already sideways: glide into the opening seat while the book settles
+      // Nothing to turn: glide into the opening seat while the book settles
       const seat = openingSeat(dims, cardPosition);
       const moveX = dims.width / 2 - (cardPosition.x + cardPosition.width / 2);
       const moveY = dims.height / 2 - (cardPosition.y + cardPosition.height / 2);
@@ -1007,12 +1008,15 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
       });
       await new Promise(resolve => setTimeout(resolve, 150));
 
-      // Phase 4: Rotate to portrait -reverse of opening's rotate to landscape
-      try {
-        await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
-        await new Promise(resolve => setTimeout(resolve, ROTATION_WAIT));
-      } catch (error) {
-        log.warn('Failed to rotate to portrait during exit:', error);
+      // Phase 4: Rotate to portrait -reverse of opening's rotate to landscape.
+      // Only a phone was turned on the way in, so only a phone is turned back.
+      if (isPhone) {
+        try {
+          await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+          await new Promise(resolve => setTimeout(resolve, ROTATION_WAIT));
+        } catch (error) {
+          log.warn('Failed to rotate to portrait during exit:', error);
+        }
       }
 
       const portraitDims = Dimensions.get('window');

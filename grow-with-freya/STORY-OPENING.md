@@ -28,6 +28,21 @@ Every step hands the book to the next one. Nothing appears or vanishes in a sing
 
 Total: about 1.6s on a tablet, about 2.6s on a phone including the turn.
 
+## Orientation, by device
+
+| | Phone | Tablet (iOS and Android) |
+|---|---|---|
+| Outside the reader | Locked portrait | Unlocked |
+| Asked to turn before a story | Yes, when upright | Never |
+| Turned by the app | Yes, behind the veil | Never |
+| Held sideways mid-story | Stays landscape | Follows the child |
+| On the way out | Portrait lock handed back | Nothing to give back |
+
+`needsGuidedTurn` in `constants/story-opening.ts` is the single answer to "does this
+device need the ritual". `applyDefaultOrientation` in `hooks/use-story-orientation.ts` is
+the single answer to "what should this device be when no story is open". Anything that
+locks orientation goes through one of those two, so a tablet is never locked anywhere.
+
 ## Rules
 
 - **The reader mounts hidden.** The layout applies `readerRevealStyle` from the transition
@@ -35,12 +50,15 @@ Total: about 1.6s on a tablet, about 2.6s on a phone including the turn.
   overlaps the breath and the grow, and it is only revealed by the dissolve. Without this, the
   reader (which sits above the overlay) appeared the instant it had rendered and cut the grow
   short on any fast device.
-- **The turn is never on show.** Phones are portrait-locked outside the reader, so the OS snap
-  to landscape is hidden by the veil. The book goes into the veil and comes back out of it; it
-  does not jump between positions.
-- **Tablets skip the turn.** Their interface is unlocked and already sideways by the time the
-  book opens (`hooks/use-turn-to-landscape.ts` opens the book as soon as the screen is
-  sideways), so they go straight from settle to cover lift.
+- **Only phones are asked to turn** (`needsGuidedTurn`). A phone is locked to portrait
+  everywhere outside the reader, so its interface cannot follow the device: the pair have to be
+  asked, and then the screen is turned for them behind the veil. The book goes into the veil and
+  comes back out of it; it never jumps between positions.
+- **Tablets are never asked, and never have their orientation taken away.** They are unlocked on
+  both iOS and Android, so a child turns them whenever they like and the interface follows. A
+  tablet goes straight from settle to cover lift and the book opens whichever way it is being
+  held, portrait included. Nothing calls `lockAsync` on a tablet, so nothing has to be given back
+  on the way out.
 - **Eases decelerate into rest.** Motion that ends in a resting state (re-enter, grow, dissolve)
   uses `Easing.out`; the cover, which is pushed and then caught, uses `Easing.inOut(quad)` --
   cubic left the last third of the lift visually dead, which read as a pause before the hold.

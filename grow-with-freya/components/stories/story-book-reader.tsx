@@ -15,6 +15,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import * as ScreenOrientation from 'expo-screen-orientation';
+import { applyDefaultOrientation, isTabletDevice } from '@/hooks/use-story-orientation';
 import { useTranslation } from 'react-i18next';
 import { Story, StoryPage, STORY_TAGS, InteractiveElement, getLocalizedText, resolveAgeGroup, MusicChallenge, JigsawPuzzle, ReadingChallenge } from '@/types/story';
 import type { SupportedLanguage } from '@/services/i18n';
@@ -742,7 +743,17 @@ export function StoryBookReader({
   useEffect(() => {
     let isMounted = true;
 
+    // A tablet is never turned for the child: it is unlocked on both iOS and
+    // Android, so it reads whichever way it is being held. Only a phone, which
+    // is portrait-locked everywhere else, is put into landscape for the story.
+    const onTablet = isTabletDevice();
+
     const checkAndSetLandscape = async () => {
+      if (onTablet) {
+        setIsLandscapeReady(true);
+        return;
+      }
+
       try {
         const orientation = await ScreenOrientation.getOrientationAsync();
         const isLandscape = orientation === ScreenOrientation.Orientation.LANDSCAPE_LEFT ||
@@ -764,7 +775,7 @@ export function StoryBookReader({
     // story reader is mounted (e.g. app backgrounding, layout re-render race), re-lock
     // landscape immediately so the reader never stays in portrait.
     const subscription = ScreenOrientation.addOrientationChangeListener((event) => {
-      if (!isMounted || isExitingRef.current) return;
+      if (!isMounted || isExitingRef.current || onTablet) return;
       const newOrientation = event.orientationInfo.orientation;
       const isLandscape = newOrientation === ScreenOrientation.Orientation.LANDSCAPE_LEFT ||
                           newOrientation === ScreenOrientation.Orientation.LANDSCAPE_RIGHT;
@@ -779,9 +790,10 @@ export function StoryBookReader({
       if (isMounted) {
         isMounted = false;
         subscription.remove();
-        // Only restore orientation if NOT exiting via handleExit (exit animation handles rotation)
+        // Only restore orientation if NOT exiting via handleExit (exit animation handles rotation).
+        // applyDefaultOrientation gives a phone its portrait lock back and leaves a tablet unlocked.
         if (!isExitingRef.current) {
-          ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP)
+          applyDefaultOrientation()
             .catch(error => log.warn('Failed to restore orientation:', error));
         }
       }

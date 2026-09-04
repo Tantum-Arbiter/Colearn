@@ -219,7 +219,7 @@ When generating image prompts:
 | Privacy email | `privacy@earlyroots.co.uk` |
 | Support email | `support@earlyroots.co.uk` |
 | Domain | `earlyroots.co.uk` / `api.earlyroots.co.uk` |
-| Orientation | Portrait-locked on phones, all orientations on tablets; story reader is landscape-locked (never portrait — re-locks if the OS forces it) |
+| Orientation | **Phones**: portrait-locked everywhere, turned to landscape for the story reader and given the lock back on the way out. **Tablets (iOS + Android)**: never locked, anywhere, including the reader — a child turns them as they wish. See `grow-with-freya/STORY-OPENING.md` |
 | i18n | 14 languages, English fallback, RTL partial (Arabic text OK, layout LTR) |
 | Auth | Google/Apple → gateway JWT pair (access + refresh), stored in SecureStore |
 | Subscriptions | Free / Basic (£5.99/mo) / Premium (£10/mo) via RevenueCat |

@@ -10,18 +10,22 @@
  * 2. No-ops when already in the target orientation (tablets)
  * 3. Falls back gracefully if the rotation never lands
  * 4. Cleans up listeners and pending waits on unmount
+ * 5. Only phones ever have their orientation taken away
  */
 
 import { renderHook, act, waitFor } from '@testing-library/react-native';
 import { Dimensions } from 'react-native';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import {
+  applyDefaultOrientation,
+  isTabletDevice,
   useStoryOrientation,
   ORIENTATION_SETTLE_TIMEOUT_MS,
 } from '@/hooks/use-story-orientation';
 
 const mockedOrientation = ScreenOrientation as unknown as {
   lockAsync: jest.Mock;
+  unlockAsync: jest.Mock;
   addOrientationChangeListener: jest.Mock;
   __emitOrientationChange: (orientation: string) => void;
   __resetListeners: () => void;
@@ -190,5 +194,58 @@ describe('useStoryOrientation', () => {
 
       expect(subscription.remove).toHaveBeenCalled();
     });
+  });
+});
+
+/**
+ * A phone is portrait-locked everywhere outside the reader, so the app turns it
+ * for the story and gives the lock back afterwards. A tablet is a tablet: a
+ * child turns it whenever they like, on iOS and on Android, and nothing in the
+ * app ever takes that away.
+ */
+describe('applyDefaultOrientation', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.restoreAllMocks();
+  });
+
+  it('should hand a phone back its portrait lock', async () => {
+    setWindowSize(390, 844);
+
+    await applyDefaultOrientation();
+
+    expect(mockedOrientation.lockAsync).toHaveBeenCalledWith(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+    expect(mockedOrientation.unlockAsync).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['upright', 834, 1194],
+    ['sideways', 1194, 834],
+  ])('should leave a tablet held %s free to turn', async (_held, width, height) => {
+    setWindowSize(width, height);
+
+    await applyDefaultOrientation();
+
+    expect(mockedOrientation.unlockAsync).toHaveBeenCalled();
+    expect(mockedOrientation.lockAsync).not.toHaveBeenCalled();
+  });
+});
+
+describe('isTabletDevice', () => {
+  beforeEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it.each([
+    ['a phone upright', 390, 844, false],
+    ['a phone sideways', 844, 390, false],
+    ['a tablet upright', 834, 1194, true],
+    ['a tablet sideways', 1194, 834, true],
+  ])('should recognise %s whichever way it is held', (_case, width, height, expected) => {
+    setWindowSize(width, height);
+
+    const underTest = isTabletDevice();
+
+    expect(underTest).toBe(expected);
   });
 });

@@ -188,6 +188,7 @@ Portrait Story Garden  →  tap a book  →  focused book (Read Together / Liste
 | One-hotspot-at-a-time rhythm | `hooks/use-interaction-rhythm.ts` |
 | Reader mount seam | `requestGardenOpen` in `contexts/story-transition-context.tsx` |
 | Book-opening choreography | [`STORY-OPENING.md`](STORY-OPENING.md); timings in `constants/story-opening.ts` |
+| Orientation policy | Phones portrait-locked and turned for a story; tablets never locked. `needsGuidedTurn`, `applyDefaultOrientation` |
 | Reading progress (Continue Reading, bookmark) | `storyProgress` in `store/app-store.ts` |
 
 The garden never calls `startTransition` / `selectModeAndBegin`. It runs its own

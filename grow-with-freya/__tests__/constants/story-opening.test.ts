@@ -8,7 +8,7 @@
  * book re-entering afterwards rather than jumping.
  */
 
-import { STORY_OPENING, openingSeat, storyOpeningTimeline, type OpeningStepName } from '@/constants/story-opening';
+import { STORY_OPENING, needsGuidedTurn, openingSeat, storyOpeningTimeline, type OpeningStepName } from '@/constants/story-opening';
 
 function names(needsRotation: boolean): OpeningStepName[] {
   return storyOpeningTimeline(needsRotation).steps.map((step) => step.name);
@@ -118,5 +118,39 @@ describe('the cover dissolving as it swings clear', () => {
 
     expect(underTest).toBeGreaterThanOrEqual(rightAngle);
     expect(underTest).toBeLessThan(1);
+  });
+});
+
+describe('needsGuidedTurn', () => {
+  const PHONE_PORTRAIT = { isTablet: false, width: 402, height: 874 };
+  const PHONE_LANDSCAPE = { isTablet: false, width: 874, height: 402 };
+  const TABLET_PORTRAIT = { isTablet: true, width: 834, height: 1194 };
+  const TABLET_LANDSCAPE = { isTablet: true, width: 1194, height: 834 };
+
+  it('should ask a phone held upright, whose screen cannot follow the device', () => {
+    const underTest = needsGuidedTurn(PHONE_PORTRAIT);
+
+    expect(underTest).toBe(true);
+  });
+
+  it('should not ask a phone that is already sideways', () => {
+    const underTest = needsGuidedTurn(PHONE_LANDSCAPE);
+
+    expect(underTest).toBe(false);
+  });
+
+  it.each([
+    ['upright', TABLET_PORTRAIT],
+    ['sideways', TABLET_LANDSCAPE],
+  ])('should never ask a tablet held %s, since a child may turn it whenever they like', (_held, device) => {
+    const underTest = needsGuidedTurn(device);
+
+    expect(underTest).toBe(false);
+  });
+
+  it('should judge a tablet by what it is, not by how big its screen happens to be', () => {
+    const underTest = needsGuidedTurn({ isTablet: true, width: 402, height: 874 });
+
+    expect(underTest).toBe(false);
   });
 });
