@@ -82,6 +82,12 @@ describe('HomeScene', () => {
       expect(underTest).toEqual(HOME_ACTIVITIES.map((activity) => activity.id));
     });
 
+    it('should send the Storybooks tile to the whole catalogue, not a mode of it', () => {
+      const storybooks = HOME_ACTIVITIES.find((activity) => activity.titleKey === 'home.storybooks');
+
+      expect(storybooks?.destination).toBe('stories');
+    });
+
     it.each(HOME_ACTIVITIES.map((activity) => [activity.id, activity.destination] as const))(
       'should navigate to %s destination %s',
       (id, destination) => {

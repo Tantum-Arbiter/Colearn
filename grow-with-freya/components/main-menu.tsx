@@ -280,6 +280,16 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
     onNavigate(destination);
   }, [onNavigate, unlockSlideY, handleShowSubMenu]);
 
+  // The home scene's tiles are destinations in their own right -- Storybooks
+  // is the whole catalogue -- so they never open the carousel's sub-menus.
+  // Routing them through guardedOnNavigate swallowed 'stories' into a sub-menu
+  // the home scene does not show, and the tile did nothing at all.
+  const navigateFromHome = useCallback((destination: string) => {
+    if (isTutorialPendingRef.current) return;
+    unlockSlideY.value = withTiming(100, { duration: 300, easing: ReanimatedEasing.in(ReanimatedEasing.ease) });
+    onNavigate(destination);
+  }, [onNavigate, unlockSlideY]);
+
   const handleTutorialEnd = useCallback(() => {
     setTutorialFinished(true);
   }, []);
@@ -462,7 +472,7 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
   if (useHomeScene) {
     return (
       <>
-        <HomeSceneContainer onNavigate={guardedOnNavigate} onOpenGrownUps={openGrownUpsCorner} isActive={isActive !== false} />
+        <HomeSceneContainer onNavigate={navigateFromHome} onOpenGrownUps={openGrownUpsCorner} isActive={isActive !== false} />
         <ParentsOnlyModal
           visible={parentsOnly.isVisible}
           challenge={parentsOnly.challenge}

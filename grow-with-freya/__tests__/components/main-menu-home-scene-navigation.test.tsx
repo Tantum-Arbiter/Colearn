@@ -121,6 +121,17 @@ describe('home scene navigation', () => {
 
     pressCard(underTest, 'interactive');
 
-    expect(onNavigate).toHaveBeenCalledWith('stories-interactive');
+    expect(onNavigate).toHaveBeenCalledWith('stories');
+  });
+
+  it('should open every story from the Storybooks tile, never one mode of them', () => {
+    mockTourUnseen = false;
+    const underTest = renderHome();
+
+    pressCard(underTest, 'interactive');
+
+    const destination = onNavigate.mock.calls[0][0];
+    expect(destination).toBe('stories');
+    expect(destination.startsWith('stories-')).toBe(false);
   });
 });

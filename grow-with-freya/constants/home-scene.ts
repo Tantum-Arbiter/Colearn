@@ -13,11 +13,14 @@ export interface HomeActivity {
 
 export const HOME_ACTIVITIES = [
   {
+    // "Read, listen and explore": every story, not one mode of them. Sending
+    // this tile into a mode left the catalogue empty on a fresh launch until
+    // the Home tab cleared the mode again.
     id: 'interactive',
     titleKey: 'home.storybooks',
     descriptionKey: 'home.storybooksDescription',
     wash: { night: 'rgba(58,47,122,0.86)', day: 'rgba(92,78,178,0.86)' },
-    destination: 'stories-interactive',
+    destination: 'stories',
   },
   {
     id: 'music',
