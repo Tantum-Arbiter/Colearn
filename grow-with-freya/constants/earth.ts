@@ -7,9 +7,8 @@ export const EARTH = {
 } as const;
 
 export const EARTH_CLOUDS = {
-  widthRatio: 0.55,
   aspect: 616 / 531,
-  mistRatio: 0.24,
+  mistRatio: 0.55,
 } as const;
 
 export interface CloudLayout {
@@ -18,13 +17,17 @@ export interface CloudLayout {
   mistHeight: number;
 }
 
-export function cloudLayout(width: number, height: number): CloudLayout {
-  const cloudWidth = Math.round(width * EARTH_CLOUDS.widthRatio);
-
+/**
+ * The cloud banks belong to the globe, so they are measured from the slice of
+ * globe on show rather than from the screen. Sized any other way they run far
+ * past the earth they are meant to be weather for -- most of the way down a
+ * landscape tablet, at the widths this used to use.
+ */
+export function cloudLayout(cap: number): CloudLayout {
   return {
-    width: cloudWidth,
-    height: Math.round(cloudWidth * EARTH_CLOUDS.aspect),
-    mistHeight: Math.round(height * EARTH_CLOUDS.mistRatio),
+    width: Math.round(cap / EARTH_CLOUDS.aspect),
+    height: cap,
+    mistHeight: Math.round(cap * EARTH_CLOUDS.mistRatio),
   };
 }
 

@@ -98,16 +98,41 @@ describe('earthLayout', () => {
 });
 
 describe('cloudLayout', () => {
-  it('should size each bank from the width with the art\'s own aspect', () => {
-    const underTest = cloudLayout(PHONE.width, PHONE.height);
+  it('should stand exactly as tall as the slice of globe it is weather for', () => {
+    const cap = earthCap(PHONE.width, PHONE.height, 'top');
 
-    expect(underTest.width).toBe(Math.round(PHONE.width * EARTH_CLOUDS.widthRatio));
-    expect(underTest.height).toBe(Math.round(underTest.width * EARTH_CLOUDS.aspect));
+    const underTest = cloudLayout(cap);
+
+    expect(underTest.height).toBe(cap);
   });
 
-  it('should keep the mist to the lower part of the screen', () => {
-    const underTest = cloudLayout(PHONE.width, PHONE.height).mistHeight;
+  it('should keep the art\'s own proportions', () => {
+    const underTest = cloudLayout(200);
 
-    expect(underTest).toBeLessThan(PHONE.height * 0.3);
+    expect(underTest.width).toBe(Math.round(200 / EARTH_CLOUDS.aspect));
+  });
+
+  it.each(SCREENS)('should never reach past the globe on %s, whichever edge it hangs from', (_case, screen) => {
+    for (const edge of ['top', 'bottom'] as const) {
+      const cap = earthCap(screen.width, screen.height, edge);
+
+      const underTest = cloudLayout(cap).height;
+
+      expect(underTest).toBeLessThanOrEqual(cap);
+    }
+  });
+
+  it.each(SCREENS)('should leave the middle of %s clear rather than closing over it', (_case, screen) => {
+    const cap = earthCap(screen.width, screen.height, 'top');
+
+    const underTest = cloudLayout(cap).width * 2;
+
+    expect(underTest).toBeLessThan(screen.width);
+  });
+
+  it('should keep the mist inside the band', () => {
+    const underTest = cloudLayout(200);
+
+    expect(underTest.mistHeight).toBeLessThanOrEqual(200);
   });
 });

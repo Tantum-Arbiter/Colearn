@@ -33,7 +33,7 @@ export const EarthHorizon = memo(function EarthHorizon({
   const height = heightProp ?? window.height;
   const cloudOpacity = Number(HOME_THEMES[timeOfDayProp ?? clockTimeOfDay].cloudOpacity);
   const layout = earthLayout(width, height, edge);
-  const clouds = cloudLayout(width, height);
+  const clouds = cloudLayout(layout.cap);
   const edgeStyle = edge === 'bottom' ? styles.bottomEdge : styles.topEdge;
   const globe = {
     width: layout.diameter,
@@ -79,6 +79,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     right: 0,
+    overflow: 'hidden',
   },
   upsideDown: {
     transform: [{ scaleY: -1 }],
