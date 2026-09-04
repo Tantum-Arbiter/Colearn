@@ -1,18 +1,23 @@
 /**
- * The story card: a compact sheet that floats over the dimmed shelf when a
- * tile is tapped, with the cover on top and the ways to read beneath. The
- * child can swipe between books without leaving it, and choosing a way to
- * read opens the book from right there.
+ * The story card: a sheet that rises from the bottom of the screen when a
+ * tile is tapped, over the shelf left visible but shadowed behind it. The
+ * cover sits on top and the ways to read beneath; the child can swipe along
+ * the shelf without leaving it, and choosing a way to read opens the book
+ * from right there.
  */
 export const STORY_CARD = {
   /** Widest the card ever gets, so a tablet shows a card rather than a page. */
   maxWidth: 520,
-  /** Side margin on a phone; on a tablet the cap wins and the card sits centred. */
-  sideInset: 22,
-  /** Cover height as a fraction of card width: a landscape picture book spread. */
-  coverAspect: 0.6,
-  /** Where the top of the card sits, as a fraction of the screen height. */
-  topRatio: { phone: 0.09, tablet: 0.13 },
+  /** Side margin on a phone -- wide enough for the neighbours to peek in. */
+  sideInset: 30,
+  /** Cover height as a fraction of card width: a wide picture book spread. */
+  coverAspect: 0.52,
+  /** Height of everything beneath the cover; larger type scrolls within it. */
+  bodyHeight: { phone: 374, tablet: 366 },
+  /** Gap between the card and the bottom of the safe area. */
+  bottomGap: 10,
+  /** Room to keep clear beneath the status bar. */
+  topGap: 12,
   /** Gap between cards in the carousel. */
   gap: 14,
   radius: 28,
@@ -22,6 +27,7 @@ export interface StoryCardLayout {
   x: number;
   y: number;
   width: number;
+  height: number;
   coverHeight: number;
   /** Distance the carousel advances per card. */
   step: number;
@@ -31,17 +37,23 @@ export interface StoryCardLayout {
 
 export function storyCardLayout(
   screen: { width: number; height: number },
-  isTablet: boolean
+  isTablet: boolean,
+  insets: { top: number; bottom: number } = { top: 0, bottom: 0 }
 ): StoryCardLayout {
   const width = Math.min(STORY_CARD.maxWidth, screen.width - STORY_CARD.sideInset * 2);
   const x = Math.round((screen.width - width) / 2);
-  const y = Math.round(screen.height * (isTablet ? STORY_CARD.topRatio.tablet : STORY_CARD.topRatio.phone));
+  const bodyHeight = isTablet ? STORY_CARD.bodyHeight.tablet : STORY_CARD.bodyHeight.phone;
+  const bottom = screen.height - insets.bottom - STORY_CARD.bottomGap;
+  const tallestCover = bottom - bodyHeight - insets.top - STORY_CARD.topGap;
+  const coverHeight = Math.round(Math.max(0, Math.min(width * STORY_CARD.coverAspect, tallestCover)));
+  const height = coverHeight + bodyHeight;
 
   return {
     x,
-    y,
+    y: Math.round(bottom - height),
     width,
-    coverHeight: Math.round(width * STORY_CARD.coverAspect),
+    height,
+    coverHeight,
     step: width + STORY_CARD.gap,
     edgePadding: x,
   };

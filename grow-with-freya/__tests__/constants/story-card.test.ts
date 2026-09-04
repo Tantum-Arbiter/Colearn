@@ -2,6 +2,7 @@ import { STORY_CARD, cardCoverTransform, cardIndexAtOffset, storyCardLayout } fr
 
 const PHONE = { width: 402, height: 874 };
 const TABLET = { width: 1194, height: 834 };
+const PHONE_INSETS = { top: 59, bottom: 34 };
 
 describe('storyCardLayout', () => {
   it('should sit centred with a side margin on a phone', () => {
@@ -19,9 +20,30 @@ describe('storyCardLayout', () => {
   });
 
   it('should give the cover the proportions of a picture book spread', () => {
-    const underTest = storyCardLayout(PHONE, false);
+    const underTest = storyCardLayout(PHONE, false, PHONE_INSETS);
 
     expect(underTest.coverHeight / underTest.width).toBeCloseTo(STORY_CARD.coverAspect, 2);
+  });
+
+  it('should rise from the bottom of the screen, clear of the home indicator', () => {
+    const underTest = storyCardLayout(PHONE, false, PHONE_INSETS);
+
+    expect(underTest.y + underTest.height).toBe(PHONE.height - PHONE_INSETS.bottom - STORY_CARD.bottomGap);
+  });
+
+  it('should keep clear of the status bar on a short screen by giving up cover height', () => {
+    const shortScreen = { width: 402, height: 560 };
+
+    const underTest = storyCardLayout(shortScreen, false, PHONE_INSETS);
+
+    expect(underTest.y).toBeGreaterThanOrEqual(PHONE_INSETS.top + STORY_CARD.topGap);
+    expect(underTest.coverHeight).toBeLessThan(underTest.width * STORY_CARD.coverAspect);
+  });
+
+  it('should stand exactly as tall as its cover and body together', () => {
+    const underTest = storyCardLayout(PHONE, false, PHONE_INSETS);
+
+    expect(underTest.height).toBe(underTest.coverHeight + STORY_CARD.bodyHeight.phone);
   });
 
   it('should advance the carousel by one card and its gap', () => {

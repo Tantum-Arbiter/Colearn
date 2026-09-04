@@ -203,9 +203,9 @@ function StoryCard({
         styles.card,
         {
           width: layout.width,
+          height: layout.height,
           marginRight: isLast ? 0 : STORY_CARD.gap,
           borderRadius: STORY_CARD.radius,
-          opacity: isCurrent ? 1 : 0.72,
         },
       ]}
       testID={`story-card-${story.id}`}
@@ -255,6 +255,27 @@ function StoryCard({
         </View>
       </View>
 
+      <ScrollView
+
+
+        style={styles.bodyScroll}
+
+
+        contentContainerStyle={styles.bodyContent}
+
+
+        showsVerticalScrollIndicator={false}
+
+
+        bounces={false}
+
+
+        scrollEnabled={isCurrent}
+
+
+      >
+
+
       <Animated.View entering={FadeInDown.delay(STORY_DETAIL_OPENING.staggerMs).duration(STORY_DETAIL_OPENING.contentMs)} style={styles.body}>
         <Text style={[styles.title, { fontSize: scaledFontSize(22) }]} numberOfLines={2}>{displayTitle}</Text>
 
@@ -280,7 +301,7 @@ function StoryCard({
         </View>
 
         {displayDescription.length > 0 && (
-          <Text style={[styles.description, { fontSize: scaledFontSize(13) }]} numberOfLines={3}>{displayDescription}</Text>
+          <Text style={[styles.description, { fontSize: scaledFontSize(13) }]} numberOfLines={2}>{displayDescription}</Text>
         )}
 
         <View style={styles.chipRow}>
@@ -297,38 +318,62 @@ function StoryCard({
         </View>
       </Animated.View>
 
-      <Animated.View entering={FadeInDown.delay(STORY_DETAIL_OPENING.staggerMs * 2).duration(STORY_DETAIL_OPENING.contentMs)} style={styles.modeRow}>
-        {MODE_OPTIONS.map((option, i) => {
-          const isPrimary = i === 0;
-          return (
-            <View key={option.mode} ref={modeRefs?.[option.mode]} collapsable={false} style={styles.modeButtonWrap}>
-              <Pressable
-                style={[
-                  styles.modeButton,
-                  isPrimary && styles.modeButtonPrimary,
-                  { borderRadius: scaledButtonSize(16), paddingVertical: scaledPadding(12) },
-                ]}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                  onChooseMode(option.mode);
-                }}
-                accessibilityLabel={t(option.labelKey)}
-                testID={`story-card-mode-${option.mode}`}
-              >
-                <Ionicons name={option.icon} size={scaledFontSize(20)} color="#FFFFFF" />
-                <Text style={[styles.modeButtonText, { fontSize: scaledFontSize(11) }]}>{t(option.labelKey)}</Text>
-              </Pressable>
-            </View>
-          );
-        })}
-      </Animated.View>
-
-      {isSavedOffline && (
-        <View style={styles.offlineRow}>
-          <Ionicons name="checkmark-circle" size={scaledFontSize(14)} color="#7ED9A7" />
-          <Text style={[styles.offlineText, { fontSize: scaledFontSize(12) }]}>{t('storyDetail.savedOffline')}</Text>
+      <Animated.View entering={FadeInDown.delay(STORY_DETAIL_OPENING.staggerMs * 2).duration(STORY_DETAIL_OPENING.contentMs)} style={styles.actions}>
+        <View ref={modeRefs?.read} collapsable={false}>
+          <Pressable
+            style={[styles.primaryButton, { borderRadius: scaledButtonSize(24), paddingVertical: scaledPadding(14) }]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              onChooseMode('read');
+            }}
+            accessibilityLabel={t('storyDetail.readTogether')}
+            testID="story-card-mode-read"
+          >
+            <Ionicons name="book" size={scaledFontSize(18)} color="#FFFFFF" />
+            <Text style={[styles.primaryText, { fontSize: scaledFontSize(15) }]}>{t('storyDetail.readTogether')}</Text>
+          </Pressable>
         </View>
-      )}
+
+        <View ref={modeRefs?.narrate} collapsable={false}>
+          <Pressable
+            style={[styles.secondaryButton, { borderRadius: scaledButtonSize(24), paddingVertical: scaledPadding(12) }]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              onChooseMode('narrate');
+            }}
+            accessibilityLabel={t('storyDetail.playAlong')}
+            testID="story-card-mode-narrate"
+          >
+            <Ionicons name="volume-medium-outline" size={scaledFontSize(18)} color="#FFFFFF" />
+            <Text style={[styles.secondaryText, { fontSize: scaledFontSize(14) }]}>{t('storyDetail.playAlong')}</Text>
+          </Pressable>
+        </View>
+
+        <View style={styles.divider} />
+
+        <View ref={modeRefs?.record} collapsable={false}>
+          <Pressable
+            style={[styles.tertiaryButton, { paddingVertical: scaledPadding(10) }]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              onChooseMode('record');
+            }}
+            accessibilityLabel={t('storyDetail.record')}
+            testID="story-card-mode-record"
+          >
+            <Ionicons name="mic-outline" size={scaledFontSize(16)} color="rgba(255,255,255,0.85)" />
+            <Text style={[styles.tertiaryText, { fontSize: scaledFontSize(13) }]}>{t('storyDetail.record')}</Text>
+          </Pressable>
+        </View>
+
+        {isSavedOffline && (
+          <View style={styles.offlineRow}>
+            <Ionicons name="checkmark-circle" size={scaledFontSize(14)} color="#7ED9A7" />
+            <Text style={[styles.offlineText, { fontSize: scaledFontSize(12) }]}>{t('storyDetail.savedOffline')}</Text>
+          </View>
+        )}
+      </Animated.View>
+      </ScrollView>
     </Animated.View>
   );
 }
@@ -420,7 +465,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 6,
-    marginBottom: 14,
+    marginBottom: 12,
+  },
+  bodyScroll: {
+    flex: 1,
+  },
+  bodyContent: {
+    paddingBottom: 16,
   },
   categoryChip: {
     flexDirection: 'row',
@@ -436,46 +487,64 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#FFFFFF',
   },
-  modeRow: {
-    flexDirection: 'row',
-    gap: 8,
+  actions: {
     paddingHorizontal: 18,
-    paddingBottom: 18,
+    gap: 8,
   },
-  modeButtonWrap: {
-    flex: 1,
-  },
-  modeButton: {
+  primaryButton: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 5,
-    paddingHorizontal: 6,
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.14)',
-  },
-  modeButtonPrimary: {
+    gap: 8,
     backgroundColor: '#6D5DF5',
-    borderColor: '#8B7CF8',
     shadowColor: '#6D5DF5',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    elevation: 5,
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+    elevation: 6,
   },
-  modeButtonText: {
+  primaryText: {
+    fontFamily: Fonts.primary,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  secondaryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.14)',
+  },
+  secondaryText: {
     fontFamily: Fonts.sans,
     fontWeight: '600',
     color: '#FFFFFF',
-    textAlign: 'center',
+  },
+  divider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: 'rgba(255, 255, 255, 0.18)',
+    marginTop: 4,
+  },
+  tertiaryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  tertiaryText: {
+    fontFamily: Fonts.sans,
+    fontWeight: '600',
+    letterSpacing: 0.4,
+    color: 'rgba(255, 255, 255, 0.85)',
   },
   offlineRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    paddingBottom: 14,
-    marginTop: -6,
+    paddingTop: 2,
   },
   offlineText: {
     fontFamily: Fonts.sans,

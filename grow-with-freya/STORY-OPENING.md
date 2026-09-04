@@ -30,9 +30,11 @@ Total: about 1.6s on a tablet, about 2.6s on a phone including the turn.
 
 ## Tile to card
 
-Tapping a tile no longer opens a full page. A compact story card floats over the dimmed
-shelf -- the cover on top, the ways to read beneath -- and the child can swipe along the shelf
-without leaving it. Choosing a way to read opens the book from right there.
+Tapping a tile no longer opens a full page. A story card rises from the bottom of the screen
+over the shelf, which stays visible behind it but shadowed -- the cover on top, the ways to
+read stacked beneath: Read Together, then Play Along, then Record as a quiet link -- and the
+child can swipe along the shelf without leaving it, the neighbours peeking in either side.
+Choosing a way to read opens the book from right there.
 
 | From | What happens |
 |---|---|
@@ -40,8 +42,11 @@ without leaving it. Choosing a way to read opens the book from right there.
 | 300ms | The card rises around the book while it is still in flight; title, meta, chips and buttons follow in turn. |
 | 620ms | The book lands. The card's own cover fades in over it (220ms) and the flying book is then hidden, so swiping to a neighbour reveals nothing beneath. |
 
-The card (`constants/story-card.ts`) is the screen width less a margin on a phone and capped
-at 520pt on a tablet, so a tablet gets a card too rather than a page. The carousel snaps one
+The card (`constants/story-card.ts`) is anchored to the bottom safe area, the screen width
+less a margin on a phone and capped at 520pt on a tablet, so a tablet gets a card too rather
+than a page. Its body is a fixed height so the cover's position is known before the card
+exists -- the flight needs it -- and larger type scrolls within the body; on a short screen
+the cover gives up height to stay clear of the status bar. The carousel snaps one
 card at a time with the neighbours peeking in; settling on another book makes it the selected
 story. Choosing a way to read -- Read Together, Play Along, Record -- puts the flying book
 back on the cover, fades the card away and carries the book onwards: to the rotate prompt on a

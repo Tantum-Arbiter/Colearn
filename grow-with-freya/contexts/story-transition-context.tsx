@@ -28,6 +28,7 @@ import { ParentsOnlyModal } from '@/components/ui/parents-only-modal';
 import { StoryPreviewModal } from '@/components/stories/story-preview-modal';
 import { StoryCardSheet } from '@/components/stories/story-card-sheet';
 import { cardCoverTransform, storyCardLayout } from '@/constants/story-card';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RotatePromptOverlay } from '@/components/stories/rotate-prompt-overlay';
 import { TutorialOverlay } from '@/components/tutorial/tutorial-overlay';
 import { useTutorial } from '@/contexts/tutorial-context';
@@ -39,7 +40,7 @@ import { allowTurnForPrompt, applyDefaultOrientation } from '@/hooks/use-story-o
 
 // Animation timing constants
 const PROMPT_GLIDE_DURATION = 450; // Glide from hero into the rotate-prompt book position
-const CARD_GROUND_OPACITY = 0.9; // The shelf stays faintly visible behind the story card
+const CARD_GROUND_OPACITY = 0.74; // The shelf stays visible behind the story card, shadowed
 const LANDSCAPE_DIMENSIONS_TIMEOUT_MS = 800; // Fallback if the dimension-change event never fires
 
 export type ReadingMode = 'read' | 'record' | 'narrate';
@@ -206,6 +207,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   // Use screenDimensions state so layout updates when orientation changes
   const { width: screenWidth, height: screenHeight } = screenDimensions;
   const isPhone = !isTablet;
+  const safeArea = useSafeAreaInsets();
 
   // Border radius for book covers - matches StoryCard (computed once, used in animations)
   const bookBorderRadius = scaledButtonSize(15);
@@ -350,7 +352,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     cardLayout: { x: number; y: number; width: number; height: number },
     width: number,
     height: number
-  ) => cardCoverTransform(storyCardLayout({ width, height }, isTablet), cardLayout);
+  ) => cardCoverTransform(storyCardLayout({ width, height }, isTablet, safeArea), cardLayout);
 
   // Compute the transform that centers the card on the rotate-prompt screen
   // The prompt parks the book in the very seat the opening uses -- the exact
@@ -1832,7 +1834,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
               <StoryCardSheet
                 stories={shelf.length > 0 ? shelf : [selectedStory]}
                 initialIndex={shelfIndex}
-                layout={storyCardLayout({ width: screenWidth, height: screenHeight }, isTablet)}
+                layout={storyCardLayout({ width: screenWidth, height: screenHeight }, isTablet, safeArea)}
                 isFavorite={isFavorite}
                 onStoryChange={(story, index) => {
                   setSelectedStory(story);
