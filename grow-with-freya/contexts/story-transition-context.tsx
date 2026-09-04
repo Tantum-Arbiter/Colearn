@@ -33,7 +33,7 @@ import { useTutorial } from '@/contexts/tutorial-context';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppStore } from '@/store/app-store';
-import { STORY_OPENING, openSpreadShift, openingSeat } from '@/constants/story-opening';
+import { STORY_OPENING, openingSeat } from '@/constants/story-opening';
 
 // Animation timing constants
 const HERO_GLIDE_DURATION = 1000; // Glide from tile into the detail-view hero area
@@ -1279,13 +1279,10 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     // Compensate border radius for scale to keep visual radius consistent
     // When element is scaled up, we need to reduce border radius proportionally
     const compensatedBorderRadius = bookBorderRadius / transitionScale.value;
-    const spreadShift = cardPosition
-      ? openSpreadShift(pageFlipProgress.value, cardPosition.width, transitionScale.value)
-      : 0;
 
     return {
       transform: [
-        { translateX: transitionX.value + spreadShift },
+        { translateX: transitionX.value },
         { translateY: transitionY.value + levitationY.value },
         { scale: transitionScale.value },
         { rotate: `${bookRotation.value}deg` }
@@ -1371,7 +1368,13 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     if (!isActive) return { opacity: 0, borderRadius: compensatedBorderRadius };
 
     const rotation = interpolate(pageFlipProgress.value, [0, 1], [0, -STORY_OPENING.coverLiftDegrees]);
-    const opacity = Math.abs(rotation) >= 90 ? 1 : 0;
+    if (Math.abs(rotation) < 90) return { opacity: 0, borderRadius: compensatedBorderRadius };
+    const opacity = interpolate(
+      pageFlipProgress.value,
+      [STORY_OPENING.coverFadeFrom, 1],
+      [1, 0],
+      'clamp'
+    );
     return { opacity, borderRadius: compensatedBorderRadius };
   });
 
@@ -1462,12 +1465,9 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
       // Update shared value for child views to use
       currentCompensatedBorderRadius.value = currentBorderRadius;
 
-      const spreadShift = openSpreadShift(pageFlipProgress.value, exitCardWidth.value, transitionScale.value)
-        * (1 - bookExpansion.value);
-
       return {
         transform: [
-          { translateX: currentTranslateX + spreadShift },
+          { translateX: currentTranslateX },
           { translateY: currentTranslateY },
           { scale: currentScale }
         ],
@@ -1501,14 +1501,10 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     currentCompensatedBorderRadius.value = currentBorderRadius;
 
     // MUST include the position transforms from transitionAnimatedStyle
-    // because this style will override them when active. The spread shift
-    // eases away as the page grows to fill the screen on its own.
-    const spreadShift = openSpreadShift(pageFlipProgress.value, targetBookPosition.width / transitionScale.value, transitionScale.value)
-      * (1 - bookExpansion.value);
-
+    // because this style will override them when active
     return {
       transform: [
-        { translateX: transitionX.value + spreadShift },
+        { translateX: transitionX.value },
         { translateY: transitionY.value },
         { scale: combinedScale }
       ],

@@ -14,6 +14,7 @@ export const STORY_OPENING = {
   pageShadeAtRest: 0.42,
   coverShadeWhenTurned: 0.4,
   seatWidthRatio: 0.46,
+  coverFadeFrom: 0.6,
 } as const;
 
 export type OpeningStepName =
@@ -59,19 +60,6 @@ export function storyOpeningTimeline(needsRotation: boolean): OpeningTimeline {
   add('dissolve', STORY_OPENING.dissolveMs);
 
   return { steps, readerMountsAt, total: at };
-}
-
-/**
- * How far the page has to slide right so the open spread -- cover flap on the
- * left, page on the right -- stays centred on the screen. The flap only reaches
- * past the spine once the cover has swung beyond a right angle.
- */
-export function openSpreadShift(progress: number, cardWidth: number, scale: number): number {
-  'worklet';
-  const angle = (progress * STORY_OPENING.coverLiftDegrees * Math.PI) / 180;
-  const flap = Math.max(0, -Math.cos(angle));
-
-  return (flap * cardWidth * scale) / 2;
 }
 
 /**

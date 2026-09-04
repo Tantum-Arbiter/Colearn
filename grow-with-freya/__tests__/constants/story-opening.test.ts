@@ -8,7 +8,7 @@
  * book re-entering afterwards rather than jumping.
  */
 
-import { STORY_OPENING, openSpreadShift, openingSeat, storyOpeningTimeline, type OpeningStepName } from '@/constants/story-opening';
+import { STORY_OPENING, openingSeat, storyOpeningTimeline, type OpeningStepName } from '@/constants/story-opening';
 
 function names(needsRotation: boolean): OpeningStepName[] {
   return storyOpeningTimeline(needsRotation).steps.map((step) => step.name);
@@ -84,45 +84,6 @@ describe('storyOpeningTimeline', () => {
   });
 });
 
-describe('openSpreadShift', () => {
-  it('should leave a closed book where it is', () => {
-    const underTest = openSpreadShift(0, 300, 1.5);
-
-    expect(underTest).toBe(0);
-  });
-
-  it('should not move the page while the cover is still over it', () => {
-    const rightAngle = 90 / STORY_OPENING.coverLiftDegrees;
-
-    const underTest = openSpreadShift(rightAngle, 300, 1.5);
-
-    expect(underTest).toBeCloseTo(0, 5);
-  });
-
-  it('should centre the open spread by sliding the page over half the flap', () => {
-    const flap = -Math.cos((STORY_OPENING.coverLiftDegrees * Math.PI) / 180);
-
-    const underTest = openSpreadShift(1, 300, 1.5);
-
-    expect(underTest).toBeCloseTo((flap * 300 * 1.5) / 2, 5);
-    expect(underTest).toBeGreaterThan(0.4 * 300 * 1.5);
-  });
-
-  it('should slide steadily as the cover swings past the spine', () => {
-    const samples = [0.6, 0.7, 0.8, 0.9, 1].map((progress) => openSpreadShift(progress, 300, 1.5));
-
-    const underTest = samples.every((value, index) => index === 0 || value >= samples[index - 1]);
-
-    expect(underTest).toBe(true);
-  });
-
-  it('should scale with the book on screen', () => {
-    const underTest = openSpreadShift(1, 300, 2);
-
-    expect(underTest).toBeCloseTo(openSpreadShift(1, 300, 1) * 2, 5);
-  });
-});
-
 describe('openingSeat', () => {
   const PHONE_LANDSCAPE = { width: 874, height: 402 };
   const CARD = { width: 300, height: 200 };
@@ -134,13 +95,11 @@ describe('openingSeat', () => {
     expect(underTest.y + underTest.height / 2).toBeCloseTo(PHONE_LANDSCAPE.height / 2, 5);
   });
 
-  it('should keep the whole open spread inside the screen', () => {
-    const seat = openingSeat(PHONE_LANDSCAPE, CARD);
-    const flap = -Math.cos((STORY_OPENING.coverLiftDegrees * Math.PI) / 180) * seat.width;
+  it('should leave room either side of the book', () => {
+    const underTest = openingSeat(PHONE_LANDSCAPE, CARD);
 
-    const underTest = seat.width + flap;
-
-    expect(underTest).toBeLessThan(PHONE_LANDSCAPE.width);
+    expect(underTest.x).toBeGreaterThan(0);
+    expect(underTest.x + underTest.width).toBeLessThan(PHONE_LANDSCAPE.width);
   });
 
   it('should keep the card\'s own proportions', () => {
@@ -148,5 +107,16 @@ describe('openingSeat', () => {
 
     expect(underTest.width / underTest.height).toBeCloseTo(CARD.width / CARD.height, 5);
     expect(underTest.scale).toBeCloseTo(underTest.width / CARD.width, 5);
+  });
+});
+
+describe('the cover dissolving as it swings clear', () => {
+  it('should start fading only once the cover has swung past the spine', () => {
+    const rightAngle = 90 / STORY_OPENING.coverLiftDegrees;
+
+    const underTest = STORY_OPENING.coverFadeFrom;
+
+    expect(underTest).toBeGreaterThanOrEqual(rightAngle);
+    expect(underTest).toBeLessThan(1);
   });
 });

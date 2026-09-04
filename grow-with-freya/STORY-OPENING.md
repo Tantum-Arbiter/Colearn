@@ -21,7 +21,7 @@ Every step hands the book to the next one. Nothing appears or vanishes in a sing
 | Veil in | 220ms | – | A night-navy veil rises and the book dips into it. |
 | Turn | ~300ms | – | The screen turns to landscape behind the veil, never on show. |
 | Re-enter | 460ms | – | The veil lifts as the book rises into its seat, a touch small and low, growing to size. |
-| Cover lift | 480ms | 480ms | The cover swings open on its spine. The page beneath sits in its shadow, brightening as the cover clears; the cover's face darkens as it turns from the light. |
+| Cover lift | 480ms | 480ms | The cover swings open on its spine and dissolves as it swings clear. The page beneath sits in its shadow, brightening as the cover clears; the cover's face darkens as it turns from the light. |
 | Hold | 140ms | 140ms | A breath with the first page showing. The live reader mounts now, hidden. |
 | Grow | 520ms | 520ms | The open book grows to fill the screen, decelerating into place. |
 | Dissolve | 200ms | 200ms | The live reader dissolves in over the grown book; then the overlay is torn down. |
@@ -47,8 +47,8 @@ Total: about 1.6s on a tablet, about 2.6s on a phone including the turn.
 - **The turn hides in navy.** The root view behind every React view is the same night navy as
   the veil (`backgroundColor` in `app.config.js`, and `expo-system-ui` at launch for dev
   clients), so the corners iOS reveals while it turns the screen are navy on navy, not black.
-- **The open spread stays centred.** The cover flap swings out to the left of the spine, so the
-  page slides right by half the flap as the cover opens (`openSpreadShift`) and back as it grows.
-  The seat is 46% of the screen width (`openingSeat`) so flap and page both fit inside the screen.
+- **The page never moves while the cover opens.** The book opens from a centred seat at 46% of
+  the screen width (`openingSeat`). The cover swings on its spine and, once past a right angle,
+  dissolves as it swings clear, so what is left on screen is the page, exactly where the book was.
 - **Closing is the same book in reverse.** The exit animation drives the same shared values
   (`pageFlipProgress`, `bookExpansion`) backwards, so the shading reads correctly both ways.
