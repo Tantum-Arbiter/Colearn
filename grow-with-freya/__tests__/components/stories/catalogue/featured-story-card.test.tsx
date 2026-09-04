@@ -36,14 +36,6 @@ describe('FeaturedStoryCard', () => {
     expect(onOpen).toHaveBeenCalledWith(model, expect.anything());
   });
 
-  it('opens the story from the Read button too', () => {
-    const onOpen = jest.fn();
-    const tree = render(<FeaturedStoryCard story={fromStory(story())} width={340} language="en" onOpen={onOpen} />);
-
-    fireEvent.press(byTestId(tree, 'story-play-featured')[0]);
-
-    expect(onOpen).toHaveBeenCalledTimes(1);
-  });
 
   it('caps the title at two lines', () => {
     const tree = render(<FeaturedStoryCard story={fromStory(story())} width={340} language="en" onOpen={jest.fn()} />);

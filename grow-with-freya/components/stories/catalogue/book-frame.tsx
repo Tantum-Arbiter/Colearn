@@ -36,10 +36,27 @@ export interface BookFrameProps {
 const SPINE_SHADE = ['rgba(255,255,255,0.18)', 'rgba(255,255,255,0.02)', 'rgba(0,0,0,0.28)'] as const;
 const COVER_SHADE = ['rgba(0,0,0,0.22)', 'rgba(0,0,0,0)'] as const;
 
+/** The block of pages showing at the fore-edge; drawn over any cover. */
+export function BookPages({ testID = 'book-pages' }: { testID?: string }) {
+  const pagesWidth = BOOK_FRAME.pageLines * BOOK_FRAME.pageLineWidth + (BOOK_FRAME.pageLines - 1) * BOOK_FRAME.pageGap;
+
+  return (
+    <View style={[styles.pages, { width: pagesWidth, right: BOOK_FRAME.pageInset }]} pointerEvents="none" testID={testID}>
+      {Array.from({ length: BOOK_FRAME.pageLines }, (_, i) => (
+        <View key={i} style={[styles.pageLine, { width: BOOK_FRAME.pageLineWidth, marginLeft: i === 0 ? 0 : BOOK_FRAME.pageGap }]} />
+      ))}
+    </View>
+  );
+}
+
+/** The hinge shadow where the cover meets the spine; drawn over any cover. */
+export function BookHinge() {
+  return <LinearGradient colors={[...COVER_SHADE]} start={{ x: 0, y: 0.5 }} end={{ x: 0.35, y: 0.5 }} style={styles.hinge} pointerEvents="none" />;
+}
+
 export function BookFrame({ width, height, radius, spineColor = '#1D2657', children, style, testID = 'book-frame' }: BookFrameProps) {
   const spineWidth = bookSpineWidth(width);
   const coverWidth = width - spineWidth;
-  const pagesWidth = BOOK_FRAME.pageLines * BOOK_FRAME.pageLineWidth + (BOOK_FRAME.pageLines - 1) * BOOK_FRAME.pageGap;
 
   return (
     <View style={[styles.book, { width, height, borderRadius: radius }, style]} testID={testID}>
@@ -49,12 +66,8 @@ export function BookFrame({ width, height, radius, spineColor = '#1D2657', child
 
       <View style={[styles.cover, { width: coverWidth, borderTopRightRadius: radius, borderBottomRightRadius: radius }]} testID={`${testID}-cover`}>
         {children}
-        <LinearGradient colors={[...COVER_SHADE]} start={{ x: 0, y: 0.5 }} end={{ x: 0.35, y: 0.5 }} style={styles.hinge} pointerEvents="none" />
-        <View style={[styles.pages, { width: pagesWidth, right: BOOK_FRAME.pageInset }]} pointerEvents="none" testID={`${testID}-pages`}>
-          {Array.from({ length: BOOK_FRAME.pageLines }, (_, i) => (
-            <View key={i} style={[styles.pageLine, { width: BOOK_FRAME.pageLineWidth, marginLeft: i === 0 ? 0 : BOOK_FRAME.pageGap }]} />
-          ))}
-        </View>
+        <BookHinge />
+        <BookPages testID={`${testID}-pages`} />
       </View>
     </View>
   );

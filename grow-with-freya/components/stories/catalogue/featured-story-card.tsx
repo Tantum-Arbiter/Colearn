@@ -13,12 +13,10 @@ import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import {
   FEATURED_ASPECT_RATIO,
   RADIUS_LARGE,
-  SPACE_4,
   TYPE_ROLES,
   typeSize,
 } from '@/components/child-ui/tokens';
 import { CatalogueStory } from './catalogue-story';
-import { StoryPlayButton } from './story-play-button';
 import { BookFrame } from './book-frame';
 
 const TITLE_INSET = 24;
@@ -104,9 +102,6 @@ export function FeaturedStoryCard({ story, width, language, onOpen, hidden = fal
           {title}
         </Text>
 
-        <View style={styles.playButton}>
-          <StoryPlayButton variant="featured" onPress={handleOpen} accessibilityLabel={title} />
-        </View>
       </Pressable>
       </BookFrame>
     </Animated.View>
@@ -141,10 +136,5 @@ const styles = StyleSheet.create({
     color: TEXT_PRIMARY,
     fontFamily: Fonts.primary,
     fontWeight: TYPE_ROLES.featuredTitle.weight,
-  },
-  playButton: {
-    position: 'absolute',
-    top: SPACE_4,
-    right: SPACE_4,
   },
 });

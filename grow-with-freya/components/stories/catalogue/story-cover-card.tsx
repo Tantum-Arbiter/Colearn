@@ -28,7 +28,6 @@ import {
 } from '@/components/child-ui/tokens';
 import { CatalogueStory } from './catalogue-story';
 import { StoryOpenHandler } from './featured-story-card';
-import { StoryPlayButton } from './story-play-button';
 import { useCatalogueDownload } from './use-catalogue-download';
 import { BookFrame } from './book-frame';
 
@@ -191,12 +190,6 @@ export function StoryCoverCard({
           {title}
         </Text>
 
-        {!remoteEntry && (
-          <View style={styles.playButton} testID="story-cover-play">
-            <StoryPlayButton variant="card" onPress={handlePress} accessibilityLabel={title} />
-          </View>
-        )}
-
         {remoteEntry && (
           <>
             <Animated.View style={[styles.darkOverlay, overlayStyle]} pointerEvents="none" />
@@ -310,11 +303,6 @@ const styles = StyleSheet.create({
     color: TEXT_PRIMARY,
     fontFamily: Fonts.primary,
     fontWeight: TYPE_ROLES.cardTitle.weight,
-  },
-  playButton: {
-    position: 'absolute',
-    bottom: SPACE_2,
-    right: SPACE_2,
   },
   darkOverlay: {
     ...StyleSheet.absoluteFillObject,

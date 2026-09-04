@@ -415,10 +415,6 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode }: StoryCatalo
       ? Math.min(contentWidth, FEATURED_MAX_WIDTH)
       : contentWidth;
 
-  const isCardHidden = useCallback((storyId: string) =>
-    interactionLocked && selectedStoryId === storyId,
-  [interactionLocked, selectedStoryId]);
-
   const renderCoverCard = useCallback((story: CatalogueStory) => (
     <StoryCoverCard
       key={story.id}
@@ -432,9 +428,8 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode }: StoryCatalo
       onDownloadComplete={refreshLibrary}
       onAuthError={handleAuthError}
       onDownloadLimitReached={handleDownloadLimitReached}
-      hidden={isCardHidden(story.id)}
     />
-  ), [coverWidth, currentLanguage, handleOpenStory, handleLongPress, handleShareToUnlock, refreshLibrary, handleAuthError, handleDownloadLimitReached, isCardHidden]);
+  ), [coverWidth, currentLanguage, handleOpenStory, handleLongPress, handleShareToUnlock, refreshLibrary, handleAuthError, handleDownloadLimitReached]);
 
   const featuredSection = featured && (
     <>
@@ -450,7 +445,6 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode }: StoryCatalo
           width={featuredWidth}
           language={currentLanguage}
           onOpen={handleOpenStory}
-          hidden={isCardHidden(featured.id)}
         />
       </View>
     </>

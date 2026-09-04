@@ -19,10 +19,13 @@ describe('storyCardLayout', () => {
     expect(underTest.x + underTest.width / 2).toBeCloseTo(TABLET.width / 2, 0);
   });
 
-  it('should give the cover the proportions of a picture book spread', () => {
+  it('should hold a book with the shelf books\' proportions, centred in the cover area', () => {
     const underTest = storyCardLayout(PHONE, false, PHONE_INSETS);
 
-    expect(underTest.coverHeight / underTest.width).toBeCloseTo(STORY_CARD.coverAspect, 2);
+    expect(underTest.book.width / underTest.book.height).toBeCloseTo(STORY_CARD.bookAspect, 1);
+    expect(underTest.book.x + underTest.book.width / 2).toBeCloseTo(underTest.x + underTest.width / 2, 0);
+    expect(underTest.book.y).toBe(underTest.y + STORY_CARD.bookInset);
+    expect(underTest.coverHeight).toBe(underTest.book.height + STORY_CARD.bookInset * 2);
   });
 
   it('should rise from the bottom of the screen, clear of the home indicator', () => {
@@ -37,7 +40,7 @@ describe('storyCardLayout', () => {
     const underTest = storyCardLayout(shortScreen, false, PHONE_INSETS);
 
     expect(underTest.y).toBeGreaterThanOrEqual(PHONE_INSETS.top + STORY_CARD.topGap);
-    expect(underTest.coverHeight).toBeLessThan(underTest.width * STORY_CARD.coverAspect);
+    expect(underTest.book.width).toBeLessThan(underTest.width - STORY_CARD.bookInset * 2);
   });
 
   it('should stand exactly as tall as its cover and body together', () => {
@@ -62,31 +65,32 @@ describe('cardCoverTransform', () => {
   it.each([
     ['a wide featured tile', LANDSCAPE_TILE],
     ['a tall shelf tile', PORTRAIT_TILE],
-  ])('should land %s centred on the cover', (_case, tile) => {
+  ])('should land %s centred on the card\'s book', (_case, tile) => {
     const underTest = cardCoverTransform(layout, tile);
 
-    expect(tile.x + tile.width / 2 + underTest.moveX).toBeCloseTo(layout.x + layout.width / 2, 5);
-    expect(tile.y + tile.height / 2 + underTest.moveY).toBeCloseTo(layout.y + layout.coverHeight / 2, 5);
+    expect(tile.x + tile.width / 2 + underTest.moveX).toBeCloseTo(layout.book.x + layout.book.width / 2, 5);
+    expect(tile.y + tile.height / 2 + underTest.moveY).toBeCloseTo(layout.book.y + layout.book.height / 2, 5);
   });
 
   it.each([
     ['a wide featured tile', LANDSCAPE_TILE],
     ['a tall shelf tile', PORTRAIT_TILE],
-  ])('should keep %s inside the cover so nothing spills over the card', (_case, tile) => {
+  ])('should keep %s inside the card\'s book', (_case, tile) => {
     const underTest = cardCoverTransform(layout, tile).rect;
 
-    expect(underTest.x).toBeGreaterThanOrEqual(layout.x - 0.01);
-    expect(underTest.x + underTest.width).toBeLessThanOrEqual(layout.x + layout.width + 0.01);
-    expect(underTest.y).toBeGreaterThanOrEqual(layout.y - 0.01);
-    expect(underTest.y + underTest.height).toBeLessThanOrEqual(layout.y + layout.coverHeight + 0.01);
+    expect(underTest.x).toBeGreaterThanOrEqual(layout.book.x - 0.01);
+    expect(underTest.x + underTest.width).toBeLessThanOrEqual(layout.book.x + layout.book.width + 0.01);
+    expect(underTest.y).toBeGreaterThanOrEqual(layout.book.y - 0.01);
+    expect(underTest.y + underTest.height).toBeLessThanOrEqual(layout.book.y + layout.book.height + 0.01);
   });
 
-  it('should fill the cover along the limiting side', () => {
-    const underTest = cardCoverTransform(layout, LANDSCAPE_TILE).rect;
+  it('should fill the card\'s book exactly when the shelf book has the same shape', () => {
+    const shelfBook = { x: 16, y: 300, width: 160, height: 100 };
 
-    const fillsWidth = Math.abs(underTest.width - layout.width) < 0.01;
-    const fillsHeight = Math.abs(underTest.height - layout.coverHeight) < 0.01;
-    expect(fillsWidth || fillsHeight).toBe(true);
+    const underTest = cardCoverTransform(layout, shelfBook).rect;
+
+    expect(underTest.width).toBeCloseTo(layout.book.width, 0);
+    expect(underTest.height).toBeCloseTo(layout.book.height, 0);
   });
 });
 

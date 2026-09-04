@@ -1,7 +1,6 @@
 import React, { RefObject, useCallback, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView, NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
   Easing,
@@ -24,6 +23,8 @@ import { Fonts } from '@/constants/theme';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { STORY_DETAIL_OPENING } from '@/constants/story-opening';
 import { STORY_CARD, cardIndexAtOffset, type StoryCardLayout } from '@/constants/story-card';
+import { BookFrame } from './catalogue/book-frame';
+import { RADIUS_CARD } from '@/components/child-ui/tokens';
 
 export interface StoryCardSheetProps {
   /** The books the child can swipe between, in shelf order. */
@@ -250,15 +251,15 @@ function StoryCard({
       testID={`story-card-${story.id}`}
     >
       <View style={[styles.cover, { height: layout.coverHeight }]}>
-        {coverSource && (
-          <ExpoImage source={coverSource} style={StyleSheet.absoluteFill} contentFit="cover" cachePolicy="memory-disk" priority="high" />
-        )}
-        <LinearGradient
-          colors={['rgba(19, 26, 63, 0)', 'rgba(19, 26, 63, 0)', 'rgba(19, 26, 63, 0.7)', '#131A3F']}
-          locations={[0, 0.55, 0.85, 1]}
-          style={StyleSheet.absoluteFill}
-          pointerEvents="none"
-        />
+        <View style={styles.bookSeat} pointerEvents="none">
+          <BookFrame width={layout.book.width} height={layout.book.height} radius={RADIUS_CARD} testID={`story-card-book-${story.id}`}>
+            {coverSource ? (
+              <ExpoImage source={coverSource} style={StyleSheet.absoluteFill} contentFit="cover" cachePolicy="memory-disk" priority="high" />
+            ) : (
+              <View style={[StyleSheet.absoluteFill, styles.coverPlaceholder]} />
+            )}
+          </BookFrame>
+        </View>
 
         <View style={styles.coverBar} pointerEvents="box-none">
           <Pressable
@@ -429,6 +430,14 @@ const styles = StyleSheet.create({
   cover: {
     width: '100%',
     overflow: 'hidden',
+    backgroundColor: '#0E1538',
+  },
+  bookSeat: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  coverPlaceholder: {
     backgroundColor: '#0A0F2C',
   },
   coverBar: {

@@ -46,7 +46,7 @@ export const FILTER_PILL_HEIGHT = 46;
 export const FILTER_PILL_PADDING_H = 22;
 export const FILTER_TOGGLE_SIZE = 46;
 
-export const FEATURED_ASPECT_RATIO = 1.8;
+export const FEATURED_ASPECT_RATIO = 1.6;
 export const COVER_ASPECT_RATIO = 1.6;
 export const COVER_GRID_GAP = 12;
 

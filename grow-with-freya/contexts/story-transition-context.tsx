@@ -28,6 +28,7 @@ import { ParentsOnlyModal } from '@/components/ui/parents-only-modal';
 import { StoryPreviewModal } from '@/components/stories/story-preview-modal';
 import { StoryCardSheet } from '@/components/stories/story-card-sheet';
 import { cardCoverTransform, storyCardLayout } from '@/constants/story-card';
+import { BookHinge, BookPages, bookSpineWidth } from '@/components/stories/catalogue/book-frame';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RotatePromptOverlay } from '@/components/stories/rotate-prompt-overlay';
 import { TutorialOverlay } from '@/components/tutorial/tutorial-overlay';
@@ -1772,8 +1773,10 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
               ]}>
                 {renderCoverImage()}
                 <Animated.View pointerEvents="none" style={[styles.coverShade, coverShadeStyle]} />
-                {/* Book spine shadow effect */}
-                <View style={styles.spineGradient} />
+                {/* The same spine, hinge and pages the book wore on the shelf and the card */}
+                <View style={[styles.bookSpine, { width: bookSpineWidth(cardPosition.width) }]} pointerEvents="none" />
+                <BookHinge />
+                <BookPages testID="transition-book-pages" />
               </Animated.View>
 
               {/* Back of cover - white page (shown when rotation > 90deg) */}
@@ -2092,13 +2095,12 @@ const styles = StyleSheet.create({
     elevation: 15,
     zIndex: 50, // Above tap-anywhere overlay (zIndex: 1)
   },
-  spineGradient: {
+  bookSpine: {
     position: 'absolute',
-    left: 0,
     top: 0,
     bottom: 0,
-    width: 8,
-    backgroundColor: 'rgba(0,0,0,0.15)',
+    left: 0,
+    backgroundColor: '#1D2657',
   },
   pageShade: {
     ...StyleSheet.absoluteFillObject,

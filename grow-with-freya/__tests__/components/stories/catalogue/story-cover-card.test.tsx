@@ -59,14 +59,11 @@ function byTestId(tree: ReturnType<typeof render>, testID: string) {
 describe('StoryCoverCard', () => {
   beforeEach(() => jest.clearAllMocks());
 
-  it('renders the title on the artwork above the play button in tree order', () => {
-    const tree = render(<StoryCoverCard {...baseProps} story={fromStory(story())} />);
+  it('renders the title on the artwork, with no play button now the book itself is the button', () => {
+    const tree = render(<StoryCoverCard story={fromStory(story())} width={160} language="en" onOpen={jest.fn()} />);
 
-    const ordered = tree.UNSAFE_root.findAll(
-      (n: any) => n.props.testID === 'story-cover-title' || n.props.testID === 'story-cover-play'
-    );
-    expect(ordered.length).toBeGreaterThanOrEqual(2);
-    expect(ordered[0].props.testID).toBe('story-cover-title');
+    expect(tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'story-cover-title').length).toBeGreaterThan(0);
+    expect(tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'story-cover-play')).toHaveLength(0);
   });
 
   it('caps the title at two lines', () => {
