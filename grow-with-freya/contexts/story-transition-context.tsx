@@ -239,9 +239,6 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
   // Background image slide animation (children art texture)
   // Slides down from above viewport on entry, slides back up on exit
-  const backgroundSlideY = useSharedValue(-screenHeight);
-  // The night sky settles in on entry rather than dropping like a curtain
-  const backgroundOpacity = useSharedValue(0);
 
   // Book page flip and expansion animation values
   const pageFlipProgress = useSharedValue(0); // 0 = closed, 1 = open (cover rotated away)
@@ -395,14 +392,10 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     transitionX.value = withTiming(hero.moveX, lift);
     transitionY.value = withTiming(hero.moveY, lift);
     transitionScale.value = withTiming(hero.scale, lift);
-    overlayOpacity.value = withTiming(1, { duration: STORY_DETAIL_OPENING.skySettleMs, easing: Easing.out(Easing.quad) });
 
-    // The night sky settles in behind the rising book, dimming the catalogue
-    // beneath as it comes -- no curtain edge sweeping past a page still awake
-    const settle = { duration: STORY_DETAIL_OPENING.skySettleMs, easing: Easing.out(Easing.cubic) };
-    backgroundSlideY.value = -STORY_DETAIL_OPENING.skyLift;
-    backgroundSlideY.value = withTiming(0, settle);
-    backgroundOpacity.value = withTiming(1, settle);
+    // The plain navy ground fades in beneath the rising book, dimming the
+    // catalogue as it comes
+    overlayOpacity.value = withTiming(1, { duration: STORY_DETAIL_OPENING.groundFadeMs, easing: Easing.out(Easing.quad) });
 
     // The sheet mounts while the book is still in flight and rises to meet it
     setTimeout(() => {
@@ -419,8 +412,6 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     transitionY.value = 0;
     transitionOpacity.value = 1;
     overlayOpacity.value = 0;
-    backgroundSlideY.value = -STORY_DETAIL_OPENING.skyLift;
-    backgroundOpacity.value = 0;
     cancelAnimation(levitationY);
     levitationY.value = 0;
 
@@ -792,10 +783,6 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     setTimeout(() => {
       transitionOpacity.value = 0; // Hide the animated book (already off-screen)
 
-      backgroundSlideY.value = withTiming(-currentHeight, {
-        duration: SLIDE_DURATION,
-        easing: Easing.in(Easing.cubic)
-      });
       overlayOpacity.value = withTiming(0, {
         duration: SLIDE_DURATION,
         easing: Easing.out(Easing.quad)
@@ -847,8 +834,6 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
       transitionOpacity.value = 1;
       overlayOpacity.value = 0;
       rotationMaskOpacity.value = 0;
-      backgroundSlideY.value = -screenHeight;
-      backgroundOpacity.value = 0;
       pageFlipProgress.value = 0;
       bookExpansion.value = 0;
       bookRotation.value = 0;
@@ -883,8 +868,6 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
       overlayOpacity.value = 0;
       pageFlipProgress.value = 0;
       bookExpansion.value = 0;
-      backgroundSlideY.value = -screenHeight;
-      backgroundOpacity.value = 0;
     }, 50);
   };
 
@@ -1094,7 +1077,6 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
       // Phase 7: Slide background up to reveal menu
       transitionOpacity.value = 0;
-      backgroundSlideY.value = withTiming(-portraitH, { duration: SLIDE_DURATION, easing: Easing.in(Easing.cubic) });
       overlayOpacity.value = withTiming(0, { duration: SLIDE_DURATION, easing: Easing.out(Easing.quad) });
       await new Promise(resolve => setTimeout(resolve, SLIDE_DURATION + 50));
 
@@ -1130,10 +1112,6 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
         transitionOpacity.value = 0; // Hide animated book (already off-screen)
 
         overlayOpacity.value = withTiming(0, {
-          duration: SLIDE_DOWN_DURATION,
-          easing: Easing.out(Easing.quad)
-        });
-        backgroundSlideY.value = withTiming(-currentHeight, {
           duration: SLIDE_DOWN_DURATION,
           easing: Easing.out(Easing.quad)
         });
@@ -1336,12 +1314,6 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     };
   });
 
-  const backgroundSlideAnimatedStyle = useAnimatedStyle(() => {
-    return {
-      opacity: backgroundOpacity.value,
-      transform: [{ translateY: backgroundSlideY.value }],
-    };
-  });
 
   // Check if expansion/exit animations should be active (using shared value for immediate effect)
   const isExpandingOrExitingShared = useSharedValue(0);
@@ -1771,19 +1743,9 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
       {/* Keep blocking touches during cancel animation to prevent taps passing through to elements below */}
       {isTransitioning && cardPosition && selectedStory && (
         <View style={styles.overlay} pointerEvents={((phase !== null && phase !== 'flying') || isCancelAnimating) ? 'auto' : 'none'}>
-          {/* Children art background image -slides down on entry, up on exit.
-              No overlay opacity -stays fully opaque so the background is always
-              full colour while sliding in/out. */}
-          <Animated.View
-            style={[styles.backgroundImageContainer, backgroundSlideAnimatedStyle]}
-            pointerEvents="none"
-          >
-            <Image
-              source={require('../assets/images/ui-elements/background-home.webp')}
-              style={styles.backgroundImage}
-              resizeMode="repeat"
-            />
-          </Animated.View>
+          {/* Plain night-navy ground beneath the book and the sheet. It fades in
+              as the book lifts, dimming the catalogue, and out again on exit. */}
+          <Animated.View style={[styles.nightGround, overlayAnimatedStyle]} pointerEvents="none" />
 
           {/* Centered book with page flip and expansion animation */}
           <Animated.View
@@ -2133,16 +2095,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  backgroundImageContainer: {
+  nightGround: {
     ...StyleSheet.absoluteFillObject,
-    zIndex: 0, // Below buttons/book
-    overflow: 'hidden',
-    backgroundColor: '#0A0F2C', // Night-sky navy matching the detail/prompt design
-  },
-  backgroundImage: {
-    width: '200%',
-    height: '200%',
-    opacity: 0.12, // Subtle texture on the night-sky base
+    zIndex: 0, // Below the book and the sheet
+    backgroundColor: '#0A0F2C',
   },
   detailLayer: {
     ...StyleSheet.absoluteFillObject,

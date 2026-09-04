@@ -234,8 +234,8 @@ describe('tile to detail', () => {
     expect(heroStartsAt).toBeGreaterThanOrEqual(STORY_DETAIL_OPENING.liftMs);
   });
 
-  it('should have the sky settled before the book lands', () => {
-    expect(STORY_DETAIL_OPENING.skySettleMs).toBeLessThanOrEqual(STORY_DETAIL_OPENING.liftMs);
+  it('should have the ground faded in before the book lands', () => {
+    expect(STORY_DETAIL_OPENING.groundFadeMs).toBeLessThanOrEqual(STORY_DETAIL_OPENING.liftMs);
   });
 
   it('should be over within a second, buttons included', () => {

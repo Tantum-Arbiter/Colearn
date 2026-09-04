@@ -39,12 +39,12 @@ It is now one motion (`STORY_DETAIL_OPENING`):
 
 | From | What happens |
 |---|---|
-| 0ms | The book lifts out of the catalogue and decelerates into the hero (620ms). The night sky fades in and settles a few points behind it (420ms), dimming the catalogue as it comes. |
+| 0ms | The book lifts out of the catalogue and decelerates into the hero (620ms). A plain navy ground fades in beneath it (420ms), dimming the catalogue as it comes. There is no background art and nothing slides. |
 | 300ms | The sheet mounts while the book is still in flight and rises to meet it (420ms); title, chips, description and buttons follow in turn (60ms apart, 320ms each). |
 | 620ms | The book lands. The sheet's own hero fades in over it (220ms) -- the same art in the same place, so all that visibly arrives is the soft gradient beneath the title. |
 
-Everything has settled by about 900ms. The sheet's ground is transparent: the transition's
-night sky is already beneath it, so mounting it changes nothing on screen.
+Everything has settled by about 900ms. The sheet's own ground is transparent: the navy is
+already beneath it, so mounting it changes nothing on screen.
 
 ## Orientation, by device
 
