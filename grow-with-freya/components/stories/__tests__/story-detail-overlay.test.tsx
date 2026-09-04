@@ -3,7 +3,7 @@
  * tapping a book tile.
  *
  * Key behaviors tested:
- * 1. Story metadata renders from the selected story (title, meta pills, supports)
+ * 1. Story metadata renders from the selected story (title, meta pills, theme chips)
  * 2. Mode buttons call onSelectMode with the mapped ReadingMode
  * 3. Read now CTA, back, favourite, and preview callbacks fire
  * 4. Offline row appears only when the story is downloaded
@@ -94,17 +94,37 @@ describe('StoryDetailOverlay', () => {
     expect(findByText(UNSAFE_root, 'A gentle story about getting ready for bed.').length).toBeGreaterThan(0);
   });
 
-  it('should render supports chips derived from story tags', () => {
+  it('should render the story themes as chips under the title', () => {
     const { UNSAFE_root } = render(<StoryDetailOverlay {...defaultProps} />);
 
     expect(findByText(UNSAFE_root, 'stories.filterTags.bedtime').length).toBeGreaterThan(0);
     expect(findByText(UNSAFE_root, 'stories.filterTags.emotions').length).toBeGreaterThan(0);
   });
 
+  it('should no longer carry a separate Supports section, now the themes sit under the title', () => {
+    const { UNSAFE_root } = render(<StoryDetailOverlay {...defaultProps} />);
+
+    const underTest = findByText(UNSAFE_root, 'storyDetail.supports');
+
+    expect(underTest).toHaveLength(0);
+  });
+
+  it('should draw each theme chip with an icon rather than an emoji', () => {
+    const { UNSAFE_root } = render(<StoryDetailOverlay {...defaultProps} />);
+
+    const chips = UNSAFE_root.findAll((node: any) => typeof node.props.testID === 'string' && node.props.testID.startsWith('story-theme-chip-'));
+
+    expect(chips.length).toBeGreaterThan(0);
+    chips.forEach((chip: any) => {
+      const text = findByText(chip, 'stories.filterTags.bedtime').concat(findByText(chip, 'stories.filterTags.emotions'));
+      text.forEach((node: any) => expect(String(node.props.children)).not.toMatch(/\p{Extended_Pictographic}/u));
+    });
+  });
+
   it.each([
     ['storyDetail.readTogether', 'read'],
-    ['storyDetail.listen', 'narrate'],
-    ['storyDetail.playAlong', 'record'],
+    ['storyDetail.playAlong', 'narrate'],
+    ['storyDetail.record', 'record'],
   ])('should map the %s button to mode %s', (labelKey, expectedMode) => {
     const { UNSAFE_root } = render(<StoryDetailOverlay {...defaultProps} />);
 

@@ -3042,11 +3042,10 @@ export default {
 
   storyDetail: {
     readTogether: 'Simul legere',
-    listen: 'Audire',
+    record: 'Recorda',
     playAlong: 'Simul ludere',
     readNow: 'Nunc lege',
     savedOffline: 'Sine conexu servatum',
-    supports: 'Adiuvat',
     minutes: '{{count}} min',
     ages: 'Aetates {{range}}',
     interactive: 'Interactivum',

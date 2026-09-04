@@ -3042,11 +3042,10 @@ export default {
 
   storyDetail: {
     readTogether: 'Birlikte oku',
-    listen: 'Dinle',
+    record: 'Kaydet',
     playAlong: 'Birlikte oyna',
     readNow: 'Şimdi oku',
     savedOffline: 'Çevrimdışı kaydedildi',
-    supports: 'Destekler',
     minutes: '{{count}} dk',
     ages: 'Yaş {{range}}',
     interactive: 'Etkileşimli',

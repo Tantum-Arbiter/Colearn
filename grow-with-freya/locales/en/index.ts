@@ -319,11 +319,10 @@ export default {
   // Story detail view (shown after tapping a book)
   storyDetail: {
     readTogether: 'Read Together',
-    listen: 'Listen',
+    record: 'Record',
     playAlong: 'Play Along',
     readNow: 'Read now',
     savedOffline: 'Saved for offline',
-    supports: 'Supports',
     minutes: '{{count}} min',
     ages: 'Ages {{range}}',
     interactive: 'Interactive',

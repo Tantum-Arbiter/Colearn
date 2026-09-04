@@ -3042,11 +3042,10 @@ export default {
 
   storyDetail: {
     readTogether: 'Leggiamo insieme',
-    listen: 'Ascolta',
+    record: 'Registra',
     playAlong: 'Gioca insieme',
     readNow: 'Leggi ora',
     savedOffline: 'Salvato offline',
-    supports: 'Favorisce',
     minutes: '{{count}} min',
     ages: 'Età {{range}}',
     interactive: 'Interattivo',

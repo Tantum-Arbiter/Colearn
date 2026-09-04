@@ -3042,11 +3042,10 @@ export default {
 
   storyDetail: {
     readTogether: '一起阅读',
-    listen: '聆听',
+    record: '录音',
     playAlong: '一起玩',
     readNow: '现在阅读',
     savedOffline: '已离线保存',
-    supports: '培养',
     minutes: '{{count}} 分钟',
     ages: '适龄 {{range}}',
     interactive: '互动',

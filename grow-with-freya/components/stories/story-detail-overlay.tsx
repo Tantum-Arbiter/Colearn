@@ -7,14 +7,14 @@ import Animated, { FadeIn, FadeInDown, FadeOut, SlideInDown, SlideOutDown, Easin
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
-import { Story, STORY_TAGS, STORY_FILTER_TAGS, StoryFilterTag, getLocalizedText } from '@/types/story';
+import { Story, getLocalizedText } from '@/types/story';
+import { storyThemeChips } from './story-theme-chips';
 import type { SupportedLanguage } from '@/services/i18n';
 import type { ReadingMode } from '@/contexts/story-transition-context';
 import { StoryDownloadService } from '@/services/story-download-service';
 import { Fonts } from '@/constants/theme';
 import { useAccessibility } from '@/hooks/use-accessibility';
 
-const MAX_SUPPORT_TAGS = 3;
 
 export interface StoryDetailOverlayProps {
   story: Story;
@@ -38,10 +38,10 @@ interface ModeOption {
   icon: keyof typeof Ionicons.glyphMap;
 }
 
-const MODE_OPTIONS: ModeOption[] = [
+export const MODE_OPTIONS: ModeOption[] = [
   { mode: 'read', labelKey: 'storyDetail.readTogether', icon: 'book-outline' },
-  { mode: 'narrate', labelKey: 'storyDetail.listen', icon: 'volume-medium-outline' },
-  { mode: 'record', labelKey: 'storyDetail.playAlong', icon: 'play-circle-outline' },
+  { mode: 'narrate', labelKey: 'storyDetail.playAlong', icon: 'volume-medium-outline' },
+  { mode: 'record', labelKey: 'storyDetail.record', icon: 'mic-outline' },
 ];
 
 export function StoryDetailOverlay({
@@ -82,7 +82,7 @@ export function StoryDetailOverlay({
 
   const displayTitle = getLocalizedText(story.localizedTitle, story.title, currentLanguage);
   const displayDescription = getLocalizedText(story.localizedDescription, story.description || '', currentLanguage);
-  const categoryTag = STORY_TAGS[story.category];
+  const themeChips = storyThemeChips(story);
 
   const hasInteractiveContent = Boolean(
     story.pages?.some(
@@ -90,10 +90,6 @@ export function StoryDetailOverlay({
     )
   );
 
-  const supportTags = (story.tags || [])
-    .map((tag) => STORY_FILTER_TAGS[tag as StoryFilterTag])
-    .filter(Boolean)
-    .slice(0, MAX_SUPPORT_TAGS);
 
   const modeRefs: Record<ReadingMode, RefObject<View | null> | undefined> = {
     read: readButtonRef,
@@ -188,11 +184,18 @@ export function StoryDetailOverlay({
             <Text style={[styles.title, { fontSize: scaledFontSize(26) }]}>{displayTitle}</Text>
 
             <View style={styles.chipRow}>
-              <View style={[styles.categoryChip, { backgroundColor: `${categoryTag.color}33`, borderColor: `${categoryTag.color}66` }]}>
-                <Text style={[styles.categoryChipText, { fontSize: scaledFontSize(12) }]}>
-                  {categoryTag.emoji} {t(categoryTag.labelKey)}
-                </Text>
-              </View>
+              {themeChips.map((chip) => (
+                <View
+                  key={chip.id}
+                  testID={`story-theme-chip-${chip.id}`}
+                  style={[styles.categoryChip, { backgroundColor: `${chip.color}33`, borderColor: `${chip.color}66` }]}
+                >
+                  <Ionicons name={chip.icon} size={scaledFontSize(13)} color={chip.color} />
+                  <Text style={[styles.categoryChipText, { fontSize: scaledFontSize(12) }]}>
+                    {t(chip.labelKey)}
+                  </Text>
+                </View>
+              ))}
             </View>
 
             <View style={styles.metaRow}>
@@ -226,22 +229,6 @@ export function StoryDetailOverlay({
               <Text style={[styles.description, { fontSize: scaledFontSize(14) }]}>{displayDescription}</Text>
             )}
 
-            {supportTags.length > 0 && (
-              <>
-                <Text style={[styles.supportsLabel, { fontSize: scaledFontSize(12) }]}>
-                  {t('storyDetail.supports')}
-                </Text>
-                <View style={styles.supportsRow}>
-                  {supportTags.map((tag) => (
-                    <View key={tag.id} style={styles.supportChip}>
-                      <Text style={[styles.supportChipText, { fontSize: scaledFontSize(12) }]}>
-                        {tag.emoji} {t(tag.labelKey)}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-              </>
-            )}
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(160).duration(400)} style={styles.modeRow}>
@@ -355,9 +342,14 @@ const styles = StyleSheet.create({
   },
   chipRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
     marginBottom: 10,
   },
   categoryChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 12,
@@ -393,32 +385,6 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.75)',
     lineHeight: 20,
     marginBottom: 14,
-  },
-  supportsLabel: {
-    fontFamily: Fonts.sans,
-    fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.5)',
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-    marginBottom: 8,
-  },
-  supportsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 16,
-  },
-  supportChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 14,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
-  },
-  supportChipText: {
-    fontFamily: Fonts.sans,
-    color: 'rgba(255, 255, 255, 0.85)',
   },
   modeRow: {
     flexDirection: 'row',

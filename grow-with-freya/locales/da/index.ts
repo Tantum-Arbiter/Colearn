@@ -3042,11 +3042,10 @@ export default {
 
   storyDetail: {
     readTogether: 'Læs sammen',
-    listen: 'Lyt',
+    record: 'Optag',
     playAlong: 'Leg med',
     readNow: 'Læs nu',
     savedOffline: 'Gemt offline',
-    supports: 'Støtter',
     minutes: '{{count}} min.',
     ages: 'Alder {{range}}',
     interactive: 'Interaktiv',

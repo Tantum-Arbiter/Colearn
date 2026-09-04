@@ -3042,11 +3042,10 @@ export default {
 
   storyDetail: {
     readTogether: 'いっしょに読む',
-    listen: 'きく',
+    record: 'ろくおん',
     playAlong: 'いっしょに遊ぶ',
     readNow: 'いま読む',
     savedOffline: 'オフラインに保存済み',
-    supports: 'はぐくむ力',
     minutes: '{{count}}分',
     ages: '対象年齢 {{range}}',
     interactive: 'インタラクティブ',
