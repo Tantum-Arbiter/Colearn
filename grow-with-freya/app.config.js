@@ -11,6 +11,7 @@ export default {
     icon: './assets/images/icon.png',
     scheme: 'growwithfreya',
     userInterfaceStyle: 'automatic',
+    backgroundColor: '#0A0F2C',
     newArchEnabled: true,
     extra: {
       eas: {

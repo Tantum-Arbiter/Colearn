@@ -187,6 +187,7 @@ Portrait Story Garden  →  tap a book  →  focused book (Read Together / Liste
 | Auto-hiding reader controls | `hooks/use-auto-hide-controls.ts` |
 | One-hotspot-at-a-time rhythm | `hooks/use-interaction-rhythm.ts` |
 | Reader mount seam | `requestGardenOpen` in `contexts/story-transition-context.tsx` |
+| Book-opening choreography | [`STORY-OPENING.md`](STORY-OPENING.md); timings in `constants/story-opening.ts` |
 | Reading progress (Continue Reading, bookmark) | `storyProgress` in `store/app-store.ts` |
 
 The garden never calls `startTransition` / `selectModeAndBegin`. It runs its own

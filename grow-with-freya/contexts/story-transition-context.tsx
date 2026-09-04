@@ -2,11 +2,12 @@ import React, { createContext, useContext, useState, useEffect, useRef, useCallb
 import { Logger } from '@/utils/logger';
 
 const log = Logger.create('StoryTransition');
-import { Dimensions, Image, InteractionManager, StyleSheet, View, Text, Pressable, TextInput, KeyboardAvoidingView, Platform, Alert, ScrollView, ScaledSize } from 'react-native';
+import { Dimensions, Image, InteractionManager, StyleSheet, View, Text, Pressable, TextInput, KeyboardAvoidingView, Platform, Alert, ScrollView, ScaledSize, type ViewStyle } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import * as Haptics from 'expo-haptics';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import Animated, {
+  type AnimatedStyle,
   useSharedValue,
   useAnimatedStyle,
   withTiming,
@@ -32,6 +33,7 @@ import { useTutorial } from '@/contexts/tutorial-context';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppStore } from '@/store/app-store';
+import { STORY_OPENING } from '@/constants/story-opening';
 
 // Animation timing constants
 const HERO_GLIDE_DURATION = 1000; // Glide from tile into the detail-view hero area
@@ -39,7 +41,6 @@ const HERO_HEIGHT_RATIO = 0.44; // Portion of the screen the detail hero occupie
 const PROMPT_BOOK_WIDTH_RATIO = 0.52; // Book width on the rotate-prompt screen
 const PROMPT_BOOK_CENTER_Y_RATIO = 0.42; // Vertical centre of the book on the rotate-prompt screen
 const PROMPT_GLIDE_DURATION = 450; // Glide from hero into the rotate-prompt book position
-const ROTATION_MASK_FADE_MS = 180; // Fade of the opaque mask that hides the OS rotation snap
 const LANDSCAPE_DIMENSIONS_TIMEOUT_MS = 800; // Fallback if the dimension-change event never fires
 
 export type ReadingMode = 'read' | 'record' | 'narrate';
@@ -70,6 +71,9 @@ interface StoryTransitionContextType {
 
   // Flag to indicate story reader should start loading
   shouldShowStoryReader: boolean;
+
+  // Opacity the layout applies to the mounted reader so it dissolves in over the opening book
+  readerRevealStyle: AnimatedStyle<ViewStyle>;
 
   // Callback when user taps "Begin" - the _layout listens to this
   onBeginCallback: (() => void) | null;
@@ -219,6 +223,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
   // Opaque full-screen mask that hides the OS rotation snap during lockAsync
   const rotationMaskOpacity = useSharedValue(0);
+  const readerReveal = useSharedValue(1);
 
   // Current compensated border radius - updated by bookExpansionAnimatedStyle
   // Used by child views that need to match parent's borderRadius when overflow: 'visible'
@@ -539,39 +544,40 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
   // Flip the cover open and expand to full screen, then hand over to the reader
   const openBookIntoReader = () => {
-    const COVER_FLIP_DURATION = 200;
-    const HOLD_AFTER_FLIP = 100;
-    const SCALE_DURATION = 200;
-
     setIsExpandingToReader(true);
 
     requestAnimationFrame(() => {
-      // PHASE 1: Flip the cover (2D scaleX - no pixelation!)
       pageFlipProgress.value = withTiming(1, {
-        duration: COVER_FLIP_DURATION,
-        easing: Easing.inOut(Easing.cubic)
+        duration: STORY_OPENING.coverLiftMs,
+        easing: Easing.inOut(Easing.quad),
       });
 
-      // PHASE 2: After flip completes + hold, scale to full screen
       setTimeout(() => {
-        // Load the story reader NOW (at start of scale) so it loads behind
+        readerReveal.value = 0;
         if (onBeginCallback) {
           onBeginCallback();
         }
 
-        // Scale the book to fill the screen
-        bookExpansion.value = withTiming(1, {
-          duration: SCALE_DURATION,
-          easing: Easing.inOut(Easing.cubic)
-        });
-
-        // After scale completes, instant switch - reader is already loaded behind
         setTimeout(() => {
-          transitionOpacity.value = 0;
-          overlayOpacity.value = 0;
-          completeTransitionOnly();
-        }, SCALE_DURATION);
-      }, COVER_FLIP_DURATION + HOLD_AFTER_FLIP);
+          bookExpansion.value = withTiming(1, {
+            duration: STORY_OPENING.growMs,
+            easing: Easing.out(Easing.cubic),
+          });
+
+          setTimeout(() => {
+            readerReveal.value = withTiming(1, {
+              duration: STORY_OPENING.dissolveMs,
+              easing: Easing.out(Easing.quad),
+            });
+
+            setTimeout(() => {
+              transitionOpacity.value = 0;
+              overlayOpacity.value = 0;
+              completeTransitionOnly();
+            }, STORY_OPENING.dissolveMs);
+          }, STORY_OPENING.growMs);
+        }, STORY_OPENING.holdMs);
+      }, STORY_OPENING.coverLiftMs);
     });
   };
 
@@ -585,21 +591,29 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
     cancelAnimation(levitationY);
-    levitationY.value = 0;
+    levitationY.value = withTiming(0, {
+      duration: STORY_OPENING.settleMs,
+      easing: Easing.out(Easing.cubic),
+    });
     setPhase('opening');
 
     bookExpansion.value = 0;
     pageFlipProgress.value = 0;
+    await new Promise(resolve => setTimeout(resolve, STORY_OPENING.settleMs));
 
     const dims = Dimensions.get('window');
     const needsRotation = dims.width <= dims.height;
 
     if (needsRotation && cardPosition) {
       rotationMaskOpacity.value = withTiming(1, {
-        duration: ROTATION_MASK_FADE_MS,
-        easing: Easing.out(Easing.quad)
+        duration: STORY_OPENING.veilInMs,
+        easing: Easing.out(Easing.quad),
       });
-      await new Promise(resolve => setTimeout(resolve, ROTATION_MASK_FADE_MS + 40));
+      transitionOpacity.value = withTiming(0, {
+        duration: STORY_OPENING.veilInMs,
+        easing: Easing.in(Easing.quad),
+      });
+      await new Promise(resolve => setTimeout(resolve, STORY_OPENING.veilInMs + 40));
 
       wasRotatedForTransition.current = true;
       try {
@@ -634,9 +648,10 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
       const landscapeMoveX = targetCenterX - cardCenterX;
       const landscapeMoveY = targetCenterY - cardCenterY;
 
+      // Seat the book a touch low and small behind the veil so it can rise into place
       transitionX.value = landscapeMoveX;
-      transitionY.value = landscapeMoveY;
-      transitionScale.value = targetScale;
+      transitionY.value = landscapeMoveY + STORY_OPENING.reenterLift;
+      transitionScale.value = targetScale * STORY_OPENING.reenterScale;
 
       // UPDATE opening transform ref with LANDSCAPE values
       // This is critical for exit animation to use the correct centering values
@@ -646,10 +661,14 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
       await new Promise(resolve => setTimeout(resolve, 50));
 
       rotationMaskOpacity.value = withTiming(0, {
-        duration: 250,
-        easing: Easing.in(Easing.quad)
+        duration: STORY_OPENING.veilOutMs,
+        easing: Easing.in(Easing.quad),
       });
-      await new Promise(resolve => setTimeout(resolve, 200));
+      const rise = { duration: STORY_OPENING.reenterMs, easing: Easing.out(Easing.cubic) };
+      transitionOpacity.value = withTiming(1, rise);
+      transitionY.value = withTiming(landscapeMoveY, rise);
+      transitionScale.value = withTiming(targetScale, rise);
+      await new Promise(resolve => setTimeout(resolve, STORY_OPENING.reenterMs));
     }
 
     openBookIntoReader();
@@ -665,6 +684,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     setTargetBookPosition(null);
     setShouldShowStoryReader(false);
     isOpeningRef.current = false;
+    readerReveal.value = 1;
 
     setTimeout(() => {
       transitionScale.value = 1;
@@ -1178,10 +1198,10 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
       // Hide the rotation snap behind the opaque mask, restore portrait, then
       // land the book in the detail hero and remount the detail sheet
       rotationMaskOpacity.value = withTiming(1, {
-        duration: ROTATION_MASK_FADE_MS,
+        duration: STORY_OPENING.veilInMs,
         easing: Easing.out(Easing.quad)
       });
-      await new Promise(resolve => setTimeout(resolve, ROTATION_MASK_FADE_MS + 40));
+      await new Promise(resolve => setTimeout(resolve, STORY_OPENING.veilInMs + 40));
 
       if (isCurrentLandscape && isPhone) {
         try {
@@ -1301,7 +1321,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
     const halfWidth = cardPosition.width / 2;
     // Rotate from 0 to -150 degrees around left edge (spine)
-    const rotation = interpolate(pageFlipProgress.value, [0, 1], [0, -150]);
+    const rotation = interpolate(pageFlipProgress.value, [0, 1], [0, -STORY_OPENING.coverLiftDegrees]);
 
     return {
       transform: [
@@ -1324,7 +1344,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
     if (!isActive) return { opacity: 1, borderRadius: compensatedBorderRadius };
 
-    const rotation = interpolate(pageFlipProgress.value, [0, 1], [0, -150]);
+    const rotation = interpolate(pageFlipProgress.value, [0, 1], [0, -STORY_OPENING.coverLiftDegrees]);
     const opacity = Math.abs(rotation) < 90 ? 1 : 0;
 
     return { opacity, borderRadius: compensatedBorderRadius };
@@ -1340,7 +1360,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
     if (!isActive) return { opacity: 0, borderRadius: compensatedBorderRadius };
 
-    const rotation = interpolate(pageFlipProgress.value, [0, 1], [0, -150]);
+    const rotation = interpolate(pageFlipProgress.value, [0, 1], [0, -STORY_OPENING.coverLiftDegrees]);
     const opacity = Math.abs(rotation) >= 90 ? 1 : 0;
     return { opacity, borderRadius: compensatedBorderRadius };
   });
@@ -1350,6 +1370,26 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   const firstPageAnimatedStyle = useAnimatedStyle(() => {
     return { borderRadius: currentCompensatedBorderRadius.value };
   });
+
+  // The first page sits in the cover's shadow until the cover has lifted clear
+  const pageShadeStyle = useAnimatedStyle(() => {
+    const isActive = isExitAnimatingShared.value === 1 || isExpandingOrExitingShared.value === 1;
+    if (!isActive) return { opacity: 0 };
+    return {
+      opacity: interpolate(pageFlipProgress.value, [0, 0.6, 1], [STORY_OPENING.pageShadeAtRest, 0.16, 0]),
+    };
+  });
+
+  // The cover's face turns away from the light as it opens
+  const coverShadeStyle = useAnimatedStyle(() => {
+    const isActive = isExitAnimatingShared.value === 1 || isExpandingOrExitingShared.value === 1;
+    if (!isActive) return { opacity: 0 };
+    return {
+      opacity: interpolate(pageFlipProgress.value, [0, 0.55], [0, STORY_OPENING.coverShadeWhenTurned], 'clamp'),
+    };
+  });
+
+  const readerRevealStyle = useAnimatedStyle(() => ({ opacity: readerReveal.value }));
 
   // Store original card position in shared values for exit animation (React state is async)
   const exitCardX = useSharedValue(0);
@@ -1585,6 +1625,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     selectedVoiceOver: currentVoiceOver,
     isExpandingToReader,
     shouldShowStoryReader,
+    readerRevealStyle,
     onBeginCallback,
     setOnBeginCallback,
     onReturnToModeSelectionCallback,
@@ -1725,6 +1766,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
               ]}
             >
               {renderPageImage()}
+              <Animated.View pointerEvents="none" style={[styles.pageShade, pageShadeStyle]} />
             </Animated.View>
 
             {/* Book cover -shows current preview page when user has swiped,
@@ -1749,6 +1791,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
                 coverFrontFaceStyle, // Always apply - style handles inactive case
               ]}>
                 {renderCoverImage()}
+                <Animated.View pointerEvents="none" style={[styles.coverShade, coverShadeStyle]} />
                 {/* Book spine shadow effect */}
                 <View style={styles.spineGradient} />
               </Animated.View>
@@ -1759,11 +1802,13 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
                   position: 'absolute',
                   width: '100%',
                   height: '100%',
-                  backgroundColor: '#FFFEF5',
+                  backgroundColor: '#F6EFE2',
                   opacity: 0, // Default: hidden until flip animation starts
                 },
                 coverBackFaceStyle, // Always apply - style handles inactive case
-              ]} />
+              ]}>
+                <View style={styles.coverBackSpine} />
+              </Animated.View>
             </Animated.View>
           </Animated.View>
 
@@ -2076,6 +2121,22 @@ const styles = StyleSheet.create({
     bottom: 0,
     width: 8,
     backgroundColor: 'rgba(0,0,0,0.15)',
+  },
+  pageShade: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#1A1230',
+  },
+  coverShade: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#000000',
+  },
+  coverBackSpine: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    bottom: 0,
+    width: 10,
+    backgroundColor: 'rgba(120, 96, 60, 0.18)',
   },
   // Modal styles
   modalOverlay: {

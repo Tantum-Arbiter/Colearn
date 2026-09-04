@@ -3,9 +3,10 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native
 import { StatusBar } from 'expo-status-bar';
 import { AppState, AppStateStatus, BackHandler, Dimensions, View, Platform, DevSettings, Alert, StyleSheet } from 'react-native';
 import * as ScreenOrientation from 'expo-screen-orientation';
+import * as SystemUI from 'expo-system-ui';
 
 import 'react-native-reanimated';
-import { configureReanimatedLogger, ReanimatedLogLevel } from 'react-native-reanimated';
+import Animated, { configureReanimatedLogger, ReanimatedLogLevel } from 'react-native-reanimated';
 import * as StoreReview from 'expo-store-review';
 // Initialize i18n service - must be imported before components that use translations
 import '@/services/i18n';
@@ -105,7 +106,16 @@ export default function RootLayout() {
 }
 
 // Main app content that can access the story transition context
+// The root view behind every React view. iOS shows it in the corners while the
+// screen turns, so it wears the night navy the story opening's veil uses --
+// otherwise the turn flashes navy-on-black.
+const ROOT_BACKGROUND = '#0A0F2C';
+
 function AppContent() {
+  useEffect(() => {
+    SystemUI.setBackgroundColorAsync(ROOT_BACKGROUND).catch(() => undefined);
+  }, []);
+
   // Access story transition context to know when to show story reader
   const {
     selectedStory: transitionStory,
@@ -115,7 +125,8 @@ function AppContent() {
     setOnReturnToModeSelectionCallback,
     setOnCancelCallback,
     gardenOpenRequest,
-    clearGardenOpen
+    clearGardenOpen,
+    readerRevealStyle,
   } = useStoryTransition();
 
   // Access activity transition context for learning game transitions
@@ -949,7 +960,7 @@ function AppContent() {
         {/* Story reader rendered on top - only loads AFTER mode selection is complete (not during transition) */}
         {/* zIndex 2000 ensures story reader stays above transition overlay (zIndex 1000) during exit animation */}
         {(showStoryReader && storyBeingRead) && (
-          <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 2000 }}>
+          <Animated.View style={[{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 2000 }, readerRevealStyle]}>
             <StoryBookReader
               story={storyBeingRead}
               initialMode={transitionMode}
@@ -958,7 +969,7 @@ function AppContent() {
               skipInitialFadeIn={true}
               onExit={handleBackToStories}
             />
-          </View>
+          </Animated.View>
         )}
 
         <StatusBar style="auto" />

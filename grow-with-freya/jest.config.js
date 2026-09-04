@@ -47,6 +47,7 @@ module.exports = {
     '^expo-file-system$': '<rootDir>/__mocks__/expo-file-system.js',
     '^expo-file-system/legacy$': '<rootDir>/__mocks__/expo-file-system.js',
     '^expo-image$': '<rootDir>/__mocks__/expo-image.js',
+    '^expo-system-ui$': '<rootDir>/__mocks__/expo-system-ui.js',
     '^@react-native-community/slider$': '<rootDir>/__mocks__/@react-native-community/slider.js',
     '^@/services/device-info-service$': '<rootDir>/__mocks__/device-info-service.js',
   },
