@@ -34,7 +34,7 @@ import { BookFrame } from './book-frame';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
-const TITLE_WASH_GRADIENT = ['rgba(4, 16, 47, 0.6)', 'rgba(4, 16, 47, 0.0)'] as const;
+const TITLE_WASH_GRADIENT = ['rgba(4, 16, 47, 0.62)', 'rgba(4, 16, 47, 0.0)'] as const;
 
 const RING_SIZE = 48;
 const RING_STROKE = 3.5;
@@ -177,8 +177,8 @@ export function StoryCoverCard({
 
         <LinearGradient
           colors={TITLE_WASH_GRADIENT}
-          start={{ x: 0.5, y: 0 }}
-          end={{ x: 0.5, y: 1 }}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
           style={styles.titleWash}
           pointerEvents="none"
         />
@@ -299,23 +299,22 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     left: 0,
-    right: 0,
-    height: '45%',
+    bottom: 0,
+    width: '70%',
   },
   title: {
     position: 'absolute',
     top: SPACE_3,
-    left: SPACE_2,
-    right: SPACE_2,
+    left: SPACE_3,
+    right: '32%',
     color: TEXT_PRIMARY,
     fontFamily: Fonts.primary,
     fontWeight: TYPE_ROLES.cardTitle.weight,
-    textAlign: 'center',
   },
   playButton: {
     position: 'absolute',
-    bottom: SPACE_3,
-    alignSelf: 'center',
+    bottom: SPACE_2,
+    right: SPACE_2,
   },
   darkOverlay: {
     ...StyleSheet.absoluteFillObject,

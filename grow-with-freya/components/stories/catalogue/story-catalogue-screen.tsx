@@ -67,7 +67,8 @@ const FILTER_TAG_SET: StoryFilterTag[] = [
   'nature', 'fantasy', 'counting', 'emotions', 'silly', 'rhymes',
 ];
 
-const COVER_COLUMNS = 3;
+// Landscape books: two to a row on a phone, three on a tablet
+const coverColumns = (isTablet: boolean) => (isTablet ? 3 : 2);
 const FEATURED_MAX_WIDTH = 560;
 const LIBRARY_RECENT_LIMIT = 6;
 
@@ -404,7 +405,8 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode }: StoryCatalo
 
   const contentWidth = windowWidth - margin * 2;
   const gridAreaWidth = isLandscapeTablet ? (contentWidth - SPACE_5) * 0.55 : contentWidth;
-  const coverWidth = Math.floor((gridAreaWidth - COVER_GRID_GAP * (COVER_COLUMNS - 1)) / COVER_COLUMNS);
+  const columns = coverColumns(isTablet);
+  const coverWidth = Math.floor((gridAreaWidth - COVER_GRID_GAP * (columns - 1)) / columns);
   // The featured book's width on the shelf: its own column on a landscape
   // tablet, capped on a portrait one, the full content width on a phone
   const featuredWidth = isLandscapeTablet
