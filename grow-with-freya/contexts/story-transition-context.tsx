@@ -26,19 +26,20 @@ import { voiceRecordingService, VoiceOver } from '@/services/voice-recording-ser
 import { useParentsOnlyChallenge } from '@/hooks/use-parents-only-challenge';
 import { ParentsOnlyModal } from '@/components/ui/parents-only-modal';
 import { StoryPreviewModal } from '@/components/stories/story-preview-modal';
-import { StoryDetailOverlay } from '@/components/stories/story-detail-overlay';
+import { StoryCardSheet } from '@/components/stories/story-card-sheet';
+import { cardCoverTransform, storyCardLayout } from '@/constants/story-card';
 import { RotatePromptOverlay } from '@/components/stories/rotate-prompt-overlay';
 import { TutorialOverlay } from '@/components/tutorial/tutorial-overlay';
 import { useTutorial } from '@/contexts/tutorial-context';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppStore } from '@/store/app-store';
-import { STORY_DETAIL_OPENING, STORY_OPENING, needsGuidedTurn, openingSeat, placementIsStale, seatTransform } from '@/constants/story-opening';
+import { STORY_DETAIL_OPENING, STORY_OPENING, heroFadeDelay, needsGuidedTurn, openingSeat, placementIsStale, seatTransform } from '@/constants/story-opening';
 import { allowTurnForPrompt, applyDefaultOrientation } from '@/hooks/use-story-orientation';
 
 // Animation timing constants
-const HERO_HEIGHT_RATIO = 0.44; // Portion of the screen the detail hero occupies
 const PROMPT_GLIDE_DURATION = 450; // Glide from hero into the rotate-prompt book position
+const CARD_GROUND_OPACITY = 0.9; // The shelf stays faintly visible behind the story card
 const LANDSCAPE_DIMENSIONS_TIMEOUT_MS = 800; // Fallback if the dimension-change event never fires
 
 export type ReadingMode = 'read' | 'record' | 'narrate';
@@ -89,7 +90,7 @@ interface StoryTransitionContextType {
   cardPosition: { x: number; y: number; width: number; height: number } | null;
 
   // Animation functions
-  startTransition: (storyId: string, cardLayout: { x: number; y: number; width: number; height: number }, story?: Story) => void;
+  startTransition: (storyId: string, cardLayout: { x: number; y: number; width: number; height: number }, story?: Story, shelf?: Story[]) => void;
   cancelTransition: () => void;
   completeTransition: () => void;
   startExitAnimation: (onComplete: () => void, currentPageIndex?: number) => Promise<void>;
@@ -134,6 +135,12 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   const [cardPosition, setCardPosition] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
   const cardPositionRef = useRef(cardPosition);
   cardPositionRef.current = cardPosition;
+  // The books the story card can swipe between, in shelf order, and where the
+  // child is along it. The tapped one is remembered so cancelling knows whether
+  // the flying book still matches the tile it would fly back to.
+  const [shelf, setShelf] = useState<Story[]>([]);
+  const [shelfIndex, setShelfIndex] = useState(0);
+  const tappedStoryIdRef = useRef<string | null>(null);
   const [originalCardPosition, setOriginalCardPosition] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
   const [targetBookPosition, setTargetBookPosition] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
   const [shouldShowStoryReader, setShouldShowStoryReader] = useState(false);
@@ -337,33 +344,13 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   };
 
   // Compute the transform that lands the card in the detail-view hero area
+  // The book flies onto the story card's cover -- centred on it and fitted
+  // inside it, so a tile of any shape lands within the card
   const computeHeroTransform = (
     cardLayout: { x: number; y: number; width: number; height: number },
     width: number,
     height: number
-  ) => {
-    const heroHeight = height * HERO_HEIGHT_RATIO;
-    const targetScale = (heroHeight * 0.82) / cardLayout.height;
-    const targetCenterX = width / 2;
-    const targetCenterY = heroHeight * 0.52;
-    const currentCenterX = cardLayout.x + cardLayout.width / 2;
-    const currentCenterY = cardLayout.y + cardLayout.height / 2;
-    const moveX = targetCenterX - currentCenterX;
-    const moveY = targetCenterY - currentCenterY;
-    const scaledWidth = cardLayout.width * targetScale;
-    const scaledHeight = cardLayout.height * targetScale;
-    return {
-      moveX,
-      moveY,
-      scale: targetScale,
-      rect: {
-        x: targetCenterX - scaledWidth / 2,
-        y: targetCenterY - scaledHeight / 2,
-        width: scaledWidth,
-        height: scaledHeight,
-      },
-    };
-  };
+  ) => cardCoverTransform(storyCardLayout({ width, height }, isTablet), cardLayout);
 
   // Compute the transform that centers the card on the rotate-prompt screen
   // The prompt parks the book in the very seat the opening uses -- the exact
@@ -393,17 +380,28 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     transitionY.value = withTiming(hero.moveY, lift);
     transitionScale.value = withTiming(hero.scale, lift);
 
-    // The plain navy ground fades in beneath the rising book, dimming the
-    // catalogue as it comes
-    overlayOpacity.value = withTiming(1, { duration: STORY_DETAIL_OPENING.groundFadeMs, easing: Easing.out(Easing.quad) });
+    // The navy ground fades in beneath the rising book, leaving the shelf
+    // faintly visible behind the card
+    overlayOpacity.value = withTiming(CARD_GROUND_OPACITY, { duration: STORY_DETAIL_OPENING.groundFadeMs, easing: Easing.out(Easing.quad) });
 
-    // The sheet mounts while the book is still in flight and rises to meet it
+    // The card mounts while the book is still in flight and rises to meet it
     setTimeout(() => {
       setPhase('detail');
     }, STORY_DETAIL_OPENING.sheetMountAt);
+    hideBookOnceCardCoversIt(STORY_DETAIL_OPENING.sheetMountAt);
   };
 
-  const startTransition = async (storyId: string, cardLayout: { x: number; y: number; width: number; height: number }, story?: Story) => {
+  // Once the card's cover has faded in over the landed book, the book itself
+  // is hidden so that swiping to another card does not reveal it underneath
+  const hideBookOnceCardCoversIt = (cardMountsAt: number) => {
+    setTimeout(() => {
+      if (phaseRef.current === 'detail') {
+        transitionOpacity.value = 0;
+      }
+    }, cardMountsAt + heroFadeDelay() + STORY_DETAIL_OPENING.heroFadeMs + 40);
+  };
+
+  const startTransition = async (storyId: string, cardLayout: { x: number; y: number; width: number; height: number }, story?: Story, shelfStories?: Story[]) => {
     // Reset ALL animation values from any previous transition FIRST
     pageFlipProgress.value = 0;
     bookExpansion.value = 0;
@@ -423,6 +421,10 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
     setSelectedStoryId(storyId);
     setSelectedStory(story || null);
+    tappedStoryIdRef.current = storyId;
+    const onShelf = story && shelfStories?.some((candidate) => candidate.id === storyId) ? shelfStories : story ? [story] : [];
+    setShelf(onShelf);
+    setShelfIndex(Math.max(0, onShelf.findIndex((candidate) => candidate.id === storyId)));
     setCardPosition(cardLayout);
     setOriginalCardPosition(cardLayout); // Save original position for exit animation
 
@@ -450,34 +452,26 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     }
   };
 
-  // Mode chip tapped on the detail view -record/narrate need a voice over first
-  const handleSelectMode = (mode: ReadingMode) => {
+  // A way to read chosen on the story card: the book opens from right there,
+  // via the rotate prompt on a phone held upright
+  const openWithMode = (mode: ReadingMode) => {
     setSelectedMode(mode);
-    if (mode === 'read') {
-      setCurrentVoiceOver(null);
-    } else if (mode === 'record') {
-      setShowVoiceOverSelectModal(false);
-      setShowVoiceOverNameModal(true);
-    } else if (mode === 'narrate') {
-      setShowVoiceOverNameModal(false);
-      setShowVoiceOverSelectModal(true);
-    }
-  };
-
-  // "Read now" tapped on the detail view -move to the rotate prompt (or open
-  // directly when the interface is already landscape, e.g. tablets)
-  const goToRotatePrompt = () => {
-    if (selectedMode === 'record' && !currentVoiceOver) {
+    if (mode === 'record' && !currentVoiceOver) {
       setShowVoiceOverNameModal(true);
       return;
     }
-    if (selectedMode === 'narrate' && !currentVoiceOver) {
+    if (mode === 'narrate' && !currentVoiceOver) {
       setShowVoiceOverSelectModal(true);
       return;
     }
     if (!cardPosition) return;
 
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    // The card fades away and the book it was showing is there beneath it,
+    // on the cover, ready to be carried onwards; the shelf behind goes dark
+    transitionOpacity.value = 1;
+    overlayOpacity.value = withTiming(1, { duration: 300, easing: Easing.out(Easing.quad) });
 
     // Tablets are never asked to turn -- they are unlocked, so the book just opens
     const dims = Dimensions.get('window');
@@ -517,9 +511,13 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   };
 
   // Back tapped on the rotate prompt -return the book to the detail hero
+  const goToRotatePrompt = () => openWithMode(selectedMode);
+
   const returnToDetailFromPrompt = () => {
     if (isOpeningRef.current) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    overlayOpacity.value = withTiming(CARD_GROUND_OPACITY, { duration: 350, easing: Easing.out(Easing.quad) });
+    hideBookOnceCardCoversIt(380);
 
     // The child changed their mind, so take the freedom to turn back away
     applyDefaultOrientation().catch((error) => log.warn('Failed to restore orientation:', error));
@@ -757,7 +755,12 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     // Block touches during the entire cancel animation
     setIsCancelAnimating(true);
 
-    // Step 1: Unmount the detail sheet to trigger its exit animations
+    // The book beneath the card flies back to its tile only if the child is
+    // still on the book they tapped; a book they swiped to has no tile to
+    // return to, so the card simply fades and the ground with it
+    transitionOpacity.value = selectedStoryId === tappedStoryIdRef.current ? 1 : 0;
+
+    // Step 1: Unmount the story card to trigger its exit animations
     setPhase('flying');
 
     // Step 2: Wait for the exit animations to complete
@@ -1732,7 +1735,6 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     opacity: rotationMaskOpacity.value,
   }));
 
-  const heroHeight = screenHeight * HERO_HEIGHT_RATIO;
   const isFavorite = selectedStoryId ? favoriteStoryIds.includes(selectedStoryId) : false;
 
   return (
@@ -1824,16 +1826,20 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
             </Animated.View>
           </Animated.View>
 
-          {/* Screen 6 -story detail sheet (covers the card with hero art + info) */}
+          {/* Screen 6 -the story card, with the shelf to swipe along */}
           {phase === 'detail' && selectedStory && (
             <View style={styles.detailLayer} pointerEvents="box-none">
-              <StoryDetailOverlay
-                story={selectedStory}
-                heroHeight={heroHeight}
+              <StoryCardSheet
+                stories={shelf.length > 0 ? shelf : [selectedStory]}
+                initialIndex={shelfIndex}
+                layout={storyCardLayout({ width: screenWidth, height: screenHeight }, isTablet)}
                 isFavorite={isFavorite}
-                selectedMode={selectedMode}
-                onSelectMode={handleSelectMode}
-                onReadNow={goToRotatePrompt}
+                onStoryChange={(story, index) => {
+                  setSelectedStory(story);
+                  setSelectedStoryId(story.id);
+                  setShelfIndex(index);
+                }}
+                onChooseMode={openWithMode}
                 onPreview={() => setShowPreviewModal(true)}
                 onClose={cancelTransition}
                 onToggleFavorite={() => {

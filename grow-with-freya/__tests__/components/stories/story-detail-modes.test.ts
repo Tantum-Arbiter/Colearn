@@ -6,7 +6,7 @@
  * child is never told they are about to play when they are about to record.
  */
 
-import { MODE_OPTIONS } from '@/components/stories/story-detail-overlay';
+import { MODE_OPTIONS } from '@/components/stories/story-card-sheet';
 import en from '@/locales/en';
 
 function optionFor(mode: string) {

@@ -1,0 +1,83 @@
+import { STORY_CARD, cardCoverTransform, cardIndexAtOffset, storyCardLayout } from '@/constants/story-card';
+
+const PHONE = { width: 402, height: 874 };
+const TABLET = { width: 1194, height: 834 };
+
+describe('storyCardLayout', () => {
+  it('should sit centred with a side margin on a phone', () => {
+    const underTest = storyCardLayout(PHONE, false);
+
+    expect(underTest.width).toBe(PHONE.width - STORY_CARD.sideInset * 2);
+    expect(underTest.x + underTest.width / 2).toBeCloseTo(PHONE.width / 2, 0);
+  });
+
+  it('should be a card on a tablet, not a page', () => {
+    const underTest = storyCardLayout(TABLET, true);
+
+    expect(underTest.width).toBe(STORY_CARD.maxWidth);
+    expect(underTest.x + underTest.width / 2).toBeCloseTo(TABLET.width / 2, 0);
+  });
+
+  it('should give the cover the proportions of a picture book spread', () => {
+    const underTest = storyCardLayout(PHONE, false);
+
+    expect(underTest.coverHeight / underTest.width).toBeCloseTo(STORY_CARD.coverAspect, 2);
+  });
+
+  it('should advance the carousel by one card and its gap', () => {
+    const underTest = storyCardLayout(PHONE, false);
+
+    expect(underTest.step).toBe(underTest.width + STORY_CARD.gap);
+    expect(underTest.edgePadding).toBe(underTest.x);
+  });
+});
+
+describe('cardCoverTransform', () => {
+  const layout = storyCardLayout(PHONE, false);
+  const LANDSCAPE_TILE = { x: 16, y: 300, width: 370, height: 210 };
+  const PORTRAIT_TILE = { x: 16, y: 600, width: 110, height: 170 };
+
+  it.each([
+    ['a wide featured tile', LANDSCAPE_TILE],
+    ['a tall shelf tile', PORTRAIT_TILE],
+  ])('should land %s centred on the cover', (_case, tile) => {
+    const underTest = cardCoverTransform(layout, tile);
+
+    expect(tile.x + tile.width / 2 + underTest.moveX).toBeCloseTo(layout.x + layout.width / 2, 5);
+    expect(tile.y + tile.height / 2 + underTest.moveY).toBeCloseTo(layout.y + layout.coverHeight / 2, 5);
+  });
+
+  it.each([
+    ['a wide featured tile', LANDSCAPE_TILE],
+    ['a tall shelf tile', PORTRAIT_TILE],
+  ])('should keep %s inside the cover so nothing spills over the card', (_case, tile) => {
+    const underTest = cardCoverTransform(layout, tile).rect;
+
+    expect(underTest.x).toBeGreaterThanOrEqual(layout.x - 0.01);
+    expect(underTest.x + underTest.width).toBeLessThanOrEqual(layout.x + layout.width + 0.01);
+    expect(underTest.y).toBeGreaterThanOrEqual(layout.y - 0.01);
+    expect(underTest.y + underTest.height).toBeLessThanOrEqual(layout.y + layout.coverHeight + 0.01);
+  });
+
+  it('should fill the cover along the limiting side', () => {
+    const underTest = cardCoverTransform(layout, LANDSCAPE_TILE).rect;
+
+    const fillsWidth = Math.abs(underTest.width - layout.width) < 0.01;
+    const fillsHeight = Math.abs(underTest.height - layout.coverHeight) < 0.01;
+    expect(fillsWidth || fillsHeight).toBe(true);
+  });
+});
+
+describe('cardIndexAtOffset', () => {
+  it('should round to the nearest card', () => {
+    expect(cardIndexAtOffset(0, 372, 5)).toBe(0);
+    expect(cardIndexAtOffset(372 * 2 + 100, 372, 5)).toBe(2);
+    expect(cardIndexAtOffset(372 * 2 + 200, 372, 5)).toBe(3);
+  });
+
+  it('should never point past either end of the shelf', () => {
+    expect(cardIndexAtOffset(-500, 372, 5)).toBe(0);
+    expect(cardIndexAtOffset(372 * 40, 372, 5)).toBe(4);
+    expect(cardIndexAtOffset(300, 372, 0)).toBe(0);
+  });
+});

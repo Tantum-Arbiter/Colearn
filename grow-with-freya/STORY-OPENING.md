@@ -28,23 +28,26 @@ Every step hands the book to the next one. Nothing appears or vanishes in a sing
 
 Total: about 1.6s on a tablet, about 2.6s on a phone including the turn.
 
-## Tile to detail
+## Tile to card
 
-Tapping a tile used to be three things in a row: the book glided to the hero over a second,
-a navy curtain dropped over a catalogue that stayed bright beneath it, and then the detail
-sheet mounted with an opaque ground -- blacking the screen out for a frame before fading its
-own hero back in. Filmed, the hero went from 162 to 39 brightness in one frame.
-
-It is now one motion (`STORY_DETAIL_OPENING`):
+Tapping a tile no longer opens a full page. A compact story card floats over the dimmed
+shelf -- the cover on top, the ways to read beneath -- and the child can swipe along the shelf
+without leaving it. Choosing a way to read opens the book from right there.
 
 | From | What happens |
 |---|---|
-| 0ms | The book lifts out of the catalogue and decelerates into the hero (620ms). A plain navy ground fades in beneath it (420ms), dimming the catalogue as it comes. There is no background art and nothing slides. |
-| 300ms | The sheet mounts while the book is still in flight and rises to meet it (420ms); title, chips, description and buttons follow in turn (60ms apart, 320ms each). |
-| 620ms | The book lands. The sheet's own hero fades in over it (220ms) -- the same art in the same place, so all that visibly arrives is the soft gradient beneath the title. |
+| 0ms | The book lifts out of the shelf and decelerates onto the card's cover (620ms), fitted inside it whatever shape the tile was. A navy ground fades in beneath (420ms), leaving the shelf faintly visible. |
+| 300ms | The card rises around the book while it is still in flight; title, meta, chips and buttons follow in turn. |
+| 620ms | The book lands. The card's own cover fades in over it (220ms) and the flying book is then hidden, so swiping to a neighbour reveals nothing beneath. |
 
-Everything has settled by about 900ms. The sheet's own ground is transparent: the navy is
-already beneath it, so mounting it changes nothing on screen.
+The card (`constants/story-card.ts`) is the screen width less a margin on a phone and capped
+at 520pt on a tablet, so a tablet gets a card too rather than a page. The carousel snaps one
+card at a time with the neighbours peeking in; settling on another book makes it the selected
+story. Choosing a way to read -- Read Together, Play Along, Record -- puts the flying book
+back on the cover, fades the card away and carries the book onwards: to the rotate prompt on a
+phone held upright, straight into the opening otherwise. Closing the card flies the book back
+to its tile if it is still the book that was tapped; a swiped-to book has no tile, so the card
+simply fades.
 
 ## Orientation, by device
 

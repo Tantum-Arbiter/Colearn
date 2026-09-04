@@ -239,10 +239,19 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode }: StoryCatalo
     setSelectedTags(tag ? new Set([tag]) : new Set());
   }, []);
 
+  // Every book the child could open from here, in shelf order, so the story
+  // card can carry them as a carousel to swipe between
+  const openableStories = useMemo(
+    () => catalogueStories
+      .map((entry) => (entry.source.kind === 'downloaded' ? entry.source.story : null))
+      .filter((story): story is Story => !!story && story.isAvailable),
+    [catalogueStories],
+  );
+
   const openDownloadedStory = useCallback((story: Story, position: { x: number; y: number; width: number; height: number }) => {
-    startTransition(story.id, position, story);
+    startTransition(story.id, position, story, openableStories);
     onStorySelect?.(story);
-  }, [startTransition, onStorySelect]);
+  }, [startTransition, onStorySelect, openableStories]);
 
   const handleOpenStory = useCallback((catalogueStory: CatalogueStory, ref: React.RefObject<View | null>) => {
     if (catalogueStory.source.kind !== 'downloaded') return;
