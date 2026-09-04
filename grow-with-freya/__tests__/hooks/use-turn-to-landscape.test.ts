@@ -8,7 +8,7 @@
  * portrait-locked (a phone).
  *
  * Key behaviors tested:
- * 1. Opens straight away when the screen is already sideways
+ * 1. Opens when the screen is already sideways, once the turn has landed
  * 2. Opens when the screen turns sideways, even with no usable accelerometer
  * 3. Fires onTurned after enough consecutive landscape-gravity samples
  * 4. Portrait samples never fire, and they reset a broken streak
@@ -20,7 +20,7 @@
 import { Dimensions } from 'react-native';
 import { renderHook, act } from '@testing-library/react-native';
 import { Accelerometer } from 'expo-sensors';
-import { useTurnToLandscape, TURN_SAMPLES_REQUIRED, TURN_SETTLE_MS } from '@/hooks/use-turn-to-landscape';
+import { useTurnToLandscape, waitForWindowToSettle, TURN_SAMPLES_REQUIRED, TURN_SETTLE_MS } from '@/hooks/use-turn-to-landscape';
 
 const PORTRAIT_SCREEN = { width: 834, height: 1194, scale: 2, fontScale: 1 };
 const LANDSCAPE_SCREEN = { width: 1194, height: 834, scale: 2, fontScale: 1 };
@@ -88,12 +88,49 @@ describe('useTurnToLandscape', () => {
   });
 
   describe('when the screen is already sideways', () => {
-    it('should open the book without asking anyone to turn anything', () => {
+    it('should open the book without asking anyone to turn anything, once the turn has landed', () => {
+      // The defect this pins: a phone turned while the book was still being
+      // drawn reached the prompt with the screen already sideways, and this
+      // path opened the book at once -- on top of the system's own rotation,
+      // which was still animating the interface round.
       screenIs(LANDSCAPE_SCREEN);
 
       renderHook(() => useTurnToLandscape({ enabled: true, onTurned }));
 
+      expect(onTurned).not.toHaveBeenCalled();
+
+      settle();
+
       expect(onTurned).toHaveBeenCalledTimes(1);
+    });
+
+    it('should keep waiting while a sideways screen is still changing size', () => {
+      screenIs({ ...LANDSCAPE_SCREEN, width: 900 });
+      renderHook(() => useTurnToLandscape({ enabled: true, onTurned }));
+
+      act(() => {
+        jest.advanceTimersByTime(TURN_SETTLE_MS - 1);
+      });
+      screenIs(LANDSCAPE_SCREEN);
+      act(() => {
+        jest.advanceTimersByTime(1);
+      });
+
+      expect(onTurned).not.toHaveBeenCalled();
+
+      settle();
+
+      expect(onTurned).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not open a book whose prompt was taken down while the turn was landing', () => {
+      screenIs(LANDSCAPE_SCREEN);
+      const { unmount } = renderHook(() => useTurnToLandscape({ enabled: true, onTurned }));
+
+      unmount();
+      settle();
+
+      expect(onTurned).not.toHaveBeenCalled();
     });
 
     it('should stay put until it is switched on', () => {
@@ -301,5 +338,61 @@ describe('useTurnToLandscape', () => {
     settle();
 
     expect(onTurned).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('waitForWindowToSettle', () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+    jest.spyOn(Dimensions, 'get').mockReturnValue(LANDSCAPE_SCREEN);
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+    jest.restoreAllMocks();
+  });
+
+  it('should resolve once the window has held one size for the settle time', async () => {
+    let settled = false;
+    const underTest = waitForWindowToSettle().then(() => {
+      settled = true;
+    });
+
+    act(() => {
+      jest.advanceTimersByTime(TURN_SETTLE_MS - 1);
+    });
+    await Promise.resolve();
+    expect(settled).toBe(false);
+
+    act(() => {
+      jest.advanceTimersByTime(1);
+    });
+    await underTest;
+
+    expect(settled).toBe(true);
+  });
+
+  it('should start the wait again whenever the window changes size', async () => {
+    let settled = false;
+    const underTest = waitForWindowToSettle().then(() => {
+      settled = true;
+    });
+
+    act(() => {
+      jest.advanceTimersByTime(TURN_SETTLE_MS - 1);
+    });
+    jest.spyOn(Dimensions, 'get').mockReturnValue({ ...LANDSCAPE_SCREEN, width: 1000 });
+    act(() => {
+      jest.advanceTimersByTime(1);
+    });
+    await Promise.resolve();
+    expect(settled).toBe(false);
+
+    act(() => {
+      jest.advanceTimersByTime(TURN_SETTLE_MS);
+    });
+    await underTest;
+
+    expect(settled).toBe(true);
   });
 });

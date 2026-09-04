@@ -8,7 +8,7 @@
  * book re-entering afterwards rather than jumping.
  */
 
-import { STORY_DETAIL_OPENING, STORY_OPENING, needsGuidedTurn, openingSeat, placementIsStale, seatTransform, storyOpeningTimeline, type OpeningStepName } from '@/constants/story-opening';
+import { STORY_DETAIL_OPENING, STORY_OPENING, STORY_SKETCH, bookOutlinePath, needsGuidedTurn, openingSeat, placementIsStale, seatTransform, coverFaceOpacity, openBookGrowScale, sketchDashOffset, storyOpeningTimeline, storySketchTimeline, type OpeningStepName } from '@/constants/story-opening';
 
 function names(needsRotation: boolean): OpeningStepName[] {
   return storyOpeningTimeline(needsRotation).steps.map((step) => step.name);
@@ -110,14 +110,30 @@ describe('openingSeat', () => {
   });
 });
 
-describe('the cover dissolving as it swings clear', () => {
-  it('should start fading only once the cover has swung past the spine', () => {
-    const rightAngle = 90 / STORY_OPENING.coverLiftDegrees;
+describe('coverFaceOpacity', () => {
+  const PAST_THE_SPINE = 90 / STORY_OPENING.coverLiftDegrees + 0.01;
 
-    const underTest = STORY_OPENING.coverFadeFrom;
+  it('should show the printed face while the cover still faces the child', () => {
+    const underTest = coverFaceOpacity(0.2);
 
-    expect(underTest).toBeGreaterThanOrEqual(rightAngle);
-    expect(underTest).toBeLessThan(1);
+    expect(underTest.front).toBe(1);
+    expect(underTest.back).toBe(0);
+  });
+
+  it('should turn to the back of the cover once it has swung past the spine', () => {
+    const underTest = coverFaceOpacity(PAST_THE_SPINE);
+
+    expect(underTest.front).toBe(0);
+    expect(underTest.back).toBe(1);
+  });
+
+  it('should hold the opened cover rather than dissolving it away', () => {
+    // It used to fade out over the last 40% of the lift, so the cover had gone
+    // by the time the book grew to fill the screen. It stays now: the book
+    // holds open and zooms in with its cover still on it.
+    const underTest = coverFaceOpacity(1);
+
+    expect(underTest.back).toBe(1);
   });
 });
 
@@ -231,5 +247,198 @@ describe('tile to card', () => {
     const underTest = Math.max(sheetRiseMs, 2 * staggerMs + contentMs);
 
     expect(underTest).toBeLessThan(700);
+  });
+});
+
+describe('storySketchTimeline', () => {
+  const underTest = storySketchTimeline();
+
+  it('should hold off until the card is out of view, so the pen starts on a clear screen', () => {
+    expect(underTest.draw.at).toBe(STORY_DETAIL_OPENING.sheetSinkMs + STORY_SKETCH.afterCardMs);
+  });
+
+  it('should leave a real beat between the card leaving and the first mark', () => {
+    expect(STORY_SKETCH.afterCardMs).toBeGreaterThanOrEqual(250);
+  });
+
+  it('should show the cover only once the whole outline has been drawn', () => {
+    expect(underTest.cover.at).toBe(underTest.draw.ends);
+  });
+
+  it('should fade the drawn line only after the cover has begun to appear', () => {
+    expect(underTest.strokeOut.at).toBeGreaterThan(underTest.cover.at);
+    expect(underTest.strokeOut.at).toBeLessThan(underTest.cover.ends);
+  });
+
+  it('should give the outline long enough to read as a line being drawn', () => {
+    expect(underTest.draw.over).toBeGreaterThanOrEqual(400);
+  });
+
+  it('should still be brief enough that the book is never kept waiting', () => {
+    expect(underTest.total).toBe(Math.max(underTest.cover.ends, underTest.strokeOut.ends));
+    expect(underTest.total).toBeLessThanOrEqual(1600);
+  });
+});
+
+describe('bookOutlinePath', () => {
+  const RECT = { x: 100, y: 200, width: 300, height: 180 };
+  const RADIUS = 15;
+  const SPINE = 20;
+
+  it('should draw the spine first, upwards, so the pen starts on an empty screen', () => {
+    const underTest = bookOutlinePath(RECT, RADIUS, SPINE);
+
+    expect(underTest.d.startsWith(`M ${RECT.x + SPINE} ${RECT.y + RECT.height} L ${RECT.x + SPINE} ${RECT.y}`)).toBe(true);
+  });
+
+  it('should close the loop where the spine began, so the pen never doubles back', () => {
+    const underTest = bookOutlinePath(RECT, RADIUS, SPINE);
+
+    expect(underTest.d.endsWith(`L ${RECT.x + SPINE} ${RECT.y}`)).toBe(true);
+  });
+
+  it('should measure the cover all the way round plus the spine down it', () => {
+    const underTest = bookOutlinePath(RECT, RADIUS, SPINE);
+
+    const straights = 2 * (RECT.width - 2 * RADIUS) + 2 * (RECT.height - 2 * RADIUS);
+    const corners = 2 * Math.PI * RADIUS;
+    expect(underTest.length).toBeCloseTo(straights + corners + RECT.height, 5);
+  });
+
+  it('should round every corner of the cover', () => {
+    const underTest = bookOutlinePath(RECT, RADIUS, SPINE);
+
+    expect(underTest.d.match(/A /g)?.length).toBe(4);
+  });
+
+  it('should keep a narrow spine clear of the corner, where the top edge is not yet straight', () => {
+    const underTest = bookOutlinePath(RECT, RADIUS, 6);
+
+    expect(underTest.d.startsWith(`M ${RECT.x + RADIUS} ${RECT.y + RECT.height}`)).toBe(true);
+  });
+
+  it('should never ask for a corner rounder than the book is tall', () => {
+    const underTest = bookOutlinePath({ x: 0, y: 0, width: 100, height: 20 }, RADIUS, SPINE);
+
+    expect(underTest.d).toContain('A 10 10');
+    expect(underTest.length).toBeCloseTo(2 * 80 + 2 * Math.PI * 10 + 20, 5);
+  });
+});
+
+describe('the sketch, in relation to the card', () => {
+  it('should give the card a sink the sketch can time itself against', () => {
+    expect(STORY_DETAIL_OPENING.sheetSinkMs).toBeGreaterThan(0);
+  });
+
+  it('should draw the outline in a visible line', () => {
+    expect(STORY_SKETCH.strokeWidth).toBeGreaterThanOrEqual(2);
+  });
+});
+
+describe('sketchDashOffset', () => {
+  const LENGTH = 400;
+
+  it('should hide the whole line before the drawing starts', () => {
+    const underTest = sketchDashOffset(LENGTH, 0);
+
+    expect(underTest).toBe(LENGTH);
+  });
+
+  it('should show the whole line once the drawing is done', () => {
+    const underTest = sketchDashOffset(LENGTH, 1);
+
+    expect(underTest).toBe(0);
+  });
+
+  it('should uncover the line evenly as the drawing runs', () => {
+    const underTest = sketchDashOffset(LENGTH, 0.25);
+
+    expect(underTest).toBe(300);
+  });
+});
+
+
+describe('SKETCH_DRAW_CURVE', () => {
+  function easing([x1, y1, x2, y2]: readonly [number, number, number, number]) {
+    const axis = (t: number, a: number, b: number) =>
+      3 * (1 - t) ** 2 * t * a + 3 * (1 - t) * t * t * b + t ** 3;
+
+    return (x: number) => {
+      let lo = 0;
+      let hi = 1;
+      for (let i = 0; i < 50; i += 1) {
+        const mid = (lo + hi) / 2;
+        if (axis(mid, x1, x2) < x) lo = mid;
+        else hi = mid;
+      }
+      return axis((lo + hi) / 2, y1, y2);
+    };
+  }
+
+  const FRAMES = 29;
+  const ease = easing(STORY_SKETCH.drawCurve);
+  const steps = Array.from({ length: FRAMES }, (_, i) => ease((i + 1) / FRAMES) - ease(i / FRAMES));
+  const mean = steps.reduce((sum, step) => sum + step, 0) / steps.length;
+
+  it('should never lurch: no frame lays down much more line than the frames around it', () => {
+    // The defect this pins: an in-out cubic peaks at nearly three times the
+    // average pace, and over a draw this short a single frame put down 39% of
+    // the whole outline. The line crawled, leapt, and glided to a halt.
+    const underTest = Math.max(...steps) / mean;
+
+    expect(underTest).toBeLessThan(1.35);
+  });
+
+  it('should never stall or reverse', () => {
+    const underTest = Math.min(...steps) / mean;
+
+    expect(underTest).toBeGreaterThan(0.25);
+  });
+
+  it('should start promptly, the way a pen does rather than creeping into motion', () => {
+    const underTest = steps[0] / mean;
+
+    expect(underTest).toBeGreaterThan(0.45);
+  });
+
+  it('should settle rather than stop dead', () => {
+    const underTest = steps[steps.length - 1] / mean;
+
+    expect(underTest).toBeLessThan(0.6);
+  });
+});
+
+
+describe('openBookGrowScale', () => {
+  const TABLET = { width: 834, height: 1210 };
+  const PHONE_LANDSCAPE = { width: 874, height: 402 };
+  const BOOK = { width: 384, height: 250 };
+
+  it('should carry the book out to the sides of the screen', () => {
+    const underTest = openBookGrowScale(TABLET, BOOK);
+
+    expect(BOOK.width * underTest).toBeCloseTo(TABLET.width, 5);
+  });
+
+  it('should never push the spread out of view, whatever the screen shape', () => {
+    // The defect this pins: the grow took the larger of the two ratios, which
+    // filled the screen by cropping the book -- the top and bottom of the
+    // spread were gone before the reader arrived to cover them.
+    const screens = [TABLET, PHONE_LANDSCAPE];
+
+    const underTest = screens.every((screen) => {
+      const scale = openBookGrowScale(screen, BOOK);
+      return BOOK.width * scale <= screen.width + 0.001 && BOOK.height * scale <= screen.height + 0.001;
+    });
+
+    expect(underTest).toBe(true);
+  });
+
+  it('should still be a growth from the seat the cover was lifted at', () => {
+    const seat = openingSeat(TABLET, { width: 300, height: 200 });
+
+    const underTest = openBookGrowScale(TABLET, seat);
+
+    expect(underTest).toBeGreaterThan(1);
   });
 });

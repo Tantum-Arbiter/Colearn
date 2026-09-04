@@ -6,10 +6,12 @@ import { Dimensions, Image, InteractionManager, StyleSheet, View, Text, Pressabl
 import { Image as ExpoImage } from 'expo-image';
 import * as Haptics from 'expo-haptics';
 import * as ScreenOrientation from 'expo-screen-orientation';
+import Svg, { Path } from 'react-native-svg';
 import Animated, {
   type AnimatedStyle,
   useSharedValue,
   useAnimatedStyle,
+  useAnimatedProps,
   withTiming,
   withRepeat,
   withSequence,
@@ -29,6 +31,7 @@ import { StoryPreviewModal } from '@/components/stories/story-preview-modal';
 import { StoryCardSheet } from '@/components/stories/story-card-sheet';
 import { cardCoverTransform, storyCardLayout } from '@/constants/story-card';
 import { BookHinge, BookPages, bookSpineWidth } from '@/components/stories/catalogue/book-frame';
+import { SeatedBook } from '@/components/stories/catalogue/seated-book';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RotatePromptOverlay } from '@/components/stories/rotate-prompt-overlay';
 import { TutorialOverlay } from '@/components/tutorial/tutorial-overlay';
@@ -36,11 +39,15 @@ import { useTutorial } from '@/contexts/tutorial-context';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppStore } from '@/store/app-store';
-import { STORY_DETAIL_OPENING, STORY_OPENING, needsGuidedTurn, openingSeat, placementIsStale, seatTransform } from '@/constants/story-opening';
+import { STORY_DETAIL_OPENING, STORY_OPENING, STORY_SKETCH, bookOutlinePath, coverFaceOpacity, needsGuidedTurn, openBookGrowScale, openingSeat, seatTransform, sketchDashOffset, storySketchTimeline } from '@/constants/story-opening';
 import { allowTurnForPrompt, applyDefaultOrientation } from '@/hooks/use-story-orientation';
+import { waitForWindowToSettle } from '@/hooks/use-turn-to-landscape';
+import { useReducedMotion } from '@/hooks/use-reduced-motion';
+import { choreograph } from '@/utils/choreograph';
+
+const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 // Animation timing constants
-const PROMPT_GLIDE_DURATION = 450; // Glide from hero into the rotate-prompt book position
 const CARD_GROUND_OPACITY = 0.74; // The shelf stays visible behind the story card, shadowed
 const LANDSCAPE_DIMENSIONS_TIMEOUT_MS = 800; // Fallback if the dimension-change event never fires
 
@@ -52,7 +59,7 @@ export interface GardenOpenRequest {
   voiceOver: VoiceOver | null;
 }
 
-export type TransitionPhase = 'flying' | 'detail' | 'prompt' | 'opening' | null;
+export type TransitionPhase = 'flying' | 'detail' | 'sketch' | 'prompt' | 'opening' | null;
 
 interface StoryTransitionContextType {
   // Story Garden: direct open request, bypassing the detail/prompt overlay.
@@ -201,6 +208,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     shouldShowTutorial('book_mode_tour') && activeTutorial !== 'book_mode_tour';
 
   const { scaledFontSize, scaledButtonSize, isTablet } = useAccessibility();
+  const reduceMotion = useReducedMotion();
   const parentsOnly = useParentsOnlyChallenge();
   const toggleFavoriteStory = useAppStore((s) => s.toggleFavoriteStory);
   const favoriteStoryIds = useAppStore((s) => s.favoriteStoryIds);
@@ -218,13 +226,21 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     const subscription = Dimensions.addEventListener('change', ({ window }) => {
       setScreenDimensions(window);
 
-      // A phone turned while the prompt is up: reseat the book for the screen
-      // it is now on, at once and without animating, so the layout iOS is
-      // turning towards already has the book at its centre. Then the book is
-      // at the centre of both layouts the system blends between, and to the
-      // child it simply stays where it is while the screen turns around it.
+      // A phone turned while the book is being drawn, or while the prompt is
+      // up: reseat the book for the screen it is now on, at once and without
+      // animating, so the layout iOS is turning towards already has the book
+      // at its centre. Then the book is at the centre of both layouts the
+      // system blends between, and to the child it simply stays where it is
+      // while the screen turns around it. The sketch has to be in here too:
+      // its outline is drawn against the seat, so a turn part-way through
+      // left the line hanging where the portrait seat used to be and the book
+      // jumped to the middle once the opening took over.
       const card = cardPositionRef.current;
-      if (phaseRef.current === 'prompt' && card && !isOpeningRef.current) {
+      const turnable = phaseRef.current === 'prompt' || phaseRef.current === 'sketch';
+      if (turnable && card && !isOpeningRef.current) {
+        if (phaseRef.current === 'sketch') {
+          sketchOpacity.value = 0;
+        }
         const seat = seatTransform(window, card);
         cancelAnimation(transitionX);
         cancelAnimation(transitionY);
@@ -262,6 +278,15 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   // Opaque full-screen mask that hides the OS rotation snap during lockAsync
   const rotationMaskOpacity = useSharedValue(0);
   const readerReveal = useSharedValue(1);
+
+  // The book being sketched at its seat: how much of its outline has been
+  // drawn, and how much of the drawn line is still showing over the cover
+  const sketchProgress = useSharedValue(0);
+  const sketchOpacity = useSharedValue(1);
+  // 0 while the book waits at its seat as a Yoga-centred view (the sketch and
+  // the prompt); the transform-driven book is hidden then and takes over at
+  // the opening, at the same size and place
+  const bookShown = useSharedValue(1);
 
   // Current compensated border radius - updated by bookExpansionAnimatedStyle
   // Used by child views that need to match parent's borderRadius when overflow: 'visible'
@@ -411,6 +436,9 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     overlayOpacity.value = 0;
     cancelAnimation(levitationY);
     levitationY.value = 0;
+    sketchProgress.value = 0;
+    sketchOpacity.value = 1;
+    bookShown.value = 1;
 
     // Reset ALL state that could affect rendering
     setIsExitAnimating(false);
@@ -443,9 +471,16 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     }
   };
 
-  // A way to read chosen on the story card: the book opens from right there,
-  // via the rotate prompt on a phone held upright
+  // A way to read chosen on the story card: the card sinks and the book is
+  // sketched at its seat -- its outline drawn, then its cover appearing inside
+  // -- and opens from there, via the rotate prompt on a phone held upright
   const openWithMode = (mode: ReadingMode) => {
+    // Only the story card can start an opening, and only once. Without this a
+    // second press -- a double tap, or the tap that stops the carousel landing
+    // on the button underneath -- ran the choreography again from the top: the
+    // outline reset to nothing and drew itself a second time.
+    if (phaseRef.current !== 'detail') return;
+
     setSelectedMode(mode);
     if (mode === 'record' && !currentVoiceOver) {
       setShowVoiceOverNameModal(true);
@@ -459,36 +494,51 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-    // The card fades away and the book it was showing is there beneath it,
-    // on the cover, ready to be carried onwards; the shelf behind goes dark
-    transitionOpacity.value = 1;
+    // The seat is the centre of the screen, which is where the prompt keeps
+    // the book and where the opening lifts its cover: the book is drawn
+    // there outright, so nothing has to glide into place afterwards
+    const dims = Dimensions.get('window');
+    const seat = computePromptTransform(cardPosition, dims.width, dims.height);
+    openingTransformRef.current = { moveX: seat.moveX, moveY: seat.moveY, scale: seat.scale };
+    noteTransformScreen();
+    setTargetBookPosition(seat.rect);
+
+    cancelAnimation(levitationY);
+    levitationY.value = 0;
+    transitionX.value = seat.moveX;
+    transitionY.value = seat.moveY;
+    transitionScale.value = seat.scale;
+    // While it waits, the book on screen is the Yoga-centred one, which the
+    // OS turns about the centre correctly; this one stays hidden until the
+    // opening takes over
+    bookShown.value = 0;
+
+    // The shelf behind goes dark as the card sinks
     overlayOpacity.value = withTiming(1, { duration: 300, easing: Easing.out(Easing.quad) });
 
-    // Tablets are never asked to turn -- they are unlocked, so the book just opens
-    const dims = Dimensions.get('window');
-    if (!needsGuidedTurn({ isTablet, width: dims.width, height: dims.height })) {
-      beginStory();
-      return;
-    }
+    const carryOn = async () => {
+      // Read the screen again: the child may have turned the phone while the
+      // book was being drawn. Tablets are never asked to turn -- they are
+      // unlocked, so the book just opens -- and neither is a phone that is
+      // already sideways. A phone that turned during the draw, though, is
+      // still turning: the size is reported as the system starts animating
+      // the interface round, and opening on that report put the book-opening
+      // on top of the rotation. So it waits for the window to hold still.
+      const now = Dimensions.get('window');
+      if (!needsGuidedTurn({ isTablet, width: now.width, height: now.height })) {
+        if (needsGuidedTurn({ isTablet, width: dims.width, height: dims.height })) {
+          await waitForWindowToSettle();
+        }
+        beginStory();
+        return;
+      }
 
-    setPhase('prompt');
+      setPhase('prompt');
 
-    // Let the phone follow the child now that we are asking them to turn it.
-    // Until this, iOS held the interface in portrait and the prompt could only
-    // be answered by the accelerometer -- which a simulator never provides.
-    allowTurnForPrompt().catch((error) => log.warn('Failed to allow turning:', error));
-
-    const prompt = computePromptTransform(cardPosition, dims.width, dims.height);
-    openingTransformRef.current = { moveX: prompt.moveX, moveY: prompt.moveY, scale: prompt.scale };
-    noteTransformScreen();
-    setTargetBookPosition(prompt.rect);
-
-    // Small delay so the detail sheet's exit animation reveals the card mid-flight
-    setTimeout(() => {
-      const glide = Easing.out(Easing.cubic);
-      transitionX.value = withTiming(prompt.moveX, { duration: PROMPT_GLIDE_DURATION, easing: glide });
-      transitionY.value = withTiming(prompt.moveY, { duration: PROMPT_GLIDE_DURATION, easing: glide });
-      transitionScale.value = withTiming(prompt.scale, { duration: PROMPT_GLIDE_DURATION, easing: glide });
+      // Let the phone follow the child now that we are asking them to turn it.
+      // Until this, iOS held the interface in portrait and the prompt could only
+      // be answered by the accelerometer -- which a simulator never provides.
+      allowTurnForPrompt().catch((error) => log.warn('Failed to allow turning:', error));
 
       levitationY.value = withRepeat(
         withSequence(
@@ -498,7 +548,43 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
         -1,
         true,
       );
-    }, 120);
+    };
+
+    if (reduceMotion) {
+      // no sketch: the book is simply there
+      transitionOpacity.value = 1;
+      sketchProgress.value = 1;
+      sketchOpacity.value = 0;
+      carryOn();
+      return;
+    }
+
+    setPhase('sketch');
+    const sketch = storySketchTimeline();
+    choreograph([
+      {
+        on: sketchProgress,
+        name: 'outline',
+        from: 0,
+        beats: [{ at: sketch.draw.at, to: 1, over: sketch.draw.over, easing: Easing.bezier(...STORY_SKETCH.drawCurve) }],
+      },
+      {
+        on: transitionOpacity,
+        name: 'cover',
+        from: 0,
+        beats: [{ at: sketch.cover.at, to: 1, over: sketch.cover.over, easing: Easing.out(Easing.quad) }],
+      },
+      {
+        on: sketchOpacity,
+        name: 'drawn line',
+        from: 1,
+        beats: [{ at: sketch.strokeOut.at, to: 0, over: sketch.strokeOut.over }],
+      },
+    ]);
+
+    setTimeout(() => {
+      if (phaseRef.current === 'sketch') carryOn();
+    }, sketch.total);
   };
 
   // Back tapped on the rotate prompt -return the book to the detail hero
@@ -507,6 +593,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   const returnToDetailFromPrompt = () => {
     if (isOpeningRef.current) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    bookShown.value = 1;
     overlayOpacity.value = withTiming(CARD_GROUND_OPACITY, { duration: 350, easing: Easing.out(Easing.quad) });
     hideBookOnceCardIsUp(380);
 
@@ -595,39 +682,30 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     const needsRotation = needsGuidedTurn({ isTablet, width: dims.width, height: dims.height });
 
     if (!needsRotation && cardPosition) {
-      // Nothing to turn: settle into the opening seat.
+      // Nothing to turn. The book has been waiting at the seat as a
+      // Yoga-centred view; this one is snapped to the same seat, worked out
+      // from the window as it is now, and shown in its place. Snapped rather
+      // than glided: a turn reports a transitional window size first, and a
+      // glide from a seat worked out against that slid the book 15pt after
+      // the swap.
       const seat = openingSeat(dims, cardPosition);
       const moveX = dims.width / 2 - (cardPosition.x + cardPosition.width / 2);
       const moveY = dims.height / 2 - (cardPosition.y + cardPosition.height / 2);
-      // If the screen has changed shape since the book was placed -- the child
-      // turned the phone -- that placement is meaningless now, so seat the book
-      // outright rather than gliding it from somewhere it never really was.
-      const stale = placementIsStale(transformScreenRef.current, dims);
-
-      if (stale) {
-        transitionX.value = moveX;
-        transitionY.value = moveY;
-        transitionScale.value = seat.scale;
-      } else {
-        const glide = { duration: STORY_OPENING.settleMs, easing: Easing.out(Easing.cubic) };
-        transitionX.value = withTiming(moveX, glide);
-        transitionY.value = withTiming(moveY, glide);
-        transitionScale.value = withTiming(seat.scale, glide);
-      }
-
+      cancelAnimation(transitionX);
+      cancelAnimation(transitionY);
+      cancelAnimation(transitionScale);
+      transitionX.value = moveX;
+      transitionY.value = moveY;
+      transitionScale.value = seat.scale;
       openingTransformRef.current = { moveX, moveY, scale: seat.scale };
       noteTransformScreen();
       setTargetBookPosition({ x: seat.x, y: seat.y, width: seat.width, height: seat.height });
-
-      if (stale) {
-        // Nothing to wait for: the book is already where it belongs
-        openBookIntoReader();
-        return;
-      }
     }
+    bookShown.value = 1;
     await new Promise(resolve => setTimeout(resolve, STORY_OPENING.settleMs));
 
     if (needsRotation && cardPosition) {
+      bookShown.value = 1;
       rotationMaskOpacity.value = withTiming(1, {
         duration: STORY_OPENING.veilInMs,
         easing: Easing.out(Easing.quad),
@@ -1271,7 +1349,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
         { scale: transitionScale.value },
         { rotate: `${bookRotation.value}deg` }
       ],
-      opacity: transitionOpacity.value,
+      opacity: transitionOpacity.value * bookShown.value,
       borderRadius: compensatedBorderRadius,
     };
   });
@@ -1330,10 +1408,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
     if (!isActive) return { opacity: 1, borderRadius: compensatedBorderRadius };
 
-    const rotation = interpolate(pageFlipProgress.value, [0, 1], [0, -STORY_OPENING.coverLiftDegrees]);
-    const opacity = Math.abs(rotation) < 90 ? 1 : 0;
-
-    return { opacity, borderRadius: compensatedBorderRadius };
+    return { opacity: coverFaceOpacity(pageFlipProgress.value).front, borderRadius: compensatedBorderRadius };
   });
 
   // Animated style for cover back face - show when rotated past 90 degrees
@@ -1346,15 +1421,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
     if (!isActive) return { opacity: 0, borderRadius: compensatedBorderRadius };
 
-    const rotation = interpolate(pageFlipProgress.value, [0, 1], [0, -STORY_OPENING.coverLiftDegrees]);
-    if (Math.abs(rotation) < 90) return { opacity: 0, borderRadius: compensatedBorderRadius };
-    const opacity = interpolate(
-      pageFlipProgress.value,
-      [STORY_OPENING.coverFadeFrom, 1],
-      [1, 0],
-      'clamp'
-    );
-    return { opacity, borderRadius: compensatedBorderRadius };
+    return { opacity: coverFaceOpacity(pageFlipProgress.value).back, borderRadius: compensatedBorderRadius };
   });
 
   // Animated style for the first page behind the cover
@@ -1383,6 +1450,22 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
   const readerRevealStyle = useAnimatedStyle(() => ({ opacity: readerReveal.value }));
 
+  // The sketch's outline, in screen coordinates: the seat the book is drawn
+  // in, with the radius the book keeps whatever its scale and the spine it
+  // wears on the shelf, scaled with it
+  const sketchOutline = phase === 'sketch' && targetBookPosition && cardPosition
+    ? bookOutlinePath(
+        targetBookPosition,
+        bookBorderRadius,
+        bookSpineWidth(cardPosition.width) * (targetBookPosition.width / cardPosition.width)
+      )
+    : null;
+  const sketchLength = sketchOutline?.length ?? 0;
+  const sketchProps = useAnimatedProps(() => ({
+    strokeDashoffset: sketchDashOffset(sketchLength, sketchProgress.value),
+    opacity: sketchOpacity.value,
+  }));
+
   // Store original card position in shared values for exit animation (React state is async)
   const exitCardX = useSharedValue(0);
   const exitCardY = useSharedValue(0);
@@ -1410,10 +1493,12 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
       const currentScreenWidth = exitScreenWidth.value;
       const currentScreenHeight = exitScreenHeight.value;
 
-      // Calculate full screen scale based on original card size
-      const scaleToFillX = currentScreenWidth / exitCardWidth.value;
-      const scaleToFillY = currentScreenHeight / exitCardHeight.value;
-      const scaleToFill = Math.max(scaleToFillX, scaleToFillY);
+      // The grown book spans the width of the screen -- the same size the
+      // opening grew it to, so the exit starts from where the opening ended
+      const scaleToFill = openBookGrowScale(
+        { width: currentScreenWidth, height: currentScreenHeight },
+        { width: exitCardWidth.value, height: exitCardHeight.value }
+      );
 
       // Current scale: interpolate from CENTERED BOOK scale to full-screen scale
       // transitionScale.value is the scale from tile to centered book (set during opening)
@@ -1461,12 +1546,13 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
       return {};
     }
 
-    // Calculate scale needed to fill the ENTIRE screen (use the larger ratio)
-    const scaleX = screenWidth / targetBookPosition.width;
-    const scaleY = screenHeight / targetBookPosition.height;
-    const scaleToFill = Math.max(scaleX, scaleY);
+    // Grow until the book's left and right edges meet the sides of the screen
+    const scaleToFill = openBookGrowScale(
+      { width: screenWidth, height: screenHeight },
+      targetBookPosition
+    );
 
-    // Interpolate scale from 1 to full screen scale
+    // Interpolate scale from 1 to the grown size
     const expansionScale = interpolate(bookExpansion.value, [0, 1], [1, scaleToFill]);
 
     // Combined scale
@@ -1716,6 +1802,41 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
               as the book lifts, dimming the catalogue, and out again on exit. */}
           <Animated.View style={[styles.nightGround, overlayAnimatedStyle]} pointerEvents="none" />
 
+          {/* The book being sketched: its outline drawn in one line, round the
+              cover and down the spine, ahead of the cover appearing inside it */}
+          {sketchOutline && (
+            <Svg pointerEvents="none" style={styles.sketch} width={screenWidth} height={screenHeight}>
+              <AnimatedPath
+                testID="transition-book-sketch"
+                d={sketchOutline.d}
+                stroke={STORY_SKETCH.stroke}
+                strokeWidth={STORY_SKETCH.strokeWidth}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                fill="none"
+                strokeDasharray={`${sketchOutline.length} ${sketchOutline.length}`}
+                strokeDashoffset={sketchDashOffset(sketchOutline.length, 0)}
+                animatedProps={sketchProps}
+              />
+            </Svg>
+          )}
+
+          {/* The book as it waits at its seat: laid out by Yoga at the centre, so the
+              screen turns around it rather than under it. Hands over to the
+              transform-driven book below at the opening. */}
+          {(phase === 'sketch' || phase === 'prompt') && (
+            <SeatedBook
+              card={cardPosition}
+              screenWidth={screenWidth}
+              radius={bookBorderRadius}
+              bob={levitationY}
+              opacity={transitionOpacity}
+              testID="seated-book"
+            >
+              {renderCoverImage()}
+            </SeatedBook>
+          )}
+
           {/* Centered book with page flip and expansion animation */}
           <Animated.View
             style={[
@@ -1807,6 +1928,10 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
                   setSelectedStory(story);
                   setSelectedStoryId(story.id);
                   setShelfIndex(index);
+                  // Only the tapped story was preloaded; the one swiped to has
+                  // to be fetched too, or its cover arrives after the sketch
+                  // has already handed over to it
+                  InteractionManager.runAfterInteractions(() => preloadStoryImages(story));
                 }}
                 onChooseMode={openWithMode}
                 onPreview={() => setShowPreviewModal(true)}
@@ -2078,6 +2203,10 @@ const styles = StyleSheet.create({
   detailLayer: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 60, // Above the animated book card (50)
+  },
+  sketch: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 55, // Over the book it outlines, beneath the card that sinks away
   },
   rotationMask: {
     ...StyleSheet.absoluteFillObject,

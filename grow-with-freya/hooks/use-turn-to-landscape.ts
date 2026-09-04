@@ -33,6 +33,54 @@ function screenIsSideways(): boolean {
   return width > height;
 }
 
+function sameSize(a: { width: number; height: number }, b: { width: number; height: number }): boolean {
+  return a.width === b.width && a.height === b.height;
+}
+
+/**
+ * Calls `onSettled` once the window has held one size for `settleMs`, starting
+ * the wait again each time the size changes. Returns a cancel, for a caller
+ * that goes away before the turn lands.
+ */
+function settleWindow(settleMs: number, onSettled: () => void): () => void {
+  let lastSeen = Dimensions.get('window');
+  let timer: ReturnType<typeof setTimeout> | null = null;
+
+  const check = () => {
+    const now = Dimensions.get('window');
+    if (!sameSize(now, lastSeen)) {
+      lastSeen = now;
+      timer = setTimeout(check, settleMs);
+      return;
+    }
+    timer = null;
+    onSettled();
+  };
+
+  timer = setTimeout(check, settleMs);
+
+  return () => {
+    if (timer !== null) {
+      clearTimeout(timer);
+      timer = null;
+    }
+  };
+}
+
+/**
+ * Resolves once the window has held one size for `settleMs`.
+ *
+ * For anything that has to seat or open the book on a screen that may still
+ * be turning -- a phone the child turned while the book was being drawn, say,
+ * which reaches the opening with the screen already sideways and the system
+ * still animating the interface round.
+ */
+export function waitForWindowToSettle(settleMs: number = TURN_SETTLE_MS): Promise<void> {
+  return new Promise((resolve) => {
+    settleWindow(settleMs, resolve);
+  });
+}
+
 interface AccelerometerModule {
   setUpdateInterval: (intervalMs: number) => void;
   addListener: (listener: (measurement: AccelerometerMeasurement) => void) => AccelerometerSubscription;
@@ -71,7 +119,7 @@ export function useTurnToLandscape({ enabled, onTurned }: UseTurnToLandscapeOpti
     if (!enabled) return;
 
     let hasFired = false;
-    let settleTimer: ReturnType<typeof setTimeout> | null = null;
+    let cancelSettle: (() => void) | null = null;
 
     const fire = (reason: string) => {
       if (hasFired) return;
@@ -83,29 +131,29 @@ export function useTurnToLandscape({ enabled, onTurned }: UseTurnToLandscapeOpti
     // Claim the turn straight away so nothing else fires meanwhile, then wait
     // for the window to stop changing size before opening anything.
     const fireOnceSettled = (reason: string) => {
-      if (hasFired || settleTimer !== null) return;
+      if (hasFired || cancelSettle !== null) return;
 
-      let lastSeen = Dimensions.get('window');
-      const check = () => {
-        const now = Dimensions.get('window');
-        if (now.width !== lastSeen.width || now.height !== lastSeen.height) {
-          lastSeen = now;
-          settleTimer = setTimeout(check, TURN_SETTLE_MS);
-          return;
-        }
-        settleTimer = null;
+      cancelSettle = settleWindow(TURN_SETTLE_MS, () => {
+        cancelSettle = null;
         fire(reason);
-      };
-
-      settleTimer = setTimeout(check, TURN_SETTLE_MS);
+      });
     };
 
-    // Already sideways -- a tablet the child is holding in landscape, or one
-    // lying flat whose interface has settled that way. Never ask someone to
-    // turn a screen that is turned.
+    const clearSettle = () => {
+      if (cancelSettle !== null) {
+        cancelSettle();
+        cancelSettle = null;
+      }
+    };
+
+    // Already sideways: never ask someone to turn a screen that is turned.
+    // It still has to land, though. A phone turned while the book was being
+    // drawn arrives here mid-turn, with the size already reported and the
+    // system still animating the interface round; opening on that first
+    // report ran the book-opening on top of the rotation.
     if (screenIsSideways()) {
-      fire('screen was already sideways');
-      return;
+      fireOnceSettled('screen was already sideways');
+      return clearSettle;
     }
 
     // The interface itself turning is the signal a tablet gives, where
@@ -118,12 +166,6 @@ export function useTurnToLandscape({ enabled, onTurned }: UseTurnToLandscapeOpti
     });
 
     const accelerometer = accelerometerRef.current;
-    const clearSettle = () => {
-      if (settleTimer !== null) {
-        clearTimeout(settleTimer);
-        settleTimer = null;
-      }
-    };
 
     if (!accelerometer) {
       return () => {

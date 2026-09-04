@@ -124,26 +124,6 @@ export function RotatePromptOverlay({ bookRect, onTurned, onOpenAnyway, onBack }
       </Animated.View>
 
       {bookRect && (
-        <Animated.View
-          entering={FadeIn.duration(300)}
-          exiting={FadeOut.duration(150)}
-          style={[
-            styles.pageEdges,
-            {
-              left: bookRect.x + bookRect.width,
-              top: bookRect.y + bookRect.height * 0.04,
-              height: bookRect.height * 0.92,
-            },
-          ]}
-          pointerEvents="none"
-        >
-          <View style={[styles.pageEdge, { height: '96%' }]} />
-          <View style={[styles.pageEdge, { height: '90%' }]} />
-          <View style={[styles.pageEdge, { height: '84%' }]} />
-        </Animated.View>
-      )}
-
-      {bookRect && (
         <Animated.Text
           style={[
             styles.sparkle,
@@ -240,17 +220,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#FFFFFF',
     textAlign: 'center',
-  },
-  pageEdges: {
-    position: 'absolute',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 1.5,
-  },
-  pageEdge: {
-    width: 2,
-    borderRadius: 1,
-    backgroundColor: 'rgba(255, 250, 235, 0.75)',
   },
   sparkle: {
     position: 'absolute',

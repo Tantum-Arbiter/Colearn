@@ -105,7 +105,7 @@ export function StoryCardSheet({
   return (
     <Animated.View
       entering={SlideInDown.duration(STORY_DETAIL_OPENING.sheetRiseMs).easing(Easing.out(Easing.cubic))}
-      exiting={SlideOutDown.duration(280).easing(Easing.in(Easing.cubic))}
+      exiting={SlideOutDown.duration(STORY_DETAIL_OPENING.sheetSinkMs).easing(Easing.in(Easing.cubic))}
       style={styles.container}
       pointerEvents="box-none"
       testID="story-card-sheet"

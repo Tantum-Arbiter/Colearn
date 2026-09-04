@@ -14,8 +14,23 @@ export const STORY_OPENING = {
   pageShadeAtRest: 0.42,
   coverShadeWhenTurned: 0.4,
   seatWidthRatio: 0.46,
-  coverFadeFrom: 0.6,
 } as const;
+
+/**
+ * Which face of the cover is showing, as it swings open.
+ *
+ * Past a right angle the child is looking at the back of the cover rather than
+ * its printed face, so the two swap. The back then stays: the opened cover
+ * holds, and the book grows to fill the screen still wearing it. It used to
+ * dissolve over the last stretch of the lift, which left the page alone on
+ * screen before the grow had even started.
+ */
+export function coverFaceOpacity(progress: number): { front: number; back: number } {
+  'worklet';
+  const turned = Math.abs(progress * STORY_OPENING.coverLiftDegrees) >= 90;
+
+  return { front: turned ? 0 : 1, back: turned ? 1 : 0 };
+}
 
 export type OpeningStepName =
   | 'settle'
@@ -81,6 +96,25 @@ export function openingSeat(
     height,
     scale,
   };
+}
+
+/**
+ * How far the open book grows before the reader arrives: until its left and
+ * right edges meet the sides of the screen.
+ *
+ * It used to take the larger of the two ratios and grow until the book covered
+ * the screen entirely, which meant cropping it -- the top and bottom of the
+ * spread were pushed out of view while the child was still watching the book,
+ * before the reader had dissolved in over it. The smaller ratio keeps the
+ * whole spread on screen; on the portrait tablet the width is what binds, so
+ * the book arrives spanning the view exactly as it should.
+ */
+export function openBookGrowScale(
+  screen: { width: number; height: number },
+  book: { width: number; height: number }
+): number {
+  'worklet';
+  return Math.min(screen.width / book.width, screen.height / book.height);
 }
 
 /**
@@ -158,6 +192,131 @@ export function seatTransform(
 export const STORY_DETAIL_OPENING = {
   groundFadeMs: 320,
   sheetRiseMs: 420,
+  sheetSinkMs: 280,
   staggerMs: 60,
   contentMs: 320,
 } as const;
+
+/**
+ * Card to book: choosing a way to read sinks the card, and the book is
+ * sketched where it will open. Its outline is drawn as one line -- round the
+ * cover and down the spine -- the cover appears inside it, and the drawn line
+ * fades as the cover's own edges take over. Only then does the opening begin.
+ *
+ * - drawMs       the outline being drawn
+ * - coverInMs    the cover appearing inside it
+ * - strokeOutMs  the drawn line giving way to the cover's edge
+ */
+export const STORY_SKETCH = {
+  /** The beat between the card clearing the screen and the first mark. */
+  afterCardMs: 250,
+  drawMs: 480,
+  coverInMs: 300,
+  strokeOutMs: 240,
+  strokeWidth: 2,
+  stroke: 'rgba(246, 239, 226, 0.92)',
+  /**
+   * The pace the line is drawn at: a pen, not a pendulum.
+   *
+   * An in-out cubic peaks at nearly three times its average pace, and over a
+   * draw this short that put 39% of the whole outline down in one frame --
+   * filmed, the line crawled, leapt across the top and right edges together,
+   * then glided to a halt. This curve holds within 19% of its average the
+   * whole way: it starts at four fifths of cruising pace rather than creeping
+   * into motion, and settles at a third rather than stopping dead.
+   */
+  drawCurve: [0.2, 0.15, 0.75, 0.95] as readonly [number, number, number, number],
+} as const;
+
+export interface SketchPhase {
+  readonly at: number;
+  readonly over: number;
+  readonly ends: number;
+}
+
+export interface SketchTimeline {
+  readonly draw: SketchPhase;
+  readonly cover: SketchPhase;
+  readonly strokeOut: SketchPhase;
+  readonly total: number;
+}
+
+function sketchPhase(at: number, over: number): SketchPhase {
+  return { at, over, ends: at + over };
+}
+
+/**
+ * The pen waits for the card to be gone and then a beat longer, so the first
+ * mark lands on a clear, settled screen rather than over a sheet still on its
+ * way out. The cover waits for the whole outline; the line fades once the
+ * cover is half there, so the handover is invisible.
+ */
+export function storySketchTimeline(): SketchTimeline {
+  const draw = sketchPhase(STORY_DETAIL_OPENING.sheetSinkMs + STORY_SKETCH.afterCardMs, STORY_SKETCH.drawMs);
+  const cover = sketchPhase(draw.ends, STORY_SKETCH.coverInMs);
+  const strokeOut = sketchPhase(cover.at + cover.over / 2, STORY_SKETCH.strokeOutMs);
+
+  return { draw, cover, strokeOut, total: Math.max(cover.ends, strokeOut.ends) };
+}
+
+/**
+ * How much of the sketched line is still hidden, as an SVG dash offset.
+ *
+ * The path is drawn by a dash the length of the whole line, slid into view.
+ * The same answer serves the static prop the Path first renders with and the
+ * animated one that follows: without the static one the browser's default
+ * offset of zero showed the entire outline for the frame before the animation
+ * landed, which read as the finished book flashing up and then being drawn.
+ */
+export function sketchDashOffset(length: number, progress: number): number {
+  'worklet';
+  return length * (1 - progress);
+}
+
+/**
+ * The single line the book is sketched with, and its length -- the drawing is
+ * a dash-offset sweep, so the dash pattern is built from the length.
+ *
+ * The spine is drawn first, upward, on an otherwise empty screen; the pen then
+ * runs clockwise round the cover -- right along the top, down the fore-edge,
+ * back along the bottom, up the left edge -- and closes exactly where the
+ * spine began.
+ *
+ * The spine used to be the last stroke instead, which put the pen straight
+ * back down a line one spine's width from the left edge it had just drawn,
+ * travelling the opposite way. It read as the pen doubling back over itself.
+ * Drawing it first separates the two by the whole loop, and gives the close a
+ * point to land on.
+ *
+ * A spine narrower than the corner is moved out to where the top edge is
+ * straight, so the line never closes inside a curve.
+ */
+export function bookOutlinePath(
+  rect: { x: number; y: number; width: number; height: number },
+  radius: number,
+  spineWidth: number
+): { d: string; length: number } {
+  const { x: l, y: t, width: w, height: h } = rect;
+  const r = l + w;
+  const b = t + h;
+  const rad = Math.min(radius, w / 2, h / 2);
+  const spine = l + Math.max(rad, Math.min(spineWidth, w - rad));
+
+  const d = [
+    `M ${spine} ${b}`,
+    `L ${spine} ${t}`,
+    `L ${r - rad} ${t}`,
+    `A ${rad} ${rad} 0 0 1 ${r} ${t + rad}`,
+    `L ${r} ${b - rad}`,
+    `A ${rad} ${rad} 0 0 1 ${r - rad} ${b}`,
+    `L ${l + rad} ${b}`,
+    `A ${rad} ${rad} 0 0 1 ${l} ${b - rad}`,
+    `L ${l} ${t + rad}`,
+    `A ${rad} ${rad} 0 0 1 ${l + rad} ${t}`,
+    `L ${spine} ${t}`,
+  ].join(' ');
+
+  const length = 2 * (w - 2 * rad) + 2 * (h - 2 * rad) + 2 * Math.PI * rad + h;
+
+  return { d, length };
+}
