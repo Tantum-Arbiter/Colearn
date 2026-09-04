@@ -31,9 +31,9 @@ Total: about 1.6s on a tablet, about 2.6s on a phone including the turn.
 ## Tile to card
 
 Tapping a book does not fly anything, and the book stays on the shelf behind. The shelf falls
-into shadow and a story card rises from the bottom of the screen with that book sitting on it;
-the title, meta and buttons follow in turn. Closing it, the card sinks and the shadow lifts.
-Every book -- on the shelf, on the card, and the one that opens -- is drawn the same way
+into shadow and a story card rises from the bottom of the screen with that book's cover across
+its top; the title, meta and buttons follow in turn. Closing it, the card sinks and the shadow
+lifts. The books on the shelf, and the one that opens, are drawn as books
 (`components/stories/catalogue/book-frame.tsx`): landscape, a spine down the left, the block
 of pages along the right, square corners against the spine and rounded at the fore-edge. There
 are no play buttons; the book is the button.
@@ -54,9 +54,9 @@ lower, a little smaller and in shadow, following the finger continuously as the 
 swiped (`CARD_REST`). Settling on another book makes it the selected story.
 
 Choosing a way to read -- Read Together, Play Along, Record -- is where the book animation
-begins. The transition's own book, wearing the same spine and pages, has been waiting hidden on
-the very rect the card's book occupies; the card fades, the book is revealed there, lifts to
-the centre of the screen and opens -- via the rotate prompt on a phone held upright, straight
+begins. The transition's own book, wearing the shelf book's spine and pages, has been waiting hidden
+inside the card's cover; the card fades, the book is revealed there, lifts to the centre of the
+screen and opens -- via the rotate prompt on a phone held upright, straight
 into the opening otherwise.
 
 ## Orientation, by device

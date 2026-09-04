@@ -10,10 +10,8 @@ export const STORY_CARD = {
   maxWidth: 520,
   /** Side margin on a phone -- wide enough for the neighbours to peek in. */
   sideInset: 30,
-  /** The book on the card has the shelf books' proportions: width over height. */
-  bookAspect: 1.6,
-  /** Margin around the book inside the card's cover area. */
-  bookInset: 16,
+  /** Cover height as a fraction of card width: a wide picture book spread. */
+  coverAspect: 0.52,
   /** Height of everything beneath the cover; larger type scrolls within it. */
   bodyHeight: { phone: 374, tablet: 366 },
   /** Gap between the card and the bottom of the safe area. */
@@ -31,8 +29,6 @@ export interface StoryCardLayout {
   width: number;
   height: number;
   coverHeight: number;
-  /** Where the book sits on screen, inside the card's cover area. */
-  book: { x: number; y: number; width: number; height: number };
   /** Distance the carousel advances per card. */
   step: number;
   /** Horizontal padding that keeps the first and last card centred. */
@@ -49,46 +45,34 @@ export function storyCardLayout(
   const bodyHeight = isTablet ? STORY_CARD.bodyHeight.tablet : STORY_CARD.bodyHeight.phone;
   const bottom = screen.height - insets.bottom - STORY_CARD.bottomGap;
   const tallestCover = bottom - bodyHeight - insets.top - STORY_CARD.topGap;
-  const bookWidthByCard = width - STORY_CARD.bookInset * 2;
-  const bookHeightByCard = bookWidthByCard / STORY_CARD.bookAspect;
-  const tallestBook = tallestCover - STORY_CARD.bookInset * 2;
-  const bookHeight = Math.round(Math.max(0, Math.min(bookHeightByCard, tallestBook)));
-  const bookWidth = Math.round(bookHeight * STORY_CARD.bookAspect);
-  const coverHeight = bookHeight + STORY_CARD.bookInset * 2;
+  const coverHeight = Math.round(Math.max(0, Math.min(width * STORY_CARD.coverAspect, tallestCover)));
   const height = coverHeight + bodyHeight;
-  const y = Math.round(bottom - height);
 
   return {
     x,
-    y,
+    y: Math.round(bottom - height),
     width,
     height,
     coverHeight,
-    book: {
-      x: x + Math.round((width - bookWidth) / 2),
-      y: y + STORY_CARD.bookInset,
-      width: bookWidth,
-      height: bookHeight,
-    },
     step: width + STORY_CARD.gap,
     edgePadding: x,
   };
 }
 
 /**
- * The transform that puts the tapped shelf book exactly where the card's book
- * sits: centred on it and scaled to fit inside it. Every book shares one
- * shape, so it fills that rect and the two are indistinguishable.
+ * The transform that carries a tapped tile onto the card's cover: centred on
+ * it and scaled to fit inside it, so a tile of any shape lands within the
+ * cover and nothing spills over the card's edge while it flies.
  */
 export function cardCoverTransform(
   layout: StoryCardLayout,
   tile: { x: number; y: number; width: number; height: number }
 ): { moveX: number; moveY: number; scale: number; rect: { x: number; y: number; width: number; height: number } } {
-  const scale = Math.min(layout.book.width / tile.width, layout.book.height / tile.height);
+  const scale = Math.min(layout.width / tile.width, layout.coverHeight / tile.height);
   const width = tile.width * scale;
   const height = tile.height * scale;
-  const centreX = layout.book.x + layout.book.width / 2;
-  const centreY = layout.book.y + layout.book.height / 2;
+  const centreX = layout.x + layout.width / 2;
+  const centreY = layout.y + layout.coverHeight / 2;
 
   return {
     moveX: centreX - (tile.x + tile.width / 2),
