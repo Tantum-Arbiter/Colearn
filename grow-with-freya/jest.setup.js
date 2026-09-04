@@ -36,6 +36,7 @@ jest.mock('react-native-reanimated', () => {
     createAnimatedComponent: (component) => component,
     useSharedValue: jest.fn(() => ({ value: 0 })),
     useAnimatedStyle: jest.fn(() => ({})),
+    useAnimatedScrollHandler: jest.fn(() => jest.fn()),
     useAnimatedProps: jest.fn(() => ({})),
     withTiming: jest.fn((value, _config, callback) => {
       if (typeof callback === 'function') callback(true);

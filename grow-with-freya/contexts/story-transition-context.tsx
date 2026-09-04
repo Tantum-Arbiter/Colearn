@@ -35,7 +35,7 @@ import { useTutorial } from '@/contexts/tutorial-context';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppStore } from '@/store/app-store';
-import { STORY_DETAIL_OPENING, STORY_OPENING, heroFadeDelay, needsGuidedTurn, openingSeat, placementIsStale, seatTransform } from '@/constants/story-opening';
+import { STORY_DETAIL_OPENING, STORY_OPENING, needsGuidedTurn, openingSeat, placementIsStale, seatTransform } from '@/constants/story-opening';
 import { allowTurnForPrompt, applyDefaultOrientation } from '@/hooks/use-story-orientation';
 
 // Animation timing constants
@@ -365,42 +365,38 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   ) => seatTransform({ width, height }, cardLayout);
 
   // Animate the card from its tile into the detail-view hero area
-  const animateToHero = (
+  // The story card rises with the tapped book already on its cover. The
+  // transition's own book waits, hidden, on that same cover rect, so choosing
+  // a way to read can carry it onwards from exactly where the card showed it.
+  const presentCard = (
     cardLayout: { x: number; y: number; width: number; height: number },
     width: number,
     height: number
   ) => {
-    const hero = computeHeroTransform(cardLayout, width, height);
-    heroTransformRef.current = { moveX: hero.moveX, moveY: hero.moveY, scale: hero.scale };
-    openingTransformRef.current = { moveX: hero.moveX, moveY: hero.moveY, scale: hero.scale };
+    const cover = computeHeroTransform(cardLayout, width, height);
+    heroTransformRef.current = { moveX: cover.moveX, moveY: cover.moveY, scale: cover.scale };
+    openingTransformRef.current = { moveX: cover.moveX, moveY: cover.moveY, scale: cover.scale };
     noteTransformScreen();
-    setTargetBookPosition(hero.rect);
+    setTargetBookPosition(cover.rect);
 
-    // The book lifts out of the catalogue and decelerates into the hero
-    const lift = { duration: STORY_DETAIL_OPENING.liftMs, easing: Easing.out(Easing.cubic) };
-    transitionX.value = withTiming(hero.moveX, lift);
-    transitionY.value = withTiming(hero.moveY, lift);
-    transitionScale.value = withTiming(hero.scale, lift);
+    transitionX.value = cover.moveX;
+    transitionY.value = cover.moveY;
+    transitionScale.value = cover.scale;
+    transitionOpacity.value = 0;
 
-    // The navy ground fades in beneath the rising book, leaving the shelf
-    // faintly visible behind the card
+    // The shelf falls into shadow as the card rises
     overlayOpacity.value = withTiming(CARD_GROUND_OPACITY, { duration: STORY_DETAIL_OPENING.groundFadeMs, easing: Easing.out(Easing.quad) });
-
-    // The card mounts while the book is still in flight and rises to meet it
-    setTimeout(() => {
-      setPhase('detail');
-    }, STORY_DETAIL_OPENING.sheetMountAt);
-    hideBookOnceCardCoversIt(STORY_DETAIL_OPENING.sheetMountAt);
+    setPhase('detail');
   };
 
-  // Once the card's cover has faded in over the landed book, the book itself
-  // is hidden so that swiping to another card does not reveal it underneath
-  const hideBookOnceCardCoversIt = (cardMountsAt: number) => {
+  // After the book has glided back from the prompt, the card rises over it;
+  // once the card is up, the book is hidden again beneath it
+  const hideBookOnceCardIsUp = (cardMountsAt: number) => {
     setTimeout(() => {
       if (phaseRef.current === 'detail') {
         transitionOpacity.value = 0;
       }
-    }, cardMountsAt + heroFadeDelay() + STORY_DETAIL_OPENING.heroFadeMs + 40);
+    }, cardMountsAt + STORY_DETAIL_OPENING.sheetRiseMs + 40);
   };
 
   const startTransition = async (storyId: string, cardLayout: { x: number; y: number; width: number; height: number }, story?: Story, shelfStories?: Story[]) => {
@@ -434,16 +430,8 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     setPhase('flying');
     setSelectedMode('read'); // Reset to default mode
 
-    // Animate from card position to center
-    transitionOpacity.value = 1;
-    transitionScale.value = 1;
-    transitionX.value = 0;
-    transitionY.value = 0;
     overlayOpacity.value = 0;
-
-    // Start animation synchronously so it begins on the same frame as the overlay mount
-    // -withTiming runs on the UI thread and isn't affected by JS thread renders
-    animateToHero(cardLayout, screenWidth, screenHeight);
+    presentCard(cardLayout, screenWidth, screenHeight);
 
     // Defer image preloading until the animation has settled
     // -Image.prefetch causes JS thread pressure that jitters the animation
@@ -519,7 +507,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     if (isOpeningRef.current) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     overlayOpacity.value = withTiming(CARD_GROUND_OPACITY, { duration: 350, easing: Easing.out(Easing.quad) });
-    hideBookOnceCardCoversIt(380);
+    hideBookOnceCardIsUp(380);
 
     // The child changed their mind, so take the freedom to turn back away
     applyDefaultOrientation().catch((error) => log.warn('Failed to restore orientation:', error));
@@ -757,47 +745,23 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     // Block touches during the entire cancel animation
     setIsCancelAnimating(true);
 
-    // The book beneath the card flies back to its tile only if the child is
-    // still on the book they tapped; a book they swiped to has no tile to
-    // return to, so the card simply fades and the ground with it
-    transitionOpacity.value = selectedStoryId === tappedStoryIdRef.current ? 1 : 0;
-
-    // Step 1: Unmount the story card to trigger its exit animations
+    // The card sinks back out of the screen and the shadow lifts off the
+    // shelf; the book beneath the card stays hidden -- nothing flies back
+    transitionOpacity.value = 0;
     setPhase('flying');
-
-    // Step 2: Wait for the exit animations to complete
-    await new Promise(resolve => setTimeout(resolve, 280));
+    overlayOpacity.value = withTiming(0, {
+      duration: STORY_DETAIL_OPENING.sheetRiseMs,
+      easing: Easing.out(Easing.quad)
+    });
+    await new Promise(resolve => setTimeout(resolve, STORY_DETAIL_OPENING.sheetRiseMs + 40));
 
     // If we rotated for this transition, rotate back to portrait first
     if (wasRotatedForTransition.current && originalCardPosition) {
       log.debug('Cancel: rotating back to portrait');
       await returnToPortrait();
-      await new Promise(resolve => setTimeout(resolve, 150));
     }
 
-    const SLIDE_DURATION = 400;
-    const currentHeight = Dimensions.get('window').height;
-
-    // Slide book down off screen
-    transitionY.value = withTiming(currentHeight + 200, {
-      duration: SLIDE_DURATION,
-      easing: Easing.in(Easing.cubic)
-    });
-
-    // Wait for book to slide out, then slide background up
-    setTimeout(() => {
-      transitionOpacity.value = 0; // Hide the animated book (already off-screen)
-
-      overlayOpacity.value = withTiming(0, {
-        duration: SLIDE_DURATION,
-        easing: Easing.out(Easing.quad)
-      });
-
-      // Complete -resetTransition will clear selectedStoryId and unmount overlay
-      setTimeout(() => {
-        resetTransition();
-      }, SLIDE_DURATION + 50);
-    }, SLIDE_DURATION);
+    resetTransition();
   };
 
   const resetTransition = () => {

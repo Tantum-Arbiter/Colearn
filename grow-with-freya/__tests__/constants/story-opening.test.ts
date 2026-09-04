@@ -8,7 +8,7 @@
  * book re-entering afterwards rather than jumping.
  */
 
-import { STORY_DETAIL_OPENING, STORY_OPENING, heroFadeDelay, needsGuidedTurn, openingSeat, placementIsStale, seatTransform, storyOpeningTimeline, type OpeningStepName } from '@/constants/story-opening';
+import { STORY_DETAIL_OPENING, STORY_OPENING, needsGuidedTurn, openingSeat, placementIsStale, seatTransform, storyOpeningTimeline, type OpeningStepName } from '@/constants/story-opening';
 
 function names(needsRotation: boolean): OpeningStepName[] {
   return storyOpeningTimeline(needsRotation).steps.map((step) => step.name);
@@ -220,28 +220,16 @@ describe('seatTransform', () => {
   });
 });
 
-describe('tile to detail', () => {
-  it('should have the sheet rising while the book is still in flight', () => {
-    const underTest = STORY_DETAIL_OPENING.sheetMountAt;
-
-    expect(underTest).toBeGreaterThan(0);
-    expect(underTest).toBeLessThan(STORY_DETAIL_OPENING.liftMs);
+describe('tile to card', () => {
+  it('should have the shadow settled by the time the card has risen', () => {
+    expect(STORY_DETAIL_OPENING.groundFadeMs).toBeLessThanOrEqual(STORY_DETAIL_OPENING.sheetRiseMs);
   });
 
-  it('should fade the sheet\'s hero in only once the book has landed', () => {
-    const heroStartsAt = STORY_DETAIL_OPENING.sheetMountAt + heroFadeDelay();
+  it('should be over well within a second, buttons included', () => {
+    const { sheetRiseMs, staggerMs, contentMs } = STORY_DETAIL_OPENING;
 
-    expect(heroStartsAt).toBeGreaterThanOrEqual(STORY_DETAIL_OPENING.liftMs);
-  });
+    const underTest = Math.max(sheetRiseMs, 2 * staggerMs + contentMs);
 
-  it('should have the ground faded in before the book lands', () => {
-    expect(STORY_DETAIL_OPENING.groundFadeMs).toBeLessThanOrEqual(STORY_DETAIL_OPENING.liftMs);
-  });
-
-  it('should be over within a second, buttons included', () => {
-    const { sheetMountAt, sheetRiseMs, staggerMs, contentMs } = STORY_DETAIL_OPENING;
-    const lastContentSettles = sheetMountAt + Math.max(sheetRiseMs, 3 * staggerMs + contentMs);
-
-    expect(lastContentSettles).toBeLessThan(1000);
+    expect(underTest).toBeLessThan(700);
   });
 });

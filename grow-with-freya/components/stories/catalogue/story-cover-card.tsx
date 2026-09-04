@@ -13,7 +13,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { CatalogEntry, STORY_TAGS, getLocalizedText } from '@/types/story';
 import type { SupportedLanguage } from '@/services/i18n';
-import { BORDER_DEFAULT, NIGHT_DEEP, NIGHT_VOID, TEXT_PRIMARY } from '@/constants/night-palette';
+import { NIGHT_DEEP, NIGHT_VOID, TEXT_PRIMARY } from '@/constants/night-palette';
 import { Fonts } from '@/constants/theme';
 import { CHILD_UI_MOTION, CHILD_UI_SCALE, motionDuration } from '@/constants/child-ui-motion';
 import { useAccessibility } from '@/hooks/use-accessibility';
@@ -30,6 +30,7 @@ import { CatalogueStory } from './catalogue-story';
 import { StoryOpenHandler } from './featured-story-card';
 import { StoryPlayButton } from './story-play-button';
 import { useCatalogueDownload } from './use-catalogue-download';
+import { BookFrame } from './book-frame';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
@@ -142,12 +143,13 @@ export function StoryCoverCard({
 
   if (hidden) {
     return (
-      <View ref={cardRef} collapsable={false} style={[styles.card, styles.hidden, { width, height }]} />
+      <View ref={cardRef} collapsable={false} style={[styles.hidden, { width, height }]} />
     );
   }
 
   return (
     <Animated.View ref={cardRef} collapsable={false} style={pressAnimatedStyle}>
+      <BookFrame width={width} height={height} radius={RADIUS_CARD} testID={`${testID ?? `story-cover-card-${story.id}`}-book`}>
       <Pressable
         testID={testID ?? `story-cover-card-${story.id}`}
         accessibilityRole="button"
@@ -157,7 +159,7 @@ export function StoryCoverCard({
         onPressOut={handlePressOut}
         onLongPress={handleLongPress}
         delayLongPress={400}
-        style={[styles.card, { width, height }]}
+        style={styles.card}
       >
         {artworkSource ? (
           <Image
@@ -269,6 +271,7 @@ export function StoryCoverCard({
           </>
         )}
       </Pressable>
+      </BookFrame>
     </Animated.View>
   );
 }
@@ -278,9 +281,8 @@ const styles = StyleSheet.create({
     opacity: 0,
   },
   card: {
-    borderRadius: RADIUS_CARD,
-    borderWidth: 1,
-    borderColor: BORDER_DEFAULT,
+    width: '100%',
+    height: '100%',
     backgroundColor: NIGHT_DEEP,
     overflow: 'hidden',
   },

@@ -29,7 +29,7 @@ describe('FeaturedStoryCard', () => {
   it('opens the story when the card itself is tapped', () => {
     const onOpen = jest.fn();
     const model = fromStory(story());
-    const tree = render(<FeaturedStoryCard story={model} language="en" onOpen={onOpen} />);
+    const tree = render(<FeaturedStoryCard story={model} width={340} language="en" onOpen={onOpen} />);
 
     fireEvent.press(byTestId(tree, 'featured-story-card')[0]);
 
@@ -38,7 +38,7 @@ describe('FeaturedStoryCard', () => {
 
   it('opens the story from the Read button too', () => {
     const onOpen = jest.fn();
-    const tree = render(<FeaturedStoryCard story={fromStory(story())} language="en" onOpen={onOpen} />);
+    const tree = render(<FeaturedStoryCard story={fromStory(story())} width={340} language="en" onOpen={onOpen} />);
 
     fireEvent.press(byTestId(tree, 'story-play-featured')[0]);
 
@@ -46,14 +46,14 @@ describe('FeaturedStoryCard', () => {
   });
 
   it('caps the title at two lines', () => {
-    const tree = render(<FeaturedStoryCard story={fromStory(story())} language="en" onOpen={jest.fn()} />);
+    const tree = render(<FeaturedStoryCard story={fromStory(story())} width={340} language="en" onOpen={jest.fn()} />);
 
     expect(byTestId(tree, 'featured-story-title')[0].props.numberOfLines).toBe(2);
   });
 
   it('shows the localised title for the active language', () => {
     const model = fromStory(story({ localizedTitle: { en: 'Snuggle Little Wombat', fr: 'Petit wombat câlin' } }));
-    const tree = render(<FeaturedStoryCard story={model} language="fr" onOpen={jest.fn()} />);
+    const tree = render(<FeaturedStoryCard story={model} width={340} language="fr" onOpen={jest.fn()} />);
 
     expect(byTestId(tree, 'featured-story-title')[0].props.children).toBe('Petit wombat câlin');
   });

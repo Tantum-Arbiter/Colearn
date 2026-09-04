@@ -1,9 +1,18 @@
-import React, { RefObject, useCallback, useEffect, useRef, useState } from 'react';
+import React, { RefObject, useCallback, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView, NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import Animated, { FadeIn, FadeInDown, FadeOut, Easing } from 'react-native-reanimated';
+import Animated, {
+  Easing,
+  FadeInDown,
+  SlideInDown,
+  SlideOutDown,
+  interpolate,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useSharedValue,
+} from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 import { Story, getLocalizedText } from '@/types/story';
@@ -13,7 +22,7 @@ import type { ReadingMode } from '@/contexts/story-transition-context';
 import { StoryDownloadService } from '@/services/story-download-service';
 import { Fonts } from '@/constants/theme';
 import { useAccessibility } from '@/hooks/use-accessibility';
-import { STORY_DETAIL_OPENING, heroFadeDelay } from '@/constants/story-opening';
+import { STORY_DETAIL_OPENING } from '@/constants/story-opening';
 import { STORY_CARD, cardIndexAtOffset, type StoryCardLayout } from '@/constants/story-card';
 
 export interface StoryCardSheetProps {
@@ -47,6 +56,13 @@ export const MODE_OPTIONS: ModeOption[] = [
   { mode: 'record', labelKey: 'storyDetail.record', icon: 'mic-outline' },
 ];
 
+/** How far a card that is not the chosen one drops back, and how much it shrinks and darkens. */
+export const CARD_REST = {
+  drop: 26,
+  scale: 0.94,
+  shade: 0.5,
+} as const;
+
 export function StoryCardSheet({
   stories,
   initialIndex,
@@ -66,7 +82,11 @@ export function StoryCardSheet({
   const { scaledFontSize, scaledButtonSize, scaledPadding } = useAccessibility();
   const currentLanguage = i18n.language as SupportedLanguage;
   const [index, setIndex] = useState(initialIndex);
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollX = useSharedValue(initialIndex * layout.step);
+
+  const onScroll = useAnimatedScrollHandler((event) => {
+    scrollX.value = event.contentOffset.x;
+  });
 
   const modeRefs: Record<ReadingMode, RefObject<View | null> | undefined> = {
     read: readButtonRef,
@@ -83,9 +103,14 @@ export function StoryCardSheet({
   }, [index, layout.step, stories, onStoryChange]);
 
   return (
-    <View style={styles.container} pointerEvents="box-none" testID="story-card-sheet">
-      <ScrollView
-        ref={scrollRef}
+    <Animated.View
+      entering={SlideInDown.duration(STORY_DETAIL_OPENING.sheetRiseMs).easing(Easing.out(Easing.cubic))}
+      exiting={SlideOutDown.duration(280).easing(Easing.in(Easing.cubic))}
+      style={styles.container}
+      pointerEvents="box-none"
+      testID="story-card-sheet"
+    >
+      <Animated.ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         snapToInterval={layout.step}
@@ -93,6 +118,8 @@ export function StoryCardSheet({
         decelerationRate="fast"
         contentOffset={{ x: initialIndex * layout.step, y: 0 }}
         contentContainerStyle={{ paddingHorizontal: layout.edgePadding, paddingTop: layout.y }}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
         onMomentumScrollEnd={settleOn}
         style={styles.carousel}
         testID="story-card-carousel"
@@ -101,9 +128,10 @@ export function StoryCardSheet({
           <StoryCard
             key={story.id}
             story={story}
+            index={i}
+            scrollX={scrollX}
             layout={layout}
             isCurrent={i === index}
-            isTapped={i === initialIndex}
             isLast={i === stories.length - 1}
             isFavorite={i === index ? isFavorite : false}
             currentLanguage={currentLanguage}
@@ -119,16 +147,17 @@ export function StoryCardSheet({
             onToggleFavorite={onToggleFavorite}
           />
         ))}
-      </ScrollView>
-    </View>
+      </Animated.ScrollView>
+    </Animated.View>
   );
 }
 
 interface StoryCardProps {
   story: Story;
+  index: number;
+  scrollX: { value: number };
   layout: StoryCardLayout;
   isCurrent: boolean;
-  isTapped: boolean;
   isLast: boolean;
   isFavorite: boolean;
   currentLanguage: SupportedLanguage;
@@ -146,9 +175,10 @@ interface StoryCardProps {
 
 function StoryCard({
   story,
+  index,
+  scrollX,
   layout,
   isCurrent,
-  isTapped,
   isLast,
   isFavorite,
   currentLanguage,
@@ -179,6 +209,22 @@ function StoryCard({
     };
   }, [story.id]);
 
+  // The chosen card stands proud; the others sit back, smaller and in shadow,
+  // following the finger continuously as the shelf is swiped
+  const step = layout.step;
+  const raiseStyle = useAnimatedStyle(() => {
+    const distance = Math.min(1, Math.abs(scrollX.value / step - index));
+    return {
+      transform: [
+        { translateY: interpolate(distance, [0, 1], [0, CARD_REST.drop]) },
+        { scale: interpolate(distance, [0, 1], [1, CARD_REST.scale]) },
+      ],
+    };
+  });
+  const shadeStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(Math.min(1, Math.abs(scrollX.value / step - index)), [0, 1], [0, CARD_REST.shade]),
+  }));
+
   const displayTitle = getLocalizedText(story.localizedTitle, story.title, currentLanguage);
   const displayDescription = getLocalizedText(story.localizedDescription, story.description || '', currentLanguage);
   const themeChips = storyThemeChips(story);
@@ -189,16 +235,8 @@ function StoryCard({
   );
   const coverSource = typeof story.coverImage === 'string' ? { uri: story.coverImage } : story.coverImage;
 
-  // The tapped card's cover waits for the flying book to land on it before
-  // fading in over it; every other card is simply there when swiped to.
-  const coverEntering = isTapped
-    ? FadeIn.delay(heroFadeDelay()).duration(STORY_DETAIL_OPENING.heroFadeMs)
-    : FadeIn.duration(1);
-
   return (
     <Animated.View
-      entering={FadeIn.duration(STORY_DETAIL_OPENING.sheetRiseMs).easing(Easing.out(Easing.cubic))}
-      exiting={FadeOut.duration(200)}
       style={[
         styles.card,
         {
@@ -207,21 +245,20 @@ function StoryCard({
           marginRight: isLast ? 0 : STORY_CARD.gap,
           borderRadius: STORY_CARD.radius,
         },
+        raiseStyle,
       ]}
       testID={`story-card-${story.id}`}
     >
       <View style={[styles.cover, { height: layout.coverHeight }]}>
-        <Animated.View entering={coverEntering} style={StyleSheet.absoluteFill}>
-          {coverSource && (
-            <ExpoImage source={coverSource} style={StyleSheet.absoluteFill} contentFit="cover" cachePolicy="memory-disk" priority="high" />
-          )}
-          <LinearGradient
-            colors={['rgba(19, 26, 63, 0)', 'rgba(19, 26, 63, 0)', 'rgba(19, 26, 63, 0.7)', '#131A3F']}
-            locations={[0, 0.55, 0.85, 1]}
-            style={StyleSheet.absoluteFill}
-            pointerEvents="none"
-          />
-        </Animated.View>
+        {coverSource && (
+          <ExpoImage source={coverSource} style={StyleSheet.absoluteFill} contentFit="cover" cachePolicy="memory-disk" priority="high" />
+        )}
+        <LinearGradient
+          colors={['rgba(19, 26, 63, 0)', 'rgba(19, 26, 63, 0)', 'rgba(19, 26, 63, 0.7)', '#131A3F']}
+          locations={[0, 0.55, 0.85, 1]}
+          style={StyleSheet.absoluteFill}
+          pointerEvents="none"
+        />
 
         <View style={styles.coverBar} pointerEvents="box-none">
           <Pressable
@@ -256,124 +293,112 @@ function StoryCard({
       </View>
 
       <ScrollView
-
-
         style={styles.bodyScroll}
-
-
         contentContainerStyle={styles.bodyContent}
-
-
         showsVerticalScrollIndicator={false}
-
-
         bounces={false}
-
-
         scrollEnabled={isCurrent}
-
-
       >
+        <Animated.View entering={FadeInDown.delay(STORY_DETAIL_OPENING.staggerMs).duration(STORY_DETAIL_OPENING.contentMs)} style={styles.body}>
+          <Text style={[styles.title, { fontSize: scaledFontSize(22) }]} numberOfLines={2}>{displayTitle}</Text>
 
-
-      <Animated.View entering={FadeInDown.delay(STORY_DETAIL_OPENING.staggerMs).duration(STORY_DETAIL_OPENING.contentMs)} style={styles.body}>
-        <Text style={[styles.title, { fontSize: scaledFontSize(22) }]} numberOfLines={2}>{displayTitle}</Text>
-
-        <View style={styles.metaRow}>
-          {typeof story.duration === 'number' && (
-            <View style={styles.metaPill}>
-              <Ionicons name="time-outline" size={scaledFontSize(12)} color="rgba(255,255,255,0.8)" />
-              <Text style={[styles.metaText, { fontSize: scaledFontSize(12) }]}>{t('storyDetail.minutes', { count: story.duration })}</Text>
-            </View>
-          )}
-          {story.ageRange && (
-            <View style={styles.metaPill}>
-              <Ionicons name="people-outline" size={scaledFontSize(12)} color="rgba(255,255,255,0.8)" />
-              <Text style={[styles.metaText, { fontSize: scaledFontSize(12) }]}>{t('storyDetail.ages', { range: story.ageRange })}</Text>
-            </View>
-          )}
-          {hasInteractiveContent && (
-            <View style={styles.metaPill}>
-              <Ionicons name="sparkles-outline" size={scaledFontSize(12)} color="rgba(255,255,255,0.8)" />
-              <Text style={[styles.metaText, { fontSize: scaledFontSize(12) }]}>{t('storyDetail.interactive')}</Text>
-            </View>
-          )}
-        </View>
-
-        {displayDescription.length > 0 && (
-          <Text style={[styles.description, { fontSize: scaledFontSize(13) }]} numberOfLines={2}>{displayDescription}</Text>
-        )}
-
-        <View style={styles.chipRow}>
-          {themeChips.map((chip) => (
-            <View
-              key={chip.id}
-              testID={`story-theme-chip-${chip.id}`}
-              style={[styles.categoryChip, { backgroundColor: `${chip.color}33`, borderColor: `${chip.color}66` }]}
-            >
-              <Ionicons name={chip.icon} size={scaledFontSize(12)} color={chip.color} />
-              <Text style={[styles.categoryChipText, { fontSize: scaledFontSize(11) }]}>{t(chip.labelKey)}</Text>
-            </View>
-          ))}
-        </View>
-      </Animated.View>
-
-      <Animated.View entering={FadeInDown.delay(STORY_DETAIL_OPENING.staggerMs * 2).duration(STORY_DETAIL_OPENING.contentMs)} style={styles.actions}>
-        <View ref={modeRefs?.read} collapsable={false}>
-          <Pressable
-            style={[styles.primaryButton, { borderRadius: scaledButtonSize(24), paddingVertical: scaledPadding(14) }]}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              onChooseMode('read');
-            }}
-            accessibilityLabel={t('storyDetail.readTogether')}
-            testID="story-card-mode-read"
-          >
-            <Ionicons name="book" size={scaledFontSize(18)} color="#FFFFFF" />
-            <Text style={[styles.primaryText, { fontSize: scaledFontSize(15) }]}>{t('storyDetail.readTogether')}</Text>
-          </Pressable>
-        </View>
-
-        <View ref={modeRefs?.narrate} collapsable={false}>
-          <Pressable
-            style={[styles.secondaryButton, { borderRadius: scaledButtonSize(24), paddingVertical: scaledPadding(12) }]}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              onChooseMode('narrate');
-            }}
-            accessibilityLabel={t('storyDetail.playAlong')}
-            testID="story-card-mode-narrate"
-          >
-            <Ionicons name="volume-medium-outline" size={scaledFontSize(18)} color="#FFFFFF" />
-            <Text style={[styles.secondaryText, { fontSize: scaledFontSize(14) }]}>{t('storyDetail.playAlong')}</Text>
-          </Pressable>
-        </View>
-
-        <View style={styles.divider} />
-
-        <View ref={modeRefs?.record} collapsable={false}>
-          <Pressable
-            style={[styles.tertiaryButton, { paddingVertical: scaledPadding(10) }]}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              onChooseMode('record');
-            }}
-            accessibilityLabel={t('storyDetail.record')}
-            testID="story-card-mode-record"
-          >
-            <Ionicons name="mic-outline" size={scaledFontSize(16)} color="rgba(255,255,255,0.85)" />
-            <Text style={[styles.tertiaryText, { fontSize: scaledFontSize(13) }]}>{t('storyDetail.record')}</Text>
-          </Pressable>
-        </View>
-
-        {isSavedOffline && (
-          <View style={styles.offlineRow}>
-            <Ionicons name="checkmark-circle" size={scaledFontSize(14)} color="#7ED9A7" />
-            <Text style={[styles.offlineText, { fontSize: scaledFontSize(12) }]}>{t('storyDetail.savedOffline')}</Text>
+          <View style={styles.metaRow}>
+            {typeof story.duration === 'number' && (
+              <View style={styles.metaPill}>
+                <Ionicons name="time-outline" size={scaledFontSize(12)} color="rgba(255,255,255,0.8)" />
+                <Text style={[styles.metaText, { fontSize: scaledFontSize(12) }]}>{t('storyDetail.minutes', { count: story.duration })}</Text>
+              </View>
+            )}
+            {story.ageRange && (
+              <View style={styles.metaPill}>
+                <Ionicons name="people-outline" size={scaledFontSize(12)} color="rgba(255,255,255,0.8)" />
+                <Text style={[styles.metaText, { fontSize: scaledFontSize(12) }]}>{t('storyDetail.ages', { range: story.ageRange })}</Text>
+              </View>
+            )}
+            {hasInteractiveContent && (
+              <View style={styles.metaPill}>
+                <Ionicons name="sparkles-outline" size={scaledFontSize(12)} color="rgba(255,255,255,0.8)" />
+                <Text style={[styles.metaText, { fontSize: scaledFontSize(12) }]}>{t('storyDetail.interactive')}</Text>
+              </View>
+            )}
           </View>
-        )}
-      </Animated.View>
+
+          {displayDescription.length > 0 && (
+            <Text style={[styles.description, { fontSize: scaledFontSize(13) }]} numberOfLines={2}>{displayDescription}</Text>
+          )}
+
+          <View style={styles.chipRow}>
+            {themeChips.map((chip) => (
+              <View
+                key={chip.id}
+                testID={`story-theme-chip-${chip.id}`}
+                style={[styles.categoryChip, { backgroundColor: `${chip.color}33`, borderColor: `${chip.color}66` }]}
+              >
+                <Ionicons name={chip.icon} size={scaledFontSize(12)} color={chip.color} />
+                <Text style={[styles.categoryChipText, { fontSize: scaledFontSize(11) }]}>{t(chip.labelKey)}</Text>
+              </View>
+            ))}
+          </View>
+        </Animated.View>
+
+        <Animated.View entering={FadeInDown.delay(STORY_DETAIL_OPENING.staggerMs * 2).duration(STORY_DETAIL_OPENING.contentMs)} style={styles.actions}>
+          <View ref={modeRefs?.read} collapsable={false}>
+            <Pressable
+              style={[styles.primaryButton, { borderRadius: scaledButtonSize(24), paddingVertical: scaledPadding(14) }]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                onChooseMode('read');
+              }}
+              accessibilityLabel={t('storyDetail.readTogether')}
+              testID="story-card-mode-read"
+            >
+              <Ionicons name="book" size={scaledFontSize(18)} color="#FFFFFF" />
+              <Text style={[styles.primaryText, { fontSize: scaledFontSize(15) }]}>{t('storyDetail.readTogether')}</Text>
+            </Pressable>
+          </View>
+
+          <View ref={modeRefs?.narrate} collapsable={false}>
+            <Pressable
+              style={[styles.secondaryButton, { borderRadius: scaledButtonSize(24), paddingVertical: scaledPadding(12) }]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                onChooseMode('narrate');
+              }}
+              accessibilityLabel={t('storyDetail.playAlong')}
+              testID="story-card-mode-narrate"
+            >
+              <Ionicons name="volume-medium-outline" size={scaledFontSize(18)} color="#FFFFFF" />
+              <Text style={[styles.secondaryText, { fontSize: scaledFontSize(14) }]}>{t('storyDetail.playAlong')}</Text>
+            </Pressable>
+          </View>
+
+          <View style={styles.divider} />
+
+          <View ref={modeRefs?.record} collapsable={false}>
+            <Pressable
+              style={[styles.tertiaryButton, { paddingVertical: scaledPadding(10) }]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                onChooseMode('record');
+              }}
+              accessibilityLabel={t('storyDetail.record')}
+              testID="story-card-mode-record"
+            >
+              <Ionicons name="mic-outline" size={scaledFontSize(16)} color="rgba(255,255,255,0.85)" />
+              <Text style={[styles.tertiaryText, { fontSize: scaledFontSize(13) }]}>{t('storyDetail.record')}</Text>
+            </Pressable>
+          </View>
+
+          {isSavedOffline && (
+            <View style={styles.offlineRow}>
+              <Ionicons name="checkmark-circle" size={scaledFontSize(14)} color="#7ED9A7" />
+              <Text style={[styles.offlineText, { fontSize: scaledFontSize(12) }]}>{t('storyDetail.savedOffline')}</Text>
+            </View>
+          )}
+        </Animated.View>
       </ScrollView>
+
+      <Animated.View style={[styles.shade, shadeStyle]} pointerEvents="none" testID={`story-card-shade-${story.id}`} />
     </Animated.View>
   );
 }
@@ -396,6 +421,10 @@ const styles = StyleSheet.create({
     shadowRadius: 28,
     elevation: 14,
     alignSelf: 'flex-start',
+  },
+  shade: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#04091F',
   },
   cover: {
     width: '100%',
@@ -424,6 +453,12 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.18)',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  bodyScroll: {
+    flex: 1,
+  },
+  bodyContent: {
+    paddingBottom: 16,
   },
   body: {
     paddingHorizontal: 18,
@@ -466,12 +501,6 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 6,
     marginBottom: 12,
-  },
-  bodyScroll: {
-    flex: 1,
-  },
-  bodyContent: {
-    paddingBottom: 16,
   },
   categoryChip: {
     flexDirection: 'row',

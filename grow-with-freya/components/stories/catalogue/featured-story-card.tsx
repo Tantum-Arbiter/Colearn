@@ -5,7 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming, Easing } from 'react-native-reanimated';
 import { getLocalizedText } from '@/types/story';
 import type { SupportedLanguage } from '@/services/i18n';
-import { BORDER_DEFAULT, NIGHT_DEEP, NIGHT_VOID, TEXT_PRIMARY } from '@/constants/night-palette';
+import { NIGHT_DEEP, NIGHT_VOID, TEXT_PRIMARY } from '@/constants/night-palette';
 import { Fonts } from '@/constants/theme';
 import { CHILD_UI_MOTION, CHILD_UI_SCALE, motionDuration } from '@/constants/child-ui-motion';
 import { useAccessibility } from '@/hooks/use-accessibility';
@@ -19,6 +19,7 @@ import {
 } from '@/components/child-ui/tokens';
 import { CatalogueStory } from './catalogue-story';
 import { StoryPlayButton } from './story-play-button';
+import { BookFrame } from './book-frame';
 
 const TITLE_INSET = 24;
 const TITLE_WASH_GRADIENT = ['rgba(4, 16, 47, 0.55)', 'rgba(4, 16, 47, 0.0)'] as const;
@@ -29,18 +30,21 @@ export interface StoryOpenHandler {
 
 interface FeaturedStoryCardProps {
   story: CatalogueStory;
+  /** The width the book is given on the shelf. */
+  width: number;
   language: SupportedLanguage;
   onOpen: StoryOpenHandler;
   hidden?: boolean;
   testID?: string;
 }
 
-export function FeaturedStoryCard({ story, language, onOpen, hidden = false, testID = 'featured-story-card' }: FeaturedStoryCardProps) {
+export function FeaturedStoryCard({ story, width, language, onOpen, hidden = false, testID = 'featured-story-card' }: FeaturedStoryCardProps) {
   const { isTablet, scaledFontSize } = useAccessibility();
   const reduceMotion = useReducedMotion();
   const cardRef = useRef<View>(null);
   const pressScale = useSharedValue(1);
   const title = getLocalizedText(story.title, story.title.en, language);
+  const height = Math.round(width / FEATURED_ASPECT_RATIO);
 
   const duration = motionDuration(CHILD_UI_MOTION.cardTap, reduceMotion);
 
@@ -62,6 +66,7 @@ export function FeaturedStoryCard({ story, language, onOpen, hidden = false, tes
 
   return (
     <Animated.View ref={cardRef} collapsable={false} style={[animatedStyle, hidden && styles.hidden]}>
+      <BookFrame width={width} height={height} radius={RADIUS_LARGE} testID={`${testID}-book`}>
       <Pressable
         testID={testID}
         accessibilityRole="button"
@@ -103,6 +108,7 @@ export function FeaturedStoryCard({ story, language, onOpen, hidden = false, tes
           <StoryPlayButton variant="featured" onPress={handleOpen} accessibilityLabel={title} />
         </View>
       </Pressable>
+      </BookFrame>
     </Animated.View>
   );
 }
@@ -113,10 +119,7 @@ const styles = StyleSheet.create({
   },
   card: {
     width: '100%',
-    aspectRatio: FEATURED_ASPECT_RATIO,
-    borderRadius: RADIUS_LARGE,
-    borderWidth: 1,
-    borderColor: BORDER_DEFAULT,
+    height: '100%',
     backgroundColor: NIGHT_DEEP,
     overflow: 'hidden',
   },

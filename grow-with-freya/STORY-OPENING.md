@@ -30,29 +30,31 @@ Total: about 1.6s on a tablet, about 2.6s on a phone including the turn.
 
 ## Tile to card
 
-Tapping a tile no longer opens a full page. A story card rises from the bottom of the screen
-over the shelf, which stays visible behind it but shadowed -- the cover on top, the ways to
-read stacked beneath: Read Together, then Play Along, then Record as a quiet link -- and the
-child can swipe along the shelf without leaving it, the neighbours peeking in either side.
-Choosing a way to read opens the book from right there.
+Tapping a tile does not fly anything. The shelf falls into shadow and a story card rises from
+the bottom of the screen with the tapped book already on its cover; the title, meta and
+buttons follow in turn. Closing it, the card sinks and the shadow lifts. The books on the shelf
+are drawn as books (`components/stories/catalogue/book-frame.tsx`): a spine down the left, the
+block of pages along the right, square corners against the spine and rounded at the fore-edge.
 
 | From | What happens |
 |---|---|
-| 0ms | The book lifts out of the shelf and decelerates onto the card's cover (620ms), fitted inside it whatever shape the tile was. A navy ground fades in beneath (420ms), leaving the shelf faintly visible. |
-| 300ms | The card rises around the book while it is still in flight; title, meta, chips and buttons follow in turn. |
-| 620ms | The book lands. The card's own cover fades in over it (220ms) and the flying book is then hidden, so swiping to a neighbour reveals nothing beneath. |
+| 0ms | The shadow settles over the shelf (320ms) and the card rises into place (420ms). |
+| 60ms / 120ms | Title, meta and chips, then the buttons, fade up in turn. |
 
 The card (`constants/story-card.ts`) is anchored to the bottom safe area, the screen width
 less a margin on a phone and capped at 520pt on a tablet, so a tablet gets a card too rather
 than a page. Its body is a fixed height so the cover's position is known before the card
-exists -- the flight needs it -- and larger type scrolls within the body; on a short screen
-the cover gives up height to stay clear of the status bar. The carousel snaps one
-card at a time with the neighbours peeking in; settling on another book makes it the selected
-story. Choosing a way to read -- Read Together, Play Along, Record -- puts the flying book
-back on the cover, fades the card away and carries the book onwards: to the rotate prompt on a
-phone held upright, straight into the opening otherwise. Closing the card flies the book back
-to its tile if it is still the book that was tapped; a swiped-to book has no tile, so the card
-simply fades.
+exists; larger type scrolls within the body, and on a short screen the cover gives up height
+to stay clear of the status bar.
+
+The carousel snaps one card at a time. The chosen card stands proud; the others sit back
+lower, a little smaller and in shadow, following the finger continuously as the shelf is
+swiped (`CARD_REST`). Settling on another book makes it the selected story.
+
+Choosing a way to read -- Read Together, Play Along, Record -- is where the book animation
+begins. The transition's own book has been waiting, hidden, on the very rect the card's cover
+occupies; the card fades, the book is revealed there, and it is carried onwards: to the rotate
+prompt on a phone held upright, straight into the opening otherwise.
 
 ## Orientation, by device
 

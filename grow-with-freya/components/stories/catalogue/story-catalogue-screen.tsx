@@ -68,6 +68,7 @@ const FILTER_TAG_SET: StoryFilterTag[] = [
 ];
 
 const COVER_COLUMNS = 3;
+const FEATURED_MAX_WIDTH = 560;
 const LIBRARY_RECENT_LIMIT = 6;
 
 interface StoryCatalogueScreenProps {
@@ -404,6 +405,13 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode }: StoryCatalo
   const contentWidth = windowWidth - margin * 2;
   const gridAreaWidth = isLandscapeTablet ? (contentWidth - SPACE_5) * 0.55 : contentWidth;
   const coverWidth = Math.floor((gridAreaWidth - COVER_GRID_GAP * (COVER_COLUMNS - 1)) / COVER_COLUMNS);
+  // The featured book's width on the shelf: its own column on a landscape
+  // tablet, capped on a portrait one, the full content width on a phone
+  const featuredWidth = isLandscapeTablet
+    ? Math.floor((contentWidth - SPACE_5) * 0.45)
+    : isTablet
+      ? Math.min(contentWidth, FEATURED_MAX_WIDTH)
+      : contentWidth;
 
   const isCardHidden = useCallback((storyId: string) =>
     interactionLocked && selectedStoryId === storyId,
@@ -437,6 +445,7 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode }: StoryCatalo
       <View style={isTablet && !isLandscapeTablet ? styles.featuredCapped : undefined}>
         <FeaturedStoryCard
           story={featured}
+          width={featuredWidth}
           language={currentLanguage}
           onOpen={handleOpenStory}
           hidden={isCardHidden(featured.id)}
@@ -634,7 +643,7 @@ const styles = StyleSheet.create({
   featuredCapped: {
     alignSelf: 'center',
     width: '100%',
-    maxWidth: 560,
+    maxWidth: FEATURED_MAX_WIDTH,
   },
   coverGrid: {
     flexDirection: 'row',
