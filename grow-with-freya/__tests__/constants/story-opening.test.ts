@@ -8,7 +8,7 @@
  * book re-entering afterwards rather than jumping.
  */
 
-import { STORY_OPENING, needsGuidedTurn, openingSeat, storyOpeningTimeline, type OpeningStepName } from '@/constants/story-opening';
+import { STORY_OPENING, needsGuidedTurn, openingSeat, placementIsStale, storyOpeningTimeline, type OpeningStepName } from '@/constants/story-opening';
 
 function names(needsRotation: boolean): OpeningStepName[] {
   return storyOpeningTimeline(needsRotation).steps.map((step) => step.name);
@@ -152,5 +152,34 @@ describe('needsGuidedTurn', () => {
     const underTest = needsGuidedTurn({ isTablet: true, width: 402, height: 874 });
 
     expect(underTest).toBe(false);
+  });
+});
+
+describe('placementIsStale', () => {
+  const PORTRAIT = { width: 402, height: 874 };
+  const LANDSCAPE = { width: 874, height: 402 };
+
+  it('should hold on the screen the book was placed against', () => {
+    const underTest = placementIsStale(PORTRAIT, PORTRAIT);
+
+    expect(underTest).toBe(false);
+  });
+
+  it('should not survive the child turning the phone', () => {
+    const underTest = placementIsStale(PORTRAIT, LANDSCAPE);
+
+    expect(underTest).toBe(true);
+  });
+
+  it('should treat a book that was never placed as needing one', () => {
+    const underTest = placementIsStale(null, PORTRAIT);
+
+    expect(underTest).toBe(true);
+  });
+
+  it('should notice a screen that changed on only one side', () => {
+    const underTest = placementIsStale(PORTRAIT, { width: 402, height: 800 });
+
+    expect(underTest).toBe(true);
   });
 });

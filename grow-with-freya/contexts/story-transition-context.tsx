@@ -33,7 +33,7 @@ import { useTutorial } from '@/contexts/tutorial-context';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppStore } from '@/store/app-store';
-import { STORY_OPENING, needsGuidedTurn, openingSeat } from '@/constants/story-opening';
+import { STORY_OPENING, needsGuidedTurn, openingSeat, placementIsStale } from '@/constants/story-opening';
 import { allowTurnForPrompt, applyDefaultOrientation } from '@/hooks/use-story-orientation';
 
 // Animation timing constants
@@ -147,6 +147,14 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   const [screenDimensions, setScreenDimensions] = useState(Dimensions.get('window'));
   // Track if we rotated to landscape for the current transition (to rotate back on cancel/exit)
   const wasRotatedForTransition = useRef(false);
+  // The screen the book's current transform was worked out for. A transform is
+  // only meaningful on the screen that produced it: turn the phone and the
+  // prompt's placement -- 42% down a portrait screen -- means nothing any more.
+  const transformScreenRef = useRef<{ width: number; height: number } | null>(null);
+  const noteTransformScreen = () => {
+    const { width, height } = Dimensions.get('window');
+    transformScreenRef.current = { width, height };
+  };
 
   // Store opening animation transform values so exit/cancel can use the EXACT same values
   // This prevents position mismatch when the book returns to the carousel
@@ -375,6 +383,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     const hero = computeHeroTransform(cardLayout, width, height);
     heroTransformRef.current = { moveX: hero.moveX, moveY: hero.moveY, scale: hero.scale };
     openingTransformRef.current = { moveX: hero.moveX, moveY: hero.moveY, scale: hero.scale };
+    noteTransformScreen();
     setTargetBookPosition(hero.rect);
 
     // Smooth bezier curve -gentle acceleration then long, soft deceleration
@@ -505,6 +514,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
     const prompt = computePromptTransform(cardPosition, dims.width, dims.height);
     openingTransformRef.current = { moveX: prompt.moveX, moveY: prompt.moveY, scale: prompt.scale };
+    noteTransformScreen();
     setTargetBookPosition(prompt.rect);
 
     // Small delay so the detail sheet's exit animation reveals the card mid-flight
@@ -541,6 +551,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     const hero = heroTransformRef.current;
     if (hero && cardPosition) {
       openingTransformRef.current = { ...hero };
+      noteTransformScreen();
       const heroRect = computeHeroTransform(cardPosition, screenWidth, screenHeight).rect;
       setTargetBookPosition(heroRect);
       const glide = Easing.out(Easing.cubic);
@@ -614,16 +625,35 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     const needsRotation = needsGuidedTurn({ isTablet, width: dims.width, height: dims.height });
 
     if (!needsRotation && cardPosition) {
-      // Nothing to turn: glide into the opening seat while the book settles
+      // Nothing to turn: settle into the opening seat.
       const seat = openingSeat(dims, cardPosition);
       const moveX = dims.width / 2 - (cardPosition.x + cardPosition.width / 2);
       const moveY = dims.height / 2 - (cardPosition.y + cardPosition.height / 2);
-      const glide = { duration: STORY_OPENING.settleMs, easing: Easing.out(Easing.cubic) };
-      transitionX.value = withTiming(moveX, glide);
-      transitionY.value = withTiming(moveY, glide);
-      transitionScale.value = withTiming(seat.scale, glide);
+      // If the screen has changed shape since the book was placed -- the child
+      // turned the phone -- that placement is meaningless now, so seat the book
+      // outright rather than gliding it from somewhere it never really was.
+      const stale = placementIsStale(transformScreenRef.current, dims);
+
+      if (stale) {
+        transitionX.value = moveX;
+        transitionY.value = moveY;
+        transitionScale.value = seat.scale;
+      } else {
+        const glide = { duration: STORY_OPENING.settleMs, easing: Easing.out(Easing.cubic) };
+        transitionX.value = withTiming(moveX, glide);
+        transitionY.value = withTiming(moveY, glide);
+        transitionScale.value = withTiming(seat.scale, glide);
+      }
+
       openingTransformRef.current = { moveX, moveY, scale: seat.scale };
+      noteTransformScreen();
       setTargetBookPosition({ x: seat.x, y: seat.y, width: seat.width, height: seat.height });
+
+      if (stale) {
+        // Nothing to wait for: the book is already where it belongs
+        openBookIntoReader();
+        return;
+      }
     }
     await new Promise(resolve => setTimeout(resolve, STORY_OPENING.settleMs));
 
@@ -1241,6 +1271,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
       const hero = computeHeroTransform(originalCardPosition, portraitDims.width, portraitDims.height);
       heroTransformRef.current = { moveX: hero.moveX, moveY: hero.moveY, scale: hero.scale };
       openingTransformRef.current = { moveX: hero.moveX, moveY: hero.moveY, scale: hero.scale };
+    noteTransformScreen();
       setTargetBookPosition(hero.rect);
 
       transitionX.value = hero.moveX;

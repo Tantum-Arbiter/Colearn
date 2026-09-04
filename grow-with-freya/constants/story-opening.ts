@@ -104,3 +104,22 @@ export function needsGuidedTurn(device: {
 
   return device.width <= device.height;
 }
+
+/**
+ * Whether the book's recorded placement still means anything.
+ *
+ * A placement is worked out against one screen -- the rotate prompt seats the
+ * book 42% down a portrait phone. Turn the phone and that spot is somewhere
+ * else entirely, so the book must be seated outright rather than glided from a
+ * position it never really occupied.
+ */
+export function placementIsStale(
+  placedOn: { width: number; height: number } | null,
+  screen: { width: number; height: number }
+): boolean {
+  if (!placedOn) {
+    return true;
+  }
+
+  return placedOn.width !== screen.width || placedOn.height !== screen.height;
+}
