@@ -5,6 +5,14 @@ import { Logger } from '@/utils/logger';
 const log = Logger.create('TurnToLandscape');
 
 export const TURN_SAMPLES_REQUIRED = 3;
+/**
+ * iOS animates the interface round over roughly a third of a second, reporting
+ * the new size as it starts rather than when it lands. Opening the book on that
+ * first report ran the whole book-opening on top of the system's own rotation,
+ * and the two transforms compounded into a skewed, displaced book. So a turn is
+ * only acted on once the window has held the same size for this long.
+ */
+export const TURN_SETTLE_MS = 320;
 const UPDATE_INTERVAL_MS = 150;
 const LANDSCAPE_GRAVITY_MIN = 0.7;
 const CROSS_AXIS_GRAVITY_MAX = 0.5;
@@ -63,12 +71,33 @@ export function useTurnToLandscape({ enabled, onTurned }: UseTurnToLandscapeOpti
     if (!enabled) return;
 
     let hasFired = false;
+    let settleTimer: ReturnType<typeof setTimeout> | null = null;
 
     const fire = (reason: string) => {
       if (hasFired) return;
       hasFired = true;
       log.debug(`Opening the book: ${reason}`);
       onTurnedRef.current();
+    };
+
+    // Claim the turn straight away so nothing else fires meanwhile, then wait
+    // for the window to stop changing size before opening anything.
+    const fireOnceSettled = (reason: string) => {
+      if (hasFired || settleTimer !== null) return;
+
+      let lastSeen = Dimensions.get('window');
+      const check = () => {
+        const now = Dimensions.get('window');
+        if (now.width !== lastSeen.width || now.height !== lastSeen.height) {
+          lastSeen = now;
+          settleTimer = setTimeout(check, TURN_SETTLE_MS);
+          return;
+        }
+        settleTimer = null;
+        fire(reason);
+      };
+
+      settleTimer = setTimeout(check, TURN_SETTLE_MS);
     };
 
     // Already sideways -- a tablet the child is holding in landscape, or one
@@ -84,12 +113,24 @@ export function useTurnToLandscape({ enabled, onTurned }: UseTurnToLandscapeOpti
     // gravity says nothing about which way round it is.
     const dimensionsSubscription = Dimensions.addEventListener('change', () => {
       if (screenIsSideways()) {
-        fire('screen turned sideways');
+        fireOnceSettled('screen turned sideways');
       }
     });
 
     const accelerometer = accelerometerRef.current;
-    if (!accelerometer) return () => dimensionsSubscription?.remove?.();
+    const clearSettle = () => {
+      if (settleTimer !== null) {
+        clearTimeout(settleTimer);
+        settleTimer = null;
+      }
+    };
+
+    if (!accelerometer) {
+      return () => {
+        clearSettle();
+        dimensionsSubscription?.remove?.();
+      };
+    }
 
     let consecutiveLandscapeSamples = 0;
     let subscription: AccelerometerSubscription | null = null;
@@ -111,15 +152,21 @@ export function useTurnToLandscape({ enabled, onTurned }: UseTurnToLandscapeOpti
 
         consecutiveLandscapeSamples += 1;
         if (consecutiveLandscapeSamples >= TURN_SAMPLES_REQUIRED) {
-          fire('gravity says the device turned');
+          // Settled too: if the interface is free to follow, it is turning right
+          // now, and the book must not open on top of that
+          fireOnceSettled('gravity says the device turned');
         }
       });
     } catch (error) {
       log.warn('Accelerometer unavailable, falling back to the screen turning:', error);
-      return () => dimensionsSubscription?.remove?.();
+      return () => {
+        clearSettle();
+        dimensionsSubscription?.remove?.();
+      };
     }
 
     return () => {
+      clearSettle();
       subscription?.remove();
       dimensionsSubscription?.remove?.();
     };

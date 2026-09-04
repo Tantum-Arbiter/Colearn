@@ -13,7 +13,7 @@ import React from 'react';
 import { render, act } from '@testing-library/react-native';
 import { Accelerometer } from 'expo-sensors';
 import { RotatePromptOverlay, FALLBACK_DELAY_MS } from '@/components/stories/rotate-prompt-overlay';
-import { TURN_SAMPLES_REQUIRED } from '@/hooks/use-turn-to-landscape';
+import { TURN_SAMPLES_REQUIRED, TURN_SETTLE_MS } from '@/hooks/use-turn-to-landscape';
 
 const emitAccelerometer = (measurement: { x: number; y: number; z: number }) => {
   (Accelerometer as unknown as { __emit: (m: object) => void }).__emit(measurement);
@@ -62,13 +62,19 @@ describe('RotatePromptOverlay', () => {
     expect(findByText(UNSAFE_root, 'rotatePrompt.openWhenSideways').length).toBeGreaterThan(0);
   });
 
-  it('should fire onTurned when the device physically turns to landscape', () => {
+  it('should fire onTurned once the device has physically turned and settled', () => {
     render(<RotatePromptOverlay {...defaultProps} />);
 
     act(() => {
       for (let i = 0; i < TURN_SAMPLES_REQUIRED; i++) {
         emitAccelerometer({ x: 0.95, y: 0.05, z: 0.2 });
       }
+    });
+
+    expect(defaultProps.onTurned).not.toHaveBeenCalled();
+
+    act(() => {
+      jest.advanceTimersByTime(TURN_SETTLE_MS);
     });
 
     expect(defaultProps.onTurned).toHaveBeenCalledTimes(1);

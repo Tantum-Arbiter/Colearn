@@ -50,6 +50,11 @@ locks orientation goes through one of those two, so a tablet is never locked any
   overlaps the breath and the grow, and it is only revealed by the dissolve. Without this, the
   reader (which sits above the overlay) appeared the instant it had rendered and cut the grow
   short on any fast device.
+- **The turn is acted on only once the system has finished making it** (`TURN_SETTLE_MS`).
+  iOS reports the new window size as it *starts* animating the interface round, not when it
+  lands. Opening on that first report ran the whole book-opening on top of the system's own
+  rotation and the two transforms compounded, giving a skewed, displaced book. The turn is now
+  claimed immediately but acted on only after the window has held one size for 320ms.
 - **The phone is unlocked while it is being asked to turn** (`allowTurnForPrompt`). Without
   this the prompt was deaf to the very thing it asked for: iOS held the interface in portrait,
   so nothing about turning the phone reached the app except raw accelerometer gravity, which a

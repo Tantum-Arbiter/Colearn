@@ -13,13 +13,14 @@
  * 3. Fires onTurned after enough consecutive landscape-gravity samples
  * 4. Portrait samples never fire, and they reset a broken streak
  * 5. Fires exactly once per activation
- * 6. Subscribes only while enabled; cleans up on unmount
+ * 6. Waits for the system's own rotation to land before opening anything
+ * 7. Subscribes only while enabled; cleans up on unmount
  */
 
 import { Dimensions } from 'react-native';
 import { renderHook, act } from '@testing-library/react-native';
 import { Accelerometer } from 'expo-sensors';
-import { useTurnToLandscape, TURN_SAMPLES_REQUIRED } from '@/hooks/use-turn-to-landscape';
+import { useTurnToLandscape, TURN_SAMPLES_REQUIRED, TURN_SETTLE_MS } from '@/hooks/use-turn-to-landscape';
 
 const PORTRAIT_SCREEN = { width: 834, height: 1194, scale: 2, fontScale: 1 };
 const LANDSCAPE_SCREEN = { width: 1194, height: 834, scale: 2, fontScale: 1 };
@@ -28,14 +29,35 @@ function screenIs(size: typeof PORTRAIT_SCREEN) {
   jest.spyOn(Dimensions, 'get').mockReturnValue(size);
 }
 
-function turnScreen(size: typeof PORTRAIT_SCREEN) {
-  screenIs(size);
+function emitScreenChange(size: typeof PORTRAIT_SCREEN) {
   const handlers = (Dimensions.addEventListener as jest.Mock).mock.calls
     .filter(([event]) => event === 'change')
     .map(([, handler]) => handler);
   act(() => {
     handlers.forEach((handler) => handler({ window: size, screen: size }));
   });
+}
+
+/** The screen has turned and the system has finished animating it round. */
+function turnScreen(size: typeof PORTRAIT_SCREEN) {
+  screenIs(size);
+  emitScreenChange(size);
+  act(() => {
+    jest.advanceTimersByTime(TURN_SETTLE_MS);
+  });
+}
+
+/** Let any pending settle window elapse. */
+function settle() {
+  act(() => {
+    jest.advanceTimersByTime(TURN_SETTLE_MS);
+  });
+}
+
+/** The screen has begun turning; the system is still animating it round. */
+function turnScreenWithoutSettling(size: typeof PORTRAIT_SCREEN) {
+  screenIs(size);
+  emitScreenChange(size);
 }
 
 const emit = (measurement: { x: number; y: number; z: number }) => {
@@ -54,6 +76,11 @@ describe('useTurnToLandscape', () => {
     onTurned = jest.fn();
     jest.spyOn(Dimensions, 'addEventListener').mockReturnValue({ remove: jest.fn() } as never);
     screenIs(PORTRAIT_SCREEN);
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   afterEach(() => {
@@ -88,6 +115,45 @@ describe('useTurnToLandscape', () => {
       expect(onTurned).toHaveBeenCalledTimes(1);
     });
 
+    it('should let the system finish turning the screen before opening anything', () => {
+      jest.useFakeTimers();
+      renderHook(() => useTurnToLandscape({ enabled: true, onTurned }));
+
+      turnScreenWithoutSettling(LANDSCAPE_SCREEN);
+
+      expect(onTurned).not.toHaveBeenCalled();
+
+      act(() => {
+        jest.advanceTimersByTime(TURN_SETTLE_MS);
+      });
+
+      expect(onTurned).toHaveBeenCalledTimes(1);
+      jest.useRealTimers();
+    });
+
+    it('should keep waiting while the screen is still changing size', () => {
+      jest.useFakeTimers();
+      renderHook(() => useTurnToLandscape({ enabled: true, onTurned }));
+      turnScreenWithoutSettling({ ...LANDSCAPE_SCREEN, width: 900 });
+
+      act(() => {
+        jest.advanceTimersByTime(TURN_SETTLE_MS - 1);
+      });
+      screenIs(LANDSCAPE_SCREEN);
+      act(() => {
+        jest.advanceTimersByTime(1);
+      });
+
+      expect(onTurned).not.toHaveBeenCalled();
+
+      act(() => {
+        jest.advanceTimersByTime(TURN_SETTLE_MS);
+      });
+
+      expect(onTurned).toHaveBeenCalledTimes(1);
+      jest.useRealTimers();
+    });
+
     it('should ignore a turn back to upright', () => {
       renderHook(() => useTurnToLandscape({ enabled: true, onTurned }));
 
@@ -114,6 +180,7 @@ describe('useTurnToLandscape', () => {
     act(() => {
       for (let i = 0; i < TURN_SAMPLES_REQUIRED; i++) emit(LANDSCAPE_SAMPLE);
     });
+    settle();
 
     expect(onTurned).toHaveBeenCalledTimes(1);
   });
@@ -124,6 +191,7 @@ describe('useTurnToLandscape', () => {
     act(() => {
       for (let i = 0; i < TURN_SAMPLES_REQUIRED * 2; i++) emit(PORTRAIT_SAMPLE);
     });
+    settle();
 
     expect(onTurned).not.toHaveBeenCalled();
   });
@@ -146,6 +214,7 @@ describe('useTurnToLandscape', () => {
     act(() => {
       for (let i = 0; i < TURN_SAMPLES_REQUIRED * 3; i++) emit(LANDSCAPE_SAMPLE);
     });
+    settle();
 
     expect(onTurned).toHaveBeenCalledTimes(1);
   });
@@ -156,6 +225,7 @@ describe('useTurnToLandscape', () => {
     act(() => {
       for (let i = 0; i < TURN_SAMPLES_REQUIRED * 2; i++) emit({ x: 0.72, y: 0.65, z: 0.1 });
     });
+    settle();
 
     expect(onTurned).not.toHaveBeenCalled();
   });
@@ -205,6 +275,7 @@ describe('useTurnToLandscape', () => {
     act(() => {
       for (let i = 0; i < TURN_SAMPLES_REQUIRED; i++) emit(LANDSCAPE_SAMPLE);
     });
+    settle();
 
     expect(onTurned).not.toHaveBeenCalled();
   });
@@ -218,6 +289,7 @@ describe('useTurnToLandscape', () => {
     act(() => {
       for (let i = 0; i < TURN_SAMPLES_REQUIRED; i++) emit(LANDSCAPE_SAMPLE);
     });
+    settle();
     expect(onTurned).toHaveBeenCalledTimes(1);
 
     rerender({ enabled: false });
@@ -226,6 +298,7 @@ describe('useTurnToLandscape', () => {
     act(() => {
       for (let i = 0; i < TURN_SAMPLES_REQUIRED; i++) emit(LANDSCAPE_SAMPLE);
     });
+    settle();
 
     expect(onTurned).toHaveBeenCalledTimes(2);
   });
