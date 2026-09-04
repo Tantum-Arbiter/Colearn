@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { Dimensions } from 'react-native';
 import { Logger } from '@/utils/logger';
 
 const log = Logger.create('TurnToLandscape');
@@ -16,6 +17,12 @@ interface AccelerometerMeasurement {
 
 interface AccelerometerSubscription {
   remove: () => void;
+}
+
+function screenIsSideways(): boolean {
+  const { width, height } = Dimensions.get('window');
+
+  return width > height;
 }
 
 interface AccelerometerModule {
@@ -54,11 +61,37 @@ export function useTurnToLandscape({ enabled, onTurned }: UseTurnToLandscapeOpti
 
   useEffect(() => {
     if (!enabled) return;
+
+    let hasFired = false;
+
+    const fire = (reason: string) => {
+      if (hasFired) return;
+      hasFired = true;
+      log.debug(`Opening the book: ${reason}`);
+      onTurnedRef.current();
+    };
+
+    // Already sideways -- a tablet the child is holding in landscape, or one
+    // lying flat whose interface has settled that way. Never ask someone to
+    // turn a screen that is turned.
+    if (screenIsSideways()) {
+      fire('screen was already sideways');
+      return;
+    }
+
+    // The interface itself turning is the signal a tablet gives, where
+    // orientation is unlocked; it also covers a device flat on a table, where
+    // gravity says nothing about which way round it is.
+    const dimensionsSubscription = Dimensions.addEventListener('change', () => {
+      if (screenIsSideways()) {
+        fire('screen turned sideways');
+      }
+    });
+
     const accelerometer = accelerometerRef.current;
-    if (!accelerometer) return;
+    if (!accelerometer) return () => dimensionsSubscription?.remove?.();
 
     let consecutiveLandscapeSamples = 0;
-    let hasFired = false;
     let subscription: AccelerometerSubscription | null = null;
 
     // A dev client built before expo-sensors was linked resolves the JS module
@@ -78,17 +111,18 @@ export function useTurnToLandscape({ enabled, onTurned }: UseTurnToLandscapeOpti
 
         consecutiveLandscapeSamples += 1;
         if (consecutiveLandscapeSamples >= TURN_SAMPLES_REQUIRED) {
-          hasFired = true;
-          log.debug('Physical landscape turn detected');
-          onTurnedRef.current();
+          fire('gravity says the device turned');
         }
       });
     } catch (error) {
-      log.warn('Accelerometer unavailable, turn detection disabled:', error);
-      return;
+      log.warn('Accelerometer unavailable, falling back to the screen turning:', error);
+      return () => dimensionsSubscription?.remove?.();
     }
 
-    return () => subscription?.remove();
+    return () => {
+      subscription?.remove();
+      dimensionsSubscription?.remove?.();
+    };
   }, [enabled]);
 
   return { sensorAvailable };
