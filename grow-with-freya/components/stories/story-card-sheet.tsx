@@ -372,11 +372,9 @@ function StoryCard({
             </Pressable>
           </View>
 
-          <View style={styles.divider} />
-
           <View ref={modeRefs?.record} collapsable={false}>
             <Pressable
-              style={[styles.tertiaryButton, { paddingVertical: scaledPadding(10) }]}
+              style={[styles.secondaryButton, { borderRadius: scaledButtonSize(24), paddingVertical: scaledPadding(12) }]}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                 onChooseMode('record');
@@ -384,8 +382,8 @@ function StoryCard({
               accessibilityLabel={t('storyDetail.record')}
               testID="story-card-mode-record"
             >
-              <Ionicons name="mic-outline" size={scaledFontSize(16)} color="rgba(255,255,255,0.85)" />
-              <Text style={[styles.tertiaryText, { fontSize: scaledFontSize(13) }]}>{t('storyDetail.record')}</Text>
+              <Ionicons name="mic-outline" size={scaledFontSize(18)} color="#FFFFFF" />
+              <Text style={[styles.secondaryText, { fontSize: scaledFontSize(14) }]}>{t('storyDetail.record')}</Text>
             </Pressable>
           </View>
 
@@ -550,23 +548,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.sans,
     fontWeight: '600',
     color: '#FFFFFF',
-  },
-  divider: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: 'rgba(255, 255, 255, 0.18)',
-    marginTop: 4,
-  },
-  tertiaryButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-  },
-  tertiaryText: {
-    fontFamily: Fonts.sans,
-    fontWeight: '600',
-    letterSpacing: 0.4,
-    color: 'rgba(255, 255, 255, 0.85)',
   },
   offlineRow: {
     flexDirection: 'row',

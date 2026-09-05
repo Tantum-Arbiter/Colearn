@@ -9,10 +9,12 @@
  * 3. Choosing a way to read opens the book with that mode
  * 4. Swiping to a neighbour reports the new story; settling on the same card does not
  * 5. Close and favourite callbacks fire
+ * 6. Record is offered as a button like the other ways to read
  */
 
 import React from 'react';
 import { render, act, waitFor } from '@testing-library/react-native';
+import { StyleSheet } from 'react-native';
 import { StoryCardSheet } from '@/components/stories/story-card-sheet';
 import { StoryDownloadService } from '@/services/story-download-service';
 import { storyCardLayout } from '@/constants/story-card';
@@ -182,5 +184,24 @@ describe('StoryCardSheet', () => {
     await waitFor(() => {
       expect(findByText(UNSAFE_root, 'storyDetail.savedOffline').length).toBeGreaterThan(0);
     });
+  });
+
+  it('should offer Record as a button like Play Along, not a bare line of text', async () => {
+    // The defect this pins: Record was a borderless row beneath a divider,
+    // which read as a footnote rather than a third way to read -- and on a
+    // phone it sat low enough to be cut off by the card's bottom edge.
+    const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} />);
+    await waitFor(() => expect(mockIsDownloaded).toHaveBeenCalled());
+    const button = (testID: string) =>
+      StyleSheet.flatten(
+        UNSAFE_root.findAll((node: any) => node.props?.testID === testID && typeof node.props?.onPress === 'function')[0].props.style
+      );
+
+    const underTest = button('story-card-mode-record');
+    const playAlong = button('story-card-mode-narrate');
+
+    expect(underTest.backgroundColor).toBe(playAlong.backgroundColor);
+    expect(underTest.borderWidth).toBe(playAlong.borderWidth);
+    expect(underTest.borderRadius).toBe(playAlong.borderRadius);
   });
 });

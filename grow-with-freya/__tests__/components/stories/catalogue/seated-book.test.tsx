@@ -12,8 +12,9 @@
  * 1. Takes the seat's share of the screen and keeps the card's proportions
  * 2. Wears the same spine, hinge and pages as the book on the shelf
  * 3. Carries the block of page edges beside it, so they rise and fall with it
- * 4. Asks for a lift of exactly the book's bob
- * 5. Scales the spine with the seat
+ * 4. Is hidden until its opacity is driven, so nothing flashes at mount
+ * 5. Asks for a lift of exactly the book's bob
+ * 6. Scales the spine with the seat
  */
 
 import React from 'react';
@@ -72,6 +73,20 @@ describe('SeatedBook', () => {
     const underTest = byTestId(book, 'seated-book-edges');
 
     expect(underTest.length).toBeGreaterThan(0);
+  });
+
+  it('should be hidden until its opacity is driven, so nothing flashes at mount', () => {
+    // The defect this pins: the base style carried no opacity, so for the
+    // first frames after mount -- before the animated style is applied -- the
+    // view rendered at the default opacity of 1. Filmed on an iPad: the page
+    // edges and page lines flashed at the seat for ~80ms as the card sank,
+    // 300ms before the outline was drawn. The cover art was not decoded yet,
+    // so only the lines showed.
+    const { UNSAFE_root } = renderSeated();
+
+    const underTest = StyleSheet.flatten(byTestId(UNSAFE_root, 'seated-book')[0].props.style);
+
+    expect(underTest.opacity).toBe(0);
   });
 
   it("should ask for a lift of exactly the book's bob", () => {

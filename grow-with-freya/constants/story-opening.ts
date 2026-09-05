@@ -187,12 +187,16 @@ export function seatTransform(
  *
  * - groundFadeMs the shadow settling over the shelf
  * - sheetRiseMs  the card rising into place
+ * - sheetSinkMs  the card leaving, and the waiting book scrolling out of view
+ *                when the child comes back from the prompt
+ * - cardReturnsAt how far into that exit the card comes back in over it
  * - staggerMs / contentMs   title, chips and buttons in turn
  */
 export const STORY_DETAIL_OPENING = {
   groundFadeMs: 320,
   sheetRiseMs: 420,
   sheetSinkMs: 280,
+  cardReturnsAt: 120,
   staggerMs: 60,
   contentMs: 320,
 } as const;

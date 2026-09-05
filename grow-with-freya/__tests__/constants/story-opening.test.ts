@@ -442,3 +442,14 @@ describe('openBookGrowScale', () => {
     expect(underTest).toBeGreaterThan(1);
   });
 });
+
+describe('going back from the prompt', () => {
+  it('should bring the card back in while the book is still scrolling out of view', () => {
+    // The two overlap: the card rises over the book as it leaves, rather than
+    // the child watching the book go and then waiting for the card.
+    const underTest = STORY_DETAIL_OPENING.cardReturnsAt;
+
+    expect(underTest).toBeGreaterThan(0);
+    expect(underTest).toBeLessThan(STORY_DETAIL_OPENING.sheetSinkMs);
+  });
+});

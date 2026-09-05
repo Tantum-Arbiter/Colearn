@@ -103,3 +103,26 @@ describe('cardIndexAtOffset', () => {
     expect(cardIndexAtOffset(300, 372, 0)).toBe(0);
   });
 });
+
+describe('the shelf either side of the card', () => {
+  it('should let the neighbouring cards show well past the chosen one, not as a sliver', () => {
+    // The defect this pins: a 30pt side margin less the 14pt gap left 16pt of
+    // each neighbour showing, which was hard to see at all. A swipe should be
+    // an invitation the child can see.
+    const underTest = STORY_CARD.sideInset - STORY_CARD.gap;
+
+    expect(underTest).toBeGreaterThanOrEqual(30);
+  });
+
+  it('should size the body to what it holds: two rows of chips and three buttons, and no blank foot', () => {
+    // At the default type size the body holds the title, a row of meta, two
+    // lines of description, the theme chips and three ways to read. On a phone
+    // four chips wrap to a second row, and with Record a button like the other
+    // two that comes to a little over 350pt; 322pt cut Record off at the foot,
+    // and the old 374pt left an empty band beneath it.
+    expect(STORY_CARD.bodyHeight.phone).toBeGreaterThanOrEqual(350);
+    expect(STORY_CARD.bodyHeight.phone).toBeLessThanOrEqual(360);
+    // tablet type scales up, but its wider card keeps the chips to one row
+    expect(STORY_CARD.bodyHeight.tablet).toBeLessThanOrEqual(STORY_CARD.bodyHeight.phone + 30);
+  });
+});

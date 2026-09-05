@@ -59,7 +59,7 @@ export interface GardenOpenRequest {
   voiceOver: VoiceOver | null;
 }
 
-export type TransitionPhase = 'flying' | 'detail' | 'sketch' | 'prompt' | 'opening' | null;
+export type TransitionPhase = 'flying' | 'detail' | 'sketch' | 'returning' | 'prompt' | 'opening' | null;
 
 interface StoryTransitionContextType {
   // Story Garden: direct open request, bypassing the detail/prompt overlay.
@@ -159,6 +159,9 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   const [isExitAnimating, setIsExitAnimating] = useState(false);
   // Track when we're animating the cancel transition - blocks touches during animation
   const [isCancelAnimating, setIsCancelAnimating] = useState(false);
+  // The waiting book stays mounted past the prompt while it scrolls out of
+  // view, with the card already coming back in over it
+  const [bookLeaving, setBookLeaving] = useState(false);
 
   // Screen dimensions state - updates when orientation changes
   const [screenDimensions, setScreenDimensions] = useState(Dimensions.get('window'));
@@ -240,6 +243,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
       if (turnable && card && !isOpeningRef.current) {
         if (phaseRef.current === 'sketch') {
           sketchOpacity.value = 0;
+          setSketchOutline(null);
         }
         const seat = seatTransform(window, card);
         cancelAnimation(transitionX);
@@ -282,7 +286,15 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   // The book being sketched at its seat: how much of its outline has been
   // drawn, and how much of the drawn line is still showing over the cover
   const sketchProgress = useSharedValue(0);
-  const sketchOpacity = useSharedValue(1);
+  // The line is invisible until the moment the draw starts, whatever its dash
+  // state: an animated prop's first value is worked out before the outline
+  // exists, and it overrides the static one, so the first frames showed the
+  // whole outline at once
+  const sketchOpacity = useSharedValue(0);
+  // The outline's length, set before the phase changes so the first frame's
+  // dash offset is worked out from it rather than from a stale closure
+  const sketchLength = useSharedValue(0);
+  const [sketchOutline, setSketchOutline] = useState<{ d: string; length: number } | null>(null);
   // 0 while the book waits at its seat as a Yoga-centred view (the sketch and
   // the prompt); the transform-driven book is hidden then and takes over at
   // the opening, at the same size and place
@@ -415,16 +427,6 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     setPhase('detail');
   };
 
-  // After the book has glided back from the prompt, the card rises over it;
-  // once the card is up, the book is hidden again beneath it
-  const hideBookOnceCardIsUp = (cardMountsAt: number) => {
-    setTimeout(() => {
-      if (phaseRef.current === 'detail') {
-        transitionOpacity.value = 0;
-      }
-    }, cardMountsAt + STORY_DETAIL_OPENING.sheetRiseMs + 40);
-  };
-
   const startTransition = async (storyId: string, cardLayout: { x: number; y: number; width: number; height: number }, story?: Story, shelfStories?: Story[]) => {
     // Reset ALL animation values from any previous transition FIRST
     pageFlipProgress.value = 0;
@@ -437,10 +439,13 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     cancelAnimation(levitationY);
     levitationY.value = 0;
     sketchProgress.value = 0;
-    sketchOpacity.value = 1;
+    sketchOpacity.value = 0;
+    sketchLength.value = 0;
+    setSketchOutline(null);
     bookShown.value = 1;
 
     // Reset ALL state that could affect rendering
+    setBookLeaving(false);
     setIsExitAnimating(false);
     setIsExpandingToReader(false);
     isOpeningRef.current = false;
@@ -559,6 +564,15 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
       return;
     }
 
+    // The outline is worked out here, before the phase changes, so its length
+    // is already in place when the line first renders
+    const outline = bookOutlinePath(
+      seat.rect,
+      bookBorderRadius,
+      bookSpineWidth(cardPosition.width) * (seat.rect.width / cardPosition.width)
+    );
+    sketchLength.value = outline.length;
+    setSketchOutline(outline);
     setPhase('sketch');
     const sketch = storySketchTimeline();
     choreograph([
@@ -577,8 +591,11 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
       {
         on: sketchOpacity,
         name: 'drawn line',
-        from: 1,
-        beats: [{ at: sketch.strokeOut.at, to: 0, over: sketch.strokeOut.over }],
+        from: 0,
+        beats: [
+          { at: sketch.draw.at, to: 1, over: 16 },
+          { at: sketch.strokeOut.at, to: 0, over: sketch.strokeOut.over },
+        ],
       },
     ]);
 
@@ -587,37 +604,50 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     }, sketch.total);
   };
 
-  // Back tapped on the rotate prompt -return the book to the detail hero
-  const goToRotatePrompt = () => openWithMode(selectedMode);
-
+  // Back tapped on the rotate prompt: the book scrolls out of view, and the
+  // card the child chose from comes back in over it
   const returnToDetailFromPrompt = () => {
     if (isOpeningRef.current) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    bookShown.value = 1;
-    overlayOpacity.value = withTiming(CARD_GROUND_OPACITY, { duration: 350, easing: Easing.out(Easing.quad) });
-    hideBookOnceCardIsUp(380);
 
     // The child changed their mind, so take the freedom to turn back away
     applyDefaultOrientation().catch((error) => log.warn('Failed to restore orientation:', error));
 
+    setBookLeaving(true);
+    setPhase('returning');
+    overlayOpacity.value = withTiming(CARD_GROUND_OPACITY, { duration: 350, easing: Easing.out(Easing.quad) });
+
+    // The seated book's rise and fall is its vertical offset; send it off the
+    // bottom of the screen, the way the card leaves
     cancelAnimation(levitationY);
-    levitationY.value = withTiming(0, { duration: 200, easing: Easing.out(Easing.quad) });
+    levitationY.value = withTiming(screenHeight, {
+      duration: STORY_DETAIL_OPENING.sheetSinkMs,
+      easing: Easing.in(Easing.cubic),
+    });
 
-    setPhase('flying');
-
+    // The transform-driven book goes back beneath the card's cover, hidden,
+    // ready for the next choice
     const hero = heroTransformRef.current;
     if (hero && cardPosition) {
       openingTransformRef.current = { ...hero };
       noteTransformScreen();
-      const heroRect = computeHeroTransform(cardPosition, screenWidth, screenHeight).rect;
-      setTargetBookPosition(heroRect);
-      const glide = Easing.out(Easing.cubic);
-      transitionX.value = withTiming(hero.moveX, { duration: 350, easing: glide });
-      transitionY.value = withTiming(hero.moveY, { duration: 350, easing: glide });
-      transitionScale.value = withTiming(hero.scale, { duration: 350, easing: glide });
+      setTargetBookPosition(computeHeroTransform(cardPosition, screenWidth, screenHeight).rect);
+      transitionX.value = hero.moveX;
+      transitionY.value = hero.moveY;
+      transitionScale.value = hero.scale;
     }
 
-    setTimeout(() => setPhase('detail'), 380);
+    setTimeout(() => {
+      if (phaseRef.current === 'returning') setPhase('detail');
+    }, STORY_DETAIL_OPENING.cardReturnsAt);
+
+    setTimeout(() => {
+      setBookLeaving(false);
+      if (phaseRef.current !== 'detail') return;
+      transitionOpacity.value = 0;
+      bookShown.value = 1;
+      levitationY.value = 0;
+    }, STORY_DETAIL_OPENING.sheetSinkMs + 40);
   };
 
   // Flip the cover open and expand to full screen, then hand over to the reader
@@ -1450,19 +1480,8 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
   const readerRevealStyle = useAnimatedStyle(() => ({ opacity: readerReveal.value }));
 
-  // The sketch's outline, in screen coordinates: the seat the book is drawn
-  // in, with the radius the book keeps whatever its scale and the spine it
-  // wears on the shelf, scaled with it
-  const sketchOutline = phase === 'sketch' && targetBookPosition && cardPosition
-    ? bookOutlinePath(
-        targetBookPosition,
-        bookBorderRadius,
-        bookSpineWidth(cardPosition.width) * (targetBookPosition.width / cardPosition.width)
-      )
-    : null;
-  const sketchLength = sketchOutline?.length ?? 0;
   const sketchProps = useAnimatedProps(() => ({
-    strokeDashoffset: sketchDashOffset(sketchLength, sketchProgress.value),
+    strokeDashoffset: sketchDashOffset(sketchLength.value, sketchProgress.value),
     opacity: sketchOpacity.value,
   }));
 
@@ -1804,7 +1823,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
           {/* The book being sketched: its outline drawn in one line, round the
               cover and down the spine, ahead of the cover appearing inside it */}
-          {sketchOutline && (
+          {phase === 'sketch' && sketchOutline && (
             <Svg pointerEvents="none" style={styles.sketch} width={screenWidth} height={screenHeight}>
               <AnimatedPath
                 testID="transition-book-sketch"
@@ -1814,6 +1833,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 fill="none"
+                opacity={0}
                 strokeDasharray={`${sketchOutline.length} ${sketchOutline.length}`}
                 strokeDashoffset={sketchDashOffset(sketchOutline.length, 0)}
                 animatedProps={sketchProps}
@@ -1824,7 +1844,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
           {/* The book as it waits at its seat: laid out by Yoga at the centre, so the
               screen turns around it rather than under it. Hands over to the
               transform-driven book below at the opening. */}
-          {(phase === 'sketch' || phase === 'prompt') && (
+          {(phase === 'sketch' || phase === 'prompt' || phase === 'returning' || bookLeaving) && cardPosition && (
             <SeatedBook
               card={cardPosition}
               screenWidth={screenWidth}

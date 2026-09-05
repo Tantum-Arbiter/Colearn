@@ -99,7 +99,12 @@ export function SeatedBook({
 }
 
 const styles = StyleSheet.create({
+  // Hidden until the animated style drives it: for the first frames after
+  // mount the animated style is not yet applied, and without this the view
+  // rendered at the default opacity of 1 -- the page edges and page lines
+  // flashed at the seat as the card sank, before the outline was drawn.
   seat: {
+    opacity: 0,
     overflow: 'visible',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },

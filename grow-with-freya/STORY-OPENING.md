@@ -45,9 +45,13 @@ are no play buttons; the book is the button.
 
 The card (`constants/story-card.ts`) is anchored to the bottom safe area, the screen width
 less a margin on a phone and capped at 520pt on a tablet, so a tablet gets a card too rather
-than a page. Its body is a fixed height so the cover's position is known before the card
-exists; larger type scrolls within the body, and on a short screen the cover gives up height
-to stay clear of the status bar.
+than a page. The margin is wide enough that the neighbouring cards plainly show either side --
+what shows of each is the margin less the gap, 34pt -- because a swipe should be an invitation
+the child can see, and at 16pt it was not. Its body is a fixed height, sized to what it holds
+at the default type size -- on a phone, where four chips wrap to a second row, that is two rows
+of chips and three buttons, Record a button like the other two rather than a footnote under a
+rule -- so the cover's position is known before the card exists; larger type scrolls within the
+body, and on a short screen the cover gives up height to stay clear of the status bar.
 
 The carousel snaps one card at a time. The chosen card stands proud; the others sit back
 lower, a little smaller and in shadow, following the finger continuously as the shelf is
@@ -96,6 +100,16 @@ instead, starting at four fifths of cruising pace rather than creeping into moti
 at a third rather than stopping dead. Measured again on the device, the line now advances by an
 even 103--120 pixels a frame where it used to jump by 3,473.
 
+**The line showed all at once, before it was drawn.** Twice. The path's dash offset defaults to
+zero, which shows the whole outline, so a static offset was added to hide it until the animated
+one arrived. That held until the outline's length came from a value captured in the provider's
+render: the animated prop's *first* value is worked out before the outline exists, with the
+length still zero -- an offset of zero, fully visible -- and an animated prop overrides the
+static one. Filmed on an iPad, the whole outline stood over the card for three frames at the
+tap, vanished, and was drawn 300ms later. The length now lives in a shared value set before the
+phase changes, and the line's opacity is zero until the instant the draw starts, so no dash
+state can show early whatever the first value is.
+
 **The pen doubled back.** The spine used to be the last stroke, which sent the pen straight back
 down a line one spine's width from the left edge it had just drawn, travelling the opposite way.
 It read as a mistake. Drawing the spine first separates the two by the whole loop and gives the
@@ -105,6 +119,12 @@ The seat is the same point on both devices -- `seatTransform` for the prompt and
 for the lift both centre the book at 46% of the screen width -- which is what lets the book be
 drawn in place rather than carried. With reduced motion on, nothing is drawn: the book is
 simply there, and the prompt or the opening follows at once.
+
+Going back from the prompt runs the handover the other way: the prompt's words fade, the book
+scrolls off the bottom of the screen the way the card left (`sheetSinkMs`), and the card the
+child chose from comes back in over it while it is still on its way out (`cardReturnsAt`).
+The book used to glide back onto the card's cover and wait there to be covered, which read as
+the book returning to a card that had not yet arrived.
 
 ## Orientation, by device
 

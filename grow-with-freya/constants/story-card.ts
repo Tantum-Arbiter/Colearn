@@ -8,12 +8,15 @@
 export const STORY_CARD = {
   /** Widest the card ever gets, so a tablet shows a card rather than a page. */
   maxWidth: 520,
-  /** Side margin on a phone -- wide enough for the neighbours to peek in. */
-  sideInset: 30,
+  /** Side margin on a phone -- wide enough that the neighbours plainly show,
+   *  not a sliver: what shows of each is this less the gap. */
+  sideInset: 48,
   /** Cover height as a fraction of card width: a wide picture book spread. */
   coverAspect: 0.52,
-  /** Height of everything beneath the cover; larger type scrolls within it. */
-  bodyHeight: { phone: 374, tablet: 366 },
+  /** Height of everything beneath the cover, sized to what it holds at the
+   *  default type size -- on a phone, two rows of chips and three buttons;
+   *  larger type scrolls within it. */
+  bodyHeight: { phone: 352, tablet: 350 },
   /** Gap between the card and the bottom of the safe area. */
   bottomGap: 10,
   /** Room to keep clear beneath the status bar. */
