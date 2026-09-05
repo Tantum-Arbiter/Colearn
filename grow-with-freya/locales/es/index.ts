@@ -3029,6 +3029,7 @@ export default {
 
   storyDetail: {
     readTogether: 'Leer juntos',
+    continueReading: 'Seguir leyendo',
     record: 'Grabar',
     playAlong: 'Jugar juntos',
     readNow: 'Leer ahora',
@@ -3177,7 +3178,6 @@ export default {
     },
     featuredStory: 'Cuento destacado',
     todaysPick: 'Elección del día',
-    continueReading: 'Seguir leyendo',
     seeAll: 'Ver todo',
     themes: {
       stories: 'Cuentos',

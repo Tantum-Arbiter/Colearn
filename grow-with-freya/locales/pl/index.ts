@@ -3029,6 +3029,7 @@ export default {
 
   storyDetail: {
     readTogether: 'Czytajmy razem',
+    continueReading: 'Czytaj dalej',
     record: 'Nagraj',
     playAlong: 'Graj razem',
     readNow: 'Czytaj teraz',
@@ -3177,7 +3178,6 @@ export default {
     },
     featuredStory: 'Polecana historia',
     todaysPick: 'Wybór dnia',
-    continueReading: 'Czytaj dalej',
     seeAll: 'Zobacz wszystko',
     themes: {
       stories: 'Historie',

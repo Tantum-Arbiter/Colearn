@@ -53,12 +53,12 @@ import {
   CatalogueStory,
   CatalogueTheme,
   buildShelves,
-  continueReading,
   entryMatchesMode,
   filterByTheme,
   fromCatalogEntry,
   fromStory,
   matchesGender,
+  recommendationTarget,
   selectFeatured,
   storyMatchesMode,
 } from './catalogue-story';
@@ -92,7 +92,6 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode }: StoryCatalo
   const { requestReturnToMainMenu, setShowLoginAfterOnboarding, getEffectiveTier } = useAppStore();
   const favoriteStoryIds = useAppStore((state) => state.favoriteStoryIds);
   const readStoryIds = useAppStore((state) => state.readStoryIds);
-  const storyProgress = useAppStore((state) => state.storyProgress);
   const toggleFavoriteStory = useAppStore((state) => state.toggleFavoriteStory);
   const userAvatarType = useAppStore((state) => state.userAvatarType);
   const effectiveTier: SubscriptionTier = getEffectiveTier();
@@ -112,8 +111,6 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode }: StoryCatalo
   });
   const [catalogEntries, setCatalogEntries] = useState<CatalogEntry[]>([]);
   const [theme, setTheme] = useState<CatalogueTheme>('stories');
-  /** See all on Continue Reading: every book underway, in one grid. */
-  const [continueOnly, setContinueOnly] = useState(false);
   const [selectedTags, setSelectedTags] = useState<Set<StoryFilterTag>>(new Set());
   const [storyMode, setStoryMode] = useState<CatalogueMode | null>(initialMode ?? null);
   const [shareUnlockedIds, setShareUnlockedIds] = useState<Set<string>>(new Set());
@@ -217,15 +214,9 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode }: StoryCatalo
     [catalogueStories, navSection],
   );
 
-  // The books the child is part-way through, most recently read first
-  const underway = useMemo(
-    () => (navSection === 'home' ? continueReading(catalogueStories, storyProgress) : []),
-    [navSection, catalogueStories, storyProgress],
-  );
-
-  // A finer theme chosen, or See all on a row, turns the whole shelf --
-  // featured panel included -- into one grid of what was asked for
-  const browsing = selectedTags.size > 0 || continueOnly;
+  // A finer theme chosen turns the whole shelf, featured panel included, into
+  // one grid of what matches, headed by that theme
+  const browsing = selectedTags.size > 0;
 
   // The shelves under the featured panel, laid out afresh each time the app opens
   const shelves = useMemo(
@@ -234,15 +225,13 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode }: StoryCatalo
       : buildShelves(catalogueStories, {
         seed: APP_LAUNCH_SEED,
         featuredId: featured?.id ?? null,
-        continueReading: underway,
       })),
-    [navSection, browsing, catalogueStories, featured, underway],
+    [navSection, browsing, catalogueStories, featured],
   );
 
   const interactionLocked = isTransitioning || shouldShowStoryReader || isExpandingToReader;
 
   const handleToggleTag = useCallback((tag: StoryFilterTag) => {
-    setContinueOnly(false);
     setSelectedTags((prev) => {
       const next = new Set(prev);
       if (next.has(tag)) {
@@ -265,30 +254,33 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode }: StoryCatalo
     if (id === 'home') {
       setStoryMode(null);
       setSelectedTags(new Set());
-      setContinueOnly(false);
-    }
+      }
     setNavSection(id);
   }, []);
 
   const handleRecommend = useCallback((tag: StoryFilterTag | null) => {
     setNavSection('home');
     setStoryMode(null);
-    setContinueOnly(false);
-    if (tag === 'learning' || tag === 'music') {
-      setTheme(tag);
-      setSelectedTags(new Set());
-      return;
-    }
-    setSelectedTags(tag ? new Set([tag]) : new Set());
+    const target = recommendationTarget(tag);
+    if (target.theme) setTheme(target.theme);
+    setSelectedTags(new Set(target.tags));
   }, []);
 
   const handleSeeAll = useCallback((tag: StoryFilterTag) => {
-    setContinueOnly(false);
     setSelectedTags(new Set([tag]));
   }, []);
 
   // Every book the child could open from here, in shelf order, so the story
   // card can carry them as a carousel to swipe between
+  const openableFrom = (entries: CatalogueStory[]): Story[] => entries
+    .map((entry) => (entry.source.kind === 'downloaded' ? entry.source.story : null))
+    .filter((story): story is Story => !!story && story.isAvailable);
+
+  const renderRowCard = (rowStories: CatalogueStory[]) => {
+    const shelf = openableFrom(rowStories);
+    return (story: CatalogueStory, width: number) => renderCoverCard(story, width, shelf);
+  };
+
   const openableStories = useMemo(
     () => catalogueStories
       .map((entry) => (entry.source.kind === 'downloaded' ? entry.source.story : null))
@@ -296,12 +288,12 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode }: StoryCatalo
     [catalogueStories],
   );
 
-  const openDownloadedStory = useCallback((story: Story, position: { x: number; y: number; width: number; height: number }) => {
-    startTransition(story.id, position, story, openableStories);
+  const openDownloadedStory = useCallback((story: Story, position: { x: number; y: number; width: number; height: number }, shelf?: Story[]) => {
+    startTransition(story.id, position, story, shelf && shelf.length > 0 ? shelf : openableStories);
     onStorySelect?.(story);
   }, [startTransition, onStorySelect, openableStories]);
 
-  const handleOpenStory = useCallback((catalogueStory: CatalogueStory, ref: React.RefObject<View | null>) => {
+  const handleOpenStory = useCallback((catalogueStory: CatalogueStory, ref: React.RefObject<View | null>, shelf?: Story[]) => {
     if (catalogueStory.source.kind !== 'downloaded') return;
     const story = catalogueStory.source.story;
     if (!story.isAvailable) return;
@@ -310,7 +302,7 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode }: StoryCatalo
 
     if (ref.current) {
       ref.current.measure((_x, _y, width, height, pageX, pageY) => {
-        openDownloadedStory(story, { x: pageX, y: pageY, width, height });
+        openDownloadedStory(story, { x: pageX, y: pageY, width, height }, shelf);
       });
       return;
     }
@@ -323,7 +315,7 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode }: StoryCatalo
       y: (screenHeight - fallbackHeight) / 2,
       width: fallbackWidth,
       height: fallbackHeight,
-    });
+    }, shelf);
   }, [openDownloadedStory]);
 
   const handleDeleteStory = useCallback((story: Story) => {
@@ -411,12 +403,10 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode }: StoryCatalo
   }, [t, currentLanguage, handleDeleteStory]);
 
   const handleClearFilters = useCallback(() => {
-    setContinueOnly(false);
     setSelectedTags(new Set());
   }, []);
 
   const handleSelectTheme = useCallback((next: CatalogueTheme) => {
-    setContinueOnly(false);
     setSelectedTags(new Set());
     setTheme(next);
   }, []);
@@ -433,13 +423,13 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode }: StoryCatalo
 
   const rowCardWidth = Math.floor(coverWidth * ROW_CARD_SCALE);
 
-  const renderCoverCard = useCallback((story: CatalogueStory, width: number = coverWidth) => (
+  const renderCoverCard = useCallback((story: CatalogueStory, width: number = coverWidth, shelf?: Story[]) => (
     <StoryCoverCard
       key={story.id}
       story={story}
       width={width}
       language={currentLanguage}
-      onOpen={handleOpenStory}
+      onOpen={(opened, ref) => handleOpenStory(opened, ref, shelf)}
       onLockedPress={() => setShowSubscription(true)}
       onShareToUnlock={handleShareToUnlock}
       onDownloadComplete={refreshLibrary}
@@ -488,24 +478,7 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode }: StoryCatalo
               stories={shelf.stories}
               cardWidth={rowCardWidth}
               edgeInset={isLandscapeTablet ? 0 : margin}
-              renderCard={renderCoverCard}
-            />
-          );
-        }
-        if (shelf.kind === 'continue') {
-          return (
-            <StoryRow
-              key="continue"
-              testID="story-row-continue"
-              heading={t('catalogue.continueReading')}
-              icon="time-outline"
-              iconColor={ACCENT_GOLD}
-              stories={shelf.stories}
-              cardWidth={rowCardWidth}
-              edgeInset={isLandscapeTablet ? 0 : margin}
-              renderCard={renderCoverCard}
-              actionLabel={t('catalogue.seeAll')}
-              onAction={() => setContinueOnly(true)}
+              renderCard={renderRowCard(shelf.stories)}
             />
           );
         }
@@ -519,7 +492,7 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode }: StoryCatalo
             stories={shelf.stories}
             cardWidth={rowCardWidth}
             edgeInset={isLandscapeTablet ? 0 : margin}
-            renderCard={renderCoverCard}
+            renderCard={renderRowCard(shelf.stories)}
             actionLabel={t('catalogue.seeAll')}
             onAction={() => handleSeeAll(shelf.tag)}
           />
@@ -529,11 +502,9 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode }: StoryCatalo
   );
 
   const chosenTags = Array.from(selectedTags);
-  const browseHeading = continueOnly
-    ? { label: t('catalogue.continueReading'), icon: 'time-outline' as const, iconColor: ACCENT_GOLD }
-    : chosenTags.length === 1
-      ? { label: rowHeading(chosenTags[0]), icon: FILTER_PILL_ICONS[chosenTags[0]].icon, iconColor: FILTER_PILL_ICONS[chosenTags[0]].color }
-      : { label: t('catalogue.moreStories'), icon: undefined, iconColor: undefined };
+  const browseHeading = chosenTags.length === 1
+    ? { label: rowHeading(chosenTags[0]), icon: FILTER_PILL_ICONS[chosenTags[0]].icon, iconColor: FILTER_PILL_ICONS[chosenTags[0]].color }
+    : { label: t('catalogue.moreStories'), icon: undefined, iconColor: undefined };
   const moreSection = (
     <>
       <View style={styles.sectionHeadingSpacing}>
@@ -545,7 +516,7 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode }: StoryCatalo
         />
       </View>
       <View style={styles.coverGrid} testID="story-cover-grid">
-        {(continueOnly ? underway : catalogueStories).map((story) => renderCoverCard(story))}
+        {catalogueStories.map((story) => renderCoverCard(story))}
       </View>
     </>
   );

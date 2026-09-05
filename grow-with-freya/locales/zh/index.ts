@@ -3029,6 +3029,7 @@ export default {
 
   storyDetail: {
     readTogether: '一起阅读',
+    continueReading: '继续阅读',
     record: '录音',
     playAlong: '一起玩',
     readNow: '现在阅读',
@@ -3177,7 +3178,6 @@ export default {
     },
     featuredStory: '精选故事',
     todaysPick: '今日推荐',
-    continueReading: '继续阅读',
     seeAll: '查看全部',
     themes: {
       stories: '故事',

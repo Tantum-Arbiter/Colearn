@@ -116,18 +116,6 @@ describe('StoryCoverCard', () => {
     expect(byTestId(tree, 'story-cover-download').length).toBeGreaterThan(0);
   });
 
-  it('should show how far the child has read along the foot of the cover, only for a book underway', () => {
-    const underway = { ...fromStory(story()), progress: 0.4 };
-    const fresh = fromStory(story());
-
-    const tree = render(<StoryCoverCard {...baseProps} story={underway} />);
-    const plain = render(<StoryCoverCard {...baseProps} story={fresh} />);
-
-    expect(byTestId(tree, 'story-cover-progress').length).toBeGreaterThan(0);
-    expect(tree.UNSAFE_root.findAll((n: any) => n.props.children === '40%').length).toBeGreaterThan(0);
-    expect(byTestId(plain, 'story-cover-progress')).toHaveLength(0);
-  });
-
   it('should be a plain rounded card, with no spine or page edges drawn on', () => {
     const tree = render(<StoryCoverCard {...baseProps} story={fromStory(story())} />);
 

@@ -1,5 +1,5 @@
 import React, { RefObject, useCallback, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView, NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
+import { View, Text, StyleSheet, Pressable, NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -22,6 +22,7 @@ import type { ReadingMode } from '@/contexts/story-transition-context';
 import { StoryDownloadService } from '@/services/story-download-service';
 import { Fonts } from '@/constants/theme';
 import { useAccessibility } from '@/hooks/use-accessibility';
+import { ReadingPlace, readingFraction } from './reading-progress';
 import { STORY_DETAIL_OPENING } from '@/constants/story-opening';
 import { STORY_CARD, cardIndexAtOffset, type StoryCardLayout } from '@/constants/story-card';
 
@@ -37,6 +38,8 @@ export interface StoryCardSheetProps {
   onChooseMode: (mode: ReadingMode) => void;
   onClose: () => void;
   onToggleFavorite: () => void;
+  /** How far through each book the child is, for the books they have begun. */
+  progress?: Record<string, ReadingPlace | undefined>;
   readButtonRef?: RefObject<View | null>;
   recordButtonRef?: RefObject<View | null>;
   narrateButtonRef?: RefObject<View | null>;
@@ -70,6 +73,7 @@ export function StoryCardSheet({
   onChooseMode,
   onClose,
   onToggleFavorite,
+  progress,
   readButtonRef,
   recordButtonRef,
   narrateButtonRef,
@@ -124,6 +128,7 @@ export function StoryCardSheet({
           <StoryCard
             key={story.id}
             story={story}
+            place={progress?.[story.id]}
             index={i}
             scrollX={scrollX}
             layout={layout}
@@ -148,6 +153,7 @@ export function StoryCardSheet({
 
 interface StoryCardProps {
   story: Story;
+  place?: ReadingPlace;
   index: number;
   scrollX: { value: number };
   layout: StoryCardLayout;
@@ -167,6 +173,7 @@ interface StoryCardProps {
 
 function StoryCard({
   story,
+  place,
   index,
   scrollX,
   layout,
@@ -184,6 +191,9 @@ function StoryCard({
   onToggleFavorite,
 }: StoryCardProps) {
   const [isSavedOffline, setIsSavedOffline] = useState(false);
+  const underway = place !== undefined && place.pageIndex > 0;
+  const readPercent = underway ? Math.round(readingFraction(place) * 100) : 0;
+  const readLabelKey = underway ? 'storyDetail.continueReading' : 'storyDetail.readTogether';
 
   useEffect(() => {
     let isActive = true;
@@ -268,13 +278,7 @@ function StoryCard({
         </View>
       </View>
 
-      <ScrollView
-        style={styles.bodyScroll}
-        contentContainerStyle={styles.bodyContent}
-        showsVerticalScrollIndicator={false}
-        bounces={false}
-        scrollEnabled={isCurrent}
-      >
+      <View style={styles.bodyScroll}>
         <Animated.View entering={FadeInDown.delay(STORY_DETAIL_OPENING.staggerMs).duration(STORY_DETAIL_OPENING.contentMs)} style={styles.body}>
           <Text style={[styles.title, { fontSize: scaledFontSize(22) }]} numberOfLines={2}>{displayTitle}</Text>
 
@@ -317,7 +321,20 @@ function StoryCard({
           </View>
         </Animated.View>
 
-        <Animated.View entering={FadeInDown.delay(STORY_DETAIL_OPENING.staggerMs * 2).duration(STORY_DETAIL_OPENING.contentMs)} style={styles.actions}>
+        {underway && (
+          <View style={styles.progressRow} testID="story-card-progress">
+            <View style={styles.progressTrack}>
+              <View style={[styles.progressFill, { width: `${readPercent}%` }]} />
+            </View>
+            <Text style={[styles.progressText, { fontSize: scaledFontSize(12) }]}>{`${readPercent}%`}</Text>
+          </View>
+        )}
+
+        <Animated.View
+          entering={FadeInDown.delay(STORY_DETAIL_OPENING.staggerMs * 2).duration(STORY_DETAIL_OPENING.contentMs)}
+          style={styles.actions}
+          testID="story-card-actions"
+        >
           <View ref={modeRefs?.read} collapsable={false}>
             <Pressable
               style={[styles.primaryButton, { borderRadius: scaledButtonSize(24), paddingVertical: scaledPadding(14) }]}
@@ -325,11 +342,11 @@ function StoryCard({
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                 onChooseMode('read');
               }}
-              accessibilityLabel={t('storyDetail.readTogether')}
+              accessibilityLabel={t(readLabelKey)}
               testID="story-card-mode-read"
             >
               <Ionicons name="book" size={scaledFontSize(18)} color="#FFFFFF" />
-              <Text style={[styles.primaryText, { fontSize: scaledFontSize(15) }]}>{t('storyDetail.readTogether')}</Text>
+              <Text style={[styles.primaryText, { fontSize: scaledFontSize(15) }]}>{t(readLabelKey)}</Text>
             </Pressable>
           </View>
 
@@ -370,7 +387,7 @@ function StoryCard({
             </View>
           )}
         </Animated.View>
-      </ScrollView>
+      </View>
 
       <Animated.View style={[styles.shade, shadeStyle]} pointerEvents="none" testID={`story-card-shade-${story.id}`} />
     </Animated.View>
@@ -425,8 +442,6 @@ const styles = StyleSheet.create({
   },
   bodyScroll: {
     flex: 1,
-  },
-  bodyContent: {
     paddingBottom: 16,
   },
   body: {
@@ -486,8 +501,32 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   actions: {
+    marginTop: 'auto',
     paddingHorizontal: 18,
     gap: 8,
+  },
+  progressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 10,
+  },
+  progressTrack: {
+    flex: 1,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.24)',
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 2,
+    backgroundColor: '#FFFFFF',
+  },
+  progressText: {
+    color: 'rgba(255, 255, 255, 0.85)',
+    fontFamily: Fonts.primary,
+    fontWeight: '700',
   },
   primaryButton: {
     flexDirection: 'row',

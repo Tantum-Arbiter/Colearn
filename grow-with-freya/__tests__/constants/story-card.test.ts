@@ -114,15 +114,16 @@ describe('the shelf either side of the card', () => {
     expect(underTest).toBeGreaterThanOrEqual(30);
   });
 
-  it('should size the body to what it holds: two rows of chips and three buttons, and no blank foot', () => {
+  it('should size the body to everything it holds, the progress of a book underway included', () => {
     // At the default type size the body holds the title, a row of meta, two
-    // lines of description, the theme chips and three ways to read. On a phone
-    // four chips wrap to a second row, and with Record a button like the other
-    // two that comes to a little over 350pt; 322pt cut Record off at the foot,
-    // and the old 374pt left an empty band beneath it.
-    expect(STORY_CARD.bodyHeight.phone).toBeGreaterThanOrEqual(350);
-    expect(STORY_CARD.bodyHeight.phone).toBeLessThanOrEqual(360);
-    // tablet type scales up, but its wider card keeps the chips to one row
+    // lines of description, the theme chips, how far the child has read and
+    // three ways to read. Nothing scrolls, so the box has to fit the tallest
+    // of those: 352pt cut Record off once the progress of a book underway
+    // stood above the buttons.
+    expect(STORY_CARD.bodyHeight.phone).toBeGreaterThanOrEqual(380);
+    expect(STORY_CARD.bodyHeight.tablet).toBeGreaterThanOrEqual(380);
+    // the buttons sit at the foot, so a card with less above them has no blank band
+    expect(STORY_CARD.bodyHeight.phone).toBeLessThanOrEqual(420);
     expect(STORY_CARD.bodyHeight.tablet).toBeLessThanOrEqual(STORY_CARD.bodyHeight.phone + 30);
   });
 });

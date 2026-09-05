@@ -161,15 +161,6 @@ export function StoryCoverCard({
 
         <CoverTitle title={title} />
 
-        {story.progress !== null && (
-          <View style={styles.progress} testID="story-cover-progress" pointerEvents="none">
-            <View style={styles.progressTrack}>
-              <View style={[styles.progressFill, { width: `${Math.round(story.progress * 100)}%` }]} />
-            </View>
-            <Text style={styles.progressLabel}>{`${Math.round(story.progress * 100)}%`}</Text>
-          </View>
-        )}
-
         {remoteEntry && (
           <>
             <Animated.View style={[styles.darkOverlay, overlayStyle]} pointerEvents="none" />
@@ -273,34 +264,6 @@ const styles = StyleSheet.create({
   placeholderEmoji: {
     fontSize: 36,
     opacity: 0.6,
-  },
-  // How far the child has read, along the foot of the cover
-  progress: {
-    position: 'absolute',
-    left: SPACE_3,
-    right: SPACE_3,
-    bottom: SPACE_3,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACE_2,
-  },
-  progressTrack: {
-    flex: 1,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: 'rgba(255, 255, 255, 0.28)',
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 2,
-    backgroundColor: TEXT_PRIMARY,
-  },
-  progressLabel: {
-    color: TEXT_PRIMARY,
-    fontFamily: Fonts.primary,
-    fontSize: 11,
-    fontWeight: '700',
   },
   darkOverlay: {
     ...StyleSheet.absoluteFillObject,

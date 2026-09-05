@@ -3029,6 +3029,7 @@ export default {
 
   storyDetail: {
     readTogether: 'Læs sammen',
+    continueReading: 'Læs videre',
     record: 'Optag',
     playAlong: 'Leg med',
     readNow: 'Læs nu',
@@ -3177,7 +3178,6 @@ export default {
     },
     featuredStory: 'Udvalgt historie',
     todaysPick: 'Dagens valg',
-    continueReading: 'Læs videre',
     seeAll: 'Se alle',
     themes: {
       stories: 'Historier',

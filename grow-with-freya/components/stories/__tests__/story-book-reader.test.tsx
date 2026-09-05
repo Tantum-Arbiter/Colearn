@@ -71,6 +71,7 @@ jest.mock('@/store/app-store', () => {
     recordReadingSession: jest.fn(),
     setStoryProgress: jest.fn(),
     markStoryCompleted: jest.fn(),
+    storyProgress: {} as Record<string, { pageIndex: number; totalPages: number; updatedAt: string; completedCount: number }>,
     getEffectiveTier: () => 'premium' as const,
     subscriptionTier: 'premium' as const,
     devTierOverride: null,
@@ -273,6 +274,15 @@ describe('StoryBookReader', () => {
 });
 
 describe('StoryBookReader reading progress', () => {
+  const longStory: Story = {
+    ...mockStory,
+    pages: [0, 1, 2, 3, 4].map((n) => ({ id: `p${n}`, pageNumber: n, text: `Page ${n}` })),
+  };
+
+  beforeEach(() => {
+    jest.requireMock('@/store/app-store').useAppStore.getState().storyProgress = {};
+  });
+
   it('records where the child is up to once past the cover, for the shelf\'s Continue Reading row', () => {
     const { useAppStore } = jest.requireMock('@/store/app-store');
     const setStoryProgress = useAppStore.getState().setStoryProgress as jest.Mock;
@@ -281,6 +291,28 @@ describe('StoryBookReader reading progress', () => {
     render(<StoryBookReader story={mockStory} onExit={jest.fn()} skipCoverPage />);
 
     expect(setStoryProgress).toHaveBeenCalledWith(mockStory.id, 1, mockStory.pages!.length);
+  });
+
+  it('opens a book the child is part-way through where they left off', () => {
+    const { useAppStore } = jest.requireMock('@/store/app-store');
+    const state = useAppStore.getState();
+    state.storyProgress = { [longStory.id]: { pageIndex: 3, totalPages: 5, updatedAt: '2026-09-05T09:00:00Z', completedCount: 0 } };
+    const setStoryProgress = state.setStoryProgress as jest.Mock;
+    setStoryProgress.mockClear();
+
+    render(<StoryBookReader story={longStory} onExit={jest.fn()} skipCoverPage />);
+
+    expect(setStoryProgress).toHaveBeenCalledWith(longStory.id, 3, 5);
+  });
+
+  it('opens a book with nothing saved at its first page', () => {
+    const { useAppStore } = jest.requireMock('@/store/app-store');
+    const setStoryProgress = useAppStore.getState().setStoryProgress as jest.Mock;
+    setStoryProgress.mockClear();
+
+    render(<StoryBookReader story={longStory} onExit={jest.fn()} skipCoverPage />);
+
+    expect(setStoryProgress).toHaveBeenCalledWith(longStory.id, 1, 5);
   });
 });
 

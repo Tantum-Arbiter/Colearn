@@ -9,6 +9,17 @@ import { PageTagline, TAGLINE_ARCH_RADIUS_RATIO } from '@/components/child-ui/pa
 import { ACCENT_GOLD, TEXT_PRIMARY } from '@/constants/night-palette';
 import { Fonts } from '@/constants/theme';
 
+const mockAccessibility = jest.fn(() => ({
+  scaledFontSize: (n: number) => n,
+  scaledButtonSize: (n: number) => n,
+  scaledPadding: (n: number) => n,
+  isTablet: false,
+  contentMaxWidth: 402,
+}));
+jest.mock('@/hooks/use-accessibility', () => ({
+  useAccessibility: () => mockAccessibility(),
+}));
+
 const LINES = ['catalogue.tagline.one', 'catalogue.tagline.two'] as const;
 
 function byTestId(tree: ReturnType<typeof render>, testID: string) {
@@ -78,5 +89,22 @@ describe('PageTagline', () => {
     const ids = tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'svg-Path').map((n: any) => n.props.id);
 
     expect(new Set(ids).size).toBe(2);
+  });
+
+  it('should set the caption larger on a tablet, where there is room for it', () => {
+    const phone = render(<PageTagline lines={LINES} width={360} />);
+    const phoneSize = phone.UNSAFE_root.findAll((n: any) => n.props.testID === 'svg-Text')[0].props.fontSize;
+    mockAccessibility.mockReturnValue({
+      scaledFontSize: (n: number) => n,
+      scaledButtonSize: (n: number) => n,
+      scaledPadding: (n: number) => n,
+      isTablet: true,
+      contentMaxWidth: 834,
+    });
+
+    const tablet = render(<PageTagline lines={LINES} width={360} />);
+
+    const underTest = tablet.UNSAFE_root.findAll((n: any) => n.props.testID === 'svg-Text')[0].props.fontSize;
+    expect(underTest).toBeGreaterThan(phoneSize);
   });
 });

@@ -3029,6 +3029,7 @@ export default {
 
   storyDetail: {
     readTogether: 'لنقرأ معًا',
+    continueReading: 'تابع القراءة',
     record: 'تسجيل',
     playAlong: 'العب معنا',
     readNow: 'اقرأ الآن',
@@ -3177,7 +3178,6 @@ export default {
     },
     featuredStory: 'قصة مميزة',
     todaysPick: 'اختيار اليوم',
-    continueReading: 'متابعة القراءة',
     seeAll: 'عرض الكل',
     themes: {
       stories: 'قصص',

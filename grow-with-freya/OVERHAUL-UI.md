@@ -407,15 +407,15 @@ The most important element on the screen.
 
 **What the shelf holds (operator decision 2026-09-05, "Netflix style").** The panel carries a
 small gold **Featured Story** label above the title; the genre heading that used to stand over
-it is gone. Beneath it, `buildShelves` lays out: **Continue Reading** first, when a book is
-underway (past the cover, not on its last page — `storyProgress` in the app store, recorded on
-every read by the reader), each cover carrying a progress bar and percentage, and its own **See all** leading to a grid of
-everything underway; then one
+it is gone. Beneath it, `buildShelves` lays out one
 horizontal **row per finer theme** that has a book to its name, headed by its genre
 (`stories.genreStories`) or theme label with the theme's own icon and a **See all** that selects
 that theme's pill; and a second big panel, **Today's pick**, standing after the second row — a
 different book from the featured one. Row order is drawn from `APP_LAUNCH_SEED`, so it changes
-when the app opens, not while the child browses. The same few books appear in several rows, as
+when the app opens, not while the child browses. A book opened from a row carries **that row**
+as the card's carousel rather than the whole shelf (operator decision 2026-09-05); a book opened
+from the grid carries the grid. There is **no Continue Reading row**: a book left unfinished says
+so on its own card, not on the shelf (operator decision 2026-09-05). The same few books appear in several rows, as
 on any shelf sorted by theme.
 
 | Property | Value |

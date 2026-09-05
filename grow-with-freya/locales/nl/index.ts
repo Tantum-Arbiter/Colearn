@@ -3029,6 +3029,7 @@ export default {
 
   storyDetail: {
     readTogether: 'Samen lezen',
+    continueReading: 'Verder lezen',
     record: 'Opnemen',
     playAlong: 'Meespelen',
     readNow: 'Nu lezen',
@@ -3177,7 +3178,6 @@ export default {
     },
     featuredStory: 'Uitgelicht verhaal',
     todaysPick: 'Keuze van vandaag',
-    continueReading: 'Verder lezen',
     seeAll: 'Alles bekijken',
     themes: {
       stories: 'Verhalen',

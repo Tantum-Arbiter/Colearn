@@ -3029,6 +3029,7 @@ export default {
 
   storyDetail: {
     readTogether: 'いっしょに読む',
+    continueReading: 'つづきをよむ',
     record: 'ろくおん',
     playAlong: 'いっしょに遊ぶ',
     readNow: 'いま読む',
@@ -3177,7 +3178,6 @@ export default {
     },
     featuredStory: 'おすすめのおはなし',
     todaysPick: 'きょうのいちおし',
-    continueReading: 'つづきを読む',
     seeAll: 'すべて見る',
     themes: {
       stories: 'おはなし',

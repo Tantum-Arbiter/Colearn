@@ -7,6 +7,9 @@
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { StoryCatalogueScreen } from '@/components/stories/catalogue/story-catalogue-screen';
+import { useStoryTransition } from '@/contexts/story-transition-context';
+
+const mockStartTransition = jest.fn();
 
 jest.mock('@/data/stories', () => ({
   ALL_STORIES: [
@@ -125,7 +128,21 @@ describe('StoryCatalogueScreen', () => {
     mockAppState.readStoryIds = [];
     mockAppState.favoriteStoryIds = [];
     mockAppState.storyProgress = {};
+    (useStoryTransition as jest.Mock).mockReturnValue({
+      isTransitioning: false,
+      selectedStoryId: null,
+      shouldShowStoryReader: false,
+      isExpandingToReader: false,
+      startTransition: mockStartTransition,
+    });
   });
+
+  function shelfCarriedBy(testID: string, tree: ReturnType<typeof render>) {
+    const card = byTestId(tree, testID).find((n: any) => n.props.accessibilityRole === 'button');
+    fireEvent.press(card);
+    const call = mockStartTransition.mock.calls[mockStartTransition.mock.calls.length - 1];
+    return (call?.[3] ?? []).map((story: any) => story.id);
+  }
 
   it('carries no view toggle in the filter row', async () => {
     const tree = render(<StoryCatalogueScreen />);
@@ -233,52 +250,58 @@ describe('StoryCatalogueScreen', () => {
     expect(pill?.props.accessibilityState).toEqual({ selected: true });
   });
 
-  it('leads the shelves with Continue Reading when a book is underway, showing how far along it is', async () => {
-    mockAppState.storyProgress = { bear: { pageIndex: 2, totalPages: 6, updatedAt: '2026-09-05T09:00:00Z', completedCount: 0 } };
+  it('carries the row a book was opened from, not the whole shelf', async () => {
     const tree = render(<StoryCatalogueScreen />);
+    await waitFor(() => expect(byTestId(tree, 'story-row-bedtime').length).toBeGreaterThan(0));
+    const bedtime = byTestId(tree, 'story-row-bedtime')[0];
 
-    await waitFor(() => expect(byTestId(tree, 'story-row-continue').length).toBeGreaterThan(0));
+    const card = bedtime.findAll((n: any) => n.props.testID === 'story-cover-card-wombat' && n.props.accessibilityRole === 'button')[0];
+    fireEvent.press(card);
 
-    const row = byTestId(tree, 'story-row-continue')[0];
-    expect(row.findAll((n: any) => n.props.testID === 'story-cover-card-bear').length).toBeGreaterThan(0);
-    expect(row.findAll((n: any) => n.props.testID === 'story-cover-progress').length).toBeGreaterThan(0);
-    expect(row.findAll((n: any) => n.props.testID === 'story-cover-card-wombat')).toHaveLength(0);
-    const order = byTestId(tree, 'story-shelves')[0]
-      .findAll((n: any) => typeof n.props.testID === 'string' && (n.props.testID.startsWith('story-row-') || n.props.testID === 'todays-pick-card'))
-      .map((n: any) => n.props.testID)
-      .filter((id: string) => !id.includes('-heading') && !id.includes('-shelf'));
-    expect(order[0]).toBe('story-row-continue');
+    const call = mockStartTransition.mock.calls[mockStartTransition.mock.calls.length - 1];
+    expect(call[3].map((story: any) => story.id).sort()).toEqual(['whale', 'wombat']);
   });
 
-  it('leads Continue Reading to every book underway, and back home from the theme tiles', async () => {
+  it('carries every book on the shelf when one is opened from the grid', async () => {
+    const tree = render(<StoryCatalogueScreen />);
+    await waitFor(() => expect(byTestId(tree, 'story-theme-tile-learning').length).toBeGreaterThan(0));
+    fireEvent.press(byTestId(tree, 'story-theme-tile-learning')[0]);
+    await waitFor(() => expect(byTestId(tree, 'story-cover-card-owl').length).toBeGreaterThan(0));
+
+    const underTest = shelfCarriedBy('story-cover-card-owl', tree);
+
+    expect(underTest).toEqual(['owl']);
+  });
+
+  it('carries only the books it can open when a row holds one that is not downloaded yet', async () => {
+    mockGetCatalog.mockResolvedValue([
+      {
+        storyId: 'remote-1',
+        title: 'Kind Moments',
+        category: 'bedtime',
+        isFree: true,
+        isReferralReward: false,
+        isPremium: false,
+        thumbnailUrl: 'https://cdn/kind.jpg',
+        tags: ['bedtime'],
+      },
+    ]);
+    const tree = render(<StoryCatalogueScreen />);
+    await waitFor(() => expect(byTestId(tree, 'story-row-bedtime').length).toBeGreaterThan(0));
+    const bedtime = byTestId(tree, 'story-row-bedtime')[0];
+    await waitFor(() => expect(bedtime.findAll((n: any) => n.props.testID === 'story-cover-card-remote-1').length).toBeGreaterThan(0));
+
+    const card = bedtime.findAll((n: any) => n.props.testID === 'story-cover-card-wombat' && n.props.accessibilityRole === 'button')[0];
+    fireEvent.press(card);
+
+    const call = mockStartTransition.mock.calls[mockStartTransition.mock.calls.length - 1];
+    expect(call[3].map((story: any) => story.id).sort()).toEqual(['whale', 'wombat']);
+  });
+
+  it('offers no Continue Reading row: a book left unfinished says so on its own card', async () => {
     mockAppState.storyProgress = {
       bear: { pageIndex: 2, totalPages: 6, updatedAt: '2026-09-05T09:00:00Z', completedCount: 0 },
-      whale: { pageIndex: 3, totalPages: 8, updatedAt: '2026-09-04T09:00:00Z', completedCount: 0 },
     };
-    const tree = render(<StoryCatalogueScreen />);
-
-    await waitFor(() => expect(byTestId(tree, 'story-row-continue').length).toBeGreaterThan(0));
-
-    fireEvent.press(
-      byTestId(tree, 'story-row-continue-heading-action').find((n: any) => n.props.accessibilityRole === 'button')
-    );
-
-    await waitFor(() => expect(byTestId(tree, 'story-cover-grid').length).toBeGreaterThan(0));
-    const heading = byTestId(tree, 'more-section-heading')[0];
-    expect(heading.findAll((n: any) => typeof n.props.children === 'string').map((n: any) => n.props.children).join(' '))
-      .toContain('catalogue.continueReading');
-    // Only what is underway, and never the shelves or the featured panel beside it
-    expect(byTestId(tree, 'story-cover-card-bear').length).toBeGreaterThan(0);
-    expect(byTestId(tree, 'story-cover-card-whale').length).toBeGreaterThan(0);
-    expect(byTestId(tree, 'story-cover-card-wombat')).toHaveLength(0);
-    expect(byTestId(tree, 'featured-story-card')).toHaveLength(0);
-
-    fireEvent.press(byTestId(tree, 'story-theme-tile-stories')[0]);
-
-    await waitFor(() => expect(byTestId(tree, 'story-shelves').length).toBeGreaterThan(0));
-  });
-
-  it('hides Continue Reading when nothing is underway', async () => {
     const tree = render(<StoryCatalogueScreen />);
 
     await waitFor(() => expect(byTestId(tree, 'story-shelves').length).toBeGreaterThan(0));

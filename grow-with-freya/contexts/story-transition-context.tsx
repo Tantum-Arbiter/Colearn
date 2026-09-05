@@ -214,6 +214,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   const parentsOnly = useParentsOnlyChallenge();
   const toggleFavoriteStory = useAppStore((s) => s.toggleFavoriteStory);
   const favoriteStoryIds = useAppStore((s) => s.favoriteStoryIds);
+  const storyProgress = useAppStore((s) => s.storyProgress);
 
   // Use screenDimensions state so layout updates when orientation changes
   const { width: screenWidth, height: screenHeight } = screenDimensions;
@@ -1954,6 +1955,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
                 initialIndex={shelfIndex}
                 layout={storyCardLayout({ width: screenWidth, height: screenHeight }, isTablet, safeArea)}
                 isFavorite={isFavorite}
+                progress={storyProgress}
                 onStoryChange={(story, index) => {
                   setSelectedStory(story);
                   setSelectedStoryId(story.id);

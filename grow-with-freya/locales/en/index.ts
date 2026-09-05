@@ -318,6 +318,7 @@ export default {
   // Story detail view (shown after tapping a book)
   storyDetail: {
     readTogether: 'Read Together',
+    continueReading: 'Continue reading',
     record: 'Record',
     playAlong: 'Play Along',
     readNow: 'Read Now',
@@ -2805,7 +2806,6 @@ export default {
     },
     featuredStory: 'Featured Story',
     todaysPick: 'Today\'s pick',
-    continueReading: 'Continue Reading',
     seeAll: 'See all',
     themes: {
       stories: 'Stories',

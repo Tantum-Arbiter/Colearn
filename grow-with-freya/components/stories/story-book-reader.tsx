@@ -45,6 +45,7 @@ import { AudioControlModal } from '../ui/audio-control-modal';
 import { ParentsOnlyModal } from '../ui/parents-only-modal';
 import { SubscriptionOverlay } from '../ui/subscription-overlay';
 import { useAppStore } from '@/store/app-store';
+import { resumePageIndex } from './reading-progress';
 import { useAutoHideControls } from '@/hooks/use-auto-hide-controls';
 import { useInteractionRhythm } from '@/hooks/use-interaction-rhythm';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
@@ -125,7 +126,12 @@ export function StoryBookReader({
   }, [story.id]);
 
   // Start from page 1 if skipping cover, otherwise start from cover (page 0)
-  const [currentPageIndex, setCurrentPageIndex] = useState(skipCoverPage ? 1 : 0);
+  const savedPlace = useAppStore((state) => state.storyProgress[story.id]);
+  const [currentPageIndex, setCurrentPageIndex] = useState(() => resumePageIndex({
+    skipCoverPage,
+    savedPlace,
+    totalPages: story.pages?.length ?? 0,
+  }));
   const [previousPageIndex, setPreviousPageIndex] = useState<number | null>(null); // For crossfade
   const [isTransitioning, setIsTransitioning] = useState(false);
 

@@ -3029,6 +3029,7 @@ export default {
 
   storyDetail: {
     readTogether: 'Birlikte oku',
+    continueReading: 'Okumaya devam et',
     record: 'Kaydet',
     playAlong: 'Birlikte oyna',
     readNow: 'Şimdi oku',
@@ -3177,7 +3178,6 @@ export default {
     },
     featuredStory: 'Öne çıkan hikâye',
     todaysPick: 'Günün seçimi',
-    continueReading: 'Okumaya devam et',
     seeAll: 'Tümünü gör',
     themes: {
       stories: 'Hikâyeler',

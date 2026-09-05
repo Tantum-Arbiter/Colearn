@@ -8,7 +8,7 @@
 
 import {
   buildShelves,
-  continueReading,
+  recommendationTarget,
   filterByTheme,
   storyTheme,
   entryMatchesMode,
@@ -277,31 +277,6 @@ describe('storyTheme', () => {
   });
 });
 
-describe('continueReading', () => {
-  const shelf = ['a', 'b', 'c', 'd'].map((id) => fromStory(story({ id })));
-
-  it('lists the books underway, most recently read first, each with how far along it is', () => {
-    const underTest = continueReading(shelf, {
-      a: { pageIndex: 2, totalPages: 6, updatedAt: '2026-09-01T10:00:00Z' },
-      b: { pageIndex: 4, totalPages: 6, updatedAt: '2026-09-04T10:00:00Z' },
-    });
-
-    expect(underTest.map((s) => s.id)).toEqual(['b', 'a']);
-    expect(underTest[0].progress).toBeCloseTo(0.8, 5);
-    expect(underTest[1].progress).toBeCloseTo(0.4, 5);
-  });
-
-  it('leaves out a book still on its cover, one on its last page, and one never opened', () => {
-    const underTest = continueReading(shelf, {
-      a: { pageIndex: 0, totalPages: 6, updatedAt: '2026-09-01T10:00:00Z' },
-      b: { pageIndex: 5, totalPages: 6, updatedAt: '2026-09-02T10:00:00Z' },
-      c: { pageIndex: 1, totalPages: 1, updatedAt: '2026-09-03T10:00:00Z' },
-    });
-
-    expect(underTest).toEqual([]);
-  });
-});
-
 describe('buildShelves', () => {
   const shelf = [
     fromStory(story({ id: 'wombat', tags: ['bedtime', 'calming'] })),
@@ -314,14 +289,14 @@ describe('buildShelves', () => {
   }
 
   it('gives a row to every theme with a book to its name, and none to the rest', () => {
-    const underTest = rows(buildShelves(shelf, { seed: 0.3, featuredId: null, continueReading: [] }));
+    const underTest = rows(buildShelves(shelf, { seed: 0.3, featuredId: null }));
 
     expect(underTest.map((r) => r.tag).sort()).toEqual(['adventure', 'bedtime', 'calming']);
     expect(underTest.find((r) => r.tag === 'bedtime')?.stories.map((s) => s.id).sort()).toEqual(['whale', 'wombat']);
   });
 
   it("stands the day's pick among the rows, never the featured book, after the second row", () => {
-    const underTest = buildShelves(shelf, { seed: 0.99, featuredId: 'whale', continueReading: [] });
+    const underTest = buildShelves(shelf, { seed: 0.99, featuredId: 'whale' });
 
     const pickAt = underTest.findIndex((s) => s.kind === 'pick');
     const pick = underTest[pickAt];
@@ -329,17 +304,9 @@ describe('buildShelves', () => {
     expect(pick.kind === 'pick' && pick.story.id).not.toBe('whale');
   });
 
-  it('leads with the books underway when there are any', () => {
-    const underway = [{ ...shelf[1], progress: 0.5 }];
-
-    const underTest = buildShelves(shelf, { seed: 0.3, featuredId: null, continueReading: underway });
-
-    expect(underTest[0]).toEqual({ kind: 'continue', stories: underway });
-  });
-
   it('lays the rows out the same way for the same seed, so the shelf holds still within a run', () => {
-    const once = rows(buildShelves(shelf, { seed: 0.42, featuredId: null, continueReading: [] })).map((r) => r.tag);
-    const again = rows(buildShelves(shelf, { seed: 0.42, featuredId: null, continueReading: [] })).map((r) => r.tag);
+    const once = rows(buildShelves(shelf, { seed: 0.42, featuredId: null })).map((r) => r.tag);
+    const again = rows(buildShelves(shelf, { seed: 0.42, featuredId: null })).map((r) => r.tag);
 
     expect(again).toEqual(once);
   });
@@ -347,7 +314,7 @@ describe('buildShelves', () => {
   it('leaves out a row that would repeat exactly the books of one above it', () => {
     const one = [fromStory(story({ id: 'wombat', tags: ['bedtime', 'calming', 'animals'] }))];
 
-    const underTest = rows(buildShelves(one, { seed: 0.3, featuredId: null, continueReading: [] }));
+    const underTest = rows(buildShelves(one, { seed: 0.3, featuredId: null }));
 
     expect(underTest).toHaveLength(1);
   });
@@ -355,17 +322,40 @@ describe('buildShelves', () => {
   it('closes the shelf with More Stories for any book no theme row claims', () => {
     const untagged = fromCatalogEntry(entry({ storyId: 'stray' }), { locked: false, shareToUnlock: false });
 
-    const underTest = buildShelves([...shelf, untagged], { seed: 0.3, featuredId: null, continueReading: [] });
+    const underTest = buildShelves([...shelf, untagged], { seed: 0.3, featuredId: null });
     const more = underTest[underTest.length - 1];
 
     expect(more.kind).toBe('more');
     expect(more.kind === 'more' && more.stories.map((s) => s.id)).toEqual(['stray']);
-    expect(buildShelves(shelf, { seed: 0.3, featuredId: null, continueReading: [] }).some((s) => s.kind === 'more')).toBe(false);
+    expect(buildShelves(shelf, { seed: 0.3, featuredId: null }).some((s) => s.kind === 'more')).toBe(false);
   });
 
   it("offers no pick when the featured book is the only one on the device", () => {
-    const underTest = buildShelves([shelf[0]], { seed: 0.5, featuredId: 'wombat', continueReading: [] });
+    const underTest = buildShelves([shelf[0]], { seed: 0.5, featuredId: 'wombat' });
 
     expect(underTest.some((s) => s.kind === 'pick')).toBe(false);
+  });
+});
+
+describe('recommendationTarget', () => {
+  it.each([
+    ['learning'],
+    ['music'],
+  ])('should send a %s recommendation to that tile, since it is no longer a pill', (tag) => {
+    const underTest = recommendationTarget(tag as any);
+
+    expect(underTest).toEqual({ theme: tag, tags: [] });
+  });
+
+  it('should narrow the shelf by a finer theme, leaving the tile as it is', () => {
+    const underTest = recommendationTarget('bedtime');
+
+    expect(underTest).toEqual({ tags: ['bedtime'] });
+  });
+
+  it('should clear the filters when nothing in particular is recommended', () => {
+    const underTest = recommendationTarget(null);
+
+    expect(underTest).toEqual({ tags: [] });
   });
 });

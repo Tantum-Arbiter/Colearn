@@ -13,10 +13,11 @@ export const STORY_CARD = {
   sideInset: 48,
   /** Cover height as a fraction of card width: a wide picture book spread. */
   coverAspect: 0.52,
-  /** Height of everything beneath the cover, sized to what it holds at the
-   *  default type size -- on a phone, two rows of chips and three buttons;
-   *  larger type scrolls within it. */
-  bodyHeight: { phone: 352, tablet: 350 },
+  /** Height of everything beneath the cover, sized to everything it holds at
+   *  the default type size -- on a phone two rows of chips, how far the child
+   *  has read, and three buttons. Nothing scrolls, and the buttons sit at the
+   *  foot, so a card with less above them simply has more room between. */
+  bodyHeight: { phone: 388, tablet: 384 },
   /** Gap between the card and the bottom of the safe area. */
   bottomGap: 10,
   /** Room to keep clear beneath the status bar. */

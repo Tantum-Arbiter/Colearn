@@ -3029,6 +3029,7 @@ export default {
 
   storyDetail: {
     readTogether: 'Simul legere',
+    continueReading: 'Perge legere',
     record: 'Recorda',
     playAlong: 'Simul ludere',
     readNow: 'Nunc lege',
@@ -3177,7 +3178,6 @@ export default {
     },
     featuredStory: 'Fabula selecta',
     todaysPick: 'Electio hodierna',
-    continueReading: 'Pergere legere',
     seeAll: 'Omnia videre',
     themes: {
       stories: 'Fabulae',

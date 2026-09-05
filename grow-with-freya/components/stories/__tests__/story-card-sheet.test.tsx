@@ -10,6 +10,8 @@
  * 4. Swiping to a neighbour reports the new story; settling on the same card does not
  * 5. Close and favourite callbacks fire
  * 6. Record is offered as a button like the other ways to read
+ * 7. A book the child is part-way through shows how far, and offers to carry on
+ * 8. The card holds everything it shows: the ways to read sit at its foot and nothing scrolls
  */
 
 import React from 'react';
@@ -104,6 +106,73 @@ describe('StoryCardSheet', () => {
     expect(findByText(UNSAFE_root, 'storyDetail.ages').length).toBeGreaterThan(0);
     expect(findByText(UNSAFE_root, 'storyDetail.interactive').length).toBeGreaterThan(0);
     expect(findByText(UNSAFE_root, 'stories.filterTags.bedtime').length).toBeGreaterThan(0);
+  });
+
+  describe('a book the child is part-way through', () => {
+    const underway = { wombat: { pageIndex: 3, totalPages: 9 } };
+
+    it('should show how far they have read', () => {
+      const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} progress={underway} />);
+
+      const underTest = UNSAFE_root.findAll((node: any) => node.props?.testID === 'story-card-progress');
+
+      expect(underTest.length).toBeGreaterThan(0);
+      expect(findByText(UNSAFE_root, '38%').length).toBeGreaterThan(0);
+    });
+
+    it('should offer to carry on where they left off, rather than start again', () => {
+      const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} progress={underway} />);
+
+      const underTest = UNSAFE_root.findAll((node: any) => node.props?.testID === 'story-card-mode-read');
+
+      expect(findByText(UNSAFE_root, 'storyDetail.continueReading').length).toBeGreaterThan(0);
+      expect(underTest[0].props.accessibilityLabel).toBe('storyDetail.continueReading');
+    });
+
+    it('should still open the book the same way, so carrying on is the same act as reading', () => {
+      const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} progress={underway} />);
+
+      pressByTestId(UNSAFE_root, 'story-card-mode-read');
+
+      expect(defaultProps.onChooseMode).toHaveBeenCalledWith('read');
+    });
+
+    it('should show nothing of the sort for a book not yet started', () => {
+      const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} />);
+
+      const underTest = UNSAFE_root.findAll((node: any) => node.props?.testID === 'story-card-progress');
+
+      expect(underTest).toHaveLength(0);
+      expect(findByText(UNSAFE_root, 'storyDetail.readTogether').length).toBeGreaterThan(0);
+    });
+
+    it('should measure only the book it belongs to, not its neighbours on the shelf', () => {
+      const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} progress={underway} />);
+
+      const owl = UNSAFE_root.findAll((node: any) => node.props?.testID === 'story-card-owl')[0];
+
+      expect(owl.findAll((node: any) => node.props?.testID === 'story-card-progress')).toHaveLength(0);
+    });
+  });
+
+  it('should hold everything it shows, so the card never scrolls under the child', () => {
+    const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} progress={{ wombat: { pageIndex: 3, totalPages: 9 } }} />);
+
+    const underTest = UNSAFE_root
+      .findAll((node: any) => typeof node.props?.onMomentumScrollEnd === 'function' || typeof node.props?.scrollEnabled === 'boolean')
+      .map((node: any) => node.props.testID);
+
+    expect(Array.from(new Set(underTest))).toEqual(['story-card-carousel']);
+  });
+
+  it('should sit the ways to read at the foot of the card, whatever the book above them holds', () => {
+    const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} />);
+
+    const underTest = StyleSheet.flatten(
+      UNSAFE_root.findAll((node: any) => node.props?.testID === 'story-card-actions')[0].props.style
+    );
+
+    expect(underTest.marginTop).toBe('auto');
   });
 
   it('should lay out a card for every book on the shelf, in order', () => {

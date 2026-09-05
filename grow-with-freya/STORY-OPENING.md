@@ -11,6 +11,18 @@ in 200ms, and the live reader popped on top the moment it had mounted, usually m
 through the grow. It read as rigid because nothing carried through from one step to the
 next.
 
+
+## Carrying on
+
+A book the child is part-way through says so on its card: a bar and a percentage above the
+buttons, measured against the pages there are to read rather than the pages there are
+(`readingFraction`), and the first button offers to carry on rather than to start again. Choosing
+it opens the book the same way, and the reader opens at the page they left (`resumePageIndex`):
+their saved place when there is one and the cover is being skipped, the first page otherwise,
+never past the last page. The place itself is `storyProgress` in the app store, written by the
+reader on every read. This is the only place an unfinished book is shown: the shelf carries no
+Continue Reading row (operator decision 2026-09-05).
+
 ## The ritual
 
 Every step hands the book to the next one. Nothing appears or vanishes in a single frame.
@@ -47,11 +59,14 @@ The card (`constants/story-card.ts`) is anchored to the bottom safe area, the sc
 less a margin on a phone and capped at 520pt on a tablet, so a tablet gets a card too rather
 than a page. The margin is wide enough that the neighbouring cards plainly show either side --
 what shows of each is the margin less the gap, 34pt -- because a swipe should be an invitation
-the child can see, and at 16pt it was not. Its body is a fixed height, sized to what it holds
+the child can see, and at 16pt it was not. Its body is a fixed height, sized to everything it holds
 at the default type size -- on a phone, where four chips wrap to a second row, that is two rows
-of chips and three buttons, Record a button like the other two rather than a footnote under a
-rule -- so the cover's position is known before the card exists; larger type scrolls within the
-body, and on a short screen the cover gives up height to stay clear of the status bar.
+of chips, how far the child has read, and three buttons, Record a button like the other two
+rather than a footnote under a rule -- so the cover's position is known before the card exists.
+**The body does not scroll** (operator decision 2026-09-05): the ways to read are pinned to its
+foot, so a card with less above them has more room between rather than a blank band, and Record
+is never half in view. On a short screen the cover gives up height to stay clear of the status
+bar.
 
 The carousel snaps one card at a time. The chosen card stands proud; the others sit back
 lower, a little smaller and in shadow, following the finger continuously as the shelf is

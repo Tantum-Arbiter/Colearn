@@ -136,36 +136,17 @@ export function filterByTheme(stories: CatalogueStory[], theme: CatalogueTheme):
   return stories.filter((story) => storyTheme(story) === theme);
 }
 
-export interface ReadingProgress {
-  pageIndex: number;
-  totalPages: number;
-  updatedAt: string;
+export interface RecommendationTarget {
+  theme?: CatalogueTheme;
+  tags: StoryFilterTag[];
 }
 
-/**
- * The books the child is part-way through, most recently read first, each
- * carrying how far along it is. A book is underway once it is past the cover
- * and not yet on its last page; page zero is the cover, so a book of N pages
- * has N-1 to read.
- */
-export function continueReading(
-  stories: CatalogueStory[],
-  progress: Record<string, ReadingProgress | undefined>,
-): CatalogueStory[] {
-  return stories
-    .flatMap((story) => {
-      const record = progress[story.id];
-      if (!record || record.totalPages < 2) return [];
-      const readable = record.totalPages - 1;
-      if (record.pageIndex <= 0 || record.pageIndex >= readable) return [];
-      return [{ story: { ...story, progress: record.pageIndex / readable }, at: record.updatedAt }];
-    })
-    .sort((a, b) => (a.at < b.at ? 1 : a.at > b.at ? -1 : 0))
-    .map((entry) => entry.story);
+export function recommendationTarget(tag: StoryFilterTag | null): RecommendationTarget {
+  if (tag === 'learning' || tag === 'music') return { theme: tag, tags: [] };
+  return { tags: tag ? [tag] : [] };
 }
 
 export type Shelf =
-  | { kind: 'continue'; stories: CatalogueStory[] }
   | { kind: 'row'; tag: StoryFilterTag; stories: CatalogueStory[] }
   | { kind: 'pick'; story: CatalogueStory }
   /** The books no theme row claims, so nothing on the shelf is out of reach. */
@@ -176,8 +157,6 @@ export interface ShelfPlan {
   seed: number;
   /** The book on the featured panel; the day's pick is never the same one. */
   featuredId: string | null;
-  /** The books underway, already in order; empty means no such row. */
-  continueReading: CatalogueStory[];
 }
 
 /** A small, deterministic random source, so one seed always gives one order. */
@@ -206,10 +185,9 @@ function shuffled<T>(items: T[], seed: number): T[] {
 const PICK_AFTER_ROW = 2;
 
 /**
- * The shelves under the featured panel: the books underway first, then a row
- * for every theme tag with a book to its name, in an order drawn afresh each
- * time the app opens, with the day's pick -- a second big panel -- standing
- * among them. The same few books turn up in more than one row, as on any
+ * The shelves under the featured panel: a row for every theme tag with a book
+ * to its name, in an order drawn afresh each time the app opens, with the
+ * day's pick -- a second big panel -- standing among them. The same few books turn up in more than one row, as on any
  * shelf sorted by theme; what changes is which rows lead -- though a
  * row that would repeat exactly the books of one above it is left out. A book
  * with no theme to its name would appear in no row, so those close the shelf
@@ -241,9 +219,7 @@ export function buildShelves(stories: CatalogueStory[], plan: ShelfPlan): Shelf[
   const unclaimed = stories.filter((story) => !inARow.has(story.id));
   if (unclaimed.length > 0) rows.push({ kind: 'more', stories: unclaimed });
 
-  return plan.continueReading.length > 0
-    ? [{ kind: 'continue', stories: plan.continueReading }, ...rows]
-    : rows;
+  return rows;
 }
 
 export function storyMatchesMode(story: Story, mode: CatalogueMode | null): boolean {
