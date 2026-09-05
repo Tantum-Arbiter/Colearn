@@ -225,7 +225,6 @@ export default {
     read: '阅读',
     record: '录制',
     narrate: '叙述',
-    preview: '预览',
     tapToBegin: '点击开始',
     recordAs: '录制为：{{name}}',
     narrateAs: '叙述为：{{name}}',
@@ -242,16 +241,8 @@ export default {
     nameAlreadyExistsMessage: '已存在名为"{{name}}"的语音。请选择其他名称。',
   },
   storyPreview: {
-    audience: '受众',
-    ages: '年龄{{range}}',
-    duration: '时长',
-    durationMinutes: '{{count}}分钟',
-    tags: '标签',
-    readStory: '阅读故事',
-    aboutThisStory: '关于这个故事',
     removeFromDevice: '移除',
     removeConfirm: '从此设备移除"{{title}}"？您可以随时重新下载。',
-    preInstalledNotice: '此故事随应用预装。无法移除，且不计入下载限额。',
   },
   completion: {
     theEnd: '结束',
@@ -705,10 +696,6 @@ export default {
       narrate: {
         title: '聆听模式',
         description: '聆听故事的预先录制的叙述。非常适合睡前！',
-      },
-      preview: {
-        title: '预览',
-        description: '在开始阅读前检查故事详情、时长和主题。',
       },
     },
     recordMode: {
@@ -3182,6 +3169,21 @@ export default {
     sound: '声音',
     noResults: '没有找到符合筛选条件的故事',
     clearFilters: '清除筛选',
+    filter: '筛选',
+    chooseTheme: '选择一个主题',
+    tagline: {
+      one: '每个故事里',
+      two: '都有更明亮的世界',
+    },
+    featuredStory: '精选故事',
+    todaysPick: '今日推荐',
+    continueReading: '继续阅读',
+    seeAll: '查看全部',
+    themes: {
+      stories: '故事',
+      learning: '学习',
+      music: '音乐',
+    },
     library: {
       recentlyRead: '最近阅读',
       favourites: '收藏',

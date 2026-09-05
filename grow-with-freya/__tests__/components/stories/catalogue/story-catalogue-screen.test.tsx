@@ -34,6 +34,14 @@ jest.mock('@/data/stories', () => ({
       coverImage: 'file://whale.webp',
       tags: ['bedtime'],
     },
+    {
+      id: 'owl',
+      title: 'Owl Spells It Out',
+      category: 'learning',
+      isAvailable: true,
+      coverImage: 'file://owl.webp',
+      tags: ['learning', 'animals'],
+    },
   ],
 }));
 
@@ -45,6 +53,7 @@ const mockAppState = {
   toggleFavoriteStory: jest.fn(),
   userAvatarType: null,
   readStoryIds: [] as string[],
+  storyProgress: {} as Record<string, { pageIndex: number; totalPages: number; updatedAt: string; completedCount: number }>,
   childAgeInMonths: 36,
 };
 jest.mock('@/store/app-store', () => ({
@@ -105,10 +114,6 @@ jest.mock('@/components/ui/subscription-overlay', () => ({
   SubscriptionOverlay: () => null,
 }));
 
-jest.mock('@/components/stories/story-preview-modal', () => ({
-  StoryPreviewModal: () => null,
-}));
-
 function byTestId(tree: ReturnType<typeof render>, testID: string) {
   return tree.UNSAFE_root.findAll((n: any) => n.props.testID === testID);
 }
@@ -119,6 +124,7 @@ describe('StoryCatalogueScreen', () => {
     mockGetCatalog.mockResolvedValue([]);
     mockAppState.readStoryIds = [];
     mockAppState.favoriteStoryIds = [];
+    mockAppState.storyProgress = {};
   });
 
   it('carries no view toggle in the filter row', async () => {
@@ -135,7 +141,7 @@ describe('StoryCatalogueScreen', () => {
     await waitFor(() => expect(byTestId(tree, 'featured-story-card').length).toBeGreaterThan(0));
   });
 
-  it('composes environment, controls, filters, featured card, grid and navigation', async () => {
+  it('composes environment, controls, filters, featured card, shelves and navigation', async () => {
     const tree = render(<StoryCatalogueScreen />);
 
     await waitFor(() => {
@@ -145,9 +151,25 @@ describe('StoryCatalogueScreen', () => {
       expect(byTestId(tree, 'page-title').length).toBeGreaterThan(0);
       expect(byTestId(tree, 'story-filter-bar').length).toBeGreaterThan(0);
       expect(byTestId(tree, 'featured-story-card').length).toBeGreaterThan(0);
-      expect(byTestId(tree, 'story-cover-grid').length).toBeGreaterThan(0);
+      expect(byTestId(tree, 'story-shelves').length).toBeGreaterThan(0);
       expect(byTestId(tree, 'child-bottom-navigation').length).toBeGreaterThan(0);
     });
+  });
+
+  it('sets the tagline beneath the title on the catalogue home, and nowhere else', async () => {
+    const tree = render(<StoryCatalogueScreen />);
+
+    await waitFor(() => expect(byTestId(tree, 'page-tagline').length).toBeGreaterThan(0));
+    const onPaths = tree.UNSAFE_root
+      .findAll((n: any) => n.props.testID === 'svg-TextPath')
+      .map((n: any) => n.props.children);
+    expect(onPaths).toEqual(['catalogue.tagline.one', 'catalogue.tagline.two']);
+
+    fireEvent.press(
+      byTestId(tree, 'navigation-item-library').find((n: any) => n.props.accessibilityRole === 'tab')
+    );
+
+    await waitFor(() => expect(byTestId(tree, 'page-tagline')).toHaveLength(0));
   });
 
   it('titles the page through the stories translation key', async () => {
@@ -158,37 +180,122 @@ describe('StoryCatalogueScreen', () => {
     });
   });
 
-  it('features the first bedtime story and keeps it out of More Stories', async () => {
+  it("should feature a book the child has, and offer a different one as the day's pick", async () => {
+    // Which books they are changes each time the app opens, so the test pins
+    // the rule rather than the names: the two big panels never show one book.
     const tree = render(<StoryCatalogueScreen />);
 
     await waitFor(() => {
-      const featuredTitle = byTestId(tree, 'featured-story-title')[0];
-      expect(featuredTitle.props.children).toBe('Snuggle Little Wombat');
-
-      expect(byTestId(tree, 'story-cover-card-wombat')).toHaveLength(0);
-      expect(byTestId(tree, 'story-cover-card-bear').length).toBeGreaterThan(0);
-      expect(byTestId(tree, 'story-cover-card-whale').length).toBeGreaterThan(0);
+      expect(byTestId(tree, 'featured-story-card').length).toBeGreaterThan(0);
+      expect(byTestId(tree, 'todays-pick-card').length).toBeGreaterThan(0);
     });
+
+    const titles = byTestId(tree, 'featured-story-title').map((n: any) => n.props.children).filter((c: any) => typeof c === 'string');
+    const featuredTitle = byTestId(tree, 'featured-story-card')[0].props.accessibilityLabel;
+    const pickTitle = byTestId(tree, 'todays-pick-card')[0].props.accessibilityLabel;
+
+    expect(titles.length).toBeGreaterThan(0);
+    expect(pickTitle).not.toBe(featuredTitle);
+    expect(byTestId(tree, 'featured-story-card-label').some((n: any) => n.props.children === 'catalogue.featuredStory')).toBe(true);
+    expect(byTestId(tree, 'todays-pick-card-label').some((n: any) => n.props.children === 'catalogue.todaysPick')).toBe(true);
+    expect(byTestId(tree, 'featured-section-heading')).toHaveLength(0);
   });
 
-  it('heads the featured section with the genre key and the grid with More Stories', async () => {
+  it('lays out a row for each theme with books, headed by its genre, with See all leading to that theme', async () => {
     const tree = render(<StoryCatalogueScreen />);
 
-    await waitFor(() => {
-      const featuredHeading = byTestId(tree, 'featured-section-heading');
-      expect(featuredHeading.length).toBeGreaterThan(0);
+    await waitFor(() => expect(byTestId(tree, 'story-row-bedtime').length).toBeGreaterThan(0));
 
-      const featuredLabel = featuredHeading[0].findAll((n: any) => typeof n.props.children === 'string')
-        .map((n: any) => n.props.children)
-        .join(' ');
-      expect(featuredLabel).toContain('stories.genreStories');
+    const bedtime = byTestId(tree, 'story-row-bedtime')[0];
+    const heading = bedtime.findAll((n: any) => n.props.testID === 'story-row-bedtime-heading')[0];
+    const label = heading.findAll((n: any) => typeof n.props.children === 'string').map((n: any) => n.props.children).join(' ');
+    expect(label).toContain('stories.genreStories');
+    expect(bedtime.findAll((n: any) => n.props.testID === 'story-cover-card-wombat').length).toBeGreaterThan(0);
+    expect(bedtime.findAll((n: any) => n.props.testID === 'story-cover-card-bear')).toHaveLength(0);
+    expect(byTestId(tree, 'story-row-adventure').length).toBeGreaterThan(0);
+    expect(byTestId(tree, 'story-row-family')).toHaveLength(0);
 
-      const moreHeading = byTestId(tree, 'more-section-heading')[0];
-      const moreLabel = moreHeading.findAll((n: any) => typeof n.props.children === 'string')
-        .map((n: any) => n.props.children)
-        .join(' ');
-      expect(moreLabel).toContain('catalogue.moreStories');
-    });
+    fireEvent.press(
+      bedtime.findAll((n: any) => n.props.testID === 'story-row-bedtime-heading-action' && n.props.accessibilityRole === 'button')[0]
+    );
+
+    await waitFor(() => expect(byTestId(tree, 'story-cover-grid').length).toBeGreaterThan(0));
+    expect(byTestId(tree, 'story-shelves')).toHaveLength(0);
+    expect(byTestId(tree, 'featured-story-card')).toHaveLength(0);
+    expect(byTestId(tree, 'story-cover-card-bear')).toHaveLength(0);
+    // Every match is in the grid, the featured book included, so a theme with
+    // one book never shows an empty grid under the featured panel
+    expect(byTestId(tree, 'story-cover-card-wombat').length).toBeGreaterThan(0);
+    expect(byTestId(tree, 'story-cover-card-whale').length).toBeGreaterThan(0);
+    const gridHeading = byTestId(tree, 'more-section-heading')[0];
+    expect(gridHeading.findAll((n: any) => typeof n.props.children === 'string').map((n: any) => n.props.children).join(' ')).toContain('stories.genreStories');
+    const pill = byTestId(tree, 'story-filter-pill-bedtime').find((n: any) => n.props.accessibilityRole === 'button');
+    expect(pill?.props.accessibilityState).toEqual({ selected: true });
+  });
+
+  it('leads the shelves with Continue Reading when a book is underway, showing how far along it is', async () => {
+    mockAppState.storyProgress = { bear: { pageIndex: 2, totalPages: 6, updatedAt: '2026-09-05T09:00:00Z', completedCount: 0 } };
+    const tree = render(<StoryCatalogueScreen />);
+
+    await waitFor(() => expect(byTestId(tree, 'story-row-continue').length).toBeGreaterThan(0));
+
+    const row = byTestId(tree, 'story-row-continue')[0];
+    expect(row.findAll((n: any) => n.props.testID === 'story-cover-card-bear').length).toBeGreaterThan(0);
+    expect(row.findAll((n: any) => n.props.testID === 'story-cover-progress').length).toBeGreaterThan(0);
+    expect(row.findAll((n: any) => n.props.testID === 'story-cover-card-wombat')).toHaveLength(0);
+    const order = byTestId(tree, 'story-shelves')[0]
+      .findAll((n: any) => typeof n.props.testID === 'string' && (n.props.testID.startsWith('story-row-') || n.props.testID === 'todays-pick-card'))
+      .map((n: any) => n.props.testID)
+      .filter((id: string) => !id.includes('-heading') && !id.includes('-shelf'));
+    expect(order[0]).toBe('story-row-continue');
+  });
+
+  it('leads Continue Reading to every book underway, and back home from the theme tiles', async () => {
+    mockAppState.storyProgress = {
+      bear: { pageIndex: 2, totalPages: 6, updatedAt: '2026-09-05T09:00:00Z', completedCount: 0 },
+      whale: { pageIndex: 3, totalPages: 8, updatedAt: '2026-09-04T09:00:00Z', completedCount: 0 },
+    };
+    const tree = render(<StoryCatalogueScreen />);
+
+    await waitFor(() => expect(byTestId(tree, 'story-row-continue').length).toBeGreaterThan(0));
+
+    fireEvent.press(
+      byTestId(tree, 'story-row-continue-heading-action').find((n: any) => n.props.accessibilityRole === 'button')
+    );
+
+    await waitFor(() => expect(byTestId(tree, 'story-cover-grid').length).toBeGreaterThan(0));
+    const heading = byTestId(tree, 'more-section-heading')[0];
+    expect(heading.findAll((n: any) => typeof n.props.children === 'string').map((n: any) => n.props.children).join(' '))
+      .toContain('catalogue.continueReading');
+    // Only what is underway, and never the shelves or the featured panel beside it
+    expect(byTestId(tree, 'story-cover-card-bear').length).toBeGreaterThan(0);
+    expect(byTestId(tree, 'story-cover-card-whale').length).toBeGreaterThan(0);
+    expect(byTestId(tree, 'story-cover-card-wombat')).toHaveLength(0);
+    expect(byTestId(tree, 'featured-story-card')).toHaveLength(0);
+
+    fireEvent.press(byTestId(tree, 'story-theme-tile-stories')[0]);
+
+    await waitFor(() => expect(byTestId(tree, 'story-shelves').length).toBeGreaterThan(0));
+  });
+
+  it('hides Continue Reading when nothing is underway', async () => {
+    const tree = render(<StoryCatalogueScreen />);
+
+    await waitFor(() => expect(byTestId(tree, 'story-shelves').length).toBeGreaterThan(0));
+
+    expect(byTestId(tree, 'story-row-continue')).toHaveLength(0);
+  });
+
+  it('sorts the shelf under the chosen tile: Stories first, Learning on its tile', async () => {
+    const tree = render(<StoryCatalogueScreen />);
+
+    await waitFor(() => expect(byTestId(tree, 'story-row-bedtime').length).toBeGreaterThan(0));
+    expect(byTestId(tree, 'story-cover-card-owl')).toHaveLength(0);
+
+    fireEvent.press(byTestId(tree, 'story-theme-tile-learning')[0]);
+
+    await waitFor(() => expect(byTestId(tree, 'story-cover-card-owl').length).toBeGreaterThan(0));
+    expect(byTestId(tree, 'story-cover-card-wombat')).toHaveLength(0);
   });
 
   it('marks Home as the selected journey area on entry', async () => {
@@ -339,9 +446,9 @@ describe('StoryCatalogueScreen', () => {
   it('shows the localised empty state when filters match nothing', async () => {
     const tree = render(<StoryCatalogueScreen />);
 
-    await waitFor(() => expect(byTestId(tree, 'story-filter-pill-music').length).toBeGreaterThan(0));
+    await waitFor(() => expect(byTestId(tree, 'story-theme-tile-music').length).toBeGreaterThan(0));
 
-    fireEvent.press(byTestId(tree, 'story-filter-pill-music')[0]);
+    fireEvent.press(byTestId(tree, 'story-theme-tile-music')[0]);
 
     await waitFor(() => {
       const texts = tree.UNSAFE_root.findAll((n: any) => n.props.children === 'catalogue.noResults');

@@ -31,7 +31,6 @@ import { EarthHorizon } from '@/components/ui/earth-horizon';
 import { useStoryTransition } from '@/contexts/story-transition-context';
 import { PageHeader } from '@/components/ui/page-header';
 import { useAccessibility } from '@/hooks/use-accessibility';
-import { StoryPreviewModal } from './story-preview-modal';
 import { CatalogStoryCard } from './catalog-story-card';
 import { StoryDownloadService } from '@/services/story-download-service';
 import { StoryAccessService } from '@/services/story-access-service';
@@ -196,7 +195,6 @@ interface StorySelectionScreenProps {
 interface StoryCardProps {
   story: Story;
   onPress: (story: Story, ref: React.RefObject<View | null>) => void;
-  onLongPress: (story: Story, ref: React.RefObject<View | null>) => void;
   cardWidth: number;
   cardHeight: number;
   borderRadius: number;
@@ -212,7 +210,6 @@ interface StoryCardProps {
 const StoryCard = memo(function StoryCard({
   story,
   onPress,
-  onLongPress,
   cardWidth,
   cardHeight,
   borderRadius,
@@ -318,9 +315,6 @@ const StoryCard = memo(function StoryCard({
     onPress(story, cardRef);
   }, [story, onPress]);
 
-  // Pass the ref to onLongPress so we can use it when "Read Story" is pressed from preview
-  const handleLongPress = useCallback(() => onLongPress(story, cardRef), [story, onLongPress]);
-
   // When hidden, render an invisible placeholder to maintain layout but hide content completely
   if (isHidden) {
     return (
@@ -337,8 +331,6 @@ const StoryCard = memo(function StoryCard({
     <Animated.View ref={cardRef} collapsable={false} style={fadeAnimatedStyle}>
       <Pressable
         onPress={handlePress}
-        onLongPress={handleLongPress}
-        delayLongPress={400}
         style={styles.cardPressable}
       >
         {/* Cover Image - loaded from local cache after batch sync */}
@@ -569,26 +561,6 @@ export function StorySelectionScreen({ onStorySelect, initialMode }: StorySelect
       viewFadeOpacity.value = withTiming(1, { duration: 300, easing: Easing.out(Easing.ease) });
     });
   }, [storyViewMode, setStoryViewMode, viewFadeOpacity]);
-
-  // Story preview modal state
-  const [previewStory, setPreviewStory] = useState<Story | null>(null);
-  const [isPreviewVisible, setIsPreviewVisible] = useState(false);
-  // Store the card ref for the currently previewed story so we can animate from it
-  const previewCardRef = useRef<React.RefObject<View | null> | null>(null);
-
-  const handleLongPress = useCallback((story: Story, cardRef: React.RefObject<View | null>) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setPreviewStory(story);
-    setIsPreviewVisible(true);
-    // Store the ref so we can use it when "Read Story" is pressed
-    previewCardRef.current = cardRef;
-  }, []);
-
-  const handleClosePreview = useCallback(() => {
-    setIsPreviewVisible(false);
-    setPreviewStory(null);
-    previewCardRef.current = null;
-  }, []);
 
   // Delete a downloaded story from cache and revert to catalog entry
   const handleDeleteStory = useCallback(async (story: Story) => {
@@ -987,8 +959,7 @@ export function StorySelectionScreen({ onStorySelect, initialMode }: StorySelect
 
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
-    // Use the provided ref, or fall back to the stored preview card ref
-    const refToUse = pressableRef || previewCardRef.current;
+    const refToUse = pressableRef;
 
     // Get the card position for transition animation
     if (refToUse && refToUse.current) {
@@ -1016,30 +987,6 @@ export function StorySelectionScreen({ onStorySelect, initialMode }: StorySelect
     }
   }, [onStorySelect, startTransition]);
 
-  // Preview for catalog entries -build a lightweight Story-like object for the preview modal
-  const handleCatalogPreview = useCallback((entry: CatalogEntry) => {
-    // Preview catalog entry
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    const previewAsStory: Story = {
-      id: entry.storyId,
-      title: entry.title,
-      localizedTitle: entry.localizedTitle,
-      description: entry.description,
-      localizedDescription: entry.localizedDescription,
-      category: entry.category,
-      tags: entry.tags,
-      coverImage: entry.thumbnailUrl,
-      isAvailable: false, // Not downloaded -prevents "Read Story" button
-      ageRange: entry.ageRange,
-      duration: entry.duration,
-      isFree: entry.isFree,
-      isPremium: entry.isPremium,
-      isReferralReward: entry.isReferralReward,
-    };
-    setPreviewStory(previewAsStory);
-    setIsPreviewVisible(true);
-  }, []);
-
   // Render a single display item (downloaded story or catalog entry)
   const renderDisplayItem: ListRenderItem<StoryDisplayItem> = useCallback(({ item }) => {
     if (item.type === 'story') {
@@ -1048,7 +995,6 @@ export function StorySelectionScreen({ onStorySelect, initialMode }: StorySelect
         <StoryCard
           story={story}
           onPress={handleStoryPress}
-          onLongPress={handleLongPress}
           cardWidth={scaledCardW}
           cardHeight={scaledCardH}
           borderRadius={scaledBorderRadius}
@@ -1084,7 +1030,6 @@ export function StorySelectionScreen({ onStorySelect, initialMode }: StorySelect
         language={currentLanguage}
         onDownloadComplete={handleCatalogDownloadComplete}
         swapTranslateX={swapTx}
-        onLongPress={handleCatalogPreview}
         onAuthError={handleAuthError}
         isLocked={effectiveTier === 'free' && !item.data.isFree && !item.data.isShareToUnlock}
         onLockedPress={() => setShowSubscription(true)}
@@ -1093,14 +1038,13 @@ export function StorySelectionScreen({ onStorySelect, initialMode }: StorySelect
         onShareToUnlock={handleShareToUnlock}
       />
     );
-  }, [handleStoryPress, handleLongPress, scaledCardW, scaledCardH, scaledBorderRadius, scaledEmojiFontSize, isTransitioning, selectedStoryId, shouldShowStoryReader, isExpandingToReader, currentLanguage, readStoryIds, deletingStoryId, handleImplodeComplete, handleCatalogDownloadComplete, handleCatalogPreview, handleAuthError, handleDownloadLimitReached, bubbleSwap, effectiveTier, shareUnlockedIds, handleShareToUnlock]);
+  }, [handleStoryPress, scaledCardW, scaledCardH, scaledBorderRadius, scaledEmojiFontSize, isTransitioning, selectedStoryId, shouldShowStoryReader, isExpandingToReader, currentLanguage, readStoryIds, deletingStoryId, handleImplodeComplete, handleCatalogDownloadComplete, handleAuthError, handleDownloadLimitReached, bubbleSwap, effectiveTier, shareUnlockedIds, handleShareToUnlock]);
 
   // Memoized render function for story cards (favorites only -pure Story[])
   const renderStoryCard: ListRenderItem<Story> = useCallback(({ item: story }) => (
     <StoryCard
       story={story}
       onPress={handleStoryPress}
-      onLongPress={handleLongPress}
       cardWidth={scaledCardW}
       cardHeight={scaledCardH}
       borderRadius={scaledBorderRadius}
@@ -1111,7 +1055,7 @@ export function StorySelectionScreen({ onStorySelect, initialMode }: StorySelect
       onDeleteAnimationComplete={handleImplodeComplete}
       language={currentLanguage}
     />
-  ), [handleStoryPress, handleLongPress, scaledCardW, scaledCardH, scaledBorderRadius, scaledEmojiFontSize, isTransitioning, selectedStoryId, shouldShowStoryReader, isExpandingToReader, currentLanguage, readStoryIds, deletingStoryId, handleImplodeComplete]);
+  ), [handleStoryPress, scaledCardW, scaledCardH, scaledBorderRadius, scaledEmojiFontSize, isTransitioning, selectedStoryId, shouldShowStoryReader, isExpandingToReader, currentLanguage, readStoryIds, deletingStoryId, handleImplodeComplete]);
 
   // Key extractors
   const keyExtractor = useCallback((story: Story) => story.id, []);
@@ -1324,7 +1268,6 @@ export function StorySelectionScreen({ onStorySelect, initialMode }: StorySelect
                         <StoryCard
                           story={story}
                           onPress={handleStoryPress}
-                          onLongPress={handleLongPress}
                           cardWidth={gridCardW}
                           cardHeight={gridCardH}
                           borderRadius={scaledBorderRadius}
@@ -1359,7 +1302,6 @@ export function StorySelectionScreen({ onStorySelect, initialMode }: StorySelect
                               <StoryCard
                                 story={story}
                                 onPress={handleStoryPress}
-                                onLongPress={handleLongPress}
                                 cardWidth={gridCardW}
                                 cardHeight={gridCardH}
                                 borderRadius={scaledBorderRadius}
@@ -1382,7 +1324,6 @@ export function StorySelectionScreen({ onStorySelect, initialMode }: StorySelect
                               borderRadius={scaledBorderRadius}
                               language={currentLanguage}
                               onDownloadComplete={handleCatalogDownloadComplete}
-                              onLongPress={handleCatalogPreview}
                               onAuthError={handleAuthError}
                               isLocked={effectiveTier === 'free' && !item.data.isFree && !item.data.isShareToUnlock}
                               onLockedPress={() => setShowSubscription(true)}
@@ -1404,15 +1345,6 @@ export function StorySelectionScreen({ onStorySelect, initialMode }: StorySelect
         </>)}
       </View>
 
-      {/* Story Preview Modal */}
-      <StoryPreviewModal
-        story={previewStory}
-        visible={isPreviewVisible}
-        onClose={handleClosePreview}
-        onReadStory={(story) => handleStoryPress(story)}
-        onDeleteStory={previewStory?.isAvailable && !StoryLoader.isLocalStory(previewStory.id) ? handleDeleteStory : undefined}
-        isPreInstalled={previewStory ? StoryLoader.isLocalStory(previewStory.id) : false}
-      />
 
       {/* Subscription Overlay -triggered from locked catalog cards */}
       <SubscriptionOverlay

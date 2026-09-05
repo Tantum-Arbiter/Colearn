@@ -225,7 +225,6 @@ export default {
     read: 'اقرأ',
     record: 'سجل',
     narrate: 'اسرد',
-    preview: 'معاينة',
     tapToBegin: 'اضغط للبدء',
     recordAs: 'التسجيل باسم: {{name}}',
     narrateAs: 'السرد باسم: {{name}}',
@@ -242,16 +241,8 @@ export default {
     nameAlreadyExistsMessage: 'يوجد بالفعل صوت باسم "{{name}}". يرجى اختيار اسم مختلف.',
   },
   storyPreview: {
-    audience: 'الجمهور',
-    ages: 'الأعمار {{range}}',
-    duration: 'المدة',
-    durationMinutes: '{{count}} دقيقة',
-    tags: 'الوسوم',
-    readStory: 'اقرأ القصة',
-    aboutThisStory: 'حول هذه القصة',
     removeFromDevice: 'إزالة',
     removeConfirm: 'إزالة "{{title}}" من هذا الجهاز؟ يمكنك تحميلها مرة أخرى في أي وقت.',
-    preInstalledNotice: 'هذه القصة مثبتة مسبقاً مع التطبيق. لا يمكن إزالتها ولا تُحتسب ضمن حد التنزيلات.',
   },
   completion: {
     theEnd: 'النهاية',
@@ -705,10 +696,6 @@ export default {
       narrate: {
         title: 'وضع الاستماع',
         description: 'استمع إلى سرد مسجل مسبقاً للقصة. مثالي لوقت النوم!',
-      },
-      preview: {
-        title: 'معاينة',
-        description: 'تحقق من تفاصيل القصة والمدة والمواضيع قبل البدء في القراءة.',
       },
     },
     recordMode: {
@@ -3182,6 +3169,21 @@ export default {
     sound: 'الصوت',
     noResults: 'لم يتم العثور على قصص بهذه المرشحات',
     clearFilters: 'مسح المرشحات',
+    filter: 'تصفية',
+    chooseTheme: 'اختر موضوعًا',
+    tagline: {
+      one: 'عالم أكثر إشراقًا',
+      two: 'في كل قصة',
+    },
+    featuredStory: 'قصة مميزة',
+    todaysPick: 'اختيار اليوم',
+    continueReading: 'متابعة القراءة',
+    seeAll: 'عرض الكل',
+    themes: {
+      stories: 'قصص',
+      learning: 'التعلم',
+      music: 'موسيقى',
+    },
     library: {
       recentlyRead: 'قُرئت مؤخرًا',
       favourites: 'المفضلة',

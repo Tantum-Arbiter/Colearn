@@ -35,13 +35,11 @@ export interface StoryCardSheetProps {
   onStoryChange: (story: Story, index: number) => void;
   /** Choosing a way to read opens the book from the card. */
   onChooseMode: (mode: ReadingMode) => void;
-  onPreview: () => void;
   onClose: () => void;
   onToggleFavorite: () => void;
   readButtonRef?: RefObject<View | null>;
   recordButtonRef?: RefObject<View | null>;
   narrateButtonRef?: RefObject<View | null>;
-  previewButtonRef?: RefObject<View | null>;
 }
 
 interface ModeOption {
@@ -70,13 +68,11 @@ export function StoryCardSheet({
   isFavorite,
   onStoryChange,
   onChooseMode,
-  onPreview,
   onClose,
   onToggleFavorite,
   readButtonRef,
   recordButtonRef,
   narrateButtonRef,
-  previewButtonRef,
 }: StoryCardSheetProps) {
   const { t, i18n } = useTranslation();
   const { scaledFontSize, scaledButtonSize, scaledPadding } = useAccessibility();
@@ -136,13 +132,11 @@ export function StoryCardSheet({
             isFavorite={i === index ? isFavorite : false}
             currentLanguage={currentLanguage}
             modeRefs={i === index ? modeRefs : undefined}
-            previewButtonRef={i === index ? previewButtonRef : undefined}
             scaledFontSize={scaledFontSize}
             scaledButtonSize={scaledButtonSize}
             scaledPadding={scaledPadding}
             t={t}
             onChooseMode={onChooseMode}
-            onPreview={onPreview}
             onClose={onClose}
             onToggleFavorite={onToggleFavorite}
           />
@@ -162,13 +156,11 @@ interface StoryCardProps {
   isFavorite: boolean;
   currentLanguage: SupportedLanguage;
   modeRefs?: Record<ReadingMode, RefObject<View | null> | undefined>;
-  previewButtonRef?: RefObject<View | null>;
   scaledFontSize: (size: number) => number;
   scaledButtonSize: (size: number) => number;
   scaledPadding: (size: number) => number;
   t: (key: string, options?: Record<string, unknown>) => string;
   onChooseMode: (mode: ReadingMode) => void;
-  onPreview: () => void;
   onClose: () => void;
   onToggleFavorite: () => void;
 }
@@ -183,13 +175,11 @@ function StoryCard({
   isFavorite,
   currentLanguage,
   modeRefs,
-  previewButtonRef,
   scaledFontSize,
   scaledButtonSize,
   scaledPadding,
   t,
   onChooseMode,
-  onPreview,
   onClose,
   onToggleFavorite,
 }: StoryCardProps) {
@@ -274,20 +264,6 @@ function StoryCard({
           </Pressable>
           <Pressable style={styles.circleButton} onPress={onClose} hitSlop={10} accessibilityLabel={t('common.back')}>
             <Ionicons name="close" size={scaledFontSize(20)} color="#FFFFFF" />
-          </Pressable>
-        </View>
-
-        <View ref={previewButtonRef} collapsable={false} style={styles.previewWrap}>
-          <Pressable
-            style={styles.circleButton}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              onPreview();
-            }}
-            hitSlop={8}
-            accessibilityLabel={t('storyMode.preview')}
-          >
-            <Ionicons name="images-outline" size={scaledFontSize(17)} color="#FFFFFF" />
           </Pressable>
         </View>
       </View>
@@ -436,11 +412,6 @@ const styles = StyleSheet.create({
     right: 12,
     flexDirection: 'row',
     justifyContent: 'space-between',
-  },
-  previewWrap: {
-    position: 'absolute',
-    right: 12,
-    bottom: 12,
   },
   circleButton: {
     width: 36,

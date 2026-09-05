@@ -225,7 +225,6 @@ export default {
     read: '読む',
     record: '記録',
     narrate: 'ナレート',
-    preview: 'プレビュー',
     tapToBegin: 'タップして開始',
     recordAs: '記録中：{{name}}',
     narrateAs: 'ナレート中：{{name}}',
@@ -242,16 +241,8 @@ export default {
     nameAlreadyExistsMessage: '「{{name}}」という名前の音声は既に存在します。別の名前を選択してください。',
   },
   storyPreview: {
-    audience: '対象者',
-    ages: '年齢{{range}}',
-    duration: '期間',
-    durationMinutes: '{{count}}分',
-    tags: 'タグ',
-    readStory: 'ストーリーを読む',
-    aboutThisStory: 'このストーリーについて',
     removeFromDevice: '削除',
     removeConfirm: '"{{title}}"をこのデバイスから削除しますか？いつでも再ダウンロードできます。',
-    preInstalledNotice: 'この物語はアプリにプリインストールされています。削除できず、ダウンロード制限にはカウントされません。',
   },
   completion: {
     theEnd: '終わり',
@@ -705,10 +696,6 @@ export default {
       narrate: {
         title: 'リッスンモード',
         description: 'ストーリーの事前に記録されたナレーションを聞いてください。就寝時間に最適です！',
-      },
-      preview: {
-        title: 'プレビュー',
-        description: '読み始める前に、ストーリーの詳細、期間、テーマを確認してください。',
       },
     },
     recordMode: {
@@ -3182,6 +3169,21 @@ export default {
     sound: 'サウンド',
     noResults: 'このじょうけんのおはなしはありません',
     clearFilters: 'フィルターをクリア',
+    filter: 'フィルター',
+    chooseTheme: 'テーマを選ぼう',
+    tagline: {
+      one: 'おはなしのなかに',
+      two: 'かがやく世界',
+    },
+    featuredStory: 'おすすめのおはなし',
+    todaysPick: 'きょうのいちおし',
+    continueReading: 'つづきを読む',
+    seeAll: 'すべて見る',
+    themes: {
+      stories: 'おはなし',
+      learning: '学習',
+      music: '音楽',
+    },
     library: {
       recentlyRead: 'さいきんよんだ',
       favourites: 'おきにいり',

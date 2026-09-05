@@ -86,7 +86,6 @@ const defaultProps = {
   isFavorite: false,
   onStoryChange: jest.fn(),
   onChooseMode: jest.fn(),
-  onPreview: jest.fn(),
   onClose: jest.fn(),
   onToggleFavorite: jest.fn(),
 };
@@ -166,14 +165,6 @@ describe('StoryCardSheet', () => {
     pressByLabel(UNSAFE_root, 'storyDetail.favourite');
 
     expect(defaultProps.onToggleFavorite).toHaveBeenCalled();
-  });
-
-  it('should call onPreview from the pictures button', () => {
-    const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} />);
-
-    pressByLabel(UNSAFE_root, 'storyMode.preview');
-
-    expect(defaultProps.onPreview).toHaveBeenCalled();
   });
 
   it('should show the offline row when the story is saved', async () => {

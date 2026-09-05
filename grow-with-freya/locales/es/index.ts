@@ -225,7 +225,6 @@ export default {
     read: 'Leer',
     record: 'Grabar',
     narrate: 'Narrar',
-    preview: 'Vista previa',
     tapToBegin: 'Toca para empezar',
     recordAs: 'Grabar como: {{name}}',
     narrateAs: 'Narrar como: {{name}}',
@@ -242,16 +241,8 @@ export default {
     nameAlreadyExistsMessage: 'Ya existe una voz llamada "{{name}}". Por favor elige otro nombre.',
   },
   storyPreview: {
-    audience: 'Audiencia',
-    ages: 'Edades {{range}}',
-    duration: 'Duración',
-    durationMinutes: '{{count}} min',
-    tags: 'Etiquetas',
-    readStory: 'Leer cuento',
-    aboutThisStory: 'Sobre este cuento',
     removeFromDevice: 'Eliminar',
     removeConfirm: '¿Eliminar "{{title}}" de este dispositivo? Puedes descargarlo de nuevo en cualquier momento.',
-    preInstalledNotice: 'Este cuento viene preinstalado con la app. No se puede eliminar y no cuenta para tu límite de descargas.',
   },
   completion: {
     theEnd: 'Fin',
@@ -705,10 +696,6 @@ export default {
       narrate: {
         title: 'Modo Escucha',
         description: 'Escucha una narración pregrabada. ¡Genial para dormir!',
-      },
-      preview: {
-        title: 'Vista Previa',
-        description: 'Ve detalles del cuento antes de comenzar a leer.',
       },
     },
     recordMode: {
@@ -3182,6 +3169,21 @@ export default {
     sound: 'Sonido',
     noResults: 'No se encontraron cuentos con estos filtros',
     clearFilters: 'Borrar filtros',
+    filter: 'Filtrar',
+    chooseTheme: 'Elige un tema',
+    tagline: {
+      one: 'Un mundo más brillante',
+      two: 'en cada cuento',
+    },
+    featuredStory: 'Cuento destacado',
+    todaysPick: 'Elección del día',
+    continueReading: 'Seguir leyendo',
+    seeAll: 'Ver todo',
+    themes: {
+      stories: 'Cuentos',
+      learning: 'Aprendizaje',
+      music: 'Música',
+    },
     library: {
       recentlyRead: 'Leídos recientemente',
       favourites: 'Favoritos',

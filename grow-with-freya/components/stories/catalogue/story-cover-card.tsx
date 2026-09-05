@@ -1,7 +1,6 @@
 import React, { useCallback, useRef } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Circle } from 'react-native-svg';
 import Animated, {
@@ -16,24 +15,20 @@ import type { SupportedLanguage } from '@/services/i18n';
 import { NIGHT_DEEP, NIGHT_VOID, TEXT_PRIMARY } from '@/constants/night-palette';
 import { Fonts } from '@/constants/theme';
 import { CHILD_UI_MOTION, CHILD_UI_SCALE, motionDuration } from '@/constants/child-ui-motion';
-import { useAccessibility } from '@/hooks/use-accessibility';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import {
   COVER_ASPECT_RATIO,
   RADIUS_CARD,
   SPACE_2,
   SPACE_3,
-  TYPE_ROLES,
-  typeSize,
 } from '@/components/child-ui/tokens';
 import { CatalogueStory } from './catalogue-story';
 import { StoryOpenHandler } from './featured-story-card';
 import { useCatalogueDownload } from './use-catalogue-download';
-import { BookFrame } from './book-frame';
+import { CoverTitle } from './cover-title';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
-const TITLE_WASH_GRADIENT = ['rgba(4, 16, 47, 0.62)', 'rgba(4, 16, 47, 0.0)'] as const;
 
 const RING_SIZE = 48;
 const RING_STROKE = 3.5;
@@ -45,7 +40,6 @@ interface StoryCoverCardProps {
   width: number;
   language: SupportedLanguage;
   onOpen: StoryOpenHandler;
-  onLongPress?: (story: CatalogueStory) => void;
   onLockedPress?: () => void;
   onShareToUnlock?: (entry: CatalogEntry) => void;
   onDownloadComplete?: (storyId: string) => void;
@@ -60,7 +54,6 @@ export function StoryCoverCard({
   width,
   language,
   onOpen,
-  onLongPress,
   onLockedPress,
   onShareToUnlock,
   onDownloadComplete,
@@ -69,7 +62,6 @@ export function StoryCoverCard({
   hidden = false,
   testID,
 }: StoryCoverCardProps) {
-  const { isTablet, scaledFontSize } = useAccessibility();
   const reduceMotion = useReducedMotion();
   const cardRef = useRef<View>(null);
   const pressScale = useSharedValue(1);
@@ -131,11 +123,6 @@ export function StoryCoverCard({
     void download.startOrCancel();
   }, [remoteEntry, story, onOpen, onShareToUnlock, onLockedPress, download]);
 
-  const handleLongPress = useCallback(() => {
-    if (download.downloading) return;
-    onLongPress?.(story);
-  }, [download.downloading, onLongPress, story]);
-
   const artworkSource = typeof story.coverArtwork === 'string'
     ? { uri: story.coverArtwork }
     : story.coverArtwork;
@@ -148,7 +135,7 @@ export function StoryCoverCard({
 
   return (
     <Animated.View ref={cardRef} collapsable={false} style={pressAnimatedStyle}>
-      <BookFrame width={width} height={height} radius={RADIUS_CARD} testID={`${testID ?? `story-cover-card-${story.id}`}-book`}>
+      <View style={[styles.frame, { width, height, borderRadius: RADIUS_CARD }]} testID={`${testID ?? `story-cover-card-${story.id}`}-frame`}>
       <Pressable
         testID={testID ?? `story-cover-card-${story.id}`}
         accessibilityRole="button"
@@ -156,8 +143,6 @@ export function StoryCoverCard({
         onPress={handlePress}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
-        onLongPress={handleLongPress}
-        delayLongPress={400}
         style={styles.card}
       >
         {artworkSource ? (
@@ -174,21 +159,16 @@ export function StoryCoverCard({
           </View>
         )}
 
-        <LinearGradient
-          colors={TITLE_WASH_GRADIENT}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={styles.titleWash}
-          pointerEvents="none"
-        />
+        <CoverTitle title={title} />
 
-        <Text
-          testID="story-cover-title"
-          style={[styles.title, { fontSize: scaledFontSize(typeSize('cardTitle', isTablet)) }]}
-          numberOfLines={2}
-        >
-          {title}
-        </Text>
+        {story.progress !== null && (
+          <View style={styles.progress} testID="story-cover-progress" pointerEvents="none">
+            <View style={styles.progressTrack}>
+              <View style={[styles.progressFill, { width: `${Math.round(story.progress * 100)}%` }]} />
+            </View>
+            <Text style={styles.progressLabel}>{`${Math.round(story.progress * 100)}%`}</Text>
+          </View>
+        )}
 
         {remoteEntry && (
           <>
@@ -264,7 +244,7 @@ export function StoryCoverCard({
           </>
         )}
       </Pressable>
-      </BookFrame>
+      </View>
     </Animated.View>
   );
 }
@@ -272,6 +252,12 @@ export function StoryCoverCard({
 const styles = StyleSheet.create({
   hidden: {
     opacity: 0,
+  },
+  // A plain rounded card: the cover art is the whole of it, with no spine or
+  // page edges drawn on (operator decision 2026-09-05)
+  frame: {
+    overflow: 'hidden',
+    backgroundColor: NIGHT_DEEP,
   },
   card: {
     width: '100%',
@@ -288,21 +274,33 @@ const styles = StyleSheet.create({
     fontSize: 36,
     opacity: 0.6,
   },
-  titleWash: {
+  // How far the child has read, along the foot of the cover
+  progress: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    bottom: 0,
-    width: '70%',
-  },
-  title: {
-    position: 'absolute',
-    top: SPACE_3,
     left: SPACE_3,
-    right: '32%',
+    right: SPACE_3,
+    bottom: SPACE_3,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACE_2,
+  },
+  progressTrack: {
+    flex: 1,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.28)',
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 2,
+    backgroundColor: TEXT_PRIMARY,
+  },
+  progressLabel: {
     color: TEXT_PRIMARY,
     fontFamily: Fonts.primary,
-    fontWeight: TYPE_ROLES.cardTitle.weight,
+    fontSize: 11,
+    fontWeight: '700',
   },
   darkOverlay: {
     ...StyleSheet.absoluteFillObject,

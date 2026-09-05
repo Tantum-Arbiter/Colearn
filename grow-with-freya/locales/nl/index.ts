@@ -225,7 +225,6 @@ export default {
     read: 'Lees',
     record: 'Opnemen',
     narrate: 'Vertel',
-    preview: 'Voorbeeld',
     tapToBegin: 'Tik om te beginnen',
     recordAs: 'Opnemen als: {{name}}',
     narrateAs: 'Vertellen als: {{name}}',
@@ -242,16 +241,8 @@ export default {
     nameAlreadyExistsMessage: 'Er bestaat al een stem met de naam "{{name}}". Selecteer alstublieft een andere naam.',
   },
   storyPreview: {
-    audience: 'Doelgroep',
-    ages: 'Leeftijden {{range}}',
-    duration: 'Duur',
-    durationMinutes: '{{count}} minuten',
-    tags: 'Labels',
-    readStory: 'Lees Verhaal',
-    aboutThisStory: 'Over Dit Verhaal',
     removeFromDevice: 'Verwijderen',
     removeConfirm: '"{{title}}" van dit apparaat verwijderen? Je kunt het op elk moment opnieuw downloaden.',
-    preInstalledNotice: 'Dit verhaal is vooraf geïnstalleerd met de app. Het kan niet worden verwijderd en telt niet mee voor je downloadlimiet.',
   },
   completion: {
     theEnd: 'Het Einde',
@@ -705,10 +696,6 @@ export default {
       narrate: {
         title: 'Luistermodus',
         description: 'Luister naar een vooraf opgenomen vertelling van het verhaal. Perfect voor slaaptijd!',
-      },
-      preview: {
-        title: 'Voorbeeld',
-        description: 'Controleer verhaaldetails, duur en thema\'s voordat je begint met lezen.',
       },
     },
     recordMode: {
@@ -3182,6 +3169,21 @@ export default {
     sound: 'Geluid',
     noResults: 'Geen verhalen gevonden met deze filters',
     clearFilters: 'Filters wissen',
+    filter: 'Filter',
+    chooseTheme: 'Kies een thema',
+    tagline: {
+      one: 'Een mooiere wereld',
+      two: 'in elk verhaal',
+    },
+    featuredStory: 'Uitgelicht verhaal',
+    todaysPick: 'Keuze van vandaag',
+    continueReading: 'Verder lezen',
+    seeAll: 'Alles bekijken',
+    themes: {
+      stories: 'Verhalen',
+      learning: 'Leren',
+      music: 'Muziek',
+    },
     library: {
       recentlyRead: 'Recent gelezen',
       favourites: 'Favorieten',

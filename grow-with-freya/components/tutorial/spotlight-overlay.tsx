@@ -332,7 +332,7 @@ export function SpotlightOverlay({
     // Handle 'below' tipPosition - position tip below the target button
     if (step.tipPosition === 'below' && target) {
       // Book mode buttons on iPad/tablet: position tip to the right of the button
-      const bookModeButtons = ['read_button', 'record_button', 'narrate_button', 'preview_button'];
+      const bookModeButtons = ['read_button', 'record_button', 'narrate_button'];
       if (!isPhonePortrait && bookModeButtons.includes(step.id)) {
         const margin = 20;
         const tipLeft = target.x + target.width + margin;
@@ -404,7 +404,7 @@ export function SpotlightOverlay({
     }
 
     // No arrows for book mode buttons - on all devices (tip is positioned next to button)
-    const bookModeButtons = ['read_button', 'record_button', 'narrate_button', 'preview_button'];
+    const bookModeButtons = ['read_button', 'record_button', 'narrate_button'];
     if (bookModeButtons.includes(step.id)) {
       return null;
     }

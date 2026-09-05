@@ -299,7 +299,6 @@ export default {
     read: 'Read',
     record: 'Record',
     narrate: 'Narrate',
-    preview: 'Preview',
     tapToBegin: 'Tap to begin',
     recordAs: 'Record as: {{name}}',
     narrateAs: 'Narrate as: {{name}}',
@@ -321,7 +320,7 @@ export default {
     readTogether: 'Read Together',
     record: 'Record',
     playAlong: 'Play Along',
-    readNow: 'Read now',
+    readNow: 'Read Now',
     savedOffline: 'Saved for offline',
     minutes: '{{count}} min',
     ages: 'Ages {{range}}',
@@ -339,16 +338,8 @@ export default {
 
   // Story preview modal
   storyPreview: {
-    audience: 'Audience',
-    ages: 'Ages {{range}}',
-    duration: 'Duration',
-    durationMinutes: '{{count}} min',
-    tags: 'Tags',
-    readStory: 'Read Story',
-    aboutThisStory: 'About this story',
     removeFromDevice: 'Remove',
     removeConfirm: 'Remove "{{title}}" from this device? You can download it again anytime.',
-    preInstalledNotice: 'This story comes pre-installed with the app. It cannot be removed and does not count towards your download limit.',
   },
 
   // Story completion
@@ -824,10 +815,6 @@ export default {
       narrate: {
         title: 'Listen Mode',
         description: 'Listen to a pre-recorded narration of the story. Great for bedtime!',
-      },
-      preview: {
-        title: 'Preview',
-        description: 'See story details, duration, and themes before you start reading.',
       },
     },
     // Record Mode Tips - keys match tutorial.recordMode.* in tutorial-content.ts
@@ -2810,6 +2797,21 @@ export default {
     sound: 'Sound',
     noResults: 'No stories found with these filters',
     clearFilters: 'Clear filters',
+    filter: 'Filter',
+    chooseTheme: 'Choose a theme',
+    tagline: {
+      one: 'A brighter world',
+      two: 'in every story',
+    },
+    featuredStory: 'Featured Story',
+    todaysPick: 'Today\'s pick',
+    continueReading: 'Continue Reading',
+    seeAll: 'See all',
+    themes: {
+      stories: 'Stories',
+      learning: 'Learning',
+      music: 'Music',
+    },
     library: {
       recentlyRead: 'Recently read',
       favourites: 'Favourites',

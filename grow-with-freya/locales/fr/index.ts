@@ -225,7 +225,6 @@ export default {
     read: 'Lire',
     record: 'Enregistrer',
     narrate: 'Narrer',
-    preview: 'Aperçu',
     tapToBegin: 'Appuyez pour commencer',
     recordAs: 'Enregistrer en tant que : {{name}}',
     narrateAs: 'Narrer en tant que : {{name}}',
@@ -242,16 +241,8 @@ export default {
     nameAlreadyExistsMessage: 'Une voix nommée « {{name}} » existe déjà. Veuillez choisir un nom différent.',
   },
   storyPreview: {
-    audience: 'Public',
-    ages: 'Âges {{range}}',
-    duration: 'Durée',
-    durationMinutes: '{{count}} min',
-    tags: 'Étiquettes',
-    readStory: 'Lire l\'histoire',
-    aboutThisStory: 'À propos de cette histoire',
     removeFromDevice: 'Supprimer',
     removeConfirm: 'Supprimer "{{title}}" de cet appareil ? Vous pouvez le retélécharger à tout moment.',
-    preInstalledNotice: 'Cette histoire est préinstallée avec l\'appli. Elle ne peut pas être supprimée et ne compte pas dans votre limite de téléchargements.',
   },
   completion: {
     theEnd: 'Fin',
@@ -705,10 +696,6 @@ export default {
       narrate: {
         title: 'Mode écoute',
         description: 'Écoutez une narration pré-enregistrée de l\'histoire. Idéal pour l\'heure du coucher !',
-      },
-      preview: {
-        title: 'Aperçu',
-        description: 'Voir les détails de l\'histoire, la durée et les thèmes avant de commencer à lire.',
       },
     },
     recordMode: {
@@ -3182,6 +3169,21 @@ export default {
     sound: 'Son',
     noResults: 'Aucune histoire trouvée avec ces filtres',
     clearFilters: 'Effacer les filtres',
+    filter: 'Filtrer',
+    chooseTheme: 'Choisis un thème',
+    tagline: {
+      one: 'Un monde plus lumineux',
+      two: 'dans chaque histoire',
+    },
+    featuredStory: 'Histoire à la une',
+    todaysPick: 'Le choix du jour',
+    continueReading: 'Continuer la lecture',
+    seeAll: 'Tout voir',
+    themes: {
+      stories: 'Histoires',
+      learning: 'Apprentissage',
+      music: 'Musique',
+    },
     library: {
       recentlyRead: 'Lus récemment',
       favourites: 'Favoris',

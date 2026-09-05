@@ -336,16 +336,41 @@ inside the safe area at content margin.
 
 There is **no app bar**. Do not reintroduce one.
 
-### 6.4 `PageTitle`
+### 6.4 `PageTitle` / `PageTagline`
 
 Centre-aligned, `TEXT_PRIMARY`, sizes per §4. Vertically centred against the two circular
-controls.
+controls. On the catalogue home, `PageTagline` sits beneath it — **A brighter world / in every
+story** (`catalogue.tagline.one` / `.two`) on **two shallow arches** with a small gold star under
+it, the way a storybook closes a title page (operator decision 2026-09-05). Each line is SVG text
+on an unpainted arc of radius `1.15 ×` the block's width, in the app's own rounded face
+(`Fonts.rounded`, which `RCTFont` resolves for SVG text as it does for any other text), so the
+arch costs no more height than a line of type. It is not shown in Library, Progress or a
+story-mode view.
 
 ### 6.5 `StoryFilterBar` / `StoryFilterPill`
 
-One row, always one line of pills. The reference's trailing grid-view toggle was removed by
-operator decision on 2026-08-29 — the catalogue has one layout (featured card + cover grid),
-so a view switch had nothing left to switch.
+A heading row — a gold star, **Choose a theme**, and the **Filter** button at the row's end —
+above one row of three **tiles** — Stories, Learning, Music — each a piece of rendered, glossy
+art over a label (operator decision 2026-09-05: the earlier All/Bedtime/Adventure/Learning/Music
+row was cut to three so the labels fit a phone). One tile is always chosen, Stories on entry,
+and the shelf is sorted under it: a book is Music if tagged `music`, else Learning if it is
+built around a game (a jigsaw, spelling or word challenge, or the `learning` tag), else a Story
+— every book has exactly one home (`storyTheme` in `catalogue-story.ts`). Music is read from the
+tag, not the pages: the bundled bedtime book carries two music pages and is still a story. The art lives
+in `assets/images/theme-icons/` as 256 px transparent WebP (star, open book, notes), cut from
+the supplied renders.
+The tiles never scroll or wrap. On a phone the whole chooser is kept short — tile `72`, gaps
+`SPACE_2`, `SPACE_3` below it, no scroll padding above it, and the header hard against the safe
+area — so the featured book is in view without scrolling rather than half a screen down
+(operator decision 2026-09-05). The thirteen finer themes (Bedtime, Adventure, Calming, …) wait
+behind Filter and appear as pills beneath the tiles, narrowing the chosen tile's shelf; a theme
+the child has chosen from there stays in view while it is chosen, or the shelf would be filtered
+by something they cannot see. Choosing one turns the whole shelf, featured panel included, into a
+single grid of everything that matches, headed by that theme — so a theme with one book never
+shows an empty grid beneath the featured panel.
+Tile labels run two points smaller than pill labels so "Adventure" fits its tile. The reference's
+trailing grid-view toggle was removed by operator decision on 2026-08-29 — the catalogue has
+one layout (featured card + cover grid), so a view switch had nothing left to switch.
 
 | Property | Value |
 |---|---|
@@ -356,6 +381,8 @@ so a view switch had nothing left to switch.
 | Pill border | `1` `BORDER_DEFAULT` |
 | Gap between pills | `SPACE_3` |
 | Toggle | `46 × 46`, `RADIUS_SMALL`, same surface |
+| Tile | `72` tall on phones, `84` on tablets, a third of the row wide; `RADIUS_CONTROL`, `SURFACE_SECONDARY`, `1` `BORDER_DEFAULT`, art `32` (`42` tablet) |
+| Tile, chosen | fill `#6F69F2 → #4A3ED0` top to foot, rim `1.5` white at 82%, glow `ACCENT_PURPLE` |
 
 Icons are colourful; labels stay white. Selected pills brighten slightly and take
 `BORDER_ACTIVE` — they do not change hue. Reference set: Calming (leaf, `ACCENT_GREEN`),
@@ -368,12 +395,28 @@ label is never squeezed or auto-shrunk to fit a fixed pill width (operator decis
 
 ### 6.6 `SectionHeading`
 
+Takes an optional `icon`/`iconColor` (a gold star unless the section has a mark of its own) and
+an optional `actionLabel`/`onAction` rendered at the row's end as **See all ›**.
+
 Gold star icon (`20–24`) + label, on the background, never inside a card. Left edge defines the
 content margin for everything beneath it.
 
 ### 6.7 `FeaturedStoryCard`
 
 The most important element on the screen.
+
+**What the shelf holds (operator decision 2026-09-05, "Netflix style").** The panel carries a
+small gold **Featured Story** label above the title; the genre heading that used to stand over
+it is gone. Beneath it, `buildShelves` lays out: **Continue Reading** first, when a book is
+underway (past the cover, not on its last page — `storyProgress` in the app store, recorded on
+every read by the reader), each cover carrying a progress bar and percentage, and its own **See all** leading to a grid of
+everything underway; then one
+horizontal **row per finer theme** that has a book to its name, headed by its genre
+(`stories.genreStories`) or theme label with the theme's own icon and a **See all** that selects
+that theme's pill; and a second big panel, **Today's pick**, standing after the second row — a
+different book from the featured one. Row order is drawn from `APP_LAUNCH_SEED`, so it changes
+when the app opens, not while the child browses. The same few books appear in several rows, as
+on any shelf sorted by theme.
 
 | Property | Value |
 |---|---|
@@ -382,9 +425,34 @@ The most important element on the screen.
 | Radius | `RADIUS_LARGE` |
 | Border | `1` `BORDER_DEFAULT` |
 
-The story illustration fills the **entire** card. The card is never split into an image half
-and a text half. A subtle dark tonal wash sits behind the title only where legibility requires
-it — a soft left-to-right gradient, not a full-card scrim.
+The panel says what the story is and offers a way straight into it, laid out as the design has it:
+the title at the top of the box (at four fifths of the featured-title role, so two words a line
+fit beside the picture), a line or two of description beneath, then a **Read Now** pill, all
+top-aligned in the left three fifths; the picture starts a tenth of the panel's width in, runs to
+the right edge anchored right, and passes under the words behind a wash. The panel carries **no
+border**: the picture is scaled up to crop its paper margin, so it runs under the panel's own
+edge, and a translucent border laid over it read as a white spine down the left side where the
+page's paper showed through (operator decision 2026-09-05). Everything is a fraction of the panel's width — inset `0.1`, words `0.6`,
+wash stops `0 / 0.1 / 0.42 / 0.62` at `1 / 0.96 / 0.62 / 0` opacity — and the panel keeps one
+aspect ratio, so the layout is the same shape on a phone and a tablet (operator decision
+2026-09-05, matching the design). That glimpse is the
+book's **third page**, not the cover — the cover is already on the shelf behind and says nothing
+new (operator decision 2026-09-05). A left-to-right wash carries the panel's own colour across
+the picture so the words stay legible, and the whole panel is tappable as well as the button.
+
+Counted by the book, not the array: a story leads with its cover as page zero, so the third page
+is the fourth entry. Books shorter than three pages fall back to the cover.
+
+Page assets are illustrations printed on near-white paper — measured across every bundled page,
+the margin is 22% at the sides and 26% top and bottom — so the panel zooms past that margin
+(`PAGE_PAPER_MARGIN`) to show the picture rather than a pale slab. Covers are edge-to-edge
+artwork and are shown as they are.
+
+**Which book is featured** changes each time the app is opened and holds for that run
+(`APP_LAUNCH_SEED`), so it does not shift under the child as they browse. Only a book they can
+actually open is eligible; a book they installed is preferred, and on a first run — or once every
+downloaded book has been deleted — it falls back to the ones bundled with the app, so the panel
+always has something to show.
 
 Title: upper-left, `24` inset, white, maximum two lines, sizes per §4.
 
@@ -405,6 +473,11 @@ Featured variant sits in the top-right of the featured artwork; card variant sit
 bottom of a cover card, horizontally centred.
 
 ### 6.9 `StoryCoverCard`
+
+**No book effect** (operator decision 2026-09-05): the shelf card is a plain rounded card — the
+cover art, the title over it, and a progress bar along the foot when the book is underway. The
+spine, hinge and page edges of `BookFrame` are no longer drawn on it; `BookFrame`'s pieces still
+dress the book at its seat on the rotate prompt and as it opens.
 
 | Property | Value |
 |---|---|
@@ -561,7 +634,7 @@ Do not stretch the phone layout onto tablet.
 | Viewport | Featured | More Stories |
 |---|---|---|
 | Phone portrait | 1 column, full content width | 3 cards visible |
-| Tablet portrait | centred, **capped width**, larger side margins | 3–4 cards |
+| Tablet portrait | **full content width** from the left margin, at the tablet aspect ratio (`FEATURED_ASPECT_RATIO_TABLET`, `1.9`) | 3–4 cards |
 | Tablet landscape | two-zone: featured left, story grid right | grid |
 
 Hierarchy is identical in all three. The featured card must not become excessively wide on

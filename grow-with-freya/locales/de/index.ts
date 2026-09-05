@@ -225,7 +225,6 @@ export default {
     read: 'Lesen',
     record: 'Aufnehmen',
     narrate: 'Erzählen',
-    preview: 'Vorschau',
     tapToBegin: 'Tippen zum Starten',
     recordAs: 'Aufnehmen als: {{name}}',
     narrateAs: 'Erzählen als: {{name}}',
@@ -242,16 +241,8 @@ export default {
     nameAlreadyExistsMessage: 'Eine Sprachaufnahme mit dem Namen "{{name}}" existiert bereits. Bitte wähle einen anderen Namen.',
   },
   storyPreview: {
-    audience: 'Zielgruppe',
-    ages: 'Alter {{range}}',
-    duration: 'Dauer',
-    durationMinutes: '{{count}} Min',
-    tags: 'Schlagwörter',
-    readStory: 'Geschichte lesen',
-    aboutThisStory: 'Über diese Geschichte',
     removeFromDevice: 'Entfernen',
     removeConfirm: '"{{title}}" von diesem Gerät entfernen? Du kannst es jederzeit erneut herunterladen.',
-    preInstalledNotice: 'Diese Geschichte ist mit der App vorinstalliert. Sie kann nicht entfernt werden und zählt nicht zu deinem Download-Limit.',
   },
   completion: {
     theEnd: 'Ende',
@@ -705,10 +696,6 @@ export default {
       narrate: {
         title: 'Hörmodus',
         description: 'Höre eine aufgenommene Erzählung. Toll fürs Schlafengehen!',
-      },
-      preview: {
-        title: 'Vorschau',
-        description: 'Sieh dir Geschichtendetails an, bevor du anfängst zu lesen.',
       },
     },
     recordMode: {
@@ -3182,6 +3169,21 @@ export default {
     sound: 'Ton',
     noResults: 'Keine Geschichten mit diesen Filtern gefunden',
     clearFilters: 'Filter zurücksetzen',
+    filter: 'Filter',
+    chooseTheme: 'Wähle ein Thema',
+    tagline: {
+      one: 'Eine hellere Welt',
+      two: 'in jeder Geschichte',
+    },
+    featuredStory: 'Empfohlene Geschichte',
+    todaysPick: 'Tipp des Tages',
+    continueReading: 'Weiterlesen',
+    seeAll: 'Alle anzeigen',
+    themes: {
+      stories: 'Geschichten',
+      learning: 'Lernen',
+      music: 'Musik',
+    },
     library: {
       recentlyRead: 'Zuletzt gelesen',
       favourites: 'Favoriten',

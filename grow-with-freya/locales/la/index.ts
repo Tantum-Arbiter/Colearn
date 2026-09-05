@@ -225,7 +225,6 @@ export default {
     read: 'Legere',
     record: 'Recordare',
     narrate: 'Narrare',
-    preview: 'Praevisa',
     tapToBegin: 'Tange ut Incipere',
     recordAs: 'Recordans ut: {{name}}',
     narrateAs: 'Narrans ut: {{name}}',
@@ -242,16 +241,8 @@ export default {
     nameAlreadyExistsMessage: 'Vox cum nomine "{{name}}" iam exstat. Amabo te alium nomen elige.',
   },
   storyPreview: {
-    audience: 'Auditorium',
-    ages: 'Aetates {{range}}',
-    duration: 'Duratio',
-    durationMinutes: '{{count}} minuta',
-    tags: 'Signa',
-    readStory: 'Legere Fabulam',
-    aboutThisStory: 'De Hac Fabula',
     removeFromDevice: 'Aufer',
     removeConfirm: 'Remove "{{title}}" ab hoc instrumento? Iterum descendere potes.',
-    preInstalledNotice: 'Haec fabula cum applicatione praeinstallata est. Removeri non potest nec ad limitem descensuum numeratur.',
   },
   completion: {
     theEnd: 'Finis',
@@ -705,10 +696,6 @@ export default {
       narrate: {
         title: 'Modus Audiendi',
         description: 'Audi Fabulam Praegravem Narratam. Perfectum ad Tempus Somni!',
-      },
-      preview: {
-        title: 'Praevisa',
-        description: 'Detaila Fabulae, Durationem et Themata Verifica Antequam Legere Incipias.',
       },
     },
     recordMode: {
@@ -3182,6 +3169,21 @@ export default {
     sound: 'Sonus',
     noResults: 'Nullae fabulae his filtris inventae',
     clearFilters: 'Filtra purga',
+    filter: 'Filter',
+    chooseTheme: 'Elige thema',
+    tagline: {
+      one: 'Mundus clarior',
+      two: 'in omni fabula',
+    },
+    featuredStory: 'Fabula selecta',
+    todaysPick: 'Electio hodierna',
+    continueReading: 'Pergere legere',
+    seeAll: 'Omnia videre',
+    themes: {
+      stories: 'Fabulae',
+      learning: 'Doctrina',
+      music: 'Musica',
+    },
     library: {
       recentlyRead: 'Recens lectae',
       favourites: 'Dilectae',

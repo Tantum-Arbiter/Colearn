@@ -158,8 +158,12 @@ locks orientation goes through one of those two, so a tablet is never locked any
   first frame of the turn and swung back over eight, landing 15pt off before gliding home --
   while a flex-centred probe square in the same frames sat half a pixel from the centre. The
   transform-driven book takes over at the opening, snapped to the seat the settled window
-  gives, at the same size and place, so the swap is invisible. The block of page edges lives
-  inside `SeatedBook`, which is why it floats with the cover.
+  gives, at the same size and place, so the swap is invisible. `SeatedBook` is dressed exactly
+  as the book on the shelf -- the same spine with its light down the ridge, hinge, pages and
+  title over the cover (`CoverTitle`, shared with `StoryCoverCard`) -- and so is the
+  transform-driven book it hands over to; the book waiting to be opened is the book that was
+  tapped. It carries no page edges of its own: the shelf has none (operator decision
+  2026-09-05).
 - **A placement belongs to the screen that produced it.** The offsets that centred the book on
   one screen point somewhere else on another. The opening no longer glides the transform-driven
   book into its seat at all: the seat is worked out from the window as it is at that moment and
@@ -176,9 +180,9 @@ locks orientation goes through one of those two, so a tablet is never locked any
   at all (it is already sideways), but `carryOn` waits for the window to hold still
   (`waitForWindowToSettle`) before the opening begins.
 - **The pages float with the book.** While the phone is being asked to turn, the book rises and
-  falls (`levitationY`). The block of pages beside the cover used to be drawn by the prompt from
-  the static `bookRect`, outside the book's own view, and sat dead still while the cover and
-  spine bobbed -- which read as only part of the book floating. It is part of `SeatedBook` now.
+  falls (`levitationY`). The pages used to be drawn by the prompt from the static `bookRect`,
+  outside the book's own view, and sat dead still while the cover and spine bobbed -- which read
+  as only part of the book floating. Everything the book wears is inside `SeatedBook` now.
 - **The phone is unlocked while it is being asked to turn** (`allowTurnForPrompt`). Without
   this the prompt was deaf to the very thing it asked for: iOS held the interface in portrait,
   so nothing about turning the phone reached the app except raw accelerometer gravity, which a

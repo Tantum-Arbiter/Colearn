@@ -281,15 +281,6 @@ export const BOOK_MODE_TOUR_STEPS: TutorialStepWithKeys[] = [
     spotlightShape: 'rounded-rect',
     spotlightBorderRadius: 16,
   },
-  {
-    id: 'preview_button',
-    titleKey: 'tutorial.bookMode.preview.title',
-    descriptionKey: 'tutorial.bookMode.preview.description',
-    arrowDirection: 'up',
-    tipPosition: 'below',
-    spotlightShape: 'rounded-rect',
-    spotlightBorderRadius: 16,
-  },
 ];
 
 /**

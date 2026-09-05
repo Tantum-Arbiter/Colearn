@@ -82,16 +82,6 @@ describe('StoryCoverCard', () => {
     expect(onOpen).toHaveBeenCalledWith(model, expect.anything());
   });
 
-  it('reports long presses for the preview flow', () => {
-    const onLongPress = jest.fn();
-    const model = fromStory(story());
-    const tree = render(<StoryCoverCard {...baseProps} story={model} onLongPress={onLongPress} />);
-
-    fireEvent(byTestId(tree, 'story-cover-card-story-1')[0], 'longPress');
-
-    expect(onLongPress).toHaveBeenCalledWith(model);
-  });
-
   it('shows a lock and routes locked taps to the subscription flow', () => {
     const onLockedPress = jest.fn();
     const model = fromCatalogEntry(entry(), { locked: true, shareToUnlock: false });
@@ -124,5 +114,27 @@ describe('StoryCoverCard', () => {
     const tree = render(<StoryCoverCard {...baseProps} story={model} />);
 
     expect(byTestId(tree, 'story-cover-download').length).toBeGreaterThan(0);
+  });
+
+  it('should show how far the child has read along the foot of the cover, only for a book underway', () => {
+    const underway = { ...fromStory(story()), progress: 0.4 };
+    const fresh = fromStory(story());
+
+    const tree = render(<StoryCoverCard {...baseProps} story={underway} />);
+    const plain = render(<StoryCoverCard {...baseProps} story={fresh} />);
+
+    expect(byTestId(tree, 'story-cover-progress').length).toBeGreaterThan(0);
+    expect(tree.UNSAFE_root.findAll((n: any) => n.props.children === '40%').length).toBeGreaterThan(0);
+    expect(byTestId(plain, 'story-cover-progress')).toHaveLength(0);
+  });
+
+  it('should be a plain rounded card, with no spine or page edges drawn on', () => {
+    const tree = render(<StoryCoverCard {...baseProps} story={fromStory(story())} />);
+
+    expect(byTestId(tree, 'story-cover-card-story-1-frame').length).toBeGreaterThan(0);
+    expect(byTestId(tree, 'story-cover-card-story-1-book')).toHaveLength(0);
+    expect(byTestId(tree, 'story-cover-card-story-1-book-spine')).toHaveLength(0);
+    expect(byTestId(tree, 'story-cover-card-story-1-book-pages')).toHaveLength(0);
+    expect(tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'linear-gradient').length).toBe(1);
   });
 });

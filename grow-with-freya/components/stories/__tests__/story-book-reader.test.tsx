@@ -69,6 +69,8 @@ jest.mock('@/store/app-store', () => {
     setTextSizeScale: jest.fn(),
     markStoryAsRead: jest.fn(),
     recordReadingSession: jest.fn(),
+    setStoryProgress: jest.fn(),
+    markStoryCompleted: jest.fn(),
     getEffectiveTier: () => 'premium' as const,
     subscriptionTier: 'premium' as const,
     devTierOverride: null,
@@ -267,6 +269,18 @@ describe('StoryBookReader', () => {
 
     expect(extractNodeText(UNSAFE_root)).toContain('reader.pagePreview');
     expect(queryByTestId('menu-change-instrument')).toBeNull();
+  });
+});
+
+describe('StoryBookReader reading progress', () => {
+  it('records where the child is up to once past the cover, for the shelf\'s Continue Reading row', () => {
+    const { useAppStore } = jest.requireMock('@/store/app-store');
+    const setStoryProgress = useAppStore.getState().setStoryProgress as jest.Mock;
+    setStoryProgress.mockClear();
+
+    render(<StoryBookReader story={mockStory} onExit={jest.fn()} skipCoverPage />);
+
+    expect(setStoryProgress).toHaveBeenCalledWith(mockStory.id, 1, mockStory.pages!.length);
   });
 });
 

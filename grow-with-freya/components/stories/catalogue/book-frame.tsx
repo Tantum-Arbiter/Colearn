@@ -49,6 +49,11 @@ export function BookPages({ testID = 'book-pages' }: { testID?: string }) {
   );
 }
 
+/** The light down the spine: a highlight at its ridge, shade where it meets the cover. */
+export function BookSpineShade() {
+  return <LinearGradient colors={[...SPINE_SHADE]} start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }} style={StyleSheet.absoluteFill} pointerEvents="none" />;
+}
+
 /** The hinge shadow where the cover meets the spine; drawn over any cover. */
 export function BookHinge() {
   return <LinearGradient colors={[...COVER_SHADE]} start={{ x: 0, y: 0.5 }} end={{ x: 0.35, y: 0.5 }} style={styles.hinge} pointerEvents="none" />;
@@ -61,7 +66,7 @@ export function BookFrame({ width, height, radius, spineColor = '#1D2657', child
   return (
     <View style={[styles.book, { width, height, borderRadius: radius }, style]} testID={testID}>
       <View style={[styles.spine, { width: spineWidth, backgroundColor: spineColor, borderTopLeftRadius: radius, borderBottomLeftRadius: radius }]} testID={`${testID}-spine`}>
-        <LinearGradient colors={[...SPINE_SHADE]} start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }} style={StyleSheet.absoluteFill} pointerEvents="none" />
+        <BookSpineShade />
       </View>
 
       <View style={[styles.cover, { width: coverWidth, borderTopRightRadius: radius, borderBottomRightRadius: radius }]} testID={`${testID}-cover`}>

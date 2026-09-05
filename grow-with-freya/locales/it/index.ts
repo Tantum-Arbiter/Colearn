@@ -225,7 +225,6 @@ export default {
     read: 'Leggi',
     record: 'Registra',
     narrate: 'Narra',
-    preview: 'Anteprima',
     tapToBegin: 'Tocca per iniziare',
     recordAs: 'Registra come: {{name}}',
     narrateAs: 'Narra come: {{name}}',
@@ -242,16 +241,8 @@ export default {
     nameAlreadyExistsMessage: 'Una voce denominata "{{name}}" esiste già. Scegli un nome diverso.',
   },
   storyPreview: {
-    audience: 'Pubblico',
-    ages: 'Età {{range}}',
-    duration: 'Durata',
-    durationMinutes: '{{count}} min',
-    tags: 'Tag',
-    readStory: 'Leggi storia',
-    aboutThisStory: 'Informazioni su questa storia',
     removeFromDevice: 'Rimuovi',
     removeConfirm: 'Rimuovere "{{title}}" da questo dispositivo? Puoi scaricarlo di nuovo in qualsiasi momento.',
-    preInstalledNotice: 'Questa storia è preinstallata con l\'app. Non può essere rimossa e non conta per il limite di download.',
   },
   completion: {
     theEnd: 'Fine',
@@ -705,10 +696,6 @@ export default {
       narrate: {
         title: 'Modalità ascolto',
         description: 'Ascolta una narrazione pre-registrata della storia. Ottimo per l\'ora della nanna!',
-      },
-      preview: {
-        title: 'Anteprima',
-        description: 'Vedi i dettagli della storia, la durata e i temi prima di iniziare a leggere.',
       },
     },
     recordMode: {
@@ -3182,6 +3169,21 @@ export default {
     sound: 'Suono',
     noResults: 'Nessuna storia trovata con questi filtri',
     clearFilters: 'Cancella filtri',
+    filter: 'Filtra',
+    chooseTheme: 'Scegli un tema',
+    tagline: {
+      one: 'Un mondo più luminoso',
+      two: 'in ogni storia',
+    },
+    featuredStory: 'Storia in evidenza',
+    todaysPick: 'La scelta di oggi',
+    continueReading: 'Continua a leggere',
+    seeAll: 'Vedi tutto',
+    themes: {
+      stories: 'Storie',
+      learning: 'Apprendimento',
+      music: 'Musica',
+    },
     library: {
       recentlyRead: 'Letti di recente',
       favourites: 'Preferiti',

@@ -1100,13 +1100,14 @@ export function StoryBookReader({
     enabled: useStoryGarden,
   });
 
+  // Where the child is up to, kept for the shelf's Continue Reading row
   useEffect(() => {
-    if (!useStoryGarden || currentPageIndex <= 0 || pages.length === 0) {
+    if (currentPageIndex <= 0 || pages.length === 0) {
       return;
     }
 
     setStoryProgress(story.id, currentPageIndex, pages.length);
-  }, [useStoryGarden, currentPageIndex, pages.length, story.id, setStoryProgress]);
+  }, [currentPageIndex, pages.length, story.id, setStoryProgress]);
 
   useEffect(() => {
     if (!useStoryGarden) {

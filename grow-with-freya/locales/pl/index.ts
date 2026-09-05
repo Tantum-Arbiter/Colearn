@@ -225,7 +225,6 @@ export default {
     read: 'Czytaj',
     record: 'Nagrywaj',
     narrate: 'Opowiadaj',
-    preview: 'Podgląd',
     tapToBegin: 'Dotknij, aby zacząć',
     recordAs: 'Nagrywaj jako: {{name}}',
     narrateAs: 'Opowiadaj jako: {{name}}',
@@ -242,16 +241,8 @@ export default {
     nameAlreadyExistsMessage: 'Nagranie o nazwie "{{name}}" już istnieje. Wybierz inną nazwę.',
   },
   storyPreview: {
-    audience: 'Odbiorcy',
-    ages: 'Wiek {{range}}',
-    duration: 'Czas trwania',
-    durationMinutes: '{{count}} min',
-    tags: 'Tagi',
-    readStory: 'Czytaj bajkę',
-    aboutThisStory: 'O tej bajce',
     removeFromDevice: 'Usuń',
     removeConfirm: 'Usunąć "{{title}}" z tego urządzenia? Możesz pobrać ponownie w każdej chwili.',
-    preInstalledNotice: 'Ta historia jest preinstalowana z aplikacją. Nie można jej usunąć i nie wlicza się do limitu pobrań.',
   },
   completion: {
     theEnd: 'Koniec',
@@ -705,10 +696,6 @@ export default {
       narrate: {
         title: 'Tryb Słuchania',
         description: 'Słuchaj nagranej narracji. Świetne na dobranoc!',
-      },
-      preview: {
-        title: 'Podgląd',
-        description: 'Zobacz szczegóły bajki przed rozpoczęciem czytania.',
       },
     },
     recordMode: {
@@ -3182,6 +3169,21 @@ export default {
     sound: 'Dźwięk',
     noResults: 'Nie znaleziono opowieści z tymi filtrami',
     clearFilters: 'Wyczyść filtry',
+    filter: 'Filtruj',
+    chooseTheme: 'Wybierz temat',
+    tagline: {
+      one: 'Jaśniejszy świat',
+      two: 'w każdej historii',
+    },
+    featuredStory: 'Polecana historia',
+    todaysPick: 'Wybór dnia',
+    continueReading: 'Czytaj dalej',
+    seeAll: 'Zobacz wszystko',
+    themes: {
+      stories: 'Historie',
+      learning: 'Edukacyjne',
+      music: 'Muzyka',
+    },
     library: {
       recentlyRead: 'Ostatnio czytane',
       favourites: 'Ulubione',

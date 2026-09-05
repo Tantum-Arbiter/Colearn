@@ -11,7 +11,7 @@
  * Key behaviors tested:
  * 1. Takes the seat's share of the screen and keeps the card's proportions
  * 2. Wears the same spine, hinge and pages as the book on the shelf
- * 3. Carries the block of page edges beside it, so they rise and fall with it
+ * 3. Wears the shelf's title over the cover, and no page edges of its own
  * 4. Is hidden until its opacity is driven, so nothing flashes at mount
  * 5. Asks for a lift of exactly the book's bob
  * 6. Scales the spine with the seat
@@ -63,16 +63,35 @@ describe('SeatedBook', () => {
     expect(byTestId(UNSAFE_root, 'seated-book-pages').length).toBeGreaterThan(0);
   });
 
-  it('should carry the block of page edges beside it, so they rise and fall with it', () => {
-    // The defect this pins: the prompt drew the page edges itself, from a
-    // static rect outside the book, so the cover and spine floated while the
-    // pages sat dead still.
-    const { UNSAFE_root } = renderSeated();
+  it("should wear the shelf's title over the cover, and carry no page edges of its own", () => {
+    // The defect this pins: at its seat the book wore a flat spine, no title
+    // and a block of page edges standing beside it, none of which the shelf
+    // has -- so the book waiting to be opened was not the book that was tapped.
+    const { UNSAFE_root } = renderSeated({ title: 'Snuggle Little Wombat' });
     const book = byTestId(UNSAFE_root, 'seated-book')[0];
 
-    const underTest = byTestId(book, 'seated-book-edges');
+    const title = byTestId(book, 'seated-book-title');
 
-    expect(underTest.length).toBeGreaterThan(0);
+    expect(title.length).toBeGreaterThan(0);
+    expect(title.some((node: any) => node.props.children === 'Snuggle Little Wombat')).toBe(true);
+    expect(byTestId(book, 'seated-book-edges')).toHaveLength(0);
+  });
+
+  it('should wear no title when it is given none', () => {
+    const { UNSAFE_root } = renderSeated();
+
+    expect(byTestId(UNSAFE_root, 'seated-book-title')).toHaveLength(0);
+  });
+
+  it("should light the spine as the shelf does, with rounded corners against the book's edge", () => {
+    const { UNSAFE_root } = renderSeated();
+
+    const spine = byTestId(UNSAFE_root, 'seated-book-spine')[0];
+    const underTest = StyleSheet.flatten(spine.props.style);
+
+    expect(underTest.borderTopLeftRadius).toBe(15);
+    expect(underTest.borderBottomLeftRadius).toBe(15);
+    expect(spine.findAll((n: any) => n.props.testID === 'linear-gradient').length).toBeGreaterThan(0);
   });
 
   it('should be hidden until its opacity is driven, so nothing flashes at mount', () => {

@@ -225,7 +225,6 @@ export default {
     read: 'Ler',
     record: 'Gravar',
     narrate: 'Narrar',
-    preview: 'Visualizar',
     tapToBegin: 'Toque para começar',
     recordAs: 'Gravar como: {{name}}',
     narrateAs: 'Narrar como: {{name}}',
@@ -242,16 +241,8 @@ export default {
     nameAlreadyExistsMessage: 'Uma voz chamada "{{name}}" já existe. Escolha um nome diferente.',
   },
   storyPreview: {
-    audience: 'Público',
-    ages: 'Idades {{range}}',
-    duration: 'Duração',
-    durationMinutes: '{{count}} min',
-    tags: 'Etiquetas',
-    readStory: 'Ler história',
-    aboutThisStory: 'Sobre esta história',
     removeFromDevice: 'Remover',
     removeConfirm: 'Remover "{{title}}" deste dispositivo? Pode transferir novamente a qualquer momento.',
-    preInstalledNotice: 'Esta história vem pré-instalada com a app. Não pode ser removida e não conta para o seu limite de transferências.',
   },
   completion: {
     theEnd: 'Fim',
@@ -705,10 +696,6 @@ export default {
       narrate: {
         title: 'Modo de escuta',
         description: 'Ouça uma narração pré-gravada da história. Ótimo para a hora de dormir!',
-      },
-      preview: {
-        title: 'Visualizar',
-        description: 'Veja os detalhes da história, duração e temas antes de começar a ler.',
       },
     },
     recordMode: {
@@ -3182,6 +3169,21 @@ export default {
     sound: 'Som',
     noResults: 'Nenhuma história encontrada com estes filtros',
     clearFilters: 'Limpar filtros',
+    filter: 'Filtrar',
+    chooseTheme: 'Escolhe um tema',
+    tagline: {
+      one: 'Um mundo mais brilhante',
+      two: 'em cada história',
+    },
+    featuredStory: 'História em destaque',
+    todaysPick: 'Escolha do dia',
+    continueReading: 'Continuar a ler',
+    seeAll: 'Ver tudo',
+    themes: {
+      stories: 'Histórias',
+      learning: 'Aprendizado',
+      music: 'Música',
+    },
     library: {
       recentlyRead: 'Lidos recentemente',
       favourites: 'Favoritos',

@@ -20,17 +20,18 @@ import Animated, {
   interpolate,
   cancelAnimation,
 } from 'react-native-reanimated';
-import { Story, STORY_TAGS } from '@/types/story';
+import { Story, STORY_TAGS, getLocalizedText } from '@/types/story';
+import type { SupportedLanguage } from '@/services/i18n';
 // All story images are loaded from local cache after batch sync - no authenticated fetching needed
 import { Fonts } from '@/constants/theme';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { voiceRecordingService, VoiceOver } from '@/services/voice-recording-service';
 import { useParentsOnlyChallenge } from '@/hooks/use-parents-only-challenge';
 import { ParentsOnlyModal } from '@/components/ui/parents-only-modal';
-import { StoryPreviewModal } from '@/components/stories/story-preview-modal';
 import { StoryCardSheet } from '@/components/stories/story-card-sheet';
 import { cardCoverTransform, storyCardLayout } from '@/constants/story-card';
-import { BookHinge, BookPages, bookSpineWidth } from '@/components/stories/catalogue/book-frame';
+import { BookHinge, BookPages, BookSpineShade, bookSpineWidth } from '@/components/stories/catalogue/book-frame';
+import { CoverTitle } from '@/components/stories/catalogue/cover-title';
 import { SeatedBook } from '@/components/stories/catalogue/seated-book';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RotatePromptOverlay } from '@/components/stories/rotate-prompt-overlay';
@@ -190,7 +191,6 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   const [showVoiceOverNameModal, setShowVoiceOverNameModal] = useState(false);
   const [showVoiceOverSelectModal, setShowVoiceOverSelectModal] = useState(false);
   const [voiceOverName, setVoiceOverName] = useState('');
-  const [showPreviewModal, setShowPreviewModal] = useState(false);
   // Ref for exit page index - synchronous, available immediately (React state is async)
   const exitPageIndexRef = useRef<number | null>(null);
 
@@ -198,13 +198,12 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   const readButtonRef = useRef<View>(null);
   const recordButtonRef = useRef<View>(null);
   const narrateButtonRef = useRef<View>(null);
-  const previewButtonRef = useRef<View>(null);
 
   // Tutorial hook
   const { shouldShowTutorial, activeTutorial } = useTutorial();
 
   // Translation hook
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   // Block touches immediately when book mode tutorial should show but hasn't started yet
   const shouldBlockBookModeTouches = showModeSelection &&
@@ -889,7 +888,6 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     setAvailableVoiceOvers([]);
     setVoiceOverName('');
     setIsExpandingToReader(false);
-    setShowPreviewModal(false);
     // Reset rotation tracking
     wasRotatedForTransition.current = false;
     isOpeningRef.current = false;
@@ -1745,6 +1743,11 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   };
 
   // Render the cover image for the selected story
+  // The title the book wore on the shelf, worn again at its seat and as it opens
+  const coverTitle = selectedStory
+    ? getLocalizedText(selectedStory.localizedTitle, selectedStory.title, i18n.language as SupportedLanguage)
+    : undefined;
+
   // Note: No borderRadius on images - parent container handles clipping with overflow: hidden
   // All images are loaded from local cache after batch sync
   const renderCoverImage = () => {
@@ -1849,6 +1852,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
               card={cardPosition}
               screenWidth={screenWidth}
               radius={bookBorderRadius}
+              title={coverTitle}
               bob={levitationY}
               opacity={transitionOpacity}
               testID="seated-book"
@@ -1913,9 +1917,15 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
                 coverFrontFaceStyle, // Always apply - style handles inactive case
               ]}>
                 {renderCoverImage()}
+                {coverTitle !== undefined && <CoverTitle title={coverTitle} testID="transition-book-title" />}
                 <Animated.View pointerEvents="none" style={[styles.coverShade, coverShadeStyle]} />
                 {/* The same spine, hinge and pages the book wore on the shelf and the card */}
-                <View style={[styles.bookSpine, { width: bookSpineWidth(cardPosition.width) }]} pointerEvents="none" />
+                <View
+                  style={[styles.bookSpine, { width: bookSpineWidth(cardPosition.width), borderTopLeftRadius: bookBorderRadius, borderBottomLeftRadius: bookBorderRadius }]}
+                  pointerEvents="none"
+                >
+                  <BookSpineShade />
+                </View>
                 <BookHinge />
                 <BookPages testID="transition-book-pages" />
               </Animated.View>
@@ -1954,7 +1964,6 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
                   InteractionManager.runAfterInteractions(() => preloadStoryImages(story));
                 }}
                 onChooseMode={openWithMode}
-                onPreview={() => setShowPreviewModal(true)}
                 onClose={cancelTransition}
                 onToggleFavorite={() => {
                   if (selectedStoryId) toggleFavoriteStory(selectedStoryId);
@@ -1962,7 +1971,6 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
                 readButtonRef={readButtonRef}
                 recordButtonRef={recordButtonRef}
                 narrateButtonRef={narrateButtonRef}
-                previewButtonRef={previewButtonRef}
               />
             </View>
           )}
@@ -2150,13 +2158,6 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
             scaledFontSize={scaledFontSize}
           />
 
-          {/* Story Preview Modal (no Read Story button) */}
-          <StoryPreviewModal
-            story={selectedStory}
-            visible={showPreviewModal}
-            onClose={() => setShowPreviewModal(false)}
-          />
-
           {/* Touch blocking layer - shown immediately when book mode tutorial should show */}
           {/* Must have higher zIndex than modeSelectionContainer (100) to block button touches */}
           {shouldBlockBookModeTouches && (
@@ -2176,7 +2177,6 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
                 'read_button': readButtonRef,
                 'record_button': recordButtonRef,
                 'narrate_button': narrateButtonRef,
-                'preview_button': previewButtonRef,
               }}
             />
           )}
@@ -2249,6 +2249,7 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     left: 0,
+    overflow: 'hidden',
     backgroundColor: '#1D2657',
   },
   pageShade: {

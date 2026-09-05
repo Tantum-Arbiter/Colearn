@@ -225,7 +225,6 @@ export default {
     read: 'Oku',
     record: 'Kaydet',
     narrate: 'Anlat',
-    preview: 'Önizleme',
     tapToBegin: 'Başlamak için dokunun',
     recordAs: 'Kaydediliyor: {{name}}',
     narrateAs: 'Anlatılıyor: {{name}}',
@@ -242,16 +241,8 @@ export default {
     nameAlreadyExistsMessage: '"{{name}}" adında bir ses zaten var. Lütfen farklı bir ad seçin.',
   },
   storyPreview: {
-    audience: 'Hedef Kitle',
-    ages: 'Yaşlar {{range}}',
-    duration: 'Süre',
-    durationMinutes: '{{count}} dakika',
-    tags: 'Etiketler',
-    readStory: 'Hikayeyi Oku',
-    aboutThisStory: 'Bu Hikaye Hakkında',
     removeFromDevice: 'Kaldır',
     removeConfirm: '"{{title}}" bu cihazdan kaldırılsın mı? İstediğiniz zaman tekrar indirebilirsiniz.',
-    preInstalledNotice: 'Bu hikaye uygulamayla birlikte önceden yüklenmiştir. Kaldırılamaz ve indirme limitinize dahil edilmez.',
   },
   completion: {
     theEnd: 'Son',
@@ -705,10 +696,6 @@ export default {
       narrate: {
         title: 'Dinleme Modu',
         description: 'Hikayenin önceden kaydedilmiş bir anlatımını dinleyin. Uyku saati için mükemmel!',
-      },
-      preview: {
-        title: 'Önizleme',
-        description: 'Okumaya başlamadan önce hikaye ayrıntılarını, süresini ve temalarını kontrol edin.',
       },
     },
     recordMode: {
@@ -3182,6 +3169,21 @@ export default {
     sound: 'Ses',
     noResults: 'Bu filtrelerle hikâye bulunamadı',
     clearFilters: 'Filtreleri temizle',
+    filter: 'Filtrele',
+    chooseTheme: 'Bir tema seç',
+    tagline: {
+      one: 'Her hikâyede',
+      two: 'daha parlak bir dünya',
+    },
+    featuredStory: 'Öne çıkan hikâye',
+    todaysPick: 'Günün seçimi',
+    continueReading: 'Okumaya devam et',
+    seeAll: 'Tümünü gör',
+    themes: {
+      stories: 'Hikâyeler',
+      learning: 'Öğrenme',
+      music: 'Müzik',
+    },
     library: {
       recentlyRead: 'Son okunanlar',
       favourites: 'Favoriler',

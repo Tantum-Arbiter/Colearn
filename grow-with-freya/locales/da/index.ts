@@ -225,7 +225,6 @@ export default {
     read: 'Læs',
     record: 'Optag',
     narrate: 'Fortæl',
-    preview: 'Forhåndsvisning',
     tapToBegin: 'Tryk for at begynde',
     recordAs: 'Optager som: {{name}}',
     narrateAs: 'Fortæller som: {{name}}',
@@ -242,16 +241,8 @@ export default {
     nameAlreadyExistsMessage: 'Der findes allerede en stemme med navnet "{{name}}". Vælg venligst et andet navn.',
   },
   storyPreview: {
-    audience: 'Målgruppe',
-    ages: 'Aldre {{range}}',
-    duration: 'Varighed',
-    durationMinutes: '{{count}} minutter',
-    tags: 'Mærker',
-    readStory: 'Læs historie',
-    aboutThisStory: 'Om denne historie',
     removeFromDevice: 'Fjern',
     removeConfirm: 'Fjern "{{title}}" fra denne enhed? Du kan downloade den igen når som helst.',
-    preInstalledNotice: 'Denne historie er forudinstalleret med appen. Den kan ikke fjernes og tæller ikke med i din downloadgrænse.',
   },
   completion: {
     theEnd: 'Slutningen',
@@ -705,10 +696,6 @@ export default {
       narrate: {
         title: 'Lyttetilstand',
         description: 'Lyt til en forudoptaget fortælling af historien. Perfekt til sengetid!',
-      },
-      preview: {
-        title: 'Forhåndsvisning',
-        description: 'Tjek historiedetaljer, varighed og temaer før du begynder at læse.',
       },
     },
     recordMode: {
@@ -3182,6 +3169,21 @@ export default {
     sound: 'Lyd',
     noResults: 'Ingen historier fundet med disse filtre',
     clearFilters: 'Ryd filtre',
+    filter: 'Filter',
+    chooseTheme: 'Vælg et tema',
+    tagline: {
+      one: 'En lysere verden',
+      two: 'i hver historie',
+    },
+    featuredStory: 'Udvalgt historie',
+    todaysPick: 'Dagens valg',
+    continueReading: 'Læs videre',
+    seeAll: 'Se alle',
+    themes: {
+      stories: 'Historier',
+      learning: 'Læring',
+      music: 'Musik',
+    },
     library: {
       recentlyRead: 'Senest læst',
       favourites: 'Favoritter',

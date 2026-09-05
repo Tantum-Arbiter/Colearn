@@ -15,9 +15,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
 import { ALL_STORIES } from '@/data/stories';
-import { CatalogEntry, Story, StoryFilterTag, getLocalizedText } from '@/types/story';
+import { CatalogEntry, STORY_FILTER_TAGS, STORY_TAGS, Story, StoryFilterTag, getLocalizedText } from '@/types/story';
 import { Fonts } from '@/constants/theme';
-import { BORDER_DEFAULT, SURFACE_SECONDARY, TEXT_PRIMARY, TEXT_SECONDARY } from '@/constants/night-palette';
+import { ACCENT_GOLD, BORDER_DEFAULT, SURFACE_SECONDARY, TEXT_PRIMARY, TEXT_SECONDARY } from '@/constants/night-palette';
 import { useAppStore, type SubscriptionTier } from '@/store/app-store';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { useStoryTransition } from '@/contexts/story-transition-context';
@@ -33,6 +33,7 @@ import { PlanetHeaderArtwork } from '@/components/child-ui/planet-header-artwork
 import { SectionCrossfade } from '@/components/child-ui/section-crossfade';
 import { CircleActionButton } from '@/components/child-ui/circle-action-button';
 import { PageTitle } from '@/components/child-ui/page-title';
+import { PageTagline } from '@/components/child-ui/page-tagline';
 import { SectionHeading } from '@/components/child-ui/section-heading';
 import { JourneyShell } from '@/components/child-ui/journey-shell';
 import { ChildNavItemId, navClearance } from '@/components/child-ui/child-bottom-navigation';
@@ -46,11 +47,15 @@ import {
   contentMargin,
 } from '@/components/child-ui/tokens';
 import { ProgressScreen } from '@/components/progress/progress-screen';
-import { StoryPreviewModal } from '../story-preview-modal';
 import {
+  APP_LAUNCH_SEED,
   CatalogueMode,
   CatalogueStory,
+  CatalogueTheme,
+  buildShelves,
+  continueReading,
   entryMatchesMode,
+  filterByTheme,
   fromCatalogEntry,
   fromStory,
   matchesGender,
@@ -58,18 +63,22 @@ import {
   storyMatchesMode,
 } from './catalogue-story';
 import { StoryFilterBar } from './story-filter-bar';
+import { FILTER_PILL_ICONS } from './story-filter-pill';
 import { FeaturedStoryCard } from './featured-story-card';
 import { StoryCoverCard } from './story-cover-card';
+import { StoryRow } from './story-row';
 
+// The finer themes behind Filter. Learning and Music are tiles, not pills
 const FILTER_TAG_SET: StoryFilterTag[] = [
-  'calming', 'bedtime', 'adventure', 'learning', 'music',
-  'family', 'creativity', 'animals', 'friendship',
-  'nature', 'fantasy', 'counting', 'emotions', 'silly', 'rhymes',
+  'bedtime', 'adventure', 'calming', 'family', 'creativity', 'animals',
+  'friendship', 'nature', 'fantasy', 'counting', 'emotions', 'silly', 'rhymes',
 ];
+
+/** A book on a shelf row is a little narrower than one in the grid, so the next one shows. */
+const ROW_CARD_SCALE = 0.86;
 
 // Landscape books: two to a row on a phone, three on a tablet
 const coverColumns = (isTablet: boolean) => (isTablet ? 3 : 2);
-const FEATURED_MAX_WIDTH = 560;
 const LIBRARY_RECENT_LIMIT = 6;
 
 interface StoryCatalogueScreenProps {
@@ -83,6 +92,7 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode }: StoryCatalo
   const { requestReturnToMainMenu, setShowLoginAfterOnboarding, getEffectiveTier } = useAppStore();
   const favoriteStoryIds = useAppStore((state) => state.favoriteStoryIds);
   const readStoryIds = useAppStore((state) => state.readStoryIds);
+  const storyProgress = useAppStore((state) => state.storyProgress);
   const toggleFavoriteStory = useAppStore((state) => state.toggleFavoriteStory);
   const userAvatarType = useAppStore((state) => state.userAvatarType);
   const effectiveTier: SubscriptionTier = getEffectiveTier();
@@ -101,14 +111,15 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode }: StoryCatalo
     return cached && cached.length > 0 ? cached : ALL_STORIES;
   });
   const [catalogEntries, setCatalogEntries] = useState<CatalogEntry[]>([]);
+  const [theme, setTheme] = useState<CatalogueTheme>('stories');
+  /** See all on Continue Reading: every book underway, in one grid. */
+  const [continueOnly, setContinueOnly] = useState(false);
   const [selectedTags, setSelectedTags] = useState<Set<StoryFilterTag>>(new Set());
   const [storyMode, setStoryMode] = useState<CatalogueMode | null>(initialMode ?? null);
   const [shareUnlockedIds, setShareUnlockedIds] = useState<Set<string>>(new Set());
   const [navSection, setNavSection] = useState<ChildNavItemId>('home');
   const [badgeDetailOpen, setBadgeDetailOpen] = useState(false);
   const [showSubscription, setShowSubscription] = useState(false);
-  const [previewStory, setPreviewStory] = useState<Story | null>(null);
-  const [isPreviewVisible, setIsPreviewVisible] = useState(false);
 
   useEffect(() => {
     setStoryMode(initialMode ?? null);
@@ -192,23 +203,46 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode }: StoryCatalo
     const all = navSection === 'library'
       ? downloaded
       : [...downloaded, ...remote];
-    if (selectedTags.size === 0) return all;
-    return all.filter((story) => Array.from(selectedTags).some((tag) => story.theme.includes(tag)));
-  }, [stories, catalogEntries, userAvatarType, storyMode, effectiveTier, shareUnlockedIds, selectedTags, navSection]);
+    const underTheme = filterByTheme(all, theme);
+    if (selectedTags.size === 0) return underTheme;
+    return underTheme.filter((story) => Array.from(selectedTags).some((tag) => story.theme.includes(tag)));
+  }, [stories, catalogEntries, userAvatarType, storyMode, effectiveTier, shareUnlockedIds, theme, selectedTags, navSection]);
 
+  // A book the child has installed, picked afresh each time the app opens and
+  // held for that run, so it does not change under them as they browse
   const featured = useMemo(
-    () => (navSection === 'library' ? null : selectFeatured(catalogueStories)),
+    () => (navSection === 'library'
+      ? null
+      : selectFeatured(catalogueStories, { seed: APP_LAUNCH_SEED, isPreInstalled: StoryLoader.isLocalStory })),
     [catalogueStories, navSection],
   );
 
-  const moreStories = useMemo(
-    () => catalogueStories.filter((story) => story.id !== featured?.id),
-    [catalogueStories, featured],
+  // The books the child is part-way through, most recently read first
+  const underway = useMemo(
+    () => (navSection === 'home' ? continueReading(catalogueStories, storyProgress) : []),
+    [navSection, catalogueStories, storyProgress],
+  );
+
+  // A finer theme chosen, or See all on a row, turns the whole shelf --
+  // featured panel included -- into one grid of what was asked for
+  const browsing = selectedTags.size > 0 || continueOnly;
+
+  // The shelves under the featured panel, laid out afresh each time the app opens
+  const shelves = useMemo(
+    () => (navSection !== 'home' || browsing
+      ? []
+      : buildShelves(catalogueStories, {
+        seed: APP_LAUNCH_SEED,
+        featuredId: featured?.id ?? null,
+        continueReading: underway,
+      })),
+    [navSection, browsing, catalogueStories, featured, underway],
   );
 
   const interactionLocked = isTransitioning || shouldShowStoryReader || isExpandingToReader;
 
   const handleToggleTag = useCallback((tag: StoryFilterTag) => {
+    setContinueOnly(false);
     setSelectedTags((prev) => {
       const next = new Set(prev);
       if (next.has(tag)) {
@@ -231,6 +265,7 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode }: StoryCatalo
     if (id === 'home') {
       setStoryMode(null);
       setSelectedTags(new Set());
+      setContinueOnly(false);
     }
     setNavSection(id);
   }, []);
@@ -238,7 +273,18 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode }: StoryCatalo
   const handleRecommend = useCallback((tag: StoryFilterTag | null) => {
     setNavSection('home');
     setStoryMode(null);
+    setContinueOnly(false);
+    if (tag === 'learning' || tag === 'music') {
+      setTheme(tag);
+      setSelectedTags(new Set());
+      return;
+    }
     setSelectedTags(tag ? new Set([tag]) : new Set());
+  }, []);
+
+  const handleSeeAll = useCallback((tag: StoryFilterTag) => {
+    setContinueOnly(false);
+    setSelectedTags(new Set([tag]));
   }, []);
 
   // Every book the child could open from here, in shelf order, so the story
@@ -279,41 +325,6 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode }: StoryCatalo
       height: fallbackHeight,
     });
   }, [openDownloadedStory]);
-
-  const handleReadFromPreview = useCallback((story: Story) => {
-    handleOpenStory(fromStory(story), { current: null });
-  }, [handleOpenStory]);
-
-  const handleLongPress = useCallback((catalogueStory: CatalogueStory) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    if (catalogueStory.source.kind === 'downloaded') {
-      setPreviewStory(catalogueStory.source.story);
-    } else {
-      const entry = catalogueStory.source.entry;
-      setPreviewStory({
-        id: entry.storyId,
-        title: entry.title,
-        localizedTitle: entry.localizedTitle,
-        description: entry.description,
-        localizedDescription: entry.localizedDescription,
-        category: entry.category,
-        tags: entry.tags,
-        coverImage: entry.thumbnailUrl,
-        isAvailable: false,
-        ageRange: entry.ageRange,
-        duration: entry.duration,
-        isFree: entry.isFree,
-        isPremium: entry.isPremium,
-        isReferralReward: entry.isReferralReward,
-      });
-    }
-    setIsPreviewVisible(true);
-  }, []);
-
-  const handleClosePreview = useCallback(() => {
-    setIsPreviewVisible(false);
-    setPreviewStory(null);
-  }, []);
 
   const handleDeleteStory = useCallback((story: Story) => {
     Alert.alert(
@@ -400,7 +411,14 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode }: StoryCatalo
   }, [t, currentLanguage, handleDeleteStory]);
 
   const handleClearFilters = useCallback(() => {
+    setContinueOnly(false);
     setSelectedTags(new Set());
+  }, []);
+
+  const handleSelectTheme = useCallback((next: CatalogueTheme) => {
+    setContinueOnly(false);
+    setSelectedTags(new Set());
+    setTheme(next);
   }, []);
 
   const contentWidth = windowWidth - margin * 2;
@@ -408,55 +426,126 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode }: StoryCatalo
   const columns = coverColumns(isTablet);
   const coverWidth = Math.floor((gridAreaWidth - COVER_GRID_GAP * (columns - 1)) / columns);
   // The featured book's width on the shelf: its own column on a landscape
-  // tablet, capped on a portrait one, the full content width on a phone
+  // tablet, otherwise the full content width, from the left margin
   const featuredWidth = isLandscapeTablet
     ? Math.floor((contentWidth - SPACE_5) * 0.45)
-    : isTablet
-      ? Math.min(contentWidth, FEATURED_MAX_WIDTH)
-      : contentWidth;
+    : contentWidth;
 
-  const renderCoverCard = useCallback((story: CatalogueStory) => (
+  const rowCardWidth = Math.floor(coverWidth * ROW_CARD_SCALE);
+
+  const renderCoverCard = useCallback((story: CatalogueStory, width: number = coverWidth) => (
     <StoryCoverCard
       key={story.id}
       story={story}
-      width={coverWidth}
+      width={width}
       language={currentLanguage}
       onOpen={handleOpenStory}
-      onLongPress={handleLongPress}
       onLockedPress={() => setShowSubscription(true)}
       onShareToUnlock={handleShareToUnlock}
       onDownloadComplete={refreshLibrary}
       onAuthError={handleAuthError}
       onDownloadLimitReached={handleDownloadLimitReached}
     />
-  ), [coverWidth, currentLanguage, handleOpenStory, handleLongPress, handleShareToUnlock, refreshLibrary, handleAuthError, handleDownloadLimitReached]);
+  ), [coverWidth, currentLanguage, handleOpenStory, handleShareToUnlock, refreshLibrary, handleAuthError, handleDownloadLimitReached]);
 
   const featuredSection = featured && (
-    <>
-      <View style={styles.sectionHeadingSpacing}>
-        <SectionHeading
-          label={t('stories.genreStories', { genre: t(`stories.genres.${featured.category}`) })}
-          testID="featured-section-heading"
-        />
-      </View>
-      <View style={isTablet && !isLandscapeTablet ? styles.featuredCapped : undefined}>
-        <FeaturedStoryCard
-          story={featured}
-          width={featuredWidth}
-          language={currentLanguage}
-          onOpen={handleOpenStory}
-        />
-      </View>
-    </>
+    <FeaturedStoryCard
+      story={featured}
+      width={featuredWidth}
+      language={currentLanguage}
+      onOpen={handleOpenStory}
+    />
   );
 
+  // A row is headed "<Genre> Stories" where the theme is also a genre, else by the theme alone
+  const rowHeading = (tag: StoryFilterTag) => (tag in STORY_TAGS
+    ? t('stories.genreStories', { genre: t(`stories.genres.${tag}`) })
+    : t(STORY_FILTER_TAGS[tag].labelKey));
+
+  const shelvesView = (
+    <View testID="story-shelves" style={styles.shelves}>
+      {shelves.map((shelf) => {
+        if (shelf.kind === 'pick') {
+          return (
+            <View key="pick" style={styles.pickSpacing}>
+              <FeaturedStoryCard
+                story={shelf.story}
+                width={isLandscapeTablet ? Math.floor(gridAreaWidth) : featuredWidth}
+                language={currentLanguage}
+                label={t('catalogue.todaysPick')}
+                onOpen={handleOpenStory}
+                testID="todays-pick-card"
+              />
+            </View>
+          );
+        }
+        if (shelf.kind === 'more') {
+          return (
+            <StoryRow
+              key="more"
+              testID="story-row-more"
+              heading={t('catalogue.moreStories')}
+              stories={shelf.stories}
+              cardWidth={rowCardWidth}
+              edgeInset={isLandscapeTablet ? 0 : margin}
+              renderCard={renderCoverCard}
+            />
+          );
+        }
+        if (shelf.kind === 'continue') {
+          return (
+            <StoryRow
+              key="continue"
+              testID="story-row-continue"
+              heading={t('catalogue.continueReading')}
+              icon="time-outline"
+              iconColor={ACCENT_GOLD}
+              stories={shelf.stories}
+              cardWidth={rowCardWidth}
+              edgeInset={isLandscapeTablet ? 0 : margin}
+              renderCard={renderCoverCard}
+              actionLabel={t('catalogue.seeAll')}
+              onAction={() => setContinueOnly(true)}
+            />
+          );
+        }
+        return (
+          <StoryRow
+            key={shelf.tag}
+            testID={`story-row-${shelf.tag}`}
+            heading={rowHeading(shelf.tag)}
+            icon={FILTER_PILL_ICONS[shelf.tag].icon}
+            iconColor={FILTER_PILL_ICONS[shelf.tag].color}
+            stories={shelf.stories}
+            cardWidth={rowCardWidth}
+            edgeInset={isLandscapeTablet ? 0 : margin}
+            renderCard={renderCoverCard}
+            actionLabel={t('catalogue.seeAll')}
+            onAction={() => handleSeeAll(shelf.tag)}
+          />
+        );
+      })}
+    </View>
+  );
+
+  const chosenTags = Array.from(selectedTags);
+  const browseHeading = continueOnly
+    ? { label: t('catalogue.continueReading'), icon: 'time-outline' as const, iconColor: ACCENT_GOLD }
+    : chosenTags.length === 1
+      ? { label: rowHeading(chosenTags[0]), icon: FILTER_PILL_ICONS[chosenTags[0]].icon, iconColor: FILTER_PILL_ICONS[chosenTags[0]].color }
+      : { label: t('catalogue.moreStories'), icon: undefined, iconColor: undefined };
   const moreSection = (
     <>
       <View style={styles.sectionHeadingSpacing}>
-        <SectionHeading label={t('catalogue.moreStories')} testID="more-section-heading" />
+        <SectionHeading
+          label={browseHeading.label}
+          icon={browseHeading.icon}
+          iconColor={browseHeading.iconColor}
+          testID="more-section-heading"
+        />
       </View>
       <View style={styles.coverGrid} testID="story-cover-grid">
-        {moreStories.map(renderCoverCard)}
+        {(continueOnly ? underway : catalogueStories).map((story) => renderCoverCard(story))}
       </View>
     </>
   );
@@ -487,7 +576,7 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode }: StoryCatalo
           <View style={styles.sectionHeadingSpacing}>
             <SectionHeading label={t(section.labelKey)} testID={`library-heading-${section.id}`} />
           </View>
-          <View style={styles.coverGrid}>{section.stories.map(renderCoverCard)}</View>
+          <View style={styles.coverGrid}>{section.stories.map((story) => renderCoverCard(story))}</View>
         </View>
       ))}
     </>
@@ -516,7 +605,7 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode }: StoryCatalo
               style={[
                 styles.headerRow,
                 {
-                  marginTop: insets.top + SPACE_2,
+                  marginTop: insets.top + (isTablet ? SPACE_2 : 0),
                   marginHorizontal: margin,
                 },
               ]}
@@ -544,20 +633,31 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode }: StoryCatalo
                 accessibilityLabel={t('catalogue.sound')}
               />
             </View>
+            {navSection === 'home' && !storyMode && (
+              <View style={[styles.tagline, { marginHorizontal: margin }]}>
+                <PageTagline
+                  lines={[t('catalogue.tagline.one'), t('catalogue.tagline.two')]}
+                  width={contentWidth}
+                />
+              </View>
+            )}
 
             <ScrollView
               style={[styles.scroll, { marginBottom: navClearance(insets.bottom) }]}
               contentContainerStyle={[
                 styles.scrollContent,
                 {
+                  paddingTop: isTablet ? SPACE_4 : 0,
                   paddingHorizontal: margin,
                   paddingBottom: SPACE_4 + (textSizeScale - 1) * 40,
                 },
               ]}
               scrollEnabled={!interactionLocked}
             >
-              <View style={styles.filterBarSpacing}>
+              <View style={isTablet ? styles.filterBarSpacing : styles.filterBarSpacingPhone}>
                 <StoryFilterBar
+                  theme={theme}
+                  onSelectTheme={handleSelectTheme}
                   tags={FILTER_TAG_SET}
                   selectedTags={selectedTags}
                   onToggleTag={handleToggleTag}
@@ -579,30 +679,23 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode }: StoryCatalo
                 </View>
               ) : navSection === 'library' ? (
                 librarySectionsView
+              ) : browsing ? (
+                moreSection
               ) : isLandscapeTablet && featured ? (
                 <View style={styles.landscapeColumns}>
                   <View style={styles.landscapeFeaturedColumn}>{featuredSection}</View>
-                  <View style={styles.landscapeGridColumn}>{moreSection}</View>
+                  <View style={styles.landscapeGridColumn}>{shelvesView}</View>
                 </View>
               ) : (
                 <>
                   {featuredSection}
-                  {moreSection}
+                  {shelvesView}
                 </>
               )}
             </ScrollView>
             </>
           )}
         </SectionCrossfade>
-
-        <StoryPreviewModal
-          story={previewStory}
-          visible={isPreviewVisible}
-          onClose={handleClosePreview}
-          onReadStory={handleReadFromPreview}
-          onDeleteStory={previewStory?.isAvailable && !StoryLoader.isLocalStory(previewStory.id) ? handleDeleteStory : undefined}
-          isPreInstalled={previewStory ? StoryLoader.isLocalStory(previewStory.id) : false}
-        />
 
         <SubscriptionOverlay
           visible={showSubscription}
@@ -622,12 +715,20 @@ const styles = StyleSheet.create({
   titleWrapper: {
     flex: 1,
   },
+  tagline: {
+    zIndex: 10,
+  },
   scroll: {
     flex: 1,
     zIndex: 5,
   },
   scrollContent: {
     paddingTop: SPACE_4,
+  },
+  // The chooser is a way in to the shelf, not a screenful: on a phone the
+  // featured book follows it closely enough to be seen without scrolling
+  filterBarSpacingPhone: {
+    marginBottom: SPACE_3,
   },
   filterBarSpacing: {
     marginBottom: SPACE_5,
@@ -636,15 +737,17 @@ const styles = StyleSheet.create({
     marginBottom: SPACE_3,
     marginTop: SPACE_2,
   },
-  featuredCapped: {
-    alignSelf: 'center',
-    width: '100%',
-    maxWidth: FEATURED_MAX_WIDTH,
-  },
   coverGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: COVER_GRID_GAP,
+  },
+  shelves: {
+    marginTop: SPACE_3,
+  },
+  pickSpacing: {
+    marginTop: SPACE_2,
+    marginBottom: SPACE_4,
   },
   landscapeColumns: {
     flexDirection: 'row',

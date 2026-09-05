@@ -1,20 +1,9 @@
 import React from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, { useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
-import { BookHinge, BookPages, bookSpineWidth } from './book-frame';
+import { BookHinge, BookPages, BookSpineShade, bookSpineWidth } from './book-frame';
+import { CoverTitle } from './cover-title';
 import { STORY_OPENING } from '@/constants/story-opening';
-
-/**
- * The block of page edges beside the cover while the book waits: three strips,
- * each a little shorter than the last, standing a little in from the top and
- * bottom of the cover.
- */
-export const SEATED_BOOK_EDGES = {
-  strips: [0.96, 0.9, 0.84],
-  width: 2,
-  gap: 1.5,
-  inset: 0.04,
-} as const;
 
 export interface SeatedBookProps {
   /** The tile the book was tapped on; the seat keeps its proportions. */
@@ -23,6 +12,8 @@ export interface SeatedBookProps {
   screenWidth: number;
   radius: number;
   spineColor?: string;
+  /** The title the book wears on the shelf; it wears the same one here. */
+  title?: string;
   /** The book's rise and fall while it waits. */
   bob: SharedValue<number>;
   /** The cover appearing inside the sketch's outline. */
@@ -44,12 +35,17 @@ export interface SeatedBookProps {
  * offset for the first frames, until the JS listener catches up, and it swings
  * into place. The transform-driven book takes over at the opening, at this
  * same size and place.
+ *
+ * It is dressed exactly as the book on the shelf: the same spine with its
+ * light down the ridge, the same hinge and pages, and the same title over the
+ * cover -- so the book a child tapped is the book they see waiting.
  */
 export function SeatedBook({
   card,
   screenWidth,
   radius,
   spineColor = '#1D2657',
+  title,
   bob,
   opacity,
   children,
@@ -77,22 +73,16 @@ export function SeatedBook({
     >
       <View testID={`${testID}-cover`} style={[styles.cover, { borderRadius: radius }]}>
         {children}
-        <View testID={`${testID}-spine`} style={[styles.spine, { width: spineWidth, backgroundColor: spineColor }]} pointerEvents="none" />
+        {title !== undefined && <CoverTitle title={title} testID={`${testID}-title`} />}
+        <View
+          testID={`${testID}-spine`}
+          style={[styles.spine, { width: spineWidth, backgroundColor: spineColor, borderTopLeftRadius: radius, borderBottomLeftRadius: radius }]}
+          pointerEvents="none"
+        >
+          <BookSpineShade />
+        </View>
         <BookHinge />
         <BookPages testID={`${testID}-pages`} />
-      </View>
-
-      <View
-        testID={`${testID}-edges`}
-        style={[styles.edges, { top: `${SEATED_BOOK_EDGES.inset * 100}%`, height: `${(1 - SEATED_BOOK_EDGES.inset * 2) * 100}%` }]}
-        pointerEvents="none"
-      >
-        {SEATED_BOOK_EDGES.strips.map((height, i) => (
-          <View
-            key={height}
-            style={[styles.edge, { height: `${height * 100}%`, marginLeft: i === 0 ? 0 : SEATED_BOOK_EDGES.gap }]}
-          />
-        ))}
       </View>
     </Animated.View>
   );
@@ -124,16 +114,6 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     left: 0,
-  },
-  edges: {
-    position: 'absolute',
-    left: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  edge: {
-    width: SEATED_BOOK_EDGES.width,
-    borderRadius: 1,
-    backgroundColor: 'rgba(255, 250, 235, 0.75)',
+    overflow: 'hidden',
   },
 });
