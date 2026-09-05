@@ -31,6 +31,7 @@ colearn/
 │   ├── NEXT-PHASE-3.md       # Subscription model, download caps, RevenueCat
 │   ├── SCHEDULE-WINDOW.md    # Screen Time schedule callout + reminders sheet
 │   ├── SCREEN-TIME-ALERT-PLAN.md # ⭐ Planned: alert UI overhaul + real-world tips
+│   ├── ACHIEVEMENTS-PLAN.md  # ⭐ Planned: badges and rewards across a growing catalogue
 │   ├── story-requirements.md # Story content requirements
 │   └── scripts/TRANSLATIONS.md # i18n translation tooling
 ├── gateway-service/          # Spring Boot backend (Java 21, Gradle)   · see AGENTS.md
@@ -66,6 +67,7 @@ colearn/
 | Schedule callout / reminders window | [`grow-with-freya/SCHEDULE-WINDOW.md`](grow-with-freya/SCHEDULE-WINDOW.md) |
 | Screen time alert UI / real-world tips | [`grow-with-freya/SCREEN-TIME-ALERT-PLAN.md`](grow-with-freya/SCREEN-TIME-ALERT-PLAN.md) |
 | Story content requirements | [`grow-with-freya/story-requirements.md`](grow-with-freya/story-requirements.md) |
+| Badges / achievements plan | [`grow-with-freya/ACHIEVEMENTS-PLAN.md`](grow-with-freya/ACHIEVEMENTS-PLAN.md) (+ [`grow-with-freya/PROGRESS-UI.md`](grow-with-freya/PROGRESS-UI.md)) |
 | Child-facing UI / story catalogue design | [`grow-with-freya/OVERHAUL-UI.md`](grow-with-freya/OVERHAUL-UI.md) |
 | Animation / motion work | [`grow-with-freya/ANIMATION-PLAN.md`](grow-with-freya/ANIMATION-PLAN.md) |
 | Backend API / endpoints | [`gateway-service/README.md`](gateway-service/README.md) + [`gateway-service/AGENTS.md`](gateway-service/AGENTS.md) |
