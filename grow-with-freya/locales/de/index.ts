@@ -1473,7 +1473,7 @@ export default {
       title: 'So funktioniert deine kostenlose Testphase',
       subtitle: 'Teste Basic 5 Tage kostenlos, danach {{price}} pro Monat, sofern nicht gekündigt.',
       todayLabel: 'Heute',
-      todayBody: '50 Bücher freigeschaltet und sofort lesbar, dazu Instrumente und Spiele.',
+      todayBody: '50 Bücher sofort bereit, dazu Musik und Lernspiele.',
       notifyLabel: 'Tag 3',
       notifyBody: 'Wir sagen dir Bescheid, dass deine Testphase bald endet.',
       chargeLabel: 'Tag 5',

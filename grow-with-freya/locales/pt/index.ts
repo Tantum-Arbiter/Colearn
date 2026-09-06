@@ -1473,7 +1473,7 @@ export default {
       title: 'Como funciona a tua avaliação gratuita',
       subtitle: 'Experimenta o Basic grátis durante 5 dias, depois {{price}} por mês salvo cancelamento.',
       todayLabel: 'Hoje',
-      todayBody: '50 livros desbloqueados e prontos a ler de imediato, mais instrumentos e jogos.',
+      todayBody: '50 livros prontos já, mais música e jogos de aprendizagem.',
       notifyLabel: 'Dia 3',
       notifyBody: 'Avisamos-te de que a tua avaliação está a terminar.',
       chargeLabel: 'Dia 5',

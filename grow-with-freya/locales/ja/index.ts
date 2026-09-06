@@ -1473,7 +1473,7 @@ export default {
       title: '無料トライアルの流れ',
       subtitle: 'Basicを5日間無料でお試し。その後は解約しない限り月額{{price}}です。',
       todayLabel: '今日',
-      todayBody: '50冊の本がすぐに読める状態で解放。楽器とゲームも使えます。',
+      todayBody: '50冊がすぐに読めて、音楽と学びの遊びも。',
       notifyLabel: '3日目',
       notifyBody: 'トライアルの終了が近いことをお知らせします。',
       chargeLabel: '5日目',

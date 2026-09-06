@@ -1473,7 +1473,7 @@ export default {
       title: '免费试用如何进行',
       subtitle: '免费试用 Basic 5 天，之后每月 {{price}}，除非取消。',
       todayLabel: '今天',
-      todayBody: '50 本书立即解锁，随时可读，还有乐器和游戏。',
+      todayBody: '50 本书立即可读，还有音乐和学习游戏。',
       notifyLabel: '第 3 天',
       notifyBody: '我们会提醒你试用即将结束。',
       chargeLabel: '第 5 天',

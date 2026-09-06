@@ -1473,7 +1473,7 @@ export default {
       title: 'Comment fonctionne votre essai gratuit',
       subtitle: 'Essayez Basic gratuitement pendant 5 jours, puis {{price}} par mois sauf annulation.',
       todayLabel: 'Aujourd’hui',
-      todayBody: '50 livres débloqués et prêts à lire tout de suite, plus les instruments et les jeux.',
+      todayBody: '50 livres prêts tout de suite, plus musique et jeux.',
       notifyLabel: 'Jour 3',
       notifyBody: 'Nous vous préviendrons que votre essai se termine bientôt.',
       chargeLabel: 'Jour 5',

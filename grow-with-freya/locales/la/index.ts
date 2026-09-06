@@ -1473,7 +1473,7 @@ export default {
       title: 'Quomodo Probatio Tua Gratuita Operatur',
       subtitle: 'Basic Gratis per Quinque Dies Tempta, Deinde {{price}} in Mense Nisi Renuntiaveris.',
       todayLabel: 'Hodie',
-      todayBody: 'Quinquaginta Libri Reclusi et Statim Legendi, cum Instrumentis et Ludis.',
+      todayBody: 'Quinquaginta Libri Statim Parati, cum Musica et Ludis Discendi.',
       notifyLabel: 'Dies III',
       notifyBody: 'Te Monebimus Probationem Tuam Mox Finiri.',
       chargeLabel: 'Dies V',

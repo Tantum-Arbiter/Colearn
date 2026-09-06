@@ -1473,7 +1473,7 @@ export default {
       title: 'Cómo funciona tu prueba gratuita',
       subtitle: 'Prueba Basic gratis durante 5 días y después {{price}} al mes, salvo que canceles.',
       todayLabel: 'Hoy',
-      todayBody: '50 libros desbloqueados y listos para leer al instante, además de instrumentos y juegos.',
+      todayBody: '50 cuentos listos ya, más música y juegos de aprendizaje.',
       notifyLabel: 'Día 3',
       notifyBody: 'Te avisaremos de que tu prueba está a punto de terminar.',
       chargeLabel: 'Día 5',

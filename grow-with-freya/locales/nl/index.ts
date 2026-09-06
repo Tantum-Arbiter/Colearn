@@ -1473,7 +1473,7 @@ export default {
       title: 'Hoe je gratis proefperiode werkt',
       subtitle: 'Probeer Basic 5 dagen gratis, daarna {{price}} per maand tenzij je opzegt.',
       todayLabel: 'Vandaag',
-      todayBody: '50 boeken meteen ontgrendeld en klaar om te lezen, plus instrumenten en spelletjes.',
+      todayBody: '50 boeken meteen klaar, plus muziek en leerspelletjes.',
       notifyLabel: 'Dag 3',
       notifyBody: 'We laten je weten dat je proefperiode bijna afloopt.',
       chargeLabel: 'Dag 5',

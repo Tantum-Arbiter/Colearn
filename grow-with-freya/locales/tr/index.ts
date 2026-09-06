@@ -1473,7 +1473,7 @@ export default {
       title: 'Ücretsiz denemen nasıl işliyor',
       subtitle: 'Basic’i 5 gün ücretsiz dene, sonrasında iptal etmezsen ayda {{price}}.',
       todayLabel: 'Bugün',
-      todayBody: '50 kitap hemen okunmaya hazır ve kilidi açık, ayrıca enstrümanlar ve oyunlar.',
+      todayBody: '50 kitap hemen hazır, ayrıca müzik ve öğrenme oyunları.',
       notifyLabel: '3. gün',
       notifyBody: 'Denemenin bitmek üzere olduğunu sana bildireceğiz.',
       chargeLabel: '5. gün',

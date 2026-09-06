@@ -1473,7 +1473,7 @@ export default {
       title: 'Sådan fungerer din gratis prøveperiode',
       subtitle: 'Prøv Basic gratis i 5 dage, derefter {{price}} om måneden, medmindre du opsiger.',
       todayLabel: 'I dag',
-      todayBody: '50 bøger låst op og klar til at læse med det samme, plus instrumenter og spil.',
+      todayBody: '50 bøger klar nu, plus musik og læringsspil.',
       notifyLabel: 'Dag 3',
       notifyBody: 'Vi giver dig besked om, at din prøveperiode snart slutter.',
       chargeLabel: 'Dag 5',

@@ -82,11 +82,23 @@ const TRIAL_LINK_DOTS = 7;
  * is left off there rather than muddying a dark panel with a grey drop.
  */
 const BOX_GLOW = {
-  shadowColor: '#FFC61A',
+  shadowColor: '#FFE14D',
   shadowOffset: { width: 0, height: 0 },
-  shadowOpacity: 0.45,
-  shadowRadius: 16,
+  shadowOpacity: 0.55,
+  shadowRadius: 18,
 } as const;
+
+const FRAME_YELLOW = '#FFE14D';
+
+/** Room for the trial card, which is wider than the app's usual tablet column. */
+const TRIAL_MAX_WIDTH = 720;
+
+/**
+ * Below this the three steps cannot hold an icon and a readable line of text
+ * side by side -- "Today" was breaking to "Tod / ay". Everything the timeline
+ * draws shrinks together rather than the text alone being squeezed.
+ */
+const COMPACT_WIDTH = 480;
 
 const TRIAL_BENEFIT_KEYS = [
   'subscription.trial.benefitStories',
@@ -169,6 +181,11 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
   const legalStyle = useAnimatedStyle(() => ({ transform: [{ translateX: legalSlideX.value }] }));
 
   const trialPrice = livePrices?.monthly_basic?.priceString ?? TRIAL_FALLBACK_PRICE;
+  const compact = screenW < COMPACT_WIDTH;
+  const stepIcon = compact ? 54 : 70;
+  const linkDots = compact ? 4 : 7;
+  const dotGap = compact ? 5 : 7;
+  const artWidth = compact ? 104 : 150;
 
   if (!visible) return null;
 
@@ -260,8 +277,11 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
               {TRIAL_STEPS.map((step, i) => (
                 <React.Fragment key={step.labelKey}>
                   {i > 0 ? (
-                    <View style={st.timelineLink} testID={`trial-link-${i - 1}`}>
-                      {Array.from({ length: TRIAL_LINK_DOTS }).map((_, d) => (
+                    <View
+                      style={[st.timelineLink, { gap: dotGap, marginTop: stepIcon * 0.56 }]}
+                      testID={`trial-link-${i - 1}`}
+                    >
+                      {Array.from({ length: linkDots }).map((_, d) => (
                         <View key={d} style={st.timelineDot} testID="trial-link-dot" />
                       ))}
                     </View>
@@ -270,11 +290,14 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
                     <Image
                       testID={`trial-step-icon-${i}`}
                       source={step.icon}
-                      style={st.stepIcon}
+                      style={{ width: stepIcon, height: stepIcon }}
                       resizeMode="contain"
                     />
                     <View style={[st.stepPill, step.pill === 'indigo' ? st.stepPillIndigo : st.stepPillAmber]}>
-                      <Text style={[st.stepPillText, step.pill === 'indigo' ? st.stepPillTextLight : null]}>
+                      <Text
+                        numberOfLines={1}
+                        style={[st.stepPillText, step.pill === 'indigo' ? st.stepPillTextLight : null]}
+                      >
                         {t(step.labelKey)}
                       </Text>
                     </View>
@@ -284,18 +307,18 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
               ))}
             </View>
 
+            <View style={st.premiumWrap}>
             <View style={st.premiumCard} testID="trial-premium-card">
-              <View style={st.popularBadge}>
-                <MaterialCommunityIcons name="crown" size={15} color="#4A2E00" />
-                <Text style={st.popularText}>{t('subscription.trial.mostRecommended')}</Text>
-              </View>
-              <View style={st.premiumRow}>
+              <View style={[st.premiumArt, { width: artWidth }]}>
                 <Image
                   testID="trial-premium-art"
                   source={TRIAL_PREMIUM_ART}
-                  style={st.premiumArt}
-                  resizeMode="contain"
+                  style={st.premiumArtImage}
+                  resizeMode="cover"
                 />
+              </View>
+              <View style={[st.premiumBody, { paddingLeft: artWidth + 14 }]}>
+                <View style={[st.premiumCopyRow, compact && st.premiumCopyStack]}>
                 <View style={st.premiumCopy}>
                   <Text style={st.premiumName}>{t('subscription.trial.planName')}</Text>
                   <Text style={st.premiumTrial}>{t('subscription.trial.planTrial')}</Text>
@@ -311,7 +334,7 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
                     </View>
                   ))}
                 </View>
-              </View>
+                </View>
 
               <Pressable
                 testID="trial-upgrade"
@@ -322,6 +345,13 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
               >
                 <Text style={st.upgradeNote}>{t('subscription.trial.upgrade')}</Text>
               </Pressable>
+              </View>
+            </View>
+
+              <View style={st.popularBadge}>
+                <MaterialCommunityIcons name="crown" size={15} color="#4A2E00" />
+                <Text style={st.popularText}>{t('subscription.trial.mostRecommended')}</Text>
+              </View>
             </View>
 
             <Pressable
@@ -452,7 +482,7 @@ const st = StyleSheet.create({
   // the trial card is a marketing page, not a form: stretched to a tablet's
   // full width the dot runs float in empty space and the timeline stops
   // reading as one journey. Capped and centred, the proportions hold at any size.
-  column: { width: '100%', maxWidth: TABLET_CONTENT_MAX_WIDTH, alignSelf: 'center' },
+  column: { width: '100%', maxWidth: TRIAL_MAX_WIDTH, alignSelf: 'center' },
   header: { fontSize: 26, fontWeight: '800', color: '#FFD700', fontFamily: Fonts.rounded, textAlign: 'center', marginBottom: 4, textShadowColor: 'rgba(0,0,0,0.8)', textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 6 },
   sub: { fontSize: 14, color: 'rgba(255,255,255,0.9)', fontFamily: Fonts.sans, textAlign: 'center', marginBottom: 20, textShadowColor: 'rgba(0,0,0,0.6)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 },
   planCard: { borderWidth: 2, borderColor: 'rgba(255,255,255,0.15)', borderRadius: 16, padding: 16, marginBottom: 12, backgroundColor: 'rgba(0,0,0,0.3)' },
@@ -481,31 +511,42 @@ const st = StyleSheet.create({
   legalRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 12, gap: 6 },
   legalLink: { fontSize: 12, color: 'rgba(255,255,255,0.5)', fontFamily: Fonts.sans, textDecorationLine: 'underline' },
   legalDot: { fontSize: 12, color: 'rgba(255,255,255,0.35)' },
-  starRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, marginBottom: 2 },
+  starRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, marginBottom: 0 },
   subBtnRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
-  timeline: { ...BOX_GLOW, flexDirection: 'row', alignItems: 'flex-start', borderWidth: 1.5, borderColor: 'rgba(255,198,26,0.7)', borderRadius: 20, backgroundColor: 'rgba(10,10,35,0.55)', paddingVertical: 18, paddingHorizontal: 10, marginBottom: 18 },
-  timelineLink: { flexDirection: 'row', alignItems: 'center', gap: 7, marginTop: 44 },
-  timelineDot: { width: 5, height: 5, borderRadius: 2.5, backgroundColor: '#FFC61A' },
-  step: { flex: 1, alignItems: 'center', paddingHorizontal: 4 },
-  stepIcon: { width: 78, height: 78 },
-  stepPill: { marginTop: 6, paddingHorizontal: 14, paddingVertical: 5, borderRadius: 999 },
+  timeline: { ...BOX_GLOW, flexDirection: 'row', alignItems: 'flex-start', borderWidth: 1.5, borderColor: FRAME_YELLOW, borderRadius: 20, backgroundColor: 'rgba(10,10,35,0.55)', paddingVertical: 12, paddingHorizontal: 8, marginBottom: 14 },
+  timelineLink: { flexDirection: 'row', alignItems: 'center' },
+  timelineDot: { width: 5, height: 5, borderRadius: 2.5, backgroundColor: FRAME_YELLOW },
+  step: { flex: 1, alignItems: 'center', paddingHorizontal: 2 },
+  stepPill: { marginTop: 5, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 999 },
   stepPillAmber: { backgroundColor: '#FFC61A' },
   stepPillIndigo: { backgroundColor: '#4F46E5' },
   stepPillText: { fontFamily: Fonts.rounded, fontSize: 13, fontWeight: '800', color: '#3A2600' },
   stepPillTextLight: { color: '#FFFFFF' },
-  stepBody: { marginTop: 8, fontFamily: Fonts.sans, fontSize: 12, lineHeight: 17, color: 'rgba(255,255,255,0.9)', textAlign: 'center' },
-  premiumCard: { ...BOX_GLOW, borderWidth: 1.5, borderColor: 'rgba(255,198,26,0.85)', borderRadius: 20, backgroundColor: 'rgba(10,10,35,0.5)', paddingTop: 24, paddingBottom: 16, paddingHorizontal: 14, marginBottom: 18 },
-  popularBadge: { position: 'absolute', top: -13, left: 16, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#FFC61A', paddingHorizontal: 12, paddingVertical: 5, borderRadius: 999 },
+  stepBody: { marginTop: 6, fontFamily: Fonts.sans, fontSize: 12, lineHeight: 16, color: 'rgba(255,255,255,0.9)', textAlign: 'center' },
+  // the badge sits outside the clipped card: overflow:hidden is what lets the
+  // artwork meet the border, and it would crop the badge off the top edge too
+  premiumWrap: { marginBottom: 14 },
+  premiumCard: { ...BOX_GLOW, borderWidth: 1.5, borderColor: FRAME_YELLOW, borderRadius: 20, backgroundColor: 'rgba(10,10,35,0.5)', overflow: 'hidden' },
+  popularBadge: { position: 'absolute', top: -13, left: 16, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#FFC61A', paddingHorizontal: 12, paddingVertical: 5, borderRadius: 999, zIndex: 2 },
   popularText: { fontFamily: Fonts.rounded, fontSize: 11, fontWeight: '800', color: '#4A2E00', letterSpacing: 0.6 },
-  premiumRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  // absolute so the artwork fills whatever height the copy settles on, rather
+  // than its own aspect ratio dictating how tall the card is
+  // the box is absolute so it takes the card's settled height; the image then
+  // fills that box, rather than its own aspect ratio deciding how tall the card is
+  premiumArt: { position: 'absolute', left: 0, top: 0, bottom: 0, overflow: 'hidden' },
+  premiumArtImage: { width: '100%', height: '100%' },
+  premiumCopyRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  // side by side, a phone leaves the benefits ~110pt and every one of them
+  // wraps to three lines; stacked they each fit on one and the card halves
+  premiumCopyStack: { flexDirection: 'column', alignItems: 'flex-start', gap: 10 },
+  premiumBody: { paddingTop: 18, paddingBottom: 12, paddingRight: 14 },
   upgradeRow: { marginTop: 12, paddingTop: 10, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.10)' },
   upgradeNote: { fontFamily: Fonts.rounded, fontSize: 13, fontWeight: '700', color: '#FFC61A', textAlign: 'center' },
-  premiumArt: { width: 138, height: 176, marginLeft: -10, marginVertical: -14 },
-  premiumCopy: { flex: 1.1, justifyContent: 'center' },
+  premiumCopy: { flex: 1, justifyContent: 'center' },
   premiumName: { fontFamily: Fonts.rounded, fontSize: 22, fontWeight: '800', color: '#FFFFFF' },
   premiumTrial: { fontFamily: Fonts.rounded, fontSize: 18, fontWeight: '800', color: '#FFC61A', marginTop: 2 },
   premiumPrice: { fontFamily: Fonts.sans, fontSize: 13, lineHeight: 18, color: 'rgba(255,255,255,0.85)', marginTop: 8 },
-  premiumBenefits: { flex: 1, justifyContent: 'center', gap: 5 },
+  premiumBenefits: { flex: 1, alignSelf: 'stretch', justifyContent: 'center', gap: 5 },
   benefitRow: { flexDirection: 'row', alignItems: 'center' },
   benefitText: { fontFamily: Fonts.sans, fontSize: 13, color: '#FFFFFF', flex: 1 },
   plansToggle: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 12, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)', backgroundColor: 'rgba(0,0,0,0.28)', marginBottom: 12 },

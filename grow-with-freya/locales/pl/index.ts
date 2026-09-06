@@ -1473,7 +1473,7 @@ export default {
       title: 'Jak działa Twój bezpłatny okres próbny',
       subtitle: 'Wypróbuj Basic za darmo przez 5 dni, potem {{price}} miesięcznie, o ile nie zrezygnujesz.',
       todayLabel: 'Dziś',
-      todayBody: '50 książek odblokowanych i gotowych do czytania od razu, plus instrumenty i gry.',
+      todayBody: '50 książek od razu, plus muzyka i gry edukacyjne.',
       notifyLabel: 'Dzień 3',
       notifyBody: 'Powiadomimy Cię, że okres próbny wkrótce się kończy.',
       chargeLabel: 'Dzień 5',

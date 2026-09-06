@@ -1706,7 +1706,7 @@ export default {
       title: 'How your free trial works',
       subtitle: 'Try Basic free for 5 days, then {{price}} per month unless cancelled.',
       todayLabel: 'Today',
-      todayBody: '50 books unlocked and ready to read straight away, plus instruments and games.',
+      todayBody: '50 books ready now, plus music and learning games.',
       notifyLabel: 'Day 3',
       notifyBody: 'We’ll notify you your trial is ending soon.',
       chargeLabel: 'Day 5',

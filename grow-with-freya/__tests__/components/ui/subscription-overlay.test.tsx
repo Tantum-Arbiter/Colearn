@@ -121,12 +121,13 @@ describe('SubscriptionOverlay', () => {
    * dash reads as a divider between three separate facts; the dotted run reads
    * as one journey moving forward, which is the whole point of the card.
    */
-  it('joins the steps with a run of dots rather than a solid rule', () => {
+  it.each(['trial-link-0', 'trial-link-1'])('joins the steps with a run of dots at %s', (testID) => {
     const tree = renderOverlay();
 
-    expect(findByTestId(tree, 'trial-link-0').length).toBeGreaterThan(0);
-    expect(findByTestId(tree, 'trial-link-1').length).toBeGreaterThan(0);
-    expect(findByTestId(tree, 'trial-link-dot').length).toBeGreaterThanOrEqual(12);
+    const link = findByTestId(tree, testID)[0];
+    const dots = link.findAll((node: any) => node.props?.testID === 'trial-link-dot');
+
+    expect(dots.length).toBeGreaterThanOrEqual(3);
   });
 
   /**
@@ -134,14 +135,14 @@ describe('SubscriptionOverlay', () => {
    * than a border, so nothing about the border assertions above would notice
    * if it were dropped.
    */
-  it.each(['trial-timeline', 'trial-premium-card'])('haloes %s in amber', (testID) => {
+  it.each(['trial-timeline', 'trial-premium-card'])('haloes %s in the frame yellow', (testID) => {
     const tree = renderOverlay();
 
     const style = [findByTestId(tree, testID)[0].props.style]
       .flat(3)
       .reduce((merged: any, entry: any) => ({ ...merged, ...entry }), {});
 
-    expect(style.shadowColor).toBe('#FFC61A');
+    expect(style.shadowColor).toBe('#FFE14D');
     expect(style.shadowRadius).toBeGreaterThan(0);
     expect(style.shadowOpacity).toBeGreaterThan(0);
   });
