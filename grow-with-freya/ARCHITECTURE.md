@@ -47,7 +47,8 @@ app/
 components/
 ├── onboarding/             ← First-launch tutorial flow
 ├── auth/                   ← Login screens (Google, Apple, guest mode)
-├── main-menu/              ← Main menu with 3D coverflow carousel
+├── home/                   ← Returning-user home: welcome, continue, journey stats, achievements (see below)
+├── main-menu/              ← Legacy 3D coverflow carousel (behind `useHomeScene`)
 ├── stories/                ← Story reader, page rendering, interactions
 │   ├── story-book-reader.tsx    ← Core reader: page navigation, mode selection, overlays
 │   ├── music-challenge-ui.tsx   ← Note buttons, sequence progress, blow detection
@@ -165,6 +166,39 @@ The hook's `lockLandscape()` / `lockPortrait()` resolve on the **emitted
 This matters: the Story Garden's book-opening bridge keeps one book rendered across
 the rotation and counter-rotates it to stay upright, which is only believable if the
 settle is frame-accurate rather than approximated.
+
+## Home (returning-user dashboard)
+
+`components/home/` is what a family sees first. It is a personal story world, not a
+launcher: a welcome chosen for the visit, the story to carry on with, how far the
+family has come, what they achieved and what comes next. Every value is read from a
+data model, never hard-coded, so an API can supply it later.
+
+```
+useChildHomeData()  →  ChildHomeData + WelcomeCopy + celebrateAchievement
+  →  HomeScene: welcome · ContinueCard · JourneyCard (4 stat tiles) · AchievementCard (next badge, View achievements beside the stars) · Find a new story pill
+     Sized to fit an iPhone 16 Pro without scrolling; the ScrollView only kicks in on shorter phones.
+```
+
+| Concern | Location |
+|---------|----------|
+| Data model (`ChildHomeData`, return-visit states) | `types/child-home.ts` |
+| Welcome choice, streak liveness, star lighting, safety score, card layout, tints, motion | `constants/home-journey.ts` |
+| Assembling the model from the store, badges and screen-time history | `components/home/use-child-home-data.ts` |
+| Visit memory (`lastHomeVisitAt`, `achievementUnlockedAt`, `lastStoryCompletedAt`) | `store/app-store.ts` (persisted) |
+| Glowing book / clock / shield / flame icons | `components/home/stat-icons.tsx` |
+| Badge medallions; the newest one shines once when new | `components/home/achievement-card.tsx` |
+| Destinations | `stories` (catalogue) and `progress` (catalogue opened at Progress via `sectionRequest`) |
+
+Return-visit states, in priority order: new achievement → story completed → long absence
+(7+ days) → active streak (2+ days) → first visit today → normal. Messages are always
+encouraging; a lapsed streak is shown as an invitation to start one, never as a loss.
+
+Motion budget: background stars twinkle, the four stat icons each move in their own way (a page flicks, the clock keeps time, the leaf sways, the flame flickers),
+the cover gives an occasional sparkle, milestone stars light
+in sequence on arrival, the newest medallion shines once when a badge is new. Cards compress
+about 2.5% on touch and arrows nudge on tap. Everything stops under Reduce Motion and
+while the page is not the one showing.
 
 ## Story Garden (feature-flagged)
 
