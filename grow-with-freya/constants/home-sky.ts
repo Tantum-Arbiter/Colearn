@@ -12,10 +12,6 @@ export const HERO_SKY = {
   blinkMs: 420,
   blinkFloor: 0.42,
   gentleFloor: 0.82,
-  cloudDriftMinPx: 2,
-  cloudDriftMaxPx: 6,
-  cloudDriftMinMs: 9000,
-  cloudDriftMaxMs: 15000,
   sunBreatheLift: 2,
   sunBreatheMs: 4500,
   welcomeGlow: 'rgba(140,150,255,0.55)',
@@ -31,24 +27,30 @@ export const HERO_HALO_OPACITY = {
   night: 0.3,
 } as const satisfies Record<TimeOfDay, number>;
 
+/**
+ * The frame every home panel wears: a vivid blue-violet fill, a bright
+ * lavender rim, and a tight light-blue bloom just outside it -- the rim
+ * reads as lit, the way a neon edge does, rather than the panel sitting in a
+ * wide pale wash. The sheen and inner rim stay faint, and nothing else on it
+ * glows: no lit corners, no halo round the arrow. The stroke and the bloom
+ * are the whole of its light.
+ */
 export const HERO_CARD = {
   radius: 22,
   strokeWidth: 1.5,
-  bloomSpread: 22,
+  bloomSpread: 20,
   bloomBlur: 9,
-  fillTop: '#6272EC',
-  fillBottom: '#3A49C2',
-  strokeTop: 'rgba(216,208,255,0.95)',
-  strokeSide: 'rgba(150,178,255,0.55)',
-  strokeBottom: 'rgba(120,140,235,0.32)',
-  innerRim: 'rgba(255,255,255,0.16)',
-  sheen: 'rgba(255,255,255,0.14)',
-  hairlineLeft: 'rgba(255,255,255,0.62)',
-  hairlineRight: 'rgba(255,255,255,0.22)',
-  cornerBloomTop: 'rgba(228,224,255,0.16)',
-  cornerBloomBottom: 'rgba(176,194,255,0.06)',
-  bloomTop: 'rgba(160,170,255,0.62)',
-  bloomBottom: 'rgba(112,128,238,0.30)',
+  fillTop: '#5E6CF6',
+  fillBottom: '#4652E2',
+  strokeTop: 'rgba(230,236,255,0.98)',
+  strokeSide: 'rgba(176,196,255,0.78)',
+  strokeBottom: 'rgba(150,172,255,0.58)',
+  innerRim: 'rgba(255,255,255,0.10)',
+  sheen: 'rgba(255,255,255,0.08)',
+  hairlineLeft: 'rgba(255,255,255,0.42)',
+  hairlineRight: 'rgba(255,255,255,0.14)',
+  bloomTop: 'rgba(150,182,255,0.72)',
+  bloomBottom: 'rgba(118,150,255,0.48)',
   depthShadow: '#04091F',
   progressTrack: 'rgba(10,22,80,0.42)',
   progressFrom: '#7FEBC8',
@@ -57,18 +59,14 @@ export const HERO_CARD = {
   arrowTop: '#FFE27A',
   arrowBottom: '#FFC533',
   arrowInk: '#4A2E00',
-  arrowGlow: 'rgba(255,214,77,0.55)',
   arrowHighlight: '#FFFFFF',
   pressScale: 0.975,
   pressInMs: 110,
   pressOutMs: 260,
   arrowPressScale: 0.9,
-  arrowGlowRest: 0.55,
-  arrowGlowPressed: 1,
 } as const;
 
 export type HeroStarKind = 'star-large' | 'star-medium' | 'star-small' | 'sparkle-large' | 'sparkle-small' | 'sparkle-dots';
-export type HeroCloudKind = 'cloud-large' | 'cloud-medium' | 'cloud-small' | 'cloud-edge' | 'cloud-bridge';
 
 export const HERO_ART_ASPECT = {
   'star-large': 283 / 274,
@@ -77,12 +75,7 @@ export const HERO_ART_ASPECT = {
   'sparkle-large': 174 / 190,
   'sparkle-small': 115 / 125,
   'sparkle-dots': 130 / 127,
-  'cloud-large': 511 / 256,
-  'cloud-medium': 389 / 205,
-  'cloud-small': 290 / 162,
-  'cloud-edge': 486 / 180,
-  'cloud-bridge': 513 / 186,
-} as const satisfies Record<HeroStarKind | HeroCloudKind, number>;
+} as const satisfies Record<HeroStarKind, number>;
 
 export type HeroMotionMode = 'full' | 'gentle' | 'off';
 
@@ -122,20 +115,6 @@ export interface HeroStarSeed {
   delayMs: number;
 }
 
-export interface HeroCloudSeed {
-  id: string;
-  kind: HeroCloudKind;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  opacity: number;
-  mirrored: boolean;
-  driftX: number;
-  driftY: number;
-  driftMs: number;
-}
-
 export interface HeroHalo {
   x: number;
   y: number;
@@ -146,7 +125,6 @@ export interface HeroSkyLayout {
   height: number;
   halo: HeroHalo;
   stars: HeroStarSeed[];
-  clouds: HeroCloudSeed[];
 }
 
 interface StarPlacement {
@@ -175,27 +153,6 @@ const STAR_PLACEMENTS: readonly StarPlacement[] = [
   { id: 'left-low-sparkle', kind: 'sparkle-small', anchor: 'edge', x: 0.06, dy: 1.3, size: 0.14, twinkleMs: 2600, delayMs: 3100 },
 ];
 
-interface CloudPlacement {
-  id: string;
-  kind: HeroCloudKind;
-  x: number;
-  dy: number;
-  width: number;
-  opacity: number;
-  mirrored: boolean;
-  driftX: number;
-  driftY: number;
-  driftMs: number;
-}
-
-const CLOUD_PLACEMENTS: readonly CloudPlacement[] = [
-  { id: 'top-left', kind: 'cloud-edge', x: -0.05, dy: -0.42, width: 0.44, opacity: 0.9, mirrored: false, driftX: 3, driftY: 0, driftMs: 12000 },
-  { id: 'top-right', kind: 'cloud-medium', x: 0.66, dy: -0.2, width: 0.38, opacity: 0.85, mirrored: true, driftX: -2, driftY: 1, driftMs: 14000 },
-  { id: 'left-low', kind: 'cloud-small', x: -0.04, dy: 0.85, width: 0.3, opacity: 0.8, mirrored: false, driftX: 2, driftY: -1, driftMs: 11000 },
-  { id: 'right-bridge', kind: 'cloud-bridge', x: 0.55, dy: 1.05, width: 0.5, opacity: 0.75, mirrored: true, driftX: -3, driftY: 0, driftMs: 15000 },
-  { id: 'left-bridge', kind: 'cloud-large', x: -0.18, dy: 1.55, width: 0.55, opacity: 0.5, mirrored: false, driftX: 2, driftY: 1, driftMs: 13000 },
-];
-
 export function buildHeroSky(width: number, sun: SunFrame): HeroSkyLayout {
   const height = heroContentTop(sun.top - HERO_SKY.sunTopInset, sun.size) + HERO_SKY.welcomeBlock + HERO_SKY.cardBridge;
 
@@ -215,30 +172,11 @@ export function buildHeroSky(width: number, sun: SunFrame): HeroSkyLayout {
     };
   });
 
-  const clouds = CLOUD_PLACEMENTS.map((placement) => {
-    const cloudWidth = placement.width * width;
-
-    return {
-      id: placement.id,
-      kind: placement.kind,
-      x: placement.x * width,
-      y: sun.centreY + placement.dy * sun.size,
-      width: cloudWidth,
-      height: cloudWidth / HERO_ART_ASPECT[placement.kind],
-      opacity: placement.opacity,
-      mirrored: placement.mirrored,
-      driftX: placement.driftX,
-      driftY: placement.driftY,
-      driftMs: placement.driftMs,
-    };
-  });
-
   const haloSize = sun.size * HERO_SKY.haloRatio;
 
   return {
     height,
     halo: { x: sun.centreX - haloSize / 2, y: sun.centreY - haloSize / 2, size: haloSize },
     stars,
-    clouds,
   };
 }

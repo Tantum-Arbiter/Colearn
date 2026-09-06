@@ -119,8 +119,6 @@ const BookIcon = memo(function BookIcon({ size, animated, delayMs }: LayerProps)
     <Animated.View style={[{ width: size, height: size }, bookStyle]}>
       <Svg width={size} height={size} viewBox={VIEWBOX}>
         <Gradient id="stat-book" kind="book" />
-        <Path d={BOOK_LEFT} stroke={tint.glow} strokeWidth={8} strokeLinejoin="round" fill="none" opacity={0.3} />
-        <Path d={BOOK_RIGHT} stroke={tint.glow} strokeWidth={8} strokeLinejoin="round" fill="none" opacity={0.3} />
         <Path d={BOOK_LEFT} fill="url(#stat-book)" />
         <Path d={BOOK_RIGHT} fill="url(#stat-book)" />
         <Path d={PAGE_LEFT} fill={tint.light} opacity={0.92} />
@@ -151,7 +149,6 @@ const ClockIcon = memo(function ClockIcon({ size, animated, delayMs }: LayerProp
     <View style={{ width: size, height: size }}>
       <Svg width={size} height={size} viewBox={VIEWBOX}>
         <Gradient id="stat-clock" kind="clock" />
-        <Circle cx="32" cy="32" r="24" stroke={tint.glow} strokeWidth={8} fill="none" opacity={0.3} />
         <Circle cx="32" cy="32" r="24" fill="url(#stat-clock)" />
         <Circle cx="32" cy="32" r="17" fill={tint.light} />
         <Rect x="30.5" y="17" width="3" height="5" rx="1.5" fill={tint.accent} />
@@ -197,7 +194,6 @@ const ShieldIcon = memo(function ShieldIcon({ size, animated, delayMs }: LayerPr
     <Animated.View style={[{ width: size, height: size }, shieldStyle]}>
       <Svg width={size} height={size} viewBox={VIEWBOX}>
         <Gradient id="stat-shield" kind="shield" />
-        <Path d={SHIELD} stroke={tint.glow} strokeWidth={8} strokeLinejoin="round" fill="none" opacity={0.3} />
         <Path d={SHIELD} fill="url(#stat-shield)" />
         <Path d={SHIELD_INNER} fill={tint.light} opacity={0.28} />
       </Svg>
@@ -240,7 +236,6 @@ const FlameIcon = memo(function FlameIcon({ size, animated, delayMs }: LayerProp
       <Animated.View testID="stat-flame-outer" style={[StyleSheet.absoluteFill, outerStyle]}>
         <Svg width={size} height={size} viewBox={VIEWBOX}>
           <Gradient id="stat-flame" kind="flame" />
-          <Path d={FLAME_OUTER} stroke={tint.glow} strokeWidth={8} strokeLinejoin="round" fill="none" opacity={0.3} />
           <Path d={FLAME_OUTER} fill="url(#stat-flame)" />
         </Svg>
       </Animated.View>

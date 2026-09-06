@@ -93,7 +93,7 @@ describe('ContinueCard', () => {
     );
 
     expect(layers).toEqual([true, true, true, true]);
-    expect(byTestId(view, 'continue-card-corner-bloom').filter((node) => node.type === View).length).toBe(4);
+    expect(byTestId(view, 'continue-card-corner-bloom').filter((node) => node.type === View)).toHaveLength(0);
   });
 
   it('should end in a golden arrow button that answers the press', () => {

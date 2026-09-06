@@ -171,15 +171,6 @@ export const HOME_JOURNEY_MOTION = {
 } as const;
 
 export const HOME_CARD_TINTS = {
-  cardTop: 'rgba(84,104,222,0.97)',
-  cardBottom: 'rgba(50,68,176,0.98)',
-  cardEdge: 'rgba(255,255,255,0.18)',
-  cardGloss: 'rgba(255,255,255,0.10)',
-  cardHairline: 'rgba(255,255,255,0.45)',
-  primaryTop: 'rgba(106,126,240,0.98)',
-  primaryBottom: 'rgba(64,86,206,0.99)',
-  primaryEdge: 'rgba(255,255,255,0.28)',
-  primaryGlow: 'rgba(140,160,255,0.45)',
   tileFill: 'rgba(255,255,255,0.08)',
   tileEdge: 'rgba(255,255,255,0.12)',
   eyebrow: '#C9C2FF',
@@ -192,11 +183,9 @@ export const HOME_CARD_TINTS = {
   progressTo: '#7CB4FF',
   coverEdge: 'rgba(255,255,255,0.30)',
   medallionRing: '#FFD76B',
-  medallionGlow: 'rgba(255,215,107,0.35)',
   medallionFill: 'rgba(255,255,255,0.10)',
   divider: 'rgba(255,255,255,0.12)',
   starLit: '#FFD76B',
-  starGlow: 'rgba(255,215,107,0.45)',
   starUnlit: 'rgba(255,255,255,0.30)',
   findFill: 'rgba(255,255,255,0.10)',
   findEdge: 'rgba(255,255,255,0.26)',
@@ -205,11 +194,11 @@ export const HOME_CARD_TINTS = {
 export type StatIconKind = 'book' | 'clock' | 'shield' | 'flame';
 
 export const STAT_ICON_TINTS = {
-  book: { glow: 'rgba(77,163,255,0.55)', from: '#5FB0FF', to: '#2A74EA', light: '#E3F2FF', accent: '#A9D4FF' },
-  clock: { glow: 'rgba(199,125,255,0.55)', from: '#D48CFF', to: '#8E44F0', light: '#F5EBFF', accent: '#7B3FE4' },
-  shield: { glow: 'rgba(94,227,181,0.55)', from: '#7CF0C6', to: '#1FB48A', light: '#E6FFF6', accent: '#137A5E' },
-  flame: { glow: 'rgba(255,140,50,0.55)', from: '#FFB347', to: '#FF6B1A', light: '#FFE58A', accent: '#FF4E1A' },
-} as const satisfies Record<StatIconKind, { glow: string; from: string; to: string; light: string; accent: string }>;
+  book: { from: '#5FB0FF', to: '#2A74EA', light: '#E3F2FF', accent: '#A9D4FF' },
+  clock: { from: '#D48CFF', to: '#8E44F0', light: '#F5EBFF', accent: '#7B3FE4' },
+  shield: { from: '#7CF0C6', to: '#1FB48A', light: '#E6FFF6', accent: '#137A5E' },
+  flame: { from: '#FFB347', to: '#FF6B1A', light: '#FFE58A', accent: '#FF4E1A' },
+} as const satisfies Record<StatIconKind, { from: string; to: string; light: string; accent: string }>;
 
 export function homeContentWidth(screenWidth: number): number {
   return Math.min(screenWidth - HOME_CARDS.screenMargin * 2, HOME_CARDS.contentMaxWidth);

@@ -1,7 +1,7 @@
 /**
  * Tests for the hero sky's layout and motion rules.
  *
- * The sun is the anchor; stars, sparkles and clouds are
+ * The sun is the anchor; stars and sparkles are
  * placed around it from the sun's own frame so that the same scene holds on a
  * phone and a tablet. Every duration and drift is bounded so the sky stays
  * calm, and nothing twinkles in step with anything else.
@@ -115,56 +115,6 @@ describe('buildHeroSky', () => {
     });
   });
 
-  describe('the clouds', () => {
-    it('should frame the sun from both edges, and settle lower down on both sides too', () => {
-      const aboveSun = underTest.clouds.filter((cloud) => cloud.y < SUN.centreY);
-      const belowSun = underTest.clouds.filter((cloud) => cloud.y > SUN.centreY);
-      const fromLeft = (clouds: typeof underTest.clouds) => clouds.filter((cloud) => cloud.x < 0);
-      const fromRight = (clouds: typeof underTest.clouds) => clouds.filter((cloud) => cloud.x + cloud.width > PHONE);
-
-      expect(fromLeft(aboveSun).length).toBeGreaterThanOrEqual(1);
-      expect(fromRight(aboveSun).length).toBeGreaterThanOrEqual(1);
-      expect(fromLeft(belowSun).length).toBeGreaterThanOrEqual(1);
-      expect(fromRight(belowSun).length).toBeGreaterThanOrEqual(1);
-    });
-
-    it('should reach down past the welcome to bridge into the card below', () => {
-      const welcomeTop = heroContentTop(59, SUN.size);
-      const bridging = underTest.clouds.filter((cloud) => cloud.y + cloud.height > welcomeTop + HERO_SKY.welcomeBlock);
-
-      expect(bridging.length).toBeGreaterThanOrEqual(1);
-    });
-
-    it('should keep the sun clear', () => {
-      const sunLeft = SUN.centreX - SUN.size / 2;
-      const sunRight = SUN.centreX + SUN.size / 2;
-      const covering = underTest.clouds.filter(
-        (cloud) => cloud.y < SUN.centreY && cloud.x < sunRight && cloud.x + cloud.width > sunLeft && cloud.x + cloud.width * 0.6 > sunLeft && cloud.x + cloud.width * 0.4 < sunRight
-      );
-
-      expect(covering).toEqual([]);
-    });
-
-    it('should drift by only a few pixels, very slowly', () => {
-      underTest.clouds.forEach((cloud) => {
-        expect(Math.abs(cloud.driftX) + Math.abs(cloud.driftY)).toBeGreaterThanOrEqual(HERO_SKY.cloudDriftMinPx);
-        expect(Math.abs(cloud.driftX)).toBeLessThanOrEqual(HERO_SKY.cloudDriftMaxPx);
-        expect(Math.abs(cloud.driftY)).toBeLessThanOrEqual(HERO_SKY.cloudDriftMaxPx);
-        expect(cloud.driftMs).toBeGreaterThanOrEqual(HERO_SKY.cloudDriftMinMs);
-        expect(cloud.driftMs).toBeLessThanOrEqual(HERO_SKY.cloudDriftMaxMs);
-      });
-    });
-
-    it('should keep the art in proportion', () => {
-      underTest.clouds.forEach((cloud) => {
-        expect(cloud.height).toBeGreaterThan(0);
-        expect(cloud.width / cloud.height).toBeGreaterThan(1.4);
-        expect(cloud.opacity).toBeLessThanOrEqual(1);
-        expect(cloud.opacity).toBeGreaterThan(0.3);
-      });
-    });
-  });
-
 
   describe('the halo', () => {
     it('should sit behind the sun and spread well past it', () => {
@@ -181,7 +131,6 @@ describe('buildHeroSky', () => {
     const tablet = buildHeroSky(TABLET, tabletSun);
 
     expect(tablet.stars.length).toBe(underTest.stars.length);
-    expect(tablet.clouds.length).toBe(underTest.clouds.length);
     tablet.stars.forEach((seed, index) => {
       expect(seed.size / tabletSun.size).toBeCloseTo(underTest.stars[index].size / SUN.size, 5);
     });

@@ -1,7 +1,7 @@
 /**
  * Tests for the living sky around the sun.
  *
- * A warm halo, a curated scatter of star and sparkle art, soft clouds framing
+ * A warm halo, a curated scatter of star and sparkle art framing
  * both edges, and the sun itself -- each its own layer,
  * none of them in the way of a finger.
  */
@@ -49,30 +49,15 @@ describe('HomeHeroSky', () => {
     expect(underTest.length).toBe(layout.stars.length);
   });
 
-  it('should lay every cloud from the layout, mirroring the ones that enter from the right', () => {
-    const { view } = renderSky();
-
-    const clouds = artByTestIdPrefix(view, 'hero-cloud-');
-    const mirrored = clouds.filter((node: RenderedNode) => {
-      const transform = StyleSheet.flatten(node.props.style as StyleProp<ViewStyle>).transform as { scaleX?: number }[] | undefined;
-
-      return transform?.some((part) => part.scaleX === -1);
-    });
-
-    expect(clouds.length).toBe(layout.clouds.length);
-    expect(mirrored.length).toBe(layout.clouds.filter((cloud) => cloud.mirrored).length);
-  });
-
-
   it('should keep the sun as the one thing to touch', () => {
     const { view } = renderSky();
 
-    const decor = ['home-hero-sky', 'hero-sky-background', 'hero-stars-layer', 'hero-cloud-layer'].map(
+    const decor = ['home-hero-sky', 'hero-sky-background', 'hero-stars-layer'].map(
       (testID) => byTestId(view, testID)[0]?.props.pointerEvents
     );
     const sun = byTestId(view, 'sky-face')[0];
 
-    expect(decor).toEqual(['none', 'none', 'none', 'none']);
+    expect(decor).toEqual(['none', 'none', 'none']);
     expect(sun.props.accessibilityRole).toBe('button');
   });
 

@@ -75,12 +75,17 @@ describe('HeroCardFrame', () => {
     expect(surface.props.colors).toEqual([HERO_CARD.fillTop, HERO_CARD.fillBottom]);
   });
 
-  it('should carry a sheen, an inner rim and four lit corners', () => {
+  /**
+   * The card once lit its four corners as well. They read as a glow bleeding
+   * out of the card rather than light on it, so the stroke and the bloom are
+   * now the whole of its light.
+   */
+  it('should carry a sheen and an inner rim, and light no corners', () => {
     const { view } = renderFrame();
 
     expect(byTestId(view, 'frame-sheen').length).toBeGreaterThan(0);
     expect(byTestId(view, 'frame-inner-highlight').length).toBeGreaterThan(0);
-    expect(viewsByTestId(view, 'frame-corner-bloom').length).toBe(4);
+    expect(viewsByTestId(view, 'frame-corner-bloom')).toHaveLength(0);
   });
 
   it('should round every layer to the same corner', () => {
@@ -141,14 +146,19 @@ describe('CardProgressBar', () => {
 });
 
 describe('CardArrowButton', () => {
-  it('should be a golden disc with a highlight, a glow and a dark arrow', () => {
+  /**
+   * The disc once wore a golden halo as well. Against the card's own bloom it
+   * read as a second, competing glow, so the disc is now just the disc: a
+   * highlight on top and a dark arrow, nothing shining round it.
+   */
+  it('should be a golden disc with a highlight and a dark arrow, and no halo', () => {
     const view = render(<CardArrowButton size={52} pressed={false} testID="arrow" />);
 
     const disc = byTestId(view, 'arrow-disc')[0];
 
     expect(disc.props.colors).toEqual([HERO_CARD.arrowTop, HERO_CARD.arrowBottom]);
     expect(byTestId(view, 'arrow-highlight').length).toBeGreaterThan(0);
-    expect(byTestId(view, 'arrow-glow').length).toBeGreaterThan(0);
+    expect(byTestId(view, 'arrow-glow')).toHaveLength(0);
     expect(byTestId(view, 'arrow-glyph').length).toBeGreaterThan(0);
     expect(view.UNSAFE_root.findAll((node: RenderedNode) => node.props.testID === 'svg-Path' && node.props.stroke === HERO_CARD.arrowInk).length).toBe(1);
   });

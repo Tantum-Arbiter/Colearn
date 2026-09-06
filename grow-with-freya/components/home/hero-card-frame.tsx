@@ -9,12 +9,10 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import Svg, {
-  Circle,
   Defs,
   FeGaussianBlur,
   Filter,
   LinearGradient as SvgLinearGradient,
-  RadialGradient,
   Rect,
   Stop,
 } from 'react-native-svg';
@@ -60,40 +58,6 @@ const CardGlowLayer = memo(function CardGlowLayer({ width, height, radius, testI
           fill="url(#hero-card-bloom-fill)"
           filter="url(#hero-card-bloom)"
         />
-      </Svg>
-    </View>
-  );
-});
-
-interface CornerBloomProps {
-  radius: number;
-  corner: 'topLeft' | 'topRight' | 'bottomLeft' | 'bottomRight';
-  testID: string;
-}
-
-const CornerBloom = memo(function CornerBloom({ radius, corner, testID }: CornerBloomProps) {
-  const size = radius * 3.2;
-  const offset = -radius * 0.9;
-  const top = corner.startsWith('top');
-  const colour = top ? HERO_CARD.cornerBloomTop : HERO_CARD.cornerBloomBottom;
-  const gradientId = `hero-card-corner-${corner}`;
-  const placement = {
-    left: corner.endsWith('Left') ? offset : undefined,
-    right: corner.endsWith('Right') ? offset : undefined,
-    top: top ? offset : undefined,
-    bottom: top ? undefined : offset,
-  };
-
-  return (
-    <View testID={testID} style={[styles.corner, placement, { width: size, height: size }]} pointerEvents="none">
-      <Svg width={size} height={size}>
-        <Defs>
-          <RadialGradient id={gradientId} cx="50%" cy="50%" r="50%">
-            <Stop offset="0" stopColor={colour} />
-            <Stop offset="1" stopColor={colour} stopOpacity={0} />
-          </RadialGradient>
-        </Defs>
-        <Circle cx={size / 2} cy={size / 2} r={size / 2} fill={`url(#${gradientId})`} />
       </Svg>
     </View>
   );
@@ -184,10 +148,6 @@ export const HeroCardFrame = memo(function HeroCardFrame({
               style={styles.sheen}
               pointerEvents="none"
             />
-            <CornerBloom radius={radius} corner="topLeft" testID={`${testID}-corner-bloom`} />
-            <CornerBloom radius={radius} corner="topRight" testID={`${testID}-corner-bloom`} />
-            <CornerBloom radius={radius} corner="bottomLeft" testID={`${testID}-corner-bloom`} />
-            <CornerBloom radius={radius} corner="bottomRight" testID={`${testID}-corner-bloom`} />
             <LinearGradient
               colors={[HERO_CARD.hairlineLeft, HERO_CARD.hairlineRight, 'transparent']}
               locations={[0, 0.6, 1]}
@@ -235,9 +195,6 @@ const styles = StyleSheet.create({
     right: 0,
     top: 0,
     height: '48%',
-  },
-  corner: {
-    position: 'absolute',
   },
   hairline: {
     position: 'absolute',

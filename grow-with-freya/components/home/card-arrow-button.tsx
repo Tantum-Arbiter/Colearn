@@ -2,7 +2,7 @@ import React, { memo, useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
-import Svg, { Circle, Defs, Ellipse, Path, RadialGradient, Stop } from 'react-native-svg';
+import Svg, { Defs, Ellipse, Path, RadialGradient, Stop } from 'react-native-svg';
 import { HERO_CARD } from '@/constants/home-sky';
 
 export interface CardArrowButtonProps {
@@ -13,8 +13,6 @@ export interface CardArrowButtonProps {
 
 export const CardArrowButton = memo(function CardArrowButton({ size, pressed, testID = 'card-arrow' }: CardArrowButtonProps) {
   const press = useSharedValue(0);
-  const glowSize = Math.round(size * 1.7);
-  const glowOffset = -(glowSize - size) / 2;
   const glyph = Math.round(size * 0.42);
   const stroke = Math.max(2.5, size * 0.065);
   const half = glyph / 2;
@@ -30,27 +28,8 @@ export const CardArrowButton = memo(function CardArrowButton({ size, pressed, te
     transform: [{ scale: 1 - (1 - HERO_CARD.arrowPressScale) * press.value }],
   }));
 
-  const glowStyle = useAnimatedStyle(() => ({
-    opacity: HERO_CARD.arrowGlowRest + (HERO_CARD.arrowGlowPressed - HERO_CARD.arrowGlowRest) * press.value,
-  }));
-
   return (
     <Animated.View testID={`${testID}-button`} style={[{ width: size, height: size }, scaleStyle]}>
-      <Animated.View
-        testID={`${testID}-glow`}
-        style={[styles.glow, { left: glowOffset, top: glowOffset, width: glowSize, height: glowSize }, glowStyle]}
-        pointerEvents="none"
-      >
-        <Svg width={glowSize} height={glowSize}>
-          <Defs>
-            <RadialGradient id="card-arrow-glow" cx="50%" cy="50%" r="50%">
-              <Stop offset="0.3" stopColor={HERO_CARD.arrowGlow} />
-              <Stop offset="1" stopColor={HERO_CARD.arrowGlow} stopOpacity={0} />
-            </RadialGradient>
-          </Defs>
-          <Circle cx={glowSize / 2} cy={glowSize / 2} r={glowSize / 2} fill="url(#card-arrow-glow)" />
-        </Svg>
-      </Animated.View>
       <LinearGradient
         testID={`${testID}-disc`}
         colors={[HERO_CARD.arrowTop, HERO_CARD.arrowBottom]}
@@ -87,9 +66,6 @@ export const CardArrowButton = memo(function CardArrowButton({ size, pressed, te
 });
 
 const styles = StyleSheet.create({
-  glow: {
-    position: 'absolute',
-  },
   disc: {
     alignItems: 'center',
     justifyContent: 'center',
