@@ -14,7 +14,6 @@ export { AchievementCard } from './achievement-card';
 export { FindStoryPill } from './find-story-pill';
 export { StatIcon } from './stat-icons';
 export { ActivityCard } from './activity-card';
-export { ContinueTogetherCard } from './continue-together-card';
 export { GrownUpsPill } from './grown-ups-pill';
 export { NightSky } from './night-sky';
 export { SkyFace } from './sky-face';

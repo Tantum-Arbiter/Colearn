@@ -187,8 +187,6 @@ export const HOME_CARD_TINTS = {
   body: '#DCE3FF',
   muted: '#AEB9E6',
   gold: '#FFD76B',
-  arrowFill: '#FFD24D',
-  arrowInk: '#4A2E00',
   progressTrack: 'rgba(255,255,255,0.16)',
   progressFrom: '#7FE3C4',
   progressTo: '#7CB4FF',

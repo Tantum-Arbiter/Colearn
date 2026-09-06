@@ -53,9 +53,6 @@ export interface HomeTheme {
   skyTop: string;
   skyMid: string;
   skyBottom: string;
-  panelTop: string;
-  panelBottom: string;
-  panelEdge: string;
   cardEdge: string;
   cardTitle: string;
   cardSubtitle: string;
@@ -74,10 +71,6 @@ export interface HomeTheme {
   progressTrack: string;
   progressFrom: string;
   progressTo: string;
-  ribbonFrom: string;
-  ribbonTo: string;
-  ribbonStar: string;
-  thumbnailEdge: string;
   star: string;
   starOpacity: string;
   chromeFill: string;
@@ -92,9 +85,6 @@ export const HOME_THEMES = {
     skyTop: NIGHT_VOID,
     skyMid: NIGHT_DEEP,
     skyBottom: NIGHT_PRIMARY,
-    panelTop: 'rgba(38,48,102,0.78)',
-    panelBottom: 'rgba(23,30,72,0.88)',
-    panelEdge: 'rgba(255,255,255,0.14)',
     cardEdge: 'rgba(255,255,255,0.16)',
     cardTitle: '#FFFFFF',
     cardSubtitle: '#C6D4EE',
@@ -113,10 +103,6 @@ export const HOME_THEMES = {
     progressTrack: 'rgba(255,255,255,0.13)',
     progressFrom: '#7C6BF0',
     progressTo: '#A493FF',
-    ribbonFrom: '#8C7BF5',
-    ribbonTo: '#6A55E0',
-    ribbonStar: '#FFD76B',
-    thumbnailEdge: 'rgba(245,212,136,0.62)',
     star: '#FFFFFF',
     starOpacity: '1',
     chromeFill: 'rgba(255,255,255,0.10)',
@@ -129,9 +115,6 @@ export const HOME_THEMES = {
     skyTop: NIGHT_DEEP,
     skyMid: NIGHT_PRIMARY,
     skyBottom: NIGHT_BRIGHT,
-    panelTop: 'rgba(74,110,175,0.62)',
-    panelBottom: 'rgba(42,72,132,0.78)',
-    panelEdge: 'rgba(255,255,255,0.22)',
     cardEdge: 'rgba(255,255,255,0.26)',
     cardTitle: '#1B3260',
     cardSubtitle: '#42598A',
@@ -150,10 +133,6 @@ export const HOME_THEMES = {
     progressTrack: 'rgba(255,255,255,0.22)',
     progressFrom: '#8B7BF6',
     progressTo: '#B4A6FF',
-    ribbonFrom: '#9C8DFA',
-    ribbonTo: '#7561EA',
-    ribbonStar: '#FFDD7A',
-    thumbnailEdge: 'rgba(255,228,160,0.66)',
     star: '#FFFFFF',
     starOpacity: '0.5',
     chromeFill: 'rgba(255,255,255,0.16)',
@@ -169,7 +148,6 @@ export const HOME_SCENE_PALETTE = HOME_THEMES.night;
 export const HOME_SCENE_LAYOUT = {
   screenMargin: 14,
   chromeTop: 8,
-  continueInset: 39,
   cardRadius: 26,
   cardGap: 14,
   cardHeightRatio: 0.29,
@@ -181,13 +159,6 @@ export const HOME_SCENE_LAYOUT = {
   badgeSizeRatio: 0.145,
   badgeLeftRatio: 0.435,
   badgeHaloRatio: 1.14,
-  continueRadius: 22,
-  thumbnailSize: 67,
-  thumbnailRadius: 9,
-  progressHeight: 6,
-  ribbonWidth: 23,
-  ribbonHeight: 37,
-  skyFaceSizeRatio: 0.25,
   starCount: 34,
 } as const;
 
@@ -195,9 +166,6 @@ export const HOME_SCENE_TYPE = {
   greeting: 30,
   cardTitle: 20,
   cardDescription: 13,
-  eyebrow: 12,
-  continueTitle: 18,
-  continueMeta: 12,
   grownUps: 13,
 } as const;
 

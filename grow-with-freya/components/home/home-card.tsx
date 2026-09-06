@@ -119,36 +119,6 @@ export const HomeCard = memo(function HomeCard({
   );
 });
 
-export interface ArrowButtonProps {
-  size: number;
-  testID?: string;
-}
-
-export const ArrowMark = memo(function ArrowMark({ size, testID = 'arrow-mark' }: ArrowButtonProps) {
-  const stem = Math.round(size * 0.34);
-  const head = Math.round(size * 0.2);
-
-  return (
-    <View
-      testID={testID}
-      style={[styles.arrow, { width: size, height: size, borderRadius: size / 2, backgroundColor: HOME_CARD_TINTS.arrowFill }]}
-    >
-      <View style={[styles.arrowStem, { width: stem, backgroundColor: HOME_CARD_TINTS.arrowInk }]} />
-      <View
-        style={[
-          styles.arrowHead,
-          {
-            width: head,
-            height: head,
-            borderColor: HOME_CARD_TINTS.arrowInk,
-            left: size / 2 + stem / 2 - head * 0.72,
-          },
-        ]}
-      />
-    </View>
-  );
-});
-
 const styles = StyleSheet.create({
   card: {
     overflow: 'visible',
@@ -184,25 +154,5 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 1,
     height: 1,
-  },
-  arrow: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#FFD24D',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.55,
-    shadowRadius: 10,
-    elevation: 4,
-  },
-  arrowStem: {
-    height: 3,
-    borderRadius: 2,
-  },
-  arrowHead: {
-    position: 'absolute',
-    borderTopWidth: 3,
-    borderRightWidth: 3,
-    borderRadius: 2,
-    transform: [{ rotate: '45deg' }],
   },
 });
