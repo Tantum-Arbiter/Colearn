@@ -1,42 +1,36 @@
-import React, { memo, useCallback } from 'react';
+import React, { memo } from 'react';
 import { View, Text, ScrollView, StyleSheet, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { MusicControl } from '@/components/ui/music-control';
 import { Fonts } from '@/constants/theme';
-import {
-  HOME_ACTIVITIES,
-  HOME_SCENE_LAYOUT,
-  HOME_SCENE_TYPE,
-  HOME_THEMES,
-  homeCardHeight,
-  type HomeActivity,
-  type TimeOfDay,
-} from '@/constants/home-scene';
+import { HOME_SCENE_LAYOUT, HOME_THEMES, type TimeOfDay } from '@/constants/home-scene';
+import { HOME_CARDS, HOME_CARD_TYPE, homeContentWidth } from '@/constants/home-journey';
 import { SCREEN_TIME_RING, ringCentre } from '@/constants/screen-time-ring';
 import { useTimeOfDay } from '@/hooks/use-time-of-day';
+import { useReducedMotion } from '@/hooks/use-reduced-motion';
+import { useSettledAfterTransition } from '@/hooks/use-ambient-animation';
 import type { ScreenTimeAllowance } from '@/hooks/use-screen-time-allowance';
+import type { ChildHomeData, WelcomeCopy } from '@/types/child-home';
 import { NightSky } from './night-sky';
 import { SkyFace } from './sky-face';
 import { GrownUpsPill } from './grown-ups-pill';
-import { ActivityCard } from './activity-card';
 import { ScreenTimeRing } from './screen-time-ring';
 import { UnlockPlanButton } from './unlock-plan-button';
-import { ContinueTogetherCard } from './continue-together-card';
-
-export interface ContinueReadingSummary {
-  storyId: string;
-  title: string;
-  coverImage: string;
-  pageIndex: number;
-  totalPages: number;
-}
+import { ContinueCard } from './continue-card';
+import { JourneyCard } from './journey-card';
+import { AchievementCard } from './achievement-card';
+import { FindStoryPill } from './find-story-pill';
 
 export interface HomeSceneProps {
-  onNavigate: (destination: string) => void;
+  data: ChildHomeData;
+  welcome: WelcomeCopy;
+  celebrateAchievement?: boolean;
+  onContinue: () => void;
+  onOpenJourney: () => void;
+  onOpenAchievements: () => void;
+  onFindStory: () => void;
   onOpenGrownUps: () => void;
-  onContinueReading: (storyId: string) => void;
-  continueReading: ContinueReadingSummary | null;
   screenTime?: ScreenTimeAllowance | null;
   /** Receives the ring's centre so the glance can open out of it. */
   onOpenScreenTime?: (origin: { x: number; y: number }) => void;
@@ -50,10 +44,14 @@ export interface HomeSceneProps {
 }
 
 export const HomeScene = memo(function HomeScene({
-  onNavigate,
+  data,
+  welcome,
+  celebrateAchievement = false,
+  onContinue,
+  onOpenJourney,
+  onOpenAchievements,
+  onFindStory,
   onOpenGrownUps,
-  onContinueReading,
-  continueReading,
   screenTime = null,
   onOpenScreenTime,
   screenTimeHidden = false,
@@ -68,24 +66,12 @@ export const HomeScene = memo(function HomeScene({
   const clockTimeOfDay = useTimeOfDay();
   const activeTimeOfDay = timeOfDay ?? clockTimeOfDay;
   const theme = HOME_THEMES[activeTimeOfDay];
+  const reduceMotion = useReducedMotion();
+  const settled = useSettledAfterTransition(isActive);
+  const animated = settled && !reduceMotion;
 
-  const cardWidth = width - HOME_SCENE_LAYOUT.screenMargin * 2;
-  const cardHeight = homeCardHeight(width);
-  const continueWidth = width - HOME_SCENE_LAYOUT.continueInset * 2;
   const skyFaceSize = Math.round(width * HOME_SCENE_LAYOUT.skyFaceSizeRatio);
-
-  const handleActivity = useCallback(
-    (activity: HomeActivity) => {
-      onNavigate(activity.destination);
-    },
-    [onNavigate]
-  );
-
-  const handleContinue = useCallback(() => {
-    if (continueReading) {
-      onContinueReading(continueReading.storyId);
-    }
-  }, [continueReading, onContinueReading]);
+  const contentWidth = homeContentWidth(width);
 
   return (
     <View testID={testID} style={[styles.root, { backgroundColor: theme.skyTop }]}>
@@ -103,41 +89,48 @@ export const HomeScene = memo(function HomeScene({
       <ScrollView
         contentContainerStyle={[
           styles.content,
-          { paddingTop: insets.top + skyFaceSize + 26, paddingBottom: insets.bottom + 32 },
+          { paddingTop: insets.top + skyFaceSize + 6, paddingBottom: insets.bottom + 52 },
         ]}
         showsVerticalScrollIndicator={false}
+        bounces={false}
       >
-        <Text style={[styles.greeting, { color: theme.title }]}>{t('home.greeting')}</Text>
+        <Text testID="home-welcome-title" style={[styles.welcome, { color: theme.title }]}>
+          {t(welcome.titleKey, welcome.params)}
+        </Text>
+        <Text testID="home-welcome-subtitle" style={[styles.subtitle, { color: theme.subtitle }]}>
+          {t(welcome.subtitleKey, welcome.params)}
+        </Text>
 
-        {continueReading ? (
-          <View style={styles.continueSlot}>
-            <ContinueTogetherCard
-              title={continueReading.title}
-              coverImage={continueReading.coverImage}
-              pageIndex={continueReading.pageIndex}
-              totalPages={continueReading.totalPages}
-              width={continueWidth}
-              timeOfDay={activeTimeOfDay}
-              onPress={handleContinue}
-            />
-          </View>
-        ) : null}
+        <View style={styles.cardSlot}>
+          <ContinueCard story={data.currentStory} width={contentWidth} animated={animated} onPress={onContinue} />
+        </View>
 
-        {HOME_ACTIVITIES.map((activity) => (
-          <View key={activity.id} style={styles.cardSlot}>
-            <ActivityCard
-              testID={`activity-card-${activity.id}`}
-              activity={activity}
-              width={cardWidth}
-              height={cardHeight}
-              timeOfDay={activeTimeOfDay}
-              onPress={handleActivity}
-            />
-          </View>
-        ))}
+        <View style={styles.cardSlot}>
+          <JourneyCard
+            storiesCompleted={data.storiesCompleted}
+            readingMinutes={data.readingMinutes}
+            readingStreakDays={data.readingStreakDays}
+            screenTimeSafety={data.screenTimeSafety}
+            width={contentWidth}
+            animated={animated}
+            onPress={onOpenJourney}
+          />
+        </View>
 
-        {/* the offer sits with the cards it is an offer about, rather than
-            floating over the art -- the bottom edge belongs to the ring */}
+        <View style={styles.cardSlot}>
+          <AchievementCard
+            next={data.nextAchievement}
+            width={contentWidth}
+            animated={animated}
+            celebrate={celebrateAchievement}
+            onPress={onOpenAchievements}
+          />
+        </View>
+
+        <View style={styles.pillSlot}>
+          <FindStoryPill onPress={onFindStory} />
+        </View>
+
         {onOpenPlans ? (
           <View style={styles.planSlot}>
             <UnlockPlanButton onPress={onOpenPlans} />
@@ -166,7 +159,6 @@ export const HomeScene = memo(function HomeScene({
           />
         ) : null}
       </View>
-
     </View>
   );
 });
@@ -192,19 +184,24 @@ const styles = StyleSheet.create({
   content: {
     alignItems: 'center',
   },
-  greeting: {
+  welcome: {
     fontFamily: Fonts.rounded,
-    fontSize: HOME_SCENE_TYPE.greeting,
-    fontWeight: '700',
+    fontSize: HOME_CARD_TYPE.welcome,
+    fontWeight: '800',
+    textAlign: 'center',
+    paddingHorizontal: 32,
+  },
+  subtitle: {
+    fontFamily: Fonts.rounded,
+    fontSize: HOME_CARD_TYPE.welcomeSubtitle,
+    fontWeight: '500',
     textAlign: 'center',
     paddingHorizontal: 40,
-    marginBottom: 22,
-  },
-  continueSlot: {
-    marginBottom: 22,
+    marginTop: 3,
+    marginBottom: 8,
   },
   cardSlot: {
-    marginBottom: HOME_SCENE_LAYOUT.cardGap,
+    marginBottom: HOME_CARDS.gap,
   },
   // centred along the bottom edge: this is where the glance's orb rises
   // from and where its closing drop falls back to, so it has to match
@@ -216,8 +213,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: 10,
   },
+  pillSlot: {
+    alignItems: 'center',
+    marginTop: 2,
+  },
   planSlot: {
     alignItems: 'center',
-    marginTop: 6,
+    marginTop: 10,
   },
 });

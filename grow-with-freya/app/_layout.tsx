@@ -30,6 +30,7 @@ import { ApiClient } from '@/services/api-client';
 import { SecureStorage } from '@/services/secure-storage';
 import { backgroundSaveService } from '@/services/background-save-service';
 import { SimpleStoryScreen } from '@/components/stories/simple-story-screen';
+import type { CatalogueSectionRequest } from '@/components/stories/catalogue/story-catalogue-screen';
 import { StoryBookReader } from '@/components/stories/story-book-reader';
 import { PractiseScreen } from '@/components/music/practise-screen';
 import { FreeplayScreen } from '@/components/music/freeplay-screen';
@@ -654,6 +655,8 @@ function AppContent() {
 
   // Track the selected story mode (interactive / music / classic) from main menu
   const [selectedStoryMode, setSelectedStoryMode] = useState<string | null>(null);
+  // Which catalogue section the home asked for; the key makes a repeat request re-apply
+  const [storiesSection, setStoriesSection] = useState<CatalogueSectionRequest>({ section: 'home', key: 0 });
   // When set, MainMenu should show the specified sub-menu instead of the main carousel
   const [returnToSubMenu, setReturnToSubMenu] = useState<'stories' | 'instruments' | 'learning' | null>(null);
 
@@ -671,6 +674,7 @@ function AppContent() {
 
     const destinationMap: Record<string, PageKey> = {
       'stories': 'stories',
+      'progress': 'stories',
       'account': 'account',
       'practise': 'practise',
       'freeplay': 'freeplay',
@@ -683,8 +687,12 @@ function AppContent() {
     if (pageKey) {
       // When navigating to plain 'stories' (not via a mode card), clear any
       // previously selected story mode so all stories are visible.
-      if (destination === 'stories') {
+      if (destination === 'stories' || destination === 'progress') {
         setSelectedStoryMode(null);
+        setStoriesSection((current) => ({
+          section: destination === 'progress' ? 'progress' : 'home',
+          key: current.key + 1,
+        }));
       }
       setCurrentPage(pageKey);
       setCurrentScreen(destination);
@@ -930,6 +938,7 @@ function AppContent() {
               selectedStory={selectedStory}
               onBack={handleBackToMainMenu}
               initialMode={selectedStoryMode}
+              sectionRequest={storiesSection}
               onOpenParentCorner={() => setCurrentPage('account')}
             />,
             practise: <PractiseScreen onBack={handleBackToInstruments} isActive={currentPage === 'practise'} />,

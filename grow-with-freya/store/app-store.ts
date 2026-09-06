@@ -98,6 +98,10 @@ export interface AppState {
   useStoryGarden: boolean;
   useHomeScene: boolean;
 
+  lastHomeVisitAt: string | null;
+  achievementUnlockedAt: Record<string, string>;
+  lastStoryCompletedAt: string | null;
+
   // Background animation state persistence
   backgroundAnimationState: {
     cloudFloat1: number;
@@ -144,6 +148,8 @@ export interface AppState {
 
   setStoryProgress: (storyId: string, pageIndex: number, totalPages: number) => void;
   markStoryCompleted: (storyId: string) => void;
+  recordHomeVisit: (at: string) => void;
+  recordAchievementUnlocks: (badgeIds: string[], at: string) => void;
   clearStoryProgress: (storyId: string) => void;
   getContinueReadingStoryId: () => string | null;
   setUseStoryGarden: (enabled: boolean) => void;
@@ -198,6 +204,9 @@ export const useAppStore = create<AppState>()(
       storyProgress: {},
       useStoryGarden: false,
       useHomeScene: true,
+      lastHomeVisitAt: null,
+      achievementUnlockedAt: {},
+      lastStoryCompletedAt: null,
 
       backgroundAnimationState: {
         cloudFloat1: -200,
@@ -329,17 +338,31 @@ export const useAppStore = create<AppState>()(
       }),
       markStoryCompleted: (storyId: string) => set((state) => {
         const existing = state.storyProgress[storyId];
+        const completedAt = new Date().toISOString();
         return {
+          lastStoryCompletedAt: completedAt,
           storyProgress: {
             ...state.storyProgress,
             [storyId]: {
               pageIndex: 0,
               totalPages: existing?.totalPages ?? 0,
-              updatedAt: new Date().toISOString(),
+              updatedAt: completedAt,
               completedCount: (existing?.completedCount ?? 0) + 1,
             },
           },
         };
+      }),
+      recordHomeVisit: (at: string) => set({ lastHomeVisitAt: at }),
+      recordAchievementUnlocks: (badgeIds: string[], at: string) => set((state) => {
+        const unseen = badgeIds.filter((id) => !state.achievementUnlockedAt[id]);
+        if (unseen.length === 0) {
+          return state;
+        }
+        const stamped = { ...state.achievementUnlockedAt };
+        unseen.forEach((id) => {
+          stamped[id] = at;
+        });
+        return { achievementUnlockedAt: stamped };
       }),
       clearStoryProgress: (storyId: string) => set((state) => {
         if (!state.storyProgress[storyId]) {
@@ -404,6 +427,9 @@ export const useAppStore = create<AppState>()(
         learningViewMode: state.learningViewMode,
         storyProgress: state.storyProgress,
         useStoryGarden: state.useStoryGarden,
+        lastHomeVisitAt: state.lastHomeVisitAt,
+        achievementUnlockedAt: state.achievementUnlockedAt,
+        lastStoryCompletedAt: state.lastStoryCompletedAt,
         backgroundAnimationState: state.backgroundAnimationState,
       }),
       onRehydrateStorage: () => (state, error) => {

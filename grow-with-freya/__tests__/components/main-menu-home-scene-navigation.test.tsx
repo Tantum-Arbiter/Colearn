@@ -11,14 +11,18 @@
  * would gate the legacy tests in main-menu.test.tsx.
  */
 
+
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import { MainMenu } from '@/components/main-menu';
 import { ScreenTimeProvider } from '@/components/screen-time/screen-time-provider';
 import { useAppStore, type AppState } from '@/store/app-store';
-import { HOME_ACTIVITIES } from '@/constants/home-scene';
 
 jest.mock('@/store/app-store');
+jest.mock('@/components/progress/use-progress-data', () => ({
+  useProgressData: () => ({ badges: [], counters: {}, summary: { earned: 0, total: 0 }, challenges: [], milestones: [] }),
+}));
+
 
 let mockTourUnseen = true;
 
@@ -67,13 +71,20 @@ describe('home scene navigation', () => {
       </ScreenTimeProvider>
     );
 
-  const pressCard = (tree: ReturnType<typeof render>, id: string) => {
+  const pressCard = (tree: ReturnType<typeof render>, testID: string) => {
     const matches = tree.UNSAFE_root.findAll(
-      (n: { props: Record<string, unknown> }) => n.props.testID === `activity-card-${id}`
+      (n: { props: Record<string, unknown> }) => n.props.testID === testID
     );
 
     fireEvent.press(matches[matches.length - 1]);
   };
+
+  const WAYS_IN: [string, string][] = [
+    ['continue-card', 'stories'],
+    ['journey-card', 'progress'],
+    ['achievement-card', 'progress'],
+    ['find-story-pill', 'stories'],
+  ];
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -101,15 +112,25 @@ describe('home scene navigation', () => {
       useHomeScene: true,
       storyProgress: {},
       getContinueReadingStoryId: jest.fn(() => null),
+      userNickname: 'Freya',
+      readStoryIds: [],
+      readingStreak: 0,
+      lastReadDate: null,
+      achievementUnlockedAt: {},
+      lastHomeVisitAt: null,
+      lastStoryCompletedAt: null,
+      childAgeInMonths: 36,
+      recordHomeVisit: jest.fn(),
+      recordAchievementUnlocks: jest.fn(),
     });
   });
 
-  it.each(HOME_ACTIVITIES.map((activity) => [activity.id, activity.destination]))(
-    'should navigate from the %s card even though the carousel tour is unseen',
-    (id, destination) => {
+  it.each(WAYS_IN)(
+    'should navigate from %s even though the carousel tour is unseen',
+    (testID, destination) => {
       const underTest = renderHome();
 
-      pressCard(underTest, id);
+      pressCard(underTest, testID);
 
       expect(onNavigate).toHaveBeenCalledWith(destination);
     }
@@ -119,16 +140,16 @@ describe('home scene navigation', () => {
     mockTourUnseen = false;
     const underTest = renderHome();
 
-    pressCard(underTest, 'interactive');
+    pressCard(underTest, 'find-story-pill');
 
     expect(onNavigate).toHaveBeenCalledWith('stories');
   });
 
-  it('should open every story from the Storybooks tile, never one mode of them', () => {
+  it('should open every story from the home, never one mode of them', () => {
     mockTourUnseen = false;
     const underTest = renderHome();
 
-    pressCard(underTest, 'interactive');
+    pressCard(underTest, 'find-story-pill');
 
     const destination = onNavigate.mock.calls[0][0];
     expect(destination).toBe('stories');

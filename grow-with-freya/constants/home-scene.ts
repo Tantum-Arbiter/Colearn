@@ -187,7 +187,7 @@ export const HOME_SCENE_LAYOUT = {
   progressHeight: 6,
   ribbonWidth: 23,
   ribbonHeight: 37,
-  skyFaceSizeRatio: 0.30,
+  skyFaceSizeRatio: 0.25,
   starCount: 34,
 } as const;
 

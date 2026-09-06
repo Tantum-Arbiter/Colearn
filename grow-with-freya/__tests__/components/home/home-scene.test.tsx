@@ -1,16 +1,18 @@
 /**
- * Tests for the home scene as a whole.
+ * Tests for the returning-user home as a whole.
  *
- * One greeting, an optional invitation to carry on, three ways in, and a way
- * out for grown-ups. Nothing else competes for a child's attention.
+ * A personal welcome, the story to carry on with, how far the family has come,
+ * what they achieved and what comes next -- every value from the data model,
+ * every card a way somewhere.
  */
 
 import React from 'react';
 import { Dimensions, StyleSheet, Text } from 'react-native';
 import { render, fireEvent, type RenderResult } from '@testing-library/react-native';
 import { HomeScene } from '@/components/home/home-scene';
-import { HOME_ACTIVITIES, HOME_THEMES } from '@/constants/home-scene';
+import { HOME_THEMES } from '@/constants/home-scene';
 import { ringCentre } from '@/constants/screen-time-ring';
+import type { ChildHomeData, WelcomeCopy } from '@/types/child-home';
 
 function textContents(view: RenderResult): string[] {
   return view
@@ -29,100 +31,144 @@ function pressTestId(view: RenderResult, testID: string): void {
   fireEvent.press(matches[matches.length - 1]);
 }
 
-function presentActivityIds(view: RenderResult): string[] {
-  return HOME_ACTIVITIES.filter(
-    (activity) => byTestId(view, `activity-card-${activity.id}`).length > 0
-  ).map((activity) => activity.id);
-}
-
-function renderScene(props: Partial<React.ComponentProps<typeof HomeScene>> = {}) {
-  const onNavigate = jest.fn();
-  const onOpenGrownUps = jest.fn();
-  const onContinueReading = jest.fn();
-
-  const view = render(
-    <HomeScene
-      onNavigate={onNavigate}
-      onOpenGrownUps={onOpenGrownUps}
-      onContinueReading={onContinueReading}
-      continueReading={null}
-      timeOfDay="night"
-      {...props}
-    />
-  );
-
-  return { view, onNavigate, onOpenGrownUps, onContinueReading, ...view };
-}
-
-const RESUMABLE = {
-  storyId: 'wombat',
-  title: 'The Gate Hears Two Taps',
-  coverImage: 'file:///cover.webp',
-  pageIndex: 3,
-  totalPages: 10,
+const DATA: ChildHomeData = {
+  firstName: 'Freya',
+  currentStory: { id: 'moonlight', title: 'The Moonlight Garden', currentPage: 8, totalPages: 14 },
+  storiesCompleted: 12,
+  readingMinutes: 84,
+  readingStreakDays: 4,
+  screenTimeSafety: 100,
+  newestAchievement: { id: 'story-adventurer', title: 'Story Explorer', description: 'Read 10 stories', icon: 'book' },
+  nextAchievement: { title: 'Moon Explorer', current: 3, required: 5, unit: 'stories' },
 };
 
+const WELCOME: WelcomeCopy = {
+  state: 'normal',
+  titleKey: 'home.welcome.normal.title',
+  subtitleKey: 'home.welcome.normal.subtitle',
+  params: { name: 'Freya', count: 4, achievement: 'Story Explorer' },
+};
+
+function renderScene(props: Partial<React.ComponentProps<typeof HomeScene>> = {}) {
+  const handlers = {
+    onContinue: jest.fn(),
+    onOpenJourney: jest.fn(),
+    onOpenAchievements: jest.fn(),
+    onFindStory: jest.fn(),
+    onOpenGrownUps: jest.fn(),
+  };
+
+  const view = render(<HomeScene data={DATA} welcome={WELCOME} timeOfDay="night" {...handlers} {...props} />);
+
+  return { view, ...handlers, ...view };
+}
+
 describe('HomeScene', () => {
-  describe('the greeting', () => {
-    it('should ask what to do together rather than what to play', () => {
+  describe('the welcome', () => {
+    it('should greet the child by the message the data model chose', () => {
       const { view } = renderScene();
 
       const underTest = textContents(view);
 
-      expect(underTest).toContain('home.greeting');
+      expect(underTest.some((text) => text.startsWith('home.welcome.normal.title (name:Freya'))).toBe(true);
+      expect(underTest.some((text) => text.startsWith('home.welcome.normal.subtitle'))).toBe(true);
+    });
+
+    it('should show whichever welcome state it is handed', () => {
+      const { view } = renderScene({
+        welcome: { ...WELCOME, state: 'longAbsence', titleKey: 'home.welcome.longAbsence.title', subtitleKey: 'home.welcome.longAbsence.subtitle' },
+      });
+
+      const underTest = textContents(view);
+
+      expect(underTest.some((text) => text.startsWith('home.welcome.longAbsence.title'))).toBe(true);
+    });
+  });
+
+  describe('the sequence', () => {
+    it('should read continue, journey, achievements, then a way to find more', () => {
+      const { view } = renderScene();
+
+      const ids = ['continue-card', 'journey-card', 'achievement-card', 'find-story-pill'].map(
+        (id) => byTestId(view, id).length > 0
+      );
+
+      expect(ids).toEqual([true, true, true, true]);
+    });
+
+    it('should name the story to carry on with and where the family is in it', () => {
+      const { view } = renderScene();
+
+      const underTest = textContents(view);
+
+      expect(underTest).toContain('The Moonlight Garden');
+      expect(underTest).toContain('home.pagePosition (page:8, total:14)');
+    });
+
+    it('should show the next badge to reach', () => {
+      const { view } = renderScene();
+
+      const underTest = textContents(view);
+
+      expect(underTest).toContain('Moon Explorer');
     });
   });
 
   describe('the ways in', () => {
-    it('should offer exactly the three ways in', () => {
-      const { view } = renderScene();
+    it('should carry on the story from the first card', () => {
+      const { view, onContinue } = renderScene();
 
-      const underTest = presentActivityIds(view);
+      pressTestId(view, 'continue-card');
 
-      expect(underTest).toEqual(HOME_ACTIVITIES.map((activity) => activity.id));
+      expect(onContinue).toHaveBeenCalledTimes(1);
     });
 
-    it('should send the Storybooks tile to the whole catalogue, not a mode of it', () => {
-      const storybooks = HOME_ACTIVITIES.find((activity) => activity.titleKey === 'home.storybooks');
+    it('should open the journey from the stats card', () => {
+      const { view, onOpenJourney } = renderScene();
 
-      expect(storybooks?.destination).toBe('stories');
+      pressTestId(view, 'journey-card');
+
+      expect(onOpenJourney).toHaveBeenCalledTimes(1);
     });
 
-    it.each(HOME_ACTIVITIES.map((activity) => [activity.id, activity.destination] as const))(
-      'should navigate to %s destination %s',
-      (id, destination) => {
-        const { onNavigate, view } = renderScene();
+    it('should open the achievements from the badge card', () => {
+      const { view, onOpenAchievements } = renderScene();
 
-        pressTestId(view, `activity-card-${id}`);
+      pressTestId(view, 'achievement-card');
 
-        expect(onNavigate).toHaveBeenCalledWith(destination);
-      }
-    );
+      expect(onOpenAchievements).toHaveBeenCalledTimes(1);
+    });
+
+    it('should offer a way to find a new story', () => {
+      const { view, onFindStory } = renderScene();
+
+      pressTestId(view, 'find-story-pill');
+
+      expect(onFindStory).toHaveBeenCalledTimes(1);
+    });
   });
 
-  describe('carrying on', () => {
-    it('should stay silent when no story is part-read', () => {
-      const { view } = renderScene({ continueReading: null });
+  describe('a family with nothing yet', () => {
+    const EMPTY: ChildHomeData = { firstName: '', storiesCompleted: 0, readingMinutes: 0, readingStreakDays: 0 };
 
-      const underTest = byTestId(view, 'continue-together-card');
+    it('should invite a first story rather than show an empty continue card', () => {
+      const { view } = renderScene({ data: EMPTY });
 
-      expect(underTest.length).toBe(0);
+      expect(byTestId(view, 'continue-panel-empty').length).toBeGreaterThan(0);
+      expect(byTestId(view, 'continue-panel').length).toBe(0);
     });
 
-    it('should invite the child back into a part-read story', () => {
-      const { view } = renderScene({ continueReading: RESUMABLE });
+    it('should still celebrate rather than show an empty badge card', () => {
+      const { view } = renderScene({ data: EMPTY });
 
-      const underTest = byTestId(view, 'continue-together-card');
-
-      expect(underTest.length).toBeGreaterThan(0);
+      expect(byTestId(view, 'achievement-all-done').length).toBeGreaterThan(0);
     });
 
-    it('should hand back the story id when resumed', () => {
-      const { onContinueReading, view } = renderScene({ continueReading: RESUMABLE });
+    it('should never show a zero-day streak', () => {
+      const { view } = renderScene({ data: EMPTY });
 
-      pressTestId(view, 'continue-together-card');
-
-      expect(onContinueReading).toHaveBeenCalledWith('wombat');
+      expect(byTestId(view, 'journey-tile-streak-start').length).toBeGreaterThan(0);
+      expect(byTestId(view, 'journey-tile-streak').length).toBe(0);
     });
   });
 
@@ -130,18 +176,16 @@ describe('HomeScene', () => {
     it('should be present but subordinate', () => {
       const { view } = renderScene();
 
-      const underTest = textContents(view);
-
-      expect(underTest).toContain('home.grownUps');
+      expect(textContents(view)).toContain('home.grownUps');
     });
 
     it('should hand off rather than navigate itself, so the gate can run', () => {
-      const { onOpenGrownUps, onNavigate, view } = renderScene();
+      const { view, onOpenGrownUps, onFindStory } = renderScene();
 
       pressTestId(view, 'grown-ups-pill');
 
       expect(onOpenGrownUps).toHaveBeenCalledTimes(1);
-      expect(onNavigate).not.toHaveBeenCalled();
+      expect(onFindStory).not.toHaveBeenCalled();
     });
   });
 });
@@ -151,116 +195,22 @@ describe('HomeScene time of day', () => {
     ['night', HOME_THEMES.night],
     ['day', HOME_THEMES.day],
   ] as const)('at %s', (timeOfDay, theme) => {
-    it('should dress the greeting in that theme', () => {
+    it('should dress the welcome in that theme', () => {
       const { view } = renderScene({ timeOfDay });
 
-      const underTest = view
-        .UNSAFE_queryAllByType(Text)
-        .find((node) => node.props.children === 'home.greeting');
+      const underTest = byTestId(view, 'home-welcome-title')[0];
 
       expect(StyleSheet.flatten(underTest?.props.style).color).toBe(theme.title);
     });
 
-    it('should still offer all three ways in', () => {
+    it('should show the horizon and the star field', () => {
       const { view } = renderScene({ timeOfDay });
 
-      const underTest = presentActivityIds(view);
-
-      expect(underTest).toEqual(HOME_ACTIVITIES.map((activity) => activity.id));
+      expect(byTestId(view, 'home-horizon').length).toBeGreaterThan(0);
+      expect(byTestId(view, 'star-field').length).toBeGreaterThan(0);
     });
   });
 
-  it.each(['day', 'night'] as const)('should show the horizon at %s', (timeOfDay) => {
-    const { view } = renderScene({ timeOfDay });
-
-    const underTest = byTestId(view, 'home-horizon');
-
-    expect(underTest.length).toBeGreaterThan(0);
-  });
-});
-
-describe('HomeScene screen time', () => {
-  it('should stay out of the way when screen time is not being tracked', () => {
-    const { view } = renderScene({ screenTime: null });
-
-    const underTest = byTestId(view, 'screen-time-ring');
-
-    expect(underTest.length).toBe(0);
-  });
-
-  it('should show a quiet ring while there is time left', () => {
-    const { view } = renderScene({ screenTime: { usageSeconds: 600, limitSeconds: 3600 } });
-
-    const underTest = byTestId(view, 'screen-time-ring-fill');
-
-    expect(byTestId(view, 'screen-time-ring').length).toBeGreaterThan(0);
-    expect(underTest.length).toBe(0);
-  });
-
-  it('should fill the ring once the allowance is spent', () => {
-    const { view } = renderScene({ screenTime: { usageSeconds: 3600, limitSeconds: 3600 } });
-
-    const underTest = byTestId(view, 'screen-time-ring-fill');
-
-    expect(underTest.length).toBeGreaterThan(0);
-  });
-});
-
-describe('HomeScene opening screen time', () => {
-  it('should let the ring be opened from the menu', () => {
-    const onOpenScreenTime = jest.fn();
-    const { view } = renderScene({
-      screenTime: { usageSeconds: 600, limitSeconds: 3600 },
-      onOpenScreenTime,
-    });
-
-    pressTestId(view, 'screen-time-ring');
-
-    expect(onOpenScreenTime).toHaveBeenCalledTimes(1);
-  });
-
-  it('should report where the ring is, so the glance can open out of it', () => {
-    const onOpenScreenTime = jest.fn();
-    const { view } = renderScene({
-      screenTime: { usageSeconds: 600, limitSeconds: 3600 },
-      onOpenScreenTime,
-    });
-
-    pressTestId(view, 'screen-time-ring');
-
-    // the ring is pinned to the middle of the bottom edge, so its centre
-    // follows from the screen and the safe-area inset (34 from the
-    // suite-wide mock) rather than a runtime measurement
-    const { width, height } = Dimensions.get('window');
-    expect(onOpenScreenTime).toHaveBeenCalledWith(ringCentre(width, height, 34));
-  });
-
-  it('should keep the offer with the cards, not floating over the bottom', () => {
-    // the bottom edge belongs to the ring now: the glance's orb rises there
-    // and its closing drop falls back to it, so the offer scrolls with the
-    // content it is an offer about
-    const { view } = renderScene({
-      screenTime: { usageSeconds: 600, limitSeconds: 3600 },
-      onOpenPlans: jest.fn(),
-    });
-
-    const plan = byTestId(view, 'unlock-plan-button')[0];
-    const ring = byTestId(view, 'screen-time-ring')[0];
-
-    expect(plan).toBeTruthy();
-    expect(ring).toBeTruthy();
-  });
-
-  it('should leave the ring inert when no handler is supplied', () => {
-    const { view } = renderScene({ screenTime: { usageSeconds: 600, limitSeconds: 3600 } });
-
-    const underTest = byTestId(view, 'screen-time-ring')[0];
-
-    expect(underTest.props.accessibilityRole).toBe('image');
-  });
-});
-
-describe('HomeScene sky face', () => {
   it.each([
     ['day', 'home.sun'],
     ['night', 'home.moon'],
@@ -273,35 +223,38 @@ describe('HomeScene sky face', () => {
   });
 });
 
-describe('HomeScene sky dressing', () => {
-  it.each(['day', 'night'] as const)('should lay clouds over the %s sky', (timeOfDay) => {
-    const { view } = renderScene({ timeOfDay });
+describe('HomeScene screen time', () => {
+  it('should stay out of the way when screen time is not being tracked', () => {
+    const { view } = renderScene({ screenTime: null });
 
-    const underTest = byTestId(view, 'home-horizon-clouds');
-
-    expect(underTest.length).toBeGreaterThan(0);
+    expect(byTestId(view, 'screen-time-ring').length).toBe(0);
   });
 
-  it.each(['day', 'night'] as const)('should show a star field at %s', (timeOfDay) => {
-    const { view } = renderScene({ timeOfDay });
+  it('should show a quiet ring while there is time left', () => {
+    const { view } = renderScene({ screenTime: { usageSeconds: 600, limitSeconds: 3600 } });
 
-    const underTest = byTestId(view, 'star-field');
-
-    expect(underTest.length).toBeGreaterThan(0);
+    expect(byTestId(view, 'screen-time-ring').length).toBeGreaterThan(0);
+    expect(byTestId(view, 'screen-time-ring-fill').length).toBe(0);
   });
 
+  it('should fill the ring once the allowance is spent', () => {
+    const { view } = renderScene({ screenTime: { usageSeconds: 3600, limitSeconds: 3600 } });
+
+    expect(byTestId(view, 'screen-time-ring-fill').length).toBeGreaterThan(0);
+  });
+
+  it('should report where the ring is, so the glance can open out of it', () => {
+    const onOpenScreenTime = jest.fn();
+    const { view } = renderScene({ screenTime: { usageSeconds: 600, limitSeconds: 3600 }, onOpenScreenTime });
+
+    pressTestId(view, 'screen-time-ring');
+
+    const { width, height } = Dimensions.get('window');
+    expect(onOpenScreenTime).toHaveBeenCalledWith(ringCentre(width, height, 34));
+  });
 });
 
 describe('HomeScene the plan offer', () => {
-  it('should sit in the opposite corner from the screen-time ring', () => {
-    const onOpenPlans = jest.fn();
-    const { view } = renderScene({ onOpenPlans });
-
-    const underTest = byTestId(view, 'unlock-plan-button');
-
-    expect(underTest.length).toBeGreaterThan(0);
-  });
-
   it('should open the plans when tapped', () => {
     const onOpenPlans = jest.fn();
     const { view } = renderScene({ onOpenPlans });
@@ -314,8 +267,6 @@ describe('HomeScene the plan offer', () => {
   it('should stay away entirely for a family who already subscribes', () => {
     const { view } = renderScene();
 
-    const underTest = byTestId(view, 'unlock-plan-button');
-
-    expect(underTest.length).toBe(0);
+    expect(byTestId(view, 'unlock-plan-button').length).toBe(0);
   });
 });

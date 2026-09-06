@@ -81,12 +81,18 @@ const ROW_CARD_SCALE = 0.86;
 const coverColumns = (isTablet: boolean) => (isTablet ? 3 : 2);
 const LIBRARY_RECENT_LIMIT = 6;
 
+export interface CatalogueSectionRequest {
+  section: ChildNavItemId;
+  key: number;
+}
+
 interface StoryCatalogueScreenProps {
   onStorySelect?: (story: Story) => void;
   initialMode?: CatalogueMode | null;
+  sectionRequest?: CatalogueSectionRequest;
 }
 
-export function StoryCatalogueScreen({ onStorySelect, initialMode }: StoryCatalogueScreenProps) {
+export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionRequest }: StoryCatalogueScreenProps) {
   const insets = useSafeAreaInsets();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const { requestReturnToMainMenu, setShowLoginAfterOnboarding, getEffectiveTier } = useAppStore();
@@ -121,6 +127,12 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode }: StoryCatalo
   useEffect(() => {
     setStoryMode(initialMode ?? null);
   }, [initialMode]);
+
+  useEffect(() => {
+    if (sectionRequest) {
+      setNavSection(sectionRequest.section);
+    }
+  }, [sectionRequest]);
 
   useEffect(() => {
     const cachedStories = StoryLoader.getCachedStories();
