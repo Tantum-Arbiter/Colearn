@@ -31,6 +31,14 @@ export interface ScreenTimeRingProps {
    *  rises in its place -- left visible it sat beneath the choreography as a
    *  second red dot that never moved. */
   hidden?: boolean;
+  /** Defaults to the home scene's ring. The nav bar draws a far larger one. */
+  size?: number;
+  /** How far the over-limit halo reaches past the dial. Overridable because a
+   *  halo sized for the open home screen swamps its neighbours inside a bar. */
+  haloScale?: number;
+  /** The unspent part of the circle. Off where the dial is large enough that
+   *  a full faint ring reads as something sitting behind the glyph. */
+  showTrack?: boolean;
   testID?: string;
 }
 
@@ -40,6 +48,9 @@ export const ScreenTimeRing = memo(function ScreenTimeRing({
   tint = '#FFFFFF',
   onPress,
   hidden = false,
+  size = SCREEN_TIME_RING.size,
+  haloScale = SCREEN_TIME_RING.haloScale,
+  showTrack = true,
   testID = 'screen-time-ring',
 }: ScreenTimeRingProps) {
   const { t } = useTranslation();
@@ -131,8 +142,7 @@ export const ScreenTimeRing = memo(function ScreenTimeRing({
     return null;
   }
 
-  const size = SCREEN_TIME_RING.size;
-  const stroke = SCREEN_TIME_RING.strokeWidth;
+  const stroke = SCREEN_TIME_RING.strokeWidth * (size / SCREEN_TIME_RING.size);
   const radius = (size - stroke) / 2;
   const centre = size / 2;
   const progress = screenTimeProgress(usageSeconds, limitSeconds);
@@ -152,9 +162,9 @@ export const ScreenTimeRing = memo(function ScreenTimeRing({
           style={[
             styles.halo,
             {
-              width: size * SCREEN_TIME_RING.haloScale,
-              height: size * SCREEN_TIME_RING.haloScale,
-              borderRadius: (size * SCREEN_TIME_RING.haloScale) / 2,
+              width: size * haloScale,
+              height: size * haloScale,
+              borderRadius: (size * haloScale) / 2,
               backgroundColor: SCREEN_TIME_RING.exceededHalo,
             },
           ]}
@@ -182,7 +192,16 @@ export const ScreenTimeRing = memo(function ScreenTimeRing({
             />
           </>
         ) : (
-          <ScreenTimeDial cx={centre} cy={centre} tint={tint} progress={progress} testID={testID} />
+          <ScreenTimeDial
+            cx={centre}
+            cy={centre}
+            tint={tint}
+            progress={progress}
+            radius={radius}
+            strokeWidth={stroke}
+            showTrack={showTrack}
+            testID={testID}
+          />
         )}
       </Svg>
 

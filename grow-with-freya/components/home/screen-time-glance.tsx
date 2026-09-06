@@ -70,6 +70,11 @@ export interface ScreenTimeGlanceProps {
   visible: boolean;
   timeOfDay: TimeOfDay;
   onClose: () => void;
+  /** Fired the moment the close begins, before any of it has run. The host
+   *  uses it to time what has to move with the close rather than after it --
+   *  the nav bar comes back out of the splash, which lands well before the
+   *  window is finished with. */
+  onCloseStart?: () => void;
   /** Centre of the ring this opened from, so the spinner rises there. Falls
    *  back to the middle of the screen when the host cannot say. */
   origin?: { x: number; y: number };
@@ -112,6 +117,7 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
   visible,
   timeOfDay,
   onClose,
+  onCloseStart,
   origin,
   exceeded = false,
   usageSeconds = 0,
@@ -493,6 +499,8 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
   }, [onClose]);
 
   const handleClose = useCallback(() => {
+    onCloseStart?.();
+
     if (reduceMotion) {
       finishClose();
       return;
@@ -709,7 +717,7 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
       ],
       { onFinished: finishClose }
     );
-  }, [finishClose, reduceMotion, geometry, exceeded]);
+  }, [finishClose, onCloseStart, reduceMotion, geometry, exceeded]);
 
   useEffect(() => {
     if (!mounted) {

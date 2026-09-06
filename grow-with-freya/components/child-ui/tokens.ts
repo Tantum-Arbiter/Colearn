@@ -31,7 +31,7 @@ export const TYPE_ROLES = {
   sectionHeading: { phone: 23, tablet: 26, weight: '700' },
   cardTitle: { phone: 15, tablet: 17, weight: '700' },
   filterLabel: { phone: 15, tablet: 16, weight: '600' },
-  navLabel: { phone: 12, tablet: 13, weight: '600' },
+  navLabel: { phone: 13, tablet: 14, weight: '600' },
 } as const satisfies Record<string, TypeRole>;
 
 export function typeSize(role: keyof typeof TYPE_ROLES, isTablet: boolean): number {

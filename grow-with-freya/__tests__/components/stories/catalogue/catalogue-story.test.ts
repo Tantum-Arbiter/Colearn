@@ -7,6 +7,7 @@
  */
 
 import {
+  buildSavedRows,
   buildShelves,
   recommendationTarget,
   filterByTheme,
@@ -357,5 +358,78 @@ describe('recommendationTarget', () => {
     const underTest = recommendationTarget(null);
 
     expect(underTest).toEqual({ tags: [] });
+  });
+});
+
+/**
+ * The saved shelf is the child's own, so it behaves unlike the catalogue's:
+ * it stays where they left it, and it does not repeat a handful of books under
+ * every theme they happen to match.
+ */
+describe('buildSavedRows', () => {
+  const saved = [
+    fromStory(story({ id: 'wombat', tags: ['bedtime', 'calming'] })),
+    fromStory(story({ id: 'bear', tags: ['adventure'] })),
+    fromStory(story({ id: 'whale', tags: ['bedtime'] })),
+  ];
+
+  function rows(shelves: ReturnType<typeof buildSavedRows>) {
+    return shelves.filter((s): s is Extract<typeof s, { kind: 'row' }> => s.kind === 'row');
+  }
+
+  /**
+   * Which theme claims a book with several is the tag order's business, not
+   * this shelf's -- what it owes is that every row holds books of its own
+   * theme, and that the whole shelf is on it somewhere.
+   */
+  it('groups the saved books under themes they belong to', () => {
+    const underTest = rows(buildSavedRows(saved));
+
+    for (const row of underTest) {
+      for (const entry of row.stories) {
+        expect(entry.theme).toContain(row.tag);
+      }
+    }
+    expect(underTest.flatMap((row) => row.stories.map((entry) => entry.id)).sort())
+      .toEqual(['bear', 'whale', 'wombat']);
+  });
+
+  /** The load-bearing difference: 'wombat' is calming too, and appears once. */
+  it('lets each book be claimed by one theme only', () => {
+    const appearances = buildSavedRows(saved)
+      .flatMap((shelf) => (shelf.kind === 'row' || shelf.kind === 'more' ? shelf.stories : []))
+      .filter((entry) => entry.id === 'wombat');
+
+    expect(appearances).toHaveLength(1);
+  });
+
+  it('lays the shelf out the same way every time', () => {
+    const once = buildSavedRows(saved).map((s) => (s.kind === 'row' ? s.tag : s.kind));
+    const again = buildSavedRows(saved).map((s) => (s.kind === 'row' ? s.tag : s.kind));
+
+    expect(once).toEqual(again);
+  });
+
+  it('gathers anything with no theme of its own at the end', () => {
+    const untagged = fromStory(story({ id: 'odd', tags: [] }));
+
+    const underTest = buildSavedRows([...saved, untagged]);
+    const more = underTest.find((s) => s.kind === 'more');
+
+    expect(underTest[underTest.length - 1].kind).toBe('more');
+    expect(more && more.kind === 'more' && more.stories.map((s) => s.id)).toEqual(['odd']);
+  });
+
+  it('adds no catch-all row when every book has a theme', () => {
+    expect(buildSavedRows(saved).some((s) => s.kind === 'more')).toBe(false);
+  });
+
+  it('has nothing to show for an empty shelf', () => {
+    expect(buildSavedRows([])).toEqual([]);
+  });
+
+  /** No day's pick: the saved shelf sells nothing, it just holds what is kept. */
+  it('stands no featured pick among the rows', () => {
+    expect(buildSavedRows(saved).some((s) => s.kind === 'pick')).toBe(false);
   });
 });

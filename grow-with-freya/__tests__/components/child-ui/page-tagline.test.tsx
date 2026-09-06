@@ -44,7 +44,7 @@ describe('PageTagline', () => {
     expect(onPaths).toEqual(['catalogue.tagline.one', 'catalogue.tagline.two']);
   });
 
-  it('bends each line along a circle a little wider than the block, so the arch stays shallow', () => {
+  it('bends each line along a circle wider than the block, so the arch stays shallow', () => {
     const width = 360;
     const tree = render(<PageTagline lines={LINES} width={width} />);
     const radius = width * TAGLINE_ARCH_RADIUS_RATIO;
@@ -55,12 +55,47 @@ describe('PageTagline', () => {
     expect(line.props.d).toContain(`A ${radius} ${radius} 0 0 1 ${width}`);
   });
 
-  it('keeps a line no taller than a line of type, so the arch costs no height', () => {
+  /**
+   * The box has to hold the whole arc, not just its crown. A long line reaches
+   * the ends, which fall well below the middle -- and a box sized for one line
+   * of type cuts them off there. "Everything you loved" lost its E and its d
+   * to exactly that edge.
+   */
+  it('stands tall enough to hold the ends of its own arch', () => {
+    const width = 360;
+    const tree = render(<PageTagline lines={LINES} width={width} />);
+    const radius = width * TAGLINE_ARCH_RADIUS_RATIO;
+    const rise = radius - Math.sqrt(radius * radius - (width / 2) ** 2);
+
+    const svg = tree.UNSAFE_root.findAll((n: any) => n.props.testID?.endsWith('-arc'))[0];
+
+    expect(svg.props.height).toBeGreaterThanOrEqual(rise);
+  });
+
+  it('spans the full width it was given', () => {
     const tree = render(<PageTagline lines={LINES} width={360} />);
+
+    const svg = tree.UNSAFE_root.findAll((n: any) => n.props.testID?.endsWith('-arc'))[0];
+
+    expect(svg.props.width).toBe(360);
+  });
+
+  /**
+   * This once asserted the opposite -- that a line cost no more height than a
+   * line of type. That was the bug: the arch's ends fall below its crown, and a
+   * box that tight cuts off the words riding there. The arch costs its rise,
+   * and the flatter curve is what keeps that cost small.
+   */
+  it('costs the height of its arch and little more', () => {
+    const width = 360;
+    const tree = render(<PageTagline lines={LINES} width={width} />);
+    const radius = width * TAGLINE_ARCH_RADIUS_RATIO;
+    const rise = radius - Math.sqrt(radius * radius - (width / 2) ** 2);
 
     const [first] = arcs(tree);
 
-    expect(first.props.height).toBeLessThanOrEqual(20);
+    expect(first.props.height).toBeGreaterThan(rise);
+    expect(first.props.height).toBeLessThan(rise + 30);
   });
 
   it('sets the words in the app\'s rounded face, centred and white', () => {

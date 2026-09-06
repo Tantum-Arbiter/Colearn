@@ -222,6 +222,33 @@ export function buildShelves(stories: CatalogueStory[], plan: ShelfPlan): Shelf[
   return rows;
 }
 
+/**
+ * The saved shelf: favourites grouped under the themes they belong to.
+ *
+ * Two deliberate differences from the catalogue's own shelves. Nothing is
+ * shuffled -- a shelf the child built themselves should be where they left it,
+ * not rearranged on every launch. And each story is claimed by the first theme
+ * that matches rather than appearing under every one of them: across a whole
+ * catalogue the repetition reads as variety, but across a handful of saved
+ * books it reads as the same three titles over and over.
+ */
+export function buildSavedRows(stories: CatalogueStory[]): Shelf[] {
+  const claimed = new Set<string>();
+
+  const rows: Shelf[] = (Object.keys(STORY_FILTER_TAGS) as StoryFilterTag[])
+    .map((tag) => {
+      const inTag = stories.filter((story) => !claimed.has(story.id) && story.theme.includes(tag));
+      inTag.forEach((story) => claimed.add(story.id));
+      return { kind: 'row' as const, tag, stories: inTag };
+    })
+    .filter((row) => row.stories.length > 0);
+
+  const unclaimed = stories.filter((story) => !claimed.has(story.id));
+  if (unclaimed.length > 0) rows.push({ kind: 'more', stories: unclaimed });
+
+  return rows;
+}
+
 export function storyMatchesMode(story: Story, mode: CatalogueMode | null): boolean {
   if (mode === 'interactive') return storyHasInteractive(story);
   if (mode === 'music') return storyHasMusic(story);

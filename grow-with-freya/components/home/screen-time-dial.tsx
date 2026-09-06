@@ -3,7 +3,6 @@ import { Circle } from 'react-native-svg';
 import { SCREEN_TIME_RING, ringDashOffset } from '@/constants/screen-time-ring';
 
 export const DIAL_RADIUS = (SCREEN_TIME_RING.size - SCREEN_TIME_RING.strokeWidth) / 2;
-const DIAL_CIRCUMFERENCE = 2 * Math.PI * DIAL_RADIUS;
 
 export interface ScreenTimeDialProps {
   cx: number;
@@ -11,6 +10,12 @@ export interface ScreenTimeDialProps {
   tint: string;
   progress: number;
   testID: string;
+  /** Defaults to the home scene's dial; the nav bar draws a larger one. */
+  radius?: number;
+  strokeWidth?: number;
+  /** The unspent part of the circle. Off where the dial is large enough that
+   *  a full faint ring reads as something sitting behind the glyph. */
+  showTrack?: boolean;
 }
 
 export const ScreenTimeDial = memo(function ScreenTimeDial({
@@ -19,32 +24,39 @@ export const ScreenTimeDial = memo(function ScreenTimeDial({
   tint,
   progress,
   testID,
+  radius = DIAL_RADIUS,
+  strokeWidth = SCREEN_TIME_RING.strokeWidth,
+  showTrack = true,
 }: ScreenTimeDialProps) {
+  const circumference = 2 * Math.PI * radius;
+
   return (
     <>
+      {showTrack ? (
       <Circle
         testID={`${testID}-track`}
         cx={cx}
         cy={cy}
-        r={DIAL_RADIUS}
+        r={radius}
         stroke={tint}
         strokeOpacity={SCREEN_TIME_RING.trackOpacity}
-        strokeWidth={SCREEN_TIME_RING.strokeWidth}
+        strokeWidth={strokeWidth}
         fill="none"
       />
+      ) : null}
 
       <Circle
         testID={`${testID}-arc`}
         cx={cx}
         cy={cy}
-        r={DIAL_RADIUS}
+        r={radius}
         stroke={tint}
         strokeOpacity={SCREEN_TIME_RING.arcOpacity}
-        strokeWidth={SCREEN_TIME_RING.strokeWidth}
+        strokeWidth={strokeWidth}
         strokeLinecap="round"
         fill="none"
-        strokeDasharray={`${DIAL_CIRCUMFERENCE} ${DIAL_CIRCUMFERENCE}`}
-        strokeDashoffset={ringDashOffset(progress, DIAL_CIRCUMFERENCE)}
+        strokeDasharray={`${circumference} ${circumference}`}
+        strokeDashoffset={ringDashOffset(progress, circumference)}
         transform={`rotate(-90 ${cx} ${cy})`}
       />
     </>

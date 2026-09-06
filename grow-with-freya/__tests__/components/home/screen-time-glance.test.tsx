@@ -169,6 +169,29 @@ describe('ScreenTimeGlance', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
+  /**
+   * The close runs for well over a second, and things outside the window have
+   * to move with it rather than after it -- the nav bar comes back out of the
+   * splash, which lands before the window is finished. `onClose` alone is too
+   * late to time anything against.
+   */
+  it('announces the close as it begins', () => {
+    const onCloseStart = jest.fn();
+    const tree = renderGlance({ onCloseStart });
+
+    fireEvent.press(findByTestId(tree, 'screen-time-glance-close')[0]);
+
+    expect(onCloseStart).toHaveBeenCalledTimes(1);
+  });
+
+  it('is happy to close with nobody listening for the start', () => {
+    const tree = renderGlance({ onCloseStart: undefined });
+
+    expect(() =>
+      fireEvent.press(findByTestId(tree, 'screen-time-glance-close')[0]),
+    ).not.toThrow();
+  });
+
   describe('the choreography surfaces', () => {
     it('dims everything outside the panel with night, not red', () => {
       const tree = renderGlance({ exceeded: true });

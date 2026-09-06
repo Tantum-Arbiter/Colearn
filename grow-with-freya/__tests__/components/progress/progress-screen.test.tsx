@@ -56,7 +56,8 @@ describe('ProgressScreen', () => {
       expect(byTestId(tree, 'circle-action-back').length).toBeGreaterThan(0);
       expect(byTestId(tree, 'circle-action-audio').length).toBeGreaterThan(0);
       expect(textByTestId(tree, 'progress-title').props.children).toBe('progress.title');
-      expect(textByTestId(tree, 'progress-subtitle').props.children).toBe('progress.subtitle');
+      // the flat line became the arched two-line tagline the other pages carry
+      expect(byTestId(tree, 'progress-tagline').length).toBeGreaterThan(0);
       expect(byTestId(tree, 'progress-hero-card').length).toBeGreaterThan(0);
       expect(byTestId(tree, 'challenge-list').length).toBeGreaterThan(0);
       expect(byTestId(tree, 'milestone-row').length).toBeGreaterThan(0);

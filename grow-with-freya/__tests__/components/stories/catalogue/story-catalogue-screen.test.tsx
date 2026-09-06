@@ -5,7 +5,12 @@
  */
 
 import React from 'react';
-import { render, fireEvent, waitFor } from '@testing-library/react-native';
+import { Alert } from 'react-native';
+import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
+import { StoryAccessService } from '@/services/story-access-service';
+import { StoryDownloadService } from '@/services/story-download-service';
+import { CHILD_UI_MOTION } from '@/constants/child-ui-motion';
+import { glanceCloseTimeline } from '@/constants/screen-time-glance-timeline';
 import { StoryCatalogueScreen } from '@/components/stories/catalogue/story-catalogue-screen';
 import { useStoryTransition } from '@/contexts/story-transition-context';
 
@@ -53,6 +58,8 @@ const mockAppState = {
   setShowLoginAfterOnboarding: jest.fn(),
   getEffectiveTier: () => 'free' as const,
   favoriteStoryIds: [] as string[],
+  favoriteActivityIds: [] as string[],
+  favoriteSongIds: [] as string[],
   toggleFavoriteStory: jest.fn(),
   userAvatarType: null,
   readStoryIds: [] as string[],
@@ -113,6 +120,27 @@ jest.mock('@/services/screen-time-service', () => ({
   },
 }));
 
+// the catalogue sits inside both providers in the app; the screen under test
+// here is rendered bare, so what it reads from them is stubbed
+const mockStartActivityTransition = jest.fn();
+jest.mock('@/contexts/ActivityTransitionContext', () => ({
+  useActivityTransition: () => ({ startTransition: mockStartActivityTransition }),
+}));
+
+// the catalogue sits inside the ScreenTimeProvider in the app; the screen
+// under test here is rendered bare, so the allowance it reads is stubbed
+jest.mock('@/hooks/use-screen-time-allowance', () => ({
+  useScreenTimeAllowance: () => ({ usageSeconds: 0, limitSeconds: 3600 }),
+}));
+
+const glanceProps: any[] = [];
+jest.mock('@/components/home/screen-time-glance', () => ({
+  ScreenTimeGlance: (props: any) => {
+    glanceProps.push(props);
+    return null;
+  },
+}));
+
 jest.mock('@/components/ui/subscription-overlay', () => ({
   SubscriptionOverlay: () => null,
 }));
@@ -127,6 +155,8 @@ describe('StoryCatalogueScreen', () => {
     mockGetCatalog.mockResolvedValue([]);
     mockAppState.readStoryIds = [];
     mockAppState.favoriteStoryIds = [];
+    mockAppState.favoriteActivityIds = [];
+    mockAppState.favoriteSongIds = [];
     mockAppState.storyProgress = {};
     (useStoryTransition as jest.Mock).mockReturnValue({
       isTransitioning: false,
@@ -173,20 +203,33 @@ describe('StoryCatalogueScreen', () => {
     });
   });
 
-  it('sets the tagline beneath the title on the catalogue home, and nowhere else', async () => {
+  /**
+   * Every browsing area is headed the same way -- title, then its own line on
+   * two shallow arches. Only story mode goes without: there the title is
+   * already the mode the child chose.
+   */
+  it('sets each section its own arched tagline beneath the title', async () => {
     const tree = render(<StoryCatalogueScreen />);
 
+    function archedLines() {
+      return tree.UNSAFE_root
+        .findAll((n: any) => n.props.testID === 'svg-TextPath')
+        .map((n: any) => n.props.children);
+    }
+
     await waitFor(() => expect(byTestId(tree, 'page-tagline').length).toBeGreaterThan(0));
-    const onPaths = tree.UNSAFE_root
-      .findAll((n: any) => n.props.testID === 'svg-TextPath')
-      .map((n: any) => n.props.children);
-    expect(onPaths).toEqual(['catalogue.tagline.one', 'catalogue.tagline.two']);
+    expect(archedLines()).toEqual(['catalogue.tagline.one', 'catalogue.tagline.two']);
 
     fireEvent.press(
       byTestId(tree, 'navigation-item-library').find((n: any) => n.props.accessibilityRole === 'tab')
     );
 
-    await waitFor(() => expect(byTestId(tree, 'page-tagline')).toHaveLength(0));
+    await waitFor(() => {
+      expect(archedLines()).toEqual([
+        'catalogue.library.tagline.one',
+        'catalogue.library.tagline.two',
+      ]);
+    });
   });
 
   it('titles the page through the stories translation key', async () => {
@@ -477,5 +520,456 @@ describe('StoryCatalogueScreen', () => {
       const texts = tree.UNSAFE_root.findAll((n: any) => n.props.children === 'catalogue.noResults');
       expect(texts.length).toBeGreaterThan(0);
     });
+  });
+});
+
+/**
+ * The bar and the window are one movement, not two overlapping ones: the bar
+ * draws into its own middle first, and only then does the window open out of
+ * the space the ring leaves. Opening both at once was what made the nav sit
+ * on top of the panel.
+ */
+describe('StoryCatalogueScreen screensafe choreography', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockGetCatalog.mockResolvedValue([]);
+    (useStoryTransition as jest.Mock).mockReturnValue({
+      isTransitioning: false,
+      selectedStoryId: null,
+      shouldShowStoryReader: false,
+      isExpandingToReader: false,
+      startTransition: mockStartTransition,
+    });
+    glanceProps.length = 0;
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.runOnlyPendingTimers();
+    jest.useRealTimers();
+  });
+
+  function latestGlance() {
+    return glanceProps[glanceProps.length - 1];
+  }
+
+  function pressScreensafe(tree: ReturnType<typeof render>) {
+    const button = tree.UNSAFE_root.findAll(
+      (node: any) => node.props.testID === 'navigation-item-screensafe',
+    )[0];
+    act(() => {
+      button.props.onPress();
+    });
+  }
+
+  it('keeps the window shut until the bar has gathered', () => {
+    const tree = render(<StoryCatalogueScreen />);
+
+    pressScreensafe(tree);
+
+    expect(latestGlance().visible).toBe(false);
+  });
+
+  it('opens the window once the bar has gathered', () => {
+    const tree = render(<StoryCatalogueScreen />);
+
+    pressScreensafe(tree);
+    act(() => {
+      jest.advanceTimersByTime(CHILD_UI_MOTION.navCollapse.duration);
+    });
+
+    expect(latestGlance().visible).toBe(true);
+  });
+
+  /**
+   * Where that point actually falls is the nav bar's own arithmetic, covered
+   * where it lives; what matters here is that the window is told to open from
+   * the ring rather than from the middle of the screen.
+   */
+  it('opens the window out of the ring rather than from nowhere', () => {
+    const tree = render(<StoryCatalogueScreen />);
+
+    pressScreensafe(tree);
+    const { origin } = latestGlance();
+
+    expect(typeof origin.x).toBe('number');
+    expect(typeof origin.y).toBe('number');
+  });
+
+  /**
+   * The bar comes back out of the splash rather than after the whole close:
+   * the splash lands a long way before the window has finished with itself.
+   */
+  it('holds the bar in until the splash lands, then brings it back', () => {
+    const tree = render(<StoryCatalogueScreen />);
+    pressScreensafe(tree);
+    act(() => {
+      jest.advanceTimersByTime(CHILD_UI_MOTION.navCollapse.duration);
+    });
+
+    act(() => {
+      latestGlance().onCloseStart();
+    });
+    act(() => {
+      jest.advanceTimersByTime(glanceCloseTimeline().splash.at - 1);
+    });
+    const beforeSplash = navIsCollapsed(tree);
+
+    act(() => {
+      jest.advanceTimersByTime(2);
+    });
+
+    expect(beforeSplash).toBe(true);
+    expect(navIsCollapsed(tree)).toBe(false);
+  });
+
+  function navIsCollapsed(tree: ReturnType<typeof render>) {
+    const bar = tree.UNSAFE_root.findAll(
+      (node: any) => node.props.testID === 'child-bottom-navigation',
+    )[0];
+    return bar.props.pointerEvents === 'none';
+  }
+});
+
+/**
+ * The saved shelf holds what the child chose to keep, laid out under the
+ * themes those books belong to -- the library's own grouping, but of their
+ * shelf rather than the catalogue's.
+ */
+describe('StoryCatalogueScreen saved shelf', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockGetCatalog.mockResolvedValue([]);
+    mockAppState.readStoryIds = [];
+    mockAppState.favoriteStoryIds = [];
+    mockAppState.favoriteActivityIds = [];
+    mockAppState.storyProgress = {};
+    (useStoryTransition as jest.Mock).mockReturnValue({
+      isTransitioning: false,
+      selectedStoryId: null,
+      shouldShowStoryReader: false,
+      isExpandingToReader: false,
+      startTransition: mockStartTransition,
+    });
+  });
+
+  function openSaved(tree: ReturnType<typeof render>) {
+    fireEvent.press(
+      byTestId(tree, 'navigation-item-saved').find((n: any) => n.props.accessibilityRole === 'tab'),
+    );
+  }
+
+  it('invites the child to save something when nothing is saved', async () => {
+    const tree = render(<StoryCatalogueScreen />);
+    await waitFor(() => expect(byTestId(tree, 'story-filter-bar').length).toBeGreaterThan(0));
+
+    openSaved(tree);
+
+    await waitFor(() => expect(byTestId(tree, 'saved-empty').length).toBeGreaterThan(0));
+    expect(byTestId(tree, 'saved-shelves')).toHaveLength(0);
+  });
+
+  it('shelves what has been saved, under its themes', async () => {
+    mockAppState.favoriteStoryIds = ['wombat', 'bear'];
+    const tree = render(<StoryCatalogueScreen />);
+    await waitFor(() => expect(byTestId(tree, 'story-filter-bar').length).toBeGreaterThan(0));
+
+    openSaved(tree);
+
+    await waitFor(() => expect(byTestId(tree, 'saved-shelves').length).toBeGreaterThan(0));
+    expect(byTestId(tree, 'saved-empty')).toHaveLength(0);
+  });
+
+  /** Nothing unsaved leaks onto the shelf, however much of it the app holds. */
+  it('shelves only what was saved', async () => {
+    mockAppState.favoriteStoryIds = ['bear'];
+    const tree = render(<StoryCatalogueScreen />);
+    await waitFor(() => expect(byTestId(tree, 'story-filter-bar').length).toBeGreaterThan(0));
+
+    openSaved(tree);
+
+    await waitFor(() => expect(byTestId(tree, 'saved-shelves').length).toBeGreaterThan(0));
+    const shelved = byTestId(tree, 'saved-shelves')[0]
+      .findAll((n: any) => typeof n.props.testID === 'string' && n.props.testID.startsWith('story-cover-card-'))
+      .map((n: any) => n.props.testID);
+    expect(shelved.every((id: string) => id.includes('bear'))).toBe(true);
+  });
+
+  it('heads the saved shelf with its own arched lines', async () => {
+    const tree = render(<StoryCatalogueScreen />);
+    await waitFor(() => expect(byTestId(tree, 'page-tagline').length).toBeGreaterThan(0));
+
+    openSaved(tree);
+
+    await waitFor(() => {
+      const lines = tree.UNSAFE_root
+        .findAll((n: any) => n.props.testID === 'svg-TextPath')
+        .map((n: any) => n.props.children);
+      expect(lines).toEqual(['catalogue.saved.tagline.one', 'catalogue.saved.tagline.two']);
+    });
+  });
+});
+
+/**
+ * Saved is one shelf, not one per kind of thing: a child who saved a book and
+ * a counting game expects both waiting there.
+ */
+describe('StoryCatalogueScreen saved activities', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockGetCatalog.mockResolvedValue([]);
+    mockAppState.readStoryIds = [];
+    mockAppState.favoriteStoryIds = [];
+    mockAppState.favoriteActivityIds = [];
+    mockAppState.storyProgress = {};
+    (useStoryTransition as jest.Mock).mockReturnValue({
+      isTransitioning: false,
+      selectedStoryId: null,
+      shouldShowStoryReader: false,
+      isExpandingToReader: false,
+      startTransition: mockStartTransition,
+    });
+  });
+
+  function openSaved(tree: ReturnType<typeof render>) {
+    fireEvent.press(
+      byTestId(tree, 'navigation-item-saved').find((n: any) => n.props.accessibilityRole === 'tab'),
+    );
+  }
+
+  it('shelves saved activities alongside saved books', async () => {
+    mockAppState.favoriteActivityIds = ['abc-animals'];
+    const tree = render(<StoryCatalogueScreen />);
+    await waitFor(() => expect(byTestId(tree, 'story-filter-bar').length).toBeGreaterThan(0));
+
+    openSaved(tree);
+
+    await waitFor(() => expect(byTestId(tree, 'saved-row-activities').length).toBeGreaterThan(0));
+  });
+
+  it('leaves the activities row out when none are saved', async () => {
+    mockAppState.favoriteStoryIds = ['bear'];
+    const tree = render(<StoryCatalogueScreen />);
+    await waitFor(() => expect(byTestId(tree, 'story-filter-bar').length).toBeGreaterThan(0));
+
+    openSaved(tree);
+
+    await waitFor(() => expect(byTestId(tree, 'saved-shelves').length).toBeGreaterThan(0));
+    expect(byTestId(tree, 'saved-row-activities')).toHaveLength(0);
+  });
+
+  /** A saved activity with no saved book is still a shelf worth showing. */
+  it('does not call the shelf empty when only activities are saved', async () => {
+    mockAppState.favoriteActivityIds = ['abc-animals'];
+    const tree = render(<StoryCatalogueScreen />);
+    await waitFor(() => expect(byTestId(tree, 'story-filter-bar').length).toBeGreaterThan(0));
+
+    openSaved(tree);
+
+    await waitFor(() => expect(byTestId(tree, 'saved-shelves').length).toBeGreaterThan(0));
+    expect(byTestId(tree, 'saved-empty')).toHaveLength(0);
+  });
+
+  it('opens a saved activity through the shared transition', async () => {
+    mockAppState.favoriteActivityIds = ['abc-animals'];
+    const tree = render(<StoryCatalogueScreen />);
+    await waitFor(() => expect(byTestId(tree, 'story-filter-bar').length).toBeGreaterThan(0));
+    openSaved(tree);
+    await waitFor(() => expect(byTestId(tree, 'saved-row-activities').length).toBeGreaterThan(0));
+
+    fireEvent.press(byTestId(tree, 'saved-activity-card-abc-animals')[0]);
+
+    expect(mockStartActivityTransition).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'abc-animals' }),
+      expect.anything(),
+    );
+  });
+});
+
+/**
+ * The last kind of thing a child can keep. A song has no cover, so its card
+ * shows the opening of the melody instead -- the notes they play first.
+ */
+describe('StoryCatalogueScreen saved songs', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockGetCatalog.mockResolvedValue([]);
+    mockAppState.readStoryIds = [];
+    mockAppState.favoriteStoryIds = [];
+    mockAppState.favoriteActivityIds = [];
+    mockAppState.favoriteSongIds = [];
+    mockAppState.storyProgress = {};
+    (useStoryTransition as jest.Mock).mockReturnValue({
+      isTransitioning: false,
+      selectedStoryId: null,
+      shouldShowStoryReader: false,
+      isExpandingToReader: false,
+      startTransition: mockStartTransition,
+    });
+  });
+
+  function openSaved(tree: ReturnType<typeof render>) {
+    fireEvent.press(
+      byTestId(tree, 'navigation-item-saved').find((n: any) => n.props.accessibilityRole === 'tab'),
+    );
+  }
+
+  it('shelves saved songs', async () => {
+    mockAppState.favoriteSongIds = ['hot_cross_buns'];
+    const tree = render(<StoryCatalogueScreen />);
+    await waitFor(() => expect(byTestId(tree, 'story-filter-bar').length).toBeGreaterThan(0));
+
+    openSaved(tree);
+
+    await waitFor(() => expect(byTestId(tree, 'saved-row-songs').length).toBeGreaterThan(0));
+  });
+
+  it('leaves the songs row out when none are saved', async () => {
+    mockAppState.favoriteStoryIds = ['bear'];
+    const tree = render(<StoryCatalogueScreen />);
+    await waitFor(() => expect(byTestId(tree, 'story-filter-bar').length).toBeGreaterThan(0));
+
+    openSaved(tree);
+
+    await waitFor(() => expect(byTestId(tree, 'saved-shelves').length).toBeGreaterThan(0));
+    expect(byTestId(tree, 'saved-row-songs')).toHaveLength(0);
+  });
+
+  it('does not call the shelf empty when only songs are saved', async () => {
+    mockAppState.favoriteSongIds = ['hot_cross_buns'];
+    const tree = render(<StoryCatalogueScreen />);
+    await waitFor(() => expect(byTestId(tree, 'story-filter-bar').length).toBeGreaterThan(0));
+
+    openSaved(tree);
+
+    await waitFor(() => expect(byTestId(tree, 'saved-shelves').length).toBeGreaterThan(0));
+    expect(byTestId(tree, 'saved-empty')).toHaveLength(0);
+  });
+
+  it('sends a tapped song to the music journey', async () => {
+    mockAppState.favoriteSongIds = ['hot_cross_buns'];
+    const onNavigateToMusic = jest.fn();
+    const tree = render(<StoryCatalogueScreen onNavigateToMusic={onNavigateToMusic} />);
+    await waitFor(() => expect(byTestId(tree, 'story-filter-bar').length).toBeGreaterThan(0));
+    openSaved(tree);
+    await waitFor(() => expect(byTestId(tree, 'saved-row-songs').length).toBeGreaterThan(0));
+
+    fireEvent.press(byTestId(tree, 'saved-song-card-hot_cross_buns')[0]);
+
+    expect(onNavigateToMusic).toHaveBeenCalled();
+  });
+});
+
+/**
+ * A saved book the child has not downloaded still belongs on their shelf --
+ * saving is a wish, not a transfer. The card is the catalogue's own, so it
+ * carries the same download and download-limit behaviour there as anywhere.
+ */
+describe('StoryCatalogueScreen saved downloads', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockGetCatalog.mockResolvedValue([]);
+    mockAppState.readStoryIds = [];
+    mockAppState.favoriteStoryIds = [];
+    mockAppState.favoriteActivityIds = [];
+    mockAppState.favoriteSongIds = [];
+    mockAppState.storyProgress = {};
+    (useStoryTransition as jest.Mock).mockReturnValue({
+      isTransitioning: false,
+      selectedStoryId: null,
+      shouldShowStoryReader: false,
+      isExpandingToReader: false,
+      startTransition: mockStartTransition,
+    });
+  });
+
+  function openSaved(tree: ReturnType<typeof render>) {
+    fireEvent.press(
+      byTestId(tree, 'navigation-item-saved').find((n: any) => n.props.accessibilityRole === 'tab'),
+    );
+  }
+
+  const REMOTE = {
+    storyId: 'remote-1',
+    title: 'Kind Moments',
+    category: 'bedtime',
+    isFree: true,
+    isReferralReward: false,
+    isPremium: false,
+    thumbnailUrl: 'https://cdn/kind.jpg',
+    tags: ['bedtime'],
+  };
+
+  it('shelves a saved book that has not been downloaded', async () => {
+    mockGetCatalog.mockResolvedValue([REMOTE]);
+    mockAppState.favoriteStoryIds = ['remote-1'];
+    const tree = render(<StoryCatalogueScreen />);
+    await waitFor(() => expect(byTestId(tree, 'story-filter-bar').length).toBeGreaterThan(0));
+
+    openSaved(tree);
+
+    await waitFor(() =>
+      expect(byTestId(tree, 'story-cover-card-remote-1').length).toBeGreaterThan(0),
+    );
+  });
+
+  it('shelves downloaded and undownloaded saves side by side', async () => {
+    mockGetCatalog.mockResolvedValue([REMOTE]);
+    mockAppState.favoriteStoryIds = ['remote-1', 'wombat'];
+    const tree = render(<StoryCatalogueScreen />);
+    await waitFor(() => expect(byTestId(tree, 'story-filter-bar').length).toBeGreaterThan(0));
+
+    openSaved(tree);
+
+    await waitFor(() => {
+      expect(byTestId(tree, 'story-cover-card-remote-1').length).toBeGreaterThan(0);
+      expect(byTestId(tree, 'story-cover-card-wombat').length).toBeGreaterThan(0);
+    });
+  });
+
+  /**
+   * Tapping an undownloaded save is a request to download it. With the plan's
+   * shelf already full, that has to become the choice the parent actually has
+   * -- make room, or buy more room -- rather than a silent no.
+   */
+  it('offers to make room when a saved book cannot be downloaded', async () => {
+    const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    (StoryAccessService.checkDownloadLimit as jest.Mock).mockResolvedValue({ atLimit: true });
+    (StoryAccessService.getSuggestedStoryToDelete as jest.Mock).mockResolvedValue({
+      storyId: 'wombat',
+      title: 'Snuggle Little Wombat',
+      localizedTitle: { en: 'Snuggle Little Wombat' },
+    });
+    mockGetCatalog.mockResolvedValue([REMOTE]);
+    mockAppState.favoriteStoryIds = ['remote-1'];
+    const tree = render(<StoryCatalogueScreen />);
+    await waitFor(() => expect(byTestId(tree, 'story-filter-bar').length).toBeGreaterThan(0));
+    openSaved(tree);
+    await waitFor(() => expect(byTestId(tree, 'story-cover-card-remote-1').length).toBeGreaterThan(0));
+
+    fireEvent.press(
+      byTestId(tree, 'story-cover-card-remote-1').find((n: any) => n.props.accessibilityRole === 'button'),
+    );
+
+    await waitFor(() => expect(alert).toHaveBeenCalled());
+    const buttons = alert.mock.calls[0][2] as { text: string; style?: string }[];
+    expect(buttons.some((button) => button.style === 'destructive')).toBe(true);
+    alert.mockRestore();
+  });
+
+  it('downloads a saved book when there is room for it', async () => {
+    (StoryAccessService.checkDownloadLimit as jest.Mock).mockResolvedValue({ atLimit: false });
+    mockGetCatalog.mockResolvedValue([REMOTE]);
+    mockAppState.favoriteStoryIds = ['remote-1'];
+    const tree = render(<StoryCatalogueScreen />);
+    await waitFor(() => expect(byTestId(tree, 'story-filter-bar').length).toBeGreaterThan(0));
+    openSaved(tree);
+    await waitFor(() => expect(byTestId(tree, 'story-cover-card-remote-1').length).toBeGreaterThan(0));
+
+    fireEvent.press(
+      byTestId(tree, 'story-cover-card-remote-1').find((n: any) => n.props.accessibilityRole === 'button'),
+    );
+
+    await waitFor(() => expect(StoryDownloadService.downloadStory).toHaveBeenCalled());
   });
 });

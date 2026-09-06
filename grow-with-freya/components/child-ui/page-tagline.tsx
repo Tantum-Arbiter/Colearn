@@ -8,15 +8,30 @@ import { useAccessibility } from '@/hooks/use-accessibility';
 import { SPACE_1 } from './tokens';
 
 /**
- * How far the arch bends. The line rides a circle whose radius is a little
- * over the block's width, so the words lift at the middle and settle at the
+ * How far the arch bends. The line rides a circle whose radius is a multiple
+ * of the block's width, so the words lift at the middle and settle at the
  * ends -- the curve of a storybook title page, and of the planet the words
  * sit against.
+ *
+ * Flatter than it first was. The ends of a steeper arc sit a long way below
+ * its crown, and every point of that drop is height the block has to carry to
+ * avoid cutting the words that ride there.
  */
-export const TAGLINE_ARCH_RADIUS_RATIO = 1.15;
+export const TAGLINE_ARCH_RADIUS_RATIO = 2.2;
+
+/** Room below the last baseline for descenders -- the y of "Everything". */
+const DESCENDER_ROOM = 0.32;
+
+/** How far the arch's ends drop below its crown, for a block of this width. */
+export function taglineArchRise(width: number): number {
+  const radius = width * TAGLINE_ARCH_RADIUS_RATIO;
+  const half = width / 2;
+
+  return radius - Math.sqrt(Math.max(radius * radius - half * half, 0));
+}
 const LINE_SIZE = { phone: 15, tablet: 19 } as const;
-/** The second line rides a touch lower, so the two read as one block. */
-const LINE_GAP = 1;
+/** How far the second crown sits below the first, as a share of the type. */
+const CROWN_TO_CROWN = 1.25;
 const STAR_SIZE = { phone: 12, tablet: 15 } as const;
 
 let taglineCount = 0;
@@ -42,12 +57,13 @@ interface ArchedLineProps {
  */
 function ArchedLine({ id, text, width, fontSize }: ArchedLineProps) {
   const radius = width * TAGLINE_ARCH_RADIUS_RATIO;
-  const half = width / 2;
-  const rise = radius - Math.sqrt(Math.max(radius * radius - half * half, 0));
-  // The crown of the arch carries the words, so the box need only be as tall
-  // as a line of type; the ends of the arc fall away below it, unpainted
+  const rise = taglineArchRise(width);
   const crownBaseline = fontSize;
-  const height = Math.ceil(fontSize * 1.3);
+  // Tall enough to hold the whole arc, not just its crown. A short line sits
+  // near the top and never notices; a long one reaches the ends, which fall
+  // `rise` below -- and a box sized for one line of type cuts them off there.
+  // "Everything you loved" was losing its E and its d to exactly that edge.
+  const height = Math.ceil(crownBaseline + rise + fontSize * DESCENDER_ROOM);
 
   return (
     <Svg testID={`${id}-arc`} width={width} height={height}>
@@ -67,6 +83,13 @@ function ArchedLine({ id, text, width, fontSize }: ArchedLineProps) {
       </SvgText>
     </Svg>
   );
+}
+
+/** What the second line's box has to be pulled up by to sit a line below. */
+function crownGap(width: number, fontSize: number): number {
+  const boxHeight = fontSize + taglineArchRise(width) + fontSize * DESCENDER_ROOM;
+
+  return CROWN_TO_CROWN * fontSize - boxHeight;
 }
 
 /**
@@ -89,7 +112,11 @@ export function PageTagline({ lines, width, testID = 'page-tagline' }: PageTagli
       accessibilityLabel={lines.join(' ')}
     >
       <ArchedLine id={`${uid}-1`} text={lines[0]} width={width} fontSize={fontSize} />
-      <View style={{ marginTop: LINE_GAP }}>
+      {/* The words ride the crown at the top of each box, so the arch's drop
+          would otherwise sit between the lines as dead space. Pulled up, the
+          second line nests under the first and the ends of one curve down
+          beside the start of the other -- which is the shape of the block. */}
+      <View style={{ marginTop: crownGap(width, fontSize) }}>
         <ArchedLine id={`${uid}-2`} text={lines[1]} width={width} fontSize={fontSize} />
       </View>
       <Ionicons name="star" size={isTablet ? STAR_SIZE.tablet : STAR_SIZE.phone} color={ACCENT_GOLD} style={styles.star} />

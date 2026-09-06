@@ -11,11 +11,11 @@ import { CelestialBackground } from '@/components/child-ui/celestial-background'
 import { PlanetHeaderArtwork } from '@/components/child-ui/planet-header-artwork';
 import { CircleActionButton } from '@/components/child-ui/circle-action-button';
 import { PageTitle } from '@/components/child-ui/page-title';
+import { PageTagline } from '@/components/child-ui/page-tagline';
 import { SectionHeading } from '@/components/child-ui/section-heading';
 import { navClearance } from '@/components/child-ui/child-bottom-navigation';
 import {
   COVER_GRID_GAP,
-  SPACE_1,
   SPACE_2,
   SPACE_3,
   SPACE_4,
@@ -31,7 +31,6 @@ import { BadgeCategoryBar } from './badge-category-bar';
 import { BadgeCard } from './badge-card';
 import { BadgeDetailSheet } from './badge-detail-sheet';
 
-const LAVENDER_TEXT = 'rgba(199, 186, 255, 0.95)';
 const MILESTONE_COLUMNS = 3;
 const BADGE_COLUMNS_PHONE = 2;
 const BADGE_COLUMNS_TABLET = 4;
@@ -84,19 +83,32 @@ export function ProgressScreen({ onBack, onRecommend, onDetailVisibleChange, emb
   const body = (
     <>
 
-      <View style={[styles.headerRow, { marginTop: insets.top + SPACE_2, marginHorizontal: margin }]}>
+      <View
+        style={[
+          styles.headerRow,
+          {
+            marginTop: insets.top + (isTablet ? SPACE_2 : 0),
+            marginHorizontal: margin,
+          },
+        ]}
+      >
         <CircleActionButton type="back" onPress={onBack} accessibilityLabel={t('common.back')} />
         <View style={styles.titleWrapper}>
           <PageTitle title={t('progress.title')} testID="progress-title" />
-          <Text style={[styles.subtitle, { fontSize: scaledFontSize(17) }]} testID="progress-subtitle">
-            {t('progress.subtitle')}
-          </Text>
         </View>
         <CircleActionButton
           type="audio"
           muted={isMuted}
           onPress={() => { void toggleMute(); }}
           accessibilityLabel={t('catalogue.sound')}
+        />
+      </View>
+
+      <View style={[styles.tagline, { marginHorizontal: margin }]}>
+        <PageTagline
+          testID="progress-tagline"
+          lines={[t('progress.tagline.one'), t('progress.tagline.two')]}
+          width={contentWidth}
         />
       </View>
 
@@ -162,21 +174,19 @@ const styles = StyleSheet.create({
   fill: {
     flex: 1,
   },
+  // matches the catalogue's header exactly: the same top margin, the same
+  // centred controls and the same absence of padding beneath, so the title and
+  // its tagline sit at one height across every journey area
   headerRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     zIndex: 10,
-    paddingBottom: SPACE_3,
   },
   titleWrapper: {
     flex: 1,
-    gap: SPACE_1,
   },
-  subtitle: {
-    color: LAVENDER_TEXT,
-    fontFamily: Fonts.primary,
-    fontWeight: '600',
-    textAlign: 'center',
+  tagline: {
+    zIndex: 10,
   },
   scroll: {
     flex: 1,

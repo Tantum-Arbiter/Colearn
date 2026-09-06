@@ -36,7 +36,14 @@ import { PageTitle } from '@/components/child-ui/page-title';
 import { PageTagline } from '@/components/child-ui/page-tagline';
 import { SectionHeading } from '@/components/child-ui/section-heading';
 import { JourneyShell } from '@/components/child-ui/journey-shell';
-import { ChildNavItemId, navClearance } from '@/components/child-ui/child-bottom-navigation';
+import { ChildNavItemId, navClearance, navItemCentre } from '@/components/child-ui/child-bottom-navigation';
+import { ScreenTimeGlance } from '@/components/home/screen-time-glance';
+import { useScreenTimeAllowance } from '@/hooks/use-screen-time-allowance';
+import { useTimeOfDay } from '@/hooks/use-time-of-day';
+import { isScreenTimeExceeded } from '@/constants/screen-time-ring';
+import { CHILD_UI_MOTION, motionDuration } from '@/constants/child-ui-motion';
+import { glanceCloseTimeline } from '@/constants/screen-time-glance-timeline';
+import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import {
   COVER_GRID_GAP,
   RADIUS_CONTROL,
@@ -52,6 +59,7 @@ import {
   CatalogueMode,
   CatalogueStory,
   CatalogueTheme,
+  buildSavedRows,
   buildShelves,
   entryMatchesMode,
   filterByTheme,
@@ -67,12 +75,27 @@ import { FILTER_PILL_ICONS } from './story-filter-pill';
 import { FeaturedStoryCard } from './featured-story-card';
 import { StoryCoverCard } from './story-cover-card';
 import { StoryRow } from './story-row';
+import { SavedActivityCard } from './saved-activity-card';
+import { SavedSongCard } from './saved-song-card';
+import { getAllPracticeSongs, type PracticeSong } from '@/services/music-asset-registry';
+import { ALL_LEARNING_ACTIVITIES, type LearningActivity } from '@/data/learning-activities';
+import { useActivityTransition } from '@/contexts/ActivityTransitionContext';
 
 // The finer themes behind Filter. Learning and Music are tiles, not pills
 const FILTER_TAG_SET: StoryFilterTag[] = [
   'bedtime', 'adventure', 'calming', 'family', 'creativity', 'animals',
   'friendship', 'nature', 'fantasy', 'counting', 'emotions', 'silly', 'rhymes',
 ];
+
+/** Each browsing area is headed by its own two arched lines. */
+const TAGLINE_LINES: Record<'home' | 'library' | 'saved' | 'screensafe', (t: (key: string) => string) => readonly [string, string]> = {
+  home: (t) => [t('catalogue.tagline.one'), t('catalogue.tagline.two')],
+  library: (t) => [t('catalogue.library.tagline.one'), t('catalogue.library.tagline.two')],
+  saved: (t) => [t('catalogue.saved.tagline.one'), t('catalogue.saved.tagline.two')],
+  // Screensafe opens a window rather than a section, so the bar it is pressed
+  // from never changes what is behind it -- this is only here for the type
+  screensafe: (t) => [t('catalogue.tagline.one'), t('catalogue.tagline.two')],
+};
 
 /** A book on a shelf row is a little narrower than one in the grid, so the next one shows. */
 const ROW_CARD_SCALE = 0.86;
@@ -88,20 +111,25 @@ export interface CatalogueSectionRequest {
 
 interface StoryCatalogueScreenProps {
   onStorySelect?: (story: Story) => void;
+  /** Opens the music journey, for a saved song tapped from the shelf. */
+  onNavigateToMusic?: () => void;
   initialMode?: CatalogueMode | null;
   sectionRequest?: CatalogueSectionRequest;
 }
 
-export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionRequest }: StoryCatalogueScreenProps) {
+export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionRequest, onNavigateToMusic }: StoryCatalogueScreenProps) {
   const insets = useSafeAreaInsets();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const { requestReturnToMainMenu, setShowLoginAfterOnboarding, getEffectiveTier } = useAppStore();
   const favoriteStoryIds = useAppStore((state) => state.favoriteStoryIds);
+  const favoriteActivityIds = useAppStore((state) => state.favoriteActivityIds);
+  const favoriteSongIds = useAppStore((state) => state.favoriteSongIds);
   const readStoryIds = useAppStore((state) => state.readStoryIds);
   const toggleFavoriteStory = useAppStore((state) => state.toggleFavoriteStory);
   const userAvatarType = useAppStore((state) => state.userAvatarType);
   const effectiveTier: SubscriptionTier = getEffectiveTier();
   const { startTransition, isTransitioning, selectedStoryId, shouldShowStoryReader, isExpandingToReader } = useStoryTransition();
+  const { startTransition: startActivityTransition } = useActivityTransition();
   const { isMuted, toggleMute } = useGlobalSound();
   const { isTablet, textSizeScale, scaledFontSize } = useAccessibility();
   const { i18n, t } = useTranslation();
@@ -122,6 +150,25 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
   const [shareUnlockedIds, setShareUnlockedIds] = useState<Set<string>>(new Set());
   const [navSection, setNavSection] = useState<ChildNavItemId>('home');
   const [badgeDetailOpen, setBadgeDetailOpen] = useState(false);
+  const [showScreenTime, setShowScreenTime] = useState(false);
+  const [navCollapsed, setNavCollapsed] = useState(false);
+  const screenTime = useScreenTimeAllowance();
+  const timeOfDay = useTimeOfDay();
+  const reduceMotion = useReducedMotion();
+  const navTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  const afterDelay = useCallback((ms: number, run: () => void) => {
+    if (ms <= 0) {
+      run();
+      return;
+    }
+    navTimers.current.push(setTimeout(run, ms));
+  }, []);
+
+  useEffect(() => () => {
+    navTimers.current.forEach(clearTimeout);
+    navTimers.current = [];
+  }, []);
   const [showSubscription, setShowSubscription] = useState(false);
 
   useEffect(() => {
@@ -231,6 +278,26 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
   const browsing = selectedTags.size > 0;
 
   // The shelves under the featured panel, laid out afresh each time the app opens
+  const savedStories = useMemo(
+    () => catalogueStories.filter((story) => favoriteStoryIds.includes(story.id)),
+    [catalogueStories, favoriteStoryIds],
+  );
+
+  const savedActivities = useMemo(
+    () => ALL_LEARNING_ACTIVITIES.filter((activity) => favoriteActivityIds.includes(activity.id)),
+    [favoriteActivityIds],
+  );
+
+  const savedSongs = useMemo(
+    () => getAllPracticeSongs().filter((song) => favoriteSongIds.includes(song.id)),
+    [favoriteSongIds],
+  );
+
+  const savedRows = useMemo(
+    () => (navSection === 'saved' ? buildSavedRows(savedStories) : []),
+    [navSection, savedStories],
+  );
+
   const shelves = useMemo(
     () => (navSection !== 'home' || browsing
       ? []
@@ -262,12 +329,34 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
     requestReturnToMainMenu();
   }, [requestReturnToMainMenu]);
 
+  /**
+   * Screensafe is a control, not a destination: it opens the usage window over
+   * whatever the child was looking at and hands them back to it on close, so
+   * the section they were browsing is deliberately left where it was.
+   */
   const handleNavSelect = useCallback((id: ChildNavItemId) => {
+    if (id === 'screensafe') {
+      // the bar gathers into its own middle first, and the window opens out of
+      // the space the ring leaves -- one movement rather than two overlapping
+      setNavCollapsed(true);
+      afterDelay(motionDuration(CHILD_UI_MOTION.navCollapse, reduceMotion), () => setShowScreenTime(true));
+      return;
+    }
     if (id === 'home') {
       setStoryMode(null);
       setSelectedTags(new Set());
       }
     setNavSection(id);
+  }, [afterDelay, reduceMotion]);
+
+  /** The bar comes back out of the splash, which lands before the close ends. */
+  const handleScreenTimeCloseStart = useCallback(() => {
+    afterDelay(reduceMotion ? 0 : glanceCloseTimeline().splash.at, () => setNavCollapsed(false));
+  }, [afterDelay, reduceMotion]);
+
+  const handleScreenTimeClosed = useCallback(() => {
+    setShowScreenTime(false);
+    setNavCollapsed(false);
   }, []);
 
   const handleRecommend = useCallback((tag: StoryFilterTag | null) => {
@@ -552,6 +641,98 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
     ].filter((section) => section.stories.length > 0);
   }, [navSection, catalogueStories, readStoryIds, favoriteStoryIds]);
 
+  /**
+   * A saved activity opens the same way it would from the learning screen --
+   * through the shared transition, which owns the preview and the game after
+   * it. The card has no measured position here, so the transition begins from
+   * the middle of the screen rather than from a card that is about to leave.
+   */
+  const handleOpenActivity = useCallback((activity: LearningActivity) => {
+    startActivityTransition(
+      {
+        id: activity.id,
+        nameKey: activity.nameKey,
+        descKey: activity.descKey,
+        ageKey: activity.ageKey,
+        icon: activity.icon,
+        color: activity.color,
+      },
+      { x: windowWidth / 2, y: windowHeight / 2, width: 0, height: 0 },
+    );
+  }, [startActivityTransition, windowWidth, windowHeight]);
+
+  const savedActivitiesRow = savedActivities.length > 0 ? (
+    <StoryRow
+      testID="saved-row-activities"
+      heading={t('catalogue.saved.activities')}
+      stories={savedActivities as unknown as CatalogueStory[]}
+      cardWidth={rowCardWidth}
+      edgeInset={isLandscapeTablet ? 0 : margin}
+      renderCard={(entry, width) => (
+        <SavedActivityCard
+          key={(entry as unknown as LearningActivity).id}
+          activity={entry as unknown as LearningActivity}
+          width={width}
+          onOpen={handleOpenActivity}
+        />
+      )}
+    />
+  ) : null;
+
+  /**
+   * A saved song opens the practice screen it belongs to. The instrument is
+   * the child's to choose there -- a song is a melody, not a fixed pairing.
+   */
+  const handleOpenSong = useCallback((_song: PracticeSong) => {
+    onNavigateToMusic?.();
+  }, [onNavigateToMusic]);
+
+  const savedSongsRow = savedSongs.length > 0 ? (
+    <StoryRow
+      testID="saved-row-songs"
+      heading={t('catalogue.saved.songs')}
+      stories={savedSongs as unknown as CatalogueStory[]}
+      cardWidth={rowCardWidth}
+      edgeInset={isLandscapeTablet ? 0 : margin}
+      renderCard={(entry, width) => (
+        <SavedSongCard
+          key={(entry as unknown as PracticeSong).id}
+          song={entry as unknown as PracticeSong}
+          width={width}
+          onOpen={handleOpenSong}
+        />
+      )}
+    />
+  ) : null;
+
+  const savedView = savedRows.length === 0 && savedActivities.length === 0 && savedSongs.length === 0 ? (
+    <View style={styles.noResultsContainer} testID="saved-empty">
+      <Text style={[styles.noResultsText, { fontSize: scaledFontSize(16) }]}>
+        {t('catalogue.saved.empty')}
+      </Text>
+    </View>
+  ) : (
+    <View testID="saved-shelves" style={styles.shelves}>
+      {savedActivitiesRow}
+      {savedSongsRow}
+      {savedRows.map((shelf) => {
+        if (shelf.kind !== 'row' && shelf.kind !== 'more') return null;
+        const key = shelf.kind === 'more' ? 'more' : shelf.tag;
+        return (
+          <StoryRow
+            key={key}
+            testID={`saved-row-${key}`}
+            heading={shelf.kind === 'more' ? t('catalogue.moreStories') : rowHeading(shelf.tag)}
+            stories={shelf.stories}
+            cardWidth={rowCardWidth}
+            edgeInset={isLandscapeTablet ? 0 : margin}
+            renderCard={renderRowCard(shelf.stories)}
+          />
+        );
+      })}
+    </View>
+  );
+
   const librarySectionsView = (
     <>
       {librarySections.map((section) => (
@@ -570,6 +751,8 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
       selected={navSection}
       onSelect={handleNavSelect}
       navigationHidden={navSection === 'progress' ? badgeDetailOpen : interactionLocked}
+      screenTime={screenTime}
+      navigationCollapsed={navCollapsed}
     >
       <CelestialBackground>
         <PlanetHeaderArtwork />
@@ -605,7 +788,9 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
                       ? t(`storyModes.${storyMode}`)
                       : navSection === 'library'
                         ? t('childUi.nav.library')
-                        : t('stories.title')
+                        : navSection === 'saved'
+                          ? t('childUi.nav.saved')
+                          : t('stories.title')
                   }
                 />
               </View>
@@ -616,12 +801,9 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
                 accessibilityLabel={t('catalogue.sound')}
               />
             </View>
-            {navSection === 'home' && !storyMode && (
+            {!storyMode && (
               <View style={[styles.tagline, { marginHorizontal: margin }]}>
-                <PageTagline
-                  lines={[t('catalogue.tagline.one'), t('catalogue.tagline.two')]}
-                  width={contentWidth}
-                />
+                <PageTagline lines={TAGLINE_LINES[navSection](t)} width={contentWidth} />
               </View>
             )}
 
@@ -647,7 +829,9 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
                 />
               </View>
 
-              {catalogueStories.length === 0 ? (
+              {navSection === 'saved' ? (
+                savedView
+              ) : catalogueStories.length === 0 ? (
                 <View style={styles.noResultsContainer}>
                   <Text style={[styles.noResultsText, { fontSize: scaledFontSize(16) }]}>
                     {t('catalogue.noResults')}
@@ -679,6 +863,21 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
             </>
           )}
         </SectionCrossfade>
+
+        <ScreenTimeGlance
+          visible={showScreenTime}
+          timeOfDay={timeOfDay}
+          onClose={handleScreenTimeClosed}
+          onCloseStart={handleScreenTimeCloseStart}
+          origin={navItemCentre('screensafe', windowWidth, windowHeight, insets.bottom, isTablet)}
+          exceeded={
+            screenTime
+              ? isScreenTimeExceeded(screenTime.usageSeconds, screenTime.limitSeconds)
+              : false
+          }
+          usageSeconds={screenTime?.usageSeconds ?? 0}
+          limitSeconds={screenTime?.limitSeconds ?? 0}
+        />
 
         <SubscriptionOverlay
           visible={showSubscription}

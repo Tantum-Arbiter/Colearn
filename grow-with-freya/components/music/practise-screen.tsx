@@ -47,6 +47,7 @@ import {
   getPracticeSongsForInstrument,
 } from '@/services/music-asset-registry';
 import type { PracticeSong, PracticeSongDifficulty } from '@/services/music-asset-registry';
+import { useAppStore } from '@/store/app-store';
 import type { MusicChallenge } from '@/types/story';
 import { Fonts } from '@/constants/theme';
 import { useGlobalSound } from '@/contexts/global-sound-context';
@@ -100,6 +101,8 @@ export function PractiseScreen({ onBack, isActive = false }: PractiseScreenProps
     }
   );
   const [selectedSong, setSelectedSong] = useState<PracticeSong | null>(null);
+  const favoriteSongIds = useAppStore((state) => state.favoriteSongIds);
+  const toggleFavoriteSong = useAppStore((state) => state.toggleFavoriteSong);
   const [showMusicSheet, setShowMusicSheet] = useState(false);
   const [instrumentIsRotated, setInstrumentIsRotated] = useState(false);
   const [musicUiHidden, setMusicUiHidden] = useState(false);
@@ -657,6 +660,23 @@ export function PractiseScreen({ onBack, isActive = false }: PractiseScreenProps
               <Text style={[styles.songName, { fontSize: songFontSize }, isLocked && styles.songNameLocked]}>
                 {t(item.nameKey)}
               </Text>
+              {!isLocked ? (
+                <Pressable
+                  testID={`song-favourite-${item.id}`}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('music.saveSong')}
+                  accessibilityState={{ selected: favoriteSongIds.includes(item.id) }}
+                  hitSlop={10}
+                  onPress={() => toggleFavoriteSong(item.id)}
+                  style={styles.songHeart}
+                >
+                  <Ionicons
+                    name={favoriteSongIds.includes(item.id) ? 'heart' : 'heart-outline'}
+                    size={20}
+                    color={favoriteSongIds.includes(item.id) ? '#FF6B6B' : 'rgba(255,255,255,0.55)'}
+                  />
+                </Pressable>
+              ) : null}
               {isLocked ? (
                 <View style={styles.lockBadge}>
                   <Ionicons name="lock-closed" size={14} color="#FFFFFF" />
@@ -780,6 +800,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     marginLeft: 8,
+  },
+  songHeart: {
+    paddingHorizontal: 4,
   },
   songCardHeader: {
     flexDirection: 'row',

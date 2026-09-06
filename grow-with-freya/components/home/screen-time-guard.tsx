@@ -9,7 +9,6 @@ const SHIELD =
 const TICKS =
   'M 12 7.0 L 12 7.9 M 16.4 11.2 L 15.5 11.2 M 12 15.4 L 12 14.5 M 7.6 11.2 L 8.5 11.2';
 const HANDS = 'M 12 11.2 L 12 8.6 M 12 11.2 L 14.3 13.1';
-const CHECK = 'M 16.1 17.4 L 17.2 18.4 L 19.1 16.3';
 
 export interface ScreenTimeGuardProps {
   size: number;
@@ -38,8 +37,6 @@ export const ScreenTimeGuard = memo(function ScreenTimeGuard({
         <Circle cx={12} cy={11.2} r={4.9} />
         <Path d={TICKS} />
         <Path d={HANDS} />
-        <Circle cx={17.6} cy={17.4} r={3.3} />
-        <Path d={CHECK} />
       </G>
     </Svg>
   );
