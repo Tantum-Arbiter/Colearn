@@ -139,6 +139,19 @@ describe('SubscriptionOverlay', () => {
     expect(images.length).toBeGreaterThanOrEqual(5);
   });
 
+  it('offers Basic in the highlighted card and points at Premium above it', () => {
+    const json = JSON.stringify(renderOverlay().toJSON());
+
+    expect(json).toContain('subscription.trial.planName');
+    expect(json).toContain('subscription.trial.upgrade');
+  });
+
+  it('no longer sells the trial as more books arriving on day five', () => {
+    const json = JSON.stringify(renderOverlay().toJSON());
+
+    expect(json).not.toContain('subscription.trial.benefitMoreLater');
+  });
+
   it('illustrates the premium card', () => {
     const tree = renderOverlay();
 
@@ -153,11 +166,11 @@ describe('SubscriptionOverlay', () => {
    * to be on the screen or the offer misrepresents itself in one direction or
    * the other.
    */
-  it('promises books today and the rest when the trial ends', () => {
+  it('promises books today, and names Premium as where the rest live', () => {
     const json = JSON.stringify(renderOverlay().toJSON());
 
     expect(json).toContain('subscription.trial.benefitStories');
-    expect(json).toContain('subscription.trial.benefitMoreLater');
+    expect(json).toContain('subscription.trial.upgrade');
   });
 
   it('crowns the most-popular badge', () => {
@@ -276,25 +289,21 @@ describe('SubscriptionOverlay plan picker', () => {
    * template would quietly appear on all three, and the annual price is the
    * one place the offer must not imply a free period.
    */
-  it.each(['monthly_basic', 'monthly_premium'])('offers the trial on %s', (planId) => {
+  it('offers the trial on Basic', () => {
     const tree = renderOverlay();
 
     press(tree, 'unlock-plan-toggle');
-    const note = findByTestId(tree, `plan-trial-note-${planId}`);
 
-    expect(note.length).toBeGreaterThan(0);
+    expect(findByTestId(tree, 'plan-trial-note-monthly_basic').length).toBeGreaterThan(0);
   });
 
-  it.each([
-    ['monthly_basic', 'subscription.planBasic'],
-    ['monthly_premium', 'subscription.planPremium'],
-  ])('sets the %s trial note beside the plan name, not under the price', (planId, nameKey) => {
+  it('sets the trial note beside the plan name, not under the price', () => {
     const tree = renderOverlay();
 
     press(tree, 'unlock-plan-toggle');
-    const row = textIn(findByTestId(tree, `plan-name-row-${planId}`)[0]);
+    const row = textIn(findByTestId(tree, 'plan-name-row-monthly_basic')[0]);
 
-    expect(row).toContain(nameKey);
+    expect(row).toContain('subscription.planBasic');
     expect(row).toContain('subscription.trial.includesTrial');
   });
 
@@ -337,6 +346,7 @@ describe('SubscriptionOverlay plan picker', () => {
     const tree = renderOverlay();
 
     press(tree, 'unlock-plan-toggle');
+    press(tree, 'plan-card-monthly_premium');
     const premium = textIn(findByTestId(tree, 'plan-card-monthly_premium')[0]);
 
     expect(premium).toContain('subscription.detailAllStories');
@@ -351,12 +361,17 @@ describe('SubscriptionOverlay plan picker', () => {
     expect(findByTestId(tree, `plan-exclusion-${planId}-0`)).toHaveLength(0);
   });
 
-  it('does not offer a trial on the annual plan', () => {
+  /**
+   * Basic is the only plan with a trial. Premium and Annual are bought
+   * outright, and the negative assertion is what stops a shared card template
+   * from quietly promising a free period on all three.
+   */
+  it.each(['monthly_premium', 'yearly'])('does not offer a trial on %s', (planId) => {
     const tree = renderOverlay();
 
     press(tree, 'unlock-plan-toggle');
 
-    expect(findByTestId(tree, 'plan-trial-note-yearly')).toHaveLength(0);
+    expect(findByTestId(tree, `plan-trial-note-${planId}`)).toHaveLength(0);
   });
 
   it('leaves the annual plan at its price with nothing added', () => {
@@ -369,12 +384,17 @@ describe('SubscriptionOverlay plan picker', () => {
     expect(annual).not.toContain('subscription.trial.includesTrial');
   });
 
-  it('starts with premium chosen, so the trial button buys premium', () => {
+  /**
+   * The trial belongs to Basic, so the button that starts it has to buy Basic.
+   * If the default drifted back to Premium the screen would advertise a free
+   * trial and charge for a plan that has none.
+   */
+  it('starts with Basic chosen, so the trial button buys the plan with the trial', () => {
     const tree = renderOverlay();
 
     press(tree, 'unlock-plan-toggle');
-    const premium = findByTestId(tree, 'plan-card-monthly_premium')[0];
+    const basic = findByTestId(tree, 'plan-card-monthly_basic')[0];
 
-    expect(premium.props.accessibilityState?.selected).toBe(true);
+    expect(basic.props.accessibilityState?.selected).toBe(true);
   });
 });

@@ -40,7 +40,7 @@ function buildPlans(
       details: [t('subscription.detail50Stories'), t('subscription.detailAllLearning'), t('subscription.detailLimitedSongs'), t('subscription.detailSyncDevices')],
       // the two things Premium ticks and Basic does not -- the actual choice
       exclusions: [t('subscription.detailAllSongs'), t('subscription.detailAllInstruments')] },
-    { id: 'monthly_premium', name: t('subscription.planPremium'), price: premiumPrice, period: t('subscription.perMonth'), badge: t('subscription.mostRecommended'), hasTrial: true,
+    { id: 'monthly_premium', name: t('subscription.planPremium'), price: premiumPrice, period: t('subscription.perMonth'), badge: t('subscription.mostRecommended'),
       details: [t('subscription.detailAllStories'), t('subscription.detailDownload100'), t('subscription.detailAllSongs'), t('subscription.detailAllInstruments')] },
     { id: 'yearly', name: t('subscription.planAnnual'), price: annualPrice, period: t('subscription.perYear'), badge: t('subscription.percentOff'), originalPrice: annualOriginal,
       details: [t('subscription.detailEverythingPremium'), t('subscription.detailSave25')] },
@@ -49,7 +49,7 @@ function buildPlans(
 
 const ANIM_MS = 350;
 
-const TRIAL_FALLBACK_PRICE = '£9.99 / $9.99';
+const TRIAL_FALLBACK_PRICE = '£5.99 / $5.99';
 
 const TRIAL_STEPS = [
   {
@@ -76,7 +76,7 @@ const TRIAL_LINK_DOTS = 7;
 
 const TRIAL_BENEFIT_KEYS = [
   'subscription.trial.benefitStories',
-  'subscription.trial.benefitMoreLater',
+  'subscription.detailAllLearning',
   'subscription.trial.benefitMusic',
   'subscription.trial.benefitNoAds',
   'subscription.trial.benefitDevices',
@@ -104,7 +104,7 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { width: screenW, height: screenH } = useWindowDimensions();
-  const [selectedPlan, setSelectedPlan] = useState<PlanId>('monthly_premium');
+  const [selectedPlan, setSelectedPlan] = useState<PlanId>('monthly_basic');
   const [livePrices, setLivePrices] = useState<Record<string, PlanPricing | null> | null>(null);
   const plans = useMemo(() => buildPlans(t, livePrices), [t, livePrices]);
   const [legalPage, setLegalPage] = useState<'privacy' | 'terms' | null>(null);
@@ -153,7 +153,7 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
   const bdStyle = useAnimatedStyle(() => ({ opacity: backdropOpacity.value }));
   const legalStyle = useAnimatedStyle(() => ({ transform: [{ translateX: legalSlideX.value }] }));
 
-  const trialPrice = livePrices?.monthly_premium?.priceString ?? TRIAL_FALLBACK_PRICE;
+  const trialPrice = livePrices?.monthly_basic?.priceString ?? TRIAL_FALLBACK_PRICE;
 
   if (!visible) return null;
 
@@ -296,6 +296,10 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
                   ))}
                 </View>
               </View>
+
+              <Text style={st.upgradeNote} testID="trial-upgrade">
+                {t('subscription.trial.upgrade')}
+              </Text>
 
               <Pressable
                 testID="trial-other-plans"
@@ -473,7 +477,8 @@ const st = StyleSheet.create({
   popularBadge: { position: 'absolute', top: -13, left: 16, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#FFC61A', paddingHorizontal: 12, paddingVertical: 5, borderRadius: 999 },
   popularText: { fontFamily: Fonts.rounded, fontSize: 11, fontWeight: '800', color: '#4A2E00', letterSpacing: 0.6 },
   premiumRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  otherPlans: { marginTop: 12, paddingTop: 10, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.10)' },
+  upgradeNote: { marginTop: 12, paddingTop: 10, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.10)', fontFamily: Fonts.rounded, fontSize: 13, fontWeight: '700', color: '#FFC61A', textAlign: 'center' },
+  otherPlans: { marginTop: 8 },
   otherPlansText: { fontFamily: Fonts.sans, fontSize: 12.5, color: 'rgba(255,255,255,0.62)', textAlign: 'center', textDecorationLine: 'underline' },
   premiumArt: { width: 138, height: 176, marginLeft: -10, marginVertical: -14 },
   premiumCopy: { flex: 1.1, justifyContent: 'center' },
