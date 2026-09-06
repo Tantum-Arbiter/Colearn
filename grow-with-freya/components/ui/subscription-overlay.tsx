@@ -37,7 +37,7 @@ function buildPlans(
 
   return [
     { id: 'monthly_basic', name: t('subscription.planBasic'), price: basicPrice, period: t('subscription.perMonth'), hasTrial: true,
-      details: [t('subscription.detailAllStories'), t('subscription.detailAllLearning'), t('subscription.detailDownload50'), t('subscription.detailLimitedSongs'), t('subscription.detailSyncDevices')],
+      details: [t('subscription.detail50Stories'), t('subscription.detailAllLearning'), t('subscription.detailLimitedSongs'), t('subscription.detailSyncDevices')],
       // the two things Premium ticks and Basic does not -- the actual choice
       exclusions: [t('subscription.detailAllSongs'), t('subscription.detailAllInstruments')] },
     { id: 'monthly_premium', name: t('subscription.planPremium'), price: premiumPrice, period: t('subscription.perMonth'), badge: t('subscription.mostRecommended'), hasTrial: true,

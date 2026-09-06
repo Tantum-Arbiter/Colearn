@@ -316,6 +316,32 @@ describe('SubscriptionOverlay plan picker', () => {
     expect(basic).toContain('subscription.detailAllInstruments');
   });
 
+  /**
+   * Basic is capped at 50 stories and Premium is what lifts the cap, so the
+   * download line Basic used to carry ("up to 50 books") said the same thing
+   * twice and in the wrong currency -- books, not stories.
+   */
+  it('caps Basic at 50 stories and drops its download line', () => {
+    const tree = renderOverlay();
+
+    press(tree, 'unlock-plan-toggle');
+    press(tree, 'plan-card-monthly_basic');
+    const basic = textIn(findByTestId(tree, 'plan-card-monthly_basic')[0]);
+
+    expect(basic).toContain('subscription.detail50Stories');
+    expect(basic).not.toContain('subscription.detailDownload50');
+    expect(basic).not.toContain('subscription.detailAllStories');
+  });
+
+  it('is what unlocks every book on premium', () => {
+    const tree = renderOverlay();
+
+    press(tree, 'unlock-plan-toggle');
+    const premium = textIn(findByTestId(tree, 'plan-card-monthly_premium')[0]);
+
+    expect(premium).toContain('subscription.detailAllStories');
+  });
+
   it.each(['monthly_premium', 'yearly'])('crosses nothing out on %s', (planId) => {
     const tree = renderOverlay();
 

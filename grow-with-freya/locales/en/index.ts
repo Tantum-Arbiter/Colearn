@@ -1747,7 +1747,8 @@ export default {
     uspNoAds: 'No ads, ever -safe for little ones',
     uspLanguages: 'Available in 14 languages',
     // Plan details -Basic
-    detailAllStories: 'All stories unlocked',
+    detailAllStories: 'All books unlocked',
+    detail50Stories: '50 stories unlocked',
     detailAllLearning: 'All learning activities unlocked',
     detailDownload50: 'Download up to 50 books',
     detailLimitedSongs: 'Limited songs access',
