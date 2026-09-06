@@ -83,6 +83,19 @@ const TRIAL_BENEFIT_KEYS = [
 
 const TRIAL_PREMIUM_ART = require('../../assets/images/subscription/premium-music.webp');
 
+/** The hero sky's own stars -- the design's are lit, and a glyph cannot be. */
+const STAR_SMALL = require('../../assets/images/home-sky/star-small.webp');
+const STAR_MEDIUM = require('../../assets/images/home-sky/star-medium.webp');
+const STAR_LARGE = require('../../assets/images/home-sky/star-large.webp');
+
+const TRIAL_STARS = [
+  { source: STAR_SMALL, size: 13 },
+  { source: STAR_MEDIUM, size: 23 },
+  { source: STAR_LARGE, size: 40 },
+  { source: STAR_MEDIUM, size: 23 },
+  { source: STAR_SMALL, size: 13 },
+];
+
 interface Props { visible: boolean; onClose: () => void; }
 
 export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ visible, onClose }: Props) {
@@ -158,16 +171,19 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
         <View style={st.planRow}>
           <View style={[st.radio, sel && st.radioSel]}>{sel ? <View style={st.radioDot} /> : null}</View>
           <View style={{ flex: 1 }}>
-            <Text style={st.planName}>{plan.name}</Text>
+            <View style={st.planNameRow} testID={`plan-name-row-${plan.id}`}>
+              <Text style={st.planName}>{plan.name}</Text>
+              {plan.hasTrial ? (
+                <Text style={st.planTrialNote} testID={`plan-trial-note-${plan.id}`}>
+                  {t('subscription.trial.includesTrial')}
+                </Text>
+              ) : null}
+            </View>
             <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
               <Text style={st.planPrice}>{plan.price}<Text style={st.planPeriod}>{plan.period}</Text></Text>
               {plan.originalPrice ? <Text style={st.planOrigPrice}>{plan.originalPrice}</Text> : null}
             </View>
-            {plan.hasTrial ? (
-              <Text style={st.planTrialNote} testID={`plan-trial-note-${plan.id}`}>
-                {t('subscription.trial.includesTrial')}
-              </Text>
-            ) : null}
+
           </View>
         </View>
         {sel ? <View style={st.planDetails}>
@@ -203,12 +219,15 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
             <Ionicons name="close" size={20} color="#FFFFFF" />
           </Pressable>
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={st.scroll}>
-            <View style={st.starRow}>
-              <Ionicons name="star" size={9} color="#FFE79A" />
-              <Ionicons name="star" size={15} color="#FFD54A" />
-              <Ionicons name="star" size={26} color="#FFC61A" />
-              <Ionicons name="star" size={15} color="#FFD54A" />
-              <Ionicons name="star" size={9} color="#FFE79A" />
+            <View style={st.starRow} testID="trial-star-cluster">
+              {TRIAL_STARS.map((star, i) => (
+                <Image
+                  key={i}
+                  source={star.source}
+                  style={{ width: star.size, height: star.size }}
+                  resizeMode="contain"
+                />
+              ))}
             </View>
             <Text style={st.header}>{t('subscription.trial.title')}</Text>
             <Text style={st.sub}>{t('subscription.trial.subtitle', { price: trialPrice })}</Text>
@@ -406,7 +425,8 @@ const st = StyleSheet.create({
   planName: { fontSize: 16, fontWeight: '700', color: '#fff', fontFamily: Fonts.rounded, textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3 },
   planOrigPrice: { fontSize: 16, fontWeight: '600', color: 'rgba(255,255,255,0.45)', fontFamily: Fonts.rounded, textDecorationLine: 'line-through', marginTop: 2 },
   planPrice: { fontSize: 22, fontWeight: '800', color: '#FFD700', fontFamily: Fonts.rounded, marginTop: 2 },
-  planTrialNote: { fontSize: 12, fontWeight: '600', color: '#8FE3B0', fontFamily: Fonts.rounded, marginTop: 3 },
+  planNameRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8 },
+  planTrialNote: { fontSize: 12, fontWeight: '600', color: '#8FE3B0', fontFamily: Fonts.rounded },
   planPeriod: { fontSize: 14, fontWeight: '500', color: 'rgba(255,255,255,0.75)' },
   planDetails: { marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.1)', gap: 6 },
   detailRow: { flexDirection: 'row', alignItems: 'flex-start' },
@@ -417,7 +437,7 @@ const st = StyleSheet.create({
   legalRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 12, gap: 6 },
   legalLink: { fontSize: 12, color: 'rgba(255,255,255,0.5)', fontFamily: Fonts.sans, textDecorationLine: 'underline' },
   legalDot: { fontSize: 12, color: 'rgba(255,255,255,0.35)' },
-  starRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, marginBottom: 4 },
+  starRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, marginBottom: 2 },
   subBtnRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
   timeline: { flexDirection: 'row', alignItems: 'flex-start', borderWidth: 1.5, borderColor: 'rgba(255,198,26,0.55)', borderRadius: 20, backgroundColor: 'rgba(10,10,35,0.55)', paddingVertical: 18, paddingHorizontal: 10, marginBottom: 18 },
   timelineLink: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 44 },

@@ -126,6 +126,19 @@ describe('SubscriptionOverlay', () => {
     expect(findByTestId(tree, 'trial-link-2')).toHaveLength(0);
   });
 
+  /**
+   * The stars are the hero sky's own artwork rather than flat glyph stars --
+   * the design's are lit, and Ionicons cannot be.
+   */
+  it('crowns the page with the sky artwork, not glyph stars', () => {
+    const tree = renderOverlay();
+
+    const stars = findByTestId(tree, 'trial-star-cluster')[0];
+    const images = stars.findAll((n: any) => n.props?.source !== undefined);
+
+    expect(images.length).toBeGreaterThanOrEqual(5);
+  });
+
   it('illustrates the premium card', () => {
     const tree = renderOverlay();
 
@@ -248,6 +261,19 @@ describe('SubscriptionOverlay plan picker', () => {
     const note = findByTestId(tree, `plan-trial-note-${planId}`);
 
     expect(note.length).toBeGreaterThan(0);
+  });
+
+  it.each([
+    ['monthly_basic', 'subscription.planBasic'],
+    ['monthly_premium', 'subscription.planPremium'],
+  ])('sets the %s trial note beside the plan name, not under the price', (planId, nameKey) => {
+    const tree = renderOverlay();
+
+    press(tree, 'unlock-plan-toggle');
+    const row = textIn(findByTestId(tree, `plan-name-row-${planId}`)[0]);
+
+    expect(row).toContain(nameKey);
+    expect(row).toContain('subscription.trial.includesTrial');
   });
 
   it('does not offer a trial on the annual plan', () => {
