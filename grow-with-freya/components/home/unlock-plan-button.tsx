@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts } from '@/constants/theme';
 import { UNLOCK_PLAN } from '@/constants/unlock-plan';
+import { useTrialEligibility } from '@/hooks/use-trial-eligibility';
 
 export interface UnlockPlanButtonProps {
   onPress: () => void;
@@ -16,7 +17,8 @@ export const UnlockPlanButton = memo(function UnlockPlanButton({
   testID = 'unlock-plan-button',
 }: UnlockPlanButtonProps) {
   const { t } = useTranslation();
-  const label = t('subscription.startFreeTrial');
+  const trialAvailable = useTrialEligibility();
+  const label = t(trialAvailable ? 'subscription.startFreeTrial' : 'subscription.unlockPlan');
 
   return (
     <Pressable

@@ -542,9 +542,16 @@ jest.mock('react-native-purchases', () => ({
     getCustomerInfo: jest.fn().mockResolvedValue({ entitlements: { active: {} } }),
     restorePurchases: jest.fn().mockResolvedValue({ entitlements: { active: {} } }),
     addCustomerInfoUpdateListener: jest.fn(),
+    checkTrialOrIntroductoryPriceEligibility: jest.fn().mockResolvedValue({}),
   },
   LOG_LEVEL: { DEBUG: 4, INFO: 3, WARN: 2, ERROR: 1 },
   PURCHASES_ERROR_CODE: { PURCHASE_CANCELLED_ERROR: 1 },
+  INTRO_ELIGIBILITY_STATUS: {
+    INTRO_ELIGIBILITY_STATUS_UNKNOWN: 0,
+    INTRO_ELIGIBILITY_STATUS_INELIGIBLE: 1,
+    INTRO_ELIGIBILITY_STATUS_ELIGIBLE: 2,
+    INTRO_ELIGIBILITY_STATUS_NO_INTRO_OFFER_EXISTS: 3,
+  },
 }));
 
 // Mock console methods to reduce noise in tests

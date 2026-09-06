@@ -12,6 +12,7 @@ import { Fonts } from '@/constants/theme';
 import { PrivacyPolicyContent } from '@/components/account/privacy-policy-screen';
 import { TermsConditionsContent } from '@/components/account/terms-conditions-screen';
 import { useAppStore } from '@/store/app-store';
+import { useTrialEligibility } from '@/hooks/use-trial-eligibility';
 import { mapPlanIdToPackage, purchasePackage, getOfferings, getOfferingPrices, type PlanPricing } from '@/services/subscription-service';
 
 type PlanId = 'monthly_basic' | 'monthly_premium' | 'yearly';
@@ -40,7 +41,7 @@ function buildPlans(
       details: [t('subscription.detail50Stories'), t('subscription.detailAllLearning'), t('subscription.detailLimitedSongs'), t('subscription.detailSyncDevices')],
       // the two things Premium ticks and Basic does not -- the actual choice
       exclusions: [t('subscription.detailAllSongs'), t('subscription.detailAllInstruments')] },
-    { id: 'monthly_premium', name: t('subscription.planPremium'), price: premiumPrice, period: t('subscription.perMonth'), badge: t('subscription.mostRecommended'),
+    { id: 'monthly_premium', name: t('subscription.planPremium'), price: premiumPrice, period: t('subscription.perMonth'), badge: t('subscription.mostPopular'),
       details: [t('subscription.detailAllStories'), t('subscription.detailDownload100'), t('subscription.detailAllSongs'), t('subscription.detailAllInstruments')] },
     { id: 'yearly', name: t('subscription.planAnnual'), price: annualPrice, period: t('subscription.perYear'), badge: t('subscription.percentOff'), originalPrice: annualOriginal,
       details: [t('subscription.detailEverythingPremium'), t('subscription.detailSave25')] },
@@ -110,6 +111,7 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
   const [legalPage, setLegalPage] = useState<'privacy' | 'terms' | null>(null);
   const [plansOpen, setPlansOpen] = useState(false);
   const { isGuestMode, setGuestMode, setShowLoginAfterOnboarding } = useAppStore();
+  const trialAvailable = useTrialEligibility();
   const [isPurchasing, setIsPurchasing] = useState(false);
   const translateY = useSharedValue(screenH);
   const backdropOpacity = useSharedValue(0);
@@ -271,7 +273,7 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
             <View style={st.premiumCard} testID="trial-premium-card">
               <View style={st.popularBadge}>
                 <MaterialCommunityIcons name="crown" size={15} color="#4A2E00" />
-                <Text style={st.popularText}>{t('subscription.trial.mostPopular')}</Text>
+                <Text style={st.popularText}>{t('subscription.trial.mostRecommended')}</Text>
               </View>
               <View style={st.premiumRow}>
                 <Image
@@ -386,7 +388,9 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
                 <ActivityIndicator color="#fff" />
               ) : (
                 <View style={st.subBtnRow}>
-                  <Text style={st.subBtnText}>{isGuestMode ? t('subscription.signInToSubscribe') : t('subscription.trial.cta')}</Text>
+                  <Text style={st.subBtnText}>
+                    {t(trialAvailable ? 'subscription.startFreeTrial' : 'subscription.unlockPlan')}
+                  </Text>
                   <Ionicons name="arrow-forward" size={20} color="#fff" />
                 </View>
               )}

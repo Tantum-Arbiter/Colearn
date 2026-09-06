@@ -1711,7 +1711,7 @@ export default {
       notifyBody: 'We’ll notify you your trial is ending soon.',
       chargeLabel: 'Day 5',
       chargeBody: 'Your first charge of {{price}}. Cancel anytime before.',
-      mostPopular: 'MOST POPULAR',
+      mostRecommended: 'MOST RECOMMENDED',
       planName: 'Basic',
       planTrial: '5-day free trial',
       planPrice: 'Then {{price}} per month unless cancelled.',
@@ -1738,7 +1738,7 @@ export default {
     perMonth: '/month',
     perYear: '/year',
     // Badges
-    mostRecommended: 'Most Recommended',
+    mostPopular: 'Most Popular',
     percentOff: '25% Off',
     // USP points
     uspStories: 'Stories crafted to support child development',

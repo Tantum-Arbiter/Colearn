@@ -16,11 +16,20 @@ jest.mock('@expo/vector-icons', () => {
   return { Ionicons: (props: any) => <Text>{props.name}</Text> };
 });
 
+const mockEligible = jest.fn(() => true);
+jest.mock('@/hooks/use-trial-eligibility', () => ({
+  useTrialEligibility: () => mockEligible(),
+}));
+
 function findByTestId(tree: ReturnType<typeof render>, testID: string) {
   return tree.UNSAFE_root.findAll((node: any) => node.props.testID === testID);
 }
 
 describe('UnlockPlanButton', () => {
+  beforeEach(() => {
+    mockEligible.mockReturnValue(true);
+  });
+
   it('invites the parent to start the free trial', () => {
     const json = JSON.stringify(render(<UnlockPlanButton onPress={jest.fn()} />).toJSON());
 
@@ -48,5 +57,20 @@ describe('UnlockPlanButton', () => {
     findByTestId(tree, 'unlock-plan-button')[0].props.onPress();
 
     expect(onPress).toHaveBeenCalledTimes(1);
+  });
+});
+
+/**
+ * Once the trial has been used and cancelled there is no free period left to
+ * offer, so the button stops promising one and offers the plans instead.
+ */
+describe('UnlockPlanButton after the trial is spent', () => {
+  it('offers the plans rather than a trial it cannot give', () => {
+    mockEligible.mockReturnValue(false);
+
+    const json = JSON.stringify(render(<UnlockPlanButton onPress={jest.fn()} />).toJSON());
+
+    expect(json).toContain('subscription.unlockPlan');
+    expect(json).not.toContain('subscription.startFreeTrial');
   });
 });

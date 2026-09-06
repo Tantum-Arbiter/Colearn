@@ -17,6 +17,7 @@ import Purchases, {
   type PurchasesOfferings,
   type PurchasesPackage,
   type CustomerInfo,
+  INTRO_ELIGIBILITY_STATUS,
   LOG_LEVEL,
   PURCHASES_ERROR_CODE,
 } from 'react-native-purchases';
@@ -162,6 +163,34 @@ export function mapEntitlementsToTier(customerInfo: CustomerInfo | null): Subscr
     log.warn('Unknown active entitlements -defaulting to free:', activeIds);
   }
   return 'free';
+}
+
+/**
+ * Whether the store will still grant this plan's introductory offer.
+ *
+ * Answers "has this person already had their free trial?", which only the
+ * store can settle -- a local flag would reset on reinstall and lie on a new
+ * device. Every uncertain path returns true: while dev mode stands in for
+ * RevenueCat, when the plan has no package, and when the check throws. Being
+ * offered a trial the store then refuses is a recoverable disappointment;
+ * being denied one you are entitled to is a lost customer.
+ */
+export async function isTrialAvailable(planId: string = 'monthly_basic'): Promise<boolean> {
+  if (isDevMode()) return true;
+  try {
+    const pkg = mapPlanIdToPackage(planId);
+    const productId = pkg?.product?.identifier;
+    if (!productId) return true;
+
+    const eligibility = await Purchases.checkTrialOrIntroductoryPriceEligibility([productId]);
+    const status = eligibility?.[productId]?.status;
+    if (status === undefined) return true;
+
+    return status !== INTRO_ELIGIBILITY_STATUS.INTRO_ELIGIBILITY_STATUS_INELIGIBLE;
+  } catch (err) {
+    log.error('Failed to check trial eligibility', err);
+    return true;
+  }
 }
 
 /** Sync RevenueCat entitlements to Zustand store. No-op in dev mode. */

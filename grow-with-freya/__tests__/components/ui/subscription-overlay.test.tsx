@@ -34,6 +34,11 @@ jest.mock('@/services/subscription-service', () => ({
   purchasePackage: jest.fn(async () => ({ success: false, cancelled: true })),
 }));
 
+const mockEligible = jest.fn(() => true);
+jest.mock('@/hooks/use-trial-eligibility', () => ({
+  useTrialEligibility: () => mockEligible(),
+}));
+
 jest.mock('@/components/account/privacy-policy-screen', () => ({
   PrivacyPolicyContent: () => null,
 }));
@@ -66,6 +71,10 @@ function renderOverlay(props: Partial<React.ComponentProps<typeof SubscriptionOv
 }
 
 describe('SubscriptionOverlay', () => {
+  beforeEach(() => {
+    mockEligible.mockReturnValue(true);
+  });
+
   it('renders nothing while hidden', () => {
     const tree = renderOverlay({ visible: false });
 
@@ -196,7 +205,7 @@ describe('SubscriptionOverlay', () => {
     const json = JSON.stringify(tree.toJSON());
 
     expect(findByTestId(tree, 'trial-premium-card').length).toBeGreaterThan(0);
-    expect(json).toContain('subscription.trial.mostPopular');
+    expect(json).toContain('subscription.trial.mostRecommended');
     for (const index of [0, 1, 2, 3, 4, 5]) {
       expect(findByTestId(tree, `trial-benefit-${index}`).length).toBeGreaterThan(0);
     }
@@ -227,7 +236,29 @@ describe('SubscriptionOverlay', () => {
   it('calls the action a free trial rather than a subscription', () => {
     const json = JSON.stringify(renderOverlay().toJSON());
 
-    expect(json).toContain('subscription.trial.cta');
+    expect(json).toContain('subscription.startFreeTrial');
+    expect(json).not.toContain('subscription.signInToSubscribe');
+  });
+
+  /**
+   * There is no free period left to offer once it has been spent, so the
+   * button stops promising one. It still opens the same purchase, which is
+   * why only the label changes.
+   */
+  it('offers the plans instead once the trial is spent', () => {
+    mockEligible.mockReturnValue(false);
+
+    const json = JSON.stringify(renderOverlay().toJSON());
+
+    expect(json).toContain('subscription.unlockPlan');
+    expect(json).not.toContain('subscription.startFreeTrial');
+  });
+
+  it('recommends the highlighted card and calls the plan-list badge popular', () => {
+    const json = JSON.stringify(renderOverlay().toJSON());
+
+    expect(json).toContain('subscription.trial.mostRecommended');
+    expect(json).not.toContain('subscription.trial.mostPopular');
   });
 
   it('keeps the legal links', () => {
@@ -251,6 +282,15 @@ describe('SubscriptionOverlay plan picker', () => {
     const json = JSON.stringify(renderOverlay().toJSON());
 
     expect(json).not.toContain('subscription.unlockPlan');
+  });
+
+  it('badges Premium as the popular choice in the plan list', () => {
+    const tree = renderOverlay();
+
+    press(tree, 'unlock-plan-toggle');
+    const premium = textIn(findByTestId(tree, 'plan-card-monthly_premium')[0]);
+
+    expect(premium).toContain('subscription.mostPopular');
   });
 
   it('brings back all three plans when opened', () => {
