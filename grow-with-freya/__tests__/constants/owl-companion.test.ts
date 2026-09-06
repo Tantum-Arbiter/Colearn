@@ -69,13 +69,38 @@ describe('OWL_CLIPS', () => {
     expect(OWL_CLIPS.delight.loop).toBe(false);
   });
 
-  it('opens the beak in talk and keeps it shut in idle', () => {
+  it('works the beak through talk rather than opening it once', () => {
     const openMouthFrames = [4, 5, 6, 7];
     const talkFrames = OWL_CLIPS.talk.steps.map((step) => step.frame);
-    const idleFrames = OWL_CLIPS.idle.steps.map((step) => step.frame);
 
-    expect(talkFrames.some((frame) => openMouthFrames.includes(frame))).toBe(true);
-    expect(idleFrames.some((frame) => openMouthFrames.includes(frame))).toBe(false);
+    expect(talkFrames.filter((frame) => openMouthFrames.includes(frame)).length).toBeGreaterThan(2);
+  });
+
+  it('lets idle hoot only in passing, never sitting open-mouthed', () => {
+    const openMouthFrames = [4, 5, 6, 7];
+    const open = OWL_CLIPS.idle.steps.filter((step) => openMouthFrames.includes(step.frame));
+
+    expect(open.length).toBeLessThanOrEqual(1);
+    expect(open.every((step) => step.ms <= 250)).toBe(true);
+  });
+
+  /**
+   * The regression this guards: idle was first built from four near-identical
+   * frames held 1.3--1.7s apiece, chosen to eliminate body jitter. On device it
+   * read as a still image -- 2.3s of literally zero changed pixels between
+   * screenshots. An owl that never moves is not an animation, so no idle frame
+   * may outstay a second.
+   */
+  it('never holds an idle frame long enough to read as a still image', () => {
+    const longest = Math.max(...OWL_CLIPS.idle.steps.map((step) => step.ms));
+
+    expect(longest).toBeLessThanOrEqual(1000);
+  });
+
+  it('gives idle a wing beat so the motion is not only blinks', () => {
+    const wingFrames = OWL_CLIPS.idle.steps.filter((step) => step.frame >= 12);
+
+    expect(wingFrames.length).toBeGreaterThan(0);
   });
 
   it('blinks during idle', () => {
