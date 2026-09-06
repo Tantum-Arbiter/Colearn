@@ -74,12 +74,14 @@ const TRIAL_LINK_DOTS = 7;
 
 const TRIAL_BENEFIT_KEYS = [
   'subscription.trial.benefitStories',
+  'subscription.trial.benefitMoreLater',
   'subscription.trial.benefitMusic',
   'subscription.trial.benefitNoAds',
-  'subscription.trial.benefitDownloads',
   'subscription.trial.benefitDevices',
   'subscription.trial.benefitCancel',
 ];
+
+const TRIAL_PREMIUM_ART = require('../../assets/images/subscription/premium-music.webp');
 
 interface Props { visible: boolean; onClose: () => void; }
 
@@ -240,6 +242,12 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
                 <Text style={st.popularText}>{t('subscription.trial.mostPopular')}</Text>
               </View>
               <View style={st.premiumRow}>
+                <Image
+                  testID="trial-premium-art"
+                  source={TRIAL_PREMIUM_ART}
+                  style={st.premiumArt}
+                  resizeMode="contain"
+                />
                 <View style={st.premiumCopy}>
                   <Text style={st.premiumName}>{t('subscription.trial.planName')}</Text>
                   <Text style={st.premiumTrial}>{t('subscription.trial.planTrial')}</Text>
@@ -262,11 +270,11 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
               testID="unlock-plan-toggle"
               accessibilityRole="button"
               accessibilityState={{ expanded: plansOpen }}
-              accessibilityLabel={t('subscription.unlockPlan')}
+              accessibilityLabel={t('subscription.exploreOptions')}
               onPress={() => setPlansOpen((open) => !open)}
               style={st.plansToggle}
             >
-              <Text style={st.plansToggleText}>{t('subscription.unlockPlan')}</Text>
+              <Text style={st.plansToggleText}>{t('subscription.exploreOptions')}</Text>
               <Ionicons name={plansOpen ? 'chevron-up' : 'chevron-down'} size={18} color="rgba(255,255,255,0.8)" />
             </Pressable>
 
@@ -419,8 +427,9 @@ const st = StyleSheet.create({
   premiumCard: { borderWidth: 1.5, borderColor: 'rgba(255,198,26,0.75)', borderRadius: 20, backgroundColor: 'rgba(10,10,35,0.5)', paddingTop: 24, paddingBottom: 16, paddingHorizontal: 14, marginBottom: 18 },
   popularBadge: { position: 'absolute', top: -13, left: 16, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#FFC61A', paddingHorizontal: 12, paddingVertical: 5, borderRadius: 999 },
   popularText: { fontFamily: Fonts.rounded, fontSize: 11, fontWeight: '800', color: '#4A2E00', letterSpacing: 0.6 },
-  premiumRow: { flexDirection: 'row', gap: 14 },
-  premiumCopy: { flex: 1, justifyContent: 'center' },
+  premiumRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  premiumArt: { width: 138, height: 176, marginLeft: -10, marginVertical: -14 },
+  premiumCopy: { flex: 1.1, justifyContent: 'center' },
   premiumName: { fontFamily: Fonts.rounded, fontSize: 22, fontWeight: '800', color: '#FFFFFF' },
   premiumTrial: { fontFamily: Fonts.rounded, fontSize: 18, fontWeight: '800', color: '#FFC61A', marginTop: 2 },
   premiumPrice: { fontFamily: Fonts.sans, fontSize: 13, lineHeight: 18, color: 'rgba(255,255,255,0.85)', marginTop: 8 },

@@ -117,6 +117,27 @@ describe('SubscriptionOverlay', () => {
     expect(findByTestId(tree, 'trial-link-2')).toHaveLength(0);
   });
 
+  it('illustrates the premium card', () => {
+    const tree = renderOverlay();
+
+    const art = findByTestId(tree, 'trial-premium-art')[0];
+
+    expect(art.props.source).toBeTruthy();
+  });
+
+  /**
+   * The promise changed shape: 50 books are unlocked the moment the trial
+   * starts, and the rest of the library arrives when it ends. Both halves have
+   * to be on the screen or the offer misrepresents itself in one direction or
+   * the other.
+   */
+  it('promises books today and the rest when the trial ends', () => {
+    const json = JSON.stringify(renderOverlay().toJSON());
+
+    expect(json).toContain('subscription.trial.benefitStories');
+    expect(json).toContain('subscription.trial.benefitMoreLater');
+  });
+
   it('crowns the most-popular badge', () => {
     const json = JSON.stringify(renderOverlay().toJSON());
 
@@ -161,12 +182,18 @@ describe('SubscriptionOverlay', () => {
 });
 
 describe('SubscriptionOverlay plan picker', () => {
-  it('folds the plans away behind Unlock a plan', () => {
+  it('folds the plans away behind Explore options', () => {
     const tree = renderOverlay();
     const json = JSON.stringify(tree.toJSON());
 
-    expect(json).toContain('subscription.unlockPlan');
+    expect(json).toContain('subscription.exploreOptions');
     expect(findByTestId(tree, 'plan-card-monthly_basic')).toHaveLength(0);
+  });
+
+  it('no longer calls the folded section Unlock a plan', () => {
+    const json = JSON.stringify(renderOverlay().toJSON());
+
+    expect(json).not.toContain('subscription.unlockPlan');
   });
 
   it('brings back all three plans when opened', () => {
