@@ -176,14 +176,34 @@ data model, never hard-coded, so an API can supply it later.
 
 ```
 useChildHomeData()  →  ChildHomeData + WelcomeCopy + celebrateAchievement
-  →  HomeScene: welcome · ContinueCard · JourneyCard (4 stat tiles) · AchievementCard (next badge, View achievements beside the stars) · Find a new story pill
+  →  HomeScene: HomeHeroSky (halo · star and sparkle art · clouds · one shooting star · the sun) over the welcome
+     · ContinueCard in a HeroCardFrame · JourneyCard (4 stat tiles) · AchievementCard (next badge, View achievements beside the stars) · Find a new story pill
      Sized to fit an iPhone 16 Pro without scrolling; the ScrollView only kicks in on shorter phones.
 ```
+
+The hero sky is layers, never one flattened picture. `buildHeroSky(width, sunFrame)` places
+everything from the sun's own frame (offsets in sun-sizes for the near stars, fractions of the
+width for the corners and clouds) so the same scene holds on a phone and a tablet. Layer order:
+gradient sky and distant specks (`NightSky`) → warm halo (`HeroSkyBackground`) → hero star and
+sparkle art (`HeroStarsLayer`) → clouds framing both edges and bridging into the card
+(`HeroCloudLayer`) → shooting star (`HeroShootingStar`) → the sun (`HeroSunContainer`, the one
+touchable thing, above the ScrollView). The art lives in `assets/images/home-sky/` as cut-outs
+with real alpha; placement is data in `constants/home-sky.ts`, so re-arranging the sky is a
+constants change.
+
+The continue card is a `HeroCardFrame`: a blurred bloom outside the shape (SVG Gaussian blur),
+a gradient stroke brightest at the top, a gradient fill darker toward the bottom, a top sheen,
+four corner blooms, an inset highlight rim and a depth shadow. It measures its own height for
+the bloom, reports press state so the `CardArrowButton` can dip and glow, and holds the
+`CardProgressBar` (capsule track, mint-to-aqua fill with a sheen).
 
 | Concern | Location |
 |---------|----------|
 | Data model (`ChildHomeData`, return-visit states) | `types/child-home.ts` |
 | Welcome choice, streak liveness, star lighting, safety score, card layout, tints, motion | `constants/home-journey.ts` |
+| Hero sky placement, motion budget, halo and card-frame tints | `constants/home-sky.ts` |
+| Sky layers | `components/home/home-hero-sky.tsx` and the `hero-*.tsx` files beside it |
+| Storybook-glass frame, progress bar, arrow button | `components/home/hero-card-frame.tsx`, `card-progress-bar.tsx`, `card-arrow-button.tsx` |
 | Assembling the model from the store, badges and screen-time history | `components/home/use-child-home-data.ts` |
 | Visit memory (`lastHomeVisitAt`, `achievementUnlockedAt`, `lastStoryCompletedAt`) | `store/app-store.ts` (persisted) |
 | Glowing book / clock / shield / flame icons | `components/home/stat-icons.tsx` |
@@ -194,11 +214,15 @@ Return-visit states, in priority order: new achievement → story completed → 
 (7+ days) → active streak (2+ days) → first visit today → normal. Messages are always
 encouraging; a lapsed streak is shown as an invitation to start one, never as a loss.
 
-Motion budget: background stars twinkle, the four stat icons each move in their own way (a page flicks, the clock keeps time, the leaf sways, the flame flickers),
+Motion budget: background stars twinkle, the hero stars and sparkles breathe (opacity 0.75–1,
+scale to 1.04, 2.5–6 s each, never in step), clouds drift 2–6 px over 9–15 s, the shooting star
+crosses once every 16 s, the sun floats 2 px over 4.5 s, the four stat icons each move in their
+own way (a page flicks, the clock keeps time, the leaf sways, the flame flickers),
 the cover gives an occasional sparkle, milestone stars light
 in sequence on arrival, the newest medallion shines once when a badge is new. Cards compress
-about 2.5% on touch and arrows nudge on tap. Everything stops under Reduce Motion and
-while the page is not the one showing.
+about 2.5% on touch, the continue arrow dips to 90% and brightens, and arrows nudge on tap.
+Under Reduce Motion the sky keeps only faint opacity changes (`heroMotionMode` → `gentle`);
+everything stops while the page is not the one showing.
 
 ## Story Garden (feature-flagged)
 
