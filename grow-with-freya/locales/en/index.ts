@@ -1700,6 +1700,28 @@ export default {
 
   // Subscription overlay
   subscription: {
+    startFreeTrial: 'Start my free trial',
+    trial: {
+      title: 'How your free trial works',
+      subtitle: 'Try Premium free for 5 days, then {{price}} per month unless cancelled.',
+      todayLabel: 'Today',
+      todayBody: 'Unlock our library of 100 premium stories, instruments and games.',
+      notifyLabel: 'Day 3',
+      notifyBody: 'We’ll notify you your trial is ending soon.',
+      chargeLabel: 'Day 5',
+      chargeBody: 'Your first charge of {{price}}. Cancel anytime before.',
+      mostPopular: 'MOST POPULAR',
+      planName: 'Premium',
+      planTrial: '5-day free trial',
+      planPrice: 'Then {{price}} per month unless cancelled.',
+      benefitStories: '100+ stories',
+      benefitMusic: 'Interactive music & games',
+      benefitNoAds: 'Ad-free experience',
+      benefitDownloads: 'Offline downloads',
+      benefitDevices: 'Works on all your devices',
+      benefitCancel: 'Cancel anytime',
+      cta: 'Start 5-Day Free Trial',
+    },
     unlockPlan: 'Unlock a Plan',
     choosePlan: 'Choose the plan that works best for your family',
     subscribe: 'Subscribe',

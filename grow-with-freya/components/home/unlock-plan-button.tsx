@@ -16,7 +16,7 @@ export const UnlockPlanButton = memo(function UnlockPlanButton({
   testID = 'unlock-plan-button',
 }: UnlockPlanButtonProps) {
   const { t } = useTranslation();
-  const label = t('subscription.unlockPlan');
+  const label = t('subscription.startFreeTrial');
 
   return (
     <Pressable

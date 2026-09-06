@@ -45,14 +45,39 @@ function buildPlans(
   ];
 }
 
-const USP_ICONS: (keyof typeof Ionicons.glyphMap)[] = [
-  'book-outline', 'checkmark-circle-outline', 'musical-notes-outline', 'shield-checkmark-outline', 'globe-outline',
-];
-const USP_KEYS = [
-  'subscription.uspStories', 'subscription.uspEducators', 'subscription.uspMusic', 'subscription.uspNoAds', 'subscription.uspLanguages',
+const ANIM_MS = 350;
+
+const TRIAL_FALLBACK_PRICE = '£9.99 / $9.99';
+
+const TRIAL_STEPS = [
+  {
+    icon: require('../../assets/images/subscription/trial-today.webp'),
+    labelKey: 'subscription.trial.todayLabel',
+    bodyKey: 'subscription.trial.todayBody',
+    pill: 'amber' as const,
+  },
+  {
+    icon: require('../../assets/images/subscription/trial-notify.webp'),
+    labelKey: 'subscription.trial.notifyLabel',
+    bodyKey: 'subscription.trial.notifyBody',
+    pill: 'indigo' as const,
+  },
+  {
+    icon: require('../../assets/images/subscription/trial-charge.webp'),
+    labelKey: 'subscription.trial.chargeLabel',
+    bodyKey: 'subscription.trial.chargeBody',
+    pill: 'amber' as const,
+  },
 ];
 
-const ANIM_MS = 350;
+const TRIAL_BENEFIT_KEYS = [
+  'subscription.trial.benefitStories',
+  'subscription.trial.benefitMusic',
+  'subscription.trial.benefitNoAds',
+  'subscription.trial.benefitDownloads',
+  'subscription.trial.benefitDevices',
+  'subscription.trial.benefitCancel',
+];
 
 interface Props { visible: boolean; onClose: () => void; }
 
@@ -64,6 +89,7 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
   const [livePrices, setLivePrices] = useState<Record<string, PlanPricing | null> | null>(null);
   const plans = useMemo(() => buildPlans(t, livePrices), [t, livePrices]);
   const [legalPage, setLegalPage] = useState<'privacy' | 'terms' | null>(null);
+  const [plansOpen, setPlansOpen] = useState(false);
   const { isGuestMode, setGuestMode, setShowLoginAfterOnboarding } = useAppStore();
   const [isPurchasing, setIsPurchasing] = useState(false);
   const translateY = useSharedValue(screenH);
@@ -108,12 +134,21 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
   const bdStyle = useAnimatedStyle(() => ({ opacity: backdropOpacity.value }));
   const legalStyle = useAnimatedStyle(() => ({ transform: [{ translateX: legalSlideX.value }] }));
 
+  const trialPrice = livePrices?.monthly_premium?.priceString ?? TRIAL_FALLBACK_PRICE;
+
   if (!visible) return null;
 
   const renderPlan = (plan: Plan) => {
     const sel = selectedPlan === plan.id;
     return (
-      <Pressable key={plan.id} onPress={() => setSelectedPlan(plan.id)} style={[st.planCard, sel && st.planCardSel]}>
+      <Pressable
+        key={plan.id}
+        testID={`plan-card-${plan.id}`}
+        accessibilityRole="button"
+        accessibilityState={{ selected: sel }}
+        onPress={() => setSelectedPlan(plan.id)}
+        style={[st.planCard, sel && st.planCardSel]}
+      >
         {plan.badge ? <View style={[st.badge, plan.id === 'yearly' ? st.badgeGreen : st.badgeAmber]}>
           <Text style={st.badgeText}>{plan.badge}</Text></View> : null}
         <View style={st.planRow}>
@@ -159,17 +194,78 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
             <Ionicons name="close" size={20} color="#FFFFFF" />
           </Pressable>
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={st.scroll}>
-            <Text style={st.header}>{t('subscription.unlockPlan')}</Text>
-            <Text style={st.sub}>{t('subscription.choosePlan')}</Text>
-            <View style={st.uspBox}>
-              {USP_ICONS.map((icon, i) => (
-                <View key={i} style={st.uspRow}>
-                  <Ionicons name={icon} size={16} color="#fff" style={{ marginRight: 8, marginTop: 1 }} />
-                  <Text style={st.uspText}>{t(USP_KEYS[i])}</Text>
-                </View>
+            <View style={st.starRow}>
+              <Ionicons name="star" size={14} color="#FFD54A" />
+              <Ionicons name="star" size={22} color="#FFC61A" />
+              <Ionicons name="star" size={14} color="#FFD54A" />
+            </View>
+            <Text style={st.header}>{t('subscription.trial.title')}</Text>
+            <Text style={st.sub}>{t('subscription.trial.subtitle', { price: trialPrice })}</Text>
+
+            <View style={st.timeline} testID="trial-timeline">
+              {TRIAL_STEPS.map((step, i) => (
+                <React.Fragment key={step.labelKey}>
+                  {i > 0 ? <View style={st.timelineLink} /> : null}
+                  <View style={st.step} testID={`trial-step-${i}`}>
+                    <Image
+                      testID={`trial-step-icon-${i}`}
+                      source={step.icon}
+                      style={st.stepIcon}
+                      resizeMode="contain"
+                    />
+                    <View style={[st.stepPill, step.pill === 'indigo' ? st.stepPillIndigo : st.stepPillAmber]}>
+                      <Text style={[st.stepPillText, step.pill === 'indigo' ? st.stepPillTextLight : null]}>
+                        {t(step.labelKey)}
+                      </Text>
+                    </View>
+                    <Text style={st.stepBody}>{t(step.bodyKey, { price: trialPrice })}</Text>
+                  </View>
+                </React.Fragment>
               ))}
             </View>
-            {plans.map(renderPlan)}
+
+            <View style={st.premiumCard} testID="trial-premium-card">
+              <View style={st.popularBadge}>
+                <Ionicons name="ribbon" size={13} color="#4A2E00" />
+                <Text style={st.popularText}>{t('subscription.trial.mostPopular')}</Text>
+              </View>
+              <View style={st.premiumRow}>
+                <View style={st.premiumCopy}>
+                  <Text style={st.premiumName}>{t('subscription.trial.planName')}</Text>
+                  <Text style={st.premiumTrial}>{t('subscription.trial.planTrial')}</Text>
+                  <Text style={st.premiumPrice}>
+                    {t('subscription.trial.planPrice', { price: trialPrice })}
+                  </Text>
+                </View>
+                <View style={st.premiumBenefits}>
+                  {TRIAL_BENEFIT_KEYS.map((key, i) => (
+                    <View key={key} style={st.benefitRow} testID={`trial-benefit-${i}`}>
+                      <Ionicons name="checkmark" size={15} color="#FFC61A" style={{ marginRight: 8 }} />
+                      <Text style={st.benefitText}>{t(key)}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            </View>
+
+            <Pressable
+              testID="unlock-plan-toggle"
+              accessibilityRole="button"
+              accessibilityState={{ expanded: plansOpen }}
+              accessibilityLabel={t('subscription.unlockPlan')}
+              onPress={() => setPlansOpen((open) => !open)}
+              style={st.plansToggle}
+            >
+              <Text style={st.plansToggleText}>{t('subscription.unlockPlan')}</Text>
+              <Ionicons name={plansOpen ? 'chevron-up' : 'chevron-down'} size={18} color="rgba(255,255,255,0.8)" />
+            </Pressable>
+
+            {plansOpen ? (
+              <View testID="unlock-plan-section">
+                <Text style={st.plansHint}>{t('subscription.choosePlan')}</Text>
+                {plans.map(renderPlan)}
+              </View>
+            ) : null}
           </ScrollView>
           <Pressable style={st.subBtn} disabled={isPurchasing} onPress={() => {
             if (isGuestMode) {
@@ -225,7 +321,7 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
               {isPurchasing ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <Text style={st.subBtnText}>{isGuestMode ? t('subscription.signInToSubscribe') : t('subscription.subscribe')}</Text>
+                <Text style={st.subBtnText}>{isGuestMode ? t('subscription.signInToSubscribe') : t('subscription.trial.cta')}</Text>
               )}
             </LinearGradient>
           </Pressable>
@@ -271,9 +367,6 @@ const st = StyleSheet.create({
   scroll: { paddingTop: 8, paddingBottom: 16 },
   header: { fontSize: 26, fontWeight: '800', color: '#FFD700', fontFamily: Fonts.rounded, textAlign: 'center', marginBottom: 4, textShadowColor: 'rgba(0,0,0,0.8)', textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 6 },
   sub: { fontSize: 14, color: 'rgba(255,255,255,0.9)', fontFamily: Fonts.sans, textAlign: 'center', marginBottom: 20, textShadowColor: 'rgba(0,0,0,0.6)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 },
-  uspBox: { backgroundColor: 'rgba(0,0,0,0.25)', borderRadius: 16, padding: 14, marginBottom: 20, gap: 8, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
-  uspRow: { flexDirection: 'row', alignItems: 'flex-start' },
-  uspText: { fontSize: 13, color: '#fff', fontFamily: Fonts.sans, lineHeight: 20, flex: 1 },
   planCard: { borderWidth: 2, borderColor: 'rgba(255,255,255,0.15)', borderRadius: 16, padding: 16, marginBottom: 12, backgroundColor: 'rgba(0,0,0,0.3)' },
   planCardSel: { borderColor: '#F59E0B', backgroundColor: 'rgba(245,158,11,0.15)' },
   badge: { position: 'absolute', top: -10, right: 12, paddingHorizontal: 10, paddingVertical: 3, borderRadius: 8 },
@@ -297,6 +390,31 @@ const st = StyleSheet.create({
   legalRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 12, gap: 6 },
   legalLink: { fontSize: 12, color: 'rgba(255,255,255,0.5)', fontFamily: Fonts.sans, textDecorationLine: 'underline' },
   legalDot: { fontSize: 12, color: 'rgba(255,255,255,0.35)' },
+  starRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 6 },
+  timeline: { flexDirection: 'row', alignItems: 'flex-start', borderWidth: 1.5, borderColor: 'rgba(255,198,26,0.55)', borderRadius: 20, backgroundColor: 'rgba(10,10,35,0.55)', paddingVertical: 18, paddingHorizontal: 10, marginBottom: 18 },
+  timelineLink: { width: 18, height: 1.5, marginTop: 44, borderRadius: 1, backgroundColor: 'rgba(255,198,26,0.5)' },
+  step: { flex: 1, alignItems: 'center', paddingHorizontal: 4 },
+  stepIcon: { width: 78, height: 78 },
+  stepPill: { marginTop: 6, paddingHorizontal: 14, paddingVertical: 5, borderRadius: 999 },
+  stepPillAmber: { backgroundColor: '#FFC61A' },
+  stepPillIndigo: { backgroundColor: '#4F46E5' },
+  stepPillText: { fontFamily: Fonts.rounded, fontSize: 13, fontWeight: '800', color: '#3A2600' },
+  stepPillTextLight: { color: '#FFFFFF' },
+  stepBody: { marginTop: 8, fontFamily: Fonts.sans, fontSize: 12, lineHeight: 17, color: 'rgba(255,255,255,0.9)', textAlign: 'center' },
+  premiumCard: { borderWidth: 1.5, borderColor: 'rgba(255,198,26,0.75)', borderRadius: 20, backgroundColor: 'rgba(10,10,35,0.5)', paddingTop: 24, paddingBottom: 16, paddingHorizontal: 14, marginBottom: 18 },
+  popularBadge: { position: 'absolute', top: -13, left: 16, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#FFC61A', paddingHorizontal: 12, paddingVertical: 5, borderRadius: 999 },
+  popularText: { fontFamily: Fonts.rounded, fontSize: 11, fontWeight: '800', color: '#4A2E00', letterSpacing: 0.6 },
+  premiumRow: { flexDirection: 'row', gap: 14 },
+  premiumCopy: { flex: 1, justifyContent: 'center' },
+  premiumName: { fontFamily: Fonts.rounded, fontSize: 22, fontWeight: '800', color: '#FFFFFF' },
+  premiumTrial: { fontFamily: Fonts.rounded, fontSize: 18, fontWeight: '800', color: '#FFC61A', marginTop: 2 },
+  premiumPrice: { fontFamily: Fonts.sans, fontSize: 13, lineHeight: 18, color: 'rgba(255,255,255,0.85)', marginTop: 8 },
+  premiumBenefits: { flex: 1, justifyContent: 'center', gap: 5 },
+  benefitRow: { flexDirection: 'row', alignItems: 'center' },
+  benefitText: { fontFamily: Fonts.sans, fontSize: 13, color: '#FFFFFF', flex: 1 },
+  plansToggle: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 12, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)', backgroundColor: 'rgba(0,0,0,0.28)', marginBottom: 12 },
+  plansToggleText: { fontFamily: Fonts.rounded, fontSize: 15, fontWeight: '700', color: 'rgba(255,255,255,0.9)' },
+  plansHint: { fontFamily: Fonts.sans, fontSize: 12, color: 'rgba(255,255,255,0.65)', textAlign: 'center', marginBottom: 12 },
   legalPanel: { ...StyleSheet.absoluteFillObject, zIndex: 20 },
   legalPanelInner: { flex: 1, paddingHorizontal: 20 },
 
