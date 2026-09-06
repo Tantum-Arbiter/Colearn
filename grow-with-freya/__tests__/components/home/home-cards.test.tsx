@@ -6,13 +6,18 @@
  */
 
 import React from 'react';
-import { StyleSheet, Text } from 'react-native';
-import { render, fireEvent, type RenderResult } from '@testing-library/react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import { act, render, fireEvent, type RenderResult } from '@testing-library/react-native';
 import { ContinueCard } from '@/components/home/continue-card';
 import { JourneyCard } from '@/components/home/journey-card';
 import { AchievementCard } from '@/components/home/achievement-card';
 import { Ionicons } from '@expo/vector-icons';
 import { MILESTONE_STARS } from '@/constants/home-journey';
+
+interface RenderedNode {
+  type: unknown;
+  props: Record<string, unknown>;
+}
 
 function textContents(view: RenderResult): string[] {
   return view
@@ -78,6 +83,44 @@ describe('ContinueCard', () => {
     const view = render(<ContinueCard story={STORY} width={358} animated={false} onPress={jest.fn()} />);
 
     expect(byTestId(view, 'continue-card-glow').length).toBeGreaterThan(0);
+  });
+
+  it('should wear the storybook-glass frame: bloom, gradient stroke, inner rim and lit corners', () => {
+    const view = render(<ContinueCard story={STORY} width={358} animated={false} onPress={jest.fn()} />);
+
+    const layers = ['continue-card-glow', 'continue-card-border', 'continue-card-inner-highlight', 'continue-card-sheen'].map(
+      (testID) => byTestId(view, testID).length > 0
+    );
+
+    expect(layers).toEqual([true, true, true, true]);
+    expect(byTestId(view, 'continue-card-corner-bloom').filter((node) => node.type === View).length).toBe(4);
+  });
+
+  it('should end in a golden arrow button that answers the press', () => {
+    const view = render(<ContinueCard story={STORY} width={358} animated={false} onPress={jest.fn()} />);
+
+    expect(byTestId(view, 'continue-arrow-disc').length).toBeGreaterThan(0);
+    expect(byTestId(view, 'continue-arrow-glyph').length).toBeGreaterThan(0);
+    expect(byTestId(view, 'continue-progress-sheen').length).toBeGreaterThan(0);
+  });
+
+  it('should let the arrow dip while the card is held and spring back when it is let go', () => {
+    const view = render(<ContinueCard story={STORY} width={358} animated={false} onPress={jest.fn()} />);
+    const matches = byTestId(view, 'continue-card');
+    const pressable = matches[matches.length - 1];
+    const arrowPressed = () =>
+      view.UNSAFE_root.findAll((node: RenderedNode) => node.props.testID === 'continue-arrow' && typeof node.props.pressed === 'boolean')[0].props.pressed;
+
+    act(() => {
+      fireEvent(pressable, 'pressIn');
+    });
+    const held = arrowPressed();
+    act(() => {
+      fireEvent(pressable, 'pressOut');
+    });
+
+    expect(held).toBe(true);
+    expect(arrowPressed()).toBe(false);
   });
 });
 

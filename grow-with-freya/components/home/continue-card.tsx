@@ -1,7 +1,6 @@
-import React, { memo, useEffect } from 'react';
+import React, { memo, useCallback, useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import Animated, {
   cancelAnimation,
@@ -17,7 +16,10 @@ import { Fonts } from '@/constants/theme';
 import { HOME_CARDS, HOME_CARD_TINTS, HOME_CARD_TYPE, HOME_JOURNEY_MOTION } from '@/constants/home-journey';
 import { progressFraction } from '@/constants/home-scene';
 import type { ChildHomeStory } from '@/types/child-home';
-import { ArrowMark, HomeCard, useArrowNudge } from './home-card';
+import { useArrowNudge } from './home-card';
+import { HeroCardFrame } from './hero-card-frame';
+import { CardProgressBar } from './card-progress-bar';
+import { CardArrowButton } from './card-arrow-button';
 import { Sparkle, StatIcon } from './stat-icons';
 
 export interface ContinueCardProps {
@@ -67,6 +69,29 @@ const CoverSparkle = memo(function CoverSparkle({ animated }: { animated: boolea
   );
 });
 
+interface CardThumbnailProps {
+  story?: ChildHomeStory;
+  size: number;
+  animated: boolean;
+}
+
+const CardThumbnail = memo(function CardThumbnail({ story, size, animated }: CardThumbnailProps) {
+  return (
+    <View style={[styles.cover, { width: size, height: size, borderRadius: HOME_CARDS.coverRadius }]}>
+      <View style={[styles.coverClip, { borderRadius: HOME_CARDS.coverRadius - 1 }]}>
+        {story?.coverImage ? (
+          <Image testID="continue-cover" source={story.coverImage} style={styles.coverImage} contentFit="cover" transition={0} />
+        ) : (
+          <View testID="continue-cover-placeholder" style={styles.coverPlaceholder}>
+            <StatIcon kind="book" size={Math.round(size * 0.55)} animated={animated} testID="continue-cover-glyph" />
+          </View>
+        )}
+      </View>
+      <CoverSparkle animated={animated} />
+    </View>
+  );
+});
+
 export const ContinueCard = memo(function ContinueCard({
   story,
   width,
@@ -76,57 +101,41 @@ export const ContinueCard = memo(function ContinueCard({
 }: ContinueCardProps) {
   const { t } = useTranslation();
   const arrow = useArrowNudge();
-  const cover = HOME_CARDS.coverSize;
+  const [pressed, setPressed] = useState(false);
+  const handlePressState = useCallback((isPressed: boolean) => setPressed(isPressed), []);
   const label = story ? t('home.resumeStory', { title: story.title }) : t('home.continueStart.title');
   const fraction = story ? progressFraction(story.currentPage - 1, story.totalPages) : 0;
 
   return (
-    <HomeCard
+    <HeroCardFrame
       testID={testID}
       width={width}
-      emphasis
       onPress={onPress}
       onPressed={arrow.play}
+      onPressStateChange={handlePressState}
       accessibilityLabel={label}
       accessibilityHint={story ? undefined : t('home.continueStart.hint')}
     >
       <View style={styles.row}>
-        <View style={[styles.cover, { width: cover, height: cover, borderRadius: HOME_CARDS.coverRadius }]}>
-          {story?.coverImage ? (
-            <Image testID="continue-cover" source={story.coverImage} style={styles.coverImage} contentFit="cover" transition={0} />
-          ) : (
-            <View testID="continue-cover-placeholder" style={styles.coverPlaceholder}>
-              <StatIcon kind="book" size={Math.round(cover * 0.55)} animated={animated} testID="continue-cover-glyph" />
-            </View>
-          )}
-          <CoverSparkle animated={animated} />
-        </View>
+        <CardThumbnail story={story} size={HOME_CARDS.coverSize} animated={animated} />
 
         <View style={styles.words}>
           {story ? (
             <View testID="continue-panel">
               <Text style={styles.eyebrow}>{t('home.continueTogether')}</Text>
-              <Text style={styles.title} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
+              <Text style={styles.title} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.8}>
                 {story.title}
               </Text>
               <Text style={styles.body} numberOfLines={1}>{t('home.continueBody')}</Text>
               <View style={styles.progressRow}>
-                <View style={styles.track}>
-                  <LinearGradient
-                    testID="continue-progress-fill"
-                    colors={[HOME_CARD_TINTS.progressFrom, HOME_CARD_TINTS.progressTo]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={[styles.fill, { width: `${Math.round(fraction * 100)}%` }]}
-                  />
-                </View>
-                <Text style={styles.meta}>{t('home.pagePosition', { page: story.currentPage, total: story.totalPages })}</Text>
+                <CardProgressBar fraction={fraction} testID="continue-progress" />
               </View>
+              <Text style={styles.meta}>{t('home.pagePosition', { page: story.currentPage, total: story.totalPages })}</Text>
             </View>
           ) : (
             <View testID="continue-panel-empty">
               <Text style={styles.eyebrow}>{t('home.continueStart.eyebrow')}</Text>
-              <Text style={styles.title} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
+              <Text style={styles.title} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.8}>
                 {t('home.continueStart.title')}
               </Text>
               <Text style={styles.body}>{t('home.continueStart.body')}</Text>
@@ -134,11 +143,11 @@ export const ContinueCard = memo(function ContinueCard({
           )}
         </View>
 
-        <Animated.View testID="continue-arrow" style={arrow.style}>
-          <ArrowMark size={HOME_CARDS.arrowSize} />
+        <Animated.View testID="continue-arrow" style={[styles.arrow, arrow.style]}>
+          <CardArrowButton size={HOME_CARDS.arrowSize} pressed={pressed} testID="continue-arrow" />
         </Animated.View>
       </View>
-    </HomeCard>
+    </HeroCardFrame>
   );
 });
 
@@ -146,22 +155,31 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: HOME_CARDS.padding,
+    paddingVertical: HOME_CARDS.padding,
+    paddingLeft: HOME_CARDS.padding + 2,
+    paddingRight: HOME_CARDS.padding + 4,
   },
   cover: {
     overflow: 'visible',
     borderWidth: 1,
     borderColor: HOME_CARD_TINTS.coverEdge,
+    shadowColor: '#04091F',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 6,
+  },
+  coverClip: {
+    width: '100%',
+    height: '100%',
+    overflow: 'hidden',
   },
   coverImage: {
     width: '100%',
     height: '100%',
-    borderRadius: HOME_CARDS.coverRadius - 1,
   },
   coverPlaceholder: {
     width: '100%',
     height: '100%',
-    borderRadius: HOME_CARDS.coverRadius - 1,
     backgroundColor: HOME_CARD_TINTS.tileFill,
     alignItems: 'center',
     justifyContent: 'center',
@@ -174,13 +192,13 @@ const styles = StyleSheet.create({
   words: {
     flex: 1,
     marginLeft: 14,
-    marginRight: 10,
+    marginRight: 12,
   },
   eyebrow: {
     fontFamily: Fonts.rounded,
     fontSize: HOME_CARD_TYPE.eyebrow,
     fontWeight: '700',
-    letterSpacing: 1.2,
+    letterSpacing: 1.4,
     textTransform: 'uppercase',
     color: HOME_CARD_TINTS.eyebrow,
   },
@@ -190,36 +208,26 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     lineHeight: HOME_CARD_TYPE.title + 4,
     color: HOME_CARD_TINTS.title,
-    marginTop: 1,
+    marginTop: 2,
   },
   body: {
     fontFamily: Fonts.rounded,
     fontSize: HOME_CARD_TYPE.body,
     fontWeight: '500',
     color: HOME_CARD_TINTS.body,
-    marginTop: 1,
+    marginTop: 2,
   },
   progressRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 6,
-  },
-  track: {
-    flex: 1,
-    height: 6,
-    borderRadius: 3,
-    overflow: 'hidden',
-    backgroundColor: HOME_CARD_TINTS.progressTrack,
-  },
-  fill: {
-    height: '100%',
-    borderRadius: 3,
+    marginTop: 8,
   },
   meta: {
     fontFamily: Fonts.rounded,
     fontSize: HOME_CARD_TYPE.meta,
     fontWeight: '600',
     color: HOME_CARD_TINTS.muted,
-    marginLeft: 10,
+    marginTop: 5,
+  },
+  arrow: {
+    marginLeft: 2,
   },
 });

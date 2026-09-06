@@ -461,6 +461,9 @@ jest.mock('react-native-svg', () => {
     ClipPath: mockComponent('ClipPath'),
     Pattern: mockComponent('Pattern'),
     Mask: mockComponent('Mask'),
+    Filter: mockComponent('Filter'),
+    FeGaussianBlur: mockComponent('FeGaussianBlur'),
+    FeDropShadow: mockComponent('FeDropShadow'),
   };
 });
 

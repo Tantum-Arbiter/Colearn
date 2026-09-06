@@ -7,12 +7,18 @@
  */
 
 import React from 'react';
-import { Dimensions, StyleSheet, Text } from 'react-native';
+import { Dimensions, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { render, fireEvent, type RenderResult } from '@testing-library/react-native';
 import { HomeScene } from '@/components/home/home-scene';
 import { HOME_THEMES } from '@/constants/home-scene';
+import { heroContentTop } from '@/constants/home-sky';
 import { ringCentre } from '@/constants/screen-time-ring';
 import type { ChildHomeData, WelcomeCopy } from '@/types/child-home';
+
+interface RenderedNode {
+  type: unknown;
+  props: Record<string, unknown>;
+}
 
 function textContents(view: RenderResult): string[] {
   return view
@@ -268,5 +274,29 @@ describe('HomeScene the plan offer', () => {
     const { view } = renderScene();
 
     expect(byTestId(view, 'unlock-plan-button').length).toBe(0);
+  });
+});
+
+describe('HomeScene sky', () => {
+  it('should set the welcome inside a living sky with the one face in it', () => {
+    const { view } = renderScene();
+
+    const viewCount = (testID: string) => byTestId(view, testID).filter((node) => node.type === View).length;
+
+    expect(viewCount('home-hero-sky')).toBe(1);
+    expect(byTestId(view, 'sky-face').length).toBeGreaterThan(0);
+    expect(byTestId(view, 'hero-shooting-star').length).toBeGreaterThan(0);
+  });
+
+  it('should start the welcome below the sun, not under it', () => {
+    const { view } = renderScene();
+
+    const sky = byTestId(view, 'home-hero-sky')[0];
+    const content = view.UNSAFE_root.findAll((node: RenderedNode) => node.props.contentContainerStyle !== undefined)[0];
+    const paddingTop = StyleSheet.flatten(content.props.contentContainerStyle as StyleProp<ViewStyle>).paddingTop as number;
+    const sunSize = StyleSheet.flatten(byTestId(view, 'sky-face')[0].props.style).width;
+
+    expect(paddingTop).toBe(heroContentTop(44, sunSize));
+    expect(StyleSheet.flatten(sky.props.style).height).toBeGreaterThan(paddingTop);
   });
 });

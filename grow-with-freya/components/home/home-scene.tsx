@@ -6,6 +6,7 @@ import { MusicControl } from '@/components/ui/music-control';
 import { Fonts } from '@/constants/theme';
 import { HOME_SCENE_LAYOUT, HOME_THEMES, type TimeOfDay } from '@/constants/home-scene';
 import { HOME_CARDS, HOME_CARD_TYPE, homeContentWidth } from '@/constants/home-journey';
+import { HERO_SKY, heroContentTop, sunFrame } from '@/constants/home-sky';
 import { SCREEN_TIME_RING, ringCentre } from '@/constants/screen-time-ring';
 import { useTimeOfDay } from '@/hooks/use-time-of-day';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
@@ -13,7 +14,7 @@ import { useSettledAfterTransition } from '@/hooks/use-ambient-animation';
 import type { ScreenTimeAllowance } from '@/hooks/use-screen-time-allowance';
 import type { ChildHomeData, WelcomeCopy } from '@/types/child-home';
 import { NightSky } from './night-sky';
-import { SkyFace } from './sky-face';
+import { HomeHeroSky } from './home-hero-sky';
 import { GrownUpsPill } from './grown-ups-pill';
 import { ScreenTimeRing } from './screen-time-ring';
 import { UnlockPlanButton } from './unlock-plan-button';
@@ -70,16 +71,14 @@ export const HomeScene = memo(function HomeScene({
   const settled = useSettledAfterTransition(isActive);
   const animated = settled && !reduceMotion;
 
-  const skyFaceSize = Math.round(width * HOME_SCENE_LAYOUT.skyFaceSizeRatio);
+  const sun = sunFrame(width, insets.top);
   const contentWidth = homeContentWidth(width);
 
   return (
     <View testID={testID} style={[styles.root, { backgroundColor: theme.skyTop }]}>
       <NightSky width={width} height={height} timeOfDay={activeTimeOfDay} active={isActive} />
 
-      <View style={[styles.moon, { top: insets.top + 6 }]} pointerEvents="box-none">
-        <SkyFace size={skyFaceSize} timeOfDay={activeTimeOfDay} />
-      </View>
+      <HomeHeroSky width={width} topInset={insets.top} timeOfDay={activeTimeOfDay} active={isActive} />
 
       <View style={[styles.chrome, { top: insets.top + HOME_SCENE_LAYOUT.chromeTop }]}>
         <GrownUpsPill timeOfDay={activeTimeOfDay} onPress={onOpenGrownUps} />
@@ -89,7 +88,7 @@ export const HomeScene = memo(function HomeScene({
       <ScrollView
         contentContainerStyle={[
           styles.content,
-          { paddingTop: insets.top + skyFaceSize + 6, paddingBottom: insets.bottom + 52 },
+          { paddingTop: heroContentTop(insets.top, sun.size), paddingBottom: insets.bottom + 52 },
         ]}
         showsVerticalScrollIndicator={false}
         bounces={false}
@@ -167,11 +166,6 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
   },
-  moon: {
-    position: 'absolute',
-    alignSelf: 'center',
-    zIndex: 10,
-  },
   chrome: {
     position: 'absolute',
     left: HOME_SCENE_LAYOUT.screenMargin,
@@ -190,6 +184,9 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     textAlign: 'center',
     paddingHorizontal: 32,
+    textShadowColor: HERO_SKY.welcomeGlow,
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 14,
   },
   subtitle: {
     fontFamily: Fonts.rounded,
@@ -199,6 +196,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
     marginTop: 3,
     marginBottom: 8,
+    textShadowColor: HERO_SKY.welcomeGlow,
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 8,
   },
   cardSlot: {
     marginBottom: HOME_CARDS.gap,
