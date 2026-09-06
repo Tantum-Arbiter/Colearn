@@ -299,18 +299,14 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
                 </View>
               </View>
 
-              <Text style={st.upgradeNote} testID="trial-upgrade">
-                {t('subscription.trial.upgrade')}
-              </Text>
-
               <Pressable
-                testID="trial-other-plans"
+                testID="trial-upgrade"
                 accessibilityRole="button"
-                accessibilityLabel={t('subscription.trial.otherPlans')}
+                accessibilityLabel={t('subscription.trial.upgrade')}
                 onPress={() => setPlansOpen(true)}
-                style={st.otherPlans}
+                style={st.upgradeRow}
               >
-                <Text style={st.otherPlansText}>{t('subscription.trial.otherPlans')}</Text>
+                <Text style={st.upgradeNote}>{t('subscription.trial.upgrade')}</Text>
               </Pressable>
             </View>
 
@@ -481,9 +477,8 @@ const st = StyleSheet.create({
   popularBadge: { position: 'absolute', top: -13, left: 16, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#FFC61A', paddingHorizontal: 12, paddingVertical: 5, borderRadius: 999 },
   popularText: { fontFamily: Fonts.rounded, fontSize: 11, fontWeight: '800', color: '#4A2E00', letterSpacing: 0.6 },
   premiumRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  upgradeNote: { marginTop: 12, paddingTop: 10, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.10)', fontFamily: Fonts.rounded, fontSize: 13, fontWeight: '700', color: '#FFC61A', textAlign: 'center' },
-  otherPlans: { marginTop: 8 },
-  otherPlansText: { fontFamily: Fonts.sans, fontSize: 12.5, color: 'rgba(255,255,255,0.62)', textAlign: 'center', textDecorationLine: 'underline' },
+  upgradeRow: { marginTop: 12, paddingTop: 10, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.10)' },
+  upgradeNote: { fontFamily: Fonts.rounded, fontSize: 13, fontWeight: '700', color: '#FFC61A', textAlign: 'center' },
   premiumArt: { width: 138, height: 176, marginLeft: -10, marginVertical: -14 },
   premiumCopy: { flex: 1.1, justifyContent: 'center' },
   premiumName: { fontFamily: Fonts.rounded, fontSize: 22, fontWeight: '800', color: '#FFFFFF' },

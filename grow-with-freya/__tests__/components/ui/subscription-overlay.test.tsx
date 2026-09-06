@@ -212,23 +212,22 @@ describe('SubscriptionOverlay', () => {
   });
 
   /**
-   * The premium card is the only plan on screen, which could read as the only
-   * plan there is. This line is what tells a parent the others exist, so it
-   * lives in the card rather than beside the toggle that opens them.
+   * One line now does both jobs: it names Premium as where the rest of the
+   * library lives, and points at where to go and get it. They were two lines
+   * saying overlapping things directly above each other.
    */
-  it('says in the premium card that other plans can be chosen', () => {
+  it('points at the other plans from the upgrade line itself', () => {
     const tree = renderOverlay();
 
-    const hint = findByTestId(tree, 'trial-other-plans');
-
-    expect(hint.length).toBeGreaterThan(0);
-    expect(JSON.stringify(tree.toJSON())).toContain('subscription.trial.otherPlans');
+    expect(findByTestId(tree, 'trial-upgrade').length).toBeGreaterThan(0);
+    expect(findByTestId(tree, 'trial-other-plans')).toHaveLength(0);
+    expect(JSON.stringify(tree.toJSON())).not.toContain('subscription.trial.otherPlans');
   });
 
   it('opens the plan picker straight from that line', () => {
     const tree = renderOverlay();
 
-    press(tree, 'trial-other-plans');
+    press(tree, 'trial-upgrade');
 
     expect(findByTestId(tree, 'plan-card-monthly_basic').length).toBeGreaterThan(0);
   });
