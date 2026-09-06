@@ -1345,6 +1345,7 @@ export default {
 
   // Music challenge UI strings
   music: {
+    saveSong: 'Save this song',
     // Celebration
     amazing: 'Amazing!',
     levelComplete: 'Level {{level}} complete!',
@@ -1700,32 +1701,43 @@ export default {
 
   // Subscription overlay
   subscription: {
+    trialEnd: {
+      titleDays: 'Your free trial ends in {{count}} days',
+      titleTomorrow: 'Your free trial ends tomorrow',
+      titleToday: 'Your free trial ends today',
+      titleUpgrade: 'Upgrade to Premium',
+      subtitle: 'On {{date}} you move to Basic at {{price}} a month.',
+      subtitleUpgrade: 'Unlock every book, song and instrument for your family.',
+      stayingLabel: 'Staying on Basic',
+      stayingPrice: 'Billed {{price}} per month. Cancel anytime.',
+      upgradeHeading: 'What Premium adds',
+      addsAll: 'All stories, songs and learning activities unlocked',
+      addsPractice: 'Unlocks all songs in practice mode',
+      cta: 'Upgrade to Premium',
+      keepBasic: 'No thanks, continue with Basic',
+    },
     startFreeTrial: 'Start my free trial',
-    exploreOptions: 'Explore options',
     trial: {
       title: 'How your free trial works',
-      subtitle: 'Try Basic free for 5 days, then {{price}} per month unless cancelled.',
+      subtitle: 'Free for 5 days, then {{price}} a month. Cancel anytime.',
       todayLabel: 'Today',
-      todayBody: '50 books ready now, plus music and learning games.',
+      todayBody: 'Unlock learning like never before',
       notifyLabel: 'Day 3',
-      notifyBody: 'We’ll notify you your trial is ending soon.',
+      notifyBody: 'We remind you before the trial ends',
       chargeLabel: 'Day 5',
-      chargeBody: 'Your first charge of {{price}}. Cancel anytime before.',
+      chargeBody: 'Subscribe for {{price}} or cancel',
       mostRecommended: 'MOST RECOMMENDED',
       planName: 'Basic',
       planTrial: '5-day free trial',
-      planPrice: 'Then {{price}} per month unless cancelled.',
-      benefitStories: '50 books ready offline today',
+      benefitLearn: 'Learn to read, play instruments and a lot more!',
       benefitMusic: 'Interactive music & games',
       benefitNoAds: 'Ad-free experience',
-      upgrade: 'Upgrade to Premium to unlock every book, song and instrument. Explore options below.',
-      benefitDevices: 'Works on all your devices',
-      benefitCancel: 'Cancel anytime',
+      upgrade: 'Premium unlocks every story, instrument and learning activity',
+      benefitDevices: 'Share progress across devices',
       cta: 'Start 5-Day Free Trial',
       includesTrial: 'Includes a 5-day free trial',
     },
     unlockPlan: 'Unlock a Plan',
-    choosePlan: 'Choose the plan that works best for your family',
     subscribe: 'Subscribe',
     privacyPolicy: 'Privacy Policy',
     termsAndConditions: 'Terms & Conditions',
@@ -2868,7 +2880,9 @@ export default {
     nav: {
       home: 'Home',
       library: 'Library',
+      screensafe: 'Screensafe',
       progress: 'Progress',
+      saved: 'Saved',
     },
   },
 
@@ -2892,17 +2906,33 @@ export default {
       learning: 'Learning',
       music: 'Music',
     },
+    saved: {
+      tagline: {
+        one: 'Everything you loved',
+        two: 'in one place',
+      },
+      activities: 'Saved activities',
+      songs: 'Saved songs',
+      empty: 'Tap the heart on anything you love, and it will wait for you here',
+    },
     library: {
       recentlyRead: 'Recently read',
       favourites: 'Favourites',
       newToYou: 'New to you',
       onThisDevice: 'On this device',
+      tagline: {
+        one: 'Your own little shelf',
+        two: 'of stories to keep',
+      },
     },
   },
 
   progress: {
     title: 'Progress',
-    subtitle: 'Little steps, big progress.',
+    tagline: {
+      one: 'Little steps,',
+      two: 'big progress',
+    },
     weeklyHeading: 'Weekly Progress',
     timeTogether: 'Time together',
     minsSuffix: 'mins this week',
