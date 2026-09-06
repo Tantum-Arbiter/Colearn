@@ -21,7 +21,10 @@ import { SubscriptionOverlay } from '@/components/ui/subscription-overlay';
 
 jest.mock('@expo/vector-icons', () => {
   const { Text } = require('react-native');
-  return { Ionicons: (props: any) => <Text>{props.name}</Text> };
+  return {
+    Ionicons: (props: any) => <Text>{props.name}</Text>,
+    MaterialCommunityIcons: (props: any) => <Text>{props.name}</Text>,
+  };
 });
 
 jest.mock('@/services/subscription-service', () => ({
@@ -93,6 +96,37 @@ describe('SubscriptionOverlay', () => {
       const icon = findByTestId(tree, `trial-step-icon-${index}`)[0];
       expect(icon.props.source).toBeTruthy();
     }
+  });
+
+  /**
+   * The design joins the three steps with a run of dots, not a rule. A single
+   * dash reads as a divider between three separate facts; the dotted run reads
+   * as one journey moving forward, which is the whole point of the card.
+   */
+  it('joins the steps with a run of dots rather than a solid rule', () => {
+    const tree = renderOverlay();
+
+    expect(findByTestId(tree, 'trial-link-0').length).toBeGreaterThan(0);
+    expect(findByTestId(tree, 'trial-link-1').length).toBeGreaterThan(0);
+    expect(findByTestId(tree, 'trial-link-dot').length).toBeGreaterThanOrEqual(12);
+  });
+
+  it('draws one fewer link than it has steps', () => {
+    const tree = renderOverlay();
+
+    expect(findByTestId(tree, 'trial-link-2')).toHaveLength(0);
+  });
+
+  it('crowns the most-popular badge', () => {
+    const json = JSON.stringify(renderOverlay().toJSON());
+
+    expect(json).toContain('crown');
+  });
+
+  it('points the way forward on the call to action', () => {
+    const json = JSON.stringify(renderOverlay().toJSON());
+
+    expect(json).toContain('arrow-forward');
   });
 
   it('stops at three steps', () => {

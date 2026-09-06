@@ -6,7 +6,7 @@ import Animated, {
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { Fonts } from '@/constants/theme';
 import { PrivacyPolicyContent } from '@/components/account/privacy-policy-screen';
@@ -69,6 +69,8 @@ const TRIAL_STEPS = [
     pill: 'amber' as const,
   },
 ];
+
+const TRIAL_LINK_DOTS = 7;
 
 const TRIAL_BENEFIT_KEYS = [
   'subscription.trial.benefitStories',
@@ -195,9 +197,11 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
           </Pressable>
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={st.scroll}>
             <View style={st.starRow}>
-              <Ionicons name="star" size={14} color="#FFD54A" />
-              <Ionicons name="star" size={22} color="#FFC61A" />
-              <Ionicons name="star" size={14} color="#FFD54A" />
+              <Ionicons name="star" size={9} color="#FFE79A" />
+              <Ionicons name="star" size={15} color="#FFD54A" />
+              <Ionicons name="star" size={26} color="#FFC61A" />
+              <Ionicons name="star" size={15} color="#FFD54A" />
+              <Ionicons name="star" size={9} color="#FFE79A" />
             </View>
             <Text style={st.header}>{t('subscription.trial.title')}</Text>
             <Text style={st.sub}>{t('subscription.trial.subtitle', { price: trialPrice })}</Text>
@@ -205,7 +209,13 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
             <View style={st.timeline} testID="trial-timeline">
               {TRIAL_STEPS.map((step, i) => (
                 <React.Fragment key={step.labelKey}>
-                  {i > 0 ? <View style={st.timelineLink} /> : null}
+                  {i > 0 ? (
+                    <View style={st.timelineLink} testID={`trial-link-${i - 1}`}>
+                      {Array.from({ length: TRIAL_LINK_DOTS }).map((_, d) => (
+                        <View key={d} style={st.timelineDot} testID="trial-link-dot" />
+                      ))}
+                    </View>
+                  ) : null}
                   <View style={st.step} testID={`trial-step-${i}`}>
                     <Image
                       testID={`trial-step-icon-${i}`}
@@ -226,7 +236,7 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
 
             <View style={st.premiumCard} testID="trial-premium-card">
               <View style={st.popularBadge}>
-                <Ionicons name="ribbon" size={13} color="#4A2E00" />
+                <MaterialCommunityIcons name="crown" size={15} color="#4A2E00" />
                 <Text style={st.popularText}>{t('subscription.trial.mostPopular')}</Text>
               </View>
               <View style={st.premiumRow}>
@@ -321,7 +331,10 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
               {isPurchasing ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <Text style={st.subBtnText}>{isGuestMode ? t('subscription.signInToSubscribe') : t('subscription.trial.cta')}</Text>
+                <View style={st.subBtnRow}>
+                  <Text style={st.subBtnText}>{isGuestMode ? t('subscription.signInToSubscribe') : t('subscription.trial.cta')}</Text>
+                  <Ionicons name="arrow-forward" size={20} color="#fff" />
+                </View>
               )}
             </LinearGradient>
           </Pressable>
@@ -329,7 +342,7 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
             <Pressable onPress={() => openLegal('privacy')}>
               <Text style={st.legalLink}>{t('subscription.privacyPolicy')}</Text>
             </Pressable>
-            <Text style={st.legalDot}>·</Text>
+            <Text style={st.legalDot}>|</Text>
             <Pressable onPress={() => openLegal('terms')}>
               <Text style={st.legalLink}>{t('subscription.termsAndConditions')}</Text>
             </Pressable>
@@ -390,9 +403,11 @@ const st = StyleSheet.create({
   legalRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 12, gap: 6 },
   legalLink: { fontSize: 12, color: 'rgba(255,255,255,0.5)', fontFamily: Fonts.sans, textDecorationLine: 'underline' },
   legalDot: { fontSize: 12, color: 'rgba(255,255,255,0.35)' },
-  starRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 6 },
+  starRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, marginBottom: 4 },
+  subBtnRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
   timeline: { flexDirection: 'row', alignItems: 'flex-start', borderWidth: 1.5, borderColor: 'rgba(255,198,26,0.55)', borderRadius: 20, backgroundColor: 'rgba(10,10,35,0.55)', paddingVertical: 18, paddingHorizontal: 10, marginBottom: 18 },
-  timelineLink: { width: 18, height: 1.5, marginTop: 44, borderRadius: 1, backgroundColor: 'rgba(255,198,26,0.5)' },
+  timelineLink: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 44 },
+  timelineDot: { width: 3, height: 3, borderRadius: 1.5, backgroundColor: 'rgba(255,198,26,0.85)' },
   step: { flex: 1, alignItems: 'center', paddingHorizontal: 4 },
   stepIcon: { width: 78, height: 78 },
   stepPill: { marginTop: 6, paddingHorizontal: 14, paddingVertical: 5, borderRadius: 999 },
