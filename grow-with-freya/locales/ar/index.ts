@@ -1490,6 +1490,7 @@ export default {
       benefitCancel: 'ألغِ في أي وقت',
       cta: 'ابدأ التجربة المجانية 5 أيام',
       includesTrial: 'يشمل تجربة مجانية لمدة 5 أيام',
+      otherPlans: 'تفضّل خطة أخرى؟ استكشف الخيارات أدناه.',
     },
     unlockPlan: 'فتح خطة',
     choosePlan: 'اختر الخطة الأنسب لعائلتك',

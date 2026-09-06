@@ -1490,6 +1490,7 @@ export default {
       benefitCancel: 'Rezygnacja w dowolnej chwili',
       cta: 'Rozpocznij 5 dni za darmo',
       includesTrial: 'Zawiera 5 dni bezpłatnego okresu próbnego',
+      otherPlans: 'Wolisz inny plan? Poznaj opcje poniżej.',
     },
     unlockPlan: 'Odblokuj plan',
     choosePlan: 'Wybierz plan, który najlepiej pasuje do Twojej rodziny',

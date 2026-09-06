@@ -15,7 +15,7 @@ import { useAppStore } from '@/store/app-store';
 import { mapPlanIdToPackage, purchasePackage, getOfferings, getOfferingPrices, type PlanPricing } from '@/services/subscription-service';
 
 type PlanId = 'monthly_basic' | 'monthly_premium' | 'yearly';
-interface Plan { id: PlanId; name: string; price: string; period: string; details: string[]; badge?: string; originalPrice?: string; hasTrial?: boolean; }
+interface Plan { id: PlanId; name: string; price: string; period: string; details: string[]; exclusions?: string[]; badge?: string; originalPrice?: string; hasTrial?: boolean; }
 
 // --- Fallback pricing (shown before RC offerings load or in dev mode) ---
 const FALLBACK_PRICES: Record<PlanId, string> = {
@@ -37,7 +37,9 @@ function buildPlans(
 
   return [
     { id: 'monthly_basic', name: t('subscription.planBasic'), price: basicPrice, period: t('subscription.perMonth'), hasTrial: true,
-      details: [t('subscription.detailAllStories'), t('subscription.detailAllLearning'), t('subscription.detailDownload50'), t('subscription.detailLimitedSongs'), t('subscription.detailSyncDevices')] },
+      details: [t('subscription.detailAllStories'), t('subscription.detailAllLearning'), t('subscription.detailDownload50'), t('subscription.detailLimitedSongs'), t('subscription.detailSyncDevices')],
+      // the two things Premium ticks and Basic does not -- the actual choice
+      exclusions: [t('subscription.detailAllSongs'), t('subscription.detailAllInstruments')] },
     { id: 'monthly_premium', name: t('subscription.planPremium'), price: premiumPrice, period: t('subscription.perMonth'), badge: t('subscription.mostRecommended'), hasTrial: true,
       details: [t('subscription.detailAllStories'), t('subscription.detailDownload100'), t('subscription.detailAllSongs'), t('subscription.detailAllInstruments')] },
     { id: 'yearly', name: t('subscription.planAnnual'), price: annualPrice, period: t('subscription.perYear'), badge: t('subscription.percentOff'), originalPrice: annualOriginal,
@@ -193,6 +195,12 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
               <Text style={st.detailText}>{d}</Text>
             </View>
           ))}
+          {plan.exclusions?.map((d, i) => (
+            <View key={`x${i}`} style={st.detailRow} testID={`plan-exclusion-${plan.id}-${i}`}>
+              <Ionicons name="close" size={15} color="#F98A8A" style={{ marginRight: 6, marginTop: 1 }} />
+              <Text style={[st.detailText, st.detailTextExcluded]}>{d}</Text>
+            </View>
+          ))}
         </View> : null}
       </Pressable>
     );
@@ -288,6 +296,16 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
                   ))}
                 </View>
               </View>
+
+              <Pressable
+                testID="trial-other-plans"
+                accessibilityRole="button"
+                accessibilityLabel={t('subscription.trial.otherPlans')}
+                onPress={() => setPlansOpen(true)}
+                style={st.otherPlans}
+              >
+                <Text style={st.otherPlansText}>{t('subscription.trial.otherPlans')}</Text>
+              </Pressable>
             </View>
 
             <Pressable
@@ -431,6 +449,7 @@ const st = StyleSheet.create({
   planDetails: { marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.1)', gap: 6 },
   detailRow: { flexDirection: 'row', alignItems: 'flex-start' },
   detailText: { fontSize: 13, color: '#fff', fontFamily: Fonts.sans, flex: 1 },
+  detailTextExcluded: { color: 'rgba(255,255,255,0.55)' },
   subBtn: { marginTop: 4, borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 3.84, elevation: 5 },
   subBtnInner: { paddingVertical: 16, alignItems: 'center', borderRadius: 16 },
   subBtnText: { fontSize: 18, fontWeight: '800', color: '#fff', fontFamily: Fonts.rounded, letterSpacing: 0.5 },
@@ -454,6 +473,8 @@ const st = StyleSheet.create({
   popularBadge: { position: 'absolute', top: -13, left: 16, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#FFC61A', paddingHorizontal: 12, paddingVertical: 5, borderRadius: 999 },
   popularText: { fontFamily: Fonts.rounded, fontSize: 11, fontWeight: '800', color: '#4A2E00', letterSpacing: 0.6 },
   premiumRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  otherPlans: { marginTop: 12, paddingTop: 10, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.10)' },
+  otherPlansText: { fontFamily: Fonts.sans, fontSize: 12.5, color: 'rgba(255,255,255,0.62)', textAlign: 'center', textDecorationLine: 'underline' },
   premiumArt: { width: 138, height: 176, marginLeft: -10, marginVertical: -14 },
   premiumCopy: { flex: 1.1, justifyContent: 'center' },
   premiumName: { fontFamily: Fonts.rounded, fontSize: 22, fontWeight: '800', color: '#FFFFFF' },

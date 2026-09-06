@@ -1490,6 +1490,7 @@ export default {
       benefitCancel: 'Renuntia Quandocumque',
       cta: 'Probationem Quinque Dierum Incipe',
       includesTrial: 'Probationem Gratuitam Quinque Dierum Continet',
+      otherPlans: 'Aliud Consilium Mavis? Optiones Infra Explora.',
     },
     unlockPlan: 'Consilium Reclude',
     choosePlan: 'Elige consilium optimum familiae tuae',

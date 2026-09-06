@@ -1490,6 +1490,7 @@ export default {
       benefitCancel: 'Disdici quando vuoi',
       cta: 'Inizia la prova di 5 giorni',
       includesTrial: 'Include 5 giorni di prova gratuita',
+      otherPlans: 'Preferisci un altro piano? Esplora le opzioni qui sotto.',
     },
     unlockPlan: 'Sblocca un piano',
     choosePlan: 'Scegli il piano più adatto alla tua famiglia',

@@ -1490,6 +1490,7 @@ export default {
       benefitCancel: 'Opsig når som helst',
       cta: 'Start 5 dages gratis prøve',
       includesTrial: 'Inkluderer 5 dages gratis prøveperiode',
+      otherPlans: 'Foretrækker du en anden plan? Udforsk mulighederne nedenfor.',
     },
     unlockPlan: 'Lås op for en plan',
     choosePlan: 'Vælg den plan, der passer bedst til din familie',

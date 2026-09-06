@@ -1490,6 +1490,7 @@ export default {
       benefitCancel: '随时取消',
       cta: '开始 5 天免费试用',
       includesTrial: '包含 5 天免费试用',
+      otherPlans: '想选其他方案？请查看下方的方案。',
     },
     unlockPlan: '解锁套餐',
     choosePlan: '选择最适合您家庭的套餐',

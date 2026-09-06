@@ -1490,6 +1490,7 @@ export default {
       benefitCancel: 'Altijd opzegbaar',
       cta: 'Start 5 dagen gratis',
       includesTrial: 'Inclusief 5 dagen gratis proberen',
+      otherPlans: 'Liever een ander abonnement? Bekijk de opties hieronder.',
     },
     unlockPlan: 'Ontgrendel een abonnement',
     choosePlan: 'Kies het abonnement dat het beste bij je gezin past',

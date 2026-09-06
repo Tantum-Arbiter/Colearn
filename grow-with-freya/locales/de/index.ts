@@ -1490,6 +1490,7 @@ export default {
       benefitCancel: 'Jederzeit kündbar',
       cta: '5 Tage kostenlos testen',
       includesTrial: 'Mit 5 Tagen kostenloser Testphase',
+      otherPlans: 'Lieber ein anderes Paket? Sieh dir die Optionen unten an.',
     },
     unlockPlan: 'Plan freischalten',
     choosePlan: 'Wähle den Plan, der am besten zu deiner Familie passt',

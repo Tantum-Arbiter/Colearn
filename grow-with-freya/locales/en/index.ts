@@ -1723,6 +1723,7 @@ export default {
       benefitCancel: 'Cancel anytime',
       cta: 'Start 5-Day Free Trial',
       includesTrial: 'Includes a 5-day free trial',
+      otherPlans: 'Prefer a different plan? Explore options below.',
     },
     unlockPlan: 'Unlock a Plan',
     choosePlan: 'Choose the plan that works best for your family',

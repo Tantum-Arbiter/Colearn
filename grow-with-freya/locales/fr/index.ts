@@ -1490,6 +1490,7 @@ export default {
       benefitCancel: 'Annulez à tout moment',
       cta: 'Commencer l’essai de 5 jours',
       includesTrial: 'Comprend un essai gratuit de 5 jours',
+      otherPlans: 'Vous préférez une autre formule ? Explorez les options ci-dessous.',
     },
     unlockPlan: 'Débloquer un forfait',
     choosePlan: 'Choisissez le forfait qui convient le mieux à votre famille',

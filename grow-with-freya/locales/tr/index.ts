@@ -1490,6 +1490,7 @@ export default {
       benefitCancel: 'İstediğin an iptal et',
       cta: '5 günlük ücretsiz denemeyi başlat',
       includesTrial: '5 günlük ücretsiz deneme içerir',
+      otherPlans: 'Farklı bir plan mı istersin? Aşağıdaki seçenekleri keşfet.',
     },
     unlockPlan: 'Bir plan aç',
     choosePlan: 'Ailenize en uygun planı seçin',

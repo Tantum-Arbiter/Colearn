@@ -189,6 +189,28 @@ describe('SubscriptionOverlay', () => {
     }
   });
 
+  /**
+   * The premium card is the only plan on screen, which could read as the only
+   * plan there is. This line is what tells a parent the others exist, so it
+   * lives in the card rather than beside the toggle that opens them.
+   */
+  it('says in the premium card that other plans can be chosen', () => {
+    const tree = renderOverlay();
+
+    const hint = findByTestId(tree, 'trial-other-plans');
+
+    expect(hint.length).toBeGreaterThan(0);
+    expect(JSON.stringify(tree.toJSON())).toContain('subscription.trial.otherPlans');
+  });
+
+  it('opens the plan picker straight from that line', () => {
+    const tree = renderOverlay();
+
+    press(tree, 'trial-other-plans');
+
+    expect(findByTestId(tree, 'plan-card-monthly_basic').length).toBeGreaterThan(0);
+  });
+
   it('calls the action a free trial rather than a subscription', () => {
     const json = JSON.stringify(renderOverlay().toJSON());
 
@@ -274,6 +296,33 @@ describe('SubscriptionOverlay plan picker', () => {
 
     expect(row).toContain(nameKey);
     expect(row).toContain('subscription.trial.includesTrial');
+  });
+
+  /**
+   * Basic's own list reads as all upside, which hides the one thing a parent
+   * is actually choosing between: songs and instruments. The crossed-out rows
+   * name what Basic does not include, reusing the very keys Premium ticks, so
+   * the two lists cannot drift apart.
+   */
+  it('crosses out what Basic does not include', () => {
+    const tree = renderOverlay();
+
+    press(tree, 'unlock-plan-toggle');
+    press(tree, 'plan-card-monthly_basic');
+    const basic = textIn(findByTestId(tree, 'plan-card-monthly_basic')[0]);
+
+    expect(findByTestId(tree, 'plan-exclusion-monthly_basic-0').length).toBeGreaterThan(0);
+    expect(basic).toContain('subscription.detailAllSongs');
+    expect(basic).toContain('subscription.detailAllInstruments');
+  });
+
+  it.each(['monthly_premium', 'yearly'])('crosses nothing out on %s', (planId) => {
+    const tree = renderOverlay();
+
+    press(tree, 'unlock-plan-toggle');
+    press(tree, `plan-card-${planId}`);
+
+    expect(findByTestId(tree, `plan-exclusion-${planId}-0`)).toHaveLength(0);
   });
 
   it('does not offer a trial on the annual plan', () => {

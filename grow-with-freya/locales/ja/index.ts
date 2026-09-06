@@ -1490,6 +1490,7 @@ export default {
       benefitCancel: 'いつでも解約可能',
       cta: '5日間の無料トライアルを始める',
       includesTrial: '5日間の無料トライアル付き',
+      otherPlans: '別のプランをお探しですか？下のプランを見るへ。',
     },
     unlockPlan: 'プランを解除',
     choosePlan: 'ご家族に最適なプランをお選びください',
