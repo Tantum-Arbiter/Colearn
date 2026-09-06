@@ -13,6 +13,7 @@ import { PrivacyPolicyContent } from '@/components/account/privacy-policy-screen
 import { TermsConditionsContent } from '@/components/account/terms-conditions-screen';
 import { useAppStore } from '@/store/app-store';
 import { useTrialEligibility } from '@/hooks/use-trial-eligibility';
+import { TABLET_CONTENT_MAX_WIDTH } from '@/hooks/use-accessibility';
 import { mapPlanIdToPackage, purchasePackage, getOfferings, getOfferingPrices, type PlanPricing } from '@/services/subscription-service';
 
 type PlanId = 'monthly_basic' | 'monthly_premium' | 'yearly';
@@ -241,6 +242,7 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
             <Ionicons name="close" size={20} color="#FFFFFF" />
           </Pressable>
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={st.scroll}>
+            <View style={st.column}>
             <View style={st.starRow} testID="trial-star-cluster">
               {TRIAL_STARS.map((star, i) => (
                 <Image
@@ -340,7 +342,9 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
                 {plans.map(renderPlan)}
               </View>
             ) : null}
+            </View>
           </ScrollView>
+          <View style={st.column}>
           <Pressable style={st.subBtn} disabled={isPurchasing} onPress={() => {
             if (isGuestMode) {
               Alert.alert(
@@ -413,6 +417,7 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
               <Text style={st.legalLink}>{t('subscription.termsAndConditions')}</Text>
             </Pressable>
           </View>
+          </View>
         </LinearGradient>
 
         {/* Legal page slide-in */}
@@ -443,7 +448,11 @@ const st = StyleSheet.create({
   bgOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(5, 5, 20, 0.45)' },
   closeBtn: { position: 'absolute', right: 18, zIndex: 10, width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.25)', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 3.84, elevation: 5 },
   closeTxt: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  scroll: { paddingTop: 8, paddingBottom: 16 },
+  scroll: { paddingTop: 8, paddingBottom: 16, alignItems: 'center' },
+  // the trial card is a marketing page, not a form: stretched to a tablet's
+  // full width the dot runs float in empty space and the timeline stops
+  // reading as one journey. Capped and centred, the proportions hold at any size.
+  column: { width: '100%', maxWidth: TABLET_CONTENT_MAX_WIDTH, alignSelf: 'center' },
   header: { fontSize: 26, fontWeight: '800', color: '#FFD700', fontFamily: Fonts.rounded, textAlign: 'center', marginBottom: 4, textShadowColor: 'rgba(0,0,0,0.8)', textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 6 },
   sub: { fontSize: 14, color: 'rgba(255,255,255,0.9)', fontFamily: Fonts.sans, textAlign: 'center', marginBottom: 20, textShadowColor: 'rgba(0,0,0,0.6)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 },
   planCard: { borderWidth: 2, borderColor: 'rgba(255,255,255,0.15)', borderRadius: 16, padding: 16, marginBottom: 12, backgroundColor: 'rgba(0,0,0,0.3)' },
