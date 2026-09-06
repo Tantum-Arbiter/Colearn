@@ -2,7 +2,7 @@
  * Tests for the living sky around the sun.
  *
  * A warm halo, a curated scatter of star and sparkle art, soft clouds framing
- * both edges, one rare shooting star, and the sun itself -- each its own layer,
+ * both edges, and the sun itself -- each its own layer,
  * none of them in the way of a finger.
  */
 
@@ -63,21 +63,16 @@ describe('HomeHeroSky', () => {
     expect(mirrored.length).toBe(layout.clouds.filter((cloud) => cloud.mirrored).length);
   });
 
-  it('should carry one shooting star', () => {
-    const { view } = renderSky();
-
-    expect(byTestId(view, 'hero-shooting-star').length).toBeGreaterThan(0);
-  });
 
   it('should keep the sun as the one thing to touch', () => {
     const { view } = renderSky();
 
-    const decor = ['home-hero-sky', 'hero-sky-background', 'hero-stars-layer', 'hero-cloud-layer', 'hero-shooting-star-layer'].map(
+    const decor = ['home-hero-sky', 'hero-sky-background', 'hero-stars-layer', 'hero-cloud-layer'].map(
       (testID) => byTestId(view, testID)[0]?.props.pointerEvents
     );
     const sun = byTestId(view, 'sky-face')[0];
 
-    expect(decor).toEqual(['none', 'none', 'none', 'none', 'none']);
+    expect(decor).toEqual(['none', 'none', 'none', 'none']);
     expect(sun.props.accessibilityRole).toBe('button');
   });
 
@@ -105,6 +100,5 @@ describe('HomeHeroSky', () => {
     const { view } = renderSky({ active: false });
 
     expect(artByTestIdPrefix(view, 'hero-star-').length).toBe(layout.stars.length);
-    expect(byTestId(view, 'hero-shooting-star').length).toBeGreaterThan(0);
   });
 });

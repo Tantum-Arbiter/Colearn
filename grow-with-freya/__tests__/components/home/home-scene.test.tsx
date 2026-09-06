@@ -285,7 +285,6 @@ describe('HomeScene sky', () => {
 
     expect(viewCount('home-hero-sky')).toBe(1);
     expect(byTestId(view, 'sky-face').length).toBeGreaterThan(0);
-    expect(byTestId(view, 'hero-shooting-star').length).toBeGreaterThan(0);
   });
 
   it('should start the welcome below the sun, not under it', () => {

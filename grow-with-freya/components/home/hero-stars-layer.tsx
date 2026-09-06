@@ -34,8 +34,9 @@ const HeroStar = memo(function HeroStar({ seed, mode }: HeroStarProps) {
       seed.delayMs,
       withRepeat(
         withSequence(
-          withTiming(1, { duration: seed.twinkleMs, easing: breathe }),
-          withTiming(0, { duration: seed.twinkleMs, easing: breathe })
+          withTiming(0, { duration: seed.twinkleMs }),
+          withTiming(1, { duration: HERO_SKY.blinkMs, easing: breathe }),
+          withTiming(0, { duration: HERO_SKY.blinkMs, easing: breathe })
         ),
         -1,
         false
@@ -47,12 +48,10 @@ const HeroStar = memo(function HeroStar({ seed, mode }: HeroStarProps) {
     };
   }, [mode, pulse, seed.delayMs, seed.twinkleMs]);
 
-  const floor = mode === 'gentle' ? HERO_SKY.gentleFloor : HERO_SKY.twinkleFloor;
-  const scaleReach = mode === 'full' ? HERO_SKY.twinkleScale - 1 : 0;
+  const floor = mode === 'gentle' ? HERO_SKY.gentleFloor : HERO_SKY.blinkFloor;
 
   const style = useAnimatedStyle(() => ({
     opacity: 1 - (1 - floor) * pulse.value,
-    transform: [{ scale: 1 + scaleReach * pulse.value }],
   }));
 
   return (

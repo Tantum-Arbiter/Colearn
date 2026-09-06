@@ -9,18 +9,13 @@ export const HERO_SKY = {
   haloRatio: 2.6,
   twinkleMinMs: 2500,
   twinkleMaxMs: 6000,
-  twinkleFloor: 0.75,
-  twinkleScale: 1.04,
-  gentleFloor: 0.9,
+  blinkMs: 420,
+  blinkFloor: 0.42,
+  gentleFloor: 0.82,
   cloudDriftMinPx: 2,
   cloudDriftMaxPx: 6,
   cloudDriftMinMs: 9000,
   cloudDriftMaxMs: 15000,
-  shootingEveryMinMs: 12000,
-  shootingEveryMaxMs: 20000,
-  shootingFlightMs: 1600,
-  shootingRestOpacity: 0.7,
-  shootingIdleOpacity: 0.3,
   sunBreatheLift: 2,
   sunBreatheMs: 4500,
   welcomeGlow: 'rgba(140,150,255,0.55)',
@@ -82,13 +77,12 @@ export const HERO_ART_ASPECT = {
   'sparkle-large': 174 / 190,
   'sparkle-small': 115 / 125,
   'sparkle-dots': 130 / 127,
-  'shooting-star': 347 / 197,
   'cloud-large': 511 / 256,
   'cloud-medium': 389 / 205,
   'cloud-small': 290 / 162,
   'cloud-edge': 486 / 180,
   'cloud-bridge': 513 / 186,
-} as const satisfies Record<HeroStarKind | HeroCloudKind | 'shooting-star', number>;
+} as const satisfies Record<HeroStarKind | HeroCloudKind, number>;
 
 export type HeroMotionMode = 'full' | 'gentle' | 'off';
 
@@ -142,17 +136,6 @@ export interface HeroCloudSeed {
   driftMs: number;
 }
 
-export interface HeroShootingStarSeed {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  travelX: number;
-  travelY: number;
-  everyMs: number;
-  flightMs: number;
-}
-
 export interface HeroHalo {
   x: number;
   y: number;
@@ -164,7 +147,6 @@ export interface HeroSkyLayout {
   halo: HeroHalo;
   stars: HeroStarSeed[];
   clouds: HeroCloudSeed[];
-  shootingStar: HeroShootingStarSeed;
 }
 
 interface StarPlacement {
@@ -214,15 +196,6 @@ const CLOUD_PLACEMENTS: readonly CloudPlacement[] = [
   { id: 'left-bridge', kind: 'cloud-large', x: -0.18, dy: 1.55, width: 0.55, opacity: 0.5, mirrored: false, driftX: 2, driftY: 1, driftMs: 13000 },
 ];
 
-const SHOOTING_STAR = {
-  x: 0.62,
-  dy: -0.4,
-  width: 0.28,
-  travelX: -26,
-  travelY: 15,
-  everyMs: 16000,
-} as const;
-
 export function buildHeroSky(width: number, sun: SunFrame): HeroSkyLayout {
   const height = heroContentTop(sun.top - HERO_SKY.sunTopInset, sun.size) + HERO_SKY.welcomeBlock + HERO_SKY.cardBridge;
 
@@ -260,7 +233,6 @@ export function buildHeroSky(width: number, sun: SunFrame): HeroSkyLayout {
     };
   });
 
-  const shootingWidth = SHOOTING_STAR.width * width;
   const haloSize = sun.size * HERO_SKY.haloRatio;
 
   return {
@@ -268,15 +240,5 @@ export function buildHeroSky(width: number, sun: SunFrame): HeroSkyLayout {
     halo: { x: sun.centreX - haloSize / 2, y: sun.centreY - haloSize / 2, size: haloSize },
     stars,
     clouds,
-    shootingStar: {
-      x: SHOOTING_STAR.x * width,
-      y: sun.centreY + SHOOTING_STAR.dy * sun.size,
-      width: shootingWidth,
-      height: shootingWidth / HERO_ART_ASPECT['shooting-star'],
-      travelX: SHOOTING_STAR.travelX,
-      travelY: SHOOTING_STAR.travelY,
-      everyMs: SHOOTING_STAR.everyMs,
-      flightMs: HERO_SKY.shootingFlightMs,
-    },
   };
 }

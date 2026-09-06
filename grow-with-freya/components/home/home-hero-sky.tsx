@@ -7,7 +7,6 @@ import { useSettledAfterTransition } from '@/hooks/use-ambient-animation';
 import { HeroSkyBackground } from './hero-sky-background';
 import { HeroStarsLayer } from './hero-stars-layer';
 import { HeroCloudLayer } from './hero-cloud-layer';
-import { HeroShootingStar } from './hero-shooting-star';
 import { HeroSunContainer } from './hero-sun-container';
 
 export interface HomeHeroSkyProps {
@@ -38,7 +37,6 @@ export const HomeHeroSky = memo(function HomeHeroSky({
         <HeroSkyBackground halo={layout.halo} timeOfDay={timeOfDay} />
         <HeroStarsLayer stars={layout.stars} mode={mode} />
         <HeroCloudLayer clouds={layout.clouds} mode={mode} intensity={Math.min(1, cloudIntensity)} />
-        <HeroShootingStar seed={layout.shootingStar} mode={mode} />
       </View>
       <HeroSunContainer sun={sun} timeOfDay={timeOfDay} mode={mode} />
     </>

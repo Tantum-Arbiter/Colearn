@@ -1,7 +1,7 @@
 /**
  * Tests for the hero sky's layout and motion rules.
  *
- * The sun is the anchor; stars, sparkles, clouds and one shooting star are
+ * The sun is the anchor; stars, sparkles and clouds are
  * placed around it from the sun's own frame so that the same scene holds on a
  * phone and a tablet. Every duration and drift is bounded so the sky stays
  * calm, and nothing twinkles in step with anything else.
@@ -165,29 +165,6 @@ describe('buildHeroSky', () => {
     });
   });
 
-  describe('the shooting star', () => {
-    it('should cross the upper right, above the sun', () => {
-      const { shootingStar } = underTest;
-
-      expect(shootingStar.x + shootingStar.width / 2).toBeGreaterThan(PHONE * 0.6);
-      expect(shootingStar.y + shootingStar.height / 2).toBeLessThan(SUN.centreY);
-    });
-
-    it('should fly down and to the left, the way its tail points', () => {
-      const { shootingStar } = underTest;
-
-      expect(shootingStar.travelX).toBeLessThan(0);
-      expect(shootingStar.travelY).toBeGreaterThan(0);
-    });
-
-    it('should be rare', () => {
-      const { shootingStar } = underTest;
-
-      expect(shootingStar.everyMs).toBeGreaterThanOrEqual(HERO_SKY.shootingEveryMinMs);
-      expect(shootingStar.everyMs).toBeLessThanOrEqual(HERO_SKY.shootingEveryMaxMs);
-      expect(shootingStar.flightMs).toBeLessThan(shootingStar.everyMs / 4);
-    });
-  });
 
   describe('the halo', () => {
     it('should sit behind the sun and spread well past it', () => {
@@ -208,5 +185,31 @@ describe('buildHeroSky', () => {
     tablet.stars.forEach((seed, index) => {
       expect(seed.size / tabletSun.size).toBeCloseTo(underTest.stars[index].size / SUN.size, 5);
     });
+  });
+});
+
+/**
+ * The stars blink rather than breathe. The old pulse eased between full and
+ * 0.75 opacity across the whole cycle, which at that depth read as nothing
+ * happening. A blink is the opposite shape -- steady for seconds, then a
+ * short dip -- and these bounds are what keep it a blink and keep it calm:
+ * the dip must be brief against the hold, and the hold must be long enough
+ * that a skyful of stars is never busy.
+ */
+describe('the star blink', () => {
+  it('is brief against the time a star spends lit', () => {
+    expect(HERO_SKY.blinkMs * 2).toBeLessThan(HERO_SKY.twinkleMinMs / 2);
+  });
+
+  it('holds still for seconds between blinks', () => {
+    expect(HERO_SKY.twinkleMinMs).toBeGreaterThanOrEqual(2000);
+  });
+
+  it('dips far enough to be seen at all', () => {
+    expect(HERO_SKY.blinkFloor).toBeLessThan(0.6);
+  });
+
+  it('dips less when motion is already being eased back', () => {
+    expect(HERO_SKY.gentleFloor).toBeGreaterThan(HERO_SKY.blinkFloor);
   });
 });

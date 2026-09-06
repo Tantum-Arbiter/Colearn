@@ -16,5 +16,3 @@ export const HERO_CLOUD_ART = {
   'cloud-edge': require('../../assets/images/home-sky/cloud-edge.webp'),
   'cloud-bridge': require('../../assets/images/home-sky/cloud-bridge.webp'),
 } as const satisfies Record<HeroCloudKind, number>;
-
-export const HERO_SHOOTING_STAR_ART = require('../../assets/images/home-sky/shooting-star.webp');
