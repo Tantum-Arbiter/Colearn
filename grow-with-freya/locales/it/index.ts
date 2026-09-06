@@ -959,6 +959,12 @@ export default {
       camel: 'cammello',
     },
   },
+  screenTimeOwl: {
+    owlLabel: 'Un gufo amichevole con un messaggio',
+    showIdeas: 'Mostrami delle idee',
+    okay: 'Va bene',
+  },
+
   screenTimeWarning: {
     approachingLimit: 'Avviso di tempo dello schermo',
     limitReached: 'Limite giornaliero raggiunto',

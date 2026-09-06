@@ -33,6 +33,10 @@ const KEY_BY_CATEGORY: Record<RealWorldAdventure['category'], string> = {
 
 export interface RealWorldTipsProps {
   onClose: () => void;
+  topInset?: number;
+  showIcons?: boolean;
+  showDone?: boolean;
+  header?: React.ReactNode;
   testID?: string;
 }
 
@@ -48,6 +52,10 @@ export interface RealWorldTipsProps {
  */
 export const RealWorldTips = memo(function RealWorldTips({
   onClose,
+  topInset = 54,
+  showIcons = true,
+  showDone = true,
+  header,
   testID = 'real-world-tips',
 }: RealWorldTipsProps) {
   const { t } = useTranslation();
@@ -69,10 +77,11 @@ export const RealWorldTips = memo(function RealWorldTips({
   return (
     <View style={styles.root} testID={testID}>
       <ScrollView
-        contentContainerStyle={[styles.scroll, isTablet && styles.scrollTablet]}
+        contentContainerStyle={[styles.scroll, { paddingTop: topInset }, isTablet && styles.scrollTablet]}
         showsVerticalScrollIndicator={false}
       >
         <View style={isTablet ? { maxWidth: contentMaxWidth, width: '100%' } : undefined}>
+        {header}
         <Text style={[styles.title, { fontSize: scaledFontSize(24) }]} testID="real-world-tips-title">
           {t('screenTime.tips.title')}
         </Text>
@@ -86,7 +95,7 @@ export const RealWorldTips = memo(function RealWorldTips({
           return (
             <View key={tip.category} style={styles.card} testID={`real-world-tip-${index}`}>
               <View style={[styles.cardHeader, { backgroundColor: config.colour }]}>
-                <Ionicons name={config.icon} size={15} color="#FFFFFF" />
+                {showIcons && <Ionicons name={config.icon} size={15} color="#FFFFFF" />}
                 <Text style={[styles.cardCategory, { fontSize: scaledFontSize(12) }]}>
                   {t(config.labelKey)}
                 </Text>
@@ -106,7 +115,7 @@ export const RealWorldTips = memo(function RealWorldTips({
       {/* the inset lives on the wrapper so the button itself can be a plain
           full-width child -- combining width:100% with its own horizontal
           margin overflows the panel */}
-      <View style={styles.doneRow}>
+      {showDone && <View style={styles.doneRow}>
         <Pressable
           testID="real-world-tips-done"
           accessibilityRole="button"
@@ -118,7 +127,7 @@ export const RealWorldTips = memo(function RealWorldTips({
             {t('screenTime.tips.done')}
           </Text>
         </Pressable>
-      </View>
+      </View>}
     </View>
   );
 });

@@ -959,6 +959,12 @@ export default {
       camel: 'Deve',
     },
   },
+  screenTimeOwl: {
+    owlLabel: 'Mesajı olan sevimli bir baykuş',
+    showIdeas: 'Bana fikirler göster',
+    okay: 'Tamam',
+  },
+
   screenTimeWarning: {
     approachingLimit: 'Ekran Süresi Uyarısı',
     limitReached: 'Günlük Sınıra Ulaşıldı',

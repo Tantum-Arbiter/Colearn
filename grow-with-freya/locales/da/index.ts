@@ -959,6 +959,12 @@ export default {
       camel: 'Kamel',
     },
   },
+  screenTimeOwl: {
+    owlLabel: 'En venlig ugle med en besked',
+    showIdeas: 'Vis mig idéer',
+    okay: 'Okay',
+  },
+
   screenTimeWarning: {
     approachingLimit: 'Skærmtidsadvarsel',
     limitReached: 'Daglig grænse nået',

@@ -3,7 +3,7 @@ import { AppState, AppStateStatus } from 'react-native';
 import { useAppStore } from '../../store/app-store';
 import ScreenTimeService, { ScreenTimeWarning } from '../../services/screen-time-service';
 import NotificationService from '../../services/notification-service';
-import { ScreenTimeWarningModal } from './screen-time-warning-modal';
+import { ScreenTimeOwlAlert } from './screen-time-owl-alert';
 import { Logger } from '@/utils/logger';
 
 const log = Logger.create('ScreenTime');
@@ -73,10 +73,8 @@ export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
   const [isPausedForExemptScreen, setIsPausedForExemptScreen] = useState(false);
   // Queued warning that arrived during an immersive screen -shown on exit
   const [pendingWarning, setPendingWarning] = useState<ScreenTimeWarning | null>(null);
-  // The last activity the user was doing — used for contextual suggestions in the warning modal
-  const [lastActivityType, setLastActivityType] = useState<ActivityType>('general');
   // Specific bridge activity ID of the last completed game (e.g. 'abc-animals')
-  const [lastCompletedActivityId, setLastCompletedActivityId] = useState<string | null>(null);
+  const lastCompletedActivityIdRef = useRef<string | null>(null);
 
   // Refs mirror React state so AppState/interval callbacks always read the
   // current value -avoids stale-closure bugs where a backgrounded app skips
@@ -102,14 +100,8 @@ export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
     currentScreen?.toLowerCase() === screen.toLowerCase()
   );
 
-  // Track screen changes to capture the last activity type
   useEffect(() => {
     if (currentScreen && currentScreen !== prevScreenRef.current) {
-      // When leaving a screen, capture its activity type
-      const prevActivity = screenToActivityType(prevScreenRef.current);
-      if (prevActivity !== 'general') {
-        setLastActivityType(prevActivity);
-      }
       prevScreenRef.current = currentScreen;
     }
   }, [currentScreen]);
@@ -153,12 +145,6 @@ export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
   // Set up warning callback
   useEffect(() => {
     const handleWarning = (warning: ScreenTimeWarning) => {
-      // Capture the current activity for contextual suggestions
-      const activity = screenToActivityType(currentScreen);
-      if (activity !== 'general') {
-        setLastActivityType(activity);
-      }
-
       // If user is on an immersive screen, queue the warning for later
       if (IMMERSIVE_SCREENS.some(s => currentScreen?.toLowerCase() === s.toLowerCase())) {
         setPendingWarning(warning);
@@ -320,7 +306,7 @@ export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
   }, []);
 
   const handleSetLastCompletedActivityId = useCallback((activityId: string) => {
-    setLastCompletedActivityId(activityId);
+    lastCompletedActivityIdRef.current = activityId;
   }, []);
 
   const contextValue: ScreenTimeContextType = {
@@ -338,11 +324,9 @@ export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
     <ScreenTimeContext.Provider value={contextValue}>
       {children}
       
-      <ScreenTimeWarningModal
+      <ScreenTimeOwlAlert
         visible={showWarningModal}
         warning={currentWarning}
-        lastActivityType={lastActivityType}
-        lastCompletedActivityId={lastCompletedActivityId}
         onDismiss={handleDismiss}
       />
     </ScreenTimeContext.Provider>

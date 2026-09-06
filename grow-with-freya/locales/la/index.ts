@@ -959,6 +959,12 @@ export default {
       camel: 'Camelus',
     },
   },
+  screenTimeOwl: {
+    owlLabel: 'Noctua Amica cum Nuntio',
+    showIdeas: 'Consilia Mihi Monstra',
+    okay: 'Bene',
+  },
+
   screenTimeWarning: {
     approachingLimit: 'Monitio Temporis Ostentionis',
     limitReached: 'Limites Diurni Iam Attacti',

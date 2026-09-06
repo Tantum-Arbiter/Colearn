@@ -4,9 +4,11 @@ Overhauling the screen-time glance (the window that opens out of the home
 screen's ring) into the alert design, and adding a tips action that shows a
 parent how to carry the story they just read into the real world.
 
-Status: **phases 1–3 built.** Phase 4 (sharing with the warning modal) and
-phase 5 (per-story bridges) are still plans. The two open questions the plan
-parked have been answered — see *Decisions taken* below.
+Status: **phases 1–4 built.** Phase 4 landed differently from the plan below:
+rather than restyling the interrupting modal, the modal was **deleted** and
+replaced by an owl companion — see *Phase 4 as built* at the end. Phase 5
+(per-story bridges) is still a plan. The open questions the plan parked have
+been answered — see *Decisions taken* below.
 
 ---
 
@@ -313,3 +315,93 @@ Only worth starting once phases 1–3 are in and the shape is settled.
   element that stays positive, and it is the counterweight to the header.
 - **Not** build a tips system from scratch. The bridge model already exists,
   is already translated, and already has a fallback path.
+
+
+---
+
+## Phase 4 as built — the owl replaces the modal (2026-09-06)
+
+The plan's phase 4 assumed the interrupting modal would survive and be
+re-pointed at shared components. The operator's call was the stronger version
+of the same argument: the modal was the wrong shape for the message, so it is
+gone. `screen-time-warning-modal.tsx` is deleted, and
+[`screen-time-owl-alert.tsx`](components/screen-time/screen-time-owl-alert.tsx)
+took its place in the provider.
+
+### Why a companion rather than a sheet
+
+The modal painted the whole screen to say "five minutes left". That is a
+bigger interruption than the message deserves, and it reads as telling the
+family off — the risk the plan already named under *A full-bleed alert for a
+child who is fine*. The owl perches at the bottom-right with a speech bubble
+and **does not take the screen**: the alert's root is `box-none`, so the app
+underneath stays usable while the owl waits. That is the behavioural
+difference between the two surfaces, and it is what the `box-none` test
+protects.
+
+### What happened to the modal's content
+
+- **The message and the type-specific title** moved into the bubble unchanged,
+  including the neutral `screenTimeWarning.notice` fallback for a warning type
+  the app does not recognise.
+- **The real-world tips** are behind a *Show me ideas* button rather than
+  always on screen, and they open the shared
+  [`RealWorldTips`](components/screen-time/real-world-tips.tsx) built in phase
+  3 — so the duplication the plan warned about never happens. `RealWorldTips`
+  gained one optional `topInset` prop so it can sit in a card that has no
+  floating close button above it.
+- **The bridge cards are not duplicated.** The modal rendered
+  `getBridgeData(lastCompletedActivityId)` itself, which was always a second
+  copy of what
+  [`real-world-bridge-overlay.tsx`](components/learning/real-world-bridge-overlay.tsx)
+  shows after a learning activity. That overlay and its tests are untouched, so
+  the 45 authored bridges lost nothing; only the duplicate rendering went.
+- **The push notification is untouched.** It fires outside the app and is a
+  separate channel from the in-app prompt.
+
+Because nothing now reads it, the provider's `lastActivityType` state and the
+effect that tracked it are gone. `lastCompletedActivityId` became a ref: the
+emotions game still calls `setLastCompletedActivityId` through the context and
+the value is still retained, but it no longer forces a re-render for a reader
+that does not exist. `screenToActivityType` stays exported and tested — phase 5
+is what makes it load-bearing again.
+
+### The sprite
+
+The owl is one 4x4 sheet,
+[`assets/images/screen-time/owl-companion.webp`](assets/images/screen-time/owl-companion.webp),
+sliced from a 50-frame source sheet down to the 16 frames the clips actually
+use. Geometry and clip tables live in
+[`constants/owl-companion.ts`](constants/owl-companion.ts).
+
+**It is one image moved behind a window, not sixteen images swapped in.**
+Swapping an `Image` source flickers on the first paint of each new frame;
+moving an already-decoded texture never does. `OwlSprite` renders a clipped
+`View` one frame wide with the whole sheet positioned absolutely inside it,
+and animates the offset.
+
+**Frames were chosen by measured body difference, not by eye.** The source
+sheet is generated art, so consecutive cells are not a coherent animation —
+poses drift between neighbours. Picking the talk frames by eye put two
+closed-beak frames in the "open mouth" set. The frames that shipped were
+chosen by scoring every candidate against an anchor frame on silhouette XOR
+plus per-pixel colour distance *outside the face*, so a talk cycle changes the
+mouth and holds the body still. Frame 0 (the anchor) is the resting pose, and
+every one-shot clip ends on it so `idle` can take over invisibly.
+
+The blink frames are the one place this could not be satisfied — every
+eyes-closed cell in the source belongs to a visibly different pose family.
+They are used anyway, held for ~110ms, because at that speed the body shift
+does not register. If the owl ever gets a slower, held eyes-closed beat, those
+frames will need re-authoring rather than re-picking.
+
+Reduced motion holds a single still frame; one-shot clips still report their
+end so the wave → talk → idle sequencing survives.
+
+### Not verified on device
+
+The sprite geometry was checked against the real asset in a browser (clean
+crops, no bleed between cells, clips advancing). The **RN layout — bubble
+placement, owl size, the tips card on a tablet — has not been seen running**.
+Triggering the alert needs today's usage seeded close to the limit, and this
+worktree has no Metro run behind it yet.

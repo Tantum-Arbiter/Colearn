@@ -959,6 +959,12 @@ export default {
       camel: 'ラクダ',
     },
   },
+  screenTimeOwl: {
+    owlLabel: 'メッセージを持った優しいフクロウ',
+    showIdeas: 'アイデアを見せて',
+    okay: 'わかりました',
+  },
+
   screenTimeWarning: {
     approachingLimit: 'スクリーンタイム警告',
     limitReached: '1日の制限に達しました',

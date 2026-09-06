@@ -959,6 +959,12 @@ export default {
       camel: '骆驼',
     },
   },
+  screenTimeOwl: {
+    owlLabel: '一只带来消息的友善猫头鹰',
+    showIdeas: '给我一些点子',
+    okay: '好的',
+  },
+
   screenTimeWarning: {
     approachingLimit: '屏幕时间警告',
     limitReached: '已达到每日限制',

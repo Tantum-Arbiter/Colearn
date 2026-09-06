@@ -959,6 +959,12 @@ export default {
       camel: 'جمل',
     },
   },
+  screenTimeOwl: {
+    owlLabel: 'بومة ودودة لديها رسالة',
+    showIdeas: 'أرني بعض الأفكار',
+    okay: 'حسناً',
+  },
+
   screenTimeWarning: {
     approachingLimit: 'تحذير وقت الشاشة',
     limitReached: 'تم الوصول إلى الحد اليومي',

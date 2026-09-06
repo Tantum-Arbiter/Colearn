@@ -1145,6 +1145,12 @@ export default {
   },
 
   // Screen time warning modal
+  screenTimeOwl: {
+    owlLabel: 'A friendly owl with a message',
+    showIdeas: 'Show me ideas',
+    okay: 'Okay',
+  },
+
   screenTimeWarning: {
     approachingLimit: 'Screen Time Warning',
     limitReached: 'Daily Limit Reached',
