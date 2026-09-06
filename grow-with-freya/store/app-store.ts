@@ -41,6 +41,9 @@ export interface AppState {
   /** Dev-only override: set to a tier to bypass real IAP checks during testing.
    *  Set to null to use the real subscription tier. NOT persisted. */
   _devSubscriptionOverride: SubscriptionTier | null;
+  /** The trial whose end-of-trial upgrade offer has already been answered,
+   *  keyed by the day it converts. Null while no trial has been answered. */
+  trialEndPromptSeenFor: string | null;
 
   // User profile (synced from backend)
   userNickname: string | null;
@@ -77,6 +80,8 @@ export interface AppState {
   favoriteStoryIds: string[]; // Array of story IDs that user has favorited
   // Activity favorites
   favoriteActivityIds: string[]; // Array of activity IDs that user has favorited
+  // Practice song favorites
+  favoriteSongIds: string[]; // Array of practice song IDs that user has favorited
 
   // Story read tracking
   readStoryIds: string[]; // Array of story IDs that user has opened/read
@@ -134,12 +139,15 @@ export interface AppState {
   setTextSizeScale: (scale: number) => void;
   setSubscriptionTier: (tier: SubscriptionTier) => void;
   setDevSubscriptionOverride: (tier: SubscriptionTier | null) => void;
+  setTrialEndPromptSeenFor: (trialKey: string | null) => void;
   /** Returns the effective tier (dev override takes priority if set). */
   getEffectiveTier: () => SubscriptionTier;
   toggleFavoriteStory: (storyId: string) => void;
   isStoryFavorited: (storyId: string) => boolean;
   toggleFavoriteActivity: (activityId: string) => void;
   isActivityFavorited: (activityId: string) => boolean;
+  toggleFavoriteSong: (songId: string) => void;
+  isSongFavorited: (songId: string) => boolean;
   markStoryAsRead: (storyId: string) => void;
   setLastRatingPromptBookCount: (count: number) => void;
   recordReadingSession: () => void; // Call when a story is opened to update streak
@@ -176,6 +184,7 @@ export const useAppStore = create<AppState>()(
       isGuestMode: false,
       subscriptionTier: 'free' as SubscriptionTier,
       _devSubscriptionOverride: null,
+      trialEndPromptSeenFor: null,
       userNickname: null,
       userAvatarType: null,
       userAvatarId: null,
@@ -193,6 +202,7 @@ export const useAppStore = create<AppState>()(
       textSizeScale: 1.0, // Default to normal size
       favoriteStoryIds: [], // Start with no favorites
       favoriteActivityIds: [], // Start with no activity favorites
+      favoriteSongIds: [], // Start with no song favorites
       readStoryIds: [], // Start with no read stories
       lastRatingPromptBookCount: 0, // Never prompted for rating
       readingStreak: 0,
@@ -254,6 +264,7 @@ export const useAppStore = create<AppState>()(
       }),
       setSubscriptionTier: (tier: SubscriptionTier) => set({ subscriptionTier: tier }),
       setDevSubscriptionOverride: (tier: SubscriptionTier | null) => set({ _devSubscriptionOverride: tier }),
+      setTrialEndPromptSeenFor: (trialKey: string | null) => set({ trialEndPromptSeenFor: trialKey }),
       getEffectiveTier: (): SubscriptionTier => {
         const s = get();
         return s._devSubscriptionOverride ?? s.subscriptionTier;
@@ -283,6 +294,17 @@ export const useAppStore = create<AppState>()(
       }),
       isActivityFavorited: (activityId: string) => {
         return get().favoriteActivityIds.includes(activityId);
+      },
+      toggleFavoriteSong: (songId: string) => set((state) => {
+        const isFavorited = state.favoriteSongIds.includes(songId);
+        if (isFavorited) {
+          return { favoriteSongIds: state.favoriteSongIds.filter(id => id !== songId) };
+        } else {
+          return { favoriteSongIds: [...state.favoriteSongIds, songId] };
+        }
+      }),
+      isSongFavorited: (songId: string) => {
+        return get().favoriteSongIds.includes(songId);
       },
       markStoryAsRead: (storyId: string) => set((state) => {
         if (state.readStoryIds.includes(storyId)) {
@@ -403,6 +425,7 @@ export const useAppStore = create<AppState>()(
         showLoginAfterOnboarding: state.showLoginAfterOnboarding,
         isGuestMode: state.isGuestMode,
         subscriptionTier: state.subscriptionTier,
+        trialEndPromptSeenFor: state.trialEndPromptSeenFor,
         userNickname: state.userNickname,
         userAvatarType: state.userAvatarType,
         userAvatarId: state.userAvatarId,
@@ -417,6 +440,7 @@ export const useAppStore = create<AppState>()(
         textSizeScale: state.textSizeScale,
         favoriteStoryIds: state.favoriteStoryIds,
         favoriteActivityIds: state.favoriteActivityIds,
+        favoriteSongIds: state.favoriteSongIds,
         readStoryIds: state.readStoryIds,
         lastRatingPromptBookCount: state.lastRatingPromptBookCount,
         readingStreak: state.readingStreak,

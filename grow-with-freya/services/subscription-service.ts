@@ -22,6 +22,7 @@ import Purchases, {
   PURCHASES_ERROR_CODE,
 } from 'react-native-purchases';
 import { useAppStore, type SubscriptionTier } from '@/store/app-store';
+import { trialDaysRemaining, type TrialStatus } from '@/constants/trial-end';
 import { Logger } from '@/utils/logger';
 
 const log = Logger.create('SubscriptionService');
@@ -44,6 +45,9 @@ export interface PurchaseResult {
   error?: string;
   tier?: SubscriptionTier;
 }
+
+
+const NO_TRIAL: TrialStatus = { inTrial: false, daysRemaining: 0, endsAt: null, billingTier: 'free' };
 
 let _initialized = false;
 let _purchaseInFlight = false;
@@ -190,6 +194,56 @@ export async function isTrialAvailable(planId: string = 'monthly_basic'): Promis
   } catch (err) {
     log.error('Failed to check trial eligibility', err);
     return true;
+  }
+}
+
+/**
+ * Where this person stands in a free trial, if they are in one.
+ *
+ * Only the store knows: a trial that started on another device, or before a
+ * reinstall, leaves nothing behind locally. `periodType` is the honest signal
+ * -- an entitlement is active during the trial exactly as it is after the
+ * charge, and only the period says which of the two you are looking at.
+ *
+ * Dev mode has no RevenueCat to ask, so the Developer Options tier override
+ * stands in: choosing Basic there converts the trial at the end of today,
+ * which is the one state the trial-end screen is built to catch.
+ */
+export async function getTrialStatus(now: Date = new Date()): Promise<TrialStatus> {
+  if (isDevMode()) {
+    const override = useAppStore.getState()._devSubscriptionOverride;
+    if (override !== 'basic') return NO_TRIAL;
+    const endsAt = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59);
+    return {
+      inTrial: true,
+      daysRemaining: trialDaysRemaining(endsAt, now),
+      endsAt,
+      billingTier: 'basic',
+    };
+  }
+
+  try {
+    const customerInfo = await Purchases.getCustomerInfo();
+    const entitlements = customerInfo?.entitlements?.active;
+    if (!entitlements) return NO_TRIAL;
+
+    const trial = Object.values(entitlements).find(
+      (entitlement) => entitlement?.isActive && entitlement.periodType === 'TRIAL',
+    );
+    if (!trial?.expirationDate) return NO_TRIAL;
+
+    const endsAt = new Date(trial.expirationDate);
+    if (Number.isNaN(endsAt.getTime())) return NO_TRIAL;
+
+    return {
+      inTrial: true,
+      daysRemaining: trialDaysRemaining(endsAt, now),
+      endsAt,
+      billingTier: mapEntitlementsToTier(customerInfo),
+    };
+  } catch (err) {
+    log.error('Failed to read trial status', err);
+    return NO_TRIAL;
   }
 }
 

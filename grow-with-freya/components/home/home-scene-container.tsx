@@ -1,10 +1,12 @@
 import React, { memo, useCallback, useState } from 'react';
 import { useAppStore } from '@/store/app-store';
 import { SubscriptionOverlay } from '@/components/ui/subscription-overlay';
+import { TrialEndUpgradeOverlay } from '@/components/ui/trial-end-upgrade-overlay';
 import { shouldOfferPlan } from '@/constants/unlock-plan';
 import { useStoryTransition } from '@/contexts/story-transition-context';
 import { ALL_STORIES } from '@/data/stories';
 import { useScreenTimeAllowance } from '@/hooks/use-screen-time-allowance';
+import { useTrialEndPrompt } from '@/hooks/use-trial-end-prompt';
 import { useTimeOfDay } from '@/hooks/use-time-of-day';
 import { isScreenTimeExceeded } from '@/constants/screen-time-ring';
 import { ScreenTimeGlance } from './screen-time-glance';
@@ -31,6 +33,7 @@ export const HomeSceneContainer = memo(function HomeSceneContainer({
   const { requestGardenOpen } = useStoryTransition();
   const screenTime = useScreenTimeAllowance();
   const timeOfDay = useTimeOfDay();
+  const trialEnd = useTrialEndPrompt();
   const [showScreenTime, setShowScreenTime] = useState(false);
   const [showPlans, setShowPlans] = useState(false);
   const getEffectiveTier = useAppStore((state) => state.getEffectiveTier);
@@ -98,6 +101,12 @@ export const HomeSceneContainer = memo(function HomeSceneContainer({
       />
 
       <SubscriptionOverlay visible={showPlans} onClose={closePlans} />
+
+      <TrialEndUpgradeOverlay
+        visible={trialEnd.visible && !showPlans}
+        onClose={trialEnd.dismiss}
+        status={trialEnd.status}
+      />
     </>
   );
 });

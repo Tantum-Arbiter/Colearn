@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, Pressable, StyleSheet, ScrollView, Image, useWindowDimensions, Alert, ActivityIndicator } from 'react-native';
 import Animated, {
   useSharedValue, useAnimatedStyle, withTiming, Easing, runOnJS,
@@ -13,45 +13,14 @@ import { PrivacyPolicyContent } from '@/components/account/privacy-policy-screen
 import { TermsConditionsContent } from '@/components/account/terms-conditions-screen';
 import { useAppStore } from '@/store/app-store';
 import { useTrialEligibility } from '@/hooks/use-trial-eligibility';
-import { TABLET_CONTENT_MAX_WIDTH } from '@/hooks/use-accessibility';
-import { mapPlanIdToPackage, purchasePackage, getOfferings, getOfferingPrices, type PlanPricing } from '@/services/subscription-service';
+import { mapPlanIdToPackage, purchasePackage, getOfferings, getOfferingPrices } from '@/services/subscription-service';
+import type { LivePrices } from '@/components/subscription/plan-picker';
+import { fallbackPrices } from '@/constants/fallback-prices';
 
-type PlanId = 'monthly_basic' | 'monthly_premium' | 'yearly';
-interface Plan { id: PlanId; name: string; price: string; period: string; details: string[]; exclusions?: string[]; badge?: string; originalPrice?: string; hasTrial?: boolean; }
-
-// --- Fallback pricing (shown before RC offerings load or in dev mode) ---
-const FALLBACK_PRICES: Record<PlanId, string> = {
-  monthly_basic: '$5.99',
-  monthly_premium: '$9.99',
-  yearly: '$89.99',
-};
-const FALLBACK_ANNUAL_ORIGINAL = '$119.88';
-
-function buildPlans(
-  t: (key: string) => string,
-  livePrices: Record<string, PlanPricing | null> | null,
-): Plan[] {
-  const basicPrice = livePrices?.monthly_basic?.priceString ?? FALLBACK_PRICES.monthly_basic;
-  const premiumPrice = livePrices?.monthly_premium?.priceString ?? FALLBACK_PRICES.monthly_premium;
-  const annualPrice = livePrices?.yearly?.priceString ?? FALLBACK_PRICES.yearly;
-  // For the "was" price, we can't pull a struck-through price from RC — keep fallback
-  const annualOriginal = FALLBACK_ANNUAL_ORIGINAL;
-
-  return [
-    { id: 'monthly_basic', name: t('subscription.planBasic'), price: basicPrice, period: t('subscription.perMonth'), hasTrial: true,
-      details: [t('subscription.detail50Stories'), t('subscription.detailAllLearning'), t('subscription.detailLimitedSongs'), t('subscription.detailSyncDevices')],
-      // the two things Premium ticks and Basic does not -- the actual choice
-      exclusions: [t('subscription.detailAllSongs'), t('subscription.detailAllInstruments')] },
-    { id: 'monthly_premium', name: t('subscription.planPremium'), price: premiumPrice, period: t('subscription.perMonth'), badge: t('subscription.mostPopular'),
-      details: [t('subscription.detailAllStories'), t('subscription.detailDownload100'), t('subscription.detailAllSongs'), t('subscription.detailAllInstruments')] },
-    { id: 'yearly', name: t('subscription.planAnnual'), price: annualPrice, period: t('subscription.perYear'), badge: t('subscription.percentOff'), originalPrice: annualOriginal,
-      details: [t('subscription.detailEverythingPremium'), t('subscription.detailSave25')] },
-  ];
-}
+/** The plan the trial runs on -- the only thing this screen sells. */
+const TRIAL_PLAN_ID = 'monthly_basic';
 
 const ANIM_MS = 350;
-
-const TRIAL_FALLBACK_PRICE = '£5.99 / $5.99';
 
 const TRIAL_STEPS = [
   {
@@ -73,8 +42,6 @@ const TRIAL_STEPS = [
     pill: 'amber' as const,
   },
 ];
-
-const TRIAL_LINK_DOTS = 7;
 
 /**
  * The amber halo the design draws around both framed boxes. iOS renders it
@@ -100,28 +67,30 @@ const TRIAL_MAX_WIDTH = 720;
  */
 const COMPACT_WIDTH = 480;
 
+/**
+ * What the card adds to the timeline above it, and nothing the timeline
+ * already said: the books, the free period and the cancellation are all
+ * promised up there, and repeating them cost the card half its height.
+ */
 const TRIAL_BENEFIT_KEYS = [
-  'subscription.trial.benefitStories',
-  'subscription.detailAllLearning',
+  'subscription.trial.benefitLearn',
   'subscription.trial.benefitMusic',
   'subscription.trial.benefitNoAds',
   'subscription.trial.benefitDevices',
-  'subscription.trial.benefitCancel',
 ];
-
-const TRIAL_PREMIUM_ART = require('../../assets/images/subscription/premium-music.webp');
 
 /** The hero sky's own stars -- the design's are lit, and a glyph cannot be. */
 const STAR_SMALL = require('../../assets/images/home-sky/star-small.webp');
 const STAR_MEDIUM = require('../../assets/images/home-sky/star-medium.webp');
 const STAR_LARGE = require('../../assets/images/home-sky/star-large.webp');
 
+/** `drop` sets each star below the crown of the arc the design draws. */
 const TRIAL_STARS = [
-  { source: STAR_SMALL, size: 13 },
-  { source: STAR_MEDIUM, size: 23 },
-  { source: STAR_LARGE, size: 40 },
-  { source: STAR_MEDIUM, size: 23 },
-  { source: STAR_SMALL, size: 13 },
+  { source: STAR_SMALL, size: 13, drop: 26 },
+  { source: STAR_MEDIUM, size: 23, drop: 12 },
+  { source: STAR_LARGE, size: 40, drop: 0 },
+  { source: STAR_MEDIUM, size: 23, drop: 12 },
+  { source: STAR_SMALL, size: 13, drop: 26 },
 ];
 
 interface Props { visible: boolean; onClose: () => void; }
@@ -130,11 +99,8 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { width: screenW, height: screenH } = useWindowDimensions();
-  const [selectedPlan, setSelectedPlan] = useState<PlanId>('monthly_basic');
-  const [livePrices, setLivePrices] = useState<Record<string, PlanPricing | null> | null>(null);
-  const plans = useMemo(() => buildPlans(t, livePrices), [t, livePrices]);
+  const [livePrices, setLivePrices] = useState<LivePrices>(null);
   const [legalPage, setLegalPage] = useState<'privacy' | 'terms' | null>(null);
-  const [plansOpen, setPlansOpen] = useState(false);
   const { isGuestMode, setGuestMode, setShowLoginAfterOnboarding } = useAppStore();
   const trialAvailable = useTrialEligibility();
   const [isPurchasing, setIsPurchasing] = useState(false);
@@ -180,63 +146,13 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
   const bdStyle = useAnimatedStyle(() => ({ opacity: backdropOpacity.value }));
   const legalStyle = useAnimatedStyle(() => ({ transform: [{ translateX: legalSlideX.value }] }));
 
-  const trialPrice = livePrices?.monthly_basic?.priceString ?? TRIAL_FALLBACK_PRICE;
+  const trialPrice = livePrices?.monthly_basic?.priceString ?? fallbackPrices().monthly_basic;
   const compact = screenW < COMPACT_WIDTH;
-  const stepIcon = compact ? 54 : 70;
-  const linkDots = compact ? 4 : 7;
-  const dotGap = compact ? 5 : 7;
-  const artWidth = compact ? 104 : 150;
+  const stepIcon = compact ? 68 : 97;
+  const linkDots = compact ? 4 : 8;
+  const dotGap = compact ? 3.5 : 6;
 
   if (!visible) return null;
-
-  const renderPlan = (plan: Plan) => {
-    const sel = selectedPlan === plan.id;
-    return (
-      <Pressable
-        key={plan.id}
-        testID={`plan-card-${plan.id}`}
-        accessibilityRole="button"
-        accessibilityState={{ selected: sel }}
-        onPress={() => setSelectedPlan(plan.id)}
-        style={[st.planCard, sel && st.planCardSel]}
-      >
-        {plan.badge ? <View style={[st.badge, plan.id === 'yearly' ? st.badgeGreen : st.badgeAmber]}>
-          <Text style={st.badgeText}>{plan.badge}</Text></View> : null}
-        <View style={st.planRow}>
-          <View style={[st.radio, sel && st.radioSel]}>{sel ? <View style={st.radioDot} /> : null}</View>
-          <View style={{ flex: 1 }}>
-            <View style={st.planNameRow} testID={`plan-name-row-${plan.id}`}>
-              <Text style={st.planName}>{plan.name}</Text>
-              {plan.hasTrial ? (
-                <Text style={st.planTrialNote} testID={`plan-trial-note-${plan.id}`}>
-                  {t('subscription.trial.includesTrial')}
-                </Text>
-              ) : null}
-            </View>
-            <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
-              <Text style={st.planPrice}>{plan.price}<Text style={st.planPeriod}>{plan.period}</Text></Text>
-              {plan.originalPrice ? <Text style={st.planOrigPrice}>{plan.originalPrice}</Text> : null}
-            </View>
-
-          </View>
-        </View>
-        {sel ? <View style={st.planDetails}>
-          {plan.details.map((d, i) => (
-            <View key={i} style={st.detailRow}>
-              <Ionicons name="checkmark" size={15} color="#fff" style={{ marginRight: 6, marginTop: 1 }} />
-              <Text style={st.detailText}>{d}</Text>
-            </View>
-          ))}
-          {plan.exclusions?.map((d, i) => (
-            <View key={`x${i}`} style={st.detailRow} testID={`plan-exclusion-${plan.id}-${i}`}>
-              <Ionicons name="close" size={15} color="#F98A8A" style={{ marginRight: 6, marginTop: 1 }} />
-              <Text style={[st.detailText, st.detailTextExcluded]}>{d}</Text>
-            </View>
-          ))}
-        </View> : null}
-      </Pressable>
-    );
-  };
 
   return (
     <View style={st.abs}>
@@ -258,20 +174,22 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
           <Pressable style={[st.closeBtn, { top: insets.top + 10 }]} onPress={handleClose} hitSlop={16}>
             <Ionicons name="close" size={20} color="#FFFFFF" />
           </Pressable>
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={st.scroll}>
-            <View style={st.column}>
+          <View style={st.page}>
+            <View style={[st.column, st.pageColumn]}>
+            <View style={st.headerBlock}>
             <View style={st.starRow} testID="trial-star-cluster">
               {TRIAL_STARS.map((star, i) => (
                 <Image
                   key={i}
                   source={star.source}
-                  style={{ width: star.size, height: star.size }}
+                  style={{ width: star.size, height: star.size, marginTop: star.drop }}
                   resizeMode="contain"
                 />
               ))}
             </View>
             <Text style={st.header}>{t('subscription.trial.title')}</Text>
             <Text style={st.sub}>{t('subscription.trial.subtitle', { price: trialPrice })}</Text>
+            </View>
 
             <View style={st.timeline} testID="trial-timeline">
               {TRIAL_STEPS.map((step, i) => (
@@ -309,42 +227,25 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
 
             <View style={st.premiumWrap}>
             <View style={st.premiumCard} testID="trial-premium-card">
-              <View style={[st.premiumArt, { width: artWidth }]}>
-                <Image
-                  testID="trial-premium-art"
-                  source={TRIAL_PREMIUM_ART}
-                  style={st.premiumArtImage}
-                  resizeMode="cover"
-                />
-              </View>
-              <View style={[st.premiumBody, { paddingLeft: artWidth + 14 }]}>
+              <View style={st.premiumBody}>
                 <View style={[st.premiumCopyRow, compact && st.premiumCopyStack]}>
-                <View style={st.premiumCopy}>
+                <View style={[st.premiumCopy, compact && st.premiumColumnStacked]}>
                   <Text style={st.premiumName}>{t('subscription.trial.planName')}</Text>
                   <Text style={st.premiumTrial}>{t('subscription.trial.planTrial')}</Text>
-                  <Text style={st.premiumPrice}>
-                    {t('subscription.trial.planPrice', { price: trialPrice })}
-                  </Text>
                 </View>
-                <View style={st.premiumBenefits}>
+                <View style={[st.premiumBenefits, compact && st.premiumColumnStacked]}>
                   {TRIAL_BENEFIT_KEYS.map((key, i) => (
                     <View key={key} style={st.benefitRow} testID={`trial-benefit-${i}`}>
-                      <Ionicons name="checkmark" size={15} color="#FFC61A" style={{ marginRight: 8 }} />
+                      <Ionicons name="checkmark" size={15} color="#FFC61A" style={st.benefitTick} />
                       <Text style={st.benefitText}>{t(key)}</Text>
                     </View>
                   ))}
                 </View>
                 </View>
 
-              <Pressable
-                testID="trial-upgrade"
-                accessibilityRole="button"
-                accessibilityLabel={t('subscription.trial.upgrade')}
-                onPress={() => setPlansOpen(true)}
-                style={st.upgradeRow}
-              >
+              <View testID="trial-upgrade" style={[st.upgradeRow, compact && st.upgradeRowCompact]}>
                 <Text style={st.upgradeNote}>{t('subscription.trial.upgrade')}</Text>
-              </Pressable>
+              </View>
               </View>
             </View>
 
@@ -354,26 +255,8 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
               </View>
             </View>
 
-            <Pressable
-              testID="unlock-plan-toggle"
-              accessibilityRole="button"
-              accessibilityState={{ expanded: plansOpen }}
-              accessibilityLabel={t('subscription.exploreOptions')}
-              onPress={() => setPlansOpen((open) => !open)}
-              style={st.plansToggle}
-            >
-              <Text style={st.plansToggleText}>{t('subscription.exploreOptions')}</Text>
-              <Ionicons name={plansOpen ? 'chevron-up' : 'chevron-down'} size={18} color="rgba(255,255,255,0.8)" />
-            </Pressable>
-
-            {plansOpen ? (
-              <View testID="unlock-plan-section">
-                <Text style={st.plansHint}>{t('subscription.choosePlan')}</Text>
-                {plans.map(renderPlan)}
-              </View>
-            ) : null}
             </View>
-          </ScrollView>
+          </View>
           <View style={st.column}>
           <Pressable style={st.subBtn} disabled={isPurchasing} onPress={() => {
             if (isGuestMode) {
@@ -403,7 +286,7 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
               try {
                 // Ensure offerings are loaded
                 await getOfferings();
-                const pkg = mapPlanIdToPackage(selectedPlan);
+                const pkg = mapPlanIdToPackage(TRIAL_PLAN_ID);
                 if (!pkg) {
                   Alert.alert(t('subscription.errorTitle'), t('subscription.errorUnavailable'));
                   return;
@@ -473,85 +356,68 @@ const st = StyleSheet.create({
   abs: { ...StyleSheet.absoluteFillObject, zIndex: 2500 },
   backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.5)' },
   modalWrap: { flex: 1 },
-  content: { flex: 1, paddingHorizontal: 20 },
+  content: { flex: 1, paddingHorizontal: 16 },
   bgImage: { position: 'absolute', top: 0, left: 0, opacity: 0.35 },
   bgOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(5, 5, 20, 0.45)' },
   closeBtn: { position: 'absolute', right: 18, zIndex: 10, width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.25)', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 3.84, elevation: 5 },
   closeTxt: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  scroll: { paddingTop: 8, paddingBottom: 16, alignItems: 'center' },
+  page: { flex: 1, alignItems: 'center', paddingTop: 4, paddingBottom: 12 },
+  // the three blocks share out whatever height the device has rather than
+  // huddling in the middle of it: the heading rides at the top, and the space
+  // left over becomes the gaps between the panels
+  pageColumn: { flex: 1, justifyContent: 'space-between' },
+  headerBlock: { width: '100%' },
   // the trial card is a marketing page, not a form: stretched to a tablet's
   // full width the dot runs float in empty space and the timeline stops
   // reading as one journey. Capped and centred, the proportions hold at any size.
   column: { width: '100%', maxWidth: TRIAL_MAX_WIDTH, alignSelf: 'center' },
   header: { fontSize: 26, fontWeight: '800', color: '#FFD700', fontFamily: Fonts.rounded, textAlign: 'center', marginBottom: 4, textShadowColor: 'rgba(0,0,0,0.8)', textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 6 },
-  sub: { fontSize: 14, color: 'rgba(255,255,255,0.9)', fontFamily: Fonts.sans, textAlign: 'center', marginBottom: 20, textShadowColor: 'rgba(0,0,0,0.6)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 },
-  planCard: { borderWidth: 2, borderColor: 'rgba(255,255,255,0.15)', borderRadius: 16, padding: 16, marginBottom: 12, backgroundColor: 'rgba(0,0,0,0.3)' },
-  planCardSel: { borderColor: '#F59E0B', backgroundColor: 'rgba(245,158,11,0.15)' },
-  badge: { position: 'absolute', top: -10, right: 12, paddingHorizontal: 10, paddingVertical: 3, borderRadius: 8 },
-  badgeAmber: { backgroundColor: '#F59E0B' },
-  badgeGreen: { backgroundColor: '#10B981' },
-  badgeText: { color: '#fff', fontSize: 11, fontWeight: '700', fontFamily: Fonts.rounded },
-  planRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  radio: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: 'rgba(255,255,255,0.3)', alignItems: 'center', justifyContent: 'center' },
-  radioSel: { borderColor: '#F59E0B' },
-  radioDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: '#F59E0B' },
-  planName: { fontSize: 16, fontWeight: '700', color: '#fff', fontFamily: Fonts.rounded, textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3 },
-  planOrigPrice: { fontSize: 16, fontWeight: '600', color: 'rgba(255,255,255,0.45)', fontFamily: Fonts.rounded, textDecorationLine: 'line-through', marginTop: 2 },
-  planPrice: { fontSize: 22, fontWeight: '800', color: '#FFD700', fontFamily: Fonts.rounded, marginTop: 2 },
-  planNameRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8 },
-  planTrialNote: { fontSize: 12, fontWeight: '600', color: '#8FE3B0', fontFamily: Fonts.rounded },
-  planPeriod: { fontSize: 14, fontWeight: '500', color: 'rgba(255,255,255,0.75)' },
-  planDetails: { marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.1)', gap: 6 },
-  detailRow: { flexDirection: 'row', alignItems: 'flex-start' },
-  detailText: { fontSize: 13, color: '#fff', fontFamily: Fonts.sans, flex: 1 },
-  detailTextExcluded: { color: 'rgba(255,255,255,0.55)' },
-  subBtn: { marginTop: 4, borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 3.84, elevation: 5 },
+  sub: { fontSize: 14, color: 'rgba(255,255,255,0.9)', fontFamily: Fonts.sans, textAlign: 'center', marginBottom: 0, textShadowColor: 'rgba(0,0,0,0.6)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 },
+  subBtn: { marginTop: 14, borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 3.84, elevation: 5 },
   subBtnInner: { paddingVertical: 16, alignItems: 'center', borderRadius: 16 },
   subBtnText: { fontSize: 18, fontWeight: '800', color: '#fff', fontFamily: Fonts.rounded, letterSpacing: 0.5 },
   legalRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 12, gap: 6 },
   legalLink: { fontSize: 12, color: 'rgba(255,255,255,0.5)', fontFamily: Fonts.sans, textDecorationLine: 'underline' },
   legalDot: { fontSize: 12, color: 'rgba(255,255,255,0.35)' },
-  starRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, marginBottom: 0 },
+  starRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'center', gap: 6, marginBottom: 0 },
   subBtnRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
-  timeline: { ...BOX_GLOW, flexDirection: 'row', alignItems: 'flex-start', borderWidth: 1.5, borderColor: FRAME_YELLOW, borderRadius: 20, backgroundColor: 'rgba(10,10,35,0.55)', paddingVertical: 12, paddingHorizontal: 8, marginBottom: 14 },
+  timeline: { ...BOX_GLOW, flexDirection: 'row', alignItems: 'flex-start', borderWidth: 1.5, borderColor: FRAME_YELLOW, borderRadius: 20, backgroundColor: 'rgba(10,10,35,0.55)', paddingVertical: 13, paddingHorizontal: 5 },
   timelineLink: { flexDirection: 'row', alignItems: 'center' },
-  timelineDot: { width: 5, height: 5, borderRadius: 2.5, backgroundColor: FRAME_YELLOW },
-  step: { flex: 1, alignItems: 'center', paddingHorizontal: 2 },
-  stepPill: { marginTop: 5, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 999 },
+  timelineDot: { width: 3.5, height: 3.5, borderRadius: 1.75, backgroundColor: FRAME_YELLOW },
+  step: { flex: 1, alignItems: 'center', paddingHorizontal: 1 },
+  stepPill: { marginTop: 7, paddingHorizontal: 13, paddingVertical: 5, borderRadius: 999 },
   stepPillAmber: { backgroundColor: '#FFC61A' },
   stepPillIndigo: { backgroundColor: '#4F46E5' },
-  stepPillText: { fontFamily: Fonts.rounded, fontSize: 13, fontWeight: '800', color: '#3A2600' },
+  stepPillText: { fontFamily: Fonts.rounded, fontSize: 14, fontWeight: '800', color: '#3A2600' },
   stepPillTextLight: { color: '#FFFFFF' },
-  stepBody: { marginTop: 6, fontFamily: Fonts.sans, fontSize: 12, lineHeight: 16, color: 'rgba(255,255,255,0.9)', textAlign: 'center' },
+  stepBody: { marginTop: 7, fontFamily: Fonts.sans, fontSize: 13, lineHeight: 17.5, color: 'rgba(255,255,255,0.9)', textAlign: 'center' },
   // the badge sits outside the clipped card: overflow:hidden is what lets the
   // artwork meet the border, and it would crop the badge off the top edge too
-  premiumWrap: { marginBottom: 14 },
+  premiumWrap: {},
   premiumCard: { ...BOX_GLOW, borderWidth: 1.5, borderColor: FRAME_YELLOW, borderRadius: 20, backgroundColor: 'rgba(10,10,35,0.5)', overflow: 'hidden' },
   popularBadge: { position: 'absolute', top: -13, left: 16, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#FFC61A', paddingHorizontal: 12, paddingVertical: 5, borderRadius: 999, zIndex: 2 },
   popularText: { fontFamily: Fonts.rounded, fontSize: 11, fontWeight: '800', color: '#4A2E00', letterSpacing: 0.6 },
-  // absolute so the artwork fills whatever height the copy settles on, rather
-  // than its own aspect ratio dictating how tall the card is
-  // the box is absolute so it takes the card's settled height; the image then
-  // fills that box, rather than its own aspect ratio deciding how tall the card is
-  premiumArt: { position: 'absolute', left: 0, top: 0, bottom: 0, overflow: 'hidden' },
-  premiumArtImage: { width: '100%', height: '100%' },
   premiumCopyRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   // side by side, a phone leaves the benefits ~110pt and every one of them
   // wraps to three lines; stacked they each fit on one and the card halves
   premiumCopyStack: { flexDirection: 'column', alignItems: 'flex-start', gap: 10 },
-  premiumBody: { paddingTop: 18, paddingBottom: 12, paddingRight: 14 },
-  upgradeRow: { marginTop: 12, paddingTop: 10, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.10)' },
-  upgradeNote: { fontFamily: Fonts.rounded, fontSize: 13, fontWeight: '700', color: '#FFC61A', textAlign: 'center' },
+  premiumBody: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 12 },
+  upgradeRowCompact: { marginTop: 8, paddingTop: 8 },
+  upgradeRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 12, paddingTop: 10, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.10)' },
+  upgradeNote: { fontFamily: Fonts.rounded, fontSize: 14, lineHeight: 19, fontWeight: '700', color: '#FFC61A', textAlign: 'center', flexShrink: 1 },
   premiumCopy: { flex: 1, justifyContent: 'center' },
-  premiumName: { fontFamily: Fonts.rounded, fontSize: 22, fontWeight: '800', color: '#FFFFFF' },
-  premiumTrial: { fontFamily: Fonts.rounded, fontSize: 18, fontWeight: '800', color: '#FFC61A', marginTop: 2 },
-  premiumPrice: { fontFamily: Fonts.sans, fontSize: 13, lineHeight: 18, color: 'rgba(255,255,255,0.85)', marginTop: 8 },
+  // stacked, the copy and the benefits sit in a column, where flex:1 is a
+  // vertical share of a box with no height of its own -- they collapse to
+  // nothing. Sized by their content instead.
+  premiumColumnStacked: { flex: 0, alignSelf: 'stretch' },
+  premiumName: { fontFamily: Fonts.rounded, fontSize: 25, fontWeight: '800', color: '#FFFFFF' },
+  premiumTrial: { fontFamily: Fonts.rounded, fontSize: 20, fontWeight: '800', color: '#FFC61A', marginTop: 2 },
   premiumBenefits: { flex: 1, alignSelf: 'stretch', justifyContent: 'center', gap: 5 },
-  benefitRow: { flexDirection: 'row', alignItems: 'center' },
-  benefitText: { fontFamily: Fonts.sans, fontSize: 13, color: '#FFFFFF', flex: 1 },
-  plansToggle: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 12, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)', backgroundColor: 'rgba(0,0,0,0.28)', marginBottom: 12 },
-  plansToggleText: { fontFamily: Fonts.rounded, fontSize: 15, fontWeight: '700', color: 'rgba(255,255,255,0.9)' },
-  plansHint: { fontFamily: Fonts.sans, fontSize: 12, color: 'rgba(255,255,255,0.65)', textAlign: 'center', marginBottom: 12 },
+  // flex-start, not center: a benefit that wraps to two lines would otherwise
+  // hang its tick in the gap between them
+  benefitRow: { flexDirection: 'row', alignItems: 'flex-start' },
+  benefitTick: { marginRight: 8, marginTop: 3 },
+  benefitText: { fontFamily: Fonts.sans, fontSize: 15, lineHeight: 21, color: '#FFFFFF', flex: 1 },
   legalPanel: { ...StyleSheet.absoluteFillObject, zIndex: 20 },
   legalPanelInner: { flex: 1, paddingHorizontal: 20 },
 

@@ -147,6 +147,8 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
     getEffectiveTier,
     _devSubscriptionOverride,
     setDevSubscriptionOverride,
+    trialEndPromptSeenFor,
+    setTrialEndPromptSeenFor,
   } = useAppStore(
     useShallow((state) => ({
       userNickname: state.userNickname,
@@ -172,6 +174,8 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
       getEffectiveTier: state.getEffectiveTier,
       _devSubscriptionOverride: state._devSubscriptionOverride,
       setDevSubscriptionOverride: state.setDevSubscriptionOverride,
+      trialEndPromptSeenFor: state.trialEndPromptSeenFor,
+      setTrialEndPromptSeenFor: state.setTrialEndPromptSeenFor,
     }))
   );
 
@@ -906,6 +910,21 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
                 })}
               </View>
             </View>
+
+            <Pressable
+              testID="dev-rearm-trial-end-prompt"
+              style={[styles.button, { paddingVertical: scaledPadding(10), minHeight: scaledButtonSize(40) }]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setTrialEndPromptSeenFor(null);
+              }}
+            >
+              <Text style={[styles.buttonText, { fontSize: scaledFontSize(13) }]}>
+                {trialEndPromptSeenFor
+                  ? `Re-arm Trial-End Prompt (answered ${trialEndPromptSeenFor})`
+                  : 'Trial-End Prompt Armed'}
+              </Text>
+            </Pressable>
 
             <Pressable
               style={[styles.button, { paddingVertical: scaledPadding(10), minHeight: scaledButtonSize(40) }]}
