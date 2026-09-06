@@ -1489,6 +1489,7 @@ export default {
       benefitDevices: 'In Omnibus Instrumentis Tuis Operatur',
       benefitCancel: 'Renuntia Quandocumque',
       cta: 'Probationem Quinque Dierum Incipe',
+      includesTrial: 'Probationem Gratuitam Quinque Dierum Continet',
     },
     unlockPlan: 'Consilium Reclude',
     choosePlan: 'Elige consilium optimum familiae tuae',

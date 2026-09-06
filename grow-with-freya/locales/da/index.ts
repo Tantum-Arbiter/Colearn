@@ -1489,6 +1489,7 @@ export default {
       benefitDevices: 'Virker på alle dine enheder',
       benefitCancel: 'Opsig når som helst',
       cta: 'Start 5 dages gratis prøve',
+      includesTrial: 'Inkluderer 5 dages gratis prøveperiode',
     },
     unlockPlan: 'Lås op for en plan',
     choosePlan: 'Vælg den plan, der passer bedst til din familie',

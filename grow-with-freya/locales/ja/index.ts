@@ -1489,6 +1489,7 @@ export default {
       benefitDevices: 'すべての端末で使えます',
       benefitCancel: 'いつでも解約可能',
       cta: '5日間の無料トライアルを始める',
+      includesTrial: '5日間の無料トライアル付き',
     },
     unlockPlan: 'プランを解除',
     choosePlan: 'ご家族に最適なプランをお選びください',

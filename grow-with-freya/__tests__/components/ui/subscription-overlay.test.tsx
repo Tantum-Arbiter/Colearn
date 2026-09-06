@@ -45,6 +45,15 @@ function findByTestId(tree: ReturnType<typeof render>, testID: string) {
   return tree.UNSAFE_root.findAll((node: any) => node.props.testID === testID);
 }
 
+/** Every string rendered anywhere inside one node's subtree. */
+function textIn(node: any): string {
+  return node
+    .findAll(() => true)
+    .flatMap((n: any) => ([] as any[]).concat(n.props?.children ?? []))
+    .filter((child: any) => typeof child === 'string')
+    .join(' ');
+}
+
 function press(tree: ReturnType<typeof render>, testID: string) {
   const target = findByTestId(tree, testID)[0];
   act(() => {
@@ -224,6 +233,39 @@ describe('SubscriptionOverlay plan picker', () => {
     expect(json).toContain('$5.99');
     expect(json).toContain('$9.99');
     expect(json).toContain('$89.99');
+  });
+
+  /**
+   * Basic and Premium carry the trial; Annual does not. The negative
+   * assertion is the load-bearing one -- a note rendered from a shared plan
+   * template would quietly appear on all three, and the annual price is the
+   * one place the offer must not imply a free period.
+   */
+  it.each(['monthly_basic', 'monthly_premium'])('offers the trial on %s', (planId) => {
+    const tree = renderOverlay();
+
+    press(tree, 'unlock-plan-toggle');
+    const note = findByTestId(tree, `plan-trial-note-${planId}`);
+
+    expect(note.length).toBeGreaterThan(0);
+  });
+
+  it('does not offer a trial on the annual plan', () => {
+    const tree = renderOverlay();
+
+    press(tree, 'unlock-plan-toggle');
+
+    expect(findByTestId(tree, 'plan-trial-note-yearly')).toHaveLength(0);
+  });
+
+  it('leaves the annual plan at its price with nothing added', () => {
+    const tree = renderOverlay();
+
+    press(tree, 'unlock-plan-toggle');
+    const annual = textIn(findByTestId(tree, 'plan-card-yearly')[0]);
+
+    expect(annual).toContain('$89.99');
+    expect(annual).not.toContain('subscription.trial.includesTrial');
   });
 
   it('starts with premium chosen, so the trial button buys premium', () => {

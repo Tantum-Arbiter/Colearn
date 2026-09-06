@@ -1489,6 +1489,7 @@ export default {
       benefitDevices: 'Tüm cihazlarında çalışır',
       benefitCancel: 'İstediğin an iptal et',
       cta: '5 günlük ücretsiz denemeyi başlat',
+      includesTrial: '5 günlük ücretsiz deneme içerir',
     },
     unlockPlan: 'Bir plan aç',
     choosePlan: 'Ailenize en uygun planı seçin',

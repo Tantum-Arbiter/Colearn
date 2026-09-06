@@ -15,7 +15,7 @@ import { useAppStore } from '@/store/app-store';
 import { mapPlanIdToPackage, purchasePackage, getOfferings, getOfferingPrices, type PlanPricing } from '@/services/subscription-service';
 
 type PlanId = 'monthly_basic' | 'monthly_premium' | 'yearly';
-interface Plan { id: PlanId; name: string; price: string; period: string; details: string[]; badge?: string; originalPrice?: string; }
+interface Plan { id: PlanId; name: string; price: string; period: string; details: string[]; badge?: string; originalPrice?: string; hasTrial?: boolean; }
 
 // --- Fallback pricing (shown before RC offerings load or in dev mode) ---
 const FALLBACK_PRICES: Record<PlanId, string> = {
@@ -36,9 +36,9 @@ function buildPlans(
   const annualOriginal = FALLBACK_ANNUAL_ORIGINAL;
 
   return [
-    { id: 'monthly_basic', name: t('subscription.planBasic'), price: basicPrice, period: t('subscription.perMonth'),
+    { id: 'monthly_basic', name: t('subscription.planBasic'), price: basicPrice, period: t('subscription.perMonth'), hasTrial: true,
       details: [t('subscription.detailAllStories'), t('subscription.detailAllLearning'), t('subscription.detailDownload50'), t('subscription.detailLimitedSongs'), t('subscription.detailSyncDevices')] },
-    { id: 'monthly_premium', name: t('subscription.planPremium'), price: premiumPrice, period: t('subscription.perMonth'), badge: t('subscription.mostRecommended'),
+    { id: 'monthly_premium', name: t('subscription.planPremium'), price: premiumPrice, period: t('subscription.perMonth'), badge: t('subscription.mostRecommended'), hasTrial: true,
       details: [t('subscription.detailAllStories'), t('subscription.detailDownload100'), t('subscription.detailAllSongs'), t('subscription.detailAllInstruments')] },
     { id: 'yearly', name: t('subscription.planAnnual'), price: annualPrice, period: t('subscription.perYear'), badge: t('subscription.percentOff'), originalPrice: annualOriginal,
       details: [t('subscription.detailEverythingPremium'), t('subscription.detailSave25')] },
@@ -163,6 +163,11 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
               <Text style={st.planPrice}>{plan.price}<Text style={st.planPeriod}>{plan.period}</Text></Text>
               {plan.originalPrice ? <Text style={st.planOrigPrice}>{plan.originalPrice}</Text> : null}
             </View>
+            {plan.hasTrial ? (
+              <Text style={st.planTrialNote} testID={`plan-trial-note-${plan.id}`}>
+                {t('subscription.trial.includesTrial')}
+              </Text>
+            ) : null}
           </View>
         </View>
         {sel ? <View style={st.planDetails}>
@@ -401,6 +406,7 @@ const st = StyleSheet.create({
   planName: { fontSize: 16, fontWeight: '700', color: '#fff', fontFamily: Fonts.rounded, textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3 },
   planOrigPrice: { fontSize: 16, fontWeight: '600', color: 'rgba(255,255,255,0.45)', fontFamily: Fonts.rounded, textDecorationLine: 'line-through', marginTop: 2 },
   planPrice: { fontSize: 22, fontWeight: '800', color: '#FFD700', fontFamily: Fonts.rounded, marginTop: 2 },
+  planTrialNote: { fontSize: 12, fontWeight: '600', color: '#8FE3B0', fontFamily: Fonts.rounded, marginTop: 3 },
   planPeriod: { fontSize: 14, fontWeight: '500', color: 'rgba(255,255,255,0.75)' },
   planDetails: { marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.1)', gap: 6 },
   detailRow: { flexDirection: 'row', alignItems: 'flex-start' },

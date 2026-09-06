@@ -1489,6 +1489,7 @@ export default {
       benefitDevices: 'Działa na wszystkich urządzeniach',
       benefitCancel: 'Rezygnacja w dowolnej chwili',
       cta: 'Rozpocznij 5 dni za darmo',
+      includesTrial: 'Zawiera 5 dni bezpłatnego okresu próbnego',
     },
     unlockPlan: 'Odblokuj plan',
     choosePlan: 'Wybierz plan, który najlepiej pasuje do Twojej rodziny',

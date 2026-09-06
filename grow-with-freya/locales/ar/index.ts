@@ -1489,6 +1489,7 @@ export default {
       benefitDevices: 'يعمل على جميع أجهزتك',
       benefitCancel: 'ألغِ في أي وقت',
       cta: 'ابدأ التجربة المجانية 5 أيام',
+      includesTrial: 'يشمل تجربة مجانية لمدة 5 أيام',
     },
     unlockPlan: 'فتح خطة',
     choosePlan: 'اختر الخطة الأنسب لعائلتك',

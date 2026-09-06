@@ -1489,6 +1489,7 @@ export default {
       benefitDevices: 'Fonctionne sur tous vos appareils',
       benefitCancel: 'Annulez à tout moment',
       cta: 'Commencer l’essai de 5 jours',
+      includesTrial: 'Comprend un essai gratuit de 5 jours',
     },
     unlockPlan: 'Débloquer un forfait',
     choosePlan: 'Choisissez le forfait qui convient le mieux à votre famille',

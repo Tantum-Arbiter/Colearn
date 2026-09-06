@@ -1722,6 +1722,7 @@ export default {
       benefitDevices: 'Works on all your devices',
       benefitCancel: 'Cancel anytime',
       cta: 'Start 5-Day Free Trial',
+      includesTrial: 'Includes a 5-day free trial',
     },
     unlockPlan: 'Unlock a Plan',
     choosePlan: 'Choose the plan that works best for your family',

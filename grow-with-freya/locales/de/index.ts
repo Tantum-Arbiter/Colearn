@@ -1489,6 +1489,7 @@ export default {
       benefitDevices: 'Funktioniert auf allen Geräten',
       benefitCancel: 'Jederzeit kündbar',
       cta: '5 Tage kostenlos testen',
+      includesTrial: 'Mit 5 Tagen kostenloser Testphase',
     },
     unlockPlan: 'Plan freischalten',
     choosePlan: 'Wähle den Plan, der am besten zu deiner Familie passt',

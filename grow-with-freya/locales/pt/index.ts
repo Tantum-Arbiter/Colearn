@@ -1489,6 +1489,7 @@ export default {
       benefitDevices: 'Funciona em todos os teus dispositivos',
       benefitCancel: 'Cancela quando quiseres',
       cta: 'Começar avaliação de 5 dias',
+      includesTrial: 'Inclui 5 dias de avaliação gratuita',
     },
     unlockPlan: 'Desbloquear um plano',
     choosePlan: 'Escolha o plano que melhor se adapta à sua família',
