@@ -129,6 +129,23 @@ describe('SubscriptionOverlay', () => {
     expect(findByTestId(tree, 'trial-link-dot').length).toBeGreaterThanOrEqual(12);
   });
 
+  /**
+   * Both framed boxes carry the design's amber halo. It is a shadow rather
+   * than a border, so nothing about the border assertions above would notice
+   * if it were dropped.
+   */
+  it.each(['trial-timeline', 'trial-premium-card'])('haloes %s in amber', (testID) => {
+    const tree = renderOverlay();
+
+    const style = [findByTestId(tree, testID)[0].props.style]
+      .flat(3)
+      .reduce((merged: any, entry: any) => ({ ...merged, ...entry }), {});
+
+    expect(style.shadowColor).toBe('#FFC61A');
+    expect(style.shadowRadius).toBeGreaterThan(0);
+    expect(style.shadowOpacity).toBeGreaterThan(0);
+  });
+
   it('draws one fewer link than it has steps', () => {
     const tree = renderOverlay();
 

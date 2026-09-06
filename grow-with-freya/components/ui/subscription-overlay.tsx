@@ -75,6 +75,18 @@ const TRIAL_STEPS = [
 
 const TRIAL_LINK_DOTS = 7;
 
+/**
+ * The amber halo the design draws around both framed boxes. iOS renders it
+ * from the shadow properties; Android's elevation shadow is always dark, so it
+ * is left off there rather than muddying a dark panel with a grey drop.
+ */
+const BOX_GLOW = {
+  shadowColor: '#FFC61A',
+  shadowOffset: { width: 0, height: 0 },
+  shadowOpacity: 0.45,
+  shadowRadius: 16,
+} as const;
+
 const TRIAL_BENEFIT_KEYS = [
   'subscription.trial.benefitStories',
   'subscription.detailAllLearning',
@@ -462,9 +474,9 @@ const st = StyleSheet.create({
   legalDot: { fontSize: 12, color: 'rgba(255,255,255,0.35)' },
   starRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, marginBottom: 2 },
   subBtnRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
-  timeline: { flexDirection: 'row', alignItems: 'flex-start', borderWidth: 1.5, borderColor: 'rgba(255,198,26,0.55)', borderRadius: 20, backgroundColor: 'rgba(10,10,35,0.55)', paddingVertical: 18, paddingHorizontal: 10, marginBottom: 18 },
-  timelineLink: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 44 },
-  timelineDot: { width: 3, height: 3, borderRadius: 1.5, backgroundColor: 'rgba(255,198,26,0.85)' },
+  timeline: { ...BOX_GLOW, flexDirection: 'row', alignItems: 'flex-start', borderWidth: 1.5, borderColor: 'rgba(255,198,26,0.7)', borderRadius: 20, backgroundColor: 'rgba(10,10,35,0.55)', paddingVertical: 18, paddingHorizontal: 10, marginBottom: 18 },
+  timelineLink: { flexDirection: 'row', alignItems: 'center', gap: 7, marginTop: 44 },
+  timelineDot: { width: 5, height: 5, borderRadius: 2.5, backgroundColor: '#FFC61A' },
   step: { flex: 1, alignItems: 'center', paddingHorizontal: 4 },
   stepIcon: { width: 78, height: 78 },
   stepPill: { marginTop: 6, paddingHorizontal: 14, paddingVertical: 5, borderRadius: 999 },
@@ -473,7 +485,7 @@ const st = StyleSheet.create({
   stepPillText: { fontFamily: Fonts.rounded, fontSize: 13, fontWeight: '800', color: '#3A2600' },
   stepPillTextLight: { color: '#FFFFFF' },
   stepBody: { marginTop: 8, fontFamily: Fonts.sans, fontSize: 12, lineHeight: 17, color: 'rgba(255,255,255,0.9)', textAlign: 'center' },
-  premiumCard: { borderWidth: 1.5, borderColor: 'rgba(255,198,26,0.75)', borderRadius: 20, backgroundColor: 'rgba(10,10,35,0.5)', paddingTop: 24, paddingBottom: 16, paddingHorizontal: 14, marginBottom: 18 },
+  premiumCard: { ...BOX_GLOW, borderWidth: 1.5, borderColor: 'rgba(255,198,26,0.85)', borderRadius: 20, backgroundColor: 'rgba(10,10,35,0.5)', paddingTop: 24, paddingBottom: 16, paddingHorizontal: 14, marginBottom: 18 },
   popularBadge: { position: 'absolute', top: -13, left: 16, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#FFC61A', paddingHorizontal: 12, paddingVertical: 5, borderRadius: 999 },
   popularText: { fontFamily: Fonts.rounded, fontSize: 11, fontWeight: '800', color: '#4A2E00', letterSpacing: 0.6 },
   premiumRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
