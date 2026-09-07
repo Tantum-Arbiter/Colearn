@@ -32,19 +32,19 @@ describe('ChildBottomNavigation', () => {
 
   /**
    * Order is the contract: Screensafe sits mid-bar as the parent's control,
-   * with the two browsing areas either side of it and Favourites at the end.
+   * with Progress and Search either side of it and Favourites at the end.
    */
   it('renders the five journey areas in order', () => {
     expect(CHILD_NAV_ITEMS.map((item) => item.id))
-      .toEqual(['home', 'library', 'screensafe', 'progress', 'saved']);
+      .toEqual(['home', 'progress', 'screensafe', 'search', 'saved']);
 
-    const tree = render(<ChildBottomNavigation selected="library" onSelect={jest.fn()} />);
+    const tree = render(<ChildBottomNavigation selected="progress" onSelect={jest.fn()} />);
 
     items(tree).forEach((node) => expect(node).toBeTruthy());
   });
 
   it('marks exactly one item as selected', () => {
-    const tree = render(<ChildBottomNavigation selected="library" onSelect={jest.fn()} />);
+    const tree = render(<ChildBottomNavigation selected="progress" onSelect={jest.fn()} />);
 
     const selectedFlags = items(tree).map((node: any) => node.props.accessibilityState?.selected);
     expect(selectedFlags.filter(Boolean)).toHaveLength(1);
@@ -61,7 +61,7 @@ describe('ChildBottomNavigation', () => {
 
   it('reports a tap through onSelect with the item id', () => {
     const onSelect = jest.fn();
-    const tree = render(<ChildBottomNavigation selected="library" onSelect={onSelect} />);
+    const tree = render(<ChildBottomNavigation selected="progress" onSelect={onSelect} />);
 
     fireEvent.press(items(tree)[0]);
 

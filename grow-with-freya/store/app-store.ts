@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Logger } from '@/utils/logger';
+import { rememberSearch } from '@/components/stories/catalogue/story-search';
 
 const log = Logger.create('Store');
 
@@ -83,6 +84,9 @@ export interface AppState {
   // Practice song favorites
   favoriteSongIds: string[]; // Array of practice song IDs that user has favorited
 
+  /** What the child has searched for, newest first, capped by rememberSearch. */
+  recentSearches: string[];
+
   // Story read tracking
   readStoryIds: string[]; // Array of story IDs that user has opened/read
   /** The totalStoriesRead count when we last showed the rating prompt (0 = never prompted). */
@@ -148,6 +152,8 @@ export interface AppState {
   toggleFavoriteSong: (songId: string) => void;
   isSongFavorited: (songId: string) => boolean;
   markStoryAsRead: (storyId: string) => void;
+  recordSearch: (term: string) => void;
+  clearRecentSearches: () => void;
   setLastRatingPromptBookCount: (count: number) => void;
   recordReadingSession: () => void; // Call when a story is opened to update streak
   setStoryViewMode: (mode: StoryViewMode) => void;
@@ -201,6 +207,7 @@ export const useAppStore = create<AppState>()(
       favoriteStoryIds: [], // Start with no favorites
       favoriteActivityIds: [], // Start with no activity favorites
       favoriteSongIds: [], // Start with no song favorites
+      recentSearches: [],
       readStoryIds: [], // Start with no read stories
       lastRatingPromptBookCount: 0, // Never prompted for rating
       readingStreak: 0,
@@ -303,6 +310,10 @@ export const useAppStore = create<AppState>()(
       isSongFavorited: (songId: string) => {
         return get().favoriteSongIds.includes(songId);
       },
+      recordSearch: (term: string) => set((state) => ({
+        recentSearches: rememberSearch(state.recentSearches, term),
+      })),
+      clearRecentSearches: () => set({ recentSearches: [] }),
       markStoryAsRead: (storyId: string) => set((state) => {
         if (state.readStoryIds.includes(storyId)) {
           return state; // Already marked as read
@@ -436,6 +447,7 @@ export const useAppStore = create<AppState>()(
         favoriteStoryIds: state.favoriteStoryIds,
         favoriteActivityIds: state.favoriteActivityIds,
         favoriteSongIds: state.favoriteSongIds,
+        recentSearches: state.recentSearches,
         readStoryIds: state.readStoryIds,
         lastRatingPromptBookCount: state.lastRatingPromptBookCount,
         readingStreak: state.readingStreak,

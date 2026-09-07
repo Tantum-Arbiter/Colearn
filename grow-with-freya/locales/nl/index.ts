@@ -964,7 +964,6 @@ export default {
     showIdeas: 'Laat me ideeën zien',
     okay: 'Oké',
   },
-
   screenTimeWarning: {
     approachingLimit: 'Schermtijd Waarschuwing',
     limitReached: 'Dagelijkse Limiet Bereikt',
@@ -3069,7 +3068,6 @@ export default {
       },
     },
   },
-
   storyDetail: {
     readTogether: 'Samen lezen',
     continueReading: 'Verder lezen',
@@ -3082,18 +3080,15 @@ export default {
     interactive: 'Interactief',
     favourite: 'Favoriet',
   },
-
   rotatePrompt: {
     ready: 'Klaar voor ons verhaaltje?',
     turnTogether: 'Draai samen het scherm',
     openWhenSideways: 'We openen het boek zodra het apparaat op zijn kant ligt.',
     openForMe: 'Open het boek voor mij',
   },
-
   splash: {
     tagline: 'Een zachte plek om samen te groeien.',
   },
-
   onboardingV2: {
     stepCounter: '{{current}} van {{total}}',
     skip: 'Overslaan',
@@ -3145,15 +3140,38 @@ export default {
       helper: 'Zo kunnen we passende verhalen en activiteiten voorstellen.',
     },
   },
-
   home: {
     welcome: {
-      normal: { title: 'Welkom terug, {{name}}!', titleAnonymous: 'Welkom terug!', subtitle: 'Je volgende avontuur wacht.' },
-      firstToday: { title: 'Welkom terug, {{name}}!', titleAnonymous: 'Welkom terug!', subtitle: 'Een gloednieuwe dag vol verhalen begint.' },
-      newAchievement: { title: 'Hoera, {{name}}!', titleAnonymous: 'Hoera!', subtitle: 'Je hebt {{achievement}} verdiend. Kijk hieronder!' },
-      storyCompleted: { title: 'Goed gedaan, {{name}}!', titleAnonymous: 'Goed gedaan!', subtitle: 'Jullie hebben samen een heel verhaal uitgelezen.' },
-      streak: { title: 'Welkom terug, {{name}}!', titleAnonymous: 'Welkom terug!', subtitle: '{{count}} dagen verhalen op rij. Prachtig!' },
-      longAbsence: { title: 'Fijn je weer te zien, {{name}}!', titleAnonymous: 'Fijn je weer te zien!', subtitle: 'Je verhalen liggen precies waar je ze liet.' },
+      normal: {
+        title: 'Welkom terug, {{name}}!',
+        titleAnonymous: 'Welkom terug!',
+        subtitle: 'Je volgende avontuur wacht.',
+      },
+      firstToday: {
+        title: 'Welkom terug, {{name}}!',
+        titleAnonymous: 'Welkom terug!',
+        subtitle: 'Een gloednieuwe dag vol verhalen begint.',
+      },
+      newAchievement: {
+        title: 'Hoera, {{name}}!',
+        titleAnonymous: 'Hoera!',
+        subtitle: 'Je hebt {{achievement}} verdiend. Kijk hieronder!',
+      },
+      storyCompleted: {
+        title: 'Goed gedaan, {{name}}!',
+        titleAnonymous: 'Goed gedaan!',
+        subtitle: 'Jullie hebben samen een heel verhaal uitgelezen.',
+      },
+      streak: {
+        title: 'Welkom terug, {{name}}!',
+        titleAnonymous: 'Welkom terug!',
+        subtitle: '{{count}} dagen verhalen op rij. Prachtig!',
+      },
+      longAbsence: {
+        title: 'Fijn je weer te zien, {{name}}!',
+        titleAnonymous: 'Fijn je weer te zien!',
+        subtitle: 'Je verhalen liggen precies waar je ze liet.',
+      },
     },
     continueBody: 'Ga verder waar je gebleven was.',
     continueLearning: {
@@ -3161,14 +3179,25 @@ export default {
       body: 'Verhalen, muziek en spelletjes wachten',
       hint: 'Bibliotheek openen',
     },
-    continueStart: { eyebrow: 'Begin een verhaal', title: 'Kies je eerste avontuur', body: 'Een nieuwe wereld wacht', hint: 'Kies een verhaal om samen te lezen' },
+    continueStart: {
+      eyebrow: 'Begin een verhaal',
+      title: 'Kies je eerste avontuur',
+      body: 'Een nieuwe wereld wacht',
+      hint: 'Kies een verhaal om samen te lezen',
+    },
     streak: {
       days: '{{count}} dagen op rij',
       days_one: '{{count}} dag op rij',
       days_other: '{{count}} dagen op rij',
       start: 'Begin vandaag een reeks',
     },
-    achievements: { title: 'Kijk wat je hebt bereikt!', cta: 'Bekijk prestaties', emptyTitle: 'Je eerste badge wacht', emptyBody: 'Lees samen een verhaal om hem te verdienen', hint: 'Bekijk je badges' },
+    achievements: {
+      title: 'Kijk wat je hebt bereikt!',
+      cta: 'Bekijk prestaties',
+      emptyTitle: 'Je eerste badge wacht',
+      emptyBody: 'Lees samen een verhaal om hem te verdienen',
+      hint: 'Bekijk je badges',
+    },
     milestone: {
       eyebrow: 'Volgende badge',
       remaining: {
@@ -3207,7 +3236,6 @@ export default {
     sun: 'De zon',
     moon: 'De maan',
   },
-
   greeting: {
     morning: 'Goedemorgen',
     afternoon: 'Goedemiddag',
@@ -3219,13 +3247,12 @@ export default {
   childUi: {
     nav: {
       home: 'Home',
-      library: 'Bibliotheek',
       screensafe: 'Schermtijd',
       progress: 'Voortgang',
       saved: 'Bewaard',
+      search: 'Zoeken',
     },
   },
-
   catalogue: {
     moreStories: 'Meer verhalen',
     read: 'Lezen',
@@ -3255,18 +3282,7 @@ export default {
       songs: 'Bewaarde liedjes',
       empty: 'Tik op het hartje bij wat je leuk vindt, dan wacht het hier op je',
     },
-    library: {
-      recentlyRead: 'Recent gelezen',
-      favourites: 'Favorieten',
-      newToYou: 'Nieuw voor jou',
-      onThisDevice: 'Op dit apparaat',
-      tagline: {
-        one: 'Je eigen boekenplank',
-        two: 'vol verhalen',
-      },
-    },
   },
-
   progress: {
     title: 'Voortgang',
     tagline: {
@@ -3299,37 +3315,118 @@ export default {
       exploration: 'Ontdekken',
     },
     challenges: {
-      threeStoryTimes: { title: 'Drie verhaalmomenten', description: 'Deel deze week samen drie verhaalmomenten' },
-      calmMoment: { title: 'Een rustig moment', description: 'Geniet deze week samen van één rustige activiteit' },
-      makeMusic: { title: 'Muziek maken', description: 'Maak deze week twee keer samen muziek' },
-      morningStory: { title: 'Een ochtendverhaal', description: 'Lees of luister deze week samen op een ochtend' },
-      bedtimeStory: { title: 'Bedtijdverhalen', description: 'Deel deze week twee verhaalmomenten in de avond' },
-      tenStoryTimes: { title: 'Tien verhaalmomenten', description: 'Deel deze maand samen tien verhaalmomenten' },
-      musicMonth: { title: 'Een muzikale maand', description: 'Geniet deze maand van vijf muzieksessies' },
-      calmCollector: { title: 'Rustverzamelaar', description: 'Geniet deze maand van vier rustige momenten' },
-      brightMornings: { title: 'Heldere ochtenden', description: 'Lees of luister deze maand samen op drie ochtenden' },
+      threeStoryTimes: {
+        title: 'Drie verhaalmomenten',
+        description: 'Deel deze week samen drie verhaalmomenten',
+      },
+      calmMoment: {
+        title: 'Een rustig moment',
+        description: 'Geniet deze week samen van één rustige activiteit',
+      },
+      makeMusic: {
+        title: 'Muziek maken',
+        description: 'Maak deze week twee keer samen muziek',
+      },
+      morningStory: {
+        title: 'Een ochtendverhaal',
+        description: 'Lees of luister deze week samen op een ochtend',
+      },
+      bedtimeStory: {
+        title: 'Bedtijdverhalen',
+        description: 'Deel deze week twee verhaalmomenten in de avond',
+      },
+      tenStoryTimes: {
+        title: 'Tien verhaalmomenten',
+        description: 'Deel deze maand samen tien verhaalmomenten',
+      },
+      musicMonth: {
+        title: 'Een muzikale maand',
+        description: 'Geniet deze maand van vijf muzieksessies',
+      },
+      calmCollector: {
+        title: 'Rustverzamelaar',
+        description: 'Geniet deze maand van vier rustige momenten',
+      },
+      brightMornings: {
+        title: 'Heldere ochtenden',
+        description: 'Lees of luister deze maand samen op drie ochtenden',
+      },
     },
     milestones: {
-      firstFiveStories: { title: 'Eerste 5 verhalen', description: 'Een prachtige start!' },
-      bedtimeListener: { title: 'Bedtijdluisteraar', description: 'Je houdt van rustige, knusse verhaaltjes.' },
-      kindMoments: { title: 'Lieve momenten', description: 'Je leert aardig te zijn.' },
+      firstFiveStories: {
+        title: 'Eerste 5 verhalen',
+        description: 'Een prachtige start!',
+      },
+      bedtimeListener: {
+        title: 'Bedtijdluisteraar',
+        description: 'Je houdt van rustige, knusse verhaaltjes.',
+      },
+      kindMoments: {
+        title: 'Lieve momenten',
+        description: 'Je leert aardig te zijn.',
+      },
     },
     badges: {
-      firstStory: { title: 'Eerste verhaal', description: 'Open je allereerste verhaal' },
-      readingTogether: { title: 'Samen lezen', description: 'Deel deze week 3 verhaalmomenten' },
-      newWorlds: { title: 'Nieuwe werelden', description: 'Ontdek 3 verschillende soorten verhalen' },
-      favouriteFinder: { title: 'Favorietenvinder', description: 'Kies een favoriet verhaal' },
-      firstNotes: { title: 'Eerste noten', description: 'Maak samen muziek' },
-      musicExplorer: { title: 'Muziekontdekker', description: 'Geniet deze maand van 5 muzieksessies' },
-      calmMoment: { title: 'Rustig moment', description: 'Probeer je eerste rustige activiteit' },
-      gentleEvening: { title: 'Zachte avond', description: 'Deel 3 verhaalmomenten in de avond' },
-      kindMoments: { title: 'Lieve momenten', description: 'Lees een verhaal over aardig zijn' },
-      curiousMind: { title: 'Nieuwsgierige geest', description: 'Ontdek 5 soorten verhalen' },
-      adventureExplorer: { title: 'Avonturenontdekker', description: 'Lees 3 avonturenverhalen' },
-      morningExplorer: { title: 'Ochtendontdekker', description: 'Lees of luister in de ochtend' },
-      storyAdventurer: { title: 'Verhalenavonturier', description: 'Luister naar 10 verschillende verhalen' },
-      calmChampion: { title: 'Kalmtekampioen', description: 'Geniet van 5 rustige momenten' },
-      kindHeart: { title: 'Lief hart', description: 'Voltooi 5 lieve activiteiten' },
+      firstStory: {
+        title: 'Eerste verhaal',
+        description: 'Open je allereerste verhaal',
+      },
+      readingTogether: {
+        title: 'Samen lezen',
+        description: 'Deel deze week 3 verhaalmomenten',
+      },
+      newWorlds: {
+        title: 'Nieuwe werelden',
+        description: 'Ontdek 3 verschillende soorten verhalen',
+      },
+      favouriteFinder: {
+        title: 'Favorietenvinder',
+        description: 'Kies een favoriet verhaal',
+      },
+      firstNotes: {
+        title: 'Eerste noten',
+        description: 'Maak samen muziek',
+      },
+      musicExplorer: {
+        title: 'Muziekontdekker',
+        description: 'Geniet deze maand van 5 muzieksessies',
+      },
+      calmMoment: {
+        title: 'Rustig moment',
+        description: 'Probeer je eerste rustige activiteit',
+      },
+      gentleEvening: {
+        title: 'Zachte avond',
+        description: 'Deel 3 verhaalmomenten in de avond',
+      },
+      kindMoments: {
+        title: 'Lieve momenten',
+        description: 'Lees een verhaal over aardig zijn',
+      },
+      curiousMind: {
+        title: 'Nieuwsgierige geest',
+        description: 'Ontdek 5 soorten verhalen',
+      },
+      adventureExplorer: {
+        title: 'Avonturenontdekker',
+        description: 'Lees 3 avonturenverhalen',
+      },
+      morningExplorer: {
+        title: 'Ochtendontdekker',
+        description: 'Lees of luister in de ochtend',
+      },
+      storyAdventurer: {
+        title: 'Verhalenavonturier',
+        description: 'Luister naar 10 verschillende verhalen',
+      },
+      calmChampion: {
+        title: 'Kalmtekampioen',
+        description: 'Geniet van 5 rustige momenten',
+      },
+      kindHeart: {
+        title: 'Lief hart',
+        description: 'Voltooi 5 lieve activiteiten',
+      },
     },
     recommendations: {
       bedtime: 'Luister naar een bedtijdverhaal',
@@ -3338,6 +3435,17 @@ export default {
       discover: 'Ontdek een nieuw verhaal',
       calming: 'Probeer een rustgevend verhaal',
       kindness: 'Kies een verhaal over aardig zijn',
+    },
+  },
+  search: {
+    placeholder: 'Zoek een verhaal',
+    recent: 'Je recente zoekopdrachten',
+    clearRecent: 'Wissen',
+    clear: 'Zoekopdracht wissen',
+    noResults: 'Geen verhalen gevonden',
+    tagline: {
+      one: 'Vind het verhaal',
+      two: 'dat je zoekt',
     },
   },
 };

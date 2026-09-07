@@ -964,7 +964,6 @@ export default {
     showIdeas: '给我一些点子',
     okay: '好的',
   },
-
   screenTimeWarning: {
     approachingLimit: '屏幕时间警告',
     limitReached: '已达到每日限制',
@@ -3069,7 +3068,6 @@ export default {
       },
     },
   },
-
   storyDetail: {
     readTogether: '一起阅读',
     continueReading: '继续阅读',
@@ -3082,18 +3080,15 @@ export default {
     interactive: '互动',
     favourite: '收藏',
   },
-
   rotatePrompt: {
     ready: '准备好听故事了吗？',
     turnTogether: '一起转动屏幕',
     openWhenSideways: '设备横过来时，我们就会打开这本书。',
     openForMe: '帮我打开书',
   },
-
   splash: {
     tagline: '一个温柔的共同成长之地。',
   },
-
   onboardingV2: {
     stepCounter: '第 {{current}} / {{total}} 页',
     skip: '跳过',
@@ -3145,15 +3140,38 @@ export default {
       helper: '这有助于我们推荐合适的故事与活动。',
     },
   },
-
   home: {
     welcome: {
-      normal: { title: '欢迎回来，{{name}}！', titleAnonymous: '欢迎回来！', subtitle: '下一个冒险正在等你。' },
-      firstToday: { title: '欢迎回来，{{name}}！', titleAnonymous: '欢迎回来！', subtitle: '崭新的故事一天开始啦。' },
-      newAchievement: { title: '太棒了，{{name}}！', titleAnonymous: '太棒了！', subtitle: '你获得了{{achievement}}。快看下面！' },
-      storyCompleted: { title: '做得好，{{name}}！', titleAnonymous: '做得好！', subtitle: '你们一起读完了一整个故事。' },
-      streak: { title: '欢迎回来，{{name}}！', titleAnonymous: '欢迎回来！', subtitle: '连续 {{count}} 天读故事，真棒！' },
-      longAbsence: { title: '很高兴见到你，{{name}}！', titleAnonymous: '很高兴见到你！', subtitle: '你的故事还在原来的地方等你。' },
+      normal: {
+        title: '欢迎回来，{{name}}！',
+        titleAnonymous: '欢迎回来！',
+        subtitle: '下一个冒险正在等你。',
+      },
+      firstToday: {
+        title: '欢迎回来，{{name}}！',
+        titleAnonymous: '欢迎回来！',
+        subtitle: '崭新的故事一天开始啦。',
+      },
+      newAchievement: {
+        title: '太棒了，{{name}}！',
+        titleAnonymous: '太棒了！',
+        subtitle: '你获得了{{achievement}}。快看下面！',
+      },
+      storyCompleted: {
+        title: '做得好，{{name}}！',
+        titleAnonymous: '做得好！',
+        subtitle: '你们一起读完了一整个故事。',
+      },
+      streak: {
+        title: '欢迎回来，{{name}}！',
+        titleAnonymous: '欢迎回来！',
+        subtitle: '连续 {{count}} 天读故事，真棒！',
+      },
+      longAbsence: {
+        title: '很高兴见到你，{{name}}！',
+        titleAnonymous: '很高兴见到你！',
+        subtitle: '你的故事还在原来的地方等你。',
+      },
     },
     continueBody: '从上次的地方继续。',
     continueLearning: {
@@ -3161,14 +3179,25 @@ export default {
       body: '故事、音乐和游戏在等你',
       hint: '打开图书馆',
     },
-    continueStart: { eyebrow: '开始一个故事', title: '选择你的第一个冒险', body: '新世界在等你', hint: '选一个故事一起读' },
+    continueStart: {
+      eyebrow: '开始一个故事',
+      title: '选择你的第一个冒险',
+      body: '新世界在等你',
+      hint: '选一个故事一起读',
+    },
     streak: {
       days: '连续 {{count}} 天',
       days_one: '连续 {{count}} 天',
       days_other: '连续 {{count}} 天',
       start: '今天开始连续记录',
     },
-    achievements: { title: '看看你的成就！', cta: '查看成就', emptyTitle: '你的第一枚徽章在等你', emptyBody: '一起读一个故事来获得它', hint: '查看你的徽章' },
+    achievements: {
+      title: '看看你的成就！',
+      cta: '查看成就',
+      emptyTitle: '你的第一枚徽章在等你',
+      emptyBody: '一起读一个故事来获得它',
+      hint: '查看你的徽章',
+    },
     milestone: {
       eyebrow: '下一枚徽章',
       remaining: {
@@ -3207,7 +3236,6 @@ export default {
     sun: '太阳',
     moon: '月亮',
   },
-
   greeting: {
     morning: '早上好',
     afternoon: '下午好',
@@ -3219,13 +3247,12 @@ export default {
   childUi: {
     nav: {
       home: '首页',
-      library: '书库',
       screensafe: '护眼时间',
       progress: '进度',
       saved: '已保存',
+      search: '搜索',
     },
   },
-
   catalogue: {
     moreStories: '更多故事',
     read: '阅读',
@@ -3255,18 +3282,7 @@ export default {
       songs: '已保存的歌曲',
       empty: '点一下喜欢的内容上的爱心，它就会留在这里',
     },
-    library: {
-      recentlyRead: '最近阅读',
-      favourites: '收藏',
-      newToYou: '还没读过',
-      onThisDevice: '本设备上的故事',
-      tagline: {
-        one: '你专属的小书架',
-        two: '收藏心爱的故事',
-      },
-    },
   },
-
   progress: {
     title: '进度',
     tagline: {
@@ -3299,37 +3315,118 @@ export default {
       exploration: '探索',
     },
     challenges: {
-      threeStoryTimes: { title: '三次故事时光', description: '本周一起分享三次故事时光' },
-      calmMoment: { title: '一个平静时刻', description: '本周一起享受一次平静活动' },
-      makeMusic: { title: '一起奏乐', description: '本周一起演奏两次音乐' },
-      morningStory: { title: '晨间故事', description: '本周某个早晨一起阅读或聆听' },
-      bedtimeStory: { title: '睡前故事', description: '本周分享两次夜晚故事时光' },
-      tenStoryTimes: { title: '十次故事时光', description: '本月一起分享十次故事时光' },
-      musicMonth: { title: '音乐月', description: '本月享受五次音乐时光' },
-      calmCollector: { title: '平静收集者', description: '本月享受四个平静时刻' },
-      brightMornings: { title: '明亮的早晨', description: '本月三个早晨一起阅读或聆听' },
+      threeStoryTimes: {
+        title: '三次故事时光',
+        description: '本周一起分享三次故事时光',
+      },
+      calmMoment: {
+        title: '一个平静时刻',
+        description: '本周一起享受一次平静活动',
+      },
+      makeMusic: {
+        title: '一起奏乐',
+        description: '本周一起演奏两次音乐',
+      },
+      morningStory: {
+        title: '晨间故事',
+        description: '本周某个早晨一起阅读或聆听',
+      },
+      bedtimeStory: {
+        title: '睡前故事',
+        description: '本周分享两次夜晚故事时光',
+      },
+      tenStoryTimes: {
+        title: '十次故事时光',
+        description: '本月一起分享十次故事时光',
+      },
+      musicMonth: {
+        title: '音乐月',
+        description: '本月享受五次音乐时光',
+      },
+      calmCollector: {
+        title: '平静收集者',
+        description: '本月享受四个平静时刻',
+      },
+      brightMornings: {
+        title: '明亮的早晨',
+        description: '本月三个早晨一起阅读或聆听',
+      },
     },
     milestones: {
-      firstFiveStories: { title: '最初的5个故事', description: '美好的开始！' },
-      bedtimeListener: { title: '睡前小听众', description: '你喜欢安静温馨的故事时光。' },
-      kindMoments: { title: '善意时刻', description: '你正在学会善良。' },
+      firstFiveStories: {
+        title: '最初的5个故事',
+        description: '美好的开始！',
+      },
+      bedtimeListener: {
+        title: '睡前小听众',
+        description: '你喜欢安静温馨的故事时光。',
+      },
+      kindMoments: {
+        title: '善意时刻',
+        description: '你正在学会善良。',
+      },
     },
     badges: {
-      firstStory: { title: '第一个故事', description: '打开你的第一个故事' },
-      readingTogether: { title: '一起阅读', description: '本周一起分享3次故事时光' },
-      newWorlds: { title: '新世界', description: '探索3种不同类型的故事' },
-      favouriteFinder: { title: '最爱发现者', description: '选一个最喜欢的故事' },
-      firstNotes: { title: '第一个音符', description: '一起演奏音乐' },
-      musicExplorer: { title: '音乐探索家', description: '本月享受5次音乐时光' },
-      calmMoment: { title: '平静时刻', description: '尝试第一个平静活动' },
-      gentleEvening: { title: '温柔的夜晚', description: '分享3次夜晚故事时光' },
-      kindMoments: { title: '善意时刻', description: '读一个关于善良的故事' },
-      curiousMind: { title: '好奇心', description: '探索5种类型的故事' },
-      adventureExplorer: { title: '冒险探索家', description: '读3个冒险故事' },
-      morningExplorer: { title: '晨间探索家', description: '在早晨阅读或聆听' },
-      storyAdventurer: { title: '故事冒险家', description: '聆听10个不同的故事' },
-      calmChampion: { title: '平静小冠军', description: '享受5个平静时刻' },
-      kindHeart: { title: '善良的心', description: '完成5个善意活动' },
+      firstStory: {
+        title: '第一个故事',
+        description: '打开你的第一个故事',
+      },
+      readingTogether: {
+        title: '一起阅读',
+        description: '本周一起分享3次故事时光',
+      },
+      newWorlds: {
+        title: '新世界',
+        description: '探索3种不同类型的故事',
+      },
+      favouriteFinder: {
+        title: '最爱发现者',
+        description: '选一个最喜欢的故事',
+      },
+      firstNotes: {
+        title: '第一个音符',
+        description: '一起演奏音乐',
+      },
+      musicExplorer: {
+        title: '音乐探索家',
+        description: '本月享受5次音乐时光',
+      },
+      calmMoment: {
+        title: '平静时刻',
+        description: '尝试第一个平静活动',
+      },
+      gentleEvening: {
+        title: '温柔的夜晚',
+        description: '分享3次夜晚故事时光',
+      },
+      kindMoments: {
+        title: '善意时刻',
+        description: '读一个关于善良的故事',
+      },
+      curiousMind: {
+        title: '好奇心',
+        description: '探索5种类型的故事',
+      },
+      adventureExplorer: {
+        title: '冒险探索家',
+        description: '读3个冒险故事',
+      },
+      morningExplorer: {
+        title: '晨间探索家',
+        description: '在早晨阅读或聆听',
+      },
+      storyAdventurer: {
+        title: '故事冒险家',
+        description: '聆听10个不同的故事',
+      },
+      calmChampion: {
+        title: '平静小冠军',
+        description: '享受5个平静时刻',
+      },
+      kindHeart: {
+        title: '善良的心',
+        description: '完成5个善意活动',
+      },
     },
     recommendations: {
       bedtime: '听一个睡前故事',
@@ -3338,6 +3435,17 @@ export default {
       discover: '发现一个新故事',
       calming: '试试一个平静的故事',
       kindness: '选一个关于善良的故事',
+    },
+  },
+  search: {
+    placeholder: '搜索故事',
+    recent: '最近的搜索',
+    clearRecent: '清除',
+    clear: '清除搜索',
+    noResults: '未找到故事',
+    tagline: {
+      one: '找到你想读的',
+      two: '那个故事',
     },
   },
 };

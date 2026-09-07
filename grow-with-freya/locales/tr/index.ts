@@ -964,7 +964,6 @@ export default {
     showIdeas: 'Bana fikirler göster',
     okay: 'Tamam',
   },
-
   screenTimeWarning: {
     approachingLimit: 'Ekran Süresi Uyarısı',
     limitReached: 'Günlük Sınıra Ulaşıldı',
@@ -3069,7 +3068,6 @@ export default {
       },
     },
   },
-
   storyDetail: {
     readTogether: 'Birlikte oku',
     continueReading: 'Okumaya devam et',
@@ -3082,18 +3080,15 @@ export default {
     interactive: 'Etkileşimli',
     favourite: 'Favori',
   },
-
   rotatePrompt: {
     ready: 'Masal saatine hazır mıyız?',
     turnTogether: 'Ekranı birlikte çevirin',
     openWhenSideways: 'Cihaz yan durduğunda kitabı açacağız.',
     openForMe: 'Kitabı benim için aç',
   },
-
   splash: {
     tagline: 'Birlikte büyümek için nazik bir yer.',
   },
-
   onboardingV2: {
     stepCounter: '{{total}} / {{current}}',
     skip: 'Atla',
@@ -3145,15 +3140,38 @@ export default {
       helper: 'Bu, uygun masal ve etkinlikler önermemize yardımcı olur.',
     },
   },
-
   home: {
     welcome: {
-      normal: { title: 'Tekrar hoş geldin, {{name}}!', titleAnonymous: 'Tekrar hoş geldin!', subtitle: 'Sıradaki maceran seni bekliyor.' },
-      firstToday: { title: 'Tekrar hoş geldin, {{name}}!', titleAnonymous: 'Tekrar hoş geldin!', subtitle: 'Yepyeni bir hikâye günü başlıyor.' },
-      newAchievement: { title: 'Yaşasın, {{name}}!', titleAnonymous: 'Yaşasın!', subtitle: '{{achievement}} rozetini kazandın. Aşağıya bak!' },
-      storyCompleted: { title: 'Aferin, {{name}}!', titleAnonymous: 'Aferin!', subtitle: 'Birlikte koca bir hikâyeyi bitirdiniz.' },
-      streak: { title: 'Tekrar hoş geldin, {{name}}!', titleAnonymous: 'Tekrar hoş geldin!', subtitle: 'Üst üste {{count}} gün hikâye. Harika!' },
-      longAbsence: { title: 'Seni görmek ne güzel, {{name}}!', titleAnonymous: 'Seni görmek ne güzel!', subtitle: 'Hikâyelerin tam bıraktığın yerde.' },
+      normal: {
+        title: 'Tekrar hoş geldin, {{name}}!',
+        titleAnonymous: 'Tekrar hoş geldin!',
+        subtitle: 'Sıradaki maceran seni bekliyor.',
+      },
+      firstToday: {
+        title: 'Tekrar hoş geldin, {{name}}!',
+        titleAnonymous: 'Tekrar hoş geldin!',
+        subtitle: 'Yepyeni bir hikâye günü başlıyor.',
+      },
+      newAchievement: {
+        title: 'Yaşasın, {{name}}!',
+        titleAnonymous: 'Yaşasın!',
+        subtitle: '{{achievement}} rozetini kazandın. Aşağıya bak!',
+      },
+      storyCompleted: {
+        title: 'Aferin, {{name}}!',
+        titleAnonymous: 'Aferin!',
+        subtitle: 'Birlikte koca bir hikâyeyi bitirdiniz.',
+      },
+      streak: {
+        title: 'Tekrar hoş geldin, {{name}}!',
+        titleAnonymous: 'Tekrar hoş geldin!',
+        subtitle: 'Üst üste {{count}} gün hikâye. Harika!',
+      },
+      longAbsence: {
+        title: 'Seni görmek ne güzel, {{name}}!',
+        titleAnonymous: 'Seni görmek ne güzel!',
+        subtitle: 'Hikâyelerin tam bıraktığın yerde.',
+      },
     },
     continueBody: 'Kaldığın yerden devam et.',
     continueLearning: {
@@ -3161,14 +3179,25 @@ export default {
       body: 'Hikâyeler, müzik ve oyunlar seni bekliyor',
       hint: 'Kitaplığı aç',
     },
-    continueStart: { eyebrow: 'Bir hikâye başlat', title: 'İlk maceranı seç', body: 'Yeni bir dünya seni bekliyor', hint: 'Birlikte okumak için bir hikâye seç' },
+    continueStart: {
+      eyebrow: 'Bir hikâye başlat',
+      title: 'İlk maceranı seç',
+      body: 'Yeni bir dünya seni bekliyor',
+      hint: 'Birlikte okumak için bir hikâye seç',
+    },
     streak: {
       days: '{{count}} gün üst üste',
       days_one: '{{count}} gün üst üste',
       days_other: '{{count}} gün üst üste',
       start: 'Bugün bir seri başlat',
     },
-    achievements: { title: 'Bak neler başardın!', cta: 'Başarıları gör', emptyTitle: 'İlk rozetin seni bekliyor', emptyBody: 'Kazanmak için birlikte bir hikâye okuyun', hint: 'Rozetlerini gör' },
+    achievements: {
+      title: 'Bak neler başardın!',
+      cta: 'Başarıları gör',
+      emptyTitle: 'İlk rozetin seni bekliyor',
+      emptyBody: 'Kazanmak için birlikte bir hikâye okuyun',
+      hint: 'Rozetlerini gör',
+    },
     milestone: {
       eyebrow: 'Sıradaki rozet',
       remaining: {
@@ -3207,7 +3236,6 @@ export default {
     sun: 'Güneş',
     moon: 'Ay',
   },
-
   greeting: {
     morning: 'Günaydın',
     afternoon: 'İyi günler',
@@ -3219,13 +3247,12 @@ export default {
   childUi: {
     nav: {
       home: 'Ana Sayfa',
-      library: 'Kitaplık',
       screensafe: 'Ekran güvenli',
       progress: 'İlerleme',
       saved: 'Kayıtlı',
+      search: 'Ara',
     },
   },
-
   catalogue: {
     moreStories: 'Daha Fazla Hikâye',
     read: 'Oku',
@@ -3255,18 +3282,7 @@ export default {
       songs: 'Kaydedilen şarkılar',
       empty: 'Sevdiğin şeydeki kalbe dokun, seni burada bekler',
     },
-    library: {
-      recentlyRead: 'Son okunanlar',
-      favourites: 'Favoriler',
-      newToYou: 'Senin için yeni',
-      onThisDevice: 'Bu cihazda',
-      tagline: {
-        one: 'Kendi küçük rafın',
-        two: 'saklanacak hikâyelerle',
-      },
-    },
   },
-
   progress: {
     title: 'İlerleme',
     tagline: {
@@ -3299,37 +3315,118 @@ export default {
       exploration: 'Keşif',
     },
     challenges: {
-      threeStoryTimes: { title: 'Üç hikâye zamanı', description: 'Bu hafta birlikte üç hikâye zamanı paylaşın' },
-      calmMoment: { title: 'Sakin bir an', description: 'Bu hafta birlikte bir sakin etkinliğin tadını çıkarın' },
-      makeMusic: { title: 'Biraz müzik', description: 'Bu hafta iki kez birlikte müzik yapın' },
-      morningStory: { title: 'Bir sabah hikâyesi', description: 'Bu hafta bir sabah birlikte okuyun ya da dinleyin' },
-      bedtimeStory: { title: 'Uyku vakti hikâyeleri', description: 'Bu hafta akşam iki hikâye zamanı paylaşın' },
-      tenStoryTimes: { title: 'On hikâye zamanı', description: 'Bu ay birlikte on hikâye zamanı paylaşın' },
-      musicMonth: { title: 'Müzikli bir ay', description: 'Bu ay beş müzik seansının tadını çıkarın' },
-      calmCollector: { title: 'Sakinlik koleksiyoncusu', description: 'Bu ay dört sakin anın tadını çıkarın' },
-      brightMornings: { title: 'Parlak sabahlar', description: 'Bu ay üç sabah birlikte okuyun ya da dinleyin' },
+      threeStoryTimes: {
+        title: 'Üç hikâye zamanı',
+        description: 'Bu hafta birlikte üç hikâye zamanı paylaşın',
+      },
+      calmMoment: {
+        title: 'Sakin bir an',
+        description: 'Bu hafta birlikte bir sakin etkinliğin tadını çıkarın',
+      },
+      makeMusic: {
+        title: 'Biraz müzik',
+        description: 'Bu hafta iki kez birlikte müzik yapın',
+      },
+      morningStory: {
+        title: 'Bir sabah hikâyesi',
+        description: 'Bu hafta bir sabah birlikte okuyun ya da dinleyin',
+      },
+      bedtimeStory: {
+        title: 'Uyku vakti hikâyeleri',
+        description: 'Bu hafta akşam iki hikâye zamanı paylaşın',
+      },
+      tenStoryTimes: {
+        title: 'On hikâye zamanı',
+        description: 'Bu ay birlikte on hikâye zamanı paylaşın',
+      },
+      musicMonth: {
+        title: 'Müzikli bir ay',
+        description: 'Bu ay beş müzik seansının tadını çıkarın',
+      },
+      calmCollector: {
+        title: 'Sakinlik koleksiyoncusu',
+        description: 'Bu ay dört sakin anın tadını çıkarın',
+      },
+      brightMornings: {
+        title: 'Parlak sabahlar',
+        description: 'Bu ay üç sabah birlikte okuyun ya da dinleyin',
+      },
     },
     milestones: {
-      firstFiveStories: { title: 'İlk 5 hikâye', description: 'Harika bir başlangıç!' },
-      bedtimeListener: { title: 'Uyku vakti dinleyicisi', description: 'Sessiz, sıcak hikâye zamanlarını seviyorsun.' },
-      kindMoments: { title: 'Nazik anlar', description: 'Nazik olmayı öğreniyorsun.' },
+      firstFiveStories: {
+        title: 'İlk 5 hikâye',
+        description: 'Harika bir başlangıç!',
+      },
+      bedtimeListener: {
+        title: 'Uyku vakti dinleyicisi',
+        description: 'Sessiz, sıcak hikâye zamanlarını seviyorsun.',
+      },
+      kindMoments: {
+        title: 'Nazik anlar',
+        description: 'Nazik olmayı öğreniyorsun.',
+      },
     },
     badges: {
-      firstStory: { title: 'İlk Hikâye', description: 'İlk hikâyeni aç' },
-      readingTogether: { title: 'Birlikte Okuma', description: 'Bu hafta 3 hikâye zamanı paylaşın' },
-      newWorlds: { title: 'Yeni Dünyalar', description: '3 farklı türde hikâye keşfet' },
-      favouriteFinder: { title: 'Favori Bulucu', description: 'Favori bir hikâye seç' },
-      firstNotes: { title: 'İlk Notalar', description: 'Birlikte müzik yapın' },
-      musicExplorer: { title: 'Müzik Kâşifi', description: 'Bu ay 5 müzik seansının tadını çıkar' },
-      calmMoment: { title: 'Sakin An', description: 'İlk sakin etkinliğini dene' },
-      gentleEvening: { title: 'Yumuşak Akşam', description: 'Akşam 3 hikâye zamanı paylaşın' },
-      kindMoments: { title: 'Nazik Anlar', description: 'Nezaketle ilgili bir hikâye oku' },
-      curiousMind: { title: 'Meraklı Zihin', description: '5 türde hikâye keşfet' },
-      adventureExplorer: { title: 'Macera Kâşifi', description: '3 macera hikâyesi oku' },
-      morningExplorer: { title: 'Sabah Kâşifi', description: 'Sabah oku ya da dinle' },
-      storyAdventurer: { title: 'Hikâye Maceracısı', description: '10 farklı hikâye dinle' },
-      calmChampion: { title: 'Sakinlik Şampiyonu', description: '5 sakin anın tadını çıkar' },
-      kindHeart: { title: 'Nazik Kalp', description: '5 nazik etkinlik tamamla' },
+      firstStory: {
+        title: 'İlk Hikâye',
+        description: 'İlk hikâyeni aç',
+      },
+      readingTogether: {
+        title: 'Birlikte Okuma',
+        description: 'Bu hafta 3 hikâye zamanı paylaşın',
+      },
+      newWorlds: {
+        title: 'Yeni Dünyalar',
+        description: '3 farklı türde hikâye keşfet',
+      },
+      favouriteFinder: {
+        title: 'Favori Bulucu',
+        description: 'Favori bir hikâye seç',
+      },
+      firstNotes: {
+        title: 'İlk Notalar',
+        description: 'Birlikte müzik yapın',
+      },
+      musicExplorer: {
+        title: 'Müzik Kâşifi',
+        description: 'Bu ay 5 müzik seansının tadını çıkar',
+      },
+      calmMoment: {
+        title: 'Sakin An',
+        description: 'İlk sakin etkinliğini dene',
+      },
+      gentleEvening: {
+        title: 'Yumuşak Akşam',
+        description: 'Akşam 3 hikâye zamanı paylaşın',
+      },
+      kindMoments: {
+        title: 'Nazik Anlar',
+        description: 'Nezaketle ilgili bir hikâye oku',
+      },
+      curiousMind: {
+        title: 'Meraklı Zihin',
+        description: '5 türde hikâye keşfet',
+      },
+      adventureExplorer: {
+        title: 'Macera Kâşifi',
+        description: '3 macera hikâyesi oku',
+      },
+      morningExplorer: {
+        title: 'Sabah Kâşifi',
+        description: 'Sabah oku ya da dinle',
+      },
+      storyAdventurer: {
+        title: 'Hikâye Maceracısı',
+        description: '10 farklı hikâye dinle',
+      },
+      calmChampion: {
+        title: 'Sakinlik Şampiyonu',
+        description: '5 sakin anın tadını çıkar',
+      },
+      kindHeart: {
+        title: 'Nazik Kalp',
+        description: '5 nazik etkinlik tamamla',
+      },
     },
     recommendations: {
       bedtime: 'Bir uyku vakti hikâyesi dinle',
@@ -3338,6 +3435,17 @@ export default {
       discover: 'Yeni bir hikâye keşfet',
       calming: 'Sakinleştiren bir hikâye dene',
       kindness: 'Nezaket hikâyesi seç',
+    },
+  },
+  search: {
+    placeholder: 'Bir hikâye ara',
+    recent: 'Son aramalarınız',
+    clearRecent: 'Temizle',
+    clear: 'Aramayı temizle',
+    noResults: 'Hikâye bulunamadı',
+    tagline: {
+      one: 'Aradığınız hikâyeyi',
+      two: 'bulun',
     },
   },
 };

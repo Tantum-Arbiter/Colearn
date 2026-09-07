@@ -42,7 +42,7 @@ import {
   contentMargin,
 } from './tokens';
 
-export type ChildNavItemId = 'home' | 'library' | 'screensafe' | 'progress' | 'saved';
+export type ChildNavItemId = 'home' | 'progress' | 'screensafe' | 'search' | 'saved';
 
 interface ChildNavItem {
   id: ChildNavItemId;
@@ -53,9 +53,9 @@ interface ChildNavItem {
 
 export const CHILD_NAV_ITEMS: readonly ChildNavItem[] = [
   { id: 'home', icon: 'home-outline', selectedIcon: 'home', labelKey: 'childUi.nav.home' },
-  { id: 'library', icon: 'book-outline', selectedIcon: 'book', labelKey: 'childUi.nav.library' },
-  { id: 'screensafe', icon: 'shield-outline', selectedIcon: 'shield-checkmark', labelKey: 'childUi.nav.screensafe' },
   { id: 'progress', icon: 'trending-up-outline', selectedIcon: 'trending-up', labelKey: 'childUi.nav.progress' },
+  { id: 'screensafe', icon: 'shield-outline', selectedIcon: 'shield-checkmark', labelKey: 'childUi.nav.screensafe' },
+  { id: 'search', icon: 'search-outline', selectedIcon: 'search', labelKey: 'childUi.nav.search' },
   { id: 'saved', icon: 'heart-outline', selectedIcon: 'heart', labelKey: 'childUi.nav.saved' },
 ] as const;
 

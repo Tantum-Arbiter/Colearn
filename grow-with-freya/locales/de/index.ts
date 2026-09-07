@@ -964,7 +964,6 @@ export default {
     showIdeas: 'Zeig mir Ideen',
     okay: 'Okay',
   },
-
   screenTimeWarning: {
     approachingLimit: 'Bildschirmzeit-Warnung',
     limitReached: 'Tageslimit erreicht',
@@ -3069,7 +3068,6 @@ export default {
       },
     },
   },
-
   storyDetail: {
     readTogether: 'Zusammen lesen',
     continueReading: 'Weiterlesen',
@@ -3082,18 +3080,15 @@ export default {
     interactive: 'Interaktiv',
     favourite: 'Favorit',
   },
-
   rotatePrompt: {
     ready: 'Bereit für unsere Geschichte?',
     turnTogether: 'Dreht den Bildschirm zusammen',
     openWhenSideways: 'Wir öffnen das Buch, wenn das Gerät quer liegt.',
     openForMe: 'Buch für mich öffnen',
   },
-
   splash: {
     tagline: 'Ein sanfter Ort, um gemeinsam zu wachsen.',
   },
-
   onboardingV2: {
     stepCounter: '{{current}} von {{total}}',
     skip: 'Überspringen',
@@ -3145,15 +3140,38 @@ export default {
       helper: 'So können wir passende Geschichten und Aktivitäten vorschlagen.',
     },
   },
-
   home: {
     welcome: {
-      normal: { title: 'Willkommen zurück, {{name}}!', titleAnonymous: 'Willkommen zurück!', subtitle: 'Dein nächstes Abenteuer wartet.' },
-      firstToday: { title: 'Willkommen zurück, {{name}}!', titleAnonymous: 'Willkommen zurück!', subtitle: 'Ein ganz neuer Geschichtentag beginnt.' },
-      newAchievement: { title: 'Hurra, {{name}}!', titleAnonymous: 'Hurra!', subtitle: 'Du hast {{achievement}} verdient. Schau unten!' },
-      storyCompleted: { title: 'Gut gemacht, {{name}}!', titleAnonymous: 'Gut gemacht!', subtitle: 'Ihr habt zusammen eine ganze Geschichte beendet.' },
-      streak: { title: 'Willkommen zurück, {{name}}!', titleAnonymous: 'Willkommen zurück!', subtitle: '{{count}} Tage Geschichten in Folge. Wunderbar!' },
-      longAbsence: { title: 'Schön, dich zu sehen, {{name}}!', titleAnonymous: 'Schön, dich zu sehen!', subtitle: 'Deine Geschichten sind genau da, wo du sie gelassen hast.' },
+      normal: {
+        title: 'Willkommen zurück, {{name}}!',
+        titleAnonymous: 'Willkommen zurück!',
+        subtitle: 'Dein nächstes Abenteuer wartet.',
+      },
+      firstToday: {
+        title: 'Willkommen zurück, {{name}}!',
+        titleAnonymous: 'Willkommen zurück!',
+        subtitle: 'Ein ganz neuer Geschichtentag beginnt.',
+      },
+      newAchievement: {
+        title: 'Hurra, {{name}}!',
+        titleAnonymous: 'Hurra!',
+        subtitle: 'Du hast {{achievement}} verdient. Schau unten!',
+      },
+      storyCompleted: {
+        title: 'Gut gemacht, {{name}}!',
+        titleAnonymous: 'Gut gemacht!',
+        subtitle: 'Ihr habt zusammen eine ganze Geschichte beendet.',
+      },
+      streak: {
+        title: 'Willkommen zurück, {{name}}!',
+        titleAnonymous: 'Willkommen zurück!',
+        subtitle: '{{count}} Tage Geschichten in Folge. Wunderbar!',
+      },
+      longAbsence: {
+        title: 'Schön, dich zu sehen, {{name}}!',
+        titleAnonymous: 'Schön, dich zu sehen!',
+        subtitle: 'Deine Geschichten sind genau da, wo du sie gelassen hast.',
+      },
     },
     continueBody: 'Mach da weiter, wo ihr aufgehört habt.',
     continueLearning: {
@@ -3161,14 +3179,25 @@ export default {
       body: 'Geschichten, Musik und Spiele warten',
       hint: 'Bibliothek öffnen',
     },
-    continueStart: { eyebrow: 'Eine Geschichte beginnen', title: 'Wähle dein erstes Abenteuer', body: 'Eine neue Welt wartet', hint: 'Wähle eine Geschichte zum gemeinsamen Lesen' },
+    continueStart: {
+      eyebrow: 'Eine Geschichte beginnen',
+      title: 'Wähle dein erstes Abenteuer',
+      body: 'Eine neue Welt wartet',
+      hint: 'Wähle eine Geschichte zum gemeinsamen Lesen',
+    },
     streak: {
       days: '{{count}} Tage in Folge',
       days_one: '{{count}} Tag in Folge',
       days_other: '{{count}} Tage in Folge',
       start: 'Starte heute eine Serie',
     },
-    achievements: { title: 'Schau, was du geschafft hast!', cta: 'Abzeichen ansehen', emptyTitle: 'Dein erstes Abzeichen wartet', emptyBody: 'Lest zusammen eine Geschichte, um es zu verdienen', hint: 'Deine Abzeichen ansehen' },
+    achievements: {
+      title: 'Schau, was du geschafft hast!',
+      cta: 'Abzeichen ansehen',
+      emptyTitle: 'Dein erstes Abzeichen wartet',
+      emptyBody: 'Lest zusammen eine Geschichte, um es zu verdienen',
+      hint: 'Deine Abzeichen ansehen',
+    },
     milestone: {
       eyebrow: 'Nächstes Abzeichen',
       remaining: {
@@ -3207,7 +3236,6 @@ export default {
     sun: 'Die Sonne',
     moon: 'Der Mond',
   },
-
   greeting: {
     morning: 'Guten Morgen',
     afternoon: 'Guten Tag',
@@ -3219,13 +3247,12 @@ export default {
   childUi: {
     nav: {
       home: 'Start',
-      library: 'Bibliothek',
       screensafe: 'Bildschirmzeit',
       progress: 'Fortschritt',
       saved: 'Gespeichert',
+      search: 'Suche',
     },
   },
-
   catalogue: {
     moreStories: 'Mehr Geschichten',
     read: 'Lesen',
@@ -3255,18 +3282,7 @@ export default {
       songs: 'Gespeicherte Lieder',
       empty: 'Tippe auf das Herz, und es wartet hier auf dich',
     },
-    library: {
-      recentlyRead: 'Zuletzt gelesen',
-      favourites: 'Favoriten',
-      newToYou: 'Neu für dich',
-      onThisDevice: 'Auf diesem Gerät',
-      tagline: {
-        one: 'Dein eigenes Regal',
-        two: 'voller Geschichten',
-      },
-    },
   },
-
   progress: {
     title: 'Fortschritt',
     tagline: {
@@ -3299,37 +3315,118 @@ export default {
       exploration: 'Entdecken',
     },
     challenges: {
-      threeStoryTimes: { title: 'Drei Geschichtenzeiten', description: 'Teilt diese Woche drei Geschichtenzeiten' },
-      calmMoment: { title: 'Ein ruhiger Moment', description: 'Genießt diese Woche eine ruhige Aktivität' },
-      makeMusic: { title: 'Musik machen', description: 'Macht diese Woche zweimal zusammen Musik' },
-      morningStory: { title: 'Eine Morgengeschichte', description: 'Lest oder hört diese Woche an einem Morgen zusammen' },
-      bedtimeStory: { title: 'Gute-Nacht-Geschichten', description: 'Teilt diese Woche zwei abendliche Geschichtenzeiten' },
-      tenStoryTimes: { title: 'Zehn Geschichtenzeiten', description: 'Teilt diesen Monat zehn Geschichtenzeiten' },
-      musicMonth: { title: 'Ein musikalischer Monat', description: 'Genießt diesen Monat fünf Musikrunden' },
-      calmCollector: { title: 'Ruhesammler', description: 'Genießt diesen Monat vier ruhige Momente' },
-      brightMornings: { title: 'Helle Morgen', description: 'Lest oder hört diesen Monat an drei Morgen zusammen' },
+      threeStoryTimes: {
+        title: 'Drei Geschichtenzeiten',
+        description: 'Teilt diese Woche drei Geschichtenzeiten',
+      },
+      calmMoment: {
+        title: 'Ein ruhiger Moment',
+        description: 'Genießt diese Woche eine ruhige Aktivität',
+      },
+      makeMusic: {
+        title: 'Musik machen',
+        description: 'Macht diese Woche zweimal zusammen Musik',
+      },
+      morningStory: {
+        title: 'Eine Morgengeschichte',
+        description: 'Lest oder hört diese Woche an einem Morgen zusammen',
+      },
+      bedtimeStory: {
+        title: 'Gute-Nacht-Geschichten',
+        description: 'Teilt diese Woche zwei abendliche Geschichtenzeiten',
+      },
+      tenStoryTimes: {
+        title: 'Zehn Geschichtenzeiten',
+        description: 'Teilt diesen Monat zehn Geschichtenzeiten',
+      },
+      musicMonth: {
+        title: 'Ein musikalischer Monat',
+        description: 'Genießt diesen Monat fünf Musikrunden',
+      },
+      calmCollector: {
+        title: 'Ruhesammler',
+        description: 'Genießt diesen Monat vier ruhige Momente',
+      },
+      brightMornings: {
+        title: 'Helle Morgen',
+        description: 'Lest oder hört diesen Monat an drei Morgen zusammen',
+      },
     },
     milestones: {
-      firstFiveStories: { title: 'Erste 5 Geschichten', description: 'Ein wunderbarer Anfang!' },
-      bedtimeListener: { title: 'Gute-Nacht-Zuhörer', description: 'Du liebst ruhige, gemütliche Geschichten.' },
-      kindMoments: { title: 'Nette Momente', description: 'Du lernst, freundlich zu sein.' },
+      firstFiveStories: {
+        title: 'Erste 5 Geschichten',
+        description: 'Ein wunderbarer Anfang!',
+      },
+      bedtimeListener: {
+        title: 'Gute-Nacht-Zuhörer',
+        description: 'Du liebst ruhige, gemütliche Geschichten.',
+      },
+      kindMoments: {
+        title: 'Nette Momente',
+        description: 'Du lernst, freundlich zu sein.',
+      },
     },
     badges: {
-      firstStory: { title: 'Erste Geschichte', description: 'Öffne deine allererste Geschichte' },
-      readingTogether: { title: 'Gemeinsam lesen', description: 'Teilt 3 Geschichtenzeiten diese Woche' },
-      newWorlds: { title: 'Neue Welten', description: 'Entdecke 3 verschiedene Arten von Geschichten' },
-      favouriteFinder: { title: 'Lieblingsfinder', description: 'Wähle eine Lieblingsgeschichte' },
-      firstNotes: { title: 'Erste Töne', description: 'Macht zusammen Musik' },
-      musicExplorer: { title: 'Musikentdecker', description: 'Genieße 5 Musikrunden diesen Monat' },
-      calmMoment: { title: 'Ruhiger Moment', description: 'Probiere deine erste ruhige Aktivität' },
-      gentleEvening: { title: 'Sanfter Abend', description: 'Teilt 3 abendliche Geschichtenzeiten' },
-      kindMoments: { title: 'Nette Momente', description: 'Lies eine Geschichte über Freundlichkeit' },
-      curiousMind: { title: 'Neugieriger Kopf', description: 'Entdecke 5 Arten von Geschichten' },
-      adventureExplorer: { title: 'Abenteuerentdecker', description: 'Lies 3 Abenteuergeschichten' },
-      morningExplorer: { title: 'Morgenentdecker', description: 'Lies oder höre am Morgen' },
-      storyAdventurer: { title: 'Geschichtenabenteurer', description: 'Höre 10 verschiedene Geschichten' },
-      calmChampion: { title: 'Ruhe-Champion', description: 'Genieße 5 ruhige Momente' },
-      kindHeart: { title: 'Gutes Herz', description: 'Schließe 5 freundliche Aktivitäten ab' },
+      firstStory: {
+        title: 'Erste Geschichte',
+        description: 'Öffne deine allererste Geschichte',
+      },
+      readingTogether: {
+        title: 'Gemeinsam lesen',
+        description: 'Teilt 3 Geschichtenzeiten diese Woche',
+      },
+      newWorlds: {
+        title: 'Neue Welten',
+        description: 'Entdecke 3 verschiedene Arten von Geschichten',
+      },
+      favouriteFinder: {
+        title: 'Lieblingsfinder',
+        description: 'Wähle eine Lieblingsgeschichte',
+      },
+      firstNotes: {
+        title: 'Erste Töne',
+        description: 'Macht zusammen Musik',
+      },
+      musicExplorer: {
+        title: 'Musikentdecker',
+        description: 'Genieße 5 Musikrunden diesen Monat',
+      },
+      calmMoment: {
+        title: 'Ruhiger Moment',
+        description: 'Probiere deine erste ruhige Aktivität',
+      },
+      gentleEvening: {
+        title: 'Sanfter Abend',
+        description: 'Teilt 3 abendliche Geschichtenzeiten',
+      },
+      kindMoments: {
+        title: 'Nette Momente',
+        description: 'Lies eine Geschichte über Freundlichkeit',
+      },
+      curiousMind: {
+        title: 'Neugieriger Kopf',
+        description: 'Entdecke 5 Arten von Geschichten',
+      },
+      adventureExplorer: {
+        title: 'Abenteuerentdecker',
+        description: 'Lies 3 Abenteuergeschichten',
+      },
+      morningExplorer: {
+        title: 'Morgenentdecker',
+        description: 'Lies oder höre am Morgen',
+      },
+      storyAdventurer: {
+        title: 'Geschichtenabenteurer',
+        description: 'Höre 10 verschiedene Geschichten',
+      },
+      calmChampion: {
+        title: 'Ruhe-Champion',
+        description: 'Genieße 5 ruhige Momente',
+      },
+      kindHeart: {
+        title: 'Gutes Herz',
+        description: 'Schließe 5 freundliche Aktivitäten ab',
+      },
     },
     recommendations: {
       bedtime: 'Höre eine Gute-Nacht-Geschichte',
@@ -3338,6 +3435,17 @@ export default {
       discover: 'Entdecke eine neue Geschichte',
       calming: 'Probiere eine ruhige Geschichte',
       kindness: 'Wähle eine Freundlichkeitsgeschichte',
+    },
+  },
+  search: {
+    placeholder: 'Nach einer Geschichte suchen',
+    recent: 'Deine letzten Suchen',
+    clearRecent: 'Löschen',
+    clear: 'Suche löschen',
+    noResults: 'Keine Geschichten gefunden',
+    tagline: {
+      one: 'Finde die Geschichte',
+      two: 'die du suchst',
     },
   },
 };

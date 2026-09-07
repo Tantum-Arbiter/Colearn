@@ -964,7 +964,6 @@ export default {
     showIdeas: 'أرني بعض الأفكار',
     okay: 'حسناً',
   },
-
   screenTimeWarning: {
     approachingLimit: 'تحذير وقت الشاشة',
     limitReached: 'تم الوصول إلى الحد اليومي',
@@ -3069,7 +3068,6 @@ export default {
       },
     },
   },
-
   storyDetail: {
     readTogether: 'لنقرأ معًا',
     continueReading: 'تابع القراءة',
@@ -3082,18 +3080,15 @@ export default {
     interactive: 'تفاعلية',
     favourite: 'المفضلة',
   },
-
   rotatePrompt: {
     ready: 'هل أنتم مستعدون لوقت القصة؟',
     turnTogether: 'أديروا الشاشة معًا',
     openWhenSideways: 'سنفتح الكتاب عندما يصبح الجهاز بالعرض.',
     openForMe: 'افتح الكتاب من أجلي',
   },
-
   splash: {
     tagline: 'مكان لطيف لننمو معًا.',
   },
-
   onboardingV2: {
     stepCounter: '{{current}} من {{total}}',
     skip: 'تخطٍّ',
@@ -3145,15 +3140,38 @@ export default {
       helper: 'يساعدنا هذا في اقتراح قصص وأنشطة مناسبة.',
     },
   },
-
   home: {
     welcome: {
-      normal: { title: 'أهلاً بعودتك يا {{name}}!', titleAnonymous: 'أهلاً بعودتك!', subtitle: 'مغامرتك التالية بانتظارك.' },
-      firstToday: { title: 'أهلاً بعودتك يا {{name}}!', titleAnonymous: 'أهلاً بعودتك!', subtitle: 'يبدأ يوم جديد من الحكايات.' },
-      newAchievement: { title: 'مرحى يا {{name}}!', titleAnonymous: 'مرحى!', subtitle: 'حصلت على {{achievement}}. انظر في الأسفل!' },
-      storyCompleted: { title: 'أحسنت يا {{name}}!', titleAnonymous: 'أحسنت!', subtitle: 'أنهيتما حكاية كاملة معاً.' },
-      streak: { title: 'أهلاً بعودتك يا {{name}}!', titleAnonymous: 'أهلاً بعودتك!', subtitle: '{{count}} أيام من الحكايات على التوالي. رائع!' },
-      longAbsence: { title: 'سعداء برؤيتك يا {{name}}!', titleAnonymous: 'سعداء برؤيتك!', subtitle: 'حكاياتك في مكانها كما تركتها.' },
+      normal: {
+        title: 'أهلاً بعودتك يا {{name}}!',
+        titleAnonymous: 'أهلاً بعودتك!',
+        subtitle: 'مغامرتك التالية بانتظارك.',
+      },
+      firstToday: {
+        title: 'أهلاً بعودتك يا {{name}}!',
+        titleAnonymous: 'أهلاً بعودتك!',
+        subtitle: 'يبدأ يوم جديد من الحكايات.',
+      },
+      newAchievement: {
+        title: 'مرحى يا {{name}}!',
+        titleAnonymous: 'مرحى!',
+        subtitle: 'حصلت على {{achievement}}. انظر في الأسفل!',
+      },
+      storyCompleted: {
+        title: 'أحسنت يا {{name}}!',
+        titleAnonymous: 'أحسنت!',
+        subtitle: 'أنهيتما حكاية كاملة معاً.',
+      },
+      streak: {
+        title: 'أهلاً بعودتك يا {{name}}!',
+        titleAnonymous: 'أهلاً بعودتك!',
+        subtitle: '{{count}} أيام من الحكايات على التوالي. رائع!',
+      },
+      longAbsence: {
+        title: 'سعداء برؤيتك يا {{name}}!',
+        titleAnonymous: 'سعداء برؤيتك!',
+        subtitle: 'حكاياتك في مكانها كما تركتها.',
+      },
     },
     continueBody: 'تابع من حيث توقفت.',
     continueLearning: {
@@ -3161,14 +3179,25 @@ export default {
       body: '‏قصص وموسيقى وألعاب في انتظارك',
       hint: '‏افتح المكتبة',
     },
-    continueStart: { eyebrow: 'ابدأ حكاية', title: 'اختر مغامرتك الأولى', body: 'عالم جديد بانتظارك', hint: 'اختر حكاية لتقرآها معاً' },
+    continueStart: {
+      eyebrow: 'ابدأ حكاية',
+      title: 'اختر مغامرتك الأولى',
+      body: 'عالم جديد بانتظارك',
+      hint: 'اختر حكاية لتقرآها معاً',
+    },
     streak: {
       days: '‏{{count}} أيام متتالية',
       days_one: '‏يوم واحد متتالٍ',
       days_other: '‏{{count}} أيام متتالية',
       start: '‏ابدأ سلسلتك اليوم',
     },
-    achievements: { title: 'انظر ماذا أنجزت!', cta: 'عرض الإنجازات', emptyTitle: 'شارتك الأولى بانتظارك', emptyBody: 'اقرآ حكاية معاً لتحصل عليها', hint: 'عرض شاراتك' },
+    achievements: {
+      title: 'انظر ماذا أنجزت!',
+      cta: 'عرض الإنجازات',
+      emptyTitle: 'شارتك الأولى بانتظارك',
+      emptyBody: 'اقرآ حكاية معاً لتحصل عليها',
+      hint: 'عرض شاراتك',
+    },
     milestone: {
       eyebrow: 'الشارة التالية',
       remaining: {
@@ -3207,7 +3236,6 @@ export default {
     sun: 'الشمس',
     moon: 'القمر',
   },
-
   greeting: {
     morning: 'صباح الخير',
     afternoon: 'نهارك سعيد',
@@ -3219,13 +3247,12 @@ export default {
   childUi: {
     nav: {
       home: 'الرئيسية',
-      library: 'المكتبة',
       screensafe: '‏وقت آمن',
       progress: 'التقدم',
       saved: '‏المحفوظات',
+      search: 'بحث',
     },
   },
-
   catalogue: {
     moreStories: 'المزيد من القصص',
     read: 'اقرأ',
@@ -3255,18 +3282,7 @@ export default {
       songs: '‏الأغاني المحفوظة',
       empty: '‏المس القلب على ما تحبه، وسينتظرك هنا',
     },
-    library: {
-      recentlyRead: 'قُرئت مؤخرًا',
-      favourites: 'المفضلة',
-      newToYou: 'جديد لك',
-      onThisDevice: 'على هذا الجهاز',
-      tagline: {
-        one: '‏رفّك الصغير',
-        two: 'من القصص المحفوظة',
-      },
-    },
   },
-
   progress: {
     title: 'التقدم',
     tagline: {
@@ -3299,37 +3315,118 @@ export default {
       exploration: 'استكشاف',
     },
     challenges: {
-      threeStoryTimes: { title: 'ثلاثة أوقات قصص', description: 'شاركا ثلاثة أوقات قصص معًا هذا الأسبوع' },
-      calmMoment: { title: 'لحظة هادئة', description: 'استمتعا بنشاط هادئ واحد معًا هذا الأسبوع' },
-      makeMusic: { title: 'لنعزف الموسيقى', description: 'اعزفا الموسيقى معًا مرتين هذا الأسبوع' },
-      morningStory: { title: 'قصة صباحية', description: 'اقرآ أو استمعا معًا في صباح واحد هذا الأسبوع' },
-      bedtimeStory: { title: 'قصص قبل النوم', description: 'شاركا وقتي قصص مسائيين هذا الأسبوع' },
-      tenStoryTimes: { title: 'عشرة أوقات قصص', description: 'شاركا عشرة أوقات قصص معًا هذا الشهر' },
-      musicMonth: { title: 'شهر موسيقي', description: 'استمتعا بخمس جلسات موسيقية هذا الشهر' },
-      calmCollector: { title: 'جامع الهدوء', description: 'استمتعا بأربع لحظات هادئة هذا الشهر' },
-      brightMornings: { title: 'صباحات مشرقة', description: 'اقرآ أو استمعا معًا في ثلاثة صباحات هذا الشهر' },
+      threeStoryTimes: {
+        title: 'ثلاثة أوقات قصص',
+        description: 'شاركا ثلاثة أوقات قصص معًا هذا الأسبوع',
+      },
+      calmMoment: {
+        title: 'لحظة هادئة',
+        description: 'استمتعا بنشاط هادئ واحد معًا هذا الأسبوع',
+      },
+      makeMusic: {
+        title: 'لنعزف الموسيقى',
+        description: 'اعزفا الموسيقى معًا مرتين هذا الأسبوع',
+      },
+      morningStory: {
+        title: 'قصة صباحية',
+        description: 'اقرآ أو استمعا معًا في صباح واحد هذا الأسبوع',
+      },
+      bedtimeStory: {
+        title: 'قصص قبل النوم',
+        description: 'شاركا وقتي قصص مسائيين هذا الأسبوع',
+      },
+      tenStoryTimes: {
+        title: 'عشرة أوقات قصص',
+        description: 'شاركا عشرة أوقات قصص معًا هذا الشهر',
+      },
+      musicMonth: {
+        title: 'شهر موسيقي',
+        description: 'استمتعا بخمس جلسات موسيقية هذا الشهر',
+      },
+      calmCollector: {
+        title: 'جامع الهدوء',
+        description: 'استمتعا بأربع لحظات هادئة هذا الشهر',
+      },
+      brightMornings: {
+        title: 'صباحات مشرقة',
+        description: 'اقرآ أو استمعا معًا في ثلاثة صباحات هذا الشهر',
+      },
     },
     milestones: {
-      firstFiveStories: { title: 'أول 5 قصص', description: 'بداية رائعة!' },
-      bedtimeListener: { title: 'مستمع وقت النوم', description: 'تحب أوقات القصص الهادئة والدافئة.' },
-      kindMoments: { title: 'لحظات لطيفة', description: 'أنت تتعلم اللطف.' },
+      firstFiveStories: {
+        title: 'أول 5 قصص',
+        description: 'بداية رائعة!',
+      },
+      bedtimeListener: {
+        title: 'مستمع وقت النوم',
+        description: 'تحب أوقات القصص الهادئة والدافئة.',
+      },
+      kindMoments: {
+        title: 'لحظات لطيفة',
+        description: 'أنت تتعلم اللطف.',
+      },
     },
     badges: {
-      firstStory: { title: 'القصة الأولى', description: 'افتح أول قصة لك' },
-      readingTogether: { title: 'نقرأ معًا', description: 'شاركا 3 أوقات قصص هذا الأسبوع' },
-      newWorlds: { title: 'عوالم جديدة', description: 'استكشف 3 أنواع مختلفة من القصص' },
-      favouriteFinder: { title: 'مكتشف المفضلات', description: 'اختر قصة مفضلة' },
-      firstNotes: { title: 'النغمات الأولى', description: 'اعزفا الموسيقى معًا' },
-      musicExplorer: { title: 'مستكشف الموسيقى', description: 'استمتع بخمس جلسات موسيقية هذا الشهر' },
-      calmMoment: { title: 'لحظة هادئة', description: 'جرّب أول نشاط هادئ لك' },
-      gentleEvening: { title: 'مساء لطيف', description: 'شاركا 3 أوقات قصص مسائية' },
-      kindMoments: { title: 'لحظات لطيفة', description: 'اقرأ قصة عن اللطف' },
-      curiousMind: { title: 'عقل فضولي', description: 'استكشف 5 أنواع من القصص' },
-      adventureExplorer: { title: 'مستكشف المغامرات', description: 'اقرأ 3 قصص مغامرات' },
-      morningExplorer: { title: 'مستكشف الصباح', description: 'اقرأ أو استمع في الصباح' },
-      storyAdventurer: { title: 'مغامر القصص', description: 'استمع إلى 10 قصص مختلفة' },
-      calmChampion: { title: 'بطل الهدوء', description: 'استمتع بخمس لحظات هادئة' },
-      kindHeart: { title: 'قلب طيب', description: 'أكمل 5 أنشطة لطيفة' },
+      firstStory: {
+        title: 'القصة الأولى',
+        description: 'افتح أول قصة لك',
+      },
+      readingTogether: {
+        title: 'نقرأ معًا',
+        description: 'شاركا 3 أوقات قصص هذا الأسبوع',
+      },
+      newWorlds: {
+        title: 'عوالم جديدة',
+        description: 'استكشف 3 أنواع مختلفة من القصص',
+      },
+      favouriteFinder: {
+        title: 'مكتشف المفضلات',
+        description: 'اختر قصة مفضلة',
+      },
+      firstNotes: {
+        title: 'النغمات الأولى',
+        description: 'اعزفا الموسيقى معًا',
+      },
+      musicExplorer: {
+        title: 'مستكشف الموسيقى',
+        description: 'استمتع بخمس جلسات موسيقية هذا الشهر',
+      },
+      calmMoment: {
+        title: 'لحظة هادئة',
+        description: 'جرّب أول نشاط هادئ لك',
+      },
+      gentleEvening: {
+        title: 'مساء لطيف',
+        description: 'شاركا 3 أوقات قصص مسائية',
+      },
+      kindMoments: {
+        title: 'لحظات لطيفة',
+        description: 'اقرأ قصة عن اللطف',
+      },
+      curiousMind: {
+        title: 'عقل فضولي',
+        description: 'استكشف 5 أنواع من القصص',
+      },
+      adventureExplorer: {
+        title: 'مستكشف المغامرات',
+        description: 'اقرأ 3 قصص مغامرات',
+      },
+      morningExplorer: {
+        title: 'مستكشف الصباح',
+        description: 'اقرأ أو استمع في الصباح',
+      },
+      storyAdventurer: {
+        title: 'مغامر القصص',
+        description: 'استمع إلى 10 قصص مختلفة',
+      },
+      calmChampion: {
+        title: 'بطل الهدوء',
+        description: 'استمتع بخمس لحظات هادئة',
+      },
+      kindHeart: {
+        title: 'قلب طيب',
+        description: 'أكمل 5 أنشطة لطيفة',
+      },
     },
     recommendations: {
       bedtime: 'استمع إلى قصة قبل النوم',
@@ -3338,6 +3435,17 @@ export default {
       discover: 'اكتشف قصة جديدة',
       calming: 'جرّب قصة هادئة',
       kindness: 'اختر قصة عن اللطف',
+    },
+  },
+  search: {
+    placeholder: 'ابحث عن قصة',
+    recent: 'عمليات البحث الأخيرة',
+    clearRecent: 'مسح',
+    clear: 'مسح البحث',
+    noResults: 'لم يتم العثور على قصص',
+    tagline: {
+      one: 'اعثر على القصة',
+      two: 'التي تبحث عنها',
     },
   },
 };

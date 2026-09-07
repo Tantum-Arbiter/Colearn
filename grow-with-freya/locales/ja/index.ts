@@ -964,7 +964,6 @@ export default {
     showIdeas: 'アイデアを見せて',
     okay: 'わかりました',
   },
-
   screenTimeWarning: {
     approachingLimit: 'スクリーンタイム警告',
     limitReached: '1日の制限に達しました',
@@ -3069,7 +3068,6 @@ export default {
       },
     },
   },
-
   storyDetail: {
     readTogether: 'いっしょに読む',
     continueReading: 'つづきをよむ',
@@ -3082,18 +3080,15 @@ export default {
     interactive: 'インタラクティブ',
     favourite: 'お気に入り',
   },
-
   rotatePrompt: {
     ready: 'おはなしのじかんです！',
     turnTogether: 'いっしょに画面を回してね',
     openWhenSideways: '端末を横にすると絵本がひらくよ。',
     openForMe: '絵本をひらいて',
   },
-
   splash: {
     tagline: 'いっしょに育つ、やさしい場所。',
   },
-
   onboardingV2: {
     stepCounter: '{{total}} 中 {{current}}',
     skip: 'スキップ',
@@ -3145,15 +3140,38 @@ export default {
       helper: 'おすすめのおはなしや遊びを選ぶために使います。',
     },
   },
-
   home: {
     welcome: {
-      normal: { title: 'おかえり、{{name}}！', titleAnonymous: 'おかえり！', subtitle: 'つぎのぼうけんが まっているよ。' },
-      firstToday: { title: 'おかえり、{{name}}！', titleAnonymous: 'おかえり！', subtitle: 'あたらしい おはなしの いちにちが はじまるよ。' },
-      newAchievement: { title: 'やったね、{{name}}！', titleAnonymous: 'やったね！', subtitle: '{{achievement}}を てにいれたよ。したを みてね！' },
-      storyCompleted: { title: 'よくできました、{{name}}！', titleAnonymous: 'よくできました！', subtitle: 'いっしょに おはなしを さいごまで よんだね。' },
-      streak: { title: 'おかえり、{{name}}！', titleAnonymous: 'おかえり！', subtitle: '{{count}}にち つづけて おはなし。すばらしい！' },
-      longAbsence: { title: 'また あえて うれしいな、{{name}}！', titleAnonymous: 'また あえて うれしいな！', subtitle: 'おはなしは そのまま まっていたよ。' },
+      normal: {
+        title: 'おかえり、{{name}}！',
+        titleAnonymous: 'おかえり！',
+        subtitle: 'つぎのぼうけんが まっているよ。',
+      },
+      firstToday: {
+        title: 'おかえり、{{name}}！',
+        titleAnonymous: 'おかえり！',
+        subtitle: 'あたらしい おはなしの いちにちが はじまるよ。',
+      },
+      newAchievement: {
+        title: 'やったね、{{name}}！',
+        titleAnonymous: 'やったね！',
+        subtitle: '{{achievement}}を てにいれたよ。したを みてね！',
+      },
+      storyCompleted: {
+        title: 'よくできました、{{name}}！',
+        titleAnonymous: 'よくできました！',
+        subtitle: 'いっしょに おはなしを さいごまで よんだね。',
+      },
+      streak: {
+        title: 'おかえり、{{name}}！',
+        titleAnonymous: 'おかえり！',
+        subtitle: '{{count}}にち つづけて おはなし。すばらしい！',
+      },
+      longAbsence: {
+        title: 'また あえて うれしいな、{{name}}！',
+        titleAnonymous: 'また あえて うれしいな！',
+        subtitle: 'おはなしは そのまま まっていたよ。',
+      },
     },
     continueBody: 'つづきから よもう。',
     continueLearning: {
@@ -3161,14 +3179,25 @@ export default {
       body: 'お話も音楽もゲームも待っています',
       hint: 'ライブラリを開く',
     },
-    continueStart: { eyebrow: 'おはなしを はじめる', title: 'はじめての ぼうけんを えらぼう', body: 'あたらしい せかいが まっているよ', hint: 'いっしょに よむ おはなしを えらんでね' },
+    continueStart: {
+      eyebrow: 'おはなしを はじめる',
+      title: 'はじめての ぼうけんを えらぼう',
+      body: 'あたらしい せかいが まっているよ',
+      hint: 'いっしょに よむ おはなしを えらんでね',
+    },
     streak: {
       days: '{{count}}日連続',
       days_one: '{{count}}日連続',
       days_other: '{{count}}日連続',
       start: '今日から続けてみよう',
     },
-    achievements: { title: 'みて、こんなに できたよ！', cta: 'できたことを みる', emptyTitle: 'はじめての バッジが まっているよ', emptyBody: 'いっしょに おはなしを よんで もらおう', hint: 'バッジを みる' },
+    achievements: {
+      title: 'みて、こんなに できたよ！',
+      cta: 'できたことを みる',
+      emptyTitle: 'はじめての バッジが まっているよ',
+      emptyBody: 'いっしょに おはなしを よんで もらおう',
+      hint: 'バッジを みる',
+    },
     milestone: {
       eyebrow: 'つぎの バッジ',
       remaining: {
@@ -3207,7 +3236,6 @@ export default {
     sun: 'たいよう',
     moon: 'おつきさま',
   },
-
   greeting: {
     morning: 'おはよう',
     afternoon: 'こんにちは',
@@ -3219,13 +3247,12 @@ export default {
   childUi: {
     nav: {
       home: 'ホーム',
-      library: 'ライブラリ',
       screensafe: '見守り',
       progress: 'せいちょう',
       saved: '保存済み',
+      search: '検索',
     },
   },
-
   catalogue: {
     moreStories: 'ほかのおはなし',
     read: 'よむ',
@@ -3255,18 +3282,7 @@ export default {
       songs: '保存した曲',
       empty: '好きなもののハートをタップすると、ここで待っています',
     },
-    library: {
-      recentlyRead: 'さいきんよんだ',
-      favourites: 'おきにいり',
-      newToYou: 'まだよんでいない',
-      onThisDevice: 'このたんまつにあるおはなし',
-      tagline: {
-        one: 'あなただけの本棚',
-        two: '大切なお話とともに',
-      },
-    },
   },
-
   progress: {
     title: 'せいちょう',
     tagline: {
@@ -3299,37 +3315,118 @@ export default {
       exploration: 'たんけん',
     },
     challenges: {
-      threeStoryTimes: { title: 'おはなしのじかん3回', description: '今週いっしょに3回おはなしのじかんをすごそう' },
-      calmMoment: { title: 'おちつきのじかん', description: '今週いっしょにおちつくあそびを1回たのしもう' },
-      makeMusic: { title: 'おんがくをかなでよう', description: '今週いっしょに2回おんがくをかなでよう' },
-      morningStory: { title: 'あさのおはなし', description: '今週のあさにいっしょによんだりきいたりしよう' },
-      bedtimeStory: { title: 'おやすみのおはなし', description: '今週ゆうがたに2回おはなしのじかんをすごそう' },
-      tenStoryTimes: { title: 'おはなしのじかん10回', description: '今月いっしょに10回おはなしのじかんをすごそう' },
-      musicMonth: { title: 'おんがくの月', description: '今月5回おんがくのじかんをたのしもう' },
-      calmCollector: { title: 'おちつきコレクター', description: '今月4回おちつきのじかんをたのしもう' },
-      brightMornings: { title: 'あかるいあさ', description: '今月3回あさにいっしょによんだりきいたりしよう' },
+      threeStoryTimes: {
+        title: 'おはなしのじかん3回',
+        description: '今週いっしょに3回おはなしのじかんをすごそう',
+      },
+      calmMoment: {
+        title: 'おちつきのじかん',
+        description: '今週いっしょにおちつくあそびを1回たのしもう',
+      },
+      makeMusic: {
+        title: 'おんがくをかなでよう',
+        description: '今週いっしょに2回おんがくをかなでよう',
+      },
+      morningStory: {
+        title: 'あさのおはなし',
+        description: '今週のあさにいっしょによんだりきいたりしよう',
+      },
+      bedtimeStory: {
+        title: 'おやすみのおはなし',
+        description: '今週ゆうがたに2回おはなしのじかんをすごそう',
+      },
+      tenStoryTimes: {
+        title: 'おはなしのじかん10回',
+        description: '今月いっしょに10回おはなしのじかんをすごそう',
+      },
+      musicMonth: {
+        title: 'おんがくの月',
+        description: '今月5回おんがくのじかんをたのしもう',
+      },
+      calmCollector: {
+        title: 'おちつきコレクター',
+        description: '今月4回おちつきのじかんをたのしもう',
+      },
+      brightMornings: {
+        title: 'あかるいあさ',
+        description: '今月3回あさにいっしょによんだりきいたりしよう',
+      },
     },
     milestones: {
-      firstFiveStories: { title: 'はじめての5さつ', description: 'すてきなスタートだね！' },
-      bedtimeListener: { title: 'おやすみリスナー', description: 'しずかでやさしいおはなしが大すき。' },
-      kindMoments: { title: 'やさしい時間', description: 'やさしさをまなんでいるよ。' },
+      firstFiveStories: {
+        title: 'はじめての5さつ',
+        description: 'すてきなスタートだね！',
+      },
+      bedtimeListener: {
+        title: 'おやすみリスナー',
+        description: 'しずかでやさしいおはなしが大すき。',
+      },
+      kindMoments: {
+        title: 'やさしい時間',
+        description: 'やさしさをまなんでいるよ。',
+      },
     },
     badges: {
-      firstStory: { title: 'はじめてのおはなし', description: 'さいしょのおはなしをひらこう' },
-      readingTogether: { title: 'いっしょによむ', description: '今週3回いっしょにおはなしのじかんをすごそう' },
-      newWorlds: { title: 'あたらしいせかい', description: '3しゅるいのおはなしをたんけんしよう' },
-      favouriteFinder: { title: 'おきにいりはっけん', description: 'おきにいりのおはなしをえらぼう' },
-      firstNotes: { title: 'はじめてのおんがく', description: 'いっしょにおんがくをかなでよう' },
-      musicExplorer: { title: 'おんがくたんけんか', description: '今月5回おんがくのじかんをたのしもう' },
-      calmMoment: { title: 'おちつきのじかん', description: 'はじめてのおちつくあそびをためそう' },
-      gentleEvening: { title: 'やさしいゆうべ', description: 'ゆうがたに3回おはなしのじかんをすごそう' },
-      kindMoments: { title: 'やさしいじかん', description: 'やさしさのおはなしをよもう' },
-      curiousMind: { title: 'こうきしんいっぱい', description: '5しゅるいのおはなしをたんけんしよう' },
-      adventureExplorer: { title: 'ぼうけんたんけんか', description: 'ぼうけんのおはなしを3つよもう' },
-      morningExplorer: { title: 'あさのたんけんか', description: 'あさによんだりきいたりしよう' },
-      storyAdventurer: { title: 'おはなしぼうけんか', description: '10のおはなしをきいてみよう' },
-      calmChampion: { title: 'おちつきチャンピオン', description: '5回おちつきの時間をたのしもう' },
-      kindHeart: { title: 'やさしいこころ', description: 'やさしいことを5回してみよう' },
+      firstStory: {
+        title: 'はじめてのおはなし',
+        description: 'さいしょのおはなしをひらこう',
+      },
+      readingTogether: {
+        title: 'いっしょによむ',
+        description: '今週3回いっしょにおはなしのじかんをすごそう',
+      },
+      newWorlds: {
+        title: 'あたらしいせかい',
+        description: '3しゅるいのおはなしをたんけんしよう',
+      },
+      favouriteFinder: {
+        title: 'おきにいりはっけん',
+        description: 'おきにいりのおはなしをえらぼう',
+      },
+      firstNotes: {
+        title: 'はじめてのおんがく',
+        description: 'いっしょにおんがくをかなでよう',
+      },
+      musicExplorer: {
+        title: 'おんがくたんけんか',
+        description: '今月5回おんがくのじかんをたのしもう',
+      },
+      calmMoment: {
+        title: 'おちつきのじかん',
+        description: 'はじめてのおちつくあそびをためそう',
+      },
+      gentleEvening: {
+        title: 'やさしいゆうべ',
+        description: 'ゆうがたに3回おはなしのじかんをすごそう',
+      },
+      kindMoments: {
+        title: 'やさしいじかん',
+        description: 'やさしさのおはなしをよもう',
+      },
+      curiousMind: {
+        title: 'こうきしんいっぱい',
+        description: '5しゅるいのおはなしをたんけんしよう',
+      },
+      adventureExplorer: {
+        title: 'ぼうけんたんけんか',
+        description: 'ぼうけんのおはなしを3つよもう',
+      },
+      morningExplorer: {
+        title: 'あさのたんけんか',
+        description: 'あさによんだりきいたりしよう',
+      },
+      storyAdventurer: {
+        title: 'おはなしぼうけんか',
+        description: '10のおはなしをきいてみよう',
+      },
+      calmChampion: {
+        title: 'おちつきチャンピオン',
+        description: '5回おちつきの時間をたのしもう',
+      },
+      kindHeart: {
+        title: 'やさしいこころ',
+        description: 'やさしいことを5回してみよう',
+      },
     },
     recommendations: {
       bedtime: 'おやすみのおはなしをきこう',
@@ -3338,6 +3435,17 @@ export default {
       discover: 'あたらしいおはなしをみつけよう',
       calming: 'おちつくおはなしをためそう',
       kindness: 'やさしさのおはなしをえらぼう',
+    },
+  },
+  search: {
+    placeholder: 'おはなしをさがす',
+    recent: 'さいきんの検索',
+    clearRecent: 'クリア',
+    clear: '検索をクリア',
+    noResults: 'おはなしが見つかりません',
+    tagline: {
+      one: 'さがしているおはなしを',
+      two: '見つけよう',
     },
   },
 };

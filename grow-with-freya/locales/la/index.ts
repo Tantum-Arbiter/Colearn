@@ -964,7 +964,6 @@ export default {
     showIdeas: 'Consilia Mihi Monstra',
     okay: 'Bene',
   },
-
   screenTimeWarning: {
     approachingLimit: 'Monitio Temporis Ostentionis',
     limitReached: 'Limites Diurni Iam Attacti',
@@ -3069,7 +3068,6 @@ export default {
       },
     },
   },
-
   storyDetail: {
     readTogether: 'Simul legere',
     continueReading: 'Perge legere',
@@ -3082,18 +3080,15 @@ export default {
     interactive: 'Interactivum',
     favourite: 'Dilectum',
   },
-
   rotatePrompt: {
     ready: 'Paratine estis fabulae?',
     turnTogether: 'Simul quadrum vertite',
     openWhenSideways: 'Librum aperiemus cum machina transversa erit.',
     openForMe: 'Aperi librum pro me',
   },
-
   splash: {
     tagline: 'Locus lenis ad simul crescendum.',
   },
-
   onboardingV2: {
     stepCounter: '{{current}} ex {{total}}',
     skip: 'Omitte',
@@ -3145,15 +3140,38 @@ export default {
       helper: 'Hoc nos adiuvat fabulas et actiones aptas suadere.',
     },
   },
-
   home: {
     welcome: {
-      normal: { title: 'Salve iterum, {{name}}!', titleAnonymous: 'Salve iterum!', subtitle: 'Proxima tua peregrinatio te exspectat.' },
-      firstToday: { title: 'Salve iterum, {{name}}!', titleAnonymous: 'Salve iterum!', subtitle: 'Novus dies fabularum incipit.' },
-      newAchievement: { title: 'Euge, {{name}}!', titleAnonymous: 'Euge!', subtitle: '{{achievement}} meruisti. Infra aspice!' },
-      storyCompleted: { title: 'Optime, {{name}}!', titleAnonymous: 'Optime!', subtitle: 'Totam fabulam una perfecistis.' },
-      streak: { title: 'Salve iterum, {{name}}!', titleAnonymous: 'Salve iterum!', subtitle: '{{count}} dies fabularum continui. Mirabile!' },
-      longAbsence: { title: 'Gaudeo te videre, {{name}}!', titleAnonymous: 'Gaudeo te videre!', subtitle: 'Fabulae tuae ibi manent ubi eas reliquisti.' },
+      normal: {
+        title: 'Salve iterum, {{name}}!',
+        titleAnonymous: 'Salve iterum!',
+        subtitle: 'Proxima tua peregrinatio te exspectat.',
+      },
+      firstToday: {
+        title: 'Salve iterum, {{name}}!',
+        titleAnonymous: 'Salve iterum!',
+        subtitle: 'Novus dies fabularum incipit.',
+      },
+      newAchievement: {
+        title: 'Euge, {{name}}!',
+        titleAnonymous: 'Euge!',
+        subtitle: '{{achievement}} meruisti. Infra aspice!',
+      },
+      storyCompleted: {
+        title: 'Optime, {{name}}!',
+        titleAnonymous: 'Optime!',
+        subtitle: 'Totam fabulam una perfecistis.',
+      },
+      streak: {
+        title: 'Salve iterum, {{name}}!',
+        titleAnonymous: 'Salve iterum!',
+        subtitle: '{{count}} dies fabularum continui. Mirabile!',
+      },
+      longAbsence: {
+        title: 'Gaudeo te videre, {{name}}!',
+        titleAnonymous: 'Gaudeo te videre!',
+        subtitle: 'Fabulae tuae ibi manent ubi eas reliquisti.',
+      },
     },
     continueBody: 'Perge unde destitisti.',
     continueLearning: {
@@ -3161,14 +3179,25 @@ export default {
       body: 'Fabulae, cantus et ludi te exspectant',
       hint: 'Bibliothecam aperi',
     },
-    continueStart: { eyebrow: 'Fabulam incipe', title: 'Primam peregrinationem elige', body: 'Novus mundus te exspectat', hint: 'Fabulam elige quam una legatis' },
+    continueStart: {
+      eyebrow: 'Fabulam incipe',
+      title: 'Primam peregrinationem elige',
+      body: 'Novus mundus te exspectat',
+      hint: 'Fabulam elige quam una legatis',
+    },
     streak: {
       days: '{{count}} dies continui',
       days_one: '{{count}} dies continuus',
       days_other: '{{count}} dies continui',
       start: 'Seriem hodie incipe',
     },
-    achievements: { title: 'Vide quid effeceris!', cta: 'Praemia vide', emptyTitle: 'Primum insigne tuum te exspectat', emptyBody: 'Fabulam una legite ut id mereamini', hint: 'Insignia tua vide' },
+    achievements: {
+      title: 'Vide quid effeceris!',
+      cta: 'Praemia vide',
+      emptyTitle: 'Primum insigne tuum te exspectat',
+      emptyBody: 'Fabulam una legite ut id mereamini',
+      hint: 'Insignia tua vide',
+    },
     milestone: {
       eyebrow: 'Proximum insigne',
       remaining: {
@@ -3207,7 +3236,6 @@ export default {
     sun: 'Sol',
     moon: 'Luna',
   },
-
   greeting: {
     morning: 'Bonum mane',
     afternoon: 'Bonum diem',
@@ -3219,13 +3247,12 @@ export default {
   childUi: {
     nav: {
       home: 'Domus',
-      library: 'Bibliotheca',
       screensafe: 'Tutum Tempus',
       progress: 'Progressus',
       saved: 'Servata',
+      search: 'Quaerere',
     },
   },
-
   catalogue: {
     moreStories: 'Plures fabulae',
     read: 'Lege',
@@ -3255,18 +3282,7 @@ export default {
       songs: 'Cantus Servati',
       empty: 'Cor tange in eo quod amas, et hic te exspectabit',
     },
-    library: {
-      recentlyRead: 'Recens lectae',
-      favourites: 'Dilectae',
-      newToYou: 'Nova tibi',
-      onThisDevice: 'In hoc instrumento',
-      tagline: {
-        one: 'Pluteus tuus proprius',
-        two: 'fabularum servandarum',
-      },
-    },
   },
-
   progress: {
     title: 'Progressus',
     tagline: {
@@ -3299,37 +3315,118 @@ export default {
       exploration: 'Exploratio',
     },
     challenges: {
-      threeStoryTimes: { title: 'Tria tempora fabularum', description: 'Tria tempora fabularum una hac hebdomade partite' },
-      calmMoment: { title: 'Momentum tranquillum', description: 'Uno opere tranquillo una hac hebdomade fruimini' },
-      makeMusic: { title: 'Musicam facere', description: 'Bis una hac hebdomade musicam facite' },
-      morningStory: { title: 'Fabula matutina', description: 'Uno mane hac hebdomade una legite aut audite' },
-      bedtimeStory: { title: 'Fabulae nocturnae', description: 'Duo tempora fabularum vespere hac hebdomade partite' },
-      tenStoryTimes: { title: 'Decem tempora fabularum', description: 'Decem tempora fabularum una hoc mense partite' },
-      musicMonth: { title: 'Mensis musicus', description: 'Quinque sessionibus musicis hoc mense fruimini' },
-      calmCollector: { title: 'Collector tranquillitatis', description: 'Quattuor momentis tranquillis hoc mense fruimini' },
-      brightMornings: { title: 'Mane clara', description: 'Tribus mane hoc mense una legite aut audite' },
+      threeStoryTimes: {
+        title: 'Tria tempora fabularum',
+        description: 'Tria tempora fabularum una hac hebdomade partite',
+      },
+      calmMoment: {
+        title: 'Momentum tranquillum',
+        description: 'Uno opere tranquillo una hac hebdomade fruimini',
+      },
+      makeMusic: {
+        title: 'Musicam facere',
+        description: 'Bis una hac hebdomade musicam facite',
+      },
+      morningStory: {
+        title: 'Fabula matutina',
+        description: 'Uno mane hac hebdomade una legite aut audite',
+      },
+      bedtimeStory: {
+        title: 'Fabulae nocturnae',
+        description: 'Duo tempora fabularum vespere hac hebdomade partite',
+      },
+      tenStoryTimes: {
+        title: 'Decem tempora fabularum',
+        description: 'Decem tempora fabularum una hoc mense partite',
+      },
+      musicMonth: {
+        title: 'Mensis musicus',
+        description: 'Quinque sessionibus musicis hoc mense fruimini',
+      },
+      calmCollector: {
+        title: 'Collector tranquillitatis',
+        description: 'Quattuor momentis tranquillis hoc mense fruimini',
+      },
+      brightMornings: {
+        title: 'Mane clara',
+        description: 'Tribus mane hoc mense una legite aut audite',
+      },
     },
     milestones: {
-      firstFiveStories: { title: 'Primae 5 fabulae', description: 'Initium mirabile!' },
-      bedtimeListener: { title: 'Auditor nocturnus', description: 'Fabulas quietas et blandas amas.' },
-      kindMoments: { title: 'Momenta benigna', description: 'Benignitatem discis.' },
+      firstFiveStories: {
+        title: 'Primae 5 fabulae',
+        description: 'Initium mirabile!',
+      },
+      bedtimeListener: {
+        title: 'Auditor nocturnus',
+        description: 'Fabulas quietas et blandas amas.',
+      },
+      kindMoments: {
+        title: 'Momenta benigna',
+        description: 'Benignitatem discis.',
+      },
     },
     badges: {
-      firstStory: { title: 'Prima fabula', description: 'Primam fabulam tuam aperi' },
-      readingTogether: { title: 'Una legere', description: 'Tria tempora fabularum hac hebdomade partite' },
-      newWorlds: { title: 'Novi mundi', description: 'Tria genera fabularum explora' },
-      favouriteFinder: { title: 'Inventor dilecti', description: 'Fabulam dilectam elige' },
-      firstNotes: { title: 'Primae notae', description: 'Una musicam facite' },
-      musicExplorer: { title: 'Explorator musicus', description: 'Quinque sessionibus musicis hoc mense fruere' },
-      calmMoment: { title: 'Momentum tranquillum', description: 'Primum opus tranquillum tempta' },
-      gentleEvening: { title: 'Vesper mitis', description: 'Tria tempora fabularum vespere partite' },
-      kindMoments: { title: 'Momenta benigna', description: 'Fabulam de benignitate lege' },
-      curiousMind: { title: 'Mens curiosa', description: 'Quinque genera fabularum explora' },
-      adventureExplorer: { title: 'Explorator itinerum', description: 'Tres fabulas itineris lege' },
-      morningExplorer: { title: 'Explorator matutinus', description: 'Mane lege aut audi' },
-      storyAdventurer: { title: 'Fabularum viator', description: 'Audi 10 fabulas diversas' },
-      calmChampion: { title: 'Tranquillitatis victor', description: 'Fruere 5 momentis tranquillis' },
-      kindHeart: { title: 'Cor benignum', description: 'Perfice 5 opera benigna' },
+      firstStory: {
+        title: 'Prima fabula',
+        description: 'Primam fabulam tuam aperi',
+      },
+      readingTogether: {
+        title: 'Una legere',
+        description: 'Tria tempora fabularum hac hebdomade partite',
+      },
+      newWorlds: {
+        title: 'Novi mundi',
+        description: 'Tria genera fabularum explora',
+      },
+      favouriteFinder: {
+        title: 'Inventor dilecti',
+        description: 'Fabulam dilectam elige',
+      },
+      firstNotes: {
+        title: 'Primae notae',
+        description: 'Una musicam facite',
+      },
+      musicExplorer: {
+        title: 'Explorator musicus',
+        description: 'Quinque sessionibus musicis hoc mense fruere',
+      },
+      calmMoment: {
+        title: 'Momentum tranquillum',
+        description: 'Primum opus tranquillum tempta',
+      },
+      gentleEvening: {
+        title: 'Vesper mitis',
+        description: 'Tria tempora fabularum vespere partite',
+      },
+      kindMoments: {
+        title: 'Momenta benigna',
+        description: 'Fabulam de benignitate lege',
+      },
+      curiousMind: {
+        title: 'Mens curiosa',
+        description: 'Quinque genera fabularum explora',
+      },
+      adventureExplorer: {
+        title: 'Explorator itinerum',
+        description: 'Tres fabulas itineris lege',
+      },
+      morningExplorer: {
+        title: 'Explorator matutinus',
+        description: 'Mane lege aut audi',
+      },
+      storyAdventurer: {
+        title: 'Fabularum viator',
+        description: 'Audi 10 fabulas diversas',
+      },
+      calmChampion: {
+        title: 'Tranquillitatis victor',
+        description: 'Fruere 5 momentis tranquillis',
+      },
+      kindHeart: {
+        title: 'Cor benignum',
+        description: 'Perfice 5 opera benigna',
+      },
     },
     recommendations: {
       bedtime: 'Fabulam nocturnam audi',
@@ -3338,6 +3435,17 @@ export default {
       discover: 'Novam fabulam inveni',
       calming: 'Fabulam tranquillam tempta',
       kindness: 'Fabulam benignitatis elige',
+    },
+  },
+  search: {
+    placeholder: 'Fabulam quaere',
+    recent: 'Quaesita tua recentia',
+    clearRecent: 'Dele',
+    clear: 'Quaesitum dele',
+    noResults: 'Nullae fabulae inventae',
+    tagline: {
+      one: 'Inveni fabulam',
+      two: 'quam quaeris',
     },
   },
 };

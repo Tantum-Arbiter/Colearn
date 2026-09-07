@@ -1,7 +1,7 @@
 /**
  * The catalogue screen composes the §3 vertical order: floating controls,
  * filter row, featured card, cover grid and the journey navigation with
- * Library selected. These assert composition and wiring, not pixels.
+ * Search selected. These assert composition and wiring, not pixels.
  */
 
 import React from 'react';
@@ -63,6 +63,9 @@ const mockAppState = {
   toggleFavoriteStory: jest.fn(),
   userAvatarType: null,
   readStoryIds: [] as string[],
+  recentSearches: [] as string[],
+  recordSearch: jest.fn(),
+  clearRecentSearches: jest.fn(),
   storyProgress: {} as Record<string, { pageIndex: number; totalPages: number; updatedAt: string; completedCount: number }>,
   childAgeInMonths: 36,
 };
@@ -221,14 +224,11 @@ describe('StoryCatalogueScreen', () => {
     expect(archedLines()).toEqual(['catalogue.tagline.one', 'catalogue.tagline.two']);
 
     fireEvent.press(
-      byTestId(tree, 'navigation-item-library').find((n: any) => n.props.accessibilityRole === 'tab')
+      byTestId(tree, 'navigation-item-search').find((n: any) => n.props.accessibilityRole === 'tab')
     );
 
     await waitFor(() => {
-      expect(archedLines()).toEqual([
-        'catalogue.library.tagline.one',
-        'catalogue.library.tagline.two',
-      ]);
+      expect(archedLines()).toEqual(['search.tagline.one', 'search.tagline.two']);
     });
   });
 
@@ -393,7 +393,34 @@ describe('StoryCatalogueScreen', () => {
     expect(mockAppState.requestReturnToMainMenu).not.toHaveBeenCalled();
   });
 
-  it('shows only on-device stories in the Library section', async () => {
+  async function openSearch() {
+    const tree = render(<StoryCatalogueScreen />);
+    await waitFor(() => expect(byTestId(tree, 'navigation-item-search').length).toBeGreaterThan(0));
+    fireEvent.press(
+      byTestId(tree, 'navigation-item-search').find((n: any) => n.props.accessibilityRole === 'tab')
+    );
+    await waitFor(() => expect(byTestId(tree, 'search-panel').length).toBeGreaterThan(0));
+    // the section leaving is still mounted while it fades, and it is the one
+    // carrying the filter bar
+    await waitFor(() => expect(byTestId(tree, 'section-crossfade-leaving')).toHaveLength(0), { timeout: 4000 });
+    return tree;
+  }
+
+  it('opens the search page from the bar, titled as Search', async () => {
+    const tree = await openSearch();
+
+    expect(byTestId(tree, 'page-title')[0].props.children).toBe('childUi.nav.search');
+  });
+
+  // The page is the catalogue's, minus the one thing a search replaces: there
+  // is nothing to filter when the child has said what they are looking for.
+  it('carries no filter bar', async () => {
+    const tree = await openSearch();
+
+    expect(byTestId(tree, 'story-filter-bar')).toHaveLength(0);
+  });
+
+  it('searches what is installed and what the catalogue has sent alike', async () => {
     mockGetCatalog.mockResolvedValue([
       {
         storyId: 'remote-1',
@@ -405,62 +432,33 @@ describe('StoryCatalogueScreen', () => {
         thumbnailUrl: 'https://cdn/kind.jpg',
       },
     ]);
-    const tree = render(<StoryCatalogueScreen />);
 
-    await waitFor(() => expect(byTestId(tree, 'story-cover-card-remote-1').length).toBeGreaterThan(0));
+    const tree = await openSearch();
+    fireEvent.changeText(byTestId(tree, 'search-panel-input')[0], 'kind');
 
-    fireEvent.press(
-      byTestId(tree, 'navigation-item-library').find((n: any) => n.props.accessibilityRole === 'tab')
-    );
-    await waitFor(() => expect(byTestId(tree, 'library-section-onThisDevice').length).toBeGreaterThan(0));
-    await waitFor(() => expect(byTestId(tree, 'section-crossfade-leaving')).toHaveLength(0), { timeout: 4000 });
-
-    expect(byTestId(tree, 'story-cover-card-remote-1')).toHaveLength(0);
-    expect(byTestId(tree, 'featured-story-card')).toHaveLength(0);
-    expect(byTestId(tree, 'story-cover-card-wombat').length).toBeGreaterThan(0);
-  });
-
-  async function openLibrary() {
-    const tree = render(<StoryCatalogueScreen />);
-    await waitFor(() => expect(byTestId(tree, 'navigation-item-library').length).toBeGreaterThan(0));
-    fireEvent.press(
-      byTestId(tree, 'navigation-item-library').find((n: any) => n.props.accessibilityRole === 'tab')
-    );
-    await waitFor(() => expect(byTestId(tree, 'library-section-onThisDevice').length).toBeGreaterThan(0));
-    return tree;
-  }
-
-  it('gives the Library the sections a phone media library expects, hiding empty ones', async () => {
-    mockAppState.readStoryIds = ['bear'];
-    mockAppState.favoriteStoryIds = ['whale'];
-
-    const tree = await openLibrary();
-
-    ['recentlyRead', 'favourites', 'newToYou', 'onThisDevice'].forEach((section) => {
-      expect(byTestId(tree, `library-section-${section}`).length).toBeGreaterThan(0);
-      const heading = byTestId(tree, `library-heading-${section}`)[0];
-      const label = heading.findAll((n: any) => typeof n.props.children === 'string').map((n: any) => n.props.children).join(' ');
-      expect(label).toContain(`catalogue.library.${section}`);
+    await waitFor(() => {
+      expect(byTestId(tree, 'story-cover-card-remote-1').length).toBeGreaterThan(0);
     });
-
-    const recent = byTestId(tree, 'library-section-recentlyRead')[0];
-    expect(recent.findAll((n: any) => n.props.testID === 'story-cover-card-bear').length).toBeGreaterThan(0);
-    expect(recent.findAll((n: any) => n.props.testID === 'story-cover-card-wombat')).toHaveLength(0);
-
-    const newToYou = byTestId(tree, 'library-section-newToYou')[0];
-    expect(newToYou.findAll((n: any) => n.props.testID === 'story-cover-card-bear')).toHaveLength(0);
-    expect(newToYou.findAll((n: any) => n.props.testID === 'story-cover-card-wombat').length).toBeGreaterThan(0);
-
-    const favourites = byTestId(tree, 'library-section-favourites')[0];
-    expect(favourites.findAll((n: any) => n.props.testID === 'story-cover-card-whale').length).toBeGreaterThan(0);
   });
 
-  it('hides Recently read and Favourites in the Library when nothing has been read or favourited', async () => {
-    const tree = await openLibrary();
+  it('says so when neither the device nor the catalogue has an answer', async () => {
+    const tree = await openSearch();
 
-    expect(byTestId(tree, 'library-section-recentlyRead')).toHaveLength(0);
-    expect(byTestId(tree, 'library-section-favourites')).toHaveLength(0);
-    expect(byTestId(tree, 'library-section-newToYou').length).toBeGreaterThan(0);
+    fireEvent.changeText(byTestId(tree, 'search-panel-input')[0], 'dinosaur');
+
+    await waitFor(() => expect(byTestId(tree, 'search-panel-empty').length).toBeGreaterThan(0));
+  });
+
+  it('offers back what was searched before until something is typed', async () => {
+    mockAppState.recentSearches = ['wombat'];
+
+    const tree = await openSearch();
+
+    expect(byTestId(tree, 'search-panel-recent').length).toBeGreaterThan(0);
+
+    fireEvent.changeText(byTestId(tree, 'search-panel-input')[0], 'wombat');
+
+    await waitFor(() => expect(byTestId(tree, 'search-panel-recent')).toHaveLength(0));
   });
 
   it('exits the journey from the floating back control', async () => {

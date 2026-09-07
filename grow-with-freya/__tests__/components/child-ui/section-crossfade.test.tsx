@@ -135,7 +135,7 @@ describe('SectionCrossfade', () => {
 
   it('should land on the last section asked for when taps come quickly', () => {
     const view = render(show('home', 'Stories'));
-    view.rerender(show('library', 'Library'));
+    view.rerender(show('search', 'Search'));
     view.rerender(show('progress', 'Progress'));
 
     act(() => {

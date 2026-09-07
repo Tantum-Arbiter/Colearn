@@ -15,7 +15,7 @@ function byTestId(tree: ReturnType<typeof render>, testID: string) {
 describe('JourneyShell', () => {
   it('renders journey content alongside the navigation', () => {
     const tree = render(
-      <JourneyShell selected="library" onSelect={jest.fn()}>
+      <JourneyShell selected="progress" onSelect={jest.fn()}>
         <Text testID="journey-content">content</Text>
       </JourneyShell>
     );
@@ -26,7 +26,7 @@ describe('JourneyShell', () => {
 
   it('hides the navigation when navigationHidden is set', () => {
     const tree = render(
-      <JourneyShell selected="library" onSelect={jest.fn()} navigationHidden>
+      <JourneyShell selected="progress" onSelect={jest.fn()} navigationHidden>
         <Text testID="journey-content">content</Text>
       </JourneyShell>
     );

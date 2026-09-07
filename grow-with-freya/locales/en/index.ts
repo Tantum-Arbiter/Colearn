@@ -2847,9 +2847,9 @@ export default {
   childUi: {
     nav: {
       home: 'Home',
-      library: 'Library',
-      screensafe: 'Screensafe',
       progress: 'Progress',
+      screensafe: 'Screensafe',
+      search: 'Search',
       saved: 'Saved',
     },
   },
@@ -2883,15 +2883,17 @@ export default {
       songs: 'Saved songs',
       empty: 'Tap the heart on anything you love, and it will wait for you here',
     },
-    library: {
-      recentlyRead: 'Recently read',
-      favourites: 'Favourites',
-      newToYou: 'New to you',
-      onThisDevice: 'On this device',
-      tagline: {
-        one: 'Your own little shelf',
-        two: 'of stories to keep',
-      },
+  },
+
+  search: {
+    placeholder: 'Search for a story',
+    recent: 'Your Recent Searches',
+    clearRecent: 'Clear',
+    clear: 'Clear search',
+    noResults: 'No stories found',
+    tagline: {
+      one: 'Find the story',
+      two: 'you are looking for',
     },
   },
 

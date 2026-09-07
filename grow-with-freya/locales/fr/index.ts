@@ -80,7 +80,7 @@ export default {
   login: {
     welcomeTitle: 'Bienvenue !',
     welcomeTitleNamed: 'Bienvenue, {{name}} !',
-    subtitle: "Commençons l'heure de l'histoire",
+    subtitle: 'Commençons l\'heure de l\'histoire',
     continueWithGoogle: 'Continuer avec Google',
     continueWithApple: 'Continuer avec Apple',
     guestNote: 'Comprend deux histoires gratuites. La synchronisation cloud est indisponible en mode invité.',
@@ -88,7 +88,7 @@ export default {
     noAdverts: 'Sans publicité',
     noTracking: 'Sans suivi comportemental',
     signingIn: 'Connexion en cours...',
-    continueAsGuest: "Continuer en tant qu'invité",
+    continueAsGuest: 'Continuer en tant qu\'invité',
     footerPrefix: 'En continuant, vous acceptez nos',
     termsAndConditions: 'Conditions d\'utilisation',
     and: ' et',
@@ -253,48 +253,48 @@ export default {
   },
   screenTime: {
     alert: {
-      title: "Alerte temps d'écran !",
+      title: 'Alerte temps d\'écran !',
       usage: 'Vous avez atteint {{used}} de votre limite quotidienne.',
       break: 'Prenons une pause en douceur.',
       showTips: 'Voir les conseils',
     },
     tips: {
-      title: "Faites vivre l'histoire",
-      intro: "L'histoire n'a pas à s'arrêter avec l'écran. Voici trois façons de la prolonger dans le reste de la journée.",
-      closing: "Une histoire que votre enfant raconte à son tour est une histoire qu'il garde.",
+      title: 'Faites vivre l\'histoire',
+      intro: 'L\'histoire n\'a pas à s\'arrêter avec l\'écran. Voici trois façons de la prolonger dans le reste de la journée.',
+      closing: 'Une histoire que votre enfant raconte à son tour est une histoire qu\'il garde.',
       done: 'Terminé',
       atHome: {
         title: 'Racontez-la avec des jouets',
-        body: "Rassemblez quelques jouets et laissez votre enfant leur distribuer les rôles. Demandez « et ensuite ? » et laissez-le raconter à sa manière : ce qu'il change est ce qui l'a le plus marqué.",
+        body: 'Rassemblez quelques jouets et laissez votre enfant leur distribuer les rôles. Demandez « et ensuite ? » et laissez-le raconter à sa manière : ce qu\'il change est ce qui l\'a le plus marqué.',
       },
       outdoors: {
-        title: "Emmenez l'histoire dehors",
-        body: "À la prochaine promenade, cherchez quelque chose de l'histoire : une lune, une flaque, un chien gentil. Demandez ce que le personnage ferait ici. Une promenade ordinaire devient alors un lieu où l'histoire habite.",
+        title: 'Emmenez l\'histoire dehors',
+        body: 'À la prochaine promenade, cherchez quelque chose de l\'histoire : une lune, une flaque, un chien gentil. Demandez ce que le personnage ferait ici. Une promenade ordinaire devient alors un lieu où l\'histoire habite.',
       },
       creative: {
         title: 'Dessinez le meilleur moment',
-        body: "Du papier, des crayons et une seule question : quel passage as-tu préféré ? Dessinez-le ensemble, puis laissez votre enfant vous parler de son dessin. Ce qu'il choisit en dit plus que n'importe quelle question.",
+        body: 'Du papier, des crayons et une seule question : quel passage as-tu préféré ? Dessinez-le ensemble, puis laissez votre enfant vous parler de son dessin. Ce qu\'il choisit en dit plus que n\'importe quelle question.',
       },
     },
     helpingStayBalanced: 'Vous aidez {{name}} à rester en sécurité et équilibré.',
     helpingStayBalancedGeneric: 'Vous aidez votre enfant à rester en sécurité et équilibré.',
     yourChild: 'Votre enfant',
     activeNow: 'Actif maintenant',
-    todaysScreenTime: "Temps d'écran du jour",
+    todaysScreenTime: 'Temps d\'écran du jour',
     ofLimit: 'sur {{limit}} de limite',
     used: 'Utilisé',
     remaining: 'Restant',
     dailyLimitLabel: 'Limite quotidienne',
-    screenTimeTrend: "Tendance du temps d'écran",
-    today: "Aujourd'hui",
+    screenTimeTrend: 'Tendance du temps d\'écran',
+    today: 'Aujourd\'hui',
     trendDayUsage: '{{day}} · {{duration}}',
     sevenDay: '7 jours',
     fourteenDay: '14 jours',
     thirtyDay: '30 jours',
     withinLimitTitle: 'Bravo ! Vous êtes dans la limite du jour.',
-    withinLimitBody: "Continuez à encourager un temps d'écran équilibré.",
+    withinLimitBody: 'Continuez à encourager un temps d\'écran équilibré.',
     overLimitTitle: 'La limite du jour est atteinte.',
-    overLimitBody: "C'est l'heure d'une pause - une histoire sans écran ?",
+    overLimitBody: 'C\'est l\'heure d\'une pause - une histoire sans écran ?',
     title: 'Temps d\'écran',
     todayUsage: 'Utilisation d\'aujourd\'hui',
     todaysUsage: 'Utilisation d\'aujourd\'hui',
@@ -964,7 +964,6 @@ export default {
     showIdeas: 'Montre-moi des idées',
     okay: 'D’accord',
   },
-
   screenTimeWarning: {
     approachingLimit: 'Avertissement de temps d\'écran',
     limitReached: 'Limite quotidienne atteinte',
@@ -3069,7 +3068,6 @@ export default {
       },
     },
   },
-
   storyDetail: {
     readTogether: 'Lire ensemble',
     continueReading: 'Continuer la lecture',
@@ -3082,18 +3080,15 @@ export default {
     interactive: 'Interactif',
     favourite: 'Favori',
   },
-
   rotatePrompt: {
     ready: 'Prêts pour notre histoire ?',
     turnTogether: 'Tournez l’écran ensemble',
     openWhenSideways: 'Nous ouvrirons le livre quand l’appareil sera de côté.',
     openForMe: 'Ouvrir le livre pour moi',
   },
-
   splash: {
     tagline: 'Un endroit doux pour grandir ensemble.',
   },
-
   onboardingV2: {
     stepCounter: '{{current}} sur {{total}}',
     skip: 'Passer',
@@ -3145,15 +3140,38 @@ export default {
       helper: 'Cela nous aide à proposer des histoires et activités adaptées.',
     },
   },
-
   home: {
     welcome: {
-      normal: { title: 'Bon retour, {{name}} !', titleAnonymous: 'Bon retour !', subtitle: 'Ta prochaine aventure t\'attend.' },
-      firstToday: { title: 'Bon retour, {{name}} !', titleAnonymous: 'Bon retour !', subtitle: 'Une toute nouvelle journée d\'histoires commence.' },
-      newAchievement: { title: 'Hourra, {{name}} !', titleAnonymous: 'Hourra !', subtitle: 'Tu as gagné {{achievement}}. Regarde en bas !' },
-      storyCompleted: { title: 'Bravo, {{name}} !', titleAnonymous: 'Bravo !', subtitle: 'Vous avez terminé toute une histoire ensemble.' },
-      streak: { title: 'Bon retour, {{name}} !', titleAnonymous: 'Bon retour !', subtitle: '{{count}} jours d\'histoires d\'affilée. Magnifique !' },
-      longAbsence: { title: 'Quel plaisir de te revoir, {{name}} !', titleAnonymous: 'Quel plaisir de te revoir !', subtitle: 'Tes histoires sont là où tu les as laissées.' },
+      normal: {
+        title: 'Bon retour, {{name}} !',
+        titleAnonymous: 'Bon retour !',
+        subtitle: 'Ta prochaine aventure t\'attend.',
+      },
+      firstToday: {
+        title: 'Bon retour, {{name}} !',
+        titleAnonymous: 'Bon retour !',
+        subtitle: 'Une toute nouvelle journée d\'histoires commence.',
+      },
+      newAchievement: {
+        title: 'Hourra, {{name}} !',
+        titleAnonymous: 'Hourra !',
+        subtitle: 'Tu as gagné {{achievement}}. Regarde en bas !',
+      },
+      storyCompleted: {
+        title: 'Bravo, {{name}} !',
+        titleAnonymous: 'Bravo !',
+        subtitle: 'Vous avez terminé toute une histoire ensemble.',
+      },
+      streak: {
+        title: 'Bon retour, {{name}} !',
+        titleAnonymous: 'Bon retour !',
+        subtitle: '{{count}} jours d\'histoires d\'affilée. Magnifique !',
+      },
+      longAbsence: {
+        title: 'Quel plaisir de te revoir, {{name}} !',
+        titleAnonymous: 'Quel plaisir de te revoir !',
+        subtitle: 'Tes histoires sont là où tu les as laissées.',
+      },
     },
     continueBody: 'Reprends là où tu t\'es arrêté.',
     continueLearning: {
@@ -3161,14 +3179,25 @@ export default {
       body: 'Histoires, musique et jeux vous attendent',
       hint: 'Ouvrir la bibliothèque',
     },
-    continueStart: { eyebrow: 'Commencer une histoire', title: 'Choisis ta première aventure', body: 'Un nouveau monde t\'attend', hint: 'Choisis une histoire à lire ensemble' },
+    continueStart: {
+      eyebrow: 'Commencer une histoire',
+      title: 'Choisis ta première aventure',
+      body: 'Un nouveau monde t\'attend',
+      hint: 'Choisis une histoire à lire ensemble',
+    },
     streak: {
       days: '{{count}} jours d’affilée',
       days_one: '{{count}} jour d’affilée',
       days_other: '{{count}} jours d’affilée',
       start: 'Commencez une série aujourd’hui',
     },
-    achievements: { title: 'Regarde ce que tu as accompli !', cta: 'Voir les réussites', emptyTitle: 'Ton premier badge t\'attend', emptyBody: 'Lisez une histoire ensemble pour le gagner', hint: 'Voir tes badges' },
+    achievements: {
+      title: 'Regarde ce que tu as accompli !',
+      cta: 'Voir les réussites',
+      emptyTitle: 'Ton premier badge t\'attend',
+      emptyBody: 'Lisez une histoire ensemble pour le gagner',
+      hint: 'Voir tes badges',
+    },
     milestone: {
       eyebrow: 'Prochain badge',
       remaining: {
@@ -3201,13 +3230,12 @@ export default {
     musicDescription: 'Joue, écoute et apprends',
     puzzles: 'Puzzles',
     puzzlesDescription: 'Associer, construire et découvrir',
-    screenTimeRemaining: "Temps d'écran utilisé",
-    screenTimeExceeded: "Le temps d'écran est écoulé",
+    screenTimeRemaining: 'Temps d\'écran utilisé',
+    screenTimeExceeded: 'Le temps d\'écran est écoulé',
     screenTimeOpen: 'Ouvrir le temps d\'écran',
     sun: 'Le soleil',
     moon: 'La lune',
   },
-
   greeting: {
     morning: 'Bonjour',
     afternoon: 'Bon après-midi',
@@ -3219,13 +3247,12 @@ export default {
   childUi: {
     nav: {
       home: 'Accueil',
-      library: 'Bibliothèque',
       screensafe: 'Écran sûr',
       progress: 'Progrès',
       saved: 'Enregistrés',
+      search: 'Recherche',
     },
   },
-
   catalogue: {
     moreStories: 'Plus d\'histoires',
     read: 'Lire',
@@ -3255,18 +3282,7 @@ export default {
       songs: 'Chansons enregistrées',
       empty: 'Touchez le cœur sur ce que vous aimez : cela vous attendra ici',
     },
-    library: {
-      recentlyRead: 'Lus récemment',
-      favourites: 'Favoris',
-      newToYou: 'Nouveau pour toi',
-      onThisDevice: 'Sur cet appareil',
-      tagline: {
-        one: 'Votre petite étagère',
-        two: 'd’histoires à garder',
-      },
-    },
   },
-
   progress: {
     title: 'Progrès',
     tagline: {
@@ -3299,37 +3315,118 @@ export default {
       exploration: 'Explorer',
     },
     challenges: {
-      threeStoryTimes: { title: 'Trois moments d\'histoires', description: 'Partagez trois moments d\'histoires cette semaine' },
-      calmMoment: { title: 'Un moment calme', description: 'Profitez d\'une activité calme cette semaine' },
-      makeMusic: { title: 'Un peu de musique', description: 'Faites de la musique ensemble deux fois cette semaine' },
-      morningStory: { title: 'Une histoire du matin', description: 'Lisez ou écoutez ensemble un matin cette semaine' },
-      bedtimeStory: { title: 'Histoires du soir', description: 'Partagez deux moments d\'histoires le soir cette semaine' },
-      tenStoryTimes: { title: 'Dix moments d\'histoires', description: 'Partagez dix moments d\'histoires ce mois-ci' },
-      musicMonth: { title: 'Un mois musical', description: 'Profitez de cinq séances de musique ce mois-ci' },
-      calmCollector: { title: 'Collectionneur de calme', description: 'Profitez de quatre moments calmes ce mois-ci' },
-      brightMornings: { title: 'Matins lumineux', description: 'Lisez ou écoutez ensemble trois matins ce mois-ci' },
+      threeStoryTimes: {
+        title: 'Trois moments d\'histoires',
+        description: 'Partagez trois moments d\'histoires cette semaine',
+      },
+      calmMoment: {
+        title: 'Un moment calme',
+        description: 'Profitez d\'une activité calme cette semaine',
+      },
+      makeMusic: {
+        title: 'Un peu de musique',
+        description: 'Faites de la musique ensemble deux fois cette semaine',
+      },
+      morningStory: {
+        title: 'Une histoire du matin',
+        description: 'Lisez ou écoutez ensemble un matin cette semaine',
+      },
+      bedtimeStory: {
+        title: 'Histoires du soir',
+        description: 'Partagez deux moments d\'histoires le soir cette semaine',
+      },
+      tenStoryTimes: {
+        title: 'Dix moments d\'histoires',
+        description: 'Partagez dix moments d\'histoires ce mois-ci',
+      },
+      musicMonth: {
+        title: 'Un mois musical',
+        description: 'Profitez de cinq séances de musique ce mois-ci',
+      },
+      calmCollector: {
+        title: 'Collectionneur de calme',
+        description: 'Profitez de quatre moments calmes ce mois-ci',
+      },
+      brightMornings: {
+        title: 'Matins lumineux',
+        description: 'Lisez ou écoutez ensemble trois matins ce mois-ci',
+      },
     },
     milestones: {
-      firstFiveStories: { title: '5 premières histoires', description: 'Quel merveilleux départ !' },
-      bedtimeListener: { title: 'Écouteur du soir', description: 'Tu aimes les histoires douces et câlines.' },
-      kindMoments: { title: 'Moments gentils', description: 'Tu apprends la gentillesse.' },
+      firstFiveStories: {
+        title: '5 premières histoires',
+        description: 'Quel merveilleux départ !',
+      },
+      bedtimeListener: {
+        title: 'Écouteur du soir',
+        description: 'Tu aimes les histoires douces et câlines.',
+      },
+      kindMoments: {
+        title: 'Moments gentils',
+        description: 'Tu apprends la gentillesse.',
+      },
     },
     badges: {
-      firstStory: { title: 'Première histoire', description: 'Ouvre ta toute première histoire' },
-      readingTogether: { title: 'Lire ensemble', description: 'Partagez 3 moments d\'histoires cette semaine' },
-      newWorlds: { title: 'Nouveaux mondes', description: 'Explore 3 sortes d\'histoires différentes' },
-      favouriteFinder: { title: 'Chercheur de favoris', description: 'Choisis une histoire préférée' },
-      firstNotes: { title: 'Premières notes', description: 'Faites de la musique ensemble' },
-      musicExplorer: { title: 'Explorateur musical', description: 'Profite de 5 séances de musique ce mois-ci' },
-      calmMoment: { title: 'Moment calme', description: 'Essaie ta première activité calme' },
-      gentleEvening: { title: 'Douce soirée', description: 'Partagez 3 moments d\'histoires le soir' },
-      kindMoments: { title: 'Moments gentils', description: 'Lis une histoire sur la gentillesse' },
-      curiousMind: { title: 'Esprit curieux', description: 'Explore 5 sortes d\'histoires' },
-      adventureExplorer: { title: 'Explorateur d\'aventures', description: 'Lis 3 histoires d\'aventure' },
-      morningExplorer: { title: 'Explorateur du matin', description: 'Lis ou écoute le matin' },
-      storyAdventurer: { title: 'Aventurier des histoires', description: 'Écoute 10 histoires différentes' },
-      calmChampion: { title: 'Champion du calme', description: 'Profite de 5 moments calmes' },
-      kindHeart: { title: 'Cœur gentil', description: 'Termine 5 activités gentilles' },
+      firstStory: {
+        title: 'Première histoire',
+        description: 'Ouvre ta toute première histoire',
+      },
+      readingTogether: {
+        title: 'Lire ensemble',
+        description: 'Partagez 3 moments d\'histoires cette semaine',
+      },
+      newWorlds: {
+        title: 'Nouveaux mondes',
+        description: 'Explore 3 sortes d\'histoires différentes',
+      },
+      favouriteFinder: {
+        title: 'Chercheur de favoris',
+        description: 'Choisis une histoire préférée',
+      },
+      firstNotes: {
+        title: 'Premières notes',
+        description: 'Faites de la musique ensemble',
+      },
+      musicExplorer: {
+        title: 'Explorateur musical',
+        description: 'Profite de 5 séances de musique ce mois-ci',
+      },
+      calmMoment: {
+        title: 'Moment calme',
+        description: 'Essaie ta première activité calme',
+      },
+      gentleEvening: {
+        title: 'Douce soirée',
+        description: 'Partagez 3 moments d\'histoires le soir',
+      },
+      kindMoments: {
+        title: 'Moments gentils',
+        description: 'Lis une histoire sur la gentillesse',
+      },
+      curiousMind: {
+        title: 'Esprit curieux',
+        description: 'Explore 5 sortes d\'histoires',
+      },
+      adventureExplorer: {
+        title: 'Explorateur d\'aventures',
+        description: 'Lis 3 histoires d\'aventure',
+      },
+      morningExplorer: {
+        title: 'Explorateur du matin',
+        description: 'Lis ou écoute le matin',
+      },
+      storyAdventurer: {
+        title: 'Aventurier des histoires',
+        description: 'Écoute 10 histoires différentes',
+      },
+      calmChampion: {
+        title: 'Champion du calme',
+        description: 'Profite de 5 moments calmes',
+      },
+      kindHeart: {
+        title: 'Cœur gentil',
+        description: 'Termine 5 activités gentilles',
+      },
     },
     recommendations: {
       bedtime: 'Écoute une histoire du soir',
@@ -3338,6 +3435,17 @@ export default {
       discover: 'Découvre une nouvelle histoire',
       calming: 'Essaie une histoire apaisante',
       kindness: 'Choisis une histoire de gentillesse',
+    },
+  },
+  search: {
+    placeholder: 'Chercher une histoire',
+    recent: 'Vos recherches récentes',
+    clearRecent: 'Effacer',
+    clear: 'Effacer la recherche',
+    noResults: 'Aucune histoire trouvée',
+    tagline: {
+      one: 'Trouvez l\'histoire',
+      two: 'que vous cherchez',
     },
   },
 };

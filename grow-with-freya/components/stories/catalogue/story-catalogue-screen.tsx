@@ -73,6 +73,7 @@ import {
 import { StoryFilterBar } from './story-filter-bar';
 import { FILTER_PILL_ICONS } from './story-filter-pill';
 import { FeaturedStoryCard } from './featured-story-card';
+import { SearchPanel } from './search-panel';
 import { StoryCoverCard } from './story-cover-card';
 import { StoryRow } from './story-row';
 import { SavedActivityCard } from './saved-activity-card';
@@ -88,9 +89,9 @@ const FILTER_TAG_SET: StoryFilterTag[] = [
 ];
 
 /** Each browsing area is headed by its own two arched lines. */
-const TAGLINE_LINES: Record<'home' | 'library' | 'saved' | 'screensafe', (t: (key: string) => string) => readonly [string, string]> = {
+const TAGLINE_LINES: Record<'home' | 'search' | 'saved' | 'screensafe', (t: (key: string) => string) => readonly [string, string]> = {
   home: (t) => [t('catalogue.tagline.one'), t('catalogue.tagline.two')],
-  library: (t) => [t('catalogue.library.tagline.one'), t('catalogue.library.tagline.two')],
+  search: (t) => [t('search.tagline.one'), t('search.tagline.two')],
   saved: (t) => [t('catalogue.saved.tagline.one'), t('catalogue.saved.tagline.two')],
   // Screensafe opens a window rather than a section, so the bar it is pressed
   // from never changes what is behind it -- this is only here for the type
@@ -102,8 +103,6 @@ const ROW_CARD_SCALE = 0.86;
 
 // Landscape books: two to a row on a phone, three on a tablet
 const coverColumns = (isTablet: boolean) => (isTablet ? 3 : 2);
-const LIBRARY_RECENT_LIMIT = 6;
-
 export interface CatalogueSectionRequest {
   section: ChildNavItemId;
   key: number;
@@ -124,7 +123,9 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
   const favoriteStoryIds = useAppStore((state) => state.favoriteStoryIds);
   const favoriteActivityIds = useAppStore((state) => state.favoriteActivityIds);
   const favoriteSongIds = useAppStore((state) => state.favoriteSongIds);
-  const readStoryIds = useAppStore((state) => state.readStoryIds);
+  const recentSearches = useAppStore((state) => state.recentSearches);
+  const recordSearch = useAppStore((state) => state.recordSearch);
+  const clearRecentSearches = useAppStore((state) => state.clearRecentSearches);
   const toggleFavoriteStory = useAppStore((state) => state.toggleFavoriteStory);
   const userAvatarType = useAppStore((state) => state.userAvatarType);
   const effectiveTier: SubscriptionTier = getEffectiveTier();
@@ -149,6 +150,7 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
   const [storyMode, setStoryMode] = useState<CatalogueMode | null>(initialMode ?? null);
   const [shareUnlockedIds, setShareUnlockedIds] = useState<Set<string>>(new Set());
   const [navSection, setNavSection] = useState<ChildNavItemId>('home');
+  const [searchQuery, setSearchQuery] = useState('');
   const [badgeDetailOpen, setBadgeDetailOpen] = useState(false);
   const [showScreenTime, setShowScreenTime] = useState(false);
   const [navCollapsed, setNavCollapsed] = useState(false);
@@ -239,7 +241,7 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
     }
   }, []);
 
-  const catalogueStories = useMemo(() => {
+  const searchableStories = useMemo(() => {
     const downloaded = stories
       .filter((story) => matchesGender(story, userAvatarType))
       .filter((story) => storyMatchesMode(story, storyMode))
@@ -256,21 +258,23 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
         shareToUnlock: !!entry.isShareToUnlock && !shareUnlockedIds.has(entry.storyId),
       }));
 
-    const all = navSection === 'library'
-      ? downloaded
-      : [...downloaded, ...remote];
-    const underTheme = filterByTheme(all, theme);
+    return [...downloaded, ...remote];
+  }, [stories, catalogEntries, userAvatarType, storyMode, effectiveTier, shareUnlockedIds]);
+
+  // What a search runs over: every book the child could reach, installed or
+  // still only a thumbnail from the catalogue, with no theme or tag narrowing
+  // it -- the search page carries no filters to narrow it by.
+  const catalogueStories = useMemo(() => {
+    const underTheme = filterByTheme(searchableStories, theme);
     if (selectedTags.size === 0) return underTheme;
     return underTheme.filter((story) => Array.from(selectedTags).some((tag) => story.theme.includes(tag)));
-  }, [stories, catalogEntries, userAvatarType, storyMode, effectiveTier, shareUnlockedIds, theme, selectedTags, navSection]);
+  }, [searchableStories, theme, selectedTags]);
 
   // A book the child has installed, picked afresh each time the app opens and
   // held for that run, so it does not change under them as they browse
   const featured = useMemo(
-    () => (navSection === 'library'
-      ? null
-      : selectFeatured(catalogueStories, { seed: APP_LAUNCH_SEED, isPreInstalled: StoryLoader.isLocalStory })),
-    [catalogueStories, navSection],
+    () => selectFeatured(catalogueStories, { seed: APP_LAUNCH_SEED, isPreInstalled: StoryLoader.isLocalStory }),
+    [catalogueStories],
   );
 
   // A finer theme chosen turns the whole shelf, featured panel included, into
@@ -342,10 +346,11 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
       afterDelay(motionDuration(CHILD_UI_MOTION.navCollapse, reduceMotion), () => setShowScreenTime(true));
       return;
     }
-    if (id === 'home') {
+    if (id === 'home' || id === 'search') {
       setStoryMode(null);
       setSelectedTags(new Set());
-      }
+    }
+    if (id !== 'search') setSearchQuery('');
     setNavSection(id);
   }, [afterDelay, reduceMotion]);
 
@@ -622,25 +627,6 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
     </>
   );
 
-  const librarySections = useMemo(() => {
-    if (navSection !== 'library') return [];
-    const byId = new Map(catalogueStories.map((story) => [story.id, story]));
-    const recentlyRead = [...readStoryIds]
-      .reverse()
-      .map((id) => byId.get(id))
-      .filter((story): story is CatalogueStory => story !== undefined)
-      .slice(0, LIBRARY_RECENT_LIMIT);
-    const favourites = catalogueStories.filter((story) => favoriteStoryIds.includes(story.id));
-    const newToYou = catalogueStories.filter((story) => !readStoryIds.includes(story.id));
-
-    return [
-      { id: 'recentlyRead', labelKey: 'catalogue.library.recentlyRead', stories: recentlyRead },
-      { id: 'favourites', labelKey: 'catalogue.library.favourites', stories: favourites },
-      { id: 'newToYou', labelKey: 'catalogue.library.newToYou', stories: newToYou },
-      { id: 'onThisDevice', labelKey: 'catalogue.library.onThisDevice', stories: catalogueStories },
-    ].filter((section) => section.stories.length > 0);
-  }, [navSection, catalogueStories, readStoryIds, favoriteStoryIds]);
-
   /**
    * A saved activity opens the same way it would from the learning screen --
    * through the shared transition, which owns the preview and the game after
@@ -733,19 +719,6 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
     </View>
   );
 
-  const librarySectionsView = (
-    <>
-      {librarySections.map((section) => (
-        <View key={section.id} testID={`library-section-${section.id}`}>
-          <View style={styles.sectionHeadingSpacing}>
-            <SectionHeading label={t(section.labelKey)} testID={`library-heading-${section.id}`} />
-          </View>
-          <View style={styles.coverGrid}>{section.stories.map((story) => renderCoverCard(story))}</View>
-        </View>
-      ))}
-    </>
-  );
-
   return (
     <JourneyShell
       selected={navSection}
@@ -786,8 +759,8 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
                   title={
                     storyMode
                       ? t(`storyModes.${storyMode}`)
-                      : navSection === 'library'
-                        ? t('childUi.nav.library')
+                      : navSection === 'search'
+                        ? t('childUi.nav.search')
                         : navSection === 'saved'
                           ? t('childUi.nav.saved')
                           : t('stories.title')
@@ -819,17 +792,30 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
               ]}
               scrollEnabled={!interactionLocked}
             >
-              <View style={isTablet ? styles.filterBarSpacing : styles.filterBarSpacingPhone}>
-                <StoryFilterBar
-                  theme={theme}
-                  onSelectTheme={handleSelectTheme}
-                  tags={FILTER_TAG_SET}
-                  selectedTags={selectedTags}
-                  onToggleTag={handleToggleTag}
-                />
-              </View>
+              {navSection !== 'search' && (
+                <View style={isTablet ? styles.filterBarSpacing : styles.filterBarSpacingPhone}>
+                  <StoryFilterBar
+                    theme={theme}
+                    onSelectTheme={handleSelectTheme}
+                    tags={FILTER_TAG_SET}
+                    selectedTags={selectedTags}
+                    onToggleTag={handleToggleTag}
+                  />
+                </View>
+              )}
 
-              {navSection === 'saved' ? (
+              {navSection === 'search' ? (
+                <SearchPanel
+                  stories={searchableStories}
+                  query={searchQuery}
+                  onQueryChange={setSearchQuery}
+                  recentSearches={recentSearches}
+                  onClearRecent={clearRecentSearches}
+                  onSearchSettled={recordSearch}
+                  language={currentLanguage}
+                  renderCard={(story) => renderCoverCard(story)}
+                />
+              ) : navSection === 'saved' ? (
                 savedView
               ) : catalogueStories.length === 0 ? (
                 <View style={styles.noResultsContainer}>
@@ -844,8 +830,6 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
                     </Pressable>
                   )}
                 </View>
-              ) : navSection === 'library' ? (
-                librarySectionsView
               ) : browsing ? (
                 moreSection
               ) : isLandscapeTablet && featured ? (

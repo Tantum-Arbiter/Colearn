@@ -964,7 +964,6 @@ export default {
     showIdeas: 'Vis mig idéer',
     okay: 'Okay',
   },
-
   screenTimeWarning: {
     approachingLimit: 'Skærmtidsadvarsel',
     limitReached: 'Daglig grænse nået',
@@ -3069,7 +3068,6 @@ export default {
       },
     },
   },
-
   storyDetail: {
     readTogether: 'Læs sammen',
     continueReading: 'Læs videre',
@@ -3082,18 +3080,15 @@ export default {
     interactive: 'Interaktiv',
     favourite: 'Favorit',
   },
-
   rotatePrompt: {
     ready: 'Klar til vores historie?',
     turnTogether: 'Vend skærmen sammen',
     openWhenSideways: 'Vi åbner bogen, når enheden ligger på siden.',
     openForMe: 'Åbn bogen for mig',
   },
-
   splash: {
     tagline: 'Et blidt sted at vokse sammen.',
   },
-
   onboardingV2: {
     stepCounter: '{{current}} af {{total}}',
     skip: 'Spring over',
@@ -3145,15 +3140,38 @@ export default {
       helper: 'Det hjælper os med at foreslå passende historier og aktiviteter.',
     },
   },
-
   home: {
     welcome: {
-      normal: { title: 'Velkommen tilbage, {{name}}!', titleAnonymous: 'Velkommen tilbage!', subtitle: 'Dit næste eventyr venter.' },
-      firstToday: { title: 'Velkommen tilbage, {{name}}!', titleAnonymous: 'Velkommen tilbage!', subtitle: 'En helt ny dag med historier begynder.' },
-      newAchievement: { title: 'Hurra, {{name}}!', titleAnonymous: 'Hurra!', subtitle: 'Du har fået {{achievement}}. Se nedenfor!' },
-      storyCompleted: { title: 'Flot klaret, {{name}}!', titleAnonymous: 'Flot klaret!', subtitle: 'I har læst en hel historie færdig sammen.' },
-      streak: { title: 'Velkommen tilbage, {{name}}!', titleAnonymous: 'Velkommen tilbage!', subtitle: '{{count}} dage med historier i træk. Vidunderligt!' },
-      longAbsence: { title: 'Dejligt at se dig, {{name}}!', titleAnonymous: 'Dejligt at se dig!', subtitle: 'Dine historier er lige der, hvor du forlod dem.' },
+      normal: {
+        title: 'Velkommen tilbage, {{name}}!',
+        titleAnonymous: 'Velkommen tilbage!',
+        subtitle: 'Dit næste eventyr venter.',
+      },
+      firstToday: {
+        title: 'Velkommen tilbage, {{name}}!',
+        titleAnonymous: 'Velkommen tilbage!',
+        subtitle: 'En helt ny dag med historier begynder.',
+      },
+      newAchievement: {
+        title: 'Hurra, {{name}}!',
+        titleAnonymous: 'Hurra!',
+        subtitle: 'Du har fået {{achievement}}. Se nedenfor!',
+      },
+      storyCompleted: {
+        title: 'Flot klaret, {{name}}!',
+        titleAnonymous: 'Flot klaret!',
+        subtitle: 'I har læst en hel historie færdig sammen.',
+      },
+      streak: {
+        title: 'Velkommen tilbage, {{name}}!',
+        titleAnonymous: 'Velkommen tilbage!',
+        subtitle: '{{count}} dage med historier i træk. Vidunderligt!',
+      },
+      longAbsence: {
+        title: 'Dejligt at se dig, {{name}}!',
+        titleAnonymous: 'Dejligt at se dig!',
+        subtitle: 'Dine historier er lige der, hvor du forlod dem.',
+      },
     },
     continueBody: 'Fortsæt hvor du slap.',
     continueLearning: {
@@ -3161,14 +3179,25 @@ export default {
       body: 'Historier, musik og spil venter',
       hint: 'Åbn biblioteket',
     },
-    continueStart: { eyebrow: 'Start en historie', title: 'Vælg dit første eventyr', body: 'En ny verden venter', hint: 'Vælg en historie at læse sammen' },
+    continueStart: {
+      eyebrow: 'Start en historie',
+      title: 'Vælg dit første eventyr',
+      body: 'En ny verden venter',
+      hint: 'Vælg en historie at læse sammen',
+    },
     streak: {
       days: '{{count}} dage i træk',
       days_one: '{{count}} dag i træk',
       days_other: '{{count}} dage i træk',
       start: 'Start en stime i dag',
     },
-    achievements: { title: 'Se hvad du har opnået!', cta: 'Se præstationer', emptyTitle: 'Dit første mærke venter', emptyBody: 'Læs en historie sammen for at få det', hint: 'Se dine mærker' },
+    achievements: {
+      title: 'Se hvad du har opnået!',
+      cta: 'Se præstationer',
+      emptyTitle: 'Dit første mærke venter',
+      emptyBody: 'Læs en historie sammen for at få det',
+      hint: 'Se dine mærker',
+    },
     milestone: {
       eyebrow: 'Næste mærke',
       remaining: {
@@ -3207,7 +3236,6 @@ export default {
     sun: 'Solen',
     moon: 'Månen',
   },
-
   greeting: {
     morning: 'Godmorgen',
     afternoon: 'God eftermiddag',
@@ -3219,13 +3247,12 @@ export default {
   childUi: {
     nav: {
       home: 'Hjem',
-      library: 'Bibliotek',
       screensafe: 'Skærmtid',
       progress: 'Fremskridt',
       saved: 'Gemte',
+      search: 'Søg',
     },
   },
-
   catalogue: {
     moreStories: 'Flere historier',
     read: 'Læs',
@@ -3255,18 +3282,7 @@ export default {
       songs: 'Gemte sange',
       empty: 'Tryk på hjertet ved det, du kan lide, så venter det her',
     },
-    library: {
-      recentlyRead: 'Senest læst',
-      favourites: 'Favoritter',
-      newToYou: 'Nyt for dig',
-      onThisDevice: 'På denne enhed',
-      tagline: {
-        one: 'Din helt egen hylde',
-        two: 'med historier at gemme',
-      },
-    },
   },
-
   progress: {
     title: 'Fremskridt',
     tagline: {
@@ -3299,37 +3315,118 @@ export default {
       exploration: 'Udforsk',
     },
     challenges: {
-      threeStoryTimes: { title: 'Tre historiestunder', description: 'Del tre historiestunder sammen i denne uge' },
-      calmMoment: { title: 'En rolig stund', description: 'Nyd én rolig aktivitet sammen i denne uge' },
-      makeMusic: { title: 'Lav lidt musik', description: 'Spil musik sammen to gange i denne uge' },
-      morningStory: { title: 'En morgenhistorie', description: 'Læs eller lyt sammen en morgen i denne uge' },
-      bedtimeStory: { title: 'Godnathistorier', description: 'Del to historiestunder om aftenen i denne uge' },
-      tenStoryTimes: { title: 'Ti historiestunder', description: 'Del ti historiestunder sammen i denne måned' },
-      musicMonth: { title: 'En musikalsk måned', description: 'Nyd fem musikstunder i denne måned' },
-      calmCollector: { title: 'Rosamler', description: 'Nyd fire rolige stunder i denne måned' },
-      brightMornings: { title: 'Lyse morgener', description: 'Læs eller lyt sammen tre morgener i denne måned' },
+      threeStoryTimes: {
+        title: 'Tre historiestunder',
+        description: 'Del tre historiestunder sammen i denne uge',
+      },
+      calmMoment: {
+        title: 'En rolig stund',
+        description: 'Nyd én rolig aktivitet sammen i denne uge',
+      },
+      makeMusic: {
+        title: 'Lav lidt musik',
+        description: 'Spil musik sammen to gange i denne uge',
+      },
+      morningStory: {
+        title: 'En morgenhistorie',
+        description: 'Læs eller lyt sammen en morgen i denne uge',
+      },
+      bedtimeStory: {
+        title: 'Godnathistorier',
+        description: 'Del to historiestunder om aftenen i denne uge',
+      },
+      tenStoryTimes: {
+        title: 'Ti historiestunder',
+        description: 'Del ti historiestunder sammen i denne måned',
+      },
+      musicMonth: {
+        title: 'En musikalsk måned',
+        description: 'Nyd fem musikstunder i denne måned',
+      },
+      calmCollector: {
+        title: 'Rosamler',
+        description: 'Nyd fire rolige stunder i denne måned',
+      },
+      brightMornings: {
+        title: 'Lyse morgener',
+        description: 'Læs eller lyt sammen tre morgener i denne måned',
+      },
     },
     milestones: {
-      firstFiveStories: { title: 'Første 5 historier', description: 'En vidunderlig start!' },
-      bedtimeListener: { title: 'Godnatlytter', description: 'Du elsker stille, hyggelige historiestunder.' },
-      kindMoments: { title: 'Venlige stunder', description: 'Du lærer at være venlig.' },
+      firstFiveStories: {
+        title: 'Første 5 historier',
+        description: 'En vidunderlig start!',
+      },
+      bedtimeListener: {
+        title: 'Godnatlytter',
+        description: 'Du elsker stille, hyggelige historiestunder.',
+      },
+      kindMoments: {
+        title: 'Venlige stunder',
+        description: 'Du lærer at være venlig.',
+      },
     },
     badges: {
-      firstStory: { title: 'Første historie', description: 'Åbn din allerførste historie' },
-      readingTogether: { title: 'Læse sammen', description: 'Del 3 historiestunder i denne uge' },
-      newWorlds: { title: 'Nye verdener', description: 'Udforsk 3 forskellige slags historier' },
-      favouriteFinder: { title: 'Favoritfinder', description: 'Vælg en yndlingshistorie' },
-      firstNotes: { title: 'Første toner', description: 'Spil musik sammen' },
-      musicExplorer: { title: 'Musikopdager', description: 'Nyd 5 musikstunder i denne måned' },
-      calmMoment: { title: 'Rolig stund', description: 'Prøv din første rolige aktivitet' },
-      gentleEvening: { title: 'Blid aften', description: 'Del 3 historiestunder om aftenen' },
-      kindMoments: { title: 'Venlige stunder', description: 'Læs en historie om venlighed' },
-      curiousMind: { title: 'Nysgerrigt sind', description: 'Udforsk 5 slags historier' },
-      adventureExplorer: { title: 'Eventyropdager', description: 'Læs 3 eventyrhistorier' },
-      morningExplorer: { title: 'Morgenopdageren', description: 'Læs eller lyt om morgenen' },
-      storyAdventurer: { title: 'Historieeventyreren', description: 'Lyt til 10 forskellige historier' },
-      calmChampion: { title: 'Ro-mesteren', description: 'Nyd 5 rolige stunder' },
-      kindHeart: { title: 'Venligt hjerte', description: 'Fuldfør 5 venlige aktiviteter' },
+      firstStory: {
+        title: 'Første historie',
+        description: 'Åbn din allerførste historie',
+      },
+      readingTogether: {
+        title: 'Læse sammen',
+        description: 'Del 3 historiestunder i denne uge',
+      },
+      newWorlds: {
+        title: 'Nye verdener',
+        description: 'Udforsk 3 forskellige slags historier',
+      },
+      favouriteFinder: {
+        title: 'Favoritfinder',
+        description: 'Vælg en yndlingshistorie',
+      },
+      firstNotes: {
+        title: 'Første toner',
+        description: 'Spil musik sammen',
+      },
+      musicExplorer: {
+        title: 'Musikopdager',
+        description: 'Nyd 5 musikstunder i denne måned',
+      },
+      calmMoment: {
+        title: 'Rolig stund',
+        description: 'Prøv din første rolige aktivitet',
+      },
+      gentleEvening: {
+        title: 'Blid aften',
+        description: 'Del 3 historiestunder om aftenen',
+      },
+      kindMoments: {
+        title: 'Venlige stunder',
+        description: 'Læs en historie om venlighed',
+      },
+      curiousMind: {
+        title: 'Nysgerrigt sind',
+        description: 'Udforsk 5 slags historier',
+      },
+      adventureExplorer: {
+        title: 'Eventyropdager',
+        description: 'Læs 3 eventyrhistorier',
+      },
+      morningExplorer: {
+        title: 'Morgenopdageren',
+        description: 'Læs eller lyt om morgenen',
+      },
+      storyAdventurer: {
+        title: 'Historieeventyreren',
+        description: 'Lyt til 10 forskellige historier',
+      },
+      calmChampion: {
+        title: 'Ro-mesteren',
+        description: 'Nyd 5 rolige stunder',
+      },
+      kindHeart: {
+        title: 'Venligt hjerte',
+        description: 'Fuldfør 5 venlige aktiviteter',
+      },
     },
     recommendations: {
       bedtime: 'Lyt til en godnathistorie',
@@ -3338,6 +3435,17 @@ export default {
       discover: 'Opdag en ny historie',
       calming: 'Prøv en beroligende historie',
       kindness: 'Vælg en historie om venlighed',
+    },
+  },
+  search: {
+    placeholder: 'Søg efter en historie',
+    recent: 'Dine seneste søgninger',
+    clearRecent: 'Ryd',
+    clear: 'Ryd søgning',
+    noResults: 'Ingen historier fundet',
+    tagline: {
+      one: 'Find den historie',
+      two: 'du leder efter',
     },
   },
 };
