@@ -11,6 +11,8 @@
 
 import {
   onboardingMetricsFor as metricsAt,
+  onboardingLift,
+  swipeIntent,
   ONBOARDING_MAX_WIDTH,
 } from '@/components/onboarding/onboarding-metrics';
 
@@ -72,5 +74,46 @@ describe('onboardingMetricsFor', () => {
 
       expect(row).toBeLessThanOrEqual(m.layoutWidth - 24 * 2);
     }
+  });
+});
+
+describe('swipeIntent', () => {
+  it('reads nothing from a drag that neither travelled nor was thrown', () => {
+    expect(swipeIntent(0, 0)).toBeNull();
+    expect(swipeIntent(-40, -120)).toBeNull();
+    expect(swipeIntent(40, 120)).toBeNull();
+  });
+
+  it('turns forward on a drag to the left and back on a drag to the right', () => {
+    expect(swipeIntent(-90, 0)).toBe('next');
+    expect(swipeIntent(90, 0)).toBe('previous');
+  });
+
+  it('takes a flick that ends almost where it started', () => {
+    expect(swipeIntent(-12, -900)).toBe('next');
+    expect(swipeIntent(12, 900)).toBe('previous');
+  });
+
+  it('trusts the distance when a flick doubles back at the end', () => {
+    expect(swipeIntent(-140, 800)).toBe('next');
+  });
+});
+
+describe('onboardingLift', () => {
+  it('leaves a phone alone, however much room is spare', () => {
+    expect(onboardingLift(900, 500, false)).toBe(0);
+  });
+
+  it('splits a tablet\'s spare height above and below the page', () => {
+    expect(onboardingLift(1000, 600, true)).toBe(200);
+  });
+
+  it('lifts nothing when the page already fills the screen or overflows it', () => {
+    expect(onboardingLift(700, 700, true)).toBe(0);
+    expect(onboardingLift(700, 900, true)).toBe(0);
+  });
+
+  it('is zero before anything has been measured', () => {
+    expect(onboardingLift(0, 0, true)).toBe(0);
   });
 });

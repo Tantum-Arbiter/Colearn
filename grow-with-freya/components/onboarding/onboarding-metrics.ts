@@ -101,3 +101,55 @@ export function useOnboardingMetrics(): OnboardingMetrics {
 
   return useMemo(() => onboardingMetricsFor(width), [width]);
 }
+
+/**
+ * How far a sideways drag has to travel, or how fast it has to be flicked,
+ * before it counts as turning the page.
+ */
+const SWIPE_DISTANCE = 56;
+const SWIPE_VELOCITY = 420;
+
+/** The drag must be this far sideways before the gesture takes over. */
+export const SWIPE_ACTIVATE_X = 24;
+/** ...and it gives up entirely once it has wandered this far vertically. */
+export const SWIPE_FAIL_Y = 16;
+
+export type SwipeIntent = 'next' | 'previous' | null;
+
+/**
+ * Which way a finished drag meant to turn, if it meant to turn at all.
+ *
+ * Distance and velocity are both accepted so a short flick works as well as a
+ * long slow drag, and the direction is read from whichever of the two carried
+ * the gesture -- a fast flick can end with almost no translation left.
+ */
+export function swipeIntent(translationX: number, velocityX: number): SwipeIntent {
+  const farEnough = Math.abs(translationX) >= SWIPE_DISTANCE;
+  const fastEnough = Math.abs(velocityX) >= SWIPE_VELOCITY;
+  if (!farEnough && !fastEnough) return null;
+
+  const direction = Math.sign(farEnough ? translationX : velocityX);
+  if (direction === 0) return null;
+
+  return direction < 0 ? 'next' : 'previous';
+}
+
+/**
+ * How far down to push the whole composition when the page does not fill the
+ * screen.
+ *
+ * A phone's pages run to the bottom of the scroll area, so there is nothing to
+ * place. A tablet is a third taller than the layout the pages are capped to,
+ * and the leftover height all collected under the last row -- the page read as
+ * a phone layout pinned to the top of a large screen. Splitting the slack puts
+ * half of it above the art instead.
+ *
+ * The lift is applied to the backdrop layer and the scrolling column alike, so
+ * the art and the content it is measured against move together.
+ */
+export function onboardingLift(viewportHeight: number, contentHeight: number, isTablet: boolean): number {
+  if (!isTablet) return 0;
+  const slack = viewportHeight - contentHeight;
+  if (slack <= 0) return 0;
+  return Math.round(slack / 2);
+}

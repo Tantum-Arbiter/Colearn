@@ -1,5 +1,6 @@
-import React, { useMemo } from 'react';
-import { View, ScrollView, StyleSheet, Dimensions, Pressable } from 'react-native';
+import React, { useCallback, useMemo, useState } from 'react';
+import { View, ScrollView, StyleSheet, Dimensions, Pressable, type LayoutChangeEvent } from 'react-native';
+import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
@@ -9,6 +10,7 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
   Easing,
+  runOnJS,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
@@ -16,7 +18,13 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { ThemedText } from '../themed-text';
 import { useAccessibility } from '@/hooks/use-accessibility';
-import { ONBOARDING_MAX_WIDTH } from './onboarding-metrics';
+import {
+  ONBOARDING_MAX_WIDTH,
+  SWIPE_ACTIVATE_X,
+  SWIPE_FAIL_Y,
+  onboardingLift,
+  swipeIntent,
+} from './onboarding-metrics';
 import { NIGHT_GRADIENT, GOLD, TEXT_MUTED } from './onboarding-theme';
 
 const { width, height } = Dimensions.get('window');
@@ -75,8 +83,33 @@ export function OnboardingScreen({
 }: OnboardingScreenProps) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const { scaledFontSize, scaledPadding } = useAccessibility();
+  const { scaledFontSize, scaledPadding, isTablet } = useAccessibility();
   const stars = useMemo(() => generateStars(STAR_COUNT), []);
+
+  // The column is measured rather than the scroll content, because the lift is
+  // then added to the padding above it -- measuring the content would feed the
+  // lift back into its own input.
+  const [columnHeight, setColumnHeight] = useState(0);
+  const [viewportHeight, setViewportHeight] = useState(0);
+
+  const basePaddingTop = insets.top + scaledPadding(34);
+  const paddingBottom = scaledPadding(8);
+  const contentHeight = basePaddingTop + columnHeight + paddingBottom;
+  const lift = onboardingLift(viewportHeight, contentHeight, isTablet);
+  // Vertical movement is navigation on no page here, so the scroll view only
+  // scrolls when the content genuinely does not fit -- otherwise holding the
+  // page and dragging drifted the whole composition around.
+  const scrollable = viewportHeight > 0 && columnHeight > 0 && contentHeight > viewportHeight;
+
+  const handleColumnLayout = useCallback((event: LayoutChangeEvent) => {
+    const measured = Math.round(event.nativeEvent.layout.height);
+    setColumnHeight((current) => (current === measured ? current : measured));
+  }, []);
+
+  const handleScrollLayout = useCallback((event: LayoutChangeEvent) => {
+    const measured = Math.round(event.nativeEvent.layout.height);
+    setViewportHeight((current) => (current === measured ? current : measured));
+  }, []);
 
   // Stepping fades the outgoing page during the flow's isTransitioning window;
   // the incoming page then remounts (keyed by step) and replays the FadeInDown
@@ -96,165 +129,197 @@ export function OnboardingScreen({
     opacity: pageOpacity.value,
   }));
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     if (isNextDisabled || isTransitioning) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onNext();
-  };
+  }, [isNextDisabled, isTransitioning, onNext]);
 
-  const handlePrevious = () => {
+  const handlePrevious = useCallback(() => {
     if (!onPrevious || isTransitioning) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onPrevious();
-  };
+  }, [onPrevious, isTransitioning]);
+
+  const handleSwipe = useCallback(
+    (translationX: number, velocityX: number) => {
+      const intent = swipeIntent(translationX, velocityX);
+      if (intent === 'next') handleNext();
+      else if (intent === 'previous') handlePrevious();
+    },
+    [handleNext, handlePrevious]
+  );
+
+  // Sideways only, and only once the drag is clearly sideways: the offsets keep
+  // taps on the chips, checkboxes and text field working, and stop a vertical
+  // drag from turning the page on its way past.
+  const swipe = useMemo(
+    () =>
+      Gesture.Pan()
+        .activeOffsetX([-SWIPE_ACTIVATE_X, SWIPE_ACTIVATE_X])
+        .failOffsetY([-SWIPE_FAIL_Y, SWIPE_FAIL_Y])
+        .onEnd((event) => {
+          runOnJS(handleSwipe)(event.translationX, event.velocityX);
+        }),
+    [handleSwipe]
+  );
 
   return (
-    <View style={styles.container}>
-      <LinearGradient colors={NIGHT_GRADIENT} style={StyleSheet.absoluteFill} />
+    <GestureHandlerRootView style={styles.container}>
+      <GestureDetector gesture={swipe}>
+        <View style={styles.container}>
+          <LinearGradient colors={NIGHT_GRADIENT} style={StyleSheet.absoluteFill} />
 
-      <View style={styles.starsLayer} pointerEvents="none">
-        {stars.map((star) => (
-          <View
-            key={`star-${star.id}`}
-            style={[
-              styles.star,
-              {
-                left: star.left,
-                top: star.top,
-                width: star.size,
-                height: star.size,
-                borderRadius: star.size / 2,
-                opacity: star.opacity,
-              },
-            ]}
-          />
-        ))}
-      </View>
+          <View style={styles.starsLayer} pointerEvents="none">
+            {stars.map((star) => (
+              <View
+                key={`star-${star.id}`}
+                style={[
+                  styles.star,
+                  {
+                    left: star.left,
+                    top: star.top,
+                    width: star.size,
+                    height: star.size,
+                    borderRadius: star.size / 2,
+                    opacity: star.opacity,
+                  },
+                ]}
+              />
+            ))}
+          </View>
 
-      {/* the layer shares pageOpacity so the art fades out in step with the
-          content; the outgoing backdrop is then removed instantly (already
-          invisible) and the incoming one fades in with the cascade */}
-      <Animated.View style={[styles.backdropLayer, pageAnimatedStyle]} pointerEvents="none">
-        {backdrop && (
-          <Animated.View
-            key={`backdrop-${currentStep}`}
-            entering={FadeIn.duration(450)}
-            style={StyleSheet.absoluteFill}
-          >
-            {backdrop}
-          </Animated.View>
-        )}
-      </Animated.View>
-
-      {onSkip && (
-        <Animated.View
-          entering={FadeIn.duration(300)}
-          style={[styles.skipContainer, { top: insets.top + scaledPadding(10) }]}
-        >
-          <Pressable
-            testID="onboarding-skip"
-            onPress={onSkip}
-            hitSlop={12}
-            accessibilityLabel={t('onboardingV2.skip')}
-          >
-            <ThemedText style={[styles.skipText, { fontSize: scaledFontSize(15) }]}>
-              {t('onboardingV2.skip')}
-            </ThemedText>
-          </Pressable>
-        </Animated.View>
-      )}
-
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingTop: insets.top + scaledPadding(34), paddingBottom: scaledPadding(8) },
-        ]}
-        showsVerticalScrollIndicator={false}
-      >
-        <Animated.View style={[styles.pageColumn, pageAnimatedStyle]}>
-          <Animated.View
-            key={`header-${currentStep}`}
-            entering={FadeInDown.duration(450)}
-            style={styles.header}
-          >
-            <ThemedText style={[styles.title, { fontSize: scaledFontSize(28) }]}>{title}</ThemedText>
-            {body ? (
-              <ThemedText style={[styles.body, { fontSize: scaledFontSize(15) }]}>{body}</ThemedText>
-            ) : null}
+          {/* the layer shares pageOpacity so the art fades out in step with the
+              content; the outgoing backdrop is then removed instantly (already
+              invisible) and the incoming one fades in with the cascade */}
+          <Animated.View style={[styles.backdropLayer, { top: lift }, pageAnimatedStyle]} pointerEvents="none">
+            {backdrop && (
+              <Animated.View
+                key={`backdrop-${currentStep}`}
+                entering={FadeIn.duration(450)}
+                style={StyleSheet.absoluteFill}
+              >
+                {backdrop}
+              </Animated.View>
+            )}
           </Animated.View>
 
-          {customContent ? (
+          {onSkip && (
             <Animated.View
-              key={`content-${currentStep}`}
-              entering={FadeInDown.delay(120).duration(450)}
-              style={styles.customContent}
+              entering={FadeIn.duration(300)}
+              style={[styles.skipContainer, { top: insets.top + scaledPadding(10) }]}
             >
-              {customContent}
+              <Pressable
+                testID="onboarding-skip"
+                onPress={onSkip}
+                hitSlop={12}
+                accessibilityLabel={t('onboardingV2.skip')}
+              >
+                <ThemedText style={[styles.skipText, { fontSize: scaledFontSize(15) }]}>
+                  {t('onboardingV2.skip')}
+                </ThemedText>
+              </Pressable>
             </Animated.View>
-          ) : null}
-        </Animated.View>
-      </ScrollView>
+          )}
 
-      {decoration && (
-        <View style={[styles.decorationLayer, { top: insets.top - 26 }]} pointerEvents="none">
-          {decoration}
-        </View>
-      )}
+          <ScrollView
+            testID="onboarding-scroll"
+            style={styles.scroll}
+            contentContainerStyle={[
+              styles.scrollContent,
+              { paddingTop: basePaddingTop + lift, paddingBottom },
+            ]}
+            showsVerticalScrollIndicator={false}
+            scrollEnabled={scrollable}
+            bounces={false}
+            overScrollMode="never"
+            onLayout={handleScrollLayout}
+          >
+            <Animated.View style={[styles.pageColumn, pageAnimatedStyle]} onLayout={handleColumnLayout}>
+              <Animated.View
+                key={`header-${currentStep}`}
+                entering={FadeInDown.duration(450)}
+                style={styles.header}
+              >
+                <ThemedText style={[styles.title, { fontSize: scaledFontSize(28) }]}>{title}</ThemedText>
+                {body ? (
+                  <ThemedText style={[styles.body, { fontSize: scaledFontSize(15) }]}>{body}</ThemedText>
+                ) : null}
+              </Animated.View>
 
-      <View
-        style={[
-          styles.footer,
-          { paddingBottom: Math.max(insets.bottom, 12) + scaledPadding(8) },
-        ]}
-      >
-        <View style={styles.buttonRow}>
-          {onPrevious && currentStep > 1 ? (
-            <Pressable
-              testID="onboarding-back"
-              style={styles.backButton}
-              onPress={handlePrevious}
-              accessibilityLabel={t('common.back')}
-            >
-              <Ionicons name="chevron-back" size={scaledFontSize(18)} color="#FFFFFF" />
-              <ThemedText style={[styles.backText, { fontSize: scaledFontSize(15) }]}>
-                {t('common.back')}
+              {customContent ? (
+                <Animated.View
+                  key={`content-${currentStep}`}
+                  entering={FadeInDown.delay(120).duration(450)}
+                  style={styles.customContent}
+                >
+                  {customContent}
+                </Animated.View>
+              ) : null}
+            </Animated.View>
+          </ScrollView>
+
+          {decoration && (
+            <View style={[styles.decorationLayer, { top: insets.top - 26 }]} pointerEvents="none">
+              {decoration}
+            </View>
+          )}
+
+          <View
+            style={[
+              styles.footer,
+              { paddingBottom: Math.max(insets.bottom, 12) + scaledPadding(8) },
+            ]}
+          >
+            <View style={styles.buttonRow}>
+              {onPrevious && currentStep > 1 ? (
+                <Pressable
+                  testID="onboarding-back"
+                  style={styles.backButton}
+                  onPress={handlePrevious}
+                  accessibilityLabel={t('common.back')}
+                >
+                  <Ionicons name="chevron-back" size={scaledFontSize(18)} color="#FFFFFF" />
+                  <ThemedText style={[styles.backText, { fontSize: scaledFontSize(15) }]}>
+                    {t('common.back')}
+                  </ThemedText>
+                </Pressable>
+              ) : null}
+
+              <Pressable
+                testID="onboarding-next"
+                style={[styles.nextButton, isNextDisabled && styles.nextButtonDisabled]}
+                onPress={handleNext}
+                disabled={isNextDisabled || isTransitioning}
+                accessibilityLabel={buttonLabel}
+              >
+                <ThemedText style={[styles.nextText, { fontSize: scaledFontSize(16) }]}>
+                  {buttonLabel}
+                </ThemedText>
+                <Ionicons name="arrow-forward" size={scaledFontSize(17)} color="#1A1633" />
+              </Pressable>
+            </View>
+
+            <View style={styles.progressRow}>
+              {Array.from({ length: totalSteps }, (_, i) => (
+                <View
+                  key={`dot-${i}`}
+                  testID={`progress-dot-${i}`}
+                  style={[styles.progressDot, i === currentStep - 1 && styles.progressDotActive]}
+                />
+              ))}
+              <ThemedText
+                testID="onboarding-step-counter"
+                style={[styles.stepCounter, { fontSize: scaledFontSize(13) }]}
+              >
+                {t('onboardingV2.stepCounter', { current: currentStep, total: totalSteps })}
               </ThemedText>
-            </Pressable>
-          ) : null}
+            </View>
+          </View>
 
-          <Pressable
-            testID="onboarding-next"
-            style={[styles.nextButton, isNextDisabled && styles.nextButtonDisabled]}
-            onPress={handleNext}
-            disabled={isNextDisabled || isTransitioning}
-            accessibilityLabel={buttonLabel}
-          >
-            <ThemedText style={[styles.nextText, { fontSize: scaledFontSize(16) }]}>
-              {buttonLabel}
-            </ThemedText>
-            <Ionicons name="arrow-forward" size={scaledFontSize(17)} color="#1A1633" />
-          </Pressable>
         </View>
-
-        <View style={styles.progressRow}>
-          {Array.from({ length: totalSteps }, (_, i) => (
-            <View
-              key={`dot-${i}`}
-              testID={`progress-dot-${i}`}
-              style={[styles.progressDot, i === currentStep - 1 && styles.progressDotActive]}
-            />
-          ))}
-          <ThemedText
-            testID="onboarding-step-counter"
-            style={[styles.stepCounter, { fontSize: scaledFontSize(13) }]}
-          >
-            {t('onboardingV2.stepCounter', { current: currentStep, total: totalSteps })}
-          </ThemedText>
-        </View>
-      </View>
-
-    </View>
+      </GestureDetector>
+    </GestureHandlerRootView>
   );
 }
 
@@ -271,7 +336,6 @@ const styles = StyleSheet.create({
   },
   backdropLayer: {
     position: 'absolute',
-    top: 0,
     left: 0,
     right: 0,
   },

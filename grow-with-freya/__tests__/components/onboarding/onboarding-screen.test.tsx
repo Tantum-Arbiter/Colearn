@@ -159,4 +159,23 @@ describe('OnboardingScreen', () => {
       });
     });
   });
+
+  describe('Vertical movement', () => {
+    // Holding a page and dragging used to drift the whole composition around,
+    // because a scroll view whose content fits still rubber-bands. Turning the
+    // page is sideways only, so there is nothing up or down to reach for.
+    it('never bounces, on either platform', () => {
+      const tree = render(<OnboardingScreen {...defaultProps} />);
+      const scroll = byTestId(tree, 'onboarding-scroll')[0];
+
+      expect(scroll.props.bounces).toBe(false);
+      expect(scroll.props.overScrollMode).toBe('never');
+    });
+
+    it('does not scroll until the page has been measured as too tall', () => {
+      const tree = render(<OnboardingScreen {...defaultProps} />);
+
+      expect(byTestId(tree, 'onboarding-scroll')[0].props.scrollEnabled).toBe(false);
+    });
+  });
 });
