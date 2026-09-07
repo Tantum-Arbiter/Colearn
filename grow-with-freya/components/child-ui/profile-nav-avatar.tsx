@@ -5,7 +5,8 @@ import { BORDER_DEFAULT, TEXT_PRIMARY } from '@/constants/night-palette';
 import { AVATAR_OPTIONS } from '@/components/onboarding/onboarding-pages';
 import { useAppStore } from '@/store/app-store';
 
-export const PROFILE_NAV_AVATAR_SIZE = 40;
+/** Kept in step with the bar's glyphs, which fill the same height it does. */
+export const PROFILE_NAV_AVATAR_SIZE = 46;
 
 interface ProfileNavAvatarProps {
   selected: boolean;

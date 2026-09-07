@@ -73,6 +73,13 @@ describe('ProfileNavAvatar', () => {
     expect(ringStyle(unselected).borderColor).not.toBe(TEXT_PRIMARY);
   });
 
+  /** It shares the bar with the glyphs, so it fills the same height they do. */
+  it('defaults to a diameter that keeps pace with the bar\'s glyphs', () => {
+    const underTest = render(<ProfileNavAvatar selected={false} />);
+
+    expect(ringStyle(underTest).width).toBeGreaterThanOrEqual(46);
+  });
+
   it('stays a circle at whatever diameter it is given', () => {
     const underTest = render(<ProfileNavAvatar selected={false} size={40} />);
 

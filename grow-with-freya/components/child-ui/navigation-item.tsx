@@ -5,8 +5,10 @@ import * as Haptics from 'expo-haptics';
 import { TEXT_PRIMARY, TEXT_SECONDARY } from '@/constants/night-palette';
 import { useAccessibility } from '@/hooks/use-accessibility';
 
-export const NAV_GLYPH_SIZE_PHONE = 32;
-export const NAV_GLYPH_SIZE_TABLET = 36;
+// the bar carries no labels and stands 76 tall, so the glyphs take the room
+// that leaves rather than sitting in the middle of it
+export const NAV_GLYPH_SIZE_PHONE = 38;
+export const NAV_GLYPH_SIZE_TABLET = 42;
 /** The selected glyph is drawn a touch larger, which on a filled glyph reads as bolder. */
 export const NAV_GLYPH_SELECTED_BOOST = 3;
 

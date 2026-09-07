@@ -259,7 +259,9 @@ describe('an icon-only bar', () => {
       .map((node: any) => node.props.size);
 
     expect(glyphSizes.length).toBeGreaterThan(0);
-    for (const size of glyphSizes) expect(size).toBeGreaterThanOrEqual(32);
+    // the bar is 76 tall and carries no labels, so a 32pt glyph left room
+    // going spare -- they fill more of the height they were given
+    for (const size of glyphSizes) expect(size).toBeGreaterThanOrEqual(38);
   });
 });
 
