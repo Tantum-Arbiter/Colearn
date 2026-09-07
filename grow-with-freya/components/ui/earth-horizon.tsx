@@ -8,7 +8,6 @@ import { useTimeOfDay } from '@/hooks/use-time-of-day';
 
 const EARTH_ART = require('../../assets/images/ui-elements/shared-earth.webp');
 const CLOUD_LEFT = require('../../assets/images/ui-elements/night-cloud-left.webp');
-const CLOUD_RIGHT = require('../../assets/images/ui-elements/night-cloud-right.webp');
 const MIST = ['transparent', 'rgba(139, 129, 196, 0.35)', 'rgba(168, 158, 222, 0.62)'] as const;
 const MIST_STOPS = [0, 0.55, 1] as const;
 
@@ -53,7 +52,6 @@ export const EarthHorizon = memo(function EarthHorizon({
       >
         <LinearGradient colors={[...MIST]} locations={[...MIST_STOPS]} style={[styles.mist, { height: clouds.mistHeight }]} />
         <Image source={CLOUD_LEFT} style={[styles.cloudLeft, bank]} contentFit="contain" transition={0} />
-        <Image source={CLOUD_RIGHT} style={[styles.cloudRight, bank]} contentFit="contain" transition={0} />
       </View>
       <View testID={testID} style={[styles.window, edgeStyle, { height: layout.cap }]} pointerEvents="none">
         <Image
@@ -99,11 +97,6 @@ const styles = StyleSheet.create({
   cloudLeft: {
     position: 'absolute',
     left: 0,
-    bottom: 0,
-  },
-  cloudRight: {
-    position: 'absolute',
-    right: 0,
     bottom: 0,
   },
   globe: {
