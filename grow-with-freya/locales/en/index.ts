@@ -246,15 +246,13 @@ export default {
     moon: 'The moon',
   },
 
-  storyGarden: {
-    greeting: {
-      morning: 'Good morning',
-      afternoon: 'Good afternoon',
-      evening: 'Good evening',
-      morningNamed: 'Good morning, {{name}}',
-      afternoonNamed: 'Good afternoon, {{name}}',
-      eveningNamed: 'Good evening, {{name}}',
-    },
+  greeting: {
+    morning: 'Good morning',
+    afternoon: 'Good afternoon',
+    evening: 'Good evening',
+    morningNamed: 'Good morning, {{name}}',
+    afternoonNamed: 'Good afternoon, {{name}}',
+    eveningNamed: 'Good evening, {{name}}',
   },
 
   // Story reader

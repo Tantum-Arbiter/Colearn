@@ -3208,15 +3208,13 @@ export default {
     moon: 'La luna',
   },
 
-  storyGarden: {
-    greeting: {
-      morning: 'Buenos días',
-      afternoon: 'Buenas tardes',
-      evening: 'Buenas noches',
-      morningNamed: 'Buenos días, {{name}}',
-      afternoonNamed: 'Buenas tardes, {{name}}',
-      eveningNamed: 'Buenas noches, {{name}}',
-    },
+  greeting: {
+    morning: 'Buenos días',
+    afternoon: 'Buenas tardes',
+    evening: 'Buenas noches',
+    morningNamed: 'Buenos días, {{name}}',
+    afternoonNamed: 'Buenas tardes, {{name}}',
+    eveningNamed: 'Buenas noches, {{name}}',
   },
   childUi: {
     nav: {

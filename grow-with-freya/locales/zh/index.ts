@@ -3208,15 +3208,13 @@ export default {
     moon: '月亮',
   },
 
-  storyGarden: {
-    greeting: {
-      morning: '早上好',
-      afternoon: '下午好',
-      evening: '晚上好',
-      morningNamed: '早上好，{{name}}',
-      afternoonNamed: '下午好，{{name}}',
-      eveningNamed: '晚上好，{{name}}',
-    },
+  greeting: {
+    morning: '早上好',
+    afternoon: '下午好',
+    evening: '晚上好',
+    morningNamed: '早上好，{{name}}',
+    afternoonNamed: '下午好，{{name}}',
+    eveningNamed: '晚上好，{{name}}',
   },
   childUi: {
     nav: {

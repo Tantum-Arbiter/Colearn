@@ -3208,15 +3208,13 @@ export default {
     moon: 'Księżyc',
   },
 
-  storyGarden: {
-    greeting: {
-      morning: 'Dzień dobry',
-      afternoon: 'Dzień dobry',
-      evening: 'Dobry wieczór',
-      morningNamed: 'Dzień dobry, {{name}}',
-      afternoonNamed: 'Dzień dobry, {{name}}',
-      eveningNamed: 'Dobry wieczór, {{name}}',
-    },
+  greeting: {
+    morning: 'Dzień dobry',
+    afternoon: 'Dzień dobry',
+    evening: 'Dobry wieczór',
+    morningNamed: 'Dzień dobry, {{name}}',
+    afternoonNamed: 'Dzień dobry, {{name}}',
+    eveningNamed: 'Dobry wieczór, {{name}}',
   },
   childUi: {
     nav: {

@@ -510,7 +510,7 @@ describe('UsageOverview', () => {
     ])('greets by the time of day at %s', (now, expected) => {
       jest.useFakeTimers({ now: new Date(now) });
 
-      expect(toStr(renderOverview())).toContain(`storyGarden.greeting.${expected}`);
+      expect(toStr(renderOverview())).toContain(`greeting.${expected}`);
     });
 
     it('does not divide by zero when no daily limit is set', () => {

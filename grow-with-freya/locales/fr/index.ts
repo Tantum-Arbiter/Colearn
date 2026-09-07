@@ -3208,15 +3208,13 @@ export default {
     moon: 'La lune',
   },
 
-  storyGarden: {
-    greeting: {
-      morning: 'Bonjour',
-      afternoon: 'Bon après-midi',
-      evening: 'Bonsoir',
-      morningNamed: 'Bonjour, {{name}}',
-      afternoonNamed: 'Bon après-midi, {{name}}',
-      eveningNamed: 'Bonsoir, {{name}}',
-    },
+  greeting: {
+    morning: 'Bonjour',
+    afternoon: 'Bon après-midi',
+    evening: 'Bonsoir',
+    morningNamed: 'Bonjour, {{name}}',
+    afternoonNamed: 'Bon après-midi, {{name}}',
+    eveningNamed: 'Bonsoir, {{name}}',
   },
   childUi: {
     nav: {

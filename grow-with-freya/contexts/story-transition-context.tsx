@@ -54,7 +54,7 @@ const LANDSCAPE_DIMENSIONS_TIMEOUT_MS = 800; // Fallback if the dimension-change
 
 export type ReadingMode = 'read' | 'record' | 'narrate';
 
-export interface GardenOpenRequest {
+export interface StoryOpenRequest {
   story: Story;
   mode: ReadingMode;
   voiceOver: VoiceOver | null;
@@ -63,11 +63,11 @@ export interface GardenOpenRequest {
 export type TransitionPhase = 'flying' | 'detail' | 'sketch' | 'returning' | 'prompt' | 'opening' | null;
 
 interface StoryTransitionContextType {
-  // Story Garden: direct open request, bypassing the detail/prompt overlay.
-  // The garden owns its own book-opening ritual and only needs the reader mounted.
-  gardenOpenRequest: GardenOpenRequest | null;
-  requestGardenOpen: (story: Story, mode: ReadingMode, voiceOver: VoiceOver | null) => void;
-  clearGardenOpen: () => void;
+  // Direct open request, bypassing the detail/prompt overlay: the caller has
+  // already run its own opening ritual and only needs the reader mounted.
+  storyOpenRequest: StoryOpenRequest | null;
+  requestStoryOpen: (story: Story, mode: ReadingMode, voiceOver: VoiceOver | null) => void;
+  clearStoryOpen: () => void;
 
   // Animation state
   isTransitioning: boolean;
@@ -139,7 +139,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   phaseRef.current = phase;
   const showModeSelection = phase === 'detail';
   const [selectedStoryId, setSelectedStoryId] = useState<string | null>(null);
-  const [gardenOpenRequest, setGardenOpenRequest] = useState<GardenOpenRequest | null>(null);
+  const [storyOpenRequest, setStoryOpenRequest] = useState<StoryOpenRequest | null>(null);
   const [selectedStory, setSelectedStory] = useState<Story | null>(null);
   const [selectedMode, setSelectedMode] = useState<ReadingMode>('read');
   const [cardPosition, setCardPosition] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
@@ -1697,22 +1697,22 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     }, 300);
   };
 
-  const requestGardenOpen = useCallback((story: Story, mode: ReadingMode, voiceOver: VoiceOver | null) => {
+  const requestStoryOpen = useCallback((story: Story, mode: ReadingMode, voiceOver: VoiceOver | null) => {
     setSelectedStoryId(story.id);
     setSelectedStory(story);
     setSelectedMode(mode);
     setCurrentVoiceOver(voiceOver);
-    setGardenOpenRequest({ story, mode, voiceOver });
+    setStoryOpenRequest({ story, mode, voiceOver });
   }, []);
 
-  const clearGardenOpen = useCallback(() => {
-    setGardenOpenRequest(null);
+  const clearStoryOpen = useCallback(() => {
+    setStoryOpenRequest(null);
   }, []);
 
   const contextValue: StoryTransitionContextType = {
-    gardenOpenRequest,
-    requestGardenOpen,
-    clearGardenOpen,
+    storyOpenRequest,
+    requestStoryOpen,
+    clearStoryOpen,
     isTransitioning,
     showModeSelection,
     selectedStoryId,

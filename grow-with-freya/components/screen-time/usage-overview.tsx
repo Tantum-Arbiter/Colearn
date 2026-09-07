@@ -230,7 +230,7 @@ export function UsageOverview({
         <View style={styles.greetingBlock}>
           <View style={styles.greetingRow}>
             <Text style={[styles.greeting, { fontSize: scaledFontSize(26) }]}>
-              {t(`storyGarden.greeting.${greetingKey()}`)}
+              {t(`greeting.${greetingKey()}`)}
             </Text>
             <Image
               source={require('@/assets/images/screen-time/star-happy.webp')}

@@ -46,8 +46,6 @@ import { ParentsOnlyModal } from '../ui/parents-only-modal';
 import { SubscriptionOverlay } from '../ui/subscription-overlay';
 import { useAppStore } from '@/store/app-store';
 import { resumePageIndex } from './reading-progress';
-import { useReducedMotion } from '@/hooks/use-reduced-motion';
-import { ReaderControlsLayer } from './reader/reader-controls-layer';
 import { useAccessibility, TEXT_SIZE_OPTIONS } from '@/hooks/use-accessibility';
 import { useParentsOnlyChallenge } from '@/hooks/use-parents-only-challenge';
 import * as Haptics from 'expo-haptics';
@@ -704,7 +702,6 @@ export function StoryBookReader({
   const childAgeInMonths = useAppStore((state) => state.childAgeInMonths);
   const setStoryProgress = useAppStore((state) => state.setStoryProgress);
   const markStoryCompleted = useAppStore((state) => state.markStoryCompleted);
-  const readerReduceMotion = useReducedMotion();
   const childAgeGroup = resolveAgeGroup(childAgeInMonths);
   const markStoryAsRead = useAppStore((state) => state.markStoryAsRead);
   const recordReadingSession = useAppStore((state) => state.recordReadingSession);
@@ -2547,11 +2544,6 @@ export function StoryBookReader({
         </View>
 
         {/* UI Controls Layer */}
-        <ReaderControlsLayer
-          visible
-          reduceMotion={readerReduceMotion}
-          passthrough
-        >
         <View style={styles.uiControlsLayer}>
 
         {/* Bottom UI Panel - Text and Controls (hide on cover page and during jigsaw/reading) */}
@@ -2818,7 +2810,6 @@ export function StoryBookReader({
         )}
 
         </View>
-        </ReaderControlsLayer>
       </View>
 
       {/* Voice Over Name Modal - Using absolute View instead of Modal to prevent iOS crash */}

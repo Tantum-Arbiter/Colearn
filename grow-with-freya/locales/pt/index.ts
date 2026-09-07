@@ -3208,15 +3208,13 @@ export default {
     moon: 'A lua',
   },
 
-  storyGarden: {
-    greeting: {
-      morning: 'Bom dia',
-      afternoon: 'Boa tarde',
-      evening: 'Boa noite',
-      morningNamed: 'Bom dia, {{name}}',
-      afternoonNamed: 'Boa tarde, {{name}}',
-      eveningNamed: 'Boa noite, {{name}}',
-    },
+  greeting: {
+    morning: 'Bom dia',
+    afternoon: 'Boa tarde',
+    evening: 'Boa noite',
+    morningNamed: 'Bom dia, {{name}}',
+    afternoonNamed: 'Boa tarde, {{name}}',
+    eveningNamed: 'Boa noite, {{name}}',
   },
   childUi: {
     nav: {

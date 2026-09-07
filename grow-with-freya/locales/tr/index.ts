@@ -3208,15 +3208,13 @@ export default {
     moon: 'Ay',
   },
 
-  storyGarden: {
-    greeting: {
-      morning: 'Günaydın',
-      afternoon: 'İyi günler',
-      evening: 'İyi akşamlar',
-      morningNamed: 'Günaydın, {{name}}',
-      afternoonNamed: 'İyi günler, {{name}}',
-      eveningNamed: 'İyi akşamlar, {{name}}',
-    },
+  greeting: {
+    morning: 'Günaydın',
+    afternoon: 'İyi günler',
+    evening: 'İyi akşamlar',
+    morningNamed: 'Günaydın, {{name}}',
+    afternoonNamed: 'İyi günler, {{name}}',
+    eveningNamed: 'İyi akşamlar, {{name}}',
   },
   childUi: {
     nav: {

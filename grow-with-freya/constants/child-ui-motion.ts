@@ -1,4 +1,9 @@
-import type { MotionBeat } from '@/constants/story-garden-motion';
+/** A duration pair: how long a movement takes, and how long when the viewer
+ *  has asked for reduced motion. A reduced duration of 0 means "cut, do not move". */
+export interface MotionBeat {
+  readonly duration: number;
+  readonly reducedDuration: number;
+}
 
 export const CHILD_UI_MOTION = {
   cardTap: { duration: 150, reducedDuration: 0 },
@@ -35,4 +40,6 @@ export const CHILD_UI_SCALE = {
   filterIconShift: 2,
 } as const;
 
-export { motionDuration } from '@/constants/story-garden-motion';
+export function motionDuration(beat: MotionBeat, reduceMotion: boolean): number {
+  return reduceMotion ? beat.reducedDuration : beat.duration;
+}

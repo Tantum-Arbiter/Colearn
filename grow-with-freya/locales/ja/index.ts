@@ -3208,15 +3208,13 @@ export default {
     moon: 'おつきさま',
   },
 
-  storyGarden: {
-    greeting: {
-      morning: 'おはよう',
-      afternoon: 'こんにちは',
-      evening: 'こんばんは',
-      morningNamed: 'おはよう、{{name}}',
-      afternoonNamed: 'こんにちは、{{name}}',
-      eveningNamed: 'こんばんは、{{name}}',
-    },
+  greeting: {
+    morning: 'おはよう',
+    afternoon: 'こんにちは',
+    evening: 'こんばんは',
+    morningNamed: 'おはよう、{{name}}',
+    afternoonNamed: 'こんにちは、{{name}}',
+    eveningNamed: 'こんばんは、{{name}}',
   },
   childUi: {
     nav: {

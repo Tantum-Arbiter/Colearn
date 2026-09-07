@@ -125,8 +125,8 @@ function AppContent() {
     setOnBeginCallback,
     setOnReturnToModeSelectionCallback,
     setOnCancelCallback,
-    gardenOpenRequest,
-    clearGardenOpen,
+    storyOpenRequest,
+    clearStoryOpen,
     readerRevealStyle,
   } = useStoryTransition();
 
@@ -539,17 +539,17 @@ function AppContent() {
     };
   }, [transitionStory, setOnBeginCallback]);
 
-  // Story Garden opens its book with its own ritual, then asks for the reader directly
+  // A caller that ran its own opening ritual asks for the reader directly
   useEffect(() => {
-    if (!gardenOpenRequest) {
+    if (!storyOpenRequest) {
       return;
     }
 
-    setStoryBeingRead(gardenOpenRequest.story);
+    setStoryBeingRead(storyOpenRequest.story);
     setShowStoryReader(true);
     setCurrentView('story-reader');
-    clearGardenOpen();
-  }, [gardenOpenRequest, clearGardenOpen]);
+    clearStoryOpen();
+  }, [storyOpenRequest, clearStoryOpen]);
 
   // Register callback for when returning to mode selection from story reader
   useEffect(() => {

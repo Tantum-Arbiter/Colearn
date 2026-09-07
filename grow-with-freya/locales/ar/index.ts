@@ -3208,15 +3208,13 @@ export default {
     moon: 'القمر',
   },
 
-  storyGarden: {
-    greeting: {
-      morning: 'صباح الخير',
-      afternoon: 'نهارك سعيد',
-      evening: 'مساء الخير',
-      morningNamed: 'صباح الخير يا {{name}}',
-      afternoonNamed: 'نهارك سعيد يا {{name}}',
-      eveningNamed: 'مساء الخير يا {{name}}',
-    },
+  greeting: {
+    morning: 'صباح الخير',
+    afternoon: 'نهارك سعيد',
+    evening: 'مساء الخير',
+    morningNamed: 'صباح الخير يا {{name}}',
+    afternoonNamed: 'نهارك سعيد يا {{name}}',
+    eveningNamed: 'مساء الخير يا {{name}}',
   },
   childUi: {
     nav: {

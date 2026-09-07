@@ -30,7 +30,7 @@ export const HomeSceneContainer = memo(function HomeSceneContainer({
   isActive = true,
 }: HomeSceneContainerProps) {
   const { data, welcome, celebrateAchievement } = useChildHomeData();
-  const { requestGardenOpen } = useStoryTransition();
+  const { requestStoryOpen } = useStoryTransition();
   const screenTime = useScreenTimeAllowance();
   const timeOfDay = useTimeOfDay();
   const trialEnd = useTrialEndPrompt();
@@ -44,12 +44,12 @@ export const HomeSceneContainer = memo(function HomeSceneContainer({
     const story = currentStoryId ? ALL_STORIES.find((candidate) => candidate.id === currentStoryId) : undefined;
 
     if (story) {
-      requestGardenOpen(story, 'read', null);
+      requestStoryOpen(story, 'read', null);
       return;
     }
 
     onNavigate(HOME_DESTINATIONS.stories);
-  }, [currentStoryId, onNavigate, requestGardenOpen]);
+  }, [currentStoryId, onNavigate, requestStoryOpen]);
 
   const handleOpenProgress = useCallback(() => onNavigate(HOME_DESTINATIONS.progress), [onNavigate]);
   const handleContinueLearning = useCallback(() => onNavigate(HOME_DESTINATIONS.stories), [onNavigate]);

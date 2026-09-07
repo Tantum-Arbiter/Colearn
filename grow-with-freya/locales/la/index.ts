@@ -3208,15 +3208,13 @@ export default {
     moon: 'Luna',
   },
 
-  storyGarden: {
-    greeting: {
-      morning: 'Bonum mane',
-      afternoon: 'Bonum diem',
-      evening: 'Bonum vesperum',
-      morningNamed: 'Bonum mane, {{name}}',
-      afternoonNamed: 'Bonum diem, {{name}}',
-      eveningNamed: 'Bonum vesperum, {{name}}',
-    },
+  greeting: {
+    morning: 'Bonum mane',
+    afternoon: 'Bonum diem',
+    evening: 'Bonum vesperum',
+    morningNamed: 'Bonum mane, {{name}}',
+    afternoonNamed: 'Bonum diem, {{name}}',
+    eveningNamed: 'Bonum vesperum, {{name}}',
   },
   childUi: {
     nav: {

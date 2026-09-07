@@ -3208,15 +3208,13 @@ export default {
     moon: 'Der Mond',
   },
 
-  storyGarden: {
-    greeting: {
-      morning: 'Guten Morgen',
-      afternoon: 'Guten Tag',
-      evening: 'Guten Abend',
-      morningNamed: 'Guten Morgen, {{name}}',
-      afternoonNamed: 'Guten Tag, {{name}}',
-      eveningNamed: 'Guten Abend, {{name}}',
-    },
+  greeting: {
+    morning: 'Guten Morgen',
+    afternoon: 'Guten Tag',
+    evening: 'Guten Abend',
+    morningNamed: 'Guten Morgen, {{name}}',
+    afternoonNamed: 'Guten Tag, {{name}}',
+    eveningNamed: 'Guten Abend, {{name}}',
   },
   childUi: {
     nav: {
