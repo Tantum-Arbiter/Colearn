@@ -87,7 +87,6 @@ interface MedallionProps {
   size: number;
   animated?: boolean;
   celebrate?: boolean;
-  orbit?: boolean;
   testID?: string;
 }
 
@@ -118,20 +117,12 @@ function useShine(celebrate: boolean, animated: boolean) {
   return shine;
 }
 
-const ORBIT_STARS = [
-  { x: 0.02, y: 0.08, size: 0.2 },
-  { x: 0.82, y: 0.0, size: 0.16 },
-  { x: 0.9, y: 0.62, size: 0.14 },
-  { x: -0.06, y: 0.7, size: 0.12 },
-] as const;
-
 const Medallion = memo(function Medallion({
   artwork,
   icon,
   size,
   animated = false,
   celebrate = false,
-  orbit = false,
   testID = 'achievement-medallion',
 }: MedallionProps) {
   const shine = useShine(celebrate, animated);
@@ -162,17 +153,6 @@ const Medallion = memo(function Medallion({
           />
         )}
       </Animated.View>
-      {orbit
-        ? ORBIT_STARS.map((star, index) => (
-            <View
-              key={`orbit-${index}`}
-              style={[styles.orbitStar, { left: star.x * size, top: star.y * size }]}
-              pointerEvents="none"
-            >
-              <GoldStar size={Math.round(size * star.size)} colour={HOME_CARD_TINTS.gold} testID="medallion-orbit-star" />
-            </View>
-          ))
-        : null}
       <Animated.View
         testID={`${testID}-glint`}
         style={[styles.glint, { left: size * 0.16 - glint / 2, top: size * 0.14 - glint / 2 }, glintStyle]}
@@ -225,7 +205,6 @@ export const AchievementCard = memo(function AchievementCard({
             size={HOME_CARDS.medallion}
             animated={animated}
             celebrate={celebrate}
-            orbit={next !== undefined}
           />
           <View style={styles.words}>
             <Text style={styles.eyebrow}>{t('home.milestone.eyebrow')}</Text>
@@ -240,7 +219,7 @@ export const AchievementCard = memo(function AchievementCard({
                 <View style={styles.line}>
                   <View testID="milestone-stars" style={styles.stars}>
                     {Array.from({ length: MILESTONE_STARS }, (_, index) => (
-                      <MilestoneStar key={index} index={index} lit={index < lit} animated={animated} size={20} />
+                      <MilestoneStar key={index} index={index} lit={index < lit} animated={animated} size={16} />
                     ))}
                   </View>
                   <Animated.View testID="achievement-cta" style={arrow.style}>
@@ -273,9 +252,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  orbitStar: {
-    position: 'absolute',
-  },
   glint: {
     position: 'absolute',
   },
@@ -283,7 +259,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderColor: HOME_CARD_TINTS.medallionRing,
     backgroundColor: HOME_CARD_TINTS.medallionFill,
   },

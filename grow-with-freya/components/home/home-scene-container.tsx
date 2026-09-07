@@ -52,7 +52,7 @@ export const HomeSceneContainer = memo(function HomeSceneContainer({
   }, [currentStoryId, onNavigate, requestGardenOpen]);
 
   const handleOpenProgress = useCallback(() => onNavigate(HOME_DESTINATIONS.progress), [onNavigate]);
-  const handleFindStory = useCallback(() => onNavigate(HOME_DESTINATIONS.stories), [onNavigate]);
+  const handleContinueLearning = useCallback(() => onNavigate(HOME_DESTINATIONS.stories), [onNavigate]);
 
   // the ring reports its own centre, so the glance opens out of the control
   // the parent actually pressed
@@ -74,9 +74,8 @@ export const HomeSceneContainer = memo(function HomeSceneContainer({
         welcome={welcome}
         celebrateAchievement={celebrateAchievement}
         onContinue={handleContinue}
-        onOpenJourney={handleOpenProgress}
         onOpenAchievements={handleOpenProgress}
-        onFindStory={handleFindStory}
+        onContinueLearning={handleContinueLearning}
         onOpenGrownUps={onOpenGrownUps}
         screenTime={screenTime}
         timeOfDay={timeOfDay}

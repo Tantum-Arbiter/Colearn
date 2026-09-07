@@ -81,9 +81,8 @@ describe('home scene navigation', () => {
 
   const WAYS_IN: [string, string][] = [
     ['continue-card', 'stories'],
-    ['journey-card', 'progress'],
     ['achievement-card', 'progress'],
-    ['find-story-pill', 'stories'],
+    ['continue-learning-card', 'stories'],
   ];
 
   beforeEach(() => {
@@ -140,7 +139,7 @@ describe('home scene navigation', () => {
     mockTourUnseen = false;
     const underTest = renderHome();
 
-    pressCard(underTest, 'find-story-pill');
+    pressCard(underTest, 'continue-learning-card');
 
     expect(onNavigate).toHaveBeenCalledWith('stories');
   });
@@ -149,7 +148,7 @@ describe('home scene navigation', () => {
     mockTourUnseen = false;
     const underTest = renderHome();
 
-    pressCard(underTest, 'find-story-pill');
+    pressCard(underTest, 'continue-learning-card');
 
     const destination = onNavigate.mock.calls[0][0];
     expect(destination).toBe('stories');

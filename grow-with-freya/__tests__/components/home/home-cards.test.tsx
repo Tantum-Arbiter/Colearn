@@ -9,8 +9,8 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { act, render, fireEvent, type RenderResult } from '@testing-library/react-native';
 import { ContinueCard } from '@/components/home/continue-card';
-import { JourneyCard } from '@/components/home/journey-card';
 import { AchievementCard } from '@/components/home/achievement-card';
+import { StreakChip } from '@/components/home/streak-chip';
 import { Ionicons } from '@expo/vector-icons';
 import { MILESTONE_STARS } from '@/constants/home-journey';
 
@@ -124,74 +124,6 @@ describe('ContinueCard', () => {
   });
 });
 
-describe('JourneyCard', () => {
-  const renderCard = (props: Partial<React.ComponentProps<typeof JourneyCard>> = {}) =>
-    render(
-      <JourneyCard
-        storiesCompleted={12}
-        readingMinutes={84}
-        readingStreakDays={4}
-        screenTimeSafety={100}
-        width={358}
-        animated={false}
-        onPress={jest.fn()}
-        {...props}
-      />
-    );
-
-  it('should tell the story journey through four illustrated tiles', () => {
-    const view = renderCard();
-
-    const underTest = ['stories', 'time', 'safety', 'streak'].map((id) => byTestId(view, `journey-tile-${id}`).length > 0);
-
-    expect(underTest).toEqual([true, true, true, true]);
-    expect(textContents(view)).toContain('home.journey.title');
-  });
-
-  it('should show the numbers a parent can scan', () => {
-    const view = renderCard();
-
-    const underTest = textContents(view);
-
-    expect(underTest).toContain('12');
-    expect(underTest).toContain('home.journey.timeLong (hours:1, minutes:24)');
-    expect(underTest).toContain('100%');
-    expect(underTest).toContain('home.journey.streakDays (count:4)');
-  });
-
-  it('should keep short reading time in minutes', () => {
-    const view = renderCard({ readingMinutes: 45 });
-
-    expect(textContents(view)).toContain('home.journey.timeShort (minutes:45)');
-  });
-
-  it('should invite a streak instead of showing zero', () => {
-    const view = renderCard({ readingStreakDays: 0 });
-
-    const underTest = textContents(view);
-
-    expect(underTest).toContain('home.journey.streakStart');
-    expect(underTest).toContain('home.journey.streakStartLabel');
-    expect(byTestId(view, 'journey-tile-streak').length).toBe(0);
-  });
-
-  it('should leave out screen-time safety until it is known', () => {
-    const view = renderCard({ screenTimeSafety: undefined });
-
-    expect(byTestId(view, 'journey-tile-safety').length).toBe(0);
-    expect(byTestId(view, 'journey-tile-streak').length).toBeGreaterThan(0);
-  });
-
-  it('should open the detailed progress when tapped', () => {
-    const onPress = jest.fn();
-    const view = renderCard({ onPress });
-
-    pressTestId(view, 'journey-card');
-
-    expect(onPress).toHaveBeenCalledTimes(1);
-  });
-});
-
 describe('AchievementCard', () => {
   beforeAll(() => {
     (Ionicons as unknown as { glyphMap: Record<string, number> }).glyphMap = { rocket: 1, star: 3 };
@@ -243,13 +175,18 @@ describe('AchievementCard', () => {
 
     expect(textContents(view)).toContain('home.milestone.allDone');
     expect(byTestId(view, 'milestone-stars').length).toBe(0);
-    expect(byTestId(view, 'medallion-orbit-star').length).toBe(0);
   });
 
-  it('should ring the medallion with stars and keep a glint ready for a new badge', () => {
+  /**
+   * The medallion once sat inside four orbiting gold stars. They were the
+   * card's loudest thing and always on, which is what made a panel about
+   * something not yet earned shout louder than the story to carry on with.
+   * The glint stays: it plays once, on a badge actually won.
+   */
+  it('should keep a glint ready for a new badge, without ringing itself in stars', () => {
     const view = renderCard();
 
-    expect(byTestId(view, 'medallion-orbit-star').length).toBeGreaterThan(0);
+    expect(byTestId(view, 'medallion-orbit-star')).toHaveLength(0);
     expect(byTestId(view, 'next-medallion-glint').length).toBeGreaterThan(0);
     expect(textContents(view)).toContain('home.achievements.cta');
   });
@@ -261,5 +198,44 @@ describe('AchievementCard', () => {
     pressTestId(view, 'achievement-card');
 
     expect(onPress).toHaveBeenCalledTimes(1);
+  });
+});
+
+/**
+ * Encouragement, not a statistic. The stats card that once carried a streak
+ * tile is gone; what a child gets now is the flame and how many days it has
+ * been burning, and an invitation rather than a zero when it has not started.
+ */
+describe('StreakChip', () => {
+  const renderChip = (props: Partial<React.ComponentProps<typeof StreakChip>> = {}) =>
+    render(<StreakChip days={4} animated={false} {...props} />);
+
+  it('should count the days in a row beside a flame', () => {
+    const view = renderChip();
+
+    expect(textContents(view)).toContain('home.streak.days (count:4)');
+    expect(byTestId(view, 'streak-chip-flame').length).toBeGreaterThan(0);
+  });
+
+  it('should invite a first streak rather than show a zero', () => {
+    const view = renderChip({ days: 0 });
+
+    const underTest = textContents(view);
+
+    expect(underTest).toContain('home.streak.start');
+    expect(underTest.some((text: string) => text.includes('0'))).toBe(false);
+  });
+
+  /** The flame is still there when unlit, banked down rather than swapped. */
+  it('should keep the flame when there is no streak yet', () => {
+    const view = renderChip({ days: 0 });
+
+    expect(byTestId(view, 'streak-chip-flame').length).toBeGreaterThan(0);
+  });
+
+  it('should read as text rather than something to press', () => {
+    const view = renderChip();
+
+    expect(byTestId(view, 'streak-chip')[0].props.accessibilityRole).toBe('text');
   });
 });

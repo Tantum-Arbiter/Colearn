@@ -19,18 +19,17 @@ import { GrownUpsPill } from './grown-ups-pill';
 import { ScreenTimeRing } from './screen-time-ring';
 import { UnlockPlanButton } from './unlock-plan-button';
 import { ContinueCard } from './continue-card';
-import { JourneyCard } from './journey-card';
+import { StreakChip } from './streak-chip';
 import { AchievementCard } from './achievement-card';
-import { FindStoryPill } from './find-story-pill';
+import { ContinueLearningCard } from './continue-learning-card';
 
 export interface HomeSceneProps {
   data: ChildHomeData;
   welcome: WelcomeCopy;
   celebrateAchievement?: boolean;
   onContinue: () => void;
-  onOpenJourney: () => void;
   onOpenAchievements: () => void;
-  onFindStory: () => void;
+  onContinueLearning: () => void;
   onOpenGrownUps: () => void;
   screenTime?: ScreenTimeAllowance | null;
   /** Receives the ring's centre so the glance can open out of it. */
@@ -49,9 +48,8 @@ export const HomeScene = memo(function HomeScene({
   welcome,
   celebrateAchievement = false,
   onContinue,
-  onOpenJourney,
   onOpenAchievements,
-  onFindStory,
+  onContinueLearning,
   onOpenGrownUps,
   screenTime = null,
   onOpenScreenTime,
@@ -100,20 +98,12 @@ export const HomeScene = memo(function HomeScene({
           {t(welcome.subtitleKey, welcome.params)}
         </Text>
 
-        <View style={styles.cardSlot}>
-          <ContinueCard story={data.currentStory} width={contentWidth} animated={animated} onPress={onContinue} />
+        <View style={styles.streakSlot}>
+          <StreakChip days={data.readingStreakDays} animated={animated} />
         </View>
 
         <View style={styles.cardSlot}>
-          <JourneyCard
-            storiesCompleted={data.storiesCompleted}
-            readingMinutes={data.readingMinutes}
-            readingStreakDays={data.readingStreakDays}
-            screenTimeSafety={data.screenTimeSafety}
-            width={contentWidth}
-            animated={animated}
-            onPress={onOpenJourney}
-          />
+          <ContinueCard story={data.currentStory} width={contentWidth} animated={animated} onPress={onContinue} />
         </View>
 
         <View style={styles.cardSlot}>
@@ -126,8 +116,8 @@ export const HomeScene = memo(function HomeScene({
           />
         </View>
 
-        <View style={styles.pillSlot}>
-          <FindStoryPill onPress={onFindStory} />
+        <View style={styles.cardSlot}>
+          <ContinueLearningCard width={contentWidth} animated={animated} onPress={onContinueLearning} />
         </View>
 
         {onOpenPlans ? (
@@ -203,6 +193,10 @@ const styles = StyleSheet.create({
   cardSlot: {
     marginBottom: HOME_CARDS.gap,
   },
+  streakSlot: {
+    alignItems: 'center',
+    marginBottom: 10,
+  },
   // centred along the bottom edge: this is where the glance's orb rises
   // from and where its closing drop falls back to, so it has to match
   // `ringCentre`
@@ -212,10 +206,6 @@ const styles = StyleSheet.create({
     right: 0,
     alignItems: 'center',
     zIndex: 10,
-  },
-  pillSlot: {
-    alignItems: 'center',
-    marginTop: 2,
   },
   planSlot: {
     alignItems: 'center',

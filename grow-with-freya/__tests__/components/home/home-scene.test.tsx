@@ -58,9 +58,8 @@ const WELCOME: WelcomeCopy = {
 function renderScene(props: Partial<React.ComponentProps<typeof HomeScene>> = {}) {
   const handlers = {
     onContinue: jest.fn(),
-    onOpenJourney: jest.fn(),
     onOpenAchievements: jest.fn(),
-    onFindStory: jest.fn(),
+    onContinueLearning: jest.fn(),
     onOpenGrownUps: jest.fn(),
   };
 
@@ -92,14 +91,30 @@ describe('HomeScene', () => {
   });
 
   describe('the sequence', () => {
-    it('should read continue, journey, achievements, then a way to find more', () => {
+    /**
+     * Three panels, not four and a link: the story to carry on with, the badge
+     * being worked towards, and the way into the library. The stats card that
+     * sat second was a parent's reading of the week in the middle of a child's
+     * screen, and the way onward was a text pill under everything.
+     */
+    it('should read continue, achievements, then the way onward', () => {
       const { view } = renderScene();
 
-      const ids = ['continue-card', 'journey-card', 'achievement-card', 'find-story-pill'].map(
+      const ids = ['continue-card', 'achievement-card', 'continue-learning-card'].map(
         (id) => byTestId(view, id).length > 0
       );
 
-      expect(ids).toEqual([true, true, true, true]);
+      expect(ids).toEqual([true, true, true]);
+      expect(byTestId(view, 'journey-card')).toHaveLength(0);
+      expect(byTestId(view, 'find-story-pill')).toHaveLength(0);
+    });
+
+    /** The one number kept from the stats card, as encouragement above them. */
+    it('should show the streak under the greeting, above the cards', () => {
+      const { view } = renderScene();
+
+      expect(byTestId(view, 'streak-chip').length).toBeGreaterThan(0);
+      expect(textContents(view)).toContain('home.streak.days (count:4)');
     });
 
     it('should name the story to carry on with and where the family is in it', () => {
@@ -129,14 +144,6 @@ describe('HomeScene', () => {
       expect(onContinue).toHaveBeenCalledTimes(1);
     });
 
-    it('should open the journey from the stats card', () => {
-      const { view, onOpenJourney } = renderScene();
-
-      pressTestId(view, 'journey-card');
-
-      expect(onOpenJourney).toHaveBeenCalledTimes(1);
-    });
-
     it('should open the achievements from the badge card', () => {
       const { view, onOpenAchievements } = renderScene();
 
@@ -145,12 +152,12 @@ describe('HomeScene', () => {
       expect(onOpenAchievements).toHaveBeenCalledTimes(1);
     });
 
-    it('should offer a way to find a new story', () => {
-      const { view, onFindStory } = renderScene();
+    it('should offer a way on into the library', () => {
+      const { view, onContinueLearning } = renderScene();
 
-      pressTestId(view, 'find-story-pill');
+      pressTestId(view, 'continue-learning-card');
 
-      expect(onFindStory).toHaveBeenCalledTimes(1);
+      expect(onContinueLearning).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -169,13 +176,6 @@ describe('HomeScene', () => {
 
       expect(byTestId(view, 'achievement-all-done').length).toBeGreaterThan(0);
     });
-
-    it('should never show a zero-day streak', () => {
-      const { view } = renderScene({ data: EMPTY });
-
-      expect(byTestId(view, 'journey-tile-streak-start').length).toBeGreaterThan(0);
-      expect(byTestId(view, 'journey-tile-streak').length).toBe(0);
-    });
   });
 
   describe('the grown-up corner', () => {
@@ -186,12 +186,12 @@ describe('HomeScene', () => {
     });
 
     it('should hand off rather than navigate itself, so the gate can run', () => {
-      const { view, onOpenGrownUps, onFindStory } = renderScene();
+      const { view, onOpenGrownUps, onContinueLearning } = renderScene();
 
       pressTestId(view, 'grown-ups-pill');
 
       expect(onOpenGrownUps).toHaveBeenCalledTimes(1);
-      expect(onFindStory).not.toHaveBeenCalled();
+      expect(onContinueLearning).not.toHaveBeenCalled();
     });
   });
 });

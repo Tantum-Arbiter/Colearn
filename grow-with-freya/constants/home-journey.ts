@@ -121,7 +121,9 @@ export const HOME_CARDS = {
   screenMargin: 16,
   contentMaxWidth: 560,
   radius: 20,
-  gap: 8,
+  /** Between the home panels. Wide enough that each reads as its own thing
+   *  to press rather than three bands of one block. */
+  gap: 16,
   padding: 12,
   coverSize: 72,
   coverRadius: 12,
@@ -129,7 +131,7 @@ export const HOME_CARDS = {
   tileRadius: 16,
   tileGap: 8,
   tileIcon: 34,
-  medallion: 72,
+  medallion: 56,
   decorStarCount: 4,
 } as const;
 
@@ -143,7 +145,7 @@ export const HOME_CARD_TYPE = {
   meta: 12,
   tileValue: 16,
   tileLabel: 11,
-  achievementTitle: 19,
+  achievementTitle: 17,
   cta: 12,
 } as const;
 
@@ -187,8 +189,6 @@ export const HOME_CARD_TINTS = {
   divider: 'rgba(255,255,255,0.12)',
   starLit: '#FFD76B',
   starUnlit: 'rgba(255,255,255,0.30)',
-  findFill: 'rgba(255,255,255,0.10)',
-  findEdge: 'rgba(255,255,255,0.26)',
 } as const;
 
 export type StatIconKind = 'book' | 'clock' | 'shield' | 'flame';
