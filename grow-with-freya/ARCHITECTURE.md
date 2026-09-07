@@ -245,7 +245,7 @@ Portrait Story Garden  →  tap a book  →  focused book (Read Together / Liste
 | Auto-hiding reader controls | `hooks/use-auto-hide-controls.ts` |
 | One-hotspot-at-a-time rhythm | `hooks/use-interaction-rhythm.ts` |
 | Reader mount seam | `requestGardenOpen` in `contexts/story-transition-context.tsx` |
-| Book-opening choreography | [`STORY-OPENING.md`](STORY-OPENING.md); timings in `constants/story-opening.ts` |
+| Book-opening choreography | `contexts/story-transition-context.tsx`; timings in `constants/story-opening.ts`, tested in `__tests__/constants/story-opening.test.ts` |
 | Orientation policy | Phones portrait-locked and turned for a story; tablets never locked. `needsGuidedTurn`, `applyDefaultOrientation` |
 | Reading progress (Continue Reading, bookmark) | `storyProgress` in `store/app-store.ts` |
 
@@ -256,7 +256,6 @@ observes to mount the reader. The legacy transition path is untouched.
 Parent-facing exits (Parent corner, Record a Voice) go through
 `useParentsOnlyChallenge` before leaving the child experience.
 
-See `STORY-GARDEN.md` for the full design rationale and phase breakdown.
 
 ## State Management
 
@@ -333,7 +332,6 @@ extensive mocks for React Native modules (`__mocks__/`).
 
 | Document | Scope |
 |----------|-------|
-| `STORY-GARDEN.md` | Story Garden catalogue, book-opening ritual, orientation bridge, reader chrome |
 | `MUSIC_FEATURE.md` | Music challenge architecture, instruments, state machine, CMS config |
 | `SONGS_README.md` | Song library, categories, instrument compatibility, AI guidelines |
 | `scripts/README.md` | CMS pipeline, upload scripts, Firestore schema |
