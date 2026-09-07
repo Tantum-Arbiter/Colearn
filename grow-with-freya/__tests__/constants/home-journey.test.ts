@@ -8,11 +8,8 @@
 import {
   HOME_CARDS,
   daysApart,
-  decorStars,
   effectiveStreak,
-  formatReadingTime,
   homeContentWidth,
-  homeTileWidth,
   litStars,
   localDateKey,
   remainingToNext,
@@ -187,20 +184,6 @@ describe('remainingToNext', () => {
   });
 });
 
-describe('formatReadingTime', () => {
-  it.each([
-    [0, 0, 0],
-    [45, 0, 45],
-    [60, 1, 0],
-    [84, 1, 24],
-    [135.4, 2, 15],
-  ])('should split %s minutes into hours and minutes', (minutes, hours, rest) => {
-    const underTest = formatReadingTime(minutes);
-
-    expect(underTest).toEqual({ hours, minutes: rest });
-  });
-});
-
 describe('screenTimeSafetyPercent', () => {
   const LIMIT = 3600;
 
@@ -225,19 +208,4 @@ describe('the card layout', () => {
     expect(homeContentWidth(1024)).toBe(HOME_CARDS.contentMaxWidth);
   });
 
-  it('should share the stats row equally between the tiles', () => {
-    const width = 358;
-
-    const underTest = homeTileWidth(width, 4);
-
-    expect(underTest * 4 + HOME_CARDS.tileGap * 3).toBeLessThanOrEqual(width - HOME_CARDS.padding * 2);
-    expect(homeTileWidth(width, 3)).toBeGreaterThan(underTest);
-  });
-
-  it('should keep its gold stars inside the card', () => {
-    const underTest = decorStars(358);
-
-    expect(underTest.length).toBeGreaterThan(0);
-    expect(underTest.every((star) => star.x >= 0 && star.x <= 358)).toBe(true);
-  });
 });

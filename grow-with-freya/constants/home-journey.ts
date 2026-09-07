@@ -97,12 +97,6 @@ export function remainingToNext(current: number, required: number): number {
   return Math.max(0, required - current);
 }
 
-export function formatReadingTime(minutes: number): { hours: number; minutes: number } {
-  const whole = Math.max(0, Math.round(minutes));
-
-  return { hours: Math.floor(whole / 60), minutes: whole % 60 };
-}
-
 export function screenTimeSafetyPercent(dailySeconds: number[], limitSeconds: number): number {
   const activeDays = dailySeconds.filter((seconds) => seconds > 0);
 
@@ -128,11 +122,8 @@ export const HOME_CARDS = {
   coverSize: 72,
   coverRadius: 12,
   arrowSize: 46,
-  tileRadius: 16,
-  tileGap: 8,
   tileIcon: 34,
   medallion: 56,
-  decorStarCount: 4,
 } as const;
 
 export const HOME_CARD_TYPE = {
@@ -143,8 +134,6 @@ export const HOME_CARD_TYPE = {
   cardHeading: 16,
   body: 14,
   meta: 12,
-  tileValue: 16,
-  tileLabel: 11,
   achievementTitle: 17,
   cta: 12,
 } as const;
@@ -174,7 +163,6 @@ export const HOME_JOURNEY_MOTION = {
 
 export const HOME_CARD_TINTS = {
   tileFill: 'rgba(255,255,255,0.08)',
-  tileEdge: 'rgba(255,255,255,0.12)',
   eyebrow: '#C9C2FF',
   title: '#FFFFFF',
   body: '#DCE3FF',
@@ -204,17 +192,3 @@ export function homeContentWidth(screenWidth: number): number {
   return Math.min(screenWidth - HOME_CARDS.screenMargin * 2, HOME_CARDS.contentMaxWidth);
 }
 
-export function homeTileWidth(contentWidth: number, tiles: number = 4): number {
-  const inner = contentWidth - HOME_CARDS.padding * 2 - HOME_CARDS.tileGap * (tiles - 1);
-
-  return Math.floor(inner / tiles);
-}
-
-export function decorStars(cardWidth: number): { x: number; y: number; size: number }[] {
-  return [
-    { x: cardWidth * 0.90, y: 14, size: 14 },
-    { x: cardWidth * 0.80, y: 34, size: 9 },
-    { x: cardWidth * 0.96, y: 48, size: 10 },
-    { x: cardWidth * 0.86, y: 72, size: 7 },
-  ].slice(0, HOME_CARDS.decorStarCount);
-}
