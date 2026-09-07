@@ -1,11 +1,45 @@
 import React, { ReactNode, useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path } from 'react-native-svg';
 import { ACCENT_GOLD, SKY_GRADIENT_WORLD } from '@/constants/night-palette';
 import { generateStarPositions } from '@/components/main-menu/utils';
+import { earthCap } from '@/constants/earth';
 
 const STAR_SEED = 47;
+
+/** Clear of the globe's rim, so a star never sits on the atmosphere. */
+const PLANET_MARGIN = 12;
+
+export interface PlacedStar {
+  id: number;
+  left: number;
+  top: number;
+  opacity: number;
+}
+
+/**
+ * The star field with nothing left over the planet.
+ *
+ * The globe hangs from the top of every journey page, and the generator that
+ * scatters these knows nothing about it, so a good few landed on the
+ * continents. Rather than dropping those -- which would thin the sky exactly
+ * where it is widest -- each one is folded down into the clear sky below the
+ * globe, keeping its horizontal place and the field's even spread.
+ */
+export function clearOfPlanet(
+  stars: readonly PlacedStar[],
+  capBottom: number,
+  height: number,
+): PlacedStar[] {
+  const clearHeight = Math.max(1, height - capBottom);
+
+  return stars.map((star) => {
+    if (star.top >= capBottom) return star;
+    const depth = capBottom <= 0 ? 0 : star.top / capBottom;
+    return { ...star, top: capBottom + depth * clearHeight };
+  });
+}
 const POINT_STAR_SIZE = 3;
 const ACCENT_STAR_SIZE = 16;
 
@@ -42,14 +76,21 @@ const AccentStar = ({ left, top, opacity }: { left: number; top: number; opacity
 );
 
 export function CelestialBackground({
-  starCount = 28,
-  goldStarRatio = 0.25,
+  // Twice the dots there were. The gold ratio drops to match, so the extra
+  // stars are all white and the handful of gold ones stays a handful.
+  starCount = 56,
+  goldStarRatio = 0.125,
   accentStars = 3,
   children,
 }: CelestialBackgroundProps) {
+  const { width, height } = useWindowDimensions();
   const stars = useMemo(
-    () => generateStarPositions(starCount + accentStars, STAR_SEED),
-    [starCount, accentStars],
+    () => clearOfPlanet(
+      generateStarPositions(starCount + accentStars, STAR_SEED),
+      earthCap(width, height, 'top') + PLANET_MARGIN,
+      height,
+    ),
+    [starCount, accentStars, width, height],
   );
   const goldEvery = goldStarRatio > 0 ? Math.max(2, Math.round(1 / goldStarRatio)) : 0;
 

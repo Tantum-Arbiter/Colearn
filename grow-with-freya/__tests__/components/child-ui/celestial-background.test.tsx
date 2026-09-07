@@ -7,7 +7,7 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
 import { Text } from 'react-native';
-import { CelestialBackground } from '@/components/child-ui/celestial-background';
+import { CelestialBackground, clearOfPlanet } from '@/components/child-ui/celestial-background';
 
 function byTestId(tree: ReturnType<typeof render>, testID: string) {
   return tree.UNSAFE_root.findAll((n: any) => n.props.testID === testID);
@@ -62,5 +62,39 @@ describe('CelestialBackground', () => {
     const tree = render(<CelestialBackground />);
 
     expect(byTestId(tree, 'celestial-star-field')[0].props.pointerEvents).toBe('none');
+  });
+});
+
+describe('clearOfPlanet', () => {
+  const star = (id: number, top: number) => ({ id, left: 10, top, opacity: 0.6 });
+
+  it('leaves alone every star that is already below the globe', () => {
+    const below = [star(1, 300), star(2, 500)];
+
+    expect(clearOfPlanet(below, 200, 800)).toEqual(below);
+  });
+
+  it('folds a star off the continents down into the clear sky', () => {
+    const [moved] = clearOfPlanet([star(1, 50)], 200, 800);
+
+    expect(moved.top).toBeGreaterThanOrEqual(200);
+    expect(moved.top).toBeLessThanOrEqual(800);
+  });
+
+  it('keeps a star where it was across the width, so the field stays even', () => {
+    const [moved] = clearOfPlanet([star(1, 50)], 200, 800);
+
+    expect(moved.left).toBe(10);
+    expect(moved.opacity).toBe(0.6);
+  });
+
+  it('keeps the order it was given, deepest under the globe landing lowest', () => {
+    const [high, low] = clearOfPlanet([star(1, 20), star(2, 180)], 200, 800);
+
+    expect(low.top).toBeGreaterThan(high.top);
+  });
+
+  it('copes with a screen too short to have a clear band', () => {
+    expect(() => clearOfPlanet([star(1, 10)], 900, 800)).not.toThrow();
   });
 });
