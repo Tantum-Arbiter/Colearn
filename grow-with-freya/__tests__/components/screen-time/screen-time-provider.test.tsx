@@ -11,6 +11,7 @@ import { render, act, waitFor } from '@testing-library/react-native';
 import { AppState, Text } from 'react-native';
 
 import { ScreenTimeProvider, useScreenTime } from '../../../components/screen-time/screen-time-provider';
+import { OWL_RHYTHM } from '@/constants/owl-companion';
 import { useAppStore } from '../../../store/app-store';
 import ScreenTimeService from '../../../services/screen-time-service';
 import NotificationService from '../../../services/notification-service';
@@ -349,7 +350,8 @@ describe('ScreenTimeProvider lifecycle', () => {
   });
 
   describe('surfacing a warning by hand', () => {
-    it('shows a warning pushed through the context', async () => {
+    it('shows a warning pushed through the context once the owl has landed', async () => {
+      jest.useFakeTimers();
       const tree = render(
         <ScreenTimeProvider>
           <Consumer />
@@ -364,7 +366,14 @@ describe('ScreenTimeProvider lifecycle', () => {
         });
       });
 
+      expect(JSON.stringify(tree.toJSON())).toContain('screen-time-owl-alert');
+
+      act(() => {
+        jest.advanceTimersByTime(OWL_RHYTHM.arriveMs);
+      });
+
       expect(JSON.stringify(tree.toJSON())).toContain('Pushed by hand');
+      jest.useRealTimers();
     });
 
     it('records the last completed activity id', async () => {

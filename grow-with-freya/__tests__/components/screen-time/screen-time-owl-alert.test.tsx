@@ -1,23 +1,8 @@
-/**
- * Tests for the owl screen-time alert -- the surface that replaced the
- * full-screen warning modal.
- *
- * The owl perches bottom-left and the whole guide is written in the box
- * beside it: title, message, guidelines and all three real-world tips, in one
- * scrollable surface with nothing hidden behind a button. The assertions
- * about all three tip bodies being present are what protect that -- the
- * earlier design put them behind a *Show me ideas* press, and the operator
- * asked for the guide to be readable in place.
- *
- * The box is text only. `CATEGORY_CONFIG` in `RealWorldTips` still carries an
- * Ionicon per category for the glance panel, so the icon assertions here pin
- * the owl's surface to `showIcons={false}` rather than trusting it.
- */
-
 import React from 'react';
 import { render, act } from '@testing-library/react-native';
 
-import { ScreenTimeOwlAlert } from '@/components/screen-time/screen-time-owl-alert';
+import { ScreenTimeOwlAlert, OWL_BUBBLE_PAGES } from '@/components/screen-time/screen-time-owl-alert';
+import { OWL_RHYTHM } from '@/constants/owl-companion';
 import type { ScreenTimeWarning } from '@/services/screen-time-service';
 
 jest.mock('@expo/vector-icons', () => {
@@ -25,8 +10,9 @@ jest.mock('@expo/vector-icons', () => {
   return { Ionicons: (props: any) => <Text>{props.name}</Text> };
 });
 
+const mockReducedMotion = jest.fn(() => false);
 jest.mock('@/hooks/use-reduced-motion', () => ({
-  useReducedMotion: () => false,
+  useReducedMotion: () => mockReducedMotion(),
 }));
 
 const APPROACHING: ScreenTimeWarning = {
@@ -35,24 +21,17 @@ const APPROACHING: ScreenTimeWarning = {
   message: 'Only 4 minutes of screen time left today.',
 };
 
-const LIMIT_REACHED: ScreenTimeWarning = {
-  type: 'limit_reached',
-  remainingTime: 0,
-  message: 'Daily screen time limit reached.',
-};
-
 function findByTestId(tree: ReturnType<typeof render>, testID: string) {
   return tree.UNSAFE_root.findAll((node: any) => node.props.testID === testID);
 }
 
-/**
- * The sprite forwards its testID to a plain View, so a testID query matches
- * both the element and its host. `clip` only exists on the element, which is
- * the one carrying the state these tests are about.
- */
+function has(tree: ReturnType<typeof render>, testID: string): boolean {
+  return findByTestId(tree, testID).length > 0;
+}
+
 function owl(tree: ReturnType<typeof render>) {
   return tree.UNSAFE_root.findAll(
-    (node: any) => typeof node.props.clip === 'string' && typeof node.props.width === 'number'
+    (node: any) => typeof node.props.phase === 'string' && typeof node.props.width === 'number'
   )[0];
 }
 
@@ -63,56 +42,223 @@ function press(tree: ReturnType<typeof render>, testID: string) {
   });
 }
 
+function advance(ms: number) {
+  act(() => {
+    jest.advanceTimersByTime(ms);
+  });
+}
+
+function json(tree: ReturnType<typeof render>) {
+  return JSON.stringify(tree.toJSON());
+}
+
 function renderAlert(props: Partial<React.ComponentProps<typeof ScreenTimeOwlAlert>> = {}) {
   return render(
     <ScreenTimeOwlAlert visible warning={APPROACHING} onDismiss={jest.fn()} {...props} />
   );
 }
 
-describe('ScreenTimeOwlAlert', () => {
-  it('renders nothing without a warning', () => {
-    const tree = renderAlert({ warning: null });
+function renderLanded(props: Partial<React.ComponentProps<typeof ScreenTimeOwlAlert>> = {}) {
+  const tree = renderAlert(props);
+  advance(OWL_RHYTHM.arriveMs);
+  return tree;
+}
 
-    expect(tree.toJSON()).toBeNull();
+describe('ScreenTimeOwlAlert', () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+    mockReducedMotion.mockReturnValue(false);
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it('renders nothing without a warning', () => {
+    expect(renderAlert({ warning: null }).toJSON()).toBeNull();
   });
 
   it('renders nothing while hidden', () => {
-    const tree = renderAlert({ visible: false });
-
-    expect(tree.toJSON()).toBeNull();
+    expect(renderAlert({ visible: false }).toJSON()).toBeNull();
   });
 
-  it('speaks the warning message', () => {
-    const json = JSON.stringify(renderAlert().toJSON());
+  it('brings the owl in first, and keeps the bubble until it has landed', () => {
+    const tree = renderAlert();
 
-    expect(json).toContain(APPROACHING.message);
+    expect(owl(tree).props.phase).toBe('arrive');
+    expect(findByTestId(tree, 'screen-time-owl-bubble')).toHaveLength(0);
+
+    advance(OWL_RHYTHM.arriveMs);
+
+    expect(owl(tree).props.phase).toBe('idle');
+    expect(findByTestId(tree, 'screen-time-owl-bubble')).toHaveLength(1);
+  });
+
+  it('opens with the warning itself', () => {
+    const tree = renderLanded();
+
+    expect(json(tree)).toContain('screenTimeWarning.approachingLimit');
+    expect(json(tree)).toContain(APPROACHING.message);
+    expect(json(tree)).toContain('screenTimeWarning.guidelines');
   });
 
   it.each([
-    ['approaching_limit', 'screenTimeWarning.approachingLimit'],
     ['limit_reached', 'screenTimeWarning.limitReached'],
     ['daily_complete', 'screenTimeWarning.dailyComplete'],
   ])('titles a %s warning with its own copy', (type, expectedKey) => {
-    const tree = renderAlert({
+    const tree = renderLanded({
       warning: { type: type as never, remainingTime: 0, message: 'msg' },
     });
 
-    expect(JSON.stringify(tree.toJSON())).toContain(expectedKey);
+    expect(json(tree)).toContain(expectedKey);
   });
 
   it('falls back to a neutral title for an unrecognised warning type', () => {
-    const tree = renderAlert({
+    const tree = renderLanded({
       warning: { type: 'something-new' as never, remainingTime: 0, message: 'msg' },
     });
 
-    expect(JSON.stringify(tree.toJSON())).toContain('screenTimeWarning.notice');
+    expect(json(tree)).toContain('screenTimeWarning.notice');
   });
 
-  it('perches an owl beside the bubble', () => {
-    const tree = renderAlert();
+  it('keeps the first bubble to the warning, with the tips still to come', () => {
+    const tree = renderLanded();
 
-    expect(owl(tree)).toBeTruthy();
-    expect(findByTestId(tree, 'screen-time-owl-bubble')).toHaveLength(1);
+    expect(json(tree)).not.toContain('screenTime.tips.atHome.body');
+    expect(has(tree, 'screen-time-owl-next')).toBe(true);
+    expect(has(tree, 'screen-time-owl-okay')).toBe(false);
+  });
+
+  it('walks through every tip in turn, one small bubble each', () => {
+    const tree = renderLanded();
+
+    press(tree, 'screen-time-owl-next');
+    expect(json(tree)).toContain('screenTime.tips.title');
+    expect(json(tree)).toContain('screenTime.tips.atHome.title');
+    expect(json(tree)).toContain('screenTime.tips.atHome.body');
+    expect(json(tree)).not.toContain('screenTime.tips.outdoors.body');
+
+    press(tree, 'screen-time-owl-next');
+    expect(json(tree)).toContain('screenTime.tips.outdoors.body');
+    expect(json(tree)).not.toContain('screenTime.tips.atHome.body');
+
+    press(tree, 'screen-time-owl-next');
+    expect(json(tree)).toContain('screenTime.tips.creative.body');
+    expect(json(tree)).toContain('screenTime.tips.closing');
+  });
+
+  it('ends on an okay rather than another next', () => {
+    const tree = renderLanded();
+
+    press(tree, 'screen-time-owl-next');
+    press(tree, 'screen-time-owl-next');
+    press(tree, 'screen-time-owl-next');
+
+    expect(has(tree, 'screen-time-owl-okay')).toBe(true);
+    expect(has(tree, 'screen-time-owl-next')).toBe(false);
+    expect(findByTestId(tree, 'screen-time-owl-okay')[0].props.accessibilityLabel).toBe('screenTimeOwl.okay');
+  });
+
+  it('labels the pill next until the last bubble', () => {
+    const tree = renderLanded();
+
+    expect(findByTestId(tree, 'screen-time-owl-next')[0].props.accessibilityLabel).toBe('common.next');
+  });
+
+  it('keeps leaving even if okay is pressed on the way out', () => {
+    const onDismiss = jest.fn();
+    const tree = renderLanded({ onDismiss });
+    press(tree, 'screen-time-owl-next');
+    press(tree, 'screen-time-owl-next');
+    press(tree, 'screen-time-owl-next');
+
+    press(tree, 'screen-time-owl-close');
+    press(tree, 'screen-time-owl-okay');
+
+    expect(owl(tree).props.phase).toBe('leave');
+    advance(OWL_RHYTHM.leaveMs);
+    expect(onDismiss).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows one dot per bubble, with the current one marked', () => {
+    const tree = renderLanded();
+
+    expect(OWL_BUBBLE_PAGES).toBe(4);
+    for (let page = 0; page < OWL_BUBBLE_PAGES; page++) {
+      expect(findByTestId(tree, `screen-time-owl-dot-${page}`)).toHaveLength(1);
+    }
+    expect(findByTestId(tree, 'screen-time-owl-dot-0')[0].props.accessibilityState).toEqual({ selected: true });
+    expect(findByTestId(tree, 'screen-time-owl-dot-1')[0].props.accessibilityState).toEqual({ selected: false });
+
+    press(tree, 'screen-time-owl-next');
+
+    expect(findByTestId(tree, 'screen-time-owl-dot-1')[0].props.accessibilityState).toEqual({ selected: true });
+  });
+
+  it('gives the owl something new to say with every bubble', () => {
+    const tree = renderLanded();
+
+    expect(owl(tree).props.sayCount).toBe(1);
+
+    press(tree, 'screen-time-owl-next');
+
+    expect(owl(tree).props.sayCount).toBe(2);
+  });
+
+  it('lets the owl celebrate before it goes when the parent says okay', () => {
+    const onDismiss = jest.fn();
+    const tree = renderLanded({ onDismiss });
+    press(tree, 'screen-time-owl-next');
+    press(tree, 'screen-time-owl-next');
+    press(tree, 'screen-time-owl-next');
+
+    press(tree, 'screen-time-owl-okay');
+
+    expect(owl(tree).props.phase).toBe('delight');
+    expect(onDismiss).not.toHaveBeenCalled();
+
+    advance(OWL_RHYTHM.delightMs);
+
+    expect(onDismiss).toHaveBeenCalledTimes(1);
+  });
+
+  it('can be closed from any bubble, and the owl slips away', () => {
+    const onDismiss = jest.fn();
+    const tree = renderLanded({ onDismiss });
+
+    press(tree, 'screen-time-owl-close');
+
+    expect(owl(tree).props.phase).toBe('leave');
+    advance(OWL_RHYTHM.leaveMs);
+    expect(onDismiss).toHaveBeenCalledTimes(1);
+  });
+
+  it('ignores a second press while the owl is already leaving', () => {
+    const onDismiss = jest.fn();
+    const tree = renderLanded({ onDismiss });
+
+    press(tree, 'screen-time-owl-close');
+    press(tree, 'screen-time-owl-close');
+    advance(OWL_RHYTHM.leaveMs * 2);
+
+    expect(onDismiss).toHaveBeenCalledTimes(1);
+  });
+
+  it('starts over from the first bubble when a new warning arrives', () => {
+    const tree = renderLanded();
+    press(tree, 'screen-time-owl-next');
+
+    tree.rerender(
+      <ScreenTimeOwlAlert
+        visible
+        warning={{ type: 'limit_reached', remainingTime: 0, message: 'Limit.' }}
+        onDismiss={jest.fn()}
+      />
+    );
+    advance(OWL_RHYTHM.arriveMs);
+
+    expect(json(tree)).toContain('screenTimeWarning.limitReached');
+    expect(json(tree)).not.toContain('screenTime.tips.atHome.body');
   });
 
   it('perches the owl in the bottom-left corner', () => {
@@ -128,119 +274,40 @@ describe('ScreenTimeOwlAlert', () => {
   it('leaves the app underneath usable rather than blocking it', () => {
     const tree = renderAlert();
 
-    const root = findByTestId(tree, 'screen-time-owl-alert')[0];
-
-    expect(root.props.pointerEvents).toBe('box-none');
+    expect(findByTestId(tree, 'screen-time-owl-alert')[0].props.pointerEvents).toBe('box-none');
   });
 
-  it('waves before it settles', () => {
-    const tree = renderAlert();
-
-    expect(owl(tree).props.clip).toBe('wave');
-  });
-
-  it('dismisses when the parent acknowledges it', () => {
-    const onDismiss = jest.fn();
-    const tree = renderAlert({ onDismiss });
-
-    press(tree, 'screen-time-owl-okay');
-
-    expect(onDismiss).toHaveBeenCalledTimes(1);
-  });
-
-  it('writes the guide in the box rather than hiding it behind a press', () => {
-    const tree = renderAlert();
-
-    expect(findByTestId(tree, 'real-world-tips').length).toBeGreaterThan(0);
-    expect(findByTestId(tree, 'screen-time-owl-ideas')).toHaveLength(0);
-  });
-
-  it('carries every tip in full, headline and body', () => {
-    const json = JSON.stringify(renderAlert().toJSON());
-
-    for (const key of ['atHome', 'outdoors', 'creative']) {
-      expect(json).toContain(`screenTime.tips.${key}.title`);
-      expect(json).toContain(`screenTime.tips.${key}.body`);
-    }
-  });
-
-  it('keeps the guidance note the old modal carried', () => {
-    const json = JSON.stringify(renderAlert().toJSON());
-
-    expect(json).toContain('screenTimeWarning.guidelines');
-  });
-
-  it('scrolls rather than clipping a guide too tall for the box', () => {
-    const tree = renderAlert();
+  it('keeps the bubble small: no scrolling guide, no icons', () => {
+    const tree = renderLanded();
+    press(tree, 'screen-time-owl-next');
 
     const scrollers = tree.UNSAFE_root.findAll(
       (node: any) => typeof node.props.contentContainerStyle !== 'undefined'
     );
 
-    expect(scrollers.length).toBeGreaterThan(0);
-  });
-
-  it('shows no icons or imagery in the guide', () => {
-    const json = JSON.stringify(renderAlert().toJSON());
-
+    expect(scrollers).toHaveLength(0);
+    expect(findByTestId(tree, 'real-world-tips')).toHaveLength(0);
     for (const icon of ['home-outline', 'leaf-outline', 'color-palette-outline']) {
-      expect(json).not.toContain(icon);
+      expect(json(tree)).not.toContain(icon);
     }
   });
 
-  it('names the owl for screen readers', () => {
+  it('names the owl and the close control for screen readers', () => {
+    const tree = renderLanded();
+
+    const labelled = (label: string) =>
+      tree.UNSAFE_root.findAll((node: any) => node.props.accessibilityLabel === label);
+
+    expect(labelled('screenTimeOwl.owlLabel').length).toBeGreaterThan(0);
+    expect(labelled('screenTimeWarning.closeNotification').length).toBeGreaterThan(0);
+  });
+
+  it('shows the bubble at once when motion is reduced', () => {
+    mockReducedMotion.mockReturnValue(true);
     const tree = renderAlert();
 
-    const labelled = tree.UNSAFE_root.findAll(
-      (node: any) => node.props.accessibilityLabel === 'screenTimeOwl.owlLabel'
-    );
+    advance(OWL_RHYTHM.reducedFadeMs);
 
-    expect(labelled.length).toBeGreaterThan(0);
-  });
-});
-
-describe('ScreenTimeOwlAlert clip sequencing', () => {
-  beforeEach(() => {
-    jest.useFakeTimers();
-  });
-
-  afterEach(() => {
-    jest.useRealTimers();
-  });
-
-  it('talks once the wave has finished', () => {
-    const tree = renderAlert();
-
-    act(() => {
-      owl(tree).props.onClipEnd();
-    });
-
-    expect(owl(tree).props.clip).toBe('talk');
-  });
-
-  it('falls quiet after it has said its piece', () => {
-    const tree = renderAlert();
-
-    act(() => {
-      owl(tree).props.onClipEnd();
-    });
-    act(() => {
-      jest.advanceTimersByTime(4000);
-    });
-
-    expect(owl(tree).props.clip).toBe('idle');
-  });
-
-  it('settles to idle rather than talking forever', () => {
-    const tree = renderAlert();
-
-    act(() => {
-      owl(tree).props.onClipEnd();
-    });
-    act(() => {
-      jest.advanceTimersByTime(10000);
-    });
-
-    expect(owl(tree).props.clip).toBe('idle');
+    expect(findByTestId(tree, 'screen-time-owl-bubble')).toHaveLength(1);
   });
 });

@@ -311,8 +311,20 @@ via EAS Build. This simplifies CI/CD and allows OTA updates via `expo-updates`.
 
 ### 6. Screen time enforcement
 Parents can set daily screen time limits. The `ScreenTimeProvider` context tracks active usage
-and triggers a gentle lockout overlay when the limit is reached. Time tracking pauses when the
-app is backgrounded.
+and, when a limit is near or reached, mounts `ScreenTimeOwlAlert` over the app: an owl perches
+bottom-left and delivers the message in a run of four small speech bubbles (the warning, then one
+real-world tip each) rather than a full-screen panel. Time tracking pauses when the app is
+backgrounded.
+
+The owl (`components/screen-time/owl-sprite.tsx`) is a layered puppet, not a frame sequence. Five
+cut-outs in `assets/images/screen-time/owl/` (body, head, closed eyes, open beak, raised wing) are
+stacked on one canvas and driven by Reanimated shared values: the body breathes from the feet, the
+head tilts and peeks about the neck, an eyelid window slides down over the closed-eye art, the beak
+opens in syllables while a bubble is new, and the wing rises from behind the body for the greeting.
+Geometry, timings and the pure motion curves live in `constants/owl-companion.ts`; the idle habits
+(blink, glance, ruffle) are scheduled by `hooks/use-owl-rhythm.ts` and fall silent under reduced
+motion. The alert waits for the owl's `arrive` phase to end before it shows the first bubble, and
+on dismissal plays `delight` or `leave` before calling back to the provider.
 
 ## Testing
 

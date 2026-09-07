@@ -1,19 +1,21 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, StyleSheet, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 
 import { useAccessibility } from '@/hooks/use-accessibility';
-import { Fonts } from '@/constants/theme';
 import type { ScreenTimeWarning } from '@/services/screen-time-service';
+import type { OwlPhase } from '@/constants/owl-companion';
 import { OwlSprite } from './owl-sprite';
-import { RealWorldTips } from './real-world-tips';
-import type { OwlClipName } from '@/constants/owl-companion';
+import { OwlSpeechBubble } from './owl-speech-bubble';
 
-const OWL_WIDTH_PHONE = 104;
-const OWL_WIDTH_TABLET = 132;
-const TALK_MS = 3200;
+const OWL_WIDTH_PHONE = 116;
+const OWL_WIDTH_TABLET = 148;
+const BUBBLE_MAX_PHONE = 340;
+const BUBBLE_MAX_TABLET = 420;
+
+export const OWL_BUBBLE_PAGES = 4;
 
 const TITLE_KEY: Record<ScreenTimeWarning['type'], string> = {
   approaching_limit: 'screenTimeWarning.approachingLimit',
@@ -22,6 +24,41 @@ const TITLE_KEY: Record<ScreenTimeWarning['type'], string> = {
 };
 
 const FALLBACK_TITLE_KEY = 'screenTimeWarning.notice';
+
+const TIP_KEYS = ['atHome', 'outdoors', 'creative'] as const;
+
+interface BubblePage {
+  eyebrow?: string;
+  title?: string;
+  body: string;
+  footnote?: string;
+  footnoteEmphasis?: boolean;
+}
+
+function bubblePage(
+  page: number,
+  warning: ScreenTimeWarning,
+  t: (key: string) => string
+): BubblePage {
+  if (page === 0) {
+    return {
+      title: t(TITLE_KEY[warning.type] ?? FALLBACK_TITLE_KEY),
+      body: warning.message,
+      footnote: t('screenTimeWarning.guidelines'),
+    };
+  }
+
+  const tip = TIP_KEYS[Math.min(page - 1, TIP_KEYS.length - 1)];
+  const isLast = page >= OWL_BUBBLE_PAGES - 1;
+
+  return {
+    eyebrow: page === 1 ? t('screenTime.tips.title') : undefined,
+    title: t(`screenTime.tips.${tip}.title`),
+    body: t(`screenTime.tips.${tip}.body`),
+    footnote: isLast ? t('screenTime.tips.closing') : undefined,
+    footnoteEmphasis: isLast,
+  };
+}
 
 export interface ScreenTimeOwlAlertProps {
   visible: boolean;
@@ -32,107 +69,93 @@ export interface ScreenTimeOwlAlertProps {
 export function ScreenTimeOwlAlert({ visible, warning, onDismiss }: ScreenTimeOwlAlertProps) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const { scaledFontSize, isTablet } = useAccessibility();
+  const { width: screenWidth } = useWindowDimensions();
+  const { isTablet } = useAccessibility();
 
-  const [clip, setClip] = useState<OwlClipName>('wave');
-  const quietTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const clearQuietTimer = useCallback(() => {
-    if (quietTimer.current) {
-      clearTimeout(quietTimer.current);
-      quietTimer.current = null;
-    }
-  }, []);
+  const [phase, setPhase] = useState<OwlPhase>('arrive');
+  const [page, setPage] = useState(0);
+  const [landed, setLanded] = useState(false);
+  const [sayCount, setSayCount] = useState(0);
+  const exitingRef = useRef(false);
 
   useEffect(() => {
-    if (!visible || !warning) {
-      clearQuietTimer();
-      setClip('wave');
-    }
-  }, [visible, warning, clearQuietTimer]);
+    if (!visible || !warning) return;
+    setPhase('arrive');
+    setPage(0);
+    setLanded(false);
+    setSayCount(0);
+    exitingRef.current = false;
+  }, [visible, warning]);
 
-  useEffect(() => clearQuietTimer, [clearQuietTimer]);
-
-  const handleClipEnd = useCallback(() => {
-    setClip((current) => {
-      if (current === 'wave') {
-        clearQuietTimer();
-        quietTimer.current = setTimeout(() => setClip('idle'), TALK_MS);
-        return 'talk';
+  const handlePhaseEnd = useCallback(
+    (ended: OwlPhase) => {
+      if (ended === 'arrive') {
+        setPhase('idle');
+        setLanded(true);
+        setSayCount((count) => count + 1);
+        return;
       }
-      if (current === 'delight') {
-        return 'idle';
+      if (ended === 'delight' || ended === 'leave') {
+        onDismiss();
       }
-      return current;
-    });
-  }, [clearQuietTimer]);
+    },
+    [onDismiss]
+  );
 
-  const handleDismiss = useCallback(() => {
+  const handleNext = useCallback(() => {
+    if (exitingRef.current) return;
+    Haptics.selectionAsync();
+    setPage((current) => Math.min(current + 1, OWL_BUBBLE_PAGES - 1));
+    setSayCount((count) => count + 1);
+  }, []);
+
+  const leaveAs = useCallback((exit: OwlPhase) => {
+    if (exitingRef.current) return;
+    exitingRef.current = true;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    clearQuietTimer();
-    onDismiss();
-  }, [clearQuietTimer, onDismiss]);
+    setPhase(exit);
+  }, []);
+
+  const handleOkay = useCallback(() => leaveAs('delight'), [leaveAs]);
+  const handleClose = useCallback(() => leaveAs('leave'), [leaveAs]);
 
   if (!visible || !warning) return null;
 
-  const spoken = (
-    <View style={styles.spoken}>
-      <Text style={[styles.title, { fontSize: scaledFontSize(19) }]} testID="screen-time-owl-title">
-        {t(TITLE_KEY[warning.type] ?? FALLBACK_TITLE_KEY)}
-      </Text>
-      <Text style={[styles.message, { fontSize: scaledFontSize(15) }]}>{warning.message}</Text>
-      <Text style={[styles.guidelines, { fontSize: scaledFontSize(12) }]}>
-        {t('screenTimeWarning.guidelines')}
-      </Text>
-    </View>
-  );
+  const isLast = page >= OWL_BUBBLE_PAGES - 1;
+  const content = bubblePage(page, warning, t);
+  const bubbleMaxWidth = Math.min(screenWidth - 24, isTablet ? BUBBLE_MAX_TABLET : BUBBLE_MAX_PHONE);
 
   return (
     <View
-      style={[
-        styles.root,
-        { paddingBottom: insets.bottom + 14, paddingTop: insets.top + 14 },
-      ]}
+      style={[styles.root, { paddingBottom: insets.bottom + 10, paddingTop: insets.top }]}
       pointerEvents="box-none"
       testID="screen-time-owl-alert"
     >
-      <View style={[styles.bubble, isTablet && styles.bubbleTablet]} testID="screen-time-owl-bubble">
-        <RealWorldTips
-          onClose={handleDismiss}
-          topInset={18}
-          showIcons={false}
-          showDone={false}
-          header={spoken}
+      {landed && (
+        <OwlSpeechBubble
+          eyebrow={content.eyebrow}
+          title={content.title}
+          body={content.body}
+          footnote={content.footnote}
+          footnoteEmphasis={content.footnoteEmphasis}
+          page={page}
+          pageCount={OWL_BUBBLE_PAGES}
+          nextLabel={isLast ? t('screenTimeOwl.okay') : t('common.next')}
+          closeLabel={t('screenTimeWarning.closeNotification')}
+          onNext={isLast ? handleOkay : handleNext}
+          onClose={handleClose}
+          leaving={phase !== 'idle'}
+          maxWidth={bubbleMaxWidth}
         />
+      )}
 
-        <View style={styles.actions}>
-          <Pressable
-            testID="screen-time-owl-okay"
-            accessibilityRole="button"
-            accessibilityLabel={t('screenTimeOwl.okay')}
-            onPress={handleDismiss}
-            style={styles.okay}
-          >
-            <Text style={[styles.okayLabel, { fontSize: scaledFontSize(16) }]}>
-              {t('screenTimeOwl.okay')}
-            </Text>
-          </Pressable>
-        </View>
-
-      </View>
-
-      <View style={styles.tail} />
-
-      <View
-        style={styles.perch}
-        accessibilityLabel={t('screenTimeOwl.owlLabel')}
-        accessible
-      >
+      <View style={styles.perch} accessible accessibilityLabel={t('screenTimeOwl.owlLabel')}>
         <OwlSprite
           testID="screen-time-owl"
-          clip={clip}
+          phase={phase}
+          sayCount={sayCount}
           width={isTablet ? OWL_WIDTH_TABLET : OWL_WIDTH_PHONE}
-          onClipEnd={handleClipEnd}
+          onPhaseEnd={handlePhaseEnd}
         />
       </View>
     </View>
@@ -147,81 +170,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     zIndex: 1000,
   },
-  bubble: {
-    width: '100%',
-    maxWidth: 460,
-    height: '76%',
-    backgroundColor: 'rgba(18, 24, 46, 0.97)',
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.14)',
-    paddingBottom: 12,
-    marginBottom: 14,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.34,
-    shadowRadius: 16,
-    elevation: 10,
-  },
-  tail: {
-    marginLeft: 40,
-    marginTop: -21,
-    marginBottom: 5,
-    width: 16,
-    height: 16,
-    backgroundColor: 'rgba(18, 24, 46, 0.97)',
-    borderRightWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.14)',
-    transform: [{ rotate: '45deg' }],
-  },
-  spoken: {
-    marginBottom: 14,
-  },
-  title: {
-    fontFamily: Fonts.rounded,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    textAlign: 'center',
-    marginBottom: 6,
-  },
-  message: {
-    fontFamily: Fonts.rounded,
-    color: 'rgba(255, 255, 255, 0.86)',
-    textAlign: 'center',
-    lineHeight: 21,
-  },
-  guidelines: {
-    fontFamily: Fonts.rounded,
-    color: 'rgba(255, 255, 255, 0.58)',
-    textAlign: 'center',
-    lineHeight: 17,
-    marginTop: 8,
-  },
-  actions: {
-    paddingHorizontal: 18,
-    paddingTop: 4,
-  },
-  okay: {
-    height: 50,
-    borderRadius: 25,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.22)',
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  okayLabel: {
-    fontFamily: Fonts.rounded,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  bubbleTablet: {
-    height: '72%',
-    maxWidth: 600,
-  },
   perch: {
-    marginLeft: 6,
+    marginTop: -2,
+    marginLeft: 2,
   },
 });
