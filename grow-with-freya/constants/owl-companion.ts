@@ -104,7 +104,7 @@ export const OWL_PERCH = {
   ledge: require('@/assets/images/screen-time/owl/owl-ledge.webp'),
   cloud: require('@/assets/images/ui-elements/night-cloud-left.webp'),
   baseOwlWidth: 116,
-  ledgeWidth: 236,
+  ledgeWidth: 150,
   ledgeHeight: 104,
   platformTop: 24,
   footOverlap: 7,
@@ -128,8 +128,7 @@ export interface PerchFrame {
   height: number;
   owl: PerchBox;
   ledge: PerchBox;
-  cloudFront: PerchBox;
-  cloudBack: PerchBox;
+  cloud: PerchBox;
   slideFrom: number;
 }
 
@@ -139,8 +138,7 @@ export function owlPerchFrame(owlWidth: number): PerchFrame {
   const ledgeWidth = OWL_PERCH.ledgeWidth * scale;
   const ledgeHeight = OWL_PERCH.ledgeHeight * scale;
   const owlBottom = (OWL_PERCH.ledgeHeight - OWL_PERCH.platformTop - OWL_PERCH.footOverlap) * scale;
-  const frontWidth = 230 * scale;
-  const backWidth = 150 * scale;
+  const cloudWidth = 230 * scale;
 
   return {
     scale,
@@ -148,8 +146,7 @@ export function owlPerchFrame(owlWidth: number): PerchFrame {
     height: owlBottom + owlHeight,
     owl: { left: OWL_PERCH.owlLeft * scale, bottom: owlBottom, width: owlWidth, height: owlHeight },
     ledge: { left: 0, bottom: 0, width: ledgeWidth, height: ledgeHeight },
-    cloudFront: { left: -70 * scale, bottom: -42 * scale, width: frontWidth, height: frontWidth * OWL_PERCH.cloudAspect },
-    cloudBack: { left: 120 * scale, bottom: -60 * scale, width: backWidth, height: backWidth * OWL_PERCH.cloudAspect },
+    cloud: { left: -70 * scale, bottom: -42 * scale, width: cloudWidth, height: cloudWidth * OWL_PERCH.cloudAspect },
     slideFrom: -(ledgeWidth + OWL_PERCH.slideOvershoot),
   };
 }

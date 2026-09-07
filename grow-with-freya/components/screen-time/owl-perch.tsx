@@ -99,12 +99,8 @@ export const OwlPerch = memo(function OwlPerch({
     transform: [{ translateX: slide.value }],
   }));
 
-  const frontCloudStyle = useAnimatedStyle(() => ({
+  const cloudStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: drift.value * OWL_PERCH.driftPixels }],
-  }));
-
-  const backCloudStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: -drift.value * OWL_PERCH.driftPixels * 0.6 }],
   }));
 
   return (
@@ -115,10 +111,6 @@ export const OwlPerch = memo(function OwlPerch({
       accessible={Boolean(accessibilityLabel)}
       accessibilityLabel={accessibilityLabel}
     >
-      <Animated.View testID="owl-perch-cloud-back" style={[styles.box, boxStyle(frame.cloudBack), backCloudStyle]}>
-        <Image source={OWL_PERCH.cloud} style={[styles.fill, styles.flipped]} contentFit="fill" transition={0} />
-      </Animated.View>
-
       <View testID="owl-perch-ledge" style={[styles.box, boxStyle(frame.ledge)]}>
         <Image source={OWL_PERCH.ledge} style={styles.fill} contentFit="fill" transition={0} />
       </View>
@@ -136,8 +128,8 @@ export const OwlPerch = memo(function OwlPerch({
         />
       </View>
 
-      <Animated.View testID="owl-perch-cloud-front" style={[styles.box, boxStyle(frame.cloudFront), frontCloudStyle]}>
-        <Image source={OWL_PERCH.cloud} style={[styles.fill, styles.frontCloud]} contentFit="fill" transition={0} />
+      <Animated.View testID="owl-perch-cloud" style={[styles.box, boxStyle(frame.cloud), cloudStyle]}>
+        <Image source={OWL_PERCH.cloud} style={[styles.fill, styles.cloud]} contentFit="fill" transition={0} />
       </Animated.View>
     </Animated.View>
   );
@@ -158,11 +150,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  flipped: {
-    transform: [{ scaleX: -1 }],
-    opacity: 0.6,
-  },
-  frontCloud: {
+  cloud: {
     opacity: 0.85,
   },
 });

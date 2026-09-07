@@ -78,12 +78,19 @@ describe('owlPerchFrame', () => {
     expect(frame.slideFrom).toBeLessThan(-frame.width);
   });
 
-  it('keeps the clouds low around the base', () => {
+  it('keeps the cloud low and off the left edge', () => {
     const frame = owlPerchFrame(116);
 
-    expect(frame.cloudFront.bottom).toBeLessThan(0);
-    expect(frame.cloudBack.bottom).toBeLessThan(0);
-    expect(frame.cloudFront.left).toBeLessThan(0);
+    expect(frame.cloud.bottom).toBeLessThan(0);
+    expect(frame.cloud.left).toBeLessThan(0);
+  });
+
+  it('stops the ledge just past the owl, so it stands on the edge', () => {
+    const frame = owlPerchFrame(116);
+    const beyondTheOwl = frame.width - (frame.owl.left + frame.owl.width);
+
+    expect(beyondTheOwl).toBeGreaterThan(0);
+    expect(beyondTheOwl).toBeLessThan(frame.owl.width / 4);
   });
 });
 
@@ -93,7 +100,7 @@ describe('OwlPerch', () => {
     reanimated.withTiming.mockClear();
   });
 
-  it('layers the back cloud, the ledge, the owl and the front cloud in that order', () => {
+  it('layers the ledge, the owl and the cloud in that order', () => {
     const tree = renderPerch();
 
     const order = tree.UNSAFE_root
@@ -101,7 +108,7 @@ describe('OwlPerch', () => {
       .map((node: any) => node.props.testID)
       .filter((id: string, index: number, all: string[]) => all.indexOf(id) === index);
 
-    expect(order).toEqual(['owl-perch-cloud-back', 'owl-perch-ledge', 'owl-perch-owl', 'owl-perch-sprite', 'owl-perch-cloud-front']);
+    expect(order).toEqual(['owl-perch-ledge', 'owl-perch-owl', 'owl-perch-sprite', 'owl-perch-cloud']);
   });
 
   it('sizes itself from the owl', () => {
@@ -146,7 +153,7 @@ describe('OwlPerch', () => {
     expect(timingsOf(OWL_RHYTHM.delightFadeMs)).toBeGreaterThan(0);
   });
 
-  it('lets the clouds drift', () => {
+  it('lets the cloud drift', () => {
     renderPerch();
 
     expect(timingsOf(OWL_PERCH.driftMs / 2)).toBeGreaterThan(0);
@@ -177,7 +184,7 @@ describe('OwlPerch', () => {
       expect(timingsOf(OWL_RHYTHM.arriveMs)).toBe(0);
     });
 
-    it('holds the clouds still', () => {
+    it('holds the cloud still', () => {
       renderPerch();
 
       expect(timingsOf(OWL_PERCH.driftMs / 2)).toBe(0);
