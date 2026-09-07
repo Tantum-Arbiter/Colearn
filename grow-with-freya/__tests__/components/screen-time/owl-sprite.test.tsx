@@ -46,8 +46,12 @@ function timingsOf(duration: number): number {
   ).length;
 }
 
+// A blink's shape is rolled at random: roughly one in seven is the slow blink,
+// which shuts over slowBlinkDownMs and records no quick-blink timing at all.
+// Counting only the quick shape made every test that waits for a blink fail
+// about that often.
 function blinkCalls(): number {
-  return timingsOf(OWL_RHYTHM.blinkDownMs);
+  return timingsOf(OWL_RHYTHM.blinkDownMs) + timingsOf(OWL_RHYTHM.slowBlinkDownMs);
 }
 
 function talkCalls(): number {
@@ -88,10 +92,30 @@ describe('OwlSprite layers', () => {
     expect(images[0].props.source).toBe(OWL_LAYERS[name]);
   });
 
-  it('turns the head about the neck', () => {
+  // The head cut-out traces the head the body layer already carries, so it
+  // covers it exactly and only exactly. Turned or slid even slightly, the
+  // body's own ear and cheek appear beside the head's own and the owl reads as
+  // two pictures laid over each other, with a gap down its left side.
+  it('gives the head no motion of its own to slide it off the body', () => {
     const tree = renderOwl();
 
-    expect(styleOf(tree, 'owl-head').transformOrigin).toBe(owlOrigin(OWL_RIG.headPivot));
+    expect(styleOf(tree, 'owl-head').transform).toBeUndefined();
+    expect(styleOf(tree, 'owl-head').transformOrigin).toBeUndefined();
+  });
+
+  it('tilts, peeks and bobs the whole owl from its feet', () => {
+    const tree = renderOwl();
+
+    expect(styleOf(tree, 'owl-gesture').transformOrigin).toBe('50% 100%');
+  });
+
+  it('keeps the head inside the body, so a squash carries both', () => {
+    const tree = renderOwl();
+
+    const body = tree.UNSAFE_root.findAll((node: any) => node.props.testID === 'owl-body')[0];
+    const heads = body.findAll((node: any) => node.props.testID === 'owl-head');
+
+    expect(heads.length).toBeGreaterThan(0);
   });
 
   it('swings the wing from the shoulder', () => {
@@ -106,13 +130,14 @@ describe('OwlSprite layers', () => {
     expect(styleOf(tree, 'owl-body').transformOrigin).toBe('50% 100%');
   });
 
-  it('clips the closed eyes behind a lid window', () => {
+  // The two eyes are drawn at different heights, so the straight-edged window
+  // this used to sweep down reached the right eye first: a blink showed as a
+  // rectangle closing over one eye alone. Fading carries both together.
+  it('fades the closed eyes in rather than clipping them behind a window', () => {
     const tree = renderOwl();
 
-    const window = styleOf(tree, 'owl-eye-window');
-
-    expect(window.overflow).toBe('hidden');
-    expect(window.position).toBe('absolute');
+    expect(styleOf(tree, 'owl-eye-lids').overflow).toBeUndefined();
+    expect(findByTestId(tree, 'owl-eye-window')).toHaveLength(0);
   });
 
   it('faces right by default and mirrors itself to point left', () => {

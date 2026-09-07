@@ -16,14 +16,16 @@ export type OwlLayerName = keyof typeof OWL_LAYERS;
 export const OWL_LAYER_ORDER: readonly OwlLayerName[] = ['wing', 'body', 'head', 'eyes', 'beak'];
 
 export const OWL_RIG = {
-  headPivot: { x: 86, y: 98 },
   wingPivot: { x: 146, y: 100 },
-  eyeWindow: { top: 24, height: 66 },
   wingTuckedDegrees: -75,
+  // How far the tip comes up. The wing layer is only the four feather tips,
+  // and the body already carries the folded wing they belong to, so the tip
+  // has to stay overlapping it: lifted much past -45 it clears the folded wing
+  // and reads as a second wing hanging off the owl.
+  wingLiftedDegrees: -55,
   wingWaveDegrees: 10,
   breathScaleY: 0.022,
   breathScaleX: 0.008,
-  breathHeadLift: 1.2,
   tiltDegrees: 6,
   peekPixels: 3,
   peekDegrees: 2,
@@ -258,13 +260,19 @@ export function waveDuration(): number {
   );
 }
 
-export function wingPose(lift: number, wave: number): { rotate: number; opacity: number } {
+/**
+ * Where the wing tip sits for a given lift and wave.
+ *
+ * It no longer fades in. Tucked, the tip is behind the folded wing the body
+ * carries -- 28 pixels of a 348px frame escape it -- so it can stay opaque and
+ * simply slide out from behind it. Fading it in on top of a wing that was
+ * already there is what made a second wing appear out of nowhere.
+ */
+export function wingPose(lift: number, wave: number): { rotate: number } {
   'worklet';
   const l = Math.min(Math.max(lift, 0), 1);
-  return {
-    rotate: OWL_RIG.wingTuckedDegrees * (1 - l) + wave * OWL_RIG.wingWaveDegrees,
-    opacity: Math.min(1, l * 2.4),
-  };
+  const swing = OWL_RIG.wingTuckedDegrees * (1 - l) + OWL_RIG.wingLiftedDegrees * l;
+  return { rotate: swing + wave * OWL_RIG.wingWaveDegrees * l };
 }
 
 export function landingSquash(progress: number): { x: number; y: number } {
@@ -276,16 +284,6 @@ export function landingSquash(progress: number): { x: number; y: number } {
   return {
     x: 1 + depth * 0.09,
     y: 1 - depth * 0.12,
-  };
-}
-
-export function lidReveal(lid: number, scale: number): { windowTop: number; contentTop: number } {
-  'worklet';
-  const height = OWL_RIG.eyeWindow.height * scale;
-  const hidden = (1 - Math.min(Math.max(lid, 0), 1)) * height;
-  return {
-    windowTop: OWL_RIG.eyeWindow.top * scale - hidden,
-    contentTop: -OWL_RIG.eyeWindow.top * scale + hidden,
   };
 }
 

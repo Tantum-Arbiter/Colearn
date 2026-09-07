@@ -11,7 +11,6 @@ import {
   blinkShape,
   glanceHold,
   landingSquash,
-  lidReveal,
   nextBlinkDelay,
   nextGlanceDelay,
   nextRuffleDelay,
@@ -43,10 +42,6 @@ describe('owlOrigin', () => {
 
   it('rounds to whole percentages, which the native parser accepts', () => {
     expect(owlOrigin({ x: 86, y: 98 })).not.toMatch(/\./);
-  });
-
-  it('puts the head pivot at the neck', () => {
-    expect(owlOrigin(OWL_RIG.headPivot)).toBe('49% 60%');
   });
 
   it('puts the wing pivot at the shoulder', () => {
@@ -219,22 +214,32 @@ describe('waveDuration', () => {
 });
 
 describe('wingPose', () => {
-  it('tucks the wing out of sight at rest', () => {
-    expect(wingPose(0, 0)).toEqual({ rotate: OWL_RIG.wingTuckedDegrees, opacity: 0 });
+  it('tucks the wing behind the folded one at rest', () => {
+    expect(wingPose(0, 0)).toEqual({ rotate: OWL_RIG.wingTuckedDegrees });
   });
 
-  it('raises it fully in view', () => {
-    expect(wingPose(1, 0)).toEqual({ rotate: 0, opacity: 1 });
+  it('raises the tip without clearing the folded wing', () => {
+    expect(wingPose(1, 0)).toEqual({ rotate: OWL_RIG.wingLiftedDegrees });
   });
 
-  it('is fully visible before it is half way up', () => {
-    expect(wingPose(0.45, 0).opacity).toBe(1);
-    expect(wingPose(0.2, 0).opacity).toBeLessThan(1);
+  // Past about -45 the tip separates from the folded wing the body carries and
+  // the owl appears to grow a second one, so the whole wave has to stay under
+  // that however the beats fall.
+  it('keeps the tip overlapping the folded wing through the whole wave', () => {
+    for (const lift of [0, 0.25, 0.5, 0.75, 1]) {
+      for (const wave of [-1, 0, 1]) {
+        expect(wingPose(lift, wave).rotate).toBeLessThanOrEqual(-45);
+      }
+    }
   });
 
   it('adds the wave on top of the raised angle', () => {
-    expect(wingPose(1, 1).rotate).toBe(OWL_RIG.wingWaveDegrees);
-    expect(wingPose(1, -1).rotate).toBe(-OWL_RIG.wingWaveDegrees);
+    expect(wingPose(1, 1).rotate).toBe(OWL_RIG.wingLiftedDegrees + OWL_RIG.wingWaveDegrees);
+    expect(wingPose(1, -1).rotate).toBe(OWL_RIG.wingLiftedDegrees - OWL_RIG.wingWaveDegrees);
+  });
+
+  it('has no wave to add while the tip is still tucked away', () => {
+    expect(wingPose(0, 1)).toEqual(wingPose(0, -1));
   });
 
   it('clamps the lift', () => {
@@ -274,38 +279,6 @@ describe('landingSquash', () => {
 
   it('never snaps between squash and rebound', () => {
     expectSmooth(landingSquash, { steps: 300 });
-  });
-});
-
-describe('lidReveal', () => {
-  const scale = 0.7;
-
-  it('keeps the closed-eye art fixed on the face however far the lid is down', () => {
-    [0, 0.25, 0.5, 1].forEach((lid) => {
-      const { windowTop, contentTop } = lidReveal(lid, scale);
-      expect(windowTop + contentTop).toBeCloseTo(0, 6);
-    });
-  });
-
-  it('reveals nothing with the lid up', () => {
-    const { windowTop } = lidReveal(0, scale);
-    const windowBottom = windowTop + OWL_RIG.eyeWindow.height * scale;
-
-    expect(windowBottom).toBeCloseTo(OWL_RIG.eyeWindow.top * scale, 6);
-  });
-
-  it('covers the whole eye with the lid down', () => {
-    expect(lidReveal(1, scale)).toEqual({
-      windowTop: OWL_RIG.eyeWindow.top * scale,
-      contentTop: -OWL_RIG.eyeWindow.top * scale,
-    });
-  });
-
-  it('comes down from the top of the eye', () => {
-    const half = lidReveal(0.5, scale);
-    const bottom = half.windowTop + OWL_RIG.eyeWindow.height * scale;
-
-    expect(bottom).toBeCloseTo((OWL_RIG.eyeWindow.top + OWL_RIG.eyeWindow.height / 2) * scale, 6);
   });
 });
 

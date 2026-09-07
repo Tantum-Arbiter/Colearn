@@ -23,7 +23,6 @@ import {
   arrivalOffset,
   landingSquash,
   leaveOffset,
-  lidReveal,
   owlOrigin,
   talkBeats,
   wingPose,
@@ -45,7 +44,6 @@ export interface OwlSpriteProps {
   testID?: string;
 }
 
-const HEAD_ORIGIN = owlOrigin(OWL_RIG.headPivot);
 const WING_ORIGIN = owlOrigin(OWL_RIG.wingPivot);
 
 const settle = Easing.out(Easing.cubic);
@@ -373,7 +371,6 @@ export const OwlSprite = memo(function OwlSprite({
   testID = 'owl-sprite',
 }: OwlSpriteProps) {
   const reduceMotion = useReducedMotion();
-  const scale = width / OWL_CANVAS.width;
   const height = width * (OWL_CANVAS.height / OWL_CANVAS.width);
 
   const fade = useSharedValue(phase === 'arrive' ? 0 : 1);
@@ -512,34 +509,32 @@ export const OwlSprite = memo(function OwlSprite({
     };
   });
 
-  const headStyle = useAnimatedStyle(() => ({
+  // Tilts, peeks and bobs move the whole owl rather than the head alone.
+  // The head cut-out is traced from the head the body layer already carries,
+  // so it covers it exactly and only exactly: at half a degree of turn the
+  // body's own ear and cheek appear alongside the head's, and the owl reads as
+  // two pictures laid over each other. Nothing short of re-cutting the body
+  // without its head buys back an independent head turn.
+  const gestureStyle = useAnimatedStyle(() => ({
     transform: [
       { translateX: peekX.value },
-      { translateY: bob.value - OWL_RIG.breathHeadLift * breath.value },
+      { translateY: bob.value },
       { rotate: `${tilt.value + shake.value}deg` },
       { scaleX: peekScale.value },
     ],
   }));
 
-  const lidWindowStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: lidReveal(lid.value, scale).windowTop }],
-  }));
-
-  const lidContentStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: lidReveal(lid.value, scale).contentTop }],
-  }));
+  // The closed eyes fade in over the open ones rather than being swept in
+  // behind a sliding window. The two eyes are drawn at different heights, so a
+  // straight-edged window reached one before the other and a blink showed as a
+  // rectangle closing over the right eye alone.
+  const lidStyle = useAnimatedStyle(() => ({ opacity: lid.value }));
 
   const beakStyle = useAnimatedStyle(() => ({ opacity: beak.value }));
 
-  const wingStyle = useAnimatedStyle(() => {
-    const pose = wingPose(wingLift.value, wave.value);
-    return {
-      opacity: pose.opacity,
-      transform: [{ rotate: `${pose.rotate}deg` }],
-    };
-  });
-
-  const eyeWindowHeight = OWL_RIG.eyeWindow.height * scale;
+  const wingStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${wingPose(wingLift.value, wave.value).rotate}deg` }],
+  }));
 
   return (
     <View
@@ -548,28 +543,27 @@ export const OwlSprite = memo(function OwlSprite({
       pointerEvents="none"
     >
       <Animated.View style={[styles.layerBox, rigStyle]}>
-        <Animated.View testID="owl-wing" style={[styles.layerBox, styles.wingOrigin, wingStyle]}>
-          <Image testID="owl-layer-wing" source={OWL_LAYERS.wing} style={styles.layer} contentFit="fill" transition={0} />
-        </Animated.View>
-
-        <Animated.View testID="owl-body" style={[styles.layerBox, styles.bodyOrigin, bodyStyle]}>
-          <Image testID="owl-layer-body" source={OWL_LAYERS.body} style={styles.layer} contentFit="fill" transition={0} />
-        </Animated.View>
-
-        <Animated.View testID="owl-head" style={[styles.layerBox, styles.headOrigin, headStyle]}>
-          <Image testID="owl-layer-head" source={OWL_LAYERS.head} style={styles.layer} contentFit="fill" transition={0} />
-
-          <Animated.View
-            testID="owl-eye-window"
-            style={[styles.eyeWindow, { width, height: eyeWindowHeight }, lidWindowStyle]}
-          >
-            <Animated.View style={[styles.layerBox, { width, height }, lidContentStyle]}>
-              <Image testID="owl-layer-eyes" source={OWL_LAYERS.eyes} style={styles.layer} contentFit="fill" transition={0} />
-            </Animated.View>
+        <Animated.View testID="owl-gesture" style={[styles.layerBox, styles.plantedOrigin, gestureStyle]}>
+          <Animated.View testID="owl-wing" style={[styles.layerBox, styles.wingOrigin, wingStyle]}>
+            <Image testID="owl-layer-wing" source={OWL_LAYERS.wing} style={styles.layer} contentFit="fill" transition={0} />
           </Animated.View>
 
-          <Animated.View style={[styles.layerBox, beakStyle]}>
-            <Image testID="owl-layer-beak" source={OWL_LAYERS.beak} style={styles.layer} contentFit="fill" transition={0} />
+          {/* the head rides inside the body, so a squash, a ruffle or a breath
+              carries both and never slides one over the other */}
+          <Animated.View testID="owl-body" style={[styles.layerBox, styles.plantedOrigin, bodyStyle]}>
+            <Image testID="owl-layer-body" source={OWL_LAYERS.body} style={styles.layer} contentFit="fill" transition={0} />
+
+            <View testID="owl-head" style={styles.layerBox}>
+              <Image testID="owl-layer-head" source={OWL_LAYERS.head} style={styles.layer} contentFit="fill" transition={0} />
+
+              <Animated.View testID="owl-eye-lids" style={[styles.layerBox, lidStyle]}>
+                <Image testID="owl-layer-eyes" source={OWL_LAYERS.eyes} style={styles.layer} contentFit="fill" transition={0} />
+              </Animated.View>
+
+              <Animated.View style={[styles.layerBox, beakStyle]}>
+                <Image testID="owl-layer-beak" source={OWL_LAYERS.beak} style={styles.layer} contentFit="fill" transition={0} />
+              </Animated.View>
+            </View>
           </Animated.View>
         </Animated.View>
       </Animated.View>
@@ -597,16 +591,8 @@ const styles = StyleSheet.create({
   wingOrigin: {
     transformOrigin: WING_ORIGIN,
   },
-  bodyOrigin: {
+  // everything the owl does, it does from its feet: they stay on the stone
+  plantedOrigin: {
     transformOrigin: '50% 100%',
-  },
-  headOrigin: {
-    transformOrigin: HEAD_ORIGIN,
-  },
-  eyeWindow: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    overflow: 'hidden',
   },
 });
