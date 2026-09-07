@@ -60,6 +60,7 @@ import type { Badge } from '@/components/progress/progress-model';
 import { ProfileView } from '@/components/profile/profile-view';
 import { ProfileEditSheet } from '@/components/profile/profile-edit-sheet';
 import { OwlGuide } from '@/components/owl-guide';
+import { useGuideScroller } from '@/components/owl-guide/use-guide-scroller';
 import { ParentsOnlyModal } from '@/components/ui/parents-only-modal';
 import { useParentsOnlyChallenge } from '@/hooks/use-parents-only-challenge';
 import {
@@ -172,6 +173,10 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
     search: navSearchRef,
     profile: navProfileRef,
   }), []);
+  // the two scrolling pages a tour runs over: this screen's own column, and
+  // the progress page's, which brings its own scroll view
+  const pageScroller = useGuideScroller();
+  const progressScroller = useGuideScroller();
   const catalogueTourTargets = useMemo(() => ({
     theme_tiles: themeTilesRef,
     filter_toggle: filterToggleRef,
@@ -886,6 +891,7 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
               onRecommend={handleRecommend}
               onDetailVisibleChange={setBadgeDetailOpen}
               guideTargets={progressGuideTargets}
+              scrollBinding={progressScroller}
             />
           ) : (
             <>
@@ -940,13 +946,16 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
             )}
 
             <ScrollView
+              ref={pageScroller.scrollRef}
+              onScroll={pageScroller.onScroll}
+              scrollEventThrottle={16}
               style={[styles.scroll, { marginBottom: navClearance(insets.bottom) }]}
               contentContainerStyle={[
                 styles.scrollContent,
                 {
                   paddingTop: isTablet ? SPACE_4 : 0,
                   paddingHorizontal: margin,
-                  paddingBottom: SPACE_4 + (textSizeScale - 1) * 40,
+                  paddingBottom: SPACE_4 + (textSizeScale - 1) * 40 + pageScroller.reserve,
                 },
               ]}
               scrollEnabled={!interactionLocked}
@@ -1055,10 +1064,30 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
 
     {/* one tour per page, over the whole shell so the bar can be pointed at;
         each starts only while its own section is the one on show */}
-    <OwlGuide id="catalogue_tour" active={navSection === 'home' && !interactionLocked} targets={catalogueTourTargets} />
-    <OwlGuide id="progress_tour" active={navSection === 'progress'} targets={progressTourTargets} />
-    <OwlGuide id="search_tour" active={navSection === 'search'} targets={searchTourTargets} />
-    <OwlGuide id="profile_tour" active={navSection === 'profile' && !editProfileOpen} targets={profileTourTargets} />
+    <OwlGuide
+      id="catalogue_tour"
+      active={navSection === 'home' && !interactionLocked}
+      targets={catalogueTourTargets}
+      scroller={pageScroller.scroller}
+    />
+    <OwlGuide
+      id="progress_tour"
+      active={navSection === 'progress'}
+      targets={progressTourTargets}
+      scroller={progressScroller.scroller}
+    />
+    <OwlGuide
+      id="search_tour"
+      active={navSection === 'search'}
+      targets={searchTourTargets}
+      scroller={pageScroller.scroller}
+    />
+    <OwlGuide
+      id="profile_tour"
+      active={navSection === 'profile' && !editProfileOpen}
+      targets={profileTourTargets}
+      scroller={pageScroller.scroller}
+    />
     </View>
   );
 }

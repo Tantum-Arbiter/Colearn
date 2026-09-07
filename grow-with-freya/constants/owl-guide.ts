@@ -94,10 +94,12 @@ export const GUIDE_STEPS: Record<GuideId, readonly GuideStep[]> = {
     ['modes_musical', 'musical'],
     ['modes_jigsaw', 'jigsaw'],
   ]),
+  // down the sheet in the order it lists them -- read, play along, record --
+  // rather than jumping to the last control and back up to the middle one
   book_mode_tour: [
     { id: 'read_button', ...keyed('bookMode', 'read_button', 'read'), target: 'read_button', shape: 'rounded-rect', radius: 16 },
-    { id: 'record_button', ...keyed('bookMode', 'record_button', 'record'), target: 'record_button', shape: 'rounded-rect', radius: 16 },
     { id: 'narrate_button', ...keyed('bookMode', 'narrate_button', 'narrate'), target: 'narrate_button', shape: 'rounded-rect', radius: 16 },
+    { id: 'record_button', ...keyed('bookMode', 'record_button', 'record'), target: 'record_button', shape: 'rounded-rect', radius: 16 },
   ],
   story_reader_tips: plain('storyReader', [
     ['story_welcome', 'welcome'],
@@ -195,6 +197,10 @@ export const GUIDE_TIMING = {
   showDelayMs: 600,
   landscapeShowDelayMs: 1500,
   measureSettleMs: 100,
+  // a page scrolled to reveal a target is still gliding when the ordinary
+  // settle is up; measuring then lands the spotlight where the target was
+  // passing rather than where it stopped
+  scrollSettleMs: 420,
   turnSettleMs: 500,
   dimMs: 260,
 } as const;
@@ -310,15 +316,15 @@ function overlaps(a: TargetRect, b: TargetRect, margin = 8): boolean {
   );
 }
 
-export function placeGuideBubble(
+/** Where the bubble sits when nothing has pushed it off the owl's perch. */
+function restingPlacement(
   frame: GuideFrame,
   insets: GuideInsets,
   perch: PerchSize,
   bubble: BubbleSize,
-  landscape: boolean,
-  target?: TargetRect | null
+  landscape: boolean
 ): BubblePlacement {
-  const resting: BubblePlacement = landscape
+  return landscape
     ? {
         mode: 'perch',
         left: perch.width + BUBBLE_SIDE_GAP,
@@ -338,17 +344,64 @@ export function placeGuideBubble(
         // step is about. Two tails on one bubble read as a mistake.
         pointer: null,
       };
+}
 
+/** What the resting bubble and the owl beneath it cover, between them. */
+function restingRects(
+  frame: GuideFrame,
+  perch: PerchSize,
+  bubble: BubbleSize,
+  resting: BubblePlacement
+): { bubble: TargetRect; perch: TargetRect } {
+  return {
+    bubble: {
+      x: resting.left,
+      y: frame.height - (resting.bottom ?? 0) - bubble.height,
+      width: bubble.maxWidth,
+      height: bubble.height,
+    },
+    perch: { x: 0, y: frame.height - perch.height, width: perch.width, height: perch.height },
+  };
+}
+
+/**
+ * How far a scrolling page has to move for a highlight to sit clear of the
+ * bubble resting by the owl, so the bubble can stay where it belongs rather
+ * than being lifted off the perch to make room.
+ *
+ * Positive is a scroll down by that many points. Zero means the highlight is
+ * already clear -- including when it is above the resting area rather than
+ * behind it, which scrolling would only make worse.
+ */
+export function guideRevealShift(
+  frame: GuideFrame,
+  insets: GuideInsets,
+  perch: PerchSize,
+  bubble: BubbleSize,
+  landscape: boolean,
+  target: TargetRect
+): number {
+  const resting = restingPlacement(frame, insets, perch, bubble, landscape);
+  const rects = restingRects(frame, perch, bubble, resting);
+  if (!overlaps(target, rects.bubble) && !overlaps(target, rects.perch)) return 0;
+
+  const clearOf = Math.min(rects.bubble.y, rects.perch.y) - BUBBLE_GAP;
+  return Math.max(0, Math.round(target.y + target.height - clearOf));
+}
+
+export function placeGuideBubble(
+  frame: GuideFrame,
+  insets: GuideInsets,
+  perch: PerchSize,
+  bubble: BubbleSize,
+  landscape: boolean,
+  target?: TargetRect | null
+): BubblePlacement {
+  const resting = restingPlacement(frame, insets, perch, bubble, landscape);
   if (!target) return resting;
 
-  const restingRect: TargetRect = {
-    x: resting.left,
-    y: frame.height - (resting.bottom ?? 0) - bubble.height,
-    width: bubble.maxWidth,
-    height: bubble.height,
-  };
-  const perchRect: TargetRect = { x: 0, y: frame.height - perch.height, width: perch.width, height: perch.height };
-  if (!overlaps(target, restingRect) && !overlaps(target, perchRect)) return resting;
+  const rects = restingRects(frame, perch, bubble, resting);
+  if (!overlaps(target, rects.bubble) && !overlaps(target, rects.perch)) return resting;
 
   const width = bubble.maxWidth;
   const minLeft = BUBBLE_MARGIN + insets.left;

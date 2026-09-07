@@ -13,6 +13,7 @@ import { CircleActionButton } from '@/components/child-ui/circle-action-button';
 import { PageTitle } from '@/components/child-ui/page-title';
 import { PageTagline } from '@/components/child-ui/page-tagline';
 import { SectionHeading } from '@/components/child-ui/section-heading';
+import type { GuideScrollerBinding } from '@/components/owl-guide/use-guide-scroller';
 import { navClearance } from '@/components/child-ui/child-bottom-navigation';
 import {
   COVER_GRID_GAP,
@@ -50,9 +51,19 @@ interface ProgressScreenProps {
   embedded?: boolean;
   /** So the progress tour can point the owl at each part of the page. */
   guideTargets?: ProgressGuideTargets;
+  /** Hands the page's scroll to the tour, which moves it to bring a step's
+   *  subject clear of the owl rather than taking the bubble off him. */
+  scrollBinding?: Pick<GuideScrollerBinding, 'scrollRef' | 'onScroll' | 'reserve'>;
 }
 
-export function ProgressScreen({ onBack, onRecommend, onDetailVisibleChange, embedded = false, guideTargets }: ProgressScreenProps) {
+export function ProgressScreen({
+  onBack,
+  onRecommend,
+  onDetailVisibleChange,
+  embedded = false,
+  guideTargets,
+  scrollBinding,
+}: ProgressScreenProps) {
   const insets = useSafeAreaInsets();
   const { width: windowWidth } = useWindowDimensions();
   const { isTablet, scaledFontSize } = useAccessibility();
@@ -122,8 +133,14 @@ export function ProgressScreen({ onBack, onRecommend, onDetailVisibleChange, emb
       </View>
 
       <ScrollView
+        ref={scrollBinding?.scrollRef}
+        onScroll={scrollBinding?.onScroll}
+        scrollEventThrottle={16}
         style={[styles.scroll, { marginBottom: navClearance(insets.bottom) }]}
-        contentContainerStyle={[styles.scrollContent, { paddingHorizontal: margin }]}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingHorizontal: margin, paddingBottom: scrollBinding?.reserve ?? 0 },
+        ]}
       >
         <View style={[styles.column, { maxWidth: CONTENT_MAX_WIDTH }]}>
           <View ref={guideTargets?.hero} collapsable={false}>

@@ -23,6 +23,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { useParentsOnlyChallenge } from '@/hooks/use-parents-only-challenge';
 import { OwlGuide } from '@/components/owl-guide';
+import { useGuideScroller } from '@/components/owl-guide/use-guide-scroller';
 import { useOwlGuide } from '@/contexts/owl-guide-context';
 import { SubscriptionOverlay } from '@/components/ui/subscription-overlay';
 import * as Haptics from 'expo-haptics';
@@ -262,6 +263,8 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
   // Block navigation while the main menu tutorial is pending (first-time sign-in).
   // This prevents the user tapping a button before the tutorial overlay mounts.
   const { shouldShowGuide, isLoaded: tutorialLoaded } = useOwlGuide();
+  // the home page scrolls, so its tour moves the page rather than the bubble
+  const homeScroller = useGuideScroller();
   const [tutorialFinished, setTutorialFinished] = useState(false);
   const isTutorialPending = !useHomeScene && !disableTutorial && tutorialLoaded && shouldShowGuide('main_menu_tour') && !tutorialFinished;
 
@@ -499,6 +502,7 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
           onOpenGrownUps={openGrownUpsCorner}
           isActive={isActive !== false}
           guideTargets={homeGuideTargets}
+          scrollBinding={homeScroller}
         />
         {!disableTutorial && (
           <OwlGuide
@@ -506,6 +510,7 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
             active={isActive !== false}
             targets={homeTourTargets}
             delayMs={HOME_GUIDE_DELAY_MS}
+            scroller={homeScroller.scroller}
             onEnd={handleTutorialEnd}
           />
         )}

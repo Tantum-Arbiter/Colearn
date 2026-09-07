@@ -9,6 +9,7 @@ import {
   DEFAULT_BUBBLE_HEIGHT,
   GUIDE_BUTTON_KEYS,
   GUIDE_TIMING,
+  guideRevealShift,
   guideSteps,
   placeGuideBubble,
   planGuideLayout,
@@ -20,6 +21,7 @@ import { OwlSpeechBubble } from '@/components/screen-time/owl-speech-bubble';
 import { GuideSpotlight } from './guide-spotlight';
 import { ScreenTimeRingLegend } from './screen-time-ring-legend';
 import { useGuideTargets, type GuideTargetRefs } from './use-guide-targets';
+import type { GuideScroller } from './use-guide-scroller';
 
 const ILLUSTRATIONS = {
   screenTimeRing: <ScreenTimeRingLegend />,
@@ -33,6 +35,9 @@ export interface OwlGuideProps {
   targets?: GuideTargetRefs;
   replay?: boolean;
   delayMs?: number;
+  /** A page that can move, so a buried highlight is scrolled into the clear
+   *  rather than the bubble being lifted off the owl to reach it. */
+  scroller?: GuideScroller;
   onEnd?: () => void;
   testID?: string;
 }
@@ -43,6 +48,7 @@ export function OwlGuide({
   targets = NO_TARGETS,
   replay = false,
   delayMs,
+  scroller,
   onEnd,
   testID = 'owl-guide',
 }: OwlGuideProps) {
@@ -77,11 +83,44 @@ export function OwlGuide({
   }, [wantsToStart, delayMs, layout.landscape, replay, id, guide]);
 
   const frameKey = `${width}x${height}`;
-  const measurements = useGuideTargets(targets, isMine, guide.stepIndex, frameKey);
+  // bumped whenever the page has been moved, so the targets are measured
+  // again in the view the scroll came to rest in
+  const [moves, setMoves] = useState(0);
+  /** Which measurement this step asked the page to move on, if it has. */
+  const [askedAt, setAskedAt] = useState<number | null>(null);
+  const measurements = useGuideTargets(targets, isMine, guide.stepIndex, frameKey, moves);
   const steps = useMemo(() => guideSteps(id, Object.keys(targets)), [id, targets]);
   const step = steps[Math.min(guide.stepIndex, Math.max(steps.length - 1, 0))];
-  const target = step?.target ? measurements.rects[step.target] ?? null : null;
+  // only rects taken for this step: between steps the ones on hand are still
+  // the last step's, read in whatever view that step had scrolled the page to,
+  // and a ring drawn from those marks where the subject was standing a moment
+  // ago rather than where it is
+  const freshlyMeasured = measurements.ready && measurements.step === guide.stepIndex;
+  const rect = step?.target && freshlyMeasured ? measurements.rects[step.target] ?? null : null;
   const perch = useMemo(() => owlPerchFrame(layout.owlWidth), [layout.owlWidth]);
+  // worked out in the render the measurement lands in, not in an effect after
+  // it: an effect renders once with the old view first, and that frame is a
+  // spotlight cut around where the highlight used to be
+  const owed =
+    scroller && rect
+      ? guideRevealShift(
+          { width, height },
+          insets,
+          { width: perch.width, height: perch.height },
+          { maxWidth: layout.bubbleMaxWidth, height: bubbleHeight },
+          layout.landscape,
+          rect
+        )
+      : 0;
+  // nothing honest to draw around a highlight the page still has to move, nor
+  // while it moves. Once it has been measured again the highlight is spotlit
+  // wherever it ended up -- a page with nothing left to give still gets its
+  // ring, it is just not as clear of the bubble as it might have been.
+  const waiting = owed > 0 && (askedAt === null || measurements.revision === askedAt);
+  const target = waiting ? null : rect;
+  // with a page to move, the bubble never leaves the owl: the target is only
+  // the spotlight's business, not the placement's
+  const placementTarget = scroller ? null : target;
   const placement = useMemo(
     () =>
       placeGuideBubble(
@@ -90,15 +129,45 @@ export function OwlGuide({
         { width: perch.width, height: perch.height },
         { maxWidth: layout.bubbleMaxWidth, height: bubbleHeight },
         layout.landscape,
-        target
+        placementTarget
       ),
-    [width, height, insets, perch.width, perch.height, layout.bubbleMaxWidth, layout.landscape, bubbleHeight, target]
+    [width, height, insets, perch.width, perch.height, layout.bubbleMaxWidth, layout.landscape, bubbleHeight, placementTarget]
   );
+
+  // Every step starts from the page's own resting place, so what the next one
+  // asks for is measured against the same ground as the last.
+  //
+  // Guarded on isMine because a screen mounts every tour it can run at once
+  // and they share the page's scroller: the step index is the guide's, not
+  // this instance's, so without the guard the tours standing by would each
+  // put the page back the moment the running one moved it.
+  useEffect(() => {
+    if (!isMine) return;
+    setAskedAt(null);
+    scroller?.restore();
+  }, [guide.stepIndex, isMine, scroller]);
+
+  // and the page is given back whole when this guide is done with it --
+  // finished, skipped, or the screen left underneath it
+  useEffect(() => {
+    if (!isMine) return;
+    return () => scroller?.release();
+  }, [isMine, scroller]);
+
+  // asked for once a step: a page with nothing left to give would otherwise be
+  // asked again on every re-measure, and never stop
+  useEffect(() => {
+    if (!scroller || !isMine || owed <= 0 || askedAt !== null) return;
+    setAskedAt(measurements.revision);
+    scroller.reveal(owed);
+    setMoves((count) => count + 1);
+  }, [scroller, isMine, owed, askedAt, measurements.revision]);
 
   const finish = useCallback(
     (how: 'complete' | 'skip') => {
       if (endedRef.current) return;
       endedRef.current = true;
+      scroller?.release();
       if (replaying) {
         guide.dismissGuide();
       } else if (how === 'complete') {

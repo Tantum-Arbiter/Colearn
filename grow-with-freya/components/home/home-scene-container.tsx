@@ -10,6 +10,7 @@ import { useTrialEndPrompt } from '@/hooks/use-trial-end-prompt';
 import { useTimeOfDay } from '@/hooks/use-time-of-day';
 import { isScreenTimeExceeded } from '@/constants/screen-time-ring';
 import { ScreenTimeGlance } from './screen-time-glance';
+import type { HomeSceneProps } from './home-scene';
 import { HomeScene, type HomeGuideTargets } from './home-scene';
 import { useChildHomeData } from './use-child-home-data';
 
@@ -22,6 +23,8 @@ export interface HomeSceneContainerProps {
   onNavigate: (destination: string) => void;
   onOpenGrownUps: () => void;
   guideTargets?: HomeGuideTargets;
+  /** Passed to the scene's scroll view, for the tour that runs over it. */
+  scrollBinding?: HomeSceneProps['scrollBinding'];
   isActive?: boolean;
 }
 
@@ -29,6 +32,7 @@ export const HomeSceneContainer = memo(function HomeSceneContainer({
   onNavigate,
   onOpenGrownUps,
   guideTargets,
+  scrollBinding,
   isActive = true,
 }: HomeSceneContainerProps) {
   const { data, welcome, celebrateAchievement } = useChildHomeData();
@@ -86,6 +90,7 @@ export const HomeSceneContainer = memo(function HomeSceneContainer({
         onOpenPlans={offerPlan ? openPlans : undefined}
         isActive={isActive}
         guideTargets={guideTargets}
+        scrollBinding={scrollBinding}
       />
 
       <ScreenTimeGlance

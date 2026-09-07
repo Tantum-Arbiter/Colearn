@@ -13,6 +13,7 @@ import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { useSettledAfterTransition } from '@/hooks/use-ambient-animation';
 import type { ScreenTimeAllowance } from '@/hooks/use-screen-time-allowance';
 import type { ChildHomeData, WelcomeCopy } from '@/types/child-home';
+import type { GuideScrollerBinding } from '@/components/owl-guide/use-guide-scroller';
 import { NightSky } from './night-sky';
 import { HomeHeroSky } from './home-hero-sky';
 import { GrownUpsPill } from './grown-ups-pill';
@@ -50,6 +51,9 @@ export interface HomeSceneProps {
   timeOfDay?: TimeOfDay;
   isActive?: boolean;
   guideTargets?: HomeGuideTargets;
+  /** Hands the page's scroll to the tour, which moves it to bring a step's
+   *  subject clear of the owl rather than taking the bubble off him. */
+  scrollBinding?: Pick<GuideScrollerBinding, 'scrollRef' | 'onScroll' | 'reserve'>;
   testID?: string;
 }
 
@@ -68,6 +72,7 @@ export const HomeScene = memo(function HomeScene({
   timeOfDay,
   isActive = true,
   guideTargets,
+  scrollBinding,
   testID = 'home-scene',
 }: HomeSceneProps) {
   const { t } = useTranslation();
@@ -99,9 +104,15 @@ export const HomeScene = memo(function HomeScene({
       </View>
 
       <ScrollView
+        ref={scrollBinding?.scrollRef}
+        onScroll={scrollBinding?.onScroll}
+        scrollEventThrottle={16}
         contentContainerStyle={[
           styles.content,
-          { paddingTop: heroContentTop(insets.top, sun.size), paddingBottom: insets.bottom + 52 },
+          {
+            paddingTop: heroContentTop(insets.top, sun.size),
+            paddingBottom: insets.bottom + 52 + (scrollBinding?.reserve ?? 0),
+          },
         ]}
         showsVerticalScrollIndicator={false}
         bounces={false}

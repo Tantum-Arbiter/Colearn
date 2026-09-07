@@ -8,9 +8,15 @@ export type GuideTargetRefs = Record<string, RefObject<View | null>>;
 export interface GuideMeasurements {
   ready: boolean;
   rects: Record<string, TargetRect>;
+  /** Which revision these rects were taken at -- a caller that has just moved
+   *  the page can tell whether they are of the view it asked for. */
+  revision: number;
+  /** And which step: between steps the rects on hand are still the last one's,
+   *  taken in whatever view that step had scrolled the page to. */
+  step: number;
 }
 
-const NOTHING: GuideMeasurements = { ready: false, rects: {} };
+const NOTHING: GuideMeasurements = { ready: false, rects: {}, revision: -1, step: -1 };
 
 function measureAll(refs: GuideTargetRefs, done: (rects: Record<string, TargetRect>) => void): void {
   const entries = Object.entries(refs);
@@ -40,14 +46,21 @@ function measureAll(refs: GuideTargetRefs, done: (rects: Record<string, TargetRe
   });
 }
 
+/**
+ * `revision` is for anything that moves the targets without changing the step
+ * -- a page scrolled to bring one into view, say. It re-measures on the short
+ * settle rather than the long one a rotation takes.
+ */
 export function useGuideTargets(
   refs: GuideTargetRefs,
   active: boolean,
   stepIndex: number,
-  frameKey: string
+  frameKey: string,
+  revision = 0
 ): GuideMeasurements {
   const [measurements, setMeasurements] = useState<GuideMeasurements>(NOTHING);
   const lastFrameKey = useRef(frameKey);
+  const lastRevision = useRef(revision);
 
   useEffect(() => {
     if (!active) {
@@ -57,22 +70,28 @@ export function useGuideTargets(
     }
 
     const turned = lastFrameKey.current !== frameKey;
+    const scrolled = lastRevision.current !== revision;
     lastFrameKey.current = frameKey;
+    lastRevision.current = revision;
     let cancelled = false;
     const timer = setTimeout(
       () => {
         measureAll(refs, (rects) => {
-          if (!cancelled) setMeasurements({ ready: true, rects });
+          if (!cancelled) setMeasurements({ ready: true, rects, revision, step: stepIndex });
         });
       },
-      turned ? GUIDE_TIMING.turnSettleMs : GUIDE_TIMING.measureSettleMs
+      turned
+        ? GUIDE_TIMING.turnSettleMs
+        : scrolled
+          ? GUIDE_TIMING.scrollSettleMs
+          : GUIDE_TIMING.measureSettleMs
     );
 
     return () => {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [refs, active, stepIndex, frameKey]);
+  }, [refs, active, stepIndex, frameKey, revision]);
 
   return measurements;
 }

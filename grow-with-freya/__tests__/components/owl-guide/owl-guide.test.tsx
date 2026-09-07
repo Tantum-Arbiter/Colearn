@@ -380,14 +380,174 @@ describe('OwlGuide', () => {
     it('settles back on the perch for a highlight out of its way', async () => {
       const tree = await renderLanded({ id: 'book_mode_tour', targets });
 
-      press(tree, 'owl-guide-next');
-      await settleMeasurements();
+      // the second step is play along, the one target these fixtures put well
+      // clear of where the bubble rests
       press(tree, 'owl-guide-next');
       await settleMeasurements();
 
       expect(has(tree, 'owl-guide-bubble-perch')).toBe(true);
       expect(has(tree, 'owl-guide-tail-down')).toBe(true);
       expect(has(tree, 'owl-guide-pointer-up')).toBe(false);
+    });
+
+    /**
+     * A page that scrolls does not need the bubble taken off the owl: the page
+     * moves until the highlight is clear of it, and goes back afterwards.
+     */
+    describe('on a page that can scroll', () => {
+      /**
+        * A page that really moves: revealing lifts the targets by the shift it
+        * was given, the way a scroll does, so the guide sees the view it asked
+        * for rather than the one it started in.
+        */
+      function movingPage(start = 700) {
+        // the second subject sits above the first, so the scroll that clears
+        // the first leaves the second measuring clear in that view -- which is
+        // exactly the stale reading a step change must not draw from
+        const at: Record<string, number> = {
+          read_button: start,
+          narrate_button: start - 60,
+          record_button: start + 120,
+        };
+        const targetAt = (id: string) => ({
+          current: {
+            measureInWindow: (cb: (...args: number[]) => void) => cb(40, at[id], 80, 40),
+          } as unknown as View,
+        });
+        const home = { ...at };
+        const scroller = {
+          reveal: jest.fn((shift: number) => {
+            Object.keys(at).forEach((id) => {
+              at[id] -= shift;
+            });
+          }),
+          // a real restore carries the page, and everything on it, back
+          restore: jest.fn(() => {
+            Object.keys(at).forEach((id) => {
+              at[id] = home[id];
+            });
+          }),
+          release: jest.fn(),
+        };
+        const targets = {
+          read_button: targetAt('read_button'),
+          narrate_button: targetAt('narrate_button'),
+          record_button: targetAt('record_button'),
+        };
+        return { targets, scroller };
+      }
+
+      it('keeps the bubble on the perch and moves the page instead', async () => {
+        const { targets: moving, scroller } = movingPage();
+        const tree = await renderLanded({ id: 'book_mode_tour', targets: moving, scroller });
+
+        expect(has(tree, 'owl-guide-bubble-perch')).toBe(true);
+        expect(has(tree, 'owl-guide-bubble-above')).toBe(false);
+        expect(scroller.reveal).toHaveBeenCalledTimes(1);
+        expect(scroller.reveal.mock.calls[0][0]).toBeGreaterThan(0);
+      });
+
+      /**
+       * The scroll glides, so a spotlight cut from the view it started in
+       * would sit where the highlight was passing rather than where it stops.
+       */
+      it('holds the spotlight back until the page has come to rest', async () => {
+        const { targets: moving, scroller } = movingPage();
+        // not landed: the owl's arrival alone outlasts the scroll settle
+        const tree = await renderStarted({ id: 'book_mode_tour', targets: moving, scroller });
+
+        expect(has(tree, 'owl-guide-cutout')).toBe(false);
+
+        await act(async () => {
+          jest.advanceTimersByTime(GUIDE_TIMING.scrollSettleMs);
+        });
+
+        expect(has(tree, 'owl-guide-cutout')).toBe(true);
+      });
+
+      /**
+       * A screen mounts every tour it can run at once and they share the one
+       * scroller, so a tour standing by must not touch the page: the step
+       * index belongs to the guide, not to the instance watching it.
+       */
+      it('leaves the page alone while a different tour is the one running', () => {
+        const { targets: moving, scroller } = movingPage();
+        render(<Harness id="catalogue_tour" active={false} targets={moving} scroller={scroller} />);
+
+        act(() => {
+          mockApi.startGuide('progress_tour' as GuideId);
+        });
+        act(() => {
+          mockApi.nextStep();
+        });
+
+        expect(scroller.restore).not.toHaveBeenCalled();
+        expect(scroller.reveal).not.toHaveBeenCalled();
+        expect(scroller.release).not.toHaveBeenCalled();
+      });
+
+      /**
+       * Between steps the rects on hand are the last step's, taken in the view
+       * that step had scrolled to. Drawing from them puts a ring around the
+       * next subject where it was standing a moment ago, before the page has
+       * moved for it.
+       */
+      it('does not spotlight the next subject from the last step\'s view of the page', async () => {
+        const { targets: moving, scroller } = movingPage();
+        const tree = await renderLanded({ id: 'book_mode_tour', targets: moving, scroller });
+        await act(async () => {
+          jest.advanceTimersByTime(GUIDE_TIMING.scrollSettleMs);
+        });
+        expect(has(tree, 'owl-guide-cutout')).toBe(true);
+
+        press(tree, 'owl-guide-next');
+
+        expect(has(tree, 'owl-guide-cutout')).toBe(false);
+      });
+
+      it('leaves the page where it is for a highlight already in the clear', async () => {
+        const { scroller } = movingPage();
+        await renderLanded({ id: 'book_mode_tour', targets: { read_button: ref(40, 90) }, scroller });
+
+        expect(scroller.reveal).not.toHaveBeenCalled();
+      });
+
+      it('puts the page back before the next step asks for its own room', async () => {
+        const { targets: moving, scroller } = movingPage();
+        const tree = await renderLanded({ id: 'book_mode_tour', targets: moving, scroller });
+        press(tree, 'owl-guide-next');
+        await settleMeasurements();
+
+        expect(scroller.restore).toHaveBeenCalled();
+      });
+
+      /** Not just back to where the step began: back to the place the child left. */
+      it('gives the page back for good when the last step is finished', async () => {
+        const { targets: moving, scroller } = movingPage();
+        const tree = await renderLanded({ id: 'book_mode_tour', targets: moving, scroller });
+
+        for (let i = 0; i < GUIDE_STEPS.book_mode_tour.length; i += 1) {
+          press(tree, has(tree, 'owl-guide-okay') ? 'owl-guide-okay' : 'owl-guide-next');
+          await settleMeasurements();
+        }
+        await act(async () => {
+          jest.advanceTimersByTime(OWL_RHYTHM.delightMs);
+        });
+
+        expect(scroller.release).toHaveBeenCalled();
+      });
+
+      it('gives the page back for good when the tour is closed', async () => {
+        const { targets: moving, scroller } = movingPage();
+        const tree = await renderLanded({ id: 'book_mode_tour', targets: moving, scroller });
+
+        press(tree, 'owl-guide-close');
+        await act(async () => {
+          jest.advanceTimersByTime(OWL_RHYTHM.leaveMs);
+        });
+
+        expect(scroller.release).toHaveBeenCalled();
+      });
     });
 
     it('leaves out a step whose highlight is not on this screen', async () => {

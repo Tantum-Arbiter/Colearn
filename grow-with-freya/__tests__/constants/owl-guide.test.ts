@@ -8,6 +8,7 @@ import {
   GUIDE_OWL_WIDTH,
   GUIDE_BUBBLE_MAX,
   SPOTLIGHT_PADDING,
+  guideRevealShift,
   guideSteps,
   placeGuideBubble,
   planGuideLayout,
@@ -95,11 +96,12 @@ describe('GUIDE_STEPS', () => {
     ]);
   });
 
-  it('points at all three reading modes on the book mode tour', () => {
+  /** Down the sheet in the order the child reads it: read, then play along, then record. */
+  it('points at the three reading modes in the order the sheet lists them', () => {
     expect(GUIDE_STEPS.book_mode_tour.map((step) => step.target)).toEqual([
       'read_button',
-      'record_button',
       'narrate_button',
+      'record_button',
     ]);
   });
 
@@ -181,6 +183,39 @@ describe('planGuideLayout', () => {
   it('scales the owl up on a tablet', () => {
     expect(planGuideLayout(TABLET)).toMatchObject({ tablet: true, owlWidth: GUIDE_OWL_WIDTH.tablet, bubbleMaxWidth: GUIDE_BUBBLE_MAX.tablet });
     expect(planGuideLayout(TABLET_LANDSCAPE).owlWidth).toBe(GUIDE_OWL_WIDTH.tabletLandscape);
+  });
+});
+
+/**
+ * A page that can scroll does not need the bubble moved off the owl: the page
+ * moves instead, until the highlight sits clear of where the bubble rests.
+ */
+describe('guideRevealShift', () => {
+  const insets = { top: 44, bottom: 34, left: 0, right: 0 };
+  const perch = { width: 236, height: 181 };
+  const bubble = { maxWidth: 340, height: 160 };
+  const shiftFor = (target: { x: number; y: number; width: number; height: number }, landscape = false) =>
+    guideRevealShift(PHONE, insets, perch, bubble, landscape, target);
+
+  it('asks for nothing when the highlight is already clear of the bubble', () => {
+    expect(shiftFor({ x: 40, y: 120, width: 200, height: 44 })).toBe(0);
+  });
+
+  it('asks for enough scroll to lift a buried highlight clear of the bubble', () => {
+    const target = { x: 40, y: 700, width: 200, height: 44 };
+
+    const shift = shiftFor(target);
+
+    expect(shift).toBeGreaterThan(0);
+    // once the page has moved by that much, nothing is left to ask for
+    expect(shiftFor({ ...target, y: target.y - shift })).toBe(0);
+  });
+
+  it('asks for more of a page the deeper the highlight is buried', () => {
+    const higher = shiftFor({ x: 40, y: 640, width: 200, height: 44 });
+    const lower = shiftFor({ x: 40, y: 760, width: 200, height: 44 });
+
+    expect(lower).toBeGreaterThan(higher);
   });
 });
 
