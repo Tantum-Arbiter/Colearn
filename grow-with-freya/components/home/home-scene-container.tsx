@@ -10,7 +10,7 @@ import { useTrialEndPrompt } from '@/hooks/use-trial-end-prompt';
 import { useTimeOfDay } from '@/hooks/use-time-of-day';
 import { isScreenTimeExceeded } from '@/constants/screen-time-ring';
 import { ScreenTimeGlance } from './screen-time-glance';
-import { HomeScene } from './home-scene';
+import { HomeScene, type HomeGuideTargets } from './home-scene';
 import { useChildHomeData } from './use-child-home-data';
 
 export const HOME_DESTINATIONS = {
@@ -21,12 +21,14 @@ export const HOME_DESTINATIONS = {
 export interface HomeSceneContainerProps {
   onNavigate: (destination: string) => void;
   onOpenGrownUps: () => void;
+  guideTargets?: HomeGuideTargets;
   isActive?: boolean;
 }
 
 export const HomeSceneContainer = memo(function HomeSceneContainer({
   onNavigate,
   onOpenGrownUps,
+  guideTargets,
   isActive = true,
 }: HomeSceneContainerProps) {
   const { data, welcome, celebrateAchievement } = useChildHomeData();
@@ -83,6 +85,7 @@ export const HomeSceneContainer = memo(function HomeSceneContainer({
         screenTimeHidden={showScreenTime}
         onOpenPlans={offerPlan ? openPlans : undefined}
         isActive={isActive}
+        guideTargets={guideTargets}
       />
 
       <ScreenTimeGlance

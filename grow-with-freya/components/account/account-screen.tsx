@@ -30,13 +30,12 @@ import { DeviceInfoService } from '../../services/device-info-service';
 import { CacheManager } from '../../services/cache-manager';
 import { StoryLoader } from '../../services/story-loader';
 import { TEXT_SIZE_OPTIONS, useAccessibility } from '../../hooks/use-accessibility';
-import { SettingsTipsOverlay } from '../tutorial/settings-tips-overlay';
-import { ScreenTimeTipsOverlay } from '../tutorial/screen-time-tips-overlay';
+import { OwlGuide } from '../owl-guide';
 import { Logger } from '@/utils/logger';
 import { AUTH_GRADIENT } from '@/components/auth/auth-theme';
 
 const log = Logger.create('Account');
-import { useTutorial } from '../../contexts/tutorial-context';
+import { useOwlGuide } from '../../contexts/owl-guide-context';
 import { SUPPORTED_LANGUAGES, setStoredLanguage, type SupportedLanguage } from '../../services/i18n';
 import * as Notifications from 'expo-notifications';
 
@@ -243,7 +242,7 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
   const { scaledFontSize, scaledButtonSize, scaledPadding, isTablet, contentMaxWidth } = useAccessibility();
 
   // Tutorial reset
-  const { resetAllTutorials, lastResetTimestamp } = useTutorial();
+  const { resetGuides, lastResetTimestamp } = useOwlGuide();
 
   // Star animation
   const starOpacity = useSharedValue(0.4);
@@ -500,7 +499,7 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
             // Clear remaining items in background (non-blocking)
             ApiClient.logout().catch(error => log.error('Background logout:', error));
             clearPersistedStorage().catch(error => log.error('Background storage clear:', error));
-            resetAllTutorials().catch(error => log.error('Background tutorial reset:', error));
+            resetGuides().catch(error => log.error('Background tutorial reset:', error));
 
             log.info('App reset complete');
           },
@@ -979,7 +978,7 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
             paddingTop={insets.top + 90 + (textSizeScale - 1) * 40 + 10}
             onReminderChange={() => setReminderChangeCounter(prev => prev + 1)}
           />
-          <ScreenTimeTipsOverlay isActive={currentView === 'screen-time'} />
+          <OwlGuide id="screen_time_tips" active={currentView === 'screen-time'} />
         </Animated.View>
 
         {/* Edit Profile Page */}
@@ -1042,8 +1041,8 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
 
       </LinearGradient>
 
-      {/* Settings Tips Overlay - shown on first visit, key forces remount after reset */}
-      <SettingsTipsOverlay key={`settings-tips-${lastResetTimestamp}`} isActive={isActive} />
+      {/* The owl's settings walkthrough - shown on first visit, key forces remount after reset */}
+      <OwlGuide key={`settings-guide-${lastResetTimestamp}`} id="settings_walkthrough" active={isActive} />
     </View>
   );
 }

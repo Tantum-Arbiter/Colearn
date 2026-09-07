@@ -59,8 +59,8 @@ jest.mock('../../components/ui/music-control', () => ({
 jest.mock('../../components/ui/page-header', () => ({
   PageHeader: () => null,
 }));
-jest.mock('../../components/tutorial', () => ({
-  EmotionCardsTipsOverlay: () => null,
+jest.mock('../../components/owl-guide', () => ({
+  OwlGuide: () => null,
 }));
 jest.mock('../../components/emotions/emotions-unified-screen', () => {
   const { View, Text } = require('react-native');

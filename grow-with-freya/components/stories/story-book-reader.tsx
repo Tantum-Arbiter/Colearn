@@ -56,9 +56,7 @@ import { useGlobalSound } from '@/contexts/global-sound-context';
 import { Logger } from '@/utils/logger';
 import { AnalyticsService } from '@/services/analytics-service';
 import { PagePreviewModal } from './pages-preview-modal';
-import { StoryTipsOverlay } from '@/components/tutorial/story-tips-overlay';
-import { ModeTipsOverlay } from '@/components/tutorial/mode-tips-overlay';
-import { MusicTipsOverlay } from '@/components/tutorial/music-tips-overlay';
+import { OwlGuide } from '@/components/owl-guide';
 
 const log = Logger.create('StoryBookReader');
 
@@ -3185,37 +3183,33 @@ export function StoryBookReader({
         }}
       />
 
-      {/* Story Tips Overlay - shown on first story in READ mode only, or when triggered from menu */}
-      {/* Hidden while instrument picker is open so it doesn't interfere with selection */}
-      {readingMode === 'read' && !showInstrumentPicker && (
-        <StoryTipsOverlay
-          storyId={story.id}
-          forceShow={showTipsOverlay}
-          onClose={() => setShowTipsOverlay(false)}
-        />
-      )}
-
-      {/* Record Mode Tips - shown on first time using record mode, or when triggered from menu */}
-      <ModeTipsOverlay
-        mode="record"
-        isActive={readingMode === 'record' && currentPageIndex > 0}
-        forceShow={showTipsOverlay && readingMode === 'record'}
-        onClose={() => setShowTipsOverlay(false)}
+      {/* The owl's reading tips: first story in READ mode, or replayed from the menu */}
+      <OwlGuide
+        id="story_reader_tips"
+        active={readingMode === 'read' && !showInstrumentPicker}
+        replay={showTipsOverlay && readingMode === 'read'}
+        onEnd={() => setShowTipsOverlay(false)}
       />
 
-      {/* Narrate Mode Tips - shown on first time using narrate mode, or when triggered from menu */}
-      <ModeTipsOverlay
-        mode="narrate"
-        isActive={readingMode === 'narrate' && currentPageIndex > 0}
-        forceShow={showTipsOverlay && readingMode === 'narrate'}
-        onClose={() => setShowTipsOverlay(false)}
+      <OwlGuide
+        id="record_mode_tour"
+        active={readingMode === 'record' && currentPageIndex > 0}
+        replay={showTipsOverlay && readingMode === 'record'}
+        onEnd={() => setShowTipsOverlay(false)}
       />
 
-      {/* Music Mode Tips - shown on first music challenge page, or when triggered from menu */}
-      <MusicTipsOverlay
-        isActive={!!isMusicChallengePage && musicChallengePhase === 'playing'}
-        forceShow={showTipsOverlay && isMusicChallengePage && musicChallengePhase === 'playing'}
-        onClose={() => setShowTipsOverlay(false)}
+      <OwlGuide
+        id="narrate_mode_tour"
+        active={readingMode === 'narrate' && currentPageIndex > 0}
+        replay={showTipsOverlay && readingMode === 'narrate'}
+        onEnd={() => setShowTipsOverlay(false)}
+      />
+
+      <OwlGuide
+        id="music_mode_tour"
+        active={!!isMusicChallengePage && musicChallengePhase === 'playing'}
+        replay={showTipsOverlay && !!isMusicChallengePage && musicChallengePhase === 'playing'}
+        onEnd={() => setShowTipsOverlay(false)}
       />
 
       {/* Music Mode Overlay - Full screen instrument free play or guided challenge */}

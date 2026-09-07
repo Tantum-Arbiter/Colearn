@@ -261,14 +261,15 @@ describe('ScreenTimeOwlAlert', () => {
     expect(json(tree)).not.toContain('screenTime.tips.atHome.body');
   });
 
-  it('perches the owl in the bottom-left corner', () => {
+  it('perches the owl on its rock in the bottom-left corner', () => {
     const tree = renderAlert();
 
-    const root = findByTestId(tree, 'screen-time-owl-alert')[0];
-    const style = [root.props.style].flat(3).reduce((a: any, b: any) => ({ ...a, ...b }), {});
+    const perch = findByTestId(tree, 'screen-time-owl-perch')[0];
+    const style = [perch.props.style].flat(3).reduce((a: any, b: any) => ({ ...a, ...b }), {});
 
-    expect(style.justifyContent).toBe('flex-end');
-    expect(style.alignItems).toBe('flex-start');
+    expect(style).toMatchObject({ left: 0, bottom: 0 });
+    expect(has(tree, 'owl-perch-ledge')).toBe(true);
+    expect(owl(tree).props.approach).toBe('none');
   });
 
   it('leaves the app underneath usable rather than blocking it', () => {

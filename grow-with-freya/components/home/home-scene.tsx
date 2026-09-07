@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, type RefObject } from 'react';
 import { View, Text, ScrollView, StyleSheet, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -23,6 +23,13 @@ import { StreakChip } from './streak-chip';
 import { AchievementCard } from './achievement-card';
 import { ContinueLearningCard } from './continue-learning-card';
 
+export interface HomeGuideTargets {
+  stories?: RefObject<View | null>;
+  learning?: RefObject<View | null>;
+  settings?: RefObject<View | null>;
+  sound?: RefObject<View | null>;
+}
+
 export interface HomeSceneProps {
   data: ChildHomeData;
   welcome: WelcomeCopy;
@@ -40,6 +47,7 @@ export interface HomeSceneProps {
   onOpenPlans?: () => void;
   timeOfDay?: TimeOfDay;
   isActive?: boolean;
+  guideTargets?: HomeGuideTargets;
   testID?: string;
 }
 
@@ -57,6 +65,7 @@ export const HomeScene = memo(function HomeScene({
   onOpenPlans,
   timeOfDay,
   isActive = true,
+  guideTargets,
   testID = 'home-scene',
 }: HomeSceneProps) {
   const { t } = useTranslation();
@@ -79,8 +88,12 @@ export const HomeScene = memo(function HomeScene({
       <HomeHeroSky width={width} topInset={insets.top} timeOfDay={activeTimeOfDay} active={isActive} />
 
       <View style={[styles.chrome, { top: insets.top + HOME_SCENE_LAYOUT.chromeTop }]}>
-        <GrownUpsPill timeOfDay={activeTimeOfDay} onPress={onOpenGrownUps} />
-        <MusicControl />
+        <View ref={guideTargets?.settings} collapsable={false}>
+          <GrownUpsPill timeOfDay={activeTimeOfDay} onPress={onOpenGrownUps} />
+        </View>
+        <View ref={guideTargets?.sound} collapsable={false}>
+          <MusicControl />
+        </View>
       </View>
 
       <ScrollView
@@ -102,7 +115,7 @@ export const HomeScene = memo(function HomeScene({
           <StreakChip days={data.readingStreakDays} animated={animated} />
         </View>
 
-        <View style={styles.cardSlot}>
+        <View style={styles.cardSlot} ref={guideTargets?.stories} collapsable={false}>
           <ContinueCard story={data.currentStory} width={contentWidth} animated={animated} onPress={onContinue} />
         </View>
 
@@ -116,7 +129,7 @@ export const HomeScene = memo(function HomeScene({
           />
         </View>
 
-        <View style={styles.cardSlot}>
+        <View style={styles.cardSlot} ref={guideTargets?.learning} collapsable={false}>
           <ContinueLearningCard width={contentWidth} animated={animated} onPress={onContinueLearning} />
         </View>
 

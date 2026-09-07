@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
+import React, { useMemo, createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { Logger } from '@/utils/logger';
 
 const log = Logger.create('StoryTransition');
@@ -35,8 +35,8 @@ import { CoverTitle } from '@/components/stories/catalogue/cover-title';
 import { SeatedBook } from '@/components/stories/catalogue/seated-book';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RotatePromptOverlay } from '@/components/stories/rotate-prompt-overlay';
-import { TutorialOverlay } from '@/components/tutorial/tutorial-overlay';
-import { useTutorial } from '@/contexts/tutorial-context';
+import { OwlGuide } from '@/components/owl-guide';
+import { useOwlGuide } from '@/contexts/owl-guide-context';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppStore } from '@/store/app-store';
@@ -200,14 +200,19 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   const narrateButtonRef = useRef<View>(null);
 
   // Tutorial hook
-  const { shouldShowTutorial, activeTutorial } = useTutorial();
+  const { shouldShowGuide, activeGuide } = useOwlGuide();
+  const bookModeTargets = useMemo(() => ({
+    'read_button': readButtonRef,
+    'record_button': recordButtonRef,
+    'narrate_button': narrateButtonRef,
+  }), []);
 
   // Translation hook
   const { t, i18n } = useTranslation();
 
   // Block touches immediately when book mode tutorial should show but hasn't started yet
   const shouldBlockBookModeTouches = showModeSelection &&
-    shouldShowTutorial('book_mode_tour') && activeTutorial !== 'book_mode_tour';
+    shouldShowGuide('book_mode_tour') && activeGuide !== 'book_mode_tour';
 
   const { scaledFontSize, scaledButtonSize, isTablet } = useAccessibility();
   const reduceMotion = useReducedMotion();
@@ -2172,15 +2177,8 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
           )}
 
           {/* Book Mode Tutorial Overlay - shows on first book open */}
-          {showModeSelection && shouldShowTutorial('book_mode_tour') && (
-            <TutorialOverlay
-              tutorialId="book_mode_tour"
-              targetRefs={{
-                'read_button': readButtonRef,
-                'record_button': recordButtonRef,
-                'narrate_button': narrateButtonRef,
-              }}
-            />
+          {showModeSelection && shouldShowGuide('book_mode_tour') && (
+            <OwlGuide id="book_mode_tour" targets={bookModeTargets} />
           )}
         </View>
       )}

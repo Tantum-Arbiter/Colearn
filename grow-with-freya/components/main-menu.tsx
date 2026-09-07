@@ -22,8 +22,8 @@ import { ParentsOnlyModal } from '@/components/ui/parents-only-modal';
 import { Ionicons } from '@expo/vector-icons';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { useParentsOnlyChallenge } from '@/hooks/use-parents-only-challenge';
-import { TutorialOverlay, StoryModeTipsOverlay } from '@/components/tutorial';
-import { useTutorial } from '@/contexts/tutorial-context';
+import { OwlGuide } from '@/components/owl-guide';
+import { useOwlGuide } from '@/contexts/owl-guide-context';
 import { SubscriptionOverlay } from '@/components/ui/subscription-overlay';
 import * as Haptics from 'expo-haptics';
 import { STORY_MODES, type StoryMode } from '@/components/stories/story-selection-screen';
@@ -125,6 +125,8 @@ interface MainMenuProps {
   /** When set, immediately show the specified sub-menu instead of the main carousel */
   returnToSubMenu?: SubMenuType;
 }
+
+const HOME_GUIDE_DELAY_MS = 1200;
 
 function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entranceDelay = 0, returnToSubMenu = null }: MainMenuProps) {
   const useHomeScene = useAppStore((state) => state.useHomeScene);
@@ -259,9 +261,9 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
 
   // Block navigation while the main menu tutorial is pending (first-time sign-in).
   // This prevents the user tapping a button before the tutorial overlay mounts.
-  const { shouldShowTutorial, isLoaded: tutorialLoaded } = useTutorial();
+  const { shouldShowGuide, isLoaded: tutorialLoaded } = useOwlGuide();
   const [tutorialFinished, setTutorialFinished] = useState(false);
-  const isTutorialPending = !useHomeScene && !disableTutorial && tutorialLoaded && shouldShowTutorial('main_menu_tour') && !tutorialFinished;
+  const isTutorialPending = !useHomeScene && !disableTutorial && tutorialLoaded && shouldShowGuide('main_menu_tour') && !tutorialFinished;
 
   // Use a ref so guardedOnNavigate keeps a stable reference -avoids re-rendering
   // MenuCarousel (React.memo) when isTutorialPending changes, which would cause a flicker.
@@ -358,6 +360,20 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
   const tutorialTargetRefs = useMemo(() => ({
     'stories_button': storiesButtonRef,
     'instruments_button': instrumentsButtonRef,
+    'learning_button': learningButtonRef,
+    'settings_button': settingsButtonRef,
+    'sound_control': musicControlRef,
+  }), []);
+
+  const homeGuideTargets = useMemo(() => ({
+    stories: storiesButtonRef,
+    learning: learningButtonRef,
+    settings: settingsButtonRef,
+    sound: musicControlRef,
+  }), []);
+
+  const homeTourTargets = useMemo(() => ({
+    'stories_button': storiesButtonRef,
     'learning_button': learningButtonRef,
     'settings_button': settingsButtonRef,
     'sound_control': musicControlRef,
@@ -472,7 +488,21 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
   if (useHomeScene) {
     return (
       <>
-        <HomeSceneContainer onNavigate={navigateFromHome} onOpenGrownUps={openGrownUpsCorner} isActive={isActive !== false} />
+        <HomeSceneContainer
+          onNavigate={navigateFromHome}
+          onOpenGrownUps={openGrownUpsCorner}
+          isActive={isActive !== false}
+          guideTargets={homeGuideTargets}
+        />
+        {!disableTutorial && (
+          <OwlGuide
+            id="main_menu_tour"
+            active={isActive !== false}
+            targets={homeTourTargets}
+            delayMs={HOME_GUIDE_DELAY_MS}
+            onEnd={handleTutorialEnd}
+          />
+        )}
         <ParentsOnlyModal
           visible={parentsOnly.isVisible}
           challenge={parentsOnly.challenge}
@@ -684,16 +714,16 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
 
         {/* Main Menu Tutorial - shown after carousel slide-in completes, not during login transition */}
         {!disableTutorial && carouselReady && (
-          <TutorialOverlay
-            tutorialId="main_menu_tour"
-            targetRefs={tutorialTargetRefs}
+          <OwlGuide
+            id="main_menu_tour"
+            targets={tutorialTargetRefs}
             onEnd={handleTutorialEnd}
           />
         )}
 
         {/* Story Modes Tutorial - explains Interactive, Musical & Jigsaw on first view */}
         {!disableTutorial && (
-          <StoryModeTipsOverlay isActive={activeSubMenu === 'stories'} />
+          <OwlGuide id="story_modes_tour" active={activeSubMenu === 'stories'} />
         )}
       </LinearGradient>
     </Animated.View>

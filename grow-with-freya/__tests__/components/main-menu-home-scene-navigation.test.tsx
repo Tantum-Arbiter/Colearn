@@ -1,12 +1,12 @@
 /**
  * Tests for navigation out of the home scene while the carousel tour is unseen.
  *
- * The carousel tour (`main_menu_tour`) gates navigation until it finishes, but
- * its overlay only renders on the legacy carousel branch. With the home scene
- * on -- which is the default -- nothing could ever finish the tour, so every
- * tap on Storybooks, Instruments and Puzzles was swallowed on a fresh install.
+ * The carousel tour (`main_menu_tour`) gates navigation until it finishes on
+ * the legacy carousel branch. On the home scene the owl guide covers the screen
+ * itself while it is talking, so navigation is never gated there: a tap that
+ * lands before the owl arrives must still work.
  *
- * These live in their own file because they need `shouldShowTutorial` to
+ * These live in their own file because they need `shouldShowGuide` to
  * return true, which is the opposite of the global mock in jest.setup and
  * would gate the legacy tests in main-menu.test.tsx.
  */
@@ -26,25 +26,21 @@ jest.mock('@/components/progress/use-progress-data', () => ({
 
 let mockTourUnseen = true;
 
-jest.mock('@/contexts/tutorial-context', () => ({
-  TutorialProvider: ({ children }: { children: React.ReactNode }) => children,
-  useTutorial: () => ({
+jest.mock('@/contexts/owl-guide-context', () => ({
+  OwlGuideProvider: ({ children }: { children: React.ReactNode }) => children,
+  useOwlGuide: () => ({
     isLoaded: true,
-    completedTutorials: [],
-    hasSeenFirstStory: true,
-    hasSeenSettings: true,
-    activeTutorial: null,
-    currentStep: 0,
-    startTutorial: jest.fn(),
-    nextStep: jest.fn(),
-    previousStep: jest.fn(),
-    skipTutorial: jest.fn(),
-    completeTutorial: jest.fn(),
-    shouldShowTutorial: () => mockTourUnseen,
-    markFirstStoryViewed: jest.fn(),
-    markSettingsViewed: jest.fn(),
-    resetAllTutorials: jest.fn(),
+    completedGuides: [],
     lastResetTimestamp: 0,
+    activeGuide: null,
+    stepIndex: 0,
+    startGuide: jest.fn(),
+    nextStep: jest.fn(),
+    skipGuide: jest.fn(),
+    completeGuide: jest.fn(),
+    dismissGuide: jest.fn(),
+    shouldShowGuide: () => mockTourUnseen,
+    resetGuides: jest.fn(),
   }),
 }));
 

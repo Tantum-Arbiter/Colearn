@@ -78,8 +78,7 @@ jest.mock('@/components/reminders', () => {
 jest.mock('@/components/account/terms-conditions-screen', () => ({ TermsConditionsContent: () => null }));
 jest.mock('@/components/account/privacy-policy-screen', () => ({ PrivacyPolicyContent: () => null }));
 jest.mock('@/components/account/edit-profile-screen', () => ({ EditProfileContent: () => null }));
-jest.mock('@/components/tutorial/settings-tips-overlay', () => ({ SettingsTipsOverlay: () => null }));
-jest.mock('@/components/tutorial/screen-time-tips-overlay', () => ({ ScreenTimeTipsOverlay: () => null }));
+jest.mock('@/components/owl-guide', () => ({ OwlGuide: () => null }));
 jest.mock('@/components/main-menu/animated-components', () => ({ MoonBottomImage: () => null }));
 jest.mock('@/components/main-menu/styles', () => ({ mainMenuStyles: { bearContainer: {} } }));
 
@@ -116,8 +115,8 @@ jest.mock('@/services/version-manager', () => ({ VersionManager: { getInstance: 
 jest.mock('@/services/device-info-service', () => ({ DeviceInfoService: { getAppVersion: () => '1.0.0' } }));
 jest.mock('@/services/cache-manager', () => ({ CacheManager: { getInstance: () => ({ clearAll: jest.fn() }) } }));
 jest.mock('@/services/story-loader', () => ({ StoryLoader: { getInstance: () => ({}) } }));
-jest.mock('@/contexts/tutorial-context', () => ({
-  useTutorial: () => ({ resetAllTutorials: jest.fn(), lastResetTimestamp: 0 }),
+jest.mock('@/contexts/owl-guide-context', () => ({
+  useOwlGuide: () => ({ resetGuides: jest.fn(), lastResetTimestamp: 0 }),
 }));
 jest.mock('@/services/notification-service', () => ({
   __esModule: true,

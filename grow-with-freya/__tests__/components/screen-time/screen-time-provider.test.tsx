@@ -12,6 +12,11 @@ import { AppState, Text } from 'react-native';
 
 import { ScreenTimeProvider, useScreenTime } from '../../../components/screen-time/screen-time-provider';
 import { OWL_RHYTHM } from '@/constants/owl-companion';
+
+const mockGuide = { activeGuide: null as string | null };
+jest.mock('@/contexts/owl-guide-context', () => ({
+  useOwlGuide: () => ({ activeGuide: mockGuide.activeGuide }),
+}));
 import { useAppStore } from '../../../store/app-store';
 import ScreenTimeService from '../../../services/screen-time-service';
 import NotificationService from '../../../services/notification-service';
@@ -373,6 +378,35 @@ describe('ScreenTimeProvider lifecycle', () => {
       });
 
       expect(JSON.stringify(tree.toJSON())).toContain('Pushed by hand');
+      jest.useRealTimers();
+    });
+
+    it('holds the warning back while the owl is busy guiding, then shows it', async () => {
+      jest.useFakeTimers();
+      mockGuide.activeGuide = 'main_menu_tour';
+      const tree = render(
+        <ScreenTimeProvider>
+          <Consumer />
+        </ScreenTimeProvider>
+      );
+
+      await act(async () => {
+        ctx?.showWarning({ type: 'limit_reached', remainingTime: 0, message: 'Held back' });
+      });
+
+      expect(JSON.stringify(tree.toJSON())).not.toContain('screen-time-owl-alert');
+
+      mockGuide.activeGuide = null;
+      tree.rerender(
+        <ScreenTimeProvider>
+          <Consumer />
+        </ScreenTimeProvider>
+      );
+      act(() => {
+        jest.advanceTimersByTime(OWL_RHYTHM.arriveMs);
+      });
+
+      expect(JSON.stringify(tree.toJSON())).toContain('Held back');
       jest.useRealTimers();
     });
 

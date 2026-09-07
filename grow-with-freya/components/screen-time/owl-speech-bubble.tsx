@@ -1,5 +1,5 @@
 import React, { memo, useEffect } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet, type LayoutChangeEvent, type ViewStyle } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { useAccessibility } from '@/hooks/use-accessibility';
@@ -11,6 +11,12 @@ export const BUBBLE_POP_MS = 380;
 export const BUBBLE_FRESH_MS = 220;
 export const BUBBLE_LEAVE_MS = 160;
 export const BUBBLE_TAIL_LEFT = 44;
+export const BUBBLE_TAIL_SIZE = 16;
+export const BUBBLE_POINTER_SIZE = 12;
+
+export type BubbleTail = 'up' | 'down' | 'left' | 'right';
+
+export type BubbleTailAlign = 'left' | 'right';
 
 export interface OwlSpeechBubbleProps {
   eyebrow?: string;
@@ -26,12 +32,73 @@ export interface OwlSpeechBubbleProps {
   onClose: () => void;
   leaving?: boolean;
   maxWidth: number;
+  tail?: BubbleTail | null;
+  tailOffset?: number;
+  tailAlign?: BubbleTailAlign;
+  pointer?: BubbleTail | null;
+  idPrefix?: string;
+  onLayout?: (event: LayoutChangeEvent) => void;
   testID?: string;
 }
 
 const pop = Easing.out(Easing.back(1.4));
 const settle = Easing.out(Easing.cubic);
 const drop = Easing.in(Easing.quad);
+
+function popOrigin(tail: BubbleTail, align: BubbleTailAlign): string {
+  const x = align === 'left' ? '14%' : '86%';
+  switch (tail) {
+    case 'down':
+      return `${x} 100%`;
+    case 'up':
+      return `${x} 0%`;
+    case 'left':
+      return '0% 85%';
+    case 'right':
+      return '100% 85%';
+  }
+}
+
+function tailStyle(tail: BubbleTail, offset: number, align: BubbleTailAlign): ViewStyle {
+  const half = BUBBLE_TAIL_SIZE / 2;
+  const along: ViewStyle = align === 'left' ? { left: offset } : { right: offset };
+  switch (tail) {
+    case 'down':
+      return { ...along, bottom: 0, borderRightWidth: 1, borderBottomWidth: 1 };
+    case 'up':
+      return { ...along, top: 0, borderLeftWidth: 1, borderTopWidth: 1 };
+    case 'left':
+      return { left: 0, bottom: offset - half, borderLeftWidth: 1, borderBottomWidth: 1 };
+    case 'right':
+      return { right: 0, bottom: offset - half, borderRightWidth: 1, borderTopWidth: 1 };
+  }
+}
+
+function pointerStyle(pointer: BubbleTail): ViewStyle {
+  switch (pointer) {
+    case 'up':
+      return { top: 0, alignSelf: 'center', borderLeftWidth: 1, borderTopWidth: 1 };
+    case 'down':
+      return { bottom: 0, alignSelf: 'center', borderRightWidth: 1, borderBottomWidth: 1 };
+    case 'left':
+      return { left: 0, top: '50%', borderLeftWidth: 1, borderBottomWidth: 1 };
+    case 'right':
+      return { right: 0, top: '50%', borderRightWidth: 1, borderTopWidth: 1 };
+  }
+}
+
+function wrapPadding(tail: BubbleTail | null, pointer: BubbleTail | null): ViewStyle {
+  const pad: ViewStyle = {};
+  const half = BUBBLE_TAIL_SIZE / 2;
+  const pointerHalf = BUBBLE_POINTER_SIZE / 2;
+  const side = (edge: BubbleTail, amount: number) => {
+    const key = edge === 'up' ? 'paddingTop' : edge === 'down' ? 'paddingBottom' : edge === 'left' ? 'paddingLeft' : 'paddingRight';
+    pad[key] = Math.max(Number(pad[key] ?? 0), amount);
+  };
+  if (tail) side(tail, half);
+  if (pointer) side(pointer, pointerHalf);
+  return pad;
+}
 
 export const OwlSpeechBubble = memo(function OwlSpeechBubble({
   eyebrow,
@@ -47,6 +114,12 @@ export const OwlSpeechBubble = memo(function OwlSpeechBubble({
   onClose,
   leaving = false,
   maxWidth,
+  tail = 'down',
+  tailOffset = BUBBLE_TAIL_LEFT,
+  tailAlign = 'left',
+  pointer = null,
+  idPrefix = 'screen-time-owl',
+  onLayout,
   testID = 'screen-time-owl-bubble',
 }: OwlSpeechBubbleProps) {
   const { scaledFontSize } = useAccessibility();
@@ -86,10 +159,14 @@ export const OwlSpeechBubble = memo(function OwlSpeechBubble({
   const isLast = page >= pageCount - 1;
 
   return (
-    <Animated.View style={[styles.wrap, { maxWidth }, bubbleStyle]} testID={testID}>
+    <Animated.View
+      style={[styles.wrap, { maxWidth, transformOrigin: popOrigin(tail ?? 'down', tailAlign) }, wrapPadding(tail, pointer), bubbleStyle]}
+      testID={testID}
+      onLayout={onLayout}
+    >
       <View style={styles.bubble}>
         <Pressable
-          testID="screen-time-owl-close"
+          testID={`${idPrefix}-close`}
           accessibilityRole="button"
           accessibilityLabel={closeLabel}
           onPress={onClose}
@@ -101,16 +178,16 @@ export const OwlSpeechBubble = memo(function OwlSpeechBubble({
 
         <Animated.View style={[styles.content, contentStyle]}>
           {eyebrow ? (
-            <Text style={[styles.eyebrow, { fontSize: scaledFontSize(11) }]} testID="screen-time-owl-eyebrow">
+            <Text style={[styles.eyebrow, { fontSize: scaledFontSize(11) }]} testID={`${idPrefix}-eyebrow`}>
               {eyebrow}
             </Text>
           ) : null}
           {title ? (
-            <Text style={[styles.title, { fontSize: scaledFontSize(17) }]} testID="screen-time-owl-title">
+            <Text style={[styles.title, { fontSize: scaledFontSize(17) }]} testID={`${idPrefix}-title`}>
               {title}
             </Text>
           ) : null}
-          <Text style={[styles.body, { fontSize: scaledFontSize(15) }]} testID="screen-time-owl-body">
+          <Text style={[styles.body, { fontSize: scaledFontSize(15) }]} testID={`${idPrefix}-body`}>
             {body}
           </Text>
           {footnote ? (
@@ -120,7 +197,7 @@ export const OwlSpeechBubble = memo(function OwlSpeechBubble({
                 footnoteEmphasis && styles.footnoteEmphasis,
                 { fontSize: scaledFontSize(12) },
               ]}
-              testID="screen-time-owl-footnote"
+              testID={`${idPrefix}-footnote`}
             >
               {footnote}
             </Text>
@@ -128,11 +205,11 @@ export const OwlSpeechBubble = memo(function OwlSpeechBubble({
         </Animated.View>
 
         <View style={styles.footer}>
-          <View style={styles.dots} testID="screen-time-owl-dots">
+          <View style={styles.dots} testID={`${idPrefix}-dots`}>
             {Array.from({ length: pageCount }, (_, index) => (
               <View
                 key={index}
-                testID={`screen-time-owl-dot-${index}`}
+                testID={`${idPrefix}-dot-${index}`}
                 accessibilityState={{ selected: index === page }}
                 style={[styles.dot, index === page && styles.dotCurrent]}
               />
@@ -140,7 +217,7 @@ export const OwlSpeechBubble = memo(function OwlSpeechBubble({
           </View>
 
           <Pressable
-            testID={isLast ? 'screen-time-owl-okay' : 'screen-time-owl-next'}
+            testID={isLast ? `${idPrefix}-okay` : `${idPrefix}-next`}
             accessibilityRole="button"
             accessibilityLabel={nextLabel}
             onPress={onNext}
@@ -151,7 +228,12 @@ export const OwlSpeechBubble = memo(function OwlSpeechBubble({
         </View>
       </View>
 
-      <View style={styles.tail} />
+      {tail ? (
+        <View testID={`${idPrefix}-tail-${tail}`} style={[styles.tail, tailStyle(tail, tailOffset, tailAlign)]} />
+      ) : null}
+      {pointer ? (
+        <View testID={`${idPrefix}-pointer-${pointer}`} style={[styles.pointer, pointerStyle(pointer)]} />
+      ) : null}
     </Animated.View>
   );
 });
@@ -161,8 +243,7 @@ const EDGE = 'rgba(255, 255, 255, 0.14)';
 
 const styles = StyleSheet.create({
   wrap: {
-    alignSelf: 'flex-start',
-    transformOrigin: '14% 100%',
+    maxWidth: '100%',
   },
   bubble: {
     backgroundColor: GLASS,
@@ -268,13 +349,18 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   tail: {
-    marginLeft: BUBBLE_TAIL_LEFT,
-    marginTop: -8,
-    width: 16,
-    height: 16,
+    position: 'absolute',
+    width: BUBBLE_TAIL_SIZE,
+    height: BUBBLE_TAIL_SIZE,
     backgroundColor: GLASS,
-    borderRightWidth: 1,
-    borderBottomWidth: 1,
+    borderColor: EDGE,
+    transform: [{ rotate: '45deg' }],
+  },
+  pointer: {
+    position: 'absolute',
+    width: BUBBLE_POINTER_SIZE,
+    height: BUBBLE_POINTER_SIZE,
+    backgroundColor: GLASS,
     borderColor: EDGE,
     transform: [{ rotate: '45deg' }],
   },

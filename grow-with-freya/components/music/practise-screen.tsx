@@ -53,7 +53,7 @@ import { Fonts } from '@/constants/theme';
 import { useGlobalSound } from '@/contexts/global-sound-context';
 import { SubscriptionOverlay } from '@/components/ui/subscription-overlay';
 import { StoryAccessService } from '@/services/story-access-service';
-import { LearningTipsOverlay } from '@/components/tutorial';
+import { OwlGuide } from '@/components/owl-guide';
 import { SKY_GRADIENT_WORLD, NIGHT_DEEP } from '@/constants/night-palette';
 
 const SPIN_STARS = spinStars(20000);
@@ -735,7 +735,7 @@ export function PractiseScreen({ onBack, isActive = false }: PractiseScreenProps
       />
 
       {/* Practise mode tutorial — shown on first visit */}
-      <LearningTipsOverlay tutorialId="practise_tips" isActive={isActive} />
+      <OwlGuide id="practise_tips" active={isActive} />
     </View>
   );
 }

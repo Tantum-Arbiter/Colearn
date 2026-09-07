@@ -17,7 +17,7 @@ import { VISUAL_EFFECTS } from '@/components/main-menu/constants';
 import { generateStarPositions } from '@/components/main-menu/utils';
 import { EarthHorizon } from '@/components/ui/earth-horizon';
 import { spinStars, useAmbientLoop } from '@/hooks/use-ambient-animation';
-import { EmotionCardsTipsOverlay } from '@/components/tutorial';
+import { OwlGuide } from '@/components/owl-guide';
 
 import { useAccessibility } from '@/hooks/use-accessibility';
 
@@ -239,8 +239,8 @@ export function EmotionsUnifiedScreen({ onStartGame, onNavigateToParents, onBack
         </View>
       </ScrollView>
 
-      {/* Tips overlay for first-time users */}
-      <EmotionCardsTipsOverlay />
+      {/* The owl's tips for first-time users */}
+      <OwlGuide id="emotion_cards_tips" />
     </Container>
   );
 }

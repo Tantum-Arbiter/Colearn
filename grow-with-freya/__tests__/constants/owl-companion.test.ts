@@ -1,4 +1,6 @@
 import {
+  arrivalOffset,
+  leaveOffset,
   OWL_CANVAS,
   OWL_LAYER_ORDER,
   OWL_RIG,
@@ -304,6 +306,23 @@ describe('lidReveal', () => {
     const bottom = half.windowTop + OWL_RIG.eyeWindow.height * scale;
 
     expect(bottom).toBeCloseTo((OWL_RIG.eyeWindow.top + OWL_RIG.eyeWindow.height / 2) * scale, 6);
+  });
+});
+
+describe('arrivalOffset', () => {
+  it('starts below the perch when hopping up, above it when dropping in', () => {
+    expect(arrivalOffset('below')).toBe(OWL_RIG.arriveFromPixels);
+    expect(arrivalOffset('above')).toBe(-OWL_RIG.arriveFromPixels);
+  });
+
+  it('leaves the way it came', () => {
+    expect(leaveOffset('below')).toBeGreaterThan(0);
+    expect(leaveOffset('above')).toBeLessThan(0);
+  });
+
+  it('stays put on its perch when something else carries it in', () => {
+    expect(arrivalOffset('none')).toBe(0);
+    expect(leaveOffset('none')).toBe(0);
   });
 });
 

@@ -115,6 +115,14 @@ describe('OwlSprite layers', () => {
     expect(window.position).toBe('absolute');
   });
 
+  it('faces right by default and mirrors itself to point left', () => {
+    const upright = renderOwl();
+    const mirrored = renderOwl({ wingSide: 'left' });
+
+    expect(styleOf(upright, 'owl-sprite').transform).toBeUndefined();
+    expect(styleOf(mirrored, 'owl-sprite').transform).toEqual([{ scaleX: -1 }]);
+  });
+
   it('keeps the whole owl out of the way of touches', () => {
     const tree = renderOwl();
 
@@ -269,6 +277,35 @@ describe('OwlSprite phases', () => {
     tree.rerender(<OwlSprite phase="idle" width={120} sayCount={1} />);
 
     expect(talkCalls()).toBe(before);
+  });
+
+  it('raises its wing to point once idle, and lowers it again', () => {
+    const tree = renderOwl({ phase: 'idle', pointing: false });
+    const raisesBefore = timingsOf(OWL_RHYTHM.pointRaiseMs);
+
+    tree.rerender(<OwlSprite phase="idle" width={116} pointing />);
+    const raisesAfter = timingsOf(OWL_RHYTHM.pointRaiseMs);
+    tree.rerender(<OwlSprite phase="idle" width={116} pointing={false} />);
+
+    expect(raisesAfter).toBeGreaterThan(raisesBefore);
+    expect(timingsOf(OWL_RHYTHM.pointLowerMs)).toBeGreaterThan(0);
+  });
+
+  it('waits until it has landed before pointing', () => {
+    const before = timingsOf(OWL_RHYTHM.pointRaiseMs);
+
+    renderOwl({ phase: 'arrive', pointing: true });
+
+    expect(timingsOf(OWL_RHYTHM.pointRaiseMs)).toBe(before);
+  });
+
+  it('does not point twice for the same request', () => {
+    const tree = renderOwl({ phase: 'idle', pointing: true });
+    const after = timingsOf(OWL_RHYTHM.pointRaiseMs);
+
+    tree.rerender(<OwlSprite phase="idle" width={120} pointing />);
+
+    expect(timingsOf(OWL_RHYTHM.pointRaiseMs)).toBe(after);
   });
 
   it('stops its breathing loop when unmounted', () => {

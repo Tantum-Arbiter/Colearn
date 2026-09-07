@@ -509,25 +509,22 @@ jest.mock('react-native', () => {
   return RN;
 });
 
-// Mock TutorialContext
-jest.mock('./contexts/tutorial-context', () => ({
-  TutorialProvider: ({ children }) => children,
-  useTutorial: () => ({
+// Mock the owl guide context: no guide is due, nothing is talking
+jest.mock('./contexts/owl-guide-context', () => ({
+  OwlGuideProvider: ({ children }) => children,
+  useOwlGuide: () => ({
     isLoaded: true,
-    completedTutorials: [],
-    hasSeenFirstStory: true,
-    hasSeenSettings: true,
-    activeTutorial: null,
-    currentStep: 0,
-    startTutorial: jest.fn(),
+    completedGuides: [],
+    lastResetTimestamp: 0,
+    activeGuide: null,
+    stepIndex: 0,
+    startGuide: jest.fn(),
     nextStep: jest.fn(),
-    previousStep: jest.fn(),
-    skipTutorial: jest.fn(),
-    completeTutorial: jest.fn(),
-    shouldShowTutorial: jest.fn().mockReturnValue(false),
-    markFirstStoryViewed: jest.fn(),
-    markSettingsViewed: jest.fn(),
-    resetAllTutorials: jest.fn().mockResolvedValue(undefined),
+    skipGuide: jest.fn(),
+    completeGuide: jest.fn(),
+    dismissGuide: jest.fn(),
+    shouldShowGuide: jest.fn().mockReturnValue(false),
+    resetGuides: jest.fn().mockResolvedValue(undefined),
   }),
 }));
 

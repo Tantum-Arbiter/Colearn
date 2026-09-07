@@ -6,8 +6,8 @@ import * as Haptics from 'expo-haptics';
 
 import { useAccessibility } from '@/hooks/use-accessibility';
 import type { ScreenTimeWarning } from '@/services/screen-time-service';
-import type { OwlPhase } from '@/constants/owl-companion';
-import { OwlSprite } from './owl-sprite';
+import { owlPerchFrame, type OwlPhase } from '@/constants/owl-companion';
+import { OwlPerch } from './owl-perch';
 import { OwlSpeechBubble } from './owl-speech-bubble';
 
 const OWL_WIDTH_PHONE = 116;
@@ -123,39 +123,44 @@ export function ScreenTimeOwlAlert({ visible, warning, onDismiss }: ScreenTimeOw
 
   const isLast = page >= OWL_BUBBLE_PAGES - 1;
   const content = bubblePage(page, warning, t);
+  const owlWidth = isTablet ? OWL_WIDTH_TABLET : OWL_WIDTH_PHONE;
+  const perch = owlPerchFrame(owlWidth);
   const bubbleMaxWidth = Math.min(screenWidth - 24, isTablet ? BUBBLE_MAX_TABLET : BUBBLE_MAX_PHONE);
 
   return (
-    <View
-      style={[styles.root, { paddingBottom: insets.bottom + 10, paddingTop: insets.top }]}
-      pointerEvents="box-none"
-      testID="screen-time-owl-alert"
-    >
+    <View style={styles.root} pointerEvents="box-none" testID="screen-time-owl-alert">
       {landed && (
-        <OwlSpeechBubble
-          eyebrow={content.eyebrow}
-          title={content.title}
-          body={content.body}
-          footnote={content.footnote}
-          footnoteEmphasis={content.footnoteEmphasis}
-          page={page}
-          pageCount={OWL_BUBBLE_PAGES}
-          nextLabel={isLast ? t('screenTimeOwl.okay') : t('common.next')}
-          closeLabel={t('screenTimeWarning.closeNotification')}
-          onNext={isLast ? handleOkay : handleNext}
-          onClose={handleClose}
-          leaving={phase !== 'idle'}
-          maxWidth={bubbleMaxWidth}
-        />
+        <View
+          style={[styles.bubbleSlot, { left: 12 + insets.left, bottom: perch.height - 4, width: bubbleMaxWidth }]}
+          pointerEvents="box-none"
+        >
+          <OwlSpeechBubble
+            eyebrow={content.eyebrow}
+            title={content.title}
+            body={content.body}
+            footnote={content.footnote}
+            footnoteEmphasis={content.footnoteEmphasis}
+            page={page}
+            pageCount={OWL_BUBBLE_PAGES}
+            nextLabel={isLast ? t('screenTimeOwl.okay') : t('common.next')}
+            closeLabel={t('screenTimeWarning.closeNotification')}
+            onNext={isLast ? handleOkay : handleNext}
+            onClose={handleClose}
+            leaving={phase !== 'idle'}
+            maxWidth={bubbleMaxWidth}
+            tailOffset={Math.round(perch.owl.left + owlWidth * 0.42 - 12)}
+          />
+        </View>
       )}
 
-      <View style={styles.perch} accessible accessibilityLabel={t('screenTimeOwl.owlLabel')}>
-        <OwlSprite
+      <View style={styles.perch} pointerEvents="none" testID="screen-time-owl-perch">
+        <OwlPerch
           testID="screen-time-owl"
           phase={phase}
           sayCount={sayCount}
-          width={isTablet ? OWL_WIDTH_TABLET : OWL_WIDTH_PHONE}
+          owlWidth={owlWidth}
           onPhaseEnd={handlePhaseEnd}
+          accessibilityLabel={t('screenTimeOwl.owlLabel')}
         />
       </View>
     </View>
@@ -165,13 +170,14 @@ export function ScreenTimeOwlAlert({ visible, warning, onDismiss }: ScreenTimeOw
 const styles = StyleSheet.create({
   root: {
     ...StyleSheet.absoluteFillObject,
-    justifyContent: 'flex-end',
-    alignItems: 'flex-start',
-    paddingHorizontal: 12,
     zIndex: 1000,
   },
+  bubbleSlot: {
+    position: 'absolute',
+  },
   perch: {
-    marginTop: -2,
-    marginLeft: 2,
+    position: 'absolute',
+    left: 0,
+    bottom: 0,
   },
 });

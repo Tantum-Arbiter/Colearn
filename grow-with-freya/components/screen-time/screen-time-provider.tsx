@@ -4,6 +4,7 @@ import { useAppStore } from '../../store/app-store';
 import ScreenTimeService, { ScreenTimeWarning } from '../../services/screen-time-service';
 import NotificationService from '../../services/notification-service';
 import { ScreenTimeOwlAlert } from './screen-time-owl-alert';
+import { useOwlGuide } from '@/contexts/owl-guide-context';
 import { Logger } from '@/utils/logger';
 
 const log = Logger.create('ScreenTime');
@@ -57,6 +58,7 @@ const EXEMPT_SCREENS = ['sleep'];
 const IMMERSIVE_SCREENS = ['story-reader', 'practise', 'freeplay'];
 
 export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
+  const { activeGuide } = useOwlGuide();
   const {
     screenTimeEnabled,
     childAgeInMonths,
@@ -325,7 +327,7 @@ export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
       {children}
       
       <ScreenTimeOwlAlert
-        visible={showWarningModal}
+        visible={showWarningModal && activeGuide === null}
         warning={currentWarning}
         onDismiss={handleDismiss}
       />

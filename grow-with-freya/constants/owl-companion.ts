@@ -76,11 +76,83 @@ export const OWL_RHYTHM = {
   talkPauseMs: 160,
   delightMs: 560,
   delightFadeMs: 180,
+  pointRaiseMs: 360,
+  pointLowerMs: 420,
+  pointBobMs: 1400,
+  pointBob: 0.35,
   leaveMs: 320,
   reducedFadeMs: 200,
 } as const;
 
 export const OWL_PHASES = ['arrive', 'idle', 'delight', 'leave'] as const;
+
+export type OwlApproach = 'below' | 'above' | 'none';
+
+export type OwlWingSide = 'right' | 'left';
+
+export function arrivalOffset(approach: OwlApproach): number {
+  if (approach === 'none') return 0;
+  return approach === 'above' ? -OWL_RIG.arriveFromPixels : OWL_RIG.arriveFromPixels;
+}
+
+export function leaveOffset(approach: OwlApproach): number {
+  if (approach === 'none') return 0;
+  return approach === 'above' ? -OWL_RIG.leaveToPixels : OWL_RIG.leaveToPixels;
+}
+
+export const OWL_PERCH = {
+  ledge: require('@/assets/images/screen-time/owl/owl-ledge.webp'),
+  cloud: require('@/assets/images/ui-elements/night-cloud-left.webp'),
+  baseOwlWidth: 116,
+  ledgeWidth: 236,
+  ledgeHeight: 104,
+  platformTop: 24,
+  footOverlap: 7,
+  owlLeft: 16,
+  cloudAspect: 616 / 531,
+  slideOvershoot: 24,
+  driftPixels: 4,
+  driftMs: 9000,
+} as const;
+
+export interface PerchBox {
+  left: number;
+  bottom: number;
+  width: number;
+  height: number;
+}
+
+export interface PerchFrame {
+  scale: number;
+  width: number;
+  height: number;
+  owl: PerchBox;
+  ledge: PerchBox;
+  cloudFront: PerchBox;
+  cloudBack: PerchBox;
+  slideFrom: number;
+}
+
+export function owlPerchFrame(owlWidth: number): PerchFrame {
+  const scale = owlWidth / OWL_PERCH.baseOwlWidth;
+  const owlHeight = owlWidth * (OWL_CANVAS.height / OWL_CANVAS.width);
+  const ledgeWidth = OWL_PERCH.ledgeWidth * scale;
+  const ledgeHeight = OWL_PERCH.ledgeHeight * scale;
+  const owlBottom = (OWL_PERCH.ledgeHeight - OWL_PERCH.platformTop - OWL_PERCH.footOverlap) * scale;
+  const frontWidth = 230 * scale;
+  const backWidth = 150 * scale;
+
+  return {
+    scale,
+    width: ledgeWidth,
+    height: owlBottom + owlHeight,
+    owl: { left: OWL_PERCH.owlLeft * scale, bottom: owlBottom, width: owlWidth, height: owlHeight },
+    ledge: { left: 0, bottom: 0, width: ledgeWidth, height: ledgeHeight },
+    cloudFront: { left: -70 * scale, bottom: -42 * scale, width: frontWidth, height: frontWidth * OWL_PERCH.cloudAspect },
+    cloudBack: { left: 120 * scale, bottom: -60 * scale, width: backWidth, height: backWidth * OWL_PERCH.cloudAspect },
+    slideFrom: -(ledgeWidth + OWL_PERCH.slideOvershoot),
+  };
+}
 
 export type OwlPhase = (typeof OWL_PHASES)[number];
 

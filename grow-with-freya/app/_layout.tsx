@@ -45,7 +45,7 @@ import { PAGE_TRANSITION_DURATION_MS } from '@/constants/page-transition';
 import { StoryTransitionProvider, useStoryTransition } from '@/contexts/story-transition-context';
 import { ActivityTransitionProvider, useActivityTransition } from '@/contexts/ActivityTransitionContext';
 import { GlobalSoundProvider } from '@/contexts/global-sound-context';
-import { TutorialProvider } from '@/contexts/tutorial-context';
+import { OwlGuideProvider } from '@/contexts/owl-guide-context';
 import { updateSentryConsent } from '@/services/sentry-service';
 import { AnalyticsService } from '@/services/analytics-service';
 import i18n from '@/services/i18n';
@@ -92,7 +92,7 @@ export default function RootLayout() {
   return (
     <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
       <GlobalSoundProvider>
-        <TutorialProvider>
+        <OwlGuideProvider>
           <ScreenTimeProvider>
             <StoryTransitionProvider>
               <ActivityTransitionProvider>
@@ -100,7 +100,7 @@ export default function RootLayout() {
               </ActivityTransitionProvider>
             </StoryTransitionProvider>
           </ScreenTimeProvider>
-        </TutorialProvider>
+        </OwlGuideProvider>
       </GlobalSoundProvider>
     </View>
   );

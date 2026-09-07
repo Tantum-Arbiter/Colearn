@@ -20,20 +20,27 @@ import {
   OWL_LAYERS,
   OWL_RIG,
   OWL_RHYTHM,
+  arrivalOffset,
   landingSquash,
+  leaveOffset,
   lidReveal,
   owlOrigin,
   talkBeats,
   wingPose,
   type BlinkShape,
   type GlanceGesture,
+  type OwlApproach,
   type OwlPhase,
+  type OwlWingSide,
 } from '@/constants/owl-companion';
 
 export interface OwlSpriteProps {
   width: number;
   phase: OwlPhase;
   sayCount?: number;
+  pointing?: boolean;
+  wingSide?: OwlWingSide;
+  approach?: OwlApproach;
   onPhaseEnd?: (phase: OwlPhase) => void;
   testID?: string;
 }
@@ -93,7 +100,7 @@ function withBeats(tracks: Track[], name: string, beats: Beat[]): Track[] {
   return tracks.map((track) => (track.name === name ? { ...track, beats } : track));
 }
 
-function arrivalTracks(rig: Rig): Track[] {
+function arrivalTracks(rig: Rig, approach: OwlApproach): Track[] {
   const { arriveMs, landSettleMs, waveAfterLandingMs, waveRaiseMs, waveBeatMs, waveBeats, waveLowerMs } =
     OWL_RHYTHM;
   const waveAt = arriveMs + waveAfterLandingMs;
@@ -129,7 +136,7 @@ function arrivalTracks(rig: Rig): Track[] {
     {
       on: rig.rise,
       name: 'rise',
-      from: OWL_RIG.arriveFromPixels,
+      from: arrivalOffset(approach),
       beats: [{ at: 0, to: 0, over: arriveMs, easing: settle }],
     },
     ...tracks,
@@ -176,7 +183,7 @@ function delightTracks(rig: Rig): Track[] {
   ];
 }
 
-function leaveTracks(rig: Rig): Track[] {
+function leaveTracks(rig: Rig, approach: OwlApproach): Track[] {
   return [
     {
       on: rig.fade,
@@ -188,7 +195,7 @@ function leaveTracks(rig: Rig): Track[] {
       on: rig.rise,
       name: 'rise',
       from: 0,
-      beats: [{ at: 0, to: OWL_RIG.leaveToPixels, over: OWL_RHYTHM.leaveMs, easing: drop }],
+      beats: [{ at: 0, to: leaveOffset(approach), over: OWL_RHYTHM.leaveMs, easing: drop }],
     },
     { on: rig.tilt, name: 'tilt', beats: [{ at: 0, to: 0, over: OWL_RHYTHM.leaveMs, easing: glide }] },
   ];
@@ -310,6 +317,20 @@ function ruffleTracks(rig: Rig): Track[] {
   ];
 }
 
+function pointTracks(rig: Rig, raised: boolean): Track[] {
+  if (raised) {
+    return [
+      { on: rig.wingLift, name: 'wing', beats: [{ at: 0, to: 1, over: OWL_RHYTHM.pointRaiseMs, easing: perk }] },
+      { on: rig.tilt, name: 'tilt', beats: [{ at: 0, to: OWL_RHYTHM.waveLeanDegrees, over: OWL_RHYTHM.pointRaiseMs, easing: perk }] },
+    ];
+  }
+  return [
+    { on: rig.wingLift, name: 'wing', beats: [{ at: 0, to: 0, over: OWL_RHYTHM.pointLowerMs, easing: glide }] },
+    { on: rig.wave, name: 'wave', beats: [{ at: 0, to: 0, over: OWL_RHYTHM.pointLowerMs, easing: glide }] },
+    { on: rig.tilt, name: 'tilt', beats: [{ at: 0, to: 0, over: OWL_RHYTHM.pointLowerMs, easing: glide }] },
+  ];
+}
+
 function talkTracks(rig: Rig, roll: number): Track[] {
   const beats = talkBeats(roll);
   return [
@@ -345,6 +366,9 @@ export const OwlSprite = memo(function OwlSprite({
   width,
   phase,
   sayCount = 0,
+  pointing = false,
+  wingSide = 'right',
+  approach = 'below',
   onPhaseEnd,
   testID = 'owl-sprite',
 }: OwlSpriteProps) {
@@ -353,7 +377,7 @@ export const OwlSprite = memo(function OwlSprite({
   const height = width * (OWL_CANVAS.height / OWL_CANVAS.width);
 
   const fade = useSharedValue(phase === 'arrive' ? 0 : 1);
-  const rise = useSharedValue(phase === 'arrive' ? OWL_RIG.arriveFromPixels : 0);
+  const rise = useSharedValue(phase === 'arrive' ? arrivalOffset(approach) : 0);
   const land = useSharedValue(0);
   const breath = useSharedValue(0);
   const ruffleX = useSharedValue(1);
@@ -401,11 +425,11 @@ export const OwlSprite = memo(function OwlSprite({
     if (reduceMotion) {
       choreograph(reducedTracks(rig, phase));
     } else if (phase === 'arrive') {
-      choreograph(arrivalTracks(rig));
+      choreograph(arrivalTracks(rig, approach));
     } else if (phase === 'delight') {
       choreograph(delightTracks(rig));
     } else if (phase === 'leave') {
-      choreograph(leaveTracks(rig));
+      choreograph(leaveTracks(rig, approach));
     }
 
     const duration = phaseDuration(phase, reduceMotion);
@@ -418,7 +442,7 @@ export const OwlSprite = memo(function OwlSprite({
           }, duration);
 
     runRef.current = { phase, reduceMotion, timer };
-  }, [phase, reduceMotion]);
+  }, [phase, reduceMotion, approach]);
 
   useEffect(
     () => () => {
@@ -426,6 +450,26 @@ export const OwlSprite = memo(function OwlSprite({
     },
     []
   );
+
+  const pointedRef = useRef(false);
+
+  useEffect(() => {
+    if (phase !== 'idle' || reduceMotion) return;
+    if (pointing === pointedRef.current) return;
+    pointedRef.current = pointing;
+    const rig = rigRef.current;
+    choreograph(pointTracks(rig, pointing));
+    if (pointing) {
+      rig.wave.value = withRepeat(
+        withSequence(
+          withTiming(OWL_RHYTHM.pointBob, { duration: OWL_RHYTHM.pointBobMs / 2, easing: sway }),
+          withTiming(-OWL_RHYTHM.pointBob, { duration: OWL_RHYTHM.pointBobMs / 2, easing: sway })
+        ),
+        -1,
+        true
+      );
+    }
+  }, [pointing, phase, reduceMotion]);
 
   useEffect(() => {
     if (sayCount <= spokenRef.current) return;
@@ -498,7 +542,11 @@ export const OwlSprite = memo(function OwlSprite({
   const eyeWindowHeight = OWL_RIG.eyeWindow.height * scale;
 
   return (
-    <View style={[styles.stage, { width, height }]} testID={testID} pointerEvents="none">
+    <View
+      style={[styles.stage, { width, height }, wingSide === 'left' && styles.mirrored]}
+      testID={testID}
+      pointerEvents="none"
+    >
       <Animated.View style={[styles.layerBox, rigStyle]}>
         <Animated.View testID="owl-wing" style={[styles.layerBox, styles.wingOrigin, wingStyle]}>
           <Image testID="owl-layer-wing" source={OWL_LAYERS.wing} style={styles.layer} contentFit="fill" transition={0} />
@@ -532,6 +580,9 @@ export const OwlSprite = memo(function OwlSprite({
 const styles = StyleSheet.create({
   stage: {
     overflow: 'visible',
+  },
+  mirrored: {
+    transform: [{ scaleX: -1 }],
   },
   layerBox: {
     ...StyleSheet.absoluteFillObject,

@@ -57,7 +57,7 @@ components/
 │   └── reader/                  ← Auto-hiding reader chrome, page-edge navigation
 ├── music/                  ← Music mode screens (practice, freeplay)
 ├── account/                ← Settings, language, screen time, profile
-├── tutorial/               ← Contextual tip overlays
+├── owl-guide/              ← The owl's guided tours (spotlight + speech bubbles)
 └── ui/                     ← Shared UI components
     └── earth-horizon.tsx        ← One globe: rises from the home page's bottom edge, hangs from the top of every page below (`constants/earth.ts` owns the geometry)
 
@@ -325,6 +325,20 @@ Geometry, timings and the pure motion curves live in `constants/owl-companion.ts
 (blink, glance, ruffle) are scheduled by `hooks/use-owl-rhythm.ts` and fall silent under reduced
 motion. The alert waits for the owl's `arrive` phase to end before it shows the first bubble, and
 on dismissal plays `delight` or `leave` before calling back to the provider.
+
+The same owl is the app's tutorial. `components/owl-guide/owl-guide.tsx` mounts on each screen
+that has something to explain (`<OwlGuide id="…" targets={refs} />`): it dims the screen, cuts a
+spotlight around the step's target (measured from the refs the screen hands it), and puts the
+step's copy in the speech bubble with a pointer aimed at the highlight. The owl always stands
+on its rock in the bottom-left corner (`components/screen-time/owl-perch.tsx`: a painted ledge,
+the night clouds, and the owl, sliding in from the left edge and out again), raising its wing
+toward the highlight. The bubble rests above the owl, or beside it in landscape; when a
+highlight sits where the bubble or the perch would cover it, `placeGuideBubble` in
+`constants/owl-guide.ts` lifts the bubble into a callout above or below the highlight instead. The step tables, placement planner and spotlight geometry live in
+`constants/owl-guide.ts` (reusing the existing `tutorial.*` strings in all fourteen locales);
+which guides have been seen is persisted by `contexts/owl-guide-context.tsx` under the old
+`@tutorial_state` key, migrating the previous shape on load. A guide that has been seen can be
+replayed from a screen's own menu with `replay`, which does not mark it again.
 
 ## Testing
 
