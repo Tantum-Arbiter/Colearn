@@ -58,7 +58,10 @@ const BOX_GLOW = {
 const FRAME_YELLOW = '#FFE14D';
 
 /** Room for the trial card, which is wider than the app's usual tablet column. */
-const TRIAL_MAX_WIDTH = 720;
+const TRIAL_MAX_WIDTH = 600;
+
+/** Above this the screen has room for type at its full size. */
+const WIDE_WIDTH = 700;
 
 /**
  * Below this the three steps cannot hold an icon and a readable line of text
@@ -148,6 +151,7 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
 
   const trialPrice = livePrices?.monthly_basic?.priceString ?? fallbackPrices().monthly_basic;
   const compact = screenW < COMPACT_WIDTH;
+  const wide = screenW >= WIDE_WIDTH;
   const stepIcon = compact ? 68 : 97;
   const linkDots = compact ? 4 : 8;
   const dotGap = compact ? 3.5 : 6;
@@ -175,7 +179,7 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
             <Ionicons name="close" size={20} color="#FFFFFF" />
           </Pressable>
           <View style={st.page}>
-            <View style={[st.column, st.pageColumn]}>
+            <View style={[st.column, st.pageColumn, wide && st.pageColumnWide]}>
             <View style={st.headerBlock}>
             <View style={st.starRow} testID="trial-star-cluster">
               {TRIAL_STARS.map((star, i) => (
@@ -187,8 +191,8 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
                 />
               ))}
             </View>
-            <Text style={st.header}>{t('subscription.trial.title')}</Text>
-            <Text style={st.sub}>{t('subscription.trial.subtitle', { price: trialPrice })}</Text>
+            <Text style={[st.header, wide && st.headerWide]}>{t('subscription.trial.title')}</Text>
+            <Text style={[st.sub, wide && st.subWide]}>{t('subscription.trial.subtitle', { price: trialPrice })}</Text>
             </View>
 
             <View style={st.timeline} testID="trial-timeline">
@@ -214,12 +218,12 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
                     <View style={[st.stepPill, step.pill === 'indigo' ? st.stepPillIndigo : st.stepPillAmber]}>
                       <Text
                         numberOfLines={1}
-                        style={[st.stepPillText, step.pill === 'indigo' ? st.stepPillTextLight : null]}
+                        style={[st.stepPillText, wide && st.stepPillTextWide, step.pill === 'indigo' ? st.stepPillTextLight : null]}
                       >
                         {t(step.labelKey)}
                       </Text>
                     </View>
-                    <Text style={st.stepBody}>{t(step.bodyKey, { price: trialPrice })}</Text>
+                    <Text style={[st.stepBody, wide && st.stepBodyWide]}>{t(step.bodyKey, { price: trialPrice })}</Text>
                   </View>
                 </React.Fragment>
               ))}
@@ -230,21 +234,21 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
               <View style={st.premiumBody}>
                 <View style={[st.premiumCopyRow, compact && st.premiumCopyStack]}>
                 <View style={[st.premiumCopy, compact && st.premiumColumnStacked]}>
-                  <Text style={st.premiumName}>{t('subscription.trial.planName')}</Text>
-                  <Text style={st.premiumTrial}>{t('subscription.trial.planTrial')}</Text>
+                  <Text style={[st.premiumName, wide && st.premiumNameWide]}>{t('subscription.trial.planName')}</Text>
+                  <Text style={[st.premiumTrial, wide && st.premiumTrialWide]}>{t('subscription.trial.planTrial')}</Text>
                 </View>
                 <View style={[st.premiumBenefits, compact && st.premiumColumnStacked]}>
                   {TRIAL_BENEFIT_KEYS.map((key, i) => (
                     <View key={key} style={st.benefitRow} testID={`trial-benefit-${i}`}>
                       <Ionicons name="checkmark" size={15} color="#FFC61A" style={st.benefitTick} />
-                      <Text style={st.benefitText}>{t(key)}</Text>
+                      <Text style={[st.benefitText, wide && st.benefitTextWide]}>{t(key)}</Text>
                     </View>
                   ))}
                 </View>
                 </View>
 
               <View testID="trial-upgrade" style={[st.upgradeRow, compact && st.upgradeRowCompact]}>
-                <Text style={st.upgradeNote}>{t('subscription.trial.upgrade')}</Text>
+                <Text style={[st.upgradeNote, wide && st.upgradeNoteWide]}>{t('subscription.trial.upgrade')}</Text>
               </View>
               </View>
             </View>
@@ -313,7 +317,7 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
                 <ActivityIndicator color="#fff" />
               ) : (
                 <View style={st.subBtnRow}>
-                  <Text style={st.subBtnText}>
+                  <Text style={[st.subBtnText, wide && st.subBtnTextWide]}>
                     {t(trialAvailable ? 'subscription.startFreeTrial' : 'subscription.unlockPlan')}
                   </Text>
                   <Ionicons name="arrow-forward" size={20} color="#fff" />
@@ -361,11 +365,16 @@ const st = StyleSheet.create({
   bgOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(5, 5, 20, 0.45)' },
   closeBtn: { position: 'absolute', right: 18, zIndex: 10, width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.25)', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 3.84, elevation: 5 },
   closeTxt: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  page: { flex: 1, alignItems: 'center', paddingTop: 4, paddingBottom: 12 },
+  page: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 4, paddingBottom: 12 },
   // the three blocks share out whatever height the device has rather than
   // huddling in the middle of it: the heading rides at the top, and the space
   // left over becomes the gaps between the panels
+  // A phone has barely more height than the offer needs, so sharing out what
+  // is left over spaces it well. A tablet has hundreds of points spare, and
+  // sharing those out pushes the timeline and the plan to arm's length -- so
+  // there the gap is a fixed number and the block sits centred.
   pageColumn: { flex: 1, justifyContent: 'space-between' },
+  pageColumnWide: { justifyContent: 'center', gap: 26 },
   headerBlock: { width: '100%' },
   // the trial card is a marketing page, not a form: stretched to a tablet's
   // full width the dot runs float in empty space and the timeline stops
@@ -375,6 +384,15 @@ const st = StyleSheet.create({
   sub: { fontSize: 14, color: 'rgba(255,255,255,0.9)', fontFamily: Fonts.sans, textAlign: 'center', marginBottom: 0, textShadowColor: 'rgba(0,0,0,0.6)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 },
   subBtn: { marginTop: 14, borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 3.84, elevation: 5 },
   subBtnInner: { paddingVertical: 16, alignItems: 'center', borderRadius: 16 },
+  headerWide: { fontSize: 34, marginBottom: 6 },
+  subWide: { fontSize: 18, lineHeight: 24 },
+  stepPillTextWide: { fontSize: 17 },
+  stepBodyWide: { fontSize: 16, lineHeight: 22, marginTop: 9 },
+  premiumNameWide: { fontSize: 32 },
+  premiumTrialWide: { fontSize: 25 },
+  benefitTextWide: { fontSize: 18, lineHeight: 25 },
+  upgradeNoteWide: { fontSize: 17, lineHeight: 23 },
+  subBtnTextWide: { fontSize: 22 },
   subBtnText: { fontSize: 18, fontWeight: '800', color: '#fff', fontFamily: Fonts.rounded, letterSpacing: 0.5 },
   legalRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 12, gap: 6 },
   legalLink: { fontSize: 12, color: 'rgba(255,255,255,0.5)', fontFamily: Fonts.sans, textDecorationLine: 'underline' },
