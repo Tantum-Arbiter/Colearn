@@ -100,7 +100,6 @@ export interface AppState {
   learningViewMode: StoryViewMode;
 
   storyProgress: Record<string, StoryProgress>;
-  useStoryGarden: boolean;
   useHomeScene: boolean;
 
   lastHomeVisitAt: string | null;
@@ -160,7 +159,6 @@ export interface AppState {
   recordAchievementUnlocks: (badgeIds: string[], at: string) => void;
   clearStoryProgress: (storyId: string) => void;
   getContinueReadingStoryId: () => string | null;
-  setUseStoryGarden: (enabled: boolean) => void;
   setUseHomeScene: (enabled: boolean) => void;
 
   updateBackgroundAnimationState: (state: {
@@ -212,7 +210,6 @@ export const useAppStore = create<AppState>()(
       storyViewMode: 'carousel' as StoryViewMode,
       learningViewMode: 'carousel' as StoryViewMode,
       storyProgress: {},
-      useStoryGarden: false,
       useHomeScene: true,
       lastHomeVisitAt: null,
       achievementUnlockedAt: {},
@@ -401,8 +398,6 @@ export const useAppStore = create<AppState>()(
 
         return entries.length > 0 ? entries[0][0] : null;
       },
-      setUseStoryGarden: (enabled: boolean) => set({ useStoryGarden: enabled }),
-
       setUseHomeScene: (enabled: boolean) => set({ useHomeScene: enabled }),
       updateBackgroundAnimationState: (animationState: { cloudFloat1: number; cloudFloat2: number; rocketFloat1: number; rocketFloat2: number }) => set({ backgroundAnimationState: animationState }),
       clearPersistedStorage: async () => {
@@ -450,7 +445,6 @@ export const useAppStore = create<AppState>()(
         storyViewMode: state.storyViewMode,
         learningViewMode: state.learningViewMode,
         storyProgress: state.storyProgress,
-        useStoryGarden: state.useStoryGarden,
         lastHomeVisitAt: state.lastHomeVisitAt,
         achievementUnlockedAt: state.achievementUnlockedAt,
         lastStoryCompletedAt: state.lastStoryCompletedAt,

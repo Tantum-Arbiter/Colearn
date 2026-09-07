@@ -37,7 +37,6 @@ jest.mock('@/store/app-store', () => {
     requestReturnToMainMenu: jest.fn(),
     clearReturnToMainMenu: jest.fn(),
     updateBackgroundAnimationState: jest.fn(),
-    useStoryGarden: false,
     useHomeScene: false,
     storyProgress: {},
     getContinueReadingStoryId: () => null,

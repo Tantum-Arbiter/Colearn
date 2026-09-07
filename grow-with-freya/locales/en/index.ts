@@ -247,8 +247,6 @@ export default {
   },
 
   storyGarden: {
-    title: 'Stories',
-    invitation: 'Which story shall we share?',
     greeting: {
       morning: 'Good morning',
       afternoon: 'Good afternoon',
@@ -257,28 +255,6 @@ export default {
       afternoonNamed: 'Good afternoon, {{name}}',
       eveningNamed: 'Good evening, {{name}}',
     },
-    places: {
-      sunnyMeadow: 'Sunny Meadow',
-      woodlandPath: 'Woodland Path',
-      cosyCorner: 'Cosy Corner',
-      moonlitStories: 'Moonlit Stories',
-    },
-    continueReading: 'Continue reading',
-    parentCorner: 'Parent corner',
-    empty: 'No stories here yet. New ones arrive soon.',
-    readTogether: 'Read Together',
-    listen: 'Listen',
-    listenTo: 'Listen to {{name}}',
-    recordAVoice: 'Record a Voice',
-    putBack: 'Put Back',
-    putItBack: 'Put It Back',
-    readAgain: 'Read Again',
-    closeBook: 'Close Book',
-    turnTheScreen: 'Turn the screen together',
-    turnTheScreenShort: 'Turn the screen',
-    readThisWay: 'Read this way',
-    nextPage: 'Next page',
-    previousPage: 'Previous page',
   },
 
   // Story reader

@@ -3209,8 +3209,6 @@ export default {
   },
 
   storyGarden: {
-    title: 'Hikâyeler',
-    invitation: 'Hangi hikâyeyi birlikte okuyalım?',
     greeting: {
       morning: 'Günaydın',
       afternoon: 'İyi günler',
@@ -3219,28 +3217,6 @@ export default {
       afternoonNamed: 'İyi günler, {{name}}',
       eveningNamed: 'İyi akşamlar, {{name}}',
     },
-    places: {
-      sunnyMeadow: 'Güneşli Çayır',
-      woodlandPath: 'Orman Patikası',
-      cosyCorner: 'Sıcacık Köşe',
-      moonlitStories: 'Ay Işığı Hikâyeleri',
-    },
-    continueReading: 'Okumaya devam et',
-    parentCorner: 'Ebeveyn köşesi',
-    empty: 'Burada henüz hikâye yok. Yakında yenileri gelecek.',
-    readTogether: 'Birlikte okuyalım',
-    listen: 'Dinle',
-    listenTo: '{{name}} sesiyle dinle',
-    recordAVoice: 'Bir ses kaydet',
-    putBack: 'Geri koy',
-    putItBack: 'Rafa geri koy',
-    readAgain: 'Tekrar oku',
-    closeBook: 'Kitabı kapat',
-    turnTheScreen: 'Ekranı birlikte çevirin',
-    turnTheScreenShort: 'Ekranı çevir',
-    readThisWay: 'Böyle oku',
-    nextPage: 'Sonraki sayfa',
-    previousPage: 'Önceki sayfa',
   },
   childUi: {
     nav: {

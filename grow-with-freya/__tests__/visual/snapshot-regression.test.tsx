@@ -41,7 +41,6 @@ jest.mock('@/store/app-store', () => {
     // read by StoryBookReader via selectors
     setTextSizeScale: jest.fn(),
     childAgeInMonths: 36,
-    useStoryGarden: false,
     setStoryProgress: jest.fn(),
     markStoryCompleted: jest.fn(),
     markStoryAsRead: jest.fn(),

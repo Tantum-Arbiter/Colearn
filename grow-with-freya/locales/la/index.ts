@@ -3209,8 +3209,6 @@ export default {
   },
 
   storyGarden: {
-    title: 'Fabulae',
-    invitation: 'Quam fabulam simul legemus?',
     greeting: {
       morning: 'Bonum mane',
       afternoon: 'Bonum diem',
@@ -3219,28 +3217,6 @@ export default {
       afternoonNamed: 'Bonum diem, {{name}}',
       eveningNamed: 'Bonum vesperum, {{name}}',
     },
-    places: {
-      sunnyMeadow: 'Pratum Solis',
-      woodlandPath: 'Semita Silvae',
-      cosyCorner: 'Angulus Tepidus',
-      moonlitStories: 'Fabulae Lunares',
-    },
-    continueReading: 'Perge legere',
-    parentCorner: 'Angulus Parentum',
-    empty: 'Nullae fabulae adhuc hic sunt. Novae mox venient.',
-    readTogether: 'Legamus simul',
-    listen: 'Audi',
-    listenTo: 'Audi {{name}}',
-    recordAVoice: 'Vocem recorda',
-    putBack: 'Repone',
-    putItBack: 'Repone in pluteum',
-    readAgain: 'Lege iterum',
-    closeBook: 'Claude librum',
-    turnTheScreen: 'Vertite simul quadrum',
-    turnTheScreenShort: 'Verte quadrum',
-    readThisWay: 'Sic lege',
-    nextPage: 'Pagina sequens',
-    previousPage: 'Pagina prior',
   },
   childUi: {
     nav: {

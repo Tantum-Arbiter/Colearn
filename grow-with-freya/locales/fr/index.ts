@@ -3209,8 +3209,6 @@ export default {
   },
 
   storyGarden: {
-    title: 'Histoires',
-    invitation: 'Quelle histoire partageons-nous ?',
     greeting: {
       morning: 'Bonjour',
       afternoon: 'Bon après-midi',
@@ -3219,28 +3217,6 @@ export default {
       afternoonNamed: 'Bon après-midi, {{name}}',
       eveningNamed: 'Bonsoir, {{name}}',
     },
-    places: {
-      sunnyMeadow: 'Prairie Ensoleillée',
-      woodlandPath: 'Sentier des Bois',
-      cosyCorner: 'Coin Douillet',
-      moonlitStories: 'Histoires au Clair de Lune',
-    },
-    continueReading: 'Continuer la lecture',
-    parentCorner: 'Coin des parents',
-    empty: 'Il n\'y a pas encore d\'histoires ici. De nouvelles arrivent bientôt.',
-    readTogether: 'Lisons ensemble',
-    listen: 'Écouter',
-    listenTo: 'Écouter {{name}}',
-    recordAVoice: 'Enregistrer une voix',
-    putBack: 'Ranger',
-    putItBack: 'Le ranger',
-    readAgain: 'Relire',
-    closeBook: 'Fermer le livre',
-    turnTheScreen: 'Tournez l\'écran ensemble',
-    turnTheScreenShort: 'Tourner l\'écran',
-    readThisWay: 'Lire comme ça',
-    nextPage: 'Page suivante',
-    previousPage: 'Page précédente',
   },
   childUi: {
     nav: {

@@ -3209,8 +3209,6 @@ export default {
   },
 
   storyGarden: {
-    title: 'Historier',
-    invitation: 'Hvilken historie skal vi dele?',
     greeting: {
       morning: 'Godmorgen',
       afternoon: 'God eftermiddag',
@@ -3219,28 +3217,6 @@ export default {
       afternoonNamed: 'God eftermiddag, {{name}}',
       eveningNamed: 'Godaften, {{name}}',
     },
-    places: {
-      sunnyMeadow: 'Solrig Eng',
-      woodlandPath: 'Skovstien',
-      cosyCorner: 'Hyggekrogen',
-      moonlitStories: 'Månelyshistorier',
-    },
-    continueReading: 'Læs videre',
-    parentCorner: 'Forældrehjørnet',
-    empty: 'Der er ingen historier her endnu. Nye kommer snart.',
-    readTogether: 'Lad os læse sammen',
-    listen: 'Lyt',
-    listenTo: 'Lyt til {{name}}',
-    recordAVoice: 'Optag en stemme',
-    putBack: 'Sæt tilbage',
-    putItBack: 'Sæt den på plads',
-    readAgain: 'Læs igen',
-    closeBook: 'Luk bogen',
-    turnTheScreen: 'Drej skærmen sammen',
-    turnTheScreenShort: 'Drej skærmen',
-    readThisWay: 'Læs sådan',
-    nextPage: 'Næste side',
-    previousPage: 'Forrige side',
   },
   childUi: {
     nav: {

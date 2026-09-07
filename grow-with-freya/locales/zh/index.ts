@@ -3209,8 +3209,6 @@ export default {
   },
 
   storyGarden: {
-    title: '故事',
-    invitation: '我们一起读哪个故事？',
     greeting: {
       morning: '早上好',
       afternoon: '下午好',
@@ -3219,28 +3217,6 @@ export default {
       afternoonNamed: '下午好，{{name}}',
       eveningNamed: '晚上好，{{name}}',
     },
-    places: {
-      sunnyMeadow: '阳光草地',
-      woodlandPath: '林间小路',
-      cosyCorner: '温馨角落',
-      moonlitStories: '月光故事',
-    },
-    continueReading: '继续阅读',
-    parentCorner: '家长角',
-    empty: '这里还没有故事，新故事很快就来。',
-    readTogether: '一起读',
-    listen: '聆听',
-    listenTo: '听{{name}}读',
-    recordAVoice: '录制声音',
-    putBack: '放回去',
-    putItBack: '放回书架',
-    readAgain: '再读一遍',
-    closeBook: '合上书本',
-    turnTheScreen: '一起转动屏幕',
-    turnTheScreenShort: '转动屏幕',
-    readThisWay: '就这样读',
-    nextPage: '下一页',
-    previousPage: '上一页',
   },
   childUi: {
     nav: {

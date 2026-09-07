@@ -3209,8 +3209,6 @@ export default {
   },
 
   storyGarden: {
-    title: 'الحكايات',
-    invitation: 'أي حكاية نقرأها معًا؟',
     greeting: {
       morning: 'صباح الخير',
       afternoon: 'نهارك سعيد',
@@ -3219,28 +3217,6 @@ export default {
       afternoonNamed: 'نهارك سعيد يا {{name}}',
       eveningNamed: 'مساء الخير يا {{name}}',
     },
-    places: {
-      sunnyMeadow: 'المرج المشمس',
-      woodlandPath: 'درب الغابة',
-      cosyCorner: 'الركن الدافئ',
-      moonlitStories: 'حكايات ضوء القمر',
-    },
-    continueReading: 'تابع القراءة',
-    parentCorner: 'ركن الوالدين',
-    empty: 'لا توجد حكايات هنا بعد. ستصل حكايات جديدة قريبًا.',
-    readTogether: 'لنقرأ معًا',
-    listen: 'استمع',
-    listenTo: 'استمع إلى {{name}}',
-    recordAVoice: 'سجّل صوتًا',
-    putBack: 'أعِده',
-    putItBack: 'أعِده إلى الرف',
-    readAgain: 'اقرأ مرة أخرى',
-    closeBook: 'أغلق الكتاب',
-    turnTheScreen: 'أديرا الشاشة معًا',
-    turnTheScreenShort: 'أدر الشاشة',
-    readThisWay: 'اقرأ هكذا',
-    nextPage: 'الصفحة التالية',
-    previousPage: 'الصفحة السابقة',
   },
   childUi: {
     nav: {

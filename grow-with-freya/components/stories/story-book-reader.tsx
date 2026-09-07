@@ -46,12 +46,8 @@ import { ParentsOnlyModal } from '../ui/parents-only-modal';
 import { SubscriptionOverlay } from '../ui/subscription-overlay';
 import { useAppStore } from '@/store/app-store';
 import { resumePageIndex } from './reading-progress';
-import { useAutoHideControls } from '@/hooks/use-auto-hide-controls';
-import { useInteractionRhythm } from '@/hooks/use-interaction-rhythm';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { ReaderControlsLayer } from './reader/reader-controls-layer';
-import { PageEdgeNavigation } from './reader/page-edge-navigation';
-import { BookClosing } from './story-garden/book-closing';
 import { useAccessibility, TEXT_SIZE_OPTIONS } from '@/hooks/use-accessibility';
 import { useParentsOnlyChallenge } from '@/hooks/use-parents-only-challenge';
 import * as Haptics from 'expo-haptics';
@@ -706,12 +702,9 @@ export function StoryBookReader({
   const { scaledFontSize, scaledButtonSize, textSizeScale } = useAccessibility();
   const setTextSizeScale = useAppStore((state) => state.setTextSizeScale);
   const childAgeInMonths = useAppStore((state) => state.childAgeInMonths);
-  const useStoryGarden = useAppStore((state) => state.useStoryGarden);
   const setStoryProgress = useAppStore((state) => state.setStoryProgress);
   const markStoryCompleted = useAppStore((state) => state.markStoryCompleted);
   const readerReduceMotion = useReducedMotion();
-  const gardenControls = useAutoHideControls({ enabled: useStoryGarden });
-  const [showClosingRitual, setShowClosingRitual] = useState(false);
   const childAgeGroup = resolveAgeGroup(childAgeInMonths);
   const markStoryAsRead = useAppStore((state) => state.markStoryAsRead);
   const recordReadingSession = useAppStore((state) => state.recordReadingSession);
@@ -940,9 +933,7 @@ export function StoryBookReader({
     // Prevent double-tap on finish button
     if (isExiting) return;
 
-    if (useStoryGarden) {
-      markStoryCompleted(story.id);
-    }
+    markStoryCompleted(story.id);
 
     try {
       // In record mode, show completion message and return to mode selection
@@ -980,12 +971,6 @@ export function StoryBookReader({
       storyCompletedRef.current = true;
       const durationSec = Math.floor((Date.now() - storyOpenTimeRef.current) / 1000);
       AnalyticsService.trackStoryCompleted(story.id, durationSec, currentPageIndex + 1);
-
-      // The Story Garden closes the book with its own ritual before leaving
-      if (useStoryGarden) {
-        setShowClosingRitual(true);
-        return;
-      }
 
       // Story complete - trigger exit animation (same as pressing X button)
       handleExit();
@@ -1097,16 +1082,7 @@ export function StoryBookReader({
   // Get story pages or create default pages if none exist
   const pages = story.pages || [];
 
-  const currentHotspotIds = useMemo(
-    () => (pages[currentPageIndex]?.interactiveElements ?? []).map((element) => element.id),
-    [pages, currentPageIndex]
-  );
-  const interactionRhythm = useInteractionRhythm({
-    hotspotIds: currentHotspotIds,
-    enabled: useStoryGarden,
-  });
-
-  // Where the child is up to, kept for the shelf's Continue Reading row
+  // Where the child is up to, kept for the home's Continue Reading card
   useEffect(() => {
     if (currentPageIndex <= 0 || pages.length === 0) {
       return;
@@ -1115,13 +1091,6 @@ export function StoryBookReader({
     setStoryProgress(story.id, currentPageIndex, pages.length);
   }, [currentPageIndex, pages.length, story.id, setStoryProgress]);
 
-  useEffect(() => {
-    if (!useStoryGarden) {
-      return;
-    }
-
-    interactionRhythm.beginObservation();
-  }, [useStoryGarden, currentPageIndex, interactionRhythm]);
   const currentPage = pages[currentPageIndex];
   const previousPage = previousPageIndex !== null ? pages[previousPageIndex] : null;
 
@@ -1889,9 +1858,6 @@ export function StoryBookReader({
                     containerHeight={screenHeight}
                     storyId={story.id}
                     isTablet={isTablet}
-                    calmHighlight={useStoryGarden}
-                    isInvited={interactionRhythm.isInvited(element.id)}
-                    onActed={interactionRhythm.markActed}
                   />
                 ))}
               </>
@@ -2576,30 +2542,15 @@ export function StoryBookReader({
         {/* Settings Menu Dropdown - Compare Language Options - REMOVED (using modal instead) */}
 
         {/* Simple Single Page - Just Like Cover Tap */}
-        {useStoryGarden ? (
-          <Pressable style={styles.pageContent} onPress={gardenControls.toggle} testID="reader-quiet-area">
-            {renderPageContent(currentPage)}
-          </Pressable>
-        ) : (
-          <View style={styles.pageContent}>
-            {renderPageContent(currentPage)}
-          </View>
-        )}
+        <View style={styles.pageContent}>
+          {renderPageContent(currentPage)}
+        </View>
 
         {/* UI Controls Layer */}
-        {useStoryGarden && (
-          <PageEdgeNavigation
-            canGoNext={currentPageIndex < pages.length - 1}
-            canGoPrevious={currentPageIndex > 1}
-            onNext={handleNextPage}
-            onPrevious={handlePreviousPage}
-            edgesEnabled={currentHotspotIds.length === 0}
-          />
-        )}
         <ReaderControlsLayer
-          visible={!useStoryGarden || gardenControls.visible}
+          visible
           reduceMotion={readerReduceMotion}
-          passthrough={!useStoryGarden}
+          passthrough
         >
         <View style={styles.uiControlsLayer}>
 
@@ -3581,25 +3532,6 @@ export function StoryBookReader({
         onLockedPress={() => setShowSubscription(true)}
       />
 
-      {/* Story Garden: close the book, then Read Again / Put It Back */}
-      {showClosingRitual && (
-        <View style={styles.closingRitualOverlay}>
-          <BookClosing
-            story={story}
-            reduceMotion={readerReduceMotion}
-            onReadAgain={() => {
-              setShowClosingRitual(false);
-              storyCompletedRef.current = false;
-              setCurrentPageIndex(1);
-            }}
-            onPutItBack={() => {
-              setShowClosingRitual(false);
-              handleExit();
-            }}
-          />
-        </View>
-      )}
-
       {/* Subscription Overlay -triggered from locked instrument tap */}
       <SubscriptionOverlay
         visible={showSubscription}
@@ -3610,15 +3542,6 @@ export function StoryBookReader({
 }
 
 const styles = StyleSheet.create({
-  closingRitualOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(16, 27, 61, 0.96)',
-    zIndex: 2500,
-  },
   container: {
     flex: 1,
   },

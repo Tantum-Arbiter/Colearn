@@ -3209,8 +3209,6 @@ export default {
   },
 
   storyGarden: {
-    title: 'おはなし',
-    invitation: 'どのおはなしをいっしょによむ？',
     greeting: {
       morning: 'おはよう',
       afternoon: 'こんにちは',
@@ -3219,28 +3217,6 @@ export default {
       afternoonNamed: 'こんにちは、{{name}}',
       eveningNamed: 'こんばんは、{{name}}',
     },
-    places: {
-      sunnyMeadow: 'ひなたの草原',
-      woodlandPath: '森の小道',
-      cosyCorner: 'あたたかな隅っこ',
-      moonlitStories: '月あかりのおはなし',
-    },
-    continueReading: 'つづきをよむ',
-    parentCorner: 'おうちの方へ',
-    empty: 'まだおはなしがありません。あたらしいおはなしがもうすぐとどきます。',
-    readTogether: 'いっしょによむ',
-    listen: 'きく',
-    listenTo: '{{name}}のこえできく',
-    recordAVoice: 'こえをろくおんする',
-    putBack: 'もどす',
-    putItBack: 'たなにもどす',
-    readAgain: 'もういちどよむ',
-    closeBook: 'ほんをとじる',
-    turnTheScreen: 'いっしょにがめんをまわそう',
-    turnTheScreenShort: 'がめんをまわす',
-    readThisWay: 'このままよむ',
-    nextPage: 'つぎのページ',
-    previousPage: 'まえのページ',
   },
   childUi: {
     nav: {

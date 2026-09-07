@@ -30,9 +30,6 @@ interface InteractiveElementProps {
   containerHeight: number;
   storyId: string;
   isTablet: boolean;
-  calmHighlight?: boolean;
-  isInvited?: boolean;
-  onActed?: (elementId: string) => void;
 }
 
 // Animation constants (similar to main menu glow)
@@ -55,9 +52,6 @@ export const InteractiveElementComponent: React.FC<InteractiveElementProps> = ({
   containerHeight,
   storyId,
   isTablet,
-  calmHighlight = false,
-  isInvited = false,
-  onActed,
 }) => {
   const [isRevealed, setIsRevealed] = useState(false);
 
@@ -137,30 +131,6 @@ export const InteractiveElementComponent: React.FC<InteractiveElementProps> = ({
 
   // Start pulsing glow and scale animation when not revealed
   useEffect(() => {
-    if (calmHighlight) {
-      cancelAnimation(glowOpacity);
-      cancelAnimation(indicatorScale);
-
-      if (isRevealed || !isInvited) {
-        glowOpacity.value = withTiming(0, { duration: 250 });
-        indicatorScale.value = withTiming(0.9, { duration: 250 });
-      } else {
-        glowOpacity.value = withTiming(GLOW_MAX_OPACITY * 0.55, {
-          duration: 450,
-          easing: Easing.inOut(Easing.ease),
-        });
-        indicatorScale.value = withTiming(1.04, {
-          duration: 450,
-          easing: Easing.inOut(Easing.ease),
-        });
-      }
-
-      return () => {
-        cancelAnimation(glowOpacity);
-        cancelAnimation(indicatorScale);
-      };
-    }
-
     if (!isRevealed) {
       // Pulsing opacity
       glowOpacity.value = withRepeat(
@@ -204,7 +174,7 @@ export const InteractiveElementComponent: React.FC<InteractiveElementProps> = ({
       cancelAnimation(glowOpacity);
       cancelAnimation(indicatorScale);
     };
-  }, [isRevealed, glowOpacity, indicatorScale, calmHighlight, isInvited]);
+  }, [isRevealed, glowOpacity, indicatorScale]);
 
   const log = Logger.create('InteractiveElement');
 
@@ -212,7 +182,6 @@ export const InteractiveElementComponent: React.FC<InteractiveElementProps> = ({
   const handlePress = () => {
     log.debug(`Tapped element: ${element.id}, currently revealed: ${isRevealed}`);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    onActed?.(element.id);
 
     if (isRevealed) {
       // Hide prop

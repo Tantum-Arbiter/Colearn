@@ -3209,8 +3209,6 @@ export default {
   },
 
   storyGarden: {
-    title: 'Verhalen',
-    invitation: 'Welk verhaal lezen we samen?',
     greeting: {
       morning: 'Goedemorgen',
       afternoon: 'Goedemiddag',
@@ -3219,28 +3217,6 @@ export default {
       afternoonNamed: 'Goedemiddag, {{name}}',
       eveningNamed: 'Goedenavond, {{name}}',
     },
-    places: {
-      sunnyMeadow: 'Zonnige Weide',
-      woodlandPath: 'Bospad',
-      cosyCorner: 'Knus Hoekje',
-      moonlitStories: 'Maanlichtverhalen',
-    },
-    continueReading: 'Verder lezen',
-    parentCorner: 'Oudershoekje',
-    empty: 'Hier zijn nog geen verhalen. Binnenkort komen er nieuwe bij.',
-    readTogether: 'Samen lezen',
-    listen: 'Luisteren',
-    listenTo: 'Naar {{name}} luisteren',
-    recordAVoice: 'Een stem opnemen',
-    putBack: 'Terugzetten',
-    putItBack: 'Terug op de plank',
-    readAgain: 'Nog eens lezen',
-    closeBook: 'Boek sluiten',
-    turnTheScreen: 'Draai het scherm samen',
-    turnTheScreenShort: 'Scherm draaien',
-    readThisWay: 'Zo lezen',
-    nextPage: 'Volgende pagina',
-    previousPage: 'Vorige pagina',
   },
   childUi: {
     nav: {

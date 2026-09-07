@@ -939,7 +939,6 @@ function AppContent() {
               onBack={handleBackToMainMenu}
               initialMode={selectedStoryMode}
               sectionRequest={storiesSection}
-              onOpenParentCorner={() => setCurrentPage('account')}
             />,
             practise: <PractiseScreen onBack={handleBackToInstruments} isActive={currentPage === 'practise'} />,
             freeplay: <FreeplayScreen onBack={handleBackToInstruments} isActive={currentPage === 'freeplay'} />,

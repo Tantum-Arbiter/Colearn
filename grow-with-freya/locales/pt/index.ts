@@ -3209,8 +3209,6 @@ export default {
   },
 
   storyGarden: {
-    title: 'Histórias',
-    invitation: 'Que história vamos partilhar?',
     greeting: {
       morning: 'Bom dia',
       afternoon: 'Boa tarde',
@@ -3219,28 +3217,6 @@ export default {
       afternoonNamed: 'Boa tarde, {{name}}',
       eveningNamed: 'Boa noite, {{name}}',
     },
-    places: {
-      sunnyMeadow: 'Prado Soalheiro',
-      woodlandPath: 'Caminho da Floresta',
-      cosyCorner: 'Cantinho Aconchegante',
-      moonlitStories: 'Histórias ao Luar',
-    },
-    continueReading: 'Continuar a ler',
-    parentCorner: 'Cantinho dos pais',
-    empty: 'Ainda não há histórias aqui. Em breve chegam novas.',
-    readTogether: 'Vamos ler juntos',
-    listen: 'Ouvir',
-    listenTo: 'Ouvir {{name}}',
-    recordAVoice: 'Gravar uma voz',
-    putBack: 'Arrumar',
-    putItBack: 'Arrumar o livro',
-    readAgain: 'Ler outra vez',
-    closeBook: 'Fechar o livro',
-    turnTheScreen: 'Virem o ecrã juntos',
-    turnTheScreenShort: 'Virar o ecrã',
-    readThisWay: 'Ler assim',
-    nextPage: 'Página seguinte',
-    previousPage: 'Página anterior',
   },
   childUi: {
     nav: {

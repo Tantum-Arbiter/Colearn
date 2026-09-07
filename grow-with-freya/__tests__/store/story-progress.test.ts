@@ -8,7 +8,6 @@
  * 1. Progress is recorded per story
  * 2. Continue Reading picks the most recently touched unfinished book
  * 3. Finished books drop out of Continue Reading but keep a completion count
- * 4. The Story Garden flag defaults off
  */
 
 // The app store is globally mocked in jest.setup.js; this suite exercises the real slice.
@@ -17,7 +16,6 @@ const { useAppStore } = jest.requireActual<typeof import('@/store/app-store')>('
 function resetStore(): void {
   useAppStore.setState({
     storyProgress: {},
-    useStoryGarden: false,
   });
 }
 
@@ -159,22 +157,6 @@ describe('story progress', () => {
 
     it('should be a no-op for an unknown story', () => {
       expect(() => useAppStore.getState().clearStoryProgress('nope')).not.toThrow();
-    });
-  });
-
-  describe('story garden flag', () => {
-    it('should default to off so the legacy catalogue stays live', () => {
-      const underTest = useAppStore.getState().useStoryGarden;
-
-      expect(underTest).toBe(false);
-    });
-
-    it('should be togglable', () => {
-      useAppStore.getState().setUseStoryGarden(true);
-
-      const underTest = useAppStore.getState().useStoryGarden;
-
-      expect(underTest).toBe(true);
     });
   });
 });

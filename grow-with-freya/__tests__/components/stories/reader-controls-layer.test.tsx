@@ -31,8 +31,8 @@ function renderPassthrough() {
 }
 
 describe('ReaderControlsLayer', () => {
-  describe('with the Story Garden off', () => {
-    it('should add no wrapper at all, leaving the legacy reader tree untouched', () => {
+  describe('in passthrough mode', () => {
+    it('should add no wrapper at all, leaving the reader tree untouched', () => {
       const view = renderPassthrough();
 
       expect(byTestId(view, 'reader-controls-layer')).toHaveLength(0);

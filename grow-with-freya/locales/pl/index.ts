@@ -3209,8 +3209,6 @@ export default {
   },
 
   storyGarden: {
-    title: 'Opowieści',
-    invitation: 'Którą opowieść przeczytamy razem?',
     greeting: {
       morning: 'Dzień dobry',
       afternoon: 'Dzień dobry',
@@ -3219,28 +3217,6 @@ export default {
       afternoonNamed: 'Dzień dobry, {{name}}',
       eveningNamed: 'Dobry wieczór, {{name}}',
     },
-    places: {
-      sunnyMeadow: 'Słoneczna Łąka',
-      woodlandPath: 'Leśna Ścieżka',
-      cosyCorner: 'Przytulny Kącik',
-      moonlitStories: 'Księżycowe Opowieści',
-    },
-    continueReading: 'Czytaj dalej',
-    parentCorner: 'Kącik rodzica',
-    empty: 'Nie ma tu jeszcze opowieści. Wkrótce pojawią się nowe.',
-    readTogether: 'Czytajmy razem',
-    listen: 'Posłuchaj',
-    listenTo: 'Posłuchaj: {{name}}',
-    recordAVoice: 'Nagraj głos',
-    putBack: 'Odłóż',
-    putItBack: 'Odłóż na półkę',
-    readAgain: 'Przeczytaj jeszcze raz',
-    closeBook: 'Zamknij książkę',
-    turnTheScreen: 'Obróćcie ekran razem',
-    turnTheScreenShort: 'Obróć ekran',
-    readThisWay: 'Czytaj tak jak jest',
-    nextPage: 'Następna strona',
-    previousPage: 'Poprzednia strona',
   },
   childUi: {
     nav: {
