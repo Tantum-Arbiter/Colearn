@@ -1,11 +1,14 @@
 import React, { ReactNode, useCallback } from 'react';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { ACCENT_GOLD, TEXT_SECONDARY } from '@/constants/night-palette';
-import { Fonts } from '@/constants/theme';
+import { TEXT_PRIMARY, TEXT_SECONDARY } from '@/constants/night-palette';
 import { useAccessibility } from '@/hooks/use-accessibility';
-import { SPACE_1, TYPE_ROLES, typeSize } from './tokens';
+
+export const NAV_GLYPH_SIZE_PHONE = 32;
+export const NAV_GLYPH_SIZE_TABLET = 36;
+/** The selected glyph is drawn a touch larger, which on a filled glyph reads as bolder. */
+export const NAV_GLYPH_SELECTED_BOOST = 3;
 
 export interface NavigationItemProps {
   id: string;
@@ -16,14 +19,17 @@ export interface NavigationItemProps {
   onSelect: (id: string) => void;
   /** Stands in for the glyph, for an item whose icon is a live control. */
   glyph?: ReactNode;
-  /** Withheld for an item whose glyph already says what it is. The label is
-   *  still the accessible name -- it is the drawn text that goes. */
-  showLabel?: boolean;
 }
 
-export function NavigationItem({ id, icon, selectedIcon, label, selected, onSelect, glyph, showLabel = true }: NavigationItemProps) {
-  const { isTablet, scaledFontSize } = useAccessibility();
-  const color = selected ? ACCENT_GOLD : TEXT_SECONDARY;
+/**
+ * One slot of the bar: a glyph and nothing under it. The label is the
+ * accessible name alone -- the bar is read by its pictures, and the height
+ * the words took goes to the glyphs instead.
+ */
+export function NavigationItem({ id, icon, selectedIcon, label, selected, onSelect, glyph }: NavigationItemProps) {
+  const { isTablet } = useAccessibility();
+  const color = selected ? TEXT_PRIMARY : TEXT_SECONDARY;
+  const size = (isTablet ? NAV_GLYPH_SIZE_TABLET : NAV_GLYPH_SIZE_PHONE) + (selected ? NAV_GLYPH_SELECTED_BOOST : 0);
 
   const handlePress = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -39,17 +45,9 @@ export function NavigationItem({ id, icon, selectedIcon, label, selected, onSele
       onPress={handlePress}
       style={styles.item}
     >
-      {glyph ?? <Ionicons name={selected ? selectedIcon : icon} size={isTablet ? 30 : 27} color={color} />}
-      {showLabel ? (
-        <Text
-          style={[styles.label, { color, fontSize: scaledFontSize(typeSize('navLabel', isTablet)) }]}
-          numberOfLines={1}
-          adjustsFontSizeToFit
-          minimumFontScale={0.8}
-        >
-          {label}
-        </Text>
-      ) : null}
+      {glyph ?? (
+        <Ionicons name={selected ? selectedIcon : icon} size={size} color={color} />
+      )}
     </Pressable>
   );
 }
@@ -60,11 +58,6 @@ const styles = StyleSheet.create({
     height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: SPACE_1,
     paddingHorizontal: 2,
-  },
-  label: {
-    fontFamily: Fonts.primary,
-    fontWeight: TYPE_ROLES.navLabel.weight,
   },
 });

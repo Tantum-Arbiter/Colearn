@@ -29,7 +29,8 @@ export function taglineArchRise(width: number): number {
 
   return radius - Math.sqrt(Math.max(radius * radius - half * half, 0));
 }
-const LINE_SIZE = { phone: 15, tablet: 19 } as const;
+/** Seven percent up from 15/19, so the words carry over the globe without an outline. */
+const LINE_SIZE = { phone: 16, tablet: 20 } as const;
 /** How far the second crown sits below the first, as a share of the type. */
 const CROWN_TO_CROWN = 1.25;
 const STAR_SIZE = { phone: 12, tablet: 15 } as const;

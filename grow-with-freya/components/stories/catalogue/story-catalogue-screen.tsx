@@ -54,6 +54,14 @@ import {
   contentMargin,
 } from '@/components/child-ui/tokens';
 import { ProgressScreen } from '@/components/progress/progress-screen';
+import { BadgeDetailSheet } from '@/components/progress/badge-detail-sheet';
+import { useProgressData } from '@/components/progress/use-progress-data';
+import type { Badge } from '@/components/progress/progress-model';
+import { ProfileView } from '@/components/profile/profile-view';
+import { ProfileEditSheet } from '@/components/profile/profile-edit-sheet';
+import { OwlGuide } from '@/components/owl-guide';
+import { ParentsOnlyModal } from '@/components/ui/parents-only-modal';
+import { useParentsOnlyChallenge } from '@/hooks/use-parents-only-challenge';
 import {
   APP_LAUNCH_SEED,
   CatalogueMode,
@@ -89,10 +97,10 @@ const FILTER_TAG_SET: StoryFilterTag[] = [
 ];
 
 /** Each browsing area is headed by its own two arched lines. */
-const TAGLINE_LINES: Record<'home' | 'search' | 'saved' | 'screensafe', (t: (key: string) => string) => readonly [string, string]> = {
+const TAGLINE_LINES: Record<'home' | 'search' | 'profile' | 'screensafe', (t: (key: string) => string) => readonly [string, string]> = {
   home: (t) => [t('catalogue.tagline.one'), t('catalogue.tagline.two')],
   search: (t) => [t('search.tagline.one'), t('search.tagline.two')],
-  saved: (t) => [t('catalogue.saved.tagline.one'), t('catalogue.saved.tagline.two')],
+  profile: (t) => [t('catalogue.profile.tagline.one'), t('catalogue.profile.tagline.two')],
   // Screensafe opens a window rather than a section, so the bar it is pressed
   // from never changes what is behind it -- this is only here for the type
   screensafe: (t) => [t('catalogue.tagline.one'), t('catalogue.tagline.two')],
@@ -112,11 +120,13 @@ interface StoryCatalogueScreenProps {
   onStorySelect?: (story: Story) => void;
   /** Opens the music journey, for a saved song tapped from the shelf. */
   onNavigateToMusic?: () => void;
+  /** Opens the grown-ups' area, once the parents-only challenge is answered. */
+  onOpenSettings?: () => void;
   initialMode?: CatalogueMode | null;
   sectionRequest?: CatalogueSectionRequest;
 }
 
-export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionRequest, onNavigateToMusic }: StoryCatalogueScreenProps) {
+export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionRequest, onNavigateToMusic, onOpenSettings }: StoryCatalogueScreenProps) {
   const insets = useSafeAreaInsets();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const { requestReturnToMainMenu, setShowLoginAfterOnboarding, getEffectiveTier } = useAppStore();
@@ -137,6 +147,65 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
   const currentLanguage = i18n.language as SupportedLanguage;
   const lastBackRef = useRef<number>(0);
 
+  // what each tour points the owl at, measured live from these
+  const themeTilesRef = useRef<View>(null);
+  const filterToggleRef = useRef<View>(null);
+  const featuredRef = useRef<View>(null);
+  const shelvesRef = useRef<View>(null);
+  const navProgressRef = useRef<View>(null);
+  const navScreensafeRef = useRef<View>(null);
+  const navSearchRef = useRef<View>(null);
+  const navProfileRef = useRef<View>(null);
+  const progressHeroRef = useRef<View>(null);
+  const progressChallengesRef = useRef<View>(null);
+  const progressMilestonesRef = useRef<View>(null);
+  const progressBadgesRef = useRef<View>(null);
+  const searchFieldRef = useRef<View>(null);
+  const searchRecentRef = useRef<View>(null);
+  const profileHeroRef = useRef<View>(null);
+  const profileTabsRef = useRef<View>(null);
+  const profileSettingsRef = useRef<View>(null);
+
+  const navItemRefs = useMemo(() => ({
+    progress: navProgressRef,
+    screensafe: navScreensafeRef,
+    search: navSearchRef,
+    profile: navProfileRef,
+  }), []);
+  const catalogueTourTargets = useMemo(() => ({
+    theme_tiles: themeTilesRef,
+    filter_toggle: filterToggleRef,
+    featured_story: featuredRef,
+    story_shelves: shelvesRef,
+    nav_progress: navProgressRef,
+    nav_screensafe: navScreensafeRef,
+    nav_search: navSearchRef,
+    nav_profile: navProfileRef,
+  }), []);
+  const progressTourTargets = useMemo(() => ({
+    progress_hero: progressHeroRef,
+    progress_challenges: progressChallengesRef,
+    progress_milestones: progressMilestonesRef,
+    progress_badges: progressBadgesRef,
+  }), []);
+  const progressGuideTargets = useMemo(() => ({
+    hero: progressHeroRef,
+    challenges: progressChallengesRef,
+    milestones: progressMilestonesRef,
+    badges: progressBadgesRef,
+  }), []);
+  const searchTourTargets = useMemo(() => ({
+    search_field: searchFieldRef,
+    search_recent: searchRecentRef,
+  }), []);
+  const searchGuideTargets = useMemo(() => ({ field: searchFieldRef, recent: searchRecentRef }), []);
+  const profileTourTargets = useMemo(() => ({
+    profile_hero: profileHeroRef,
+    profile_tabs: profileTabsRef,
+    profile_settings: profileSettingsRef,
+  }), []);
+  const profileGuideTargets = useMemo(() => ({ hero: profileHeroRef, tabs: profileTabsRef }), []);
+
   const margin = contentMargin(isTablet);
   const isLandscapeTablet = isTablet && windowWidth > windowHeight;
 
@@ -152,8 +221,12 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
   const [navSection, setNavSection] = useState<ChildNavItemId>('home');
   const [searchQuery, setSearchQuery] = useState('');
   const [badgeDetailOpen, setBadgeDetailOpen] = useState(false);
+  const [selectedBadge, setSelectedBadge] = useState<Badge | null>(null);
+  const [editProfileOpen, setEditProfileOpen] = useState(false);
   const [showScreenTime, setShowScreenTime] = useState(false);
   const [navCollapsed, setNavCollapsed] = useState(false);
+  const { badges } = useProgressData();
+  const parentsOnly = useParentsOnlyChallenge();
   const screenTime = useScreenTimeAllowance();
   const timeOfDay = useTimeOfDay();
   const reduceMotion = useReducedMotion();
@@ -298,7 +371,7 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
   );
 
   const savedRows = useMemo(
-    () => (navSection === 'saved' ? buildSavedRows(savedStories) : []),
+    () => (navSection === 'profile' ? buildSavedRows(savedStories) : []),
     [navSection, savedStories],
   );
 
@@ -313,6 +386,9 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
   );
 
   const interactionLocked = isTransitioning || shouldShowStoryReader || isExpandingToReader;
+  // the sheet rises over the shelf, so the bar stays put beneath it; only
+  // the book itself, which takes the whole screen, sends the bar away
+  const readerTakesScreen = shouldShowStoryReader || isExpandingToReader;
 
   const handleToggleTag = useCallback((tag: StoryFilterTag) => {
     setSelectedTags((prev) => {
@@ -346,11 +422,15 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
       afterDelay(motionDuration(CHILD_UI_MOTION.navCollapse, reduceMotion), () => setShowScreenTime(true));
       return;
     }
-    if (id === 'home' || id === 'search') {
+    if (id === 'home' || id === 'search' || id === 'profile') {
       setStoryMode(null);
       setSelectedTags(new Set());
     }
     if (id !== 'search') setSearchQuery('');
+    if (id !== 'profile') {
+      setSelectedBadge(null);
+      setEditProfileOpen(false);
+    }
     setNavSection(id);
   }, [afterDelay, reduceMotion]);
 
@@ -451,6 +531,50 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
   const handleAuthError = useCallback(() => {
     setShowLoginAfterOnboarding(true);
   }, [setShowLoginAfterOnboarding]);
+
+  /**
+   * A book opened from the download list grows out of its own thumbnail, so
+   * the transition begins where the child's finger was rather than from the
+   * middle of a list they were scrolling.
+   */
+  const handleOpenDownload = useCallback((story: Story, cover: React.RefObject<View | null>) => {
+    if (!story.isAvailable) return;
+
+    if (cover.current) {
+      cover.current.measure((_x, _y, width, height, pageX, pageY) => {
+        openDownloadedStory(story, { x: pageX, y: pageY, width, height });
+      });
+      return;
+    }
+
+    const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+    openDownloadedStory(story, { x: screenWidth / 2, y: screenHeight / 2, width: 0, height: 0 });
+  }, [openDownloadedStory]);
+
+  /** Settings belong to the grown-ups, so the same challenge stands here. */
+  const handleOpenSettings = useCallback(() => {
+    parentsOnly.showChallenge(() => onOpenSettings?.());
+  }, [parentsOnly, onOpenSettings]);
+
+  /** So does changing the child's name and age. */
+  const handleEditProfile = useCallback(() => {
+    parentsOnly.showChallenge(() => setEditProfileOpen(true));
+  }, [parentsOnly]);
+
+  const handleSelectBadge = useCallback((badge: Badge) => {
+    setSelectedBadge(badge);
+    setBadgeDetailOpen(true);
+  }, []);
+
+  const handleCloseBadge = useCallback(() => {
+    setSelectedBadge(null);
+    setBadgeDetailOpen(false);
+  }, []);
+
+  const handleRecommendFromBadge = useCallback((badge: Badge) => {
+    handleCloseBadge();
+    handleRecommend(badge.recommendation?.tag ?? null);
+  }, [handleCloseBadge, handleRecommend]);
 
   const handleShareToUnlock = useCallback(async (entry: CatalogEntry) => {
     try {
@@ -691,7 +815,7 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
     />
   ) : null;
 
-  const savedView = savedRows.length === 0 && savedActivities.length === 0 && savedSongs.length === 0 ? (
+  const favouritesView = savedRows.length === 0 && savedActivities.length === 0 && savedSongs.length === 0 ? (
     <View style={styles.noResultsContainer} testID="saved-empty">
       <Text style={[styles.noResultsText, { fontSize: scaledFontSize(16) }]}>
         {t('catalogue.saved.empty')}
@@ -719,11 +843,35 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
     </View>
   );
 
+  const profileView = (
+    <ProfileView
+      favourites={favouritesView}
+      downloads={stories}
+      downloadLimit={StoryAccessService.getDownloadLimit()}
+      badges={badges}
+      language={currentLanguage}
+      width={contentWidth}
+      onOpenDownload={handleOpenDownload}
+      onDeleteDownload={handleDeleteStory}
+      onSelectBadge={handleSelectBadge}
+      onEditProfile={handleEditProfile}
+      guideTargets={profileGuideTargets}
+    />
+  );
+
   return (
+    <View style={styles.fill}>
     <JourneyShell
       selected={navSection}
       onSelect={handleNavSelect}
-      navigationHidden={navSection === 'progress' ? badgeDetailOpen : interactionLocked}
+      navigationItemRefs={navItemRefs}
+      navigationHidden={
+        navSection === 'progress'
+          ? badgeDetailOpen
+          : navSection === 'profile'
+            ? badgeDetailOpen || editProfileOpen
+            : readerTakesScreen
+      }
       screenTime={screenTime}
       navigationCollapsed={navCollapsed}
     >
@@ -737,6 +885,7 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
               onBack={() => handleNavSelect('home')}
               onRecommend={handleRecommend}
               onDetailVisibleChange={setBadgeDetailOpen}
+              guideTargets={progressGuideTargets}
             />
           ) : (
             <>
@@ -761,18 +910,28 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
                       ? t(`storyModes.${storyMode}`)
                       : navSection === 'search'
                         ? t('childUi.nav.search')
-                        : navSection === 'saved'
-                          ? t('childUi.nav.saved')
+                        : navSection === 'profile'
+                          ? t('childUi.nav.profile')
                           : t('stories.title')
                   }
                 />
               </View>
-              <CircleActionButton
-                type="audio"
-                muted={isMuted}
-                onPress={() => { void toggleMute(); }}
-                accessibilityLabel={t('catalogue.sound')}
-              />
+              {navSection === 'profile' ? (
+                <View ref={profileSettingsRef} collapsable={false}>
+                  <CircleActionButton
+                    type="settings"
+                    onPress={handleOpenSettings}
+                    accessibilityLabel={t('profile.settings')}
+                  />
+                </View>
+              ) : (
+                <CircleActionButton
+                  type="audio"
+                  muted={isMuted}
+                  onPress={() => { void toggleMute(); }}
+                  accessibilityLabel={t('catalogue.sound')}
+                />
+              )}
             </View>
             {!storyMode && (
               <View style={[styles.tagline, { marginHorizontal: margin }]}>
@@ -792,7 +951,7 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
               ]}
               scrollEnabled={!interactionLocked}
             >
-              {navSection !== 'search' && (
+              {navSection !== 'search' && navSection !== 'profile' && (
                 <View style={isTablet ? styles.filterBarSpacing : styles.filterBarSpacingPhone}>
                   <StoryFilterBar
                     theme={theme}
@@ -800,6 +959,8 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
                     tags={FILTER_TAG_SET}
                     selectedTags={selectedTags}
                     onToggleTag={handleToggleTag}
+                    tilesRef={themeTilesRef}
+                    toggleRef={filterToggleRef}
                   />
                 </View>
               )}
@@ -814,9 +975,10 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
                   onSearchSettled={recordSearch}
                   language={currentLanguage}
                   renderCard={(story) => renderCoverCard(story)}
+                  guideTargets={searchGuideTargets}
                 />
-              ) : navSection === 'saved' ? (
-                savedView
+              ) : navSection === 'profile' ? (
+                profileView
               ) : catalogueStories.length === 0 ? (
                 <View style={styles.noResultsContainer}>
                   <Text style={[styles.noResultsText, { fontSize: scaledFontSize(16) }]}>
@@ -834,13 +996,13 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
                 moreSection
               ) : isLandscapeTablet && featured ? (
                 <View style={styles.landscapeColumns}>
-                  <View style={styles.landscapeFeaturedColumn}>{featuredSection}</View>
-                  <View style={styles.landscapeGridColumn}>{shelvesView}</View>
+                  <View style={styles.landscapeFeaturedColumn} ref={featuredRef} collapsable={false}>{featuredSection}</View>
+                  <View style={styles.landscapeGridColumn} ref={shelvesRef} collapsable={false}>{shelvesView}</View>
                 </View>
               ) : (
                 <>
-                  {featuredSection}
-                  {shelvesView}
+                  <View ref={featuredRef} collapsable={false}>{featuredSection}</View>
+                  <View ref={shelvesRef} collapsable={false}>{shelvesView}</View>
                 </>
               )}
             </ScrollView>
@@ -867,12 +1029,44 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
           visible={showSubscription}
           onClose={() => setShowSubscription(false)}
         />
+
+        {navSection === 'profile' && (
+          <>
+            <BadgeDetailSheet
+              badge={selectedBadge}
+              onClose={handleCloseBadge}
+              onRecommend={handleRecommendFromBadge}
+            />
+            <ProfileEditSheet visible={editProfileOpen} onClose={() => setEditProfileOpen(false)} />
+          </>
+        )}
+
+        <ParentsOnlyModal
+          visible={parentsOnly.isVisible}
+          challenge={parentsOnly.challenge}
+          inputValue={parentsOnly.inputValue}
+          onInputChange={parentsOnly.setInputValue}
+          onSubmit={parentsOnly.handleSubmit}
+          onClose={parentsOnly.handleClose}
+          isInputValid={parentsOnly.isInputValid}
+        />
       </CelestialBackground>
     </JourneyShell>
+
+    {/* one tour per page, over the whole shell so the bar can be pointed at;
+        each starts only while its own section is the one on show */}
+    <OwlGuide id="catalogue_tour" active={navSection === 'home' && !interactionLocked} targets={catalogueTourTargets} />
+    <OwlGuide id="progress_tour" active={navSection === 'progress'} targets={progressTourTargets} />
+    <OwlGuide id="search_tour" active={navSection === 'search'} targets={searchTourTargets} />
+    <OwlGuide id="profile_tour" active={navSection === 'profile' && !editProfileOpen} targets={profileTourTargets} />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  fill: {
+    flex: 1,
+  },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',

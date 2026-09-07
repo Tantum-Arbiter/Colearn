@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { type RefObject, useCallback, useMemo, useState } from 'react';
 import { FlatList, ImageSourcePropType, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
@@ -70,6 +70,9 @@ interface StoryFilterBarProps {
   tags: StoryFilterTag[];
   selectedTags: ReadonlySet<StoryFilterTag>;
   onToggleTag: (tag: StoryFilterTag) => void;
+  /** So the stories tour can point the owl at the tiles and at Filter. */
+  tilesRef?: RefObject<View | null>;
+  toggleRef?: RefObject<View | null>;
 }
 
 interface ThemeTileProps {
@@ -138,7 +141,7 @@ function ThemeTile({ id, art, label, selected, onPress }: ThemeTileProps) {
  * child has chosen from there stays in view while it is chosen, or the shelf
  * would be filtered by something they cannot see.
  */
-export function StoryFilterBar({ theme, onSelectTheme, tags, selectedTags, onToggleTag }: StoryFilterBarProps) {
+export function StoryFilterBar({ theme, onSelectTheme, tags, selectedTags, onToggleTag, tilesRef, toggleRef }: StoryFilterBarProps) {
   const { t } = useTranslation();
   const { isTablet, scaledFontSize } = useAccessibility();
   const [expanded, setExpanded] = useState(false);
@@ -170,6 +173,7 @@ export function StoryFilterBar({ theme, onSelectTheme, tags, selectedTags, onTog
           </Text>
         </View>
 
+        <View ref={toggleRef} collapsable={false}>
         <Pressable
           testID="story-filter-more"
           accessibilityRole="button"
@@ -186,9 +190,10 @@ export function StoryFilterBar({ theme, onSelectTheme, tags, selectedTags, onTog
             {t('catalogue.filter')}
           </Text>
         </Pressable>
+        </View>
       </View>
 
-      <View style={styles.tiles}>
+      <View style={styles.tiles} ref={tilesRef} collapsable={false}>
         {CATALOGUE_THEMES.map((id) => (
           <ThemeTile
             key={id}

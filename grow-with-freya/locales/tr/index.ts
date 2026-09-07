@@ -275,6 +275,34 @@ export default {
         title: 'En sevdiğiniz anı çizin',
         body: 'Kâğıt, boya kalemleri ve tek bir soru: en çok neresini sevdin? Birlikte çizin, sonra çocuğunuz resmini anlatsın. Seçtiği şey, her sorudan daha çok şey söyler.',
       },
+      bathTime: {
+        title: 'Hikâyeyi banyoda yüzdür',
+        body: 'Bardaklar ve şişeler tekne, sünger ada olsun. Hangi karakter nereye yüzer diye sor. Banyo zaten oyun — hikâye ona sadece bir olay örgüsü verir.',
+      },
+      inTheDark: {
+        title: 'Karanlıkta yeniden anlat',
+        body: 'Işıkları kapat, sırayla birer cümle ekleyin. Kitapla aynı olması gerekmez. Karanlıkta anlatılan hikâye yarı senin, yarı onun — en güzeli de bu.',
+      },
+      onAPlate: {
+        title: 'Bir sayfasını pişir',
+        body: 'Ekmek, meyve, tabaktaki ne varsa: bir karakterin adını ver, çocuğun sahneyi kursun. Neyin nereye gideceğini konuşmak hikâyenin ta kendisi — yemekle anlatılan.',
+      },
+      listen: {
+        title: 'Hikâyeyi dinle',
+        body: 'Dışarıda birlikte durun ve dinleyin. Bir karakter burada ne duyardı? Bir kuş, bir otobüs, rüzgâr — her ses hikâyenin gidebileceği bir yer.',
+      },
+      sockShow: {
+        title: 'Çorap tiyatrosu kur',
+        body: 'İki çorap, iki ses. Hangi çorabın hangi karakter olduğunu çocuğun seçsin ve en iyi hatırladığı sahneyi oynayın. Seçtiği şey, hâlâ aklında olan şeydir.',
+      },
+      singIt: {
+        title: 'Hikâyeyi söyle',
+        body: 'Olanları anlatan bir şarkı uydurun, ikinizin de bildiği herhangi bir ezgiyle. Saçma olabilir — amaç zaten bu. Şarkı, kendiliğinden geri gelen bir hikâyedir.',
+      },
+      whatIf: {
+        title: 'Ya öyle olsaydı diye sor',
+        body: 'Ya son farklı olsaydı? Ya hikâyenin içinde sen olsaydın? Tek bir soru, sonra bırak koşsunlar. Yanlış cevap yok, sadece onların cevabı var.',
+      },
     },
     helpingStayBalanced: '{{name}} adlı çocuğunun güvende ve dengede kalmasına yardım ediyorsun.',
     helpingStayBalancedGeneric: 'Çocuğunun güvende ve dengede kalmasına yardım ediyorsun.',
@@ -495,6 +523,17 @@ export default {
     girl: ' Kız',
     saveChanges: 'Değişiklikleri Kaydet',
     comingSoon: ' Profil Özelleştirme Seçenekleri Yakında - Hala Geliştirme Aşamasında!',
+    settings: 'Ayarlar',
+    noName: 'Küçük kâşif',
+    downloadsUsed: 'Bu cihazda {{limit}} kitaptan {{used}} tanesi',
+    downloadsEmpty: 'Bu cihazda henüz bir şey yok — bir kitap indir, her yerde oku',
+    downloadMeta: '{{minutes}} dk · {{pages}} sayfa',
+    downloadsCount: 'Bu cihazda {{count}} kitap',
+    tabs: {
+      saved: 'Kayıtlı',
+      badges: 'Rozetler',
+      manage: 'Yönet',
+    },
   },
   onboarding: {
     welcome: 'Hoş Geldiniz!',
@@ -626,6 +665,16 @@ export default {
       sound: {
         title: 'Ses Kontrolü',
         description: 'Arka plan müziği ve ses efektlerini kontrol etmek için buraya dokunun.',
+      },
+      achievement: {
+        title: 'Sıradaki başarı',
+        description: 'Çocuğunun en yakın olduğu rozet ve ne kadar kaldığı. Hepsini görmek için dokun.',
+      },
+      screenTime: {
+        title: 'Ekran süresi halkası',
+        description: 'Bu halka bugünkü ekran süresi kullanıldıkça dolar. Günü görmek için dokun. Süre bitince kırmızı bir küreye dönüşür.',
+        remainingCaption: 'Kalan süre',
+        spentCaption: 'Süre doldu',
       },
     },
     screenTime: {
@@ -940,6 +989,98 @@ export default {
       benefit: {
         title: 'Yaratıcı İfade',
         description: 'Serbest müzik oyunu yaratıcılığı, özgüveni ve çocuğunuzla birlikte büyüyen müzik sevgisini besler.',
+      },
+    },
+    catalogue: {
+      welcome: {
+        title: 'Hikâye rafın',
+        description: 'Her kitap, şarkı ve oyun burada. Hep birlikte bir göz atalım.',
+      },
+      themes: {
+        title: 'Bir tema seç',
+        description: 'Hikâyeler, öğrenme ya da müzik. Bir karoya dokun, raf kendini düzenlesin.',
+      },
+      filter: {
+        title: 'İnce filtreler',
+        description: 'Uyku vakti, hayvanlar, sakinlik ve dahası. Birkaçını seç, raf yalnızca onları göstersin.',
+      },
+      featured: {
+        title: 'Bugünün seçimi',
+        description: 'Her gün yeniden seçilen bir kitap. Şimdi oku\'ya dokun, hemen açılsın.',
+      },
+      shelves: {
+        title: 'Kaydırılacak raflar',
+        description: 'Herhangi bir rafı kaydır ya da tüm tema için Tümünü gör\'e dokun.',
+      },
+      navProgress: {
+        title: 'İlerleme',
+        description: 'Rozetler, kilometre taşları ve bu haftanın maceraları tek yerde.',
+      },
+      navScreensafe: {
+        title: 'Ekran güvenliği',
+        description: 'Halka bugünkü ekran süresini gösterir. Tam resim için dokun; süre bitince kırmızıya döner.',
+      },
+      navSearch: {
+        title: 'Ara',
+        description: 'Belirli bir kitap mı arıyorsun? Bir başlık ya da karakter yaz, bulsun.',
+      },
+      navProfile: {
+        title: 'Profil',
+        description: 'Kaydedilen favoriler, rozet duvarı ve bu cihazdaki kitaplar.',
+      },
+    },
+    progress: {
+      welcome: {
+        title: 'Küçük adımlar, büyük ilerleme',
+        description: 'Çocuğunun okuduğu, oynadığı ve kazandığı her şey burada.',
+      },
+      hero: {
+        title: 'Bu hafta',
+        description: 'Pazartesiden beri birlikte geçen dakikalar, okunan hikâyeler ve oturumlar.',
+      },
+      challenges: {
+        title: 'Maceralar',
+        description: 'Birlikte hedeflenecek küçük haftalık ve aylık görevler. Birine dokun, ne kadar ilerlediğini gör.',
+      },
+      milestones: {
+        title: 'Kilometre taşları',
+        description: 'Büyük ilkler, olduğu anda işaretlenir.',
+      },
+      badges: {
+        title: 'Rozetler',
+        description: 'Kazanılanlar altın parlar; kalanlar keşfedilmeyi bekler. Ne gerektiğini görmek için bir rozete dokun.',
+      },
+    },
+    search: {
+      welcome: {
+        title: 'Bir hikâye bul',
+        description: 'Bir başlık, karakter ya da tema yaz, raf senin için bulsun.',
+      },
+      field: {
+        title: 'Buraya yaz',
+        description: 'Yazdıkça sonuçlar çıkar; hem bu cihazdaki kitaplardan hem katalogdan.',
+      },
+      recent: {
+        title: 'Son aramalar',
+        description: 'Son aradıkların hızlı bir dokunuş için burada bekliyor.',
+      },
+    },
+    profile: {
+      welcome: {
+        title: 'Kendi köşen',
+        description: 'Sadece sana ait olan her şey bu sayfada.',
+      },
+      hero: {
+        title: 'Profili değiştir',
+        description: 'Avatarı, adı ya da yaşı değiştirmek için resme veya ada dokun. Önce bir yetişkin kısa bir soruyu yanıtlar.',
+      },
+      tabs: {
+        title: 'Kayıtlı, Rozetler, Yönet',
+        description: 'Kalp verdiğin favoriler, rozet duvarı ve bu cihazdaki kitaplar; istediğini kaldırabilirsin.',
+      },
+      settings: {
+        title: 'Yetişkin ayarları',
+        description: 'Dil, ekran süresi ve hesabın; yetişkin kapısının ardında.',
       },
     },
   },
@@ -3249,8 +3390,8 @@ export default {
       home: 'Ana Sayfa',
       screensafe: 'Ekran güvenli',
       progress: 'İlerleme',
-      saved: 'Kayıtlı',
       search: 'Ara',
+      profile: 'Profil',
     },
   },
   catalogue: {
@@ -3274,13 +3415,15 @@ export default {
       music: 'Müzik',
     },
     saved: {
-      tagline: {
-        one: 'Sevdiğin her şey',
-        two: 'tek bir yerde',
-      },
       activities: 'Kaydedilen etkinlikler',
       songs: 'Kaydedilen şarkılar',
       empty: 'Sevdiğin şeydeki kalbe dokun, seni burada bekler',
+    },
+    profile: {
+      tagline: {
+        one: 'Sadece sana',
+        two: 'ait olan her şey',
+      },
     },
   },
   progress: {

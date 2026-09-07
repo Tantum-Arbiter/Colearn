@@ -275,6 +275,34 @@ export default {
         title: '画出最喜欢的一幕',
         body: '一张纸、几支彩笔，只问一个问题：你最喜欢哪一段?一起画下来，再让孩子讲讲他的画。他的选择，比任何提问都说明问题。',
       },
+      bathTime: {
+        title: '让故事在洗澡时漂起来',
+        body: '杯子和瓶子当小船，海绵当小岛。问问哪个角色会驶向哪里。洗澡本来就是玩耍——故事只是给它加了情节。',
+      },
+      inTheDark: {
+        title: '关灯再讲一遍',
+        body: '关掉灯，轮流各加一句。不必和书里一样。黑暗里讲的故事一半是你的、一半是孩子的，这才是最好的。',
+      },
+      onAPlate: {
+        title: '把一页故事摆上盘子',
+        body: '吐司、水果，盘子里的任何东西：用角色的名字命名，让孩子摆出场景。聊聊什么放哪里，就是用食物讲的故事。',
+      },
+      listen: {
+        title: '听听故事的声音',
+        body: '在户外一起站定，听一听。故事里的角色在这里会听到什么？一只鸟、一辆公交车、风——每一种声音都是故事可以去的地方。',
+      },
+      sockShow: {
+        title: '来一场袜子剧场',
+        body: '两只袜子，两个声音。让孩子决定每只袜子是哪个角色，演出记得最清楚的那一幕。孩子选的，就是还在心里的。',
+      },
+      singIt: {
+        title: '把故事唱出来',
+        body: '用你们都会的任何曲调，编一首关于故事的歌。傻一点没关系——傻正是重点。歌，是会自己回来的故事。',
+      },
+      whatIf: {
+        title: '问问“如果”',
+        body: '如果结局不一样呢？如果你在故事里呢？问一个问题，然后让孩子自由发挥。没有错的答案，只有他们的答案。',
+      },
     },
     helpingStayBalanced: '你正在帮助{{name}}保持安全与平衡。',
     helpingStayBalancedGeneric: '你正在帮助孩子保持安全与平衡。',
@@ -495,6 +523,17 @@ export default {
     girl: ' 女孩',
     saveChanges: '保存更改',
     comingSoon: ' 个人资料自定义选项即将推出 - 仍在开发中！',
+    settings: '设置',
+    noName: '小小探险家',
+    downloadsUsed: '本设备上有 {{used}}/{{limit}} 本书',
+    downloadsEmpty: '本设备上还没有内容 — 下载一本书，随时随地都能看',
+    downloadMeta: '{{minutes}} 分钟 · {{pages}} 页',
+    downloadsCount: '本设备上有 {{count}} 本书',
+    tabs: {
+      saved: '已保存',
+      badges: '徽章',
+      manage: '管理',
+    },
   },
   onboarding: {
     welcome: '欢迎！',
@@ -626,6 +665,16 @@ export default {
       sound: {
         title: '声音控制',
         description: '点击此处管理背景音乐和音效。',
+      },
+      achievement: {
+        title: '下一个成就',
+        description: '孩子最接近获得的徽章，以及还差多少。点击查看全部。',
+      },
+      screenTime: {
+        title: '屏幕时间圆环',
+        description: '这个圆环会随着今天屏幕时间的使用而填满。点击它查看今天的情况。时间用完后它会变成一个红色圆球。',
+        remainingCaption: '还有时间',
+        spentCaption: '时间到了',
       },
     },
     screenTime: {
@@ -940,6 +989,98 @@ export default {
       benefit: {
         title: '创意表达',
         description: '自由的音乐游戏培养创造力、自信心和与孩子一起成长的音乐热爱。',
+      },
+    },
+    catalogue: {
+      welcome: {
+        title: '你的故事书架',
+        description: '每本书、每首歌和每个游戏都在这里。我们一起看看吧。',
+      },
+      themes: {
+        title: '选择一个主题',
+        description: '故事、学习或音乐。点一下图块，书架会自动整理。',
+      },
+      filter: {
+        title: '更细的筛选',
+        description: '睡前、动物、安静等等。选几个，书架就只显示那些。',
+      },
+      featured: {
+        title: '今日之选',
+        description: '每天新选的一本书。点“现在阅读”立刻打开。',
+      },
+      shelves: {
+        title: '滑动书架',
+        description: '在任一书架上滑动，或点“查看全部”看整个主题。',
+      },
+      navProgress: {
+        title: '进度',
+        description: '徽章、里程碑和本周的冒险，都在一处。',
+      },
+      navScreensafe: {
+        title: '安全屏幕',
+        description: '圆环显示今天的屏幕时间。点击查看全貌；时间用完会变红。',
+      },
+      navSearch: {
+        title: '搜索',
+        description: '想找某一本书？输入书名或角色就能找到。',
+      },
+      navProfile: {
+        title: '个人页',
+        description: '已收藏的最爱、徽章墙，以及本设备上的书。',
+      },
+    },
+    progress: {
+      welcome: {
+        title: '小步前进，大有进步',
+        description: '孩子读过、玩过和获得的一切，都汇集在这里。',
+      },
+      hero: {
+        title: '本周',
+        description: '自周一以来一起度过的分钟数、读过的故事和玩过的次数。',
+      },
+      challenges: {
+        title: '冒险',
+        description: '每周和每月的小挑战，一起去完成。点一个看看进度。',
+      },
+      milestones: {
+        title: '里程碑',
+        description: '重要的第一次，发生时便被记下。',
+      },
+      badges: {
+        title: '徽章',
+        description: '已获得的闪着金光；其余的等待被发现。点任意徽章看看需要做什么。',
+      },
+    },
+    search: {
+      welcome: {
+        title: '找一个故事',
+        description: '输入书名、角色或主题，书架会帮你找到。',
+      },
+      field: {
+        title: '在这里搜索',
+        description: '边输入边显示结果，包括本设备上的书和目录中的书。',
+      },
+      recent: {
+        title: '最近搜索',
+        description: '最近找过的内容在这里等你快速点回。',
+      },
+    },
+    profile: {
+      welcome: {
+        title: '你的小天地',
+        description: '只属于你的一切都在这一页。',
+      },
+      hero: {
+        title: '修改资料',
+        description: '点头像或名字可更改头像、名字或年龄。需要大人先回答一个小问题。',
+      },
+      tabs: {
+        title: '已保存、徽章、管理',
+        description: '你点过心的最爱、徽章墙和本设备上的书，也可以移除任意一本。',
+      },
+      settings: {
+        title: '家长设置',
+        description: '语言、屏幕时间和你的账户，在家长门后。',
       },
     },
   },
@@ -3249,8 +3390,8 @@ export default {
       home: '首页',
       screensafe: '护眼时间',
       progress: '进度',
-      saved: '已保存',
       search: '搜索',
+      profile: '个人页',
     },
   },
   catalogue: {
@@ -3274,13 +3415,15 @@ export default {
       music: '音乐',
     },
     saved: {
-      tagline: {
-        one: '你喜爱的一切',
-        two: '都在这里',
-      },
       activities: '已保存的活动',
       songs: '已保存的歌曲',
       empty: '点一下喜欢的内容上的爱心，它就会留在这里',
+    },
+    profile: {
+      tagline: {
+        one: '属于你的',
+        two: '小小天地',
+      },
     },
   },
   progress: {

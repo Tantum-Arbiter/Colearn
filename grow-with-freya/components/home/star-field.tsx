@@ -13,6 +13,15 @@ import Animated, {
 import { STAR_FIELD, buildStarField, type StarSeed } from '@/constants/night-sky';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
 
+/**
+ * Whether one star breathes. The field was filled out with extra dots that
+ * hang steady, so a seed's own answer decides -- on top of the two reasons
+ * the whole sky ever holds still.
+ */
+export function starAnimates(seed: StarSeed, reduceMotion: boolean, active: boolean): boolean {
+  return seed.twinkles && !reduceMotion && active;
+}
+
 interface TwinklingStarProps {
   seed: StarSeed;
   colour: string;
@@ -107,7 +116,7 @@ export const StarField = memo(function StarField({
           seed={seed}
           colour={colour}
           intensity={intensity}
-          animated={!reduceMotion && active}
+          animated={starAnimates(seed, reduceMotion, active)}
         />
       ))}
     </View>

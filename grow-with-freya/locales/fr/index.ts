@@ -275,6 +275,34 @@ export default {
         title: 'Dessinez le meilleur moment',
         body: 'Du papier, des crayons et une seule question : quel passage as-tu préféré ? Dessinez-le ensemble, puis laissez votre enfant vous parler de son dessin. Ce qu\'il choisit en dit plus que n\'importe quelle question.',
       },
+      bathTime: {
+        title: 'Fais flotter l\'histoire dans le bain',
+        body: 'Gobelets et bouteilles deviennent des bateaux, une éponge une île. Demande quel personnage naviguerait où. Le bain est déjà un jeu — l\'histoire lui donne juste une intrigue.',
+      },
+      inTheDark: {
+        title: 'Raconte-la à nouveau dans le noir',
+        body: 'Lumière éteinte, et chacun ajoute une phrase à tour de rôle. Pas besoin de coller au livre. Une histoire racontée dans le noir est à moitié à toi, à moitié à eux — la meilleure qui soit.',
+      },
+      onAPlate: {
+        title: 'Cuisine une page de l\'histoire',
+        body: 'Tartine, fruit, n\'importe quoi dans une assiette : donne-lui le nom d\'un personnage et laisse ton enfant composer la scène. Discuter de ce qui va où, c\'est l\'histoire — racontée avec de la nourriture.',
+      },
+      listen: {
+        title: 'Écoute l\'histoire',
+        body: 'Arrêtez-vous ensemble dehors et écoutez. Qu\'entendrait un personnage ici ? Un oiseau, un bus, le vent — chaque son est un endroit où l\'histoire pourrait aller.',
+      },
+      sockShow: {
+        title: 'Monte un spectacle de chaussettes',
+        body: 'Deux chaussettes, deux voix. Laisse ton enfant choisir quel personnage est chacune et jouez la scène dont il se souvient le mieux. Ce qu\'il choisit, c\'est ce qui le travaille encore.',
+      },
+      singIt: {
+        title: 'Chante l\'histoire',
+        body: 'Inventez une chanson sur ce qui s\'est passé, sur n\'importe quel air que vous connaissez. Elle peut être bête — c\'est le but. Une chanson est une histoire qui revient toute seule.',
+      },
+      whatIf: {
+        title: 'Demande et si…',
+        body: 'Et si la fin avait été différente ? Et si tu étais dans l\'histoire ? Une question, puis laisse-les partir. Il n\'y a pas de mauvaises réponses, seulement les leurs.',
+      },
     },
     helpingStayBalanced: 'Vous aidez {{name}} à rester en sécurité et équilibré.',
     helpingStayBalancedGeneric: 'Vous aidez votre enfant à rester en sécurité et équilibré.',
@@ -495,6 +523,17 @@ export default {
     girl: ' Fille',
     saveChanges: 'Enregistrer les modifications',
     comingSoon: ' Plus d\'options de personnalisation de profil à venir - toujours en développement !',
+    settings: 'Réglages',
+    noName: 'Petit explorateur',
+    downloadsUsed: '{{used}} livres sur {{limit}} sur cet appareil',
+    downloadsEmpty: 'Rien d\'enregistré sur cet appareil pour l\'instant — télécharge un livre pour le lire partout',
+    downloadMeta: '{{minutes}} min · {{pages}} pages',
+    downloadsCount: '{{count}} livres sur cet appareil',
+    tabs: {
+      saved: 'Enregistrés',
+      badges: 'Badges',
+      manage: 'Gérer',
+    },
   },
   onboarding: {
     welcome: 'Bienvenue !',
@@ -626,6 +665,16 @@ export default {
       sound: {
         title: 'Contrôle du son',
         description: 'Appuyez ici pour contrôler la musique de fond et les effets sonores.',
+      },
+      achievement: {
+        title: 'Prochain succès',
+        description: 'Le badge dont ton enfant est le plus proche, et ce qu\'il reste à faire. Touche pour les voir tous.',
+      },
+      screenTime: {
+        title: 'L\'anneau Écran sûr',
+        description: 'Cet anneau se remplit à mesure que le temps d\'écran du jour s\'écoule. Touche-le pour voir la journée. Une fois le temps écoulé, il devient une orbe rouge.',
+        remainingCaption: 'Temps restant',
+        spentCaption: 'Temps écoulé',
       },
     },
     screenTime: {
@@ -940,6 +989,98 @@ export default {
       benefit: {
         title: 'Expression Créative',
         description: 'Le jeu musical libre nourrit la créativité, la confiance en soi et l\'amour de la musique qui grandit avec votre enfant.',
+      },
+    },
+    catalogue: {
+      welcome: {
+        title: 'Ton étagère d\'histoires',
+        description: 'Chaque livre, chanson et jeu vit ici. Faisons le tour ensemble.',
+      },
+      themes: {
+        title: 'Choisis un thème',
+        description: 'Histoires, apprentissage ou musique. Touche une tuile et l\'étagère se range toute seule.',
+      },
+      filter: {
+        title: 'Filtres plus fins',
+        description: 'Coucher, animaux, calme et plus. Choisis-en quelques-uns et l\'étagère ne garde que ceux-là.',
+      },
+      featured: {
+        title: 'Le choix du jour',
+        description: 'Un livre choisi chaque jour. Touche Lire maintenant et il s\'ouvre aussitôt.',
+      },
+      shelves: {
+        title: 'Des étagères à faire défiler',
+        description: 'Fais défiler une étagère, ou touche Tout voir pour le thème entier.',
+      },
+      navProgress: {
+        title: 'Progrès',
+        description: 'Badges, étapes et aventures de la semaine, réunis au même endroit.',
+      },
+      navScreensafe: {
+        title: 'Écran sûr',
+        description: 'L\'anneau montre le temps d\'écran du jour. Touche-le pour tout voir ; il devient rouge quand le temps est écoulé.',
+      },
+      navSearch: {
+        title: 'Recherche',
+        description: 'Tu cherches un livre précis ? Tape un titre ou un personnage et il le trouvera.',
+      },
+      navProfile: {
+        title: 'Profil',
+        description: 'Favoris enregistrés, le mur de badges et les livres gardés sur cet appareil.',
+      },
+    },
+    progress: {
+      welcome: {
+        title: 'Petits pas, grands progrès',
+        description: 'Tout ce que ton enfant a lu, joué et gagné, réuni ici.',
+      },
+      hero: {
+        title: 'Cette semaine',
+        description: 'Minutes ensemble, histoires lues et sessions jouées depuis lundi.',
+      },
+      challenges: {
+        title: 'Aventures',
+        description: 'De petits défis hebdomadaires et mensuels à relever ensemble. Touche-en un pour voir où il en est.',
+      },
+      milestones: {
+        title: 'Étapes',
+        description: 'Les grandes premières fois, marquées quand elles arrivent.',
+      },
+      badges: {
+        title: 'Badges',
+        description: 'Ceux qui sont gagnés brillent en or ; les autres attendent d\'être découverts. Touche un badge pour voir ce qu\'il faut.',
+      },
+    },
+    search: {
+      welcome: {
+        title: 'Trouve une histoire',
+        description: 'Tape un titre, un personnage ou un thème et l\'étagère le trouvera pour toi.',
+      },
+      field: {
+        title: 'Cherche ici',
+        description: 'Les résultats s\'affichent au fil de la frappe, depuis les livres de cet appareil et le catalogue.',
+      },
+      recent: {
+        title: 'Recherches récentes',
+        description: 'Tes dernières recherches attendent ici pour un retour rapide.',
+      },
+    },
+    profile: {
+      welcome: {
+        title: 'Ton coin à toi',
+        description: 'Tout ce qui n\'est qu\'à toi vit sur cette page.',
+      },
+      hero: {
+        title: 'Modifier le profil',
+        description: 'Touche l\'image ou le nom pour changer l\'avatar, le nom ou l\'âge. Un adulte répond d\'abord à une petite question.',
+      },
+      tabs: {
+        title: 'Enregistrés, Badges, Gérer',
+        description: 'Les favoris que tu as aimés, le mur de badges et les livres de cet appareil, avec la possibilité d\'en retirer.',
+      },
+      settings: {
+        title: 'Réglages des adultes',
+        description: 'Langue, temps d\'écran et ton compte, derrière la porte des adultes.',
       },
     },
   },
@@ -3249,8 +3390,8 @@ export default {
       home: 'Accueil',
       screensafe: 'Écran sûr',
       progress: 'Progrès',
-      saved: 'Enregistrés',
       search: 'Recherche',
+      profile: 'Profil',
     },
   },
   catalogue: {
@@ -3274,13 +3415,15 @@ export default {
       music: 'Musique',
     },
     saved: {
-      tagline: {
-        one: 'Tout ce que vous aimez',
-        two: 'au même endroit',
-      },
       activities: 'Activités enregistrées',
       songs: 'Chansons enregistrées',
       empty: 'Touchez le cœur sur ce que vous aimez : cela vous attendra ici',
+    },
+    profile: {
+      tagline: {
+        one: 'Tout ce qui',
+        two: 'n\'est qu\'à toi',
+      },
     },
   },
   progress: {

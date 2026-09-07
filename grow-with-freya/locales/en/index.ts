@@ -394,6 +394,34 @@ export default {
         title: 'Draw the best bit',
         body: 'Paper and crayons, and one question: which part did you like best? Draw it together, then let your child tell you about their picture. What they choose says more than any quiz would.',
       },
+      bathTime: {
+        title: 'Float the story at bath time',
+        body: 'Cups and bottles make boats; a sponge makes an island. Ask which character would sail where. Bath time is already play — the story just gives it a plot.',
+      },
+      inTheDark: {
+        title: 'Tell it back in the dark',
+        body: 'Lights off, and take turns adding one line each. It does not have to match the book. A story told in the dark is half yours and half theirs, and that is the best kind.',
+      },
+      onAPlate: {
+        title: 'Cook a page of it',
+        body: 'Toast, fruit, anything on a plate: name it after a character and let your child arrange the scene. Talking about what goes where is the story, told with food.',
+      },
+      listen: {
+        title: 'Listen for the story',
+        body: 'Stand still together somewhere outside and listen. What might a character hear here? A bird, a bus, the wind — every sound is a place the story could go next.',
+      },
+      sockShow: {
+        title: 'Put on a sock show',
+        body: 'Two socks, two voices. Let your child choose which character each one is and play the scene they remember best. What they pick is what they are still thinking about.',
+      },
+      singIt: {
+        title: 'Sing the story',
+        body: 'Make up a song about what happened, to any tune you both know. It can be silly — silly is the point. A song is a story that comes back on its own.',
+      },
+      whatIf: {
+        title: 'Ask what if',
+        body: 'What if the ending had been different? What if you were in the story? One question, then let them run. There are no wrong answers, only their answers.',
+      },
     },
     helpingStayBalanced: "You're helping {{name}} stay safe and balanced.",
     helpingStayBalancedGeneric: "You're helping your child stay safe and balanced.",
@@ -607,8 +635,19 @@ export default {
     deleteAccountHint: 'Permanently delete your account and all data',
   },
 
-  // Profile validation and edit profile screen
+  // The child's own page in the journey, plus profile validation and editing
   profile: {
+    settings: 'Settings',
+    noName: 'Little explorer',
+    tabs: {
+      saved: 'Saved',
+      badges: 'Badges',
+      manage: 'Manage',
+    },
+    downloadsUsed: '{{used}} of {{limit}} books on this device',
+    downloadsCount: '{{count}} books on this device',
+    downloadsEmpty: 'Nothing saved to this device yet — download a book to read it anywhere',
+    downloadMeta: '{{minutes}} min · {{pages}} pages',
     enterNickname: 'Please enter a nickname',
     nicknameTooLong: 'Nickname must be 20 characters or less',
     editTitle: 'Edit Profile',
@@ -760,6 +799,108 @@ export default {
       sound: {
         title: 'Sound Control',
         description: 'Tap here to control background music and sound effects.',
+      },
+      achievement: {
+        title: 'Next achievement',
+        description: 'The badge your child is closest to earning, and how far there is still to go. Tap it to see them all.',
+      },
+      screenTime: {
+        title: 'The Screensafe ring',
+        description: 'This ring fills as today\'s screen time is used. Tap it any time to see the day. Once the time is up it becomes a red orb.',
+        remainingCaption: 'Time left',
+        spentCaption: 'Time is up',
+      },
+    },
+    catalogue: {
+      welcome: {
+        title: 'Your story shelf',
+        description: 'Every book, song and game lives here. Let\'s have a look around together.',
+      },
+      themes: {
+        title: 'Choose a theme',
+        description: 'Stories, Learning or Music. Tap a tile and the shelf sorts itself to match.',
+      },
+      filter: {
+        title: 'Finer filters',
+        description: 'Bedtime, animals, calming and more. Pick a few and the shelf narrows to just those.',
+      },
+      featured: {
+        title: 'Today\'s pick',
+        description: 'A book chosen fresh each day. Tap Read Now and it opens straight away.',
+      },
+      shelves: {
+        title: 'Shelves to swipe',
+        description: 'Swipe along any shelf, or tap See all for the whole theme at once.',
+      },
+      navProgress: {
+        title: 'Progress',
+        description: 'Badges, milestones and this week\'s adventures, all in one place.',
+      },
+      navScreensafe: {
+        title: 'Screensafe',
+        description: 'The ring shows today\'s screen time. Tap it for the full picture; it turns red once the time is up.',
+      },
+      navSearch: {
+        title: 'Search',
+        description: 'Looking for one book in particular? Type a title or a character and it will find it.',
+      },
+      navProfile: {
+        title: 'Profile',
+        description: 'Saved favourites, the badge wall, and the books kept on this device.',
+      },
+    },
+    progress: {
+      welcome: {
+        title: 'Little steps, big progress',
+        description: 'Everything your child has read, played and earned, gathered here.',
+      },
+      hero: {
+        title: 'This week',
+        description: 'Minutes together, stories read and sessions played since Monday.',
+      },
+      challenges: {
+        title: 'Adventures',
+        description: 'Small weekly and monthly challenges to work towards together. Tap one to see how far along it is.',
+      },
+      milestones: {
+        title: 'Milestones',
+        description: 'The big firsts, marked as they happen.',
+      },
+      badges: {
+        title: 'Badges',
+        description: 'Earned ones glow gold; the rest wait to be discovered. Tap any badge to see what it takes.',
+      },
+    },
+    search: {
+      welcome: {
+        title: 'Find a story',
+        description: 'Type a title, a character or a theme and the shelf finds it for you.',
+      },
+      field: {
+        title: 'Search here',
+        description: 'Results appear as you type, from the books on this device and the catalogue alike.',
+      },
+      recent: {
+        title: 'Recent searches',
+        description: 'The last few things you looked for wait here for a quick tap back.',
+      },
+    },
+    profile: {
+      welcome: {
+        title: 'Your own corner',
+        description: 'Everything that is yours alone lives on this page.',
+      },
+      hero: {
+        title: 'Change the profile',
+        description: 'Tap the picture or the name to change the avatar, name or age. A grown-up answers a quick question first.',
+      },
+      tabs: {
+        title: 'Saved, Badges, Manage',
+        description: 'Favourites you have hearted, the badge wall, and the books on this device, with room to remove any.',
+      },
+      settings: {
+        title: 'Grown-ups\' settings',
+        description: 'Language, screen time and your account, behind the grown-ups\' gate.',
       },
     },
     // Screen Time Tips - keys match tutorial.screenTime.* in tutorial-content.ts
@@ -2850,7 +2991,7 @@ export default {
       progress: 'Progress',
       screensafe: 'Screensafe',
       search: 'Search',
-      saved: 'Saved',
+      profile: 'Profile',
     },
   },
 
@@ -2874,11 +3015,13 @@ export default {
       learning: 'Learning',
       music: 'Music',
     },
-    saved: {
+    profile: {
       tagline: {
-        one: 'Everything you loved',
-        two: 'in one place',
+        one: 'Everything that is',
+        two: 'yours alone',
       },
+    },
+    saved: {
       activities: 'Saved activities',
       songs: 'Saved songs',
       empty: 'Tap the heart on anything you love, and it will wait for you here',

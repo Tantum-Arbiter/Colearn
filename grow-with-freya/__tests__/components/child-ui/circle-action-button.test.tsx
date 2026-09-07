@@ -41,6 +41,7 @@ describe('CircleActionButton', () => {
     ['back', false, 'arrow-back'],
     ['audio', false, 'volume-high'],
     ['audio', true, 'volume-mute'],
+    ['settings', false, 'settings-outline'],
   ] as const)('renders the %s control (muted=%s) with the %s icon', (type, muted, icon) => {
     const tree = render(
       <CircleActionButton type={type} muted={muted} onPress={jest.fn()} accessibilityLabel="label" />

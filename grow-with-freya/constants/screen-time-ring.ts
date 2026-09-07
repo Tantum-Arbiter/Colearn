@@ -38,6 +38,11 @@ export const SCREEN_TIME_RING = {
    *  instant the orb has reformed, so anything the ring has and the orb does
    *  not appears out of nowhere in that frame. */
   haloScale: 1.9,
+  /** The disc the home ring sits on, so the dial reads over the globe's
+   *  lime and blue. A little wider than the dial, well inside the halo. */
+  backplateScale: 1.4,
+  backplateColour: 'rgba(6, 10, 28, 0.62)',
+  backplateEdge: 'rgba(214, 230, 255, 0.28)',
   hitSlop: 14,
 } as const;
 

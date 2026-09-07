@@ -25,3 +25,6 @@ export const ACCENT_GOLD = '#E8B84B';
 export const ACCENT_PURPLE = '#6D5DF5';
 export const ACCENT_BLUE = NIGHT_BRIGHT;
 export const ACCENT_GREEN = '#6FCF7F';
+
+/** Removal and other undoing. The same red the screen-time ring warns in. */
+export const ACCENT_CORAL = '#E4483F';

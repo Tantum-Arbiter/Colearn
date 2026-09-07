@@ -5,7 +5,7 @@ import Svg, { Path } from 'react-native-svg';
 import { ACCENT_GOLD, ACCENT_PURPLE } from '@/constants/night-palette';
 import { BadgeStatus } from './progress-model';
 
-const ARTWORK_SIZE = 76;
+export const BADGE_ARTWORK_SIZE = 76;
 const SPARKLE_PATH = 'M 6 0 Q 7 5 12 6 Q 7 7 6 12 Q 5 7 0 6 Q 5 5 6 0 Z';
 
 const RIM_BY_STATUS: Record<BadgeStatus, { borderColor: string; borderStyle: 'solid' | 'dashed'; borderWidth: number }> = {
@@ -23,7 +23,7 @@ const ARTWORK_OPACITY: Record<BadgeStatus, number> = {
 };
 
 const Sparkle = ({ left, top }: { left: number; top: number }) => (
-  <View style={[styles.sparkle, { left, top }]} pointerEvents="none">
+  <View testID="badge-sparkle" style={[styles.sparkle, { left, top }]} pointerEvents="none">
     <Svg width={12} height={12} viewBox="0 0 12 12">
       <Path d={SPARKLE_PATH} fill={ACCENT_GOLD} />
     </Svg>
@@ -33,16 +33,20 @@ const Sparkle = ({ left, top }: { left: number; top: number }) => (
 interface BadgeArtworkProps {
   artwork: ImageSourcePropType;
   status: BadgeStatus;
+  /** Diameter of the medallion. The Profile wall draws these far smaller than
+   *  the Progress cards do, and the rim, glow and sparkles follow it. */
+  size?: number;
 }
 
-export function BadgeArtwork({ artwork, status }: BadgeArtworkProps) {
+export function BadgeArtwork({ artwork, status, size = BADGE_ARTWORK_SIZE }: BadgeArtworkProps) {
   const rim = RIM_BY_STATUS[status];
 
   return (
-    <View style={styles.wrapper} testID={`badge-artwork-${status}`}>
+    <View style={[styles.wrapper, { width: size, height: size }]} testID={`badge-artwork-${status}`}>
       <View
         style={[
           styles.circle,
+          { width: size, height: size, borderRadius: size / 2 },
           rim,
           status === 'earned' && styles.earnedGlow,
           status === 'in_progress' && styles.progressGlow,
@@ -59,8 +63,8 @@ export function BadgeArtwork({ artwork, status }: BadgeArtworkProps) {
       </View>
       {status === 'earned' && (
         <>
-          <Sparkle left={-4} top={6} />
-          <Sparkle left={ARTWORK_SIZE - 6} top={-2} />
+          <Sparkle left={-4} top={size * 0.08} />
+          <Sparkle left={size - 6} top={-2} />
         </>
       )}
     </View>
@@ -68,14 +72,8 @@ export function BadgeArtwork({ artwork, status }: BadgeArtworkProps) {
 }
 
 const styles = StyleSheet.create({
-  wrapper: {
-    width: ARTWORK_SIZE,
-    height: ARTWORK_SIZE,
-  },
+  wrapper: {},
   circle: {
-    width: ARTWORK_SIZE,
-    height: ARTWORK_SIZE,
-    borderRadius: ARTWORK_SIZE / 2,
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',

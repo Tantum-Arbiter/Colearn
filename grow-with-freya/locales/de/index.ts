@@ -275,6 +275,34 @@ export default {
         title: 'Malt die schönste Stelle',
         body: 'Papier, Stifte und eine Frage: Welcher Teil hat dir am besten gefallen? Malt ihn gemeinsam und lasst Ihr Kind von seinem Bild erzählen. Was es wählt, sagt mehr als jedes Abfragen.',
       },
+      bathTime: {
+        title: 'Die Geschichte in der Badewanne',
+        body: 'Becher und Flaschen werden Boote, ein Schwamm wird eine Insel. Frag, welche Figur wohin segeln würde. Baden ist schon Spiel — die Geschichte gibt ihm nur eine Handlung.',
+      },
+      inTheDark: {
+        title: 'Im Dunkeln nacherzählen',
+        body: 'Licht aus, und abwechselnd fügt jeder einen Satz hinzu. Es muss nicht zum Buch passen. Eine im Dunkeln erzählte Geschichte ist halb deine und halb ihre — die beste Art.',
+      },
+      onAPlate: {
+        title: 'Eine Seite davon kochen',
+        body: 'Toast, Obst, irgendetwas auf dem Teller: nenn es nach einer Figur und lass dein Kind die Szene anrichten. Zu besprechen, was wohin kommt, ist die Geschichte — mit Essen erzählt.',
+      },
+      listen: {
+        title: 'Der Geschichte lauschen',
+        body: 'Bleibt draußen zusammen stehen und lauscht. Was würde eine Figur hier hören? Einen Vogel, einen Bus, den Wind — jedes Geräusch ist ein Ort, an den die Geschichte weitergehen kann.',
+      },
+      sockShow: {
+        title: 'Ein Sockentheater',
+        body: 'Zwei Socken, zwei Stimmen. Lass dein Kind wählen, welche Figur jede Socke ist, und spielt die Szene, an die es sich am besten erinnert. Was es wählt, beschäftigt es noch.',
+      },
+      singIt: {
+        title: 'Die Geschichte singen',
+        body: 'Denkt euch ein Lied darüber aus, was passiert ist, zu einer Melodie, die ihr beide kennt. Es darf albern sein — albern ist der Sinn. Ein Lied ist eine Geschichte, die von allein wiederkommt.',
+      },
+      whatIf: {
+        title: 'Frag was wäre wenn',
+        body: 'Was wäre, wenn das Ende anders gewesen wäre? Was wäre, wenn du in der Geschichte wärst? Eine Frage, dann lass sie laufen. Es gibt keine falschen Antworten, nur ihre.',
+      },
     },
     helpingStayBalanced: 'Du hilfst {{name}}, sicher und ausgeglichen zu bleiben.',
     helpingStayBalancedGeneric: 'Du hilfst deinem Kind, sicher und ausgeglichen zu bleiben.',
@@ -495,6 +523,17 @@ export default {
     girl: ' Mädchen',
     saveChanges: 'Änderungen Speichern',
     comingSoon: ' Weitere Profilanpassungsoptionen kommen bald - noch in Entwicklung!',
+    settings: 'Einstellungen',
+    noName: 'Kleiner Entdecker',
+    downloadsUsed: '{{used}} von {{limit}} Büchern auf diesem Gerät',
+    downloadsEmpty: 'Noch nichts auf diesem Gerät — lade ein Buch herunter und lies es überall',
+    downloadMeta: '{{minutes}} Min · {{pages}} Seiten',
+    downloadsCount: '{{count}} Bücher auf diesem Gerät',
+    tabs: {
+      saved: 'Gespeichert',
+      badges: 'Abzeichen',
+      manage: 'Verwalten',
+    },
   },
   onboarding: {
     welcome: 'Willkommen!',
@@ -626,6 +665,16 @@ export default {
       sound: {
         title: 'Tonsteuerung',
         description: 'Tippe hier, um Hintergrundmusik und Soundeffekte zu steuern.',
+      },
+      achievement: {
+        title: 'Nächste Auszeichnung',
+        description: 'Das Abzeichen, dem dein Kind am nächsten ist, und wie weit es noch ist. Tippe, um alle zu sehen.',
+      },
+      screenTime: {
+        title: 'Der Bildschirmzeit-Ring',
+        description: 'Der Ring füllt sich, während die Bildschirmzeit des Tages verbraucht wird. Tippe jederzeit, um den Tag zu sehen. Ist die Zeit um, wird er zu einer roten Kugel.',
+        remainingCaption: 'Zeit übrig',
+        spentCaption: 'Zeit ist um',
       },
     },
     screenTime: {
@@ -940,6 +989,98 @@ export default {
       benefit: {
         title: 'Kreativer Ausdruck',
         description: 'Freies Musikspiel fördert Kreativität, Selbstvertrauen und die Liebe zur Musik, die mit Ihrem Kind wächst.',
+      },
+    },
+    catalogue: {
+      welcome: {
+        title: 'Dein Geschichtenregal',
+        description: 'Jedes Buch, jedes Lied und jedes Spiel wohnt hier. Sehen wir uns zusammen um.',
+      },
+      themes: {
+        title: 'Wähle ein Thema',
+        description: 'Geschichten, Lernen oder Musik. Tippe auf eine Kachel und das Regal sortiert sich.',
+      },
+      filter: {
+        title: 'Feinere Filter',
+        description: 'Schlafenszeit, Tiere, Ruhe und mehr. Wähle ein paar und das Regal zeigt nur diese.',
+      },
+      featured: {
+        title: 'Die Wahl des Tages',
+        description: 'Jeden Tag ein frisch gewähltes Buch. Tippe auf Jetzt lesen und es öffnet sich sofort.',
+      },
+      shelves: {
+        title: 'Regale zum Wischen',
+        description: 'Wische an jedem Regal entlang, oder tippe auf Alle ansehen für das ganze Thema.',
+      },
+      navProgress: {
+        title: 'Fortschritt',
+        description: 'Abzeichen, Meilensteine und die Abenteuer der Woche, alles an einem Ort.',
+      },
+      navScreensafe: {
+        title: 'Bildschirmzeit',
+        description: 'Der Ring zeigt die heutige Bildschirmzeit. Tippe für das ganze Bild; er wird rot, wenn die Zeit um ist.',
+      },
+      navSearch: {
+        title: 'Suche',
+        description: 'Suchst du ein bestimmtes Buch? Tippe einen Titel oder eine Figur ein und es findet es.',
+      },
+      navProfile: {
+        title: 'Profil',
+        description: 'Gespeicherte Favoriten, die Abzeichenwand und die Bücher auf diesem Gerät.',
+      },
+    },
+    progress: {
+      welcome: {
+        title: 'Kleine Schritte, großer Fortschritt',
+        description: 'Alles, was dein Kind gelesen, gespielt und erreicht hat, hier gesammelt.',
+      },
+      hero: {
+        title: 'Diese Woche',
+        description: 'Minuten zusammen, gelesene Geschichten und gespielte Runden seit Montag.',
+      },
+      challenges: {
+        title: 'Abenteuer',
+        description: 'Kleine wöchentliche und monatliche Aufgaben, die ihr zusammen angeht. Tippe auf eine, um zu sehen, wie weit sie ist.',
+      },
+      milestones: {
+        title: 'Meilensteine',
+        description: 'Die großen ersten Male, festgehalten, wenn sie geschehen.',
+      },
+      badges: {
+        title: 'Abzeichen',
+        description: 'Verdiente leuchten golden; der Rest wartet darauf, entdeckt zu werden. Tippe auf ein Abzeichen, um zu sehen, was es braucht.',
+      },
+    },
+    search: {
+      welcome: {
+        title: 'Finde eine Geschichte',
+        description: 'Tippe einen Titel, eine Figur oder ein Thema ein und das Regal findet es für dich.',
+      },
+      field: {
+        title: 'Hier suchen',
+        description: 'Ergebnisse erscheinen beim Tippen, aus den Büchern auf diesem Gerät und dem Katalog.',
+      },
+      recent: {
+        title: 'Letzte Suchen',
+        description: 'Die letzten Dinge, die du gesucht hast, warten hier auf einen schnellen Tipp.',
+      },
+    },
+    profile: {
+      welcome: {
+        title: 'Deine eigene Ecke',
+        description: 'Alles, was nur dir gehört, wohnt auf dieser Seite.',
+      },
+      hero: {
+        title: 'Profil ändern',
+        description: 'Tippe auf das Bild oder den Namen, um Avatar, Name oder Alter zu ändern. Ein Erwachsener beantwortet zuerst eine kurze Frage.',
+      },
+      tabs: {
+        title: 'Gespeichert, Abzeichen, Verwalten',
+        description: 'Favoriten, die du geherzt hast, die Abzeichenwand und die Bücher auf diesem Gerät, mit Platz, welche zu entfernen.',
+      },
+      settings: {
+        title: 'Einstellungen für Erwachsene',
+        description: 'Sprache, Bildschirmzeit und dein Konto, hinter dem Erwachsenen-Tor.',
       },
     },
   },
@@ -3249,8 +3390,8 @@ export default {
       home: 'Start',
       screensafe: 'Bildschirmzeit',
       progress: 'Fortschritt',
-      saved: 'Gespeichert',
       search: 'Suche',
+      profile: 'Profil',
     },
   },
   catalogue: {
@@ -3274,13 +3415,15 @@ export default {
       music: 'Musik',
     },
     saved: {
-      tagline: {
-        one: 'Alles, was du liebst',
-        two: 'an einem Ort',
-      },
       activities: 'Gespeicherte Aktivitäten',
       songs: 'Gespeicherte Lieder',
       empty: 'Tippe auf das Herz, und es wartet hier auf dich',
+    },
+    profile: {
+      tagline: {
+        one: 'Alles, was',
+        two: 'nur dir gehört',
+      },
     },
   },
   progress: {

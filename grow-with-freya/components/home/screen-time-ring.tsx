@@ -39,6 +39,9 @@ export interface ScreenTimeRingProps {
   /** The unspent part of the circle. Off where the dial is large enough that
    *  a full faint ring reads as something sitting behind the glyph. */
   showTrack?: boolean;
+  /** A dark disc behind the dial, for a ring that sits on the globe rather
+   *  than on the bar's own dark surface. It fades up with the guard mark. */
+  backplate?: boolean;
   testID?: string;
 }
 
@@ -51,6 +54,7 @@ export const ScreenTimeRing = memo(function ScreenTimeRing({
   size = SCREEN_TIME_RING.size,
   haloScale = SCREEN_TIME_RING.haloScale,
   showTrack = true,
+  backplate = false,
   testID = 'screen-time-ring',
 }: ScreenTimeRingProps) {
   const { t } = useTranslation();
@@ -157,6 +161,21 @@ export const ScreenTimeRing = memo(function ScreenTimeRing({
     // swap. A newly mounted view evaluates its animated style during the
     // render itself, which is what makes the swap actually atomic.
     <Animated.View key={hidden ? 'stepping-aside' : 'holding-the-corner'} style={[styles.root, animatedStyle]}>
+      {backplate ? (
+        <Animated.View
+          testID="screen-time-ring-backplate"
+          pointerEvents="none"
+          style={[
+            styles.backplate,
+            {
+              width: size * SCREEN_TIME_RING.backplateScale,
+              height: size * SCREEN_TIME_RING.backplateScale,
+              borderRadius: (size * SCREEN_TIME_RING.backplateScale) / 2,
+            },
+            guardStyle,
+          ]}
+        />
+      ) : null}
       {exceeded ? (
         <View
           style={[
@@ -243,6 +262,12 @@ const styles = StyleSheet.create({
   root: {
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  backplate: {
+    position: 'absolute',
+    backgroundColor: SCREEN_TIME_RING.backplateColour,
+    borderWidth: 1,
+    borderColor: SCREEN_TIME_RING.backplateEdge,
   },
   halo: {
     position: 'absolute',

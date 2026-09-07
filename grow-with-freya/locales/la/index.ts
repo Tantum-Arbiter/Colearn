@@ -275,6 +275,34 @@ export default {
         title: 'Partem optimam pinge',
         body: 'Charta, creta, et una quaestio: quae pars tibi maxime placuit? Eam simul pingite, deinde sine puerum de pictura sua narrare. Quod eligit plus dicit quam ulla interrogatio.',
       },
+      bathTime: {
+        title: 'Fabulam in balneo nata',
+        body: 'Pocula et lagoenae naves fiunt; spongia insula. Roga quae persona quo navigaret. Balneum iam ludus est — fabula tantum argumentum dat.',
+      },
+      inTheDark: {
+        title: 'In tenebris renarra',
+        body: 'Lumine exstincto, vicissim singulos versus addite. Libro congruere non necesse est. Fabula in tenebris narrata dimidia tua est, dimidia eorum — et illa optima est.',
+      },
+      onAPlate: {
+        title: 'Paginam eius coque',
+        body: 'Panis tostus, fructus, quidlibet in patella: personae nomen ei da et sine ut liberi scaenam disponant. De eo quid quo eat loqui ipsa fabula est, cibo narrata.',
+      },
+      listen: {
+        title: 'Fabulam ausculta',
+        body: 'Foris una consistite et auscultate. Quid persona hic audiret? Avem, raedam, ventum — omnis sonus locus est quo fabula ire possit.',
+      },
+      sockShow: {
+        title: 'Fabulam tibialium age',
+        body: 'Duo tibialia, duae voces. Sine ut liberi eligant quae persona quodque sit, et scaenam quam optime meminerunt agite. Quod eligunt, id adhuc cogitant.',
+      },
+      singIt: {
+        title: 'Fabulam cane',
+        body: 'Carmen de eo quod accidit fingite, ad quemlibet modum quem ambo nostis. Ineptum esse licet — ineptia ipsa est causa. Carmen fabula est quae sua sponte redit.',
+      },
+      whatIf: {
+        title: 'Roga quid si',
+        body: 'Quid si finis alius fuisset? Quid si tu in fabula esses? Una interrogatio, deinde sine eos currere. Nulla responsa prava sunt, sua tantum.',
+      },
     },
     helpingStayBalanced: '{{name}} tutum et aequabilem manere adiuvas.',
     helpingStayBalancedGeneric: 'Filium tuum tutum et aequabilem manere adiuvas.',
@@ -495,6 +523,17 @@ export default {
     girl: ' Puella',
     saveChanges: 'Serva Mutationes',
     comingSoon: ' Optiones Customizationis Professionis Mox Venient - Adhuc in Evolutione!',
+    settings: 'Optiones',
+    noName: 'Parvus explorator',
+    downloadsUsed: '{{used}} ex {{limit}} libris in hoc instrumento',
+    downloadsEmpty: 'Nihil adhuc in hoc instrumento servatum est — librum depone ut ubique legas',
+    downloadMeta: '{{minutes}} min · {{pages}} paginae',
+    downloadsCount: '{{count}} libri in hoc instrumento',
+    tabs: {
+      saved: 'Servata',
+      badges: 'Insignia',
+      manage: 'Curare',
+    },
   },
   onboarding: {
     welcome: 'Salve!',
@@ -626,6 +665,16 @@ export default {
       sound: {
         title: 'Moderatio Soni',
         description: 'Tange Hic ut Musicam Fundalem et Effectus Soni Modereres.',
+      },
+      achievement: {
+        title: 'Proximum praemium',
+        description: 'Insigne cui liberi proximi sunt, et quantum restat. Tange ut omnia videas.',
+      },
+      screenTime: {
+        title: 'Anulus temporis',
+        description: 'Hic anulus impletur dum tempus hodiernum consumitur. Tange ut diem videas. Tempore exhausto, globus ruber fit.',
+        remainingCaption: 'Tempus restat',
+        spentCaption: 'Tempus exhaustum',
       },
     },
     screenTime: {
@@ -940,6 +989,98 @@ export default {
       benefit: {
         title: 'Expressio Creativa',
         description: 'Lusus musicalis liber creativitatem, fiduciam sui et amorem musicae nutrit.',
+      },
+    },
+    catalogue: {
+      welcome: {
+        title: 'Pluteus tuus',
+        description: 'Omnis liber, cantus et ludus hic habitat. Una circumspiciamus.',
+      },
+      themes: {
+        title: 'Elige argumentum',
+        description: 'Fabulae, discendum aut musica. Tange tesseram et pluteus se ordinat.',
+      },
+      filter: {
+        title: 'Subtiliora',
+        description: 'Somnus, animalia, tranquillitas et plura. Elige pauca et pluteus ad ea contrahitur.',
+      },
+      featured: {
+        title: 'Hodie electum',
+        description: 'Liber cottidie de novo electus. Tange Lege nunc et statim aperitur.',
+      },
+      shelves: {
+        title: 'Plutei perlustrandi',
+        description: 'Pluteum perlustra, aut Omnia vide tange ad totum argumentum.',
+      },
+      navProgress: {
+        title: 'Progressus',
+        description: 'Insignia, lapides miliarii et huius hebdomadis facinora, uno loco.',
+      },
+      navScreensafe: {
+        title: 'Tempus tutum',
+        description: 'Anulus tempus hodiernum ostendit. Tange ad totum; ruber fit tempore exhausto.',
+      },
+      navSearch: {
+        title: 'Quaere',
+        description: 'Librum certum quaeris? Titulum aut personam scribe et inveniet.',
+      },
+      navProfile: {
+        title: 'Persona',
+        description: 'Dilecta servata, paries insignium et libri in hoc instrumento.',
+      },
+    },
+    progress: {
+      welcome: {
+        title: 'Parvi gradus, magnus progressus',
+        description: 'Omnia quae liberi legerunt, luserunt et meruerunt, hic collecta.',
+      },
+      hero: {
+        title: 'Haec hebdomas',
+        description: 'Minuta una, fabulae lectae et sessiones lusae a die Lunae.',
+      },
+      challenges: {
+        title: 'Facinora',
+        description: 'Parvae provocationes hebdomadales et menstruae una petendae. Unam tange ut quantum progressa sit videas.',
+      },
+      milestones: {
+        title: 'Lapides miliarii',
+        description: 'Magna primitiae, notatae cum accidunt.',
+      },
+      badges: {
+        title: 'Insignia',
+        description: 'Merita auro lucent; cetera detegi exspectant. Insigne tange ut quid opus sit videas.',
+      },
+    },
+    search: {
+      welcome: {
+        title: 'Fabulam inveni',
+        description: 'Titulum, personam aut argumentum scribe et pluteus tibi inveniet.',
+      },
+      field: {
+        title: 'Hic quaere',
+        description: 'Eventus apparent dum scribis, ex libris huius instrumenti et catalogo.',
+      },
+      recent: {
+        title: 'Quaesita recentia',
+        description: 'Ultima quae quaesivisti hic exspectant tactum celerem.',
+      },
+    },
+    profile: {
+      welcome: {
+        title: 'Angulus tuus',
+        description: 'Omnia quae tua sola sunt in hac pagina habitant.',
+      },
+      hero: {
+        title: 'Personam muta',
+        description: 'Imaginem aut nomen tange ut imaginem, nomen aut aetatem mutes. Adultus prius quaestioni brevi respondet.',
+      },
+      tabs: {
+        title: 'Servata, Insignia, Curare',
+        description: 'Dilecta quae corde notasti, paries insignium, et libri huius instrumenti, quorum quemlibet tollere potes.',
+      },
+      settings: {
+        title: 'Optiones adultorum',
+        description: 'Lingua, tempus et ratio tua, post portam adultorum.',
       },
     },
   },
@@ -3249,8 +3390,8 @@ export default {
       home: 'Domus',
       screensafe: 'Tutum Tempus',
       progress: 'Progressus',
-      saved: 'Servata',
       search: 'Quaerere',
+      profile: 'Persona',
     },
   },
   catalogue: {
@@ -3274,13 +3415,15 @@ export default {
       music: 'Musica',
     },
     saved: {
-      tagline: {
-        one: 'Omnia quae amasti',
-        two: 'uno in loco',
-      },
       activities: 'Actiones Servatae',
       songs: 'Cantus Servati',
       empty: 'Cor tange in eo quod amas, et hic te exspectabit',
+    },
+    profile: {
+      tagline: {
+        one: 'Omnia quae',
+        two: 'tua sola sunt',
+      },
     },
   },
   progress: {

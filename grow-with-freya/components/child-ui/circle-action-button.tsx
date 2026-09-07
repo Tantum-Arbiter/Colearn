@@ -13,16 +13,19 @@ import { CIRCLE_BUTTON_DIAMETER_PHONE, CIRCLE_BUTTON_DIAMETER_TABLET } from './t
 
 const ICON_RATIO = 0.48;
 
+type CircleActionType = 'back' | 'audio' | 'settings';
+
 interface CircleActionButtonProps {
-  type: 'back' | 'audio';
+  type: CircleActionType;
   onPress: () => void;
   accessibilityLabel: string;
   muted?: boolean;
   testID?: string;
 }
 
-function iconName(type: 'back' | 'audio', muted: boolean): keyof typeof Ionicons.glyphMap {
+function iconName(type: CircleActionType, muted: boolean): keyof typeof Ionicons.glyphMap {
   if (type === 'back') return 'arrow-back';
+  if (type === 'settings') return 'settings-outline';
   return muted ? 'volume-mute' : 'volume-high';
 }
 

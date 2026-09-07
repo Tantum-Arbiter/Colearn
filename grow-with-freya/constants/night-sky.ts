@@ -1,12 +1,15 @@
 export const TABLET_MIN_WIDTH = 768;
 
 export const STAR_FIELD = {
-  count: 54,
+  count: 84,
+  /** The stars that breathe. The rest were added to fill the sky, not to
+   *  make it busier, so they hang steady. */
+  twinkleCount: 54,
   skyFraction: 0.74,
-  columns: 8,
+  columns: 10,
   smallRadius: 1.1,
   largeRadius: 1.9,
-  largeEvery: 6,
+  largeEvery: 10,
   smallOpacity: 0.52,
   largeOpacity: 0.9,
   twinkleMinMs: 2600,
@@ -32,6 +35,7 @@ export interface StarSeed {
   y: number;
   radius: number;
   opacity: number;
+  twinkles: boolean;
   twinkleMs: number;
   delayMs: number;
 }
@@ -54,6 +58,7 @@ export function buildStarField(width: number, height: number): StarSeed[] {
       y: ((row + jitterY) / rows) * sky,
       radius: isLarge ? STAR_FIELD.largeRadius : STAR_FIELD.smallRadius,
       opacity: isLarge ? STAR_FIELD.largeOpacity : STAR_FIELD.smallOpacity,
+      twinkles: index < STAR_FIELD.twinkleCount,
       twinkleMs: STAR_FIELD.twinkleMinMs + (((index * 71) % 17) / 17) * twinkleSpan,
       delayMs: ((index * 97) % 31) * 180,
     });

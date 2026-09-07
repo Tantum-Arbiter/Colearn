@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, type RefObject } from 'react';
 import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -30,6 +30,7 @@ import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { ScreenTimeRing } from '@/components/home/screen-time-ring';
 import { TEXT_SECONDARY } from '@/constants/night-palette';
 import { NavigationItem } from './navigation-item';
+import { ProfileNavAvatar } from './profile-nav-avatar';
 import {
   NAV_BOTTOM_MARGIN,
   NAV_HEIGHT,
@@ -42,7 +43,7 @@ import {
   contentMargin,
 } from './tokens';
 
-export type ChildNavItemId = 'home' | 'progress' | 'screensafe' | 'search' | 'saved';
+export type ChildNavItemId = 'home' | 'progress' | 'screensafe' | 'search' | 'profile';
 
 interface ChildNavItem {
   id: ChildNavItemId;
@@ -56,7 +57,7 @@ export const CHILD_NAV_ITEMS: readonly ChildNavItem[] = [
   { id: 'progress', icon: 'trending-up-outline', selectedIcon: 'trending-up', labelKey: 'childUi.nav.progress' },
   { id: 'screensafe', icon: 'shield-outline', selectedIcon: 'shield-checkmark', labelKey: 'childUi.nav.screensafe' },
   { id: 'search', icon: 'search-outline', selectedIcon: 'search', labelKey: 'childUi.nav.search' },
-  { id: 'saved', icon: 'heart-outline', selectedIcon: 'heart', labelKey: 'childUi.nav.saved' },
+  { id: 'profile', icon: 'person-circle-outline', selectedIcon: 'person-circle', labelKey: 'childUi.nav.profile' },
 ] as const;
 
 const PANEL_INSET = 6;
@@ -117,9 +118,11 @@ interface ChildBottomNavigationProps {
   /** Draws the bar into its own middle, where the ring is, so the screen-time
    *  window can open out of the space it leaves. */
   collapsed?: boolean;
+  /** A ref per slot, for a tour that wants to point the owl at one. */
+  itemRefs?: Partial<Record<ChildNavItemId, RefObject<View | null>>>;
 }
 
-export function ChildBottomNavigation({ selected, onSelect, screenTime, collapsed = false }: ChildBottomNavigationProps) {
+export function ChildBottomNavigation({ selected, onSelect, screenTime, collapsed = false, itemRefs }: ChildBottomNavigationProps) {
   const insets = useSafeAreaInsets();
   const { width: windowWidth } = useWindowDimensions();
   const { isTablet } = useAccessibility();
@@ -147,9 +150,19 @@ export function ChildBottomNavigation({ selected, onSelect, screenTime, collapse
   // toward the very point the ring sits at -- no measurement, and the gather
   // lands exactly where the orb rises.
   const collapse = useSharedValue(collapsed ? 1 : 0);
+  // the fade is its own beat: tied to the spring, the overshoot of the
+  // anticipation put the bar at full opacity in the very frame it began to
+  // widen -- filmed as the bar snapping on beside the splash it should rise
+  // out of
+  const presence = useSharedValue(collapsed ? 0 : 1);
 
   useEffect(() => {
     const total = motionDuration(CHILD_UI_MOTION.navCollapse, reduceMotion);
+    const fade = motionDuration(CHILD_UI_MOTION.navPresence, reduceMotion);
+    presence.value = withTiming(collapsed ? 0 : 1, {
+      duration: collapsed ? total : fade,
+      easing: collapsed ? Easing.in(Easing.quad) : Easing.out(Easing.quad),
+    });
 
     if (total === 0) {
       collapse.value = collapsed ? 1 : 0;
@@ -172,18 +185,12 @@ export function ChildBottomNavigation({ selected, onSelect, screenTime, collapse
         }),
       )
       : withSpring(0, CHILD_UI_SPRING.navExpand);
-  }, [collapsed, reduceMotion, collapse]);
+  }, [collapsed, reduceMotion, collapse, presence]);
 
-  const collapseStyle = useAnimatedStyle(() => {
-    // clamped so the overshoot at either end is a change of width alone --
-    // an opacity above 1 is not a brighter bar, it is an invalid style
-    const shown = Math.min(1, Math.max(0, collapse.value));
-
-    return {
-      opacity: 1 - shown,
-      transform: [{ scaleX: 1 - (1 - CHILD_UI_SCALE.navCollapsed) * collapse.value }],
-    };
-  });
+  const collapseStyle = useAnimatedStyle(() => ({
+    opacity: presence.value,
+    transform: [{ scaleX: 1 - (1 - CHILD_UI_SCALE.navCollapsed) * collapse.value }],
+  }));
 
   // the ring draws nothing without an allowance to draw, so the shield holds
   // the slot whenever screen time is off or not yet known
@@ -219,27 +226,31 @@ export function ChildBottomNavigation({ selected, onSelect, screenTime, collapse
           </Animated.View>
         )}
         {CHILD_NAV_ITEMS.map((item) => (
+          <View key={item.id} ref={itemRefs?.[item.id]} collapsable={false} style={styles.slot}>
           <NavigationItem
-            key={item.id}
             id={item.id}
             icon={item.icon}
             selectedIcon={item.selectedIcon}
             label={t(item.labelKey)}
             selected={item.id === selected}
-            showLabel={item.id !== 'screensafe'}
-            glyph={item.id === 'screensafe' && showsRing ? (
-              <ScreenTimeRing
-                testID="nav-screen-time-ring"
-                usageSeconds={screenTime.usageSeconds}
-                limitSeconds={screenTime.limitSeconds}
-                tint={TEXT_SECONDARY}
-                size={NAV_RING_SIZE}
-                haloScale={NAV_RING_HALO_SCALE}
-                showTrack={false}
-              />
-            ) : undefined}
+            glyph={
+              item.id === 'screensafe' && showsRing ? (
+                <ScreenTimeRing
+                  testID="nav-screen-time-ring"
+                  usageSeconds={screenTime.usageSeconds}
+                  limitSeconds={screenTime.limitSeconds}
+                  tint={TEXT_SECONDARY}
+                  size={NAV_RING_SIZE}
+                  haloScale={NAV_RING_HALO_SCALE}
+                  showTrack={false}
+                />
+              ) : item.id === 'profile' ? (
+                <ProfileNavAvatar selected={item.id === selected} />
+              ) : undefined
+            }
             onSelect={onSelect as (id: string) => void}
           />
+          </View>
         ))}
       </View>
       </Animated.View>
@@ -266,6 +277,10 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  slot: {
+    flex: 1,
+    height: '100%',
   },
   selectedPanel: {
     position: 'absolute',

@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState, type RefObject } from 'react';
 import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -36,14 +36,23 @@ const BADGE_COLUMNS_PHONE = 2;
 const BADGE_COLUMNS_TABLET = 4;
 const CONTENT_MAX_WIDTH = 720;
 
+export interface ProgressGuideTargets {
+  hero?: RefObject<View | null>;
+  challenges?: RefObject<View | null>;
+  milestones?: RefObject<View | null>;
+  badges?: RefObject<View | null>;
+}
+
 interface ProgressScreenProps {
   onBack: () => void;
   onRecommend?: (tag: StoryFilterTag | null) => void;
   onDetailVisibleChange?: (visible: boolean) => void;
   embedded?: boolean;
+  /** So the progress tour can point the owl at each part of the page. */
+  guideTargets?: ProgressGuideTargets;
 }
 
-export function ProgressScreen({ onBack, onRecommend, onDetailVisibleChange, embedded = false }: ProgressScreenProps) {
+export function ProgressScreen({ onBack, onRecommend, onDetailVisibleChange, embedded = false, guideTargets }: ProgressScreenProps) {
   const insets = useSafeAreaInsets();
   const { width: windowWidth } = useWindowDimensions();
   const { isTablet, scaledFontSize } = useAccessibility();
@@ -117,12 +126,14 @@ export function ProgressScreen({ onBack, onRecommend, onDetailVisibleChange, emb
         contentContainerStyle={[styles.scrollContent, { paddingHorizontal: margin }]}
       >
         <View style={[styles.column, { maxWidth: CONTENT_MAX_WIDTH }]}>
-          <ProgressHeroCard counters={counters} />
+          <View ref={guideTargets?.hero} collapsable={false}>
+            <ProgressHeroCard counters={counters} />
+          </View>
 
           <View style={styles.sectionHeadingSpacing}>
             <SectionHeading label={t('progress.adventuresHeading')} testID="adventures-heading" />
           </View>
-          <View style={styles.challengeList} testID="challenge-list">
+          <View style={styles.challengeList} testID="challenge-list" ref={guideTargets?.challenges} collapsable={false}>
             {challenges.map((challenge) => (
               <ChallengeCard key={challenge.id} challenge={challenge} onPress={handleBadgePress} />
             ))}
@@ -131,7 +142,7 @@ export function ProgressScreen({ onBack, onRecommend, onDetailVisibleChange, emb
           <View style={styles.sectionHeadingSpacing}>
             <SectionHeading label={t('progress.milestonesHeading')} testID="milestones-heading" />
           </View>
-          <View style={styles.milestoneRow} testID="milestone-row">
+          <View style={styles.milestoneRow} testID="milestone-row" ref={guideTargets?.milestones} collapsable={false}>
             {milestones.map((milestone) => (
               <MilestoneCard key={milestone.id} milestone={milestone} width={milestoneWidth} />
             ))}
@@ -146,7 +157,7 @@ export function ProgressScreen({ onBack, onRecommend, onDetailVisibleChange, emb
           <View style={styles.categoryBarSpacing}>
             <BadgeCategoryBar selected={badgeFilter} onSelect={setBadgeFilter} />
           </View>
-          <View style={styles.badgeGrid} testID="badge-grid">
+          <View style={styles.badgeGrid} testID="badge-grid" ref={guideTargets?.badges} collapsable={false}>
             {visibleBadges.map((badge) => (
               <BadgeCard key={badge.id} badge={badge} width={badgeWidth} onPress={handleBadgePress} />
             ))}

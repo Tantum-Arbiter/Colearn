@@ -56,12 +56,66 @@ describe('GUIDE_STEPS', () => {
     expect(targets).toContain('sound_control');
   });
 
+  /** The home tour was skipping the achievement card and never mentioned the ring. */
+  it('walks the home in reading order: stories, achievement, learning, ring, grown-ups, sound', () => {
+    const ids = GUIDE_STEPS.main_menu_tour.map((step) => step.id);
+
+    expect(ids.indexOf('achievement_card')).toBe(ids.indexOf('stories_button') + 1);
+    expect(ids.indexOf('learning_button')).toBe(ids.indexOf('achievement_card') + 1);
+    expect(ids.indexOf('screen_time_ring')).toBeGreaterThan(ids.indexOf('learning_button'));
+    expect(ids.indexOf('settings_button')).toBe(ids.indexOf('screen_time_ring') + 1);
+  });
+
+  it('shows the ring step with a picture of the ring in both its states', () => {
+    const step = GUIDE_STEPS.main_menu_tour.find((entry) => entry.id === 'screen_time_ring');
+
+    expect(step?.target).toBe('screen_time_ring');
+    expect(step?.shape).toBe('circle');
+    expect(step?.illustration).toBe('screenTimeRing');
+  });
+
+  it('has a tour for each journey page, each opening with a step that points at nothing', () => {
+    for (const id of ['catalogue_tour', 'progress_tour', 'search_tour', 'profile_tour'] as const) {
+      expect(GUIDE_STEPS[id].length).toBeGreaterThanOrEqual(3);
+      expect(GUIDE_STEPS[id][0].target).toBeUndefined();
+    }
+  });
+
+  it('takes the stories tour along the shelf and then down the bar', () => {
+    expect(GUIDE_STEPS.catalogue_tour.map((step) => step.target)).toEqual([
+      undefined,
+      'theme_tiles',
+      'filter_toggle',
+      'featured_story',
+      'story_shelves',
+      'nav_progress',
+      'nav_screensafe',
+      'nav_search',
+      'nav_profile',
+    ]);
+  });
+
   it('points at all three reading modes on the book mode tour', () => {
     expect(GUIDE_STEPS.book_mode_tour.map((step) => step.target)).toEqual([
       'read_button',
       'record_button',
       'narrate_button',
     ]);
+  });
+
+  /** The grown-ups control is a pill, so its spotlight is the same pill, not a circle around it. */
+  it('spotlights the grown-ups pill as a pill', () => {
+    const step = GUIDE_STEPS.main_menu_tour.find((entry) => entry.target === 'settings_button');
+
+    expect(step?.shape).toBe('rounded-rect');
+    expect(step?.radius).toBe(19);
+  });
+
+  /** The face and the name are a round subject: a circle round the two of them, not a band across the page. */
+  it('rings the profile face and name with a circle', () => {
+    const step = GUIDE_STEPS.profile_tour.find((entry) => entry.target === 'profile_hero');
+
+    expect(step?.shape).toBe('circle');
   });
 
   it('gives every highlighted step a shape', () => {
@@ -156,12 +210,17 @@ describe('placeGuideBubble', () => {
     expect(placement.tail).toBe('left');
   });
 
-  it('stays on the perch and points up at a highlight well above it', () => {
+  /**
+   * On the perch the bubble belongs to the owl, and its tail says so. A second
+   * notch pointing at the highlight put two tails on the one bubble; the
+   * spotlight already says which thing is being talked about.
+   */
+  it('stays on the perch with only its owl tail when the highlight is well above it', () => {
     const placement = place({ x: 300, y: 60, width: 80, height: 40 });
 
     expect(placement.mode).toBe('perch');
     expect(placement.tail).toBe('down');
-    expect(placement.pointer).toBe('up');
+    expect(placement.pointer).toBeNull();
   });
 
   it('moves above a highlight that its resting place would cover', () => {

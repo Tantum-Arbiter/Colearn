@@ -156,3 +156,36 @@ describe('ScreenTimeRing', () => {
     });
   });
 });
+
+/**
+ * On the home scene the ring sits on the globe, where a thin white dial over
+ * lime continents and blue sea all but vanished. A dark disc behind it gives
+ * it something of its own to sit on. Only the home asks for it; the bar has
+ * its own dark surface already.
+ */
+describe('the backplate', () => {
+  function plate(tree: ReturnType<typeof render>) {
+    return tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'screen-time-ring-backplate');
+  }
+
+  it('is not drawn unless asked for', () => {
+    const tree = render(<ScreenTimeRing usageSeconds={600} limitSeconds={3600} />);
+
+    expect(plate(tree)).toHaveLength(0);
+  });
+
+  it('sits behind the dial, a little wider than it', () => {
+    const tree = render(<ScreenTimeRing usageSeconds={600} limitSeconds={3600} size={40} backplate />);
+
+    const style = [plate(tree)[0].props.style].flat(Infinity).reduce((a: any, b: any) => ({ ...a, ...b }), {});
+
+    expect(style.width).toBeGreaterThan(40);
+    expect(style.borderRadius).toBe(style.width / 2);
+  });
+
+  it('stays under the spent circle too', () => {
+    const tree = render(<ScreenTimeRing usageSeconds={4000} limitSeconds={3600} backplate />);
+
+    expect(plate(tree).length).toBeGreaterThan(0);
+  });
+});

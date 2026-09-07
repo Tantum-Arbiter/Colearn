@@ -387,7 +387,7 @@ describe('OwlGuide', () => {
 
       expect(has(tree, 'owl-guide-bubble-perch')).toBe(true);
       expect(has(tree, 'owl-guide-tail-down')).toBe(true);
-      expect(has(tree, 'owl-guide-pointer-up')).toBe(true);
+      expect(has(tree, 'owl-guide-pointer-up')).toBe(false);
     });
 
     it('leaves out a step whose highlight is not on this screen', async () => {
@@ -445,5 +445,51 @@ describe('OwlGuide', () => {
       expect(has(tree, 'owl-guide-bubble-above')).toBe(true);
       expect(has(tree, 'owl-guide-tail-left')).toBe(false);
     });
+  });
+});
+
+/**
+ * The home tour's ring step shows the ring itself, twice, under its words:
+ * with time left, and as the red orb it becomes when the time is up.
+ */
+describe('the ring step', () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+    mockGuide.isLoaded = true;
+    mockGuide.activeGuide = null;
+    mockGuide.stepIndex = 0;
+    mockGuide.completed = [];
+    setWindow(402, 874);
+    Object.values(mockApi).forEach((fn) => fn.mockClear());
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it('draws the ring legend under the words', async () => {
+    const targets = Object.fromEntries(
+      GUIDE_STEPS.main_menu_tour.filter((step) => step.target).map((step) => [step.target as string, ref(100, 100)]),
+    );
+    const tree = await renderLanded({ id: 'main_menu_tour', targets });
+    const ringIndex = GUIDE_STEPS.main_menu_tour.findIndex((step) => step.id === 'screen_time_ring');
+
+    for (let i = 0; i < ringIndex; i += 1) {
+      press(tree, 'owl-guide-next');
+      await settleMeasurements();
+    }
+
+    expect(json(tree)).toContain('owl-guide-illustration');
+    expect(json(tree)).toContain('screen-time-ring-legend-remaining');
+    expect(json(tree)).toContain('screen-time-ring-legend-spent');
+  });
+
+  it('draws no picture under a step that has none', async () => {
+    const targets = Object.fromEntries(
+      GUIDE_STEPS.main_menu_tour.filter((step) => step.target).map((step) => [step.target as string, ref(100, 100)]),
+    );
+    const tree = await renderLanded({ id: 'main_menu_tour', targets });
+
+    expect(json(tree)).not.toContain('owl-guide-illustration');
   });
 });

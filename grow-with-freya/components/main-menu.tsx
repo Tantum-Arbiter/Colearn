@@ -348,6 +348,8 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
   const learningButtonRef = useRef<View>(null);
   const musicControlRef = useRef<View>(null);
   const settingsButtonRef = useRef<View>(null);
+  const achievementCardRef = useRef<View>(null);
+  const screenTimeRingRef = useRef<View>(null);
 
   // Per-button refs for the carousel strip buttons (keyed by menu item id)
   const carouselButtonRefs = useMemo(() => ({
@@ -367,14 +369,18 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
 
   const homeGuideTargets = useMemo(() => ({
     stories: storiesButtonRef,
+    achievement: achievementCardRef,
     learning: learningButtonRef,
+    screenTime: screenTimeRingRef,
     settings: settingsButtonRef,
     sound: musicControlRef,
   }), []);
 
   const homeTourTargets = useMemo(() => ({
     'stories_button': storiesButtonRef,
+    'achievement_card': achievementCardRef,
     'learning_button': learningButtonRef,
+    'screen_time_ring': screenTimeRingRef,
     'settings_button': settingsButtonRef,
     'sound_control': musicControlRef,
   }), []);

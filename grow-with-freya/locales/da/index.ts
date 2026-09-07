@@ -275,6 +275,34 @@ export default {
         title: 'Tegn det bedste sted',
         body: 'Papir og farver og ét spørgsmål: hvilken del kunne du bedst lide? Tegn den sammen, og lad dit barn fortælle om sin tegning. Det, barnet vælger, siger mere end nogen quiz.',
       },
+      bathTime: {
+        title: 'Lad historien flyde i badet',
+        body: 'Kopper og flasker bliver både, en svamp bliver en ø. Spørg hvilken figur der ville sejle hvorhen. Badetid er allerede leg — historien giver den bare en handling.',
+      },
+      inTheDark: {
+        title: 'Fortæl den igen i mørket',
+        body: 'Sluk lyset og skiftes til at tilføje én linje hver. Den behøver ikke ligne bogen. En historie fortalt i mørket er halvt din og halvt deres — og det er den bedste slags.',
+      },
+      onAPlate: {
+        title: 'Lav en side af den',
+        body: 'Toast, frugt, hvad som helst på en tallerken: opkald det efter en figur og lad dit barn stille scenen op. At tale om hvad der skal hvor, er historien — fortalt med mad.',
+      },
+      listen: {
+        title: 'Lyt efter historien',
+        body: 'Stå stille sammen et sted udenfor og lyt. Hvad ville en figur høre her? En fugl, en bus, vinden — hver lyd er et sted, historien kan tage hen.',
+      },
+      sockShow: {
+        title: 'Lav et sokketeater',
+        body: 'To sokker, to stemmer. Lad dit barn vælge hvilken figur hver sok er, og spil den scene de husker bedst. Det de vælger, er det de stadig tænker på.',
+      },
+      singIt: {
+        title: 'Syng historien',
+        body: 'Find på en sang om det der skete, til en melodi I begge kender. Den må gerne være fjollet — det er hele pointen. En sang er en historie, der kommer tilbage af sig selv.',
+      },
+      whatIf: {
+        title: 'Spørg hvad nu hvis',
+        body: 'Hvad nu hvis slutningen var anderledes? Hvad nu hvis du var med i historien? Ét spørgsmål, og lad dem så løbe med det. Der er ingen forkerte svar — kun deres svar.',
+      },
     },
     helpingStayBalanced: 'Du hjælper {{name}} med at være tryg og i balance.',
     helpingStayBalancedGeneric: 'Du hjælper dit barn med at være tryg og i balance.',
@@ -495,6 +523,17 @@ export default {
     girl: ' Pige',
     saveChanges: 'Gem ændringer',
     comingSoon: ' Profilindstillingsmuligheder kommer snart - stadig under udvikling!',
+    settings: 'Indstillinger',
+    noName: 'Lille opdager',
+    downloadsUsed: '{{used}} af {{limit}} bøger på denne enhed',
+    downloadsEmpty: 'Intet gemt på denne enhed endnu — hent en bog, så kan du læse den overalt',
+    downloadMeta: '{{minutes}} min · {{pages}} sider',
+    downloadsCount: '{{count}} bøger på denne enhed',
+    tabs: {
+      saved: 'Gemte',
+      badges: 'Mærker',
+      manage: 'Administrér',
+    },
   },
   onboarding: {
     welcome: 'Velkommen!',
@@ -626,6 +665,16 @@ export default {
       sound: {
         title: 'Lydkontrol',
         description: 'Tryk her for at styre baggrundsmusik og lydeffekter.',
+      },
+      achievement: {
+        title: 'Næste præstation',
+        description: 'Det mærke dit barn er tættest på, og hvor langt der er igen. Tryk for at se dem alle.',
+      },
+      screenTime: {
+        title: 'Skærmsikker-ringen',
+        description: 'Ringen fyldes, mens dagens skærmtid bruges. Tryk når som helst for at se dagen. Når tiden er gået, bliver den til en rød kugle.',
+        remainingCaption: 'Tid tilbage',
+        spentCaption: 'Tiden er gået',
       },
     },
     screenTime: {
@@ -940,6 +989,98 @@ export default {
       benefit: {
         title: 'Kreativt Udtryk',
         description: 'Fri musikalsk leg nærer kreativitet, selvtillid og en kærlighed til musik, der vokser med dit barn.',
+      },
+    },
+    catalogue: {
+      welcome: {
+        title: 'Din historiehylde',
+        description: 'Alle bøger, sange og spil bor her. Lad os se os omkring sammen.',
+      },
+      themes: {
+        title: 'Vælg et tema',
+        description: 'Historier, læring eller musik. Tryk på en flise, og hylden sorterer sig selv.',
+      },
+      filter: {
+        title: 'Finere filtre',
+        description: 'Sengetid, dyr, ro og mere. Vælg et par, og hylden snævrer ind til netop dem.',
+      },
+      featured: {
+        title: 'Dagens valg',
+        description: 'En bog valgt på ny hver dag. Tryk på Læs nu, og den åbner med det samme.',
+      },
+      shelves: {
+        title: 'Hylder at swipe på',
+        description: 'Swipe langs enhver hylde, eller tryk på Se alle for hele temaet på én gang.',
+      },
+      navProgress: {
+        title: 'Fremskridt',
+        description: 'Mærker, milepæle og ugens eventyr, samlet ét sted.',
+      },
+      navScreensafe: {
+        title: 'Skærmsikker',
+        description: 'Ringen viser dagens skærmtid. Tryk for hele billedet; den bliver rød, når tiden er gået.',
+      },
+      navSearch: {
+        title: 'Søg',
+        description: 'Leder du efter en bestemt bog? Skriv en titel eller en figur, så finder den den.',
+      },
+      navProfile: {
+        title: 'Profil',
+        description: 'Gemte favoritter, mærkevæggen og bøgerne gemt på denne enhed.',
+      },
+    },
+    progress: {
+      welcome: {
+        title: 'Små skridt, store fremskridt',
+        description: 'Alt hvad dit barn har læst, spillet og opnået, samlet her.',
+      },
+      hero: {
+        title: 'Denne uge',
+        description: 'Minutter sammen, historier læst og sessioner spillet siden mandag.',
+      },
+      challenges: {
+        title: 'Eventyr',
+        description: 'Små ugentlige og månedlige udfordringer at gå efter sammen. Tryk på én for at se, hvor langt den er.',
+      },
+      milestones: {
+        title: 'Milepæle',
+        description: 'De store første gange, markeret når de sker.',
+      },
+      badges: {
+        title: 'Mærker',
+        description: 'De optjente lyser guld; resten venter på at blive opdaget. Tryk på et mærke for at se, hvad der skal til.',
+      },
+    },
+    search: {
+      welcome: {
+        title: 'Find en historie',
+        description: 'Skriv en titel, en figur eller et tema, så finder hylden den for dig.',
+      },
+      field: {
+        title: 'Søg her',
+        description: 'Resultater dukker op, mens du skriver, fra bøgerne på denne enhed og kataloget.',
+      },
+      recent: {
+        title: 'Seneste søgninger',
+        description: 'De sidste par ting, du ledte efter, venter her på et hurtigt tryk.',
+      },
+    },
+    profile: {
+      welcome: {
+        title: 'Dit eget hjørne',
+        description: 'Alt det, der kun er dit, bor på denne side.',
+      },
+      hero: {
+        title: 'Skift profilen',
+        description: 'Tryk på billedet eller navnet for at ændre avatar, navn eller alder. En voksen svarer først på et hurtigt spørgsmål.',
+      },
+      tabs: {
+        title: 'Gemte, Mærker, Administrér',
+        description: 'Favoritter du har givet et hjerte, mærkevæggen og bøgerne på denne enhed, med plads til at fjerne dem.',
+      },
+      settings: {
+        title: 'Voksnes indstillinger',
+        description: 'Sprog, skærmtid og din konto, bag de voksnes port.',
       },
     },
   },
@@ -3249,8 +3390,8 @@ export default {
       home: 'Hjem',
       screensafe: 'Skærmtid',
       progress: 'Fremskridt',
-      saved: 'Gemte',
       search: 'Søg',
+      profile: 'Profil',
     },
   },
   catalogue: {
@@ -3274,13 +3415,15 @@ export default {
       music: 'Musik',
     },
     saved: {
-      tagline: {
-        one: 'Alt det, du elsker',
-        two: 'på ét sted',
-      },
       activities: 'Gemte aktiviteter',
       songs: 'Gemte sange',
       empty: 'Tryk på hjertet ved det, du kan lide, så venter det her',
+    },
+    profile: {
+      tagline: {
+        one: 'Alt det, der',
+        two: 'kun er dit',
+      },
     },
   },
   progress: {

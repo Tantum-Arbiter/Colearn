@@ -18,7 +18,12 @@ import { owlPerchFrame, type OwlPhase } from '@/constants/owl-companion';
 import { OwlPerch } from '@/components/screen-time/owl-perch';
 import { OwlSpeechBubble } from '@/components/screen-time/owl-speech-bubble';
 import { GuideSpotlight } from './guide-spotlight';
+import { ScreenTimeRingLegend } from './screen-time-ring-legend';
 import { useGuideTargets, type GuideTargetRefs } from './use-guide-targets';
+
+const ILLUSTRATIONS = {
+  screenTimeRing: <ScreenTimeRingLegend />,
+} as const;
 
 const NO_TARGETS: GuideTargetRefs = {};
 
@@ -186,6 +191,7 @@ export function OwlGuide({
             testID="owl-guide-bubble"
             title={t(step.titleKey)}
             body={t(step.descriptionKey)}
+            illustration={step.illustration ? ILLUSTRATIONS[step.illustration] : undefined}
             page={guide.stepIndex}
             pageCount={steps.length}
             nextLabel={t(isLast ? GUIDE_BUTTON_KEYS.finish : GUIDE_BUTTON_KEYS.next)}

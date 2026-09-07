@@ -1,5 +1,6 @@
-import React, { memo, useEffect } from 'react';
+import React, { memo, useEffect, type ReactNode } from 'react';
 import { View, Text, Pressable, StyleSheet, type LayoutChangeEvent, type ViewStyle } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { useAccessibility } from '@/hooks/use-accessibility';
@@ -18,18 +19,32 @@ export type BubbleTail = 'up' | 'down' | 'left' | 'right';
 
 export type BubbleTailAlign = 'left' | 'right';
 
+/** Which way the page turned, so the fresh content slides in from that side. */
+export type BubbleTurn = 'forward' | 'back';
+
+const SLIDE_PX = 18;
+const ARROW_SIZE = 20;
+
 export interface OwlSpeechBubbleProps {
   eyebrow?: string;
   title?: string;
   body: string;
   footnote?: string;
   footnoteEmphasis?: boolean;
+  /** A picture under the words, for a step that words alone would not carry. */
+  illustration?: ReactNode;
   page: number;
   pageCount: number;
   nextLabel: string;
   closeLabel: string;
   onNext: () => void;
   onClose: () => void;
+  /** A way to the page before. Absent on a first page, which has none. */
+  onBack?: () => void;
+  backLabel?: string;
+  /** Draws the way on as an arrow rather than a word; the label stays the accessible name. */
+  nextAsArrow?: boolean;
+  direction?: BubbleTurn;
   leaving?: boolean;
   maxWidth: number;
   tail?: BubbleTail | null;
@@ -106,12 +121,17 @@ export const OwlSpeechBubble = memo(function OwlSpeechBubble({
   body,
   footnote,
   footnoteEmphasis = false,
+  illustration,
   page,
   pageCount,
   nextLabel,
   closeLabel,
   onNext,
   onClose,
+  onBack,
+  backLabel,
+  nextAsArrow = false,
+  direction = 'forward',
   leaving = false,
   maxWidth,
   tail = 'down',
@@ -151,9 +171,12 @@ export const OwlSpeechBubble = memo(function OwlSpeechBubble({
     transform: [{ scale: reduceMotion ? 1 : 0.7 + 0.3 * presence.value }],
   }));
 
+  // the fresh page arrives from the side the turn came from: forward slides
+  // in from the right, back from the left
+  const slideFrom = direction === 'back' ? -SLIDE_PX : SLIDE_PX;
   const contentStyle = useAnimatedStyle(() => ({
     opacity: fresh.value,
-    transform: [{ translateY: (1 - fresh.value) * 6 }],
+    transform: [{ translateX: (1 - fresh.value) * slideFrom }],
   }));
 
   const isLast = page >= pageCount - 1;
@@ -190,6 +213,9 @@ export const OwlSpeechBubble = memo(function OwlSpeechBubble({
           <Text style={[styles.body, { fontSize: scaledFontSize(15) }]} testID={`${idPrefix}-body`}>
             {body}
           </Text>
+          {illustration ? (
+            <View testID={`${idPrefix}-illustration`}>{illustration}</View>
+          ) : null}
           {footnote ? (
             <Text
               style={[
@@ -205,6 +231,19 @@ export const OwlSpeechBubble = memo(function OwlSpeechBubble({
         </Animated.View>
 
         <View style={styles.footer}>
+          {onBack ? (
+            <Pressable
+              testID={`${idPrefix}-back`}
+              accessibilityRole="button"
+              accessibilityLabel={backLabel ?? ''}
+              onPress={onBack}
+              hitSlop={6}
+              style={({ pressed }) => [styles.arrow, pressed && styles.pillPressed]}
+            >
+              <Ionicons name="chevron-back" size={ARROW_SIZE} color="#FFFFFF" />
+            </Pressable>
+          ) : null}
+
           <View style={styles.dots} testID={`${idPrefix}-dots`}>
             {Array.from({ length: pageCount }, (_, index) => (
               <View
@@ -221,9 +260,17 @@ export const OwlSpeechBubble = memo(function OwlSpeechBubble({
             accessibilityRole="button"
             accessibilityLabel={nextLabel}
             onPress={onNext}
-            style={({ pressed }) => [styles.pill, pressed && styles.pillPressed]}
+            hitSlop={nextAsArrow && !isLast ? 6 : undefined}
+            style={({ pressed }) => [
+              nextAsArrow && !isLast ? styles.arrow : styles.pill,
+              pressed && styles.pillPressed,
+            ]}
           >
-            <Text style={[styles.pillLabel, { fontSize: scaledFontSize(15) }]}>{nextLabel}</Text>
+            {nextAsArrow && !isLast ? (
+              <Ionicons name="chevron-forward" size={ARROW_SIZE} color="#FFFFFF" />
+            ) : (
+              <Text style={[styles.pillLabel, { fontSize: scaledFontSize(15) }]}>{nextLabel}</Text>
+            )}
           </Pressable>
         </View>
       </View>
@@ -316,9 +363,23 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   dots: {
+    flex: 1,
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
-    gap: 6,
+    justifyContent: 'center',
+    gap: 5,
+    marginHorizontal: 8,
+  },
+  arrow: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.22)',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   dot: {
     width: 6,
@@ -327,7 +388,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.28)',
   },
   dotCurrent: {
-    width: 16,
+    width: 12,
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
   },
   pill: {

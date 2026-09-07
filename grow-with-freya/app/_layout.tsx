@@ -703,6 +703,11 @@ function AppContent() {
     setCurrentPage('main');
   };
 
+  const handleOpenGrownUps = () => {
+    setCurrentPage('account');
+    setCurrentScreen('account');
+  };
+
 
 
   const handleBackToMainMenu = () => {
@@ -939,6 +944,7 @@ function AppContent() {
               onBack={handleBackToMainMenu}
               initialMode={selectedStoryMode}
               sectionRequest={storiesSection}
+              onOpenSettings={handleOpenGrownUps}
             />,
             practise: <PractiseScreen onBack={handleBackToInstruments} isActive={currentPage === 'practise'} />,
             freeplay: <FreeplayScreen onBack={handleBackToInstruments} isActive={currentPage === 'freeplay'} />,

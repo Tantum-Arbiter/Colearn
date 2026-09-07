@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, type RefObject } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { ChildBottomNavigation, ChildNavItemId } from './child-bottom-navigation';
 
@@ -8,10 +8,11 @@ interface JourneyShellProps {
   navigationHidden?: boolean;
   screenTime?: { usageSeconds: number; limitSeconds: number } | null;
   navigationCollapsed?: boolean;
+  navigationItemRefs?: Partial<Record<ChildNavItemId, RefObject<View | null>>>;
   children: ReactNode;
 }
 
-export function JourneyShell({ selected, onSelect, navigationHidden = false, screenTime, navigationCollapsed = false, children }: JourneyShellProps) {
+export function JourneyShell({ selected, onSelect, navigationHidden = false, screenTime, navigationCollapsed = false, navigationItemRefs, children }: JourneyShellProps) {
   return (
     <View style={styles.fill} testID="journey-shell">
       {children}
@@ -21,6 +22,7 @@ export function JourneyShell({ selected, onSelect, navigationHidden = false, scr
           onSelect={onSelect}
           screenTime={screenTime}
           collapsed={navigationCollapsed}
+          itemRefs={navigationItemRefs}
         />
       )}
     </View>

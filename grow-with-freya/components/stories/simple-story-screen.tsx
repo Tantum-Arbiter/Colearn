@@ -12,6 +12,8 @@ interface SimpleStoryScreenProps {
   initialMode?: string | null;
   /** Which catalogue section the home asked for, keyed so a repeat request still applies */
   sectionRequest?: CatalogueSectionRequest;
+  /** Opens the grown-ups' area from the profile page's settings control. */
+  onOpenSettings?: () => void;
 }
 
 export function SimpleStoryScreen({
@@ -19,12 +21,14 @@ export function SimpleStoryScreen({
   onBack: _onBack,
   initialMode,
   sectionRequest,
+  onOpenSettings,
 }: SimpleStoryScreenProps) {
   return (
     <StoryCatalogueScreen
       onStorySelect={onStorySelect}
       initialMode={(initialMode as CatalogueMode | null) ?? null}
       sectionRequest={sectionRequest}
+      onOpenSettings={onOpenSettings}
     />
   );
 }

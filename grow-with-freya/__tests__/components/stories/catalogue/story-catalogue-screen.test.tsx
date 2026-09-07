@@ -102,6 +102,58 @@ jest.mock('@/services/story-access-service', () => ({
   },
 }));
 
+// The tours themselves are the owl guide's business; what this screen owes
+// them is to run the right one for the section on show, with that section's
+// controls to point at. The stub records exactly that.
+const mockGuides: { id: string; active: boolean; targets: string[] }[] = [];
+jest.mock('@/components/owl-guide', () => {
+  const { View } = jest.requireActual('react-native');
+  return {
+    OwlGuide: ({ id, active, targets }: { id: string; active?: boolean; targets?: Record<string, unknown> }) => {
+      mockGuides.push({ id, active: active !== false, targets: Object.keys(targets ?? {}) });
+      return active !== false ? <View testID={`owl-guide-${id}`} /> : null;
+    },
+  };
+});
+
+jest.mock('@/components/account/edit-profile-screen', () => {
+  const { View } = jest.requireActual('react-native');
+  return { EditProfileContent: () => <View testID="edit-profile-content" /> };
+});
+
+// The gate is the real hook; only its face is stubbed. A touch-end types the
+// challenge's own answer, a touch-start submits it -- two steps, because the
+// hook judges the input on the render after it changes.
+jest.mock('@/components/ui/parents-only-modal', () => {
+  const { View } = jest.requireActual('react-native');
+  return {
+    ParentsOnlyModal: ({
+      visible,
+      challenge,
+      onInputChange,
+      onSubmit,
+    }: {
+      visible: boolean;
+      challenge: { type: string; answer?: number; word?: string };
+      onInputChange: (value: string) => void;
+      onSubmit: () => void;
+    }) =>
+      (visible ? (
+        <View
+          testID="parents-only-modal"
+          onTouchEnd={() =>
+            onInputChange(
+              challenge.type === 'math'
+                ? String(challenge.answer)
+                : `parentsOnly.animals.${challenge.word} (defaultValue:${challenge.word})`,
+            )
+          }
+          onTouchStart={onSubmit}
+        />
+      ) : null),
+  };
+});
+
 jest.mock('@/services/story-download-service', () => ({
   StoryDownloadService: {
     downloadStory: jest.fn().mockResolvedValue({ success: true }),
@@ -214,10 +266,11 @@ describe('StoryCatalogueScreen', () => {
   it('sets each section its own arched tagline beneath the title', async () => {
     const tree = render(<StoryCatalogueScreen />);
 
+    // each line is drawn twice -- a halo beneath the words -- so read it once
     function archedLines() {
-      return tree.UNSAFE_root
+      return [...new Set(tree.UNSAFE_root
         .findAll((n: any) => n.props.testID === 'svg-TextPath')
-        .map((n: any) => n.props.children);
+        .map((n: any) => n.props.children))];
     }
 
     await waitFor(() => expect(byTestId(tree, 'page-tagline').length).toBeGreaterThan(0));
@@ -632,7 +685,8 @@ describe('StoryCatalogueScreen screensafe choreography', () => {
 /**
  * The saved shelf holds what the child chose to keep, laid out under the
  * themes those books belong to -- the library's own grouping, but of their
- * shelf rather than the catalogue's.
+ * shelf rather than the catalogue's. It now heads the Profile page, which is
+ * where a child goes looking for the things that are theirs.
  */
 describe('StoryCatalogueScreen saved shelf', () => {
   beforeEach(() => {
@@ -653,7 +707,7 @@ describe('StoryCatalogueScreen saved shelf', () => {
 
   function openSaved(tree: ReturnType<typeof render>) {
     fireEvent.press(
-      byTestId(tree, 'navigation-item-saved').find((n: any) => n.props.accessibilityRole === 'tab'),
+      byTestId(tree, 'navigation-item-profile').find((n: any) => n.props.accessibilityRole === 'tab'),
     );
   }
 
@@ -693,7 +747,7 @@ describe('StoryCatalogueScreen saved shelf', () => {
     expect(shelved.every((id: string) => id.includes('bear'))).toBe(true);
   });
 
-  it('heads the saved shelf with its own arched lines', async () => {
+  it('heads the profile page with its own arched lines', async () => {
     const tree = render(<StoryCatalogueScreen />);
     await waitFor(() => expect(byTestId(tree, 'page-tagline').length).toBeGreaterThan(0));
 
@@ -703,7 +757,7 @@ describe('StoryCatalogueScreen saved shelf', () => {
       const lines = tree.UNSAFE_root
         .findAll((n: any) => n.props.testID === 'svg-TextPath')
         .map((n: any) => n.props.children);
-      expect(lines).toEqual(['catalogue.saved.tagline.one', 'catalogue.saved.tagline.two']);
+      expect([...new Set(lines)]).toEqual(['catalogue.profile.tagline.one', 'catalogue.profile.tagline.two']);
     });
   });
 });
@@ -731,7 +785,7 @@ describe('StoryCatalogueScreen saved activities', () => {
 
   function openSaved(tree: ReturnType<typeof render>) {
     fireEvent.press(
-      byTestId(tree, 'navigation-item-saved').find((n: any) => n.props.accessibilityRole === 'tab'),
+      byTestId(tree, 'navigation-item-profile').find((n: any) => n.props.accessibilityRole === 'tab'),
     );
   }
 
@@ -808,7 +862,7 @@ describe('StoryCatalogueScreen saved songs', () => {
 
   function openSaved(tree: ReturnType<typeof render>) {
     fireEvent.press(
-      byTestId(tree, 'navigation-item-saved').find((n: any) => n.props.accessibilityRole === 'tab'),
+      byTestId(tree, 'navigation-item-profile').find((n: any) => n.props.accessibilityRole === 'tab'),
     );
   }
 
@@ -883,7 +937,7 @@ describe('StoryCatalogueScreen saved downloads', () => {
 
   function openSaved(tree: ReturnType<typeof render>) {
     fireEvent.press(
-      byTestId(tree, 'navigation-item-saved').find((n: any) => n.props.accessibilityRole === 'tab'),
+      byTestId(tree, 'navigation-item-profile').find((n: any) => n.props.accessibilityRole === 'tab'),
     );
   }
 
@@ -969,5 +1023,298 @@ describe('StoryCatalogueScreen saved downloads', () => {
     );
 
     await waitFor(() => expect(StoryDownloadService.downloadStory).toHaveBeenCalled());
+  });
+});
+
+/**
+ * The Profile page is the child's own corner: their face and name, the
+ * favourites shelf they already knew, the books they keep on the device, and
+ * the badges they have earned. Its top-right control is the way out to the
+ * grown-ups' settings -- audio belongs to pages a child is browsing.
+ */
+describe('StoryCatalogueScreen profile page', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockGetCatalog.mockResolvedValue([]);
+    mockAppState.readStoryIds = [];
+    mockAppState.favoriteStoryIds = [];
+    mockAppState.favoriteActivityIds = [];
+    mockAppState.favoriteSongIds = [];
+    mockAppState.storyProgress = {};
+    (useStoryTransition as jest.Mock).mockReturnValue({
+      isTransitioning: false,
+      selectedStoryId: null,
+      shouldShowStoryReader: false,
+      isExpandingToReader: false,
+      startTransition: mockStartTransition,
+    });
+  });
+
+  function openProfile(tree: ReturnType<typeof render>) {
+    fireEvent.press(
+      byTestId(tree, 'navigation-item-profile').find((n: any) => n.props.accessibilityRole === 'tab'),
+    );
+  }
+
+  async function renderProfile(props: Record<string, unknown> = {}) {
+    const tree = render(<StoryCatalogueScreen {...props} />);
+    await waitFor(() => expect(byTestId(tree, 'story-filter-bar').length).toBeGreaterThan(0));
+    openProfile(tree);
+    await waitFor(() => expect(byTestId(tree, 'profile-view').length).toBeGreaterThan(0));
+    return tree;
+  }
+
+  /**
+   * The section the child is actually looking at. The page it came from is
+   * still mounted for the length of the crossfade, and its controls are not
+   * the ones under their finger.
+   */
+  function inCurrentSection(tree: ReturnType<typeof render>, testID: string) {
+    return byTestId(tree, 'section-crossfade-current')[0]
+      .findAll((n: any) => n.props.testID === testID);
+  }
+
+  function openTab(tree: ReturnType<typeof render>, id: 'saved' | 'badges' | 'manage') {
+    fireEvent.press(
+      inCurrentSection(tree, `profile-tab-${id}`).find((n: any) => n.props.accessibilityRole === 'button'),
+    );
+  }
+
+  it('offers the three tabs into what is the child’s own', async () => {
+    const tree = await renderProfile();
+
+    expect(inCurrentSection(tree, 'profile-tab-saved').length).toBeGreaterThan(0);
+    expect(inCurrentSection(tree, 'profile-tab-badges').length).toBeGreaterThan(0);
+    expect(inCurrentSection(tree, 'profile-tab-manage').length).toBeGreaterThan(0);
+  });
+
+  it('swaps the sound control for a way through to settings', async () => {
+    const tree = await renderProfile();
+
+    expect(inCurrentSection(tree, 'circle-action-settings').length).toBeGreaterThan(0);
+    expect(inCurrentSection(tree, 'circle-action-audio')).toHaveLength(0);
+  });
+
+  it('keeps the back button that returns to the main menu', async () => {
+    const tree = await renderProfile();
+
+    fireEvent.press(
+      inCurrentSection(tree, 'circle-action-back').find((n: any) => n.props.accessibilityRole === 'button'),
+    );
+
+    expect(mockAppState.requestReturnToMainMenu).toHaveBeenCalled();
+  });
+
+  /** Settings sit behind the same challenge the Grown-ups pill asks for. */
+  it('raises the parents-only challenge instead of opening settings outright', async () => {
+    const onOpenSettings = jest.fn();
+    const tree = await renderProfile({ onOpenSettings });
+
+    expect(byTestId(tree, 'parents-only-modal')).toHaveLength(0);
+
+    fireEvent.press(
+      inCurrentSection(tree, 'circle-action-settings').find((n: any) => n.props.accessibilityRole === 'button'),
+    );
+
+    expect(onOpenSettings).not.toHaveBeenCalled();
+    expect(byTestId(tree, 'parents-only-modal').length).toBeGreaterThan(0);
+  });
+
+  it('leaves the theme filters off the page -- there is nothing here to filter', async () => {
+    const tree = await renderProfile();
+
+    expect(inCurrentSection(tree, 'story-filter-bar')).toHaveLength(0);
+  });
+
+  it('lists the books held on the device under manage', async () => {
+    const tree = await renderProfile();
+    openTab(tree, 'manage');
+
+    expect(byTestId(tree, 'download-row-wombat').length).toBeGreaterThan(0);
+    expect(byTestId(tree, 'download-row-bear').length).toBeGreaterThan(0);
+  });
+
+  it('confirms before removing a book, and removes it once confirmed', async () => {
+    const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    const tree = await renderProfile();
+    openTab(tree, 'manage');
+
+    fireEvent.press(byTestId(tree, 'download-row-delete-wombat')[0]);
+
+    expect(alert).toHaveBeenCalled();
+    const buttons = alert.mock.calls[0][2] as { text: string; style?: string; onPress?: () => void }[];
+    const destructive = buttons.find((button) => button.style === 'destructive');
+    expect(destructive).toBeTruthy();
+
+    await act(async () => {
+      destructive?.onPress?.();
+    });
+
+    expect(StoryDownloadService.deleteStory).toHaveBeenCalledWith('wombat');
+    alert.mockRestore();
+  });
+
+  it('opens a book straight from the download list', async () => {
+    const tree = await renderProfile();
+    openTab(tree, 'manage');
+
+    fireEvent.press(byTestId(tree, 'download-row-wombat')[0]);
+
+    await waitFor(() => expect(mockStartTransition).toHaveBeenCalled());
+    expect(mockStartTransition.mock.calls[0][0]).toBe('wombat');
+  });
+
+  it('opens the shared badge detail when a badge on the wall is tapped', async () => {
+    const tree = await renderProfile();
+    openTab(tree, 'badges');
+    const badge = byTestId(tree, 'badge-wall')[0]
+      .findAll((n: any) => typeof n.props.testID === 'string' && n.props.testID.startsWith('badge-wall-item-'))[0];
+
+    fireEvent.press(badge);
+
+    await waitFor(() => expect(byTestId(tree, 'badge-detail-sheet').length).toBeGreaterThan(0));
+  });
+
+  /** Editing the child's details is a grown-up's job, like the settings gear. */
+  it('challenges a grown-up before opening the edit page from the hero', async () => {
+    const tree = await renderProfile();
+
+    fireEvent.press(
+      inCurrentSection(tree, 'profile-hero').find((n: any) => n.props.accessibilityRole === 'button'),
+    );
+
+    expect(byTestId(tree, 'profile-edit-sheet')).toHaveLength(0);
+    expect(byTestId(tree, 'parents-only-modal').length).toBeGreaterThan(0);
+  });
+
+  it('opens the edit page once the challenge is answered, and puts the bar away', async () => {
+    const tree = await renderProfile();
+    fireEvent.press(
+      inCurrentSection(tree, 'profile-hero').find((n: any) => n.props.accessibilityRole === 'button'),
+    );
+
+    await act(async () => {
+      byTestId(tree, 'parents-only-modal')[0].props.onTouchEnd();
+    });
+    await act(async () => {
+      byTestId(tree, 'parents-only-modal')[0].props.onTouchStart();
+    });
+
+    await waitFor(() => expect(byTestId(tree, 'profile-edit-sheet').length).toBeGreaterThan(0));
+    expect(byTestId(tree, 'edit-profile-content').length).toBeGreaterThan(0);
+    expect(byTestId(tree, 'child-bottom-navigation')).toHaveLength(0);
+  });
+
+  /** The sheet is the whole screen's business, so the bar steps out of it. */
+  it('hides the journey bar while a badge detail is open', async () => {
+    const tree = await renderProfile();
+    openTab(tree, 'badges');
+    const badge = byTestId(tree, 'badge-wall')[0]
+      .findAll((n: any) => typeof n.props.testID === 'string' && n.props.testID.startsWith('badge-wall-item-'))[0];
+
+    fireEvent.press(badge);
+
+    await waitFor(() => expect(byTestId(tree, 'child-bottom-navigation')).toHaveLength(0));
+  });
+});
+
+/**
+ * The story sheet rises over the shelf, not instead of it: the journey bar
+ * stays where it was beneath the panel. It only steps out once the book
+ * itself opens, which takes the whole screen.
+ */
+describe('the journey bar and the story sheet', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockGetCatalog.mockResolvedValue([]);
+  });
+
+  function transition(flags: Partial<{ isTransitioning: boolean; shouldShowStoryReader: boolean; isExpandingToReader: boolean }>) {
+    (useStoryTransition as jest.Mock).mockReturnValue({
+      isTransitioning: false,
+      selectedStoryId: null,
+      shouldShowStoryReader: false,
+      isExpandingToReader: false,
+      startTransition: mockStartTransition,
+      ...flags,
+    });
+  }
+
+  it('keeps the bar while the story sheet is up', async () => {
+    transition({ isTransitioning: true });
+    const tree = render(<StoryCatalogueScreen />);
+
+    await waitFor(() => expect(byTestId(tree, 'story-filter-bar').length).toBeGreaterThan(0));
+
+    expect(byTestId(tree, 'child-bottom-navigation').length).toBeGreaterThan(0);
+  });
+
+  it.each([
+    ['the book is expanding into the reader', { isExpandingToReader: true }],
+    ['the reader is open', { shouldShowStoryReader: true }],
+  ])('puts the bar away once %s', async (_case, flags) => {
+    transition(flags);
+    const tree = render(<StoryCatalogueScreen />);
+
+    await waitFor(() => expect(byTestId(tree, 'story-filter-bar').length).toBeGreaterThan(0));
+
+    expect(byTestId(tree, 'child-bottom-navigation')).toHaveLength(0);
+  });
+});
+
+/**
+ * Each journey page has a tour of its own, and the screen runs only the one
+ * for the section on show, handing it that section's controls to point at.
+ */
+describe('the journey tours', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockGuides.length = 0;
+    mockGetCatalog.mockResolvedValue([]);
+    (useStoryTransition as jest.Mock).mockReturnValue({
+      isTransitioning: false,
+      selectedStoryId: null,
+      shouldShowStoryReader: false,
+      isExpandingToReader: false,
+      startTransition: mockStartTransition,
+    });
+  });
+
+  function latest(id: string) {
+    return [...mockGuides].reverse().find((entry) => entry.id === id);
+  }
+
+  function openSection(tree: ReturnType<typeof render>, id: string) {
+    fireEvent.press(
+      byTestId(tree, `navigation-item-${id}`).find((n: any) => n.props.accessibilityRole === 'tab'),
+    );
+  }
+
+  it('runs the stories tour on the shelf, pointing at the chooser, the shelf and the bar', async () => {
+    const tree = render(<StoryCatalogueScreen />);
+    await waitFor(() => expect(byTestId(tree, 'story-filter-bar').length).toBeGreaterThan(0));
+
+    expect(byTestId(tree, 'owl-guide-catalogue_tour').length).toBeGreaterThan(0);
+    expect(latest('catalogue_tour')?.targets).toEqual(
+      expect.arrayContaining(['theme_tiles', 'filter_toggle', 'featured_story', 'story_shelves', 'nav_progress', 'nav_screensafe', 'nav_search', 'nav_profile']),
+    );
+    for (const other of ['progress_tour', 'search_tour', 'profile_tour']) {
+      expect(byTestId(tree, `owl-guide-${other}`)).toHaveLength(0);
+    }
+  });
+
+  it.each([
+    ['profile', 'profile_tour', ['profile_hero', 'profile_tabs', 'profile_settings']],
+    ['progress', 'progress_tour', ['progress_hero', 'progress_challenges', 'progress_milestones', 'progress_badges']],
+    ['search', 'search_tour', ['search_field']],
+  ])('runs the %s tour once that section is open, and puts the others away', async (section, tourId, targets) => {
+    const tree = render(<StoryCatalogueScreen />);
+    await waitFor(() => expect(byTestId(tree, 'story-filter-bar').length).toBeGreaterThan(0));
+
+    openSection(tree, section);
+
+    await waitFor(() => expect(byTestId(tree, `owl-guide-${tourId}`).length).toBeGreaterThan(0));
+    expect(latest(tourId)?.targets).toEqual(expect.arrayContaining(targets));
+    expect(byTestId(tree, 'owl-guide-catalogue_tour')).toHaveLength(0);
   });
 });

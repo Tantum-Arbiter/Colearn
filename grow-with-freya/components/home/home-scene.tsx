@@ -25,7 +25,9 @@ import { ContinueLearningCard } from './continue-learning-card';
 
 export interface HomeGuideTargets {
   stories?: RefObject<View | null>;
+  achievement?: RefObject<View | null>;
   learning?: RefObject<View | null>;
+  screenTime?: RefObject<View | null>;
   settings?: RefObject<View | null>;
   sound?: RefObject<View | null>;
 }
@@ -119,7 +121,7 @@ export const HomeScene = memo(function HomeScene({
           <ContinueCard story={data.currentStory} width={contentWidth} animated={animated} onPress={onContinue} />
         </View>
 
-        <View style={styles.cardSlot}>
+        <View style={styles.cardSlot} ref={guideTargets?.achievement} collapsable={false}>
           <AchievementCard
             next={data.nextAchievement}
             width={contentWidth}
@@ -148,7 +150,9 @@ export const HomeScene = memo(function HomeScene({
         pointerEvents="box-none"
       >
         {screenTime ? (
+          <View ref={guideTargets?.screenTime} collapsable={false}>
           <ScreenTimeRing
+            backplate
             usageSeconds={screenTime.usageSeconds}
             limitSeconds={screenTime.limitSeconds}
             tint={theme.chromeInk}
@@ -159,6 +163,7 @@ export const HomeScene = memo(function HomeScene({
             }
             hidden={screenTimeHidden}
           />
+          </View>
         ) : null}
       </View>
     </View>

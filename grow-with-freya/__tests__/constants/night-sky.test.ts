@@ -95,3 +95,40 @@ describe('cloudBandTop', () => {
     expect(underTest).toBeGreaterThan(0);
   });
 });
+
+/**
+ * The sky was asked to be fuller without becoming busier: more plain white
+ * dots, and no more of them flashing than there already were. So the field
+ * grew, and the twinkle stayed with the stars that already had it -- the
+ * extras hang steady.
+ */
+describe('the fuller field', () => {
+  it('holds a good many more stars than the field it grew from', () => {
+    expect(STAR_FIELD.count).toBeGreaterThan(54);
+  });
+
+  it('twinkles no more stars than it used to', () => {
+    expect(STAR_FIELD.twinkleCount).toBeLessThanOrEqual(54);
+    expect(STAR_FIELD.twinkleCount).toBeLessThan(STAR_FIELD.count);
+  });
+
+  it('marks the extras as steady rather than twinkling', () => {
+    const underTest = buildStarField(PHONE, HEIGHT);
+
+    expect(underTest.filter((star) => star.twinkles)).toHaveLength(STAR_FIELD.twinkleCount);
+  });
+
+  it('keeps every star it added out of the sky the horizon owns', () => {
+    const underTest = buildStarField(PHONE, HEIGHT);
+
+    expect(underTest.every((star) => star.y <= HEIGHT * STAR_FIELD.skyFraction)).toBe(true);
+  });
+
+  it('adds no more of the larger stars than the smaller field carried', () => {
+    const large = buildStarField(PHONE, HEIGHT).filter(
+      (star) => star.radius === STAR_FIELD.largeRadius,
+    );
+
+    expect(large.length).toBeLessThanOrEqual(Math.ceil(54 / 6));
+  });
+});

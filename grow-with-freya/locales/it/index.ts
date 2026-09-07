@@ -275,6 +275,34 @@ export default {
         title: 'Disegnate il momento più bello',
         body: 'Carta, pastelli e una domanda: quale parte ti è piaciuta di più? Disegnatela insieme, poi lasciate che vostro figlio vi racconti il suo disegno. Quello che sceglie dice più di qualsiasi domanda.',
       },
+      bathTime: {
+        title: 'Fai galleggiare la storia nel bagnetto',
+        body: 'Bicchieri e bottiglie diventano barche, una spugna un\'isola. Chiedi quale personaggio navigherebbe dove. Il bagnetto è già un gioco: la storia gli dà solo una trama.',
+      },
+      inTheDark: {
+        title: 'Raccontala di nuovo al buio',
+        body: 'Luci spente e, a turno, una frase ciascuno. Non deve seguire il libro. Una storia raccontata al buio è per metà tua e per metà loro, ed è il tipo migliore.',
+      },
+      onAPlate: {
+        title: 'Cucina una pagina',
+        body: 'Pane, frutta, qualsiasi cosa nel piatto: dalle il nome di un personaggio e lascia che tuo figlio componga la scena. Parlare di cosa va dove è la storia, raccontata col cibo.',
+      },
+      listen: {
+        title: 'Ascolta la storia',
+        body: 'Fermatevi insieme da qualche parte all\'aperto e ascoltate. Cosa sentirebbe un personaggio qui? Un uccello, un autobus, il vento: ogni suono è un posto dove la storia potrebbe andare.',
+      },
+      sockShow: {
+        title: 'Metti su uno spettacolo di calzini',
+        body: 'Due calzini, due voci. Lascia che tuo figlio decida quale personaggio è ciascuno e recitate la scena che ricorda meglio. Ciò che sceglie è ciò a cui sta ancora pensando.',
+      },
+      singIt: {
+        title: 'Canta la storia',
+        body: 'Inventate una canzone su quello che è successo, su una melodia che conoscete entrambi. Può essere sciocca: è proprio quello il punto. Una canzone è una storia che torna da sola.',
+      },
+      whatIf: {
+        title: 'Chiedi e se…',
+        body: 'E se il finale fosse stato diverso? E se tu fossi nella storia? Una domanda, poi lasciali correre. Non ci sono risposte sbagliate, solo le loro.',
+      },
     },
     helpingStayBalanced: 'Stai aiutando {{name}} a restare al sicuro ed equilibrato.',
     helpingStayBalancedGeneric: 'Stai aiutando il tuo bambino a restare al sicuro ed equilibrato.',
@@ -495,6 +523,17 @@ export default {
     girl: ' Ragazza',
     saveChanges: 'Salva modifiche',
     comingSoon: ' Altre opzioni di personalizzazione del profilo in arrivo - ancora in sviluppo!',
+    settings: 'Impostazioni',
+    noName: 'Piccolo esploratore',
+    downloadsUsed: '{{used}} di {{limit}} libri su questo dispositivo',
+    downloadsEmpty: 'Non c\'è ancora nulla su questo dispositivo: scarica un libro per leggerlo ovunque',
+    downloadMeta: '{{minutes}} min · {{pages}} pagine',
+    downloadsCount: '{{count}} libri su questo dispositivo',
+    tabs: {
+      saved: 'Salvati',
+      badges: 'Distintivi',
+      manage: 'Gestisci',
+    },
   },
   onboarding: {
     welcome: 'Benvenuto!',
@@ -626,6 +665,16 @@ export default {
       sound: {
         title: 'Controllo del suono',
         description: 'Tocca qui per controllare la musica di sottofondo e gli effetti sonori.',
+      },
+      achievement: {
+        title: 'Prossimo traguardo',
+        description: 'Il distintivo più vicino a tuo figlio e quanto manca. Tocca per vederli tutti.',
+      },
+      screenTime: {
+        title: 'L\'anello del tempo davanti allo schermo',
+        description: 'Questo anello si riempie man mano che si usa il tempo di oggi. Toccalo per vedere la giornata. Finito il tempo, diventa una sfera rossa.',
+        remainingCaption: 'Tempo rimasto',
+        spentCaption: 'Tempo finito',
       },
     },
     screenTime: {
@@ -940,6 +989,98 @@ export default {
       benefit: {
         title: 'Espressione Creativa',
         description: 'Il gioco musicale libero nutre la creatività, la fiducia in sé stessi e l\'amore per la musica che cresce con il tuo bambino.',
+      },
+    },
+    catalogue: {
+      welcome: {
+        title: 'Il tuo scaffale',
+        description: 'Ogni libro, canzone e gioco vive qui. Diamo un\'occhiata insieme.',
+      },
+      themes: {
+        title: 'Scegli un tema',
+        description: 'Storie, apprendimento o musica. Tocca un riquadro e lo scaffale si ordina da solo.',
+      },
+      filter: {
+        title: 'Filtri più fini',
+        description: 'Nanna, animali, calma e altro. Scegline alcuni e lo scaffale mostra solo quelli.',
+      },
+      featured: {
+        title: 'La scelta di oggi',
+        description: 'Un libro scelto ogni giorno. Tocca Leggi ora e si apre subito.',
+      },
+      shelves: {
+        title: 'Scaffali da sfogliare',
+        description: 'Scorri lungo uno scaffale, oppure tocca Vedi tutto per l\'intero tema.',
+      },
+      navProgress: {
+        title: 'Progressi',
+        description: 'Distintivi, tappe e le avventure di questa settimana, tutti in un posto.',
+      },
+      navScreensafe: {
+        title: 'Schermo sicuro',
+        description: 'L\'anello mostra il tempo di oggi. Toccalo per il quadro completo; diventa rosso quando il tempo è finito.',
+      },
+      navSearch: {
+        title: 'Cerca',
+        description: 'Cerchi un libro in particolare? Scrivi un titolo o un personaggio e lo troverà.',
+      },
+      navProfile: {
+        title: 'Profilo',
+        description: 'Preferiti salvati, il muro dei distintivi e i libri su questo dispositivo.',
+      },
+    },
+    progress: {
+      welcome: {
+        title: 'Piccoli passi, grandi progressi',
+        description: 'Tutto ciò che tuo figlio ha letto, giocato e guadagnato, raccolto qui.',
+      },
+      hero: {
+        title: 'Questa settimana',
+        description: 'Minuti insieme, storie lette e sessioni giocate da lunedì.',
+      },
+      challenges: {
+        title: 'Avventure',
+        description: 'Piccole sfide settimanali e mensili da affrontare insieme. Toccane una per vedere a che punto è.',
+      },
+      milestones: {
+        title: 'Tappe',
+        description: 'Le grandi prime volte, segnate quando accadono.',
+      },
+      badges: {
+        title: 'Distintivi',
+        description: 'Quelli guadagnati brillano d\'oro; gli altri aspettano di essere scoperti. Tocca un distintivo per vedere cosa serve.',
+      },
+    },
+    search: {
+      welcome: {
+        title: 'Trova una storia',
+        description: 'Scrivi un titolo, un personaggio o un tema e lo scaffale lo troverà per te.',
+      },
+      field: {
+        title: 'Cerca qui',
+        description: 'I risultati compaiono mentre scrivi, dai libri su questo dispositivo e dal catalogo.',
+      },
+      recent: {
+        title: 'Ricerche recenti',
+        description: 'Le ultime cose che hai cercato aspettano qui per un tocco veloce.',
+      },
+    },
+    profile: {
+      welcome: {
+        title: 'Il tuo angolo',
+        description: 'Tutto ciò che è solo tuo vive in questa pagina.',
+      },
+      hero: {
+        title: 'Cambia il profilo',
+        description: 'Tocca l\'immagine o il nome per cambiare avatar, nome o età. Prima un adulto risponde a una domanda veloce.',
+      },
+      tabs: {
+        title: 'Salvati, Distintivi, Gestisci',
+        description: 'I preferiti che hai segnato, il muro dei distintivi e i libri su questo dispositivo, con la possibilità di rimuoverne.',
+      },
+      settings: {
+        title: 'Impostazioni per adulti',
+        description: 'Lingua, tempo davanti allo schermo e il tuo account, dietro il cancello per adulti.',
       },
     },
   },
@@ -3249,8 +3390,8 @@ export default {
       home: 'Home',
       screensafe: 'Schermo sicuro',
       progress: 'Progressi',
-      saved: 'Salvati',
       search: 'Cerca',
+      profile: 'Profilo',
     },
   },
   catalogue: {
@@ -3274,13 +3415,15 @@ export default {
       music: 'Musica',
     },
     saved: {
-      tagline: {
-        one: 'Tutto ciò che ami',
-        two: 'in un solo posto',
-      },
       activities: 'Attività salvate',
       songs: 'Canzoni salvate',
       empty: 'Tocca il cuore su ciò che ami e ti aspetterà qui',
+    },
+    profile: {
+      tagline: {
+        one: 'Tutto ciò che',
+        two: 'è solo tuo',
+      },
     },
   },
   progress: {

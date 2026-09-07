@@ -76,10 +76,11 @@ const AccentStar = ({ left, top, opacity }: { left: number; top: number; opacity
 );
 
 export function CelestialBackground({
-  // Twice the dots there were. The gold ratio drops to match, so the extra
-  // stars are all white and the handful of gold ones stays a handful.
-  starCount = 56,
-  goldStarRatio = 0.125,
+  // Three times the dots there were. The gold ratio drops each time to match,
+  // so every star added is a plain white one and the handful of gold ones
+  // stays the handful it started as.
+  starCount = 84,
+  goldStarRatio = 0.084,
   accentStars = 3,
   children,
 }: CelestialBackgroundProps) {

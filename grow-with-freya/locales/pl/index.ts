@@ -275,6 +275,34 @@ export default {
         title: 'Narysujcie najlepszy fragment',
         body: 'Kartka, kredki i jedno pytanie: co podobało ci się najbardziej? Narysujcie to razem, a potem pozwól dziecku opowiedzieć o rysunku. To, co wybierze, mówi więcej niż jakikolwiek test.',
       },
+      bathTime: {
+        title: 'Puść opowieść na wodę w kąpieli',
+        body: 'Kubki i butelki to łódki, gąbka to wyspa. Zapytaj, która postać dokąd by popłynęła. Kąpiel to już zabawa — opowieść tylko dodaje jej fabułę.',
+      },
+      inTheDark: {
+        title: 'Opowiedz jeszcze raz po ciemku',
+        body: 'Zgaś światło i dodawajcie po jednym zdaniu na zmianę. Nie musi zgadzać się z książką. Opowieść po ciemku jest w połowie twoja, w połowie dziecka — i to najlepszy rodzaj.',
+      },
+      onAPlate: {
+        title: 'Ugotuj jedną stronę',
+        body: 'Tost, owoc, cokolwiek na talerzu: nazwij to imieniem postaci i pozwól dziecku ułożyć scenę. Rozmowa o tym, co gdzie leży, to właśnie opowieść — opowiedziana jedzeniem.',
+      },
+      listen: {
+        title: 'Wsłuchaj się w opowieść',
+        body: 'Zatrzymajcie się razem gdzieś na dworze i posłuchajcie. Co usłyszałaby tu postać? Ptak, autobus, wiatr — każdy dźwięk to miejsce, dokąd opowieść może pójść.',
+      },
+      sockShow: {
+        title: 'Zrób teatrzyk ze skarpetek',
+        body: 'Dwie skarpetki, dwa głosy. Niech dziecko wybierze, którą postacią jest każda, i odegrajcie scenę, którą pamięta najlepiej. To, co wybierze, wciąż w nim siedzi.',
+      },
+      singIt: {
+        title: 'Zaśpiewaj opowieść',
+        body: 'Wymyślcie piosenkę o tym, co się wydarzyło, na dowolną znaną wam melodię. Może być głupiutka — o to chodzi. Piosenka to opowieść, która wraca sama.',
+      },
+      whatIf: {
+        title: 'Zapytaj co by było gdyby',
+        body: 'A gdyby zakończenie było inne? A gdybyś to ty był w tej opowieści? Jedno pytanie, a potem daj im pobiec. Nie ma złych odpowiedzi — są tylko ich odpowiedzi.',
+      },
     },
     helpingStayBalanced: 'Pomagasz {{name}} zachować bezpieczeństwo i równowagę.',
     helpingStayBalancedGeneric: 'Pomagasz swojemu dziecku zachować bezpieczeństwo i równowagę.',
@@ -495,6 +523,17 @@ export default {
     girl: ' Dziewczynka',
     saveChanges: 'Zapisz Zmiany',
     comingSoon: ' Więcej opcji dostosowywania profilu wkrótce - wciąż w opracowaniu!',
+    settings: 'Ustawienia',
+    noName: 'Mały odkrywca',
+    downloadsUsed: '{{used}} z {{limit}} książek na tym urządzeniu',
+    downloadsEmpty: 'Nic jeszcze nie zapisano na tym urządzeniu — pobierz książkę, by czytać ją wszędzie',
+    downloadMeta: '{{minutes}} min · {{pages}} stron',
+    downloadsCount: '{{count}} książek na tym urządzeniu',
+    tabs: {
+      saved: 'Zapisane',
+      badges: 'Odznaki',
+      manage: 'Zarządzaj',
+    },
   },
   onboarding: {
     welcome: 'Witaj!',
@@ -626,6 +665,16 @@ export default {
       sound: {
         title: 'Kontrola dźwięku',
         description: 'Dotknij tutaj, aby kontrolować muzykę tła i efekty dźwiękowe.',
+      },
+      achievement: {
+        title: 'Następne osiągnięcie',
+        description: 'Odznaka, do której dziecku najbliżej, i ile jeszcze brakuje. Dotknij, by zobaczyć wszystkie.',
+      },
+      screenTime: {
+        title: 'Pierścień czasu ekranowego',
+        description: 'Ten pierścień zapełnia się w miarę zużywania dzisiejszego czasu. Dotknij, by zobaczyć dzień. Gdy czas minie, zmienia się w czerwoną kulę.',
+        remainingCaption: 'Zostało czasu',
+        spentCaption: 'Czas minął',
       },
     },
     screenTime: {
@@ -940,6 +989,98 @@ export default {
       benefit: {
         title: 'Kreatywna Ekspresja',
         description: 'Swobodna zabawa muzyczna pielęgnuje kreatywność, pewność siebie i miłość do muzyki, która rośnie z Twoim dzieckiem.',
+      },
+    },
+    catalogue: {
+      welcome: {
+        title: 'Twoja półka z bajkami',
+        description: 'Każda książka, piosenka i gra mieszka tutaj. Rozejrzyjmy się razem.',
+      },
+      themes: {
+        title: 'Wybierz temat',
+        description: 'Bajki, nauka albo muzyka. Dotknij kafelka, a półka sama się ułoży.',
+      },
+      filter: {
+        title: 'Dokładniejsze filtry',
+        description: 'Pora snu, zwierzęta, spokój i więcej. Wybierz kilka, a półka pokaże tylko je.',
+      },
+      featured: {
+        title: 'Wybór dnia',
+        description: 'Codziennie nowa książka. Dotknij Czytaj teraz, a otworzy się od razu.',
+      },
+      shelves: {
+        title: 'Półki do przesuwania',
+        description: 'Przesuwaj po półce albo dotknij Zobacz wszystkie, by zobaczyć cały temat.',
+      },
+      navProgress: {
+        title: 'Postępy',
+        description: 'Odznaki, kamienie milowe i przygody z tego tygodnia w jednym miejscu.',
+      },
+      navScreensafe: {
+        title: 'Bezpieczny ekran',
+        description: 'Pierścień pokazuje dzisiejszy czas przed ekranem. Dotknij, by zobaczyć całość; czerwienieje, gdy czas minie.',
+      },
+      navSearch: {
+        title: 'Szukaj',
+        description: 'Szukasz konkretnej książki? Wpisz tytuł lub postać, a ją znajdzie.',
+      },
+      navProfile: {
+        title: 'Profil',
+        description: 'Zapisane ulubione, ściana odznak i książki na tym urządzeniu.',
+      },
+    },
+    progress: {
+      welcome: {
+        title: 'Małe kroki, wielki postęp',
+        description: 'Wszystko, co dziecko przeczytało, w co zagrało i co zdobyło, zebrane tutaj.',
+      },
+      hero: {
+        title: 'Ten tydzień',
+        description: 'Minuty razem, przeczytane bajki i sesje od poniedziałku.',
+      },
+      challenges: {
+        title: 'Przygody',
+        description: 'Małe tygodniowe i miesięczne wyzwania do wspólnego zdobywania. Dotknij jednego, by zobaczyć postęp.',
+      },
+      milestones: {
+        title: 'Kamienie milowe',
+        description: 'Wielkie pierwsze razy, zaznaczane, gdy się zdarzą.',
+      },
+      badges: {
+        title: 'Odznaki',
+        description: 'Zdobyte świecą złotem; reszta czeka na odkrycie. Dotknij odznaki, by zobaczyć, co trzeba zrobić.',
+      },
+    },
+    search: {
+      welcome: {
+        title: 'Znajdź bajkę',
+        description: 'Wpisz tytuł, postać lub temat, a półka znajdzie go dla ciebie.',
+      },
+      field: {
+        title: 'Szukaj tutaj',
+        description: 'Wyniki pojawiają się podczas pisania, z książek na tym urządzeniu i z katalogu.',
+      },
+      recent: {
+        title: 'Ostatnie wyszukiwania',
+        description: 'Ostatnie wyszukiwania czekają tu na szybkie dotknięcie.',
+      },
+    },
+    profile: {
+      welcome: {
+        title: 'Twój własny kącik',
+        description: 'Wszystko, co należy tylko do ciebie, mieszka na tej stronie.',
+      },
+      hero: {
+        title: 'Zmień profil',
+        description: 'Dotknij obrazka lub imienia, by zmienić awatar, imię lub wiek. Dorosły najpierw odpowie na krótkie pytanie.',
+      },
+      tabs: {
+        title: 'Zapisane, Odznaki, Zarządzaj',
+        description: 'Ulubione oznaczone serduszkiem, ściana odznak i książki na tym urządzeniu, z możliwością usunięcia.',
+      },
+      settings: {
+        title: 'Ustawienia dla dorosłych',
+        description: 'Język, czas przed ekranem i twoje konto, za bramką dla dorosłych.',
       },
     },
   },
@@ -3249,8 +3390,8 @@ export default {
       home: 'Start',
       screensafe: 'Bezpieczny czas',
       progress: 'Postępy',
-      saved: 'Zapisane',
       search: 'Szukaj',
+      profile: 'Profil',
     },
   },
   catalogue: {
@@ -3274,13 +3415,15 @@ export default {
       music: 'Muzyka',
     },
     saved: {
-      tagline: {
-        one: 'Wszystko, co pokochałeś',
-        two: 'w jednym miejscu',
-      },
       activities: 'Zapisane zajęcia',
       songs: 'Zapisane piosenki',
       empty: 'Dotknij serduszka przy tym, co lubisz, a poczeka tutaj',
+    },
+    profile: {
+      tagline: {
+        one: 'Wszystko, co',
+        two: 'należy tylko do ciebie',
+      },
     },
   },
   progress: {

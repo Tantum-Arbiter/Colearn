@@ -98,3 +98,56 @@ describe('clearOfPlanet', () => {
     expect(() => clearOfPlanet([star(1, 10)], 900, 800)).not.toThrow();
   });
 });
+
+/**
+ * A fuller sky, the same handful of gold. The field was asked for more white
+ * dots, not for more of the four-pointed accents or a brighter, busier sky --
+ * so the gold count stays where it was while the plain dots multiply.
+ */
+describe('the field’s own defaults', () => {
+  function counts(tree: ReturnType<typeof render>) {
+    return {
+      white: byTestId(tree, 'celestial-star').length,
+      gold: byTestId(tree, 'celestial-star-gold').length,
+      accent: byTestId(tree, 'celestial-star-accent').length,
+    };
+  }
+
+  it('draws a good many more white dots than gold ones', () => {
+    const { white, gold } = counts(render(<CelestialBackground />));
+
+    expect(white).toBeGreaterThan(gold * 8);
+  });
+
+  it('keeps the accents a handful, however full the sky gets', () => {
+    expect(counts(render(<CelestialBackground />)).accent).toBeLessThanOrEqual(3);
+  });
+
+  it('holds the gold to about the handful it always was', () => {
+    expect(counts(render(<CelestialBackground />)).gold).toBeLessThanOrEqual(8);
+  });
+
+  /** The point of the extra stars is a fuller sky, so it has to be fuller. */
+  it('fills the sky more than the field it grew from', () => {
+    const { white, gold } = counts(render(<CelestialBackground />));
+
+    expect(white + gold).toBeGreaterThan(56);
+  });
+});
+
+/** No star may sit on the continents, at whatever count the field draws. */
+describe('a fuller field still clears the globe', () => {
+  it('folds every star below the globe’s rim', () => {
+    const folded = clearOfPlanet(
+      [
+        { id: 1, left: 10, top: 0, opacity: 1 },
+        { id: 2, left: 20, top: 120, opacity: 1 },
+        { id: 3, left: 30, top: 400, opacity: 1 },
+      ],
+      200,
+      800,
+    );
+
+    expect(folded.every((star) => star.top >= 200)).toBe(true);
+  });
+});

@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef } from 'react';
+import React, { type RefObject, useCallback, useMemo, useRef } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -36,6 +36,8 @@ export interface SearchPanelProps {
   onSearchSettled: (query: string) => void;
   language: SupportedLanguage;
   renderCard: (story: CatalogueStory) => React.ReactNode;
+  /** So the search tour can point the owl at the field and the recent list. */
+  guideTargets?: { field?: RefObject<View | null>; recent?: RefObject<View | null> };
   testID?: string;
 }
 
@@ -56,6 +58,7 @@ export function SearchPanel({
   onSearchSettled,
   language,
   renderCard,
+  guideTargets,
   testID = 'search-panel',
 }: SearchPanelProps) {
   const { t } = useTranslation();
@@ -78,7 +81,7 @@ export function SearchPanel({
 
   return (
     <View testID={testID}>
-      <View style={styles.field}>
+      <View style={styles.field} ref={guideTargets?.field} collapsable={false}>
         <Ionicons name="search" size={scaledFontSize(20)} color={TEXT_SECONDARY} />
         <TextInput
           ref={inputRef}
@@ -108,7 +111,7 @@ export function SearchPanel({
       </View>
 
       {!searching && recentSearches.length > 0 && (
-        <View testID={`${testID}-recent`} style={styles.recent}>
+        <View testID={`${testID}-recent`} style={styles.recent} ref={guideTargets?.recent} collapsable={false}>
           <SectionHeading
             testID={`${testID}-recent-heading`}
             label={t('search.recent')}

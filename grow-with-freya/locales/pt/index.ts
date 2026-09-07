@@ -275,6 +275,34 @@ export default {
         title: 'Desenhem a melhor parte',
         body: 'Papel, lápis de cor e uma pergunta: de que parte gostaste mais? Desenhem-na juntos e deixe o seu filho falar-lhe do desenho. O que escolhe diz mais do que qualquer pergunta.',
       },
+      bathTime: {
+        title: 'Põe a história a flutuar no banho',
+        body: 'Copos e garrafas são barcos; uma esponja é uma ilha. Pergunta que personagem navegaria para onde. O banho já é brincadeira — a história só lhe dá um enredo.',
+      },
+      inTheDark: {
+        title: 'Conta-a outra vez no escuro',
+        body: 'Luzes apagadas e, à vez, uma frase cada um. Não tem de bater certo com o livro. Uma história contada no escuro é metade tua e metade deles — e essa é a melhor.',
+      },
+      onAPlate: {
+        title: 'Cozinha uma página',
+        body: 'Torrada, fruta, seja o que for num prato: dá-lhe o nome de uma personagem e deixa a criança montar a cena. Conversar sobre o que vai onde é a história, contada com comida.',
+      },
+      listen: {
+        title: 'Escuta a história',
+        body: 'Parem juntos algures lá fora e escutem. O que ouviria aqui uma personagem? Um pássaro, um autocarro, o vento — cada som é um lugar para onde a história pode ir.',
+      },
+      sockShow: {
+        title: 'Faz um teatro de meias',
+        body: 'Duas meias, duas vozes. Deixa a criança escolher que personagem é cada uma e representem a cena de que se lembra melhor. O que escolhe é o que ainda lhe anda na cabeça.',
+      },
+      singIt: {
+        title: 'Canta a história',
+        body: 'Inventem uma canção sobre o que aconteceu, com qualquer melodia que ambos conheçam. Pode ser parva — é mesmo essa a ideia. Uma canção é uma história que volta sozinha.',
+      },
+      whatIf: {
+        title: 'Pergunta e se…',
+        body: 'E se o final tivesse sido diferente? E se tu estivesses na história? Uma pergunta, e depois deixa-os correr. Não há respostas erradas, só as deles.',
+      },
     },
     helpingStayBalanced: 'Está a ajudar {{name}} a manter-se seguro e equilibrado.',
     helpingStayBalancedGeneric: 'Está a ajudar o seu filho a manter-se seguro e equilibrado.',
@@ -495,6 +523,17 @@ export default {
     girl: ' Menina',
     saveChanges: 'Salvar alterações',
     comingSoon: ' Mais opções de personalização de perfil em breve - ainda em desenvolvimento!',
+    settings: 'Definições',
+    noName: 'Pequeno explorador',
+    downloadsUsed: '{{used}} de {{limit}} livros neste dispositivo',
+    downloadsEmpty: 'Ainda não há nada guardado neste dispositivo — transfere um livro para o leres onde quiseres',
+    downloadMeta: '{{minutes}} min · {{pages}} páginas',
+    downloadsCount: '{{count}} livros neste dispositivo',
+    tabs: {
+      saved: 'Guardados',
+      badges: 'Emblemas',
+      manage: 'Gerir',
+    },
   },
   onboarding: {
     welcome: 'Bem-vindo!',
@@ -626,6 +665,16 @@ export default {
       sound: {
         title: 'Controle de som',
         description: 'Toque aqui para controlar a música de fundo e efeitos sonoros.',
+      },
+      achievement: {
+        title: 'Próxima conquista',
+        description: 'O emblema mais perto de ser ganho e o que ainda falta. Toca para ver todos.',
+      },
+      screenTime: {
+        title: 'O anel de tempo de ecrã',
+        description: 'Este anel enche-se à medida que o tempo de ecrã de hoje é usado. Toca para ver o dia. Quando o tempo acaba, torna-se uma esfera vermelha.',
+        remainingCaption: 'Tempo restante',
+        spentCaption: 'Acabou o tempo',
       },
     },
     screenTime: {
@@ -940,6 +989,98 @@ export default {
       benefit: {
         title: 'Expressão Criativa',
         description: 'O jogo musical livre nutre a criatividade, a autoconfiança e o amor pela música que cresce com o seu filho.',
+      },
+    },
+    catalogue: {
+      welcome: {
+        title: 'A tua prateleira',
+        description: 'Cada livro, canção e jogo vive aqui. Vamos dar uma vista de olhos juntos.',
+      },
+      themes: {
+        title: 'Escolhe um tema',
+        description: 'Histórias, aprendizagem ou música. Toca num azulejo e a prateleira arruma-se sozinha.',
+      },
+      filter: {
+        title: 'Filtros mais finos',
+        description: 'Hora de dormir, animais, calma e mais. Escolhe alguns e a prateleira fica só com esses.',
+      },
+      featured: {
+        title: 'A escolha de hoje',
+        description: 'Um livro escolhido de novo a cada dia. Toca em Ler agora e abre logo.',
+      },
+      shelves: {
+        title: 'Prateleiras para deslizar',
+        description: 'Desliza por qualquer prateleira ou toca em Ver tudo para o tema inteiro.',
+      },
+      navProgress: {
+        title: 'Progresso',
+        description: 'Emblemas, marcos e as aventuras desta semana, tudo num só lugar.',
+      },
+      navScreensafe: {
+        title: 'Ecrã seguro',
+        description: 'O anel mostra o tempo de ecrã de hoje. Toca para ver tudo; fica vermelho quando o tempo acaba.',
+      },
+      navSearch: {
+        title: 'Pesquisar',
+        description: 'Procuras um livro em particular? Escreve um título ou uma personagem e ele encontra-o.',
+      },
+      navProfile: {
+        title: 'Perfil',
+        description: 'Favoritos guardados, o mural de emblemas e os livros neste dispositivo.',
+      },
+    },
+    progress: {
+      welcome: {
+        title: 'Passos pequenos, grande progresso',
+        description: 'Tudo o que a criança leu, jogou e ganhou, reunido aqui.',
+      },
+      hero: {
+        title: 'Esta semana',
+        description: 'Minutos juntos, histórias lidas e sessões jogadas desde segunda.',
+      },
+      challenges: {
+        title: 'Aventuras',
+        description: 'Pequenos desafios semanais e mensais para alcançar juntos. Toca num para ver como vai.',
+      },
+      milestones: {
+        title: 'Marcos',
+        description: 'As grandes primeiras vezes, marcadas quando acontecem.',
+      },
+      badges: {
+        title: 'Emblemas',
+        description: 'Os ganhos brilham a dourado; os outros esperam ser descobertos. Toca num emblema para ver o que é preciso.',
+      },
+    },
+    search: {
+      welcome: {
+        title: 'Encontra uma história',
+        description: 'Escreve um título, uma personagem ou um tema e a prateleira encontra-o.',
+      },
+      field: {
+        title: 'Pesquisa aqui',
+        description: 'Os resultados aparecem enquanto escreves, dos livros neste dispositivo e do catálogo.',
+      },
+      recent: {
+        title: 'Pesquisas recentes',
+        description: 'As últimas coisas que procuraste esperam aqui por um toque rápido.',
+      },
+    },
+    profile: {
+      welcome: {
+        title: 'O teu cantinho',
+        description: 'Tudo o que é só teu vive nesta página.',
+      },
+      hero: {
+        title: 'Alterar o perfil',
+        description: 'Toca na imagem ou no nome para mudar o avatar, o nome ou a idade. Um adulto responde primeiro a uma pergunta rápida.',
+      },
+      tabs: {
+        title: 'Guardados, Emblemas, Gerir',
+        description: 'Favoritos que marcaste, o mural de emblemas e os livros neste dispositivo, com espaço para remover algum.',
+      },
+      settings: {
+        title: 'Definições dos adultos',
+        description: 'Idioma, tempo de ecrã e a tua conta, atrás do portão dos adultos.',
       },
     },
   },
@@ -3249,8 +3390,8 @@ export default {
       home: 'Início',
       screensafe: 'Ecrã seguro',
       progress: 'Progresso',
-      saved: 'Guardados',
       search: 'Pesquisar',
+      profile: 'Perfil',
     },
   },
   catalogue: {
@@ -3274,13 +3415,15 @@ export default {
       music: 'Música',
     },
     saved: {
-      tagline: {
-        one: 'Tudo o que adoraste',
-        two: 'num só lugar',
-      },
       activities: 'Atividades guardadas',
       songs: 'Canções guardadas',
       empty: 'Toca no coração do que adoras e ficará à tua espera aqui',
+    },
+    profile: {
+      tagline: {
+        one: 'Tudo o que',
+        two: 'só é teu',
+      },
     },
   },
   progress: {

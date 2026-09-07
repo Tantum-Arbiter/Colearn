@@ -1,5 +1,9 @@
 export const GUIDE_IDS = [
   'main_menu_tour',
+  'catalogue_tour',
+  'progress_tour',
+  'search_tour',
+  'profile_tour',
   'story_modes_tour',
   'book_mode_tour',
   'story_reader_tips',
@@ -20,6 +24,9 @@ export type GuideId = (typeof GUIDE_IDS)[number];
 
 export type SpotlightShape = 'circle' | 'rounded-rect';
 
+/** A picture the bubble shows under its words, where words alone would not do. */
+export type GuideIllustration = 'screenTimeRing';
+
 export interface GuideStep {
   id: string;
   titleKey: string;
@@ -27,6 +34,7 @@ export interface GuideStep {
   target?: string;
   shape?: SpotlightShape;
   radius?: number;
+  illustration?: GuideIllustration;
 }
 
 function keyed(section: string, id: string, key: string): Pick<GuideStep, 'titleKey' | 'descriptionKey'> {
@@ -44,10 +52,41 @@ export const GUIDE_STEPS: Record<GuideId, readonly GuideStep[]> = {
   main_menu_tour: [
     { id: 'welcome', ...keyed('mainMenu', 'welcome', 'welcome') },
     { id: 'stories_button', ...keyed('mainMenu', 'stories_button', 'stories'), target: 'stories_button', shape: 'rounded-rect', radius: 24 },
+    { id: 'achievement_card', ...keyed('mainMenu', 'achievement_card', 'achievement'), target: 'achievement_card', shape: 'rounded-rect', radius: 24 },
     { id: 'learning_button', ...keyed('mainMenu', 'learning_button', 'learning'), target: 'learning_button', shape: 'rounded-rect', radius: 24 },
     { id: 'instruments_button', ...keyed('mainMenu', 'instruments_button', 'instruments'), target: 'instruments_button', shape: 'rounded-rect', radius: 24 },
-    { id: 'settings_button', ...keyed('mainMenu', 'settings_button', 'settings'), target: 'settings_button', shape: 'circle' },
+    { id: 'screen_time_ring', ...keyed('mainMenu', 'screen_time_ring', 'screenTime'), target: 'screen_time_ring', shape: 'circle', illustration: 'screenTimeRing' },
+    { id: 'settings_button', ...keyed('mainMenu', 'settings_button', 'settings'), target: 'settings_button', shape: 'rounded-rect', radius: 19 },
     { id: 'sound_control', ...keyed('mainMenu', 'sound_control', 'sound'), target: 'sound_control', shape: 'circle' },
+  ],
+  catalogue_tour: [
+    { id: 'catalogue_welcome', ...keyed('catalogue', 'catalogue_welcome', 'welcome') },
+    { id: 'theme_tiles', ...keyed('catalogue', 'theme_tiles', 'themes'), target: 'theme_tiles', shape: 'rounded-rect', radius: 22 },
+    { id: 'filter_toggle', ...keyed('catalogue', 'filter_toggle', 'filter'), target: 'filter_toggle', shape: 'rounded-rect', radius: 22 },
+    { id: 'featured_story', ...keyed('catalogue', 'featured_story', 'featured'), target: 'featured_story', shape: 'rounded-rect', radius: 22 },
+    { id: 'story_shelves', ...keyed('catalogue', 'story_shelves', 'shelves'), target: 'story_shelves', shape: 'rounded-rect', radius: 22 },
+    { id: 'nav_progress', ...keyed('catalogue', 'nav_progress', 'navProgress'), target: 'nav_progress', shape: 'circle' },
+    { id: 'nav_screensafe', ...keyed('catalogue', 'nav_screensafe', 'navScreensafe'), target: 'nav_screensafe', shape: 'circle' },
+    { id: 'nav_search', ...keyed('catalogue', 'nav_search', 'navSearch'), target: 'nav_search', shape: 'circle' },
+    { id: 'nav_profile', ...keyed('catalogue', 'nav_profile', 'navProfile'), target: 'nav_profile', shape: 'circle' },
+  ],
+  progress_tour: [
+    { id: 'progress_welcome', ...keyed('progress', 'progress_welcome', 'welcome') },
+    { id: 'progress_hero', ...keyed('progress', 'progress_hero', 'hero'), target: 'progress_hero', shape: 'rounded-rect', radius: 22 },
+    { id: 'progress_challenges', ...keyed('progress', 'progress_challenges', 'challenges'), target: 'progress_challenges', shape: 'rounded-rect', radius: 22 },
+    { id: 'progress_milestones', ...keyed('progress', 'progress_milestones', 'milestones'), target: 'progress_milestones', shape: 'rounded-rect', radius: 22 },
+    { id: 'progress_badges', ...keyed('progress', 'progress_badges', 'badges'), target: 'progress_badges', shape: 'rounded-rect', radius: 22 },
+  ],
+  search_tour: [
+    { id: 'search_welcome', ...keyed('search', 'search_welcome', 'welcome') },
+    { id: 'search_field', ...keyed('search', 'search_field', 'field'), target: 'search_field', shape: 'rounded-rect', radius: 22 },
+    { id: 'search_recent', ...keyed('search', 'search_recent', 'recent'), target: 'search_recent', shape: 'rounded-rect', radius: 22 },
+  ],
+  profile_tour: [
+    { id: 'profile_welcome', ...keyed('profile', 'profile_welcome', 'welcome') },
+    { id: 'profile_hero', ...keyed('profile', 'profile_hero', 'hero'), target: 'profile_hero', shape: 'circle' },
+    { id: 'profile_tabs', ...keyed('profile', 'profile_tabs', 'tabs'), target: 'profile_tabs', shape: 'rounded-rect', radius: 22 },
+    { id: 'profile_settings', ...keyed('profile', 'profile_settings', 'settings'), target: 'profile_settings', shape: 'circle' },
   ],
   story_modes_tour: plain('storyModes', [
     ['modes_welcome', 'welcome'],
@@ -286,7 +325,7 @@ export function placeGuideBubble(
         bottom: BUBBLE_SIDE_BOTTOM + insets.bottom,
         width: bubble.maxWidth,
         tail: 'left',
-        pointer: target ? 'up' : null,
+        pointer: null,
       }
     : {
         mode: 'perch',
@@ -294,7 +333,10 @@ export function placeGuideBubble(
         bottom: perch.height - BUBBLE_PERCH_LIFT,
         width: bubble.maxWidth,
         tail: 'down',
-        pointer: target ? 'up' : null,
+        // no second notch at the highlight: on the perch the bubble is the
+        // owl's, its tail says so, and the spotlight already marks what the
+        // step is about. Two tails on one bubble read as a mistake.
+        pointer: null,
       };
 
   if (!target) return resting;

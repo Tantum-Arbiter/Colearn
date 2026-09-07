@@ -36,9 +36,9 @@ describe('PageTagline', () => {
   it('sets the caption on two lines, each on its own arch', () => {
     const tree = render(<PageTagline lines={LINES} width={360} />);
 
-    const onPaths = tree.UNSAFE_root
+    const onPaths = [...new Set(tree.UNSAFE_root
       .findAll((n: any) => n.props.testID === 'svg-TextPath')
-      .map((n: any) => n.props.children);
+      .map((n: any) => n.props.children))];
 
     expect(arcs(tree)).toHaveLength(2);
     expect(onPaths).toEqual(['catalogue.tagline.one', 'catalogue.tagline.two']);
@@ -101,7 +101,9 @@ describe('PageTagline', () => {
   it('sets the words in the app\'s rounded face, centred and white', () => {
     const tree = render(<PageTagline lines={LINES} width={360} />);
 
-    const underTest = tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'svg-Text')[0];
+    const underTest = tree.UNSAFE_root.findAll(
+      (n: any) => n.props.testID === 'svg-Text' && n.props.fill === TEXT_PRIMARY,
+    )[0];
 
     expect(underTest.props.fontFamily).toBe(Fonts.rounded);
     expect(underTest.props.textAnchor).toBe('middle');
@@ -141,5 +143,49 @@ describe('PageTagline', () => {
 
     const underTest = tablet.UNSAFE_root.findAll((n: any) => n.props.testID === 'svg-Text')[0].props.fontSize;
     expect(underTest).toBeGreaterThan(phoneSize);
+  });
+});
+
+/**
+ * The arched lines sit on the globe. They lift off it by size alone -- a
+ * dark outline behind the words was tried and read as a smudge -- so each
+ * line is drawn once, white, seven percent larger than it was.
+ */
+describe('PageTagline over the globe', () => {
+  it('draws each line once, with no outline behind it', () => {
+    const tree = render(<PageTagline lines={['A brighter world', 'in every story']} width={300} />);
+
+    const layers = tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'svg-Text');
+    const outlined = layers.filter((n: any) => typeof n.props.stroke === 'string' && n.props.stroke !== 'none');
+
+    expect(layers).toHaveLength(2);
+    expect(outlined).toHaveLength(0);
+    for (const layer of layers) expect(layer.props.fill).toBe(TEXT_PRIMARY);
+  });
+
+  it.each([
+    ['a phone', false, 16],
+    ['a tablet', true, 20],
+  ])('sets the type seven percent up from where it was on %s', (_case, isTablet, size) => {
+    mockAccessibility.mockReturnValue({
+      scaledFontSize: (n: number) => n,
+      scaledButtonSize: (n: number) => n,
+      scaledPadding: (n: number) => n,
+      isTablet,
+      contentMaxWidth: 402,
+    });
+    const tree = render(<PageTagline lines={['A brighter world', 'in every story']} width={300} />);
+
+    const layer = tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'svg-Text')[0];
+
+    expect(layer.props.fontSize).toBe(size);
+  });
+
+  it('still reads as exactly the two lines to assistive tech', () => {
+    const tree = render(<PageTagline lines={['A brighter world', 'in every story']} width={300} />);
+
+    const block = tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'page-tagline')[0];
+
+    expect(block.props.accessibilityLabel).toBe('A brighter world in every story');
   });
 });

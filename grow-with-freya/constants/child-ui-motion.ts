@@ -14,6 +14,8 @@ export const CHILD_UI_MOTION = {
   /** The bar drawing into the middle before the screen-time window opens out
    *  of the ring it leaves behind, and back out of the splash on the way home. */
   navCollapse: { duration: 260, reducedDuration: 0 },
+  /** The bar's own fade as it rises out of the splash, or sinks into the ring. */
+  navPresence: { duration: 220, reducedDuration: 0 },
 } as const satisfies Record<string, MotionBeat>;
 
 /**
@@ -23,7 +25,8 @@ export const CHILD_UI_MOTION = {
  * "bounds out" of the splash actually looks like.
  */
 export const CHILD_UI_SPRING = {
-  navExpand: { damping: 11, stiffness: 180, mass: 0.6 },
+  // slowed to rise over the glance's splash (460ms) rather than in a frame
+  navExpand: { damping: 9, stiffness: 65, mass: 0.8 },
 } as const;
 
 /** How much of the collapse is spent drawing wider before gathering in. */
@@ -42,4 +45,16 @@ export const CHILD_UI_SCALE = {
 
 export function motionDuration(beat: MotionBeat, reduceMotion: boolean): number {
   return reduceMotion ? beat.reducedDuration : beat.duration;
+}
+
+/**
+ * How long an underdamped spring takes to first reach its target -- half a
+ * damped period. The nav bar's rise has to be measured against the splash
+ * it rises out of, and this is the number to measure.
+ */
+export function springRiseMs(spring: { damping: number; stiffness: number; mass: number }): number {
+  const natural = Math.sqrt(spring.stiffness / spring.mass);
+  const ratio = spring.damping / (2 * Math.sqrt(spring.stiffness * spring.mass));
+  const damped = natural * Math.sqrt(Math.max(0, 1 - ratio * ratio));
+  return damped > 0 ? Math.round((Math.PI / damped) * 1000) : Number.POSITIVE_INFINITY;
 }

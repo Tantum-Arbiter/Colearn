@@ -275,6 +275,34 @@ export default {
         title: 'Teken het mooiste stukje',
         body: 'Papier, kleurpotloden en één vraag: welk stukje vond je het leukst? Teken het samen en laat je kind over de tekening vertellen. Wat het kiest, zegt meer dan welke vraag ook.',
       },
+      bathTime: {
+        title: 'Laat het verhaal drijven in bad',
+        body: 'Bekers en flessen worden boten, een spons een eiland. Vraag welk personage waarheen zou varen. Badtijd is al spel — het verhaal geeft het alleen een plot.',
+      },
+      inTheDark: {
+        title: 'Vertel het na in het donker',
+        body: 'Licht uit en om de beurt één zin. Het hoeft niet op het boek te lijken. Een verhaal in het donker is half van jou en half van hen — de beste soort.',
+      },
+      onAPlate: {
+        title: 'Kook een bladzijde ervan',
+        body: 'Toast, fruit, wat dan ook op een bord: noem het naar een personage en laat je kind de scène opbouwen. Bespreken wat waar hoort, is het verhaal — verteld met eten.',
+      },
+      listen: {
+        title: 'Luister naar het verhaal',
+        body: 'Sta samen ergens buiten stil en luister. Wat zou een personage hier horen? Een vogel, een bus, de wind — elk geluid is een plek waar het verhaal heen kan.',
+      },
+      sockShow: {
+        title: 'Speel een sokkenshow',
+        body: 'Twee sokken, twee stemmen. Laat je kind kiezen welk personage elke sok is en speel de scène die het zich het best herinnert. Wat het kiest, is waar het nog over nadenkt.',
+      },
+      singIt: {
+        title: 'Zing het verhaal',
+        body: 'Verzin een liedje over wat er gebeurde, op een wijsje dat jullie allebei kennen. Het mag gek zijn — gek is de bedoeling. Een liedje is een verhaal dat vanzelf terugkomt.',
+      },
+      whatIf: {
+        title: 'Vraag wat als',
+        body: 'Wat als het einde anders was geweest? Wat als jij in het verhaal zat? Eén vraag, en laat ze dan gaan. Er zijn geen foute antwoorden, alleen hun antwoorden.',
+      },
     },
     helpingStayBalanced: 'Je helpt {{name}} veilig en in balans te blijven.',
     helpingStayBalancedGeneric: 'Je helpt je kind veilig en in balans te blijven.',
@@ -495,6 +523,17 @@ export default {
     girl: ' Meisje',
     saveChanges: 'Wijzigingen Opslaan',
     comingSoon: ' Profielaanpassingsopties Binnenkort - Nog in Ontwikkeling!',
+    settings: 'Instellingen',
+    noName: 'Kleine ontdekker',
+    downloadsUsed: '{{used}} van {{limit}} boeken op dit apparaat',
+    downloadsEmpty: 'Nog niets opgeslagen op dit apparaat — download een boek om het overal te lezen',
+    downloadMeta: '{{minutes}} min · {{pages}} pagina\'s',
+    downloadsCount: '{{count}} boeken op dit apparaat',
+    tabs: {
+      saved: 'Bewaard',
+      badges: 'Badges',
+      manage: 'Beheren',
+    },
   },
   onboarding: {
     welcome: 'Welkom!',
@@ -626,6 +665,16 @@ export default {
       sound: {
         title: 'Geluidsbediening',
         description: 'Tik hier om achtergrondmuziek en geluidseffecten te beheren.',
+      },
+      achievement: {
+        title: 'Volgende prestatie',
+        description: 'De badge waar je kind het dichtst bij is, en hoe ver het nog is. Tik om ze allemaal te zien.',
+      },
+      screenTime: {
+        title: 'De schermtijdring',
+        description: 'Deze ring vult zich terwijl de schermtijd van vandaag opgaat. Tik erop om de dag te zien. Is de tijd op, dan wordt hij een rode bol.',
+        remainingCaption: 'Tijd over',
+        spentCaption: 'Tijd is op',
       },
     },
     screenTime: {
@@ -940,6 +989,98 @@ export default {
       benefit: {
         title: 'Creatieve Expressie',
         description: 'Vrij muzikaal spel koestert creativiteit, zelfvertrouwen en een liefde voor muziek die meegroeit met je kind.',
+      },
+    },
+    catalogue: {
+      welcome: {
+        title: 'Jouw verhalenplank',
+        description: 'Elk boek, liedje en spel woont hier. Laten we samen rondkijken.',
+      },
+      themes: {
+        title: 'Kies een thema',
+        description: 'Verhalen, leren of muziek. Tik op een tegel en de plank sorteert zichzelf.',
+      },
+      filter: {
+        title: 'Fijnere filters',
+        description: 'Bedtijd, dieren, rust en meer. Kies er een paar en de plank laat alleen die zien.',
+      },
+      featured: {
+        title: 'Keuze van vandaag',
+        description: 'Elke dag een vers gekozen boek. Tik op Nu lezen en het gaat meteen open.',
+      },
+      shelves: {
+        title: 'Planken om te swipen',
+        description: 'Swipe langs een plank, of tik op Alles zien voor het hele thema.',
+      },
+      navProgress: {
+        title: 'Voortgang',
+        description: 'Badges, mijlpalen en de avonturen van deze week, op één plek.',
+      },
+      navScreensafe: {
+        title: 'Schermtijd',
+        description: 'De ring toont de schermtijd van vandaag. Tik voor het hele beeld; hij wordt rood als de tijd op is.',
+      },
+      navSearch: {
+        title: 'Zoeken',
+        description: 'Op zoek naar één bepaald boek? Typ een titel of een personage en het vindt het.',
+      },
+      navProfile: {
+        title: 'Profiel',
+        description: 'Bewaarde favorieten, de badgemuur en de boeken op dit apparaat.',
+      },
+    },
+    progress: {
+      welcome: {
+        title: 'Kleine stapjes, grote voortgang',
+        description: 'Alles wat je kind gelezen, gespeeld en verdiend heeft, hier bij elkaar.',
+      },
+      hero: {
+        title: 'Deze week',
+        description: 'Minuten samen, verhalen gelezen en sessies gespeeld sinds maandag.',
+      },
+      challenges: {
+        title: 'Avonturen',
+        description: 'Kleine week- en maanduitdagingen om samen aan te werken. Tik op eentje om te zien hoe ver die is.',
+      },
+      milestones: {
+        title: 'Mijlpalen',
+        description: 'De grote eerste keren, gemarkeerd als ze gebeuren.',
+      },
+      badges: {
+        title: 'Badges',
+        description: 'Verdiende glanzen goud; de rest wacht om ontdekt te worden. Tik op een badge om te zien wat ervoor nodig is.',
+      },
+    },
+    search: {
+      welcome: {
+        title: 'Vind een verhaal',
+        description: 'Typ een titel, een personage of een thema en de plank vindt het voor je.',
+      },
+      field: {
+        title: 'Zoek hier',
+        description: 'Resultaten verschijnen terwijl je typt, uit de boeken op dit apparaat en de catalogus.',
+      },
+      recent: {
+        title: 'Recente zoekopdrachten',
+        description: 'De laatste dingen die je zocht wachten hier op een snelle tik.',
+      },
+    },
+    profile: {
+      welcome: {
+        title: 'Jouw eigen hoekje',
+        description: 'Alles wat alleen van jou is woont op deze pagina.',
+      },
+      hero: {
+        title: 'Profiel aanpassen',
+        description: 'Tik op de afbeelding of de naam om de avatar, naam of leeftijd te veranderen. Een volwassene beantwoordt eerst een korte vraag.',
+      },
+      tabs: {
+        title: 'Bewaard, Badges, Beheren',
+        description: 'Favorieten met een hartje, de badgemuur en de boeken op dit apparaat, met ruimte om er te verwijderen.',
+      },
+      settings: {
+        title: 'Instellingen voor volwassenen',
+        description: 'Taal, schermtijd en je account, achter het hek voor volwassenen.',
       },
     },
   },
@@ -3249,8 +3390,8 @@ export default {
       home: 'Home',
       screensafe: 'Schermtijd',
       progress: 'Voortgang',
-      saved: 'Bewaard',
       search: 'Zoeken',
+      profile: 'Profiel',
     },
   },
   catalogue: {
@@ -3274,13 +3415,15 @@ export default {
       music: 'Muziek',
     },
     saved: {
-      tagline: {
-        one: 'Alles wat je mooi vond',
-        two: 'op één plek',
-      },
       activities: 'Bewaarde activiteiten',
       songs: 'Bewaarde liedjes',
       empty: 'Tik op het hartje bij wat je leuk vindt, dan wacht het hier op je',
+    },
+    profile: {
+      tagline: {
+        one: 'Alles wat',
+        two: 'alleen van jou is',
+      },
     },
   },
   progress: {

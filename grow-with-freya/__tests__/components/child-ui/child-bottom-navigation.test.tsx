@@ -16,10 +16,19 @@ import {
 } from '@/components/child-ui/child-bottom-navigation';
 import { NAV_HEIGHT, NAV_MAX_WIDTH } from '@/components/child-ui/tokens';
 import {
+  CHILD_UI_MOTION,
   CHILD_UI_SCALE,
   CHILD_UI_SPRING,
   NAV_ANTICIPATION_SHARE,
+  springRiseMs,
 } from '@/constants/child-ui-motion';
+import { TEXT_PRIMARY } from '@/constants/night-palette';
+
+function glyphs(tree: ReturnType<typeof render>) {
+  return tree.UNSAFE_root.findAll(
+    (node: any) => typeof node.props.name === 'string' && typeof node.props.size === 'number',
+  );
+}
 
 function items(tree: ReturnType<typeof render>) {
   return CHILD_NAV_ITEMS.map((item) =>
@@ -32,11 +41,11 @@ describe('ChildBottomNavigation', () => {
 
   /**
    * Order is the contract: Screensafe sits mid-bar as the parent's control,
-   * with Progress and Search either side of it and Favourites at the end.
+   * with Progress and Search either side of it and Profile at the end.
    */
   it('renders the five journey areas in order', () => {
     expect(CHILD_NAV_ITEMS.map((item) => item.id))
-      .toEqual(['home', 'progress', 'screensafe', 'search', 'saved']);
+      .toEqual(['home', 'progress', 'screensafe', 'search', 'profile']);
 
     const tree = render(<ChildBottomNavigation selected="progress" onSelect={jest.fn()} />);
 
@@ -57,6 +66,15 @@ describe('ChildBottomNavigation', () => {
     items(tree).forEach((node: any, index) => {
       expect(node.props.accessibilityLabel).toBe(CHILD_NAV_ITEMS[index].labelKey);
     });
+  });
+
+  it('reports a tap on the profile slot as the profile item', () => {
+    const onSelect = jest.fn();
+    const tree = render(<ChildBottomNavigation selected="home" onSelect={onSelect} />);
+
+    fireEvent.press(items(tree)[4]);
+
+    expect(onSelect).toHaveBeenCalledWith('profile');
   });
 
   it('reports a tap through onSelect with the item id', () => {
@@ -182,11 +200,11 @@ describe('ChildBottomNavigation screensafe ring', () => {
 });
 
 /**
- * The ring says what it is by drawing today's usage, so the word beneath it
- * was spending the bar's scarcest resource -- height -- on a label the
- * control already carries. It survives as the accessible name.
+ * The bar is glyphs alone. Every slot's name survives as its accessible
+ * label, but no word is drawn beneath any glyph -- the height that bought
+ * goes to the glyphs themselves, which draw larger for it.
  */
-describe('the screensafe slot', () => {
+describe('an icon-only bar', () => {
   const SCREEN_TIME = { usageSeconds: 900, limitSeconds: 3600 };
 
   function labelsIn(tree: ReturnType<typeof render>) {
@@ -195,31 +213,75 @@ describe('the screensafe slot', () => {
       .map((node: any) => node.props.children);
   }
 
-  it('draws no label under the ring', () => {
+  it('draws no label under any glyph', () => {
     const tree = render(
       <ChildBottomNavigation selected="home" onSelect={jest.fn()} screenTime={SCREEN_TIME} />,
     );
 
-    expect(labelsIn(tree)).not.toContain('childUi.nav.screensafe');
-  });
-
-  it('keeps the label as the accessible name', () => {
-    const tree = render(
-      <ChildBottomNavigation selected="home" onSelect={jest.fn()} screenTime={SCREEN_TIME} />,
-    );
-
-    expect(items(tree)[2].props.accessibilityLabel).toBe('childUi.nav.screensafe');
-  });
-
-  it('still labels every other item', () => {
-    const tree = render(
-      <ChildBottomNavigation selected="home" onSelect={jest.fn()} screenTime={SCREEN_TIME} />,
-    );
-    const drawn = labelsIn(tree);
-
-    for (const item of CHILD_NAV_ITEMS.filter((entry) => entry.id !== 'screensafe')) {
-      expect(drawn).toContain(item.labelKey);
+    for (const item of CHILD_NAV_ITEMS) {
+      expect(labelsIn(tree)).not.toContain(item.labelKey);
     }
+  });
+
+  it('keeps every label as the accessible name', () => {
+    const tree = render(
+      <ChildBottomNavigation selected="home" onSelect={jest.fn()} screenTime={SCREEN_TIME} />,
+    );
+
+    items(tree).forEach((node: any, index) => {
+      expect(node.props.accessibilityLabel).toBe(CHILD_NAV_ITEMS[index].labelKey);
+    });
+  });
+
+  /** The bar picks out its selection in white, not gold -- gold is for stars. */
+  it('draws the selected glyph in white and the rest dimmer', () => {
+    const tree = render(<ChildBottomNavigation selected="home" onSelect={jest.fn()} />);
+
+    const [home, ...rest] = glyphs(tree);
+
+    expect(home.props.color).toBe(TEXT_PRIMARY);
+    for (const glyph of rest) expect(glyph.props.color).not.toBe(TEXT_PRIMARY);
+  });
+
+  it('draws the selected glyph a touch bolder than its neighbours', () => {
+    const tree = render(<ChildBottomNavigation selected="home" onSelect={jest.fn()} />);
+
+    const [home, progress] = glyphs(tree);
+
+    expect(home.props.size).toBeGreaterThan(progress.props.size);
+  });
+
+  it('draws its glyphs larger than a labelled bar could afford', () => {
+    const tree = render(<ChildBottomNavigation selected="home" onSelect={jest.fn()} />);
+
+    const glyphSizes = tree.UNSAFE_root
+      .findAll((node: any) => typeof node.props.name === 'string' && typeof node.props.size === 'number')
+      .map((node: any) => node.props.size);
+
+    expect(glyphSizes.length).toBeGreaterThan(0);
+    for (const size of glyphSizes) expect(size).toBeGreaterThanOrEqual(32);
+  });
+});
+
+/**
+ * Profile is the child's own corner, so its slot wears their avatar rather
+ * than a person glyph -- the same substitution Screensafe makes for its ring.
+ */
+describe('the profile slot', () => {
+  function avatarIn(tree: ReturnType<typeof render>) {
+    return tree.UNSAFE_root.findAll((node: any) => node.props.testID === 'profile-nav-avatar');
+  }
+
+  it('wears the child avatar in place of a glyph', () => {
+    const tree = render(<ChildBottomNavigation selected="home" onSelect={jest.fn()} />);
+
+    expect(avatarIn(tree)).toHaveLength(1);
+  });
+
+  it('is named for a screen reader like every other slot', () => {
+    const tree = render(<ChildBottomNavigation selected="home" onSelect={jest.fn()} />);
+
+    expect(items(tree)[4].props.accessibilityLabel).toBe('childUi.nav.profile');
   });
 });
 
@@ -248,6 +310,24 @@ describe('the bar’s bounce', () => {
     const { damping, stiffness, mass } = CHILD_UI_SPRING.navExpand;
 
     expect(damping).toBeLessThan(2 * Math.sqrt(stiffness * mass));
+  });
+
+  /**
+   * Filmed: the droplet landed, and one frame later the bar was already out
+   * at full width and full opacity while the splash still had 400ms to run.
+   * The spring now takes about as long to rise as the splash takes to
+   * spread, and the bar fades up over that rise instead of snapping on.
+   */
+  it('rises out over the splash rather than in a single frame', () => {
+    const rise = springRiseMs(CHILD_UI_SPRING.navExpand);
+
+    expect(rise).toBeGreaterThanOrEqual(300);
+    expect(rise).toBeLessThanOrEqual(520);
+  });
+
+  it('fades itself up as it widens, over a real beat', () => {
+    expect(CHILD_UI_MOTION.navPresence.duration).toBeGreaterThanOrEqual(180);
+    expect(CHILD_UI_MOTION.navPresence.duration).toBeLessThanOrEqual(springRiseMs(CHILD_UI_SPRING.navExpand));
   });
 });
 
@@ -281,5 +361,27 @@ describe('the ring in the bar', () => {
     expect(
       tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'nav-screen-time-ring-arc').length,
     ).toBeGreaterThan(0);
+  });
+});
+
+/**
+ * A tour that wants to point the owl at a slot has to be able to measure
+ * it, so every slot is wrapped in a view that stays a real native view
+ * (`collapsable={false}`) and takes the ref the bar is handed for it. Refs
+ * never fill under this test renderer, so the wrapper is what is asserted.
+ */
+describe('pointing at a slot', () => {
+  it('wraps every slot in a measurable view', () => {
+    const tree = render(<ChildBottomNavigation selected="home" onSelect={jest.fn()} />);
+
+    const wrappers = tree.UNSAFE_root.findAll((n: any) => n.props.collapsable === false);
+
+    expect(wrappers.length).toBeGreaterThanOrEqual(CHILD_NAV_ITEMS.length);
+  });
+
+  it('asks for nothing when no refs are handed over', () => {
+    const tree = render(<ChildBottomNavigation selected="home" onSelect={jest.fn()} />);
+
+    expect(items(tree)).toHaveLength(CHILD_NAV_ITEMS.length);
   });
 });
