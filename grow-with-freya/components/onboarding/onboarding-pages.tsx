@@ -12,6 +12,10 @@ import {
   ONBOARDING_MAX_WIDTH,
   ONBOARDING_H_PADDING,
   ONBOARDING_HERO_RADIUS,
+  onboardingMetricsFor,
+  SAFE_BACKDROP_TOP,
+  TOGETHER_BACKDROP_TOP,
+  READY_BACKDROP_TOP,
 } from './onboarding-metrics';
 import { MIN_NICKNAME_LENGTH, MAX_NICKNAME_LENGTH } from '@/constants/profile';
 import { SUPPORTED_LANGUAGES, setStoredLanguage, type SupportedLanguage } from '@/services/i18n';
@@ -35,40 +39,43 @@ const CHIP_SIZE = Math.floor((LAYOUT_WIDTH - SHELL_H_PADDING * 2 - CHIP_GAP * 2)
 // the tile claims nearly the whole cell: padding is trimmed to the minimum that
 // still separates it from the gold dividers
 // the art fills its whole cell, with the label sitting over it
-const SAFETY_CELL_H = 128;
-const SAFETY_GRID_RATIO = 0.86;
+// the panel sits just inside the together chip row opposite rather than
+// matching it edge for edge, so its two cells are a little under half that
+// width and tall enough to carry a chip the size of one of those, with two
+// lines of label under it
+const SAFETY_CELL_H = 150;
+const SAFETY_GRID_RATIO = 0.8;
 const SAFETY_CELL_W = Math.floor(((LAYOUT_WIDTH - SHELL_H_PADDING * 2) * SAFETY_GRID_RATIO) / 2);
 // every label reserves two lines, so a one-line label starts level with the
 // first line of a two-line one
 const SAFETY_LABEL_LINE = 16;
 const SAFETY_LABEL_H = SAFETY_LABEL_LINE * 2;
-// lifts the art so the glyph centres in the space above the label. Capped so
-// the frame never grows taller than the cell is wide -- past that, cover would
-// scale to the height and enlarge the glyph instead of just moving it.
-const SAFETY_ART_LIFT = Math.max(0, Math.min(24, SAFETY_CELL_W - SAFETY_CELL_H));
+// The tile is a starfield square with the glyph about a third of its width, so
+// scaling it to cover the cell pins the glyph to a fixed share of that cell --
+// a smaller cell then draws a proportionally smaller everything and the icon
+// reads exactly as large as before. Drawing it `contain` at a fixed size is
+// what makes the glyph itself smaller; the cell's own panel shows around it.
+const SAFETY_ART_SIZE = 104;
+// sits the tile just under the cell's top edge, so the glyph centres in the
+// space above the label rather than behind it
+const SAFETY_ART_TOP = 8;
 // pale moonlit hairlines rather than gold, with a highlight raked across the
 // panel's top edge so it catches the light from the scene above it
 const SAFETY_BORDER = 'rgba(198, 219, 250, 0.42)';
 const SAFETY_DIVIDER = 'rgba(198, 219, 250, 0.22)';
 const SAFETY_PANEL_BG = 'rgba(9, 13, 38, 0.9)';
-// the together art is 900x941; sizing the backdrop to that ratio means the full
-// scene shows edge-to-edge with no crop
-const TOGETHER_ART_RATIO = 941 / 900;
-const TOGETHER_BACKDROP_H = Math.round(LAYOUT_WIDTH * TOGETHER_ART_RATIO);
-// safety art is 900x774; same full-bleed treatment as the together backdrop
-// the ready hero is a 3:2 scene. Like the together and safety heroes it is a
-// full-bleed backdrop rather than an inset card, so it is sized to the screen
-const READY_BACKDROP_H = Math.round(LAYOUT_WIDTH * (600 / 900));
-// drops the scene clear of the headline, matching the together backdrop
-const READY_BACKDROP_TOP = 150;
+// the static fallbacks are the same sums the components read live, so a
+// style that is never overridden still lays out to the same numbers
+const FALLBACK_METRICS = onboardingMetricsFor(SCREEN_WIDTH);
+const TOGETHER_BACKDROP_H = FALLBACK_METRICS.togetherBackdropHeight;
+const READY_BACKDROP_H = FALLBACK_METRICS.readyBackdropHeight;
+const READY_SPACER_H = FALLBACK_METRICS.readySpacerHeight;
+const SAFE_SPACER_H = FALLBACK_METRICS.safeSpacerHeight;
+const TOGETHER_SPACER_H = FALLBACK_METRICS.togetherSpacerHeight;
 // gold hairline cards, matching the plates supplied with the ready artwork
 const READY_CARD_BG = 'rgba(18, 26, 62, 0.82)';
 const READY_CARD_BORDER = 'rgba(232, 184, 75, 0.5)';
-// the cut-out constellation is shown whole rather than cropped into a band
-const SAFE_BACKDROP_H = Math.round(LAYOUT_WIDTH * 0.62);
-const SAFE_BACKDROP_TOP = 160;
-// drops the scene down the screen so the headline has clear sky above it
-const TOGETHER_BACKDROP_TOP = 128;
+const SAFE_BACKDROP_H = FALLBACK_METRICS.safeBackdropHeight;
 
 export interface WorldTile {
   key: string;
@@ -315,7 +322,7 @@ export function SafetyPage() {
                 styles.safetyArt,
                 item.nudgeX ? { transform: [{ translateX: item.nudgeX }] } : null,
               ]}
-              resizeMode="cover"
+              resizeMode="contain"
             />
             <LinearGradient
               colors={['transparent', 'rgba(6, 9, 26, 0.55)', 'rgba(6, 9, 26, 0.92)']}
@@ -327,7 +334,7 @@ export function SafetyPage() {
               numberOfLines={2}
               style={[
                 styles.safetyLabel,
-                { fontSize: scaledFontSize(12) },
+                { fontSize: scaledFontSize(13) },
                 item.labelNudgeX ? { transform: [{ translateX: item.labelNudgeX }] } : null,
               ]}
             >
@@ -749,7 +756,7 @@ const styles = StyleSheet.create({
   safeBackdropSpacer: {
     // clears the artwork plus a gap. The cut-out has transparent margin around
     // the constellation, so this reaches into it rather than clearing the box.
-    height: SAFE_BACKDROP_H + SAFE_BACKDROP_TOP - 197,
+    height: SAFE_SPACER_H,
   },
   togetherBackdrop: {
     alignSelf: 'center',
@@ -814,7 +821,7 @@ const styles = StyleSheet.create({
   },
   // reserves the space the backdrop occupies so the chips land over its base
   backdropSpacer: {
-    height: TOGETHER_BACKDROP_H + TOGETHER_BACKDROP_TOP - 246,
+    height: TOGETHER_SPACER_H,
   },
   heroWrap: {
     alignSelf: 'center',
@@ -941,10 +948,14 @@ const styles = StyleSheet.create({
   // and made the glyph vanish when paging back to this screen.
   safetyArt: {
     position: 'absolute',
-    left: 0,
-    top: -SAFETY_ART_LIFT,
-    width: '100%',
-    height: SAFETY_CELL_H + SAFETY_ART_LIFT,
+    alignSelf: 'center',
+    top: SAFETY_ART_TOP,
+    width: SAFETY_ART_SIZE,
+    height: SAFETY_ART_SIZE,
+    // the tile no longer reaches the cell's edges, so it takes a corner of its
+    // own and reads as a chip rather than a square cut out of the panel --
+    // the same 0.22 of its width the together chips use
+    borderRadius: 26,
   },
   // catches the light from the scene above: a highlight raked down from the
   // panel's top edge, over the cells
@@ -1013,7 +1024,7 @@ const styles = StyleSheet.create({
   // reserves the space the backdrop occupies so the feature cards land over its
   // base, the same overlap the together chips use
   readyBackdropSpacer: {
-    height: READY_BACKDROP_H + READY_BACKDROP_TOP - 246,
+    height: READY_SPACER_H,
   },
   featureList: {
     gap: 12,

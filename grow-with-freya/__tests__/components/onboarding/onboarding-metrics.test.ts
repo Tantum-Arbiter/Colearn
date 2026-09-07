@@ -10,6 +10,7 @@
  */
 
 import {
+  READY_BACKDROP_TOP,
   onboardingMetricsFor as metricsAt,
   onboardingLift,
   swipeIntent,
@@ -65,6 +66,35 @@ describe('onboardingMetricsFor', () => {
       expect(spacer).toBeGreaterThan(0);
       expect(spacer).toBeLessThan(600);
     }
+  });
+
+  /**
+   * The safety constellation and the ready scene were asked to be bigger, and
+   * the ready cards to sit lower under theirs. Ready's art is 3:2, so it
+   * grows by scaling past that ratio and cropping its curtain edges.
+   */
+  it('gives the constellation the whole column, at the art\'s own 860x760 aspect', () => {
+    for (const width of [PHONE_WIDTH, TABLET_WIDTH]) {
+      const m = metricsAt(width);
+
+      // sized to the art's aspect, `contain` draws it edge to edge with no
+      // margin left over -- as big as the column allows
+      expect(m.safeBackdropHeight).toBe(Math.round(m.layoutWidth * (760 / 860)));
+    }
+  });
+
+  it('shows the ready scene a good deal larger than its own 3:2 frame', () => {
+    for (const width of [PHONE_WIDTH, TABLET_WIDTH]) {
+      const m = metricsAt(width);
+
+      expect(m.readyBackdropHeight).toBeGreaterThanOrEqual(Math.round(m.layoutWidth * (600 / 900) * 1.4));
+    }
+  });
+
+  it('runs the first ready card up over the base of the scene, as the chips do', () => {
+    const m = metricsAt(PHONE_WIDTH);
+
+    expect(m.readySpacerHeight).toBeLessThanOrEqual(m.readyBackdropHeight + READY_BACKDROP_TOP - 175);
   });
 
   it('keeps three chips plus their gaps inside the padded row', () => {

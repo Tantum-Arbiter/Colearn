@@ -88,6 +88,71 @@ describe('SafetyPage', () => {
   });
 });
 
+/** The panel now runs the full padded width, the way the together chips do, and its cells and art scale with it. */
+describe('SafetyPage grid', () => {
+  function flat(style: unknown): any {
+    return [style].flat(Infinity).reduce((acc: any, s: any) => ({ ...acc, ...s }), {});
+  }
+
+  it('keeps the panel just inside the together chip row rather than matching it', () => {
+    const tree = render(<SafetyPage />);
+
+    // the grid is the one wrapping row whose width is a share of the page
+    const grid = tree.UNSAFE_root.findAll((n: any) => {
+      const style = flat(n.props.style);
+      return style.flexWrap === 'wrap' && typeof style.width === 'string' && style.width.endsWith('%');
+    })[0];
+
+    expect(grid).toBeTruthy();
+    const width = parseFloat(grid.props.style && flat(grid.props.style).width);
+
+    expect(width).toBeLessThanOrEqual(84);
+    expect(width).toBeGreaterThanOrEqual(72);
+  });
+
+  it('gives each cell room for its chip and two lines of label, clear of each other', () => {
+    const tree = render(<SafetyPage />);
+
+    const cell = findByTestId(tree, 'safety-item-noAds')[0];
+
+    const height = flat(cell.props.style).height;
+
+    expect(height).toBeGreaterThanOrEqual(120);
+    expect(height).toBeLessThanOrEqual(155);
+  });
+
+  /**
+   * The promise art is a starfield tile with the glyph about a third of its
+   * width, so a tile scaled to cover the cell always draws the glyph at the
+   * same fraction of that cell -- shrinking the cell alone never shrinks the
+   * icon. It is drawn to a fixed size instead, well inside the cell.
+   */
+  it('draws the promise glyph to a fixed size rather than covering the cell', () => {
+    const tree = render(<SafetyPage />);
+
+    const art = findByTestId(tree, 'safety-art-noAds')[0];
+    const style = flat(art.props.style);
+
+    expect(typeof style.width).toBe('number');
+    expect(style.width).toBeGreaterThanOrEqual(100);
+    expect(style.width).toBeLessThanOrEqual(130);
+    expect(style.height).toBe(style.width);
+    expect(art.props.resizeMode).toBe('contain');
+  });
+
+  /** Bigger cells carry the label at the same size as the chip labels opposite. */
+  it('sets the promise labels in the same 13pt as the together chip labels', () => {
+    const tree = render(<SafetyPage />);
+
+    const label = tree.UNSAFE_root.findAll(
+      (n: any) => n.props.children === 'onboardingV2.safe.noAds'
+    )[0];
+
+    expect(label).toBeTruthy();
+    expect(flat(label.props.style).fontSize).toBe(13);
+  });
+});
+
 describe('SafetyBackdrop', () => {
   it('renders the full-bleed cloud illustration', () => {
     const tree = render(<SafetyBackdrop />);

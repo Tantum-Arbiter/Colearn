@@ -28,7 +28,14 @@ const CHIP_GAP = 10;
 // is a cut-out shown at a fixed fraction of the width
 const TOGETHER_ART_RATIO = 941 / 900;
 const READY_ART_RATIO = 600 / 900;
-const SAFE_ART_RATIO = 0.62;
+// the constellation was asked to be bigger again, so the box now carries the
+// art's own 860x760 aspect: `contain` then draws it the full width of the
+// column with no margin left over, which is as large as it can go without
+// bleeding past the page, and the panel beneath it shrank to give it the room
+const SAFE_ART_RATIO = 760 / 860;
+// the ready scene is already as wide as the page, so it grows by scaling past
+// its 3:2 frame; cover then crops the curtain edges, which carry nothing
+export const READY_HERO_SCALE = 1.44;
 
 // how far down the page each hero starts, so the headline has clear sky above
 export const TOGETHER_BACKDROP_TOP = 128;
@@ -37,10 +44,14 @@ export const SAFE_BACKDROP_TOP = 160;
 
 // how far the content below each hero rides up over its base
 const TOGETHER_OVERLAP = 246;
-const READY_OVERLAP = 246;
+// the first ready card was asked to run up over the base of the scene, the way
+// the together chips do. The gap between the two is this overlap alone: growing
+// the hero moves its base and the cards below it by the same amount.
+const READY_OVERLAP = 208;
 // the safety cut-out has transparent margin around the constellation, so its
-// spacer reaches into the box rather than clearing it
-const SAFE_OVERLAP = 197;
+// spacer reaches into the box rather than clearing it -- scaled up with the
+// art, since the margin grew with it
+const SAFE_OVERLAP = 240;
 
 /** Corner the heroes take once they no longer reach the screen's edges. */
 export const ONBOARDING_HERO_RADIUS = 28;
@@ -71,7 +82,7 @@ export function onboardingMetricsFor(width: number): OnboardingMetrics {
   const layoutWidth = Math.min(width, ONBOARDING_MAX_WIDTH);
 
   const togetherBackdropHeight = Math.round(layoutWidth * TOGETHER_ART_RATIO);
-  const readyBackdropHeight = Math.round(layoutWidth * READY_ART_RATIO);
+  const readyBackdropHeight = Math.round(layoutWidth * READY_ART_RATIO * READY_HERO_SCALE);
   const safeBackdropHeight = Math.round(layoutWidth * SAFE_ART_RATIO);
 
   return {
