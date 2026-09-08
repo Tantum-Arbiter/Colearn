@@ -19,7 +19,6 @@ import Animated, {
   withTiming,
   withSequence,
   withSpring,
-  withDelay,
   Easing,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
@@ -28,9 +27,25 @@ import { useAccessibility } from '@/hooks/use-accessibility';
 import type { MusicChallengeHookResult } from '@/hooks/use-music-challenge';
 import type { InstrumentArtwork, NoteLayoutItem } from '@/services/music-asset-registry';
 import { isChordEntry, parseChordEntry } from '@/services/sequence-matcher';
-import { layoutInstrumentSurface, type SurfaceBox } from '@/services/instrument-surface-layout';
+import { layoutInstrumentStage, type SurfaceBox } from '@/services/instrument-surface-layout';
+import { InstrumentBell } from '@/components/music/instrument-bell';
 
 const log = Logger.create('MusicChallengeUI');
+
+const ARTWORK_EDGE_MARGIN = 8;
+
+export const ARTWORK_TOP_MARGIN = 12;
+export const LOWER_BLOCK_BUTTON_GAP = 16;
+
+export function instrumentLowerBlockHeight(
+  scaledButtonSize: (size: number) => number,
+  scaledFontSize: (size: number) => number,
+  hasSequence: boolean,
+): number {
+  const controls = scaledButtonSize(40) + 24;
+  const dots = hasSequence ? scaledButtonSize(32) + scaledFontSize(12) + 30 : 0;
+  return controls + dots;
+}
 
 type PlayMode = 'blow' | 'press';
 
@@ -217,10 +232,8 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
   const celebrationOpacity = useSharedValue(0);
   const shineOffset = useSharedValue(-1);
 
-  // Song playback visualization -which sequence index is currently highlighted
-  const [playbackIndex, setPlaybackIndex] = useState(-1);
-  // Monotonic counter so NoteButton re-triggers animation even for repeated notes
-  const [playbackTick, setPlaybackTick] = useState(0);
+  const playbackIndex = challenge.playbackPosition?.index ?? -1;
+  const playbackTick = challenge.playbackPosition?.tick ?? 0;
 
   // Rotation for blow mode -instrument faces bottom of phone
   const instrumentRotation = useSharedValue(0);
@@ -304,59 +317,6 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
   const activeSequence = challenge.currentSequence?.length > 0 ? challenge.currentSequence : requiredSequence;
   const hasSequence = activeSequence.length > 0;
 
-  // Song playback: highlight each note in sequence in time with the audio playback.
-  // Holds highlight for the full note duration, then moves directly to the next note.
-  // Only inserts a brief "off" gap when two consecutive entries share a note so the
-  // user can see the transition.
-  useEffect(() => {
-    if (isPlayingSong && activeSequence.length > 0) {
-      const noteMs = Math.round(60000 / Math.max(challenge.resolvedBpm, 30));
-      const gapMs = 100;
-      let cancelled = false;
-      let tick = 0;
-
-      const playEntry = (idx: number) => {
-        if (cancelled) return;
-        const wrappedIdx = idx % activeSequence.length;
-        const prevIdx = idx > 0 ? (idx - 1) % activeSequence.length : -1;
-        tick++;
-
-        // Check if current entry shares any notes with previous entry
-        const needsGap = prevIdx >= 0 &&
-          activeSequence[wrappedIdx] === activeSequence[prevIdx];
-
-        const showNote = () => {
-          if (cancelled) return;
-          setPlaybackIndex(wrappedIdx);
-          setPlaybackTick(tick);
-          // Hold for the full note duration, then advance
-          setTimeout(() => {
-            if (!cancelled) playEntry(idx + 1);
-          }, noteMs);
-        };
-
-        if (needsGap) {
-          // Brief off gap so repeated same-note is visually distinct
-          setPlaybackIndex(-1);
-          setTimeout(showNote, gapMs);
-        } else {
-          showNote();
-        }
-      };
-
-      playEntry(0);
-
-      return () => {
-        cancelled = true;
-        setPlaybackIndex(-1);
-        setPlaybackTick(0);
-      };
-    } else {
-      setPlaybackIndex(-1);
-      setPlaybackTick(0);
-    }
-  }, [isPlayingSong, activeSequence, challenge.resolvedBpm]);
-
   const togglePlayMode = useCallback(() => {
     setPlayMode(prev => {
       const next = prev === 'blow' ? 'press' : 'blow';
@@ -385,15 +345,27 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
   const celebrationFontSize = scaledFontSize(isRotated ? 28 : 36);
   const celebrationSubtextFontSize = scaledFontSize(isRotated ? 12 : 14);
 
-  const handleSurfaceLayout = useCallback((event: LayoutChangeEvent) => {
+  const handleRegionLayout = useCallback((event: LayoutChangeEvent) => {
     const { width, height } = event.nativeEvent.layout;
     setSurfaceBox(prev => (prev.width === width && prev.height === height ? prev : { width, height }));
   }, []);
 
-  const surfaceLayout = useMemo(
-    () => (artwork ? layoutInstrumentSurface(artwork, noteLayout, surfaceBox, scaledButtonSize(60)) : null),
-    [artwork, noteLayout, surfaceBox, scaledButtonSize],
+  const reserveRight = insets.right + ARTWORK_EDGE_MARGIN;
+  const topSectionHeight = scaledFontSize(36) + scaledFontSize(14) + 24;
+  const bottomSectionHeight = scaledButtonSize(40) + 24;
+  const lowerBlockHeight = instrumentLowerBlockHeight(scaledButtonSize, scaledFontSize, hasSequence);
+  const stage = useMemo(
+    () => (artwork
+      ? layoutInstrumentStage(artwork, noteLayout, { ...surfaceBox, reserveRight }, {
+          maxButtonSize: scaledButtonSize(60),
+          lowerBlockHeight,
+          topMargin: ARTWORK_TOP_MARGIN,
+          buttonGap: LOWER_BLOCK_BUTTON_GAP,
+        })
+      : null),
+    [artwork, noteLayout, surfaceBox, reserveRight, scaledButtonSize, lowerBlockHeight],
   );
+  const surfaceLayout = stage?.layout ?? null;
 
   const renderNoteButton = (item: NoteLayoutItem, size: number, fontSize: number) => {
     // Disable next-note highlight during playback to avoid double-flash
@@ -443,7 +415,7 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
     <View style={styles.container}>
       {/* Top section: prompt OR celebration.
           When there's no sequence (freeplay), use equal flex so the instrument is centered. */}
-      <View style={[styles.topSection, !hasSequence && { flex: 1 }, artwork && styles.sectionCompact]}>
+      <View style={[styles.topSection, !hasSequence && { flex: 1 }, artwork && styles.sectionCompact, artwork && styles.topSectionFloating, artwork && { height: topSectionHeight }]} testID="top-section" pointerEvents="box-none">
         {showCelebration ? (
           <Animated.View style={[
             styles.celebrationContainer,
@@ -467,51 +439,49 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
 
       {/* Center section: instrument body (not rotated) */}
       {artwork ? (
-        <View style={styles.instrumentSurface} testID="instrument-surface" onLayout={handleSurfaceLayout}>
+      <View style={styles.instrumentRegion} testID="instrument-region" onLayout={handleRegionLayout}>
+        <View
+          style={[
+            styles.instrumentSurface,
+            stage && { position: 'absolute', left: 0, right: 0, top: stage.surfaceTop, height: stage.layout.height },
+          ]}
+          testID="instrument-surface"
+        >
           {rotateButton}
-          {surfaceLayout && (
-            <View style={{ width: surfaceLayout.width, height: surfaceLayout.height }}>
-              <Image
-                source={artwork.image}
-                style={{ width: surfaceLayout.width, height: surfaceLayout.height }}
-                resizeMode="contain"
-                testID="instrument-artwork"
-              />
-              {noteLayout.map((item) => {
-                const position = surfaceLayout.positions[item.note];
-                if (!position) return null;
-                return (
-                  <View key={item.note} style={[styles.holeButton, position]} testID={`note-hole-${item.note}`}>
-                    {renderNoteButton(item, surfaceLayout.buttonSize, Math.round(surfaceLayout.buttonSize * 0.37))}
-                  </View>
-                );
-              })}
-            </View>
-          )}
+          {surfaceLayout && (() => {
+            const body = (
+              <View style={{ width: surfaceLayout.width, height: surfaceLayout.height }}>
+                <Image
+                  source={artwork.image}
+                  style={{ width: surfaceLayout.width, height: surfaceLayout.height }}
+                  resizeMode="contain"
+                  testID="instrument-artwork"
+                />
+                {artwork.bell && surfaceLayout.bell && (
+                  <InstrumentBell bell={artwork.bell} placement={surfaceLayout.bell} noteEvents={challenge.noteEvents} />
+                )}
+                {noteLayout.map((item) => {
+                  const position = surfaceLayout.positions[item.note];
+                  if (!position) return null;
+                  return (
+                    <View key={item.note} style={[styles.holeButton, position]} testID={`note-hole-${item.note}`}>
+                      {renderNoteButton(item, surfaceLayout.buttonSize, Math.round(surfaceLayout.buttonSize * 0.37))}
+                    </View>
+                  );
+                })}
+              </View>
+            );
+            return body;
+          })()}
         </View>
-      ) : (
-        <View style={styles.instrumentBody}>
-          <View style={styles.instrumentTube} testID="instrument-tube">
-            {rotateButton}
-            <View style={styles.noteButtonsRow}>
-              {noteLayout.map((item) => renderNoteButton(item, scaledButtonSize(60), scaledFontSize(22)))}
-            </View>
-          </View>
-
-          {/* Mouthpiece on the right */}
-          <View style={styles.mouthpiece}>
-            <View style={styles.mouthpieceInner} />
-          </View>
-        </View>
-      )}
-
+        <View style={[styles.lowerBlock, stage && { position: 'absolute', left: 0, right: 0, top: stage.lowerBlockTop, height: lowerBlockHeight }]} testID="lower-block">
       {/* Sequence dots -hidden when UI is toggled off or sequence is empty */}
       {/* Sequence dots -use currentSequence from challenge when available (for Go Harder levels) */}
       {(() => {
         const displaySeq = challenge.currentSequence?.length > 0 ? challenge.currentSequence : requiredSequence;
         if (displaySeq.length === 0) return null;
         return (
-          <View style={styles.sequenceContainer}>
+          <View style={styles.sequenceContainer} testID="sequence-container">
             <View style={styles.sequenceRow}>
               {displaySeq.map((entry, index) => {
                 // For chord entries like "C+E", find the first matching note's color
@@ -560,7 +530,7 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
       })()}
 
       {/* Bottom section: controls (not rotated) */}
-      <View style={[styles.bottomSection, artwork && styles.sectionCompact]}>
+      <View style={[styles.bottomSection, artwork && styles.sectionCompact, artwork && { height: bottomSectionHeight }]} testID="bottom-section">
 
         {/* Bottom row: controls change based on state */}
         <View style={[styles.bottomRow, isPlayingSong && { opacity: 0 }]}>
@@ -640,6 +610,160 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
         )}
       </View>
 
+        </View>
+      </View>
+      ) : (
+        <>
+        <View style={styles.instrumentBody}>
+          <View style={styles.instrumentTube} testID="instrument-tube">
+            {rotateButton}
+            <View style={styles.noteButtonsRow}>
+              {noteLayout.map((item) => renderNoteButton(item, scaledButtonSize(60), scaledFontSize(22)))}
+            </View>
+          </View>
+
+          {/* Mouthpiece on the right */}
+          <View style={styles.mouthpiece}>
+            <View style={styles.mouthpieceInner} />
+          </View>
+        </View>
+      {/* Sequence dots -hidden when UI is toggled off or sequence is empty */}
+      {/* Sequence dots -use currentSequence from challenge when available (for Go Harder levels) */}
+      {(() => {
+        const displaySeq = challenge.currentSequence?.length > 0 ? challenge.currentSequence : requiredSequence;
+        if (displaySeq.length === 0) return null;
+        return (
+          <View style={styles.sequenceContainer} testID="sequence-container">
+            <View style={styles.sequenceRow}>
+              {displaySeq.map((entry, index) => {
+                // For chord entries like "C+E", find the first matching note's color
+                const notes = isChordEntry(entry) ? parseChordEntry(entry) : [entry];
+                const layoutItem = noteLayout.find(n => notes.includes(n.note));
+                const isCompleted = index < challenge.currentNoteIndex;
+                const isCurrent = index === challenge.currentNoteIndex;
+                // Display label: "C+E" → "C·E" for readability
+                const label = isChordEntry(entry)
+                  ? parseChordEntry(entry).join('·')
+                  : entry;
+
+                return (
+                  <View
+                    key={`seq-${index}`}
+                    style={[
+                      styles.sequenceDot,
+                      {
+                        width: scaledButtonSize(isChordEntry(entry) ? 48 : 32),
+                        height: scaledButtonSize(32),
+                        borderRadius: scaledButtonSize(16),
+                        backgroundColor: isCompleted
+                          ? (layoutItem?.color ?? '#81C784')
+                          : 'rgba(255,255,255,0.25)',
+                        borderColor: isCurrent ? '#FFFFFF' : 'transparent',
+                      },
+                    ]}
+                  >
+                    <Animated.Text style={[
+                      styles.sequenceDotText,
+                      { fontSize: scaledFontSize(isChordEntry(entry) ? 9 : 11) },
+                      isCompleted && styles.sequenceDotTextCompleted,
+                      instrumentRotationStyle,
+                    ]}>
+                      {label}
+                    </Animated.Text>
+                  </View>
+                );
+              })}
+            </View>
+            <Animated.Text style={[styles.sequenceProgress, { fontSize: scaledFontSize(12) }, instrumentRotationStyle, (isPlayingSong || isFinished) && { opacity: 0 }]}>
+              {Math.min(challenge.currentNoteIndex, displaySeq.length)}/{displaySeq.length}
+            </Animated.Text>
+          </View>
+        );
+      })()}
+
+      {/* Bottom section: controls (not rotated) */}
+      <View style={[styles.bottomSection, artwork && styles.sectionCompact, artwork && { height: bottomSectionHeight }]} testID="bottom-section">
+
+        {/* Bottom row: controls change based on state */}
+        <View style={[styles.bottomRow, isPlayingSong && { opacity: 0 }]}>
+          {isFinished ? (
+            <>
+              <Pressable
+                style={styles.retryButton}
+                onPress={challenge.retry}
+                testID="retry-button"
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Ionicons name="refresh-outline" size={scaledFontSize(14)} color="#FFFFFF" style={{ marginRight: 4 }} />
+                  <Text style={[styles.retryButtonText, { fontSize: scaledFontSize(15) }]}>{t('music.retry')}</Text>
+                </View>
+              </Pressable>
+              {!challenge.isMaxDifficulty && (
+                <Pressable
+                  style={styles.goHarderButton}
+                  onPress={challenge.goHarder}
+                  testID="go-harder-button"
+                >
+                  <Text style={[styles.goHarderButtonText, { fontSize: scaledFontSize(15) }]}>
+                    <MaterialIcons name="trending-up" size={scaledFontSize(16)} color="#FFFFFF" /> {challenge.difficultyLevel > 1 ? t('music.goHarderLevel', { level: challenge.difficultyLevel + 1 }) : t('music.goHarder')}
+                  </Text>
+                </Pressable>
+              )}
+              <Pressable
+                style={styles.continueButton}
+                onPress={onContinue}
+                testID="continue-story-button"
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Text style={[styles.continueButtonText, { fontSize: scaledFontSize(15) }]}>{continueLabel ?? t('music.continueStory')}</Text>
+                  <Ionicons name="chevron-forward" size={scaledFontSize(14)} color="#FFFFFF" style={{ marginLeft: 4 }} />
+                </View>
+              </Pressable>
+            </>
+          ) : !uiHidden ? (
+            <>
+              <Pressable
+                style={[
+                  styles.modeToggleButton,
+                  playMode === 'blow' && styles.modeToggleActive,
+                ]}
+                onPress={togglePlayMode}
+                testID="play-mode-toggle"
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Ionicons name="musical-note" size={scaledFontSize(12)} color="#FFFFFF" style={{ marginRight: 4 }} />
+                  <Text style={[styles.modeToggleText, { fontSize: scaledFontSize(14) }]}>
+                    {playMode === 'blow' ? t('music.blowMode') : t('music.pressMode')}
+                  </Text>
+                </View>
+              </Pressable>
+
+
+
+              {challenge.lastInputCorrect === false && (
+                <Text style={[styles.feedbackWrong, { fontSize: scaledFontSize(15) }]}>{t('music.tryAgain')}</Text>
+              )}
+
+              {allowSkip && (
+                <Pressable style={styles.skipButton} onPress={onSkip}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Text style={[styles.skipButtonText, { fontSize: scaledFontSize(13) }]}>{t('music.skip')}</Text>
+                    <Ionicons name="chevron-forward" size={scaledFontSize(12)} color="rgba(255,255,255,0.7)" style={{ marginLeft: 2 }} />
+                  </View>
+                </Pressable>
+              )}
+            </>
+          ) : null}
+        </View>
+        {isPlayingSong && (
+          <View style={styles.listeningOverlay}>
+            <Text style={[styles.blowHint, { fontSize: scaledFontSize(12) }]}>{t('music.listeningToMelody')}</Text>
+          </View>
+        )}
+      </View>
+
+        </>
+      )}
       {/* Floating controls -bottom left in landscape, rotate with instrument in portrait */}
       {onMusicSheet && !uiHidden && (
         <Animated.View style={[
@@ -743,13 +867,28 @@ const styles = StyleSheet.create({
   },
   sectionCompact: {
     flex: 0,
-    paddingVertical: 6,
+    paddingVertical: 0,
+    paddingBottom: 0,
   },
   instrumentSurface: {
-    flex: 1,
     alignSelf: 'stretch',
     marginHorizontal: -16,
-    minHeight: 100,
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
+  },
+  topSectionFloating: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 5,
+  },
+  instrumentRegion: {
+    flex: 1,
+    alignSelf: 'stretch',
+  },
+  lowerBlock: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -849,6 +988,9 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '800',
     textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.35)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
 
   // Sequence progress dots -below instrument
@@ -856,6 +998,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
     marginTop: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 24,
+    backgroundColor: 'rgba(0, 0, 0, 0.35)',
   },
   sequenceRow: {
     flexDirection: 'row',

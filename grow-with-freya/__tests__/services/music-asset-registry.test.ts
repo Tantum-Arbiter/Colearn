@@ -16,6 +16,9 @@ import {
   getAvailableInstrumentIds,
   getInstrumentsByFamily,
   registerInstrument,
+  getAllPracticeSongs,
+  getPracticeSong,
+  NOTE_COLORS,
   InstrumentDefinition,
 } from '@/services/music-asset-registry';
 
@@ -25,7 +28,7 @@ const EXPECTED_INSTRUMENTS = [
   { id: 'recorder', family: 'recorder', displayName: 'Woodland Recorder', noteCount: 6 },
   { id: 'ocarina', family: 'ocarina', displayName: 'Enchanted Ocarina', noteCount: 6 },
   { id: 'trumpet', family: 'trumpet', displayName: 'Golden Trumpet', noteCount: 3 },
-  { id: 'clarinet', family: 'clarinet', displayName: 'Jazzy Clarinet', noteCount: 5 },
+  { id: 'clarinet', family: 'clarinet', displayName: 'Jazzy Clarinet', noteCount: 6 },
   { id: 'saxophone', family: 'saxophone', displayName: 'Sunshine Saxophone', noteCount: 5 },
 ];
 
@@ -114,8 +117,28 @@ describe('MusicAssetRegistry', () => {
     it('flute note layout should start with C/star', () => {
       const flute = getInstrument('flute')!;
       expect(flute.noteLayout[0]).toMatchObject({
-        note: 'C', label: '⭐', color: '#4FC3F7', icon: 'star',
+        note: 'C', label: '⭐', color: NOTE_COLORS.C, icon: 'star',
       });
+    });
+
+    it('colours every note the same on every instrument', () => {
+      for (const { id } of EXPECTED_INSTRUMENTS) {
+        for (const item of getInstrument(id)!.noteLayout) {
+          expect({ id, note: item.note, color: item.color }).toEqual({ id, note: item.note, color: NOTE_COLORS[item.note as keyof typeof NOTE_COLORS] });
+        }
+      }
+    });
+
+    it('gives the six notes six distinct colours', () => {
+      expect(new Set(Object.values(NOTE_COLORS)).size).toBe(6);
+    });
+
+    it('orders every instrument\'s buttons from C upwards', () => {
+      const order = ['C', 'D', 'E', 'F', 'G', 'A'];
+      for (const { id } of EXPECTED_INSTRUMENTS) {
+        const notes = getInstrument(id)!.noteLayout.map(item => item.note);
+        expect({ id, notes }).toEqual({ id, notes: order.slice(0, notes.length) });
+      }
     });
 
     it('each instrument should have unique icon themes', () => {
@@ -182,10 +205,11 @@ describe('MusicAssetRegistry', () => {
       expect(underTest.noteLayout.map(n => n.note)).toEqual(['C', 'D', 'E', 'F', 'G', 'A']);
     });
 
-    it('clarinet keeps the generic layout until artwork exists', () => {
+    it('clarinet plays one note per hole, sixth hole included', () => {
       const underTest = getInstrument('clarinet')!;
 
-      expect(underTest.artwork).toBeUndefined();
+      expect(underTest.artwork).toBeDefined();
+      expect(Object.keys(underTest.notes)).toEqual(['C', 'D', 'E', 'F', 'G', 'A']);
     });
   });
 
@@ -257,5 +281,76 @@ describe('MusicAssetRegistry', () => {
       const missing = validateMusicChallengeAssets('trumpet', ['C', 'Z']);
       expect(missing).toContain('note:trumpet/Z');
     });
+  });
+});
+
+describe('MusicAssetRegistry practice songs', () => {
+  const songs = getAllPracticeSongs();
+
+  it('gives every song with a rhythm one beat count per sequence entry', () => {
+    for (const song of songs) {
+      if (song.rhythm) {
+        expect({ id: song.id, length: song.rhythm.length }).toEqual({ id: song.id, length: song.sequence.length });
+        expect(song.rhythm.every(beats => beats > 0)).toBe(true);
+      }
+    }
+  });
+
+  it('lists exactly the notes each sequence uses as its required notes', () => {
+    for (const song of songs) {
+      const used = [...new Set(song.sequence.flatMap(entry => entry.split('+')))].sort();
+      expect({ id: song.id, notes: [...song.requiredNotes].sort() }).toEqual({ id: song.id, notes: used });
+    }
+  });
+
+  it('plays Hot Cross Buns with four pennies on C and four on D', () => {
+    expect(getPracticeSong('hot_cross_buns')!.sequence).toEqual(
+      ['E', 'D', 'C', 'E', 'D', 'C', 'C', 'C', 'C', 'C', 'D', 'D', 'D', 'D', 'E', 'D', 'C'],
+    );
+  });
+
+  it('keeps all three notes of "happy birthday dear" in Happy Birthday', () => {
+    expect(getPracticeSong('happy_birthday')!.sequence).toEqual(
+      ['C', 'C', 'D', 'C', 'F', 'E', 'C', 'C', 'D', 'C', 'G', 'F', 'C', 'C', 'C', 'A', 'F', 'E', 'D'],
+    );
+  });
+
+  it('gives the well-known nursery rhymes a rhythm', () => {
+    for (const id of ['hot_cross_buns', 'twinkle_star', 'jingle_bells', 'happy_birthday', 'frere_jacques', 'ode_to_joy', 'london_bridge', 'mary_lamb', 'old_macdonald']) {
+      expect({ id, hasRhythm: getPracticeSong(id)!.rhythm !== undefined }).toEqual({ id, hasRhythm: true });
+    }
+  });
+});
+
+describe('MusicAssetRegistry instrument bells', () => {
+  it.each(['trumpet', 'saxophone', 'recorder', 'flute', 'ocarina', 'clarinet'])('%s has a bell cutout inside its body artwork', (id) => {
+    const bell = getInstrument(id)!.artwork!.bell!;
+
+    expect(bell.image).toBeTruthy();
+    expect(bell.frame.x).toBeGreaterThanOrEqual(0);
+    expect(bell.frame.y).toBeGreaterThanOrEqual(0);
+    expect(bell.frame.x + bell.frame.width).toBeLessThanOrEqual(1);
+    expect(bell.frame.y + bell.frame.height).toBeLessThanOrEqual(1);
+    expect(bell.origin.x).toBeGreaterThanOrEqual(bell.frame.x);
+    expect(bell.origin.x).toBeLessThanOrEqual(bell.frame.x + bell.frame.width);
+    expect(bell.origin.y).toBeGreaterThanOrEqual(bell.frame.y);
+    expect(bell.origin.y).toBeLessThanOrEqual(bell.frame.y + bell.frame.height);
+  });
+
+  it.each(['trumpet', 'saxophone', 'recorder', 'flute', 'ocarina', 'clarinet'])('%s expands its bell by a subtle 2-8 percent', (id) => {
+    const { scale } = getInstrument(id)!.artwork!.bell!;
+
+    expect(scale.x).toBeGreaterThanOrEqual(1.02);
+    expect(scale.x).toBeLessThanOrEqual(1.08);
+    expect(scale.y).toBeGreaterThanOrEqual(1.02);
+    expect(scale.y).toBeLessThanOrEqual(1.08);
+  });
+
+  it('pins every clarinet note to a hole on its body artwork', () => {
+    const underTest = getInstrument('clarinet')!;
+
+    expect(underTest.artwork).toBeDefined();
+    expect(underTest.noteLayout.every(item => item.hole)).toBe(true);
+    expect(underTest.noteLayout.map(item => item.note)).toEqual(['C', 'D', 'E', 'F', 'G', 'A']);
   });
 });

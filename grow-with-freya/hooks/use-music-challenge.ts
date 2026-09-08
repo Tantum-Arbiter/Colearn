@@ -11,13 +11,15 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { createAudioPlayer, AudioPlayer } from 'expo-audio';
 import { Logger } from '@/utils/logger';
-import { SequenceMatcher, SequenceMatchResult, isChordEntry, parseChordEntry } from '@/services/sequence-matcher';
+import { SequenceMatcher, SequenceMatchResult, isChordEntry } from '@/services/sequence-matcher';
 import {
   getInstrument,
   getPracticeSong,
   validateMusicChallengeAssets,
   InstrumentDefinition,
 } from '@/services/music-asset-registry';
+import { buildMelodyTimeline } from '@/services/melody-scheduler';
+import { createNoteEventBus, type NoteEventBus, type NoteEventSource } from '@/services/note-event-bus';
 import type { MusicChallenge } from '@/types/story';
 
 const log = Logger.create('MusicChallenge');
@@ -31,6 +33,11 @@ export type MusicChallengeState =
   | 'playing_success_song'
   | 'completed'
   | 'error';
+
+export interface PlaybackPosition {
+  index: number;
+  tick: number;
+}
 
 export interface MusicChallengeHookResult {
   // State
@@ -56,6 +63,10 @@ export interface MusicChallengeHookResult {
   resolvedSequence: string[];
   /** Resolved BPM for playback timing (from song or default 120) */
   resolvedBpm: number;
+  /** Which sequence entry the completion melody is sounding right now, null when it is not playing */
+  playbackPosition: PlaybackPosition | null;
+  /** Every note the instrument sounds (pressed, previewed or in the completion melody) */
+  noteEvents: NoteEventBus;
 
   // Actions
   start: () => void;
@@ -162,6 +173,18 @@ export interface AudioSessionControl {
   isListening: boolean;
 }
 
+const RELEASE_FADE_STEPS = 6;
+const RELEASE_FADE_INTERVAL_MS = 25;
+const MELODY_RELEASE_FADE_STEPS = 4;
+const MELODY_RELEASE_FADE_INTERVAL_MS = 20;
+
+interface MelodyRun {
+  timers: Set<ReturnType<typeof setTimeout>>;
+  players: Set<AudioPlayer>;
+  soundingNotes: Set<string>;
+  cancelled: boolean;
+}
+
 export function useMusicChallenge(
   config: MusicChallenge | undefined,
   onComplete?: () => void,
@@ -171,6 +194,11 @@ export function useMusicChallenge(
   audioSessionControl?: AudioSessionControl,
 ): MusicChallengeHookResult {
   const [state, setState] = useState<MusicChallengeState>('idle');
+  const stateRef = useRef<MusicChallengeState>('idle');
+  const updateState = useCallback((next: MusicChallengeState) => {
+    stateRef.current = next;
+    setState(next);
+  }, []);
   const [isBreathActive, setIsBreathActiveRaw] = useState(false);
   // Ref mirror so playNote always reads the latest value without stale closures.
   // Updated both via setBreathActive (immediate) and useEffect (sync from state)
@@ -189,10 +217,19 @@ export function useMusicChallenge(
   const [missingAssets, setMissingAssets] = useState<string[]>([]);
   const [difficultyLevel, setDifficultyLevel] = useState(1);
   const [currentSequence, setCurrentSequence] = useState<string[]>([]);
+  const [playbackPosition, setPlaybackPosition] = useState<PlaybackPosition | null>(null);
+
+  const noteEventsRef = useRef<NoteEventBus | null>(null);
+  if (noteEventsRef.current === null) {
+    noteEventsRef.current = createNoteEventBus();
+  }
+  const noteEvents = noteEventsRef.current;
 
   const matcherRef = useRef<SequenceMatcher | null>(null);
   // Map of note → AudioPlayer so multiple notes can play simultaneously
   const notePlayersRef = useRef<Map<string, AudioPlayer>>(new Map());
+  // Players created ahead of the press so the first play() of a fresh player never lands on the touch
+  const warmPlayersRef = useRef<Map<string, AudioPlayer>>(new Map());
   // Track when each note started playing (for minimum tap duration)
   const noteStartTimeRef = useRef<Map<string, number>>(new Map());
   // Track active fade-out intervals so they can be cancelled during cleanup,
@@ -200,6 +237,8 @@ export function useMusicChallenge(
   const fadeIntervalsRef = useRef<Set<ReturnType<typeof setInterval>>>(new Set());
   // Track delayed stopNote timers (MIN_TAP_DURATION_MS) so they can be cancelled.
   const delayedStopTimersRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
+  const melodyRunRef = useRef<MelodyRun | null>(null);
+  const melodyTickRef = useRef(0);
 
   // Keep a ref for noteVolume so playNoteAudio always reads the latest value
   // and update all currently-playing note players when volume changes.
@@ -208,6 +247,9 @@ export function useMusicChallenge(
     noteVolumeRef.current = noteVolume;
     // Update all currently-playing note players to reflect the new volume
     notePlayersRef.current.forEach((player) => {
+      try { player.volume = noteVolume; } catch {}
+    });
+    melodyRunRef.current?.players.forEach((player) => {
       try { player.volume = noteVolume; } catch {}
     });
   }, [noteVolume]);
@@ -240,6 +282,7 @@ export function useMusicChallenge(
   })();
   // BPM for playback timing -defaults to 120 when no song is referenced
   const resolvedBpm = resolvedSong?.bpm ?? 120;
+  const resolvedRhythm = resolvedSong && resolvedSong.sequence === resolvedSequence ? resolvedSong.rhythm : undefined;
 
   // Validate assets on mount
   useEffect(() => {
@@ -253,14 +296,89 @@ export function useMusicChallenge(
       }
       setMissingAssets(missing);
       if (missing.length > 0) {
-        setState('error');
+        updateState('error');
       }
     }
   }, [config?.instrumentId, config?.enabled, config?.songId]);
 
+  const createNotePlayer = useCallback((note: string): AudioPlayer | null => {
+    const noteAudio = instrument?.notes[note];
+    if (!noteAudio) return null;
+    try {
+      const player = createAudioPlayer(noteAudio);
+      player.volume = noteVolumeRef.current;
+      return player;
+    } catch (err) {
+      log.error('Failed to create note player:', err);
+      return null;
+    }
+  }, [instrument]);
+
+  const releaseWarmPlayers = useCallback(() => {
+    const players = [...warmPlayersRef.current.values()];
+    warmPlayersRef.current.clear();
+    for (const player of players) {
+      try { player.release(); } catch {}
+    }
+  }, []);
+
+  const warmUpPlayers = useCallback(() => {
+    if (!instrument) return;
+    for (const note of Object.keys(instrument.notes)) {
+      if (warmPlayersRef.current.has(note)) continue;
+      const player = createNotePlayer(note);
+      if (player) warmPlayersRef.current.set(note, player);
+    }
+  }, [instrument, createNotePlayer]);
+
+  const takePlayer = useCallback((note: string): AudioPlayer | null => {
+    const warm = warmPlayersRef.current.get(note);
+    if (warm) {
+      warmPlayersRef.current.delete(note);
+      const replacement = createNotePlayer(note);
+      if (replacement) warmPlayersRef.current.set(note, replacement);
+      try { warm.volume = noteVolumeRef.current; } catch {}
+      return warm;
+    }
+    return createNotePlayer(note);
+  }, [createNotePlayer]);
+
+  const fadeAndRelease = useCallback((player: AudioPlayer, steps: number, intervalMs: number) => {
+    let step = 0;
+    const startVolume = player.volume ?? 1;
+    const fade = setInterval(() => {
+      step++;
+      try { player.volume = startVolume * (1 - step / steps); } catch {}
+      if (step >= steps) {
+        clearInterval(fade);
+        fadeIntervalsRef.current.delete(fade);
+        try { player.pause(); } catch {}
+        try { player.release(); } catch {}
+      }
+    }, intervalMs);
+    fadeIntervalsRef.current.add(fade);
+  }, []);
+
+  const cancelMelody = useCallback(() => {
+    const run = melodyRunRef.current;
+    if (!run) return;
+    melodyRunRef.current = null;
+    run.cancelled = true;
+    for (const timer of run.timers) clearTimeout(timer);
+    run.timers.clear();
+    for (const note of run.soundingNotes) {
+      noteEvents.emit({ note, phase: 'end', source: 'melody' });
+    }
+    run.soundingNotes.clear();
+    for (const player of run.players) {
+      try { player.pause(); } catch {}
+      try { player.release(); } catch {}
+    }
+    run.players.clear();
+    setPlaybackPosition(null);
+  }, [noteEvents]);
+
   // Helper to release all active note players.
-  // Removes loop subscriptions BEFORE releasing to prevent native crashes
-  // from stale listeners accessing deallocated player memory.
   // Also cancels any in-flight fade-out intervals and delayed stop timers
   // so they don't access deallocated native AudioPlayer memory.
   const releaseAllNotePlayers = useCallback(() => {
@@ -278,30 +396,34 @@ export function useMusicChallenge(
     }
     fadeIntervalsRef.current.clear();
 
-    notePlayersRef.current.forEach(player => {
-      try { (player as any).__loopSub?.remove(); } catch {}
-    });
-    // Clear the map BEFORE releasing so status-update listeners see
-    // the player is gone and bail out of their restart logic.
-    const players = [...notePlayersRef.current.values()];
+    const players = [...notePlayersRef.current.entries()];
     notePlayersRef.current.clear();
-    for (const player of players) {
+    for (const [note, player] of players) {
+      noteEvents.emit({ note, phase: 'end', source: 'press' });
+      try { player.pause(); } catch {}
       try { player.release(); } catch {}
     }
-  }, []);
+    releaseWarmPlayers();
+  }, [noteEvents, releaseWarmPlayers]);
 
   // Auto-cleanup when config becomes undefined (navigated away from music page)
   useEffect(() => {
     if (!config) {
+      cancelMelody();
       releaseAllNotePlayers();
       matcherRef.current = null;
-      if (state !== 'idle') {
-        setState('idle');
+      if (stateRef.current !== 'idle') {
+        updateState('idle');
       }
       setDifficultyLevel(1);
       setCurrentSequence([]);
     }
   }, [config]);
+
+  // A new instrument needs its own warm players
+  useEffect(() => {
+    releaseWarmPlayers();
+  }, [instrument, releaseWarmPlayers]);
 
   const start = useCallback(() => {
     log.debug(`Music challenge start() called: config=${!!config}, missingAssets=${missingAssets.length}, currentState=${state}`);
@@ -314,13 +436,15 @@ export function useMusicChallenge(
       const seq = resolvedSequence;
       // For freeplay mode (empty sequence), we still transition to awaiting_input
       // so playNote() works -there's just no sequence matcher to check against.
+      cancelMelody();
       setCurrentSequence(seq);
       setDifficultyLevel(1);
       matcherRef.current = seq.length > 0 ? new SequenceMatcher(seq) : null;
       activeNotesRef.current.clear();
-      setState('awaiting_input');
+      updateState('awaiting_input');
       setLastInputCorrect(null);
       setSequenceResult(null);
+      warmUpPlayers();
       log.debug(`Music challenge started: ${config.instrumentId}, sequence: ${seq.length > 0 ? seq.join(' ') : '(freeplay)'}`);
     };
 
@@ -332,52 +456,33 @@ export function useMusicChallenge(
     } else {
       finishStart();
     }
-  }, [config, missingAssets, state, resolvedSequence]);
+  }, [config, missingAssets, state, resolvedSequence, cancelMelody, warmUpPlayers, updateState]);
 
-  // Play a note sample. Creates a fresh AudioPlayer for each press (expo-audio
-  // players have native state that makes reuse unreliable). The note sustains
-  // indefinitely via a playbackStatusUpdate listener that restarts playback
-  // when the sample ends. The note only stops when stopNote fades it out.
-  const playNoteAudio = useCallback((note: string) => {
+  // Sound a note sample. Takes a player prepared ahead of the press when one is
+  // warm, otherwise creates one. The sample loops so the note sustains as long
+  // as the button is held; it only stops when stopNote fades it out.
+  const playNoteAudio = useCallback((note: string, source: NoteEventSource) => {
     if (!instrument) return;
-
-    const noteAudio = instrument.notes[note];
-    if (!noteAudio) return;
 
     try {
       const existing = notePlayersRef.current.get(note);
       if (existing) {
-        // Remove loop subscription and map entry BEFORE releasing to prevent
-        // the status listener from restarting playback on a released player.
-        try { (existing as any).__loopSub?.remove(); } catch {}
         notePlayersRef.current.delete(note);
+        try { existing.pause(); } catch {}
         try { existing.release(); } catch {}
       }
 
-      const player = createAudioPlayer(noteAudio);
-      player.volume = noteVolumeRef.current;
+      const player = takePlayer(note);
+      if (!player) return;
       notePlayersRef.current.set(note, player);
-
-      // Restart when playback ends so the note sustains as long as the
-      // button is held. If the player has already been removed from
-      // notePlayersRef (stopNote was called), don't restart.
-      const subscription = player.addListener('playbackStatusUpdate', (status: { playing: boolean }) => {
-        if (!status.playing && notePlayersRef.current.get(note) === player) {
-          try {
-            player.seekTo(0);
-            player.play();
-          } catch {}
-        }
-      });
-      // Store the subscription cleanup so stopNote can remove it
-      (player as any).__loopSub = subscription;
-
+      player.loop = true;
       noteStartTimeRef.current.set(note, Date.now());
       player.play();
+      noteEvents.emit({ note, phase: 'start', source });
     } catch (err) {
       log.error('Failed to play note audio:', err);
     }
-  }, [instrument]);
+  }, [instrument, takePlayer, noteEvents]);
 
   // --- Ambient breath sound cleanup ---
   // Stop any ambient breath sound that may be playing.
@@ -415,67 +520,78 @@ export function useMusicChallenge(
   const hasChords = currentSequence.some(e => isChordEntry(e));
 
   /**
-   * Play back the current sequence using the instrument's note samples.
-   * For chord entries, all notes play simultaneously. Each entry is spaced
-   * at 500ms -matching the UI playback visualization timing.
-   * Only adds a brief gap when consecutive entries are identical (so the
-   * repeated note is audibly distinct).
+   * Play the melody back with the instrument's own samples, in the song's rhythm.
+   * Every entry gets its own players (chords sound together), each faded out at the
+   * end of its slot so notes never pile up. Resolves when the ring-out tail has passed.
    */
-  const playSequenceAsAudio = useCallback((sequence: string[]) => {
-    if (!instrument) return;
-    const noteMs = Math.round(60000 / Math.max(resolvedBpm, 30));
-    const gapMs = 100;
-    let cancelled = false;
-    const playbackPlayers: AudioPlayer[] = [];
+  const playMelody = useCallback((sequence: string[], onFinished: () => void) => {
+    if (!instrument) {
+      onFinished();
+      return;
+    }
+    cancelMelody();
+    const timeline = buildMelodyTimeline(sequence, resolvedBpm, resolvedRhythm);
+    const run: MelodyRun = { timers: new Set(), players: new Set(), soundingNotes: new Set(), cancelled: false };
+    melodyRunRef.current = run;
 
-    const playEntry = (idx: number) => {
-      if (cancelled || idx >= sequence.length) return;
-      const entry = sequence[idx];
-      const prevEntry = idx > 0 ? sequence[idx - 1] : null;
-      const needsGap = prevEntry != null && entry === prevEntry;
-      const notes = isChordEntry(entry) ? parseChordEntry(entry) : [entry];
+    const schedule = (delayMs: number, action: () => void) => {
+      const timer = setTimeout(() => {
+        run.timers.delete(timer);
+        if (!run.cancelled) action();
+      }, delayMs);
+      run.timers.add(timer);
+    };
 
-      const doPlay = () => {
-        if (cancelled) return;
-        // Play all notes in this entry simultaneously
-        for (const note of notes) {
-          const noteAudio = instrument.notes[note];
-          if (!noteAudio) continue;
-          try {
-            const player = createAudioPlayer(noteAudio);
-            player.volume = noteVolumeRef.current;
-            playbackPlayers.push(player);
-            player.play();
-          } catch {}
-        }
-        // Hold for note duration, then next
-        setTimeout(() => {
-          if (!cancelled) playEntry(idx + 1);
-        }, noteMs);
-      };
+    const stopEntry = (players: AudioPlayer[], notes: string[]) => {
+      for (const player of players) {
+        run.players.delete(player);
+        fadeAndRelease(player, MELODY_RELEASE_FADE_STEPS, MELODY_RELEASE_FADE_INTERVAL_MS);
+      }
+      for (const note of notes) {
+        run.soundingNotes.delete(note);
+        noteEvents.emit({ note, phase: 'end', source: 'melody' });
+      }
+    };
 
-      if (needsGap) {
-        setTimeout(doPlay, gapMs);
+    const startEntry = (event: (typeof timeline.events)[number]) => {
+      const players: AudioPlayer[] = [];
+      for (const note of event.notes) {
+        const player = createNotePlayer(note);
+        if (!player) continue;
+        run.players.add(player);
+        players.push(player);
+        try { player.play(); } catch {}
+        run.soundingNotes.add(note);
+        noteEvents.emit({ note, phase: 'start', source: 'melody', durationMs: event.soundMs });
+      }
+      melodyTickRef.current += 1;
+      setPlaybackPosition({ index: event.index, tick: melodyTickRef.current });
+      schedule(event.soundMs, () => stopEntry(players, event.notes));
+    };
+
+    for (const event of timeline.events) {
+      if (event.startMs === 0) {
+        startEntry(event);
       } else {
-        doPlay();
+        schedule(event.startMs, () => startEntry(event));
       }
-    };
-
-    playEntry(0);
-
-    // Return cleanup function
-    return () => {
-      cancelled = true;
-      for (const p of playbackPlayers) {
-        try { p.release(); } catch {}
+    }
+    schedule(timeline.totalMs, () => {
+      melodyRunRef.current = null;
+      for (const player of run.players) {
+        try { player.release(); } catch {}
       }
-    };
-  }, [instrument, resolvedBpm]);
+      run.players.clear();
+      setPlaybackPosition(null);
+      onFinished();
+    });
+  }, [instrument, resolvedBpm, resolvedRhythm, cancelMelody, fadeAndRelease, createNotePlayer, noteEvents]);
 
   /** Handle sequence completion -plays the full song back note-by-note */
   const handleSequenceComplete = useCallback(() => {
+    if (stateRef.current !== 'awaiting_input') return;
     activeNotesRef.current.clear();
-    setState('sequence_complete');
+    updateState('sequence_complete');
     log.debug(`Sequence completed! (difficulty ${difficultyLevel})`);
 
     // Always play the full original song on completion (resolvedSequence),
@@ -484,33 +600,21 @@ export function useMusicChallenge(
     const successSequence = resolvedSequence.length > 0 ? resolvedSequence : currentSequence;
 
     if (instrument && successSequence.length > 0) {
-      setState('playing_success_song');
+      updateState('playing_success_song');
 
       // If the recorder is active (blow mode), pause it first so the
       // success song plays at full speaker volume instead of the quieter
       // playAndRecord session.
       const startPlayback = () => {
-        const cleanupPlayback = playSequenceAsAudio(successSequence);
-        const noteMs = Math.round(60000 / Math.max(resolvedBpm, 30));
-        const gapMs = 100;
-        // Calculate total time including extra gaps for repeated consecutive notes
-        let totalMs = noteMs; // buffer at end
-        for (let i = 0; i < successSequence.length; i++) {
-          totalMs += noteMs;
-          if (i > 0 && successSequence[i] === successSequence[i - 1]) {
-            totalMs += gapMs;
-          }
-        }
-        setTimeout(() => {
-          cleanupPlayback?.();
+        playMelody(successSequence, () => {
           // Resume recording if it was paused
           if (blowActiveCountRef.current <= 0 && isRecorderPausedRef.current) {
             isRecorderPausedRef.current = false;
             audioSessionRef.current?.resumeRecording();
           }
-          setState('completed');
+          updateState('completed');
           onComplete?.();
-        }, totalMs);
+        });
       };
 
       // Clear blow-mode state and pause recorder for full-volume playback
@@ -523,10 +627,10 @@ export function useMusicChallenge(
         startPlayback();
       }
     } else {
-      setState('completed');
+      updateState('completed');
       onComplete?.();
     }
-  }, [onComplete, difficultyLevel, instrument, currentSequence, resolvedSequence, playSequenceAsAudio, resolvedBpm]);
+  }, [onComplete, difficultyLevel, instrument, currentSequence, resolvedSequence, playMelody, updateState]);
 
   /**
    * Process a note (or chord) against the sequence matcher.
@@ -585,8 +689,8 @@ export function useMusicChallenge(
 
   const playNote = useCallback((note: string) => {
     log.debug(`playNote called: note=${note}, state=${state}, instrument=${!!instrument}, config=${!!config}`);
-    if (state !== 'awaiting_input' || !instrument || !config) {
-      log.debug(`playNote bailed: state=${state}, instrument=${!!instrument}, config=${!!config}`);
+    if (stateRef.current !== 'awaiting_input' || !instrument || !config) {
+      log.debug(`playNote bailed: state=${stateRef.current}, instrument=${!!instrument}, config=${!!config}`);
       return;
     }
 
@@ -598,7 +702,7 @@ export function useMusicChallenge(
       if (config.micRequired && audioSessionRef.current?.isListening) {
         blowActiveCountRef.current++;
         void ensurePlaybackSession().then(() => {
-          playNoteAudio(note);
+          playNoteAudio(note, 'press');
           processNoteForSequence(note);
           // Start a max-sustain timer: auto-fade after BLOW_MAX_SUSTAIN_MS
           // so the note doesn't ring forever while the session is paused.
@@ -612,11 +716,11 @@ export function useMusicChallenge(
       const ctrl = audioSessionRef.current;
       if (ctrl && !ctrl.isInPlaybackMode()) {
         void ctrl.ensurePlaybackMode().then(() => {
-          playNoteAudio(note);
+          playNoteAudio(note, 'press');
           processNoteForSequence(note);
         });
       } else {
-        playNoteAudio(note);
+        playNoteAudio(note, 'press');
         processNoteForSequence(note);
       }
     } else {
@@ -645,14 +749,14 @@ export function useMusicChallenge(
         blowActiveCountRef.current += notesToPlay.length;
         void ensurePlaybackSession().then(() => {
           for (const note of notesToPlay) {
-            playNoteAudio(note);
+            playNoteAudio(note, 'press');
             processNoteForSequence(note);
             startBlowSustainTimer(note);
           }
         });
       } else {
         for (const note of notesToPlay) {
-          playNoteAudio(note);
+          playNoteAudio(note, 'press');
           processNoteForSequence(note);
         }
       }
@@ -660,38 +764,22 @@ export function useMusicChallenge(
   }, [isBreathActive, state, config, processNoteForSequence, playNoteAudio, ensurePlaybackSession]);
 
   const previewNote = useCallback((note: string) => {
+    if (stateRef.current === 'playing_success_song') return;
     // If the audio session is already in playback mode (cached), fire immediately.
     // Otherwise do the async switch first -only happens on the very first note.
     const ctrl = audioSessionRef.current;
     if (ctrl && !ctrl.isInPlaybackMode()) {
-      void ctrl.ensurePlaybackMode().then(() => playNoteAudio(note));
+      void ctrl.ensurePlaybackMode().then(() => playNoteAudio(note, 'preview'));
     } else {
-      playNoteAudio(note);
+      playNoteAudio(note, 'preview');
     }
   }, [playNoteAudio]);
 
-  // Fade out and release a single audio player over ~200ms.
-  // Also removes the loop listener so the sample doesn't restart during fade.
-  const fadeOutPlayer = useCallback((player: AudioPlayer) => {
-    // Remove the loop-restart listener first
-    try { (player as any).__loopSub?.remove(); } catch {}
-
-    const fadeSteps = 5;
-    const fadeInterval = 40; // ms per step → ~200ms total fade
-    let step = 0;
-    const startVolume = player.volume ?? 1;
-    const fade = setInterval(() => {
-      step++;
-      try { player.volume = startVolume * (1 - step / fadeSteps); } catch {}
-      if (step >= fadeSteps) {
-        clearInterval(fade);
-        fadeIntervalsRef.current.delete(fade);
-        try { player.pause(); } catch {}
-        try { player.release(); } catch {}
-      }
-    }, fadeInterval);
-    fadeIntervalsRef.current.add(fade);
-  }, []);
+  // Dampen a held note on release: fade it out over ~150ms, then release the player.
+  const fadeOutNote = useCallback((note: string, player: AudioPlayer) => {
+    noteEvents.emit({ note, phase: 'end', source: 'press' });
+    fadeAndRelease(player, RELEASE_FADE_STEPS, RELEASE_FADE_INTERVAL_MS);
+  }, [noteEvents, fadeAndRelease]);
 
   // Start a sustain timer for a blow-mode note. When it expires, the note
   // fades out and the recorder resumes (same as if the key was released).
@@ -707,7 +795,7 @@ export function useMusicChallenge(
       const player = notePlayersRef.current.get(note);
       if (player) {
         notePlayersRef.current.delete(note);
-        fadeOutPlayer(player);
+        fadeOutNote(note, player);
       }
       noteStartTimeRef.current.delete(note);
       activeNotesRef.current.delete(note);
@@ -718,7 +806,7 @@ export function useMusicChallenge(
       }
     }, BLOW_MAX_SUSTAIN_MS);
     blowSustainTimersRef.current.set(note, timer);
-  }, [fadeOutPlayer, maybeResumeRecording]);
+  }, [fadeOutNote, maybeResumeRecording]);
 
   // Clear all sustain timers (for cleanup / breath stop)
   const clearAllBlowSustainTimers = useCallback(() => {
@@ -744,11 +832,10 @@ export function useMusicChallenge(
     }
 
     const doStop = () => {
-      // Dampen the note on release -fade out over ~200ms then release.
       const player = notePlayersRef.current.get(note);
       if (player) {
         notePlayersRef.current.delete(note);
-        fadeOutPlayer(player);
+        fadeOutNote(note, player);
       }
       noteStartTimeRef.current.delete(note);
 
@@ -774,7 +861,7 @@ export function useMusicChallenge(
       }
     }
     doStop();
-  }, [fadeOutPlayer, config, maybeResumeRecording]);
+  }, [fadeOutNote, config, maybeResumeRecording]);
 
   // In blow mode (micRequired), fade out ALL active notes when breath stops.
   // Notes should only sustain while the user is actively blowing + holding
@@ -786,7 +873,7 @@ export function useMusicChallenge(
       log.debug('Breath stopped -fading out all active note players');
       for (const [note, player] of notePlayersRef.current) {
         notePlayersRef.current.delete(note);
-        fadeOutPlayer(player);
+        fadeOutNote(note, player);
       }
       // Clear all sustain timers -notes are being stopped by breath-off
       clearAllBlowSustainTimers();
@@ -794,30 +881,33 @@ export function useMusicChallenge(
       blowActiveCountRef.current = 0;
       maybeResumeRecording();
     }
-  }, [isBreathActive, config, fadeOutPlayer, clearAllBlowSustainTimers, maybeResumeRecording]);
+  }, [isBreathActive, config, fadeOutNote, clearAllBlowSustainTimers, maybeResumeRecording]);
 
   const retry = useCallback(() => {
+    if (stateRef.current === 'playing_success_song') return;
     matcherRef.current?.reset();
     activeNotesRef.current.clear();
     setSequenceResult(null);
     setLastInputCorrect(null);
-    setState('awaiting_input');
+    updateState('awaiting_input');
     log.debug('Music challenge retry');
-  }, []);
+  }, [updateState]);
 
   const skip = useCallback(() => {
     if (config?.allowSkip) {
-      setState('completed');
+      cancelMelody();
+      updateState('completed');
       onComplete?.();
       log.debug('Music challenge skipped');
     }
-  }, [config, onComplete]);
+  }, [config, onComplete, cancelMelody, updateState]);
 
   const MAX_DIFFICULTY = 5;
 
   /** Go Harder: generate a more difficult chord sequence and restart */
   const goHarder = useCallback(() => {
     if (!instrument || !config) return;
+    if (stateRef.current === 'playing_success_song') return;
     if (difficultyLevel >= MAX_DIFFICULTY) return;
     const nextLevel = difficultyLevel + 1;
     const availableNotes = Object.keys(instrument.notes);
@@ -826,29 +916,30 @@ export function useMusicChallenge(
     setCurrentSequence(harderSeq);
     matcherRef.current = new SequenceMatcher(harderSeq);
     activeNotesRef.current.clear();
-    setState('awaiting_input');
+    updateState('awaiting_input');
     setLastInputCorrect(null);
     setSequenceResult(null);
     setFailedAttempts(0);
     log.debug(`Go harder! Level ${nextLevel}, sequence: ${harderSeq.join(' ')}`);
-  }, [instrument, config, difficultyLevel]);
+  }, [instrument, config, difficultyLevel, updateState]);
 
   const cleanup = useCallback(() => {
     log.debug('cleanup() called');
     try {
+      cancelMelody();
       releaseAllNotePlayers();
       stopAmbientSound();
       clearAllBlowSustainTimers();
       matcherRef.current = null;
       activeNotesRef.current.clear();
-      setState('idle');
+      updateState('idle');
       setDifficultyLevel(1);
       setCurrentSequence([]);
       log.debug('cleanup() completed');
     } catch (err) {
       log.error('cleanup() error:', err);
     }
-  }, [releaseAllNotePlayers, stopAmbientSound, clearAllBlowSustainTimers]);
+  }, [cancelMelody, releaseAllNotePlayers, stopAmbientSound, clearAllBlowSustainTimers, updateState]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -866,12 +957,19 @@ export function useMusicChallenge(
         }
         fadeIntervalsRef.current.clear();
 
-        // Remove loop subscriptions before releasing to prevent native crashes
-        notePlayersRef.current.forEach(player => {
-          try { (player as any).__loopSub?.remove(); } catch {}
-        });
-        const players = [...notePlayersRef.current.values()];
+        const run = melodyRunRef.current;
+        if (run) {
+          melodyRunRef.current = null;
+          run.cancelled = true;
+          for (const timer of run.timers) clearTimeout(timer);
+          for (const player of run.players) {
+            try { player.release(); } catch {}
+          }
+        }
+
+        const players = [...notePlayersRef.current.values(), ...warmPlayersRef.current.values()];
         notePlayersRef.current.clear();
+        warmPlayersRef.current.clear();
         for (const player of players) {
           try { player.release(); } catch {}
         }
@@ -908,6 +1006,8 @@ export function useMusicChallenge(
     currentSequence,
     resolvedSequence,
     resolvedBpm,
+    playbackPosition,
+    noteEvents,
 
     start,
     playNote,

@@ -11,6 +11,7 @@ jest.mock('react-native-reanimated', () => {
   const View = require('react-native').View;
   const Text = require('react-native').Text;
   const ScrollView = require('react-native').ScrollView;
+  const Image = require('react-native').Image;
 
   // Chainable builder for entering/exiting layout animations (FadeIn.duration(300).delay(100)...)
   const createAnimationBuilder = () => {
@@ -27,12 +28,14 @@ jest.mock('react-native-reanimated', () => {
       View: View,
       Text: Text,
       ScrollView: ScrollView,
+      Image: Image,
       createAnimatedComponent: (component) => component,
       call: () => {},
     },
     View: View,
     Text: Text,
     ScrollView: ScrollView,
+    Image: Image,
     createAnimatedComponent: (component) => component,
     useSharedValue: jest.fn(() => ({ value: 0 })),
     useAnimatedStyle: jest.fn(() => ({})),
