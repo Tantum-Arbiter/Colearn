@@ -15,6 +15,9 @@ Songs are registered in `services/music-asset-registry.ts` in the `PRACTICE_SONG
 | `sequence`      | Array of note names, e.g. `['C','D','E','D','C']` |
 | `requiredNotes` | Unique notes used (for instrument-compatibility filtering) |
 | `bpm`           | Tempo hint in beats per minute |
+| `rhythm`        | Optional beats per entry (same length as `sequence`, e.g. `[1, 1, 2]`); the completion melody holds each note for its beats × 60000 / `bpm` ms, with a short articulation gap. Songs without one play every entry for one beat |
+
+The well-known nursery rhymes carry their real rhythm (Hot Cross Buns, Twinkle Twinkle, Ode to Joy, London Bridge, Mary Had a Little Lamb, Old MacDonald, Jingle Bells, Frère Jacques, Happy Birthday, Row Row Row Your Boat, Three Blind Mice, Itsy Bitsy Spider, Au Clair de la Lune). Keep `requiredNotes` equal to the set of notes in `sequence` -a test enforces both invariants.
 
 ---
 
@@ -69,7 +72,7 @@ Songs are automatically filtered by instrument. A song only appears if the instr
 | Flute | C, D, E, F, G, A | All songs |
 | Recorder | C, D, E, F, G, A | All songs |
 | Ocarina | C, D, E, F, G, A | All songs |
-| Clarinet | C, D, E, F, G | All except those needing A |
+| Clarinet | C, D, E, F, G, A | All songs |
 | Saxophone | C, D, E, F, G | All except those needing A |
 | Trumpet | C, D, E | Only songs using C–E (three valves) |
 

@@ -55,7 +55,10 @@ story-book-reader.tsx (integration layer -detects music pages, gates navigation)
 |-|-|
 | `types/story.ts` | `MusicChallenge`, `PageInteractionType` types |
 | `services/music-asset-registry.ts` | Local asset registry -maps instrument/song IDs to bundled files, body artwork and hole positions |
-| `services/instrument-surface-layout.ts` | Pure layout -fits the body artwork into the measured area and pins one note button per hole |
+| `services/instrument-surface-layout.ts` | Pure layout -fits the body artwork into the measured area (leaving room for the bell to swell) and pins one note button per hole |
+| `services/melody-scheduler.ts` | Pure timeline for the completion melody -one slot per entry from the song's `rhythm` and `bpm`, with an articulation gap |
+| `services/note-event-bus.ts` | Start/end events for every note the instrument sounds; the bell animation subscribes to it |
+| `components/music/instrument-bell.tsx` | Reusable bell swell -scales the instrument's bell cutout while notes sound, off under reduce-motion |
 | `services/sequence-matcher.ts` | Pure note sequence matching logic |
 | `services/music-analytics.ts` | Analytics event tracking |
 | `hooks/use-mic-permission.ts` | Shared mic permission singleton -used by both recording and breath detection |
@@ -250,26 +253,36 @@ Every story page should declare its `interactionType`. This applies to both loca
 | `recorder` | Woodland Recorder | recorder | C D E F G A (6) | 6 holes | Forest, woodland creatures |
 | `ocarina` | Enchanted Ocarina | ocarina | C D E F G A (6) | 6 holes | Magic, mystery, night sky |
 | `trumpet` | Golden Trumpet | trumpet | C D E (3) | 3 valves | Knights, castles, heroic |
-| `clarinet` | Jazzy Clarinet | clarinet | C D E F G (5) | none -generic tube | Jazz, city nightlife |
+| `clarinet` | Jazzy Clarinet | clarinet | C D E F G A (6) | 6 holes | Jazz, city nightlife |
 | `saxophone` | Sunshine Saxophone | saxophone | C D E F G (5) | 5 holes | Funk, dance, rainbow |
 
 The note count follows the artwork: one note per hole (or valve), ordered left to right from C.
-`recorder/A.wav` and `ocarina/A.wav` were derived from each instrument's `G.wav` by a two-semitone
-pitch shift (ffmpeg `asetrate`/`atempo`, 2026-09-08) so the sixth hole plays; replace them with real
+Every instrument colours its buttons from the shared `NOTE_COLORS` (C red, D orange, E amber,
+F green, G blue, A violet -Boomwhacker order), so a note keeps its colour when the child changes
+instrument; the sequence dots, music sheet and song previews use the same map. The per-instrument
+`label`/`icon` emoji remain a theme for future use -nothing renders them today.
+`recorder/A.wav`, `ocarina/A.wav` and `clarinet/A.wav` were derived from each instrument's `G.wav`
+by a two-semitone pitch shift (2026-09-08) so the sixth hole plays; replace them with real
 recordings when available.
 
-**Every sample is tuned to equal temperament (A4 = 440 Hz).** On 2026-09-08 the bundled recordings
-were measured and resampled to their exact named pitch (the saxophone set was up to 48 cents flat,
-the flute G 30 cents sharp, and the recorder "F" was an F♯). Check any new or replaced sample with:
+**Every sample is tuned to equal temperament (A4 = 440 Hz)** and conditioned for the instrument UI
+(2026-09-08). Each instrument sits in one register (trumpet C4–A4, clarinet/flute/ocarina/saxophone
+C5–A5, recorder C6–A6). `scripts/prepare-note-samples.py` turns a raw recording into the bundled
+sample: mono 44.1 kHz 16-bit, silence before the onset trimmed to ~6 ms so the note speaks on the
+touch, the steady tone looped to 3.2 s (whole periods found by autocorrelation, phase-aligned linear
+crossfades, the tone eased onto its exact named pitch before the loop starts), the recording's own
+release kept at the end, then every sample matched to −17 dBFS RMS with a −1 dBFS peak ceiling.
+Run it on a folder of new recordings, then check the result:
 
 ```bash
-python3 scripts/check-note-pitch.py --tolerance-cents 5   # needs numpy; exits 1 on any drift
+python3 scripts/prepare-note-samples.py --src /path/to/raw --out assets/music/notes   # needs numpy
+python3 scripts/check-note-pitch.py --tolerance-cents 5   # measures the held tone; exits 1 on drift
 ```
 
-Correct a drifting sample by resampling rather than re-recording when the timbre is fine:
-`ffmpeg -i in.wav -af "asetrate=44100*R,aresample=44100,atempo=1/R" out.wav` where
-`R = target_hz / measured_hz`. The trumpet has three valves, so it plays three notes -songs that need
-F, G or A are filtered out of its practise list and cannot be assigned to it in stories.
+The pitch check finds the note spectrally, then refines the held tone (0.5–1.5 s) by autocorrelation
+around the named pitch, so it is not fooled by a breathy attack or by octave-ambiguous spectra.
+The trumpet has three valves, so it plays three notes -songs that need F, G or A are filtered out of
+its practise list and cannot be assigned to it in stories.
 
 > **Backward compatibility**: Old IDs like `flute_basic`, `trumpet_basic` etc. are aliased to the
 > new short IDs. CMS metadata using either form will work. New content should use the short form.
@@ -295,7 +308,7 @@ assets/music/
 │   ├── ocarina.webp / ocarina-body.webp
 │   ├── trumpet.webp / trumpet-body.webp
 │   ├── saxophone.webp / saxophone-body.webp
-│   └── clarinet.png           # placeholder icon -no body art yet
+│   └── clarinet.webp / clarinet-body.webp
 ├── notes/                # Note audio samples per instrument family
 │   ├── flute/
 │   │   ├── C.mp3
@@ -311,7 +324,7 @@ assets/music/
 │   ├── trumpet/
 │   │   ├── C.mp3  ...  F.mp3
 │   ├── clarinet/
-│   │   ├── C.mp3  ...  G.mp3
+│   │   ├── C.mp3  ...  A.mp3
 │   └── saxophone/
 │       ├── C.mp3  ...  G.mp3
 └── songs/                # Success/celebration songs (shared across instruments)
@@ -368,10 +381,10 @@ trumpet: {
   },
   noteCount: 4,
   noteLayout: [
-    { note: 'C', label: '🛡️', color: '#FFA000', icon: 'shield' },
-    { note: 'D', label: '⚔️', color: '#F4511E', icon: 'sword' },
-    { note: 'E', label: '👑', color: '#FFD600', icon: 'crown' },
-    { note: 'F', label: '🏰', color: '#6D4C41', icon: 'castle' },
+    { note: 'C', label: '🛡️', color: NOTE_COLORS.C, icon: 'shield' },
+    { note: 'D', label: '⚔️', color: NOTE_COLORS.D, icon: 'sword' },
+    { note: 'E', label: '👑', color: NOTE_COLORS.E, icon: 'crown' },
+    { note: 'F', label: '🏰', color: NOTE_COLORS.F, icon: 'castle' },
   ],
 },
 ```
@@ -416,17 +429,17 @@ In Firestore (CMS) or `data/bundled-stories.ts` (local), set up the story page:
 
 | ID | Type | Status |
 |-|-|-|
-| `flute` | Instrument | Registered (placeholder -`require()` calls commented out, needs audio files) |
-| `recorder` | Instrument | Registered (placeholder) |
-| `ocarina` | Instrument | Registered (placeholder) |
-| `trumpet` | Instrument | Registered (placeholder) |
-| `clarinet` | Instrument | Registered (placeholder) |
-| `saxophone` | Instrument | Registered (placeholder) |
+| `flute` | Instrument | Active -thumbnail, body art, bell cutout, 6 note samples |
+| `recorder` | Instrument | Active -thumbnail, body art, bell cutout, 6 note samples (A derived from G) |
+| `ocarina` | Instrument | Active -thumbnail, body art, mouthpiece cutout, 6 note samples (A derived from G) |
+| `trumpet` | Instrument | Active -thumbnail, body art, bell cutout, 3 valve notes (F, G, A samples unused) |
+| `clarinet` | Instrument | Active -thumbnail, body art, bell cutout, 6 note samples (A derived from G, 2026-09-08) |
+| `saxophone` | Instrument | Active -thumbnail, body art, bell cutout, 5 note samples |
 
-> **Important**: All 6 instruments are registered in `music-asset-registry.ts` with `image: 0`
-> and empty `notes: {}`. The `require()` calls are commented out. Once you add the real audio
-> and image files, uncomment them per instrument. The noteLayout (button icons/colors) is already
-> configured and does not need audio files to work.
+> All six instruments are fully wired. To replace a sample, drop the recording in
+> `assets/music/notes/{family}/` and run `scripts/prepare-note-samples.py` then
+> `scripts/check-note-pitch.py`; to replace body art, update the hole fractions and rerun
+> `scripts/make-instrument-bells.py`.
 
 ---
 
@@ -457,8 +470,27 @@ In Firestore (CMS) or `data/bundled-stories.ts` (local), set up the story page:
   fractions of the body art width/height. `MusicChallengeUI` measures the space it has, fits the
   art with contain scaling (`services/instrument-surface-layout.ts`) and pins one `NoteButton`
   per hole, so every instrument shares the same press, glow, pulse and playback effects
-- **No artwork**: an instrument without `artwork` (currently the clarinet) falls back to the
-  generic tube with a row of note buttons
+- **Bell cutout** (`{id}-bell.webp`): the body art cropped to the bell / open end with its alpha
+  feathered where it joins the tube, generated by `scripts/make-instrument-bells.py` (which owns
+  the frame numbers). Registered as `artwork.bell: { image, frame, origin, scale }` -all fractions
+  of the body art. `InstrumentBell` draws it exactly over the body and scales it about `origin`
+  (the join) by `scale` while any note sounds, so only the bell moves and the rest of the art is
+  untouched. Only mouth-blown instruments get a bell (flute, recorder, clarinet, trumpet, saxophone)
+- **Body pulse** (`artwork.bodyPulse: { x, y }`): vessel instruments with no bell (the ocarina)
+  breathe as a whole instead -`InstrumentBodyPulse` scales the art *and* its pinned buttons
+  together by 2–3 % about the centre. Both effects share `useNoteSwell`, which follows
+  `challenge.noteEvents`, so they are in step with the sound and switch off under reduce-motion
+- **Placement** (`layoutInstrumentStage`): the body art is pinned to the left edge (tube art is drawn
+  to bleed off that edge, so the left cut must never be visible) and stops before the right
+  safe-area inset plus the bell's swell headroom, so nothing clips under the notch. Its note row is
+  placed exactly on the screen's middle line; the art is only shrunk when that would push its top
+  above `ARTWORK_TOP_MARGIN` or leave no room for the dots-and-controls block under the buttons.
+  The prompt / celebration row floats over the top, and the dots and controls form one block
+  centred between the buttons and the bottom edge (never closer than `LOWER_BLOCK_BUTTON_GAP` to a
+  button, free to overlap the rest of the art). Size and position stay identical from the first
+  note to "Amazing!"
+- **No artwork**: an instrument without `artwork` falls back to the generic tube with a row of
+  note buttons (no bundled instrument uses this any more)
 - **Style**: Match the app's illustration style -colorful, friendly, child-appropriate
 
 ---
@@ -508,6 +540,19 @@ button. This is a hard requirement because:
 The music challenge reuses the same page completion model as existing interactive pages (before/after
 state). This keeps the story progression system simple and consistent. A music page is just another
 kind of stateful interaction that resolves from "before" to "after" when the challenge is completed.
+
+### 5b. Notes sound from prepared players; the melody is scheduled, not replayed
+
+`useMusicChallenge` creates one warm `AudioPlayer` per note when a challenge starts and swaps a
+fresh one in after each press, so the first `play()` of a player never lands on the touch. A held
+note loops its 3.2 s sample and fades over ~150 ms on release. On completion the hook builds a
+timeline with `buildMelodyTimeline` (song `rhythm` in beats × `bpm`, default one beat per entry,
+a 40–140 ms articulation gap) and fades each entry's players at the end of its slot, so notes never
+pile up. While the melody plays, presses, previews, retry and go-harder are ignored; cleanup,
+skip, config change and unmount cancel it. Every sounded note is published on
+`challenge.noteEvents` (`press` / `preview` / `melody`, `start` / `end`), which is what the bell
+swell and the playback highlight (`challenge.playbackPosition`) follow -so the animation tracks
+the audio, not the button.
 
 ### 6. Sequence matching is simple and forgiving
 
@@ -635,6 +680,9 @@ npx jest __tests__/hooks/use-music-challenge.test.ts --forceExit
 | `use-music-challenge.test.ts` | 14 | State transitions, note progress, mic gating, skip, cleanup, error state |
 | `use-mic-permission.test.ts` | 12 | Singleton caching, no double prompt, concurrent dedup, cross-hook sharing, denial propagation |
 | `instrument-picker-overlay.test.tsx` | 12 | Visibility, instrument display, title/subtitle, confirm button, placeholders, defaults |
+| `melody-scheduler.test.ts` | 11 | Rhythm slots, fallback to one beat, articulation gap, chords, tempo clamping |
+| `note-event-bus.test.ts` | 4 | Delivery, unsubscribe, listener isolation, ordering |
+| `music/instrument-bell.test.tsx` | 7 | Frame placement, touch pass-through, swell/relax on note events, reduce-motion, unmount |
 
 ### Backend Test Coverage (gateway-service)
 
