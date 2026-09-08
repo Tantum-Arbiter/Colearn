@@ -7,8 +7,9 @@
  * Supported instruments: flute, recorder, ocarina, trumpet, clarinet, saxophone
  *
  * Asset directory structure:
- *   assets/music/instruments/{instrumentId}.png       -instrument image
- *   assets/music/notes/{instrumentFamily}/{note}.wav  -individual note samples
+ *   assets/music/instruments/{instrumentId}.webp       -square thumbnail for carousels
+ *   assets/music/instruments/{instrumentId}-body.webp  -landscape body art the note buttons sit on
+ *   assets/music/notes/{instrumentFamily}/{note}.wav   -individual note samples
  *
  * Success melodies are played back note-by-note using the instrument's own samples
  * after a music challenge is completed -no pre-recorded song files needed.
@@ -37,9 +38,23 @@ export interface InstrumentDefinition {
   displayName: string; // Child-friendly display name
   description: string; // Short description for tooltips / accessibility
   image: number; // require() result for local instrument image
+  artwork?: InstrumentArtwork; // Landscape body illustration the note buttons sit on
   notes: Record<string, number>; // noteName -> require() result for note audio sample
   noteLayout: NoteLayoutItem[]; // Visual layout for on-screen note buttons
   noteCount: number; // Number of playable notes (for UI layout decisions)
+}
+
+// Landscape illustration of the instrument body; hole positions live on the note layout
+export interface InstrumentArtwork {
+  image: number; // require() result for the body illustration
+  aspectRatio: number; // width / height of the illustration
+  holeDiameter: number; // hole diameter as a fraction of the illustration width
+}
+
+// Hole centre as fractions of the artwork width / height
+export interface HolePosition {
+  x: number;
+  y: number;
 }
 
 // Visual layout for a single note button
@@ -48,6 +63,7 @@ export interface NoteLayoutItem {
   label: string; // Display label (emoji/icon for children, not music notation)
   color: string; // Button background color
   icon?: string; // Optional icon identifier for themed rendering
+  hole?: HolePosition; // Where the button sits on the instrument artwork
 }
 
 
@@ -70,7 +86,12 @@ const INSTRUMENTS: Record<string, InstrumentDefinition> = {
     family: 'flute',
     displayName: 'Magic Flute',
     description: 'A gentle flute with a light, airy sound',
-    image: require('@/assets/music/instruments/flute.png'),
+    image: require('@/assets/music/instruments/flute.webp'),
+    artwork: {
+      image: require('@/assets/music/instruments/flute-body.webp'),
+      aspectRatio: 8.3585,
+      holeDiameter: 0.0406,
+    },
     notes: {
       C: require('@/assets/music/notes/flute/C.wav'),
       D: require('@/assets/music/notes/flute/D.wav'),
@@ -81,12 +102,12 @@ const INSTRUMENTS: Record<string, InstrumentDefinition> = {
     },
     noteCount: 6,
     noteLayout: [
-      { note: 'C', label: '⭐', color: '#4FC3F7', icon: 'star' },
-      { note: 'D', label: '🌙', color: '#FFD54F', icon: 'moon' },
-      { note: 'E', label: '🍃', color: '#81C784', icon: 'leaf' },
-      { note: 'F', label: '🌸', color: '#F48FB1', icon: 'flower' },
-      { note: 'G', label: '☀️', color: '#FFB74D', icon: 'sun' },
-      { note: 'A', label: '💧', color: '#4DD0E1', icon: 'droplet' },
+      { note: 'C', label: '⭐', color: '#4FC3F7', icon: 'star', hole: { x: 0.1618, y: 0.4906 } },
+      { note: 'D', label: '🌙', color: '#FFD54F', icon: 'moon', hole: { x: 0.2739, y: 0.4906 } },
+      { note: 'E', label: '🍃', color: '#81C784', icon: 'leaf', hole: { x: 0.3853, y: 0.4906 } },
+      { note: 'F', label: '🌸', color: '#F48FB1', icon: 'flower', hole: { x: 0.4951, y: 0.4906 } },
+      { note: 'G', label: '☀️', color: '#FFB74D', icon: 'sun', hole: { x: 0.605, y: 0.4906 } },
+      { note: 'A', label: '💧', color: '#4DD0E1', icon: 'droplet', hole: { x: 0.7133, y: 0.4906 } },
     ],
   },
 
@@ -95,21 +116,28 @@ const INSTRUMENTS: Record<string, InstrumentDefinition> = {
     family: 'recorder',
     displayName: 'Woodland Recorder',
     description: 'A warm recorder with a soft, woody tone',
-    image: require('@/assets/music/instruments/recorder.png'),
+    image: require('@/assets/music/instruments/recorder.webp'),
+    artwork: {
+      image: require('@/assets/music/instruments/recorder-body.webp'),
+      aspectRatio: 4.0728,
+      holeDiameter: 0.0378,
+    },
     notes: {
       C: require('@/assets/music/notes/recorder/C.wav'),
       D: require('@/assets/music/notes/recorder/D.wav'),
       E: require('@/assets/music/notes/recorder/E.wav'),
       F: require('@/assets/music/notes/recorder/F.wav'),
       G: require('@/assets/music/notes/recorder/G.wav'),
+      A: require('@/assets/music/notes/recorder/A.wav'),
     },
-    noteCount: 5,
+    noteCount: 6,
     noteLayout: [
-      { note: 'C', label: '🌲', color: '#66BB6A', icon: 'tree' },
-      { note: 'D', label: '🍄', color: '#EF5350', icon: 'mushroom' },
-      { note: 'E', label: '🦋', color: '#AB47BC', icon: 'butterfly' },
-      { note: 'F', label: '🐦', color: '#42A5F5', icon: 'bird' },
-      { note: 'G', label: '🌻', color: '#FFA726', icon: 'sunflower' },
+      { note: 'C', label: '🌲', color: '#66BB6A', icon: 'tree', hole: { x: 0.1429, y: 0.4906 } },
+      { note: 'D', label: '🍄', color: '#EF5350', icon: 'mushroom', hole: { x: 0.2348, y: 0.4927 } },
+      { note: 'E', label: '🦋', color: '#AB47BC', icon: 'butterfly', hole: { x: 0.3277, y: 0.4906 } },
+      { note: 'F', label: '🐦', color: '#42A5F5', icon: 'bird', hole: { x: 0.4206, y: 0.4906 } },
+      { note: 'G', label: '🌻', color: '#FFA726', icon: 'sunflower', hole: { x: 0.5135, y: 0.4948 } },
+      { note: 'A', label: '🦊', color: '#FF8A65', icon: 'fox', hole: { x: 0.6085, y: 0.4927 } },
     ],
   },
 
@@ -118,21 +146,28 @@ const INSTRUMENTS: Record<string, InstrumentDefinition> = {
     family: 'ocarina',
     displayName: 'Enchanted Ocarina',
     description: 'A mysterious ocarina with a dreamy, magical sound',
-    image: require('@/assets/music/instruments/ocarina.png'),
+    image: require('@/assets/music/instruments/ocarina.webp'),
+    artwork: {
+      image: require('@/assets/music/instruments/ocarina-body.webp'),
+      aspectRatio: 1.7865,
+      holeDiameter: 0.0581,
+    },
     notes: {
       C: require('@/assets/music/notes/ocarina/C.wav'),
       D: require('@/assets/music/notes/ocarina/D.wav'),
       E: require('@/assets/music/notes/ocarina/E.wav'),
       F: require('@/assets/music/notes/ocarina/F.wav'),
       G: require('@/assets/music/notes/ocarina/G.wav'),
+      A: require('@/assets/music/notes/ocarina/A.wav'),
     },
-    noteCount: 5,
+    noteCount: 6,
     noteLayout: [
-      { note: 'C', label: '🔮', color: '#7E57C2', icon: 'crystal' },
-      { note: 'D', label: '✨', color: '#5C6BC0', icon: 'sparkle' },
-      { note: 'E', label: '🌟', color: '#26C6DA', icon: 'glow' },
-      { note: 'F', label: '🦉', color: '#8D6E63', icon: 'owl' },
-      { note: 'G', label: '🌌', color: '#3F51B5', icon: 'galaxy' },
+      { note: 'C', label: '🔮', color: '#7E57C2', icon: 'crystal', hole: { x: 0.1668, y: 0.6622 } },
+      { note: 'D', label: '✨', color: '#5C6BC0', icon: 'sparkle', hole: { x: 0.2984, y: 0.6683 } },
+      { note: 'E', label: '🌟', color: '#26C6DA', icon: 'glow', hole: { x: 0.4315, y: 0.6707 } },
+      { note: 'F', label: '🦉', color: '#8D6E63', icon: 'owl', hole: { x: 0.5685, y: 0.6719 } },
+      { note: 'G', label: '🌌', color: '#3F51B5', icon: 'galaxy', hole: { x: 0.707, y: 0.6719 } },
+      { note: 'A', label: '☄️', color: '#7986CB', icon: 'comet', hole: { x: 0.8406, y: 0.6659 } },
     ],
   },
 
@@ -141,23 +176,22 @@ const INSTRUMENTS: Record<string, InstrumentDefinition> = {
     family: 'trumpet',
     displayName: 'Golden Trumpet',
     description: 'A bright trumpet with a bold, heroic sound',
-    image: require('@/assets/music/instruments/trumpet.png'),
+    image: require('@/assets/music/instruments/trumpet.webp'),
+    artwork: {
+      image: require('@/assets/music/instruments/trumpet-body.webp'),
+      aspectRatio: 3.1345,
+      holeDiameter: 0.081,
+    },
     notes: {
       C: require('@/assets/music/notes/trumpet/C.wav'),
       D: require('@/assets/music/notes/trumpet/D.wav'),
       E: require('@/assets/music/notes/trumpet/E.wav'),
-      F: require('@/assets/music/notes/trumpet/F.wav'),
-      G: require('@/assets/music/notes/trumpet/G.wav'),
-      A: require('@/assets/music/notes/trumpet/A.wav'),
     },
-    noteCount: 6,
+    noteCount: 3,
     noteLayout: [
-      { note: 'C', label: '🛡️', color: '#FFA000', icon: 'shield' },
-      { note: 'D', label: '⚔️', color: '#F4511E', icon: 'sword' },
-      { note: 'E', label: '👑', color: '#FFD600', icon: 'crown' },
-      { note: 'F', label: '🏰', color: '#6D4C41', icon: 'castle' },
-      { note: 'G', label: '🐉', color: '#D32F2F', icon: 'dragon' },
-      { note: 'A', label: '🔥', color: '#FF6F00', icon: 'fire' },
+      { note: 'C', label: '🛡️', color: '#FFA000', icon: 'shield', hole: { x: 0.193, y: 0.437 } },
+      { note: 'D', label: '⚔️', color: '#F4511E', icon: 'sword', hole: { x: 0.3314, y: 0.437 } },
+      { note: 'E', label: '👑', color: '#FFD600', icon: 'crown', hole: { x: 0.4697, y: 0.437 } },
     ],
   },
 
@@ -189,7 +223,12 @@ const INSTRUMENTS: Record<string, InstrumentDefinition> = {
     family: 'saxophone',
     displayName: 'Sunshine Saxophone',
     description: 'A funky saxophone with a warm, soulful sound',
-    image: require('@/assets/music/instruments/saxophone.png'),
+    image: require('@/assets/music/instruments/saxophone.webp'),
+    artwork: {
+      image: require('@/assets/music/instruments/saxophone-body.webp'),
+      aspectRatio: 2.7932,
+      holeDiameter: 0.04,
+    },
     notes: {
       C: require('@/assets/music/notes/saxophone/C.wav'),
       D: require('@/assets/music/notes/saxophone/D.wav'),
@@ -199,11 +238,11 @@ const INSTRUMENTS: Record<string, InstrumentDefinition> = {
     },
     noteCount: 5,
     noteLayout: [
-      { note: 'C', label: '🌈', color: '#EC407A', icon: 'rainbow' },
-      { note: 'D', label: '🎸', color: '#FF7043', icon: 'guitar' },
-      { note: 'E', label: '🥁', color: '#8E24AA', icon: 'drum' },
-      { note: 'F', label: '🎤', color: '#00897B', icon: 'mic' },
-      { note: 'G', label: '💃', color: '#FDD835', icon: 'dance' },
+      { note: 'C', label: '🌈', color: '#EC407A', icon: 'rainbow', hole: { x: 0.074, y: 0.5627 } },
+      { note: 'D', label: '🎸', color: '#FF7043', icon: 'guitar', hole: { x: 0.1687, y: 0.5627 } },
+      { note: 'E', label: '🥁', color: '#8E24AA', icon: 'drum', hole: { x: 0.2633, y: 0.5593 } },
+      { note: 'F', label: '🎤', color: '#00897B', icon: 'mic', hole: { x: 0.3574, y: 0.561 } },
+      { note: 'G', label: '💃', color: '#FDD835', icon: 'dance', hole: { x: 0.4521, y: 0.561 } },
     ],
   },
 };

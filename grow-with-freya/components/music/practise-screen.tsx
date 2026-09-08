@@ -460,6 +460,7 @@ export function PractiseScreen({ onBack, isActive = false }: PractiseScreenProps
             promptText={t(selectedSong.nameKey)}
             requiredSequence={selectedSong.sequence}
             noteLayout={instrumentDef.noteLayout}
+            artwork={instrumentDef.artwork}
             showBreathButton={breathDetector.useFallback}
             allowSkip
             onSkip={handleBackToSongs}

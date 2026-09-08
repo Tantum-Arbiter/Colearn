@@ -54,7 +54,8 @@ story-book-reader.tsx (integration layer -detects music pages, gates navigation)
 | File | Purpose |
 |-|-|
 | `types/story.ts` | `MusicChallenge`, `PageInteractionType` types |
-| `services/music-asset-registry.ts` | Local asset registry -maps instrument/song IDs to bundled files |
+| `services/music-asset-registry.ts` | Local asset registry -maps instrument/song IDs to bundled files, body artwork and hole positions |
+| `services/instrument-surface-layout.ts` | Pure layout -fits the body artwork into the measured area and pins one note button per hole |
 | `services/sequence-matcher.ts` | Pure note sequence matching logic |
 | `services/music-analytics.ts` | Analytics event tracking |
 | `hooks/use-mic-permission.ts` | Shared mic permission singleton -used by both recording and breath detection |
@@ -243,14 +244,32 @@ Every story page should declare its `interactionType`. This applies to both loca
 
 6 instruments are registered and ready for use. Each has a unique child-friendly visual theme.
 
-| ID | Display Name | Family | Notes | Theme |
-|-|-|-|-|-|
-| `flute` | Magic Flute | flute | C D E F G A (6) | Stars, moons, nature |
-| `recorder` | Woodland Recorder | recorder | C D E F G (5) | Forest, woodland creatures |
-| `ocarina` | Enchanted Ocarina | ocarina | C D E F G (5) | Magic, mystery, night sky |
-| `trumpet` | Golden Trumpet | trumpet | C D E F (4) | Knights, castles, heroic |
-| `clarinet` | Jazzy Clarinet | clarinet | C D E F G (5) | Jazz, city nightlife |
-| `saxophone` | Sunshine Saxophone | saxophone | C D E F G (5) | Funk, dance, rainbow |
+| ID | Display Name | Family | Notes | Artwork | Theme |
+|-|-|-|-|-|-|
+| `flute` | Magic Flute | flute | C D E F G A (6) | 6 holes | Stars, moons, nature |
+| `recorder` | Woodland Recorder | recorder | C D E F G A (6) | 6 holes | Forest, woodland creatures |
+| `ocarina` | Enchanted Ocarina | ocarina | C D E F G A (6) | 6 holes | Magic, mystery, night sky |
+| `trumpet` | Golden Trumpet | trumpet | C D E (3) | 3 valves | Knights, castles, heroic |
+| `clarinet` | Jazzy Clarinet | clarinet | C D E F G (5) | none -generic tube | Jazz, city nightlife |
+| `saxophone` | Sunshine Saxophone | saxophone | C D E F G (5) | 5 holes | Funk, dance, rainbow |
+
+The note count follows the artwork: one note per hole (or valve), ordered left to right from C.
+`recorder/A.wav` and `ocarina/A.wav` were derived from each instrument's `G.wav` by a two-semitone
+pitch shift (ffmpeg `asetrate`/`atempo`, 2026-09-08) so the sixth hole plays; replace them with real
+recordings when available.
+
+**Every sample is tuned to equal temperament (A4 = 440 Hz).** On 2026-09-08 the bundled recordings
+were measured and resampled to their exact named pitch (the saxophone set was up to 48 cents flat,
+the flute G 30 cents sharp, and the recorder "F" was an F♯). Check any new or replaced sample with:
+
+```bash
+python3 scripts/check-note-pitch.py --tolerance-cents 5   # needs numpy; exits 1 on any drift
+```
+
+Correct a drifting sample by resampling rather than re-recording when the timbre is fine:
+`ffmpeg -i in.wav -af "asetrate=44100*R,aresample=44100,atempo=1/R" out.wav` where
+`R = target_hz / measured_hz`. The trumpet has three valves, so it plays three notes -songs that need
+F, G or A are filtered out of its practise list and cannot be assigned to it in stories.
 
 > **Backward compatibility**: Old IDs like `flute_basic`, `trumpet_basic` etc. are aliased to the
 > new short IDs. CMS metadata using either form will work. New content should use the short form.
@@ -269,13 +288,14 @@ Create these directories under `grow-with-freya/assets/music/`:
 
 ```
 assets/music/
-├── instruments/          # Instrument images (PNG, one per instrument)
-│   ├── flute.png
-│   ├── recorder.png
-│   ├── ocarina.png
-│   ├── trumpet.png
-│   ├── clarinet.png
-│   └── saxophone.png
+├── instruments/          # Instrument art (WebP with alpha)
+│   ├── flute.webp             # square thumbnail for carousels / picker
+│   ├── flute-body.webp        # landscape body art the note buttons sit on
+│   ├── recorder.webp / recorder-body.webp
+│   ├── ocarina.webp / ocarina-body.webp
+│   ├── trumpet.webp / trumpet-body.webp
+│   ├── saxophone.webp / saxophone-body.webp
+│   └── clarinet.png           # placeholder icon -no body art yet
 ├── notes/                # Note audio samples per instrument family
 │   ├── flute/
 │   │   ├── C.mp3
@@ -308,8 +328,9 @@ The 6 instruments are already registered in `music-asset-registry.ts` with place
 
 | Asset | Format | Spec |
 |-|-|-|
-| Note samples | MP3 or WAV | 44.1 kHz, 16-bit, < 100KB each, 0.5–2s duration |
-| Instrument image | PNG | Transparent background, 300×300px minimum |
+| Note samples | MP3 or WAV | 44.1 kHz, 16-bit, < 100KB each, 0.5–2s duration, within ±5 cents of the named note (`scripts/check-note-pitch.py`) |
+| Instrument thumbnail | WebP/PNG | Transparent background, square, 512×512px |
+| Instrument body art | WebP/PNG | Transparent background, landscape, ≤1400px wide, holes left to right |
 | Success song | MP3 | 44.1 kHz, 128–320 kbps, < 2MB, 5–30s duration |
 
 **2. Place files in the correct directories**
@@ -427,8 +448,17 @@ In Firestore (CMS) or `data/bundled-stories.ts` (local), set up the story page:
 
 ### Instrument Images
 
-- **Format**: PNG with transparent background
-- **Size**: 300×300px minimum, will be scaled by the app
+- **Thumbnail** (`{id}.webp`): square, transparent background, 512×512px -shown in the carousel
+  and the story instrument picker (no circular crop is applied, so the art can reach the corners)
+- **Body art** (`{id}-body.webp`): landscape, transparent background, ≤1400px wide, holes running
+  left to right. Registered as `artwork: { image, aspectRatio, holeDiameter }` where
+  `aspectRatio` is width ÷ height and `holeDiameter` is the hole width as a fraction of image width
+- **Hole positions**: each `noteLayout` entry carries `hole: { x, y }` -the hole centre as
+  fractions of the body art width/height. `MusicChallengeUI` measures the space it has, fits the
+  art with contain scaling (`services/instrument-surface-layout.ts`) and pins one `NoteButton`
+  per hole, so every instrument shares the same press, glow, pulse and playback effects
+- **No artwork**: an instrument without `artwork` (currently the clarinet) falls back to the
+  generic tube with a row of note buttons
 - **Style**: Match the app's illustration style -colorful, friendly, child-appropriate
 
 ---

@@ -422,7 +422,9 @@ function CarouselItem({
           Navigation is done via the arrow buttons or swiping. */}
       <View style={styles.itemPressable} testID={`instrument-${instrument.id}`}>
         {hasImage ? (
-          <Image source={instrument.image} style={[styles.instrumentImage, isLocked && { opacity: 0.5 }]} resizeMode="contain" />
+          <View style={styles.instrumentDisc}>
+            <Image source={instrument.image} style={[styles.instrumentImage, isLocked && { opacity: 0.5 }]} resizeMode="contain" />
+          </View>
         ) : (
           <View style={[styles.instrumentPlaceholder, { backgroundColor: instrument.noteLayout[0]?.color || '#666' }, isLocked && { opacity: 0.5 }]}>
             <Ionicons name="musical-note" size={40} color="#FFFFFF" />
@@ -608,7 +610,16 @@ const styles = StyleSheet.create({
   instrumentImage: {
     width: INSTRUMENT_IMAGE_SIZE,
     height: INSTRUMENT_IMAGE_SIZE,
+  },
+  instrumentDisc: {
+    width: INSTRUMENT_IMAGE_SIZE,
+    height: INSTRUMENT_IMAGE_SIZE,
     borderRadius: INSTRUMENT_IMAGE_SIZE / 2,
+    backgroundColor: 'rgba(16, 20, 56, 0.85)',
+    borderWidth: 3,
+    borderColor: 'rgba(255,255,255,0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   instrumentPlaceholder: {
     width: INSTRUMENT_IMAGE_SIZE,

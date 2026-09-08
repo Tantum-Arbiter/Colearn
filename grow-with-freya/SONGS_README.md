@@ -67,11 +67,11 @@ Songs are automatically filtered by instrument. A song only appears if the instr
 | Instrument | Available Notes | Compatible Songs |
 |-----------|----------------|-----------------|
 | Flute | C, D, E, F, G, A | All songs |
-| Recorder | C, D, E, F, G | All except those needing A |
-| Ocarina | C, D, E, F, G | All except those needing A |
+| Recorder | C, D, E, F, G, A | All songs |
+| Ocarina | C, D, E, F, G, A | All songs |
 | Clarinet | C, D, E, F, G | All except those needing A |
 | Saxophone | C, D, E, F, G | All except those needing A |
-| Trumpet | C, D, E, F | Only songs using C–F |
+| Trumpet | C, D, E | Only songs using C–E (three valves) |
 
 ---
 

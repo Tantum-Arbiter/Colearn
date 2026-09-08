@@ -216,8 +216,10 @@ function CarouselItem({ instrument, index, anglePerItem, rotation, imageSize, ra
       <Animated.View style={[st.ring, { width: ringSize, height: ringSize, borderRadius: ringSize / 2, top: -12, borderWidth: 3 }, ringStyle]} />
       <View style={{ width: imageSize, height: imageSize, justifyContent: 'center', alignItems: 'center' }}>
         {hasImage ? (
-          <Image source={instrument.image}
-            style={{ width: imageSize, height: imageSize, borderRadius: imageSize / 2, opacity: isLocked ? 0.5 : 1 }} resizeMode="contain" />
+          <View style={[st.disc, { width: imageSize, height: imageSize, borderRadius: imageSize / 2 }]}>
+            <Image source={instrument.image}
+              style={{ width: imageSize, height: imageSize, opacity: isLocked ? 0.5 : 1 }} resizeMode="contain" />
+          </View>
         ) : (
           <View style={[st.ph, { width: imageSize, height: imageSize, borderRadius: imageSize / 2,
             backgroundColor: instrument.noteLayout[0]?.color || '#666', opacity: isLocked ? 0.5 : 1 }]}>
@@ -255,6 +257,7 @@ const st = StyleSheet.create({
   item: { position: 'absolute', alignItems: 'center' },
   ring: { position: 'absolute', borderColor: 'rgba(255,255,255,0.8)' },
   ph: { justifyContent: 'center', alignItems: 'center', borderWidth: 3, borderColor: 'rgba(255,255,255,0.3)' },
+  disc: { justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(16, 20, 56, 0.85)', borderWidth: 3, borderColor: 'rgba(255,255,255,0.3)' },
   label: { alignItems: 'center', marginTop: 8 },
   name: {
     color: '#FFF', fontWeight: '700', fontFamily: Fonts.rounded, textAlign: 'center',

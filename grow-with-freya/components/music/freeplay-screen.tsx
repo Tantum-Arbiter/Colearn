@@ -376,6 +376,7 @@ export function FreeplayScreen({ onBack, isActive = false }: FreeplayScreenProps
               promptText={t('music.freeplayPrompt')}
               requiredSequence={[]}
               noteLayout={instrumentDef!.noteLayout}
+              artwork={instrumentDef!.artwork}
               showBreathButton={breathDetector.useFallback}
               allowSkip={false}
               onSkip={handleBack}

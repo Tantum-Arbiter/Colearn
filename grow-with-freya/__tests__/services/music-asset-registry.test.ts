@@ -22,9 +22,9 @@ import {
 // All 6 supported instruments with their expected properties
 const EXPECTED_INSTRUMENTS = [
   { id: 'flute', family: 'flute', displayName: 'Magic Flute', noteCount: 6 },
-  { id: 'recorder', family: 'recorder', displayName: 'Woodland Recorder', noteCount: 5 },
-  { id: 'ocarina', family: 'ocarina', displayName: 'Enchanted Ocarina', noteCount: 5 },
-  { id: 'trumpet', family: 'trumpet', displayName: 'Golden Trumpet', noteCount: 6 },
+  { id: 'recorder', family: 'recorder', displayName: 'Woodland Recorder', noteCount: 6 },
+  { id: 'ocarina', family: 'ocarina', displayName: 'Enchanted Ocarina', noteCount: 6 },
+  { id: 'trumpet', family: 'trumpet', displayName: 'Golden Trumpet', noteCount: 3 },
   { id: 'clarinet', family: 'clarinet', displayName: 'Jazzy Clarinet', noteCount: 5 },
   { id: 'saxophone', family: 'saxophone', displayName: 'Sunshine Saxophone', noteCount: 5 },
 ];
@@ -113,7 +113,7 @@ describe('MusicAssetRegistry', () => {
 
     it('flute note layout should start with C/star', () => {
       const flute = getInstrument('flute')!;
-      expect(flute.noteLayout[0]).toEqual({
+      expect(flute.noteLayout[0]).toMatchObject({
         note: 'C', label: '⭐', color: '#4FC3F7', icon: 'star',
       });
     });
@@ -126,6 +126,66 @@ describe('MusicAssetRegistry', () => {
       // At least 20 unique icons across all instruments
       const uniqueIcons = new Set(allIcons);
       expect(uniqueIcons.size).toBeGreaterThanOrEqual(20);
+    });
+  });
+
+  // =============================================
+  // Instrument artwork and hole positions
+  // =============================================
+
+  describe('instrument artwork', () => {
+    const ILLUSTRATED = ['flute', 'recorder', 'ocarina', 'trumpet', 'saxophone'];
+
+    it.each(ILLUSTRATED)('%s has body artwork with a landscape aspect ratio', (id) => {
+      const underTest = getInstrument(id)!;
+
+      expect(underTest.artwork).toBeDefined();
+      expect(underTest.artwork!.aspectRatio).toBeGreaterThan(1);
+      expect(underTest.artwork!.holeDiameter).toBeGreaterThan(0);
+      expect(underTest.artwork!.holeDiameter).toBeLessThan(0.2);
+    });
+
+    it.each(ILLUSTRATED)('%s places every note in a hole inside the artwork', (id) => {
+      const underTest = getInstrument(id)!;
+
+      for (const item of underTest.noteLayout) {
+        expect(item.hole).toBeDefined();
+        expect(item.hole!.x).toBeGreaterThan(0);
+        expect(item.hole!.x).toBeLessThan(1);
+        expect(item.hole!.y).toBeGreaterThan(0);
+        expect(item.hole!.y).toBeLessThan(1);
+      }
+    });
+
+    it.each(ILLUSTRATED)('%s orders notes left to right along the holes', (id) => {
+      const underTest = getInstrument(id)!;
+
+      const xs = underTest.noteLayout.map(item => item.hole!.x);
+      expect(xs).toEqual([...xs].sort((a, b) => a - b));
+    });
+
+    it.each(ILLUSTRATED)('%s has a note sample for every hole and no extra samples', (id) => {
+      const underTest = getInstrument(id)!;
+
+      expect(Object.keys(underTest.notes).sort()).toEqual(underTest.noteLayout.map(n => n.note).sort());
+    });
+
+    it('trumpet plays one note per valve', () => {
+      const underTest = getInstrument('trumpet')!;
+
+      expect(underTest.noteLayout.map(n => n.note)).toEqual(['C', 'D', 'E']);
+    });
+
+    it.each(['recorder', 'ocarina', 'flute'])('%s plays six notes up to A', (id) => {
+      const underTest = getInstrument(id)!;
+
+      expect(underTest.noteLayout.map(n => n.note)).toEqual(['C', 'D', 'E', 'F', 'G', 'A']);
+    });
+
+    it('clarinet keeps the generic layout until artwork exists', () => {
+      const underTest = getInstrument('clarinet')!;
+
+      expect(underTest.artwork).toBeUndefined();
     });
   });
 

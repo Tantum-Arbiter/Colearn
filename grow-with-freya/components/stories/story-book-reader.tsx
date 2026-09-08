@@ -1867,6 +1867,7 @@ export function StoryBookReader({
                   promptText={page.musicChallenge.promptText}
                   requiredSequence={musicChallenge.currentSequence.length > 0 ? musicChallenge.currentSequence : ((page.musicChallenge.requiredSequence?.length ?? 0) > 0 ? page.musicChallenge.requiredSequence! : musicChallenge.resolvedSequence)}
                   noteLayout={getInstrument(selectedInstrumentId || page.musicChallenge.instrumentId)?.noteLayout ?? []}
+                  artwork={getInstrument(selectedInstrumentId || page.musicChallenge.instrumentId)?.artwork}
                   showBreathButton={breathDetector.useFallback || !page.musicChallenge.micRequired}
                   onSkip={() => {
                     musicChallenge.skip();
@@ -3246,6 +3247,7 @@ export function StoryBookReader({
                 promptText={currentMusicChallenge.promptText}
                 requiredSequence={musicChallenge.currentSequence.length > 0 ? musicChallenge.currentSequence : ((currentMusicChallenge.requiredSequence?.length ?? 0) > 0 ? currentMusicChallenge.requiredSequence! : musicChallenge.resolvedSequence)}
                 noteLayout={getInstrument(currentMusicChallenge.instrumentId)?.noteLayout ?? []}
+                artwork={getInstrument(currentMusicChallenge.instrumentId)?.artwork}
                 showBreathButton={breathDetector.useFallback || !currentMusicChallenge.micRequired}
                 onSkip={() => musicChallenge.skip()}
                 onContinue={() => {
