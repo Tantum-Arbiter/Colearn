@@ -107,6 +107,53 @@ describe('onboardingMetricsFor', () => {
   });
 });
 
+/**
+ * A phone is not tall enough for every page: the safety grid and the ready
+ * cards ran under the footer. The screen measures how far its column
+ * overflows and asks the page to give that much back, which comes out of the
+ * hero and the spacer that holds room for it, together, so the content keeps
+ * riding up over the base of the art by the same amount as before.
+ */
+describe('onboardingMetricsFor with a squeeze', () => {
+  it('changes nothing when no squeeze is asked for', () => {
+    expect(metricsAt(PHONE_WIDTH, 0)).toEqual(metricsAt(PHONE_WIDTH));
+  });
+
+  it('takes the squeeze out of each spacer and its hero alike', () => {
+    const base = metricsAt(PHONE_WIDTH);
+
+    const m = metricsAt(PHONE_WIDTH, 60);
+
+    expect(m.safeSpacerHeight).toBe(base.safeSpacerHeight - 60);
+    expect(m.safeBackdropHeight).toBe(base.safeBackdropHeight - 60);
+    expect(m.readySpacerHeight).toBe(base.readySpacerHeight - 60);
+    expect(m.readyBackdropHeight).toBe(base.readyBackdropHeight - 60);
+    expect(m.togetherSpacerHeight).toBe(base.togetherSpacerHeight - 60);
+    expect(m.togetherBackdropHeight).toBe(base.togetherBackdropHeight - 60);
+  });
+
+  it('never squeezes a hero below half its height, and leaves the rest to scrolling', () => {
+    const base = metricsAt(PHONE_WIDTH);
+
+    const m = metricsAt(PHONE_WIDTH, 10000);
+
+    expect(m.safeBackdropHeight).toBeGreaterThanOrEqual(Math.round(base.safeBackdropHeight / 2));
+    expect(m.readyBackdropHeight).toBeGreaterThanOrEqual(Math.round(base.readyBackdropHeight / 2));
+    expect(m.togetherBackdropHeight).toBeGreaterThanOrEqual(Math.round(base.togetherBackdropHeight / 2));
+    expect(m.safeSpacerHeight - m.safeBackdropHeight).toBe(base.safeSpacerHeight - base.safeBackdropHeight);
+  });
+
+  it('leaves the width, cap and chips alone', () => {
+    const base = metricsAt(TABLET_WIDTH);
+
+    const m = metricsAt(TABLET_WIDTH, 80);
+
+    expect(m.layoutWidth).toBe(base.layoutWidth);
+    expect(m.isCapped).toBe(base.isCapped);
+    expect(m.chipSize).toBe(base.chipSize);
+  });
+});
+
 describe('swipeIntent', () => {
   it('reads nothing from a drag that neither travelled nor was thrown', () => {
     expect(swipeIntent(0, 0)).toBeNull();

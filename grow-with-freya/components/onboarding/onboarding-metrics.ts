@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { createContext, useContext, useMemo } from 'react';
 import { useWindowDimensions } from 'react-native';
 
 import { TABLET_CONTENT_MAX_WIDTH } from '@/hooks/use-accessibility';
@@ -56,6 +56,17 @@ const SAFE_OVERLAP = 240;
 /** Corner the heroes take once they no longer reach the screen's edges. */
 export const ONBOARDING_HERO_RADIUS = 28;
 
+// a hero gives up at most half of itself to make a page fit; past that the
+// page scrolls rather than losing the picture
+const SQUEEZE_FLOOR = 0.5;
+
+/**
+ * How much height the screen has asked the page to give back, in points.
+ * Set by the onboarding shell once it has measured its column running past
+ * the viewport; nothing, until it has.
+ */
+export const OnboardingSqueezeContext = createContext(0);
+
 export interface OnboardingMetrics {
   /** Width the page lays out to: the screen on a phone, capped on a tablet. */
   layoutWidth: number;
@@ -78,24 +89,33 @@ export interface OnboardingMetrics {
  * Kept as a plain function of the width so the sizing can be reasoned about
  * and tested on its own, without a renderer or a mocked dimensions source.
  */
-export function onboardingMetricsFor(width: number): OnboardingMetrics {
+export function onboardingMetricsFor(width: number, squeeze = 0): OnboardingMetrics {
   const layoutWidth = Math.min(width, ONBOARDING_MAX_WIDTH);
+
+  // the squeeze comes out of the hero and the spacer that holds room for it
+  // alike, so the content below keeps riding up over its base by as much as
+  // it did before
+  const asked = Math.max(0, Math.round(squeeze));
+  const shrink = (backdrop: number) => Math.min(asked, backdrop - Math.round(backdrop * SQUEEZE_FLOOR));
 
   const togetherBackdropHeight = Math.round(layoutWidth * TOGETHER_ART_RATIO);
   const readyBackdropHeight = Math.round(layoutWidth * READY_ART_RATIO * READY_HERO_SCALE);
   const safeBackdropHeight = Math.round(layoutWidth * SAFE_ART_RATIO);
+  const togetherGive = shrink(togetherBackdropHeight);
+  const readyGive = shrink(readyBackdropHeight);
+  const safeGive = shrink(safeBackdropHeight);
 
   return {
     layoutWidth,
     isCapped: layoutWidth < width,
     chipSize: Math.floor((layoutWidth - ONBOARDING_H_PADDING * 2 - CHIP_GAP * 2) / 3),
-    togetherBackdropHeight,
+    togetherBackdropHeight: togetherBackdropHeight - togetherGive,
     togetherSpacerHeight:
-      togetherBackdropHeight + TOGETHER_BACKDROP_TOP - TOGETHER_OVERLAP,
-    readyBackdropHeight,
-    readySpacerHeight: readyBackdropHeight + READY_BACKDROP_TOP - READY_OVERLAP,
-    safeBackdropHeight,
-    safeSpacerHeight: safeBackdropHeight + SAFE_BACKDROP_TOP - SAFE_OVERLAP,
+      togetherBackdropHeight + TOGETHER_BACKDROP_TOP - TOGETHER_OVERLAP - togetherGive,
+    readyBackdropHeight: readyBackdropHeight - readyGive,
+    readySpacerHeight: readyBackdropHeight + READY_BACKDROP_TOP - READY_OVERLAP - readyGive,
+    safeBackdropHeight: safeBackdropHeight - safeGive,
+    safeSpacerHeight: safeBackdropHeight + SAFE_BACKDROP_TOP - SAFE_OVERLAP - safeGive,
   };
 }
 
@@ -109,8 +129,9 @@ export function onboardingMetricsFor(width: number): OnboardingMetrics {
  */
 export function useOnboardingMetrics(): OnboardingMetrics {
   const { width } = useWindowDimensions();
+  const squeeze = useContext(OnboardingSqueezeContext);
 
-  return useMemo(() => onboardingMetricsFor(width), [width]);
+  return useMemo(() => onboardingMetricsFor(width, squeeze), [width, squeeze]);
 }
 
 /**

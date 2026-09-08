@@ -23,6 +23,7 @@ import {
   SWIPE_ACTIVATE_X,
   SWIPE_FAIL_Y,
   onboardingLift,
+  OnboardingSqueezeContext,
   swipeIntent,
 } from './onboarding-metrics';
 import { NIGHT_GRADIENT, GOLD, TEXT_MUTED } from './onboarding-theme';
@@ -30,6 +31,8 @@ import { NIGHT_GRADIENT, GOLD, TEXT_MUTED } from './onboarding-theme';
 const { width, height } = Dimensions.get('window');
 
 const STAR_COUNT = 55;
+// past this the page scrolls; a hero has already given all it can
+const MAX_SQUEEZE = 600;
 
 const generateStars = (count: number) => {
   const seededRandom = (seed: number) => {
@@ -89,22 +92,43 @@ export function OnboardingScreen({
   // The column is measured rather than the scroll content, because the lift is
   // then added to the padding above it -- measuring the content would feed the
   // lift back into its own input.
-  const [columnHeight, setColumnHeight] = useState(0);
+  // the column is remounted for each step, so its height is always the
+  // current page's: the last page's measurement would otherwise be taken for
+  // this one until it happened to lay out at a different size
+  const [column, setColumn] = useState({ step: currentStep, height: 0 });
+  const columnHeight = column.step === currentStep ? column.height : 0;
   const [viewportHeight, setViewportHeight] = useState(0);
 
   const basePaddingTop = insets.top + scaledPadding(34);
   const paddingBottom = scaledPadding(8);
   const contentHeight = basePaddingTop + columnHeight + paddingBottom;
   const lift = onboardingLift(viewportHeight, contentHeight, isTablet);
+  // A page taller than the viewport is asked to give the difference back,
+  // out of its hero. The ask only ever grows for a page, and is measured
+  // from the column as it stands, so once the page fits it stays fitted
+  // rather than springing back the moment the overflow it caused is gone.
+  const [fit, setFit] = useState({ step: currentStep, squeeze: 0 });
+  const squeeze = fit.step === currentStep ? fit.squeeze : 0;
+  const measured = viewportHeight > 0 && columnHeight > 0;
+  const overflow = measured ? contentHeight - viewportHeight : 0;
+  React.useEffect(() => {
+    if (overflow <= 0) return;
+    setFit((current) => ({
+      step: currentStep,
+      squeeze: Math.min(MAX_SQUEEZE, (current.step === currentStep ? current.squeeze : 0) + overflow),
+    }));
+  }, [overflow, currentStep]);
   // Vertical movement is navigation on no page here, so the scroll view only
   // scrolls when the content genuinely does not fit -- otherwise holding the
   // page and dragging drifted the whole composition around.
-  const scrollable = viewportHeight > 0 && columnHeight > 0 && contentHeight > viewportHeight;
+  const scrollable = measured && contentHeight > viewportHeight;
 
   const handleColumnLayout = useCallback((event: LayoutChangeEvent) => {
     const measured = Math.round(event.nativeEvent.layout.height);
-    setColumnHeight((current) => (current === measured ? current : measured));
-  }, []);
+    setColumn((current) =>
+      current.step === currentStep && current.height === measured ? current : { step: currentStep, height: measured }
+    );
+  }, [currentStep]);
 
   const handleScrollLayout = useCallback((event: LayoutChangeEvent) => {
     const measured = Math.round(event.nativeEvent.layout.height);
@@ -167,6 +191,7 @@ export function OnboardingScreen({
   return (
     <GestureHandlerRootView style={styles.container}>
       <GestureDetector gesture={swipe}>
+        <OnboardingSqueezeContext.Provider value={squeeze}>
         <View style={styles.container}>
           <LinearGradient colors={NIGHT_GRADIENT} style={StyleSheet.absoluteFill} />
 
@@ -235,7 +260,12 @@ export function OnboardingScreen({
             overScrollMode="never"
             onLayout={handleScrollLayout}
           >
-            <Animated.View style={[styles.pageColumn, pageAnimatedStyle]} onLayout={handleColumnLayout}>
+            <Animated.View
+              key={`column-${currentStep}`}
+              style={[styles.pageColumn, pageAnimatedStyle]}
+              onLayout={handleColumnLayout}
+              testID="onboarding-column"
+            >
               <Animated.View
                 key={`header-${currentStep}`}
                 entering={FadeInDown.duration(450)}
@@ -318,6 +348,7 @@ export function OnboardingScreen({
           </View>
 
         </View>
+        </OnboardingSqueezeContext.Provider>
       </GestureDetector>
     </GestureHandlerRootView>
   );

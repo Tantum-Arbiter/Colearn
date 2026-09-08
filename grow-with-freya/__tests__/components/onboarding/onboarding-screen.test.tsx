@@ -1,6 +1,8 @@
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
+import { Text } from 'react-native';
 import { OnboardingScreen } from '@/components/onboarding/onboarding-screen';
+import { onboardingMetricsFor, useOnboardingMetrics } from '@/components/onboarding/onboarding-metrics';
 
 // Mock the PngIllustration component
 jest.mock('@/components/ui/png-illustration', () => ({
@@ -157,6 +159,89 @@ describe('OnboardingScreen', () => {
           render(<OnboardingScreen {...props} />);
         }).not.toThrow();
       });
+    });
+  });
+
+  describe('Fitting the page', () => {
+    function SpacerProbe() {
+      const { safeSpacerHeight } = useOnboardingMetrics();
+      return <Text testID="spacer-probe">{String(safeSpacerHeight)}</Text>;
+    }
+
+    function layout(tree: ReturnType<typeof render>, testID: string, height: number) {
+      fireEvent(byTestId(tree, testID)[0], 'layout', { nativeEvent: { layout: { width: 402, height } } });
+    }
+
+    function probeValue(tree: ReturnType<typeof render>) {
+      return Number(byTestId(tree, 'spacer-probe')[0].props.children);
+    }
+
+    const base = onboardingMetricsFor(402).safeSpacerHeight;
+
+    // useWindowDimensions reads the document under react-native-web, and jsdom
+    // gives it 0x0 unless told otherwise
+    beforeAll(() => {
+      Object.defineProperty(document.documentElement, 'clientWidth', { value: 402, configurable: true });
+      Object.defineProperty(document.documentElement, 'clientHeight', { value: 874, configurable: true });
+      window.dispatchEvent(new Event('resize'));
+    });
+
+    it('hands the page its full spacer while nothing has been measured', () => {
+      const tree = render(<OnboardingScreen {...defaultProps} customContent={<SpacerProbe />} />);
+
+      expect(probeValue(tree)).toBe(base);
+    });
+
+    it('asks the page to give back the height its column runs over the viewport by', () => {
+      const tree = render(<OnboardingScreen {...defaultProps} customContent={<SpacerProbe />} />);
+
+      layout(tree, 'onboarding-scroll', 600);
+      layout(tree, 'onboarding-column', 620);
+
+      // the column is 620 tall inside a 600 viewport, plus the padding around it
+      expect(probeValue(tree)).toBeLessThan(base - 20);
+    });
+
+    it('leaves a page that fits alone', () => {
+      const tree = render(<OnboardingScreen {...defaultProps} customContent={<SpacerProbe />} />);
+
+      layout(tree, 'onboarding-scroll', 900);
+      layout(tree, 'onboarding-column', 500);
+
+      expect(probeValue(tree)).toBe(base);
+    });
+
+    it('keeps the squeeze once the page has been made to fit, rather than letting it spring back', () => {
+      const tree = render(<OnboardingScreen {...defaultProps} customContent={<SpacerProbe />} />);
+      layout(tree, 'onboarding-scroll', 600);
+      layout(tree, 'onboarding-column', 620);
+      const squeezed = probeValue(tree);
+
+      layout(tree, 'onboarding-column', 480);
+
+      expect(probeValue(tree)).toBe(squeezed);
+    });
+
+    it('adds to the ask when the page still runs over after giving once', () => {
+      const tree = render(<OnboardingScreen {...defaultProps} customContent={<SpacerProbe />} />);
+      layout(tree, 'onboarding-scroll', 600);
+      layout(tree, 'onboarding-column', 620);
+      const afterFirst = probeValue(tree);
+
+      // the page gave 20 back but is still 46 over
+      layout(tree, 'onboarding-column', 560);
+
+      expect(probeValue(tree)).toBe(afterFirst - 46);
+    });
+
+    it('starts the next page from its full spacer', () => {
+      const tree = render(<OnboardingScreen {...defaultProps} customContent={<SpacerProbe />} />);
+      layout(tree, 'onboarding-scroll', 600);
+      layout(tree, 'onboarding-column', 620);
+
+      tree.rerender(<OnboardingScreen {...defaultProps} currentStep={2} customContent={<SpacerProbe />} />);
+
+      expect(probeValue(tree)).toBe(base);
     });
   });
 
