@@ -415,17 +415,23 @@ describe('OwlGuide', () => {
           } as unknown as View,
         });
         const home = { ...at };
+        let moved = false;
         const scroller = {
           reveal: jest.fn((shift: number) => {
+            moved = true;
             Object.keys(at).forEach((id) => {
               at[id] -= shift;
             });
           }),
-          // a real restore carries the page, and everything on it, back
+          // a real restore carries the page, and everything on it, back --
+          // and says so, but only when there was a page to carry
           restore: jest.fn(() => {
             Object.keys(at).forEach((id) => {
               at[id] = home[id];
             });
+            const carried = moved;
+            moved = false;
+            return carried;
           }),
           release: jest.fn(),
         };
@@ -519,6 +525,33 @@ describe('OwlGuide', () => {
         await settleMeasurements();
 
         expect(scroller.restore).toHaveBeenCalled();
+      });
+
+      /**
+       * The restore is animated. Read while the page is still gliding home, the
+       * next subject measures wherever it happens to be passing -- often in the
+       * clear -- and the step asks for nothing, leaving it under the bubble.
+       */
+      it('measures the next step only once the page has glided back', async () => {
+        const { targets: moving, scroller } = movingPage();
+        const tree = await renderLanded({ id: 'book_mode_tour', targets: moving, scroller });
+        await act(async () => {
+          jest.advanceTimersByTime(GUIDE_TIMING.scrollSettleMs);
+        });
+        expect(scroller.reveal).toHaveBeenCalledTimes(1);
+        // from here the page takes its time going home, as a real one does
+        const home = scroller.restore.getMockImplementation()!;
+        scroller.restore.mockImplementation(() => {
+          setTimeout(home, GUIDE_TIMING.scrollSettleMs - 20);
+          return true;
+        });
+
+        press(tree, 'owl-guide-next');
+        await act(async () => {
+          jest.advanceTimersByTime(GUIDE_TIMING.scrollSettleMs);
+        });
+
+        expect(scroller.reveal).toHaveBeenCalledTimes(2);
       });
 
       /** Not just back to where the step began: back to the place the child left. */

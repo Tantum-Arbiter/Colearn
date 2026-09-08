@@ -211,6 +211,25 @@ describe('guideRevealShift', () => {
     expect(shiftFor({ ...target, y: target.y - shift })).toBe(0);
   });
 
+  /**
+   * On a phone the badge grid starts below the bottom of the screen. Nothing
+   * on screen is behind the bubble, so it used to count as clear and the page
+   * stayed put with the owl talking about something no one could see.
+   */
+  it('asks for enough scroll to bring a highlight below the screen up into the clear', () => {
+    const target = { x: 40, y: PHONE.height + 200, width: 200, height: 44 };
+
+    const shift = shiftFor(target);
+
+    expect(shift).toBeGreaterThan(200);
+    expect(shiftFor({ ...target, y: target.y - shift })).toBe(0);
+  });
+
+  it('still leaves alone a highlight beside the bubble that is fully on screen', () => {
+    // bottom-right edge, past the end of the resting bubble and the perch
+    expect(shiftFor({ x: PHONE.width - 30, y: PHONE.height - 60, width: 28, height: 20 })).toBe(0);
+  });
+
   it('asks for more of a page the deeper the highlight is buried', () => {
     const higher = shiftFor({ x: 40, y: 640, width: 200, height: 44 });
     const lower = shiftFor({ x: 40, y: 760, width: 200, height: 44 });

@@ -141,10 +141,14 @@ export function OwlGuide({
   // and they share the page's scroller: the step index is the guide's, not
   // this instance's, so without the guard the tours standing by would each
   // put the page back the moment the running one moved it.
+  //
+  // A page carried back is still gliding when the ordinary settle is up, so
+  // the step counts it as a move and measures on the scroll settle instead --
+  // read mid-glide, the next subject is wherever it happens to be passing.
   useEffect(() => {
     if (!isMine) return;
     setAskedAt(null);
-    scroller?.restore();
+    if (scroller?.restore()) setMoves((count) => count + 1);
   }, [guide.stepIndex, isMine, scroller]);
 
   // and the page is given back whole when this guide is done with it --

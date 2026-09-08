@@ -70,6 +70,19 @@ describe('useGuideScroller', () => {
     expect(scrollTo).toHaveBeenLastCalledWith({ y: 210, animated: true });
   });
 
+  it('says whether a restore has a page to carry back', () => {
+    const { hook } = withSpy();
+
+    let untouched: boolean | undefined;
+    act(() => { untouched = hook.result.current.scroller.restore(); });
+    act(() => hook.result.current.scroller.reveal(80));
+    let carried: boolean | undefined;
+    act(() => { carried = hook.result.current.scroller.restore(); });
+
+    expect(untouched).toBe(false);
+    expect(carried).toBe(true);
+  });
+
   it('gives the page back and forgets it when the tour is over', () => {
     const { hook, scrollTo } = withSpy();
 

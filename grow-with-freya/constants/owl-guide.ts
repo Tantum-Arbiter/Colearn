@@ -383,9 +383,15 @@ export function guideRevealShift(
 ): number {
   const resting = restingPlacement(frame, insets, perch, bubble, landscape);
   const rects = restingRects(frame, perch, bubble, resting);
-  if (!overlaps(target, rects.bubble) && !overlaps(target, rects.perch)) return 0;
-
   const clearOf = Math.min(rects.bubble.y, rects.perch.y) - BUBBLE_GAP;
+  if (target.y + target.height <= clearOf) return 0;
+
+  // a highlight past the bottom of the screen is behind nothing, but it is
+  // no more visible for that: it needs the same lift as one under the bubble
+  const belowTheScreen = target.y >= frame.height;
+  const inTheWay = overlaps(target, rects.bubble) || overlaps(target, rects.perch);
+  if (!belowTheScreen && !inTheWay) return 0;
+
   return Math.max(0, Math.round(target.y + target.height - clearOf));
 }
 

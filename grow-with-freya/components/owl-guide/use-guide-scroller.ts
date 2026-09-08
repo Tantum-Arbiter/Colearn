@@ -12,8 +12,10 @@ const REACH_MS = 120;
 export interface GuideScroller {
   /** Scroll this far past the page's resting place, reserving room to do it in. */
   reveal: (shift: number) => void;
-  /** Back to the resting place, which is remembered for the steps still to come. */
-  restore: () => void;
+  /** Back to the resting place, which is remembered for the steps still to come.
+   *  True when there was a page to carry back -- it glides, so anything read
+   *  off it should wait for the scroll settle. */
+  restore: () => boolean;
   /** Back to it and forget it: the tour is over. */
   release: () => void;
 }
@@ -65,9 +67,10 @@ export function useGuideScroller(): GuideScrollerBinding {
         setTick((count) => count + 1);
       },
       restore: () => {
-        if (resting.current === null) return;
+        if (resting.current === null) return false;
         pending.current = resting.current;
         setTick((count) => count + 1);
+        return true;
       },
       release: () => {
         if (resting.current === null) return;
