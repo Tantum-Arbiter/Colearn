@@ -21,6 +21,8 @@ export interface BellPlacement {
 }
 
 export interface InstrumentSurfaceLayout {
+  /** Offset that centres the artwork in the space left of the reserved strip. */
+  left: number;
   width: number;
   height: number;
   buttonSize: number;
@@ -86,7 +88,12 @@ export function layoutInstrumentSurface(
       }
     : undefined;
 
-  return { width, height, buttonSize, positions, bell };
+  // A squat instrument is limited by the region's height, so it comes out far
+  // narrower than the space available and would sit against the left edge.
+  const available = box.width - (box.reserveRight ?? 0);
+  const left = Math.max((available - width * (1 + growth.x)) / 2, 0);
+
+  return { left, width, height, buttonSize, positions, bell };
 }
 
 export interface StageOptions {

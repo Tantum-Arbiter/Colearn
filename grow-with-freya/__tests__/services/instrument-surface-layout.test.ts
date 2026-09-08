@@ -130,6 +130,50 @@ describe('layoutInstrumentSurface anchored to the left edge', () => {
   });
 });
 
+describe('layoutInstrumentSurface centring', () => {
+  it('leaves a wide instrument against the left edge', () => {
+    const underTest = layoutInstrumentSurface(artwork, notes, { width: 800, height: 400 }, 60)!;
+
+    expect(underTest.left).toBe(0);
+  });
+
+  // A squat instrument is limited by the region's height, so without this it comes
+  // out far narrower than the region and sits against the left edge.
+  it('centres a squat instrument in the region', () => {
+    const squat = { image: 1, aspectRatio: 1.8, holeDiameter: 0.05 };
+
+    const underTest = layoutInstrumentSurface(squat, notes, { width: 800, height: 200 }, 60)!;
+
+    expect(underTest.width).toBeLessThan(800);
+    expect(underTest.left).toBeCloseTo((800 - underTest.width) / 2, 5);
+  });
+
+  it('centres within the space left of the reserved strip', () => {
+    const squat = { image: 1, aspectRatio: 1.8, holeDiameter: 0.05 };
+
+    const underTest = layoutInstrumentSurface(
+      squat, notes, { width: 800, height: 200, reserveRight: 60 }, 60)!;
+
+    expect(underTest.left + underTest.width / 2).toBeCloseTo((800 - 60) / 2, 5);
+  });
+
+  it('accounts for a bell that grows rightwards when centring', () => {
+    const bell = { image: 2, frame: { x: 0.75, y: 0, width: 0.25, height: 1 }, origin: { x: 0.75, y: 0.5 }, scale: { x: 1.2, y: 1.0 } };
+    const squat = { image: 1, aspectRatio: 1.8, holeDiameter: 0.05, bell };
+
+    const underTest = layoutInstrumentSurface(squat, notes, { width: 800, height: 200 }, 60)!;
+    const growth = (1 - bell.origin.x) * (bell.scale.x - 1);
+
+    expect(underTest.left * 2 + underTest.width * (1 + growth)).toBeCloseTo(800, 5);
+  });
+
+  it('never pushes the artwork off the left edge', () => {
+    const underTest = layoutInstrumentSurface(artwork, notes, { width: 200, height: 400 }, 60)!;
+
+    expect(underTest.left).toBeGreaterThanOrEqual(0);
+  });
+});
+
 describe('layoutInstrumentStage', () => {
   const stageOptions = { maxButtonSize: 60, lowerBlockHeight: 138, topMargin: 12, buttonGap: 16 };
 

@@ -450,7 +450,11 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
           {rotateButton}
           {surfaceLayout && (() => {
             const body = (
-              <View style={{ width: surfaceLayout.width, height: surfaceLayout.height }}>
+              <View style={{
+                width: surfaceLayout.width,
+                height: surfaceLayout.height,
+                marginLeft: surfaceLayout.left,
+              }}>
                 <Image
                   source={artwork.image}
                   style={{ width: surfaceLayout.width, height: surfaceLayout.height }}
