@@ -8,6 +8,7 @@
  *
  * Asset directory structure:
  *   assets/music/instruments/{instrumentId}.webp       -square thumbnail for carousels
+ *   assets/music/instruments/medallions/{instrumentId}.webp -picker medallion: sky, rim and instrument
  *   assets/music/instruments/{instrumentId}-body.webp  -landscape body art the note buttons sit on
  *   assets/music/notes/{instrumentFamily}/{note}.wav   -individual note samples
  *
@@ -39,6 +40,7 @@ export interface InstrumentDefinition {
   description: string; // Short description for tooltips / accessibility
   image: number; // require() result for local instrument image
   artwork?: InstrumentArtwork; // Landscape body illustration the note buttons sit on
+  medallion: number; // require() result for the picker medallion
   notes: Record<string, number>; // noteName -> require() result for note audio sample
   noteLayout: NoteLayoutItem[]; // Visual layout for on-screen note buttons
   noteCount: number; // Number of playable notes (for UI layout decisions)
@@ -127,6 +129,7 @@ const INSTRUMENTS: Record<string, InstrumentDefinition> = {
         scale: { x: 1.02, y: 1.04 },
       },
     },
+    medallion: require('@/assets/music/instruments/medallions/flute.webp'),
     notes: {
       C: require('@/assets/music/notes/flute/C.wav'),
       D: require('@/assets/music/notes/flute/D.wav'),
@@ -163,6 +166,7 @@ const INSTRUMENTS: Record<string, InstrumentDefinition> = {
         scale: { x: 1.04, y: 1.07 },
       },
     },
+    medallion: require('@/assets/music/instruments/medallions/recorder.webp'),
     notes: {
       C: require('@/assets/music/notes/recorder/C.wav'),
       D: require('@/assets/music/notes/recorder/D.wav'),
@@ -199,6 +203,7 @@ const INSTRUMENTS: Record<string, InstrumentDefinition> = {
         scale: { x: 1.03, y: 1.05 },
       },
     },
+    medallion: require('@/assets/music/instruments/medallions/ocarina.webp'),
     notes: {
       C: require('@/assets/music/notes/ocarina/C.wav'),
       D: require('@/assets/music/notes/ocarina/D.wav'),
@@ -235,6 +240,7 @@ const INSTRUMENTS: Record<string, InstrumentDefinition> = {
         scale: { x: 1.04, y: 1.07 },
       },
     },
+    medallion: require('@/assets/music/instruments/medallions/trumpet.webp'),
     notes: {
       C: require('@/assets/music/notes/trumpet/C.wav'),
       D: require('@/assets/music/notes/trumpet/D.wav'),
@@ -265,6 +271,7 @@ const INSTRUMENTS: Record<string, InstrumentDefinition> = {
         scale: { x: 1.04, y: 1.07 },
       },
     },
+    medallion: require('@/assets/music/instruments/medallions/clarinet.webp'),
     notes: {
       C: require('@/assets/music/notes/clarinet/C.wav'),
       D: require('@/assets/music/notes/clarinet/D.wav'),
@@ -301,6 +308,7 @@ const INSTRUMENTS: Record<string, InstrumentDefinition> = {
         scale: { x: 1.04, y: 1.07 },
       },
     },
+    medallion: require('@/assets/music/instruments/medallions/saxophone.webp'),
     notes: {
       C: require('@/assets/music/notes/saxophone/C.wav'),
       D: require('@/assets/music/notes/saxophone/D.wav'),

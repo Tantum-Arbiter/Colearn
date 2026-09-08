@@ -10,6 +10,9 @@ jest.mock('@/utils/logger', () => ({
   },
 }));
 
+import * as fs from 'fs';
+import * as path from 'path';
+
 import {
   getInstrument,
   validateMusicChallengeAssets,
@@ -71,6 +74,15 @@ describe('MusicAssetRegistry', () => {
         const instrument = getInstrument(id);
         expect(instrument!.description).toBeTruthy();
         expect(instrument!.description.length).toBeGreaterThan(10);
+      }
+    );
+
+    it.each(EXPECTED_INSTRUMENTS)(
+      '$id should have a medallion image',
+      ({ id }) => {
+        const instrument = getInstrument(id);
+        expect(instrument!.medallion).toBeDefined();
+        expect(instrument!.medallion).not.toBe(0);
       }
     );
 
@@ -246,7 +258,7 @@ describe('MusicAssetRegistry', () => {
       registerInstrument({
         id: 'dynamic_xylophone', family: 'flute' as any,
         displayName: 'Xylophone', description: 'test',
-        image: 0, notes: {}, noteLayout: [], noteCount: 0,
+        image: 0, medallion: 0, notes: {}, noteLayout: [], noteCount: 0,
       });
       expect(getAvailableInstrumentIds()).toContain('dynamic_xylophone');
     });
@@ -272,7 +284,7 @@ describe('MusicAssetRegistry', () => {
       registerInstrument({
         id: 'valid_inst', family: 'flute' as any,
         displayName: 'Valid', description: 'test',
-        image: 1, notes: { C: 10, D: 11 }, noteLayout: [], noteCount: 2,
+        image: 1, medallion: 2, notes: { C: 10, D: 11 }, noteLayout: [], noteCount: 2,
       });
       expect(validateMusicChallengeAssets('valid_inst', ['C', 'D'])).toEqual([]);
     });
@@ -280,6 +292,28 @@ describe('MusicAssetRegistry', () => {
     it('should flag missing notes', () => {
       const missing = validateMusicChallengeAssets('trumpet', ['C', 'Z']);
       expect(missing).toContain('note:trumpet/Z');
+    });
+  });
+  // =============================================
+  // Medallion assets on disk
+  //
+  // Jest maps every image require() to the same stub string, so identity and
+  // dimensions cannot be asserted through the registry -check the files.
+  // =============================================
+
+  describe('medallion assets', () => {
+    const medallionDir = path.resolve(__dirname, '../../assets/music/instruments/medallions');
+    const builtInIds = EXPECTED_INSTRUMENTS.map(i => i.id);
+
+    it.each(builtInIds)('%s should have a medallion asset file', (id) => {
+      expect(fs.existsSync(path.join(medallionDir, `${id}.webp`))).toBe(true);
+    });
+
+    it('every medallion should be a distinct image', () => {
+      const contents = builtInIds.map(id =>
+        fs.readFileSync(path.join(medallionDir, `${id}.webp`)).toString('base64'));
+
+      expect(new Set(contents).size).toBe(builtInIds.length);
     });
   });
 });

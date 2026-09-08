@@ -1486,7 +1486,7 @@ export default {
     successSong: '♫ Success Song',
     readyToPlay: '♫ Ready to Play',
     // Instrument picker
-    chooseInstrument: 'Choose Your Instrument',
+    chooseInstrument: 'Choose your instrument',
     swipeToExplore: 'Swipe to explore, tap to select',
     useThisInstrument: 'Use this instrument',
     closeInstrumentPicker: 'Close instrument picker',

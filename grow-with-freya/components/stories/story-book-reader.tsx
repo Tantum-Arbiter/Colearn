@@ -3516,6 +3516,7 @@ export function StoryBookReader({
         onClose={handleCloseInstrumentPicker}
         defaultInstrumentId={selectedInstrumentId || cmsDefaultInstrumentId}
         isRotated={instrumentIsRotated}
+        backdrop="scene"
         onLockedPress={() => setShowSubscription(true)}
       />
 
