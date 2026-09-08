@@ -7,7 +7,7 @@ import * as Haptics from 'expo-haptics';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import type { ScreenTimeWarning } from '@/services/screen-time-service';
 import { owlPerchFrame, type OwlPhase } from '@/constants/owl-companion';
-import { SCREEN_TIME_TIP_KEYS, shuffleTips, type ScreenTimeTipKey } from '@/constants/screen-time-tips';
+import { SCREEN_TIME_TIP_KEYS, dealTips, type ScreenTimeTipKey } from '@/constants/screen-time-tips';
 import { OwlPerch } from './owl-perch';
 import { OwlSpeechBubble, type BubbleTurn } from './owl-speech-bubble';
 
@@ -94,15 +94,19 @@ export function ScreenTimeOwlAlert({ visible, warning, onDismiss, random = Math.
   const [turn, setTurn] = useState<BubbleTurn>('forward');
   const [landed, setLanded] = useState(false);
   const [sayCount, setSayCount] = useState(0);
-  const [tips, setTips] = useState<ScreenTimeTipKey[]>(() => shuffleTips(SCREEN_TIME_TIP_KEYS, random));
+  // Dealt by the effect below rather than here, so the tips the parent is
+  // actually shown are the only ones marked as heard.
+  const [tips, setTips] = useState<ScreenTimeTipKey[]>([]);
+  const heardRef = useRef<ScreenTimeTipKey[]>([]);
   const exitingRef = useRef(false);
   const randomRef = useRef(random);
   randomRef.current = random;
 
   const pageCount = tips.length + 1;
 
-  // a fresh hand every time the owl lands, so the same parent does not hear
-  // the same three tips in the same order every evening
+  // a fresh hand every time the owl lands: a couple of ideas rather than the
+  // whole pool, and never one this parent has already been told until the
+  // deck has been through
   useEffect(() => {
     if (!visible || !warning) return;
     setPhase('arrive');
@@ -110,7 +114,9 @@ export function ScreenTimeOwlAlert({ visible, warning, onDismiss, random = Math.
     setTurn('forward');
     setLanded(false);
     setSayCount(0);
-    setTips(shuffleTips(SCREEN_TIME_TIP_KEYS, randomRef.current));
+    const hand = dealTips(SCREEN_TIME_TIP_KEYS, randomRef.current, heardRef.current);
+    heardRef.current = hand.seen;
+    setTips(hand.dealt);
     exitingRef.current = false;
   }, [visible, warning]);
 

@@ -10,7 +10,7 @@ import React from 'react';
 import { render, act } from '@testing-library/react-native';
 
 import { ScreenTimeOwlAlert, OWL_SWIPE_THRESHOLD, swipeIntent } from '@/components/screen-time/screen-time-owl-alert';
-import { SCREEN_TIME_TIP_KEYS } from '@/constants/screen-time-tips';
+import { TIPS_PER_VISIT, SCREEN_TIME_TIP_KEYS } from '@/constants/screen-time-tips';
 import { OWL_RHYTHM } from '@/constants/owl-companion';
 import type { ScreenTimeWarning } from '@/services/screen-time-service';
 
@@ -32,7 +32,7 @@ const APPROACHING: ScreenTimeWarning = {
 
 /** A roll that always lands high keeps the pool in its written order. */
 const IN_ORDER = () => 0.999;
-const TIP_COUNT = SCREEN_TIME_TIP_KEYS.length;
+const TIP_COUNT = TIPS_PER_VISIT;
 const PAGE_COUNT = TIP_COUNT + 1;
 
 function findByTestId(tree: ReturnType<typeof render>, testID: string) {
@@ -166,7 +166,9 @@ describe('the tips carousel', () => {
     jest.useRealTimers();
   });
 
-  it('deals every tip in the pool, one bubble each, after the warning', () => {
+  // A couple of ideas, not the whole pool: ten bubbles to page through at the
+  // end of a screen-time day is a wall, not help.
+  it('deals a short hand from the pool, one bubble each, after the warning', () => {
     const tree = renderLanded();
 
     for (let page = 0; page < PAGE_COUNT; page += 1) {

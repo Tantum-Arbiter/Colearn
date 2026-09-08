@@ -5,7 +5,12 @@
  * predict the hand.
  */
 
-import { SCREEN_TIME_TIP_KEYS, shuffleTips } from '@/constants/screen-time-tips';
+import {
+  SCREEN_TIME_TIP_KEYS,
+  TIPS_PER_VISIT,
+  dealTips,
+  shuffleTips,
+} from '@/constants/screen-time-tips';
 
 function rolls(...values: number[]) {
   let index = 0;
@@ -64,5 +69,80 @@ describe('shuffleTips', () => {
 
   it('copes with an empty pool', () => {
     expect(shuffleTips([], Math.random)).toEqual([]);
+  });
+});
+
+/**
+ * The owl offers a couple of ideas, not the whole pool, and never one this
+ * parent has already been told until the deck has been all the way through.
+ */
+describe('dealTips', () => {
+  const POOL = ['a', 'b', 'c', 'd', 'e'] as const;
+
+  it('deals a hand of TIPS_PER_VISIT', () => {
+    const { dealt } = dealTips(SCREEN_TIME_TIP_KEYS, Math.random);
+
+    expect(dealt).toHaveLength(TIPS_PER_VISIT);
+  });
+
+  it('never deals the same tip twice in one hand', () => {
+    for (let attempt = 0; attempt < 40; attempt += 1) {
+      const { dealt } = dealTips(SCREEN_TIME_TIP_KEYS, Math.random);
+
+      expect(new Set(dealt).size).toBe(dealt.length);
+    }
+  });
+
+  it('only deals tips from the pool', () => {
+    const { dealt } = dealTips(SCREEN_TIME_TIP_KEYS, Math.random);
+
+    dealt.forEach(tip => expect(SCREEN_TIME_TIP_KEYS).toContain(tip));
+  });
+
+  it('never repeats a tip while unheard ones remain', () => {
+    let seen: string[] = [];
+    const told: string[] = [];
+
+    // Two rounds of the pool: the first should use every tip exactly once.
+    for (let visit = 0; visit < Math.floor(POOL.length / 2); visit += 1) {
+      const hand = dealTips(POOL, Math.random, seen);
+      told.push(...hand.dealt);
+      seen = hand.seen;
+    }
+
+    expect(new Set(told).size).toBe(told.length);
+  });
+
+  it('starts the deck over once too few are left for a hand', () => {
+    let seen: string[] = ['a', 'b', 'c', 'd'];
+
+    const { dealt, seen: next } = dealTips(POOL, Math.random, seen);
+
+    expect(dealt).toHaveLength(2);
+    expect(next).toHaveLength(2);
+  });
+
+  it('does not repeat the hand just told across the seam', () => {
+    const seen = ['a', 'b', 'c', 'd'];
+
+    for (let attempt = 0; attempt < 40; attempt += 1) {
+      const { dealt } = dealTips(POOL, Math.random, seen);
+
+      expect(dealt).not.toContain('c');
+      expect(dealt).not.toContain('d');
+    }
+  });
+
+  it('carries the hand forward so the next visit knows what was told', () => {
+    const first = dealTips(POOL, Math.random);
+    const second = dealTips(POOL, Math.random, first.seen);
+
+    expect(second.seen).toEqual([...first.seen, ...second.dealt]);
+  });
+
+  it('copes with a pool smaller than a hand', () => {
+    const { dealt } = dealTips(['only'], Math.random);
+
+    expect(dealt).toEqual(['only']);
   });
 });

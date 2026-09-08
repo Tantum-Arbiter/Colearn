@@ -161,7 +161,8 @@ describe('ScreenTimeRing', () => {
  * On the home scene the ring sits on the globe, where a thin white dial over
  * lime continents and blue sea all but vanished. A dark disc behind it gives
  * it something of its own to sit on. Only the home asks for it; the bar has
- * its own dark surface already.
+ * its own dark surface already -- and only while the dial is still counting,
+ * since the spent state is solid red and needs no backing.
  */
 describe('the backplate', () => {
   function plate(tree: ReturnType<typeof render>) {
@@ -183,8 +184,17 @@ describe('the backplate', () => {
     expect(style.borderRadius).toBe(style.width / 2);
   });
 
-  it('stays under the spent circle too', () => {
+  // Once the limit is spent the ring is a solid red circle with its own halo.
+  // It needs no dark disc to stand off the globe, and one behind it only muddies
+  // the glow.
+  it('is dropped once the limit is spent', () => {
     const tree = render(<ScreenTimeRing usageSeconds={4000} limitSeconds={3600} backplate />);
+
+    expect(plate(tree)).toHaveLength(0);
+  });
+
+  it('is still drawn right up to the limit', () => {
+    const tree = render(<ScreenTimeRing usageSeconds={3599} limitSeconds={3600} backplate />);
 
     expect(plate(tree).length).toBeGreaterThan(0);
   });

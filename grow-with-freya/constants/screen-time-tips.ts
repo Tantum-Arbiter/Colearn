@@ -30,3 +30,33 @@ export function shuffleTips<T>(pool: readonly T[], random: () => number): T[] {
   }
   return dealt;
 }
+
+/** How many ideas the owl offers on one visit. */
+export const TIPS_PER_VISIT = 2;
+
+/**
+ * Deals a hand of tips the parent has not heard yet, so an idea only comes
+ * round again once every other one has been told. When too few are left for a
+ * full hand the deck starts over, holding back the hand just told so nothing
+ * repeats across the seam.
+ */
+export function dealTips<T>(
+  pool: readonly T[],
+  random: () => number,
+  seen: readonly T[] = [],
+  count: number = TIPS_PER_VISIT,
+): { dealt: T[]; seen: T[] } {
+  const wanted = Math.min(count, pool.length);
+  let unheard = pool.filter(tip => !seen.includes(tip));
+  let carried: T[] = [...seen];
+
+  if (unheard.length < wanted) {
+    const justTold = seen.slice(-wanted);
+    const fresh = pool.filter(tip => !justTold.includes(tip));
+    unheard = fresh.length >= wanted ? fresh : [...pool];
+    carried = [];
+  }
+
+  const dealt = shuffleTips(unheard, random).slice(0, wanted);
+  return { dealt, seen: [...carried, ...dealt] };
+}

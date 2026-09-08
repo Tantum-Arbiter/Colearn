@@ -40,7 +40,10 @@ export interface ScreenTimeRingProps {
    *  a full faint ring reads as something sitting behind the glyph. */
   showTrack?: boolean;
   /** A dark disc behind the dial, for a ring that sits on the globe rather
-   *  than on the bar's own dark surface. It fades up with the guard mark. */
+   *  than on the bar's own dark surface. It fades up with the guard mark, and
+   *  is dropped once the limit is spent: that state is a solid red circle with
+   *  its own halo, which needs no help standing off the globe, and the dark
+   *  disc only muddied the glow. */
   backplate?: boolean;
   testID?: string;
 }
@@ -161,7 +164,7 @@ export const ScreenTimeRing = memo(function ScreenTimeRing({
     // swap. A newly mounted view evaluates its animated style during the
     // render itself, which is what makes the swap actually atomic.
     <Animated.View key={hidden ? 'stepping-aside' : 'holding-the-corner'} style={[styles.root, animatedStyle]}>
-      {backplate ? (
+      {backplate && !exceeded ? (
         <Animated.View
           testID="screen-time-ring-backplate"
           pointerEvents="none"
