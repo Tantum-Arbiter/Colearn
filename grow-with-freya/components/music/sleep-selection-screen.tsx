@@ -10,12 +10,15 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
+  FadeIn,
+  FadeOut,
   useSharedValue,
   useAnimatedStyle,
   withRepeat,
   withTiming,
   Easing
 } from 'react-native-reanimated';
+import { ContentSwap } from '@/components/child-ui/content-swap';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { VISUAL_EFFECTS } from '@/components/main-menu/constants';
@@ -236,13 +239,18 @@ export function SleepSelectionScreen({ onTrackSelect, onBack, skipBackground }: 
         </>
       )}
 
-      {/* Shared page header */}
-      <PageHeader
-        title={t('relaxMusic.screenTitle')}
-        subtitle={t('relaxMusic.subtitle')}
-        onBack={handleBack}
-        useBackArrow
-      />
+      {/* Page header — only when this screen owns its own background. Given
+          skipBackground it is standing inside another screen, and that screen
+          draws the header; two of them stacked put both titles on top of each
+          other, and two back arrows in the same corner. */}
+      {!skipBackground && (
+        <PageHeader
+          title={t('relaxMusic.screenTitle')}
+          subtitle={t('relaxMusic.subtitle')}
+          onBack={handleBack}
+          useBackArrow
+        />
+      )}
 
       {/* Scrollable content with fade-in */}
       <Animated.View style={[{ flex: 1, paddingTop: insets.top + 160 + (textSizeScale - 1) * 80, zIndex: 10 }, contentAnimatedStyle]}>
@@ -292,31 +300,34 @@ export function SleepSelectionScreen({ onTrackSelect, onBack, skipBackground }: 
                         {track.titleKey ? t(track.titleKey) : track.title}
                       </Text>
 
-                      {/* Show description when not active */}
-                      {!isActive && (
-                        <Text style={[styles.trackDescription, { fontSize: scaledFontSize(13) }]} numberOfLines={2}>
-                          {track.descriptionKey ? t(track.descriptionKey) : track.description}
-                        </Text>
-                      )}
-
-                      {/* Show time progress when active */}
-                      {isActive && duration > 0 && (
-                        <View style={styles.progressContainer}>
-                          <View style={styles.progressBarBg}>
-                            <View style={[styles.progressBarFill, { width: `${Math.min(progress * 100, 100)}%` }]} />
-                          </View>
-                          <Text style={[styles.progressTime, { fontSize: scaledFontSize(11) }]}>
-                            {formatTime(currentTime)} / {formatTime(duration)}
-                          </Text>
-                        </View>
-                      )}
-
-                      {/* Show duration label when not active and duration known at data level */}
-                      {!isActive && !track.isSequence && track.duration > 0 && (
-                        <Text style={[styles.trackDuration, { fontSize: scaledFontSize(11) }]}>
-                          {formatDurationLabel(track.duration)}
-                        </Text>
-                      )}
+                      {/* what the card says about itself changes when it starts
+                          playing -- the description gives way to the time, and
+                          the two fade rather than replacing each other whole */}
+                      <ContentSwap contentKey={isActive ? 'playing' : 'resting'}>
+                        {isActive ? (
+                          duration > 0 ? (
+                            <View style={styles.progressContainer}>
+                              <View style={styles.progressBarBg}>
+                                <View style={[styles.progressBarFill, { width: `${Math.min(progress * 100, 100)}%` }]} />
+                              </View>
+                              <Text style={[styles.progressTime, { fontSize: scaledFontSize(11) }]}>
+                                {formatTime(currentTime)} / {formatTime(duration)}
+                              </Text>
+                            </View>
+                          ) : null
+                        ) : (
+                          <>
+                            <Text style={[styles.trackDescription, { fontSize: scaledFontSize(13) }]} numberOfLines={2}>
+                              {track.descriptionKey ? t(track.descriptionKey) : track.description}
+                            </Text>
+                            {!track.isSequence && track.duration > 0 ? (
+                              <Text style={[styles.trackDuration, { fontSize: scaledFontSize(11) }]}>
+                                {formatDurationLabel(track.duration)}
+                              </Text>
+                            ) : null}
+                          </>
+                        )}
+                      </ContentSwap>
                     </View>
 
                     {track.isSequence && (
@@ -331,12 +342,14 @@ export function SleepSelectionScreen({ onTrackSelect, onBack, skipBackground }: 
 
             {/* Stop button when playing */}
             {playingTrackId && (
+              <Animated.View entering={FadeIn.duration(220)} exiting={FadeOut.duration(180)}>
               <Pressable style={[styles.stopButton, { minHeight: scaledButtonSize(44) }]} onPress={handleStopAll}>
                 <Ionicons name="stop-circle" size={scaledFontSize(20)} color="#FFFFFF" />
                 <Text style={[styles.stopButtonText, { fontSize: scaledFontSize(15) }]}>
                   {t('relaxMusic.stopAll')}
                 </Text>
               </Pressable>
+              </Animated.View>
             )}
 
             {/* Relaxation tips - Collapsible */}
@@ -351,11 +364,15 @@ export function SleepSelectionScreen({ onTrackSelect, onBack, skipBackground }: 
               </Pressable>
 
               {showInfo && (
-                <View style={styles.infoBox}>
+                <Animated.View
+                  style={styles.infoBox}
+                  entering={FadeIn.duration(220)}
+                  exiting={FadeOut.duration(180)}
+                >
                   <Text style={styles.infoText}>
                     {t('relaxMusic.tipsBody')}
                   </Text>
-                </View>
+                </Animated.View>
               )}
             </View>
 

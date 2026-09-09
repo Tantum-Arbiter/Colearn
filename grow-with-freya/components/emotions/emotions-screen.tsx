@@ -229,13 +229,18 @@ export function EmotionsScreen({ onBack, isActive = true }: EmotionsScreenProps)
         </Animated.View>
       )}
 
-      {/* Page header — rendered LAST so it sits on top of all content, matching Stories pattern */}
-      <PageHeader
-        title={t('emotions.title')}
-        subtitle={t('emotions.subtitle')}
-        onBack={handleBack}
-        useBackArrow
-      />
+      {/* Page header — rendered LAST so it sits on top of all content, matching
+          Stories pattern. It speaks for whichever view is showing, because the
+          views it covers hand their header over to it; the game brings its own,
+          so this one stands down while that is up. */}
+      {currentView !== 'game' && (
+        <PageHeader
+          title={currentView === 'parents' ? t('relaxMusic.screenTitle') : t('emotions.title')}
+          subtitle={currentView === 'parents' ? t('relaxMusic.subtitle') : t('emotions.subtitle')}
+          onBack={currentView === 'parents' ? handleBackFromParents : handleBack}
+          useBackArrow
+        />
+      )}
     </View>
   );
 }
