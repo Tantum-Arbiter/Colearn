@@ -119,17 +119,66 @@ describe('onboardingMetricsFor with a squeeze', () => {
     expect(metricsAt(PHONE_WIDTH, 0)).toEqual(metricsAt(PHONE_WIDTH));
   });
 
-  it('takes the squeeze out of each spacer and its hero alike', () => {
+  it('takes the whole squeeze out of the together hero, which has no panel', () => {
     const base = metricsAt(PHONE_WIDTH);
 
     const m = metricsAt(PHONE_WIDTH, 60);
 
-    expect(m.safeSpacerHeight).toBe(base.safeSpacerHeight - 60);
-    expect(m.safeBackdropHeight).toBe(base.safeBackdropHeight - 60);
-    expect(m.readySpacerHeight).toBe(base.readySpacerHeight - 60);
-    expect(m.readyBackdropHeight).toBe(base.readyBackdropHeight - 60);
     expect(m.togetherSpacerHeight).toBe(base.togetherSpacerHeight - 60);
     expect(m.togetherBackdropHeight).toBe(base.togetherBackdropHeight - 60);
+  });
+
+  /**
+   * The panel is sized from the width alone, so on a short phone the hero
+   * above it was being halved while the grid kept every point of its own --
+   * a shrunken constellation over an oversized grid, with the body text
+   * pressed against the footer.
+   */
+  it('takes the squeeze out of the safety panel before its hero', () => {
+    const base = metricsAt(PHONE_WIDTH);
+
+    const m = metricsAt(PHONE_WIDTH, 60);
+
+    expect(m.safetyCellHeight).toBe(base.safetyCellHeight - 30);
+    expect(m.safeBackdropHeight).toBe(base.safeBackdropHeight);
+    expect(m.safeSpacerHeight).toBe(base.safeSpacerHeight);
+  });
+
+  it('draws a smaller glyph in a smaller cell', () => {
+    const base = metricsAt(PHONE_WIDTH);
+
+    const m = metricsAt(PHONE_WIDTH, 60);
+
+    expect(m.safetyArtSize).toBeLessThan(base.safetyArtSize);
+    expect(m.safetyArtSize / m.safetyCellHeight).toBeCloseTo(base.safetyArtSize / base.safetyCellHeight, 2);
+  });
+
+  it('closes up the ready cards before shrinking their scene', () => {
+    const base = metricsAt(PHONE_WIDTH);
+
+    const m = metricsAt(PHONE_WIDTH, 24);
+
+    expect(m.readyCardPadding).toBeLessThan(base.readyCardPadding);
+    expect(m.readyListGap).toBeLessThan(base.readyListGap);
+    expect(m.readyBackdropHeight).toBe(base.readyBackdropHeight);
+  });
+
+  it('asks the hero for what the panel could not give', () => {
+    const base = metricsAt(PHONE_WIDTH);
+    const panelGave = (base.safetyCellHeight - metricsAt(PHONE_WIDTH, 10000).safetyCellHeight) * 2;
+
+    const m = metricsAt(PHONE_WIDTH, panelGave + 40);
+
+    expect(m.safeBackdropHeight).toBe(base.safeBackdropHeight - 40);
+    expect(m.safeSpacerHeight).toBe(base.safeSpacerHeight - 40);
+  });
+
+  it('never shrinks a panel past the floor that keeps it legible', () => {
+    const m = metricsAt(PHONE_WIDTH, 10000);
+
+    expect(m.safetyCellHeight).toBe(112);
+    expect(m.readyCardPadding).toBe(7);
+    expect(m.readyListGap).toBe(8);
   });
 
   it('never squeezes a hero below half its height, and leaves the rest to scrolling', () => {

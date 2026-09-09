@@ -61,6 +61,29 @@ export const ONBOARDING_HERO_RADIUS = 28;
 const SQUEEZE_FLOOR = 0.5;
 
 /**
+ * The panel of four safety promises, and the three ready cards.
+ *
+ * On a phone these are sized from the width alone, so on a short screen the
+ * hero above them was being halved while the panel kept every point of its
+ * own -- a shrunken constellation over an oversized grid, with the body text
+ * pressed against the footer. They give first now, down to a floor that keeps
+ * the artwork and two lines of label legible, and the hero is only asked for
+ * what is left.
+ */
+const SAFETY_ROWS = 2;
+const SAFETY_CELL_HEIGHT = 150;
+const SAFETY_CELL_FLOOR = 112;
+// the tile is a starfield square with the glyph about a third of its width, so
+// keeping it to the same share of a smaller cell draws a smaller everything
+const SAFETY_ART_OF_CELL = 104 / SAFETY_CELL_HEIGHT;
+
+const READY_ROWS = 3;
+const READY_CARD_PADDING = 12;
+const READY_CARD_PADDING_FLOOR = 7;
+const READY_LIST_GAP = 12;
+const READY_LIST_GAP_FLOOR = 8;
+
+/**
  * How much height the screen has asked the page to give back, in points.
  * Set by the onboarding shell once it has measured its column running past
  * the viewport; nothing, until it has.
@@ -74,6 +97,10 @@ export interface OnboardingMetrics {
    *  they need a corner and cannot rely on their edges running off it. */
   isCapped: boolean;
   chipSize: number;
+  safetyCellHeight: number;
+  safetyArtSize: number;
+  readyCardPadding: number;
+  readyListGap: number;
   togetherBackdropHeight: number;
   togetherSpacerHeight: number;
   readyBackdropHeight: number;
@@ -92,23 +119,41 @@ export interface OnboardingMetrics {
 export function onboardingMetricsFor(width: number, squeeze = 0): OnboardingMetrics {
   const layoutWidth = Math.min(width, ONBOARDING_MAX_WIDTH);
 
-  // the squeeze comes out of the hero and the spacer that holds room for it
+  const asked = Math.max(0, Math.round(squeeze));
+
+  // what the page's own panel gives up before its hero is asked for anything
+  const safetyCellHeight = Math.max(SAFETY_CELL_FLOOR, SAFETY_CELL_HEIGHT - Math.ceil(asked / SAFETY_ROWS));
+  const fromSafetyPanel = (SAFETY_CELL_HEIGHT - safetyCellHeight) * SAFETY_ROWS;
+
+  const readyCardPadding = Math.max(
+    READY_CARD_PADDING_FLOOR,
+    READY_CARD_PADDING - Math.ceil(asked / (READY_ROWS * 2))
+  );
+  const readyListGap = Math.max(READY_LIST_GAP_FLOOR, READY_LIST_GAP - Math.ceil(asked / READY_ROWS));
+  const fromReadyCards =
+    (READY_CARD_PADDING - readyCardPadding) * READY_ROWS * 2 + (READY_LIST_GAP - readyListGap) * (READY_ROWS - 1);
+
+  // the rest comes out of the hero and the spacer that holds room for it
   // alike, so the content below keeps riding up over its base by as much as
   // it did before
-  const asked = Math.max(0, Math.round(squeeze));
-  const shrink = (backdrop: number) => Math.min(asked, backdrop - Math.round(backdrop * SQUEEZE_FLOOR));
+  const shrink = (backdrop: number, absorbed: number) =>
+    Math.min(Math.max(0, asked - absorbed), backdrop - Math.round(backdrop * SQUEEZE_FLOOR));
 
   const togetherBackdropHeight = Math.round(layoutWidth * TOGETHER_ART_RATIO);
   const readyBackdropHeight = Math.round(layoutWidth * READY_ART_RATIO * READY_HERO_SCALE);
   const safeBackdropHeight = Math.round(layoutWidth * SAFE_ART_RATIO);
-  const togetherGive = shrink(togetherBackdropHeight);
-  const readyGive = shrink(readyBackdropHeight);
-  const safeGive = shrink(safeBackdropHeight);
+  const togetherGive = shrink(togetherBackdropHeight, 0);
+  const readyGive = shrink(readyBackdropHeight, fromReadyCards);
+  const safeGive = shrink(safeBackdropHeight, fromSafetyPanel);
 
   return {
     layoutWidth,
     isCapped: layoutWidth < width,
     chipSize: Math.floor((layoutWidth - ONBOARDING_H_PADDING * 2 - CHIP_GAP * 2) / 3),
+    safetyCellHeight,
+    safetyArtSize: Math.round(safetyCellHeight * SAFETY_ART_OF_CELL),
+    readyCardPadding,
+    readyListGap,
     togetherBackdropHeight: togetherBackdropHeight - togetherGive,
     togetherSpacerHeight:
       togetherBackdropHeight + TOGETHER_BACKDROP_TOP - TOGETHER_OVERLAP - togetherGive,

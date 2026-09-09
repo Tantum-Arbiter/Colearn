@@ -43,19 +43,12 @@ const CHIP_SIZE = Math.floor((LAYOUT_WIDTH - SHELL_H_PADDING * 2 - CHIP_GAP * 2)
 // matching it edge for edge, so its two cells are a little under half that
 // width and tall enough to carry a chip the size of one of those, with two
 // lines of label under it
-const SAFETY_CELL_H = 150;
 const SAFETY_GRID_RATIO = 0.8;
 const SAFETY_CELL_W = Math.floor(((LAYOUT_WIDTH - SHELL_H_PADDING * 2) * SAFETY_GRID_RATIO) / 2);
 // every label reserves two lines, so a one-line label starts level with the
 // first line of a two-line one
 const SAFETY_LABEL_LINE = 16;
 const SAFETY_LABEL_H = SAFETY_LABEL_LINE * 2;
-// The tile is a starfield square with the glyph about a third of its width, so
-// scaling it to cover the cell pins the glyph to a fixed share of that cell --
-// a smaller cell then draws a proportionally smaller everything and the icon
-// reads exactly as large as before. Drawing it `contain` at a fixed size is
-// what makes the glyph itself smaller; the cell's own panel shows around it.
-const SAFETY_ART_SIZE = 104;
 // sits the tile just under the cell's top edge, so the glyph centres in the
 // space above the label rather than behind it
 const SAFETY_ART_TOP = 8;
@@ -298,7 +291,7 @@ export function SafetyBackdrop() {
 export function SafetyPage() {
   const { t } = useTranslation();
   const { scaledFontSize } = useAccessibility();
-  const { safeSpacerHeight } = useOnboardingMetrics();
+  const { safeSpacerHeight, safetyCellHeight, safetyArtSize } = useOnboardingMetrics();
 
   return (
     <View style={styles.pageContainer}>
@@ -311,6 +304,7 @@ export function SafetyPage() {
             testID={`safety-item-${item.key}`}
             style={[
               styles.safetyCell,
+              { height: safetyCellHeight },
               index % 2 === 0 && styles.safetyCellDividerRight,
               index < 2 && styles.safetyCellDividerBottom,
             ]}
@@ -320,6 +314,7 @@ export function SafetyPage() {
               source={item.art}
               style={[
                 styles.safetyArt,
+                { width: safetyArtSize, height: safetyArtSize, borderRadius: Math.round(safetyArtSize * 0.25) },
                 item.nudgeX ? { transform: [{ translateX: item.nudgeX }] } : null,
               ]}
               resizeMode="contain"
@@ -418,15 +413,19 @@ export function ReadyBackdrop() {
 export function ReadyPage() {
   const { t } = useTranslation();
   const { scaledFontSize } = useAccessibility();
-  const { readySpacerHeight } = useOnboardingMetrics();
+  const { readySpacerHeight, readyCardPadding, readyListGap } = useOnboardingMetrics();
 
   return (
     <View style={styles.pageContainer}>
       <View style={[styles.readyBackdropSpacer, { height: readySpacerHeight }]} />
 
-      <View style={styles.featureList}>
+      <View style={[styles.featureList, { gap: readyListGap }]}>
         {READY_ITEMS.map((item) => (
-          <View key={item.key} testID={`ready-item-${item.key}`} style={styles.featureCard}>
+          <View
+            key={item.key}
+            testID={`ready-item-${item.key}`}
+            style={[styles.featureCard, { paddingVertical: readyCardPadding }]}
+          >
             <Image
               testID={`ready-art-${item.key}`}
               source={item.art}
@@ -925,7 +924,6 @@ const styles = StyleSheet.create({
   },
   safetyCell: {
     width: '50%',
-    height: SAFETY_CELL_H,
     alignItems: 'center',
     justifyContent: 'flex-end',
     paddingBottom: 6,
@@ -946,16 +944,13 @@ const styles = StyleSheet.create({
   // with only insets, a remounted Image falls back to its intrinsic 420x420 and
   // anchors top-left, which put the cell's window on the artwork's empty corner
   // and made the glyph vanish when paging back to this screen.
+  // the tile no longer reaches the cell's edges, so it takes a corner of its
+  // own and reads as a chip rather than a square cut out of the panel. Its size
+  // and corner come from the metrics, which shrink both with the cell.
   safetyArt: {
     position: 'absolute',
     alignSelf: 'center',
     top: SAFETY_ART_TOP,
-    width: SAFETY_ART_SIZE,
-    height: SAFETY_ART_SIZE,
-    // the tile no longer reaches the cell's edges, so it takes a corner of its
-    // own and reads as a chip rather than a square cut out of the panel --
-    // the same 0.22 of its width the together chips use
-    borderRadius: 26,
   },
   // catches the light from the scene above: a highlight raked down from the
   // panel's top edge, over the cells
