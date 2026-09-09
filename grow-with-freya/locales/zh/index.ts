@@ -3332,6 +3332,10 @@ export default {
       days_other: '连续 {{count}} 天',
       start: '今天开始连续记录',
     },
+    weeklyReading: {
+      minutes: '本周阅读 {{count}} 分钟',
+      none: '本周还没有阅读',
+    },
     achievements: {
       title: '看看你的成就！',
       cta: '查看成就',

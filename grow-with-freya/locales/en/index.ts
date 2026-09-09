@@ -206,6 +206,10 @@ export default {
       days_other: '{{count}} days in a row',
       start: 'Start a streak today',
     },
+    weeklyReading: {
+      minutes: '{{count}} min this week',
+      none: 'No reading yet this week',
+    },
     achievements: { title: 'Look what you achieved!', cta: 'View achievements', emptyTitle: 'Your first badge is waiting', emptyBody: 'Read a story together to earn it', hint: 'See your badges' },
     milestone: {
       eyebrow: 'Next achievement',

@@ -3332,6 +3332,10 @@ export default {
       days_other: '{{count}} gün üst üste',
       start: 'Bugün bir seri başlat',
     },
+    weeklyReading: {
+      minutes: 'Bu hafta {{count}} dk',
+      none: 'Bu hafta henüz okuma yok',
+    },
     achievements: {
       title: 'Bak neler başardın!',
       cta: 'Başarıları gör',

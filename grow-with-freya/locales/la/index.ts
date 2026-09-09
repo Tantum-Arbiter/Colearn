@@ -3332,6 +3332,10 @@ export default {
       days_other: '{{count}} dies continui',
       start: 'Seriem hodie incipe',
     },
+    weeklyReading: {
+      minutes: '{{count}} minuta hac hebdomade',
+      none: 'Nulla lectio hac hebdomade',
+    },
     achievements: {
       title: 'Vide quid effeceris!',
       cta: 'Praemia vide',

@@ -5,7 +5,13 @@
  */
 
 import { renderHook, waitFor } from '@testing-library/react-native';
-import { useChildHomeData, newestEarned, pickNextAchievement, storyMinutes } from '@/components/home/use-child-home-data';
+import {
+  useChildHomeData,
+  newestEarned,
+  pickNextAchievement,
+  storyMinutes,
+  weeklyStoryMinutes,
+} from '@/components/home/use-child-home-data';
 import { useAppStore, type AppState } from '@/store/app-store';
 import type { Badge } from '@/components/progress/progress-model';
 
@@ -17,7 +23,7 @@ jest.mock('@/components/progress/use-progress-data', () => ({
   useProgressData: () => ({ badges: mockBadges, counters: {}, summary: { earned: 0, total: 0 }, challenges: [], milestones: [] }),
 }));
 
-const mockSessions: { activity: string; duration: number }[] = [];
+const mockSessions: { activity: string; duration: number; date?: string }[] = [];
 const mockTotals: { date: string; seconds: number }[] = [];
 
 jest.mock('@/services/screen-time-service', () => ({
@@ -85,6 +91,28 @@ describe('storyMinutes', () => {
   });
 });
 
+describe('weeklyStoryMinutes', () => {
+  const NOW = new Date(2026, 8, 9, 12, 0);
+
+  it('should count only the sessions inside the window', () => {
+    const underTest = weeklyStoryMinutes(
+      [
+        { activity: 'story', duration: 600, date: '2026-09-09' } as never, // today
+        { activity: 'story', duration: 600, date: '2026-09-03' } as never, // 6 days ago, still in
+        { activity: 'story', duration: 600, date: '2026-09-01' } as never, // 8 days ago, out
+        { activity: 'music', duration: 600, date: '2026-09-09' } as never, // not reading
+      ],
+      NOW
+    );
+
+    expect(underTest).toBe(20);
+  });
+
+  it('should read as nothing when the week has no reading in it', () => {
+    expect(weeklyStoryMinutes([{ activity: 'story', duration: 600, date: '2026-08-20' } as never], NOW)).toBe(0);
+  });
+});
+
 describe('newestEarned', () => {
   it('should pick the badge unlocked most recently', () => {
     const underTest = newestEarned(
@@ -128,7 +156,7 @@ describe('useChildHomeData', () => {
   });
 
   it('should build the model from the store', async () => {
-    mockSessions.push({ activity: 'story', duration: 84 * 60 });
+    mockSessions.push({ activity: 'story', duration: 84 * 60, date: new Date().toISOString().slice(0, 10) });
     mockTotals.push({ date: '2026-09-05', seconds: 1200 }, { date: '2026-09-06', seconds: 5000 });
     applyState({
       readStoryIds: ['a', 'b', 'c'],
@@ -143,6 +171,7 @@ describe('useChildHomeData', () => {
     await waitFor(() => expect(result.current.data.readingMinutes).toBe(84));
     const underTest = result.current.data;
 
+    expect(underTest.weeklyReadingMinutes).toBe(84);
     expect(underTest.firstName).toBe('Freya');
     expect(underTest.storiesCompleted).toBe(3);
     expect(underTest.readingStreakDays).toBe(4);

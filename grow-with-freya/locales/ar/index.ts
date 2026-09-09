@@ -3332,6 +3332,10 @@ export default {
       days_other: '‏{{count}} أيام متتالية',
       start: '‏ابدأ سلسلتك اليوم',
     },
+    weeklyReading: {
+      minutes: '‏{{count}} دقيقة هذا الأسبوع',
+      none: '‏لا قراءة بعد هذا الأسبوع',
+    },
     achievements: {
       title: 'انظر ماذا أنجزت!',
       cta: 'عرض الإنجازات',

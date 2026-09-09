@@ -11,7 +11,8 @@ import { Dimensions, StyleSheet, Text, View, type StyleProp, type ViewStyle } fr
 import { render, fireEvent, type RenderResult } from '@testing-library/react-native';
 import { HomeScene } from '@/components/home/home-scene';
 import { HOME_THEMES } from '@/constants/home-scene';
-import { heroContentTop } from '@/constants/home-sky';
+import { HOME_CARD_TYPE } from '@/constants/home-journey';
+import { HERO_SKY, heroContentTop } from '@/constants/home-sky';
 import { ringCentre } from '@/constants/screen-time-ring';
 import type { ChildHomeData, WelcomeCopy } from '@/types/child-home';
 
@@ -42,6 +43,7 @@ const DATA: ChildHomeData = {
   currentStory: { id: 'moonlight', title: 'The Moonlight Garden', currentPage: 8, totalPages: 14 },
   storiesCompleted: 12,
   readingMinutes: 84,
+  weeklyReadingMinutes: 22,
   readingStreakDays: 4,
   screenTimeSafety: 100,
   newestAchievement: { id: 'story-adventurer', title: 'Story Explorer', description: 'Read 10 stories', icon: 'book' },
@@ -162,7 +164,13 @@ describe('HomeScene', () => {
   });
 
   describe('a family with nothing yet', () => {
-    const EMPTY: ChildHomeData = { firstName: '', storiesCompleted: 0, readingMinutes: 0, readingStreakDays: 0 };
+    const EMPTY: ChildHomeData = {
+      firstName: '',
+      storiesCompleted: 0,
+      readingMinutes: 0,
+      weeklyReadingMinutes: 0,
+      readingStreakDays: 0,
+    };
 
     it('should invite a first story rather than show an empty continue card', () => {
       const { view } = renderScene({ data: EMPTY });
@@ -297,5 +305,179 @@ describe('HomeScene sky', () => {
 
     expect(paddingTop).toBe(heroContentTop(44, sunSize));
     expect(StyleSheet.flatten(sky.props.style).height).toBeGreaterThan(paddingTop);
+  });
+});
+
+/**
+ * A tablet has the width to spare that a phone does not, which is what a
+ * landscape screen short on height needs: the achievement and
+ * continue-learning cards pair up side by side instead of stacking, freeing
+ * the vertical room the plan button and the screen-time ring were being cut
+ * off by.
+ */
+describe('HomeScene on a tablet', () => {
+  let originalWidth: number;
+  let originalHeight: number;
+
+  beforeEach(() => {
+    originalWidth = document.documentElement.clientWidth;
+    originalHeight = document.documentElement.clientHeight;
+    Object.defineProperty(document.documentElement, 'clientWidth', { value: 1194, configurable: true });
+    Object.defineProperty(document.documentElement, 'clientHeight', { value: 834, configurable: true });
+    window.dispatchEvent(new Event('resize'));
+  });
+
+  afterEach(() => {
+    Object.defineProperty(document.documentElement, 'clientWidth', { value: originalWidth, configurable: true });
+    Object.defineProperty(document.documentElement, 'clientHeight', { value: originalHeight, configurable: true });
+    window.dispatchEvent(new Event('resize'));
+  });
+
+  it('pairs the achievement and continue-learning cards side by side, the same size', () => {
+    const { view } = renderScene();
+
+    const achievement = byTestId(view, 'achievement-card')[0];
+    const learning = byTestId(view, 'continue-learning-card')[0];
+
+    expect(achievement.props.width).toBe(learning.props.width);
+    // Narrower than the full content column -- actually paired, not just
+    // sitting beside each other at full width.
+    expect(achievement.props.width).toBeLessThan(400);
+    // Compact mode drops the standalone CTA row -- the whole tile is the
+    // press target instead, which is how it fits at half the width.
+    expect(byTestId(view, 'achievement-cta').length).toBe(0);
+  });
+
+  it('keeps every fact on the paired achievement card, laid out to fit', () => {
+    const { view } = renderScene();
+
+    const underTest = textContents(view);
+    expect(underTest).toContain('home.milestone.eyebrow');
+    expect(byTestId(view, 'milestone-stars').length).toBeGreaterThan(0);
+  });
+
+  it('still opens the achievements and the library when their paired tiles are tapped', () => {
+    const { view, onOpenAchievements, onContinueLearning } = renderScene();
+
+    pressTestId(view, 'achievement-card');
+    pressTestId(view, 'continue-learning-card');
+
+    expect(onOpenAchievements).toHaveBeenCalledTimes(1);
+    expect(onContinueLearning).toHaveBeenCalledTimes(1);
+  });
+
+  it('still shows the streak and the week`s reading below the cards', () => {
+    const { view } = renderScene();
+
+    expect(byTestId(view, 'streak-chip').length).toBeGreaterThan(0);
+    expect(byTestId(view, 'weekly-reading-chip').length).toBeGreaterThan(0);
+  });
+
+  it('keeps the ordinary welcome text size in landscape -- portrait is the one with height to spend', () => {
+    const { view } = renderScene();
+
+    const title = StyleSheet.flatten(byTestId(view, 'home-welcome-title')[0].props.style);
+    expect(title.fontSize).toBe(HOME_CARD_TYPE.welcome);
+  });
+});
+
+/**
+ * A tablet in portrait has height the landscape layout doesn't: rather than
+ * leave it as empty sky above the cards, the welcome grows into it and the
+ * gap it would otherwise leave above the cards is closed instead.
+ */
+describe('HomeScene on a tablet in portrait', () => {
+  let originalWidth: number;
+  let originalHeight: number;
+
+  beforeEach(() => {
+    originalWidth = document.documentElement.clientWidth;
+    originalHeight = document.documentElement.clientHeight;
+    Object.defineProperty(document.documentElement, 'clientWidth', { value: 834, configurable: true });
+    Object.defineProperty(document.documentElement, 'clientHeight', { value: 1194, configurable: true });
+    window.dispatchEvent(new Event('resize'));
+  });
+
+  afterEach(() => {
+    Object.defineProperty(document.documentElement, 'clientWidth', { value: originalWidth, configurable: true });
+    Object.defineProperty(document.documentElement, 'clientHeight', { value: originalHeight, configurable: true });
+    window.dispatchEvent(new Event('resize'));
+  });
+
+  it('grows the welcome title and subtitle past their ordinary size', () => {
+    const { view } = renderScene();
+
+    const title = StyleSheet.flatten(byTestId(view, 'home-welcome-title')[0].props.style);
+    const subtitle = StyleSheet.flatten(byTestId(view, 'home-welcome-subtitle')[0].props.style);
+
+    expect(title.fontSize).toBeGreaterThan(HOME_CARD_TYPE.welcome);
+    expect(subtitle.fontSize).toBeGreaterThan(HOME_CARD_TYPE.welcomeSubtitle);
+  });
+
+  it('closes the gap the bigger subtitle would otherwise leave above the cards', () => {
+    const { view } = renderScene();
+
+    const subtitle = StyleSheet.flatten(byTestId(view, 'home-welcome-subtitle')[0].props.style);
+
+    expect(subtitle.marginBottom).toBe(0);
+  });
+
+  it('grows the sun to match', () => {
+    const { view } = renderScene();
+
+    const sunSize = StyleSheet.flatten(byTestId(view, 'sky-face')[0].props.style).width as number;
+
+    expect(sunSize).toBeGreaterThan(Math.round(834 * HERO_SKY.sunSizeRatio));
+  });
+
+  it('still pairs the achievement and continue-learning cards side by side', () => {
+    const { view } = renderScene();
+
+    const achievement = byTestId(view, 'achievement-card')[0];
+    const learning = byTestId(view, 'continue-learning-card')[0];
+
+    expect(achievement.props.width).toBe(learning.props.width);
+    expect(byTestId(view, 'achievement-cta').length).toBe(0);
+  });
+});
+
+/** The streak and the week's reading sit under the cards on a phone too --
+ *  only the achievement/continue-learning pairing is tablet-only. */
+describe('HomeScene stats row', () => {
+  let originalWidth: number;
+  let originalHeight: number;
+
+  beforeEach(() => {
+    originalWidth = document.documentElement.clientWidth;
+    originalHeight = document.documentElement.clientHeight;
+    // A phone's short side, well under the >= 768 tablet threshold.
+    Object.defineProperty(document.documentElement, 'clientWidth', { value: 402, configurable: true });
+    Object.defineProperty(document.documentElement, 'clientHeight', { value: 874, configurable: true });
+    window.dispatchEvent(new Event('resize'));
+  });
+
+  afterEach(() => {
+    Object.defineProperty(document.documentElement, 'clientWidth', { value: originalWidth, configurable: true });
+    Object.defineProperty(document.documentElement, 'clientHeight', { value: originalHeight, configurable: true });
+    window.dispatchEvent(new Event('resize'));
+  });
+
+  it('should show the streak beside how much was read this week', () => {
+    const { view } = renderScene();
+
+    expect(byTestId(view, 'streak-chip').length).toBeGreaterThan(0);
+    expect(byTestId(view, 'weekly-reading-chip').length).toBeGreaterThan(0);
+  });
+
+  it('should not pair the cards on a phone-width screen', () => {
+    const { view } = renderScene();
+
+    const achievement = byTestId(view, 'achievement-card')[0];
+    const { width } = Dimensions.get('window');
+
+    // Full content column width, not half of it -- still stacked.
+    expect(achievement.props.width).toBeGreaterThan(width / 2);
+    // Not compact -- the standalone CTA row is still there.
+    expect(byTestId(view, 'achievement-cta').length).toBeGreaterThan(0);
   });
 });

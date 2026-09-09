@@ -42,6 +42,16 @@ describe('sunFrame', () => {
 
     expect(underTest).toBe(59 + HERO_SKY.sunTopInset + SUN.size + HERO_SKY.welcomeGap);
   });
+
+  it('should grow past its ordinary ratio when handed a size scale, without moving off centre', () => {
+    const plain = sunFrame(TABLET, 59);
+    const scaled = sunFrame(TABLET, 59, TABLET, 1.3);
+
+    expect(scaled.size).toBe(Math.round(TABLET * HERO_SKY.sunSizeRatio * 1.3));
+    expect(scaled.size).toBeGreaterThan(plain.size);
+    expect(scaled.centreX).toBe(plain.centreX);
+    expect(scaled.top).toBe(plain.top);
+  });
 });
 
 describe('heroMotionMode', () => {

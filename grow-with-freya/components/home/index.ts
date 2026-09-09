@@ -12,6 +12,7 @@ export { ContinueCard } from './continue-card';
 export { AchievementCard } from './achievement-card';
 export { ContinueLearningCard } from './continue-learning-card';
 export { StreakChip } from './streak-chip';
+export { WeeklyReadingChip } from './weekly-reading-chip';
 export { StatIcon } from './stat-icons';
 export { ActivityCard } from './activity-card';
 export { GrownUpsPill } from './grown-ups-pill';

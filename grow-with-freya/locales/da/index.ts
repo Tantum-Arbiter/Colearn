@@ -3332,6 +3332,10 @@ export default {
       days_other: '{{count}} dage i træk',
       start: 'Start en stime i dag',
     },
+    weeklyReading: {
+      minutes: '{{count}} min. denne uge',
+      none: 'Ingen læsning endnu denne uge',
+    },
     achievements: {
       title: 'Se hvad du har opnået!',
       cta: 'Se præstationer',

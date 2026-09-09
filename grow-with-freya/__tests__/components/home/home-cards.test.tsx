@@ -10,7 +10,9 @@ import { StyleSheet, Text, View } from 'react-native';
 import { act, render, fireEvent, type RenderResult } from '@testing-library/react-native';
 import { ContinueCard } from '@/components/home/continue-card';
 import { AchievementCard } from '@/components/home/achievement-card';
+import { ContinueLearningCard } from '@/components/home/continue-learning-card';
 import { StreakChip } from '@/components/home/streak-chip';
+import { WeeklyReadingChip } from '@/components/home/weekly-reading-chip';
 import { Ionicons } from '@expo/vector-icons';
 import { MILESTONE_STARS } from '@/constants/home-journey';
 
@@ -237,5 +239,121 @@ describe('StreakChip', () => {
     const view = renderChip();
 
     expect(byTestId(view, 'streak-chip')[0].props.accessibilityRole).toBe('text');
+  });
+});
+
+/**
+ * The streak's neighbour: how many minutes of stories this week, beside a
+ * book rather than a flame. Livelier than the lifetime total the progress
+ * screen keeps, and -- like the streak -- an invitation rather than a zero
+ * when the week hasn't started yet.
+ */
+describe('WeeklyReadingChip', () => {
+  const renderChip = (props: Partial<React.ComponentProps<typeof WeeklyReadingChip>> = {}) =>
+    render(<WeeklyReadingChip minutes={22} animated={false} {...props} />);
+
+  it('should count the minutes read this week beside a book', () => {
+    const view = renderChip();
+
+    expect(textContents(view)).toContain('home.weeklyReading.minutes (count:22)');
+    expect(byTestId(view, 'weekly-reading-chip-book').length).toBeGreaterThan(0);
+  });
+
+  it('should invite reading rather than show a zero', () => {
+    const view = renderChip({ minutes: 0 });
+
+    const underTest = textContents(view);
+
+    expect(underTest).toContain('home.weeklyReading.none');
+    expect(underTest.some((text: string) => text.includes('0'))).toBe(false);
+  });
+
+  /** The book is still there with nothing read yet, banked down rather than swapped. */
+  it('should keep the book when nothing has been read this week', () => {
+    const view = renderChip({ minutes: 0 });
+
+    expect(byTestId(view, 'weekly-reading-chip-book').length).toBeGreaterThan(0);
+  });
+
+  it('should read as text rather than something to press', () => {
+    const view = renderChip();
+
+    expect(byTestId(view, 'weekly-reading-chip')[0].props.accessibilityRole).toBe('text');
+  });
+});
+
+/**
+ * The achievement and continue-learning cards can pair up side by side on a
+ * tablet instead of stacking full width. Compact mode has to keep every
+ * fact the full card shows -- it is just laid out to fit half the room.
+ */
+describe('AchievementCard in compact (paired) mode', () => {
+  const NEXT = { title: 'Moon Explorer', current: 3, required: 5, unit: 'stories' as const };
+
+  it('should still show the badge, the title and the stars, without the standalone CTA row', () => {
+    const view = render(
+      <AchievementCard next={NEXT} width={170} compact animated={false} celebrate={false} onPress={jest.fn()} />
+    );
+
+    const underTest = textContents(view);
+    expect(underTest).toContain('home.milestone.eyebrow');
+    expect(underTest).toContain('Moon Explorer');
+    expect(underTest).toContain('home.milestone.remaining.stories (count:2)');
+    expect(byTestId(view, 'milestone-stars').length).toBeGreaterThan(0);
+    expect(byTestId(view, 'achievement-cta').length).toBe(0);
+  });
+
+  it('should still open the achievements when tapped', () => {
+    const onPress = jest.fn();
+    const view = render(
+      <AchievementCard next={NEXT} width={170} compact animated={false} celebrate={false} onPress={onPress} />
+    );
+
+    pressTestId(view, 'achievement-card');
+
+    expect(onPress).toHaveBeenCalledTimes(1);
+  });
+
+  it('should still celebrate a full set, without the standalone CTA row', () => {
+    const view = render(
+      <AchievementCard next={undefined} width={170} compact animated={false} celebrate={false} onPress={jest.fn()} />
+    );
+
+    expect(textContents(view)).toContain('home.milestone.allDone');
+    expect(byTestId(view, 'achievement-cta').length).toBe(0);
+  });
+});
+
+describe('ContinueLearningCard', () => {
+  const renderCard = (props: Partial<React.ComponentProps<typeof ContinueLearningCard>> = {}) =>
+    render(<ContinueLearningCard width={358} animated={false} onPress={jest.fn()} {...props} />);
+
+  it('should name the way into the library, with its book and its arrow', () => {
+    const view = renderCard();
+
+    const underTest = textContents(view);
+    expect(underTest).toContain('home.continueLearning.title');
+    expect(underTest).toContain('home.continueLearning.body');
+    expect(byTestId(view, 'continue-learning-glyph').length).toBeGreaterThan(0);
+    expect(byTestId(view, 'continue-learning-arrow').length).toBeGreaterThan(0);
+  });
+
+  it('should open the library when tapped', () => {
+    const onPress = jest.fn();
+    const view = renderCard({ onPress });
+
+    pressTestId(view, 'continue-learning-card');
+
+    expect(onPress).toHaveBeenCalledTimes(1);
+  });
+
+  it('should keep the same book, title and arrow in compact (paired) mode', () => {
+    const view = renderCard({ compact: true, width: 170 });
+
+    const underTest = textContents(view);
+    expect(underTest).toContain('home.continueLearning.title');
+    expect(underTest).toContain('home.continueLearning.body');
+    expect(byTestId(view, 'continue-learning-glyph').length).toBeGreaterThan(0);
+    expect(byTestId(view, 'continue-learning-arrow').length).toBeGreaterThan(0);
   });
 });

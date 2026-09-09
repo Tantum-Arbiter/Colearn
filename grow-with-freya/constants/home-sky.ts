@@ -94,8 +94,15 @@ export interface SunFrame {
   size: number;
 }
 
-export function sunFrame(width: number, topInset: number): SunFrame {
-  const size = Math.round(width * HERO_SKY.sunSizeRatio);
+export function sunFrame(width: number, topInset: number, height: number = width, sizeScale: number = 1): SunFrame {
+  // Size off the shorter axis so a wide tablet landscape doesn't blow the
+  // sun up to portrait-width proportions -- it stays the size it would be
+  // if the device were upright. `sizeScale` is the one further knob callers
+  // get: a tablet in portrait has height to spare that this ratio alone
+  // doesn't spend, and a plain phone-sized sun on that much canvas reads as
+  // small rather than deliberate.
+  const sizeBasis = Math.min(width, height);
+  const size = Math.round(sizeBasis * HERO_SKY.sunSizeRatio * sizeScale);
   const top = topInset + HERO_SKY.sunTopInset;
 
   return { centreX: width / 2, centreY: top + size / 2, top, size };

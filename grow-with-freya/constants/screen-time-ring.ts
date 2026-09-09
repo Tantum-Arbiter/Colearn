@@ -471,6 +471,22 @@ export function ringCentre(
 }
 
 /**
+ * How much clear space the ring needs below whatever sits above it on the
+ * home scene -- out to the edge of its own halo, not just its dial, plus a
+ * breathing gap so the halo never touches the last card. Scrollable content
+ * that reserves less than this has the ring's glow drawn over its own
+ * bottom edge once that content is short enough to land beside it (a tall
+ * phone screen hides the shortfall by staying scrollable past it; a tablet
+ * that fits everything on one page does not).
+ */
+export function ringClearance(gap: number = 14): number {
+  const half = SCREEN_TIME_RING.size / 2;
+  const haloRadius = (SCREEN_TIME_RING.size * SCREEN_TIME_RING.haloScale) / 2;
+
+  return SCREEN_TIME_RING.marginBottom + half + haloRadius + gap;
+}
+
+/**
  * The rounded-rect path the open animation draws the panel's border along,
  * and its length -- the drawing is a dash-offset sweep, so the length is what
  * the dash pattern is built from.

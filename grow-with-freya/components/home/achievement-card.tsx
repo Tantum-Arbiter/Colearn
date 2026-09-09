@@ -170,6 +170,10 @@ export interface AchievementCardProps {
   animated: boolean;
   celebrate: boolean;
   onPress: () => void;
+  /** The tablet's side-by-side pairing with the continue-learning card --
+   *  a smaller medallion and stars, and the stars/CTA stacked rather than
+   *  spread across a row that no longer has the width for both. */
+  compact?: boolean;
   testID?: string;
 }
 
@@ -179,6 +183,7 @@ export const AchievementCard = memo(function AchievementCard({
   animated,
   celebrate,
   onPress,
+  compact = false,
   testID = 'achievement-card',
 }: AchievementCardProps) {
   const { t } = useTranslation();
@@ -186,6 +191,7 @@ export const AchievementCard = memo(function AchievementCard({
   const lit = next ? litStars(next.current, next.required) : 0;
   const remaining = next ? remainingToNext(next.current, next.required) : 0;
   const unit = next?.unit ?? 'stories';
+  const starSize = compact ? 12 : 16;
 
   return (
     <HomeCard
@@ -196,50 +202,96 @@ export const AchievementCard = memo(function AchievementCard({
       accessibilityLabel={t('home.milestone.eyebrow')}
       accessibilityHint={t('home.achievements.hint')}
     >
-      <View style={styles.inner}>
-        <View style={styles.row}>
-          <Medallion
-            testID="next-medallion"
-            artwork={next?.artwork}
-            icon="rocket"
-            size={HOME_CARDS.medallion}
-            animated={animated}
-            celebrate={celebrate}
-          />
-          <View style={styles.words}>
-            <Text style={styles.eyebrow}>{t('home.milestone.eyebrow')}</Text>
+      {compact ? (
+        <View style={styles.columnCompact}>
+          <View style={styles.topRowCompact}>
+            <Medallion
+              testID="next-medallion"
+              artwork={next?.artwork}
+              icon="rocket"
+              size={HOME_CARDS.pairedMedallion}
+              animated={animated}
+              celebrate={celebrate}
+            />
             {next ? (
-              <View testID="achievement-next">
-                <Text style={styles.nextTitle} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
-                  {next.title}
-                </Text>
-                <Text style={styles.body} numberOfLines={1}>
-                  {t(`home.milestone.remaining.${unit}`, { count: remaining })}
-                </Text>
-                <View style={styles.line}>
-                  <View testID="milestone-stars" style={styles.stars}>
-                    {Array.from({ length: MILESTONE_STARS }, (_, index) => (
-                      <MilestoneStar key={index} index={index} lit={index < lit} animated={animated} size={16} />
-                    ))}
+              <View testID="milestone-stars" style={styles.starsCompact}>
+                {Array.from({ length: MILESTONE_STARS }, (_, index) => (
+                  <MilestoneStar key={index} index={index} lit={index < lit} animated={animated} size={starSize} />
+                ))}
+              </View>
+            ) : null}
+          </View>
+          <Text style={styles.eyebrowCompact} numberOfLines={1}>
+            {t('home.milestone.eyebrow')}
+          </Text>
+          {next ? (
+            <View testID="achievement-next">
+              <Text
+                style={[styles.nextTitle, styles.nextTitleCompact]}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.8}
+              >
+                {next.title}
+              </Text>
+              <Text style={[styles.body, styles.bodyCompact]} numberOfLines={1}>
+                {t(`home.milestone.remaining.${unit}`, { count: remaining })}
+              </Text>
+            </View>
+          ) : (
+            <Text testID="achievement-all-done" style={[styles.body, styles.bodyCompact]} numberOfLines={2}>
+              {t('home.milestone.allDone')}
+            </Text>
+          )}
+        </View>
+      ) : (
+        <View style={styles.inner}>
+          <View style={styles.row}>
+            <Medallion
+              testID="next-medallion"
+              artwork={next?.artwork}
+              icon="rocket"
+              size={HOME_CARDS.medallion}
+              animated={animated}
+              celebrate={celebrate}
+            />
+            <View style={styles.words}>
+              <Text style={styles.eyebrow} numberOfLines={1}>
+                {t('home.milestone.eyebrow')}
+              </Text>
+              {next ? (
+                <View testID="achievement-next">
+                  <Text style={styles.nextTitle} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
+                    {next.title}
+                  </Text>
+                  <Text style={styles.body} numberOfLines={1}>
+                    {t(`home.milestone.remaining.${unit}`, { count: remaining })}
+                  </Text>
+                  <View style={styles.line}>
+                    <View testID="milestone-stars" style={styles.stars}>
+                      {Array.from({ length: MILESTONE_STARS }, (_, index) => (
+                        <MilestoneStar key={index} index={index} lit={index < lit} animated={animated} size={starSize} />
+                      ))}
+                    </View>
+                    <Animated.View testID="achievement-cta" style={arrow.style}>
+                      <Text style={styles.ctaText}>{t('home.achievements.cta')} →</Text>
+                    </Animated.View>
                   </View>
-                  <Animated.View testID="achievement-cta" style={arrow.style}>
+                </View>
+              ) : (
+                <View>
+                  <Text testID="achievement-all-done" style={styles.body} numberOfLines={2}>
+                    {t('home.milestone.allDone')}
+                  </Text>
+                  <Animated.View testID="achievement-cta" style={[styles.ctaAlone, arrow.style]}>
                     <Text style={styles.ctaText}>{t('home.achievements.cta')} →</Text>
                   </Animated.View>
                 </View>
-              </View>
-            ) : (
-              <View>
-                <Text testID="achievement-all-done" style={styles.body} numberOfLines={2}>
-                  {t('home.milestone.allDone')}
-                </Text>
-                <Animated.View testID="achievement-cta" style={[styles.ctaAlone, arrow.style]}>
-                  <Text style={styles.ctaText}>{t('home.achievements.cta')} →</Text>
-                </Animated.View>
-              </View>
-            )}
+              )}
+            </View>
           </View>
         </View>
-      </View>
+      )}
     </HomeCard>
   );
 });
@@ -247,6 +299,21 @@ export const AchievementCard = memo(function AchievementCard({
 const styles = StyleSheet.create({
   inner: {
     padding: HOME_CARDS.padding,
+  },
+  // Mirrors the continue-learning card's compact shape exactly -- icon (and
+  // here, the stars) on a top row, the words running full width underneath
+  // -- so the two paired tiles read as one matching design, not two
+  // different card layouts squeezed into the same box.
+  columnCompact: {
+    minHeight: HOME_CARDS.pairedHeight,
+    justifyContent: 'center',
+    padding: HOME_CARDS.padding,
+  },
+  topRowCompact: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
   },
   row: {
     flexDirection: 'row',
@@ -278,11 +345,22 @@ const styles = StyleSheet.create({
     color: HOME_CARD_TINTS.body,
     marginTop: 1,
   },
+  bodyCompact: {
+    fontSize: HOME_CARD_TYPE.pairedBody,
+  },
   eyebrow: {
     fontFamily: Fonts.rounded,
     fontSize: HOME_CARD_TYPE.eyebrow,
     fontWeight: '700',
     letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    color: HOME_CARD_TINTS.eyebrow,
+  },
+  eyebrowCompact: {
+    fontFamily: Fonts.rounded,
+    fontSize: HOME_CARD_TYPE.pairedEyebrow,
+    fontWeight: '700',
+    letterSpacing: 0.8,
     textTransform: 'uppercase',
     color: HOME_CARD_TINTS.eyebrow,
   },
@@ -293,10 +371,16 @@ const styles = StyleSheet.create({
     color: HOME_CARD_TINTS.title,
     marginTop: 1,
   },
+  nextTitleCompact: {
+    fontSize: HOME_CARD_TYPE.pairedTitle,
+  },
   stars: {
     flexDirection: 'row',
     marginTop: 5,
     marginRight: 8,
+  },
+  starsCompact: {
+    flexDirection: 'row',
   },
   star: {
     marginRight: 4,

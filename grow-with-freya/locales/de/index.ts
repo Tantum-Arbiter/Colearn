@@ -3332,6 +3332,10 @@ export default {
       days_other: '{{count}} Tage in Folge',
       start: 'Starte heute eine Serie',
     },
+    weeklyReading: {
+      minutes: '{{count}} Min. diese Woche',
+      none: 'Diese Woche noch nicht gelesen',
+    },
     achievements: {
       title: 'Schau, was du geschafft hast!',
       cta: 'Abzeichen ansehen',

@@ -10,23 +10,30 @@ import { HeroSunContainer } from './hero-sun-container';
 
 export interface HomeHeroSkyProps {
   width: number;
+  /** Defaults to `width` (a square viewport) when the caller doesn't know it. */
+  height?: number;
   topInset: number;
   timeOfDay: TimeOfDay;
   active?: boolean;
+  /** Grows the sun (and everything scaled off it -- the halo, the stars)
+   *  beyond its ordinary share of the shorter axis. See `sunFrame`. */
+  sizeScale?: number;
   testID?: string;
 }
 
 export const HomeHeroSky = memo(function HomeHeroSky({
   width,
+  height = width,
   topInset,
   timeOfDay,
   active = true,
+  sizeScale = 1,
   testID = 'home-hero-sky',
 }: HomeHeroSkyProps) {
   const reduceMotion = useReducedMotion();
   const settled = useSettledAfterTransition(active);
   const mode = heroMotionMode(settled, reduceMotion);
-  const sun = useMemo(() => sunFrame(width, topInset), [width, topInset]);
+  const sun = useMemo(() => sunFrame(width, topInset, height, sizeScale), [width, topInset, height, sizeScale]);
   const layout = useMemo(() => buildHeroSky(width, sun), [width, sun]);
 
   return (

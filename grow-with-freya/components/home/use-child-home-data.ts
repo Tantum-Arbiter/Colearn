@@ -10,6 +10,7 @@ import type { Badge, BadgeCategory } from '@/components/progress/progress-model'
 import {
   READING_HISTORY_DAYS,
   SAFETY_HISTORY_DAYS,
+  daysApart,
   effectiveStreak,
   resolveReturnVisit,
   screenTimeSafetyPercent,
@@ -61,6 +62,25 @@ export function storyMinutes(sessions: ScreenTimeSession[]): number {
   return Math.round(seconds / 60);
 }
 
+/**
+ * The same tally, narrowed to the last `windowDays` -- a livelier number for
+ * a weekly glance than the lifetime total `storyMinutes` gives on its own.
+ * Filters the one list `getRecentUsage` already fetched rather than a
+ * second call for a shorter range.
+ */
+export function weeklyStoryMinutes(
+  sessions: ScreenTimeSession[],
+  now: Date,
+  windowDays: number = SAFETY_HISTORY_DAYS
+): number {
+  const recent = sessions.filter((session) => {
+    const gap = daysApart(new Date(`${session.date}T12:00:00`), now);
+    return gap >= 0 && gap < windowDays;
+  });
+
+  return storyMinutes(recent);
+}
+
 export interface ChildHome {
   data: ChildHomeData;
   welcome: WelcomeCopy;
@@ -85,6 +105,7 @@ export function useChildHomeData(): ChildHome {
 
   const previousVisitRef = useRef<string | null>(lastHomeVisitAt);
   const [readingMinutes, setReadingMinutes] = useState(0);
+  const [weeklyReadingMinutes, setWeeklyReadingMinutes] = useState(0);
   const [screenTimeSafety, setScreenTimeSafety] = useState<number | undefined>(undefined);
 
   useEffect(() => {
@@ -96,6 +117,7 @@ export function useChildHomeData(): ChildHome {
       .then((sessions: ScreenTimeSession[]) => {
         if (mounted) {
           setReadingMinutes(storyMinutes(sessions));
+          setWeeklyReadingMinutes(weeklyStoryMinutes(sessions, new Date()));
         }
       })
       .catch(() => undefined);
@@ -170,6 +192,7 @@ export function useChildHomeData(): ChildHome {
       currentStory,
       storiesCompleted: readStoryIds.length,
       readingMinutes,
+      weeklyReadingMinutes,
       readingStreakDays: effectiveStreak(readingStreak, lastReadDate, now),
       screenTimeSafety,
       newestAchievement: newest
@@ -223,6 +246,7 @@ export function useChildHomeData(): ChildHome {
     currentStory,
     readStoryIds.length,
     readingMinutes,
+    weeklyReadingMinutes,
     screenTimeSafety,
     readingStreak,
     lastReadDate,

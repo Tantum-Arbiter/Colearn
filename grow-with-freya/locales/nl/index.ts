@@ -3332,6 +3332,10 @@ export default {
       days_other: '{{count}} dagen op rij',
       start: 'Begin vandaag een reeks',
     },
+    weeklyReading: {
+      minutes: '{{count}} min deze week',
+      none: 'Nog niet gelezen deze week',
+    },
     achievements: {
       title: 'Kijk wat je hebt bereikt!',
       cta: 'Bekijk prestaties',

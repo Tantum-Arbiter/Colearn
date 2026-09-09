@@ -12,6 +12,11 @@ export interface ContinueLearningCardProps {
   width: number;
   animated: boolean;
   onPress: () => void;
+  /** The tablet's side-by-side pairing with the achievement card -- the
+   *  icon-title-body-arrow row doesn't fit at half width, so this stands the
+   *  icon and arrow on their own top line and lets the words run underneath,
+   *  full width, the way the achievement tile's do. */
+  compact?: boolean;
   testID?: string;
 }
 
@@ -27,6 +32,7 @@ export const ContinueLearningCard = memo(function ContinueLearningCard({
   width,
   animated,
   onPress,
+  compact = false,
   testID = 'continue-learning-card',
 }: ContinueLearningCardProps) {
   const { t } = useTranslation();
@@ -41,22 +47,39 @@ export const ContinueLearningCard = memo(function ContinueLearningCard({
       accessibilityLabel={t('home.continueLearning.title')}
       accessibilityHint={t('home.continueLearning.hint')}
     >
-      <View style={styles.row}>
-        <View style={styles.glyph}>
-          <StatIcon kind="book" size={HOME_CARDS.tileIcon} animated={animated} testID="continue-learning-glyph" />
-        </View>
-
-        <View style={styles.words}>
-          <Text style={styles.title} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
+      {compact ? (
+        <View style={styles.columnCompact}>
+          <View style={styles.topRowCompact}>
+            <StatIcon kind="book" size={HOME_CARDS.pairedIcon} animated={animated} testID="continue-learning-glyph" />
+            <Animated.View style={arrow.style}>
+              <CardArrowButton size={HOME_CARDS.pairedArrow} pressed={false} testID="continue-learning-arrow" />
+            </Animated.View>
+          </View>
+          <Text style={[styles.title, styles.titleCompact]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
             {t('home.continueLearning.title')}
           </Text>
-          <Text style={styles.body} numberOfLines={1}>{t('home.continueLearning.body')}</Text>
+          <Text style={[styles.body, styles.bodyCompact]} numberOfLines={2}>
+            {t('home.continueLearning.body')}
+          </Text>
         </View>
+      ) : (
+        <View style={styles.row}>
+          <View style={styles.glyph}>
+            <StatIcon kind="book" size={HOME_CARDS.tileIcon} animated={animated} testID="continue-learning-glyph" />
+          </View>
 
-        <Animated.View style={arrow.style}>
-          <CardArrowButton size={HOME_CARDS.arrowSize} pressed={false} testID="continue-learning-arrow" />
-        </Animated.View>
-      </View>
+          <View style={styles.words}>
+            <Text style={styles.title} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
+              {t('home.continueLearning.title')}
+            </Text>
+            <Text style={styles.body} numberOfLines={1}>{t('home.continueLearning.body')}</Text>
+          </View>
+
+          <Animated.View style={arrow.style}>
+            <CardArrowButton size={HOME_CARDS.arrowSize} pressed={false} testID="continue-learning-arrow" />
+          </Animated.View>
+        </View>
+      )}
     </HomeCard>
   );
 });
@@ -68,6 +91,17 @@ const styles = StyleSheet.create({
     paddingVertical: HOME_CARDS.padding,
     paddingLeft: HOME_CARDS.padding + 2,
     paddingRight: HOME_CARDS.padding + 4,
+  },
+  columnCompact: {
+    minHeight: HOME_CARDS.pairedHeight,
+    justifyContent: 'center',
+    padding: HOME_CARDS.padding,
+  },
+  topRowCompact: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
   },
   glyph: {
     alignItems: 'center',
@@ -84,11 +118,17 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: HOME_CARD_TINTS.title,
   },
+  titleCompact: {
+    fontSize: HOME_CARD_TYPE.pairedTitle,
+  },
   body: {
     fontFamily: Fonts.rounded,
     fontSize: HOME_CARD_TYPE.body,
     fontWeight: '500',
     color: HOME_CARD_TINTS.body,
     marginTop: 2,
+  },
+  bodyCompact: {
+    fontSize: HOME_CARD_TYPE.pairedBody,
   },
 });

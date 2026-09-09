@@ -3332,6 +3332,10 @@ export default {
       days_other: '{{count}}日連続',
       start: '今日から続けてみよう',
     },
+    weeklyReading: {
+      minutes: '今週{{count}}分',
+      none: '今週はまだ読んでいません',
+    },
     achievements: {
       title: 'みて、こんなに できたよ！',
       cta: 'できたことを みる',

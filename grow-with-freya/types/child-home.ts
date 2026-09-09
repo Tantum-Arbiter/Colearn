@@ -31,6 +31,9 @@ export interface ChildHomeData {
   currentStory?: ChildHomeStory;
   storiesCompleted: number;
   readingMinutes: number;
+  /** Reading minutes over the last 7 days -- a livelier figure than the
+   *  lifetime total for a weekly glance on the home scene. */
+  weeklyReadingMinutes: number;
   readingStreakDays: number;
   screenTimeSafety?: number;
   newestAchievement?: ChildHomeAchievement;

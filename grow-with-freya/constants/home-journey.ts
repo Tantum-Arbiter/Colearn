@@ -124,6 +124,19 @@ export const HOME_CARDS = {
   arrowSize: 46,
   tileIcon: 34,
   medallion: 56,
+  /** The achievement and continue-learning cards on a tablet, side by side
+   *  rather than stacked -- there is width to spare there that a phone does
+   *  not have, and pairing them is what keeps the taller welcome block, the
+   *  streak and the plan button all inside a short landscape screen. Sized
+   *  down from the stacked cards' own icon/arrow so the pair reads as two
+   *  compact tiles rather than two shrunken full-width panels. */
+  pairedMedallion: 40,
+  pairedIcon: 28,
+  pairedArrow: 34,
+  /** Same reserved height on both tiles regardless of which has more to say,
+   *  so "the same size" is a fact of the layout rather than a coincidence of
+   *  the two cards' word counts. */
+  pairedHeight: 132,
 } as const;
 
 export const HOME_CARD_TYPE = {
@@ -136,6 +149,10 @@ export const HOME_CARD_TYPE = {
   meta: 12,
   achievementTitle: 17,
   cta: 12,
+  pairedEyebrow: 10,
+  pairedTitle: 15,
+  pairedBody: 12,
+  pairedCta: 11,
 } as const;
 
 export const HOME_JOURNEY_MOTION = {
@@ -190,5 +207,11 @@ export const STAT_ICON_TINTS = {
 
 export function homeContentWidth(screenWidth: number): number {
   return Math.min(screenWidth - HOME_CARDS.screenMargin * 2, HOME_CARDS.contentMaxWidth);
+}
+
+/** Half the content column, less half a gap -- so two tiles plus the gap
+ *  between them add back up to exactly `contentWidth`. */
+export function pairedCardWidth(contentWidth: number): number {
+  return (contentWidth - HOME_CARDS.gap) / 2;
 }
 

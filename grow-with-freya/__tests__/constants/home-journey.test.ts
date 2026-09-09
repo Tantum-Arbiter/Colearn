@@ -25,6 +25,7 @@ const data = (overrides: Partial<ChildHomeData> = {}): ChildHomeData => ({
   firstName: 'Freya',
   storiesCompleted: 12,
   readingMinutes: 84,
+  weeklyReadingMinutes: 22,
   readingStreakDays: 0,
   ...overrides,
 });

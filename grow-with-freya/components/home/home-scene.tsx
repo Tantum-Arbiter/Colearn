@@ -5,9 +5,9 @@ import { useTranslation } from 'react-i18next';
 import { MusicControl } from '@/components/ui/music-control';
 import { Fonts } from '@/constants/theme';
 import { HOME_SCENE_LAYOUT, HOME_THEMES, type TimeOfDay } from '@/constants/home-scene';
-import { HOME_CARDS, HOME_CARD_TYPE, homeContentWidth } from '@/constants/home-journey';
+import { HOME_CARDS, HOME_CARD_TYPE, homeContentWidth, pairedCardWidth } from '@/constants/home-journey';
 import { HERO_SKY, heroContentTop, sunFrame } from '@/constants/home-sky';
-import { SCREEN_TIME_RING, ringCentre } from '@/constants/screen-time-ring';
+import { SCREEN_TIME_RING, ringCentre, ringClearance } from '@/constants/screen-time-ring';
 import { useTimeOfDay } from '@/hooks/use-time-of-day';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { useSettledAfterTransition } from '@/hooks/use-ambient-animation';
@@ -21,6 +21,7 @@ import { ScreenTimeRing } from './screen-time-ring';
 import { UnlockPlanButton } from './unlock-plan-button';
 import { ContinueCard } from './continue-card';
 import { StreakChip } from './streak-chip';
+import { WeeklyReadingChip } from './weekly-reading-chip';
 import { AchievementCard } from './achievement-card';
 import { ContinueLearningCard } from './continue-learning-card';
 
@@ -85,14 +86,37 @@ export const HomeScene = memo(function HomeScene({
   const settled = useSettledAfterTransition(isActive);
   const animated = settled && !reduceMotion;
 
-  const sun = sunFrame(width, insets.top);
+  // A tablet's shorter axis stays >= 768 in either orientation -- use it,
+  // not raw width, so landscape isn't misread as a phone-width screen.
+  const isTablet = Math.min(width, height) >= 768;
+  // Landscape is already tight on height (that's what the paired cards and
+  // the ring clearance above are for). Portrait is the one with height to
+  // spare, so it's the one that gets a bigger sun and bigger welcome text
+  // rather than just more empty sky above the cards.
+  const portraitTablet = isTablet && height > width;
+  const sun = sunFrame(width, insets.top, height, portraitTablet ? 1.3 : 1);
   const contentWidth = homeContentWidth(width);
+  const pairedWidth = pairedCardWidth(contentWidth);
+  // On a phone the content overflows the screen, so the ring's clearance
+  // can live inside the scrollable padding -- it just scrolls into view.
+  // On a tablet the content is centred and *fits*, so that same padding
+  // gets treated as extra slack to centre around and only half of it ends
+  // up as a real gap. Carved out of the ScrollView's own height instead
+  // (before centring runs on what's left), it stays a full, guaranteed gap.
+  const tabletRingReserve = isTablet && screenTime ? ringClearance(28) : 0;
 
   return (
     <View testID={testID} style={[styles.root, { backgroundColor: theme.skyTop }]}>
       <NightSky width={width} height={height} timeOfDay={activeTimeOfDay} active={isActive} />
 
-      <HomeHeroSky width={width} topInset={insets.top} timeOfDay={activeTimeOfDay} active={isActive} />
+      <HomeHeroSky
+        width={width}
+        height={height}
+        topInset={insets.top}
+        timeOfDay={activeTimeOfDay}
+        active={isActive}
+        sizeScale={portraitTablet ? 1.3 : 1}
+      />
 
       <View style={[styles.chrome, { top: insets.top + HOME_SCENE_LAYOUT.chromeTop }]}>
         <View ref={guideTargets?.settings} collapsable={false}>
@@ -109,8 +133,10 @@ export const HomeScene = memo(function HomeScene({
         onLayout={scrollBinding?.onLayout}
         onContentSizeChange={scrollBinding?.onContentSizeChange}
         scrollEventThrottle={16}
+        style={isTablet ? [styles.scrollTablet, { marginBottom: tabletRingReserve }] : undefined}
         contentContainerStyle={[
           styles.content,
+          isTablet && styles.contentTabletCenter,
           {
             paddingTop: heroContentTop(insets.top, sun.size),
             paddingBottom: insets.bottom + 52 + (scrollBinding?.reserve ?? 0),
@@ -119,33 +145,65 @@ export const HomeScene = memo(function HomeScene({
         showsVerticalScrollIndicator={false}
         bounces={false}
       >
-        <Text testID="home-welcome-title" style={[styles.welcome, { color: theme.title }]}>
+        <Text
+          testID="home-welcome-title"
+          style={[styles.welcome, { color: theme.title }, portraitTablet && styles.welcomePortraitTablet]}
+        >
           {t(welcome.titleKey, welcome.params)}
         </Text>
-        <Text testID="home-welcome-subtitle" style={[styles.subtitle, { color: theme.subtitle }]}>
+        <Text
+          testID="home-welcome-subtitle"
+          style={[
+            styles.subtitle,
+            { color: theme.subtitle },
+            portraitTablet && styles.subtitlePortraitTablet,
+          ]}
+        >
           {t(welcome.subtitleKey, welcome.params)}
         </Text>
-
-        <View style={styles.streakSlot}>
-          <StreakChip days={data.readingStreakDays} animated={animated} />
-        </View>
 
         <View style={styles.cardSlot} ref={guideTargets?.stories} collapsable={false}>
           <ContinueCard story={data.currentStory} width={contentWidth} animated={animated} onPress={onContinue} />
         </View>
 
-        <View style={styles.cardSlot} ref={guideTargets?.achievement} collapsable={false}>
-          <AchievementCard
-            next={data.nextAchievement}
-            width={contentWidth}
-            animated={animated}
-            celebrate={celebrateAchievement}
-            onPress={onOpenAchievements}
-          />
-        </View>
+        {isTablet ? (
+          <View style={[styles.cardSlot, styles.pairedRow]}>
+            <View style={styles.pairedSlot} ref={guideTargets?.achievement} collapsable={false}>
+              <AchievementCard
+                next={data.nextAchievement}
+                width={pairedWidth}
+                animated={animated}
+                celebrate={celebrateAchievement}
+                onPress={onOpenAchievements}
+                compact
+              />
+            </View>
+            <View style={styles.pairedSlot} ref={guideTargets?.learning} collapsable={false}>
+              <ContinueLearningCard width={pairedWidth} animated={animated} onPress={onContinueLearning} compact />
+            </View>
+          </View>
+        ) : (
+          <>
+            <View style={styles.cardSlot} ref={guideTargets?.achievement} collapsable={false}>
+              <AchievementCard
+                next={data.nextAchievement}
+                width={contentWidth}
+                animated={animated}
+                celebrate={celebrateAchievement}
+                onPress={onOpenAchievements}
+              />
+            </View>
 
-        <View style={styles.cardSlot} ref={guideTargets?.learning} collapsable={false}>
-          <ContinueLearningCard width={contentWidth} animated={animated} onPress={onContinueLearning} />
+            <View style={styles.cardSlot} ref={guideTargets?.learning} collapsable={false}>
+              <ContinueLearningCard width={contentWidth} animated={animated} onPress={onContinueLearning} />
+            </View>
+          </>
+        )}
+
+        <View style={styles.statsRow}>
+          <StreakChip days={data.readingStreakDays} animated={animated} />
+          <View style={styles.statsDivider} />
+          <WeeklyReadingChip minutes={data.weeklyReadingMinutes} animated={animated} />
         </View>
 
         {onOpenPlans ? (
@@ -199,6 +257,16 @@ const styles = StyleSheet.create({
   content: {
     alignItems: 'center',
   },
+  // On a tablet the content rarely fills the taller viewport -- stretch the
+  // scroller to full height and centre the block within it instead of
+  // leaving it pinned to the top with empty space below.
+  scrollTablet: {
+    flex: 1,
+  },
+  contentTabletCenter: {
+    flexGrow: 1,
+    justifyContent: 'center',
+  },
   welcome: {
     fontFamily: Fonts.rounded,
     fontSize: HOME_CARD_TYPE.welcome,
@@ -208,6 +276,12 @@ const styles = StyleSheet.create({
     textShadowColor: HERO_SKY.welcomeGlow,
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 14,
+  },
+  // A tablet in portrait has the height to spend on a bigger greeting
+  // instead of just more sky above the cards -- matches the sun's own
+  // `sizeScale` so the two grow together.
+  welcomePortraitTablet: {
+    fontSize: Math.round(HOME_CARD_TYPE.welcome * 1.3),
   },
   subtitle: {
     fontFamily: Fonts.rounded,
@@ -221,12 +295,42 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 8,
   },
+  // Bigger type, but *less* of the gap it would otherwise want beneath it --
+  // the point is to close the distance to the cards, not just make the
+  // words above them larger.
+  subtitlePortraitTablet: {
+    fontSize: Math.round(HOME_CARD_TYPE.welcomeSubtitle * 1.3),
+    marginBottom: 0,
+  },
   cardSlot: {
     marginBottom: HOME_CARDS.gap,
   },
-  streakSlot: {
+  // The achievement and continue-learning cards, side by side on a tablet
+  // instead of stacked -- see `pairedCardWidth`.
+  pairedRow: {
+    flexDirection: 'row',
+    gap: HOME_CARDS.gap,
+  },
+  // No `flex: 1` here -- each card already gets its exact pixel width from
+  // `pairedCardWidth`, and flexing this wrapper on top of that fights it:
+  // with no width of its own to hand out, `pairedRow` collapsed and the two
+  // tiles drifted apart instead of sitting flush against the gap between
+  // them.
+  pairedSlot: {},
+  // The streak and the week's reading, together under the cards rather than
+  // above them -- an answer to "how am I doing", read after the "here's what
+  // to do next" the cards themselves are.
+  statsRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  statsDivider: {
+    width: 1,
+    height: 18,
+    marginHorizontal: 4,
+    backgroundColor: 'rgba(255,255,255,0.16)',
   },
   // centred along the bottom edge: this is where the glance's orb rises
   // from and where its closing drop falls back to, so it has to match

@@ -3332,6 +3332,10 @@ export default {
       days_other: '{{count}} días seguidos',
       start: 'Empieza una racha hoy',
     },
+    weeklyReading: {
+      minutes: '{{count}} min esta semana',
+      none: 'Sin lectura esta semana',
+    },
     achievements: {
       title: '¡Mira lo que has logrado!',
       cta: 'Ver logros',
