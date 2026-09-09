@@ -30,7 +30,7 @@ import Animated, {
 
 
 import { MusicChallengeUI } from '@/components/stories/music-challenge-ui';
-import { MusicSheetOverlay } from '@/components/stories/music-sheet-overlay';
+import { MusicSheetOverlay, MUSIC_SHEET_ANIM_MS } from '@/components/stories/music-sheet-overlay';
 import { InstrumentCarousel } from '@/components/music/instrument-carousel';
 import { MusicControl } from '@/components/ui/music-control';
 import { PageHeader } from '@/components/ui/page-header';
@@ -54,6 +54,7 @@ import { useGlobalSound } from '@/contexts/global-sound-context';
 import { SubscriptionOverlay } from '@/components/ui/subscription-overlay';
 import { StoryAccessService } from '@/services/story-access-service';
 import { OwlGuide } from '@/components/owl-guide';
+import { ContentSwap } from '@/components/child-ui/content-swap';
 import { SKY_GRADIENT_WORLD, NIGHT_DEEP } from '@/constants/night-palette';
 
 const SPIN_STARS = spinStars(20000);
@@ -66,6 +67,9 @@ type PlayMode = 'blow' | 'press';
 // Phases of the practise screen
 // songs → preview (music sheet) → playing (instrument UI)
 type PractisePhase = 'songs' | 'preview' | 'playing';
+
+/** How long a foreground takes to leave before the next phase mounts. */
+const PHASE_FADE_MS = 300;
 
 interface PractiseScreenProps {
   onBack: () => void;
@@ -273,15 +277,13 @@ export function PractiseScreen({ onBack, isActive = false }: PractiseScreenProps
     setSelectedSong(null);
   }, []);
 
-  // Fade the instrument overlay in when entering the playing phase.
-  // Delay slightly to let the music sheet fade out first (its close animation is ~300ms).
+  // Fade the instrument overlay in when entering the playing phase. The sheet
+  // has already finished closing by the time the phase changes, so this starts
+  // straight away rather than waiting behind it.
   useEffect(() => {
     if (phase === 'playing') {
       instrumentContentOpacity.value = 0;
-      const timer = setTimeout(() => {
-        instrumentContentOpacity.value = withTiming(1, { duration: 400, easing: Easing.out(Easing.ease) });
-      }, 200);
-      return () => clearTimeout(timer);
+      instrumentContentOpacity.value = withTiming(1, { duration: 400, easing: Easing.out(Easing.ease) });
     }
   }, [phase]);
 
@@ -307,12 +309,44 @@ export function PractiseScreen({ onBack, isActive = false }: PractiseScreenProps
     }
   }, [phase, musicChallengeConfig]);
 
+  // Every phase change waits for what is on show to fade out first: the phase
+  // is what mounts and unmounts each foreground, so changing it in the same
+  // tick took the old one off screen between frames. Held in a ref and cleared
+  // on unmount, so leaving mid-fade cannot set state on a screen that has gone.
+  const phaseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => {
+    if (phaseTimer.current) clearTimeout(phaseTimer.current);
+  }, []);
+  const afterFade = useCallback((ms: number, then: () => void) => {
+    if (phaseTimer.current) clearTimeout(phaseTimer.current);
+    phaseTimer.current = setTimeout(() => {
+      phaseTimer.current = null;
+      then();
+    }, ms);
+  }, []);
+  const afterSheetCloses = useCallback(
+    (then: () => void) => afterFade(MUSIC_SHEET_ANIM_MS, then),
+    [afterFade],
+  );
+
+  /** The song library fades with its phase rather than appearing whole. */
+  const songsOpacity = useSharedValue(0);
+  const songsAnimatedStyle = useAnimatedStyle(() => ({ opacity: songsOpacity.value }));
+  useEffect(() => {
+    if (phase !== 'songs') return;
+    songsOpacity.value = 0;
+    songsOpacity.value = withTiming(1, { duration: PHASE_FADE_MS, easing: Easing.out(Easing.ease) });
+  }, [phase, songsOpacity]);
+
   const handleSongSelect = useCallback((song: PracticeSong) => {
-    // Always update state first so the music sheet appears even if volume
-    // ducking fails (e.g. due to stale globalSound reference).
-    setSelectedSong(song);
-    setShowMusicSheet(true);
-    setPhase('preview');
+    // The library fades out before the sheet takes its place -- the phase
+    // change unmounts it, so switching in the same tick tore it away whole.
+    songsOpacity.value = withTiming(0, { duration: PHASE_FADE_MS, easing: Easing.in(Easing.ease) });
+    afterFade(PHASE_FADE_MS, () => {
+      setSelectedSong(song);
+      setShowMusicSheet(true);
+      setPhase('preview');
+    });
 
     // Save current bg music volume and duck to 0.1 (matches story-book-reader)
     try {
@@ -324,13 +358,16 @@ export function PractiseScreen({ onBack, isActive = false }: PractiseScreenProps
     }
   }, [globalSound.volume, fadeMusicVolumeTo]);
 
-  // User taps "Ready to Play" on the music sheet → close sheet, enter instrument mode
+  // User taps "Ready to Play" on the music sheet → close sheet, enter instrument mode.
+  // The phase change unmounts the sheet, so it waits for the sheet's own close:
+  // changing both in the one tick took the sheet off screen between frames and
+  // its fade never ran at all.
   const handleReadyToPlay = useCallback(() => {
     setShowMusicSheet(false);
     // Fade background music the rest of the way to silence
     fadeMusicVolumeTo(0, 1000);
-    setPhase('playing');
-  }, [fadeMusicVolumeTo]);
+    afterSheetCloses(() => setPhase('playing'));
+  }, [fadeMusicVolumeTo, afterSheetCloses]);
 
   // User closes the music sheet without playing → go back to song list
   const handleCloseMusicSheet = useCallback(() => {
@@ -340,10 +377,14 @@ export function PractiseScreen({ onBack, isActive = false }: PractiseScreenProps
     // song selection and cause a native crash when accessed after deallocation.
     musicChallengeRef.current.cleanup();
     setShowMusicSheet(false);
-    setSelectedSong(null);
     restoreMusicVolume();
-    setPhase('songs');
-  }, [restoreMusicVolume]);
+    // the song is what keeps the preview phase rendered, so it is let go of
+    // only once the sheet has finished sliding away
+    afterSheetCloses(() => {
+      setSelectedSong(null);
+      setPhase('songs');
+    });
+  }, [restoreMusicVolume, afterSheetCloses]);
 
   // Handle play-mode changes from MusicChallengeUI (matches story-book-reader / freeplay).
   // In "blow" mode we need the mic → start the breath detector.
@@ -366,9 +407,14 @@ export function PractiseScreen({ onBack, isActive = false }: PractiseScreenProps
     setShowSettingsMenu(false);
     setMusicUiHidden(false);
     restoreMusicVolume();
-    setSelectedSong(null);
-    setPhase('songs');
-  }, [musicChallenge, breathDetector, restoreMusicVolume]);
+    // the instrument goes the way it came, and the library fades back in
+    // behind it rather than replacing it between frames
+    instrumentContentOpacity.value = withTiming(0, { duration: PHASE_FADE_MS, easing: Easing.in(Easing.ease) });
+    afterFade(PHASE_FADE_MS, () => {
+      setSelectedSong(null);
+      setPhase('songs');
+    });
+  }, [musicChallenge, breathDetector, restoreMusicVolume, instrumentContentOpacity, afterFade]);
 
   // Return to song library from playing/preview phase (used by settings menu "Change Instrument")
   const handleChangeInstrument = useCallback(() => {
@@ -379,13 +425,15 @@ export function PractiseScreen({ onBack, isActive = false }: PractiseScreenProps
     setShowMusicSheet(false);
     setShowSettingsMenu(false);
     setMusicUiHidden(false);
-    instrumentContentOpacity.value = 0;
     if (phase === 'playing' || phase === 'preview') {
       restoreMusicVolume();
     }
-    setSelectedSong(null);
-    setPhase('songs');
-  }, [phase, musicChallenge, breathDetector, restoreMusicVolume, instrumentContentOpacity]);
+    instrumentContentOpacity.value = withTiming(0, { duration: PHASE_FADE_MS, easing: Easing.in(Easing.ease) });
+    afterFade(PHASE_FADE_MS, () => {
+      setSelectedSong(null);
+      setPhase('songs');
+    });
+  }, [phase, musicChallenge, breathDetector, restoreMusicVolume, instrumentContentOpacity, afterFade]);
 
   const handleBack = useCallback(() => {
     if (phase === 'playing') {
@@ -587,7 +635,7 @@ export function PractiseScreen({ onBack, isActive = false }: PractiseScreenProps
         {renderStoriesBackground()}
 
         <MusicSheetOverlay
-          visible
+          visible={showMusicSheet}
           onClose={handleCloseMusicSheet}
           requiredSequence={selectedSong.sequence}
           noteLayout={instrumentDef.noteLayout}
@@ -613,6 +661,9 @@ export function PractiseScreen({ onBack, isActive = false }: PractiseScreenProps
     <View style={styles.container}>
       {renderStoriesBackground()}
 
+      {/* the whole library leaves and arrives as one, over the standing sky */}
+      <Animated.View style={[styles.songsLayer, songsAnimatedStyle]}>
+
       {/* Shared page header -matches story selection screen */}
       <PageHeader
         title={t('music.songLibrary')}
@@ -631,6 +682,9 @@ export function PractiseScreen({ onBack, isActive = false }: PractiseScreenProps
         active={isActive}
       />
 
+      {/* turning the carousel replaces every song on the list, so the shelf
+          fades between the two instruments rather than swapping under the hand */}
+      <ContentSwap contentKey={selectedInstrumentId} style={styles.songSwap} testID="practise-songs">
       <FlatList
         data={availableSongs}
         keyExtractor={(item) => item.id}
@@ -727,7 +781,10 @@ export function PractiseScreen({ onBack, isActive = false }: PractiseScreenProps
           </Text>
         }
       />
+      </ContentSwap>
       </View>
+
+      </Animated.View>
 
       {/* Subscription Overlay -triggered from locked instrument tap */}
       <SubscriptionOverlay
@@ -750,6 +807,12 @@ const styles = StyleSheet.create({
     backgroundColor: NIGHT_DEEP,
   },
 
+  songsLayer: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  songSwap: {
+    flex: 1,
+  },
   songList: {
     paddingHorizontal: 20,
     paddingTop: 8,

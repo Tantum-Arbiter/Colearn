@@ -54,6 +54,15 @@ interface MusicSheetOverlayProps {
   bpm?: number;
 }
 
+/**
+ * How long the sheet takes to open and to close.
+ *
+ * Exported because a caller that swaps the sheet out for something else has to
+ * wait for the close before it unmounts the sheet -- otherwise the animation
+ * below never runs and the sheet vanishes between frames.
+ */
+export const MUSIC_SHEET_ANIM_MS = 300;
+
 export const MusicSheetOverlay = React.memo(function MusicSheetOverlay({
   visible,
   onClose,
@@ -196,14 +205,14 @@ export const MusicSheetOverlay = React.memo(function MusicSheetOverlay({
         return;
       }
       isFirstRenderRef.current = false;
-      overlayOpacity.value = withTiming(1, { duration: 300, easing: Easing.out(Easing.ease) });
-      slideY.value = withTiming(0, { duration: 300, easing: Easing.out(Easing.ease) });
+      overlayOpacity.value = withTiming(1, { duration: MUSIC_SHEET_ANIM_MS, easing: Easing.out(Easing.ease) });
+      slideY.value = withTiming(0, { duration: MUSIC_SHEET_ANIM_MS, easing: Easing.out(Easing.ease) });
     } else if (isRendered) {
       if (fadeOutOnly) {
         // Fade out only (no slide) -used when transitioning to instrument view
         overlayOpacity.value = withTiming(
           0,
-          { duration: 300, easing: Easing.in(Easing.ease) },
+          { duration: MUSIC_SHEET_ANIM_MS, easing: Easing.in(Easing.ease) },
           (finished) => {
             if (finished) {
               runOnJS(setIsRendered)(false);
@@ -212,10 +221,10 @@ export const MusicSheetOverlay = React.memo(function MusicSheetOverlay({
         );
       } else {
         // Slide down off screen, then unmount
-        overlayOpacity.value = withTiming(0, { duration: 300 });
+        overlayOpacity.value = withTiming(0, { duration: MUSIC_SHEET_ANIM_MS });
         slideY.value = withTiming(
           screenHeight,
-          { duration: 300, easing: Easing.in(Easing.cubic) },
+          { duration: MUSIC_SHEET_ANIM_MS, easing: Easing.in(Easing.cubic) },
           (finished) => {
             if (finished) {
               runOnJS(setIsRendered)(false);

@@ -53,6 +53,7 @@ import {
 } from '@/services/music-asset-registry';
 import { StoryAccessService } from '@/services/story-access-service';
 import { InstrumentMedallion } from '@/components/stories/instrument-medallion';
+import { ContentSwap } from '@/components/child-ui/content-swap';
 import { SceneBackground } from '@/components/ui/scene-background';
 import {
   ArcText,
@@ -497,14 +498,18 @@ export const InstrumentPickerOverlay = React.memo(function InstrumentPickerOverl
             </GestureDetector>
           </GestureHandlerRootView>
 
-          <View style={[styles.centerLabel, { width: panelWidth - 40 }]}>
-            <Text style={[styles.centerName, compactLayout && styles.centerNameCompact]} numberOfLines={1}>
-              {centeredInstrument?.displayName}
-            </Text>
-            <Text style={styles.centerDescription} numberOfLines={2}>
-              {centeredInstrument?.description}
-            </Text>
-          </View>
+          {/* the medallion takes a spring to settle on its new instrument, so
+              the name underneath it changes over rather than snapping ahead */}
+          <ContentSwap contentKey={String(centeredIndex)} testID="instrument-picker-label">
+            <View style={[styles.centerLabel, { width: panelWidth - 40 }]}>
+              <Text style={[styles.centerName, compactLayout && styles.centerNameCompact]} numberOfLines={1}>
+                {centeredInstrument?.displayName}
+              </Text>
+              <Text style={styles.centerDescription} numberOfLines={2}>
+                {centeredInstrument?.description}
+              </Text>
+            </View>
+          </ContentSwap>
 
           {itemCount > 1 && (
             <View style={styles.dotRow}>

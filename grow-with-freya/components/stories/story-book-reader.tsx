@@ -60,6 +60,9 @@ import { OwlGuide } from '@/components/owl-guide';
 
 const log = Logger.create('StoryBookReader');
 
+/** How long the instrument overlay takes to rise into place, and to leave. */
+const MUSIC_PRACTICE_ANIM_MS = 300;
+
 
 
 interface StoryBookReaderProps {
@@ -192,7 +195,6 @@ export function StoryBookReader({
   const voiceRecording = useVoiceRecording();
 
   // Music challenge state
-  const [showMusicMode, setShowMusicMode] = useState(false);
   const [musicChallengeCompleted, setMusicChallengeCompleted] = useState<Record<number, boolean>>({});
   // Music challenge phase: idle → preview (music sheet) → playing (instrument UI)
   const [musicChallengePhase, setMusicChallengePhase] = useState<'idle' | 'preview' | 'playing'>('idle');
@@ -524,10 +526,17 @@ export function StoryBookReader({
   // Fade background music the rest of the way to 0 (already ducked to 0.1 from step 1)
   const handleReadyToPlay = useCallback(() => {
     setShowMusicSheet(false);
-    // Reset animation values before showing the overlay (they may be left
-    // off-screen from a previous closeMusicPractice animation)
-    musicPracticeSlideY.value = 0;
-    musicPracticeOpacity.value = 1;
+    // Come in the way closeMusicPractice goes out: up from below the screen,
+    // fading in. The values are set to the start of that journey rather than
+    // its end -- left at rest, as they used to be, the overlay simply appeared,
+    // so leaving was a glide and arriving was a jump.
+    musicPracticeSlideY.value = Dimensions.get('window').height;
+    musicPracticeOpacity.value = 0;
+    musicPracticeSlideY.value = withTiming(0, {
+      duration: MUSIC_PRACTICE_ANIM_MS,
+      easing: Easing.out(Easing.cubic),
+    });
+    musicPracticeOpacity.value = withTiming(1, { duration: MUSIC_PRACTICE_ANIM_MS });
     setMusicChallengePhase('playing');
 
     // Fade background music to silence for instrument practice
@@ -660,7 +669,7 @@ export function StoryBookReader({
   const closeMusicPractice = useCallback((opts?: { cleanup?: boolean; stopBreath?: boolean; resetUiHidden?: boolean }) => {
     log.debug('closeMusicPractice called', opts);
     const screenH = Dimensions.get('window').height;
-    const ANIM_DURATION = 300;
+    const ANIM_DURATION = MUSIC_PRACTICE_ANIM_MS;
     musicPracticeOpacity.value = withTiming(0, { duration: ANIM_DURATION });
     musicPracticeSlideY.value = withTiming(
       screenH,
@@ -680,8 +689,8 @@ export function StoryBookReader({
         if (opts?.resetUiHidden) { setMusicUiHidden(false); }
         restoreMusicVolume();
         // Set phase to idle LAST -this unmounts the overlay.
-        // Animation values stay off-screen; they're reset in handleReadyToPlay
-        // before the overlay is shown again, preventing any flash.
+        // Animation values stay off-screen; handleReadyToPlay starts the next
+        // arrival from there, so the overlay never flashes into place.
         setMusicChallengePhase('idle');
       } catch (err) {
         log.warn('closeMusicPractice cleanup error:', err);
@@ -3213,66 +3222,6 @@ export function StoryBookReader({
         onEnd={() => setShowTipsOverlay(false)}
       />
 
-      {/* Music Mode Overlay - Full screen instrument free play or guided challenge */}
-      {showMusicMode && (
-        <View style={styles.absoluteModalContainer}>
-          <Pressable
-            style={styles.absoluteModalBackdrop}
-            onPress={() => {
-              setShowMusicMode(false);
-              breathDetector.stopListening();
-              restoreMusicVolume();
-            }}
-          />
-          <View style={styles.musicModeOverlay}>
-            <View style={styles.musicModeHeader}>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Ionicons name="musical-note" size={18} color="#FFFFFF" style={{ marginRight: 6 }} />
-                <Text style={styles.musicModeTitle}>Music Mode</Text>
-              </View>
-              <Pressable
-                style={styles.musicModeCloseButton}
-                onPress={() => {
-                  setShowMusicMode(false);
-                  breathDetector.stopListening();
-                  restoreMusicVolume();
-                }}
-              >
-                <Ionicons name="close" size={18} color="#FFFFFF" />
-              </Pressable>
-            </View>
-            {isMusicChallengePage && currentMusicChallenge ? (
-              <MusicChallengeUI
-                challenge={musicChallenge}
-                promptText={currentMusicChallenge.promptText}
-                requiredSequence={musicChallenge.currentSequence.length > 0 ? musicChallenge.currentSequence : ((currentMusicChallenge.requiredSequence?.length ?? 0) > 0 ? currentMusicChallenge.requiredSequence! : musicChallenge.resolvedSequence)}
-                noteLayout={getInstrument(currentMusicChallenge.instrumentId)?.noteLayout ?? []}
-                artwork={getInstrument(currentMusicChallenge.instrumentId)?.artwork}
-                showBreathButton={breathDetector.useFallback || !currentMusicChallenge.micRequired}
-                onSkip={() => musicChallenge.skip()}
-                onContinue={() => {
-                  setShowMusicMode(false);
-                  musicChallenge.cleanup();
-                  breathDetector.stopListening();
-                  restoreMusicVolume();
-                }}
-                onMusicSheet={handleToggleMusicSheet}
-                allowSkip={currentMusicChallenge.allowSkip}
-                onRotationChange={setInstrumentIsRotated}
-                onPlayModeChange={handlePlayModeChange}
-                onVisibilityChange={setMusicUiHidden}
-              />
-            ) : (
-              <View style={styles.musicModeFreePlay}>
-                <Text style={styles.musicModeFreePlayText}>
-                  No music challenge on this page.{'\n'}Free play coming soon!
-                </Text>
-              </View>
-            )}
-          </View>
-        </View>
-      )}
-
       {/* Compare Languages Modal - Using absolute View instead of Modal to prevent iOS crash */}
       {showCompareLanguageModal && (
         <View style={styles.absoluteModalContainer}>
@@ -3566,52 +3515,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
   },
 
-  musicModeOverlay: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'rgba(30, 30, 60, 0.95)',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 20,
-    maxHeight: '80%',
-    zIndex: 200,
-  },
-  musicModeHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  musicModeTitle: {
-    color: '#FFFFFF',
-    fontSize: 22,
-    fontWeight: '700',
-  },
-  musicModeCloseButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   musicModeCloseText: {
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: '600',
-  },
-  musicModeFreePlay: {
-    alignItems: 'center',
-    paddingVertical: 40,
-  },
-  musicModeFreePlayText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    textAlign: 'center',
-    opacity: 0.7,
-    lineHeight: 24,
   },
   nextPageOverlay: {
     position: 'absolute',
