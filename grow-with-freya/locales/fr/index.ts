@@ -3542,6 +3542,10 @@ export default {
         title: 'Douce soirée',
         description: 'Partagez 3 moments d\'histoires le soir',
       },
+      bedtimeListener: {
+        title: 'Écouteur du soir',
+        description: 'Partagez 3 histoires du coucher',
+      },
       kindMoments: {
         title: 'Moments gentils',
         description: 'Lis une histoire sur la gentillesse',

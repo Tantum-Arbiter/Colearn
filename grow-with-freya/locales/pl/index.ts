@@ -3542,6 +3542,10 @@ export default {
         title: 'Spokojny wieczór',
         description: 'Spędźcie 3 wieczorne chwile z bajką',
       },
+      bedtimeListener: {
+        title: 'Wieczorny słuchacz',
+        description: 'Przeczytajcie 3 bajki na dobranoc',
+      },
       kindMoments: {
         title: 'Miłe chwile',
         description: 'Przeczytaj bajkę o życzliwości',

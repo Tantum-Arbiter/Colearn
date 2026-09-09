@@ -3542,6 +3542,10 @@ export default {
         title: '温柔的夜晚',
         description: '分享3次夜晚故事时光',
       },
+      bedtimeListener: {
+        title: '睡前小听众',
+        description: '分享3个睡前故事',
+      },
       kindMoments: {
         title: '善意时刻',
         description: '读一个关于善良的故事',

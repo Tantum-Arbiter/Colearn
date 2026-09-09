@@ -3096,6 +3096,7 @@ export default {
       musicExplorer: { title: 'Music Explorer', description: 'Enjoy 5 music sessions this month' },
       calmMoment: { title: 'Calm Moment', description: 'Try your first calm activity' },
       gentleEvening: { title: 'Gentle Evening', description: 'Share 3 evening story times' },
+      bedtimeListener: { title: 'Bedtime Listener', description: 'Share 3 bedtime stories' },
       kindMoments: { title: 'Kind Moments', description: 'Read a story about kindness' },
       curiousMind: { title: 'Curious Mind', description: 'Explore 5 kinds of story' },
       adventureExplorer: { title: 'Adventure Explorer', description: 'Read 3 adventure stories' },

@@ -3542,6 +3542,10 @@ export default {
         title: 'Vesper mitis',
         description: 'Tria tempora fabularum vespere partite',
       },
+      bedtimeListener: {
+        title: 'Auditor nocturnus',
+        description: 'Tres fabulas nocturnas partite',
+      },
       kindMoments: {
         title: 'Momenta benigna',
         description: 'Fabulam de benignitate lege',

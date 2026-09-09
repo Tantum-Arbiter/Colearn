@@ -3542,6 +3542,10 @@ export default {
         title: 'Yumuşak Akşam',
         description: 'Akşam 3 hikâye zamanı paylaşın',
       },
+      bedtimeListener: {
+        title: 'Uyku vakti dinleyicisi',
+        description: '3 uyku masalı paylaşın',
+      },
       kindMoments: {
         title: 'Nazik Anlar',
         description: 'Nezaketle ilgili bir hikâye oku',

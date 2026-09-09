@@ -16,6 +16,14 @@ import {
   sortBadgesForDiscovery,
   summariseBadges,
 } from '@/components/progress/progress-model';
+import en from '@/locales/en';
+
+function lookup(key: string): unknown {
+  return key.split('.').reduce<unknown>((node, part) => {
+    if (node && typeof node === 'object') return (node as Record<string, unknown>)[part];
+    return undefined;
+  }, en);
+}
 
 describe('badgeStatus', () => {
   it.each([
@@ -74,6 +82,28 @@ describe('buildBadges', () => {
       expect(badge.descriptionKey).toMatch(/^progress\.badges\./);
     });
   });
+});
+
+/**
+ * A key with no copy behind it is drawn on the page as the key itself. The
+ * bedtime listener badge shipped that way: every other badge had its line in
+ * the locale and that one did not, so the shelf read
+ * "progress.badges.bedtimeListener.title".
+ */
+describe('the copy every badge, challenge and milestone needs', () => {
+  const everything = [
+    ...buildBadges(EMPTY_COUNTERS),
+    ...buildChallenges(EMPTY_COUNTERS, new Date(2026, 7, 26)),
+    ...buildMilestones(EMPTY_COUNTERS),
+  ];
+
+  it.each(everything.map((item) => [item.titleKey, item.descriptionKey]))(
+    'has English for %s',
+    (titleKey, descriptionKey) => {
+      expect(typeof lookup(titleKey)).toBe('string');
+      expect(typeof lookup(descriptionKey)).toBe('string');
+    },
+  );
 });
 
 describe('sortBadgesForDiscovery', () => {

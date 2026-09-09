@@ -3542,6 +3542,10 @@ export default {
         title: 'Tarde tranquila',
         description: 'Compartid 3 ratos de cuentos por la tarde',
       },
+      bedtimeListener: {
+        title: 'Oyente nocturno',
+        description: 'Compartid 3 cuentos antes de dormir',
+      },
       kindMoments: {
         title: 'Momentos amables',
         description: 'Lee un cuento sobre la amabilidad',

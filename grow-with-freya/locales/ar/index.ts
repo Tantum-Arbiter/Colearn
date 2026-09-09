@@ -3542,6 +3542,10 @@ export default {
         title: 'مساء لطيف',
         description: 'شاركا 3 أوقات قصص مسائية',
       },
+      bedtimeListener: {
+        title: 'مستمع وقت النوم',
+        description: 'شاركا 3 قصص قبل النوم',
+      },
       kindMoments: {
         title: 'لحظات لطيفة',
         description: 'اقرأ قصة عن اللطف',

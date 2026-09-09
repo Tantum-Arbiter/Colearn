@@ -3542,6 +3542,10 @@ export default {
         title: 'Blid aften',
         description: 'Del 3 historiestunder om aftenen',
       },
+      bedtimeListener: {
+        title: 'Godnatlytter',
+        description: 'Del 3 godnathistorier',
+      },
       kindMoments: {
         title: 'Venlige stunder',
         description: 'Læs en historie om venlighed',

@@ -3542,6 +3542,10 @@ export default {
         title: 'やさしいゆうべ',
         description: 'ゆうがたに3回おはなしのじかんをすごそう',
       },
+      bedtimeListener: {
+        title: 'おやすみリスナー',
+        description: 'おやすみのおはなしを3かいよもう',
+      },
       kindMoments: {
         title: 'やさしいじかん',
         description: 'やさしさのおはなしをよもう',

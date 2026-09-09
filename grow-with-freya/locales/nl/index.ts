@@ -3542,6 +3542,10 @@ export default {
         title: 'Zachte avond',
         description: 'Deel 3 verhaalmomenten in de avond',
       },
+      bedtimeListener: {
+        title: 'Bedtijdluisteraar',
+        description: 'Deel 3 verhaaltjes voor het slapengaan',
+      },
       kindMoments: {
         title: 'Lieve momenten',
         description: 'Lees een verhaal over aardig zijn',

@@ -3542,6 +3542,10 @@ export default {
         title: 'Sanfter Abend',
         description: 'Teilt 3 abendliche Geschichtenzeiten',
       },
+      bedtimeListener: {
+        title: 'Gute-Nacht-Zuhörer',
+        description: 'Teilt 3 Gute-Nacht-Geschichten',
+      },
       kindMoments: {
         title: 'Nette Momente',
         description: 'Lies eine Geschichte über Freundlichkeit',
