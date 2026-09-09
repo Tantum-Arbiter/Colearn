@@ -1,5 +1,5 @@
 import React, { RefObject, useCallback, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView, NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -278,7 +278,12 @@ function StoryCard({
         </View>
       </View>
 
-      <View style={styles.bodyScroll}>
+      <ScrollView
+        style={styles.bodyScroll}
+        contentContainerStyle={styles.bodyScrollContent}
+        showsVerticalScrollIndicator={false}
+        bounces={false}
+      >
         <Animated.View entering={FadeInDown.delay(STORY_DETAIL_OPENING.staggerMs).duration(STORY_DETAIL_OPENING.contentMs)} style={styles.body}>
           <Text style={[styles.title, { fontSize: scaledFontSize(22) }]} numberOfLines={2}>{displayTitle}</Text>
 
@@ -387,7 +392,7 @@ function StoryCard({
             </View>
           )}
         </Animated.View>
-      </View>
+      </ScrollView>
 
       <Animated.View style={[styles.shade, shadeStyle]} pointerEvents="none" testID={`story-card-shade-${story.id}`} />
     </Animated.View>
@@ -442,6 +447,9 @@ const styles = StyleSheet.create({
   },
   bodyScroll: {
     flex: 1,
+  },
+  bodyScrollContent: {
+    flexGrow: 1,
     paddingBottom: 16,
   },
   body: {
