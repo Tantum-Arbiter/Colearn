@@ -3327,9 +3327,9 @@ export default {
       hint: 'اختر حكاية لتقرآها معاً',
     },
     streak: {
-      days: '‏{{count}} أيام متتالية',
-      days_one: '‏يوم واحد متتالٍ',
-      days_other: '‏{{count}} أيام متتالية',
+      days: '‏سلسلة {{count}} أيام!',
+      days_one: '‏سلسلة يوم واحد!',
+      days_other: '‏سلسلة {{count}} أيام!',
       start: '‏ابدأ سلسلتك اليوم',
     },
     weeklyReading: {

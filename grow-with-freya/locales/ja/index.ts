@@ -3327,9 +3327,9 @@ export default {
       hint: 'いっしょに よむ おはなしを えらんでね',
     },
     streak: {
-      days: '{{count}}日連続',
-      days_one: '{{count}}日連続',
-      days_other: '{{count}}日連続',
+      days: '{{count}}日連続達成！',
+      days_one: '{{count}}日連続達成！',
+      days_other: '{{count}}日連続達成！',
       start: '今日から続けてみよう',
     },
     weeklyReading: {

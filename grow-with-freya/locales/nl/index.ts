@@ -3327,9 +3327,9 @@ export default {
       hint: 'Kies een verhaal om samen te lezen',
     },
     streak: {
-      days: '{{count}} dagen op rij',
-      days_one: '{{count}} dag op rij',
-      days_other: '{{count}} dagen op rij',
+      days: '{{count}} dagen reeks!',
+      days_one: '{{count}} dag reeks!',
+      days_other: '{{count}} dagen reeks!',
       start: 'Begin vandaag een reeks',
     },
     weeklyReading: {

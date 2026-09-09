@@ -3327,9 +3327,9 @@ export default {
       hint: 'Vælg en historie at læse sammen',
     },
     streak: {
-      days: '{{count}} dage i træk',
-      days_one: '{{count}} dag i træk',
-      days_other: '{{count}} dage i træk',
+      days: '{{count}} dages stime!',
+      days_one: '{{count}} dags stime!',
+      days_other: '{{count}} dages stime!',
       start: 'Start en stime i dag',
     },
     weeklyReading: {

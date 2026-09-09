@@ -3327,9 +3327,9 @@ export default {
       hint: '选一个故事一起读',
     },
     streak: {
-      days: '连续 {{count}} 天',
-      days_one: '连续 {{count}} 天',
-      days_other: '连续 {{count}} 天',
+      days: '连续 {{count}} 天！',
+      days_one: '连续 {{count}} 天！',
+      days_other: '连续 {{count}} 天！',
       start: '今天开始连续记录',
     },
     weeklyReading: {

@@ -201,9 +201,9 @@ export default {
     },
     continueStart: { eyebrow: 'Start a story', title: 'Pick your first adventure', body: 'A new world is waiting', hint: 'Choose a story to read together' },
     streak: {
-      days: '{{count}} days in a row',
-      days_one: '{{count}} day in a row',
-      days_other: '{{count}} days in a row',
+      days: '{{count}} day streak!',
+      days_one: '{{count}} day streak!',
+      days_other: '{{count}} day streak!',
       start: 'Start a streak today',
     },
     weeklyReading: {

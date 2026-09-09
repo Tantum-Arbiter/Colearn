@@ -3327,9 +3327,9 @@ export default {
       hint: 'Fabulam elige quam una legatis',
     },
     streak: {
-      days: '{{count}} dies continui',
-      days_one: '{{count}} dies continuus',
-      days_other: '{{count}} dies continui',
+      days: 'Series {{count}} dierum!',
+      days_one: 'Series {{count}} diei!',
+      days_other: 'Series {{count}} dierum!',
       start: 'Seriem hodie incipe',
     },
     weeklyReading: {

@@ -3327,9 +3327,9 @@ export default {
       hint: 'Birlikte okumak için bir hikâye seç',
     },
     streak: {
-      days: '{{count}} gün üst üste',
-      days_one: '{{count}} gün üst üste',
-      days_other: '{{count}} gün üst üste',
+      days: '{{count}} günlük seri!',
+      days_one: '{{count}} günlük seri!',
+      days_other: '{{count}} günlük seri!',
       start: 'Bugün bir seri başlat',
     },
     weeklyReading: {

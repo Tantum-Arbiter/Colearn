@@ -3327,9 +3327,9 @@ export default {
       hint: 'Wybierz opowieść do wspólnego czytania',
     },
     streak: {
-      days: '{{count}} dni z rzędu',
-      days_one: '{{count}} dzień z rzędu',
-      days_other: '{{count}} dni z rzędu',
+      days: 'Seria {{count}} dni!',
+      days_one: 'Seria {{count}} dnia!',
+      days_other: 'Seria {{count}} dni!',
       start: 'Zacznij serię dzisiaj',
     },
     weeklyReading: {

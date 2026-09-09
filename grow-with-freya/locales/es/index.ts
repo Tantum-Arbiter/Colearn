@@ -3327,9 +3327,9 @@ export default {
       hint: 'Elige un cuento para leer juntos',
     },
     streak: {
-      days: '{{count}} días seguidos',
-      days_one: '{{count}} día seguido',
-      days_other: '{{count}} días seguidos',
+      days: '¡Racha de {{count}} días!',
+      days_one: '¡Racha de {{count}} día!',
+      days_other: '¡Racha de {{count}} días!',
       start: 'Empieza una racha hoy',
     },
     weeklyReading: {

@@ -3327,9 +3327,9 @@ export default {
       hint: 'Wähle eine Geschichte zum gemeinsamen Lesen',
     },
     streak: {
-      days: '{{count}} Tage in Folge',
-      days_one: '{{count}} Tag in Folge',
-      days_other: '{{count}} Tage in Folge',
+      days: '{{count}} Tage Serie!',
+      days_one: '{{count}} Tag Serie!',
+      days_other: '{{count}} Tage Serie!',
       start: 'Starte heute eine Serie',
     },
     weeklyReading: {
