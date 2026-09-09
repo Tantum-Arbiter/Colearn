@@ -31,6 +31,7 @@ import { SubscriptionOverlay } from '@/components/ui/subscription-overlay';
 import { CelestialBackground } from '@/components/child-ui/celestial-background';
 import { PlanetHeaderArtwork } from '@/components/child-ui/planet-header-artwork';
 import { SectionCrossfade } from '@/components/child-ui/section-crossfade';
+import { ContentSwap } from '@/components/child-ui/content-swap';
 import { CircleActionButton } from '@/components/child-ui/circle-action-button';
 import { PageTitle } from '@/components/child-ui/page-title';
 import { PageTagline } from '@/components/child-ui/page-tagline';
@@ -358,6 +359,9 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
   // A finer theme chosen turns the whole shelf, featured panel included, into
   // one grid of what matches, headed by that theme
   const browsing = selectedTags.size > 0;
+  // what the shelves are showing: the theme, and the filters narrowing it.
+  // A change to either replaces every book on the page.
+  const collectionKey = `${theme}:${[...selectedTags].sort().join(',')}`;
 
   // The shelves under the featured panel, laid out afresh each time the app opens
   const savedStories = useMemo(
@@ -948,6 +952,8 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
             <ScrollView
               ref={pageScroller.scrollRef}
               onScroll={pageScroller.onScroll}
+              onLayout={pageScroller.onLayout}
+              onContentSizeChange={pageScroller.onContentSizeChange}
               scrollEventThrottle={16}
               style={[styles.scroll, { marginBottom: navClearance(insets.bottom) }]}
               contentContainerStyle={[
@@ -1001,18 +1007,25 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
                     </Pressable>
                   )}
                 </View>
-              ) : browsing ? (
-                moreSection
-              ) : isLandscapeTablet && featured ? (
-                <View style={styles.landscapeColumns}>
-                  <View style={styles.landscapeFeaturedColumn} ref={featuredRef} collapsable={false}>{featuredSection}</View>
-                  <View style={styles.landscapeGridColumn} ref={shelvesRef} collapsable={false}>{shelvesView}</View>
-                </View>
               ) : (
-                <>
-                  <View ref={featuredRef} collapsable={false}>{featuredSection}</View>
-                  <View ref={shelvesRef} collapsable={false}>{shelvesView}</View>
-                </>
+                // the shelves change wholesale when a theme or a filter is
+                // tapped; without this they were replaced between one frame
+                // and the next, which read as the page glitching
+                <ContentSwap contentKey={collectionKey} testID="catalogue-collection">
+                  {browsing ? (
+                    moreSection
+                  ) : isLandscapeTablet && featured ? (
+                    <View style={styles.landscapeColumns}>
+                      <View style={styles.landscapeFeaturedColumn} ref={featuredRef} collapsable={false}>{featuredSection}</View>
+                      <View style={styles.landscapeGridColumn} ref={shelvesRef} collapsable={false}>{shelvesView}</View>
+                    </View>
+                  ) : (
+                    <>
+                      <View ref={featuredRef} collapsable={false}>{featuredSection}</View>
+                      <View ref={shelvesRef} collapsable={false}>{shelvesView}</View>
+                    </>
+                  )}
+                </ContentSwap>
               )}
             </ScrollView>
             </>

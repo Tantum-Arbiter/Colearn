@@ -35,6 +35,13 @@ export interface GuideStep {
   shape?: SpotlightShape;
   radius?: number;
   illustration?: GuideIllustration;
+  /**
+   * The subject is furniture the page cannot move -- a fixed bar, a corner
+   * control, a button on a sheet that does not scroll. Scrolling to reveal it
+   * only walks the page away from what the owl is talking about, so a pinned
+   * step is spotlit where it stands.
+   */
+  pinned?: boolean;
 }
 
 function keyed(section: string, id: string, key: string): Pick<GuideStep, 'titleKey' | 'descriptionKey'> {
@@ -55,9 +62,9 @@ export const GUIDE_STEPS: Record<GuideId, readonly GuideStep[]> = {
     { id: 'achievement_card', ...keyed('mainMenu', 'achievement_card', 'achievement'), target: 'achievement_card', shape: 'rounded-rect', radius: 24 },
     { id: 'learning_button', ...keyed('mainMenu', 'learning_button', 'learning'), target: 'learning_button', shape: 'rounded-rect', radius: 24 },
     { id: 'instruments_button', ...keyed('mainMenu', 'instruments_button', 'instruments'), target: 'instruments_button', shape: 'rounded-rect', radius: 24 },
-    { id: 'screen_time_ring', ...keyed('mainMenu', 'screen_time_ring', 'screenTime'), target: 'screen_time_ring', shape: 'circle', illustration: 'screenTimeRing' },
-    { id: 'settings_button', ...keyed('mainMenu', 'settings_button', 'settings'), target: 'settings_button', shape: 'rounded-rect', radius: 19 },
-    { id: 'sound_control', ...keyed('mainMenu', 'sound_control', 'sound'), target: 'sound_control', shape: 'circle' },
+    { id: 'screen_time_ring', ...keyed('mainMenu', 'screen_time_ring', 'screenTime'), target: 'screen_time_ring', shape: 'circle', illustration: 'screenTimeRing', pinned: true },
+    { id: 'settings_button', ...keyed('mainMenu', 'settings_button', 'settings'), target: 'settings_button', shape: 'rounded-rect', radius: 19, pinned: true },
+    { id: 'sound_control', ...keyed('mainMenu', 'sound_control', 'sound'), target: 'sound_control', shape: 'circle', pinned: true },
   ],
   catalogue_tour: [
     { id: 'catalogue_welcome', ...keyed('catalogue', 'catalogue_welcome', 'welcome') },
@@ -65,10 +72,10 @@ export const GUIDE_STEPS: Record<GuideId, readonly GuideStep[]> = {
     { id: 'filter_toggle', ...keyed('catalogue', 'filter_toggle', 'filter'), target: 'filter_toggle', shape: 'rounded-rect', radius: 22 },
     { id: 'featured_story', ...keyed('catalogue', 'featured_story', 'featured'), target: 'featured_story', shape: 'rounded-rect', radius: 22 },
     { id: 'story_shelves', ...keyed('catalogue', 'story_shelves', 'shelves'), target: 'story_shelves', shape: 'rounded-rect', radius: 22 },
-    { id: 'nav_progress', ...keyed('catalogue', 'nav_progress', 'navProgress'), target: 'nav_progress', shape: 'circle' },
-    { id: 'nav_screensafe', ...keyed('catalogue', 'nav_screensafe', 'navScreensafe'), target: 'nav_screensafe', shape: 'circle' },
-    { id: 'nav_search', ...keyed('catalogue', 'nav_search', 'navSearch'), target: 'nav_search', shape: 'circle' },
-    { id: 'nav_profile', ...keyed('catalogue', 'nav_profile', 'navProfile'), target: 'nav_profile', shape: 'circle' },
+    { id: 'nav_progress', ...keyed('catalogue', 'nav_progress', 'navProgress'), target: 'nav_progress', shape: 'circle', pinned: true },
+    { id: 'nav_screensafe', ...keyed('catalogue', 'nav_screensafe', 'navScreensafe'), target: 'nav_screensafe', shape: 'circle', pinned: true },
+    { id: 'nav_search', ...keyed('catalogue', 'nav_search', 'navSearch'), target: 'nav_search', shape: 'circle', pinned: true },
+    { id: 'nav_profile', ...keyed('catalogue', 'nav_profile', 'navProfile'), target: 'nav_profile', shape: 'circle', pinned: true },
   ],
   progress_tour: [
     { id: 'progress_welcome', ...keyed('progress', 'progress_welcome', 'welcome') },
@@ -86,7 +93,7 @@ export const GUIDE_STEPS: Record<GuideId, readonly GuideStep[]> = {
     { id: 'profile_welcome', ...keyed('profile', 'profile_welcome', 'welcome') },
     { id: 'profile_hero', ...keyed('profile', 'profile_hero', 'hero'), target: 'profile_hero', shape: 'circle' },
     { id: 'profile_tabs', ...keyed('profile', 'profile_tabs', 'tabs'), target: 'profile_tabs', shape: 'rounded-rect', radius: 22 },
-    { id: 'profile_settings', ...keyed('profile', 'profile_settings', 'settings'), target: 'profile_settings', shape: 'circle' },
+    { id: 'profile_settings', ...keyed('profile', 'profile_settings', 'settings'), target: 'profile_settings', shape: 'circle', pinned: true },
   ],
   story_modes_tour: plain('storyModes', [
     ['modes_welcome', 'welcome'],
@@ -203,6 +210,9 @@ export const GUIDE_TIMING = {
   scrollSettleMs: 420,
   turnSettleMs: 500,
   dimMs: 260,
+  // the spotlight lands first and is left alone for a beat, so the eye is
+  // already on the new subject by the time the words arrive
+  highlightLeadMs: 260,
 } as const;
 
 export const GUIDE_BUTTON_KEYS = {
@@ -288,7 +298,12 @@ export interface BubbleSize {
   height: number;
 }
 
-export type BubbleMode = 'perch' | 'above' | 'below';
+/**
+ * The bubble belongs to the owl and never leaves it. Between steps the only
+ * things that change are the spotlight and the words -- a bubble that flew to
+ * whatever was being pointed at read as a second, unattached voice.
+ */
+export type BubbleMode = 'perch';
 
 export interface BubblePlacement {
   mode: BubbleMode;
@@ -307,7 +322,8 @@ export const BUBBLE_SIDE_GAP = 8;
 export const BUBBLE_SIDE_BOTTOM = 18;
 export const DEFAULT_BUBBLE_HEIGHT = 160;
 
-function overlaps(a: TargetRect, b: TargetRect, margin = 8): boolean {
+/** Whether two rectangles touch, allowing a little breathing room between. */
+export function rectsOverlap(a: TargetRect, b: TargetRect, margin = 8): boolean {
   return (
     a.x < b.x + b.width + margin &&
     a.x + a.width + margin > b.x &&
@@ -316,7 +332,7 @@ function overlaps(a: TargetRect, b: TargetRect, margin = 8): boolean {
   );
 }
 
-/** Where the bubble sits when nothing has pushed it off the owl's perch. */
+/** Where the bubble sits: over the owl on a phone, beside it in landscape. */
 function restingPlacement(
   frame: GuideFrame,
   insets: GuideInsets,
@@ -365,13 +381,17 @@ function restingRects(
 }
 
 /**
- * How far a scrolling page has to move for a highlight to sit clear of the
- * bubble resting by the owl, so the bubble can stay where it belongs rather
- * than being lifted off the perch to make room.
+ * How far a scrolling page has to move for a highlight to sit in the clear
+ * band: below the top of the screen, above the bubble resting by the owl.
  *
- * Positive is a scroll down by that many points. Zero means the highlight is
- * already clear -- including when it is above the resting area rather than
- * behind it, which scrolling would only make worse.
+ * Positive scrolls the page down, negative up, zero leaves it alone. The
+ * move is from wherever the page is now, not from a resting place it has to
+ * be carried home to first -- that round trip was a visible bounce between
+ * every pair of steps, and the ring was still drawn over the page while it
+ * made it.
+ *
+ * A subject taller than the band keeps its head: scrolling far enough to
+ * clear the bubble would take its top off the screen instead.
  */
 export function guideRevealShift(
   frame: GuideFrame,
@@ -383,16 +403,24 @@ export function guideRevealShift(
 ): number {
   const resting = restingPlacement(frame, insets, perch, bubble, landscape);
   const rects = restingRects(frame, perch, bubble, resting);
-  const clearOf = Math.min(rects.bubble.y, rects.perch.y) - BUBBLE_GAP;
-  if (target.y + target.height <= clearOf) return 0;
+  const bandTop = insets.top + BUBBLE_MARGIN;
+  const bandBottom = Math.min(rects.bubble.y, rects.perch.y) - BUBBLE_GAP;
 
-  // a highlight past the bottom of the screen is behind nothing, but it is
-  // no more visible for that: it needs the same lift as one under the bubble
-  const belowTheScreen = target.y >= frame.height;
-  const inTheWay = overlaps(target, rects.bubble) || overlaps(target, rects.perch);
-  if (!belowTheScreen && !inTheWay) return 0;
+  // low enough to be behind the bubble or the owl, or off the bottom
+  // altogether -- something merely low but beside them is already visible and
+  // moving the page for it would only take something else away
+  const buried = target.y + target.height - bandBottom;
+  const hidden =
+    target.y >= frame.height || rectsOverlap(target, rects.bubble) || rectsOverlap(target, rects.perch);
+  if (buried > 0 && hidden) {
+    // never so far that the head of the subject goes off the top instead
+    return Math.round(Math.min(buried, Math.max(0, target.y - bandTop)));
+  }
 
-  return Math.max(0, Math.round(target.y + target.height - clearOf));
+  // clipped by the top of the screen: brought down until its head shows
+  if (target.y < insets.top) return Math.round(target.y - bandTop);
+
+  return 0;
 }
 
 export function placeGuideBubble(
@@ -400,25 +428,9 @@ export function placeGuideBubble(
   insets: GuideInsets,
   perch: PerchSize,
   bubble: BubbleSize,
-  landscape: boolean,
-  target?: TargetRect | null
+  landscape: boolean
 ): BubblePlacement {
-  const resting = restingPlacement(frame, insets, perch, bubble, landscape);
-  if (!target) return resting;
-
-  const rects = restingRects(frame, perch, bubble, resting);
-  if (!overlaps(target, rects.bubble) && !overlaps(target, rects.perch)) return resting;
-
-  const width = bubble.maxWidth;
-  const minLeft = BUBBLE_MARGIN + insets.left;
-  const maxLeft = frame.width - insets.right - BUBBLE_MARGIN - width;
-  const left = Math.min(Math.max(target.x + target.width / 2 - width / 2, minLeft), Math.max(minLeft, maxLeft));
-  const fitsAbove = target.y - BUBBLE_GAP - bubble.height >= insets.top + BUBBLE_MARGIN;
-
-  if (fitsAbove) {
-    return { mode: 'above', left, bottom: frame.height - (target.y - BUBBLE_GAP), width, tail: null, pointer: 'down' };
-  }
-  return { mode: 'below', left, top: target.y + target.height + BUBBLE_GAP, width, tail: null, pointer: 'up' };
+  return restingPlacement(frame, insets, perch, bubble, landscape);
 }
 
 export const SPOTLIGHT_PADDING = 8;

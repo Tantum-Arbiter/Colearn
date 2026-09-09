@@ -1,5 +1,4 @@
 import {
-  BUBBLE_GAP,
   BUBBLE_MARGIN,
   BUBBLE_PERCH_LIFT,
   BUBBLE_SIDE_GAP,
@@ -129,6 +128,53 @@ describe('GUIDE_STEPS', () => {
   });
 });
 
+/**
+ * The tour scrolled the page to lift the child nav bar clear of the bubble.
+ * The bar is pinned below the scroll view, so the page walked off whatever the
+ * owl was talking about and came back a step later, over and over.
+ */
+describe('pinned steps', () => {
+  const pinnedOf = (id: GuideId) =>
+    GUIDE_STEPS[id].filter((step) => step.pinned).map((step) => step.target);
+
+  it('pins the child nav bar on the catalogue tour', () => {
+    expect(pinnedOf('catalogue_tour')).toEqual([
+      'nav_progress',
+      'nav_screensafe',
+      'nav_search',
+      'nav_profile',
+    ]);
+  });
+
+  it('pins the home page controls that sit outside its scroll view', () => {
+    expect(pinnedOf('main_menu_tour')).toEqual([
+      'screen_time_ring',
+      'settings_button',
+      'sound_control',
+    ]);
+  });
+
+  it('pins the gear on the profile page, which sits above its column', () => {
+    expect(pinnedOf('profile_tour')).toEqual(['profile_settings']);
+  });
+
+  /** The card sheet has no scroll view but it does rise for the owl, so its
+   *  buttons are movable rather than pinned. */
+  it('leaves the mode sheet free to lift', () => {
+    const steps = GUIDE_STEPS.book_mode_tour;
+
+    expect(steps.some((step) => step.pinned)).toBe(false);
+  });
+
+  it('leaves the cards inside a scrolling column free to be scrolled to', () => {
+    const scrollable = GUIDE_STEPS.catalogue_tour
+      .filter((step) => step.target && !step.pinned)
+      .map((step) => step.target);
+
+    expect(scrollable).toEqual(['theme_tiles', 'filter_toggle', 'featured_story', 'story_shelves']);
+  });
+});
+
 describe('guideSteps', () => {
   it('keeps every step when all its targets are on screen', () => {
     const targets = GUIDE_STEPS.main_menu_tour.map((step) => step.target).filter(Boolean) as string[];
@@ -230,6 +276,21 @@ describe('guideRevealShift', () => {
     expect(shiftFor({ x: PHONE.width - 30, y: PHONE.height - 60, width: 28, height: 20 })).toBe(0);
   });
 
+  /**
+   * The page is no longer carried home between steps, so a subject the tour
+   * has already scrolled past has to be reached by scrolling back up to it.
+   */
+  it('carries the page back up for a highlight clipped by the top of the screen', () => {
+    const shift = shiftFor({ x: 40, y: -80, width: 200, height: 44 });
+
+    expect(shift).toBeLessThan(0);
+    expect(shiftFor({ x: 40, y: -80 - shift, width: 200, height: 44 })).toBe(0);
+  });
+
+  it('leaves alone a highlight that is fully in the clear band', () => {
+    expect(shiftFor({ x: 40, y: 200, width: 200, height: 44 })).toBe(0);
+  });
+
   it('asks for more of a page the deeper the highlight is buried', () => {
     const higher = shiftFor({ x: 40, y: 640, width: 200, height: 44 });
     const lower = shiftFor({ x: 40, y: 760, width: 200, height: 44 });
@@ -238,14 +299,19 @@ describe('guideRevealShift', () => {
   });
 });
 
+/**
+ * The bubble belongs to the owl. It used to fly to whatever was being pointed
+ * at, which left a box floating mid-screen with no owl attached to it; between
+ * steps only the spotlight and the words change now.
+ */
 describe('placeGuideBubble', () => {
   const insets = { top: 44, bottom: 34, left: 0, right: 0 };
   const perch = { width: 236, height: 181 };
   const bubble = { maxWidth: 340, height: 160 };
-  const place = (target?: { x: number; y: number; width: number; height: number }, landscape = false, frame = PHONE) =>
-    placeGuideBubble(frame, insets, perch, bubble, landscape, target);
+  const place = (landscape = false, frame = PHONE) =>
+    placeGuideBubble(frame, insets, perch, bubble, landscape);
 
-  it('rests above the owl with its tail down when there is nothing to point at', () => {
+  it('rests above the owl with its tail down', () => {
     expect(place()).toEqual({
       mode: 'perch',
       left: BUBBLE_MARGIN,
@@ -257,60 +323,17 @@ describe('placeGuideBubble', () => {
   });
 
   it('rests beside the owl in landscape', () => {
-    const placement = place(undefined, true, PHONE_LANDSCAPE);
+    const placement = place(true, PHONE_LANDSCAPE);
 
     expect(placement.mode).toBe('perch');
     expect(placement.left).toBe(perch.width + BUBBLE_SIDE_GAP);
     expect(placement.tail).toBe('left');
   });
 
-  /**
-   * On the perch the bubble belongs to the owl, and its tail says so. A second
-   * notch pointing at the highlight put two tails on the one bubble; the
-   * spotlight already says which thing is being talked about.
-   */
-  it('stays on the perch with only its owl tail when the highlight is well above it', () => {
-    const placement = place({ x: 300, y: 60, width: 80, height: 40 });
+  it('allows for the left inset so a notch does not push it off screen', () => {
+    const placement = placeGuideBubble(PHONE, { ...insets, left: 20 }, perch, bubble, false);
 
-    expect(placement.mode).toBe('perch');
-    expect(placement.tail).toBe('down');
-    expect(placement.pointer).toBeNull();
-  });
-
-  it('moves above a highlight that its resting place would cover', () => {
-    const target = { x: 60, y: 640, width: 260, height: 44 };
-
-    const placement = place(target);
-
-    expect(placement.mode).toBe('above');
-    expect(placement.bottom).toBe(PHONE.height - (target.y - BUBBLE_GAP));
-    expect(placement.tail).toBeNull();
-    expect(placement.pointer).toBe('down');
-  });
-
-  it('moves above a highlight that the owl itself would cover', () => {
-    const placement = place({ x: 20, y: 800, width: 120, height: 40 });
-
-    expect(placement.mode).toBe('above');
-  });
-
-  it('drops below a highlight near the top when there is no room above', () => {
-    const target = { x: 20, y: 60, width: 200, height: 40 };
-    const placement = placeGuideBubble(PHONE, insets, { width: 236, height: 700 }, bubble, false, target);
-
-    expect(placement.mode).toBe('below');
-    expect(placement.top).toBe(target.y + target.height + BUBBLE_GAP);
-    expect(placement.pointer).toBe('up');
-  });
-
-  it('centres a callout on its highlight but keeps it on screen', () => {
-    const centred = place({ x: 100, y: 640, width: 200, height: 40 });
-    const clamped = place({ x: 330, y: 640, width: 60, height: 40 });
-
-    expect(centred.mode).toBe('above');
-    expect(centred.left).toBe(100 + 100 - bubble.maxWidth / 2);
-    expect(clamped.mode).toBe('above');
-    expect(clamped.left).toBe(PHONE.width - BUBBLE_MARGIN - bubble.maxWidth);
+    expect(placement.left).toBe(BUBBLE_MARGIN + 20);
   });
 });
 

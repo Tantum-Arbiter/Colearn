@@ -5,6 +5,7 @@
  */
 
 import React from 'react';
+import type { View } from 'react-native';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { ProgressScreen } from '@/components/progress/progress-screen';
 
@@ -39,6 +40,13 @@ jest.mock('@/services/screen-time-service', () => ({
 
 function byTestId(tree: ReturnType<typeof render>, testID: string) {
   return tree.UNSAFE_root.findAll((n: any) => n.props.testID === testID);
+}
+
+/** Every badge on the shelf, wherever it sits in the grid's rows. */
+function badgeCards(tree: ReturnType<typeof render>) {
+  return tree.UNSAFE_root.findAll(
+    (n: any) => typeof n.props.testID === 'string' && n.props.testID.startsWith('badge-card-'),
+  );
 }
 
 function textByTestId(tree: ReturnType<typeof render>, testID: string) {
@@ -80,8 +88,36 @@ describe('ProgressScreen', () => {
 
     await waitFor(() => {
       expect(byTestId(tree, 'milestone-row')[0].props.children).toHaveLength(3);
-      expect(byTestId(tree, 'badge-grid')[0].props.children.length).toBeGreaterThanOrEqual(12);
+      expect(badgeCards(tree).length).toBeGreaterThanOrEqual(12);
       expect(textByTestId(tree, 'badges-summary').props.children).toContain('progress.badgesSummary');
+    });
+  });
+
+  /**
+   * A ring drawn around every badge is most of the page, and large enough to
+   * reach the owl's own corner in the bottom left -- which then had to fade
+   * back out of the way of a highlight that was covering it. One row says
+   * "here are the badges" just as well, and the owl can stay where it is.
+   */
+  it('gives the owl one row of badges to point at, not the whole shelf', async () => {
+    const badges = React.createRef<View>();
+
+    const tree = render(<ProgressScreen onBack={jest.fn()} guideTargets={{ badges }} />);
+
+    await waitFor(() => {
+      const row = byTestId(tree, 'badge-row');
+      expect(row).toHaveLength(1);
+      expect(row[0].props.children.length).toBeLessThan(badgeCards(tree).length);
+    });
+  });
+
+  it('keeps every badge on the shelf, in the rows below that one', async () => {
+    const tree = render(<ProgressScreen onBack={jest.fn()} />);
+
+    await waitFor(() => {
+      const inTheRow = byTestId(tree, 'badge-row')[0].props.children.length;
+
+      expect(badgeCards(tree).length).toBeGreaterThan(inTheRow);
     });
   });
 
@@ -89,13 +125,12 @@ describe('ProgressScreen', () => {
     const tree = render(<ProgressScreen onBack={jest.fn()} />);
 
     await waitFor(() => expect(byTestId(tree, 'badge-category-calm').length).toBeGreaterThan(0));
-    const total = byTestId(tree, 'badge-grid')[0].props.children.length;
+    const total = badgeCards(tree).length;
 
     fireEvent.press(byTestId(tree, 'badge-category-calm')[0]);
 
     await waitFor(() => {
-      const shown = byTestId(tree, 'badge-grid')[0].props.children;
-      expect(shown.length).toBeLessThan(total);
+      expect(badgeCards(tree).length).toBeLessThan(total);
       expect(byTestId(tree, 'badge-card-calm-champion').length).toBeGreaterThan(0);
       expect(byTestId(tree, 'badge-card-story-adventurer')).toHaveLength(0);
     });

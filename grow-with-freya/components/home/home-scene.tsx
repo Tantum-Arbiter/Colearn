@@ -53,7 +53,7 @@ export interface HomeSceneProps {
   guideTargets?: HomeGuideTargets;
   /** Hands the page's scroll to the tour, which moves it to bring a step's
    *  subject clear of the owl rather than taking the bubble off him. */
-  scrollBinding?: Pick<GuideScrollerBinding, 'scrollRef' | 'onScroll' | 'reserve'>;
+  scrollBinding?: Pick<GuideScrollerBinding, 'scrollRef' | 'onScroll' | 'onLayout' | 'onContentSizeChange' | 'reserve'>;
   testID?: string;
 }
 
@@ -106,6 +106,8 @@ export const HomeScene = memo(function HomeScene({
       <ScrollView
         ref={scrollBinding?.scrollRef}
         onScroll={scrollBinding?.onScroll}
+        onLayout={scrollBinding?.onLayout}
+        onContentSizeChange={scrollBinding?.onContentSizeChange}
         scrollEventThrottle={16}
         contentContainerStyle={[
           styles.content,

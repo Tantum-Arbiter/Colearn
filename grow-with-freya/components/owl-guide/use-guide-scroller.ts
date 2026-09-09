@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { NativeScrollEvent, NativeSyntheticEvent, ScrollView } from 'react-native';
+import type { LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent, ScrollView } from 'react-native';
 
 /** How long to give the page to take on the room asked for before reaching again. */
 const REACH_MS = 120;
@@ -10,19 +10,25 @@ const REACH_MS = 120;
  * whole at the end.
  */
 export interface GuideScroller {
-  /** Scroll this far past the page's resting place, reserving room to do it in. */
+  /**
+   * Move the page this far from where it is now -- down for a positive shift,
+   * up for a negative one -- reserving room to do it in.
+   *
+   * Relative, and only ever asked for from a page at rest, so there is no
+   * carrying it home between steps: that round trip was a bounce the child
+   * could see, and the ring was drawn over the page while it made it.
+   */
   reveal: (shift: number) => void;
-  /** Back to the resting place, which is remembered for the steps still to come.
-   *  True when there was a page to carry back -- it glides, so anything read
-   *  off it should wait for the scroll settle. */
-  restore: () => boolean;
-  /** Back to it and forget it: the tour is over. */
+  /** Back to where the child left it, and forget it: the tour is over. */
   release: () => void;
 }
 
 export interface GuideScrollerBinding {
   scrollRef: React.RefObject<ScrollView | null>;
   onScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
+  /** Both needed to know how far the page can actually travel on its own. */
+  onLayout: (event: LayoutChangeEvent) => void;
+  onContentSizeChange: (width: number, height: number) => void;
   /** Extra room the page adds to the foot of its content while a tour needs it. */
   reserve: number;
   scroller: GuideScroller;
@@ -31,17 +37,35 @@ export interface GuideScrollerBinding {
 export function useGuideScroller(): GuideScrollerBinding {
   const scrollRef = useRef<ScrollView | null>(null);
   const offset = useRef(0);
-  // where the page was sitting when the tour first asked for room. Held for
-  // the whole tour: the restore between steps is animated, so reading the
-  // offset again while it glides would take a mid-flight position for the
-  // page's own place and walk it away a step at a time.
+  // where the page was sitting when the tour first asked for room, so it can
+  // be given back at the end. Every shift in between is measured from a page
+  // at rest and applied from where it stands, so nothing drifts.
   const resting = useRef<number | null>(null);
   const [reserve, setReserve] = useState(0);
   const pending = useRef<number | null>(null);
   const [tick, setTick] = useState(0);
+  // how far the page could scroll on its own, before the tour reserved
+  // anything: content that already runs past the viewport, and no further
+  const viewport = useRef(0);
+  const content = useRef(0);
+  // Taken once, before the tour has reserved anything, so it is the page's own
+  // measure and nothing of ours. Negative on a page whose content does not even
+  // fill the screen -- which is the case that matters, and the one that is lost
+  // if this is clamped at zero.
+  const ownReach = useRef<number | null>(null);
 
   const onScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
     offset.current = event.nativeEvent.contentOffset.y;
+    viewport.current = event.nativeEvent.layoutMeasurement.height;
+    content.current = event.nativeEvent.contentSize.height;
+  }, []);
+
+  const onLayout = useCallback((event: LayoutChangeEvent) => {
+    viewport.current = event.nativeEvent.layout.height;
+  }, []);
+
+  const onContentSizeChange = useCallback((_width: number, height: number) => {
+    content.current = height;
   }, []);
 
   // the scroll waits a render, so the room asked for is part of the page
@@ -61,21 +85,26 @@ export function useGuideScroller(): GuideScrollerBinding {
   const scroller = useMemo<GuideScroller>(
     () => ({
       reveal: (shift: number) => {
-        if (resting.current === null) resting.current = offset.current;
-        pending.current = resting.current + shift;
-        setReserve((room) => Math.max(room, shift));
+        const home = resting.current ?? offset.current;
+        resting.current = home;
+        const to = Math.max(0, offset.current + shift);
+        pending.current = to;
+        // A short page cannot scroll at all, however far it is asked to, so the
+        // room reserved is what the page is missing rather than the size of the
+        // move: reserving the move itself left a page whose content does not
+        // fill the screen stuck most of the way short of where it was sent.
+        if (ownReach.current === null && viewport.current > 0) {
+          ownReach.current = content.current - viewport.current;
+        }
+        const reach = ownReach.current ?? 0;
+        setReserve((room) => Math.max(room, Math.max(0, to - reach)));
         setTick((count) => count + 1);
-      },
-      restore: () => {
-        if (resting.current === null) return false;
-        pending.current = resting.current;
-        setTick((count) => count + 1);
-        return true;
       },
       release: () => {
         if (resting.current === null) return;
         pending.current = resting.current;
         resting.current = null;
+        ownReach.current = null;
         setReserve(0);
         setTick((count) => count + 1);
       },
@@ -83,5 +112,5 @@ export function useGuideScroller(): GuideScrollerBinding {
     []
   );
 
-  return { scrollRef, onScroll, reserve, scroller };
+  return { scrollRef, onScroll, onLayout, onContentSizeChange, reserve, scroller };
 }

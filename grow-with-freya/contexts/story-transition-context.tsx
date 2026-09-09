@@ -29,6 +29,7 @@ import { voiceRecordingService, VoiceOver } from '@/services/voice-recording-ser
 import { useParentsOnlyChallenge } from '@/hooks/use-parents-only-challenge';
 import { ParentsOnlyModal } from '@/components/ui/parents-only-modal';
 import { StoryCardSheet } from '@/components/stories/story-card-sheet';
+import { useGuideLift } from '@/components/owl-guide/use-guide-lift';
 import { cardCoverTransform, storyCardLayout } from '@/constants/story-card';
 import { BookHinge, BookPages, BookSpineShade, bookSpineWidth } from '@/components/stories/catalogue/book-frame';
 import { CoverTitle } from '@/components/stories/catalogue/cover-title';
@@ -201,6 +202,9 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
   // Tutorial hook
   const { shouldShowGuide, activeGuide } = useOwlGuide();
+  // the card sheet does not scroll, so it rises for the owl instead: a button
+  // low on it would otherwise sit behind the bubble resting on the perch
+  const sheetLift = useGuideLift();
   const bookModeTargets = useMemo(() => ({
     'read_button': readButtonRef,
     'record_button': recordButtonRef,
@@ -1954,7 +1958,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
           {/* Screen 6 -the story card, with the shelf to swipe along */}
           {phase === 'detail' && selectedStory && (
-            <View style={styles.detailLayer} pointerEvents="box-none">
+            <Animated.View style={[styles.detailLayer, sheetLift.style]} pointerEvents="box-none">
               <StoryCardSheet
                 stories={shelf.length > 0 ? shelf : [selectedStory]}
                 initialIndex={shelfIndex}
@@ -1979,7 +1983,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
                 recordButtonRef={recordButtonRef}
                 narrateButtonRef={narrateButtonRef}
               />
-            </View>
+            </Animated.View>
           )}
 
           {/* Screen 7 -rotate prompt around the floating book */}
@@ -2178,7 +2182,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
           {/* Book Mode Tutorial Overlay - shows on first book open */}
           {showModeSelection && shouldShowGuide('book_mode_tour') && (
-            <OwlGuide id="book_mode_tour" targets={bookModeTargets} />
+            <OwlGuide id="book_mode_tour" targets={bookModeTargets} scroller={sheetLift.scroller} />
           )}
         </View>
       )}

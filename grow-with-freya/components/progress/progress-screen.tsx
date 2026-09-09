@@ -8,6 +8,7 @@ import { TEXT_SECONDARY } from '@/constants/night-palette';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { useGlobalSound } from '@/contexts/global-sound-context';
 import { CelestialBackground } from '@/components/child-ui/celestial-background';
+import { ContentSwap } from '@/components/child-ui/content-swap';
 import { PlanetHeaderArtwork } from '@/components/child-ui/planet-header-artwork';
 import { CircleActionButton } from '@/components/child-ui/circle-action-button';
 import { PageTitle } from '@/components/child-ui/page-title';
@@ -53,7 +54,7 @@ interface ProgressScreenProps {
   guideTargets?: ProgressGuideTargets;
   /** Hands the page's scroll to the tour, which moves it to bring a step's
    *  subject clear of the owl rather than taking the bubble off him. */
-  scrollBinding?: Pick<GuideScrollerBinding, 'scrollRef' | 'onScroll' | 'reserve'>;
+  scrollBinding?: Pick<GuideScrollerBinding, 'scrollRef' | 'onScroll' | 'onLayout' | 'onContentSizeChange' | 'reserve'>;
 }
 
 export function ProgressScreen({
@@ -83,6 +84,11 @@ export function ProgressScreen({
     () => sortBadgesForDiscovery(filterBadges(badges, badgeFilter)),
     [badges, badgeFilter],
   );
+  // The owl points at the first row rather than the whole shelf: a ring drawn
+  // around every badge is most of the page, and large enough to reach the owl's
+  // own corner. One row says "here are the badges" just as well.
+  const badgeRow = visibleBadges.slice(0, badgeColumns);
+  const badgesBelow = visibleBadges.slice(badgeColumns);
 
   const handleBadgePress = useCallback((badge: Badge) => {
     setSelectedBadge(badge);
@@ -135,6 +141,8 @@ export function ProgressScreen({
       <ScrollView
         ref={scrollBinding?.scrollRef}
         onScroll={scrollBinding?.onScroll}
+        onLayout={scrollBinding?.onLayout}
+        onContentSizeChange={scrollBinding?.onContentSizeChange}
         scrollEventThrottle={16}
         style={[styles.scroll, { marginBottom: navClearance(insets.bottom) }]}
         contentContainerStyle={[
@@ -174,11 +182,20 @@ export function ProgressScreen({
           <View style={styles.categoryBarSpacing}>
             <BadgeCategoryBar selected={badgeFilter} onSelect={setBadgeFilter} />
           </View>
-          <View style={styles.badgeGrid} testID="badge-grid" ref={guideTargets?.badges} collapsable={false}>
-            {visibleBadges.map((badge) => (
-              <BadgeCard key={badge.id} badge={badge} width={badgeWidth} onPress={handleBadgePress} />
-            ))}
-          </View>
+          {/* picking a category replaces every badge on the shelf, so the
+              grid fades between the two rather than swapping under the hand */}
+          <ContentSwap contentKey={badgeFilter} testID="badge-collection">
+            <View style={styles.badgeGrid} testID="badge-grid">
+              <View style={styles.badgeRow} testID="badge-row" ref={guideTargets?.badges} collapsable={false}>
+                {badgeRow.map((badge) => (
+                  <BadgeCard key={badge.id} badge={badge} width={badgeWidth} onPress={handleBadgePress} />
+                ))}
+              </View>
+              {badgesBelow.map((badge) => (
+                <BadgeCard key={badge.id} badge={badge} width={badgeWidth} onPress={handleBadgePress} />
+              ))}
+            </View>
+          </ContentSwap>
         </View>
       </ScrollView>
 
@@ -253,5 +270,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: COVER_GRID_GAP,
+  },
+  // full width so the badges after it wrap onto their own lines, leaving the
+  // shelf looking exactly as it did when it was one flat grid
+  badgeRow: {
+    flexDirection: 'row',
+    gap: COVER_GRID_GAP,
+    width: '100%',
   },
 });

@@ -23,6 +23,7 @@ export type BubbleTailAlign = 'left' | 'right';
 export type BubbleTurn = 'forward' | 'back';
 
 const SLIDE_PX = 18;
+const BUBBLE_MUTE_MS = 160;
 const ARROW_SIZE = 20;
 
 export interface OwlSpeechBubbleProps {
@@ -45,6 +46,9 @@ export interface OwlSpeechBubbleProps {
   /** Draws the way on as an arrow rather than a word; the label stays the accessible name. */
   nextAsArrow?: boolean;
   direction?: BubbleTurn;
+  /** Holds the words out of sight while the thing they are about is still
+   *  being found, so the change reads as one fade rather than a snap. */
+  muted?: boolean;
   leaving?: boolean;
   maxWidth: number;
   tail?: BubbleTail | null;
@@ -132,6 +136,7 @@ export const OwlSpeechBubble = memo(function OwlSpeechBubble({
   backLabel,
   nextAsArrow = false,
   direction = 'forward',
+  muted = false,
   leaving = false,
   maxWidth,
   tail = 'down',
@@ -146,6 +151,9 @@ export const OwlSpeechBubble = memo(function OwlSpeechBubble({
   const reduceMotion = useReducedMotion();
   const presence = useSharedValue(0);
   const fresh = useSharedValue(1);
+  // the words leave straight down their own opacity and arrive with the slide:
+  // fading out along the entry path reads as the old page being pushed away
+  const slide = useSharedValue(1);
 
   useEffect(() => {
     if (leaving) {
@@ -159,12 +167,19 @@ export const OwlSpeechBubble = memo(function OwlSpeechBubble({
 
   useEffect(() => {
     if (reduceMotion) {
-      fresh.value = 1;
+      fresh.value = muted ? 0 : 1;
+      slide.value = 0;
       return;
     }
+    if (muted) {
+      slide.value = 0;
+      fresh.value = withTiming(0, { duration: BUBBLE_MUTE_MS, easing: drop });
+      return;
+    }
+    slide.value = 1;
     fresh.value = 0;
     fresh.value = withTiming(1, { duration: BUBBLE_FRESH_MS, easing: settle });
-  }, [page, fresh, reduceMotion]);
+  }, [page, muted, fresh, slide, reduceMotion]);
 
   const bubbleStyle = useAnimatedStyle(() => ({
     opacity: presence.value,
@@ -176,7 +191,7 @@ export const OwlSpeechBubble = memo(function OwlSpeechBubble({
   const slideFrom = direction === 'back' ? -SLIDE_PX : SLIDE_PX;
   const contentStyle = useAnimatedStyle(() => ({
     opacity: fresh.value,
-    transform: [{ translateX: (1 - fresh.value) * slideFrom }],
+    transform: [{ translateX: (1 - fresh.value) * slideFrom * slide.value }],
   }));
 
   const isLast = page >= pageCount - 1;
