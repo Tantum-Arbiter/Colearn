@@ -186,15 +186,19 @@ export function OwlGuide({
     setMoves((count) => count + 1);
   }, [scroller, isMine, worthAsking, owed, measurements.revision]);
 
-  // Which step's words the bubble is showing. It lags the guide's own index:
-  // the spotlight lands on the new subject first and is left alone for a beat,
-  // so the eye has already gone with it by the time the words change.
+  // Which step's words the bubble is showing. It lags the guide's own index
+  // by a beat when the subject was already on screen, so the eye has time to
+  // follow the ring before the words under it change. It does *not* wait for
+  // a page that has to scroll to reveal that subject -- the words read while
+  // the page is still moving, rather than sitting on the old step's text
+  // until the scroll (which can run well past this beat) has settled.
   const [shownIndex, setShownIndex] = useState(0);
-  // Measured, and settled wherever the page came to rest for it. A subject
-  // that cannot be measured at all still counts as landed -- the owl speaks
-  // about it without a ring, the way it always has, rather than the words
-  // waiting for something that is never coming.
-  const landedOnSubject = !step?.target || (freshlyMeasured && !waiting);
+  // True the moment the new step's target has been measured at all, whether
+  // or not the page still has to scroll it into view. A subject that cannot
+  // be measured at all still counts as landed -- the owl speaks about it
+  // without a ring, the way it always has, rather than the words waiting for
+  // something that is never coming.
+  const landedOnSubject = !step?.target || freshlyMeasured;
 
   useEffect(() => {
     if (!isMine) setShownIndex(0);

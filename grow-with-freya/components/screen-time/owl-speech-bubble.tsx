@@ -1,4 +1,4 @@
-import React, { memo, useEffect, type ReactNode } from 'react';
+import React, { memo, useEffect, useRef, useState, type ReactNode } from 'react';
 import { View, Text, Pressable, StyleSheet, type LayoutChangeEvent, type ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
@@ -14,6 +14,26 @@ export const BUBBLE_LEAVE_MS = 160;
 export const BUBBLE_TAIL_LEFT = 44;
 export const BUBBLE_TAIL_SIZE = 16;
 export const BUBBLE_POINTER_SIZE = 12;
+
+/**
+ * The owl's words write themselves out rather than fading in as a block --
+ * a quick game-dialogue reveal, not a typewriter clatter. Speed is a
+ * duration per letter, but capped short: a two-sentence tip would otherwise
+ * take a beat and a half to finish, which reads as sluggish rather than
+ * lively for a page most children tap through quickly. Reduced motion (and
+ * the letter tick itself) skips straight to the full line -- there is
+ * nothing left to build up to for a user who has asked for less movement.
+ */
+export const TYPEWRITER_MS_PER_CHAR = 32;
+export const TYPEWRITER_MIN_MS = 260;
+export const TYPEWRITER_MAX_MS = 900;
+/** How often the revealed slice advances -- a smooth-enough cadence without
+ *  a state update every couple of milliseconds. */
+export const TYPEWRITER_TICK_MS = 16;
+
+export function typewriterDurationMs(length: number): number {
+  return Math.min(TYPEWRITER_MAX_MS, Math.max(TYPEWRITER_MIN_MS, length * TYPEWRITER_MS_PER_CHAR));
+}
 
 export type BubbleTail = 'up' | 'down' | 'left' | 'right';
 
@@ -181,6 +201,53 @@ export const OwlSpeechBubble = memo(function OwlSpeechBubble({
     fresh.value = withTiming(1, { duration: BUBBLE_FRESH_MS, easing: settle });
   }, [page, muted, fresh, slide, reduceMotion]);
 
+  // The line writes itself out rather than fading in as a block. It is a
+  // second, independent Text laid over an invisible full copy of the same
+  // line -- the hidden one is what a screen reader (and anything reading
+  // the tree) sees immediately, so the reveal is a purely visual flourish
+  // and never delays or garbles the real content.
+  const [revealedBody, setRevealedBody] = useState(reduceMotion ? body : '');
+  const revealTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (revealTimer.current) {
+      clearInterval(revealTimer.current);
+      revealTimer.current = null;
+    }
+
+    if (reduceMotion) {
+      setRevealedBody(body);
+      return;
+    }
+
+    // Hidden behind the fade already -- nothing to build up to until it is
+    // shown again, at which point this effect re-fires and starts fresh.
+    if (muted || body.length === 0) {
+      return;
+    }
+
+    setRevealedBody('');
+    const duration = typewriterDurationMs(body.length);
+    const startedAt = Date.now();
+
+    revealTimer.current = setInterval(() => {
+      const progress = Math.min(1, (Date.now() - startedAt) / duration);
+      setRevealedBody(body.slice(0, Math.ceil(progress * body.length)));
+
+      if (progress >= 1 && revealTimer.current) {
+        clearInterval(revealTimer.current);
+        revealTimer.current = null;
+      }
+    }, TYPEWRITER_TICK_MS);
+
+    return () => {
+      if (revealTimer.current) {
+        clearInterval(revealTimer.current);
+        revealTimer.current = null;
+      }
+    };
+  }, [body, muted, reduceMotion]);
+
   const bubbleStyle = useAnimatedStyle(() => ({
     opacity: presence.value,
     transform: [{ scale: reduceMotion ? 1 : 0.7 + 0.3 * presence.value }],
@@ -225,9 +292,21 @@ export const OwlSpeechBubble = memo(function OwlSpeechBubble({
               {title}
             </Text>
           ) : null}
-          <Text style={[styles.body, { fontSize: scaledFontSize(15) }]} testID={`${idPrefix}-body`}>
-            {body}
-          </Text>
+          <View style={styles.bodyBox}>
+            <Text
+              style={[styles.body, styles.bodyGhost, { fontSize: scaledFontSize(15) }]}
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants"
+            >
+              {body}
+            </Text>
+            <Text
+              style={[styles.body, styles.bodyReveal, { fontSize: scaledFontSize(15) }]}
+              testID={`${idPrefix}-body`}
+            >
+              {revealedBody}
+            </Text>
+          </View>
           {illustration ? (
             <View testID={`${idPrefix}-illustration`}>{illustration}</View>
           ) : null}
@@ -360,6 +439,21 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.rounded,
     color: 'rgba(255, 255, 255, 0.86)',
     lineHeight: 21,
+  },
+  // The ghost reserves the box's true, full-text size so the reveal below
+  // never grows the bubble as it writes itself out; it is invisible but
+  // still laid out, which is what an absolutely-positioned overlay needs.
+  bodyBox: {
+    position: 'relative',
+  },
+  bodyGhost: {
+    opacity: 0,
+  },
+  bodyReveal: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
   },
   footnote: {
     fontFamily: Fonts.rounded,

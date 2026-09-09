@@ -678,6 +678,33 @@ describe('OwlGuide', () => {
       });
 
       /**
+       * The ring waits for the page to stop moving (previous test), but the
+       * words do not -- a scroll can run well past the ordinary
+       * highlight-leads-words beat, and making them sit on the old step's
+       * text for all of it reads as the tour stalling rather than a subject
+       * being brought into view.
+       */
+      it('reads the new words while the page is still scrolling to them', async () => {
+        const { targets: moving, scroller } = movingPage();
+        const tree = await renderLanded({ id: 'progress_tour', targets: moving, scroller });
+
+        press(tree, 'owl-guide-next');
+        await settleMeasurements();
+        // The usual highlight-leads-words beat -- well short of the scroll's
+        // own settle, asserted below to still be running.
+        await act(async () => {
+          jest.advanceTimersByTime(GUIDE_TIMING.highlightLeadMs);
+        });
+
+        // The scroll this step needs has been asked for but not finished --
+        // the ring is still withheld -- yet the bubble has already moved on.
+        expect(scroller.reveal).toHaveBeenCalledTimes(1);
+        expect(has(tree, 'owl-guide-cutout')).toBe(false);
+        expect(findByTestId(tree, 'owl-guide-bubble')[0].props.muted).toBe(false);
+        expect(json(tree)).toContain(GUIDE_STEPS.progress_tour[1].titleKey);
+      });
+
+      /**
        * A screen mounts every tour it can run at once and they share the one
        * scroller, so a tour standing by must not touch the page: the step
        * index belongs to the guide, not to the instance watching it.
