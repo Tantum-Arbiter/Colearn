@@ -64,6 +64,15 @@ const TRIAL_MAX_WIDTH = 600;
 const WIDE_WIDTH = 700;
 
 /**
+ * Below this there is not enough height for the offer at any size -- a phone
+ * on its side is 400-ish points tall. It is also wider than `WIDE_WIDTH`,
+ * which is exactly the trap this guards: sized off width alone, the shortest
+ * screen the app runs on was picking the *largest* type and icons and
+ * running the plan card out under the button.
+ */
+const SHORT_HEIGHT = 600;
+
+/**
  * Below this the three steps cannot hold an icon and a readable line of text
  * side by side -- "Today" was breaking to "Tod / ay". Everything the timeline
  * draws shrinks together rather than the text alone being squeezed.
@@ -150,9 +159,19 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
   const legalStyle = useAnimatedStyle(() => ({ transform: [{ translateX: legalSlideX.value }] }));
 
   const trialPrice = livePrices?.monthly_basic?.priceString ?? fallbackPrices().monthly_basic;
-  const compact = screenW < COMPACT_WIDTH;
-  const wide = screenW >= WIDE_WIDTH;
-  const stepIcon = compact ? 68 : 97;
+  const short = screenH < SHORT_HEIGHT;
+  // COMPACT_WIDTH is about the room the timeline actually gets, not the
+  // screen: running two columns hands it half, which is where "Today" starts
+  // breaking again even though the screen is wide.
+  const timelineWidth = short ? Math.min(screenW, 940) / 2 : screenW;
+  const compact = timelineWidth < COMPACT_WIDTH;
+  // Full-size type is for a screen that is big, not merely wide: a phone in
+  // landscape clears WIDE_WIDTH twice over and has a third of the height.
+  const wide = screenW >= WIDE_WIDTH && !short;
+  const stepIcon = short ? 54 : compact ? 68 : 97;
+  // The plan card is half-width when the offer runs in two columns, so its
+  // copy stacks there for the same reason it does on a narrow phone.
+  const stackPlan = compact || short;
   const linkDots = compact ? 4 : 8;
   const dotGap = compact ? 3.5 : 6;
 
@@ -167,7 +186,12 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
       </Animated.View>
       <Animated.View style={[st.modalWrap, modalStyle]}>
         <LinearGradient colors={['#1a1a3e', '#0d0d2b', '#050515']}
-          style={[st.content, { paddingBottom: insets.bottom + 16, paddingTop: insets.top + 20 }]}>
+          style={[st.content, {
+            paddingBottom: insets.bottom + (short ? 8 : 16),
+            paddingTop: insets.top + (short ? 10 : 20),
+            paddingLeft: insets.left + (short ? 6 : 16),
+            paddingRight: insets.right + (short ? 6 : 16),
+          }]}>
           {/* Background art */}
           <Image
             source={require('../../assets/images/ui-elements/story-art-strip-subscribe.webp')}
@@ -178,9 +202,21 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
           <Pressable style={[st.closeBtn, { top: insets.top + 10 }]} onPress={handleClose} hitSlop={16}>
             <Ionicons name="close" size={20} color="#FFFFFF" />
           </Pressable>
-          <View style={st.page}>
-            <View style={[st.column, st.pageColumn, wide && st.pageColumnWide]}>
+          <ScrollView
+            style={st.page}
+            contentContainerStyle={[st.pageContent, short && st.pageContentShort]}
+            showsVerticalScrollIndicator={false}
+            bounces={false}
+            /* The offer is meant to be taken in at a glance, so nothing on
+             * it may hide below a fold -- on any screen, in any orientation.
+             * Landscape earns that by running two columns and trimming, not
+             * by handing the parent a scrollbar. */
+            scrollEnabled={false}
+            testID="trial-scroller"
+          >
+            <View style={[st.column, short && st.columnShort, st.pageColumn, wide && st.pageColumnWide, short && st.pageColumnShort]}>
             <View style={st.headerBlock}>
+            {short ? null : (
             <View style={st.starRow} testID="trial-star-cluster">
               {TRIAL_STARS.map((star, i) => (
                 <Image
@@ -191,11 +227,13 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
                 />
               ))}
             </View>
-            <Text style={[st.header, wide && st.headerWide]}>{t('subscription.trial.title')}</Text>
-            <Text style={[st.sub, wide && st.subWide]}>{t('subscription.trial.subtitle', { price: trialPrice })}</Text>
+            )}
+            <Text style={[st.header, wide && st.headerWide, short && st.headerShort]}>{t('subscription.trial.title')}</Text>
+            <Text style={[st.sub, wide && st.subWide, short && st.subShort]}>{t('subscription.trial.subtitle', { price: trialPrice })}</Text>
             </View>
 
-            <View style={st.timeline} testID="trial-timeline">
+            <View style={short ? st.offerRowShort : undefined}>
+            <View style={[st.timeline, short && st.offerTimeline, short && st.timelineShort]} testID="trial-timeline">
               {TRIAL_STEPS.map((step, i) => (
                 <React.Fragment key={step.labelKey}>
                   {i > 0 ? (
@@ -229,26 +267,26 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
               ))}
             </View>
 
-            <View style={st.premiumWrap}>
+            <View style={[st.premiumWrap, short && st.offerPlan]}>
             <View style={st.premiumCard} testID="trial-premium-card">
-              <View style={st.premiumBody}>
-                <View style={[st.premiumCopyRow, compact && st.premiumCopyStack]}>
-                <View style={[st.premiumCopy, compact && st.premiumColumnStacked]}>
-                  <Text style={[st.premiumName, wide && st.premiumNameWide]}>{t('subscription.trial.planName')}</Text>
-                  <Text style={[st.premiumTrial, wide && st.premiumTrialWide]}>{t('subscription.trial.planTrial')}</Text>
+              <View style={[st.premiumBody, short && st.premiumBodyShort]}>
+                <View style={[st.premiumCopyRow, stackPlan && st.premiumCopyStack]}>
+                <View style={[st.premiumCopy, stackPlan && st.premiumColumnStacked]}>
+                  <Text style={[st.premiumName, wide && st.premiumNameWide, short && st.premiumNameShort]}>{t('subscription.trial.planName')}</Text>
+                  <Text style={[st.premiumTrial, wide && st.premiumTrialWide, short && st.premiumTrialShort]}>{t('subscription.trial.planTrial')}</Text>
                 </View>
-                <View style={[st.premiumBenefits, compact && st.premiumColumnStacked]}>
+                <View style={[st.premiumBenefits, stackPlan && st.premiumColumnStacked, short && st.benefitsShort]}>
                   {TRIAL_BENEFIT_KEYS.map((key, i) => (
                     <View key={key} style={st.benefitRow} testID={`trial-benefit-${i}`}>
                       <Ionicons name="checkmark" size={15} color="#FFC61A" style={st.benefitTick} />
-                      <Text style={[st.benefitText, wide && st.benefitTextWide]}>{t(key)}</Text>
+                      <Text style={[st.benefitText, wide && st.benefitTextWide, short && st.benefitTextShort]}>{t(key)}</Text>
                     </View>
                   ))}
                 </View>
                 </View>
 
-              <View testID="trial-upgrade" style={[st.upgradeRow, compact && st.upgradeRowCompact]}>
-                <Text style={[st.upgradeNote, wide && st.upgradeNoteWide]}>{t('subscription.trial.upgrade')}</Text>
+              <View testID="trial-upgrade" style={[st.upgradeRow, stackPlan && st.upgradeRowCompact]}>
+                <Text style={[st.upgradeNote, wide && st.upgradeNoteWide, short && st.upgradeNoteShort]}>{t('subscription.trial.upgrade')}</Text>
               </View>
               </View>
             </View>
@@ -258,11 +296,12 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
                 <Text style={st.popularText}>{t('subscription.trial.mostRecommended')}</Text>
               </View>
             </View>
+            </View>
 
             </View>
-          </View>
+          </ScrollView>
           <View style={st.column}>
-          <Pressable style={st.subBtn} disabled={isPurchasing} onPress={() => {
+          <Pressable style={[st.subBtn, short && st.subBtnShort]} disabled={isPurchasing} onPress={() => {
             if (isGuestMode) {
               Alert.alert(
                 t('subscription.signInRequiredTitle'),
@@ -312,7 +351,7 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
               }
             })();
           }}>
-            <LinearGradient colors={['#F59E0B', '#D97706']} style={[st.subBtnInner, isPurchasing && { opacity: 0.6 }]}>
+            <LinearGradient colors={['#F59E0B', '#D97706']} style={[st.subBtnInner, short && st.subBtnInnerShort, isPurchasing && { opacity: 0.6 }]}>
               {isPurchasing ? (
                 <ActivityIndicator color="#fff" />
               ) : (
@@ -325,7 +364,7 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
               )}
             </LinearGradient>
           </Pressable>
-          <View style={st.legalRow}>
+          <View style={[st.legalRow, short && st.legalRowShort]}>
             <Pressable onPress={() => openLegal('privacy')}>
               <Text style={st.legalLink}>{t('subscription.privacyPolicy')}</Text>
             </Pressable>
@@ -360,12 +399,18 @@ const st = StyleSheet.create({
   abs: { ...StyleSheet.absoluteFillObject, zIndex: 2500 },
   backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.5)' },
   modalWrap: { flex: 1 },
-  content: { flex: 1, paddingHorizontal: 16 },
+  content: { flex: 1 },
   bgImage: { position: 'absolute', top: 0, left: 0, opacity: 0.35 },
   bgOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(5, 5, 20, 0.45)' },
   closeBtn: { position: 'absolute', right: 18, zIndex: 10, width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.25)', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 3.84, elevation: 5 },
   closeTxt: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  page: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 4, paddingBottom: 12 },
+  // The offer scrolls; the button below it does not. On a phone in landscape
+  // there is no type size at which all of this fits in ~400pt of height, so
+  // the last resort has to be reachable rather than clipped -- while the CTA
+  // stays pinned where a thumb expects it.
+  page: { flex: 1 },
+  pageContent: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 4, paddingBottom: 12 },
+  pageContentShort: { paddingTop: 0, paddingBottom: 4 },
   // the three blocks share out whatever height the device has rather than
   // huddling in the middle of it: the heading rides at the top, and the space
   // left over becomes the gaps between the panels
@@ -375,6 +420,17 @@ const st = StyleSheet.create({
   // there the gap is a fixed number and the block sits centred.
   pageColumn: { flex: 1, justifyContent: 'space-between' },
   pageColumnWide: { justifyContent: 'center', gap: 26 },
+  // Sized by its content, not by a share of the viewport: `flex: 1` inside a
+  // scroller would squeeze the offer back down to the height it doesn't fit
+  // in, which is the thing the scroller is there to avoid.
+  pageColumnShort: { flex: 0, gap: 10 },
+  // Landscape is short on height and awash with width, so the two panels the
+  // offer is made of sit beside each other instead of stacking -- which is
+  // what lets the whole thing fit without a fold.
+  offerRowShort: { flexDirection: 'row', alignItems: 'stretch', gap: 10 },
+  offerTimeline: { flex: 0.86 },
+  offerPlan: { flex: 1.14 },
+  columnShort: { maxWidth: 940 },
   headerBlock: { width: '100%' },
   // the trial card is a marketing page, not a form: stretched to a tablet's
   // full width the dot runs float in empty space and the timeline stops
@@ -384,6 +440,9 @@ const st = StyleSheet.create({
   sub: { fontSize: 14, color: 'rgba(255,255,255,0.9)', fontFamily: Fonts.sans, textAlign: 'center', marginBottom: 0, textShadowColor: 'rgba(0,0,0,0.6)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 },
   subBtn: { marginTop: 14, borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 3.84, elevation: 5 },
   subBtnInner: { paddingVertical: 16, alignItems: 'center', borderRadius: 16 },
+  // Every point the pinned block gives back is a point the offer above it
+  // keeps.
+  subBtnShort: { marginTop: 6 },
   headerWide: { fontSize: 34, marginBottom: 6 },
   subWide: { fontSize: 18, lineHeight: 24 },
   stepPillTextWide: { fontSize: 17 },
@@ -394,11 +453,17 @@ const st = StyleSheet.create({
   upgradeNoteWide: { fontSize: 17, lineHeight: 23 },
   subBtnTextWide: { fontSize: 22 },
   subBtnText: { fontSize: 18, fontWeight: '800', color: '#fff', fontFamily: Fonts.rounded, letterSpacing: 0.5 },
+  subBtnInnerShort: { paddingVertical: 11 },
   legalRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 12, gap: 6 },
+  headerShort: { fontSize: 23, marginBottom: 2 },
+  subShort: { fontSize: 13 },
+  benefitsShort: { gap: 3 },
+  legalRowShort: { marginTop: 4 },
   legalLink: { fontSize: 12, color: 'rgba(255,255,255,0.5)', fontFamily: Fonts.sans, textDecorationLine: 'underline' },
   legalDot: { fontSize: 12, color: 'rgba(255,255,255,0.35)' },
   starRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'center', gap: 6, marginBottom: 0 },
   subBtnRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
+  timelineShort: { paddingVertical: 6 },
   timeline: { ...BOX_GLOW, flexDirection: 'row', alignItems: 'flex-start', borderWidth: 1.5, borderColor: FRAME_YELLOW, borderRadius: 20, backgroundColor: 'rgba(10,10,35,0.55)', paddingVertical: 13, paddingHorizontal: 5 },
   timelineLink: { flexDirection: 'row', alignItems: 'center' },
   timelineDot: { width: 3.5, height: 3.5, borderRadius: 1.75, backgroundColor: FRAME_YELLOW },
@@ -420,6 +485,7 @@ const st = StyleSheet.create({
   // wraps to three lines; stacked they each fit on one and the card halves
   premiumCopyStack: { flexDirection: 'column', alignItems: 'flex-start', gap: 10 },
   premiumBody: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 12 },
+  premiumBodyShort: { paddingTop: 10, paddingBottom: 8 },
   upgradeRowCompact: { marginTop: 8, paddingTop: 8 },
   upgradeRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 12, paddingTop: 10, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.10)' },
   upgradeNote: { fontFamily: Fonts.rounded, fontSize: 14, lineHeight: 19, fontWeight: '700', color: '#FFC61A', textAlign: 'center', flexShrink: 1 },
@@ -428,6 +494,10 @@ const st = StyleSheet.create({
   // vertical share of a box with no height of its own -- they collapse to
   // nothing. Sized by their content instead.
   premiumColumnStacked: { flex: 0, alignSelf: 'stretch' },
+  premiumNameShort: { fontSize: 21 },
+  premiumTrialShort: { fontSize: 17 },
+  benefitTextShort: { fontSize: 14, lineHeight: 19 },
+  upgradeNoteShort: { fontSize: 13, lineHeight: 17 },
   premiumName: { fontFamily: Fonts.rounded, fontSize: 25, fontWeight: '800', color: '#FFFFFF' },
   premiumTrial: { fontFamily: Fonts.rounded, fontSize: 20, fontWeight: '800', color: '#FFC61A', marginTop: 2 },
   premiumBenefits: { flex: 1, alignSelf: 'stretch', justifyContent: 'center', gap: 5 },

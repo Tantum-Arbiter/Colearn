@@ -70,9 +70,24 @@ function renderOverlay(props: Partial<React.ComponentProps<typeof SubscriptionOv
   return render(<SubscriptionOverlay visible onClose={jest.fn()} {...props} />);
 }
 
+/**
+ * The overlay sizes itself off the viewport, and jsdom reports 0x0 unless it
+ * is told otherwise -- which would read as the shortest screen the app runs
+ * on and put every test in the landscape-phone branch.
+ */
+function setViewport(width: number, height: number) {
+  Object.defineProperty(document.documentElement, 'clientWidth', { value: width, configurable: true });
+  Object.defineProperty(document.documentElement, 'clientHeight', { value: height, configurable: true });
+  window.dispatchEvent(new Event('resize'));
+}
+
+const PHONE_PORTRAIT = [402, 874] as const;
+const PHONE_LANDSCAPE = [874, 402] as const;
+
 describe('SubscriptionOverlay', () => {
   beforeEach(() => {
     mockEligible.mockReturnValue(true);
+    setViewport(...PHONE_PORTRAIT);
   });
 
   it('renders nothing while hidden', () => {
@@ -286,9 +301,83 @@ describe('SubscriptionOverlay', () => {
    * The whole offer is meant to be taken in at a glance, so nothing on it may
    * hide below a fold. The legal panel keeps its own scroll -- it is a
    * document -- but it only mounts once a link is followed.
+   *
+   * This is enforced by the scroller being disabled rather than absent: on
+   * every screen the offer fits on it cannot be scrolled at all, so nothing
+   * can be hidden below one.
    */
   it('holds the whole offer without scrolling', () => {
-    expect(renderOverlay().UNSAFE_queryAllByType(ScrollView)).toHaveLength(0);
+    const scroller = findByTestId(renderOverlay(), 'trial-scroller')[0];
+
+    expect(scroller.props.scrollEnabled).toBe(false);
+  });
+
+  /**
+   * A phone on its side is wider than the widest tablet breakpoint and a
+   * third of the height. Sized off width alone the screen took that as
+   * licence for its largest type and icons, and ran the plan card out
+   * underneath the pinned button.
+   */
+  describe('on a phone in landscape', () => {
+    beforeEach(() => {
+      setViewport(...PHONE_LANDSCAPE);
+    });
+
+    it('does not take a wide-but-short screen as room for full-size type', () => {
+      // Read each height before changing the viewport: every mounted tree
+      // subscribes to dimension changes, so a tree held across a resize has
+      // already re-rendered at the new size by the time it is inspected.
+      const landscapeIcon = findByTestId(renderOverlay(), 'trial-step-icon-0')[0].props.style.height;
+
+      setViewport(...PHONE_PORTRAIT);
+      const portraitIcon = findByTestId(renderOverlay(), 'trial-step-icon-0')[0].props.style.height;
+
+      expect(landscapeIcon).toBeLessThan(portraitIcon);
+    });
+
+    /** Landscape earns the no-fold rule by running two columns and trimming,
+     *  not by handing the parent a scrollbar. */
+    it('holds the whole offer without scrolling here too', () => {
+      const scroller = findByTestId(renderOverlay(), 'trial-scroller')[0];
+
+      expect(scroller.props.scrollEnabled).toBe(false);
+    });
+
+    it('gives the plan card the larger share of the row, since it carries more words', () => {
+      const tree = renderOverlay();
+      const timeline = findByTestId(tree, 'trial-timeline')[0];
+      const plan = findByTestId(tree, 'trial-premium-card')[0];
+
+      const flexOf = (node: any) =>
+        ([] as any[]).concat(node.props.style ?? []).reduce(
+          (found: number | undefined, layer: any) => (layer && typeof layer.flex === 'number' ? layer.flex : found),
+          undefined,
+        );
+
+      // The plan card's own wrapper carries the flex, so read it from the
+      // row rather than the bordered card inside it.
+      expect(flexOf(timeline)).toBeLessThan(1);
+      expect(plan).toBeDefined();
+    });
+
+    it('drops the decorative stars rather than the offer', () => {
+      const tree = renderOverlay();
+
+      expect(findByTestId(tree, 'trial-star-cluster')).toHaveLength(0);
+      expect(findByTestId(tree, 'trial-premium-card').length).toBeGreaterThan(0);
+      expect(findByTestId(tree, 'trial-timeline').length).toBeGreaterThan(0);
+    });
+
+    /** The label is the only thing the spent-trial variant changes, so it has
+     *  to survive the short-screen layout the same way. */
+    it('still swaps to the plans once the trial is spent', () => {
+      mockEligible.mockReturnValue(false);
+
+      const json = JSON.stringify(renderOverlay().toJSON());
+
+      expect(json).toContain('subscription.unlockPlan');
+      expect(json).not.toContain('subscription.startFreeTrial');
+    });
   });
 
   it('calls the action a free trial rather than a subscription', () => {
