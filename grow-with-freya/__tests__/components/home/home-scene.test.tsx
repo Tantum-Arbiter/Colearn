@@ -9,9 +9,9 @@
 import React from 'react';
 import { Dimensions, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { render, fireEvent, type RenderResult } from '@testing-library/react-native';
-import { HomeScene } from '@/components/home/home-scene';
+import { HomeScene, STATS_CHIP_INSET } from '@/components/home/home-scene';
 import { HOME_THEMES } from '@/constants/home-scene';
-import { HOME_CARD_TYPE } from '@/constants/home-journey';
+import { HOME_CARDS, HOME_CARD_TYPE } from '@/constants/home-journey';
 import { HERO_SKY, heroContentTop } from '@/constants/home-sky';
 import { ringCentre } from '@/constants/screen-time-ring';
 import type { ChildHomeData, WelcomeCopy } from '@/types/child-home';
@@ -373,6 +373,16 @@ describe('HomeScene on a tablet', () => {
     expect(byTestId(view, 'weekly-reading-chip').length).toBeGreaterThan(0);
   });
 
+  it('still keeps the greeting clear of the first card in landscape', () => {
+    const { view } = renderScene();
+
+    const subtitle = StyleSheet.flatten(byTestId(view, 'home-welcome-subtitle')[0].props.style);
+
+    // The gap is a tablet thing, not a portrait thing -- at the phone's 8 the
+    // subtitle sat on the first card's glow here too.
+    expect(subtitle.marginBottom).toBeGreaterThanOrEqual(HOME_CARDS.gap);
+  });
+
   it('keeps the ordinary welcome text size in landscape -- portrait is the one with height to spend', () => {
     const { view } = renderScene();
 
@@ -414,12 +424,33 @@ describe('HomeScene on a tablet in portrait', () => {
     expect(subtitle.fontSize).toBeGreaterThan(HOME_CARD_TYPE.welcomeSubtitle);
   });
 
-  it('closes the gap the bigger subtitle would otherwise leave above the cards', () => {
+  it('keeps the bigger subtitle clear of the first card rather than sitting on it', () => {
     const { view } = renderScene();
 
     const subtitle = StyleSheet.flatten(byTestId(view, 'home-welcome-subtitle')[0].props.style);
 
-    expect(subtitle.marginBottom).toBe(0);
+    // Bigger type has a taller line box, so it needs *more* room beneath it
+    // than the phone's 8, not less -- at 0 it sat on the first card's glow.
+    expect(subtitle.marginBottom).toBeGreaterThanOrEqual(HOME_CARDS.gap);
+  });
+
+  /**
+   * The greeting should not hug the first card while the stats row sits well
+   * clear of the plan button -- the block reads as top-heavy when it does.
+   */
+  it('stands the greeting as far above the cards as the stats sit below them', () => {
+    const { view } = renderScene({ onOpenPlans: jest.fn() });
+
+    const gapOf = (testID: string, key: 'marginTop' | 'marginBottom') =>
+      (StyleSheet.flatten(byTestId(view, testID)[0].props.style) as Record<string, number>)[key] ?? 0;
+
+    const subtitleToCard = gapOf('home-welcome-subtitle', 'marginBottom');
+    const statsToButton = gapOf('home-stats-row', 'marginBottom') + gapOf('home-plan-slot', 'marginTop');
+
+    // Matched by eye, not on paper: the stats chips pad themselves, so the
+    // margin under them looks larger than it measures and the greeting's has
+    // to add that back. See STATS_CHIP_INSET.
+    expect(subtitleToCard).toBe(statsToButton + STATS_CHIP_INSET);
   });
 
   it('grows the sun to match', () => {

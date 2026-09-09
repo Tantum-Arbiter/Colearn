@@ -160,11 +160,27 @@ const STAR_PLACEMENTS: readonly StarPlacement[] = [
   { id: 'left-low-sparkle', kind: 'sparkle-small', anchor: 'edge', x: 0.06, dy: 1.3, size: 0.14, twinkleMs: 2600, delayMs: 3100 },
 ];
 
-export function buildHeroSky(width: number, sun: SunFrame): HeroSkyLayout {
+/**
+ * How large the stars are allowed to be sized off.
+ *
+ * The stars are the texture around the hero, not the hero. Sized
+ * point-for-point off the sun they grow with it twice over on a tablet --
+ * once because the sun scales with the screen, again because portrait gives
+ * it a `sizeScale` boost -- and a scatter of small lights becomes a handful
+ * of blobs. Past a little over a phone-sized sun they stop keeping pace.
+ */
+export const STAR_BASIS_CAP = 132;
+
+/** The sun size the stars are drawn from: its unboosted size, capped. */
+export function starBasis(sunSize: number, sizeScale: number = 1): number {
+  return Math.min(sunSize / sizeScale, STAR_BASIS_CAP);
+}
+
+export function buildHeroSky(width: number, sun: SunFrame, starSizeBasis: number = sun.size): HeroSkyLayout {
   const height = heroContentTop(sun.top - HERO_SKY.sunTopInset, sun.size) + HERO_SKY.welcomeBlock + HERO_SKY.cardBridge;
 
   const stars = STAR_PLACEMENTS.map((placement) => {
-    const size = placement.size * sun.size;
+    const size = placement.size * starSizeBasis;
     const centreX = placement.anchor === 'sun' ? sun.centreX + placement.x * sun.size : placement.x * width;
     const centreY = sun.centreY + placement.dy * sun.size;
 

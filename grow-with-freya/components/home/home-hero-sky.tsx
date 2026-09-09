@@ -1,7 +1,7 @@
 import React, { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { TimeOfDay } from '@/constants/home-scene';
-import { buildHeroSky, heroMotionMode, sunFrame } from '@/constants/home-sky';
+import { buildHeroSky, heroMotionMode, starBasis, sunFrame } from '@/constants/home-sky';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { useSettledAfterTransition } from '@/hooks/use-ambient-animation';
 import { HeroSkyBackground } from './hero-sky-background';
@@ -34,7 +34,7 @@ export const HomeHeroSky = memo(function HomeHeroSky({
   const settled = useSettledAfterTransition(active);
   const mode = heroMotionMode(settled, reduceMotion);
   const sun = useMemo(() => sunFrame(width, topInset, height, sizeScale), [width, topInset, height, sizeScale]);
-  const layout = useMemo(() => buildHeroSky(width, sun), [width, sun]);
+  const layout = useMemo(() => buildHeroSky(width, sun, starBasis(sun.size, sizeScale)), [width, sun, sizeScale]);
 
   return (
     <>

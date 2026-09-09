@@ -9,7 +9,9 @@
 
 import {
   HERO_SKY,
+  STAR_BASIS_CAP,
   buildHeroSky,
+  starBasis,
   heroContentTop,
   heroMotionMode,
   sunFrame,
@@ -26,6 +28,45 @@ function distanceFromSun(seed: HeroStarSeed, sun = SUN): number {
 
   return Math.hypot(centreX - sun.centreX, centreY - sun.centreY) / sun.size;
 }
+
+/**
+ * The stars are texture around the hero, not the hero. Sized point-for-point
+ * off the sun they grew with it twice over on a tablet -- once for the wider
+ * screen, again for portrait's `sizeScale` boost -- and the scatter of small
+ * lights read as a handful of blobs.
+ */
+describe('starBasis', () => {
+  it('leaves a phone alone -- its sun never reaches the cap', () => {
+    const phoneSun = sunFrame(PHONE, 59).size;
+
+    expect(starBasis(phoneSun)).toBe(phoneSun);
+  });
+
+  it('stops the stars keeping pace once the sun is tablet-sized', () => {
+    const tabletSun = sunFrame(TABLET, 24).size;
+
+    expect(tabletSun).toBeGreaterThan(STAR_BASIS_CAP);
+    expect(starBasis(tabletSun)).toBe(STAR_BASIS_CAP);
+  });
+
+  it("does not let portrait's bigger sun drag the stars up with it", () => {
+    const plain = sunFrame(TABLET, 24);
+    const boosted = sunFrame(TABLET, 24, TABLET, 1.3);
+
+    expect(boosted.size).toBeGreaterThan(plain.size);
+    expect(starBasis(boosted.size, 1.3)).toBe(starBasis(plain.size));
+  });
+
+  it('draws the stars from the basis it is handed, not the sun', () => {
+    const sun = sunFrame(TABLET, 24, TABLET, 1.3);
+    const big = buildHeroSky(TABLET, sun).stars;
+    const damped = buildHeroSky(TABLET, sun, starBasis(sun.size, 1.3)).stars;
+
+    expect(damped[0].size).toBeLessThan(big[0].size);
+    // still centred where they were -- only their size changed
+    expect(damped[0].x + damped[0].size / 2).toBeCloseTo(big[0].x + big[0].size / 2, 5);
+  });
+});
 
 describe('sunFrame', () => {
   it('should hang the sun centred under the safe area with breathing room above it', () => {

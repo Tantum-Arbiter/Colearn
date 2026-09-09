@@ -209,4 +209,11 @@ describe('the card layout', () => {
     expect(homeContentWidth(1024)).toBe(HOME_CARDS.contentMaxWidth);
   });
 
+  it('keeps the panels to a narrower column on a tablet', () => {
+    expect(HOME_CARDS.tabletContentMaxWidth).toBeLessThan(HOME_CARDS.contentMaxWidth);
+    expect(homeContentWidth(1024, HOME_CARDS.tabletContentMaxWidth)).toBe(HOME_CARDS.tabletContentMaxWidth);
+    // a phone is narrower than either cap, so the margins still decide there
+    expect(homeContentWidth(390, HOME_CARDS.tabletContentMaxWidth)).toBe(390 - HOME_CARDS.screenMargin * 2);
+  });
+
 });

@@ -25,6 +25,22 @@ import { WeeklyReadingChip } from './weekly-reading-chip';
 import { AchievementCard } from './achievement-card';
 import { ContinueLearningCard } from './continue-learning-card';
 
+/** The phone's own gaps beneath the stats row and above the plan button --
+ *  the styles below use these, and the tablet's spacing is derived from them. */
+const STATS_BASE_GAP = 4;
+const PLAN_BASE_GAP = 10;
+
+/**
+ * How much taller the stats row's box is than the words you actually see in
+ * it: the streak and reading chips pad themselves, and their icons stand
+ * taller than their text. The margin below them therefore *looks* bigger than
+ * it is, so the greeting's gap adds this back to match it by eye rather than
+ * on paper. Measured against the rendered screen, not derived -- it is a fact
+ * about the chips' artwork, which is why it is written down here rather than
+ * folded silently into the gap.
+ */
+export const STATS_CHIP_INSET = 21;
+
 export interface HomeGuideTargets {
   stories?: RefObject<View | null>;
   achievement?: RefObject<View | null>;
@@ -95,7 +111,10 @@ export const HomeScene = memo(function HomeScene({
   // rather than just more empty sky above the cards.
   const portraitTablet = isTablet && height > width;
   const sun = sunFrame(width, insets.top, height, portraitTablet ? 1.3 : 1);
-  const contentWidth = homeContentWidth(width);
+  const contentWidth = homeContentWidth(
+    width,
+    isTablet ? HOME_CARDS.tabletContentMaxWidth : HOME_CARDS.contentMaxWidth
+  );
   const pairedWidth = pairedCardWidth(contentWidth);
   // On a phone the content overflows the screen, so the ring's clearance
   // can live inside the scrollable padding -- it just scrolls into view.
@@ -104,6 +123,31 @@ export const HomeScene = memo(function HomeScene({
   // up as a real gap. Carved out of the ScrollView's own height instead
   // (before centring runs on what's left), it stays a full, guaranteed gap.
   const tabletRingReserve = isTablet && screenTime ? ringClearance(28) : 0;
+  // A tablet has room the phone's spacing never asks for, and the panels read
+  // as one block without it. Portrait has hundreds of points spare and takes
+  // the generous set; landscape has tens, so it takes a smaller one rather
+  // than pushing the plan button into the ring.
+  const gaps = portraitTablet
+    ? { card: 14, stats: 10, plan: 14 }
+    : isTablet
+      ? { card: 3, stats: 2, plan: 4 }
+      : null;
+  // The greeting stands the same distance above the first card as the stats
+  // row stands below the last one, so the block reads as evenly spaced rather
+  // than top-heavy. Derived from that gap rather than set beside it, so the
+  // two cannot drift apart when either is tuned.
+  const statsToPlan = gaps ? STATS_BASE_GAP + gaps.stats + PLAN_BASE_GAP + gaps.plan : 0;
+  const subtitleGap = gaps ? statsToPlan + STATS_CHIP_INSET - HOME_CARDS.gap : 0;
+  // Centring splits any height the content gains evenly above and below it,
+  // so the panels spreading out would walk the greeting up the screen with
+  // them. The gaps *below* the greeting are pushed back down by exactly what
+  // they added, spending all of that space beneath it; the greeting's own gap
+  // is subtracted instead, which lifts the greeting and leaves the cards where
+  // they were rather than driving the plan button lower.
+  // Both halves come out of the slack the centring had, so landscape's set
+  // stays small enough to still fit -- past that the plan button runs off the
+  // bottom instead of merely sitting lower.
+  const spread = gaps ? gaps.card * 2 + gaps.stats * 2 + gaps.plan - subtitleGap : 0;
 
   return (
     <View testID={testID} style={[styles.root, { backgroundColor: theme.skyTop }]}>
@@ -138,7 +182,7 @@ export const HomeScene = memo(function HomeScene({
           styles.content,
           isTablet && styles.contentTabletCenter,
           {
-            paddingTop: heroContentTop(insets.top, sun.size),
+            paddingTop: heroContentTop(insets.top, sun.size) + spread,
             paddingBottom: insets.bottom + 52 + (scrollBinding?.reserve ?? 0),
           },
         ]}
@@ -156,18 +200,20 @@ export const HomeScene = memo(function HomeScene({
           style={[
             styles.subtitle,
             { color: theme.subtitle },
+            isTablet && styles.subtitleTablet,
             portraitTablet && styles.subtitlePortraitTablet,
+            gaps && { marginBottom: HOME_CARDS.gap + subtitleGap },
           ]}
         >
           {t(welcome.subtitleKey, welcome.params)}
         </Text>
 
-        <View style={styles.cardSlot} ref={guideTargets?.stories} collapsable={false}>
+        <View style={[styles.cardSlot, gaps && { marginBottom: HOME_CARDS.gap + gaps.card }]} ref={guideTargets?.stories} collapsable={false}>
           <ContinueCard story={data.currentStory} width={contentWidth} animated={animated} onPress={onContinue} />
         </View>
 
         {isTablet ? (
-          <View style={[styles.cardSlot, styles.pairedRow]}>
+          <View style={[styles.cardSlot, styles.pairedRow, gaps && { marginBottom: HOME_CARDS.gap + gaps.card }]}>
             <View style={styles.pairedSlot} ref={guideTargets?.achievement} collapsable={false}>
               <AchievementCard
                 next={data.nextAchievement}
@@ -200,14 +246,14 @@ export const HomeScene = memo(function HomeScene({
           </>
         )}
 
-        <View style={styles.statsRow}>
+        <View testID="home-stats-row" style={[styles.statsRow, gaps && { marginTop: gaps.stats, marginBottom: 4 + gaps.stats }]}>
           <StreakChip days={data.readingStreakDays} animated={animated} />
           <View style={styles.statsDivider} />
           <WeeklyReadingChip minutes={data.weeklyReadingMinutes} animated={animated} />
         </View>
 
         {onOpenPlans ? (
-          <View style={styles.planSlot}>
+          <View testID="home-plan-slot" style={[styles.planSlot, gaps && { marginTop: PLAN_BASE_GAP + gaps.plan }]}>
             <UnlockPlanButton onPress={onOpenPlans} />
           </View>
         ) : null}
@@ -295,12 +341,16 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 8,
   },
-  // Bigger type, but *less* of the gap it would otherwise want beneath it --
-  // the point is to close the distance to the cards, not just make the
-  // words above them larger.
+  // A tablet needs its own breathing room beneath the greeting, not the
+  // phone's: at the base 8 the subtitle sat on the first card's glow in
+  // both orientations. One card gap keeps the greeting and the cards
+  // reading as two things, in the same rhythm as the gaps between cards.
+  subtitleTablet: {
+    marginBottom: HOME_CARDS.gap,
+  },
+  // Only portrait has the spare height to spend on bigger type.
   subtitlePortraitTablet: {
     fontSize: Math.round(HOME_CARD_TYPE.welcomeSubtitle * 1.3),
-    marginBottom: 0,
   },
   cardSlot: {
     marginBottom: HOME_CARDS.gap,
@@ -324,7 +374,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 4,
+    marginBottom: STATS_BASE_GAP,
   },
   statsDivider: {
     width: 1,
@@ -344,6 +394,6 @@ const styles = StyleSheet.create({
   },
   planSlot: {
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: PLAN_BASE_GAP,
   },
 });

@@ -114,6 +114,11 @@ export const SAFETY_HISTORY_DAYS = 7;
 export const HOME_CARDS = {
   screenMargin: 16,
   contentMaxWidth: 560,
+  /** A tablet has width to spare, and at the phone's cap the panels ran wide
+   *  enough to read as a wall rather than a column of cards. This is the
+   *  content column the rest of the app already keeps to on a tablet
+   *  (`TABLET_CONTENT_MAX_WIDTH`), so the home scene now matches it. */
+  tabletContentMaxWidth: 500,
   radius: 20,
   /** Between the home panels. Wide enough that each reads as its own thing
    *  to press rather than three bands of one block. */
@@ -205,8 +210,11 @@ export const STAT_ICON_TINTS = {
   flame: { from: '#FFB347', to: '#FF6B1A', light: '#FFE58A', accent: '#FF4E1A' },
 } as const satisfies Record<StatIconKind, { from: string; to: string; light: string; accent: string }>;
 
-export function homeContentWidth(screenWidth: number): number {
-  return Math.min(screenWidth - HOME_CARDS.screenMargin * 2, HOME_CARDS.contentMaxWidth);
+export function homeContentWidth(
+  screenWidth: number,
+  maxWidth: number = HOME_CARDS.contentMaxWidth
+): number {
+  return Math.min(screenWidth - HOME_CARDS.screenMargin * 2, maxWidth);
 }
 
 /** Half the content column, less half a gap -- so two tiles plus the gap
