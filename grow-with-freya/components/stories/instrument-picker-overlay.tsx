@@ -77,6 +77,16 @@ const EDGE_CLEARANCE = 4;
 const RADIUS_RATIO = 1.12;
 const ARROW_SIZE = 48;
 const ARROW_EDGE_GAP = 12;
+/** Where every other back button in the app sits -- see `page-header.tsx`,
+ *  which pins its own to `insets.top + 20` / `left: 20`. The safe-area inset
+ *  is added on the left too, which is nought in portrait (so the two match
+ *  exactly) and clears the notch when this picker is opened side-on. */
+export const BACK_BUTTON_GAP = 20;
+/** How far outside the panel's edge the carousel arrows sit. Pinned to the
+ *  panel rather than the screen: the panel is capped at PANEL_MAX_WIDTH and
+ *  centred, so on a tablet -- a wide landscape especially -- screen-edge
+ *  arrows ended up hundreds of points adrift of the thing they scroll. */
+const ARROW_PANEL_GAP = 14;
 const MEDALLION_MAX_SIZE = 224;
 const MEDALLION_COMPACT_MAX_SIZE = 172;
 const CENTER_SCALE = 1.0;
@@ -250,7 +260,6 @@ export const InstrumentPickerOverlay = React.memo(function InstrumentPickerOverl
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const windowInsets = useSafeAreaInsets();
   const insets = rotateInsets(windowInsets, isRotated);
-  const [panelTop, setPanelTop] = useState(0);
 
   const instrumentIds = filterInstrumentIds ?? getAvailableInstrumentIds();
   const instruments: InstrumentDefinition[] = instrumentIds
@@ -292,12 +301,14 @@ export const InstrumentPickerOverlay = React.memo(function InstrumentPickerOverl
     arcRadiusForText(titleLength, DEFAULT_ARC_CURVE),
   );
 
-  // Level with the title rather than jammed into the frame's corner, so the two read
-  // as one row. Falls back to the corner until the panel has been measured.
-  const titleBandCentre = (compactLayout ? 10 : 14) + titleFontSize * 0.75;
-  const closeButtonTop = panelTop > 0
-    ? Math.max(panelTop + titleBandCentre - ARROW_SIZE / 2, insets.top + 8)
-    : Math.max(insets.top + 16, 16);
+  // The panel is centred, so its edge is half the leftover width. The arrows
+  // tuck just outside it, but never past the safe area on a narrow screen --
+  // there they keep the old edge placement and overlap the panel instead.
+  const viewportWidth = isRotated ? screenHeight : screenWidth;
+  const arrowEdgeInset = Math.max(
+    (viewportWidth - panelWidth) / 2 - ARROW_SIZE - ARROW_PANEL_GAP,
+    ARROW_EDGE_GAP,
+  );
 
   const resolvedBackdrop: InstrumentPickerBackdrop =
     backdrop ?? (hideBackdrop ? 'none' : 'blur');
@@ -405,8 +416,8 @@ export const InstrumentPickerOverlay = React.memo(function InstrumentPickerOverl
       ]}>
         <Pressable
           style={[styles.glassCircle, styles.closeButton, {
-            top: closeButtonTop,
-            left: Math.max(insets.left + ARROW_EDGE_GAP, ARROW_EDGE_GAP),
+            top: insets.top + BACK_BUTTON_GAP,
+            left: insets.left + BACK_BUTTON_GAP,
           }]}
           onPress={onClose}
           testID="instrument-picker-close-button"
@@ -419,7 +430,7 @@ export const InstrumentPickerOverlay = React.memo(function InstrumentPickerOverl
           <>
             <Pressable
               style={[styles.glassCircle, styles.arrowButton, {
-                left: Math.max(insets.left + ARROW_EDGE_GAP, ARROW_EDGE_GAP),
+                left: Math.max(insets.left + ARROW_EDGE_GAP, arrowEdgeInset),
               }]}
               onPress={() => goToNeighbor(1)}
               testID="instrument-picker-previous-button"
@@ -429,7 +440,7 @@ export const InstrumentPickerOverlay = React.memo(function InstrumentPickerOverl
             </Pressable>
             <Pressable
               style={[styles.glassCircle, styles.arrowButton, {
-                right: Math.max(insets.right + ARROW_EDGE_GAP, ARROW_EDGE_GAP),
+                right: Math.max(insets.right + ARROW_EDGE_GAP, arrowEdgeInset),
               }]}
               onPress={() => goToNeighbor(-1)}
               testID="instrument-picker-next-button"
@@ -443,7 +454,6 @@ export const InstrumentPickerOverlay = React.memo(function InstrumentPickerOverl
         <BlobPanel
           fill={COLORS.panel}
           stroke={COLORS.panelBorder}
-          onLayout={event => setPanelTop(event.nativeEvent.layout.y)}
           style={[
             styles.panel,
             compactLayout && styles.panelCompact,

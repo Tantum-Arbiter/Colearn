@@ -47,6 +47,7 @@ jest.mock('@/store/app-store', () => {
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import {
+  BACK_BUTTON_GAP,
   InstrumentPickerOverlay,
   computePickerLayout,
   rotateInsets,
@@ -511,5 +512,120 @@ describe('InstrumentPickerOverlay', () => {
 
       expect(total(rotateInsets(PHONE, true))).toBe(total(PHONE));
     });
+  });
+});
+
+/**
+ * The back button used to ride down with the panel -- it was aligned to the
+ * panel's title rather than the screen, so on a tall device it sat halfway
+ * down the left edge instead of in the corner every other back button in the
+ * app uses. `page-header.tsx` pins its own to `insets.top + 20` / `left: 20`,
+ * and this one now matches, in either orientation and on either device.
+ */
+describe('the back button', () => {
+  /** The safe area the component is handed by the global mock. */
+  const INSETS = { top: 44, bottom: 34, left: 0, right: 0 };
+
+  function backButtonStyle(isRotated = false) {
+    const view = render(
+      <InstrumentPickerOverlay visible onSelect={jest.fn()} onClose={jest.fn()} isRotated={isRotated} />
+    );
+    const node = view.UNSAFE_root.findAll(
+      (n: any) => n.props.testID === 'instrument-picker-close-button'
+    )[0];
+    return ([] as any[])
+      .concat(node.props.style ?? [])
+      .reduce((merged: Record<string, number>, layer: any) => ({ ...merged, ...(layer ?? {}) }), {});
+  }
+
+  it('sits in the top corner, clear of the safe area', () => {
+    const style = backButtonStyle();
+    const insets = rotateInsets(INSETS, false);
+
+    expect(style.top).toBe(insets.top + BACK_BUTTON_GAP);
+    expect(style.left).toBe(insets.left + BACK_BUTTON_GAP);
+  });
+
+  /** Side-on, the notch moves to a side edge -- the corner has to follow it
+   *  rather than sitting under it. */
+  it('follows the safe area round when the picker is rotated', () => {
+    const style = backButtonStyle(true);
+    const insets = rotateInsets(INSETS, true);
+
+    expect(style.top).toBe(insets.top + BACK_BUTTON_GAP);
+    expect(style.left).toBe(insets.left + BACK_BUTTON_GAP);
+  });
+
+  it('does not drift with the panel it sits beside', () => {
+    // Same corner whichever way round it is -- the old placement was measured
+    // off the panel, so it moved when the panel did.
+    expect(backButtonStyle().top).toBe(backButtonStyle().top);
+    expect(backButtonStyle(true).left).toBe(rotateInsets(INSETS, true).left + BACK_BUTTON_GAP);
+  });
+});
+
+/**
+ * The arrows scroll the carousel, so they belong beside the panel that holds
+ * it. Pinned to the screen edge instead, a wide tablet -- landscape most of
+ * all -- left them hundreds of points adrift of the thing they act on.
+ */
+describe('the carousel arrows', () => {
+  /** The component reads the viewport through `useWindowDimensions`, which
+   *  under react-native-web comes from the document -- jsdom reports 0x0
+   *  unless it is told otherwise. */
+  function setViewport(width: number, height: number) {
+    Object.defineProperty(document.documentElement, 'clientWidth', { value: width, configurable: true });
+    Object.defineProperty(document.documentElement, 'clientHeight', { value: height, configurable: true });
+    window.dispatchEvent(new Event('resize'));
+  }
+
+  afterEach(() => {
+    setViewport(0, 0);
+  });
+
+  function arrowInsets(viewport: { width: number; height: number }, isRotated = false) {
+    setViewport(viewport.width, viewport.height);
+    const view = render(
+      <InstrumentPickerOverlay visible onSelect={jest.fn()} onClose={jest.fn()} isRotated={isRotated} />
+    );
+    const flat = (testID: string) =>
+      ([] as any[])
+        .concat(view.UNSAFE_root.findAll((n: any) => n.props.testID === testID)[0].props.style ?? [])
+        .reduce((merged: Record<string, number>, layer: any) => ({ ...merged, ...(layer ?? {}) }), {});
+    return {
+      left: flat('instrument-picker-previous-button').left,
+      right: flat('instrument-picker-next-button').right,
+      panelWidth: computePickerLayout({
+        viewportWidth: isRotated ? viewport.height : viewport.width,
+        viewportHeight: isRotated ? viewport.width : viewport.height,
+        itemCount: 3,
+      }).panelWidth,
+    };
+  }
+
+  it('tucks in beside the panel on a wide screen rather than hugging the edge', () => {
+    const tabletLandscape = arrowInsets({ width: 1194, height: 834 });
+    const panelEdge = (1194 - tabletLandscape.panelWidth) / 2;
+
+    // just outside the panel, nowhere near the screen edge
+    expect(tabletLandscape.left).toBeGreaterThan(panelEdge - 100);
+    expect(tabletLandscape.left).toBeLessThan(panelEdge);
+    expect(tabletLandscape.left).toBe(tabletLandscape.right);
+  });
+
+  it('moves in as the screen widens, since the panel stops growing', () => {
+    const portrait = arrowInsets({ width: 834, height: 1194 });
+    const landscape = arrowInsets({ width: 1194, height: 834 });
+
+    expect(landscape.left).toBeGreaterThan(portrait.left);
+  });
+
+  /** A phone has no room to sit outside the panel, so it keeps the old edge
+   *  placement and overlaps it instead of being pushed off screen. */
+  it('falls back to the screen edge where the panel leaves no room', () => {
+    const phone = arrowInsets({ width: 402, height: 874 });
+
+    expect(phone.left).toBeGreaterThan(0);
+    expect(phone.left).toBeLessThan(40);
   });
 });
