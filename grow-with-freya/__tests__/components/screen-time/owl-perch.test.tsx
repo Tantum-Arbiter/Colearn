@@ -98,6 +98,7 @@ describe('OwlPerch', () => {
   beforeEach(() => {
     mockReducedMotion.mockReturnValue(false);
     reanimated.withTiming.mockClear();
+    reanimated.withRepeat.mockClear();
   });
 
   it('layers the ledge, the owl and the cloud in that order', () => {
@@ -153,10 +154,16 @@ describe('OwlPerch', () => {
     expect(timingsOf(OWL_RHYTHM.delightFadeMs)).toBeGreaterThan(0);
   });
 
-  it('lets the cloud drift', () => {
-    renderPerch();
+  /**
+   * The owl is the only thing that moves. The cloud used to sway on an
+   * endless loop of its own, which is the drift you notice behind the owl
+   * while the tutorial is running -- the scenery shifting under him rather
+   * than him arriving on it. Nothing here may loop.
+   */
+  it('never sets the scenery moving on a loop of its own', () => {
+    renderPerch({ phase: 'arrive' });
 
-    expect(timingsOf(OWL_PERCH.driftMs / 2)).toBeGreaterThan(0);
+    expect(reanimated.withRepeat).not.toHaveBeenCalled();
   });
 
   it('never intercepts touches', () => {
@@ -175,6 +182,7 @@ describe('OwlPerch', () => {
     beforeEach(() => {
       mockReducedMotion.mockReturnValue(true);
       reanimated.withTiming.mockClear();
+      reanimated.withRepeat.mockClear();
     });
 
     it('fades rather than slides', () => {
@@ -187,7 +195,7 @@ describe('OwlPerch', () => {
     it('holds the cloud still', () => {
       renderPerch();
 
-      expect(timingsOf(OWL_PERCH.driftMs / 2)).toBe(0);
+      expect(reanimated.withRepeat).not.toHaveBeenCalled();
     });
   });
 });

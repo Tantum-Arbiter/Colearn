@@ -3,12 +3,9 @@ import { StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import Animated, {
   Easing,
-  cancelAnimation,
   useAnimatedStyle,
   useSharedValue,
   withDelay,
-  withRepeat,
-  withSequence,
   withTiming,
 } from 'react-native-reanimated';
 
@@ -35,7 +32,6 @@ export interface OwlPerchProps {
 
 const glideIn = Easing.out(Easing.cubic);
 const glideOut = Easing.in(Easing.quad);
-const sway = Easing.inOut(Easing.sin);
 
 export const OwlPerch = memo(function OwlPerch({
   phase,
@@ -51,7 +47,6 @@ export const OwlPerch = memo(function OwlPerch({
   const frame = useMemo(() => owlPerchFrame(owlWidth), [owlWidth]);
   const slide = useSharedValue(phase === 'arrive' ? frame.slideFrom : 0);
   const presence = useSharedValue(phase === 'arrive' ? 0 : 1);
-  const drift = useSharedValue(0);
 
   useEffect(() => {
     if (reduceMotion) {
@@ -78,29 +73,16 @@ export const OwlPerch = memo(function OwlPerch({
     }
   }, [phase, reduceMotion, frame.slideFrom, slide, presence]);
 
-  useEffect(() => {
-    if (reduceMotion) {
-      drift.value = 0;
-      return;
-    }
-    drift.value = withRepeat(
-      withSequence(
-        withTiming(1, { duration: OWL_PERCH.driftMs / 2, easing: sway }),
-        withTiming(-1, { duration: OWL_PERCH.driftMs / 2, easing: sway })
-      ),
-      -1,
-      false
-    );
-    return () => cancelAnimation(drift);
-  }, [drift, reduceMotion]);
-
   const perchStyle = useAnimatedStyle(() => ({
     opacity: presence.value,
-    transform: [{ translateX: slide.value }],
   }));
 
-  const cloudStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: drift.value * OWL_PERCH.driftPixels }],
+  // The owl is the only thing that travels. The ledge it lands on and the
+  // cloud behind it are scenery: they were carried along by the arrival
+  // slide (and the cloud had a sway of its own besides), which read as the
+  // whole set shifting under the owl rather than the owl arriving on it.
+  const owlStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: slide.value }],
   }));
 
   return (
@@ -115,7 +97,7 @@ export const OwlPerch = memo(function OwlPerch({
         <Image source={OWL_PERCH.ledge} style={styles.fill} contentFit="fill" transition={0} />
       </View>
 
-      <View testID="owl-perch-owl" style={[styles.box, boxStyle(frame.owl)]}>
+      <Animated.View testID="owl-perch-owl" style={[styles.box, boxStyle(frame.owl), owlStyle]}>
         <OwlSprite
           testID="owl-perch-sprite"
           phase={phase}
@@ -126,11 +108,11 @@ export const OwlPerch = memo(function OwlPerch({
           width={owlWidth}
           onPhaseEnd={onPhaseEnd}
         />
-      </View>
-
-      <Animated.View testID="owl-perch-cloud" style={[styles.box, boxStyle(frame.cloud), cloudStyle]}>
-        <Image source={OWL_PERCH.cloud} style={[styles.fill, styles.cloud]} contentFit="fill" transition={0} />
       </Animated.View>
+
+      <View testID="owl-perch-cloud" style={[styles.box, boxStyle(frame.cloud)]}>
+        <Image source={OWL_PERCH.cloud} style={[styles.fill, styles.cloud]} contentFit="fill" transition={0} />
+      </View>
     </Animated.View>
   );
 });

@@ -113,8 +113,6 @@ export const OWL_PERCH = {
   owlLeft: 16,
   cloudAspect: 616 / 531,
   slideOvershoot: 24,
-  driftPixels: 4,
-  driftMs: 9000,
 } as const;
 
 export interface PerchBox {
