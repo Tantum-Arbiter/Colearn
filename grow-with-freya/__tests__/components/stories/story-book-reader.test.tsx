@@ -1,4 +1,10 @@
 import React from 'react';
+import { Image } from 'expo-image';
+
+beforeAll(() => {
+  Object.defineProperty(globalThis, '__DEV__', { value: false, configurable: true });
+  Image.prefetch = jest.fn().mockResolvedValue(true);
+});
 import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
 import { StoryBookReader } from '@/components/stories/story-book-reader';
 import { Story } from '@/types/story';
@@ -33,6 +39,20 @@ jest.mock('@/hooks/use-breath-detector', () => ({
     setUseFallback: jest.fn(),
   }),
 }));
+
+jest.mock('@/store/app-store', () => {
+  const state = {
+    textSizeScale: 1,
+    childAgeInMonths: 36,
+    setTextSizeScale: jest.fn(),
+    markStoryAsRead: jest.fn(),
+    recordReadingSession: jest.fn(),
+  };
+  return {
+    useAppStore: jest.fn((selector?: (value: typeof state) => unknown) => selector ? selector(state) : state),
+    BASIC_TIER_INSTRUMENTS: ['flute', 'recorder', 'ocarina'],
+  };
+});
 
 // Reanimated is mocked globally in jest.setup.js
 
