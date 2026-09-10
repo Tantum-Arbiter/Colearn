@@ -20,6 +20,7 @@ import { Story, StoryPage, STORY_TAGS, InteractiveElement, getLocalizedText, res
 import type { SupportedLanguage } from '@/services/i18n';
 import { SUPPORTED_LANGUAGES, setStoredLanguage } from '@/services/i18n';
 import { InteractiveElementComponent } from './interactive-element';
+import { narrationLayout } from './narration-layout';
 import { MusicChallengeUI } from './music-challenge-ui';
 import { JigsawPuzzleUI } from './jigsaw-puzzle-ui';
 import { ReadingChallengeUI } from './reading-challenge-ui';
@@ -1817,7 +1818,7 @@ export function StoryBookReader({
               <>
                 {page.interactiveElements.map((element: InteractiveElement) => (
                   <InteractiveElementComponent
-                    key={element.id}
+                    key={`${story.id}:${page.id}:${element.id}`}
                     element={element}
                     containerWidth={screenWidth}
                     containerHeight={screenHeight}
@@ -2088,6 +2089,114 @@ export function StoryBookReader({
   });
 
 
+
+  const renderNarration = () => (
+          <Animated.View style={[styles.centerTextContainer, textBoxAnimatedStyle, isCompareLanguageEnabled && styles.centerTextContainerCompare, !isTablet && { maxWidth: '68%' }, narrationLayout(screenWidth, screenHeight, insets.right)]} testID="story-narration">
+            {(() => {
+              // Tablet gets larger base font for better readability
+              // iPad base sizes are significantly larger to compensate for 2-line limit
+              const baseFontSize = currentPage?.pageNumber === 0
+                ? (isTablet ? 28 : 18)
+                : (isTablet ? 26 : 16);
+              const fontSize = scaledFontSize(baseFontSize);
+              const lineHeight = fontSize * 1.5;
+              // In compare mode, show all text; otherwise limit to 2 lines
+              const maxLines = isCompareLanguageEnabled ? 999 : isLandscape ? 6 : 2;
+              const verticalPadding = 30;
+              const fixedTextBoxHeight = isCompareLanguageEnabled
+                ? undefined // Let content determine height in compare mode
+                : Math.min((lineHeight * maxLines) + verticalPadding, isLandscape ? screenHeight * 0.55 : Number.POSITIVE_INFINITY);
+
+              return (
+                <View style={[
+                  styles.narrationContent,
+                  isCompareLanguageEnabled && styles.compareLanguageContainer
+                ]}>
+                  {/* Compare Language Text Box - Above (only when enabled) */}
+                  {isCompareLanguageEnabled && (
+                    <View style={[
+                      styles.centerTextBox,
+                      styles.compareLanguageTextBox,
+                      {
+                        height: isLandscape ? screenHeight * 0.25 : 'auto',
+                        minHeight: undefined,
+                        maxHeight: isLandscape ? screenHeight * 0.25 : undefined,
+                      }
+                    ]}>
+                      <ScrollView
+                        key={`compare-text-scroll-${story.id}-${currentPageIndex}-${textSizeScale}-${compareLanguage}`}
+                        showsVerticalScrollIndicator={true}
+                        indicatorStyle="black"
+                        scrollEventThrottle={16}
+                        bounces={false}
+                        nestedScrollEnabled={true}
+                        scrollEnabled={true}
+                      >
+                        <View style={{ paddingRight: 15, alignItems: 'center' }}>
+                          {renderTextWithHighlight(
+                            getLocalizedText(undefined, currentPage?.text || '', compareLanguage, currentPage?.localizedText, childAgeGroup) || '',
+                            fontSize,
+                            lineHeight,
+                            currentPage?.pageNumber === 0 ? styles.coverText : styles.storyText,
+                            textAnimatedStyle,
+                            'blue'
+                          )}
+                        </View>
+                      </ScrollView>
+                      <Text style={[styles.compareLanguageLabel, { fontSize: scaledFontSize(10) }]}>
+                        {SUPPORTED_LANGUAGES.find(l => l.code === compareLanguage)?.nativeName}
+                      </Text>
+                    </View>
+                  )}
+
+                  {/* Original Language Text Box - Below */}
+                  <View style={[
+                    styles.centerTextBox,
+                    isCompareLanguageEnabled && styles.originalLanguageTextBox,
+                    isCompareLanguageEnabled ? {
+                      height: isLandscape ? screenHeight * 0.25 : 'auto',
+                      minHeight: undefined,
+                      maxHeight: isLandscape ? screenHeight * 0.25 : undefined,
+                    } : fixedTextBoxHeight ? {
+                      height: fixedTextBoxHeight,
+                      minHeight: fixedTextBoxHeight,
+                      maxHeight: fixedTextBoxHeight,
+                    } : {
+                      minHeight: 80,
+                    }
+                  ]}>
+                    <ScrollView
+                      key={`text-scroll-${story.id}-${currentPageIndex}-${textSizeScale}`}
+                      ref={textScrollViewRef}
+                      showsVerticalScrollIndicator={true}
+                      indicatorStyle="black"
+                      scrollEventThrottle={16}
+                      bounces={false}
+                      nestedScrollEnabled={true}
+                      scrollEnabled={true}
+                    >
+                      <View style={{ paddingRight: 15, alignItems: 'center' }}>
+                        {renderTextWithHighlight(
+                          getLocalizedText(undefined, currentPage?.text || '', isCompareLanguageEnabled ? sessionLanguage : currentLanguage, currentPage?.localizedText, childAgeGroup) || '',
+                          fontSize,
+                          lineHeight,
+                          currentPage?.pageNumber === 0 ? styles.coverText : styles.storyText,
+                          textAnimatedStyle,
+                          'white'
+                        )}
+                      </View>
+                    </ScrollView>
+                    {isCompareLanguageEnabled && (
+                      <Text style={[styles.compareLanguageLabel, { fontSize: scaledFontSize(10) }]}>
+                        {SUPPORTED_LANGUAGES.find(l => l.code === sessionLanguage)?.nativeName}
+                      </Text>
+                    )}
+                  </View>
+                </View>
+              );
+            })()}
+          </Animated.View>
+  );
 
   // Show transition screen while orientation is changing
   // This conditional return must come after ALL hooks to avoid Rules of Hooks violation
@@ -2513,6 +2622,7 @@ export function StoryBookReader({
 
         {/* UI Controls Layer */}
         <View style={styles.uiControlsLayer}>
+        {isLandscape && currentPage && currentPageIndex > 0 && !isJigsawActive && !isReadingActive && renderNarration()}
 
         {/* Bottom UI Panel - Text and Controls (hide on cover page and during jigsaw/reading) */}
         {currentPage && currentPageIndex > 0 && !isJigsawActive && !isReadingActive && (
@@ -2553,110 +2663,7 @@ export function StoryBookReader({
           </Animated.View>
 
           {/* Story Text Box - Center - Scrollable for accessibility */}
-          <Animated.View style={[styles.centerTextContainer, textBoxAnimatedStyle, isCompareLanguageEnabled && styles.centerTextContainerCompare, !isTablet && { maxWidth: '68%' }]}>
-            {(() => {
-              // Tablet gets larger base font for better readability
-              // iPad base sizes are significantly larger to compensate for 2-line limit
-              const baseFontSize = currentPage?.pageNumber === 0
-                ? (isTablet ? 28 : 18)
-                : (isTablet ? 26 : 16);
-              const fontSize = scaledFontSize(baseFontSize);
-              const lineHeight = fontSize * 1.5;
-              // In compare mode, show all text; otherwise limit to 2 lines
-              const maxLines = isCompareLanguageEnabled ? 999 : 2;
-              const verticalPadding = 30;
-              const fixedTextBoxHeight = isCompareLanguageEnabled
-                ? undefined // Let content determine height in compare mode
-                : (lineHeight * maxLines) + verticalPadding;
-
-              return (
-                <View style={[
-                  isCompareLanguageEnabled && styles.compareLanguageContainer
-                ]}>
-                  {/* Compare Language Text Box - Above (only when enabled) */}
-                  {isCompareLanguageEnabled && (
-                    <View style={[
-                      styles.centerTextBox,
-                      styles.compareLanguageTextBox,
-                      {
-                        height: 'auto',
-                        minHeight: undefined,
-                        maxHeight: undefined,
-                      }
-                    ]}>
-                      <ScrollView
-                        key={`compare-text-scroll-${story.id}-${currentPageIndex}-${textSizeScale}-${compareLanguage}`}
-                        showsVerticalScrollIndicator={true}
-                        indicatorStyle="black"
-                        scrollEventThrottle={16}
-                        bounces={false}
-                        nestedScrollEnabled={true}
-                        scrollEnabled={true}
-                      >
-                        <View style={{ paddingRight: 15, alignItems: 'center' }}>
-                          {renderTextWithHighlight(
-                            getLocalizedText(undefined, currentPage?.text || '', compareLanguage, currentPage?.localizedText, childAgeGroup) || '',
-                            fontSize,
-                            lineHeight,
-                            currentPage?.pageNumber === 0 ? styles.coverText : styles.storyText,
-                            textAnimatedStyle,
-                            'blue'
-                          )}
-                        </View>
-                      </ScrollView>
-                      <Text style={[styles.compareLanguageLabel, { fontSize: scaledFontSize(10) }]}>
-                        {SUPPORTED_LANGUAGES.find(l => l.code === compareLanguage)?.nativeName}
-                      </Text>
-                    </View>
-                  )}
-
-                  {/* Original Language Text Box - Below */}
-                  <View style={[
-                    styles.centerTextBox,
-                    isCompareLanguageEnabled && styles.originalLanguageTextBox,
-                    isCompareLanguageEnabled ? {
-                      height: 'auto',
-                      minHeight: undefined,
-                      maxHeight: undefined,
-                    } : fixedTextBoxHeight ? {
-                      height: fixedTextBoxHeight,
-                      minHeight: fixedTextBoxHeight,
-                      maxHeight: fixedTextBoxHeight,
-                    } : {
-                      minHeight: 80,
-                    }
-                  ]}>
-                    <ScrollView
-                      key={`text-scroll-${story.id}-${currentPageIndex}-${textSizeScale}`}
-                      ref={textScrollViewRef}
-                      showsVerticalScrollIndicator={true}
-                      indicatorStyle="black"
-                      scrollEventThrottle={16}
-                      bounces={false}
-                      nestedScrollEnabled={true}
-                      scrollEnabled={true}
-                    >
-                      <View style={{ paddingRight: 15, alignItems: 'center' }}>
-                        {renderTextWithHighlight(
-                          getLocalizedText(undefined, currentPage?.text || '', isCompareLanguageEnabled ? sessionLanguage : currentLanguage, currentPage?.localizedText, childAgeGroup) || '',
-                          fontSize,
-                          lineHeight,
-                          currentPage?.pageNumber === 0 ? styles.coverText : styles.storyText,
-                          textAnimatedStyle,
-                          'white'
-                        )}
-                      </View>
-                    </ScrollView>
-                    {isCompareLanguageEnabled && (
-                      <Text style={[styles.compareLanguageLabel, { fontSize: scaledFontSize(10) }]}>
-                        {SUPPORTED_LANGUAGES.find(l => l.code === sessionLanguage)?.nativeName}
-                      </Text>
-                    )}
-                  </View>
-                </View>
-              );
-            })()}
-          </Animated.View>
+          {!isLandscape && renderNarration()}
 
           {/* Next Button - Right Side */}
           <Animated.View style={[rightButtonAnimatedStyle]}>
@@ -3972,6 +3979,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginHorizontal: 10,
     maxWidth: '85%',
+  },
+  narrationContent: {
+    width: '100%',
   },
   recordModeTextContainer: {
     flex: 0,

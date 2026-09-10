@@ -54,12 +54,13 @@ export const InteractiveElementComponent: React.FC<InteractiveElementProps> = ({
   isTablet,
 }) => {
   const [isRevealed, setIsRevealed] = useState(false);
+  const isAlignedReveal = element.type === 'reveal';
 
   // Animation values
   const glowOpacity = useSharedValue(GLOW_MIN_OPACITY);
   const indicatorScale = useSharedValue(PULSE_SCALE_MIN);
   const propOpacity = useSharedValue(0);
-  const propScale = useSharedValue(0.95);
+  const propScale = useSharedValue(isAlignedReveal ? 1 : 0.95);
 
   // Calculate pixel positions from normalized coordinates
   // Both tablet and phone use: resizeMode="contain" + scale from center
@@ -189,7 +190,7 @@ export const InteractiveElementComponent: React.FC<InteractiveElementProps> = ({
         duration: TRANSITION_DURATION,
         easing: Easing.out(Easing.ease),
       });
-      propScale.value = withTiming(0.95, {
+      propScale.value = isAlignedReveal ? 1 : withTiming(0.95, {
         duration: TRANSITION_DURATION,
         easing: Easing.out(Easing.ease),
       });
@@ -200,7 +201,7 @@ export const InteractiveElementComponent: React.FC<InteractiveElementProps> = ({
         duration: TRANSITION_DURATION,
         easing: Easing.out(Easing.ease),
       });
-      propScale.value = withTiming(1, {
+      propScale.value = isAlignedReveal ? 1 : withTiming(1, {
         duration: TRANSITION_DURATION,
         easing: Easing.out(Easing.back(1.2)),
       });
@@ -216,7 +217,7 @@ export const InteractiveElementComponent: React.FC<InteractiveElementProps> = ({
 
   const propStyle = useAnimatedStyle(() => ({
     opacity: propOpacity.value,
-    transform: [{ scale: propScale.value }],
+    transform: isAlignedReveal ? [] : [{ scale: propScale.value }],
   }));
 
   // Determine if image is a local require() or a URL string
@@ -258,6 +259,10 @@ export const InteractiveElementComponent: React.FC<InteractiveElementProps> = ({
     <>
       {/* Hit area / Pressable zone with glow indicator */}
       <Pressable
+        testID={`prop-hit-${element.id}`}
+        accessibilityRole="button"
+        accessibilityLabel={element.id.replace(/-/g, ' ')}
+        accessibilityState={{ expanded: isRevealed }}
         onPress={handlePress}
         style={[
           styles.hitArea,
@@ -289,6 +294,7 @@ export const InteractiveElementComponent: React.FC<InteractiveElementProps> = ({
 
       {/* Prop image overlay (positioned absolutely) */}
       <Animated.View
+        testID={`prop-overlay-${element.id}`}
         style={[
           styles.propContainer,
           propStyle,
@@ -332,4 +338,3 @@ const styles = StyleSheet.create({
     height: '100%',
   },
 });
-

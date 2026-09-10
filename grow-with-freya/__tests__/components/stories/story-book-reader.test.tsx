@@ -122,3 +122,16 @@ describe('StoryBookReader', () => {
     expect(() => result.toJSON()).not.toThrow();
   });
 });
+
+it('mounts landscape narration on the right outside the navigation row', () => {
+  const { Dimensions, StyleSheet } = require('react-native');
+  const dimensions = jest.spyOn(Dimensions, 'get').mockReturnValue({ width: 844, height: 390, scale: 1, fontScale: 1 });
+  const underTest = render(<StoryBookReader story={mockStory} onExit={jest.fn()} skipCoverPage skipInitialFadeIn />);
+  const narration = underTest.UNSAFE_root.findByProps({ testID: 'story-narration' });
+  const layout = StyleSheet.flatten(narration.props.style);
+  expect(layout.position).toBe('absolute');
+  expect(844 - layout.right - layout.width).toBeGreaterThan(422);
+  expect(layout.bottom).toBeGreaterThan(60);
+  underTest.unmount();
+  dimensions.mockRestore();
+});

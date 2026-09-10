@@ -237,3 +237,20 @@ extensive mocks for React Native modules (`__mocks__/`).
 | `.github/workflows/README.md` | All CI/CD pipelines |
 | `gateway-service/README.md` | Backend API reference |
 | `func-tests/README.md` | Functional test suite |
+## Production storybook presentation
+
+Landscape stories place narration in a bounded panel on the right, over the quiet
+scenery reserved by the authoring specification. `components/stories/narration-layout.ts`
+keeps this panel clear of the left action area and bottom navigation. Portrait tablets
+retain the existing bottom narration layout. Narration and language comparison remain
+scrollable, including at larger accessibility text sizes.
+
+Reveal elements (`type: reveal`), including cropped patches and legacy full-canvas
+overlays, use fixed scene geometry. Their opacity animates, but their geometry does not scale;
+this keeps delivered before/after patches aligned to the background throughout the
+transition. Other interaction types retain their existing animation. Reader prop
+keys include story and page identity so identical prop IDs on successive pages reset.
+
+This change needs the generator's protected, lossless WebP overlays. It does not make
+unprotected generated after-scenes safe or certify artwork quality. No API or CMS
+metadata contract changes are needed.
