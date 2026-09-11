@@ -246,7 +246,6 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
 }) => {
   const { t } = useTranslation();
   const [playMode, setPlayMode] = useState<PlayMode>('press');
-  const [manualRotated, setManualRotated] = useState(false);
   const [uiHidden, setUiHidden] = useState(false);
   const [surfaceBox, setSurfaceBox] = useState<SurfaceBox>({ width: 0, height: 0 });
   const [containerBox, setContainerBox] = useState<SurfaceBox>({ width: 0, height: 0 });
@@ -255,10 +254,6 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
   const systemInsets = useSafeAreaInsets();
   const insets = insetsOverride ?? systemInsets;
 
-  // Celebration animation values
-  const celebrationScale = useSharedValue(0);
-  const celebrationOpacity = useSharedValue(0);
-  const shineOffset = useSharedValue(-1);
 
   const playbackIndex = challenge.playbackPosition?.index ?? -1;
   const playbackTick = challenge.playbackPosition?.tick ?? 0;
@@ -267,11 +262,12 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
   const instrumentRotation = useSharedValue(0);
 
   const isPlayingSong = challenge.state === 'playing_success_song';
-  const isFinished = challenge.isComplete;
-  const showCelebration = isPlayingSong || isFinished;
+  // The challenge no longer stops on a finished state -- it clears the song and
+  // waits to be played again -- so the only special state left is the reward
+  // melody, and `hasCompleted` is what says the story may be carried on.
 
   // Whether rotation is active (user holding phone in portrait orientation)
-  const isRotated = playMode === 'blow' || (playMode === 'press' && manualRotated);
+  const isRotated = playMode === 'blow';
 
   // Report rotation state changes to parent (so music sheet can rotate too)
   useEffect(() => {
@@ -288,60 +284,19 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
   }, [playMode]);
 
   // Animate rotation: automatic in blow mode, manual toggle in press mode
-  // Keep rotation active even during celebration so "Amazing!" matches
   useEffect(() => {
-    if (playMode === 'blow' || (playMode === 'press' && manualRotated)) {
+    if (playMode === 'blow') {
       instrumentRotation.value = withTiming(-90, { duration: 500, easing: Easing.inOut(Easing.ease) });
     } else {
       instrumentRotation.value = withTiming(0, { duration: 500, easing: Easing.inOut(Easing.ease) });
     }
-  }, [playMode, manualRotated, instrumentRotation]);
-
-  // Reset manual rotation when switching to blow mode
-  useEffect(() => {
-    if (playMode === 'blow') {
-      setManualRotated(false);
-    }
-  }, [playMode]);
+  }, [playMode, instrumentRotation]);
 
   const instrumentRotationStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${instrumentRotation.value}deg` }],
   }));
 
-  // Celebration bounce + shine animation
-  useEffect(() => {
-    if (showCelebration) {
-      // Quick bounce-in then settle -one bounce only, high damping to stabilise fast
-      celebrationScale.value = withSequence(
-        withTiming(0, { duration: 0 }),
-        withSpring(1.08, { damping: 12, stiffness: 180 }),
-        withSpring(1, { damping: 20, stiffness: 200 })
-      );
-      celebrationOpacity.value = withTiming(1, { duration: 400 });
-      // Single slow shine sweep, then hold -no repeat
-      shineOffset.value = withSequence(
-        withTiming(-1, { duration: 0 }),
-        withTiming(2, { duration: 2000, easing: Easing.inOut(Easing.ease) })
-      );
-    } else {
-      celebrationScale.value = 0;
-      celebrationOpacity.value = 0;
-    }
-  }, [showCelebration]);
-
-  const celebrationStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: celebrationScale.value }],
-    opacity: celebrationOpacity.value,
-  }));
-
-  // In rotated mode the celebration should stay upright at the top of the screen,
-  // not rotate with the instrument. Use the same scale/opacity animation without rotation.
-  const celebrationRotatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: celebrationScale.value }],
-    opacity: celebrationOpacity.value,
-  }));
-
-  // The active sequence -use currentSequence from hook when available (for Go Harder levels)
+  // The active sequence -use currentSequence from the hook when available
   const activeSequence = challenge.currentSequence?.length > 0 ? challenge.currentSequence : requiredSequence;
   const hasSequence = activeSequence.length > 0;
 
@@ -354,11 +309,6 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   }, [onPlayModeChange]);
 
-  const toggleManualRotation = useCallback(() => {
-    setManualRotated(prev => !prev);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  }, []);
-
   const handleNotePressIn = useCallback((note: string) => {
     activeNotesRef.current.add(note);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -370,7 +320,6 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
     challenge.stopNote(note);
   }, [challenge]);
 
-  const celebrationSubtextFontSize = scaledFontSize(isRotated ? 12 : 14);
 
   const handleRegionLayout = useCallback((event: LayoutChangeEvent) => {
     const { width, height } = event.nativeEvent.layout;
@@ -474,6 +423,8 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
       holdPlan={challenge.holdPlan}
       holdingCurrent={holdingCurrent}
       playbackIndex={isPlayingSong ? playbackIndex : -1}
+      wrongCue={challenge.wrongCue}
+      replayCue={challenge.replayCue}
       width={width}
       title={titleOnSheet ? promptText : undefined}
       visibleFraction={sheetVisibleFraction}
@@ -527,38 +478,13 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
     );
   };
 
-  const rotateButton = playMode === 'press' && !isFinished && !isPlayingSong && (
-    <View style={[styles.rotateButtonWrapper, artwork && styles.rotateButtonWrapperOnArtwork]}>
-      <Pressable
-        style={[styles.rotateButtonCircle, { width: scaledButtonSize(36), height: scaledButtonSize(36), borderRadius: scaledButtonSize(18) }, manualRotated && styles.rotateButtonActive]}
-        onPress={toggleManualRotation}
-        testID="rotate-button"
-      >
-        <Ionicons name="refresh" size={scaledFontSize(18)} color="#FFFFFF" />
-      </Pressable>
-    </View>
-  );
-
   return (
     <View style={styles.container} onLayout={handleContainerLayout} testID="challenge-container">
       {/* Top section: prompt OR celebration.
           When there's no sequence (freeplay), use equal flex so the instrument is centered. */}
       <View style={[styles.topSection, !hasSequence && { flex: 1 }, artwork && styles.sectionCompact, artwork && styles.topSectionFloating, artwork && { height: topSectionHeight }]} testID="top-section" pointerEvents="box-none">
-        {showCelebration ? (
-          <Animated.View style={[
-            styles.celebrationContainer,
-            isRotated && styles.celebrationContainerRotated,
-            isRotated ? celebrationRotatedStyle : celebrationStyle,
-          ]}>
-            {challenge.difficultyLevel > 1 && (
-              <Text style={[styles.celebrationSubtext, { fontSize: celebrationSubtextFontSize }]}>{t('music.levelComplete', { level: challenge.difficultyLevel })}</Text>
-            )}
-            {isPlayingSong && (
-              <Text style={[styles.celebrationSubtext, { fontSize: celebrationSubtextFontSize }]}>{t('music.playingYourSong')}</Text>
-            )}
-          </Animated.View>
-        ) : showsSheet ? null : (
-          <View style={[styles.promptContainer, showCelebration && { opacity: 0 }]} testID="prompt-pill">
+        {showsSheet ? null : (
+          <View style={[styles.promptContainer, isPlayingSong && { opacity: 0 }]} testID="prompt-pill">
             <Text style={[styles.promptText, { fontSize: scaledFontSize(16) }]}>{promptText}</Text>
           </View>
         )}
@@ -591,7 +517,6 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
           ]}
           testID="instrument-surface"
         >
-          {rotateButton}
           {surfaceLayout && (() => {
             const body = (
               <Animated.View
@@ -634,7 +559,7 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
         return (
           <View style={styles.sequenceContainer} testID="sequence-container">
             <Animated.Text
-              style={[styles.sequenceProgress, { fontSize: scaledFontSize(12) }, instrumentRotationStyle, (isPlayingSong || isFinished) && { opacity: 0 }]}
+              style={[styles.sequenceProgress, { fontSize: scaledFontSize(12) }, instrumentRotationStyle, isPlayingSong && { opacity: 0 }]}
               testID="sequence-progress"
             >
               {Math.min(challenge.currentNoteIndex, displaySeq.length)}/{displaySeq.length}
@@ -648,41 +573,7 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
 
         {/* Bottom row: controls change based on state */}
         <View style={[styles.bottomRow, isPlayingSong && { opacity: 0 }]}>
-          {isFinished ? (
-            <>
-              <Pressable
-                style={styles.retryButton}
-                onPress={challenge.retry}
-                testID="retry-button"
-              >
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Ionicons name="refresh-outline" size={scaledFontSize(14)} color="#FFFFFF" style={{ marginRight: 4 }} />
-                  <Text style={[styles.retryButtonText, { fontSize: scaledFontSize(15) }]}>{t('music.retry')}</Text>
-                </View>
-              </Pressable>
-              {!challenge.isMaxDifficulty && (
-                <Pressable
-                  style={styles.goHarderButton}
-                  onPress={challenge.goHarder}
-                  testID="go-harder-button"
-                >
-                  <Text style={[styles.goHarderButtonText, { fontSize: scaledFontSize(15) }]}>
-                    <MaterialIcons name="trending-up" size={scaledFontSize(16)} color="#FFFFFF" /> {challenge.difficultyLevel > 1 ? t('music.goHarderLevel', { level: challenge.difficultyLevel + 1 }) : t('music.goHarder')}
-                  </Text>
-                </Pressable>
-              )}
-              <Pressable
-                style={styles.continueButton}
-                onPress={onContinue}
-                testID="continue-story-button"
-              >
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Text style={[styles.continueButtonText, { fontSize: scaledFontSize(15) }]}>{continueLabel ?? t('music.continueStory')}</Text>
-                  <Ionicons name="chevron-forward" size={scaledFontSize(14)} color="#FFFFFF" style={{ marginLeft: 4 }} />
-                </View>
-              </Pressable>
-            </>
-          ) : !uiHidden ? (
+          {!uiHidden ? (
             <>
               <Pressable
                 style={[
@@ -700,10 +591,20 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
                 </View>
               </Pressable>
 
-
-
-              {challenge.lastInputCorrect === false && (
-                <Text style={[styles.feedbackWrong, { fontSize: scaledFontSize(15) }]}>{t('music.tryAgain')}</Text>
+              {/* Once the song has been played through the story can be carried
+                  on, but the sheet stays playable -- it clears itself back to
+                  the first note so it can simply be played again. */}
+              {challenge.hasCompleted && (
+                <Pressable
+                  style={styles.continueButton}
+                  onPress={onContinue}
+                  testID="continue-story-button"
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Text style={[styles.continueButtonText, { fontSize: scaledFontSize(15) }]}>{continueLabel ?? t('music.continueStory')}</Text>
+                    <Ionicons name="chevron-forward" size={scaledFontSize(14)} color="#FFFFFF" style={{ marginLeft: 4 }} />
+                  </View>
+                </Pressable>
               )}
 
               {allowSkip && (
@@ -717,11 +618,6 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
             </>
           ) : null}
         </View>
-        {isPlayingSong && (
-          <View style={styles.listeningOverlay}>
-            <Text style={[styles.blowHint, { fontSize: scaledFontSize(12) }]}>{t('music.listeningToMelody')}</Text>
-          </View>
-        )}
       </View>
 
         </View>
@@ -735,8 +631,7 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
         )}
         <View style={styles.instrumentBody}>
           <View style={styles.instrumentTube} testID="instrument-tube">
-            {rotateButton}
-            <View style={styles.noteButtonsRow}>
+              <View style={styles.noteButtonsRow}>
               {noteLayout.map((item) => renderNoteButton(item, scaledButtonSize(60), scaledFontSize(22)))}
             </View>
           </View>
@@ -754,7 +649,7 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
         return (
           <View style={styles.sequenceContainer} testID="sequence-container">
             <Animated.Text
-              style={[styles.sequenceProgress, { fontSize: scaledFontSize(12) }, instrumentRotationStyle, (isPlayingSong || isFinished) && { opacity: 0 }]}
+              style={[styles.sequenceProgress, { fontSize: scaledFontSize(12) }, instrumentRotationStyle, isPlayingSong && { opacity: 0 }]}
               testID="sequence-progress"
             >
               {Math.min(challenge.currentNoteIndex, displaySeq.length)}/{displaySeq.length}
@@ -768,41 +663,7 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
 
         {/* Bottom row: controls change based on state */}
         <View style={[styles.bottomRow, isPlayingSong && { opacity: 0 }]}>
-          {isFinished ? (
-            <>
-              <Pressable
-                style={styles.retryButton}
-                onPress={challenge.retry}
-                testID="retry-button"
-              >
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Ionicons name="refresh-outline" size={scaledFontSize(14)} color="#FFFFFF" style={{ marginRight: 4 }} />
-                  <Text style={[styles.retryButtonText, { fontSize: scaledFontSize(15) }]}>{t('music.retry')}</Text>
-                </View>
-              </Pressable>
-              {!challenge.isMaxDifficulty && (
-                <Pressable
-                  style={styles.goHarderButton}
-                  onPress={challenge.goHarder}
-                  testID="go-harder-button"
-                >
-                  <Text style={[styles.goHarderButtonText, { fontSize: scaledFontSize(15) }]}>
-                    <MaterialIcons name="trending-up" size={scaledFontSize(16)} color="#FFFFFF" /> {challenge.difficultyLevel > 1 ? t('music.goHarderLevel', { level: challenge.difficultyLevel + 1 }) : t('music.goHarder')}
-                  </Text>
-                </Pressable>
-              )}
-              <Pressable
-                style={styles.continueButton}
-                onPress={onContinue}
-                testID="continue-story-button"
-              >
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Text style={[styles.continueButtonText, { fontSize: scaledFontSize(15) }]}>{continueLabel ?? t('music.continueStory')}</Text>
-                  <Ionicons name="chevron-forward" size={scaledFontSize(14)} color="#FFFFFF" style={{ marginLeft: 4 }} />
-                </View>
-              </Pressable>
-            </>
-          ) : !uiHidden ? (
+          {!uiHidden ? (
             <>
               <Pressable
                 style={[
@@ -820,10 +681,20 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
                 </View>
               </Pressable>
 
-
-
-              {challenge.lastInputCorrect === false && (
-                <Text style={[styles.feedbackWrong, { fontSize: scaledFontSize(15) }]}>{t('music.tryAgain')}</Text>
+              {/* Once the song has been played through the story can be carried
+                  on, but the sheet stays playable -- it clears itself back to
+                  the first note so it can simply be played again. */}
+              {challenge.hasCompleted && (
+                <Pressable
+                  style={styles.continueButton}
+                  onPress={onContinue}
+                  testID="continue-story-button"
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Text style={[styles.continueButtonText, { fontSize: scaledFontSize(15) }]}>{continueLabel ?? t('music.continueStory')}</Text>
+                    <Ionicons name="chevron-forward" size={scaledFontSize(14)} color="#FFFFFF" style={{ marginLeft: 4 }} />
+                  </View>
+                </Pressable>
               )}
 
               {allowSkip && (
@@ -837,11 +708,6 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
             </>
           ) : null}
         </View>
-        {isPlayingSong && (
-          <View style={styles.listeningOverlay}>
-            <Text style={[styles.blowHint, { fontSize: scaledFontSize(12) }]}>{t('music.listeningToMelody')}</Text>
-          </View>
-        )}
       </View>
 
         </>
@@ -926,15 +792,6 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
     gap: 10,
   },
-  listeningOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   promptText: {
     color: '#FFFFFF',
     fontSize: 16,
@@ -943,19 +800,6 @@ const styles = StyleSheet.create({
   },
 
   // Rotate button -absolutely positioned at far left inside tube
-  rotateButtonWrapper: {
-    position: 'absolute',
-    left: 46,
-    top: '10%',
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 10,
-  },
-  rotateButtonWrapperOnArtwork: {
-    left: 8,
-    top: 0,
-  },
   sectionCompact: {
     flex: 0,
     paddingVertical: 0,
@@ -985,24 +829,6 @@ const styles = StyleSheet.create({
   },
   holeButton: {
     position: 'absolute',
-  },
-  rotateButtonCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-  },
-  rotateButtonActive: {
-    backgroundColor: 'rgba(129, 199, 132, 0.4)',
-    borderColor: 'rgba(129, 199, 132, 0.6)',
-  },
-  rotateButtonText: {
-    fontSize: 20,
-    color: '#FFFFFF',
   },
 
   // Instrument body -horizontal across the screen
@@ -1182,61 +1008,8 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   // Celebration (shown above instrument on completion -landscape, no rotation)
-  celebrationContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    width: '100%',
-    overflow: 'visible',
-  },
   // Celebration when rotated -stays in the top section so it doesn't overlap note buttons
-  celebrationContainerRotated: {
-    maxWidth: 260,
-    paddingVertical: 8,
-  },
-  celebrationSubtext: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '500',
-    opacity: 0.8,
-  },
   // Retry + Continue buttons
-  retryButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 24,
-    paddingHorizontal: 24,
-    paddingVertical: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  retryButtonText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  goHarderButton: {
-    backgroundColor: 'rgba(220, 80, 20, 0.85)',
-    borderRadius: 24,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  goHarderButtonText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '700',
-  },
   continueButton: {
     backgroundColor: 'rgba(80, 60, 160, 0.9)',
     borderRadius: 24,

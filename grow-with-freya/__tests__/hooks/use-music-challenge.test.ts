@@ -57,6 +57,7 @@ import { renderHook, act } from '@testing-library/react-native';
 import { useMusicChallenge, type MusicChallengeHookResult } from '@/hooks/use-music-challenge';
 import type { MusicChallenge } from '@/types/story';
 import { validateMusicChallengeAssets, getPracticeSong } from '@/services/music-asset-registry';
+import { cueMaskedAtMs } from '@/services/sheet-transition';
 
 const createTestConfig = (overrides: Partial<MusicChallenge> = {}): MusicChallenge => ({
   enabled: true,
@@ -142,14 +143,53 @@ describe('useMusicChallenge', () => {
     playAndHold(result, 'D');
     playAndHold(result, 'E');
 
-    // After completing the sequence, the hook plays back the notes before
-    // transitioning to 'completed'. Advance timers to skip the playback.
+    // After completing the sequence the hook plays the notes back, tells the
+    // story it is done, and then clears the song so it can be played again.
     expect(result.current.state).toBe('playing_success_song');
     act(() => jest.runAllTimers());
 
-    expect(result.current.isComplete).toBe(true);
-    expect(result.current.state).toBe('completed');
+    expect(result.current.hasCompleted).toBe(true);
     expect(onComplete).toHaveBeenCalledTimes(1);
+    expect(result.current.state).toBe('awaiting_input');
+    expect(result.current.currentNoteIndex).toBe(0);
+  });
+
+  it('offers the song again once it has been played through', () => {
+    const { result } = renderHook(() => useMusicChallenge(createTestConfig()));
+    act(() => result.current.start());
+    const cue = result.current.replayCue;
+    playAndHold(result, 'C');
+    playAndHold(result, 'D');
+    playAndHold(result, 'E');
+    act(() => jest.runAllTimers());
+
+    // The sheet is asked for a cue, and the score is back at the first note
+    // behind it -- so the child can simply play it again.
+    expect(result.current.replayCue).toBe(cue + 1);
+    expect(result.current.currentNoteIndex).toBe(0);
+    expect(result.current.hasCompleted).toBe(true);
+  });
+
+  it('waits for the sheet to hide the notes before resetting them', () => {
+    const { result } = renderHook(() => useMusicChallenge(createTestConfig()));
+    act(() => result.current.start());
+    playAndHold(result, 'C');
+    playAndHold(result, 'D');
+
+    act(() => { result.current.playNote('A'); });        // wrong
+    expect(result.current.wrongCue).toBe(1);
+    // Still showing where the child got to: resetting the score now would be
+    // the snap the cue exists to cover.
+    expect(result.current.currentNoteIndex).toBe(2);
+
+    act(() => { jest.advanceTimersByTime(cueMaskedAtMs('wrong') - 20); });
+    expect(result.current.currentNoteIndex).toBe(2);
+    expect(result.current.lastInputCorrect).toBe(false);
+
+    act(() => { jest.advanceTimersByTime(40); });
+    expect(result.current.currentNoteIndex).toBe(0);
+    expect(result.current.lastInputCorrect).toBeNull();
+    expect(result.current.state).toBe('awaiting_input');
   });
 
   describe('holding a note', () => {
@@ -237,12 +277,13 @@ describe('useMusicChallenge', () => {
       expect(result.current.holdingIndex).toBeNull();
     });
 
-    it('forgets a hold still waiting when the challenge is retried', () => {
+    it('forgets a hold still waiting when a wrong note resets the song', () => {
       const { result } = renderHook(() => useMusicChallenge(createTestConfig()));
       act(() => result.current.start());
 
       act(() => { result.current.playNote('C'); });
-      act(() => result.current.retry());
+      act(() => { result.current.playNote('A'); });   // wrong
+      act(() => { jest.advanceTimersByTime(cueMaskedAtMs('wrong') + 1); });
       act(() => { jest.advanceTimersByTime(result.current.holdPlan.targets[0].holdMs * 2); });
 
       expect(result.current.currentNoteIndex).toBe(0);
@@ -268,7 +309,8 @@ describe('useMusicChallenge', () => {
     playAndHold(result, 'C');
     playAndHold(result, 'D');
 
-    act(() => result.current.retry());
+    act(() => { result.current.playNote('A'); });   // wrong
+    act(() => { jest.advanceTimersByTime(cueMaskedAtMs('wrong') + 1); });
 
     expect(result.current.state).toBe('awaiting_input');
     expect(result.current.currentNoteIndex).toBe(0);
@@ -447,7 +489,7 @@ describe('useMusicChallenge completion melody', () => {
 
     act(() => { jest.runAllTimers(); });
     expect(seen.slice(-1)).toEqual(['E:end']);
-    expect(result.current.state).toBe('completed');
+    expect(result.current.hasCompleted).toBe(true);
     expect(result.current.playbackPosition).toBeNull();
   });
 
@@ -489,7 +531,6 @@ describe('useMusicChallenge completion melody', () => {
     mockPlay.mockClear();
     playAndHold(result, 'C');
     act(() => result.current.previewNote('C'));
-    act(() => result.current.retry());
 
     expect(mockPlay).not.toHaveBeenCalled();
     expect(result.current.state).toBe('playing_success_song');

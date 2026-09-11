@@ -37,17 +37,17 @@ const baseChallenge = {
   previewNote: jest.fn(),
   stopNote: jest.fn(),
   setBreathActive: jest.fn(),
-  retry: jest.fn(),
   skip: jest.fn(),
   cleanup: jest.fn(),
-  goHarder: jest.fn(),
-  difficultyLevel: 1,
   currentSequence: [],
   resolvedBpm: 120,
   playbackPosition: null,
   noteEvents: { subscribe: jest.fn(() => jest.fn()), emit: jest.fn() },
   holdPlan: buildHoldPlan(['C', 'D'], 120, [1, 2]),
   holdingIndex: null,
+  hasCompleted: false,
+  wrongCue: 0,
+  replayCue: 0,
 } as any;
 
 const noteLayout = [
@@ -515,6 +515,32 @@ describe('MusicChallengeUI music sheet', () => {
       },
     });
     expect(sheetHolding(view)).toBe(true);
+  });
+
+  it('offers the story on once the song has been played, and keeps it playable', () => {
+    // Retry and Increase Difficulty are gone: the sheet clears itself back to
+    // the first note, so playing it again needs no button at all.
+    const view = renderWithArtwork({
+      challenge: { ...baseChallenge, hasCompleted: true },
+    });
+    expect(view.UNSAFE_queryAllByProps({ testID: 'continue-story-button' }).length).toBeGreaterThan(0);
+    expect(view.UNSAFE_queryAllByProps({ testID: 'retry-button' }).length).toBe(0);
+    expect(view.UNSAFE_queryAllByProps({ testID: 'go-harder-button' }).length).toBe(0);
+    // Still playable -- the mode toggle has not been replaced by a wall of
+    // end-of-song buttons.
+    expect(view.UNSAFE_queryAllByProps({ testID: 'play-mode-toggle' }).length).toBeGreaterThan(0);
+  });
+
+  it('leaves the story button off until the song has been played through', () => {
+    const view = renderWithArtwork();
+    expect(view.UNSAFE_queryAllByProps({ testID: 'continue-story-button' }).length).toBe(0);
+  });
+
+  it('hands the sheet both cues so it can answer a wrong note and a replay', () => {
+    const view = renderWithArtwork({
+      challenge: { ...baseChallenge, wrongCue: 3, replayCue: 2 },
+    });
+    expect(view.UNSAFE_queryAllByProps({ wrongCue: 3, replayCue: 2 }).length).toBeGreaterThan(0);
   });
 
   it('keeps the sheet out of the way of touches meant for the instrument', () => {

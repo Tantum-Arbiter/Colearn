@@ -19,6 +19,7 @@ import {
   InstrumentDefinition,
 } from '@/services/music-asset-registry';
 import { buildMelodyTimeline } from '@/services/melody-scheduler';
+import { cueMaskedAtMs, type SheetCue } from '@/services/sheet-transition';
 import { buildHoldPlan, type HoldPlan } from '@/services/hold-plan';
 import { createNoteEventBus, type NoteEventBus, type NoteEventSource } from '@/services/note-event-bus';
 import type { MusicChallenge } from '@/types/story';
@@ -54,11 +55,7 @@ export interface MusicChallengeHookResult {
   isComplete: boolean;
   hasError: boolean;
   missingAssets: string[];
-  /** Current difficulty level (1 = original story sequence, 2–5 = harder) */
-  difficultyLevel: number;
-  /** Whether the maximum difficulty (level 5) has been reached */
-  isMaxDifficulty: boolean;
-  /** The currently active required sequence (may differ from config when difficulty > 1) */
+  /** The currently active required sequence */
   currentSequence: string[];
   /** The resolved sequence from config (requiredSequence or songId lookup), available before start() */
   resolvedSequence: string[];
@@ -73,6 +70,19 @@ export interface MusicChallengeHookResult {
    * note's hold, so the sheet can never run ahead of the score.
    */
   holdingIndex: number | null;
+  /**
+   * Whether the song has been played through at least once. The challenge
+   * returns to `awaiting_input` afterwards so it can be played again, so this
+   * is what says the story may be carried on -- `isComplete` goes back to false.
+   */
+  hasCompleted: boolean;
+  /**
+   * Counts up whenever the sheet should play a cue: a wrong note, or a finished
+   * song clearing itself for another go. The sheet animates on the change and
+   * the score is reset behind it.
+   */
+  wrongCue: number;
+  replayCue: number;
   /** Which sequence entry the completion melody is sounding right now, null when it is not playing */
   playbackPosition: PlaybackPosition | null;
   /** Every note the instrument sounds (pressed, previewed or in the completion melody) */
@@ -84,86 +94,10 @@ export interface MusicChallengeHookResult {
   previewNote: (note: string) => void;
   stopNote: (note: string) => void;
   setBreathActive: (active: boolean) => void;
-  retry: () => void;
   skip: () => void;
   cleanup: () => void;
-  /** Increase difficulty: generates a harder chord-based sequence and restarts */
-  goHarder: () => void;
 }
 
-/**
- * Generate a harder sequence mixing single notes and chords.
- * Builds musical phrases: single-note runs leading into chord resolutions.
- * Uses thirds and triads so chords sound natural.
- *
- * Level 2: 4 entries -two singles ascending, then a 2-note chord, resolve single
- *          e.g. C → D → C+E → C
- * Level 3: 5 entries -single, single, 2-chord, single, 3-chord resolve
- *          e.g. C → E → C+E → D → D+F+A
- * Level 4: 6 entries -single, 2-chord, single, 2-chord, single, 3-chord
- * Level 5: 7 entries -ascending singles + chords interwoven, triad finale
- */
-function generateHarderSequence(
-  availableNotes: string[],
-  level: number,
-): string[] {
-  const n = availableNotes.length;
-  if (n < 2) return availableNotes;
-
-  // Build a chord from a root index using musical intervals (thirds)
-  const buildChord = (rootIdx: number, size: number): string => {
-    const notes = [availableNotes[rootIdx % n]];
-    if (size >= 2) notes.push(availableNotes[(rootIdx + 2) % n]);
-    if (size >= 3) notes.push(availableNotes[(rootIdx + 4) % n]);
-    const unique = [...new Set(notes)];
-    return unique.length > 1 ? unique.join('+') : unique[0];
-  };
-
-  // S = single note, C2 = 2-note chord, C3 = 3-note chord
-  // Each level defines a phrase pattern and which root index to use
-  type Entry = { type: 'S' | 'C2' | 'C3'; root: number };
-
-  const patterns: Record<number, Entry[]> = {
-    2: [
-      { type: 'S',  root: 0 }, // C
-      { type: 'S',  root: 1 }, // D
-      { type: 'C2', root: 0 }, // C+E (resolve chord)
-      { type: 'S',  root: 0 }, // C (resolve back)
-    ],
-    3: [
-      { type: 'S',  root: 0 }, // C
-      { type: 'S',  root: 2 }, // E
-      { type: 'C2', root: 0 }, // C+E
-      { type: 'S',  root: 1 }, // D
-      { type: 'C3', root: 1 }, // D+F+A (triad resolve)
-    ],
-    4: [
-      { type: 'S',  root: 0 }, // C
-      { type: 'C2', root: 0 }, // C+E
-      { type: 'S',  root: 1 }, // D
-      { type: 'C2', root: 1 }, // D+F
-      { type: 'S',  root: 2 }, // E
-      { type: 'C3', root: 0 }, // C+E+G (triad finale)
-    ],
-    5: [
-      { type: 'S',  root: 0 }, // C
-      { type: 'S',  root: 1 }, // D
-      { type: 'C2', root: 0 }, // C+E
-      { type: 'S',  root: 2 }, // E
-      { type: 'C2', root: 1 }, // D+F
-      { type: 'C3', root: 0 }, // C+E+G
-      { type: 'C3', root: 1 }, // D+F+A (grand finale)
-    ],
-  };
-
-  const pattern = patterns[Math.min(level, 5)] ?? patterns[5];
-
-  return pattern.map(entry => {
-    if (entry.type === 'S') return availableNotes[entry.root % n];
-    const size = entry.type === 'C2' ? 2 : Math.min(3, n);
-    return buildChord(entry.root, size);
-  });
-}
 
 /** Optional callbacks for switching the iOS audio session between
  *  playAndRecord (mic active, quiet speaker) and playback-only (full volume).
@@ -225,8 +159,11 @@ export function useMusicChallenge(
   const [failedAttempts, setFailedAttempts] = useState(0);
   const [sequenceResult, setSequenceResult] = useState<SequenceMatchResult | null>(null);
   const [missingAssets, setMissingAssets] = useState<string[]>([]);
-  const [difficultyLevel, setDifficultyLevel] = useState(1);
   const [currentSequence, setCurrentSequence] = useState<string[]>([]);
+  const [hasCompleted, setHasCompleted] = useState(false);
+  const [wrongCue, setWrongCue] = useState(0);
+  const [replayCue, setReplayCue] = useState(0);
+  const cueTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [playbackPosition, setPlaybackPosition] = useState<PlaybackPosition | null>(null);
 
   const noteEventsRef = useRef<NoteEventBus | null>(null);
@@ -426,7 +363,6 @@ export function useMusicChallenge(
       if (stateRef.current !== 'idle') {
         updateState('idle');
       }
-      setDifficultyLevel(1);
       setCurrentSequence([]);
     }
   }, [config]);
@@ -449,10 +385,10 @@ export function useMusicChallenge(
       // so playNote() works -there's just no sequence matcher to check against.
       cancelMelody();
       setCurrentSequence(seq);
-      setDifficultyLevel(1);
       matcherRef.current = seq.length > 0 ? new SequenceMatcher(seq) : null;
       activeNotesRef.current.clear();
       clearAllPendingCredits();
+      clearCueTimer();
       updateState('awaiting_input');
       setLastInputCorrect(null);
       setSequenceResult(null);
@@ -531,7 +467,7 @@ export function useMusicChallenge(
   // Check if the current sequence has any chord entries
   const hasChords = currentSequence.some(e => isChordEntry(e));
 
-  // How long each note of the sequence on screen is held. A harder generated
+  // How long each note of the sequence on screen is held. A generated
   // sequence has no rhythm of its own, so `buildHoldPlan` falls back to a beat
   // an entry -- which is what the difficulty levels sound like anyway.
   const activeSequenceForHold = currentSequence.length > 0 ? currentSequence : resolvedSequence;
@@ -609,17 +545,46 @@ export function useMusicChallenge(
     });
   }, [instrument, resolvedBpm, resolvedRhythm, cancelMelody, fadeAndRelease, createNotePlayer, noteEvents]);
 
+  /**
+   * Put the song back to its first note so it can be played again.
+   *
+   * Scheduled behind a sheet cue rather than run straight away: the sheet takes
+   * `cueMaskedAtMs` to hide the notes, and resetting before then would show the
+   * child the score jumping back to the start, which is the thing the cue is
+   * there to cover.
+   */
+  const resetBehindCue = useCallback((cue: SheetCue) => {
+    if (cueTimerRef.current) clearTimeout(cueTimerRef.current);
+    cueTimerRef.current = setTimeout(() => {
+      cueTimerRef.current = null;
+      matcherRef.current?.reset();
+      activeNotesRef.current.clear();
+      clearAllPendingCredits();
+      setSequenceResult(null);
+      setLastInputCorrect(null);
+      updateState('awaiting_input');
+    }, cueMaskedAtMs(cue));
+  }, [updateState]);
+
+  /**
+   * Offer the finished song again: the sheet fades the notes away and brings
+   * them back at the first note. There is no button for this -- playing it
+   * through is the invitation to play it through again.
+   */
+  const offerReplay = useCallback(() => {
+    setReplayCue(prev => prev + 1);
+    resetBehindCue('replay');
+  }, [resetBehindCue]);
+
   /** Handle sequence completion -plays the full song back note-by-note */
   const handleSequenceComplete = useCallback(() => {
     if (stateRef.current !== 'awaiting_input') return;
     activeNotesRef.current.clear();
     clearAllPendingCredits();
     updateState('sequence_complete');
-    log.debug(`Sequence completed! (difficulty ${difficultyLevel})`);
+    log.debug('Sequence completed!');
 
-    // Always play the full original song on completion (resolvedSequence),
-    // not just the current difficulty sequence. This gives the child the
-    // full extended celebration melody while "Amazing!" is displayed.
+    // Always play the full original song on completion (resolvedSequence).
     const successSequence = resolvedSequence.length > 0 ? resolvedSequence : currentSequence;
 
     if (instrument && successSequence.length > 0) {
@@ -635,8 +600,9 @@ export function useMusicChallenge(
             isRecorderPausedRef.current = false;
             audioSessionRef.current?.resumeRecording();
           }
-          updateState('completed');
+          setHasCompleted(true);
           onComplete?.();
+          offerReplay();
         });
       };
 
@@ -650,10 +616,11 @@ export function useMusicChallenge(
         startPlayback();
       }
     } else {
-      updateState('completed');
+      setHasCompleted(true);
       onComplete?.();
+      offerReplay();
     }
-  }, [onComplete, difficultyLevel, instrument, currentSequence, resolvedSequence, playMelody, updateState]);
+  }, [onComplete, instrument, currentSequence, resolvedSequence, playMelody, updateState, offerReplay]);
 
   /**
    * Process a note (or chord) against the sequence matcher.
@@ -672,16 +639,24 @@ export function useMusicChallenge(
       }
     } else {
       const result = matcherRef.current.processNote(note);
-      setSequenceResult(result);
       setLastInputCorrect(result.lastInputCorrect);
       if (!result.lastInputCorrect) {
         setFailedAttempts(prev => prev + 1);
+        // The matcher has already gone back to the first note, but the sheet
+        // deliberately is not told yet: it keeps showing where the child got to
+        // while the paper washes red, and `resetBehindCue` publishes the reset
+        // once the notes are hidden. Pushing the result through here instead
+        // snapped the score to the start before the child saw anything go red.
+        setWrongCue(prev => prev + 1);
+        resetBehindCue('wrong');
+        return;
       }
+      setSequenceResult(result);
       if (result.isComplete) {
         handleSequenceComplete();
       }
     }
-  }, [currentSequence, hasChords, handleSequenceComplete]);
+  }, [currentSequence, hasChords, handleSequenceComplete, resetBehindCue]);
 
   // Holding the note is part of playing it right, so the credit waits out the
   // hold instead of landing on the press. Letting go early simply cancels it --
@@ -708,6 +683,14 @@ export function useMusicChallenge(
     pendingCreditRef.current.forEach(timer => clearTimeout(timer));
     pendingCreditRef.current.clear();
     setHoldingIndex(null);
+  }, []);
+
+  /** Drop a cue's reset if the challenge is torn down or restarted under it. */
+  const clearCueTimer = useCallback(() => {
+    if (cueTimerRef.current) {
+      clearTimeout(cueTimerRef.current);
+      cueTimerRef.current = null;
+    }
   }, []);
 
   const creditAfterHold = useCallback((note: string) => {
@@ -961,52 +944,22 @@ export function useMusicChallenge(
     }
   }, [isBreathActive, config, fadeOutNote, clearAllBlowSustainTimers, maybeResumeRecording]);
 
-  const retry = useCallback(() => {
-    if (stateRef.current === 'playing_success_song') return;
-    matcherRef.current?.reset();
-    activeNotesRef.current.clear();
-    clearAllPendingCredits();
-    setSequenceResult(null);
-    setLastInputCorrect(null);
-    updateState('awaiting_input');
-    log.debug('Music challenge retry');
-  }, [updateState]);
 
   const skip = useCallback(() => {
     if (config?.allowSkip) {
       cancelMelody();
+      clearCueTimer();
       updateState('completed');
       onComplete?.();
       log.debug('Music challenge skipped');
     }
   }, [config, onComplete, cancelMelody, updateState]);
 
-  const MAX_DIFFICULTY = 5;
-
-  /** Go Harder: generate a more difficult chord sequence and restart */
-  const goHarder = useCallback(() => {
-    if (!instrument || !config) return;
-    if (stateRef.current === 'playing_success_song') return;
-    if (difficultyLevel >= MAX_DIFFICULTY) return;
-    const nextLevel = difficultyLevel + 1;
-    const availableNotes = Object.keys(instrument.notes);
-    const harderSeq = generateHarderSequence(availableNotes, nextLevel);
-    setDifficultyLevel(nextLevel);
-    setCurrentSequence(harderSeq);
-    matcherRef.current = new SequenceMatcher(harderSeq);
-    activeNotesRef.current.clear();
-    clearAllPendingCredits();
-    updateState('awaiting_input');
-    setLastInputCorrect(null);
-    setSequenceResult(null);
-    setFailedAttempts(0);
-    log.debug(`Go harder! Level ${nextLevel}, sequence: ${harderSeq.join(' ')}`);
-  }, [instrument, config, difficultyLevel, updateState]);
-
   const cleanup = useCallback(() => {
     log.debug('cleanup() called');
     try {
       cancelMelody();
+      clearCueTimer();
       releaseAllNotePlayers();
       stopAmbientSound();
       clearAllBlowSustainTimers();
@@ -1014,8 +967,8 @@ export function useMusicChallenge(
       activeNotesRef.current.clear();
       clearAllPendingCredits();
       updateState('idle');
-      setDifficultyLevel(1);
       setCurrentSequence([]);
+      setHasCompleted(false);
       log.debug('cleanup() completed');
     } catch (err) {
       log.error('cleanup() error:', err);
@@ -1082,13 +1035,14 @@ export function useMusicChallenge(
     isComplete: state === 'completed',
     hasError: state === 'error',
     missingAssets,
-    difficultyLevel,
-    isMaxDifficulty: difficultyLevel >= MAX_DIFFICULTY,
     currentSequence,
     resolvedSequence,
     resolvedBpm,
     holdPlan,
     holdingIndex,
+    hasCompleted,
+    wrongCue,
+    replayCue,
     playbackPosition,
     noteEvents,
 
@@ -1097,9 +1051,7 @@ export function useMusicChallenge(
     previewNote,
     stopNote,
     setBreathActive: setIsBreathActive,
-    retry,
     skip,
     cleanup,
-    goHarder,
   };
 }
