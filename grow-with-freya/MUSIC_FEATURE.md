@@ -61,7 +61,8 @@ story-book-reader.tsx (integration layer -detects music pages, gates navigation)
 | `services/music-asset-registry.ts` | Local asset registry -maps instrument/song IDs to bundled files, body artwork and hole positions |
 | `services/instrument-surface-layout.ts` | Pure layout -fits the body artwork into the measured area (leaving room for the bell to swell), pins one note button per hole, and turns the instrument end for end for blow mode |
 | `services/staff-notation.ts` | Pure notation geometry -staff line fractions measured off the sheet artwork, where each note sits, ledger lines, stem direction, shadow length, slot offsets, how far the row travels and where it sits (`staffHoldTravel` / `staffRowShift`), and where the sheet goes in each pose |
-| `services/hold-plan.ts` | Pure -turns a song's `rhythm` and optional `hold` into a millisecond hold target per note, clamped to what blow mode can sustain; `holdRun` says how the sheet moves for a hold starting or let go |
+| `services/sheet-transition.ts` | Pure -timings for the wrong-note and replay cues, shared by the sheet's animation and the hook's reset so the score only changes while the notes are hidden |
+| `services/hold-plan.ts` | Pure -turns a song's `rhythm` and optional `hold` into a hold target and a slot length in ms per note, the hold clamped to what blow mode can sustain; `holdRun` says how the sheet moves for a hold starting or let go |
 | `components/music/music-staff-strip.tsx` | The song written on a staff -one coloured note per entry, in its button's colour, scrolling under a playhead |
 | `services/melody-scheduler.ts` | Pure timeline for the completion melody -one slot per entry from the song's `rhythm` and `bpm`, with an articulation gap |
 | `services/note-event-bus.ts` | Start/end events for every note the instrument sounds; the bell animation subscribes to it |
@@ -564,7 +565,21 @@ Everything positional is measured off the artwork and lives in `services/staff-n
   hold, so the shadow is eaten by the left edge and what is still to the right is what is left to
   hold; the target line reaching the edge *is* the note completing. Let go early and it rewinds at
   full in `RELEASE_SNAP_MS` (180 ms, `holdRun`): a note counts only if it is held all the way
-  through in one go, so the sheet starts again too. It used to rewind at half the speed it ran, which
+  through in one go, so the sheet starts again too. **The release carries on from wherever the move
+  actually reached, and `holdRun` deliberately will not say where that is.** The move runs on the UI
+  thread, and reading an animating shared value back on the JS thread returns a stale copy; assigning
+  it cancelled the move and snapped the score to a place it had been several frames earlier, which
+  was a visible jolt -- worst on the long notes, where most progress had accumulated. `withTiming`
+  starts from the live UI value on its own, so the fix is simply not to touch it.
+- **Only a new note starts the move over.** Pressing again part-way through a snap-back carries on
+  from wherever the score is, rather than rewinding to nothing first -- rewinding teleported it by
+  whatever the snap had not yet undone, measured at 50px on device with the snap stretched to make
+  the window reachable, and that is the stutter felt when tapping the same note repeatedly. A press
+  still takes the whole hold, the same span the credit waits, so it arrives at the end of the note's
+  travel exactly as the note counts; it only shows the score a little further through the note than
+  the credit is, by however much of the snap was left, and that decays as the snap finishes. A note
+  the score has just moved on to *must* start over, because its resting place has already shifted
+  along by a whole travel. It used to rewind at half the speed it ran, which
   meant up to twice the hold spent sliding backwards with nothing held -- that read as the sheet
   undoing itself rather than as "hold it again". Freezing the shadow where it got to would be
   kinder but would lie, since the credit restarts from zero on the next press. There is no clock:
@@ -572,12 +587,26 @@ Everything positional is measured off the artwork and lives in `services/staff-n
   The credit waits with it: `creditAfterHold` in `use-music-challenge` defers
   `processNoteForSequence` by the note's `holdMs` and drops it if the key comes up first. A **wrong**
   note is still credited instantly, so the feedback never lags behind the mistake, and every reset
-  (`start`, `retry`, `skip`, `goHarder`, `cleanup`) clears the credits still waiting.
+  (`start`, `skip`, `cleanup`, and the reset behind either sheet cue) clears the credits still
+  waiting.
 - **The sheet runs off the credit's clock, not the keys.** `useMusicChallenge` reports
   `holdingIndex` -- the entry whose credit is counting down -- and the sheet creeps only while that
   is the note in focus. Key state is not enough: a finger left down across a note boundary credits
   the note it was pressed for and nothing more, so driving the sheet off the keys ran it ahead of
   the score for the rest of the song.
+- **The whole position lives on shared values, and that is the point.** Resting place and move used
+  to be split -- the resting place a plain `left` from React, the move an animated transform -- and
+  the two reach the UI thread by independent routes with no ordering between them. A frame could
+  therefore be drawn pairing *this* note's resting place with the *last* note's finished move, which
+  flashed the score a whole note's travel sideways and back on every completed note: measured at
+  221 px on a two-beat note and 130 px on a one-beat, one frame, immediately undone. No amount of
+  reordering the JS writes fixes that, because the race is between two transports. `rowRest`,
+  `rowTravel` and `progress` are now written together in a single `runOnUI` tick, so there is no
+  half-applied state to draw, and rewinding for a new note is a plain assignment rather than a
+  one-millisecond animation -- as an animation it did not land until the next frame, which was the
+  flash all over again.
+  The cost is that a jest render cannot read where the row is parked (`useAnimatedStyle` returns
+  `{}`), so that is asserted against the pure layer instead: `staffRowShift` and `staffFocusIndex`.
 - **The row cannot drift.** Its position is computed, never accumulated: `staffRowShift(slots,
   focus, held, playheadX)` is `playheadX - slots[focus] - travel * held`, so a finished hold and the
   next note at rest give the same number -- the handover has no step in it (`staffNoteSlots` carries
@@ -588,8 +617,17 @@ Everything positional is measured off the artwork and lives in `services/staff-n
   An earlier accumulating version drifted a slot per long note.
 - **Past the last note** there is nothing left to play, so the score stops on the closing note --
   dimmed, ring off -- rather than scrolling off and leaving a blank staff behind the celebration.
+- **The light at the cut**: a glow standing where the note being held slides out of view, brightening
+  with the hold so how far through a note the child is reads as something lighting up and not only as
+  the score creeping. It sits **on that note's own row and in that note's colour** -- a pale
+  full-height line across the staff was both invisible against cream paper and silent about which
+  note it belonged to. The halo is anchored at the cut and spreads *right*, over the highlight being
+  eaten; centred on the cut it spilled back over the treble clef and bare paper, which is not what is
+  being consumed. Measured at the cut on the note's row: saturation 18 at rest against 120 mid-hold.
 - **Landing bounce**: the note the child is on springs once whenever the sheet advances onto it, so
-  a landing reads as one. Off under reduce-motion.
+  a landing reads as one. The reward melody bounces harder and looser (1.5x against 1.22x, damping 6
+  against 9) so it rings rather than lands -- nothing is being asked of the child there. Off under
+  reduce-motion.
 - **Letters**: each note's name is written under the staff in the note's own colour, every one on
   the `STAFF_LETTER_CENTRE` baseline rather than under its own head, so the row of letters reads
   straight however high the melody climbs. They sit between the bottom staff line and the paper's
@@ -599,7 +637,14 @@ Everything positional is measured off the artwork and lives in `services/staff-n
   cut just past the treble clef. Notes already played stay on the page at 40 % opacity; the one to
   play next carries a white ring, which follows the melody instead during the success song. The
   reward melody holds each note itself, so the sheet runs through the song with it and the shadows
-  are eaten one by one exactly as they are under the child's own fingers.
+  are eaten one by one exactly as they are under the child's own fingers. **Played back, the score
+  moves at the rate of the melody, not the rate of the hold**: `melody-scheduler` starts each note
+  one *slot* after the last, while a hold is only 0.85 of its slot (and capped at 2 s), so animating
+  the travel over the hold finished every note early and left the score still until the next one
+  sounded -- 100 ms on a one-beat note, 667 ms on the four-beat close, which read as the playback
+  stopping and starting rather than flowing. `HoldTarget.slotMs` carries the slot for exactly this,
+  rounded the way the scheduler rounds so the two stay locked; a test asserts they agree note for
+  note against `buildMelodyTimeline`.
 - **Placement** (`layoutStaffStrip`): the sheet fills the space the stage left above the instrument,
   its paper bottom resting `STAFF_SHEET_OVERLAP` px past the top of the artwork, centred, capped at
   55 % of the region height and never wider than the region. The prompt is written on the paper in
@@ -682,7 +727,7 @@ fresh one in after each press, so the first `play()` of a player never lands on 
 note loops its 3.2 s sample and fades over ~150 ms on release. On completion the hook builds a
 timeline with `buildMelodyTimeline` (song `rhythm` in beats × `bpm`, default one beat per entry,
 a 40–140 ms articulation gap) and fades each entry's players at the end of its slot, so notes never
-pile up. While the melody plays, presses, previews, retry and go-harder are ignored; cleanup,
+pile up. While the melody plays, presses and previews are ignored; cleanup,
 skip, config change and unmount cancel it. Every sounded note is published on
 `challenge.noteEvents` (`press` / `preview` / `melody`, `start` / `end`), which is what the bell
 swell and the playback highlight (`challenge.playbackPosition`) follow -so the animation tracks
@@ -696,7 +741,7 @@ simple -children should succeed with patience, not precision.
 
 **Chord support**: Sequence entries can be single notes (`"C"`) or chords using `+` notation (`"C+E"`,
 `"C+E+G"`). The `SequenceMatcher.processChord(activeNotes)` method validates that all required notes
-are held simultaneously. Chord entries are used by the "Go Harder" difficulty feature (see below).
+are held simultaneously. Chord entries come from a story that asks for them in `requiredSequence`.
 
 ### 7. One instrument at a time per page
 
@@ -711,9 +756,14 @@ The music challenge follows this state flow:
 
 ```
 idle → awaiting_input → playing_note → (awaiting_input | sequence_complete)
-                                        sequence_complete → playing_success_song → completed
-                                        completed → [Go Harder!] → awaiting_input (higher difficulty)
+                                        sequence_complete → playing_success_song
+                                        playing_success_song → (replay cue) → awaiting_input
 ```
+
+**There is no resting finished state.** Once the reward melody has played, the hook tells the story
+it is done (`onComplete`, and `hasCompleted` stays true so "Continue Story" appears) and then clears
+the song back to its first note so it can simply be played again. `completed` is now only reached by
+`skip`.
 
 | State | Description |
 |-|-|
@@ -722,25 +772,38 @@ idle → awaiting_input → playing_note → (awaiting_input | sequence_complete
 | `playing_note` | A note is being played (audio) |
 | `sequence_complete` | All notes played correctly |
 | `playing_success_song` | Success song is playing |
-| `completed` | Challenge done -page unlocked for progression. "Go Harder!" available. |
+| `completed` | Only reached by `skip`; the normal finish returns to `awaiting_input` |
 | `error` | Asset validation failed -challenge disabled |
 
-## "Go Harder" Difficulty Progression
+## What the sheet says without words
 
-After completing a music challenge, the child sees three options: **↻ Retry**, **🔥 Go Harder**, and
-**Continue Story →**.
+Two things are told with the sheet rather than with buttons or text. Both timings live in
+`services/sheet-transition.ts`, and both the animation and the hook's reset work from the same
+figures -- the score is only ever reset while the notes are hidden, because the whole point of each
+cue is to cover that change.
 
-Pressing "Go Harder" generates a new, harder chord-based sequence from the instrument's available
-notes and restarts the challenge. This is session-only -no persistence.
+| Cue | What the child sees | Timing |
+|-|-|-|
+| **Wrong note** | The paper washes red and clears again, then the notes fade out and come back at the first note | red in 180 ms, red out 220 ms, notes out 260 ms, notes in 520 ms |
+| | *The wash is a second copy of the banner with a `tintColor`, not a coloured rectangle. The artwork is paper with 3 % transparent margins and a transparent skirt below it, so a rectangle over the strip's box washed 125 px of the story art above the sheet red as well -- measured. Tinting the image keeps the red inside the paper's own shape, gold border and wavy edges and all: the reddened area now matches the artwork's opaque region to within a pixel.* | |
+| **Replay** | The notes simply fade out and come back at the first note | notes out 260 ms, notes in 520 ms |
+| | *Both note fades run at an even rate and the way back in is twice the way out. Eased -- quickest at the start -- coloured notes on cream paper crossed into visibility in the first fifth of the fade and read as the song appearing rather than fading in: measured at four frames, against twenty-seven now.* | |
 
-### Difficulty Levels
+The matcher already sends the score back to the first note the instant a wrong note is pressed, but
+the hook deliberately does **not** publish that result: the sheet keeps showing where the child got
+to while the red is on, and `resetBehindCue` publishes the reset once the notes are hidden. Pushing
+it through on the press snapped the score to the start before the child had seen anything go red.
 
-| Level | Chord Size | Sequence Length | Example |
-|-|-|-|-|
-| 1 (original) | Single notes | From CMS config | `C → D → E → C` |
-| 2 | 2-note chords | 3 chords | `C·D → E·F → C·E` |
-| 3 | 3-note chords | 3 chords | `C·D·E → D·E·F → C·E·F` |
-| 4+ | 3-note chords | 4–5 chords | Longer sequences |
+**Also removed:** the manual rotate button and the `manualRotated` state behind it -- turning the
+instrument is what blow mode does, and it does it on its own, so `isRotated` is simply
+`playMode === 'blow'`. And the "Playing your song…" caption during the reward melody: the sheet
+running through the song says it.
+
+**Removed:** ↻ Retry and 🔥 Go Harder, and the difficulty progression behind them
+(`generateHarderSequence`, `difficultyLevel`, `goHarder`, `retry`). Playing the song again needs no
+button -- the sheet clears itself -- and a wrong note resets it the same way. The `music.retry`,
+`music.goHarder`, `music.goHarderLevel`, `music.levelComplete` and `music.listeningToMelody`
+strings are left in the 14 locale files rather than risk a bulk edit across them; they are unused.
 
 ### Chord Notation
 
@@ -752,9 +815,7 @@ notes and restarts the challenge. This is session-only -no persistence.
 ### Implementation
 
 - `SequenceMatcher.processChord(activeNotes: Set<string>)` -validates held notes against expected chord
-- `generateHarderSequence(availableNotes, level)` -procedural generator in `use-music-challenge.ts`
-- `useMusicChallenge.goHarder()` -increments difficulty, generates new sequence, resets state
-- `MusicChallengeUI` -highlights all notes in a chord entry, shows wider dots for chords
+- `MusicChallengeUI` -highlights all notes in a chord entry
 
 ---
 
@@ -811,16 +872,17 @@ npx jest __tests__/hooks/use-music-challenge.test.ts --forceExit
 | `sequence-matcher.test.ts` | 15 | Correct/wrong sequences, repeat tolerance, reset, edge cases |
 | `music-asset-registry.test.ts` | 45 | All 6 instruments, aliases, families, note layouts, validation |
 | `music-analytics.test.ts` | 11 | All tracking functions export and execute without error |
-| `use-music-challenge.test.ts` | 32 | State transitions, note progress, mic gating, skip, cleanup, error state |
+| `use-music-challenge.test.ts` | 38 | State transitions, note progress, mic gating, skip, cleanup, error state, the hold gate, and the two sheet cues resetting the song behind them |
+| `sheet-transition.test.ts` | 6 | Cue order and timings -- the red wash before the notes clear, the notes hidden before the score is reset |
 | `use-mic-permission.test.ts` | 12 | Singleton caching, no double prompt, concurrent dedup, cross-hook sharing, denial propagation |
 | `instrument-picker-overlay.test.tsx` | 12 | Visibility, instrument display, title/subtitle, confirm button, placeholders, defaults |
 | `melody-scheduler.test.ts` | 11 | Rhythm slots, fallback to one beat, articulation gap, chords, tempo clamping |
 | `note-event-bus.test.ts` | 4 | Delivery, unsubscribe, listener isolation, ordering |
 | `music/instrument-bell.test.tsx` | 7 | Frame placement, touch pass-through, swell/relax on note events, reduce-motion, unmount |
 | `instrument-surface-layout.test.ts` | 33 | Artwork fit, hole pinning, bell placement, stage placement, and the blow-mode mirror (shift, pose, letter pose, landscape gate) |
-| `hold-plan.test.ts` | 22 | Hold derived from the slot, explicit holds, the blow-mode clamp, chords, mismatched rhythm, progress, and the move the sheet makes for a hold starting or let go |
-| `staff-notation.test.ts` | 68 | Pitch to staff position against the measured line pixels, ledger lines, stem direction, note metrics, shadow length, slot offsets, the row's resting position and drift-free handover, and the sheet's placement in both poses |
-| `music-staff-strip.test.tsx` | 36 | One coloured note per entry on its own line, ledger line, stems ending on the bottom line, aligned letters, hold shadows and the room they take, the row parked on the playhead (long notes and the end of the song included), played/next/melody states, chord entries, unplaceable names, touch pass-through |
+| `hold-plan.test.ts` | 31 | Hold derived from the slot, explicit holds, the blow-mode clamp, chords, mismatched rhythm, progress, the move the sheet makes for a hold starting or let go, which clock it moves on, and the slot length agreeing with the reward melody's own timeline |
+| `staff-notation.test.ts` | 71 | Pitch to staff position against the measured line pixels, ledger lines, stem direction, note metrics, shadow length, slot offsets, the row's resting position and drift-free handover, and the sheet's placement in both poses |
+| `music-staff-strip.test.tsx` | 41 | One coloured note per entry on its own line, ledger line, stems ending on the bottom line, aligned letters, hold shadows and the room they take, the row parked on the playhead (long notes and the end of the song included), played/next/melody states, chord entries, unplaceable names, touch pass-through |
 
 ### Backend Test Coverage (gateway-service)
 
@@ -886,10 +948,9 @@ data for the registry songs and the CMS `noteLength` field -- is not.
 - Multiple instruments in one story
 - Difficulty levels by age
 - Timing/rhythm scoring
-- ~~Harmony/chords~~ ✅ Implemented via "Go Harder" difficulty progression
+- ~~Harmony/chords~~ ✅ Implemented -a story may ask for them in `requiredSequence`
 - Adaptive hints after repeated failures
 - Recording / playback of child's performance
 - Teacher or parent mode
 - Unlockable songs / practice mode
 - Music Mode free play with instrument selection (currently shows placeholder text for non-music pages)
-- Persistent difficulty level (currently session-only)
