@@ -43,6 +43,7 @@ colearn/
 ├── PHASE-4-PROD-READINESS.md # ⭐ Production checklist, infrastructure, DNS, costs
 ├── PHASE-5-SCALING-AND-WHITELABEL.md # White-label roadmap, multi-tenancy, scaling
 ├── PHASE-6-MATH-GAMES.md    # ⭐ Math games roadmap, age-appropriate mechanics, technical plan
+├── PHASE-7-MUSIC-GAME.md    # Timed music play — hold-the-note mechanic, metadata, phases
 └── CLAUDE.md                 # This file — root operating instructions
 ```
 
@@ -72,6 +73,7 @@ colearn/
 | Production readiness / infra | [`PHASE-4-PROD-READINESS.md`](PHASE-4-PROD-READINESS.md) |
 | Scaling / white-label | [`PHASE-5-SCALING-AND-WHITELABEL.md`](PHASE-5-SCALING-AND-WHITELABEL.md) |
 | Math games roadmap | [`PHASE-6-MATH-GAMES.md`](PHASE-6-MATH-GAMES.md) |
+| Timed music play roadmap | [`PHASE-7-MUSIC-GAME.md`](PHASE-7-MUSIC-GAME.md) |
 
 ---
 

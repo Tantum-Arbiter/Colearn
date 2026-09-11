@@ -19,7 +19,9 @@ while all instrument images, note audio samples, and success songs remain **bund
    then taps "Let's Play!" to confirm their choice.
 2. The overlay fades out and the story begins. The child's chosen instrument applies to ALL
    music challenge pages in that story (overriding the CMS default `instrumentId`).
-3. On a music challenge page, the child sees on-screen note buttons themed to their chosen instrument
+3. On a music challenge page, the child sees on-screen note buttons themed to their chosen
+   instrument, with the song written above them on a music sheet -- one coloured note per note to
+   play, on the staff line it belongs to (see "The Music Sheet Above the Instrument")
 4. Notes only produce sound when breath/blow is detected (mic or fallback button held)
 5. The app matches played notes against the required sequence
 6. On success: page state transitions, success song plays, next-page navigation unlocks
@@ -46,6 +48,8 @@ story-book-reader.tsx (integration layer -detects music pages, gates navigation)
   ├── useBreathDetector hook (mic metering for blow detection, with fallback)
   │     └── useMicPermission (shared singleton -no double mic prompt)
   ├── MusicChallengeUI component (instrument buttons, progress, feedback)
+  │     └── MusicStaffStrip (the song written on the sheet banner)
+  │           └── staff-notation (pure geometry: pitch → staff position, sheet placement)
   └── music-analytics (structured event logging)
 ```
 
@@ -55,7 +59,10 @@ story-book-reader.tsx (integration layer -detects music pages, gates navigation)
 |-|-|
 | `types/story.ts` | `MusicChallenge`, `PageInteractionType` types |
 | `services/music-asset-registry.ts` | Local asset registry -maps instrument/song IDs to bundled files, body artwork and hole positions |
-| `services/instrument-surface-layout.ts` | Pure layout -fits the body artwork into the measured area (leaving room for the bell to swell) and pins one note button per hole |
+| `services/instrument-surface-layout.ts` | Pure layout -fits the body artwork into the measured area (leaving room for the bell to swell), pins one note button per hole, and turns the instrument end for end for blow mode |
+| `services/staff-notation.ts` | Pure notation geometry -staff line fractions measured off the sheet artwork, where each note sits, ledger lines, stem direction, shadow length, slot offsets, how far the row travels and where it sits (`staffHoldTravel` / `staffRowShift`), and where the sheet goes in each pose |
+| `services/hold-plan.ts` | Pure -turns a song's `rhythm` and optional `hold` into a millisecond hold target per note, clamped to what blow mode can sustain; `holdRun` says how the sheet moves for a hold starting or let go |
+| `components/music/music-staff-strip.tsx` | The song written on a staff -one coloured note per entry, in its button's colour, scrolling under a playhead |
 | `services/melody-scheduler.ts` | Pure timeline for the completion melody -one slot per entry from the song's `rhythm` and `bpm`, with an articulation gap |
 | `services/note-event-bus.ts` | Start/end events for every note the instrument sounds; the bell animation subscribes to it |
 | `components/music/instrument-bell.tsx` | Reusable bell swell -scales the instrument's bell cutout while notes sound, off under reduce-motion |
@@ -65,7 +72,7 @@ story-book-reader.tsx (integration layer -detects music pages, gates navigation)
 | `hooks/use-music-challenge.ts` | React hook -state machine, audio playback, completion |
 | `hooks/use-breath-detector.ts` | Microphone breath detection with on-screen fallback (uses shared permission) |
 | `components/stories/instrument-picker-overlay.tsx` | Full-screen instrument selection carousel (3D coverflow, pulsing ring, blur) |
-| `components/stories/music-challenge-ui.tsx` | Instrument UI -note buttons, sequence progress, feedback |
+| `components/stories/music-challenge-ui.tsx` | Instrument UI -note buttons, the music sheet above the instrument, progress, feedback |
 | `components/stories/story-book-reader.tsx` | Integration -shows picker on story entry, renders challenge, blocks navigation |
 
 ### Backend/CMS Files
@@ -489,9 +496,136 @@ In Firestore (CMS) or `data/bundled-stories.ts` (local), set up the story page:
   centred between the buttons and the bottom edge (never closer than `LOWER_BLOCK_BUTTON_GAP` to a
   button, free to overlap the rest of the art). Size and position stay identical from the first
   note to "Amazing!"
+- **Which end blows** (`flippedSurfaceShift`, `instrumentFlipTransform`): every body art is drawn
+  with the mouthpiece on the left, cut flat to bleed off that edge, and the bell finished on the
+  right. Blowing means holding the phone upright with the *bottom* of the phone -- where the
+  microphone is -- at the child's mouth, and the landscape layout maps its own right-hand edge to
+  that bottom. So in blow mode the instrument turns end for end: the body is mirrored about the
+  middle of the surface, which swaps the ends over and keeps the bleed exactly as deep, so the flat
+  cut is still never visible. The mirror animates from the same 0 -> -90 value as the note letters,
+  passing edge-on halfway, which reads as the instrument being turned round. The letters carry the
+  mirror again (`noteLabelTransform`) so they still read the right way up -- a rotation inside a
+  mirror comes out reversed, so its sign goes with it. Both helpers are `'worklet'`s: they are
+  called from inside `useAnimatedStyle`, and a plain imported function called on the UI runtime
+  aborts the app.
+- **Only where the layout turns** (`regionTurnsForBlow`): the turn, and the sheet's move to the
+  bottom, apply only in a landscape region -- the way a phone draws this screen. A tablet held
+  upright leaves the instrument lying across the screen, so nothing turns.
 - **No artwork**: an instrument without `artwork` falls back to the generic tube with a row of
-  note buttons (no bundled instrument uses this any more)
+  note buttons (no bundled instrument uses this any more). Its mouthpiece is already drawn on the
+  right, so it is never mirrored
 - **Style**: Match the app's illustration style -colorful, friendly, child-appropriate
+
+### The Music Sheet Above the Instrument
+
+`assets/music/sheet/staff-banner.webp` (2000x667, transparent) is a storybook banner with a
+treble clef and five printed staff lines. `MusicStaffStrip` draws the song on it: one note per
+sequence entry, in the same colour as that note's button on the instrument, sitting on the line or
+space the note belongs to. It replaces the row of coloured chips that used to list the sequence
+under the instrument -- only the `n/m` progress line is left there.
+
+Everything positional is measured off the artwork and lives in `services/staff-notation.ts`:
+
+| Constant | Value | What it is |
+|-|-|-|
+| `STAFF_ASPECT_RATIO` | 2000/667 | Banner width ÷ height |
+| `STAFF_TOP_LINE` / `STAFF_LINE_GAP` | 0.3651 / 0.0624 | Top printed line and line spacing, as fractions of banner height (sampled at y = 243.5, 285.5, 327.5, 369, 410) |
+| `STAFF_PAPER_TOP` / `STAFF_PAPER_BOTTOM` | 0.2 / 0.78 | Where the opaque paper starts and ends. Below `PAPER_BOTTOM` the artwork is clear, so the sheet can hang over the instrument without hiding it |
+| `STAFF_NOTE_LEFT` / `STAFF_NOTE_RIGHT` | 0.181 / 0.85 | Where the notes are cut off, right against the clef (whose ink was measured at columns 257-358 of 2000, ending at 0.179) and before the stars and leaves |
+| `STAFF_LETTER_CENTRE` | 0.695 | The one baseline under the staff that every note's letter sits on |
+
+- **Register**: the bundled samples measure 523 Hz (C5) through 880 Hz (A5), so the app's C is the
+  C *above* middle C -- the middle space of the treble staff, five half-steps up from the bottom
+  line (`APP_C_STEPS`). That is both the true pitch and the reading that keeps a whole nursery
+  melody inside the printed staff; writing it in the middle-C octave would hang most notes under
+  the staff on ledger lines. Only A reaches above the staff, and it gets one ledger line.
+- **Engraving**: stems hang down from the middle line up (`staffStemsPointDown`), which is where
+  the whole C-A scale sits. Every stem runs all the way to the bottom staff line
+  (`staffStemHeight`), so a row of them ends on one line rather than at a dozen different heights.
+  They cannot point up instead: the artwork leaves 0.165 of its height of paper above the top staff
+  line and a stem is 0.19, so an upward stem would climb out of the paper and through the song
+  title. `staffLedgerSteps` returns the short lines a note written off the staff needs.
+- **Hold shadows and the target line**: given a `holdPlan` (from `services/hold-plan.ts`, built by `useMusicChallenge`
+  off the song's `rhythm` and optional `hold`), each note carries a band behind it in its own colour
+  at 80 % opacity, running right from the head for as long as the note is held, and a taller line
+  in the same colour standing at its far end -- the point a hold has to reach. The band alone was
+  not enough to read a length off; the line makes the end unmistakable. One beat covers
+  exactly the ordinary note spacing, so a note held twice as long simply takes twice the room --
+  `staffNoteSlots` gives each note `max(spacing, shadow + gap)`. The gap is 0.3 of a slot rather
+  than the 0.15 a default hold leaves over: at that narrower figure consecutive shadows very nearly
+  touch and a run of equal notes reads as one long band instead of several separate holds. The row's
+  position works off those slot offsets rather than the note index. Holds are capped at `MAX_HOLD_MS` (2 s) because blow-mode notes
+  auto-fade at `BLOW_MAX_SUSTAIN_MS` (3 s), so the sheet can never ask for a hold the child cannot
+  achieve. - **Holding a note is how it counts.** The note being played is parked just under a head-width in
+  from the left of the window (`playheadX`, `PLAYHEAD_HEAD_WIDTHS` -- only enough for its ring to
+  clear the cut, so it sits flush against the point notes scroll out at), everything already played
+  having scrolled off behind it, and its
+  hold runs away to the right. While it sounds, the score creeps left at exactly the rate of the
+  hold, so the shadow is eaten by the left edge and what is still to the right is what is left to
+  hold; the target line reaching the edge *is* the note completing. Let go early and it rewinds at
+  full in `RELEASE_SNAP_MS` (180 ms, `holdRun`): a note counts only if it is held all the way
+  through in one go, so the sheet starts again too. It used to rewind at half the speed it ran, which
+  meant up to twice the hold spent sliding backwards with nothing held -- that read as the sheet
+  undoing itself rather than as "hold it again". Freezing the shadow where it got to would be
+  kinder but would lie, since the credit restarts from zero on the next press. There is no clock:
+  nothing moves unless the child is holding, so there is no hurry.
+  The credit waits with it: `creditAfterHold` in `use-music-challenge` defers
+  `processNoteForSequence` by the note's `holdMs` and drops it if the key comes up first. A **wrong**
+  note is still credited instantly, so the feedback never lags behind the mistake, and every reset
+  (`start`, `retry`, `skip`, `goHarder`, `cleanup`) clears the credits still waiting.
+- **The sheet runs off the credit's clock, not the keys.** `useMusicChallenge` reports
+  `holdingIndex` -- the entry whose credit is counting down -- and the sheet creeps only while that
+  is the note in focus. Key state is not enough: a finger left down across a note boundary credits
+  the note it was pressed for and nothing more, so driving the sheet off the keys ran it ahead of
+  the score for the rest of the song.
+- **The row cannot drift.** Its position is computed, never accumulated: `staffRowShift(slots,
+  focus, held, playheadX)` is `playheadX - slots[focus] - travel * held`, so a finished hold and the
+  next note at rest give the same number -- the handover has no step in it (`staffNoteSlots` carries
+  a trailing end marker so `slots[i + 1]` exists for the last note too). Both ends of the move are
+  worked out in plain JS; the worklet only slides between them, which keeps the resting position
+  readable in a test. Measured on device across an 11-note song (`au_clair_lune`, two 2-beat notes
+  and a 4-beat close): the played note sat within 2 px of the playhead at every one of the eleven.
+  An earlier accumulating version drifted a slot per long note.
+- **Past the last note** there is nothing left to play, so the score stops on the closing note --
+  dimmed, ring off -- rather than scrolling off and leaving a blank staff behind the celebration.
+- **Landing bounce**: the note the child is on springs once whenever the sheet advances onto it, so
+  a landing reads as one. Off under reduce-motion.
+- **Letters**: each note's name is written under the staff in the note's own colour, every one on
+  the `STAFF_LETTER_CENTRE` baseline rather than under its own head, so the row of letters reads
+  straight however high the melody climbs. They sit between the bottom staff line and the paper's
+  edge, in the band the stems now stop short of.
+- **Scrolling**: songs run to 32 notes but only about a dozen fit, so the row is always positioned
+  to put the note being played on the playhead -- everything before it has scrolled out through the
+  cut just past the treble clef. Notes already played stay on the page at 40 % opacity; the one to
+  play next carries a white ring, which follows the melody instead during the success song. The
+  reward melody holds each note itself, so the sheet runs through the song with it and the shadows
+  are eaten one by one exactly as they are under the child's own fingers.
+- **Placement** (`layoutStaffStrip`): the sheet fills the space the stage left above the instrument,
+  its paper bottom resting `STAFF_SHEET_OVERLAP` px past the top of the artwork, centred, capped at
+  55 % of the region height and never wider than the region. The prompt is written on the paper in
+  ink instead of floating over it in a pill, so the whole band above the staff is used.
+- **Blow pose**: in blow mode the instrument turns to point at the floor, so the sheet turns with
+  it -- the same box rotated -90°, scaled to the region's height (the width of the phone as the
+  child now holds it) and moved so its paper *top* lands across the top of the upright phone, clear
+  of the hand and of the mouthpiece at the bottom. `edgeInset` keeps it below the notch on that
+  edge. Turned, the sheet is also **drawn longer than the screen** (`rotatedZoom`, from
+  `TURNED_MIN_LINE_GAP`): only as long as the phone is wide, the staff comes out around 8px between
+  lines, which is too small to pick a note off. Zooming past the screen brings it to 14, and the
+  sheet is **anchored by its left edge** rather than centred -- so the moon and the treble clef stay
+  in view and the notes slide in from the right, off the end of the paper the child cannot see.
+  `visibleFraction` (1/zoom) then narrows the note window to the part actually on screen, so the
+  score is parked and scrolled where it can be seen rather than off the edge. A region already big enough (a tablet) is left at its natural size, ends and all,
+  and the song title stays on the paper -- it comes off only when zoomed, where it would be clipped
+  at both ends. It is a transform on one box, driven by the same `instrumentRotation` value as the note
+  labels, so sheet and instrument move together. This only applies where the layout really is drawn
+  the phone way (`turnsForBlow`, a landscape region); a tablet held upright leaves the instrument
+  lying across the screen, so the sheet stays above it.
+- **Depth**: lying across the screen, the instrument paints *over* the sheet -- the overlap is only
+  the sheet's empty bottom skirt, and the instrument should read as the thing in front. Stood
+  upright for blow mode the sheet comes forward instead (`staffSheetLifted`), or the bell would sit
+  over the middle of the staff and hide the notes.
+- **Touches**: the strip is `pointerEvents="none"` throughout -- it overlaps the instrument, and
+  every press has to reach the note buttons.
 
 ---
 
@@ -677,12 +811,16 @@ npx jest __tests__/hooks/use-music-challenge.test.ts --forceExit
 | `sequence-matcher.test.ts` | 15 | Correct/wrong sequences, repeat tolerance, reset, edge cases |
 | `music-asset-registry.test.ts` | 45 | All 6 instruments, aliases, families, note layouts, validation |
 | `music-analytics.test.ts` | 11 | All tracking functions export and execute without error |
-| `use-music-challenge.test.ts` | 14 | State transitions, note progress, mic gating, skip, cleanup, error state |
+| `use-music-challenge.test.ts` | 32 | State transitions, note progress, mic gating, skip, cleanup, error state |
 | `use-mic-permission.test.ts` | 12 | Singleton caching, no double prompt, concurrent dedup, cross-hook sharing, denial propagation |
 | `instrument-picker-overlay.test.tsx` | 12 | Visibility, instrument display, title/subtitle, confirm button, placeholders, defaults |
 | `melody-scheduler.test.ts` | 11 | Rhythm slots, fallback to one beat, articulation gap, chords, tempo clamping |
 | `note-event-bus.test.ts` | 4 | Delivery, unsubscribe, listener isolation, ordering |
 | `music/instrument-bell.test.tsx` | 7 | Frame placement, touch pass-through, swell/relax on note events, reduce-motion, unmount |
+| `instrument-surface-layout.test.ts` | 33 | Artwork fit, hole pinning, bell placement, stage placement, and the blow-mode mirror (shift, pose, letter pose, landscape gate) |
+| `hold-plan.test.ts` | 22 | Hold derived from the slot, explicit holds, the blow-mode clamp, chords, mismatched rhythm, progress, and the move the sheet makes for a hold starting or let go |
+| `staff-notation.test.ts` | 68 | Pitch to staff position against the measured line pixels, ledger lines, stem direction, note metrics, shadow length, slot offsets, the row's resting position and drift-free handover, and the sheet's placement in both poses |
+| `music-staff-strip.test.tsx` | 36 | One coloured note per entry on its own line, ledger line, stems ending on the bottom line, aligned letters, hold shadows and the room they take, the row parked on the playhead (long notes and the end of the song included), played/next/melody states, chord entries, unplaceable names, touch pass-through |
 
 ### Backend Test Coverage (gateway-service)
 
@@ -728,6 +866,18 @@ cd gateway-service
 - **Empty sequence** → Immediately completes (edge case in SequenceMatcher)
 - **Child leaves and returns to page** → Challenge can be restarted
 - **Offline** → Fully functional -all assets are local
+
+---
+
+## Hold-the-note (Phase 7)
+
+The sheet moves only when the right note is played -- there is no clock and nothing to miss. Its job
+is to show which note comes next and **how long to hold it**.
+[`../PHASE-7-MUSIC-GAME.md`](../PHASE-7-MUSIC-GAME.md) has the whole design: the `hold` metadata,
+the three latency limits from `use-breath-detector` and `use-music-challenge`, the forgiveness rules
+and five phases. **Phases 1-4 are built** (the `hold` field, `hold-plan.ts`, the shadow drawn on the
+sheet, the score creeping left as the hold runs, and the credit waiting it out). Phase 5 -- `hold`
+data for the registry songs and the CMS `noteLength` field -- is not.
 
 ---
 
