@@ -1,6 +1,8 @@
 import React from 'react';
-import { render, fireEvent, type RenderResult } from '@testing-library/react-native';
-import { MusicChallengeUI, instrumentLowerBlockHeight, ARTWORK_TOP_MARGIN, LOWER_BLOCK_BUTTON_GAP } from '@/components/stories/music-challenge-ui';
+import { render, fireEvent, act, type RenderResult } from '@testing-library/react-native';
+import { MusicChallengeUI, instrumentLowerBlockHeight, ARTWORK_TOP_MARGIN, LOWER_BLOCK_BUTTON_GAP, STAFF_SHEET_OVERLAP } from '@/components/stories/music-challenge-ui';
+import { layoutStaffStrip } from '@/services/staff-notation';
+import { buildHoldPlan } from '@/services/hold-plan';
 import { layoutInstrumentSurface, layoutInstrumentStage } from '@/services/instrument-surface-layout';
 
 let mockIsTablet = false;
@@ -44,6 +46,8 @@ const baseChallenge = {
   resolvedBpm: 120,
   playbackPosition: null,
   noteEvents: { subscribe: jest.fn(() => jest.fn()), emit: jest.fn() },
+  holdPlan: buildHoldPlan(['C', 'D'], 120, [1, 2]),
+  holdingIndex: null,
 } as any;
 
 const noteLayout = [
@@ -299,7 +303,7 @@ describe('MusicChallengeUI artwork placement', () => {
 });
 
 describe('MusicChallengeUI sequence row', () => {
-  it('sits on a dark backdrop so the dots read over bright artwork', () => {
+  it('sits on a dark backdrop so the progress line reads over bright artwork', () => {
     const view = renderWithArtwork();
 
     expect(flatStyle(byTestId(view, 'sequence-container').props.style)).toMatchObject({ backgroundColor: 'rgba(0, 0, 0, 0.35)' });
@@ -316,12 +320,243 @@ describe('MusicChallengeUI stage', () => {
     expect(flatStyle(byTestId(view, 'top-section').props.style)).toMatchObject({ position: 'absolute', top: 0 });
   });
 
-  it('puts the dots and controls where the stage leaves room under the buttons', () => {
+  it('puts the progress line and controls where the stage leaves room under the buttons', () => {
     const view = renderWithArtwork();
     const stage = stageFor(artwork);
 
     const style = flatStyle(byTestId(view, 'lower-block').props.style);
     expect(style).toMatchObject({ position: 'absolute', left: 0, right: 0, top: stage.lowerBlockTop, height: lowerBlockHeight, alignItems: 'center', justifyContent: 'center' });
     expect(byTestId(view, 'lower-block').findAll((node: { props: { testID?: string } }) => node.props.testID === 'sequence-container').length).toBeGreaterThan(0);
+  });
+});
+
+describe('MusicChallengeUI mouthpiece orientation', () => {
+  it('hangs the whole body off one node, so blow mode can turn it end for end', () => {
+    const view = renderWithArtwork();
+    const layout = stageFor(artwork).layout;
+    expect(flatStyle(byTestId(view, 'instrument-body-flip').props.style)).toMatchObject({
+      width: layout.width,
+      marginLeft: layout.left,
+    });
+  });
+
+  it('leaves the fallback tube alone -- its mouthpiece is drawn at that end already', () => {
+    const view = render(
+      <MusicChallengeUI
+        challenge={baseChallenge}
+        promptText="Play"
+        requiredSequence={['C', 'D']}
+        noteLayout={noteLayout}
+        showBreathButton={false}
+      />
+    );
+    expect(view.UNSAFE_queryAllByProps({ testID: 'instrument-body-flip' }).length).toBe(0);
+  });
+});
+
+describe('MusicChallengeUI music sheet', () => {
+  const stripFor = (region = surfaceBox) =>
+    layoutStaffStrip({
+      width: region.width,
+      height: region.height,
+      instrumentTop: stageFor(artwork).surfaceTop,
+      overlap: STAFF_SHEET_OVERLAP,
+    })!;
+
+  it('hangs the sheet off the top of the instrument once the region is measured', () => {
+    const view = renderWithArtwork();
+    const placement = stripFor();
+    expect(flatStyle(byTestId(view, 'staff-strip-wrapper').props.style)).toMatchObject({
+      left: placement.left,
+      top: placement.top,
+    });
+  });
+
+  it('sizes the sheet to the space the stage left above the instrument', () => {
+    const view = renderWithArtwork();
+    const banner = view.UNSAFE_queryAllByProps({ testID: 'staff-banner' }).filter(node => node.props.source)[0];
+    expect(flatStyle(banner.props.style).width).toBeCloseTo(stripFor().width, 1);
+  });
+
+  it('rests the paper on the instrument instead of floating clear of it', () => {
+    const view = renderWithArtwork();
+    const top = flatStyle(byTestId(view, 'staff-strip-wrapper').props.style).top as number;
+    const banner = view.UNSAFE_queryAllByProps({ testID: 'staff-banner' }).filter(node => node.props.source)[0];
+    // The paper runs to 0.78 of the banner; below that the artwork is clear.
+    const paperBottom = top + (flatStyle(banner.props.style).height as number) * 0.78;
+    const gap = paperBottom - stageFor(artwork).surfaceTop;
+    expect(gap).toBeGreaterThan(0);
+    expect(gap).toBeLessThan(20);
+  });
+
+  it('carries the song\'s hold lengths onto the sheet, so a long note shows a long shadow', () => {
+    const view = renderWithArtwork({ requiredSequence: ['C', 'D'] });
+    const first = flatStyle(byTestId(view, 'staff-note-shadow-0').props.style).width as number;
+    const second = flatStyle(byTestId(view, 'staff-note-shadow-1').props.style).width as number;
+    expect(second).toBeCloseTo(first * 2, 1);
+  });
+
+  it('writes the notes to play on the staff rather than as a row of chips', () => {
+    const view = renderWithArtwork({ requiredSequence: ['C', 'E'] });
+    expect(view.UNSAFE_queryAllByProps({ testID: 'staff-note-head-1' }).length).toBeGreaterThan(0);
+    // Nothing under the instrument is tinted a note colour any more -- the only
+    // thing left in that block is the "1/2" progress line.
+    const noteColours = holeLayout.map((item: { color: string }) => item.color);
+    const chips = byTestId(view, 'sequence-container').findAll(
+      (node: { props: { style?: unknown } }) => noteColours.includes(flatStyle(node.props.style).backgroundColor as string),
+    );
+    expect(chips.length).toBe(0);
+    expect(view.UNSAFE_queryAllByProps({ testID: 'sequence-progress' }).length).toBeGreaterThan(0);
+  });
+
+  it('heads the sheet with the prompt instead of floating a caption over it', () => {
+    const view = renderWithArtwork({ promptText: 'Play a cozy tune' });
+    const title = byTestId(view, 'staff-title');
+    expect(title.props.children).toBe('Play a cozy tune');
+    expect(view.UNSAFE_queryAllByProps({ testID: 'prompt-pill' }).length).toBe(0);
+  });
+
+  it('keeps the floating prompt when there is no sheet to write it on', () => {
+    const view = renderWithArtwork({ requiredSequence: [] });
+    expect(view.UNSAFE_queryAllByProps({ testID: 'prompt-pill' }).length).toBeGreaterThan(0);
+  });
+
+  it('leaves the instrument painting over the sheet while it lies across the screen', () => {
+    const view = renderWithArtwork();
+    // No zIndex on the sheet, so the surface that follows it paints on top.
+    expect(flatStyle(byTestId(view, 'staff-strip-wrapper').props.style).zIndex).toBeUndefined();
+  });
+
+  const toBlowMode = (view: RenderResult) => {
+    const toggle = view.UNSAFE_queryAllByProps({ testID: 'play-mode-toggle' })
+      .find(node => typeof node.props.onPress === 'function')!;
+    act(() => { toggle.props.onPress(); });
+  };
+
+  it('lifts the sheet over the instrument once it stands upright, so the bell cannot cover the notes', () => {
+    const view = renderWithArtwork();
+    toBlowMode(view);
+    expect(flatStyle(byTestId(view, 'staff-strip-wrapper').props.style).zIndex).toBe(1);
+  });
+
+  it('takes the title off the sheet once it is zoomed past the screen, where it would be clipped', () => {
+    const view = renderWithArtwork({ promptText: 'Play a cozy tune' });
+    expect(view.UNSAFE_queryAllByProps({ testID: 'staff-title' }).length).toBeGreaterThan(0);
+    toBlowMode(view);
+    expect(view.UNSAFE_queryAllByProps({ testID: 'staff-title' }).length).toBe(0);
+  });
+
+  it('leaves the instrument in front in a portrait region, where nothing stands upright', () => {
+    const view = render(
+      <MusicChallengeUI
+        challenge={baseChallenge}
+        promptText="Play"
+        requiredSequence={['C', 'D']}
+        noteLayout={holeLayout}
+        artwork={artwork}
+        showBreathButton={false}
+      />
+    );
+    fireEvent(byTestId(view, 'instrument-region'), 'layout', { nativeEvent: { layout: { width: 400, height: 800 } } });
+    toBlowMode(view);
+    expect(flatStyle(byTestId(view, 'staff-strip-wrapper').props.style).zIndex).toBeUndefined();
+  });
+
+  it('keeps the sheet clear of the notch on the edge it moves to in blow mode', () => {
+    const view = renderWithArtwork({ insetsOverride: { top: 0, bottom: 21, left: 59, right: 0 } });
+    const placement = layoutStaffStrip({
+      width: surfaceBox.width,
+      height: surfaceBox.height,
+      instrumentTop: stageFor(artwork).surfaceTop,
+      overlap: STAFF_SHEET_OVERLAP,
+      edgeInset: 59,
+    })!;
+    const wrapper = flatStyle(byTestId(view, 'staff-strip-wrapper').props.style);
+    const banner = view.UNSAFE_queryAllByProps({ testID: 'staff-banner' }).filter(node => node.props.source)[0];
+    expect(flatStyle(banner.props.style).width).toBeCloseTo(placement.width, 1);
+    expect(wrapper.top).toBeCloseTo(placement.top, 1);
+  });
+
+  /** Whether the sheet is running the current note's hold. */
+  const sheetHolding = (view: RenderResult) =>
+    view.UNSAFE_queryAllByProps({ testID: 'staff-strip' }).length > 0
+    && view.UNSAFE_queryAllByProps({ holdingCurrent: true }).length > 0;
+
+  it('runs the hold on the sheet for the note whose credit is counting down', () => {
+    const view = renderWithArtwork({
+      challenge: { ...baseChallenge, currentNoteIndex: 1, holdingIndex: 1 },
+    });
+    expect(sheetHolding(view)).toBe(true);
+  });
+
+  it('leaves the sheet still when no hold is counting, however the keys are held', () => {
+    // A finger left down across a note boundary credits nothing further, so the
+    // sheet must not run ahead of the score.
+    const view = renderWithArtwork({
+      challenge: { ...baseChallenge, currentNoteIndex: 1, holdingIndex: null },
+    });
+    expect(sheetHolding(view)).toBe(false);
+  });
+
+  it('leaves the sheet still while a hold is counting for a different note', () => {
+    const view = renderWithArtwork({
+      challenge: { ...baseChallenge, currentNoteIndex: 1, holdingIndex: 0 },
+    });
+    expect(sheetHolding(view)).toBe(false);
+  });
+
+  it('holds the notes down itself while the reward melody plays', () => {
+    const view = renderWithArtwork({
+      challenge: {
+        ...baseChallenge,
+        state: 'playing_success_song',
+        holdingIndex: null,
+        playbackPosition: { index: 1, tick: 1 },
+      },
+    });
+    expect(sheetHolding(view)).toBe(true);
+  });
+
+  it('keeps the sheet out of the way of touches meant for the instrument', () => {
+    const view = renderWithArtwork();
+    expect(byTestId(view, 'staff-strip-wrapper').props.pointerEvents).toBe('none');
+  });
+
+  it('leaves the sheet off freeplay, where there is no song to follow', () => {
+    const view = renderWithArtwork({ requiredSequence: [] });
+    expect(view.UNSAFE_queryAllByProps({ testID: 'staff-strip-wrapper' }).length).toBe(0);
+  });
+
+  it('draws no sheet before the region has been measured', () => {
+    const view = render(
+      <MusicChallengeUI
+        challenge={baseChallenge}
+        promptText="Play"
+        requiredSequence={['C', 'D']}
+        noteLayout={holeLayout}
+        artwork={artwork}
+        showBreathButton={false}
+      />
+    );
+    expect(view.UNSAFE_queryAllByProps({ testID: 'staff-strip-wrapper' }).length).toBe(0);
+  });
+
+  it('reserves room under the instrument for the progress line, not a row of chips', () => {
+    expect(instrumentLowerBlockHeight(identity, identity, true) - instrumentLowerBlockHeight(identity, identity, false))
+      .toBe(22);
+  });
+
+  it('draws a sheet on the fallback tube too', () => {
+    const view = render(
+      <MusicChallengeUI
+        challenge={baseChallenge}
+        promptText="Play"
+        requiredSequence={['C', 'D']}
+        noteLayout={noteLayout}
+        showBreathButton={false}
+      />
+    );
+    fireEvent(byTestId(view, 'challenge-container'), 'layout', { nativeEvent: { layout: surfaceBox } });
+    expect(view.UNSAFE_queryAllByProps({ testID: 'staff-note-head-1' }).length).toBeGreaterThan(0);
   });
 });

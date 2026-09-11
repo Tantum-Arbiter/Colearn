@@ -1,4 +1,4 @@
-import { layoutInstrumentSurface, layoutInstrumentStage } from '@/services/instrument-surface-layout';
+import { layoutInstrumentSurface, layoutInstrumentStage, flippedSurfaceShift, regionTurnsForBlow, instrumentFlipTransform, noteLabelTransform } from '@/services/instrument-surface-layout';
 import type { NoteLayoutItem } from '@/services/music-asset-registry';
 
 const artwork = { image: 1, aspectRatio: 4, holeDiameter: 0.05 };
@@ -220,5 +220,61 @@ describe('layoutInstrumentStage', () => {
 
   it('returns null before the region has been measured', () => {
     expect(layoutInstrumentStage(artwork, notes, { width: 0, height: 0 }, stageOptions)).toBeNull();
+  });
+});
+
+describe('flippedSurfaceShift', () => {
+  it('mirrors the artwork about the surface, so a left bleed becomes an equal right bleed', () => {
+    // Art pinned to the left, running 8px short of the right edge.
+    const shift = flippedSurfaceShift({ left: 0, width: 792 }, 800);
+    expect(shift).toBe(8);
+  });
+
+  it('carries a bleed off the near edge over to the far edge', () => {
+    // The art starts 16px off the left edge of the surface.
+    const shift = flippedSurfaceShift({ left: -16, width: 800 }, 800);
+    const mirroredRight = -16 + 800 + shift;
+    expect(mirroredRight).toBe(800 + 16);
+  });
+
+  it('leaves a centred instrument centred', () => {
+    expect(flippedSurfaceShift({ left: 150, width: 500 }, 800)).toBe(0);
+  });
+});
+
+describe('instrumentFlipTransform', () => {
+  it('leaves the instrument alone while it faces the way it is drawn', () => {
+    expect(instrumentFlipTransform(40, 0)).toEqual({ translateX: 0, scaleX: 1 });
+  });
+
+  it('turns it end for end, and slides it, once it has fully turned', () => {
+    expect(instrumentFlipTransform(40, -90)).toEqual({ translateX: 40, scaleX: -1 });
+  });
+
+  it('passes through edge-on halfway, so it reads as the instrument turning round', () => {
+    expect(instrumentFlipTransform(40, -45)).toEqual({ translateX: 20, scaleX: 0 });
+  });
+});
+
+describe('noteLabelTransform', () => {
+  it('leaves the letters upright while the instrument faces the way it is drawn', () => {
+    expect(noteLabelTransform(0)).toEqual({ rotate: '0deg', scaleX: 1 });
+  });
+
+  it('undoes both the turn and the mirror, so the letter still reads upright', () => {
+    // Inside a mirrored parent, a -90deg child comes out at +90deg, so the
+    // label has to ask for +90 to land on -90.
+    expect(noteLabelTransform(-90)).toEqual({ rotate: '90deg', scaleX: -1 });
+  });
+});
+
+describe('regionTurnsForBlow', () => {
+  it('turns in a landscape region, which is how a phone draws this screen', () => {
+    expect(regionTurnsForBlow({ width: 800, height: 400 })).toBe(true);
+  });
+
+  it('stays put in a portrait region, where the instrument lies across the screen', () => {
+    expect(regionTurnsForBlow({ width: 800, height: 1200 })).toBe(false);
+    expect(regionTurnsForBlow({ width: 800, height: 800 })).toBe(false);
   });
 });

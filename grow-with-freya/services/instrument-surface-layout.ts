@@ -142,3 +142,53 @@ export function layoutInstrumentStage(
   );
   return { layout, surfaceTop, lowerBlockTop };
 }
+
+/**
+ * Whether a measured region is drawn the phone way -- wider than it is tall, so
+ * turning the device upright brings the instrument round to point at the floor.
+ * A tablet held upright leaves it lying across the screen instead, and nothing
+ * should turn.
+ */
+export function regionTurnsForBlow(region: { width: number; height: number }): boolean {
+  return region.width > region.height;
+}
+
+/**
+ * How far to slide a mirrored instrument.
+ *
+ * The body art is drawn with one end cut flat, to bleed off the edge of the
+ * screen; the other end is finished. Reflecting the art about the middle of the
+ * surface swaps those ends over and keeps the bleed exactly as deep, so the cut
+ * is still never visible. A centred instrument stays centred.
+ */
+export function flippedSurfaceShift(
+  layout: Pick<InstrumentSurfaceLayout, 'left' | 'width'>,
+  surfaceWidth: number,
+): number {
+  return surfaceWidth - 2 * layout.left - layout.width;
+}
+
+/**
+ * Instrument pose for blow mode, driven by the same 0 -> -90 degree value as the
+ * note letters. Blowing means holding the phone upright with the mouthpiece at
+ * the bottom, over the microphone, so the whole instrument turns end for end --
+ * passing edge-on halfway, which reads as the instrument being turned round.
+ */
+export function instrumentFlipTransform(shift: number, rotationDegrees: number): { translateX: number; scaleX: number } {
+  'worklet';
+  // The driving value only ever runs 0 -> -90, and abs keeps a resting pose off
+  // negative zero.
+  const turned = Math.abs(rotationDegrees) / 90;
+  return { translateX: shift * turned, scaleX: 1 - 2 * turned };
+}
+
+/**
+ * Note letter pose. The letters sit inside the mirrored instrument, so they
+ * carry the mirror again to come out the right way round -- and a rotation
+ * inside a mirror comes out reversed, so the sign goes with it.
+ */
+export function noteLabelTransform(rotationDegrees: number): { rotate: string; scaleX: number } {
+  'worklet';
+  const scaleX = 1 + rotationDegrees / 45;
+  return { rotate: `${rotationDegrees * scaleX}deg`, scaleX };
+}

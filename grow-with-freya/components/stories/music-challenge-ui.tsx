@@ -9,7 +9,7 @@
  */
 
 import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
-import { View, Text, Pressable, StyleSheet, Image, type LayoutChangeEvent } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Image, type LayoutChangeEvent, type StyleProp, type TextStyle } from 'react-native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -27,15 +27,40 @@ import { useAccessibility } from '@/hooks/use-accessibility';
 import type { MusicChallengeHookResult } from '@/hooks/use-music-challenge';
 import type { InstrumentArtwork, NoteLayoutItem } from '@/services/music-asset-registry';
 import { isChordEntry, parseChordEntry } from '@/services/sequence-matcher';
-import { layoutInstrumentStage, type SurfaceBox } from '@/services/instrument-surface-layout';
+import {
+  layoutInstrumentStage,
+  flippedSurfaceShift,
+  regionTurnsForBlow,
+  instrumentFlipTransform,
+  noteLabelTransform,
+  type SurfaceBox,
+} from '@/services/instrument-surface-layout';
+import { layoutStaffStrip, STAFF_ASPECT_RATIO } from '@/services/staff-notation';
 import { InstrumentBell } from '@/components/music/instrument-bell';
+import { MusicStaffStrip } from '@/components/music/music-staff-strip';
 
 const log = Logger.create('MusicChallengeUI');
 
 const ARTWORK_EDGE_MARGIN = 8;
 
+/**
+ * Side padding on the challenge container. The instrument surface cancels it
+ * with a negative margin so the body art can bleed off the screen edge, so the
+ * two have to stay in step.
+ */
+const CONTAINER_PADDING = 16;
+
 export const ARTWORK_TOP_MARGIN = 12;
 export const LOWER_BLOCK_BUTTON_GAP = 16;
+
+/**
+ * How far the music sheet may hang over the top of the instrument. Only the
+ * transparent skirt of the banner reaches that far, so nothing is hidden.
+ */
+export const STAFF_SHEET_OVERLAP = 12;
+
+/** Share of the fallback tube layout's height the sheet may take. */
+const TUBE_SHEET_HEIGHT_FRACTION = 0.3;
 
 export function instrumentLowerBlockHeight(
   scaledButtonSize: (size: number) => number,
@@ -43,8 +68,10 @@ export function instrumentLowerBlockHeight(
   hasSequence: boolean,
 ): number {
   const controls = scaledButtonSize(40) + 24;
-  const dots = hasSequence ? scaledButtonSize(32) + scaledFontSize(12) + 30 : 0;
-  return controls + dots;
+  // The notes themselves are written on the sheet above the instrument; all
+  // that is left down here is the "3/17" progress line.
+  const progress = hasSequence ? scaledFontSize(12) + 10 : 0;
+  return controls + progress;
 }
 
 type PlayMode = 'blow' | 'press';
@@ -94,8 +121,8 @@ const NoteButton = React.memo(function NoteButton({
   playbackActive: boolean;
   /** Incrementing counter to force re-trigger even when the same note repeats */
   playbackTick: number;
-  /** Animated rotation style applied to just the letter */
-  rotationStyle?: { transform: { rotate: string }[] };
+  /** Animated pose applied to just the letter */
+  rotationStyle?: StyleProp<TextStyle>;
   /** Scaled button size */
   size?: number;
   /** Scaled font size */
@@ -222,6 +249,7 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
   const [manualRotated, setManualRotated] = useState(false);
   const [uiHidden, setUiHidden] = useState(false);
   const [surfaceBox, setSurfaceBox] = useState<SurfaceBox>({ width: 0, height: 0 });
+  const [containerBox, setContainerBox] = useState<SurfaceBox>({ width: 0, height: 0 });
   const activeNotesRef = useRef<Set<string>>(new Set());
   const { scaledFontSize, scaledButtonSize } = useAccessibility();
   const systemInsets = useSafeAreaInsets();
@@ -342,12 +370,16 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
     challenge.stopNote(note);
   }, [challenge]);
 
-  const celebrationFontSize = scaledFontSize(isRotated ? 28 : 36);
   const celebrationSubtextFontSize = scaledFontSize(isRotated ? 12 : 14);
 
   const handleRegionLayout = useCallback((event: LayoutChangeEvent) => {
     const { width, height } = event.nativeEvent.layout;
     setSurfaceBox(prev => (prev.width === width && prev.height === height ? prev : { width, height }));
+  }, []);
+
+  const handleContainerLayout = useCallback((event: LayoutChangeEvent) => {
+    const { width, height } = event.nativeEvent.layout;
+    setContainerBox(prev => (prev.width === width && prev.height === height ? prev : { width, height }));
   }, []);
 
   const reserveRight = insets.right + ARTWORK_EDGE_MARGIN;
@@ -367,7 +399,103 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
   );
   const surfaceLayout = stage?.layout ?? null;
 
-  const renderNoteButton = (item: NoteLayoutItem, size: number, fontSize: number) => {
+  // The sheet fills the space the stage left above the instrument, and turns
+  // with the instrument when the child holds the phone up to blow.
+  const sheet = useMemo(
+    () => (stage
+      ? layoutStaffStrip({
+          width: surfaceBox.width,
+          height: surfaceBox.height,
+          instrumentTop: stage.surfaceTop,
+          overlap: STAFF_SHEET_OVERLAP,
+          // In blow mode the sheet moves to what is then the top of the phone,
+          // which in this landscape layout is whichever side the notch is on.
+          edgeInset: Math.max(insets.left, insets.right),
+        })
+      : null),
+    [stage, surfaceBox.width, surfaceBox.height, insets.left, insets.right],
+  );
+
+  // Blowing means holding the phone upright with the mouthpiece over the
+  // microphone at the bottom, so the instrument turns end for end to meet it.
+  const flipShift = stage
+    ? flippedSurfaceShift(stage.layout, surfaceBox.width + 2 * CONTAINER_PADDING)
+    : 0;
+  const turnsForBlow = regionTurnsForBlow(surfaceBox);
+
+  const instrumentFlipStyle = useAnimatedStyle(() => {
+    const turn = turnsForBlow ? instrumentRotation.value : 0;
+    const { translateX, scaleX } = instrumentFlipTransform(flipShift, turn);
+    return { transform: [{ translateX }, { scaleX }] };
+  }, [flipShift, turnsForBlow]);
+
+  const mirroredLabelStyle = useAnimatedStyle(() => {
+    const { rotate, scaleX } = noteLabelTransform(instrumentRotation.value);
+    return { transform: [{ rotate }, { scaleX }] };
+  });
+  // Only an instrument that turned needs its letters turned back.
+  const noteLabelStyle = turnsForBlow ? mirroredLabelStyle : instrumentRotationStyle;
+
+  const sheetStyle = useAnimatedStyle(() => {
+    // instrumentRotation runs 0 -> -90 as the instrument turns, so it doubles
+    // as the progress of the sheet's move to the bottom of the phone.
+    const turned = sheet?.turnsForBlow ? instrumentRotation.value / -90 : 0;
+    return {
+      transform: [
+        { translateX: (sheet?.rotatedTranslateX ?? 0) * turned },
+        { translateY: (sheet?.rotatedTranslateY ?? 0) * turned },
+        { rotate: `${(sheet?.turnsForBlow ? instrumentRotation.value : 0)}deg` },
+        { scale: 1 + ((sheet?.rotatedScale ?? 1) - 1) * turned },
+      ],
+    };
+  }, [sheet]);
+
+  // The hold on the sheet runs off the credit's own clock, so what the child
+  // sees creeping left is exactly the time the note still has to be held. Key
+  // state is not enough: a finger left down across a note boundary would run
+  // the next note's hold without the score ever counting it.
+  const holdingCurrent = isPlayingSong
+    // The reward melody holds each note itself, so the sheet runs through the
+    // song with it rather than sitting still.
+    ? true
+    : challenge.holdingIndex === challenge.currentNoteIndex;
+
+  // Turned and zoomed past the screen, the title would be cut off at both ends,
+  // so it comes off the paper until the sheet lies flat again.
+  const sheetZoomed = Boolean(isRotated && sheet?.turnsForBlow && sheet.rotatedZoom > 1);
+  const titleOnSheet = !sheetZoomed;
+  const sheetVisibleFraction = sheetZoomed && sheet ? 1 / sheet.rotatedZoom : 1;
+
+  const staffStrip = (width: number) => (
+    <MusicStaffStrip
+      sequence={activeSequence}
+      noteLayout={noteLayout}
+      currentIndex={challenge.currentNoteIndex}
+      holdPlan={challenge.holdPlan}
+      holdingCurrent={holdingCurrent}
+      playbackIndex={isPlayingSong ? playbackIndex : -1}
+      width={width}
+      title={titleOnSheet ? promptText : undefined}
+      visibleFraction={sheetVisibleFraction}
+    />
+  );
+
+  /** Sheet width for the fallback tube layout, which has no measured stage. */
+  const tubeSheetWidth = Math.min(
+    containerBox.width - 24,
+    containerBox.height * TUBE_SHEET_HEIGHT_FRACTION * STAFF_ASPECT_RATIO,
+  );
+
+  // With a sheet on screen the prompt is written on the paper, so the floating
+  // caption would only sit on top of it.
+  const showsSheet = hasSequence && (artwork ? sheet != null : tubeSheetWidth > 0);
+
+  const renderNoteButton = (
+    item: NoteLayoutItem,
+    size: number,
+    fontSize: number,
+    labelStyle: StyleProp<TextStyle> = instrumentRotationStyle,
+  ) => {
     // Disable next-note highlight during playback to avoid double-flash
     // For chord entries like "C+E", highlight all notes in the chord
     const nextNote = challenge.nextExpectedNote;
@@ -392,7 +520,7 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
         onPressOut={handleNotePressOut}
         playbackActive={isPlaybackNote}
         playbackTick={isPlaybackNote ? playbackTick : 0}
-        rotationStyle={instrumentRotationStyle}
+        rotationStyle={labelStyle}
         size={size}
         fontSize={fontSize}
       />
@@ -412,7 +540,7 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
   );
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} onLayout={handleContainerLayout} testID="challenge-container">
       {/* Top section: prompt OR celebration.
           When there's no sequence (freeplay), use equal flex so the instrument is centered. */}
       <View style={[styles.topSection, !hasSequence && { flex: 1 }, artwork && styles.sectionCompact, artwork && styles.topSectionFloating, artwork && { height: topSectionHeight }]} testID="top-section" pointerEvents="box-none">
@@ -422,7 +550,6 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
             isRotated && styles.celebrationContainerRotated,
             isRotated ? celebrationRotatedStyle : celebrationStyle,
           ]}>
-            <Text style={[styles.celebrationText, { fontSize: celebrationFontSize }]}>{t('music.amazing')}</Text>
             {challenge.difficultyLevel > 1 && (
               <Text style={[styles.celebrationSubtext, { fontSize: celebrationSubtextFontSize }]}>{t('music.levelComplete', { level: challenge.difficultyLevel })}</Text>
             )}
@@ -430,8 +557,8 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
               <Text style={[styles.celebrationSubtext, { fontSize: celebrationSubtextFontSize }]}>{t('music.playingYourSong')}</Text>
             )}
           </Animated.View>
-        ) : (
-          <View style={[styles.promptContainer, showCelebration && { opacity: 0 }]}>
+        ) : showsSheet ? null : (
+          <View style={[styles.promptContainer, showCelebration && { opacity: 0 }]} testID="prompt-pill">
             <Text style={[styles.promptText, { fontSize: scaledFontSize(16) }]}>{promptText}</Text>
           </View>
         )}
@@ -440,6 +567,23 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
       {/* Center section: instrument body (not rotated) */}
       {artwork ? (
       <View style={styles.instrumentRegion} testID="instrument-region" onLayout={handleRegionLayout}>
+        {sheet && hasSequence && (
+          <Animated.View
+            style={[
+              styles.staffSheet,
+              { left: sheet.left, top: sheet.top },
+              // Lying across the screen the instrument paints over the sheet's
+              // empty skirt, which looks right; stood upright the sheet has to
+              // come forward or the bell covers the notes.
+              isRotated && sheet.turnsForBlow && styles.staffSheetLifted,
+              sheetStyle,
+            ]}
+            pointerEvents="none"
+            testID="staff-strip-wrapper"
+          >
+            {staffStrip(sheet.width)}
+          </Animated.View>
+        )}
         <View
           style={[
             styles.instrumentSurface,
@@ -450,11 +594,14 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
           {rotateButton}
           {surfaceLayout && (() => {
             const body = (
-              <View style={{
-                width: surfaceLayout.width,
-                height: surfaceLayout.height,
-                marginLeft: surfaceLayout.left,
-              }}>
+              <Animated.View
+                style={[{
+                  width: surfaceLayout.width,
+                  height: surfaceLayout.height,
+                  marginLeft: surfaceLayout.left,
+                }, instrumentFlipStyle]}
+                testID="instrument-body-flip"
+              >
                 <Image
                   source={artwork.image}
                   style={{ width: surfaceLayout.width, height: surfaceLayout.height }}
@@ -469,64 +616,27 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
                   if (!position) return null;
                   return (
                     <View key={item.note} style={[styles.holeButton, position]} testID={`note-hole-${item.note}`}>
-                      {renderNoteButton(item, surfaceLayout.buttonSize, Math.round(surfaceLayout.buttonSize * 0.37))}
+                      {renderNoteButton(item, surfaceLayout.buttonSize, Math.round(surfaceLayout.buttonSize * 0.37), noteLabelStyle)}
                     </View>
                   );
                 })}
-              </View>
+              </Animated.View>
             );
             return body;
           })()}
         </View>
         <View style={[styles.lowerBlock, stage && { position: 'absolute', left: 0, right: 0, top: stage.lowerBlockTop, height: lowerBlockHeight }]} testID="lower-block">
-      {/* Sequence dots -hidden when UI is toggled off or sequence is empty */}
-      {/* Sequence dots -use currentSequence from challenge when available (for Go Harder levels) */}
+      {/* Progress line under the instrument -the notes themselves are on the
+          sheet above it. Uses currentSequence when the hook has one (Go Harder). */}
       {(() => {
         const displaySeq = challenge.currentSequence?.length > 0 ? challenge.currentSequence : requiredSequence;
         if (displaySeq.length === 0) return null;
         return (
           <View style={styles.sequenceContainer} testID="sequence-container">
-            <View style={styles.sequenceRow}>
-              {displaySeq.map((entry, index) => {
-                // For chord entries like "C+E", find the first matching note's color
-                const notes = isChordEntry(entry) ? parseChordEntry(entry) : [entry];
-                const layoutItem = noteLayout.find(n => notes.includes(n.note));
-                const isCompleted = index < challenge.currentNoteIndex;
-                const isCurrent = index === challenge.currentNoteIndex;
-                // Display label: "C+E" → "C·E" for readability
-                const label = isChordEntry(entry)
-                  ? parseChordEntry(entry).join('·')
-                  : entry;
-
-                return (
-                  <View
-                    key={`seq-${index}`}
-                    style={[
-                      styles.sequenceDot,
-                      {
-                        width: scaledButtonSize(isChordEntry(entry) ? 48 : 32),
-                        height: scaledButtonSize(32),
-                        borderRadius: scaledButtonSize(16),
-                        backgroundColor: isCompleted
-                          ? (layoutItem?.color ?? '#81C784')
-                          : 'rgba(255,255,255,0.25)',
-                        borderColor: isCurrent ? '#FFFFFF' : 'transparent',
-                      },
-                    ]}
-                  >
-                    <Animated.Text style={[
-                      styles.sequenceDotText,
-                      { fontSize: scaledFontSize(isChordEntry(entry) ? 9 : 11) },
-                      isCompleted && styles.sequenceDotTextCompleted,
-                      instrumentRotationStyle,
-                    ]}>
-                      {label}
-                    </Animated.Text>
-                  </View>
-                );
-              })}
-            </View>
-            <Animated.Text style={[styles.sequenceProgress, { fontSize: scaledFontSize(12) }, instrumentRotationStyle, (isPlayingSong || isFinished) && { opacity: 0 }]}>
+            <Animated.Text
+              style={[styles.sequenceProgress, { fontSize: scaledFontSize(12) }, instrumentRotationStyle, (isPlayingSong || isFinished) && { opacity: 0 }]}
+              testID="sequence-progress"
+            >
               {Math.min(challenge.currentNoteIndex, displaySeq.length)}/{displaySeq.length}
             </Animated.Text>
           </View>
@@ -618,6 +728,11 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
       </View>
       ) : (
         <>
+        {hasSequence && tubeSheetWidth > 0 && (
+          <View style={styles.staffSheetFlow} pointerEvents="none" testID="staff-strip-wrapper">
+            {staffStrip(tubeSheetWidth)}
+          </View>
+        )}
         <View style={styles.instrumentBody}>
           <View style={styles.instrumentTube} testID="instrument-tube">
             {rotateButton}
@@ -631,54 +746,17 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
             <View style={styles.mouthpieceInner} />
           </View>
         </View>
-      {/* Sequence dots -hidden when UI is toggled off or sequence is empty */}
-      {/* Sequence dots -use currentSequence from challenge when available (for Go Harder levels) */}
+      {/* Progress line under the instrument -the notes themselves are on the
+          sheet above it. Uses currentSequence when the hook has one (Go Harder). */}
       {(() => {
         const displaySeq = challenge.currentSequence?.length > 0 ? challenge.currentSequence : requiredSequence;
         if (displaySeq.length === 0) return null;
         return (
           <View style={styles.sequenceContainer} testID="sequence-container">
-            <View style={styles.sequenceRow}>
-              {displaySeq.map((entry, index) => {
-                // For chord entries like "C+E", find the first matching note's color
-                const notes = isChordEntry(entry) ? parseChordEntry(entry) : [entry];
-                const layoutItem = noteLayout.find(n => notes.includes(n.note));
-                const isCompleted = index < challenge.currentNoteIndex;
-                const isCurrent = index === challenge.currentNoteIndex;
-                // Display label: "C+E" → "C·E" for readability
-                const label = isChordEntry(entry)
-                  ? parseChordEntry(entry).join('·')
-                  : entry;
-
-                return (
-                  <View
-                    key={`seq-${index}`}
-                    style={[
-                      styles.sequenceDot,
-                      {
-                        width: scaledButtonSize(isChordEntry(entry) ? 48 : 32),
-                        height: scaledButtonSize(32),
-                        borderRadius: scaledButtonSize(16),
-                        backgroundColor: isCompleted
-                          ? (layoutItem?.color ?? '#81C784')
-                          : 'rgba(255,255,255,0.25)',
-                        borderColor: isCurrent ? '#FFFFFF' : 'transparent',
-                      },
-                    ]}
-                  >
-                    <Animated.Text style={[
-                      styles.sequenceDotText,
-                      { fontSize: scaledFontSize(isChordEntry(entry) ? 9 : 11) },
-                      isCompleted && styles.sequenceDotTextCompleted,
-                      instrumentRotationStyle,
-                    ]}>
-                      {label}
-                    </Animated.Text>
-                  </View>
-                );
-              })}
-            </View>
-            <Animated.Text style={[styles.sequenceProgress, { fontSize: scaledFontSize(12) }, instrumentRotationStyle, (isPlayingSong || isFinished) && { opacity: 0 }]}>
+            <Animated.Text
+              style={[styles.sequenceProgress, { fontSize: scaledFontSize(12) }, instrumentRotationStyle, (isPlayingSong || isFinished) && { opacity: 0 }]}
+              testID="sequence-progress"
+            >
               {Math.min(challenge.currentNoteIndex, displaySeq.length)}/{displaySeq.length}
             </Animated.Text>
           </View>
@@ -809,11 +887,20 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
 };
 
 const styles = StyleSheet.create({
+  staffSheet: {
+    position: 'absolute',
+  },
+  staffSheetLifted: {
+    zIndex: 1,
+  },
+  staffSheetFlow: {
+    alignItems: 'center',
+  },
   container: {
     flex: 1,
     width: '100%',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: CONTAINER_PADDING,
   },
 
   // Top section: flex 1.8 to push instrument + sequence lower
@@ -876,7 +963,7 @@ const styles = StyleSheet.create({
   },
   instrumentSurface: {
     alignSelf: 'stretch',
-    marginHorizontal: -16,
+    marginHorizontal: -CONTAINER_PADDING,
     justifyContent: 'flex-start',
     alignItems: 'flex-start',
   },
@@ -1007,34 +1094,6 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     backgroundColor: 'rgba(0, 0, 0, 0.35)',
   },
-  sequenceRow: {
-    flexDirection: 'row',
-    gap: 12,
-    justifyContent: 'center',
-    flexWrap: 'wrap',
-  },
-  sequenceDot: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-  },
-  sequenceDotPlayback: {
-    borderWidth: 3,
-    borderColor: '#FFD700',
-    transform: [{ scale: 1.2 }],
-  },
-  sequenceDotText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    opacity: 0.5,
-  },
-  sequenceDotTextCompleted: {
-    opacity: 1,
-  },
   sequenceProgress: {
     color: '#FFFFFF',
     fontSize: 12,
@@ -1134,16 +1193,6 @@ const styles = StyleSheet.create({
   celebrationContainerRotated: {
     maxWidth: 260,
     paddingVertical: 8,
-  },
-  celebrationText: {
-    color: '#FFD700',
-    fontSize: 36,
-    fontWeight: '900',
-    textAlign: 'center',
-    letterSpacing: 3,
-    textShadowColor: 'rgba(255, 215, 0, 0.6)',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 20,
   },
   celebrationSubtext: {
     color: '#FFFFFF',
