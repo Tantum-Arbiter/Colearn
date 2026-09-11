@@ -1,4 +1,5 @@
-import { buildHoldPlan, holdProgress, holdRun, MAX_HOLD_MS, DEFAULT_HOLD_RATIO, RELEASE_SNAP_MS } from '@/services/hold-plan';
+import { buildHoldPlan, holdMoveMs, holdProgress, holdRun, MAX_HOLD_MS, DEFAULT_HOLD_RATIO, RELEASE_SNAP_MS } from '@/services/hold-plan';
+import { buildMelodyTimeline } from '@/services/melody-scheduler';
 
 describe('buildHoldPlan', () => {
   it('holds every note for most of its slot when the song says nothing else', () => {
@@ -66,7 +67,7 @@ describe('buildHoldPlan', () => {
 });
 
 describe('holdProgress', () => {
-  const target = { index: 0, notes: ['C'], holdMs: 400 };
+  const target = { index: 0, notes: ['C'], holdMs: 400, slotMs: 500 };
 
   it('reads nothing before the note is held', () => {
     expect(holdProgress(0, target)).toBe(0);
@@ -87,36 +88,99 @@ describe('holdProgress', () => {
 });
 
 describe('holdRun', () => {
-  it('runs a fresh press over the whole hold, at the rate of the hold', () => {
-    expect(holdRun(true, 0, 800)).toEqual({ from: 0, to: 1, durationMs: 800 });
+  it('runs a press over the whole hold, at the rate of the hold', () => {
+    expect(holdRun(true, true, 800)).toEqual({ to: 1, durationMs: 800, fromStart: true });
   });
 
-  it('starts a press from the beginning however far the last one got', () => {
-    // The credit starts again from zero on every press, so the sheet has to as
-    // well -- otherwise it shows progress the score does not have.
-    expect(holdRun(true, 0.7, 800).from).toBe(0);
-    expect(holdRun(true, 0.7, 800).durationMs).toBe(800);
+  it('carries a press on the same note on from wherever the move reached', () => {
+    // Pressing again part-way through a snap-back must not restart the move:
+    // that jumped the score by whatever the snap had not yet undone.
+    expect(holdRun(true, false, 800).fromStart).toBe(false);
+    expect(holdRun(true, false, 800).durationMs).toBe(800);
   });
 
-  it('snaps back in a moment when the note is let go', () => {
-    const run = holdRun(false, 0.7, 800);
-    expect(run).toEqual({ from: 0.7, to: 0, durationMs: RELEASE_SNAP_MS });
+  it('still takes the whole hold, so the note ends where it should', () => {
+    // However far along it already was, a press runs for the same span the
+    // credit waits -- so the score reaches the end of the travel as it counts.
+    expect(holdRun(true, false, 800).durationMs).toBe(holdRun(true, true, 800).durationMs);
+  });
+
+  it('carries a release on from wherever the move reached', () => {
+    // Not "from 0.7" -- from wherever it is. Only the UI thread knows that, and
+    // handing it a JS-side copy snapped the score back several frames.
+    const run = holdRun(false, false, 800);
+    expect(run).toEqual({ to: 0, durationMs: RELEASE_SNAP_MS, fromStart: false });
+  });
+
+  it('begins from nothing only on a note it has just moved on to', () => {
+    // That one has to: its resting place has already shifted along by a whole
+    // note's travel, so the leftover move would draw it that far out.
+    expect(holdRun(false, true, 800).fromStart).toBe(true);
+    expect(holdRun(true, true, 800).fromStart).toBe(true);
+    expect(holdRun(false, false, 800).fromStart).toBe(false);
+    expect(holdRun(true, false, 800).fromStart).toBe(false);
   });
 
   it('snaps back in the same moment however long the note was', () => {
-    expect(holdRun(false, 0.9, 2000).durationMs).toBe(holdRun(false, 0.1, 300).durationMs);
+    expect(holdRun(false, false, 2000).durationMs).toBe(holdRun(false, false, 300).durationMs);
   });
 
   it('is quick enough to read as "hold it again" rather than a rewind', () => {
     expect(RELEASE_SNAP_MS).toBeLessThan(300);
   });
 
-  it('keeps a nonsense position inside the hold', () => {
-    expect(holdRun(false, 4, 800).from).toBe(1);
-    expect(holdRun(false, -2, 800).from).toBe(0);
+  it('never asks for a negative duration', () => {
+    expect(holdRun(true, true, -50).durationMs).toBe(0);
+  });
+});
+
+describe('slot length', () => {
+  it('is the whole slot, not the part of it the note sounds for', () => {
+    const plan = buildHoldPlan(['C', 'D'], 120, [1, 2]);
+    expect(plan.targets.map(t => t.slotMs)).toEqual([500, 1000]);
+    expect(plan.targets[0].holdMs).toBeLessThan(plan.targets[0].slotMs);
   });
 
-  it('never asks for a negative duration', () => {
-    expect(holdRun(true, 0, -50).durationMs).toBe(0);
+  it('matches the reward melody note for note, so the sheet can move with it', () => {
+    // The melody starts each note one slot after the last. If these two ever
+    // disagreed the score would finish a note's travel early and stall, or run
+    // past the note still sounding.
+    const sequence = ['C', 'C', 'C', 'D', 'E', 'D', 'C', 'E', 'D', 'D', 'C'];
+    const rhythm = [1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 4];
+    const plan = buildHoldPlan(sequence, 90, rhythm);
+    const melody = buildMelodyTimeline(sequence, 90, rhythm);
+    expect(plan.targets.map(t => t.slotMs)).toEqual(melody.events.map(e => e.slotMs));
+  });
+
+  it('is never cut short by the blow-mode clamp', () => {
+    // Eight beats at 60bpm is 8s. The hold is capped at 2s, but the note still
+    // occupies its full slot when the melody plays it.
+    const plan = buildHoldPlan(['C'], 60, [8]);
+    expect(plan.targets[0].holdMs).toBe(MAX_HOLD_MS);
+    expect(plan.targets[0].slotMs).toBe(8000);
+  });
+
+  it('gives every entry one beat when the song has no rhythm', () => {
+    expect(buildHoldPlan(['C', 'D'], 120).targets.map(t => t.slotMs)).toEqual([500, 500]);
+  });
+});
+
+describe('holdMoveMs', () => {
+  const plan = buildHoldPlan(['C', 'D'], 90, [1, 4]);
+
+  it('covers a note in the time the child has to hold it', () => {
+    expect(holdMoveMs(plan.targets[0], false)).toBe(plan.targets[0].holdMs);
+  });
+
+  it('covers a note in its whole slot when the melody plays it back', () => {
+    // Otherwise the score finishes early and stands still until the next note
+    // sounds -- 667ms of dead time on the four-beat note below.
+    expect(holdMoveMs(plan.targets[1], true)).toBe(plan.targets[1].slotMs);
+    expect(holdMoveMs(plan.targets[1], true) - holdMoveMs(plan.targets[1], false)).toBeGreaterThan(600);
+  });
+
+  it('never moves for a note that is not there', () => {
+    expect(holdMoveMs(undefined, true)).toBe(0);
+    expect(holdMoveMs(undefined, false)).toBe(0);
   });
 });

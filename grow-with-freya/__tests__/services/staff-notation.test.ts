@@ -7,6 +7,7 @@ import {
   layoutStaffStrip,
   staffShadowLength,
   staffNoteSlots,
+  staffFocusIndex,
   staffHoldTravel,
   staffRowShift,
   staffStemHeight,
@@ -468,5 +469,24 @@ describe('staffHoldTravel', () => {
 
   it('is nothing at all past the end of the song', () => {
     expect(staffHoldTravel(staffNoteSlots([0], metrics), 5)).toBe(0);
+  });
+});
+
+describe('staffFocusIndex', () => {
+  it('follows the score through the song', () => {
+    expect(staffFocusIndex(0, 5)).toBe(0);
+    expect(staffFocusIndex(3, 5)).toBe(3);
+  });
+
+  it('stops on the closing note once the song is over', () => {
+    // Otherwise the row scrolls off the end and leaves a blank staff behind the
+    // celebration.
+    expect(staffFocusIndex(5, 5)).toBe(4);
+    expect(staffFocusIndex(99, 5)).toBe(4);
+  });
+
+  it('never reads before the first note', () => {
+    expect(staffFocusIndex(-3, 5)).toBe(0);
+    expect(staffFocusIndex(0, 0)).toBe(0);
   });
 });

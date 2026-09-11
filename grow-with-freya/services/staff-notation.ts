@@ -347,6 +347,17 @@ export function layoutStaffStrip(region: StaffStripRegion): StaffStripPlacement 
 }
 
 /**
+ * Which entry the score is parked on, given how many it has got through.
+ *
+ * Past the last note the song is over: the score stops on the closing note
+ * rather than scrolling off the end and leaving a blank staff behind the
+ * celebration.
+ */
+export function staffFocusIndex(reached: number, count: number): number {
+  return Math.max(0, Math.min(reached, count - 1));
+}
+
+/**
  * How far the row travels while note `focusIndex` is held -- exactly the gap to
  * where the next note rests, so a completed hold leaves the next note on the
  * playhead with nothing left over.

@@ -41,6 +41,16 @@ export interface HoldTarget {
   notes: string[];
   /** How long to hold, in ms, already clamped to what blow mode can sustain. */
   holdMs: number;
+  /**
+   * How long the entry occupies, in ms -- the whole slot, not just the part of
+   * it the note sounds for, and never clamped.
+   *
+   * This is the rate the reward melody moves at: `melody-scheduler` starts each
+   * note one slot after the last, so the sheet has to travel a slot's distance
+   * in a slot's time or it finishes early and stalls until the next note sounds.
+   * Rounded the same way the scheduler rounds, so the two stay locked together.
+   */
+  slotMs: number;
 }
 
 export interface HoldPlan {
@@ -75,6 +85,7 @@ export function buildHoldPlan(
     index,
     notes: parseChordEntry(entry),
     holdMs: Math.min(MAX_HOLD_MS, holds[index] * beatMs),
+    slotMs: Math.round(slots[index] * beatMs),
   }));
 
   const isUniform = targets.every(target => target.holdMs === targets[0]?.holdMs);
@@ -99,21 +110,55 @@ export function holdProgress(heldMs: number, target: HoldTarget): number {
 export const RELEASE_SNAP_MS = 180;
 
 export interface HoldRun {
-  /** Where the hold starts from: always the beginning of a fresh press. */
-  from: number;
   /** Where it is heading -- 1 for a hold running, 0 for one let go. */
   to: 0 | 1;
   durationMs: number;
+  /**
+   * Whether to begin again from nothing rather than carry on from wherever the
+   * move has actually reached.
+   *
+   * Only a note the score has just moved on to begins from nothing, and it has
+   * to: its resting place has already shifted along by a whole note's travel,
+   * so the move left over from the note before would draw it that far out.
+   *
+   * Everything else carries on, and this deliberately says nothing about where
+   * from -- the move runs on the UI thread, so only the UI thread knows where
+   * it is. Reading that position back on the JS thread returns a stale copy;
+   * assigning it cancels the move and snaps the score to a place it was several
+   * frames ago. Pressing again part-way through a snap-back used to restart the
+   * move, which teleported the score by whatever the snap had not yet undone --
+   * measured at 50px on device -- before it began creeping again.
+   */
+  fromStart: boolean;
+}
+
+/**
+ * How long the score has to cover a note's travel.
+ *
+ * Under the child's fingers that is the hold, because the hold is the clock the
+ * credit runs on and the score must not claim to be further through the note
+ * than the score is. Played back it is the note's whole slot, because that is
+ * when the next note sounds -- using the hold there finished every note early
+ * and left the score still for the rest of the slot, which read as the playback
+ * stopping and starting rather than flowing.
+ */
+export function holdMoveMs(target: HoldTarget | undefined, playingBack: boolean): number {
+  if (!target) return 0;
+  return playingBack ? target.slotMs : target.holdMs;
 }
 
 /**
  * The move the sheet should make for a hold that is starting, or one let go.
  *
- * `at` is how much of the hold has run so far, which only matters on release --
- * a new press restarts the credit, so it restarts the sheet as well and the two
- * can never disagree about how much of the note is left.
+ * A press always takes the whole of `durationMs`, the same span the credit
+ * waits, so however far along the score already was it arrives at the end of
+ * the note's travel exactly as the note counts. Pressing again after letting go
+ * therefore shows the score a little further through the note than the credit
+ * is, by however much of the snap-back was left -- which decays to nothing as
+ * the snap finishes, and never lies about where the note ends.
  */
-export function holdRun(holding: boolean, at: number, holdMs: number): HoldRun {
-  if (holding) return { from: 0, to: 1, durationMs: Math.max(0, holdMs) };
-  return { from: Math.min(1, Math.max(0, at)), to: 0, durationMs: RELEASE_SNAP_MS };
+export function holdRun(holding: boolean, freshNote: boolean, durationMs: number): HoldRun {
+  return holding
+    ? { to: 1, durationMs: Math.max(0, durationMs), fromStart: freshNote }
+    : { to: 0, durationMs: RELEASE_SNAP_MS, fromStart: freshNote };
 }

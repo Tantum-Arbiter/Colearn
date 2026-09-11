@@ -101,6 +101,9 @@ describe('MusicStaffStrip', () => {
     expect(allByTestId(view, 'staff-note-ledger-2').length).toBe(0);
   });
 
+
+
+
   it('never takes a touch, so the instrument keeps every press', () => {
     const view = renderStrip();
     expect(byTestId(view, 'staff-strip').props.pointerEvents).toBe('none');
@@ -196,31 +199,26 @@ describe('MusicStaffStrip', () => {
     expect(allByTestId(view, 'staff-note-halo-2').length).toBe(0);
   });
 
+  it('rings nothing when it is a sheet to read rather than play', () => {
+    // The music-sheet page has no next note to point at, so a ring there only
+    // invites the child to press the wrong thing.
+    const view = renderStrip({ sequence: ['C', 'D', 'E'], currentIndex: 1, markCurrent: false });
+    expect(allByTestId(view, 'staff-note-halo-1').length).toBe(0);
+    expect(allByTestId(view, 'staff-note-head-1').length).toBeGreaterThan(0);
+  });
+
+
   it('moves the ring onto the note the success melody is sounding', () => {
     const view = renderStrip({ sequence: ['C', 'D', 'E'], currentIndex: 0, playbackIndex: 2 });
     expect(allByTestId(view, 'staff-note-halo-2').length).toBeGreaterThan(0);
     expect(allByTestId(view, 'staff-note-halo-0').length).toBe(0);
   });
 
-  /** Where the row of notes rests, before any hold has run. */
-  const rowRestsAt = (view: RenderResult) =>
-    flatStyle(byTestId(view, 'staff-note-row').props.style).left;
-
-  it('parks the note being played on the playhead', () => {
-    const view = renderStrip({ sequence: ['C', 'D', 'E'], currentIndex: 1 });
-    expect(rowRestsAt(view) + metrics.spacing).toBeCloseTo(metrics.playheadX, 1);
-  });
-
-  it('parks a long note on the playhead too, room for its hold and all', () => {
-    // With a hold plan the notes are no longer a spacing apart, so a row that
-    // scrolled by index would leave every note after a long one off the mark.
-    const holdPlan = buildHoldPlan(['C', 'D', 'E'], 120, [1, 4, 1]);
-    const view = renderStrip({ sequence: ['C', 'D', 'E'], currentIndex: 2, holdPlan });
-    const shadows = holdPlan.targets.map(t => staffShadowLength(t.holdMs, holdPlan.beatMs, metrics));
-    const slots = staffNoteSlots(shadows, metrics);
-    expect(rowRestsAt(view)).toBeCloseTo(staffRowShift(slots, 2, 0, metrics.playheadX), 1);
-    expect(rowRestsAt(view) + slots[2]).toBeCloseTo(metrics.playheadX, 1);
-  });
+  // The row's position is a shared value now, so it reaches the screen by one
+  // route and a jest render cannot read it (`useAnimatedStyle` gives back {}).
+  // What the row is parked on is asserted against the pure layer instead --
+  // `staffRowShift` and `staffFocusIndex` in staff-notation.test.ts -- and what
+  // is drawn inside the row is asserted here.
 
   it('keeps the closing note on the page once the song is done', () => {
     // Past the last note there is nothing left to play, so the score stops on
@@ -228,9 +226,6 @@ describe('MusicStaffStrip', () => {
     const view = renderStrip({ sequence: ['C', 'D', 'E'], currentIndex: 3 });
     expect(allByTestId(view, 'staff-note-head-2').length).toBeGreaterThan(0);
     expect(flatStyle(byTestId(view, 'staff-note-2').props.style).opacity).toBeLessThan(0.6);
-    // Parked on the last note, not scrolled a slot past the end of the song.
-    const slots = staffNoteSlots([0, 0, 0], metrics);
-    expect(rowRestsAt(view)).toBeCloseTo(staffRowShift(slots, 2, 0, metrics.playheadX), 1);
   });
 
   it('takes the ring off once there is no note left to play', () => {
@@ -315,6 +310,111 @@ describe('MusicStaffStrip', () => {
       const view = renderStrip({ sequence: ['C', 'D'] });
       expect(allByTestId(view, 'staff-note-shadow-0').length).toBe(0);
     });
+  });
+
+  it('stands a light at the cut, where the note slides out of view', () => {
+    const view = renderStrip();
+    const light = flatStyle(byTestId(view, 'staff-hold-light').props.style);
+    const window = flatStyle(byTestId(view, 'staff-note-window').props.style);
+    // Centred on the cut, and outside the window so the very edge it marks does
+    // not clip it in half.
+    expect(light.left + light.width / 2).toBeCloseTo(window.left as number, 1);
+  });
+
+  it('sits the light on the held note, not across the whole staff', () => {
+    // What is being consumed is that one note and its highlight. A full-height
+    // line said nothing about which note it belonged to.
+    const view = renderStrip({ sequence: ['C', 'A'], currentIndex: 1 });
+    const light = flatStyle(byTestId(view, 'staff-hold-light').props.style);
+    expect(light.top + light.height / 2).toBeCloseTo(staffNoteY(stepsFor('A'), HEIGHT), 1);
+    // No taller than a couple of line gaps -- it is on the row, not spanning it.
+    expect(light.height).toBeLessThan(metrics.lineGap * 2);
+  });
+
+  it('follows the held note up and down the staff', () => {
+    const low = renderStrip({ sequence: ['C', 'A'], currentIndex: 0 });
+    const high = renderStrip({ sequence: ['C', 'A'], currentIndex: 1 });
+    const y = (v: RenderResult) => flatStyle(byTestId(v, 'staff-hold-light').props.style).top;
+    expect(y(high)).toBeLessThan(y(low) as number);
+  });
+
+  it('haloes the light in the note\'s own colour so it reads on the highlight', () => {
+    const view = renderStrip({ sequence: ['C', 'A'], currentIndex: 1 });
+    const core = flatStyle(byTestId(view, 'staff-hold-line').props.style);
+    const box = flatStyle(byTestId(view, 'staff-hold-light').props.style);
+    const glow = flatStyle(byTestId(view, 'staff-hold-glow').props.style);
+    expect(glow.backgroundColor).toBe('#8E5BD8');        // A's button colour
+    expect(core.backgroundColor).not.toBe(glow.backgroundColor);
+    expect(glow.width).toBeGreaterThan(core.width as number);
+    expect(glow.height).toBeGreaterThan(core.height as number);
+    // Level with the line, but spreading right from the cut, over the highlight
+    // being eaten rather than back over the clef and bare paper.
+    expect(glow.top + glow.height / 2).toBeCloseTo(box.top + box.height / 2, 1);
+    const window = flatStyle(byTestId(view, 'staff-note-window').props.style);
+    expect(glow.left).toBeCloseTo(window.left as number, 1);
+    expect(glow.left).toBeGreaterThan(box.left as number);
+  });
+
+  it('falls away in layers so the light radiates rather than sitting there', () => {
+    // One block of the note's colour read as a pale slab on the paper. The
+    // layers carry static opacities under a single animated one -- nested
+    // opacity multiplies -- so the falloff costs no extra animation.
+    const view = renderStrip({ sequence: ['C', 'A'], currentIndex: 1 });
+    const layers = allByTestId(view, 'staff-hold-glow-inner')
+      .concat(allByTestId(view, 'staff-hold-glow'))
+      .map(node => flatStyle(node.props.style))
+      .filter(style => style.width !== undefined);
+    expect(layers.length).toBeGreaterThan(2);
+    const sorted = [...layers].sort((a, b) => (a.width as number) - (b.width as number));
+    // Wider means fainter, all the way out.
+    for (let i = 1; i < sorted.length; i += 1) {
+      expect(sorted[i].opacity).toBeLessThan(sorted[i - 1].opacity as number);
+      expect(sorted[i].height).toBeGreaterThan(sorted[i - 1].height as number);
+    }
+    // Narrower than the single block it replaced, which was 2.1 line gaps.
+    expect(Math.max(...sorted.map(l => l.width as number))).toBeLessThan(metrics.lineGap * 1.6);
+  });
+
+  it('blooms behind the line so it reads as a light, not a painted bar', () => {
+    const view = renderStrip();
+    const line = flatStyle(byTestId(view, 'staff-hold-line').props.style);
+    const bloom = flatStyle(byTestId(view, 'staff-hold-line-bloom').props.style);
+    expect(bloom.width).toBeGreaterThan(line.width as number);
+    expect(bloom.height).toBeGreaterThan(line.height as number);
+    expect(bloom.opacity).toBeLessThan(1);
+    expect(bloom.backgroundColor).toBe(line.backgroundColor);
+  });
+
+  it('leaves the light off a note it cannot place on the staff', () => {
+    const view = renderStrip({ sequence: ['H'], currentIndex: 0 });
+    expect(allByTestId(view, 'staff-hold-light').length).toBe(0);
+  });
+
+  it('swells a note harder while the melody plays it back than while the child does', () => {
+    // Nothing is being asked of the child during playback, so the notes are
+    // free to be pleased with themselves.
+    const playing = renderStrip({ sequence: ['C', 'D'], currentIndex: 0, playbackIndex: 1 });
+    const child = renderStrip({ sequence: ['C', 'D'], currentIndex: 1 });
+    // The bounce rides on the focused head in both, which is what a jest render
+    // can see; the size of it lives in the animation.
+    expect((byTestId(playing, 'staff-note-head-1').props.style as unknown[])[1]).toBeTruthy();
+    expect((byTestId(child, 'staff-note-head-1').props.style as unknown[])[1]).toBeTruthy();
+  });
+
+  it('keeps the wrong-note wash inside the paper, not over the story behind it', () => {
+    // The artwork is paper with transparent margins and a transparent skirt
+    // below it, so a coloured rectangle over the strip's box washed the story
+    // art above the sheet red too. The wash is the banner itself, tinted.
+    const view = renderStrip();
+    // Every image shares one mock object here, so what matters is that the wash
+    // *is* an image sized to the banner rather than a plain coloured box.
+    const wash = allByTestId(view, 'staff-error-wash').filter(node => node.props.source)[0];
+    expect(wash).toBeTruthy();
+    const style = flatStyle(wash.props.style);
+    expect(style.tintColor).toBeTruthy();
+    expect(style.width).toBe(WIDTH);
+    expect(style.height).toBeCloseTo(HEIGHT, 1);
+    expect(wash.props.resizeMode).toBe('contain');
   });
 
   it('draws nothing before the strip has been measured', () => {

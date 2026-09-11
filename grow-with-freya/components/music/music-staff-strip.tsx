@@ -13,11 +13,13 @@
  * instrument without stealing presses from the note buttons.
  */
 
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
+  runOnUI,
+  withDelay,
   withSequence,
   withSpring,
   withTiming,
@@ -27,7 +29,14 @@ import Animated, {
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { isChordEntry, parseChordEntry } from '@/services/sequence-matcher';
 import type { NoteLayoutItem } from '@/services/music-asset-registry';
-import { holdRun, type HoldPlan } from '@/services/hold-plan';
+import { holdMoveMs, holdRun, type HoldPlan } from '@/services/hold-plan';
+import {
+  ERROR_RED_IN_MS,
+  ERROR_RED_OUT_MS,
+  NOTES_IN_MS,
+  NOTES_OUT_MS,
+  cueHiddenMs,
+} from '@/services/sheet-transition';
 import {
   STAFF_ASPECT_RATIO,
   STAFF_PAPER_TOP,
@@ -36,6 +45,7 @@ import {
   staffLedgerSteps,
   staffNoteMetrics,
   staffNoteSlots,
+  staffFocusIndex,
   staffNoteY,
   staffRowShift,
   staffShadowLength,
@@ -67,11 +77,78 @@ const TARGET_LINE_HEIGHT_RATIO = 1.9;
 /** How long a landing note takes to bounce. */
 const LANDING_MS = 260;
 
+/**
+ * How far a note swells as the score arrives on it. The reward melody bounces
+ * harder than the child's own playing: nothing is being asked of them there, so
+ * the notes are free to be pleased with themselves.
+ */
+const LANDING_SWELL = 1.22;
+const PLAYBACK_SWELL = 1.5;
+
+/**
+ * The light at the cut, where the note being held slides out of view.
+ *
+ * It brightens with the hold, so how far through a note the child is can be
+ * read without watching the score creep. It sits *on* the note's own row rather
+ * than crossing the whole staff -- what is being consumed is that one note and
+ * its highlight, and a full-height line said nothing about which.
+ *
+ * The halo is drawn in the note's own colour and the core in near-white, so it
+ * reads as the highlight itself lighting up where it disappears. A pale line on
+ * cream paper was simply too low in contrast to see.
+ */
+const HOLD_LIGHT = '#FFFFFF';
+
+/**
+ * The glow, as layers spilling right from the cut -- innermost first, sized
+ * against the staff line gap.
+ *
+ * Three of them rather than one block: a single rounded rectangle of the note's
+ * colour read as a pale slab sitting on the paper, not as light coming off the
+ * edge. Stacking them with the opacity falling away gives the falloff that
+ * makes it radiate, and lets the whole thing be narrower than the one block was
+ * while carrying further.
+ */
+const HOLD_GLOW_LAYERS = [
+  { width: 0.5, height: 1.15, opacity: 1 },
+  { width: 0.9, height: 1.45, opacity: 0.5 },
+  { width: 1.4, height: 1.85, opacity: 0.22 },
+];
+
+/**
+ * The line itself, standing on the cut across the note's row.
+ *
+ * It both brightens and grows as the hold runs -- opacity alone was too quiet
+ * to notice against the coloured glow behind it, so there was no telling the
+ * thing was animating at all. A white bloom sits behind the core so it reads as
+ * a light rather than a painted bar.
+ */
+const HOLD_LINE_WIDTH_RATIO = 2.2;
+const HOLD_LINE_HEIGHT_RATIO = 1.55;
+const HOLD_LINE_BLOOM_WIDTH_RATIO = 6;
+const HOLD_LINE_BLOOM_OPACITY = 0.4;
+/** How short the line starts, so its growth is what shows the hold running. */
+const HOLD_LINE_MIN_SCALE = 0.45;
+/** Box the line and its bloom sit in, so the growth scales about the note's row. */
+const HOLD_LINE_BOX_HEIGHT_RATIO = 1.9;
+
 /** Shadow thickness, a shade under a line gap so it never smears across two lines. */
 const SHADOW_HEIGHT_RATIO = 0.8;
 
 /** Song title size, as a multiple of the staff line gap. */
 const TITLE_SIZE_RATIO = 1.25;
+
+/** The wash that says a wrong note was played, over the whole paper. */
+const ERROR_RED = '#D8412F';
+const ERROR_RED_PEAK = 0.55;
+
+/**
+ * Easings for the two moves, built once out here rather than inside the worklet
+ * that uses them: composing one on the UI thread is the kind of call that takes
+ * the app down outright instead of reporting an error.
+ */
+const MOVE_EVENLY = Easing.linear;
+const MOVE_BACK = Easing.out(Easing.quad);
 
 interface MusicStaffStripProps {
   /** Note entries for the song, in order. Chord entries like "C+E" are allowed. */
@@ -93,6 +170,20 @@ interface MusicStaffStripProps {
   holdingCurrent?: boolean;
   /** Index sounding during the success melody, or -1 when nothing is playing. */
   playbackIndex?: number;
+  /**
+   * Whether to ring the note in focus. On a sheet being read rather than played
+   * -- the one in the music-sheet page -- there is no next note to point at, so
+   * a ring only invites the child to press the wrong thing.
+   */
+  markCurrent?: boolean;
+  /**
+   * Counters that tick when the sheet should play a cue. A wrong note washes
+   * the paper red and then clears the notes; a finished song just clears them.
+   * Either way the score is reset behind the cue, so what fades back in is the
+   * song from its first note.
+   */
+  wrongCue?: number;
+  replayCue?: number;
   /** Width to draw the banner at; its height follows the artwork's aspect ratio. */
   width: number;
   /** Written on the paper above the staff, the way a score is headed. */
@@ -112,6 +203,9 @@ export const MusicStaffStrip = React.memo(function MusicStaffStrip({
   holdPlan,
   holdingCurrent = false,
   playbackIndex = -1,
+  markCurrent = true,
+  wrongCue = 0,
+  replayCue = 0,
   width,
   title,
   visibleFraction = 1,
@@ -124,7 +218,7 @@ export const MusicStaffStrip = React.memo(function MusicStaffStrip({
   // leave a blank staff behind the celebration. The score stops on the closing
   // note instead, played out and with no ring on it.
   const reached = playbackIndex >= 0 ? playbackIndex : currentIndex;
-  const focusIndex = Math.max(0, Math.min(reached, sequence.length - 1));
+  const focusIndex = staffFocusIndex(reached, sequence.length);
   const stillPlaying = reached < sequence.length;
 
   // A note's shadow can need more room than the ordinary spacing, so where each
@@ -149,60 +243,153 @@ export const MusicStaffStrip = React.memo(function MusicStaffStrip({
   // as zero -- so the new note is exactly on the playhead from the first frame,
   // with no reset effect to run late and no leftover to hand over.
   const travel = staffHoldTravel(slots, focusIndex);
-  const currentHoldMs = holdPlan?.targets[focusIndex]?.holdMs ?? 0;
   const playheadX = metrics?.playheadX ?? 0;
 
-  const progress = useSharedValue(0);
-  const heldFor = useSharedValue(-1);
+  // The hold under the child's fingers, the whole slot when the melody is
+  // playing it back -- `holdMoveMs` carries the reasoning.
+  const moveMs = holdMoveMs(holdPlan?.targets[focusIndex], playbackIndex >= 0);
 
-  useEffect(() => {
-    const at = heldFor.value === focusIndex ? progress.value : 0;
-    heldFor.value = focusIndex;
-    if (currentHoldMs <= 0 || travel <= 0) {
-      progress.value = 0;
-      return;
-    }
-    const run = holdRun(holdingCurrent, at, currentHoldMs);
-    progress.value = run.from;
-    progress.value = reduceMotion
-      ? run.to
-      : withTiming(run.to, {
-          duration: Math.max(1, run.durationMs),
-          // Running forward is a clock, so it has to be even; snapping back is
-          // not, and eases out so it lands rather than stops dead.
-          easing: holdingCurrent ? Easing.linear : Easing.out(Easing.quad),
-        });
-  }, [focusIndex, holdingCurrent, currentHoldMs, travel, reduceMotion, progress, heldFor]);
-
-  // Both ends of the move are worked out here, in plain JS, and the worklet only
-  // slides between them by however much of the hold has run. So where the row
-  // rests is ordinary style that a test can read, and the one thing crossing to
-  // the UI thread each frame is a single number.
+  // Where the row rests for this note, and how far it moves while the note is
+  // held. Both are worked out by the pure layer.
   const restingShift = staffRowShift(slots, focusIndex, 0, playheadX);
   const heldShift = staffRowShift(slots, focusIndex, 1, playheadX);
 
-  const creepStyle = useAnimatedStyle(() => {
-    const ran = heldFor.value === focusIndex ? progress.value : 0;
-    return { transform: [{ translateX: (heldShift - restingShift) * ran }] };
-  }, [focusIndex, restingShift, heldShift]);
+  // The whole position lives on shared values, and so travels to the screen by
+  // one route. It used to be split -- the resting place as a plain `left` from
+  // React, the move as an animated transform -- and the two reach the UI thread
+  // independently, so a frame could be drawn pairing this note's resting place
+  // with the last note's finished move. That flashed the score a whole note's
+  // travel sideways and back on every completed note. There is no ordering to
+  // get right now: all three are written in a single UI-thread tick below.
+  const rowRest = useSharedValue(restingShift);
+  const rowTravel = useSharedValue(restingShift - heldShift);
+  const progress = useSharedValue(0);
+  // Only JS writes this, so reading it back is safe -- unlike a shared value the
+  // UI thread is animating, whose JS copy lags.
+  const lastFocus = useRef(focusIndex);
+  const lastWrongCue = useRef(wrongCue);
+  const lastReplayCue = useRef(replayCue);
+
+  useEffect(() => {
+    const freshNote = lastFocus.current !== focusIndex;
+    lastFocus.current = focusIndex;
+    const { to, durationMs, fromStart } = holdRun(holdingCurrent, freshNote, moveMs);
+    const nowhereToGo = durationMs <= 0 || travel <= 0;
+    // Running forward is a clock, so it has to be even; snapping back is not,
+    // and eases out so it lands rather than stops dead.
+    const easing = holdingCurrent ? MOVE_EVENLY : MOVE_BACK;
+    const duration = Math.max(1, durationMs);
+    const instant = reduceMotion;
+    const rest = restingShift;
+    const span = restingShift - heldShift;
+
+    runOnUI(() => {
+      'worklet';
+      rowRest.value = rest;
+      rowTravel.value = span;
+      if (nowhereToGo) {
+        progress.value = 0;
+        return;
+      }
+      // A plain assignment, not a one-millisecond animation: an animation would
+      // not land until the next frame, which is the flash all over again.
+      if (fromStart) progress.value = 0;
+      progress.value = instant ? to : withTiming(to, { duration, easing });
+    })();
+  }, [focusIndex, holdingCurrent, moveMs, travel, reduceMotion, restingShift, heldShift,
+      progress, rowRest, rowTravel]);
+
+  const rowStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: rowRest.value - rowTravel.value * progress.value }],
+  }));
+
+  // The two cues. A wrong note washes the paper red and then takes the notes
+  // away; a finished song takes them away without the red. Either way the score
+  // is reset behind them -- `sheet-transition` holds the timings both sides
+  // work from -- so what fades back in is the song from its first note.
+  const notesOpacity = useSharedValue(1);
+  const errorWash = useSharedValue(0);
+  const firstCue = useRef(true);
+
+  useEffect(() => {
+    if (firstCue.current) {
+      firstCue.current = false;
+      return;
+    }
+    const wrong = wrongCue > lastWrongCue.current;
+    lastWrongCue.current = wrongCue;
+    lastReplayCue.current = replayCue;
+    if (reduceMotion) return;
+
+    if (wrong) {
+      errorWash.value = withSequence(
+        withTiming(ERROR_RED_PEAK, { duration: ERROR_RED_IN_MS, easing: Easing.out(Easing.quad) }),
+        withTiming(0, { duration: ERROR_RED_OUT_MS, easing: Easing.in(Easing.quad) }),
+      );
+    }
+    // The notes leave only once the red has gone, so the child sees what went
+    // wrong before the page clears. Both fades run at an even rate: eased, the
+    // way back in crossed into visibility almost at once and read as the song
+    // appearing rather than fading in.
+    notesOpacity.value = withSequence(
+      withDelay(wrong ? ERROR_RED_IN_MS + ERROR_RED_OUT_MS : 0,
+        withTiming(0, { duration: NOTES_OUT_MS, easing: Easing.linear })),
+      withDelay(cueHiddenMs(wrong ? 'wrong' : 'replay') - NOTES_IN_MS,
+        withTiming(1, { duration: NOTES_IN_MS, easing: Easing.linear })),
+    );
+  }, [wrongCue, replayCue, reduceMotion, notesOpacity, errorWash]);
+
+  const notesStyle = useAnimatedStyle(() => ({ opacity: notesOpacity.value }));
+  const errorStyle = useAnimatedStyle(() => ({ opacity: errorWash.value }));
 
   // The note that has just landed on the playhead gives a little bounce, so the
   // child can see the sheet has moved on.
   const landing = useSharedValue(1);
+  const playingBack = playbackIndex >= 0;
   useEffect(() => {
     if (reduceMotion) return;
     landing.value = withSequence(
-      withTiming(1.22, { duration: LANDING_MS * 0.35, easing: Easing.out(Easing.quad) }),
-      withSpring(1, { damping: 9, stiffness: 220 }),
+      withTiming(playingBack ? PLAYBACK_SWELL : LANDING_SWELL, {
+        duration: LANDING_MS * 0.35,
+        easing: Easing.out(Easing.quad),
+      }),
+      // Looser on the way back during playback, so it rings rather than lands.
+      withSpring(1, playingBack
+        ? { damping: 6, stiffness: 190 }
+        : { damping: 9, stiffness: 220 }),
     );
-  }, [focusIndex, reduceMotion, landing]);
+  }, [focusIndex, playingBack, reduceMotion, landing]);
 
   const landingStyle = useAnimatedStyle(() => ({ transform: [{ scale: landing.value }] }));
+
+  // The light at the cut comes up with the hold and goes out when the note is
+  // done, so the run of a note reads as something brightening and not only as
+  // the score sliding along.
+  const holdLightStyle = useAnimatedStyle(() => ({ opacity: progress.value }));
+  // The line brightens *and* grows, so the hold running is visible in the shape
+  // and not only in how bright it is.
+  const holdLineStyle = useAnimatedStyle(() => ({
+    opacity: progress.value,
+    transform: [
+      { scaleY: HOLD_LINE_MIN_SCALE + (1 - HOLD_LINE_MIN_SCALE) * progress.value },
+    ],
+  }));
 
   if (!metrics || sequence.length === 0) return null;
 
   const height = width / STAFF_ASPECT_RATIO;
   const playedBefore = reached;
+
+  // The light belongs to the note being held, so it takes that note's row and
+  // its colour.
+  const focusEntry = sequence[focusIndex] ?? '';
+  const focusLetters = isChordEntry(focusEntry) ? parseChordEntry(focusEntry) : [focusEntry];
+  const focusItem = focusLetters
+    .map(letter => noteLayout.find(candidate => candidate.note === letter))
+    .find(Boolean);
+  const focusSteps = staffStepsAboveBottomLine(focusItem?.note ?? focusLetters[0] ?? '');
+  const focusColour = focusItem?.color ?? UNMAPPED_NOTE_COLOR;
+  const focusY = focusSteps === null ? null : staffNoteY(focusSteps, height);
 
   return (
     <View style={{ width, height }} pointerEvents="none" testID={testID}>
@@ -239,14 +426,11 @@ export const MusicStaffStrip = React.memo(function MusicStaffStrip({
           </Text>
         </View>
       ) : null}
-      <View
-        style={[styles.window, { left: metrics.windowLeft, width: metrics.windowWidth, height }]}
+      <Animated.View
+        style={[styles.window, { left: metrics.windowLeft, width: metrics.windowWidth, height }, notesStyle]}
         testID="staff-note-window"
       >
-        <Animated.View
-          style={[styles.row, { height, left: restingShift }, creepStyle]}
-          testID="staff-note-row"
-        >
+        <Animated.View style={[styles.row, { height }, rowStyle]} testID="staff-note-row">
           {sequence.map((entry, index) => {
             const letters = isChordEntry(entry) ? parseChordEntry(entry) : [entry];
             const item = letters
@@ -257,7 +441,7 @@ export const MusicStaffStrip = React.memo(function MusicStaffStrip({
 
             const colour = item?.color ?? UNMAPPED_NOTE_COLOR;
             const shadow = shadows[index] ?? 0;
-            const focused = stillPlaying && index === focusIndex;
+            const focused = markCurrent && stillPlaying && index === focusIndex;
             const centreY = staffNoteY(steps, height);
             const stemHeight = staffStemHeight(steps, height, metrics.lineGap);
             const letter = item?.note ?? letters[0] ?? '';
@@ -380,6 +564,98 @@ export const MusicStaffStrip = React.memo(function MusicStaffStrip({
             );
           })}
         </Animated.View>
+      </Animated.View>
+      {/*
+        The light at the cut, outside the note window so the very edge it marks
+        cannot clip it in half. It sits on the held note's own row, in that
+        note's colour under a near-white core, and comes up with the hold.
+      */}
+      {focusY !== null && (
+        // One animated opacity for the whole light: nested opacity multiplies,
+        // so each layer keeps its own static share of it and the falloff needs
+        // no further animation.
+        <Animated.View
+          testID="staff-hold-light-wrap"
+          pointerEvents="none"
+          style={[StyleSheet.absoluteFill, holdLightStyle]}
+        >
+          {[...HOLD_GLOW_LAYERS].reverse().map(layer => (
+            <View
+              key={`glow-${layer.width}`}
+              testID={layer === HOLD_GLOW_LAYERS[HOLD_GLOW_LAYERS.length - 1]
+                ? 'staff-hold-glow'
+                : 'staff-hold-glow-inner'}
+              style={{
+                position: 'absolute',
+                // Spilling right from the cut, over the highlight being eaten.
+                left: metrics.windowLeft,
+                top: focusY - (metrics.lineGap * layer.height) / 2,
+                width: metrics.lineGap * layer.width,
+                height: metrics.lineGap * layer.height,
+                borderRadius: (metrics.lineGap * layer.height) / 2,
+                backgroundColor: focusColour,
+                opacity: layer.opacity,
+              }}
+            />
+          ))}
+        </Animated.View>
+      )}
+      {focusY !== null && (
+        <Animated.View
+          testID="staff-hold-light"
+          pointerEvents="none"
+          style={[
+            {
+              position: 'absolute',
+              left: metrics.windowLeft - (metrics.stemWidth * HOLD_LINE_BLOOM_WIDTH_RATIO) / 2,
+              top: focusY - (metrics.lineGap * HOLD_LINE_BOX_HEIGHT_RATIO) / 2,
+              width: metrics.stemWidth * HOLD_LINE_BLOOM_WIDTH_RATIO,
+              height: metrics.lineGap * HOLD_LINE_BOX_HEIGHT_RATIO,
+              alignItems: 'center',
+              justifyContent: 'center',
+            },
+            holdLineStyle,
+          ]}
+        >
+          <View
+            testID="staff-hold-line-bloom"
+            style={{
+              position: 'absolute',
+              width: metrics.stemWidth * HOLD_LINE_BLOOM_WIDTH_RATIO,
+              height: metrics.lineGap * HOLD_LINE_BOX_HEIGHT_RATIO,
+              borderRadius: (metrics.stemWidth * HOLD_LINE_BLOOM_WIDTH_RATIO) / 2,
+              backgroundColor: HOLD_LIGHT,
+              opacity: HOLD_LINE_BLOOM_OPACITY,
+            }}
+          />
+          <View
+            testID="staff-hold-line"
+            style={{
+              width: metrics.stemWidth * HOLD_LINE_WIDTH_RATIO,
+              height: metrics.lineGap * HOLD_LINE_HEIGHT_RATIO,
+              borderRadius: (metrics.stemWidth * HOLD_LINE_WIDTH_RATIO) / 2,
+              backgroundColor: HOLD_LIGHT,
+            }}
+          />
+        </Animated.View>
+      )}
+      {/*
+        The wrong-note wash. A second copy of the banner, tinted, rather than a
+        coloured rectangle: the artwork is paper with transparent margins and a
+        transparent skirt below it, so a rectangle washed 125px of the story art
+        above the sheet red as well. Tinting the image keeps the red inside the
+        paper's own shape, wavy edges and all.
+      */}
+      <View style={StyleSheet.absoluteFill} pointerEvents="none">
+        <Animated.Image
+          source={STAFF_BANNER}
+          resizeMode="contain"
+          testID="staff-error-wash"
+          style={[
+            { position: 'absolute', left: 0, top: 0, width, height, tintColor: ERROR_RED },
+            errorStyle,
+          ]}
+        />
       </View>
     </View>
   );
