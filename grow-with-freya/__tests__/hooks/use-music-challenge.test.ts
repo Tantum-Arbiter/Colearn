@@ -54,7 +54,7 @@ jest.mock('@/services/music-asset-registry', () => ({
 }));
 
 import { renderHook, act } from '@testing-library/react-native';
-import { useMusicChallenge } from '@/hooks/use-music-challenge';
+import { useMusicChallenge, type MusicChallengeHookResult } from '@/hooks/use-music-challenge';
 import type { MusicChallenge } from '@/types/story';
 import { validateMusicChallengeAssets, getPracticeSong } from '@/services/music-asset-registry';
 
@@ -73,10 +73,26 @@ const createTestConfig = (overrides: Partial<MusicChallenge> = {}): MusicChallen
   ...overrides,
 });
 
+/**
+ * A note only counts once it has been held for its own hold length, so a press
+ * has to be followed by exactly that much clock -- no more, or the reward melody
+ * that follows the last note would be run forward too.
+ */
+function playAndHold(result: { current: MusicChallengeHookResult }, note: string) {
+  const holdMs = result.current.holdPlan.targets[result.current.currentNoteIndex]?.holdMs ?? 0;
+  act(() => { result.current.playNote(note); });
+  act(() => { jest.advanceTimersByTime(holdMs + 1); });
+}
+
 describe('useMusicChallenge', () => {
   beforeEach(() => {
+    jest.useFakeTimers();
     jest.clearAllMocks();
     (validateMusicChallengeAssets as jest.Mock).mockReturnValue([]);
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   it('should start in idle state with no config', () => {
@@ -107,25 +123,24 @@ describe('useMusicChallenge', () => {
 
     act(() => result.current.start());
 
-    act(() => result.current.playNote('C'));
+    playAndHold(result, 'C');
     expect(result.current.currentNoteIndex).toBe(1);
     expect(result.current.lastInputCorrect).toBe(true);
 
-    act(() => result.current.playNote('D'));
+    playAndHold(result, 'D');
     expect(result.current.currentNoteIndex).toBe(2);
   });
 
   it('should complete the challenge when full sequence is played', () => {
-    jest.useFakeTimers();
     const onComplete = jest.fn();
     const { result } = renderHook(() =>
       useMusicChallenge(createTestConfig(), onComplete)
     );
 
     act(() => result.current.start());
-    act(() => result.current.playNote('C'));
-    act(() => result.current.playNote('D'));
-    act(() => result.current.playNote('E'));
+    playAndHold(result, 'C');
+    playAndHold(result, 'D');
+    playAndHold(result, 'E');
 
     // After completing the sequence, the hook plays back the notes before
     // transitioning to 'completed'. Advance timers to skip the playback.
@@ -135,14 +150,111 @@ describe('useMusicChallenge', () => {
     expect(result.current.isComplete).toBe(true);
     expect(result.current.state).toBe('completed');
     expect(onComplete).toHaveBeenCalledTimes(1);
-    jest.useRealTimers();
+  });
+
+  describe('holding a note', () => {
+    it('does not count the note until it has been held for its length', () => {
+      const { result } = renderHook(() => useMusicChallenge(createTestConfig()));
+      act(() => result.current.start());
+      const holdMs = result.current.holdPlan.targets[0].holdMs;
+
+      act(() => { result.current.playNote('C'); });
+      expect(result.current.currentNoteIndex).toBe(0);
+
+      act(() => { jest.advanceTimersByTime(holdMs - 10); });
+      expect(result.current.currentNoteIndex).toBe(0);
+
+      act(() => { jest.advanceTimersByTime(20); });
+      expect(result.current.currentNoteIndex).toBe(1);
+    });
+
+    it('drops the note when it is let go before the hold is up', () => {
+      const { result } = renderHook(() => useMusicChallenge(createTestConfig()));
+      act(() => result.current.start());
+      const holdMs = result.current.holdPlan.targets[0].holdMs;
+
+      act(() => { result.current.playNote('C'); });
+      act(() => { jest.advanceTimersByTime(holdMs / 2); });
+      act(() => result.current.stopNote('C'));
+      act(() => { jest.advanceTimersByTime(holdMs * 2); });
+
+      expect(result.current.currentNoteIndex).toBe(0);
+      // Nothing lost -- pressing again and holding it through still counts.
+      playAndHold(result, 'C');
+      expect(result.current.currentNoteIndex).toBe(1);
+    });
+
+    it('calls a wrong note wrong straight away, without waiting out a hold', () => {
+      const { result } = renderHook(() => useMusicChallenge(createTestConfig()));
+      act(() => result.current.start());
+
+      act(() => { result.current.playNote('F'); });
+      expect(result.current.lastInputCorrect).toBe(false);
+      expect(result.current.failedAttempts).toBe(1);
+    });
+
+    it('reports which note is counting towards its hold, and stops when it lands', () => {
+      const { result } = renderHook(() => useMusicChallenge(createTestConfig()));
+      act(() => result.current.start());
+      const holdMs = result.current.holdPlan.targets[0].holdMs;
+      expect(result.current.holdingIndex).toBeNull();
+
+      act(() => { result.current.playNote('C'); });
+      expect(result.current.holdingIndex).toBe(0);
+
+      act(() => { jest.advanceTimersByTime(holdMs + 1); });
+      expect(result.current.currentNoteIndex).toBe(1);
+      expect(result.current.holdingIndex).toBeNull();
+    });
+
+    it('stops counting the moment the note is let go', () => {
+      const { result } = renderHook(() => useMusicChallenge(createTestConfig()));
+      act(() => result.current.start());
+
+      act(() => { result.current.playNote('C'); });
+      act(() => { jest.advanceTimersByTime(result.current.holdPlan.targets[0].holdMs / 2); });
+      act(() => result.current.stopNote('C'));
+
+      expect(result.current.holdingIndex).toBeNull();
+    });
+
+    it('does not start the next note on a key that was never lifted', () => {
+      // A finger left down credits the note it was pressed for and nothing
+      // more, so the sheet must not run the next note's hold behind it.
+      const { result } = renderHook(() => useMusicChallenge(createTestConfig()));
+      act(() => result.current.start());
+
+      playAndHold(result, 'C');
+      expect(result.current.currentNoteIndex).toBe(1);
+      expect(result.current.holdingIndex).toBeNull();
+    });
+
+    it('never counts a wrong note towards a hold', () => {
+      const { result } = renderHook(() => useMusicChallenge(createTestConfig()));
+      act(() => result.current.start());
+
+      act(() => { result.current.playNote('F'); });
+      expect(result.current.holdingIndex).toBeNull();
+    });
+
+    it('forgets a hold still waiting when the challenge is retried', () => {
+      const { result } = renderHook(() => useMusicChallenge(createTestConfig()));
+      act(() => result.current.start());
+
+      act(() => { result.current.playNote('C'); });
+      act(() => result.current.retry());
+      act(() => { jest.advanceTimersByTime(result.current.holdPlan.targets[0].holdMs * 2); });
+
+      expect(result.current.currentNoteIndex).toBe(0);
+      expect(result.current.holdingIndex).toBeNull();
+    });
   });
 
   it('should increment failedAttempts on wrong note', () => {
     const { result } = renderHook(() => useMusicChallenge(createTestConfig()));
 
     act(() => result.current.start());
-    act(() => result.current.playNote('C')); // correct
+    playAndHold(result, 'C'); // correct
     act(() => result.current.playNote('F')); // wrong
 
     expect(result.current.failedAttempts).toBe(1);
@@ -153,8 +265,8 @@ describe('useMusicChallenge', () => {
     const { result } = renderHook(() => useMusicChallenge(createTestConfig()));
 
     act(() => result.current.start());
-    act(() => result.current.playNote('C'));
-    act(() => result.current.playNote('D'));
+    playAndHold(result, 'C');
+    playAndHold(result, 'D');
 
     act(() => result.current.retry());
 
@@ -169,7 +281,7 @@ describe('useMusicChallenge', () => {
     );
 
     act(() => result.current.start());
-    act(() => result.current.playNote('C')); // breath not active
+    playAndHold(result, 'C'); // breath not active
 
     expect(result.current.currentNoteIndex).toBe(0); // no progress
   });
@@ -181,7 +293,7 @@ describe('useMusicChallenge', () => {
 
     act(() => result.current.start());
     act(() => result.current.setBreathActive(true));
-    act(() => result.current.playNote('C'));
+    playAndHold(result, 'C');
 
     expect(result.current.currentNoteIndex).toBe(1);
   });
@@ -219,7 +331,7 @@ describe('useMusicChallenge', () => {
     const { result } = renderHook(() => useMusicChallenge(createTestConfig()));
 
     // Still in 'idle' state -not started
-    act(() => result.current.playNote('C'));
+    playAndHold(result, 'C');
     expect(result.current.currentNoteIndex).toBe(0);
   });
 
@@ -241,35 +353,34 @@ describe('useMusicChallenge', () => {
   });
 });
 describe('useMusicChallenge note events', () => {
+  beforeEach(() => { jest.useFakeTimers(); });
+  afterEach(() => { jest.useRealTimers(); });
+
   it('announces a pressed note starting and ending', () => {
-    jest.useFakeTimers();
     const { result } = renderHook(() => useMusicChallenge(createTestConfig()));
     const seen: string[] = [];
     result.current.noteEvents.subscribe(event => seen.push(`${event.source}:${event.note}:${event.phase}`));
 
     act(() => result.current.start());
-    act(() => result.current.playNote('C'));
+    playAndHold(result, 'C');
     act(() => { jest.advanceTimersByTime(200); });
     act(() => result.current.stopNote('C'));
 
     expect(seen).toEqual(['press:C:start', 'press:C:end']);
-    jest.useRealTimers();
   });
 
   it('lets a quick tap sound for its minimum length before announcing the end', () => {
-    jest.useFakeTimers();
     const { result } = renderHook(() => useMusicChallenge(createTestConfig()));
     const seen: string[] = [];
     result.current.noteEvents.subscribe(event => seen.push(event.phase));
 
     act(() => result.current.start());
-    act(() => result.current.playNote('C'));
+    act(() => { result.current.playNote('C'); });
     act(() => result.current.stopNote('C'));
     expect(seen).toEqual(['start']);
 
     act(() => { jest.advanceTimersByTime(120); });
     expect(seen).toEqual(['start', 'end']);
-    jest.useRealTimers();
   });
 
   it('announces a previewed note with the preview source', () => {
@@ -293,22 +404,23 @@ describe('useMusicChallenge note events', () => {
 });
 
 describe('useMusicChallenge completion melody', () => {
+  beforeEach(() => { jest.useFakeTimers(); });
+  afterEach(() => { jest.useRealTimers(); });
+
   const song = { id: 'twinkle', sequence: ['C', 'D', 'E'], requiredNotes: ['C', 'D', 'E'], bpm: 120, rhythm: [1, 1, 2] };
 
   beforeEach(() => {
-    jest.useFakeTimers();
     (getPracticeSong as jest.Mock).mockImplementation((id: string) => (id === 'twinkle' ? song : undefined));
   });
 
   afterEach(() => {
-    jest.useRealTimers();
   });
 
   function complete(result: { current: ReturnType<typeof useMusicChallenge> }) {
     act(() => result.current.start());
-    act(() => result.current.playNote('C'));
-    act(() => result.current.playNote('D'));
-    act(() => result.current.playNote('E'));
+    playAndHold(result, 'C');
+    playAndHold(result, 'D');
+    playAndHold(result, 'E');
   }
 
   it('plays the melody back in rhythm, announcing each note as it sounds', () => {
@@ -375,7 +487,7 @@ describe('useMusicChallenge completion melody', () => {
     complete(result);
     result.current.noteEvents.subscribe(event => seen.push(`${event.source}:${event.phase}`));
     mockPlay.mockClear();
-    act(() => result.current.playNote('C'));
+    playAndHold(result, 'C');
     act(() => result.current.previewNote('C'));
     act(() => result.current.retry());
 
@@ -403,14 +515,17 @@ describe('useMusicChallenge completion melody', () => {
     act(() => result.current.start());
     act(() => result.current.setBreathActive(true));
     for (const note of ['C', 'D']) {
+      const holdMs = result.current.holdPlan.targets[result.current.currentNoteIndex]?.holdMs ?? 0;
       act(() => result.current.playNote(note));
       await act(async () => { await Promise.resolve(); });
+      act(() => { jest.advanceTimersByTime(holdMs + 1); });
     }
     act(() => {
       result.current.playNote('E');
       result.current.playNote('E');
     });
     await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+    act(() => { jest.advanceTimersByTime(result.current.holdPlan.targets[2].holdMs + 1); });
 
     expect(result.current.state).toBe('playing_success_song');
     expect(starts).toBe(1);
@@ -424,7 +539,7 @@ describe('useMusicChallenge completion melody', () => {
     });
 
     complete(result);
-    act(() => result.current.playNote('E'));
+    playAndHold(result, 'E');
     act(() => { jest.runAllTimers(); });
 
     expect(starts).toBe(1);

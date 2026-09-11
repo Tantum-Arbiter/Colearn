@@ -8,10 +8,10 @@
  * Reusable for both story challenge pages and Music Mode free play.
  */
 
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { createAudioPlayer, AudioPlayer } from 'expo-audio';
 import { Logger } from '@/utils/logger';
-import { SequenceMatcher, SequenceMatchResult, isChordEntry } from '@/services/sequence-matcher';
+import { SequenceMatcher, SequenceMatchResult, isChordEntry, parseChordEntry } from '@/services/sequence-matcher';
 import {
   getInstrument,
   getPracticeSong,
@@ -19,6 +19,7 @@ import {
   InstrumentDefinition,
 } from '@/services/music-asset-registry';
 import { buildMelodyTimeline } from '@/services/melody-scheduler';
+import { buildHoldPlan, type HoldPlan } from '@/services/hold-plan';
 import { createNoteEventBus, type NoteEventBus, type NoteEventSource } from '@/services/note-event-bus';
 import type { MusicChallenge } from '@/types/story';
 
@@ -63,6 +64,15 @@ export interface MusicChallengeHookResult {
   resolvedSequence: string[];
   /** Resolved BPM for playback timing (from song or default 120) */
   resolvedBpm: number;
+  /** How long each note of the active sequence is held, for the sheet's shadows */
+  holdPlan: HoldPlan;
+  /**
+   * The sequence entry whose hold is running right now, or null when nothing is
+   * counting towards a credit. This is the credit's own clock, not the key
+   * state: a key left down across a note boundary does not start the next
+   * note's hold, so the sheet can never run ahead of the score.
+   */
+  holdingIndex: number | null;
   /** Which sequence entry the completion melody is sounding right now, null when it is not playing */
   playbackPosition: PlaybackPosition | null;
   /** Every note the instrument sounds (pressed, previewed or in the completion melody) */
@@ -283,6 +293,7 @@ export function useMusicChallenge(
   // BPM for playback timing -defaults to 120 when no song is referenced
   const resolvedBpm = resolvedSong?.bpm ?? 120;
   const resolvedRhythm = resolvedSong && resolvedSong.sequence === resolvedSequence ? resolvedSong.rhythm : undefined;
+  const resolvedHold = resolvedSong && resolvedSong.sequence === resolvedSequence ? resolvedSong.hold : undefined;
 
   // Validate assets on mount
   useEffect(() => {
@@ -441,6 +452,7 @@ export function useMusicChallenge(
       setDifficultyLevel(1);
       matcherRef.current = seq.length > 0 ? new SequenceMatcher(seq) : null;
       activeNotesRef.current.clear();
+      clearAllPendingCredits();
       updateState('awaiting_input');
       setLastInputCorrect(null);
       setSequenceResult(null);
@@ -519,6 +531,16 @@ export function useMusicChallenge(
   // Check if the current sequence has any chord entries
   const hasChords = currentSequence.some(e => isChordEntry(e));
 
+  // How long each note of the sequence on screen is held. A harder generated
+  // sequence has no rhythm of its own, so `buildHoldPlan` falls back to a beat
+  // an entry -- which is what the difficulty levels sound like anyway.
+  const activeSequenceForHold = currentSequence.length > 0 ? currentSequence : resolvedSequence;
+  const holdPlan = useMemo(
+    () => buildHoldPlan(activeSequenceForHold, resolvedBpm, resolvedRhythm, resolvedHold),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [activeSequenceForHold.join('|'), resolvedBpm, resolvedRhythm, resolvedHold],
+  );
+
   /**
    * Play the melody back with the instrument's own samples, in the song's rhythm.
    * Every entry gets its own players (chords sound together), each faded out at the
@@ -591,6 +613,7 @@ export function useMusicChallenge(
   const handleSequenceComplete = useCallback(() => {
     if (stateRef.current !== 'awaiting_input') return;
     activeNotesRef.current.clear();
+    clearAllPendingCredits();
     updateState('sequence_complete');
     log.debug(`Sequence completed! (difficulty ${difficultyLevel})`);
 
@@ -660,6 +683,59 @@ export function useMusicChallenge(
     }
   }, [currentSequence, hasChords, handleSequenceComplete]);
 
+  // Holding the note is part of playing it right, so the credit waits out the
+  // hold instead of landing on the press. Letting go early simply cancels it --
+  // nothing is lost and the child can press again. A wrong note is wrong
+  // straight away, so the feedback never lags behind the mistake.
+  const holdPlanRef = useRef(holdPlan);
+  useEffect(() => { holdPlanRef.current = holdPlan; }, [holdPlan]);
+  const pendingCreditRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  // The sheet draws its hold off this, so it is the credit's clock rather than
+  // the key's: it appears when a hold starts counting and goes the moment that
+  // credit lands or is dropped.
+  const [holdingIndex, setHoldingIndex] = useState<number | null>(null);
+
+  const clearPendingCredit = useCallback((note: string) => {
+    const timer = pendingCreditRef.current.get(note);
+    if (timer) {
+      clearTimeout(timer);
+      pendingCreditRef.current.delete(note);
+    }
+    if (pendingCreditRef.current.size === 0) setHoldingIndex(null);
+  }, []);
+
+  const clearAllPendingCredits = useCallback(() => {
+    pendingCreditRef.current.forEach(timer => clearTimeout(timer));
+    pendingCreditRef.current.clear();
+    setHoldingIndex(null);
+  }, []);
+
+  const creditAfterHold = useCallback((note: string) => {
+    const matcher = matcherRef.current;
+    if (!matcher) {
+      processNoteForSequence(note);
+      return;
+    }
+    const expected = matcher.getNextExpectedNote();
+    const isExpected = expected != null
+      && (expected === note || (isChordEntry(expected) && parseChordEntry(expected).includes(note)));
+    const holdMs = holdPlanRef.current.targets[matcher.getCurrentIndex()]?.holdMs ?? 0;
+    if (!isExpected || holdMs <= 0) {
+      processNoteForSequence(note);
+      return;
+    }
+    clearPendingCredit(note);
+    // Nothing guards the callback: releasing the key clears this timer in
+    // stopNote, and every reset clears all of them, so if it fires the note was
+    // held all the way through.
+    pendingCreditRef.current.set(note, setTimeout(() => {
+      pendingCreditRef.current.delete(note);
+      if (pendingCreditRef.current.size === 0) setHoldingIndex(null);
+      processNoteForSequence(note);
+    }, holdMs));
+    setHoldingIndex(matcher.getCurrentIndex());
+  }, [processNoteForSequence, clearPendingCredit]);
+
   // Helper: ensure the iOS audio session is in playback-only mode (full volume)
   // before playing a note in blow mode. If already paused, resolves immediately.
   const ensurePlaybackSession = useCallback(async () => {
@@ -703,7 +779,7 @@ export function useMusicChallenge(
         blowActiveCountRef.current++;
         void ensurePlaybackSession().then(() => {
           playNoteAudio(note, 'press');
-          processNoteForSequence(note);
+          creditAfterHold(note);
           // Start a max-sustain timer: auto-fade after BLOW_MAX_SUSTAIN_MS
           // so the note doesn't ring forever while the session is paused.
           startBlowSustainTimer(note);
@@ -717,18 +793,18 @@ export function useMusicChallenge(
       if (ctrl && !ctrl.isInPlaybackMode()) {
         void ctrl.ensurePlaybackMode().then(() => {
           playNoteAudio(note, 'press');
-          processNoteForSequence(note);
+          creditAfterHold(note);
         });
       } else {
         playNoteAudio(note, 'press');
-        processNoteForSequence(note);
+        creditAfterHold(note);
       }
     } else {
       // No breath yet -silently queue; will play + process when breath arrives
       pendingNotesRef.current.push(note);
       log.debug('Note pressed without breath -queued silently');
     }
-  }, [state, instrument, config, playNoteAudio, processNoteForSequence, ensurePlaybackSession]);
+  }, [state, instrument, config, playNoteAudio, creditAfterHold, ensurePlaybackSession]);
 
   // When breath activates while notes are held down → play and process them.
   // Also handles session switching for blow mode full-volume playback.
@@ -750,18 +826,18 @@ export function useMusicChallenge(
         void ensurePlaybackSession().then(() => {
           for (const note of notesToPlay) {
             playNoteAudio(note, 'press');
-            processNoteForSequence(note);
+            creditAfterHold(note);
             startBlowSustainTimer(note);
           }
         });
       } else {
         for (const note of notesToPlay) {
           playNoteAudio(note, 'press');
-          processNoteForSequence(note);
+          creditAfterHold(note);
         }
       }
     }
-  }, [isBreathActive, state, config, processNoteForSequence, playNoteAudio, ensurePlaybackSession]);
+  }, [isBreathActive, state, config, creditAfterHold, playNoteAudio, ensurePlaybackSession]);
 
   const previewNote = useCallback((note: string) => {
     if (stateRef.current === 'playing_success_song') return;
@@ -824,6 +900,8 @@ export function useMusicChallenge(
     // Remove from active and pending notes
     activeNotesRef.current.delete(note);
     pendingNotesRef.current = pendingNotesRef.current.filter(n => n !== note);
+    // Let go before the hold was up -- the credit waiting on it is dropped
+    clearPendingCredit(note);
     // Cancel any blow-sustain timer for this note (key released before timeout)
     const sustainTimer = blowSustainTimersRef.current.get(note);
     if (sustainTimer) {
@@ -887,6 +965,7 @@ export function useMusicChallenge(
     if (stateRef.current === 'playing_success_song') return;
     matcherRef.current?.reset();
     activeNotesRef.current.clear();
+    clearAllPendingCredits();
     setSequenceResult(null);
     setLastInputCorrect(null);
     updateState('awaiting_input');
@@ -916,6 +995,7 @@ export function useMusicChallenge(
     setCurrentSequence(harderSeq);
     matcherRef.current = new SequenceMatcher(harderSeq);
     activeNotesRef.current.clear();
+    clearAllPendingCredits();
     updateState('awaiting_input');
     setLastInputCorrect(null);
     setSequenceResult(null);
@@ -932,6 +1012,7 @@ export function useMusicChallenge(
       clearAllBlowSustainTimers();
       matcherRef.current = null;
       activeNotesRef.current.clear();
+      clearAllPendingCredits();
       updateState('idle');
       setDifficultyLevel(1);
       setCurrentSequence([]);
@@ -1006,6 +1087,8 @@ export function useMusicChallenge(
     currentSequence,
     resolvedSequence,
     resolvedBpm,
+    holdPlan,
+    holdingIndex,
     playbackPosition,
     noteEvents,
 

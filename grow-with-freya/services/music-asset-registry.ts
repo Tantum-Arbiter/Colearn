@@ -436,6 +436,12 @@ export interface PracticeSong {
   bpm?: number;
   /** Duration of each sequence entry in beats; omitted songs play every entry for one beat */
   rhythm?: number[];
+  /**
+   * How long each entry is held, in beats -- what the sheet draws as a shadow
+   * behind the note. Omitted entries fall back to the entry's rhythm slot less a
+   * breath gap (see `services/hold-plan.ts`).
+   */
+  hold?: number[];
 }
 
 const PRACTICE_SONGS: PracticeSong[] = [
