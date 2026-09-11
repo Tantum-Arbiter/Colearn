@@ -3455,7 +3455,7 @@ export function StoryBookReader({
         onReadyToPlay={musicChallengePhase === 'preview' ? handleReadyToPlay : undefined}
         onNotePressIn={musicChallenge.previewNote}
         onNotePressOut={musicChallenge.stopNote}
-
+        holdPlan={musicChallenge.holdPlan}
       />
 
       {/* Instrument Picker Overlay -opened only from music challenge controls */}
