@@ -218,6 +218,77 @@ describe('layoutInstrumentStage', () => {
     expect(underTest.lowerBlockTop).toBeCloseTo(buttonsBottom + (400 - buttonsBottom - 138) / 2, 5);
   });
 
+  /** A flute: far wider than it is tall, with its holes left of centre. */
+  const wideArtwork = { image: 1, aspectRatio: 8.3585, holeDiameter: 0.0406 };
+  const wideNotes: NoteLayoutItem[] = [
+    { note: 'C', label: 'C', color: '#111111', hole: { x: 0.1618, y: 0.4906 } },
+    { note: 'D', label: 'D', color: '#222222', hole: { x: 0.2739, y: 0.4906 } },
+    { note: 'E', label: 'E', color: '#333333', hole: { x: 0.3853, y: 0.4906 } },
+    { note: 'F', label: 'F', color: '#444444', hole: { x: 0.4951, y: 0.4906 } },
+    { note: 'G', label: 'G', color: '#555555', hole: { x: 0.605, y: 0.4906 } },
+    { note: 'A', label: 'A', color: '#666666', hole: { x: 0.7133, y: 0.4906 } },
+  ];
+  const UPRIGHT = { width: 800, height: 1200, reserveRight: 8 };
+  const SIDEWAYS = { width: 800, height: 400, reserveRight: 8 };
+
+  it('lets a wide instrument bleed past an upright screen, rather than leaving a thin band', () => {
+    const underTest = layoutInstrumentStage(wideArtwork, wideNotes, UPRIGHT, stageOptions)!;
+
+    expect(underTest.layout.width).toBeGreaterThan(UPRIGHT.width);
+  });
+
+  it('grows the buttons with it, which is the point of the bleed', () => {
+    const upright = layoutInstrumentStage(wideArtwork, wideNotes, UPRIGHT, stageOptions)!;
+    const sideways = layoutInstrumentStage(wideArtwork, wideNotes, SIDEWAYS, stageOptions)!;
+
+    expect(upright.layout.buttonSize).toBeGreaterThan(sideways.layout.buttonSize);
+  });
+
+  it('keeps a button\'s width of screen around every hole it bled past', () => {
+    const underTest = layoutInstrumentStage(wideArtwork, wideNotes, UPRIGHT, stageOptions)!;
+
+    const available = UPRIGHT.width - UPRIGHT.reserveRight;
+    for (const item of wideNotes) {
+      const centre = underTest.layout.left + item.hole!.x * underTest.layout.width;
+      expect(centre).toBeGreaterThanOrEqual(stageOptions.maxButtonSize);
+      expect(centre).toBeLessThanOrEqual(available - stageOptions.maxButtonSize);
+    }
+  });
+
+  it('keeps the instrument centred on the screen, not on the width it was drawn at', () => {
+    const underTest = layoutInstrumentStage(wideArtwork, wideNotes, UPRIGHT, stageOptions)!;
+
+    const available = UPRIGHT.width - UPRIGHT.reserveRight;
+    expect(underTest.layout.left).toBeCloseTo((available - underTest.layout.width) / 2, 5);
+  });
+
+  it('never draws an instrument narrower than the screen to make room around its holes', () => {
+    // Holes almost at the ends of the art: there is no room to bleed, and the
+    // answer is the screen's own width rather than something smaller than it.
+    const edgeHoles: NoteLayoutItem[] = [
+      { note: 'C', label: 'C', color: '#111111', hole: { x: 0.05, y: 0.4906 } },
+      { note: 'D', label: 'D', color: '#222222', hole: { x: 0.95, y: 0.4906 } },
+    ];
+
+    const underTest = layoutInstrumentStage(wideArtwork, edgeHoles, UPRIGHT, stageOptions)!;
+
+    expect(underTest.layout.width).toBe(UPRIGHT.width - UPRIGHT.reserveRight);
+  });
+
+  it('leaves a screen wider than it is tall exactly as it was', () => {
+    const underTest = layoutInstrumentStage(wideArtwork, wideNotes, SIDEWAYS, stageOptions)!;
+
+    expect(underTest.layout.width).toBe(792);
+    expect(underTest.layout.left).toBe(0);
+  });
+
+  it('still puts the note row on the middle line when it has bled', () => {
+    const underTest = layoutInstrumentStage(wideArtwork, wideNotes, UPRIGHT, stageOptions)!;
+
+    const rowCentre = underTest.surfaceTop + 0.4906 * underTest.layout.height;
+    expect(rowCentre).toBeCloseTo(UPRIGHT.height / 2, 5);
+  });
+
   it('returns null before the region has been measured', () => {
     expect(layoutInstrumentStage(artwork, notes, { width: 0, height: 0 }, stageOptions)).toBeNull();
   });

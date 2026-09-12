@@ -109,6 +109,28 @@ export interface InstrumentStage {
   lowerBlockTop: number;
 }
 
+/**
+ * The widest the artwork may be drawn while every hole keeps a button's worth of
+ * screen around it.
+ *
+ * An instrument far wider than it is tall is drawn to the screen's width, which
+ * on a screen held upright leaves it a thin band with its buttons at the
+ * smallest a finger can be asked to hit. Letting the art bleed further off both
+ * edges grows the holes, and the buttons on them, with it. The outermost hole is
+ * what sets the limit -- past it a button would be half off the screen.
+ */
+export function holeFitWidth(
+  noteLayout: NoteLayoutItem[],
+  available: number,
+  margin: number,
+): number {
+  const xs = noteLayout.filter(item => item.hole).map(item => item.hole!.x);
+  if (xs.length === 0) return available;
+  const reach = Math.max(0.5 - Math.min(...xs), Math.max(...xs) - 0.5);
+  if (reach <= 0) return available;
+  return Math.max(available, (available / 2 - margin) / reach);
+}
+
 export function layoutInstrumentStage(
   artwork: SurfaceArtwork,
   noteLayout: NoteLayoutItem[],
@@ -130,8 +152,24 @@ export function layoutInstrumentStage(
     limits.push(Math.max(0, roomBelow) / (lowestHoleY - rowY));
   }
 
-  const layout = layoutInstrumentSurface(artwork, noteLayout, { ...region, height: Math.max(1, Math.min(...limits)) }, options.maxButtonSize);
-  if (!layout) return null;
+  const reserveRight = region.reserveRight ?? 0;
+  const available = region.width - reserveRight;
+  const surfaceWidth = region.height > region.width
+    ? holeFitWidth(noteLayout, available, options.maxButtonSize)
+    : available;
+
+  const drawn = layoutInstrumentSurface(
+    artwork,
+    noteLayout,
+    { ...region, width: surfaceWidth + reserveRight, height: Math.max(1, Math.min(...limits)) },
+    options.maxButtonSize,
+  );
+  if (!drawn) return null;
+
+  // Drawn to a width wider than the screen, the art is centred on that width;
+  // bringing it back by half the difference centres it on the screen instead.
+  const bleed = (surfaceWidth - available) / 2;
+  const layout = bleed > 0 ? { ...drawn, left: drawn.left - bleed } : drawn;
 
   const surfaceTop = middle - rowY * layout.height;
   const buttonsBottom = surfaceTop + Math.max(...Object.values(layout.positions).map(position => position.top)) + layout.buttonSize;
