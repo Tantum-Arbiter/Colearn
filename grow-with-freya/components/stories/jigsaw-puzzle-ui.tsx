@@ -320,7 +320,7 @@ export const JigsawPuzzleUI: React.FC<JigsawPuzzleUIProps> = ({
         >
           <Image
             source={require('@/assets/images/ui-elements/background-home.webp')}
-            style={{ width: screenWidth, height: screenHeight }}
+            style={StyleSheet.absoluteFill}
             contentFit="cover"
             cachePolicy="memory-disk"
           />

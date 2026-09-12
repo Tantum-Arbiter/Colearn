@@ -219,7 +219,7 @@ export const TrialEndUpgradeOverlay = React.memo(function TrialEndUpgradeOverlay
           <Image
             testID="trial-end-background"
             source={require('../../assets/images/ui-elements/story-art-strip-subscribe.webp')}
-            style={[st.bgImage, { width: screenW, height: screenH }]}
+            style={st.bgImage}
             resizeMode="cover"
           />
           <View style={st.bgOverlay} />
@@ -336,7 +336,9 @@ const st = StyleSheet.create({
   backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.5)' },
   modalWrap: { flex: 1 },
   content: { flex: 1, paddingHorizontal: 20 },
-  bgImage: { position: 'absolute', top: 0, left: 0, opacity: 0.35 },
+  // Fitted by the platform against its own bounds: sized here from the window
+  // it is a render behind a rotation, and the art leaves a gap down one side.
+  bgImage: { ...StyleSheet.absoluteFillObject, opacity: 0.35 },
   bgOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(5, 5, 20, 0.45)' },
   closeBtn: { position: 'absolute', right: 18, zIndex: 10, width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.25)', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)' },
   // a tablet is taller than either screen needs, and left to itself the

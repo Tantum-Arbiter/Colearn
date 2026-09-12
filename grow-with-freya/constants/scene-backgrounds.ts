@@ -14,6 +14,28 @@ export const SCENE_BACKGROUNDS: number[] = [
   require('@/assets/images/scene-backgrounds/scene-5.webp'),
 ];
 
+/**
+ * Each scene as four stops down its own height.
+ *
+ * A picture cannot be re-sampled in the frame a rotation resizes it, so what
+ * shows behind it in those frames is this -- the scene's own colours rather than
+ * a flat panel. Sampled straight off the artwork; the order matches
+ * `SCENE_BACKGROUNDS`.
+ */
+export const SCENE_BACKGROUND_TONES: string[][] = [
+  ['#223054', '#1F316D', '#3B3E54', '#373435'],
+  ['#29335B', '#23326E', '#3D3C49', '#332E2A'],
+  ['#26345C', '#273664', '#413E40', '#313339'],
+  ['#223164', '#1C307C', '#3C3F4B', '#39372A'],
+  ['#25315F', '#1F2D6D', '#353956', '#41372E'],
+];
+
+export const SCENE_BACKGROUND_TONE_STOPS = [0, 0.34, 0.68, 1];
+
+export function getSceneBackgroundTones(index: number): string[] {
+  return SCENE_BACKGROUND_TONES[index] ?? SCENE_BACKGROUND_TONES[0];
+}
+
 export const SCENE_BACKGROUND_SOURCE_WIDTH = 1086;
 export const SCENE_BACKGROUND_SOURCE_HEIGHT = 1448;
 export const SCENE_BACKGROUND_ASPECT_RATIO =
