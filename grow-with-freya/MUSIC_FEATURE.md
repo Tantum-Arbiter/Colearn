@@ -62,6 +62,7 @@ story-book-reader.tsx (integration layer -detects music pages, gates navigation)
 | `services/instrument-surface-layout.ts` | Pure layout -fits the body artwork into the measured area (leaving room for the bell to swell), pins one note button per hole, and turns the instrument end for end for blow mode |
 | `services/staff-notation.ts` | Pure notation geometry -staff line fractions measured off the sheet artwork, where each note sits, ledger lines, stem direction, shadow length, slot offsets, how far the row travels and where it sits (`staffHoldTravel` / `staffRowShift`), and where the sheet goes in each pose |
 | `services/sheet-transition.ts` | Pure -timings for the wrong-note and replay cues, shared by the sheet's animation and the hook's reset so the score only changes while the notes are hidden |
+| `services/sheet-flight.ts` | Pure -the one timeline for arriving at the instrument from the music sheet: the sheet's flight, the instrument's slide, the note buttons' stagger and the controls' rise, all read off a single progress value |
 | `services/hold-plan.ts` | Pure -turns a song's `rhythm` and optional `hold` into a hold target and a slot length in ms per note, the hold clamped to what blow mode can sustain; `holdRun` says how the sheet moves for a hold starting or let go |
 | `components/music/music-staff-strip.tsx` | The song written on a staff -one coloured note per entry, in its button's colour, scrolling under a playhead |
 | `services/melody-scheduler.ts` | Pure timeline for the completion melody -one slot per entry from the song's `rhythm` and `bpm`, with an articulation gap |
@@ -805,6 +806,147 @@ button -- the sheet clears itself -- and a wrong note resets it the same way. Th
 `music.goHarder`, `music.goHarderLevel`, `music.levelComplete` and `music.listeningToMelody`
 strings are left in the 14 locale files rather than risk a bulk edit across them; they are unused.
 
+## From the sheet to the instrument
+
+Pressing **Ready to Play** used to be two separate fades in two different places: the sheet faded out
+where it stood, and a moment later the instrument view faded (in the reader, slid up from below) into
+its place. The sheet died at the panel's centre and was reborn at the staff, so nothing joined the
+two halves and the child had no reason to look anywhere in particular.
+
+It is now one move, about three quarters of a second long, driven by a single progress value the
+sheet and the instrument view share. The figures are in `services/sheet-flight.ts`; the lanes overlap
+deliberately, so the next thing is always already arriving before the last one has settled.
+
+The press itself starts the panel leaving. The rest waits on one thing: the instrument view has to be
+mounted and laid out before it can say where its staff is, which is where the sheet is flying to.
+That took 150-250 ms on a dev build of an iPhone 16 Pro, measured off a 60 fps capture. Everything
+below is timed from that report, not from the press.
+
+| From | To | What moves |
+|-|-|-|
+| the press | +240 ms | The panel and its buttons fade. The sheet is not part of this: it detaches on the press and stays exactly where it stood, so what fades is a panel with a sheet-shaped hole in it |
+| 0 ms | 420 ms | The sheet flies from the panel's middle onto the staff above the instrument, easing in and out |
+| 180 ms | 560 ms | The instrument slides in from the left edge, at its own even rate |
+| 400 ms | ~700 ms | The note buttons balloon onto their holes, ~25 ms apart, **in hole order left to right** rather than note-layout order |
+| 480 ms | 700 ms | The play-mode toggle, continue and skip, the progress line and the two floating buttons rise from the bottom edge |
+
+Splitting the press from the report is the whole reason for the `awaitingFlight` prop. Driving both
+off the report instead left 250 ms in which pressing the button did nothing at all, which is the one
+thing a four-year-old will read as the button not working. The alternative -- mounting the instrument
+view under the panel as soon as the preview opens, so the staff is known before the press -- would
+remove the wait entirely, but it starts the challenge's own effects (`setBreathActive`, the play-mode
+effect) a screen early, so it is not worth it for a quarter of a second.
+
+**The background does not change.** In the reader the panel used to stand on its own full-screen
+night scene and the instrument on a dark blur of the story page, so at the 240 ms mark the whole
+background swapped under the sheet. Both now stand on the same night meadow --
+`components/music/music-backdrop.tsx`, drawn full bleed with a centre crop. The reader puts one
+behind the whole challenge when the preview opens and takes it away with the instrument, and passes
+the sheet `backdrop="music"` so it carries its own copy as well. The practise screen still gets the
+random night scene, which is the prop's default.
+
+Two copies rather than one, because the sheet can also be opened *over* the instrument, and a
+backdrop underneath the instrument cannot hide it. Which is why **the blur and the darkening are
+baked into the artwork** instead of being a `BlurView` and a scrim laid over it: identical opaque
+pictures stack to the same pixels, so the sheet's copy fading out over the challenge's shows no
+change at all, where a live blur and scrim would double up and then visibly lighten. It also spares
+the device a full-screen blur redrawn every frame of the arrival. The asset was made from the
+source art with a 26 px Gaussian blur at 1448 px wide, brightness 0.65, resized to 1200x900 --
+14 KB, and any re-tune means regenerating it rather than changing a prop.
+
+**The crop is `contentFit="cover"` with `contentPosition="bottom"`, fitted by the platform.** The art
+is 4:3 and no music screen is, so something has to go; a plain centre crop threw away the meadow on a
+phone held sideways and kept an empty sky, so the bottom is what stays. Measured on the two
+simulators:
+
+| Screen | Viewport (pt) | What is seen |
+|-|-|-|
+| iPhone 16 Pro, sideways | 874 x 402 | Full width; the lower two-fifths of the art -- meadow, fireflies, water. The moon is above the cut |
+| iPad Pro 11, upright | 834 x 1210 | Taller than the art, so it scales by height instead and loses a little from each side; nothing is cut off the top or bottom |
+| iPad Pro 11, sideways | 1210 x 834 | Full width, and only about a tenth off the top -- a tablet is nearly the shape of the art |
+
+Cover means `max(width / 1200, height / 900)`, so a viewport taller than 4:3 still fills rather than
+leaving a gap -- that is the tablet-upright row.
+
+**Why the platform does the fitting and not us.** This was first written with the crop computed from
+`useWindowDimensions`, which is a React render behind the view's own bounds. A tablet turned on its
+side showed the fill behind the art for 165-400 ms of every rotation, measured frame by frame off a
+30 fps capture -- a flat panel where the meadow should be, in the one place a child is most likely to
+turn the device. `contentFit` is resolved natively against whatever bounds the view has, so there is
+nothing to be stale. It also retired the `viewport` prop: a backdrop that fits its own view needs no
+telling how big the window is, including inside the practise screen's quarter-turned container.
+
+Behind the art, the same meadow as a **gradient** (`MEADOW_GRADIENT`, four stops sampled straight
+down the artwork). A picture cannot be re-sampled in the frame a rotation resizes it -- even the
+platform takes a frame or two -- but a gradient is redrawn with the layer it is on. So what shows
+through in those frames is the meadow's own colours rather than a panel. The scene navy that was
+there before is a brighter, more saturated blue than anything in the art, which is exactly why it
+read as a hole.
+
+### The instrument on a screen held upright
+
+A tablet held upright is the one shape the instruments do not suit: the flute is 8.36:1, so drawn to
+an 834 pt screen it is a 95 pt band with its buttons at 48 pt -- barely above the 44 pt touch target,
+in the middle of a very tall screen. `layoutInstrumentStage` now lets the art bleed further off both
+edges when the region is taller than it is wide, up to `holeFitWidth`: the widest it can be drawn
+while every hole keeps a button's width of screen around it. The art is drawn at that width and then
+shifted back by half the overflow, so it stays centred on the screen rather than on the width it was
+drawn at.
+
+For the flute on an iPad Pro 11 held upright that is 794 -> ~960 pt of art, a 115 pt band with 59 pt
+buttons. A screen wider than it is tall -- every phone in the reader, and a tablet turned sideways --
+takes the branch it always did and is unchanged, which is what the "exactly as it was" test pins.
+
+This does not fill a tall screen, and nothing about this artwork can: an 8.36:1 instrument under a
+4:1 sheet leaves air above and below whatever they are scaled to. What it does is stop the child
+being asked to hit 48 pt targets on a device with room for 59.
+
+Four small things had been hidden by the old full-screen scene rather than by intent, and had to be
+handled once the background stopped changing under the arrival:
+
+- **The page's own controls.** The reader's back arrow sat under the sheet's, two arrows in the same
+  corner. They now stand down while the sheet is up, and come back on the sheet's `onLeft` -- when it
+  is actually off screen, not when it was asked to go, which would pop them back mid-exit.
+- **The challenge's caption pill.** `MusicChallengeUI` shows a floating caption when it has no sheet,
+  and for the frames between mounting and being measured it has none, so the caption flashed on the
+  fading panel. It now waits for the measurement before deciding either way.
+- **One frame of the resting pose.** Reanimated applies an animated style *after* the first paint, so
+  the controls and the floating buttons landed in place for a frame the instant the button was
+  pressed, then left. They carry a plain `opacity: 0` underneath the animated style while arriving,
+  which the worklet overrides from its first tick.
+- **The travelling sheet's paper.** The flying copy is a second `MusicStaffStrip`; mounted at the
+  moment it started moving, its banner artwork had not painted for the first frame, so the journey
+  began as notes on nothing. It is now mounted at `opacity: 0` as soon as the sheet has been
+  measured, and only made visible when it leaves.
+
+Four more things that are the way they are for a reason:
+
+- **The sheet is laid out at the panel's width and shrinks into the staff's**, rather than laid out
+  small and blown up. On a landscape phone the ratio is about 0.65, so the paper is only ever
+  sampled down; the other way round it would start the journey blurred, which is the half the child
+  is actually looking at.
+- **The instrument arrives on a timing curve, not a spring.** It is what the note buttons are pinned
+  to, so an overshoot would visibly slide them off their holes. Only the buttons get the springy
+  balloon, and they get it from `easeOutBack`, not `withSpring`, so the whole timeline stays one
+  readable set of numbers.
+- **Two sheets overlap for the last 60 ms of the flight.** The flying copy belongs to the overlay and
+  the resting one to the challenge view; by then they are the same song at the same size in the same
+  place, so the handover is a frame nobody sees. Cutting between them instead risked a blink on the
+  one thing the eye is following.
+- **The flight only happens on the way in.** Opening the sheet from inside the challenge and closing
+  it again slides down as it always did: the reader clears the staff target on those paths, and with
+  no target the overlay falls back to its old fade.
+
+The practise screen still does the old two-fade transition. Its preview and playing phases are two
+separate early returns, so the overlay is destroyed and remade at the phase change and has nothing
+left to fly; and its instrument is drawn in a quarter-turned container, so the sheet would have to
+turn as it travelled. Both are doable -- the flight was built with that in mind -- but neither is
+done.
+
+There is no reduce-motion path yet. `useAccessibility()` returns sizing only, so honouring
+`AccessibilityInfo.isReduceMotionEnabled` means collapsing the timeline to a short crossfade, which
+is its own small change.
+
 ### Chord Notation
 
 - Single note: `"C"` -press one button
@@ -874,6 +1016,7 @@ npx jest __tests__/hooks/use-music-challenge.test.ts --forceExit
 | `music-analytics.test.ts` | 11 | All tracking functions export and execute without error |
 | `use-music-challenge.test.ts` | 38 | State transitions, note progress, mic gating, skip, cleanup, error state, the hold gate, and the two sheet cues resetting the song behind them |
 | `sheet-transition.test.ts` | 6 | Cue order and timings -- the red wash before the notes clear, the notes hidden before the score is reset |
+| `sheet-flight.test.ts` | 28 | The arrival's timeline -- lane order and fit, the flight's start, middle and landing pose, the stagger tightening for a wide instrument, the balloon overshoot, and everything at rest by the end |
 | `use-mic-permission.test.ts` | 12 | Singleton caching, no double prompt, concurrent dedup, cross-hook sharing, denial propagation |
 | `instrument-picker-overlay.test.tsx` | 12 | Visibility, instrument display, title/subtitle, confirm button, placeholders, defaults |
 | `melody-scheduler.test.ts` | 11 | Rhythm slots, fallback to one beat, articulation gap, chords, tempo clamping |

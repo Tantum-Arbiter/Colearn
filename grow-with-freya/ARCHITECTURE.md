@@ -167,6 +167,33 @@ This matters: the Story Garden's book-opening bridge keeps one book rendered acr
 the rotation and counter-rotates it to stay upright, which is only believable if the
 settle is frame-accurate rather than approximated.
 
+### Full-bleed backgrounds must not be sized in JS
+
+A background image sized from `useWindowDimensions()` is a React render behind the view's
+own bounds. The container resizes with the window immediately; the image inside it keeps
+the size it was given for the *old* orientation, and whatever is behind it shows through.
+Measured on an iPad Pro 11 off a 30 fps capture: **165-400 ms of every rotation** showed a
+flat panel where the art should be. (Proved by temporarily colouring that fill magenta and
+rotating again -- the band went magenta.)
+
+So, for anything drawn full-bleed:
+
+- **Let the platform fit it.** `contentFit` / `resizeMode` with no width or height of its
+  own -- `expo-image`'s `contentPosition` carries any anchor the crop needs (`'bottom'`, or
+  `{ top: '42%', left: '50%' }` for a focal bias). It is resolved natively against whatever
+  bounds the view has, so there is nothing to be stale, and it also means such a component
+  needs no `viewport` prop even inside a quarter-turned container.
+- **Put the art's own colours behind it.** Even the platform takes a frame or two to
+  re-sample a picture, but a gradient is redrawn with the layer it is on. `MEADOW_GRADIENT`
+  and `SCENE_BACKGROUND_TONES` are four stops sampled straight down each piece of artwork;
+  a flat colour -- especially a brighter, more saturated one than anything in the art --
+  is what reads as a hole.
+
+This applies to `components/music/music-backdrop.tsx`, `components/ui/scene-background.tsx`,
+the subscription and trial-end overlays, and the jigsaw scramble transition. Decorative art
+that sits on a gradient (the auth sky's clouds, the splash logo) does not leave a hole and
+is sized at module scope; it is wrong after a rotation rather than missing.
+
 ## Home (returning-user dashboard)
 
 `components/home/` is what a family sees first. It is a personal story world, not a
@@ -315,6 +342,13 @@ and, when a limit is near or reached, mounts `ScreenTimeOwlAlert` over the app: 
 bottom-left and delivers the message in a run of four small speech bubbles (the warning, then one
 real-world tip each) rather than a full-screen panel. Time tracking pauses when the app is
 backgrounded.
+
+In the parents' dashboard, the trend chart colours each day against that limit
+(`constants/usage-trend-bars.ts`): a day that went past it is amber -- the same `#F59E0B` the rest
+of the parents' area warns in -- and a day inside it stays teal. Bar heights alone only say how the
+days compare with each other, so a fortnight of long days read exactly like a fortnight of short
+ones. Amber rather than red on purpose: red belongs to the limit being spent now, which is the
+home ring's job.
 
 The owl (`components/screen-time/owl-sprite.tsx`) is a layered puppet, not a frame sequence. Five
 cut-outs in `assets/images/screen-time/owl/` (body, head, closed eyes, open beak, raised wing) are
