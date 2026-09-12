@@ -11,8 +11,11 @@ const MockImage = React.forwardRef((props, ref) => {
                      contentFit === 'contain' ? 'contain' : 
                      contentFit === 'fill' ? 'stretch' : 'cover';
   
+  // Kept alongside resizeMode so a test can assert how the caller asked for the
+  // image to be fitted, which is the thing the component actually chose.
   return React.createElement(Image, {
     ...imageProps,
+    contentFit,
     resizeMode,
     ref,
   });

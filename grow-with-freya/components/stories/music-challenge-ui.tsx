@@ -20,6 +20,7 @@ import Animated, {
   withSequence,
   withSpring,
   Easing,
+  type SharedValue,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { Logger } from '@/utils/logger';
@@ -36,6 +37,15 @@ import {
   type SurfaceBox,
 } from '@/services/instrument-surface-layout';
 import { layoutStaffStrip, STAFF_ASPECT_RATIO } from '@/services/staff-notation';
+import {
+  SHEET_FLIGHT_MS,
+  SHEET_HANDOVER_MS,
+  chromeEntry,
+  instrumentEntry,
+  laneProgress,
+  noteBalloonScale,
+  type SheetRect,
+} from '@/services/sheet-flight';
 import { InstrumentBell } from '@/components/music/instrument-bell';
 import { MusicStaffStrip } from '@/components/music/music-staff-strip';
 
@@ -98,6 +108,13 @@ interface MusicChallengeUIProps {
   onVisibilityChange?: (hidden: boolean) => void;
   /** Override safe-area insets (e.g. when the component is rendered inside a CSS-rotated container) */
   insetsOverride?: { top: number; bottom: number; left: number; right: number };
+  /** Runs 0 -> 1 while the view arrives from the music sheet; absent means at rest */
+  enterProgress?: SharedValue<number>;
+  /**
+   * Reports where the staff sits once the view has been measured, so the sheet
+   * can be flown onto it. Null when this instrument has no staff to fly to.
+   */
+  onStageReady?: (staff: SheetRect | null) => void;
 }
 
 /** Individual note button with its own bounce animation */
@@ -112,6 +129,9 @@ const NoteButton = React.memo(function NoteButton({
   rotationStyle,
   size = 60,
   fontSize = 22,
+  entryProgress,
+  entryIndex,
+  entryCount,
 }: {
   note: string;
   color: string;
@@ -127,6 +147,11 @@ const NoteButton = React.memo(function NoteButton({
   size?: number;
   /** Scaled font size */
   fontSize?: number;
+  /** Arrival progress, shared with the rest of the challenge view */
+  entryProgress: SharedValue<number>;
+  /** Place along the instrument, so the buttons pop in order */
+  entryIndex: number;
+  entryCount: number;
 }) {
   const bounceScale = useSharedValue(1);
   const pulseScale = useSharedValue(1);
@@ -165,8 +190,12 @@ const NoteButton = React.memo(function NoteButton({
   }, [playbackTick, playbackActive, bounceScale, glowIntensity]);
 
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: pulseScale.value * bounceScale.value }],
-  }));
+    transform: [{
+      scale: pulseScale.value
+        * bounceScale.value
+        * noteBalloonScale(entryProgress.value, entryIndex, entryCount),
+    }],
+  }), [entryProgress, entryIndex, entryCount]);
 
   // Animated border/shadow glow that fades in on press and out on release
   const glowStyle = useAnimatedStyle(() => ({
@@ -201,7 +230,7 @@ const NoteButton = React.memo(function NoteButton({
   }, [note, onPressOut, bounceScale, glowIntensity]);
 
   return (
-    <Animated.View style={animatedStyle}>
+    <Animated.View style={animatedStyle} testID={`note-entry-${note}`}>
       <Animated.View
         style={[
           styles.noteButton,
@@ -243,11 +272,14 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
   onPlayModeChange,
   onVisibilityChange,
   insetsOverride,
+  enterProgress,
+  onStageReady,
 }) => {
   const { t } = useTranslation();
   const [playMode, setPlayMode] = useState<PlayMode>('press');
   const [uiHidden, setUiHidden] = useState(false);
   const [surfaceBox, setSurfaceBox] = useState<SurfaceBox>({ width: 0, height: 0 });
+  const [regionOrigin, setRegionOrigin] = useState({ x: 0, y: 0 });
   const [containerBox, setContainerBox] = useState<SurfaceBox>({ width: 0, height: 0 });
   const activeNotesRef = useRef<Set<string>>(new Set());
   const { scaledFontSize, scaledButtonSize } = useAccessibility();
@@ -260,6 +292,14 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
 
   // Rotation for blow mode -instrument faces bottom of phone
   const instrumentRotation = useSharedValue(0);
+
+  const restingProgress = useSharedValue(1);
+  const entryProgress = enterProgress ?? restingProgress;
+  // Reanimated applies an animated style after the first paint, so a view that
+  // arrives from off screen shows one frame of its resting pose first. These
+  // start hidden underneath the animated style, which overrides them from the
+  // first tick onward.
+  const arriving = enterProgress != null;
 
   const isPlayingSong = challenge.state === 'playing_success_song';
   // The challenge no longer stops on a finished state -- it clears the song and
@@ -322,8 +362,9 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
 
 
   const handleRegionLayout = useCallback((event: LayoutChangeEvent) => {
-    const { width, height } = event.nativeEvent.layout;
+    const { x = 0, y = 0, width, height } = event.nativeEvent.layout;
     setSurfaceBox(prev => (prev.width === width && prev.height === height ? prev : { width, height }));
+    setRegionOrigin(prev => (prev.x === x && prev.y === y ? prev : { x, y }));
   }, []);
 
   const handleContainerLayout = useCallback((event: LayoutChangeEvent) => {
@@ -385,6 +426,54 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
   // Only an instrument that turned needs its letters turned back.
   const noteLabelStyle = turnsForBlow ? mirroredLabelStyle : instrumentRotationStyle;
 
+  const staffRect = useMemo<SheetRect | null>(
+    () => (sheet && hasSequence
+      ? { x: regionOrigin.x + sheet.left, y: regionOrigin.y + sheet.top, width: sheet.width, height: sheet.height }
+      : null),
+    [sheet, hasSequence, regionOrigin],
+  );
+
+  const stageMeasured = artwork ? surfaceBox.width > 0 : containerBox.width > 0;
+  const onStageReadyRef = useRef(onStageReady);
+  onStageReadyRef.current = onStageReady;
+  useEffect(() => {
+    if (stageMeasured) onStageReadyRef.current?.(staffRect);
+  }, [stageMeasured, staffRect]);
+
+  const sheetArrivalStyle = useAnimatedStyle(() => ({
+    opacity: laneProgress(entryProgress.value, SHEET_FLIGHT_MS - SHEET_HANDOVER_MS, SHEET_HANDOVER_MS),
+  }), [entryProgress]);
+
+  const instrumentTravel = surfaceLayout
+    ? surfaceLayout.left + surfaceLayout.width + CONTAINER_PADDING
+    : containerBox.width;
+
+  const instrumentEnterStyle = useAnimatedStyle(() => {
+    const pose = instrumentEntry(entryProgress.value);
+    return {
+      opacity: pose.opacity,
+      transform: [{ translateX: pose.slide > 0 ? -instrumentTravel * pose.slide : 0 }],
+    };
+  }, [entryProgress, instrumentTravel]);
+
+  const chromeTravel = lowerBlockHeight + insets.bottom + LOWER_BLOCK_BUTTON_GAP;
+
+  const chromeEnterStyle = useAnimatedStyle(() => {
+    const pose = chromeEntry(entryProgress.value);
+    return { opacity: pose.opacity, transform: [{ translateY: chromeTravel * pose.slide }] };
+  }, [entryProgress, chromeTravel]);
+
+  const floatingEnterStyle = useAnimatedStyle(() => {
+    const pose = chromeEntry(entryProgress.value);
+    return {
+      opacity: pose.opacity,
+      transform: [
+        { translateY: chromeTravel * pose.slide },
+        { rotate: `${instrumentRotation.value}deg` },
+      ],
+    };
+  }, [entryProgress, chromeTravel]);
+
   const sheetStyle = useAnimatedStyle(() => {
     // instrumentRotation runs 0 -> -90 as the instrument turns, so it doubles
     // as the progress of the sheet's move to the bottom of the phone.
@@ -441,11 +530,22 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
   // caption would only sit on top of it.
   const showsSheet = hasSequence && (artwork ? sheet != null : tubeSheetWidth > 0);
 
+  const balloonOrder = useMemo(() => {
+    const rank: Record<string, number> = {};
+    if (!surfaceLayout) return rank;
+    noteLayout
+      .filter(item => surfaceLayout.positions[item.note])
+      .sort((a, b) => surfaceLayout.positions[a.note].left - surfaceLayout.positions[b.note].left)
+      .forEach((item, index) => { rank[item.note] = index; });
+    return rank;
+  }, [noteLayout, surfaceLayout]);
+
   const renderNoteButton = (
     item: NoteLayoutItem,
     size: number,
     fontSize: number,
     labelStyle: StyleProp<TextStyle> = instrumentRotationStyle,
+    entryIndex = 0,
   ) => {
     // Disable next-note highlight during playback to avoid double-flash
     // For chord entries like "C+E", highlight all notes in the chord
@@ -474,6 +574,9 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
         rotationStyle={labelStyle}
         size={size}
         fontSize={fontSize}
+        entryProgress={entryProgress}
+        entryIndex={entryIndex}
+        entryCount={noteLayout.length}
       />
     );
   };
@@ -483,7 +586,7 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
       {/* Top section: prompt OR celebration.
           When there's no sequence (freeplay), use equal flex so the instrument is centered. */}
       <View style={[styles.topSection, !hasSequence && { flex: 1 }, artwork && styles.sectionCompact, artwork && styles.topSectionFloating, artwork && { height: topSectionHeight }]} testID="top-section" pointerEvents="box-none">
-        {showsSheet ? null : (
+        {showsSheet || !stageMeasured ? null : (
           <View style={[styles.promptContainer, isPlayingSong && { opacity: 0 }]} testID="prompt-pill">
             <Text style={[styles.promptText, { fontSize: scaledFontSize(16) }]}>{promptText}</Text>
           </View>
@@ -503,6 +606,7 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
               // come forward or the bell covers the notes.
               isRotated && sheet.turnsForBlow && styles.staffSheetLifted,
               sheetStyle,
+              sheetArrivalStyle,
             ]}
             pointerEvents="none"
             testID="staff-strip-wrapper"
@@ -519,6 +623,7 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
         >
           {surfaceLayout && (() => {
             const body = (
+              <Animated.View style={instrumentEnterStyle} testID="instrument-entry">
               <Animated.View
                 style={[{
                   width: surfaceLayout.width,
@@ -541,16 +646,17 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
                   if (!position) return null;
                   return (
                     <View key={item.note} style={[styles.holeButton, position]} testID={`note-hole-${item.note}`}>
-                      {renderNoteButton(item, surfaceLayout.buttonSize, Math.round(surfaceLayout.buttonSize * 0.37), noteLabelStyle)}
+                      {renderNoteButton(item, surfaceLayout.buttonSize, Math.round(surfaceLayout.buttonSize * 0.37), noteLabelStyle, balloonOrder[item.note] ?? 0)}
                     </View>
                   );
                 })}
+              </Animated.View>
               </Animated.View>
             );
             return body;
           })()}
         </View>
-        <View style={[styles.lowerBlock, stage && { position: 'absolute', left: 0, right: 0, top: stage.lowerBlockTop, height: lowerBlockHeight }]} testID="lower-block">
+        <Animated.View style={[styles.lowerBlock, stage && { position: 'absolute', left: 0, right: 0, top: stage.lowerBlockTop, height: lowerBlockHeight }, arriving && styles.hiddenUntilArrival, chromeEnterStyle]} testID="lower-block">
       {/* Progress line under the instrument -the notes themselves are on the
           sheet above it. Uses currentSequence when the hook has one (Go Harder). */}
       {(() => {
@@ -620,7 +726,7 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
         </View>
       </View>
 
-        </View>
+        </Animated.View>
       </View>
       ) : (
         <>
@@ -632,7 +738,7 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
         <View style={styles.instrumentBody}>
           <View style={styles.instrumentTube} testID="instrument-tube">
               <View style={styles.noteButtonsRow}>
-              {noteLayout.map((item) => renderNoteButton(item, scaledButtonSize(60), scaledFontSize(22)))}
+              {noteLayout.map((item, index) => renderNoteButton(item, scaledButtonSize(60), scaledFontSize(22), instrumentRotationStyle, index))}
             </View>
           </View>
 
@@ -717,7 +823,8 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
         <Animated.View style={[
           styles.floatingControlsWrapper,
           { bottom: Math.max(insets.bottom + 20, 20), left: Math.max(insets.left + 20, 20) },
-          instrumentRotationStyle,
+          arriving && styles.hiddenUntilArrival,
+          floatingEnterStyle,
         ]}>
           <Pressable
             style={[styles.floatingControlButton, { width: scaledButtonSize(44), height: scaledButtonSize(44), borderRadius: scaledButtonSize(22) }]}
@@ -731,9 +838,11 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
       )}
 
       {/* Hide/Unhide button -bottom right, aligned with burger menu */}
-      <View style={[
+      <Animated.View style={[
         styles.floatingControlsWrapper,
         { bottom: Math.max(insets.bottom + 20, 20), right: Math.max(insets.right + 20, 20) },
+        arriving && styles.hiddenUntilArrival,
+        chromeEnterStyle,
       ]}>
         <Pressable
           style={[styles.floatingControlButton, { width: scaledButtonSize(44), height: scaledButtonSize(44), borderRadius: scaledButtonSize(22) }]}
@@ -747,12 +856,15 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
         >
           <MaterialIcons name={uiHidden ? 'visibility' : 'visibility-off'} size={scaledFontSize(22)} color="#FFFFFF" />
         </Pressable>
-      </View>
+      </Animated.View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  hiddenUntilArrival: {
+    opacity: 0,
+  },
   staffSheet: {
     position: 'absolute',
   },

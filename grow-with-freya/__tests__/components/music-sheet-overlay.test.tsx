@@ -5,11 +5,14 @@
  */
 
 import React from 'react';
-import { render, act } from '@testing-library/react-native';
+import { StyleSheet } from 'react-native';
+import { useAnimatedStyle } from 'react-native-reanimated';
+import { render, act, fireEvent } from '@testing-library/react-native';
 import { MusicSheetOverlay } from '@/components/stories/music-sheet-overlay';
 import { NoteLayoutItem } from '@/services/music-asset-registry';
 import { buildHoldPlan } from '@/services/hold-plan';
 import { cueMaskedAtMs } from '@/services/sheet-transition';
+import { SHEET_FLIGHT_MS } from '@/services/sheet-flight';
 
 
 // Helper to search rendered JSON tree for text content (handles arrays and nested nodes)
@@ -407,5 +410,231 @@ describe('MusicSheetOverlay', () => {
       expect(allText).toContain('C');
       expect(allText).toContain('D');
     });
+  });
+});
+
+describe('what the panel stands on', () => {
+  it('stands on a night scene of its own by default', () => {
+    const view = renderOverlay();
+
+    expect(view.UNSAFE_queryAllByProps({ testID: 'scene-background' }).length).toBeGreaterThan(0);
+  });
+
+  it('draws nothing of its own when the caller has put a backdrop behind it', () => {
+    const view = renderOverlay({ backdrop: 'none' } as never);
+
+    expect(view.UNSAFE_queryAllByProps({ testID: 'scene-background' }).length).toBe(0);
+    expect(view.UNSAFE_queryAllByProps({ testID: 'music-backdrop' }).length).toBe(0);
+  });
+
+  it('stands on the music meadow when asked, which is what hides the instrument behind it', () => {
+    const view = renderOverlay({ backdrop: 'music' } as never);
+
+    expect(view.UNSAFE_queryAllByProps({ testID: 'music-backdrop' }).length).toBe(1);
+    expect(view.UNSAFE_queryAllByProps({ testID: 'scene-background' }).length).toBe(0);
+  });
+});
+
+describe('reporting that it has gone', () => {
+  it('says so once it is off screen, not when it was asked to go', () => {
+    const onLeft = jest.fn();
+    const view = render(
+      <MusicSheetOverlay {...defaultProps} onClose={jest.fn()} onLeft={onLeft} />
+    );
+
+    expect(onLeft).not.toHaveBeenCalled();
+
+    view.rerender(
+      <MusicSheetOverlay {...defaultProps} onClose={jest.fn()} onLeft={onLeft} visible={false} />
+    );
+
+    expect(view.toJSON()).toBeNull();
+    expect(onLeft).toHaveBeenCalledTimes(1);
+  });
+
+  it('says nothing when it was never on screen', () => {
+    const onLeft = jest.fn();
+
+    render(
+      <MusicSheetOverlay {...defaultProps} onClose={jest.fn()} onLeft={onLeft} visible={false} />
+    );
+
+    expect(onLeft).not.toHaveBeenCalled();
+  });
+});
+
+describe('flying the sheet onto the instrument', () => {
+  const staff = { x: 208, y: 40, width: 435, height: 109 };
+  const panelAt = { x: 30, y: 90 };
+  const sheetAt = { x: 18, y: 74, width: 664, height: 166 };
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  function renderMeasured(props: Record<string, unknown> = {}) {
+    const view = render(
+      <MusicSheetOverlay
+        {...defaultProps}
+        onClose={jest.fn()}
+        onReadyToPlay={jest.fn()}
+        awaitingFlight
+        {...props}
+      />
+    );
+    const layout = (testID: string, box: Record<string, number>) =>
+      fireEvent(
+        view.UNSAFE_queryAllByProps({ testID })[0],
+        'layout',
+        { nativeEvent: { layout: box } },
+      );
+    act(() => {
+      layout('music-sheet-panel-frame', { ...panelAt, width: 700, height: 320 });
+      layout('music-sheet-frame', sheetAt);
+    });
+    return view;
+  }
+
+  const flightLayer = (view: ReturnType<typeof renderMeasured>) =>
+    view.UNSAFE_queryAllByProps({ testID: 'music-sheet-flight' })[0];
+
+  it('leaves the panel with the sheet still on screen, where the panel had it', () => {
+    const view = renderMeasured();
+
+    view.rerender(
+      <MusicSheetOverlay {...defaultProps} onClose={jest.fn()} visible={false} awaitingFlight />
+    );
+
+    const style = StyleSheet.flatten(flightLayer(view).props.style);
+    expect(style).toMatchObject({
+      left: panelAt.x + sheetAt.x,
+      top: panelAt.y + sheetAt.y,
+      width: sheetAt.width,
+      height: sheetAt.height,
+      opacity: 1,
+    });
+  });
+
+  it('keeps the travelling copy ready behind the panel, so its paper misses no frame', () => {
+    // Mounted only when it starts moving, the second staff's artwork had not
+    // painted for the first frame of the journey: notes on no paper.
+    const view = renderMeasured();
+
+    expect(StyleSheet.flatten(flightLayer(view).props.style).opacity).toBe(0);
+  });
+
+  it('takes the sheet out of the panel so only the flying one is seen', () => {
+    const view = renderMeasured();
+
+    view.rerender(
+      <MusicSheetOverlay {...defaultProps} onClose={jest.fn()} visible={false} awaitingFlight />
+    );
+
+    const inPanel = StyleSheet.flatten(
+      view.UNSAFE_queryAllByProps({ testID: 'music-sheet-frame' })[0].props.style,
+    );
+    expect(inPanel.opacity).toBe(0);
+  });
+
+  it('holds the sheet in place while the staff is still being worked out', () => {
+    const view = renderMeasured();
+
+    view.rerender(
+      <MusicSheetOverlay {...defaultProps} onClose={jest.fn()} visible={false} awaitingFlight />
+    );
+
+    act(() => { jest.advanceTimersByTime(SHEET_FLIGHT_MS * 3); });
+    expect(StyleSheet.flatten(flightLayer(view).props.style).opacity).toBe(1);
+  });
+
+  it('keeps the sheet mounted for the whole flight, then lets it go', () => {
+    const view = renderMeasured();
+
+    view.rerender(
+      <MusicSheetOverlay {...defaultProps} onClose={jest.fn()} visible={false} awaitingFlight />
+    );
+    view.rerender(
+      <MusicSheetOverlay {...defaultProps} onClose={jest.fn()} visible={false} flightTarget={staff} />
+    );
+
+    act(() => { jest.advanceTimersByTime(SHEET_FLIGHT_MS - 1); });
+    expect(StyleSheet.flatten(flightLayer(view).props.style).opacity).toBe(1);
+
+    act(() => { jest.advanceTimersByTime(1); });
+    expect(view.toJSON()).toBeNull();
+  });
+
+  it('does not send the sheet back to the start when the reader re-renders mid-flight', () => {
+    const view = renderMeasured();
+
+    view.rerender(
+      <MusicSheetOverlay {...defaultProps} onClose={jest.fn()} visible={false} awaitingFlight />
+    );
+    view.rerender(
+      <MusicSheetOverlay {...defaultProps} onClose={jest.fn()} visible={false} flightTarget={staff} />
+    );
+    act(() => { jest.advanceTimersByTime(SHEET_FLIGHT_MS - 50); });
+    view.rerender(
+      <MusicSheetOverlay {...defaultProps} onClose={jest.fn()} visible={false} flightTarget={{ ...staff }} />
+    );
+
+    act(() => { jest.advanceTimersByTime(50); });
+
+    expect(view.toJSON()).toBeNull();
+  });
+
+  it('leaves the sheet where it stood, untouched, until it has somewhere to go', () => {
+    const animatedStyle = useAnimatedStyle as unknown as jest.Mock;
+    animatedStyle.mockImplementation((worklet: () => unknown) => worklet());
+    try {
+      const view = renderMeasured();
+
+      view.rerender(
+        <MusicSheetOverlay {...defaultProps} onClose={jest.fn()} visible={false} awaitingFlight />
+      );
+
+      expect(StyleSheet.flatten(flightLayer(view).props.style).transform).toBeUndefined();
+    } finally {
+      animatedStyle.mockImplementation(() => ({}));
+    }
+  });
+
+  it('lets the sheet go when the instrument turns out to have no staff', () => {
+    const view = renderMeasured();
+
+    view.rerender(
+      <MusicSheetOverlay {...defaultProps} onClose={jest.fn()} visible={false} awaitingFlight />
+    );
+    view.rerender(
+      <MusicSheetOverlay {...defaultProps} onClose={jest.fn()} visible={false} flightTarget={null} />
+    );
+
+    expect(view.toJSON()).toBeNull();
+  });
+
+  it('fades where it stands when it was never going to fly', () => {
+    const view = renderMeasured({ awaitingFlight: false });
+
+    view.rerender(
+      <MusicSheetOverlay {...defaultProps} onClose={jest.fn()} visible={false} />
+    );
+
+    expect(flightLayer(view)).toBeUndefined();
+  });
+
+  it('has nothing to fly before the sheet has been measured', () => {
+    const view = render(
+      <MusicSheetOverlay {...defaultProps} onClose={jest.fn()} awaitingFlight />
+    );
+
+    view.rerender(
+      <MusicSheetOverlay {...defaultProps} onClose={jest.fn()} visible={false} awaitingFlight />
+    );
+
+    expect(view.UNSAFE_queryAllByProps({ testID: 'music-sheet-flight' })[0]).toBeUndefined();
   });
 });

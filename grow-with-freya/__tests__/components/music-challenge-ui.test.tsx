@@ -1,7 +1,9 @@
 import React from 'react';
 import { render, fireEvent, act, type RenderResult } from '@testing-library/react-native';
+import { useAnimatedStyle } from 'react-native-reanimated';
 import { MusicChallengeUI, instrumentLowerBlockHeight, ARTWORK_TOP_MARGIN, LOWER_BLOCK_BUTTON_GAP, STAFF_SHEET_OVERLAP } from '@/components/stories/music-challenge-ui';
 import { layoutStaffStrip } from '@/services/staff-notation';
+import { ARRIVAL_TOTAL_MS, NOTE_BALLOON_MS, NOTE_BALLOON_START_MS } from '@/services/sheet-flight';
 import { buildHoldPlan } from '@/services/hold-plan';
 import { layoutInstrumentSurface, layoutInstrumentStage } from '@/services/instrument-surface-layout';
 
@@ -584,5 +586,217 @@ describe('MusicChallengeUI music sheet', () => {
     );
     fireEvent(byTestId(view, 'challenge-container'), 'layout', { nativeEvent: { layout: surfaceBox } });
     expect(view.UNSAFE_queryAllByProps({ testID: 'staff-note-head-1' }).length).toBeGreaterThan(0);
+  });
+});
+
+describe('arriving from the music sheet', () => {
+  const animatedStyle = useAnimatedStyle as unknown as jest.Mock;
+
+  const placement = layoutStaffStrip({
+    width: surfaceBox.width,
+    height: surfaceBox.height,
+    instrumentTop: stageFor(artwork).surfaceTop,
+    overlap: STAFF_SHEET_OVERLAP,
+    edgeInset: 0,
+  })!;
+  const body = layoutInstrumentSurface(artwork, holeLayout, artworkBox, 60)!;
+
+  beforeEach(() => {
+    // The shared mock hands back an empty style, which hides every pose this
+    // transition is made of; here the worklets are run for real.
+    animatedStyle.mockImplementation((worklet: () => unknown) => worklet());
+  });
+
+  afterEach(() => {
+    animatedStyle.mockImplementation(() => ({}));
+  });
+
+  function renderArriving(enterProgress?: { value: number }) {
+    const view = render(
+      <MusicChallengeUI
+        challenge={baseChallenge}
+        promptText="Play"
+        requiredSequence={['C', 'D']}
+        noteLayout={holeLayout}
+        artwork={artwork}
+        showBreathButton={false}
+        onMusicSheet={jest.fn()}
+        enterProgress={enterProgress as never}
+      />
+    );
+    fireEvent(byTestId(view, 'instrument-region'), 'layout', { nativeEvent: { layout: { x: 16, y: 52, ...surfaceBox } } });
+    return view;
+  }
+
+  function renderArrivingWithoutWorklets(enterProgress?: { value: number }) {
+    animatedStyle.mockImplementation(() => ({}));
+    const view = render(
+      <MusicChallengeUI
+        challenge={baseChallenge}
+        promptText="Play"
+        requiredSequence={['C', 'D']}
+        noteLayout={holeLayout}
+        artwork={artwork}
+        showBreathButton={false}
+        onMusicSheet={jest.fn()}
+        enterProgress={enterProgress as never}
+      />
+    );
+    fireEvent(byTestId(view, 'instrument-region'), 'layout', { nativeEvent: { layout: { x: 16, y: 52, ...surfaceBox } } });
+    animatedStyle.mockImplementation((worklet: () => unknown) => worklet());
+    return view;
+  }
+
+  it('reports where the staff sits, in the challenge view own coordinates', () => {
+    const onStageReady = jest.fn();
+
+    const view = render(
+      <MusicChallengeUI
+        challenge={baseChallenge}
+        promptText="Play"
+        requiredSequence={['C', 'D']}
+        noteLayout={holeLayout}
+        artwork={artwork}
+        showBreathButton={false}
+        onStageReady={onStageReady}
+      />
+    );
+    fireEvent(byTestId(view, 'instrument-region'), 'layout', { nativeEvent: { layout: { x: 16, y: 52, ...surfaceBox } } });
+
+    expect(onStageReady).toHaveBeenLastCalledWith({
+      x: 16 + placement.left,
+      y: 52 + placement.top,
+      width: placement.width,
+      height: placement.height,
+    });
+  });
+
+  it('reports that there is nothing to fly onto where there is no song to read', () => {
+    const onStageReady = jest.fn();
+
+    const view = render(
+      <MusicChallengeUI
+        challenge={baseChallenge}
+        promptText="Play"
+        requiredSequence={[]}
+        noteLayout={holeLayout}
+        artwork={artwork}
+        showBreathButton={false}
+        onStageReady={onStageReady}
+      />
+    );
+    fireEvent(byTestId(view, 'instrument-region'), 'layout', { nativeEvent: { layout: { x: 16, y: 52, ...surfaceBox } } });
+
+    expect(onStageReady).toHaveBeenLastCalledWith(null);
+  });
+
+  it('starts the controls hidden, so no frame of them lands before the arrival runs', () => {
+    // Reanimated applies its style after the first paint; without a resting
+    // style underneath, the controls flash in place the moment the button is
+    // pressed. Read with the shared mock, which returns no animated style.
+    const arriving = renderArrivingWithoutWorklets({ value: 0 });
+    const atRest = renderArrivingWithoutWorklets(undefined);
+
+    expect(flatStyle(byTestId(arriving, 'lower-block').props.style).opacity).toBe(0);
+    expect(flatStyle(byTestId(arriving, 'music-sheet-button').props.style).opacity).toBeUndefined();
+    expect(flatStyle(byTestId(atRest, 'lower-block').props.style).opacity).toBeUndefined();
+  });
+
+  it('holds the caption back until it knows whether there is a sheet to read', () => {
+    const view = render(
+      <MusicChallengeUI
+        challenge={baseChallenge}
+        promptText="Play"
+        requiredSequence={['C', 'D']}
+        noteLayout={holeLayout}
+        artwork={artwork}
+        showBreathButton={false}
+      />
+    );
+
+    expect(view.UNSAFE_queryAllByProps({ testID: 'prompt-pill' }).length).toBe(0);
+
+    fireEvent(byTestId(view, 'instrument-region'), 'layout', { nativeEvent: { layout: { x: 16, y: 52, ...surfaceBox } } });
+
+    expect(view.UNSAFE_queryAllByProps({ testID: 'staff-strip-wrapper' }).length).toBeGreaterThan(0);
+    expect(view.UNSAFE_queryAllByProps({ testID: 'prompt-pill' }).length).toBe(0);
+  });
+
+  it('says there is nothing to fly onto for an instrument drawn as the fallback tube', () => {
+    const onStageReady = jest.fn();
+
+    const view = render(
+      <MusicChallengeUI
+        challenge={baseChallenge}
+        promptText="Play"
+        requiredSequence={['C', 'D']}
+        noteLayout={noteLayout}
+        showBreathButton={false}
+        onStageReady={onStageReady}
+      />
+    );
+    fireEvent(byTestId(view, 'challenge-container'), 'layout', { nativeEvent: { layout: { x: 0, y: 0, ...surfaceBox } } });
+
+    expect(onStageReady).toHaveBeenLastCalledWith(null);
+  });
+
+  it('starts with the instrument off the left edge and nothing on the holes', () => {
+    const view = renderArriving({ value: 0 });
+
+    const instrument = flatStyle(byTestId(view, 'instrument-entry').props.style);
+    expect(instrument.opacity).toBe(0);
+    expect((instrument.transform as { translateX: number }[])[0].translateX)
+      .toBeLessThanOrEqual(-(body.left + body.width));
+    expect(flatStyle(byTestId(view, 'note-entry-C').props.style).transform)
+      .toEqual([{ scale: 0 }]);
+  });
+
+  it('starts with the sheet, the controls and the floating buttons still away', () => {
+    const view = renderArriving({ value: 0 });
+
+    expect(flatStyle(byTestId(view, 'staff-strip-wrapper').props.style).opacity).toBe(0);
+    const lower = flatStyle(byTestId(view, 'lower-block').props.style);
+    expect(lower.opacity).toBe(0);
+    expect((lower.transform as { translateY: number }[])[0].translateY).toBeGreaterThan(0);
+    expect(flatStyle(byTestId(view, 'music-sheet-button').props.style).opacity).toBeUndefined();
+  });
+
+  it.each([
+    ['driven to the end of the arrival', { value: 1 }],
+    ['left out altogether', undefined],
+  ])('puts everything exactly where it rests when %s', (_label, enterProgress) => {
+    const view = renderArriving(enterProgress);
+
+    const instrument = flatStyle(byTestId(view, 'instrument-entry').props.style);
+    expect(instrument.opacity).toBe(1);
+    expect(instrument.transform).toEqual([{ translateX: 0 }]);
+    expect(flatStyle(byTestId(view, 'note-entry-C').props.style).transform).toEqual([{ scale: 1 }]);
+    expect(flatStyle(byTestId(view, 'staff-strip-wrapper').props.style).opacity).toBe(1);
+    const lower = flatStyle(byTestId(view, 'lower-block').props.style);
+    expect(lower.opacity).toBe(1);
+    expect(lower.transform).toEqual([{ translateY: 0 }]);
+  });
+
+  it('pops the note buttons along the instrument, left to right', () => {
+    const shuffled = [holeLayout[2], holeLayout[0], holeLayout[1]] as typeof holeLayout;
+    const midway = { value: (NOTE_BALLOON_START_MS + NOTE_BALLOON_MS / 2) / ARRIVAL_TOTAL_MS };
+
+    const view = render(
+      <MusicChallengeUI
+        challenge={baseChallenge}
+        promptText="Play"
+        requiredSequence={['C', 'D']}
+        noteLayout={shuffled}
+        artwork={artwork}
+        showBreathButton={false}
+        enterProgress={midway as never}
+      />
+    );
+    fireEvent(byTestId(view, 'instrument-region'), 'layout', { nativeEvent: { layout: { x: 16, y: 52, ...surfaceBox } } });
+
+    const scaleOf = (note: string) =>
+      (flatStyle(byTestId(view, `note-entry-${note}`).props.style).transform as { scale: number }[])[0].scale;
+    expect(scaleOf('C')).toBeGreaterThan(scaleOf('D'));
+    expect(scaleOf('D')).toBeGreaterThan(scaleOf('E'));
   });
 });

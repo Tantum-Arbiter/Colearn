@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, Pressable, Dimensions, StatusBar, ImageBackgrou
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   useSharedValue,
@@ -26,6 +25,8 @@ import { JigsawPuzzleUI } from './jigsaw-puzzle-ui';
 import { ReadingChallengeUI } from './reading-challenge-ui';
 import { InstrumentPickerOverlay } from './instrument-picker-overlay';
 import { MusicSheetOverlay } from './music-sheet-overlay';
+import { ARRIVAL_TOTAL_MS, type SheetRect } from '@/services/sheet-flight';
+import { MusicBackdrop } from '@/components/music/music-backdrop';
 import { useMusicChallenge } from '@/hooks/use-music-challenge';
 import { useJigsawChallenge } from '@/hooks/use-jigsaw-challenge';
 import { useReadingChallenge } from '@/hooks/use-reading-challenge';
@@ -212,6 +213,13 @@ export function StoryBookReader({
   // Animation shared value for sliding the music practice overlay down on close
   const musicPracticeSlideY = useSharedValue(0);
   const musicPracticeOpacity = useSharedValue(1);
+  const musicEnterProgress = useSharedValue(1);
+  const [staffTarget, setStaffTarget] = useState<SheetRect | null>(null);
+  const [awaitingFlight, setAwaitingFlight] = useState(false);
+  // True from the moment the sheet is asked for until it is off screen, which
+  // outlasts `showMusicSheet` by the length of its exit.
+  const [sheetOnScreen, setSheetOnScreen] = useState(false);
+  const arrivalStartedRef = useRef(false);
   // Track the current play mode for blow/press coordination.
   const currentPlayModeRef = useRef<'blow' | 'press'>('press');
 
@@ -244,7 +252,12 @@ export function StoryBookReader({
 
   // Toggle music sheet overlay
   const handleToggleMusicSheet = useCallback(() => {
-    setShowMusicSheet(prev => !prev);
+    setStaffTarget(null);
+    setAwaitingFlight(false);
+    setShowMusicSheet(prev => {
+      if (!prev) setSheetOnScreen(true);
+      return !prev;
+    });
   }, []);
 
   // Get current page's music challenge config, with user's instrument selection applied
@@ -508,7 +521,13 @@ export function StoryBookReader({
       preMusicChallengeVolumeRef.current = baseVolume;
       fadeMusicVolumeTo(0.1, 500);
 
+      // The blurred page is one layer for the whole challenge, the sheet's panel
+      // and the instrument both standing on it, so it is put in place here
+      // rather than when the instrument arrives.
+      musicPracticeSlideY.value = 0;
+      musicPracticeOpacity.value = 1;
       setMusicChallengePhase('preview');
+      setSheetOnScreen(true);
       setShowMusicSheet(true);
     };
 
@@ -525,18 +544,16 @@ export function StoryBookReader({
   // Step 2: User taps "Ready to Play" on the music sheet → close sheet, show instrument UI
   // Fade background music the rest of the way to 0 (already ducked to 0.1 from step 1)
   const handleReadyToPlay = useCallback(() => {
+    // The panel starts leaving on the press, and the sheet stays on screen: it
+    // is the thing that travels. The instrument view mounts under it at the
+    // start of its own arrival and reports where the staff sits, which is the
+    // rest of the sheet's journey -- a few frames later, which is why the panel
+    // does not wait for it.
+    arrivalStartedRef.current = false;
+    setStaffTarget(null);
+    setAwaitingFlight(true);
     setShowMusicSheet(false);
-    // Come in the way closeMusicPractice goes out: up from below the screen,
-    // fading in. The values are set to the start of that journey rather than
-    // its end -- left at rest, as they used to be, the overlay simply appeared,
-    // so leaving was a glide and arriving was a jump.
-    musicPracticeSlideY.value = Dimensions.get('window').height;
-    musicPracticeOpacity.value = 0;
-    musicPracticeSlideY.value = withTiming(0, {
-      duration: MUSIC_PRACTICE_ANIM_MS,
-      easing: Easing.out(Easing.cubic),
-    });
-    musicPracticeOpacity.value = withTiming(1, { duration: MUSIC_PRACTICE_ANIM_MS });
+    musicEnterProgress.value = 0;
     setMusicChallengePhase('playing');
 
     // Fade background music to silence for instrument practice
@@ -550,6 +567,19 @@ export function StoryBookReader({
     // playAndRecord mode and reduces speaker volume significantly.
     // The breath detector is started/stopped via handlePlayModeChange instead.
   }, [musicChallenge, currentMusicChallenge, breathDetector, fadeMusicVolumeTo, globalSound.volume]);
+
+  // Step 3: the instrument view has worked out where its staff sits, so the
+  // sheet can leave the panel and fly onto it while everything else arrives.
+  const handleStageReady = useCallback((staff: SheetRect | null) => {
+    if (arrivalStartedRef.current) return;
+    arrivalStartedRef.current = true;
+    setStaffTarget(staff);
+    setAwaitingFlight(false);
+    musicEnterProgress.value = withTiming(1, {
+      duration: ARRIVAL_TOTAL_MS,
+      easing: Easing.linear,
+    });
+  }, [musicEnterProgress]);
 
   // Handle play-mode changes from MusicChallengeUI.
   // In "blow" mode we need the mic → start the breath detector (playAndRecord session).
@@ -584,6 +614,8 @@ export function StoryBookReader({
   }, [clearMusicVolumeFade]);
 
   const handleCloseMusicSheet = useCallback(() => {
+    setStaffTarget(null);
+    setAwaitingFlight(false);
     setShowMusicSheet(false);
     // If we were in preview phase (music sheet shown before instrument),
     // reset back to idle so the "Begin Playing" button reappears.
@@ -689,8 +721,6 @@ export function StoryBookReader({
         if (opts?.resetUiHidden) { setMusicUiHidden(false); }
         restoreMusicVolume();
         // Set phase to idle LAST -this unmounts the overlay.
-        // Animation values stay off-screen; handleReadyToPlay starts the next
-        // arrival from there, so the overlay never flashes into place.
         setMusicChallengePhase('idle');
       } catch (err) {
         log.warn('closeMusicPractice cleanup error:', err);
@@ -1867,10 +1897,23 @@ export function StoryBookReader({
               </>
             )}
 
+            {/* The night meadow the whole music challenge stands on -- the
+                sheet's panel while it is being read, the instrument once it
+                arrives. One layer for both, so the handover changes nothing
+                behind them. */}
+            {!isNextPage && page.interactionType === 'music_challenge' && page.musicChallenge?.enabled && musicChallengePhase !== 'idle' && (
+              <Animated.View
+                style={[styles.musicChallengeBackdrop, musicPracticeAnimatedStyle]}
+                pointerEvents="none"
+                testID="music-challenge-backdrop"
+              >
+                <MusicBackdrop />
+              </Animated.View>
+            )}
+
             {/* Music Challenge: instrument UI (only in 'playing' phase) */}
             {!isNextPage && page.interactionType === 'music_challenge' && page.musicChallenge?.enabled && musicChallengePhase === 'playing' && (
               <Animated.View style={[styles.musicChallengeOverlay, musicPracticeAnimatedStyle]}>
-                <BlurView intensity={40} style={StyleSheet.absoluteFill} tint="dark" />
                 <MusicChallengeUI
                   challenge={musicChallenge}
                   promptText={page.musicChallenge.promptText}
@@ -1890,6 +1933,8 @@ export function StoryBookReader({
                   onRotationChange={setInstrumentIsRotated}
                   onPlayModeChange={handlePlayModeChange}
                   onVisibilityChange={setMusicUiHidden}
+                  enterProgress={musicEnterProgress}
+                  onStageReady={handleStageReady}
                 />
               </Animated.View>
             )}
@@ -2180,7 +2225,10 @@ export function StoryBookReader({
         {/* Top Left Controls - Exit Button (aligned with bottom back button) */}
         {/* During music challenge playing: X closes the challenge overlay and returns to story page */}
         {/* Otherwise: X exits the story entirely */}
-        {!musicUiHidden && (
+        {/* The music sheet carries its own back arrow, and used to cover these
+            with its own full-screen scene; on the blurred page it does not, so
+            they stand down while it is up rather than doubling up with it. */}
+        {!musicUiHidden && !sheetOnScreen && (
         <View style={[styles.topLeftControls, {
           paddingTop: Math.max(insets.top + 20, 20),
           paddingLeft: Math.max(insets.left + 20, 20)
@@ -2199,6 +2247,7 @@ export function StoryBookReader({
               closeMusicPractice({ cleanup: true, stopBreath: true, resetUiHidden: true });
             } : handleExit}
             disabled={musicChallengePhase !== 'playing' && isExiting}
+            testID="story-exit-button"
           >
             <Ionicons name="arrow-back" size={scaledFontSize(20)} color="#333333" />
           </Pressable>
@@ -2347,7 +2396,7 @@ export function StoryBookReader({
         )}
 
         {/* Top Right Controls - Sound and Settings (aligned with bottom next button) */}
-        {!musicUiHidden && (
+        {!musicUiHidden && !sheetOnScreen && (
         <View style={[styles.topRightControls, {
           paddingTop: Math.max(insets.top + 20, 20),
           paddingRight: Math.max(insets.right + 20, 20)
@@ -3456,6 +3505,11 @@ export function StoryBookReader({
         onNotePressIn={musicChallenge.previewNote}
         onNotePressOut={musicChallenge.stopNote}
         holdPlan={musicChallenge.holdPlan}
+        flightTarget={staffTarget}
+        awaitingFlight={awaitingFlight}
+        backdrop="music"
+        onLeft={() => setSheetOnScreen(false)}
+        enterProgress={musicEnterProgress}
       />
 
       {/* Instrument Picker Overlay -opened only from music challenge controls */}
@@ -3503,6 +3557,14 @@ const styles = StyleSheet.create({
     bottom: 0,
     zIndex: 1, // Ensure overlay appears on top
   },
+  musicChallengeBackdrop: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    zIndex: 14,
+  },
   musicChallengeOverlay: {
     position: 'absolute',
     left: 0,
@@ -3512,7 +3574,6 @@ const styles = StyleSheet.create({
     zIndex: 15,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
   },
 
   musicModeCloseText: {

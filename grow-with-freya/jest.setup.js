@@ -37,7 +37,7 @@ jest.mock('react-native-reanimated', () => {
     ScrollView: ScrollView,
     Image: Image,
     createAnimatedComponent: (component) => component,
-    useSharedValue: jest.fn(() => ({ value: 0 })),
+    useSharedValue: jest.fn((initial = 0) => ({ value: initial })),
     useAnimatedStyle: jest.fn(() => ({})),
     useAnimatedScrollHandler: jest.fn(() => jest.fn()),
     useAnimatedProps: jest.fn(() => ({})),

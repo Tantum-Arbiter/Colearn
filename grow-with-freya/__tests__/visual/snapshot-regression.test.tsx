@@ -227,6 +227,7 @@ describe('Visual Regression Tests', () => {
         'linear-gradient',
         'music-control-button',
         'music-icon-playing',
+        'story-exit-button',
       ]);
     });
 

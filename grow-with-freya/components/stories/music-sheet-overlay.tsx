@@ -14,7 +14,7 @@
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, Pressable, useWindowDimensions } from 'react-native';
+import { View, Text, StyleSheet, Pressable, useWindowDimensions, type LayoutChangeEvent } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import Animated, {
   useSharedValue,
@@ -22,6 +22,7 @@ import Animated, {
   withTiming,
   Easing,
   runOnJS,
+  type SharedValue,
 } from 'react-native-reanimated';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -29,11 +30,18 @@ import { NoteLayoutItem } from '@/services/music-asset-registry';
 import type { HoldPlan } from '@/services/hold-plan';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SceneBackground } from '@/components/ui/scene-background';
+import { MusicBackdrop } from '@/components/music/music-backdrop';
 import { ArcText, estimateArcTextWidth } from '@/components/ui/arc-text';
 import { BlobPanel } from '@/components/ui/blob-panel';
 import { MusicStaffStrip } from '@/components/music/music-staff-strip';
 import { STAFF_ASPECT_RATIO, STAFF_PAPER_BOTTOM, STAFF_PAPER_TOP } from '@/services/staff-notation';
 import { cueMaskedAtMs } from '@/services/sheet-transition';
+import {
+  PANEL_EXIT_MS,
+  SHEET_FLIGHT_MS,
+  flightPose,
+  type SheetRect,
+} from '@/services/sheet-flight';
 
 /**
  * The same panel and night sky the instrument picker uses, so choosing an
@@ -88,6 +96,33 @@ interface MusicSheetOverlayProps {
    * rather than as bare heads that look like a different song.
    */
   holdPlan?: HoldPlan;
+  /**
+   * Where the sheet is to fly to, in the screen's coordinates. The instrument
+   * view has to be mounted and measured before this is known, which is a few
+   * frames after the press, so the sheet waits in place for it.
+   */
+  flightTarget?: SheetRect | null;
+  /**
+   * Set on the press itself: the panel starts leaving straight away and the
+   * sheet is held where it stood until a target arrives. Cleared with no target
+   * when the instrument turns out to have no staff, and the sheet simply goes.
+   */
+  awaitingFlight?: boolean;
+  /**
+   * Called once the sheet has finished leaving and is off screen. A caller that
+   * hides its own controls behind the sheet uses this to bring them back, so
+   * they return when the sheet has actually gone rather than when it was asked
+   * to go.
+   */
+  onLeft?: () => void;
+  /**
+   * What to stand the panel on. 'music' is the same night meadow the instrument
+   * stands on, so moving between the two changes nothing behind them -- and it
+   * covers the instrument while the sheet is being read over it.
+   */
+  backdrop?: 'scene' | 'music' | 'none';
+  /** The arrival's own progress, shared with the view the sheet is flying into. */
+  enterProgress?: SharedValue<number>;
 }
 
 /**
@@ -114,6 +149,11 @@ export const MusicSheetOverlay = React.memo(function MusicSheetOverlay({
   fadeOutOnly = false,
   bpm = 120,
   holdPlan,
+  flightTarget,
+  awaitingFlight = false,
+  backdrop = 'scene',
+  onLeft,
+  enterProgress,
 }: MusicSheetOverlayProps) {
   const { t } = useTranslation();
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
@@ -126,6 +166,10 @@ export const MusicSheetOverlay = React.memo(function MusicSheetOverlay({
   const slideY = useSharedValue(visible ? 0 : screenHeight);
   // Keep overlay rendered during close animation
   const [isRendered, setIsRendered] = useState(visible);
+  const [panelFrame, setPanelFrame] = useState({ x: 0, y: 0 });
+  const [sheetFrame, setSheetFrame] = useState({ x: 0, y: 0, width: 0, height: 0 });
+  const [flight, setFlight] = useState<{ from: SheetRect; to: SheetRect | null } | null>(null);
+  const flightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
 
   // Playback preview state
@@ -269,7 +313,18 @@ export const MusicSheetOverlay = React.memo(function MusicSheetOverlay({
       overlayOpacity.value = withTiming(1, { duration: MUSIC_SHEET_ANIM_MS, easing: Easing.out(Easing.ease) });
       slideY.value = withTiming(0, { duration: MUSIC_SHEET_ANIM_MS, easing: Easing.out(Easing.ease) });
     } else if (isRendered) {
-      if (fadeOutOnly) {
+      if ((awaitingFlight || flightTarget) && sheetFrame.width > 0) {
+        setFlight({
+          from: {
+            x: panelFrame.x + sheetFrame.x,
+            y: panelFrame.y + sheetFrame.y,
+            width: sheetFrame.width,
+            height: sheetFrame.height,
+          },
+          to: flightTarget ?? null,
+        });
+        overlayOpacity.value = withTiming(0, { duration: PANEL_EXIT_MS, easing: Easing.in(Easing.ease) });
+      } else if (fadeOutOnly) {
         // Fade out only (no slide) -used when transitioning to instrument view
         overlayOpacity.value = withTiming(
           0,
@@ -300,6 +355,66 @@ export const MusicSheetOverlay = React.memo(function MusicSheetOverlay({
     opacity: overlayOpacity.value,
     transform: [{ translateY: slideY.value }],
   }));
+
+  const restingProgress = useSharedValue(0);
+  const flightProgress = enterProgress ?? restingProgress;
+
+  const flightStyle = useAnimatedStyle(() => {
+    if (!flight?.to) return {};
+    const pose = flightPose(flightProgress.value, flight.from, flight.to);
+    return {
+      transform: [
+        { translateX: pose.translateX },
+        { translateY: pose.translateY },
+        { scale: pose.scale },
+      ],
+    };
+  }, [flightProgress, flight]);
+
+  const handlePanelFrameLayout = useCallback((event: LayoutChangeEvent) => {
+    const { x = 0, y = 0 } = event.nativeEvent.layout;
+    setPanelFrame(prev => (prev.x === x && prev.y === y ? prev : { x, y }));
+  }, []);
+
+  const handleSheetFrameLayout = useCallback((event: LayoutChangeEvent) => {
+    const { x = 0, y = 0, width, height } = event.nativeEvent.layout;
+    setSheetFrame(prev => (
+      prev.x === x && prev.y === y && prev.width === width && prev.height === height
+        ? prev
+        : { x, y, width, height }
+    ));
+  }, []);
+
+  // The staff's whereabouts land a few frames after the press, so the flight
+  // itself starts here rather than with the panel's exit. With no staff to fly
+  // to, the sheet has nothing left to do and goes.
+  useEffect(() => {
+    if (!flight || flight.to) return;
+    if (flightTarget) {
+      setFlight(current => (current ? { ...current, to: flightTarget } : current));
+      if (flightTimerRef.current) clearTimeout(flightTimerRef.current);
+      flightTimerRef.current = setTimeout(() => {
+        flightTimerRef.current = null;
+        setFlight(null);
+        setIsRendered(false);
+      }, SHEET_FLIGHT_MS);
+    } else if (!awaitingFlight) {
+      setFlight(null);
+      setIsRendered(false);
+    }
+  }, [flight, flightTarget, awaitingFlight]);
+
+  const onLeftRef = useRef(onLeft);
+  onLeftRef.current = onLeft;
+  const wasRenderedRef = useRef(isRendered);
+  useEffect(() => {
+    if (wasRenderedRef.current && !isRendered) onLeftRef.current?.();
+    wasRenderedRef.current = isRendered;
+  }, [isRendered]);
+
+  useEffect(() => () => {
+    if (flightTimerRef.current) clearTimeout(flightTimerRef.current);
+  }, []);
 
   // Calculate max height for the ScrollView so it doesn't collapse to 0.
   // The container is content-sized (window mode), so the ScrollView cannot use
@@ -343,12 +458,38 @@ export const MusicSheetOverlay = React.memo(function MusicSheetOverlay({
     estimateArcTextWidth(t('music.musicSheet'), titleFontSize) + 24,
   );
 
+  const staffElement = requiredSequence.length > 0 ? (
+    <MusicStaffStrip
+      sequence={requiredSequence}
+      noteLayout={noteLayout}
+      holdPlan={holdPlan}
+      // The whole song from its first note, and no ring on any of it:
+      // this is the song to read, not a playhead to follow. The
+      // preview is the one thing that does point at a note, so it
+      // takes the ring back while it runs.
+      // The song from its first note, and nothing marked on it --
+      // until the preview runs, when the sheet follows the melody and
+      // runs each note's hold, so the song is seen the way it is
+      // heard.
+      currentIndex={0}
+      // Not gated on `isPlaying`: when a preview ends the sheet holds
+      // its place until the cue has hidden the notes, then goes back
+      // to the first one behind them.
+      playbackIndex={playbackIndex}
+      replayCue={replayCue}
+      holdingCurrent={isPlaying}
+      markCurrent={isPlaying}
+      width={sheetWidth}
+      title={promptText}
+      testID="music-sheet-staff"
+    />
+  ) : null;
+
   return (
-    <Animated.View
-      style={[styles.overlay, animatedStyle]}
-      testID="music-sheet-overlay"
-    >
-      <SceneBackground blurIntensity={26} scrimOpacity={0.42} />
+    <View style={styles.overlay} testID="music-sheet-overlay">
+      <Animated.View style={[StyleSheet.absoluteFill, styles.centred, animatedStyle]}>
+      {backdrop === 'scene' && <SceneBackground blurIntensity={26} scrimOpacity={0.42} />}
+      {backdrop === 'music' && <MusicBackdrop />}
 
       <View style={styles.content}>
         <Pressable
@@ -363,6 +504,7 @@ export const MusicSheetOverlay = React.memo(function MusicSheetOverlay({
           <Ionicons name="arrow-back" size={22} color="#FFFFFF" />
         </Pressable>
 
+        <View onLayout={handlePanelFrameLayout} testID="music-sheet-panel-frame">
         <BlobPanel
           fill={COLORS.panel}
           stroke={COLORS.panelBorder}
@@ -394,36 +536,18 @@ export const MusicSheetOverlay = React.memo(function MusicSheetOverlay({
             // its box is a fifth taller than the paper at each end. Pulled in by
             // most of that, the panel hugs the sheet instead of the artwork's
             // empty margins.
-            <View style={{
-              width: sheetWidth,
-              height: sheetHeight,
-              marginTop: -sheetHeight * (STAFF_PAPER_TOP - 0.04),
-              marginBottom: -sheetHeight * (1 - STAFF_PAPER_BOTTOM - 0.04),
-            }}>
-              <MusicStaffStrip
-                sequence={requiredSequence}
-                noteLayout={noteLayout}
-                holdPlan={holdPlan}
-                // The whole song from its first note, and no ring on any of it:
-                // this is the song to read, not a playhead to follow. The
-                // preview is the one thing that does point at a note, so it
-                // takes the ring back while it runs.
-                // The song from its first note, and nothing marked on it --
-                // until the preview runs, when the sheet follows the melody and
-                // runs each note's hold, so the song is seen the way it is
-                // heard.
-                currentIndex={0}
-                // Not gated on `isPlaying`: when a preview ends the sheet holds
-                // its place until the cue has hidden the notes, then goes back
-                // to the first one behind them.
-                playbackIndex={playbackIndex}
-                replayCue={replayCue}
-                holdingCurrent={isPlaying}
-                markCurrent={isPlaying}
-                width={sheetWidth}
-                title={promptText}
-                testID="music-sheet-staff"
-              />
+            <View
+              style={{
+                width: sheetWidth,
+                height: sheetHeight,
+                marginTop: -sheetHeight * (STAFF_PAPER_TOP - 0.04),
+                marginBottom: -sheetHeight * (1 - STAFF_PAPER_BOTTOM - 0.04),
+                opacity: flight ? 0 : 1,
+              }}
+              onLayout={handleSheetFrameLayout}
+              testID="music-sheet-frame"
+            >
+              {staffElement}
             </View>
           )}
 
@@ -459,8 +583,29 @@ export const MusicSheetOverlay = React.memo(function MusicSheetOverlay({
             <Text style={styles.songName} testID="music-sheet-song-name">{successSongName}</Text>
           ) : null}
         </BlobPanel>
-      </View>
-    </Animated.View>
+        </View>
+        </View>
+      </Animated.View>
+      {sheetFrame.width > 0 && (
+        <Animated.View
+          style={[
+            styles.flyingSheet,
+            {
+              left: panelFrame.x + sheetFrame.x,
+              top: panelFrame.y + sheetFrame.y,
+              width: sheetFrame.width,
+              height: sheetFrame.height,
+              opacity: flight ? 1 : 0,
+            },
+            flightStyle,
+          ]}
+          pointerEvents="none"
+          testID="music-sheet-flight"
+        >
+          {staffElement}
+        </Animated.View>
+      )}
+    </View>
   );
 });
 
@@ -470,6 +615,14 @@ const styles = StyleSheet.create({
     zIndex: 150,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  centred: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  flyingSheet: {
+    position: 'absolute',
+    zIndex: 2,
   },
   content: {
     flex: 1,
