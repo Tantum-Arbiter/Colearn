@@ -23,6 +23,7 @@ import {
   axisLabelLeft,
   estimateTextWidth,
 } from '@/constants/usage-trend-axis';
+import { TREND_BAR, isOverLimit, trendBarFill } from '@/constants/usage-trend-bars';
 
 /** Palette for the parent dashboard cards, shared with the design mock. */
 const TEAL = '#4ECDC4';
@@ -425,7 +426,11 @@ export function UsageOverview({
             {selected && (
               <Text
                 testID="usage-trend-selected"
-                style={[styles.trendSelected, { fontSize: scaledFontSize(12) }]}
+                style={[
+                  styles.trendSelected,
+                  { fontSize: scaledFontSize(12) },
+                  isOverLimit(selected.usage, dailyLimitSeconds) && { color: TREND_BAR.over },
+                ]}
                 numberOfLines={1}
               >
                 {t('screenTime.trendDayUsage', {
@@ -493,13 +498,7 @@ export function UsageOverview({
                       width={b.width}
                       height={b.height}
                       rx={Math.min(b.width / 2, 3)}
-                      fill={
-                        i === effectiveIndex
-                          ? TEAL
-                          : trend[i].usage > 0
-                            ? 'rgba(78, 205, 196, 0.32)'
-                            : 'rgba(255, 255, 255, 0.13)'
-                      }
+                      fill={trendBarFill(trend[i].usage, dailyLimitSeconds, i === effectiveIndex)}
                     />
                   ))}
                   {/* a tick on the bar each label belongs to: the label box is
@@ -513,7 +512,15 @@ export function UsageOverview({
                       x2={tick.x}
                       y1={CHART_HEIGHT}
                       y2={CHART_HEIGHT + AXIS_TICK_HEIGHT}
-                      stroke={tick.isSelected ? TEAL : 'rgba(255, 255, 255, 0.30)'}
+                      stroke={
+                        tick.isSelected
+                          ? trendBarFill(
+                              trend.find(day => day.date === tick.date)?.usage ?? 0,
+                              dailyLimitSeconds,
+                              true,
+                            )
+                          : 'rgba(255, 255, 255, 0.30)'
+                      }
                       strokeWidth={1}
                     />
                   ))}

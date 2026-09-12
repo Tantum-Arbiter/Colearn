@@ -12,6 +12,7 @@ import React from 'react';
 import { render, fireEvent, act } from '@testing-library/react-native';
 
 import { UsageOverview } from '@/components/screen-time/usage-overview';
+import { TREND_BAR } from '@/constants/usage-trend-bars';
 
 jest.mock('@/store/app-store', () => ({
   useAppStore: () => ({
@@ -312,6 +313,51 @@ describe('UsageOverview', () => {
       const tree = withRange(30);
 
       expect(findByTestId(tree, 'usage-trend-span')).toHaveLength(1);
+    });
+
+    it('marks the days that went past the limit in amber', () => {
+      // Heights alone say how the days compare to each other; they say nothing
+      // about whether any of them was a healthy amount.
+      const overAndUnder = [
+        { date: '2026-09-08', seconds: 600 },
+        { date: '2026-09-09', seconds: 47820 },
+        { date: '2026-09-10', seconds: 1200 },
+      ];
+
+      const tree = renderOverview({
+        dailyTotals: overAndUnder,
+        dailyLimitSeconds: 3600,
+        todayUsageSeconds: 1200,
+      });
+      layOutChart(tree, CHART);
+
+      const fills = testIdsStartingWith(tree, 'usage-trend-bar-').map((n: any) => n.props.fill);
+      expect(fills[1]).toBe(TREND_BAR.overFaint);
+      expect(fills[0]).toBe(TREND_BAR.withinFaint);
+    });
+
+    it('keeps a day that went past the limit amber when it is the one picked out', () => {
+      const tree = renderOverview({
+        dailyTotals: [{ date: '2026-09-10', seconds: 47820 }],
+        dailyLimitSeconds: 3600,
+        todayUsageSeconds: 47820,
+      });
+      layOutChart(tree, CHART);
+
+      const fills = testIdsStartingWith(tree, 'usage-trend-bar-').map((n: any) => n.props.fill);
+      expect(fills[0]).toBe(TREND_BAR.over);
+    });
+
+    it('leaves every day teal when no limit is set', () => {
+      const tree = renderOverview({
+        dailyTotals: [{ date: '2026-09-10', seconds: 47820 }],
+        dailyLimitSeconds: 0,
+        todayUsageSeconds: 47820,
+      });
+      layOutChart(tree, CHART);
+
+      const fills = testIdsStartingWith(tree, 'usage-trend-bar-').map((n: any) => n.props.fill);
+      expect(fills[0]).toBe(TREND_BAR.within);
     });
 
     it('gives every day a slot that can be seen, even an empty one', () => {
