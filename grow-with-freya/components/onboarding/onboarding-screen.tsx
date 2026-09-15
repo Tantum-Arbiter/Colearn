@@ -27,6 +27,7 @@ import {
   swipeIntent,
 } from './onboarding-metrics';
 import { NIGHT_GRADIENT, GOLD, TEXT_MUTED } from './onboarding-theme';
+import { OnboardingProgressBar } from './onboarding-progress-bar';
 
 const { width, height } = Dimensions.get('window');
 
@@ -331,13 +332,7 @@ export function OnboardingScreen({
             </View>
 
             <View style={styles.progressRow}>
-              {Array.from({ length: totalSteps }, (_, i) => (
-                <View
-                  key={`dot-${i}`}
-                  testID={`progress-dot-${i}`}
-                  style={[styles.progressDot, i === currentStep - 1 && styles.progressDotActive]}
-                />
-              ))}
+              <OnboardingProgressBar currentStep={currentStep} totalSteps={totalSteps} />
               <ThemedText
                 testID="onboarding-step-counter"
                 style={[styles.stepCounter, { fontSize: scaledFontSize(13) }]}
@@ -434,22 +429,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 7,
-  },
-  progressDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 3.5,
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
-  },
-  progressDotActive: {
-    width: 20,
-    backgroundColor: GOLD,
+    gap: 12,
   },
   stepCounter: {
     color: TEXT_MUTED,
     fontWeight: '600',
-    marginLeft: 10,
   },
   buttonRow: {
     flexDirection: 'row',

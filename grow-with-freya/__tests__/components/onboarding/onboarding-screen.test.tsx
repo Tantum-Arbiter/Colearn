@@ -162,6 +162,23 @@ describe('OnboardingScreen', () => {
     });
   });
 
+  describe('Progress', () => {
+    it('shows a progress bar at the current step in place of the step dots', () => {
+      const tree = render(<OnboardingScreen {...defaultProps} currentStep={3} />);
+
+      const bar = byTestId(tree, 'onboarding-progress-bar');
+      expect(bar.length).toBeGreaterThan(0);
+      expect(bar[0].props.accessibilityValue).toEqual({ min: 0, max: 5, now: 3 });
+      expect(byTestId(tree, 'progress-dot-0')).toHaveLength(0);
+    });
+
+    it('keeps the step counter beside the bar', () => {
+      const tree = render(<OnboardingScreen {...defaultProps} currentStep={3} />);
+
+      expect(byTestId(tree, 'onboarding-step-counter').length).toBeGreaterThan(0);
+    });
+  });
+
   describe('Fitting the page', () => {
     function SpacerProbe() {
       const { safeSpacerHeight } = useOnboardingMetrics();
