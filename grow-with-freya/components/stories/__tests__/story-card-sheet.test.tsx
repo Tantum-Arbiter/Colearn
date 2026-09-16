@@ -12,6 +12,7 @@
  * 6. Record is offered as a button like the other ways to read
  * 7. A book the child is part-way through shows how far, and offers to carry on
  * 8. The card holds everything it shows: the ways to read sit at its foot and nothing scrolls
+ * 9. The cover of the card in front turns through the book's pages; its neighbours wait on their covers
  */
 
 import React from 'react';
@@ -263,5 +264,55 @@ describe('StoryCardSheet', () => {
     expect(underTest.backgroundColor).toBe(playAlong.backgroundColor);
     expect(underTest.borderWidth).toBe(playAlong.borderWidth);
     expect(underTest.borderRadius).toBe(playAlong.borderRadius);
+  });
+
+  describe('the page preview on the cover', () => {
+    const withPages = (id: string, title: string): Story => ({
+      ...makeStory(id, title),
+      coverImage: { uri: `test://${id}-cover` } as unknown as string,
+      pages: [
+        { id: `${id}-p1`, pageNumber: 1, text: 'page', backgroundImage: { uri: `test://${id}-p1` } as unknown as string },
+        { id: `${id}-p2`, pageNumber: 2, text: 'page', backgroundImage: { uri: `test://${id}-p2` } as unknown as string },
+      ],
+    });
+    const shelf = [withPages('wombat', 'Snuggle Little Wombat'), withPages('owl', 'Little Owl Listens')];
+    const playingWithin = (root: any, storyId: string) => {
+      const card = root.findAll((node: any) => node.props?.testID === `story-card-${storyId}`)[0];
+      return card.findAll((node: any) => node.props?.testID === 'story-page-preview-playing');
+    };
+
+    beforeEach(() => {
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('should turn the pages of the book in front and leave its neighbour on the cover', () => {
+      const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} stories={shelf} />);
+
+      expect(playingWithin(UNSAFE_root, 'wombat').length).toBeGreaterThan(0);
+      expect(playingWithin(UNSAFE_root, 'owl')).toHaveLength(0);
+    });
+
+    it('should hand the turning over to the book the carousel settles on', () => {
+      const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} stories={shelf} />);
+
+      settleCarouselAt(UNSAFE_root, layout.step);
+
+      expect(playingWithin(UNSAFE_root, 'wombat')).toHaveLength(0);
+      expect(playingWithin(UNSAFE_root, 'owl').length).toBeGreaterThan(0);
+    });
+
+    it('should size the preview to the cover it sits in', () => {
+      const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} stories={shelf} />);
+
+      const underTest = UNSAFE_root.findAll((node: any) => node.props?.testID === 'story-page-preview-playing')[0];
+      const style = StyleSheet.flatten(underTest.props.style);
+
+      expect(style.width).toBe(layout.width);
+      expect(style.height).toBe(layout.coverHeight);
+    });
   });
 });

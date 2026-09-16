@@ -1,6 +1,5 @@
 import React, { RefObject, useCallback, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView, NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
-import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
@@ -25,6 +24,7 @@ import { useAccessibility } from '@/hooks/use-accessibility';
 import { ReadingPlace, readingFraction } from './reading-progress';
 import { STORY_DETAIL_OPENING } from '@/constants/story-opening';
 import { STORY_CARD, cardIndexAtOffset, type StoryCardLayout } from '@/constants/story-card';
+import { StoryPageSlideshow } from './story-page-slideshow';
 
 export interface StoryCardSheetProps {
   /** The books the child can swipe between, in shelf order. */
@@ -233,7 +233,6 @@ function StoryCard({
       (page) => (page.interactionType && page.interactionType !== 'none') || page.interactiveElements?.length
     )
   );
-  const coverSource = typeof story.coverImage === 'string' ? { uri: story.coverImage } : story.coverImage;
 
   return (
     <Animated.View
@@ -250,9 +249,7 @@ function StoryCard({
       testID={`story-card-${story.id}`}
     >
       <View style={[styles.cover, { height: layout.coverHeight }]}>
-        {coverSource && (
-          <ExpoImage source={coverSource} style={StyleSheet.absoluteFill} contentFit="cover" cachePolicy="memory-disk" priority="high" />
-        )}
+        <StoryPageSlideshow story={story} isCurrent={isCurrent} width={layout.width} height={layout.coverHeight} />
         <LinearGradient
           colors={['rgba(19, 26, 63, 0)', 'rgba(19, 26, 63, 0)', 'rgba(19, 26, 63, 0.7)', '#131A3F']}
           locations={[0, 0.55, 0.85, 1]}
