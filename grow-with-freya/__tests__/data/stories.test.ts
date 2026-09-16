@@ -82,7 +82,14 @@ describe('Stories Data', () => {
     it('should return only available stories', () => {
       const availableStories = getAvailableStories();
 
-      expect(availableStories).toHaveLength(4); // Wombat, Jigsaw, Spelling, Word Placing
+      expect(availableStories.map(story => story.id)).toEqual([
+        'snuggle-little-wombat',
+        'wombat-jigsaw-adventure',
+        'wombat-spelling',
+        'wombat-word-placing',
+        'hold-on-juni',
+        'my-turn-to-ding',
+      ]);
       availableStories.forEach(story => {
         expect(story.isAvailable).toBe(true);
       });

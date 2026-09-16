@@ -1,4 +1,5 @@
 import { Story } from '@/types/story';
+import { GENERATED_STORIES } from './generated-stories';
 
 /**
  * Real story data -only contains published stories with actual content.
@@ -831,6 +832,7 @@ export const ALL_STORIES: Story[] = [
   ...MOCK_STORIES,
   ...JIGSAW_STORIES,
   ...READING_CHALLENGE_STORIES,
+  ...GENERATED_STORIES, // books bundled by the story factory
 ];
 
 // Helper functions
