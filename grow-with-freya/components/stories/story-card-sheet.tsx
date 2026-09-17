@@ -25,6 +25,7 @@ import { ReadingPlace, readingFraction } from './reading-progress';
 import { STORY_DETAIL_OPENING } from '@/constants/story-opening';
 import { STORY_CARD, cardIndexAtOffset, type StoryCardLayout } from '@/constants/story-card';
 import { StoryPageSlideshow } from './story-page-slideshow';
+import { OnboardingProgressBar } from '@/components/onboarding/onboarding-progress-bar';
 
 export interface StoryCardSheetProps {
   /** The books the child can swipe between, in shelf order. */
@@ -325,9 +326,12 @@ function StoryCard({
 
         {underway && (
           <View style={styles.progressRow} testID="story-card-progress">
-            <View style={styles.progressTrack}>
-              <View style={[styles.progressFill, { width: `${readPercent}%` }]} />
-            </View>
+            <OnboardingProgressBar
+              currentStep={place.pageIndex}
+              totalSteps={place.totalPages - 1}
+              maxWidth={layout.width}
+              testIDPrefix="story-card-progress"
+            />
             <Text style={[styles.progressText, { fontSize: scaledFontSize(12) }]}>{`${readPercent}%`}</Text>
           </View>
         )}
@@ -514,19 +518,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    paddingHorizontal: 18,
     marginBottom: 10,
-  },
-  progressTrack: {
-    flex: 1,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: 'rgba(255, 255, 255, 0.24)',
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 2,
-    backgroundColor: '#FFFFFF',
   },
   progressText: {
     color: 'rgba(255, 255, 255, 0.85)',

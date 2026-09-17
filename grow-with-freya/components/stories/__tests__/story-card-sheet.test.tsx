@@ -22,6 +22,7 @@ import { StoryCardSheet } from '@/components/stories/story-card-sheet';
 import { StoryDownloadService } from '@/services/story-download-service';
 import { storyCardLayout } from '@/constants/story-card';
 import { Story } from '@/types/story';
+import { PROGRESS_GRADIENT } from '@/components/onboarding/onboarding-theme';
 
 jest.mock('@/services/story-download-service', () => ({
   StoryDownloadService: {
@@ -119,6 +120,37 @@ describe('StoryCardSheet', () => {
 
       expect(underTest.length).toBeGreaterThan(0);
       expect(findByText(UNSAFE_root, '38%').length).toBeGreaterThan(0);
+    });
+
+    it('should draw that progress with the onboarding bar: the same gradient, growing over the pages read', () => {
+      const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} progress={underway} />);
+
+      const bar = UNSAFE_root.findAll((node: any) => node.props?.testID === 'story-card-progress-bar' && node.props?.accessibilityRole === 'progressbar');
+      const gradient = UNSAFE_root.findAll((node: any) => node.props?.testID === 'story-card-progress-gradient');
+
+      expect(bar.length).toBeGreaterThan(0);
+      expect(bar[0].props.accessibilityValue).toEqual({ min: 0, max: 8, now: 3 });
+      expect(gradient.length).toBeGreaterThan(0);
+      expect(gradient[0].props.colors).toEqual(PROGRESS_GRADIENT);
+    });
+
+    it('should keep the bar inside the same gutter as the title, chips and buttons, not out to the card edge', () => {
+      const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} progress={underway} />);
+
+      const row = UNSAFE_root.findAll((node: any) => node.props?.testID === 'story-card-progress')[0];
+      const actions = UNSAFE_root.findAll((node: any) => node.props?.testID === 'story-card-actions')[0];
+      const underTest = StyleSheet.flatten(row.props.style).paddingHorizontal;
+
+      expect(underTest).toBeGreaterThan(0);
+      expect(underTest).toBe(StyleSheet.flatten(actions.props.style).paddingHorizontal);
+    });
+
+    it('should let the bar run the width of the card rather than stopping at the footer cap', () => {
+      const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} progress={underway} />);
+
+      const bar = UNSAFE_root.findAll((node: any) => node.props?.testID === 'story-card-progress-bar' && node.props?.accessibilityRole === 'progressbar')[0];
+
+      expect(StyleSheet.flatten(bar.props.style).maxWidth).toBe(layout.width);
     });
 
     it('should offer to carry on where they left off, rather than start again', () => {

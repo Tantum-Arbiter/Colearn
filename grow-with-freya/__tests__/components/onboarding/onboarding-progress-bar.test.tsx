@@ -65,6 +65,23 @@ describe('OnboardingProgressBar', () => {
     expect(bar.props.accessibilityValue).toEqual({ min: 0, max: 5, now: 2 });
   });
 
+  it('keeps to a footer width by default, and stretches to whatever width a caller lends it', () => {
+    const footer = render(<OnboardingProgressBar currentStep={2} totalSteps={5} />);
+    const card = render(<OnboardingProgressBar currentStep={2} totalSteps={5} maxWidth={306} />);
+
+    expect(flatStyle(byTestId(footer, 'onboarding-progress-bar')[0].props.style).maxWidth).toBe(220);
+    expect(flatStyle(byTestId(card, 'onboarding-progress-bar')[0].props.style).maxWidth).toBe(306);
+  });
+
+  it('names its parts after the place it is used, so a host can find them without the onboarding name', () => {
+    const tree = render(<OnboardingProgressBar currentStep={2} totalSteps={5} testIDPrefix="story-card-progress" />);
+
+    expect(byTestId(tree, 'story-card-progress-bar').length).toBeGreaterThan(0);
+    expect(byTestId(tree, 'story-card-progress-track').length).toBeGreaterThan(0);
+    expect(byTestId(tree, 'story-card-progress-fill').length).toBeGreaterThan(0);
+    expect(byTestId(tree, 'onboarding-progress-bar')).toHaveLength(0);
+  });
+
   it('paints the gradient across the whole track so the colour warms as the bar fills', () => {
     const tree = render(<OnboardingProgressBar currentStep={2} totalSteps={5} />);
 

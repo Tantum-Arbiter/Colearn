@@ -10,6 +10,7 @@ export const ONBOARDING_PROGRESS_FILL_MS = 700;
 export const ONBOARDING_PROGRESS_SHEEN_MS = 900;
 
 const BAR_HEIGHT = 6;
+const FOOTER_MAX_WIDTH = 220;
 const SHEEN_WIDTH = 36;
 const SHEEN_DELAY_MS = 180;
 const SHEEN_PEAK_OPACITY = 0.7;
@@ -22,9 +23,16 @@ export function onboardingProgressFraction(currentStep: number, totalSteps: numb
 interface OnboardingProgressBarProps {
   currentStep: number;
   totalSteps: number;
+  maxWidth?: number;
+  testIDPrefix?: string;
 }
 
-export function OnboardingProgressBar({ currentStep, totalSteps }: OnboardingProgressBarProps) {
+export function OnboardingProgressBar({
+  currentStep,
+  totalSteps,
+  maxWidth = FOOTER_MAX_WIDTH,
+  testIDPrefix = 'onboarding-progress',
+}: OnboardingProgressBarProps) {
   const reduceMotion = useReducedMotion();
   const fraction = onboardingProgressFraction(currentStep, totalSteps);
   const [trackWidth, setTrackWidth] = useState(0);
@@ -75,22 +83,22 @@ export function OnboardingProgressBar({ currentStep, totalSteps }: OnboardingPro
 
   return (
     <View
-      testID="onboarding-progress-bar"
-      style={styles.bar}
+      testID={`${testIDPrefix}-bar`}
+      style={[styles.bar, { maxWidth }]}
       accessibilityRole="progressbar"
       accessibilityValue={{ min: 0, max: totalSteps, now: currentStep }}
     >
-      <View testID="onboarding-progress-track" style={styles.track} onLayout={handleTrackLayout}>
-        <Animated.View testID="onboarding-progress-fill" style={[styles.fill, fillStyle]}>
+      <View testID={`${testIDPrefix}-track`} style={styles.track} onLayout={handleTrackLayout}>
+        <Animated.View testID={`${testIDPrefix}-fill`} style={[styles.fill, fillStyle]}>
           <View style={styles.fillClip}>
             <LinearGradient
-              testID="onboarding-progress-gradient"
+              testID={`${testIDPrefix}-gradient`}
               colors={PROGRESS_GRADIENT}
               start={{ x: 0, y: 0.5 }}
               end={{ x: 1, y: 0.5 }}
               style={[styles.gradient, { width: trackWidth }]}
             />
-            <Animated.View testID="onboarding-progress-sheen" style={[styles.sheen, sheenStyle]} pointerEvents="none">
+            <Animated.View testID={`${testIDPrefix}-sheen`} style={[styles.sheen, sheenStyle]} pointerEvents="none">
               <LinearGradient
                 colors={['rgba(255, 255, 255, 0)', 'rgba(255, 255, 255, 0.9)', 'rgba(255, 255, 255, 0)']}
                 start={{ x: 0, y: 0.5 }}
@@ -108,7 +116,6 @@ export function OnboardingProgressBar({ currentStep, totalSteps }: OnboardingPro
 const styles = StyleSheet.create({
   bar: {
     flex: 1,
-    maxWidth: 220,
     justifyContent: 'center',
     paddingVertical: 4,
   },
