@@ -19,7 +19,7 @@ import { render, act } from '@testing-library/react-native';
 import { StyleSheet, type ImageSourcePropType } from 'react-native';
 import { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { StoryPageSlideshow } from '@/components/stories/story-page-slideshow';
-import { STORY_PAGE_PREVIEW } from '@/constants/story-page-preview';
+import { STORY_PAGE_PREVIEW, cornerPose } from '@/constants/story-page-preview';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import type { Story } from '@/types/story';
 
@@ -48,6 +48,10 @@ function makeStory(pageCount: number): Story {
 }
 
 function restingPage(root: any): string | undefined {
+  const bases = root.findAll((node: any) => node.props?.testID === 'story-page-preview-base' && node.props?.source !== undefined && node.props?.style !== undefined);
+  if (bases.length > 0) {
+    return bases[bases.length - 1].props.source.uri;
+  }
   const pages = root.findAll((node: any) => node.props?.testID === 'story-page-preview-page' && node.props?.source !== undefined);
   return pages[0]?.props.source.uri;
 }
@@ -110,6 +114,9 @@ describe('StoryPageSlideshow', () => {
 
   it('should have the next page ready behind the leaf before it turns', () => {
     const { UNSAFE_root } = render(<StoryPageSlideshow story={makeStory(3)} isCurrent {...size} />);
+    act(() => {
+      jest.advanceTimersByTime(STORY_PAGE_PREVIEW.dwellMs - STORY_PAGE_PREVIEW.prepareMs);
+    });
 
     const underTest = nodes(UNSAFE_root, 'story-page-preview-next').filter((node: any) => node.props.source !== undefined);
 
@@ -181,20 +188,92 @@ describe('StoryPageSlideshow', () => {
     mockReducedMotion.mockReturnValue(true);
 
     const { UNSAFE_root } = render(<StoryPageSlideshow story={makeStory(3)} isCurrent {...size} />);
+    act(() => {
+      jest.advanceTimersByTime(STORY_PAGE_PREVIEW.dwellMs - STORY_PAGE_PREVIEW.prepareMs);
+    });
 
     expect(nodes(UNSAFE_root, 'story-page-preview-fade').length).toBeGreaterThan(0);
     expect(nodes(UNSAFE_root, 'story-page-preview-leaf')).toHaveLength(0);
     act(() => {
-      jest.advanceTimersByTime(STORY_PAGE_PREVIEW.dwellMs);
+      jest.advanceTimersByTime(STORY_PAGE_PREVIEW.prepareMs);
     });
     expect(restingPage(UNSAFE_root)).toBe('test://page-1');
   });
 
-  it('should turn the pages with a leaf that lifts at the spine', () => {
+  it('should open light: no strips are built until shortly before the first turn, so the card can rise smoothly', () => {
     const { UNSAFE_root } = render(<StoryPageSlideshow story={makeStory(3)} isCurrent {...size} />);
 
+    expect(nodes(UNSAFE_root, 'story-page-preview-leaf')).toHaveLength(0);
+    expect(nodes(UNSAFE_root, 'story-page-preview-strip')).toHaveLength(0);
+    expect(restingPage(UNSAFE_root)).toBe('test://cover');
+
+    act(() => {
+      jest.advanceTimersByTime(STORY_PAGE_PREVIEW.dwellMs - STORY_PAGE_PREVIEW.prepareMs - 1);
+    });
+    expect(nodes(UNSAFE_root, 'story-page-preview-leaf')).toHaveLength(0);
+
+    act(() => {
+      jest.advanceTimersByTime(1);
+    });
+
     expect(nodes(UNSAFE_root, 'story-page-preview-leaf').length).toBeGreaterThan(0);
+    expect(nodes(UNSAFE_root, 'story-page-preview-still').length).toBeGreaterThan(0);
+  });
+
+  it('should take the strips down again once a turn has landed, so nothing heavy sits under the resting page', () => {
+    const { UNSAFE_root } = render(<StoryPageSlideshow story={makeStory(3)} isCurrent {...size} />);
+
+    act(() => {
+      jest.advanceTimersByTime(STORY_PAGE_PREVIEW.dwellMs);
+    });
+
+    expect(restingPage(UNSAFE_root)).toBe('test://page-1');
+    expect(nodes(UNSAFE_root, 'story-page-preview-leaf')).toHaveLength(0);
+  });
+
+  it('should give the strips a moment to load before the turn', () => {
+    expect(STORY_PAGE_PREVIEW.prepareMs).toBeGreaterThanOrEqual(400);
+    expect(STORY_PAGE_PREVIEW.prepareMs).toBeLessThan(STORY_PAGE_PREVIEW.dwellMs);
+  });
+
+  it('should turn the pages with a leaf drawn as strips, so it can bend like paper', () => {
+    const { UNSAFE_root } = render(<StoryPageSlideshow story={makeStory(3)} isCurrent {...size} />);
+    act(() => {
+      jest.advanceTimersByTime(STORY_PAGE_PREVIEW.dwellMs - STORY_PAGE_PREVIEW.prepareMs);
+    });
+
+    const strips = nodes(UNSAFE_root, 'story-page-preview-strip');
+    expect(nodes(UNSAFE_root, 'story-page-preview-leaf').length).toBeGreaterThan(0);
+    expect(strips).toHaveLength(STORY_PAGE_PREVIEW.curl.strips);
     expect(nodes(UNSAFE_root, 'story-page-preview-fade')).toHaveLength(0);
+  });
+
+  it('should give every strip its slice of the page in front and of the next page on its back', () => {
+    const { UNSAFE_root } = render(<StoryPageSlideshow story={makeStory(3)} isCurrent {...size} />);
+    act(() => {
+      jest.advanceTimersByTime(STORY_PAGE_PREVIEW.dwellMs - STORY_PAGE_PREVIEW.prepareMs);
+    });
+    const half = size.width / 2;
+    const stripWidth = half / STORY_PAGE_PREVIEW.curl.strips;
+
+    const strips = nodes(UNSAFE_root, 'story-page-preview-strip');
+    const underTest = strips.map((strip: any, index: number) => {
+      const images = strip.findAll((node: any) => node.props?.source !== undefined && node.props?.style !== undefined && node.props?.testID?.startsWith('story-page-preview-'));
+      const front = images.find((node: any) => node.props.testID === 'story-page-preview-page');
+      const back = images.find((node: any) => node.props.testID === 'story-page-preview-next');
+      return {
+        front: front.props.source.uri,
+        frontLeft: StyleSheet.flatten(front.props.style).left,
+        back: back.props.source.uri,
+        backLeft: StyleSheet.flatten(back.props.style).left,
+        expectedFrontLeft: -(half + index * stripWidth),
+        expectedBackLeft: (index + 1) * stripWidth + (index === strips.length - 1 ? 0 : STORY_PAGE_PREVIEW.curl.overlap) - half,
+      };
+    });
+
+    expect(underTest.every((s: any) => s.front === 'test://cover' && s.back === 'test://page-1')).toBe(true);
+    expect(underTest.every((s: any) => Math.abs(s.frontLeft - s.expectedFrontLeft) < 1e-9)).toBe(true);
+    expect(underTest.every((s: any) => Math.abs(s.backLeft - s.expectedBackLeft) < 1e-9)).toBe(true);
   });
 
   describe('the leaf between turns', () => {
@@ -221,11 +300,130 @@ describe('StoryPageSlideshow', () => {
       act(() => {
         jest.advanceTimersByTime(STORY_PAGE_PREVIEW.dwellMs);
       });
+      act(() => {
+        jest.advanceTimersByTime(STORY_PAGE_PREVIEW.dwellMs - STORY_PAGE_PREVIEW.prepareMs);
+      });
 
-      const leaf = nodes(UNSAFE_root, 'story-page-preview-leaf')[0];
-      const underTest = StyleSheet.flatten(leaf.props.style).transform;
+      const strips = nodes(UNSAFE_root, 'story-page-preview-strip');
+      const underTest = strips.map((strip: any) => StyleSheet.flatten(strip.props.style).transform);
       expect(restingPage(UNSAFE_root)).toBe('test://page-1');
-      expect(underTest).toEqual(expect.arrayContaining([{ scaleX: 1 }]));
+      expect(underTest.length).toBeGreaterThan(0);
+      expect(underTest.every((transform: unknown[]) => JSON.stringify(transform) === JSON.stringify([{ translateX: 0 }, { skewX: '0deg' }, { scaleX: 1 }]))).toBe(true);
+    });
+
+    it('should lay every strip where the fold puts it half-way through a turn', () => {
+      animatedStyle.mockImplementation((worklet: () => unknown) => worklet());
+      timing.mockImplementation(() => 0.5);
+      const half = size.width / 2;
+      const stripWidth = half / STORY_PAGE_PREVIEW.curl.strips;
+      const story = makeStory(3);
+      const { UNSAFE_root, rerender } = render(<StoryPageSlideshow story={story} isCurrent {...size} />);
+
+      act(() => {
+        jest.advanceTimersByTime(STORY_PAGE_PREVIEW.dwellMs);
+      });
+      rerender(<StoryPageSlideshow story={story} isCurrent {...size} />);
+
+      const strips = nodes(UNSAFE_root, 'story-page-preview-strip');
+      const underTest = strips.map((strip: any, index: number) => {
+        const transform = StyleSheet.flatten(strip.props.style).transform as ({ translateX: number } | { skewX: string } | { scaleX: number })[];
+        const overlap = index === strips.length - 1 ? 0 : STORY_PAGE_PREVIEW.curl.overlap;
+        const expected = cornerPose(index * stripWidth, (index + 1) * stripWidth + overlap, 0.5, half, size.height);
+        return JSON.stringify(transform) === JSON.stringify([{ translateX: expected.translateX }, { skewX: expected.skewX }, { scaleX: expected.scaleX }]);
+      });
+      expect(underTest).toHaveLength(STORY_PAGE_PREVIEW.curl.strips);
+      expect(underTest.every(Boolean)).toBe(true);
+      expect(strips.some((strip: any) => (StyleSheet.flatten(strip.props.style).transform[0] as { translateX: number }).translateX < 0)).toBe(true);
+      expect(strips.some((strip: any) => (StyleSheet.flatten(strip.props.style).transform[1] as { skewX: string }).skewX !== '0deg')).toBe(true);
+    });
+
+    it('should tint a strip only as much of it as shows, so the standing leaf never reads as a dark wedge', () => {
+      animatedStyle.mockImplementation((worklet: () => unknown) => worklet());
+      timing.mockImplementation(() => 0.65);
+      const story = makeStory(3);
+      const { UNSAFE_root, rerender } = render(<StoryPageSlideshow story={story} isCurrent {...size} />);
+
+      act(() => {
+        jest.advanceTimersByTime(STORY_PAGE_PREVIEW.dwellMs);
+      });
+      rerender(<StoryPageSlideshow story={story} isCurrent {...size} />);
+
+      const strips = nodes(UNSAFE_root, 'story-page-preview-strip');
+      const alphaOf = (strip: any) => {
+        const tint = strip.findAll((node: any) => node.props?.testID === 'story-page-preview-tint')[0];
+        return Number(String(StyleSheet.flatten(tint.props.style).backgroundColor).split(',').pop()!.replace(')', ''));
+      };
+      const { shade, presenceGain } = STORY_PAGE_PREVIEW.curl;
+      const widthOf = (strip: any) => Math.abs((StyleSheet.flatten(strip.props.style).transform[2] as { scaleX: number }).scaleX);
+      const narrowAndTinted = strips.filter((strip: any) => widthOf(strip) * presenceGain < 0.9 && alphaOf(strip) > 0);
+
+      expect(strips.every((strip: any) => alphaOf(strip) <= shade * Math.min(1, widthOf(strip) * presenceGain) + 1e-6)).toBe(true);
+      expect(narrowAndTinted.length).toBeGreaterThan(0);
+      expect(narrowAndTinted.every((strip: any) => alphaOf(strip) < shade)).toBe(true);
+    });
+
+    it('should fade a strip over to its back face rather than switch, so no strip pops as it passes upright', () => {
+      animatedStyle.mockImplementation((worklet: () => unknown) => worklet());
+      timing.mockImplementation(() => 0.65);
+      const story = makeStory(3);
+      const { UNSAFE_root, rerender } = render(<StoryPageSlideshow story={story} isCurrent {...size} />);
+
+      act(() => {
+        jest.advanceTimersByTime(STORY_PAGE_PREVIEW.dwellMs);
+      });
+      rerender(<StoryPageSlideshow story={story} isCurrent {...size} />);
+
+      const backs: number[] = nodes(UNSAFE_root, 'story-page-preview-back').map((node: any) => StyleSheet.flatten(node.props.style).opacity as number);
+      const underTest = backs.filter((opacity) => opacity > 0.05 && opacity < 0.95);
+
+      expect(backs.length).toBe(STORY_PAGE_PREVIEW.curl.strips);
+      expect(underTest.length).toBeGreaterThan(0);
+      expect(backs.every((opacity) => opacity >= 0 && opacity <= 1)).toBe(true);
+    });
+
+    it('should cover the freshly staged strips with a plain still of the page, and lift it only once the turn begins', () => {
+      timing.mockImplementation(() => 0.5);
+      const story = makeStory(3);
+      const { UNSAFE_root } = render(<StoryPageSlideshow story={story} isCurrent {...size} />);
+      act(() => {
+        jest.advanceTimersByTime(STORY_PAGE_PREVIEW.dwellMs - STORY_PAGE_PREVIEW.prepareMs);
+      });
+      const staged = nodes(UNSAFE_root, 'story-page-preview-still').filter((node: any) => node.props.source !== undefined);
+      expect(staged.length).toBeGreaterThan(0);
+      expect(staged.every((node: any) => node.props.source.uri === 'test://cover')).toBe(true);
+
+      act(() => {
+        jest.advanceTimersByTime(STORY_PAGE_PREVIEW.prepareMs);
+      });
+
+      expect(nodes(UNSAFE_root, 'story-page-preview-still')).toHaveLength(0);
+    });
+
+    it('should still turn when the stage is mounted ahead of the turn: staging must not cancel the turn itself', () => {
+      const { UNSAFE_root } = render(<StoryPageSlideshow story={makeStory(3)} isCurrent {...size} />);
+
+      act(() => {
+        jest.advanceTimersByTime(STORY_PAGE_PREVIEW.dwellMs - STORY_PAGE_PREVIEW.prepareMs);
+      });
+      act(() => {
+        jest.advanceTimersByTime(STORY_PAGE_PREVIEW.prepareMs);
+      });
+
+      expect(restingPage(UNSAFE_root)).toBe('test://page-1');
+    });
+
+    it('should keep loaded stills beneath the stage, this page on top of the next, so a landing reveals the page that was already showing', () => {
+      const { UNSAFE_root } = render(<StoryPageSlideshow story={makeStory(3)} isCurrent {...size} />);
+
+      const bases = nodes(UNSAFE_root, 'story-page-preview-base').filter((node: any) => node.type?.displayName === 'MockExpoImage').map((node: any) => node.props.source.uri);
+
+      expect(bases).toEqual(['test://page-1', 'test://cover']);
+      act(() => {
+        jest.advanceTimersByTime(STORY_PAGE_PREVIEW.dwellMs - STORY_PAGE_PREVIEW.prepareMs);
+      });
+      const playing = nodes(UNSAFE_root, 'story-page-preview-playing')[0];
+      const order = playing.findAll((node: any) => node.props?.testID === 'story-page-preview-base' || node.props?.testID === 'story-page-preview-leaf').map((node: any) => node.props.testID);
+      expect(order.indexOf('story-page-preview-leaf')).toBeGreaterThan(order.lastIndexOf('story-page-preview-base'));
     });
 
     it('should not count a turn that was cut short as a page turned', () => {

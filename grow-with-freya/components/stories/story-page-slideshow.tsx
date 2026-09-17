@@ -14,12 +14,17 @@ import { Story } from '@/types/story';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import {
   STORY_PAGE_PREVIEW,
-  castShadows,
-  leafFaces,
-  leafPose,
-  leafShade,
+  cornerPose,
+  faceMix,
+  foldState,
+  frameKey,
+  landingShadow,
+  leadProgress,
+  liftShadow,
   nextFrame,
   previewFrames,
+  sheetPoint,
+  stripTint,
   type PreviewFrame,
 } from '@/constants/story-page-preview';
 
@@ -72,31 +77,36 @@ interface PageTurnsProps {
   height: number;
 }
 
+type TurnPhase = 'rest' | 'staged' | 'turning';
+
 function PageTurns({ frames, width, height }: PageTurnsProps) {
   const reduceMotion = useReducedMotion();
   const [shown, setShown] = useState(0);
-  const [turning, setTurning] = useState(false);
+  const [phase, setPhase] = useState<TurnPhase>('rest');
   const [turns, setTurns] = useState(0);
 
   useEffect(() => {
-    if (turning) {
-      return undefined;
-    }
-    const timer = setTimeout(() => setTurning(true), STORY_PAGE_PREVIEW.dwellMs);
-    return () => clearTimeout(timer);
-  }, [turning]);
+    const { dwellMs, prepareMs } = STORY_PAGE_PREVIEW;
+    const stage = setTimeout(() => setPhase('staged'), dwellMs - prepareMs);
+    const turn = setTimeout(() => setPhase('turning'), dwellMs);
+    return () => {
+      clearTimeout(stage);
+      clearTimeout(turn);
+    };
+  }, [turns]);
 
   const landed = useCallback(() => {
     setShown((index) => nextFrame(index, frames.length));
-    setTurning(false);
+    setPhase('rest');
     setTurns((count) => count + 1);
   }, [frames.length]);
 
   const current = Math.min(shown, frames.length - 1);
+  const next = nextFrame(current, frames.length);
   const stage = {
     from: frames[current],
-    to: frames[nextFrame(current, frames.length)],
-    turning,
+    to: frames[next],
+    turning: phase === 'turning',
     onLanded: landed,
     width,
     height,
@@ -104,7 +114,9 @@ function PageTurns({ frames, width, height }: PageTurnsProps) {
 
   return (
     <View style={{ width, height }} testID="story-page-preview-playing">
-      {reduceMotion ? <PageFade key={turns} {...stage} /> : <PageTurn key={turns} {...stage} />}
+      <Frame key={`base-${frameKey(frames[next])}`} source={frames[next]} width={width} height={height} testID="story-page-preview-base" />
+      <Frame key={`base-${frameKey(frames[current])}`} source={frames[current]} width={width} height={height} testID="story-page-preview-base" />
+      {phase !== 'rest' && (reduceMotion ? <PageFade key={turns} {...stage} /> : <PageTurn key={turns} {...stage} />)}
     </View>
   );
 }
@@ -139,42 +151,82 @@ function useTurnProgress(turning: boolean, durationMs: number, onLanded: () => v
 function PageTurn({ from, to, turning, onLanded, width, height }: StageProps) {
   const progress = useTurnProgress(turning, STORY_PAGE_PREVIEW.turnMs, onLanded);
   const half = width / 2;
+  const strips = STORY_PAGE_PREVIEW.curl.strips;
+  const castWidth = half * STORY_PAGE_PREVIEW.curl.castWidth;
 
-  const leafStyle = useAnimatedStyle(() => leafPose(progress.value, width));
-  const frontStyle = useAnimatedStyle(() => ({ opacity: leafFaces(progress.value).front }));
-  const backStyle = useAnimatedStyle(() => ({ opacity: leafFaces(progress.value).back }));
-  const frontShadeStyle = useAnimatedStyle(() => ({ opacity: leafShade(progress.value).front }));
-  const backShadeStyle = useAnimatedStyle(() => ({ opacity: leafShade(progress.value).back }));
-  const leftCastStyle = useAnimatedStyle(() => ({ opacity: castShadows(progress.value).left }));
-  const rightCastStyle = useAnimatedStyle(() => ({ opacity: castShadows(progress.value).right }));
+  const landingStyle = useAnimatedStyle(() => ({ opacity: landingShadow(progress.value) }));
+  const liftStyle = useAnimatedStyle(() => {
+    const { phi, bend } = foldState(leadProgress(progress.value, 0.5), half);
+    const shadow = liftShadow(phi, bend, half);
+    return { opacity: shadow.opacity, transform: [{ translateX: shadow.translateX }] };
+  });
 
   return (
     <>
       <View style={[styles.half, { left: 0, width: half, height }]}>
         <Frame source={from} width={width} height={height} testID="story-page-preview-page" />
-        <Animated.View style={[StyleSheet.absoluteFill, leftCastStyle]} pointerEvents="none">
+        <Animated.View style={[StyleSheet.absoluteFill, landingStyle]} pointerEvents="none">
           <LinearGradient colors={CAST_COLORS} locations={CAST_LOCATIONS} start={{ x: 1, y: 0 }} end={{ x: 0, y: 0 }} style={StyleSheet.absoluteFill} />
         </Animated.View>
       </View>
 
       <View style={[styles.half, { left: half, width: half, height }]}>
         <Frame source={to} width={width} height={height} offset={-half} testID="story-page-preview-next" />
-        <Animated.View style={[StyleSheet.absoluteFill, rightCastStyle]} pointerEvents="none">
+        <Animated.View style={[styles.liftShadow, { width: castWidth, height }, liftStyle]} pointerEvents="none">
           <LinearGradient colors={CAST_COLORS} locations={CAST_LOCATIONS} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={StyleSheet.absoluteFill} />
         </Animated.View>
       </View>
 
-      <Animated.View style={[styles.leaf, { left: half, width: half, height }, leafStyle]} testID="story-page-preview-leaf" pointerEvents="none">
-        <Animated.View style={[styles.face, frontStyle]}>
-          <Frame source={from} width={width} height={height} offset={-half} testID="story-page-preview-page" />
-          <Animated.View style={[styles.shade, frontShadeStyle]} />
-        </Animated.View>
-        <Animated.View style={[styles.face, styles.backFace, backStyle]}>
-          <Frame source={to} width={width} height={height} testID="story-page-preview-next" />
-          <Animated.View style={[styles.shade, backShadeStyle]} />
-        </Animated.View>
-      </Animated.View>
+      <View style={[styles.leaf, { left: half, width: half, height }]} testID="story-page-preview-leaf" pointerEvents="none">
+        {Array.from({ length: strips }, (_, index) => (
+          <Strip key={index} index={index} count={strips} half={half} width={width} height={height} from={from} to={to} progress={progress} />
+        ))}
+      </View>
+      {!turning && <Frame source={from} width={width} height={height} testID="story-page-preview-still" />}
     </>
+  );
+}
+
+interface StripProps {
+  index: number;
+  count: number;
+  half: number;
+  width: number;
+  height: number;
+  from: PreviewFrame;
+  to: PreviewFrame;
+  progress: { value: number };
+}
+
+function Strip({ index, count, half, width, height, from, to, progress }: StripProps) {
+  const stripWidth = half / count;
+  const isLast = index === count - 1;
+  const a = index * stripWidth;
+  const b = a + stripWidth + (isLast ? 0 : STORY_PAGE_PREVIEW.curl.overlap);
+  const mid = (a + b) / 2;
+
+  const poseStyle = useAnimatedStyle(() => {
+    const pose = cornerPose(a, b, progress.value, half, height);
+    return { transform: [{ translateX: pose.translateX }, { skewX: pose.skewX }, { scaleX: pose.scaleX }] };
+  });
+  const backStyle = useAnimatedStyle(() => {
+    const { phi, bend } = foldState(leadProgress(progress.value, 0.5), half);
+    return { opacity: faceMix(sheetPoint(mid, phi, bend).theta) };
+  });
+  const tintStyle = useAnimatedStyle(() => {
+    const { phi, bend } = foldState(leadProgress(progress.value, 0.5), half);
+    const pose = cornerPose(a, b, progress.value, half, height);
+    return { backgroundColor: stripTint(sheetPoint(mid, phi, bend).theta, pose.scaleX) };
+  });
+
+  return (
+    <Animated.View style={[styles.strip, { left: a, width: b - a, height }, poseStyle]} testID="story-page-preview-strip">
+      <Frame source={from} width={width} height={height} offset={-(half + a)} testID="story-page-preview-page" />
+      <Animated.View style={[styles.face, styles.backFace, backStyle]} testID="story-page-preview-back">
+        <Frame source={to} width={width} height={height} offset={b - half} testID="story-page-preview-next" />
+      </Animated.View>
+      <Animated.View style={[StyleSheet.absoluteFill, tintStyle]} testID="story-page-preview-tint" />
+    </Animated.View>
   );
 }
 
@@ -198,9 +250,19 @@ const styles = StyleSheet.create({
     top: 0,
     overflow: 'hidden',
   },
+  liftShadow: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+  },
   leaf: {
     position: 'absolute',
     top: 0,
+  },
+  strip: {
+    position: 'absolute',
+    top: 0,
+    overflow: 'hidden',
   },
   face: {
     ...StyleSheet.absoluteFillObject,
@@ -208,9 +270,5 @@ const styles = StyleSheet.create({
   },
   backFace: {
     transform: [{ scaleX: -1 }],
-  },
-  shade: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#04091F',
   },
 });
