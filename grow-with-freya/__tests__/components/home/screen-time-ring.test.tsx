@@ -187,6 +187,17 @@ describe('the backplate', () => {
   // Once the limit is spent the ring is a solid red circle with its own halo.
   // It needs no dark disc to stand off the globe, and one behind it only muddies
   // the glow.
+  it('is frosted glass like the rest of the home chrome, not a dark ink disc, so it sits lightly on the bright globe', () => {
+    const tree = render(<ScreenTimeRing usageSeconds={600} limitSeconds={3600} backplate />);
+
+    const style = [plate(tree)[0].props.style].flat(Infinity).reduce((a: any, b: any) => ({ ...a, ...b }), {});
+    const [r, g, b, alpha] = String(style.backgroundColor).match(/[\d.]+/g)!.map(Number);
+
+    expect(Math.min(r, g, b)).toBeGreaterThanOrEqual(200);
+    expect(alpha).toBeGreaterThanOrEqual(0.12);
+    expect(alpha).toBeLessThanOrEqual(0.35);
+  });
+
   it('is dropped once the limit is spent', () => {
     const tree = render(<ScreenTimeRing usageSeconds={4000} limitSeconds={3600} backplate />);
 
