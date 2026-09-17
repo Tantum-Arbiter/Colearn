@@ -25,6 +25,8 @@ import {
   typeSize,
 } from '@/components/child-ui/tokens';
 import { CatalogueStory, featuredInsightImage } from './catalogue-story';
+import { CardProgressBar } from '@/components/home/card-progress-bar';
+import { progressFraction } from '@/constants/home-scene';
 
 /**
  * The title runs smaller than the featured-title role so two words a line fit
@@ -44,13 +46,14 @@ const TITLE_SCALE = 0.8;
  * nearly solid behind the start of the words, and clears just past where they
  * end, so the picture is plain from there to the edge.
  */
-export const INSIGHT_INSET = 0.1;
+export const INSIGHT_INSET = 0;
+export const INSIGHT_SHIFT = 0.3;
 export const TEXT_WIDTH = 0.6;
-export const READABILITY_WASH_LOCATIONS = [0, INSIGHT_INSET, 0.42, TEXT_WIDTH + 0.02] as const;
+export const READABILITY_WASH_LOCATIONS = [0, 0.2, 0.5, 0.8] as const;
 const READABILITY_WASH = [
   'rgba(9, 20, 56, 1)',
   'rgba(9, 20, 56, 0.96)',
-  'rgba(9, 20, 56, 0.62)',
+  'rgba(9, 20, 56, 0.72)',
   'rgba(9, 20, 56, 0)',
 ] as const;
 /**
@@ -81,6 +84,8 @@ interface FeaturedStoryCardProps {
   onOpen: StoryOpenHandler;
   /** What the panel is offering: "Featured Story" unless told otherwise, as for the day's pick. */
   label?: string;
+  /** Where the child is in the book, for one they are part-way through. */
+  place?: { currentPage: number; totalPages: number };
   hidden?: boolean;
   testID?: string;
 }
@@ -92,7 +97,7 @@ interface FeaturedStoryCardProps {
  * button, beside a glimpse of what is inside -- the book's third page rather
  * than the cover, which the child has already seen on the shelf behind.
  */
-export function FeaturedStoryCard({ story, width, language, onOpen, label, hidden = false, testID = 'featured-story-card' }: FeaturedStoryCardProps) {
+export function FeaturedStoryCard({ story, width, language, onOpen, label, place, hidden = false, testID = 'featured-story-card' }: FeaturedStoryCardProps) {
   const { isTablet, scaledFontSize } = useAccessibility();
   const { t } = useTranslation();
   const reduceMotion = useReducedMotion();
@@ -134,13 +139,16 @@ export function FeaturedStoryCard({ story, width, language, onOpen, label, hidde
         onPress={handleOpen}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
-        style={[styles.card, { width, height, borderRadius: RADIUS_LARGE }]}
+        style={[styles.card, { width, minHeight: height, borderRadius: RADIUS_LARGE }]}
       >
         {insight ? (
           <Image
             testID="featured-story-insight"
             source={typeof insight === 'string' ? { uri: insight } : insight}
-            style={[styles.insight, insightIsPage && { transform: [{ scale: PAGE_CROP }] }]}
+            style={[
+              styles.insight,
+              { transform: [{ translateX: Math.round(width * INSIGHT_SHIFT) }, { scale: insightIsPage ? PAGE_CROP : 1 }] },
+            ]}
             contentFit="cover"
             contentPosition="right"
             transition={0}
@@ -184,6 +192,15 @@ export function FeaturedStoryCard({ story, width, language, onOpen, label, hidde
             >
               {description}
             </Text>
+          )}
+
+          {place && (
+            <View testID="featured-story-progress" style={styles.progress}>
+              <CardProgressBar fraction={progressFraction(place.currentPage - 1, place.totalPages)} height={6} testID="featured-story-progress" />
+              <Text style={[styles.progressMeta, { fontSize: scaledFontSize(isTablet ? 13 : 12) }]}>
+                {t('home.pagePosition', { page: place.currentPage, total: place.totalPages })}
+              </Text>
+            </View>
           )}
 
           <Pressable
@@ -235,6 +252,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     alignItems: 'flex-start',
     paddingTop: SPACE_5,
+    paddingBottom: SPACE_5,
     paddingLeft: SPACE_5,
     paddingRight: SPACE_3,
     width: `${TEXT_WIDTH * 100}%`,
@@ -259,6 +277,16 @@ const styles = StyleSheet.create({
     color: TEXT_SECONDARY,
     fontFamily: Fonts.sans,
     lineHeight: 18,
+  },
+  progress: {
+    alignSelf: 'stretch',
+    marginTop: SPACE_2,
+    gap: 4,
+  },
+  progressMeta: {
+    color: TEXT_SECONDARY,
+    fontFamily: Fonts.sans,
+    fontWeight: '600',
   },
   readNow: {
     flexDirection: 'row',

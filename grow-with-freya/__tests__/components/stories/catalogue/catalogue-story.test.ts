@@ -18,6 +18,8 @@ import {
   featuredInsightImage,
   matchesGender,
   selectFeatured,
+  continuingStoryId,
+  selectContinuing,
   storyMatchesMode,
 } from '@/components/stories/catalogue/catalogue-story';
 import { CatalogEntry, Story } from '@/types/story';
@@ -86,6 +88,52 @@ describe('fromCatalogEntry', () => {
     expect(underTest.locked).toBe(true);
     expect(underTest.shareToUnlock).toBe(false);
     expect(underTest.source.kind).toBe('remote');
+  });
+});
+
+describe('continuingStoryId', () => {
+  const at = (updatedAt: string, pageIndex: number, totalPages = 8) => ({ pageIndex, totalPages, updatedAt, completedCount: 0 });
+
+  it('should name the book most recently left part-way through', () => {
+    const underTest = continuingStoryId({
+      a: at('2026-09-10T09:00:00Z', 3),
+      b: at('2026-09-12T09:00:00Z', 2),
+      c: at('2026-09-11T09:00:00Z', 5),
+    });
+
+    expect(underTest).toBe('b');
+  });
+
+  it('should pass over books not yet begun and books read to the end', () => {
+    const underTest = continuingStoryId({
+      unstarted: at('2026-09-14T09:00:00Z', 0),
+      finished: at('2026-09-13T09:00:00Z', 8),
+      underway: at('2026-09-01T09:00:00Z', 4),
+    });
+
+    expect(underTest).toBe('underway');
+  });
+
+  it('should name nothing when no book is underway', () => {
+    expect(continuingStoryId({})).toBeNull();
+    expect(continuingStoryId({ done: at('2026-09-13T09:00:00Z', 8) })).toBeNull();
+  });
+});
+
+describe('selectContinuing', () => {
+  const installed = (id: string) => fromStory(story({ id }));
+  const remote = () => fromCatalogEntry(entry({ storyId: 'shop' }), { locked: false, shareToUnlock: false });
+
+  it('should hand back the installed book the child is part-way through', () => {
+    const underTest = selectContinuing([remote(), installed('a'), installed('b')], 'b');
+
+    expect(underTest?.id).toBe('b');
+  });
+
+  it('should hand back nothing when the book is not on this shelf, still in the shop, or there is none', () => {
+    expect(selectContinuing([installed('a')], 'zzz')).toBeNull();
+    expect(selectContinuing([remote()], 'shop')).toBeNull();
+    expect(selectContinuing([installed('a')], null)).toBeNull();
   });
 });
 

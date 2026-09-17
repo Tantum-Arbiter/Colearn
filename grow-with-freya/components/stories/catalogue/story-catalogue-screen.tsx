@@ -78,11 +78,14 @@ import {
   matchesGender,
   recommendationTarget,
   selectFeatured,
+  continuingStoryId,
+  selectContinuing,
   storyMatchesMode,
 } from './catalogue-story';
 import { StoryFilterBar } from './story-filter-bar';
 import { FILTER_PILL_ICONS } from './story-filter-pill';
 import { FeaturedStoryCard } from './featured-story-card';
+import { coverColumns, coverWidthFor } from '@/constants/catalogue-columns';
 import { SearchPanel } from './search-panel';
 import { StoryCoverCard } from './story-cover-card';
 import { StoryRow } from './story-row';
@@ -108,11 +111,6 @@ const TAGLINE_LINES: Record<'home' | 'search' | 'profile' | 'screensafe', (t: (k
   screensafe: (t) => [t('catalogue.tagline.one'), t('catalogue.tagline.two')],
 };
 
-/** A book on a shelf row is a little narrower than one in the grid, so the next one shows. */
-const ROW_CARD_SCALE = 0.86;
-
-// Landscape books: two to a row on a phone, three on a tablet
-const coverColumns = (isTablet: boolean) => (isTablet ? 3 : 2);
 export interface CatalogueSectionRequest {
   section: ChildNavItemId;
   key: number;
@@ -351,9 +349,14 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
 
   // A book the child has installed, picked afresh each time the app opens and
   // held for that run, so it does not change under them as they browse
+  const storyProgress = useAppStore((state) => state.storyProgress);
+  const continuing = useMemo(
+    () => selectContinuing(catalogueStories, continuingStoryId(storyProgress)),
+    [catalogueStories, storyProgress],
+  );
   const featured = useMemo(
-    () => selectFeatured(catalogueStories, { seed: APP_LAUNCH_SEED, isPreInstalled: StoryLoader.isLocalStory }),
-    [catalogueStories],
+    () => continuing ?? selectFeatured(catalogueStories, { seed: APP_LAUNCH_SEED, isPreInstalled: StoryLoader.isLocalStory }),
+    [catalogueStories, continuing],
   );
 
   // A finer theme chosen turns the whole shelf, featured panel included, into
@@ -652,15 +655,15 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
 
   const contentWidth = windowWidth - margin * 2;
   const gridAreaWidth = isLandscapeTablet ? (contentWidth - SPACE_5) * 0.55 : contentWidth;
-  const columns = coverColumns(isTablet);
-  const coverWidth = Math.floor((gridAreaWidth - COVER_GRID_GAP * (columns - 1)) / columns);
+  const columns = coverColumns(isTablet, gridAreaWidth);
+  const coverWidth = coverWidthFor(gridAreaWidth, columns);
   // The featured book's width on the shelf: its own column on a landscape
   // tablet, otherwise the full content width, from the left margin
   const featuredWidth = isLandscapeTablet
     ? Math.floor((contentWidth - SPACE_5) * 0.45)
     : contentWidth;
 
-  const rowCardWidth = Math.floor(coverWidth * ROW_CARD_SCALE);
+  const rowCardWidth = coverWidth;
 
   const renderCoverCard = useCallback((story: CatalogueStory, width: number = coverWidth, shelf?: Story[]) => (
     <StoryCoverCard
@@ -683,6 +686,10 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
       width={featuredWidth}
       language={currentLanguage}
       onOpen={handleOpenStory}
+      label={continuing ? t('storyDetail.continueReading') : undefined}
+      place={continuing && storyProgress[continuing.id]
+        ? { currentPage: storyProgress[continuing.id].pageIndex + 1, totalPages: storyProgress[continuing.id].totalPages }
+        : undefined}
     />
   );
 

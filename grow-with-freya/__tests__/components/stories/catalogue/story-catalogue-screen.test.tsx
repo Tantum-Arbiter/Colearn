@@ -12,9 +12,26 @@ import { StoryDownloadService } from '@/services/story-download-service';
 import { CHILD_UI_MOTION } from '@/constants/child-ui-motion';
 import { glanceCloseTimeline } from '@/constants/screen-time-glance-timeline';
 import { StoryCatalogueScreen } from '@/components/stories/catalogue/story-catalogue-screen';
+import { COVER_GRID_GAP } from '@/components/child-ui/tokens';
+import { coverWidthFor } from '@/constants/catalogue-columns';
+import { StyleSheet } from 'react-native';
 import { useStoryTransition } from '@/contexts/story-transition-context';
 
 const mockStartTransition = jest.fn();
+let mockIsTablet = false;
+
+jest.mock('@/hooks/use-accessibility', () => ({
+  useAccessibility: () => ({
+    textSizeScale: 1.0,
+    scaledFontSize: (size: number) => size,
+    scaledButtonSize: (size: number) => size,
+    scaledPadding: (padding: number) => padding,
+    isTablet: mockIsTablet,
+    contentMaxWidth: mockIsTablet ? 700 : 375,
+    fontSizes: { tiny: 12, small: 14, body: 16, subtitle: 18, title: 24, largeTitle: 34 },
+    buttonSizes: { small: 36, medium: 44, large: 56 },
+  }),
+}));
 
 jest.mock('@/data/stories', () => ({
   ALL_STORIES: [
@@ -346,6 +363,70 @@ describe('StoryCatalogueScreen', () => {
     expect(pill?.props.accessibilityState).toEqual({ selected: true });
   });
 
+  it('sizes shelf books so two of them, and the gap between, span exactly the featured card', async () => {
+    Object.defineProperty(document.documentElement, 'clientWidth', { value: 402, configurable: true });
+    Object.defineProperty(document.documentElement, 'clientHeight', { value: 874, configurable: true });
+    window.dispatchEvent(new Event('resize'));
+    const tree = render(<StoryCatalogueScreen />);
+
+    await waitFor(() => expect(byTestId(tree, 'story-row-bedtime').length).toBeGreaterThan(0));
+
+    const shelf = byTestId(tree, 'story-row-bedtime-shelf')[0];
+    const bookWidths = shelf
+      .findAll((n: any) => n.props.testID === undefined && typeof StyleSheet.flatten(n.props.style)?.width === 'number')
+      .map((n: any) => StyleSheet.flatten(n.props.style).width as number);
+    const featured = byTestId(tree, 'featured-story-card')[0];
+    const featuredWidth = featured.props.width ?? StyleSheet.flatten(featured.props.style)?.width;
+
+    expect(bookWidths.length).toBeGreaterThan(0);
+    expect(new Set(bookWidths).size).toBe(1);
+    expect(bookWidths[0] * 2 + COVER_GRID_GAP).toBe(featuredWidth);
+    expect(bookWidths[0]).toBe(Math.floor((402 - 22 * 2 - COVER_GRID_GAP) / 2));
+  });
+
+  describe('on a tablet', () => {
+    const viewport = (width: number, height: number) => {
+      Object.defineProperty(document.documentElement, 'clientWidth', { value: width, configurable: true });
+      Object.defineProperty(document.documentElement, 'clientHeight', { value: height, configurable: true });
+      window.dispatchEvent(new Event('resize'));
+    };
+    const shelfBookWidth = async (tree: ReturnType<typeof render>) => {
+      await waitFor(() => expect(byTestId(tree, 'story-row-bedtime').length).toBeGreaterThan(0));
+      const shelf = byTestId(tree, 'story-row-bedtime-shelf')[0];
+      const widths = shelf
+        .findAll((n: any) => n.props.testID === undefined && typeof StyleSheet.flatten(n.props.style)?.width === 'number')
+        .map((n: any) => StyleSheet.flatten(n.props.style).width as number);
+      return widths[0];
+    };
+
+    beforeEach(() => {
+      mockIsTablet = true;
+    });
+
+    afterEach(() => {
+      mockIsTablet = false;
+      viewport(0, 0);
+    });
+
+    it('fits four books across an 11-inch tablet held upright', async () => {
+      viewport(834, 1194);
+      const gridWidth = 834 - 32 * 2;
+
+      const underTest = await shelfBookWidth(render(<StoryCatalogueScreen />));
+
+      expect(underTest).toBe(coverWidthFor(gridWidth, 4));
+    });
+
+    it('fits three books beside the featured book when the same tablet is turned sideways', async () => {
+      viewport(1194, 834);
+      const gridWidth = (1194 - 32 * 2 - 24) * 0.55;
+
+      const underTest = await shelfBookWidth(render(<StoryCatalogueScreen />));
+
+      expect(underTest).toBe(coverWidthFor(gridWidth, 3));
+    });
+  });
+
   it('carries the row a book was opened from, not the whole shelf', async () => {
     const tree = render(<StoryCatalogueScreen />);
     await waitFor(() => expect(byTestId(tree, 'story-row-bedtime').length).toBeGreaterThan(0));
@@ -392,6 +473,36 @@ describe('StoryCatalogueScreen', () => {
 
     const call = mockStartTransition.mock.calls[mockStartTransition.mock.calls.length - 1];
     expect(call[3].map((story: any) => story.id).sort()).toEqual(['whale', 'wombat']);
+  });
+
+  it('leads with the book left part-way through, offered as Continue reading with the same Read Now button', async () => {
+    mockAppState.storyProgress = {
+      wombat: { pageIndex: 2, totalPages: 6, updatedAt: '2026-09-05T09:00:00Z', completedCount: 0 },
+    };
+    const tree = render(<StoryCatalogueScreen />);
+
+    await waitFor(() => expect(byTestId(tree, 'featured-story-card').length).toBeGreaterThan(0));
+
+    const card = byTestId(tree, 'featured-story-card')[0];
+    expect(card.props.accessibilityLabel).toContain('Snuggle Little Wombat');
+    expect(byTestId(tree, 'featured-story-card-label').some((n: any) => n.props.children === 'storyDetail.continueReading')).toBe(true);
+    expect(byTestId(tree, 'featured-story-card-label').some((n: any) => n.props.children === 'catalogue.featuredStory')).toBe(false);
+    expect(card.findAll((n: any) => n.props.accessibilityLabel === 'storyDetail.readNow').length).toBeGreaterThan(0);
+    expect(card.findAll((n: any) => n.props.testID === 'featured-story-progress-track').length).toBeGreaterThan(0);
+    expect(card.findAll((n: any) => n.props.children === 'home.pagePosition (page:3, total:6)').length).toBeGreaterThan(0);
+  });
+
+  it('keeps the day\'s pick a different book from the one being continued', async () => {
+    mockAppState.storyProgress = {
+      wombat: { pageIndex: 2, totalPages: 6, updatedAt: '2026-09-05T09:00:00Z', completedCount: 0 },
+    };
+    const tree = render(<StoryCatalogueScreen />);
+
+    await waitFor(() => expect(byTestId(tree, 'todays-pick-card').length).toBeGreaterThan(0));
+
+    const pick = byTestId(tree, 'todays-pick-card').find((n: any) => typeof n.props.accessibilityLabel === 'string');
+    expect(pick?.props.accessibilityLabel).toBeDefined();
+    expect(pick?.props.accessibilityLabel).not.toContain('Snuggle Little Wombat');
   });
 
   it('offers no Continue Reading row: a book left unfinished says so on its own card', async () => {

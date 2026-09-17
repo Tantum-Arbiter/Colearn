@@ -296,6 +296,27 @@ export function selectFeatured(stories: CatalogueStory[], choice: FeaturedChoice
   return shelf[index];
 }
 
+export interface ReadingRecord {
+  pageIndex: number;
+  totalPages: number;
+  updatedAt: string;
+}
+
+export function continuingStoryId(progress: Record<string, ReadingRecord>): string | null {
+  const underway = Object.entries(progress)
+    .filter(([, record]) => record.pageIndex > 0 && record.pageIndex < record.totalPages)
+    .sort(([, a], [, b]) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt));
+
+  return underway.length > 0 ? underway[0][0] : null;
+}
+
+export function selectContinuing(stories: CatalogueStory[], storyId: string | null): CatalogueStory | null {
+  if (!storyId) return null;
+  const match = stories.find((story) => story.id === storyId && story.source.kind === 'downloaded');
+
+  return match ?? null;
+}
+
 /**
  * The picture the featured panel shows to give a glimpse inside: the third
  * page, rather than the cover the child has already seen on the shelf.
