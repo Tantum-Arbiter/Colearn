@@ -70,6 +70,33 @@ describe('SectionCrossfade', () => {
     expect(layer(view, 'leaving')).toBeTruthy();
   });
 
+  it('should swap at once, with nothing left fading, when told the change is instant', () => {
+    const view = render(show('home', 'Stories'));
+
+    view.rerender(
+      <SectionCrossfade sectionKey="search" instant>
+        <Section name="search" label="Search" />
+      </SectionCrossfade>
+    );
+
+    expect(texts(view)).toEqual(['Search']);
+    expect(layer(view, 'leaving')).toBeUndefined();
+  });
+
+  it('should go back to crossfading once changes are no longer instant', () => {
+    const view = render(show('home', 'Stories'));
+    view.rerender(
+      <SectionCrossfade sectionKey="search" instant>
+        <Section name="search" label="Search" />
+      </SectionCrossfade>
+    );
+
+    view.rerender(show('profile', 'Profile'));
+
+    expect(texts(view)).toEqual(['Profile', 'Search']);
+    expect(layer(view, 'leaving')).toBeTruthy();
+  });
+
   it('should keep the outgoing section on its own instance rather than remounting it', () => {
     const view = render(show('home', 'Stories'));
 

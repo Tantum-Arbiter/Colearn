@@ -91,6 +91,66 @@ describe('EnhancedPageTransition', () => {
     expect(underTest).toEqual(['main']);
   });
 
+  describe('warming a page ahead of time', () => {
+    it('should mount a page the child is likely to open once the home page has been still for a moment, and not before', () => {
+      render(<EnhancedPageTransition currentPage="main" pages={PAGES} duration={800} prewarm={['stories']} prewarmAfterMs={1200} />);
+
+      act(() => {
+        jest.advanceTimersByTime(1199);
+      });
+      expect(Object.keys(renders).sort()).toEqual(['main']);
+
+      act(() => {
+        jest.advanceTimersByTime(1);
+      });
+      expect(Object.keys(renders).sort()).toEqual(['main', 'stories']);
+    });
+
+    it('should not mount it again when the child then opens it, so the slide pays for nothing', () => {
+      const view = render(<EnhancedPageTransition currentPage="main" pages={PAGES} duration={800} prewarm={['stories']} prewarmAfterMs={1200} />);
+      act(() => {
+        jest.advanceTimersByTime(1200);
+      });
+      const before = renders.stories;
+
+      view.rerender(<EnhancedPageTransition currentPage="stories" pages={PAGES} duration={800} prewarm={['stories']} prewarmAfterMs={1200} />);
+
+      expect(renders.stories).toBe(before);
+    });
+
+    it('should wait for stillness again if the child moves on before the page has been warmed', () => {
+      const view = render(<EnhancedPageTransition currentPage="main" pages={PAGES} duration={800} prewarm={['stories']} prewarmAfterMs={1200} />);
+      act(() => {
+        jest.advanceTimersByTime(600);
+      });
+
+      view.rerender(<EnhancedPageTransition currentPage="account" pages={PAGES} duration={800} prewarm={['stories']} prewarmAfterMs={1200} />);
+      act(() => {
+        jest.advanceTimersByTime(1199);
+      });
+      expect(renders.stories).toBeUndefined();
+
+      act(() => {
+        jest.advanceTimersByTime(1);
+      });
+      expect(renders.stories).toBeGreaterThan(0);
+    });
+
+    it('should keep a warmed page mounted however far the child wanders', () => {
+      const view = render(<EnhancedPageTransition currentPage="main" pages={PAGES} duration={800} prewarm={['stories']} prewarmAfterMs={1200} />);
+      act(() => {
+        jest.advanceTimersByTime(1200);
+      });
+
+      view.rerender(<EnhancedPageTransition currentPage="account" pages={PAGES} duration={800} prewarm={['stories']} prewarmAfterMs={1200} />);
+      act(() => {
+        jest.advanceTimersByTime(800);
+      });
+
+      expect(shown(view)).toContain('stories');
+    });
+  });
+
   it('should mount the destination before sliding to it', () => {
     const view = render(<EnhancedPageTransition currentPage="main" pages={PAGES} duration={800} />);
 

@@ -12,6 +12,7 @@ import Animated, {
 import { getScreenDimensions } from '@/components/main-menu/constants';
 
 const ALWAYS_MOUNTED = 'main';
+const NO_PREWARM: readonly string[] = [];
 
 interface EnhancedPageTransitionProps {
   currentPage: string;
@@ -19,6 +20,10 @@ interface EnhancedPageTransitionProps {
   duration?: number;
   /** When false, page positions are set instantly (no slide animation). Default: true */
   animate?: boolean;
+  /** Pages to mount, off screen, once the current page has been still for a moment, so sliding
+   *  to one of them does not pay for mounting it mid-slide. They stay mounted thereafter. */
+  prewarm?: readonly string[];
+  prewarmAfterMs?: number;
 }
 
 interface AnimatedPageProps {
@@ -66,6 +71,8 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
   pages,
   duration = 600,
   animate = true,
+  prewarm = NO_PREWARM,
+  prewarmAfterMs = 1200,
 }) => {
   // Get initial screen height and track changes
   const [screenHeight, setScreenHeight] = React.useState(() => getScreenDimensions().height);
@@ -82,8 +89,18 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
   if (slide.to !== currentPage) {
     setSlide({ from: slide.to, to: currentPage, recent: slide.recent === currentPage ? slide.from : slide.recent });
   }
+  const [warmed, setWarmed] = useState<readonly string[]>(NO_PREWARM);
+  const prewarmKey = prewarm.join('|');
+  const allWarm = prewarm.every((key) => warmed.includes(key));
+
+  useEffect(() => {
+    if (prewarmKey === '' || allWarm) return undefined;
+    const timer = setTimeout(() => setWarmed(prewarmKey.split('|')), prewarmAfterMs);
+    return () => clearTimeout(timer);
+  }, [currentPage, prewarmKey, prewarmAfterMs, allWarm]);
+
   const mounted = new Set(
-    [ALWAYS_MOUNTED, currentPage, slide.from, slide.recent].filter((key): key is string => key !== null)
+    [ALWAYS_MOUNTED, currentPage, slide.from, slide.recent, ...warmed].filter((key): key is string => key !== null)
   );
 
   // Update screen height when dimensions change (orientation changes)

@@ -13,6 +13,8 @@ type Phase = 'current' | 'entering' | 'leaving';
 
 interface SectionCrossfadeProps {
   sectionKey: string;
+  /** A change made while this is set swaps at once, leaving nothing behind to fade. */
+  instant?: boolean;
   children: ReactNode;
   testID?: string;
 }
@@ -65,7 +67,7 @@ function Layer({ phase, testID, children }: LayerProps) {
   );
 }
 
-export function SectionCrossfade({ sectionKey, children, testID = 'section-crossfade' }: SectionCrossfadeProps) {
+export function SectionCrossfade({ sectionKey, instant = false, children, testID = 'section-crossfade' }: SectionCrossfadeProps) {
   const [view, setView] = useState<ViewState>({ key: sectionKey, leaving: null, generation: 0 });
   const latest = useRef<ReactNode>(children);
 
@@ -76,7 +78,7 @@ export function SectionCrossfade({ sectionKey, children, testID = 'section-cross
   if (view.key !== sectionKey) {
     setView({
       key: sectionKey,
-      leaving: { key: view.key, node: latest.current },
+      leaving: instant ? null : { key: view.key, node: latest.current },
       generation: view.generation + 1,
     });
   }
