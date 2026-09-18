@@ -147,3 +147,14 @@ gradle-app.setting
 *.bak
 *.swp
 *~
+# Local ai orchestrator outputs (not versioned)
+!/.ai/
+!/.ai/scripts/lib/
+.ai/runs/
+.ai/reviews/
+.ai/reports/
+.ai/quarantine/
+.ai/state/
+.ai/tmp/
+.ai/*.pid
+.ai/*.sock

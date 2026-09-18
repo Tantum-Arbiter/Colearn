@@ -1,0 +1,12 @@
+{
+  "name": "colearn-ai-orchestrator",
+  "private": true,
+  "type": "module",
+  "description": "Local multi-model review orchestrator. Runs on Node 22 type stripping; no build step.",
+  "engines": {
+    "node": ">=22.18.0"
+  },
+  "scripts": {
+    "test": "node --test scripts/test/*.test.ts"
+  }
+}

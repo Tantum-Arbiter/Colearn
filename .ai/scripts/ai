@@ -1,0 +1,8 @@
+#!/usr/bin/env node
+import { realpathSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const aiDir = resolve(dirname(realpathSync(fileURLToPath(import.meta.url))), '..');
+const { main } = await import('./lib/cli.ts');
+process.exitCode = await main(process.argv.slice(2), aiDir);
