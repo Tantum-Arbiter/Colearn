@@ -191,8 +191,45 @@ So, for anything drawn full-bleed:
 
 This applies to `components/music/music-backdrop.tsx`, `components/ui/scene-background.tsx`,
 the subscription and trial-end overlays, and the jigsaw scramble transition. Decorative art
-that sits on a gradient (the auth sky's clouds, the splash logo) does not leave a hole and
-is sized at module scope; it is wrong after a rotation rather than missing.
+that sits on a gradient (the auth sky's clouds) does not leave a hole and is sized at module
+scope; it is wrong after a rotation rather than missing. The splash is the exception: it
+lays out from `useWindowDimensions`, so it is right whichever way a tablet is held.
+
+## Splash (launch animation)
+
+`components/splash-screen.tsx` takes over from the native launch image, grows the logo, then
+calls `setAppReady(true)`; `app/_layout.tsx` shows it while `currentView === 'splash'`.
+
+- **The logo is cut, not redrawn.** `scripts/prepare-splash-logo.py` splits the flat
+  `ui-elements/earlyroots-logo.png` into `assets/images/splash-logo/` (the book's two halves,
+  roots, stem, three leaves, wordmark) plus `layout.json`, each layer's frame and leaf pivot as fractions
+  of the canvas. Every output pixel is a source pixel and the script fails if the layers do
+  not recompose to the source exactly. Re-run it if the logo art changes.
+- **Native hand-off.** The script also writes `assets/images/splash-icon.png`: the *closed*
+  book alone on the full canvas (each half folded to `bookClosedScale` about the spine). The native launch screen (`expo-splash-screen` in
+  `app.config.js`, mirrored in `app.json`) shows it at `NATIVE_SPLASH_IMAGE_WIDTH` on
+  `NIGHT_DEEP`, and `AnimatedLogo` opens on the same closed book at the same size, so the first
+  animated frame lands on the launch image. On a tablet the logo starts at that size and
+  eases up to its own. A test holds the config and the constant together. Changing either
+  needs a native rebuild to be seen.
+- **Choreography lives in `constants/splash-logo.ts`**, as pure, tested functions: the book
+  opens first (each half `scaleX`-folds about the spine -- no 3D transform, which breaks
+  clipping on iOS), then the stem rises out of it and the roots spread down into it (clipped reveals), each leaf opens
+  about its neck at the moment `leafUnfurlDelayMs` says the stem tip reaches it (the inverse
+  of `growEase`), then the wordmark and tagline arrive. The leaves sway afterwards. Helpers
+  called from `useAnimatedStyle` carry the `'worklet'` directive.
+- **The sky stays; only the content leaves.** `SplashSky` is the home sky -- the same
+  `HOME_THEMES` gradient for the time of day, the same `StarField` and `EarthHorizon` at the
+  same size -- so the home page arrives over an unchanged sky. `SplashAura` (moonlight
+  behind the sprout, a few motes off the book) and the logo sit in `splash-content`, which is
+  the only thing that fades out. Fading the whole screen shows `RootLayout`'s white backing
+  for a frame or more; do not reintroduce it.
+- **Reduce motion**: the finished logo fades in; no growth, sway, drift, motes or shooting
+  star.
+- **The finished logo holds for two seconds** (operator decision 2026-09-18).
+  `SPLASH_TIMELINE.exitAtMs` is derived, not typed in: `logoCompleteMs` (the latest entrance
+  to finish) plus `holdMs`. Retiming any entrance moves the exit with it. A test caps
+  launch-to-ready at 4.6 s so the hold is the only thing that made it longer.
 
 ## Home (returning-user dashboard)
 
