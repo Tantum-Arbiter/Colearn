@@ -51,7 +51,7 @@ export interface HomeGuideTargets {
 
 const TABLET_FOOT_PADDING = 24;
 
-export type HomeSection = Exclude<ChildNavItemId, 'home' | 'screensafe'>;
+export type HomeSection = Exclude<ChildNavItemId, 'screensafe'>;
 
 export interface HomeSceneProps {
   data: ChildHomeData;
@@ -132,7 +132,7 @@ export const HomeScene = memo(function HomeScene({
       onOpenScreenTime?.(navItemCentre('screensafe', width, height, insets.bottom, isTablet));
       return;
     }
-    if (id !== 'home') onSelectSection(id);
+    onSelectSection(id);
   }, [onOpenScreenTime, onSelectSection, width, height, insets.bottom, isTablet]);
   // A tablet has room the phone's spacing never asks for, and the panels read
   // as one block without it. Portrait has hundreds of points spare and takes
@@ -247,7 +247,7 @@ export const HomeScene = memo(function HomeScene({
       </ScrollView>
 
       <ChildBottomNavigation
-        selected="home"
+        selected={null}
         onSelect={handleSelect}
         screenTime={screenTime}
         collapsed={screenTimeHidden}

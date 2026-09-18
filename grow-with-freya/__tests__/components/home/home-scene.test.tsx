@@ -175,7 +175,7 @@ describe('HomeScene', () => {
       expect(onOpenAchievements).toHaveBeenCalledTimes(1);
     });
 
-    it.each(['progress', 'search', 'profile'])('should hand %s in the bar on to be opened, like a normal selection', (id) => {
+    it.each(['home', 'progress', 'search', 'profile'])('should hand %s in the bar on to be opened, like a normal selection', (id) => {
       const { view, onSelectSection } = renderScene();
 
       pressTestId(view, `navigation-item-${id}`);
@@ -183,20 +183,12 @@ describe('HomeScene', () => {
       expect(onSelectSection).toHaveBeenCalledWith(id);
     });
 
-    it('should do nothing for Home, which is where the child already is', () => {
-      const { view, onSelectSection } = renderScene();
-
-      pressTestId(view, 'navigation-item-home');
-
-      expect(onSelectSection).not.toHaveBeenCalled();
-    });
-
-    it('should mark Home as the place the child already is', () => {
+    it('should light nothing in the bar, since the main menu is none of its places', () => {
       const { view } = renderScene();
 
       const underTest = byTestId(view, 'navigation-item-home').find((n) => n.props.accessibilityState !== undefined);
 
-      expect(underTest?.props.accessibilityState).toEqual(expect.objectContaining({ selected: true }));
+      expect(underTest?.props.accessibilityState).toEqual(expect.objectContaining({ selected: false }));
     });
   });
 

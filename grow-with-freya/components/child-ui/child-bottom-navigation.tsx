@@ -1,4 +1,4 @@
-import React, { useEffect, useState, type RefObject } from 'react';
+import React, { useEffect, useRef, useState, type RefObject } from 'react';
 import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -111,7 +111,8 @@ export function navItemCentre(
 }
 
 export interface ChildBottomNavigationBarProps {
-  selected: ChildNavItemId;
+  /** Null on a page that is none of the bar's places, such as the main menu: nothing is lit. */
+  selected: ChildNavItemId | null;
   onSelect: (id: ChildNavItemId) => void;
   /** Today's usage, so Screensafe can be the live ring rather than a glyph.
    *  Absent, or with no limit set, the item falls back to its shield. */
@@ -152,19 +153,33 @@ export function ChildBottomNavigationBar({ selected, onSelect, screenTime, colla
   const { t } = useTranslation();
   const [rowWidth, setRowWidth] = useState(0);
 
-  const selectedIndex = Math.max(0, CHILD_NAV_ITEMS.findIndex((item) => item.id === selected));
+  const selectedIndex = CHILD_NAV_ITEMS.findIndex((item) => item.id === selected);
+  const lit = selectedIndex >= 0;
   const itemWidth = rowWidth / CHILD_NAV_ITEMS.length;
-  const panelX = useSharedValue(selectedIndex * itemWidth);
+  const panelX = useSharedValue(Math.max(selectedIndex, 0) * itemWidth);
+  const panelOpacity = useSharedValue(lit ? 1 : 0);
+  const wasLit = useRef(lit);
 
   useEffect(() => {
-    if (itemWidth === 0) return;
-    panelX.value = withTiming(selectedIndex * itemWidth, {
+    if (itemWidth === 0 || !lit) return;
+    const x = selectedIndex * itemWidth;
+    // back from a page with nothing lit, the highlight comes up on the place
+    // chosen rather than sliding across from the last one
+    panelX.value = wasLit.current
+      ? withTiming(x, { duration: motionDuration(CHILD_UI_MOTION.navSlide, reduceMotion), easing: Easing.out(Easing.cubic) })
+      : x;
+  }, [selectedIndex, lit, itemWidth, reduceMotion, panelX]);
+
+  useEffect(() => {
+    wasLit.current = lit;
+    panelOpacity.value = withTiming(lit ? 1 : 0, {
       duration: motionDuration(CHILD_UI_MOTION.navSlide, reduceMotion),
-      easing: Easing.out(Easing.cubic),
+      easing: Easing.out(Easing.quad),
     });
-  }, [selectedIndex, itemWidth, reduceMotion, panelX]);
+  }, [lit, reduceMotion, panelOpacity]);
 
   const panelStyle = useAnimatedStyle(() => ({
+    opacity: panelOpacity.value,
     transform: [{ translateX: panelX.value }],
   }));
 

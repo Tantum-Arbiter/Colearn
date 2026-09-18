@@ -432,6 +432,9 @@ layer it would otherwise cover whatever page is showing. The screen-time owl ale
 zIndex 3000 for the same reason: Fabric flattens the wrappers between, so it competes with the
 bar and the story reader directly.
 
+The bar lights the section it is on and nothing elsewhere: the main menu passes
+`selected={null}`, the highlight fades out, and it comes back up on the section chosen rather
+than sliding in from the last one. "Learn" on the main menu opens the library's home section.
 
 ## Testing
 

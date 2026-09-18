@@ -60,7 +60,10 @@ export const HomeSceneContainer = memo(function HomeSceneContainer({
   }, [currentStoryId, onNavigate, requestStoryOpen]);
 
   const handleOpenProgress = useCallback(() => onNavigate(HOME_DESTINATIONS.progress), [onNavigate]);
-  const handleSelectSection = useCallback((id: HomeSection) => onNavigate(HOME_DESTINATIONS[id]), [onNavigate]);
+  const handleSelectSection = useCallback(
+    (id: HomeSection) => onNavigate(id === 'home' ? HOME_DESTINATIONS.stories : HOME_DESTINATIONS[id]),
+    [onNavigate]
+  );
 
   // the ring reports its own centre, so the glance opens out of the control
   // the parent actually pressed

@@ -6,7 +6,8 @@
 
 import React from 'react';
 import { StyleSheet } from 'react-native';
-import { render, fireEvent } from '@testing-library/react-native';
+import { render, fireEvent, act } from '@testing-library/react-native';
+import { withTiming } from 'react-native-reanimated';
 import {
   ChildBottomNavigation,
   navItemCentre,
@@ -302,6 +303,85 @@ describe('the profile slot', () => {
     const tree = render(<ChildBottomNavigation selected="home" onSelect={jest.fn()} />);
 
     expect(items(tree)[4].props.accessibilityLabel).toBe('childUi.nav.profile');
+  });
+});
+
+const ROW_WIDTH = 500;
+
+function layOutRow(tree: ReturnType<typeof render>) {
+  const row = tree.UNSAFE_root.findAll((n: any) => typeof n.props.onLayout === 'function')[0];
+  act(() => {
+    row.props.onLayout({ nativeEvent: { layout: { x: 0, y: 0, width: ROW_WIDTH, height: 60 } } });
+  });
+}
+
+/**
+ * The bar is also shown on pages that are none of its places -- the main menu
+ * above all. Nothing may be lit there, or the bar claims the child is somewhere
+ * they are not.
+ */
+describe('on a page that is none of the bar’s places', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it('lights no item', () => {
+    const tree = render(<ChildBottomNavigation selected={null} onSelect={jest.fn()} />);
+
+    const selectedFlags = items(tree).map((node: any) => node.props.accessibilityState?.selected);
+    expect(selectedFlags.filter(Boolean)).toHaveLength(0);
+  });
+
+  it('still reports a tap on any item', () => {
+    const onSelect = jest.fn();
+    const tree = render(<ChildBottomNavigation selected={null} onSelect={onSelect} />);
+
+    fireEvent.press(items(tree)[0]);
+
+    expect(onSelect).toHaveBeenCalledWith('home');
+  });
+
+  it('fades the highlight out when the child leaves its places, rather than leaving the last one lit', () => {
+    const tree = render(<ChildBottomNavigation selected="progress" onSelect={jest.fn()} />);
+    layOutRow(tree);
+    (withTiming as jest.Mock).mockClear();
+
+    tree.rerender(<ChildBottomNavigation selected={null} onSelect={jest.fn()} />);
+
+    expect(withTiming).toHaveBeenCalledWith(0, expect.objectContaining({ duration: CHILD_UI_MOTION.navSlide.duration }));
+  });
+
+  it('lights the chosen place where it is, rather than sliding in from the last place lit', () => {
+    const itemWidth = ROW_WIDTH / CHILD_NAV_ITEMS.length;
+    const tree = render(<ChildBottomNavigation selected={null} onSelect={jest.fn()} />);
+    layOutRow(tree);
+    (withTiming as jest.Mock).mockClear();
+
+    tree.rerender(<ChildBottomNavigation selected="search" onSelect={jest.fn()} />);
+
+    expect(withTiming).toHaveBeenCalledWith(1, expect.objectContaining({ duration: CHILD_UI_MOTION.navSlide.duration }));
+    expect(withTiming).not.toHaveBeenCalledWith(3 * itemWidth, expect.anything());
+  });
+
+  it('comes back up on the place chosen after the child has been off the bar\'s places', () => {
+    const itemWidth = ROW_WIDTH / CHILD_NAV_ITEMS.length;
+    const tree = render(<ChildBottomNavigation selected="progress" onSelect={jest.fn()} />);
+    layOutRow(tree);
+    tree.rerender(<ChildBottomNavigation selected={null} onSelect={jest.fn()} />);
+    (withTiming as jest.Mock).mockClear();
+
+    tree.rerender(<ChildBottomNavigation selected="search" onSelect={jest.fn()} />);
+
+    expect(withTiming).not.toHaveBeenCalledWith(3 * itemWidth, expect.anything());
+  });
+
+  it('slides between two places it owns', () => {
+    const itemWidth = ROW_WIDTH / CHILD_NAV_ITEMS.length;
+    const tree = render(<ChildBottomNavigation selected="progress" onSelect={jest.fn()} />);
+    layOutRow(tree);
+    (withTiming as jest.Mock).mockClear();
+
+    tree.rerender(<ChildBottomNavigation selected="search" onSelect={jest.fn()} />);
+
+    expect(withTiming).toHaveBeenCalledWith(3 * itemWidth, expect.anything());
   });
 });
 

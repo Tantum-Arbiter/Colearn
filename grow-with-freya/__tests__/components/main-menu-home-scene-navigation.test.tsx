@@ -142,13 +142,13 @@ describe('home scene navigation', () => {
     expect(onNavigate).toHaveBeenCalledWith('search');
   });
 
-  it('should go nowhere for Home, which is where the child already is', () => {
+  it('should open the library for Learn, since the main menu is none of the bar\'s places', () => {
     mockTourUnseen = false;
     const underTest = renderHome();
 
     pressCard(underTest, 'navigation-item-home');
 
-    expect(onNavigate).not.toHaveBeenCalled();
+    expect(onNavigate).toHaveBeenCalledWith('stories');
   });
 
   it('should open the library as a section, never one mode of the stories', () => {
