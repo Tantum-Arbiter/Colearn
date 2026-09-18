@@ -152,3 +152,15 @@ gradle-app.setting
 _xfer/
 _to_delete/
 .claude/settings.local.json
+
+# Local ai orchestrator outputs (not versioned)
+!/.ai/
+!/.ai/scripts/lib/
+.ai/runs/
+.ai/reviews/
+.ai/reports/
+.ai/quarantine/
+.ai/state/
+.ai/tmp/
+.ai/*.pid
+.ai/*.sock

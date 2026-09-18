@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "lead": {
+    "label": "Claude Max",
+    "profile_dir": "~/.claude"
+  },
+  "reviewers": [
+    {
+      "id": "claude-pro",
+      "label": "Claude Pro",
+      "kind": "claude",
+      "profile_dir": "~/.claude-pro",
+      "expected_plan": "pro"
+    },
+    {
+      "id": "codex-1",
+      "label": "Codex 1",
+      "kind": "codex",
+      "profile_dir": "~/.codex-1",
+      "expected_plan": null
+    },
+    {
+      "id": "codex-2",
+      "label": "Codex 2",
+      "kind": "codex",
+      "profile_dir": "~/.codex-2",
+      "expected_plan": null
+    }
+  ],
+  "binaries": {
+    "claude": "~/.local/bin/claude",
+    "codex": "~/.local/share/ai-workers/node_modules/.bin/codex"
+  },
+  "pins": {
+    "codex": "0.154.0"
+  }
+}
