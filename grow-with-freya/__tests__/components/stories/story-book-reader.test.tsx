@@ -44,7 +44,10 @@ jest.mock('@/store/app-store', () => {
   const state = {
     textSizeScale: 1,
     childAgeInMonths: 36,
+    storyProgress: {},
     setTextSizeScale: jest.fn(),
+    setStoryProgress: jest.fn(),
+    markStoryCompleted: jest.fn(),
     markStoryAsRead: jest.fn(),
     recordReadingSession: jest.fn(),
   };
