@@ -8,6 +8,8 @@
 
 import React from 'react';
 import { render, act } from '@testing-library/react-native';
+import { StyleSheet } from 'react-native';
+import { JOURNEY_BAR_LAYER_Z } from '@/components/child-ui/journey-bar-slot';
 
 import { ScreenTimeOwlAlert, OWL_SWIPE_THRESHOLD, swipeIntent } from '@/components/screen-time/screen-time-owl-alert';
 import { TIPS_PER_VISIT, SCREEN_TIME_TIP_KEYS } from '@/constants/screen-time-tips';
@@ -90,6 +92,19 @@ describe('ScreenTimeOwlAlert', () => {
 
   afterEach(() => {
     jest.useRealTimers();
+  });
+
+  /**
+   * The journey bar's layer is flattened up to compete with this one on iOS,
+   * and at 1000 against the bar's 1500 the owl was drawn behind the bar.
+   */
+  it('stands in front of the journey bar and the story reader', () => {
+    const tree = renderAlert();
+
+    const root = StyleSheet.flatten(findByTestId(tree, 'screen-time-owl-alert')[0].props.style);
+
+    expect(root.zIndex).toBeGreaterThan(JOURNEY_BAR_LAYER_Z);
+    expect(root.zIndex).toBeGreaterThan(2000);
   });
 
   it('renders nothing without a warning', () => {

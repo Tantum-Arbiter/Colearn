@@ -2,6 +2,8 @@ import React, { createContext, useCallback, useContext, useEffect, useState, typ
 import { StyleSheet, View } from 'react-native';
 import { ChildBottomNavigationBar, type ChildBottomNavigationBarProps } from './child-bottom-navigation';
 
+export const JOURNEY_BAR_LAYER_Z = 1500;
+
 type Publish = (key: string, props: ChildBottomNavigationBarProps | null) => void;
 
 const PublishContext = createContext<Publish | null>(null);
@@ -69,6 +71,6 @@ export function JourneyBarOutlet({ pageKey, holdMs = 0 }: JourneyBarOutletProps)
 const styles = StyleSheet.create({
   layer: {
     ...StyleSheet.absoluteFillObject,
-    zIndex: 1500,
+    zIndex: JOURNEY_BAR_LAYER_Z,
   },
 });

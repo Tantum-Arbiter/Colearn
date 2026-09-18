@@ -24,6 +24,7 @@ import { owlPerchFrame, type OwlPhase } from '@/constants/owl-companion';
 import { OwlPerch } from '@/components/screen-time/owl-perch';
 import { OwlSpeechBubble } from '@/components/screen-time/owl-speech-bubble';
 import { GuideSpotlight } from './guide-spotlight';
+import { useGuideOnTop } from './owl-guide-layer';
 import { ScreenTimeRingLegend } from './screen-time-ring-legend';
 import { useGuideTargets, type GuideTargetRefs } from './use-guide-targets';
 import type { GuideScroller } from './use-guide-scroller';
@@ -311,75 +312,80 @@ export function OwlGuide({
     </View>
   );
 
-  if (!isMine) return wantsToStart ? blocking : null;
-  if (!step) return null;
-  if (step.target && !measurements.ready) return blocking;
+  const content = (() => {
+    if (!isMine) return wantsToStart ? blocking : null;
+    if (!step) return null;
+    if (step.target && !measurements.ready) return blocking;
 
-  const shown = steps[Math.min(shownIndex, Math.max(steps.length - 1, 0))] ?? step;
-  const landed = phase !== 'arrive';
+    const shown = steps[Math.min(shownIndex, Math.max(steps.length - 1, 0))] ?? step;
+    const landed = phase !== 'arrive';
 
-  return (
-    <View style={styles.root} testID={testID} accessibilityViewIsModal>
-      <Pressable style={StyleSheet.absoluteFill} onPress={() => {}} testID="owl-guide-dim" />
-      <GuideSpotlight
-        width={width}
-        height={height}
-        target={spotlight?.rect ?? null}
-        shape={spotlight?.shape}
-        radius={spotlight?.radius}
-      />
-
-      <Animated.View style={[styles.perch, perchStyle]} pointerEvents="none" testID="owl-guide-perch">
-        <OwlPerch
-          testID="owl-guide-owl-perch"
-          phase={phase}
-          sayCount={sayCount}
-          owlWidth={layout.owlWidth}
-          pointing={Boolean(spotlight)}
-          wingSide="right"
-          onPhaseEnd={handlePhaseEnd}
-          accessibilityLabel={t('screenTimeOwl.owlLabel')}
+    return (
+      <View style={styles.root} testID={testID} accessibilityViewIsModal>
+        <Pressable style={StyleSheet.absoluteFill} onPress={() => {}} testID="owl-guide-dim" />
+        <GuideSpotlight
+          width={width}
+          height={height}
+          target={spotlight?.rect ?? null}
+          shape={spotlight?.shape}
+          radius={spotlight?.radius}
         />
-      </Animated.View>
 
-      {landed ? (
-        <View
-          testID={`owl-guide-bubble-${placement.mode}`}
-          style={[
-            styles.bubbleSlot,
-            {
-              left: placement.left,
-              width: placement.width,
-              top: placement.top,
-              bottom: placement.bottom,
-            },
-          ]}
-          pointerEvents="box-none"
-        >
-          <OwlSpeechBubble
-            idPrefix="owl-guide"
-            testID="owl-guide-bubble"
-            title={t(shown.titleKey)}
-            body={t(shown.descriptionKey)}
-            illustration={shown.illustration ? ILLUSTRATIONS[shown.illustration] : undefined}
-            muted={swapping}
-            page={shownIndex}
-            pageCount={steps.length}
-            nextLabel={t(isLast ? GUIDE_BUTTON_KEYS.finish : GUIDE_BUTTON_KEYS.next)}
-            closeLabel={t(GUIDE_BUTTON_KEYS.skip)}
-            onNext={handleNext}
-            onClose={handleSkip}
-            leaving={phase !== 'idle'}
-            maxWidth={placement.width}
-            tail={placement.tail}
-            tailOffset={Math.round(perch.owl.left + layout.owlWidth * 0.42 - placement.left)}
-            pointer={placement.pointer}
-            onLayout={handleBubbleLayout}
+        <Animated.View style={[styles.perch, perchStyle]} pointerEvents="none" testID="owl-guide-perch">
+          <OwlPerch
+            testID="owl-guide-owl-perch"
+            phase={phase}
+            sayCount={sayCount}
+            owlWidth={layout.owlWidth}
+            pointing={Boolean(spotlight)}
+            wingSide="right"
+            onPhaseEnd={handlePhaseEnd}
+            accessibilityLabel={t('screenTimeOwl.owlLabel')}
           />
-        </View>
-      ) : null}
-    </View>
-  );
+        </Animated.View>
+
+        {landed ? (
+          <View
+            testID={`owl-guide-bubble-${placement.mode}`}
+            style={[
+              styles.bubbleSlot,
+              {
+                left: placement.left,
+                width: placement.width,
+                top: placement.top,
+                bottom: placement.bottom,
+              },
+            ]}
+            pointerEvents="box-none"
+          >
+            <OwlSpeechBubble
+              idPrefix="owl-guide"
+              testID="owl-guide-bubble"
+              title={t(shown.titleKey)}
+              body={t(shown.descriptionKey)}
+              illustration={shown.illustration ? ILLUSTRATIONS[shown.illustration] : undefined}
+              muted={swapping}
+              page={shownIndex}
+              pageCount={steps.length}
+              nextLabel={t(isLast ? GUIDE_BUTTON_KEYS.finish : GUIDE_BUTTON_KEYS.next)}
+              closeLabel={t(GUIDE_BUTTON_KEYS.skip)}
+              onNext={handleNext}
+              onClose={handleSkip}
+              leaving={phase !== 'idle'}
+              maxWidth={placement.width}
+              tail={placement.tail}
+              tailOffset={Math.round(perch.owl.left + layout.owlWidth * 0.42 - placement.left)}
+              pointer={placement.pointer}
+              onLayout={handleBubbleLayout}
+            />
+          </View>
+        ) : null}
+      </View>
+    );
+  })();
+
+  const onTop = useGuideOnTop(content);
+  return <>{onTop}</>;
 }
 
 const styles = StyleSheet.create({

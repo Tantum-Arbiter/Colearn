@@ -43,6 +43,7 @@ import { Story } from '@/types/story';
 import { preloadCriticalImages, preloadSecondaryImages } from '@/services/image-preloader';
 import { EnhancedPageTransition } from '@/components/ui/enhanced-page-transition';
 import { JourneyBarProvider, JourneyBarOutlet } from '@/components/child-ui/journey-bar-slot';
+import { OwlGuideLayer, OwlGuideLayerProvider, guidePages } from '@/components/owl-guide/owl-guide-layer';
 import { PAGE_TRANSITION_DURATION_MS, SLIDE_AFTER_SECTION_SWITCH_MS } from '@/constants/page-transition';
 
 const PREWARMED_PAGES = ['stories'] as const;
@@ -959,9 +960,10 @@ function AppContent() {
         <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
           {/* App navigation always rendered underneath */}
           <JourneyBarProvider>
+          <OwlGuideLayerProvider>
           <EnhancedPageTransition
             currentPage={currentPage as string}
-            pages={{
+            pages={guidePages({
               main: <MainMenu onNavigate={handleMainMenuNavigate} isActive={currentPage === 'main'} returnToSubMenu={returnToSubMenu} />,
               stories: <SimpleStoryScreen
                 onStorySelect={handleStorySelect}
@@ -991,12 +993,15 @@ function AppContent() {
               ) : null,
               feelings: <EmotionsScreen onBack={handleBackToLearning} isActive={currentPage === 'feelings'} />,
               account: <AccountScreen onBack={handleAccountBack} isActive={currentPage === 'account'} />,
-            }}
+            }, currentPage)}
             duration={PAGE_TRANSITION_DURATION_MS}
             animate={animatePageTransition}
             prewarm={PREWARMED_PAGES}
           />
           <JourneyBarOutlet pageKey={currentPage as string} holdMs={animatePageTransition ? PAGE_TRANSITION_DURATION_MS : 0} />
+          {/* above the bar, so an owl pointing at the bar is not drawn behind it */}
+          <OwlGuideLayer />
+          </OwlGuideLayerProvider>
           </JourneyBarProvider>
 
           {/* Story reader rendered on top - only loads AFTER mode selection is complete (not during transition) */}

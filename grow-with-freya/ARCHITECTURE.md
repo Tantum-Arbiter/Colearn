@@ -422,6 +422,16 @@ which guides have been seen is persisted by `contexts/owl-guide-context.tsx` und
 `@tutorial_state` key, migrating the previous shape on load. A guide that has been seen can be
 replayed from a screen's own menu with `replay`, which does not mark it again.
 
+A guide on an app page does not draw inside its page: pages sit under the shared journey bar
+(`JourneyBarOutlet`, zIndex 1500), which would cover the owl and the spotlight on its own
+buttons. `useGuideOnTop` (`components/owl-guide/owl-guide-layer.tsx`) hands the guide to
+`OwlGuideLayer`, mounted just above the bar in `app/_layout.tsx`; without a layer (screen
+tests, the story reader) it draws in place. Pages are mounted before they are shown, so each
+is wrapped by `guidePages` and a guide on a page that is not on screen draws nothing -- in the
+layer it would otherwise cover whatever page is showing. The screen-time owl alert sits at
+zIndex 3000 for the same reason: Fabric flattens the wrappers between, so it competes with the
+bar and the story reader directly.
+
 
 ## Testing
 
