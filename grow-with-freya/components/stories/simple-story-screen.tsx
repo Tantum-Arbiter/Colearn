@@ -1,5 +1,6 @@
 import React from 'react';
-import { StorySelectionScreen } from './story-selection-screen';
+import { StoryCatalogueScreen, type CatalogueSectionRequest } from './catalogue/story-catalogue-screen';
+import type { CatalogueMode } from './catalogue/catalogue-story';
 import { Story } from '@/types/story';
 
 interface SimpleStoryScreenProps {
@@ -9,18 +10,25 @@ interface SimpleStoryScreenProps {
   onBack: () => void;
   /** Pre-selected story mode from main menu (interactive / music / classic) */
   initialMode?: string | null;
+  /** Which catalogue section the home asked for, keyed so a repeat request still applies */
+  sectionRequest?: CatalogueSectionRequest;
+  /** Opens the grown-ups' area from the profile page's settings control. */
+  onOpenSettings?: () => void;
 }
 
 export function SimpleStoryScreen({
   onStorySelect,
-  selectedStory,
-  onBack,
+  onBack: _onBack,
   initialMode,
+  sectionRequest,
+  onOpenSettings,
 }: SimpleStoryScreenProps) {
   return (
-    <StorySelectionScreen
+    <StoryCatalogueScreen
       onStorySelect={onStorySelect}
-      initialMode={initialMode as any}
+      initialMode={(initialMode as CatalogueMode | null) ?? null}
+      sectionRequest={sectionRequest}
+      onOpenSettings={onOpenSettings}
     />
   );
 }

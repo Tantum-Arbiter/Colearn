@@ -1,0 +1,398 @@
+/**
+ * Tests for useTurnToLandscape -decides when the device is sideways enough to
+ * open the book.
+ *
+ * Three ways it can tell, because no single one covers every device: the screen
+ * is already sideways, the screen turns sideways (a tablet, whose interface is
+ * free to rotate), or gravity says the device turned while the interface stayed
+ * portrait-locked (a phone).
+ *
+ * Key behaviors tested:
+ * 1. Opens when the screen is already sideways, once the turn has landed
+ * 2. Opens when the screen turns sideways, even with no usable accelerometer
+ * 3. Fires onTurned after enough consecutive landscape-gravity samples
+ * 4. Portrait samples never fire, and they reset a broken streak
+ * 5. Fires exactly once per activation
+ * 6. Waits for the system's own rotation to land before opening anything
+ * 7. Subscribes only while enabled; cleans up on unmount
+ */
+
+import { Dimensions } from 'react-native';
+import { renderHook, act } from '@testing-library/react-native';
+import { Accelerometer } from 'expo-sensors';
+import { useTurnToLandscape, waitForWindowToSettle, TURN_SAMPLES_REQUIRED, TURN_SETTLE_MS } from '@/hooks/use-turn-to-landscape';
+
+const PORTRAIT_SCREEN = { width: 834, height: 1194, scale: 2, fontScale: 1 };
+const LANDSCAPE_SCREEN = { width: 1194, height: 834, scale: 2, fontScale: 1 };
+
+function screenIs(size: typeof PORTRAIT_SCREEN) {
+  jest.spyOn(Dimensions, 'get').mockReturnValue(size);
+}
+
+function emitScreenChange(size: typeof PORTRAIT_SCREEN) {
+  const handlers = (Dimensions.addEventListener as jest.Mock).mock.calls
+    .filter(([event]) => event === 'change')
+    .map(([, handler]) => handler);
+  act(() => {
+    handlers.forEach((handler) => handler({ window: size, screen: size }));
+  });
+}
+
+/** The screen has turned and the system has finished animating it round. */
+function turnScreen(size: typeof PORTRAIT_SCREEN) {
+  screenIs(size);
+  emitScreenChange(size);
+  act(() => {
+    jest.advanceTimersByTime(TURN_SETTLE_MS);
+  });
+}
+
+/** Let any pending settle window elapse. */
+function settle() {
+  act(() => {
+    jest.advanceTimersByTime(TURN_SETTLE_MS);
+  });
+}
+
+/** The screen has begun turning; the system is still animating it round. */
+function turnScreenWithoutSettling(size: typeof PORTRAIT_SCREEN) {
+  screenIs(size);
+  emitScreenChange(size);
+}
+
+const emit = (measurement: { x: number; y: number; z: number }) => {
+  (Accelerometer as unknown as { __emit: (m: object) => void }).__emit(measurement);
+};
+
+const LANDSCAPE_SAMPLE = { x: 0.98, y: 0.05, z: 0.1 };
+const PORTRAIT_SAMPLE = { x: 0.05, y: -0.98, z: 0.1 };
+
+describe('useTurnToLandscape', () => {
+  let onTurned: jest.Mock;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    (Accelerometer as unknown as { listeners: Set<unknown> }).listeners.clear();
+    onTurned = jest.fn();
+    jest.spyOn(Dimensions, 'addEventListener').mockReturnValue({ remove: jest.fn() } as never);
+    screenIs(PORTRAIT_SCREEN);
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  describe('when the screen is already sideways', () => {
+    it('should open the book without asking anyone to turn anything, once the turn has landed', () => {
+      // The defect this pins: a phone turned while the book was still being
+      // drawn reached the prompt with the screen already sideways, and this
+      // path opened the book at once -- on top of the system's own rotation,
+      // which was still animating the interface round.
+      screenIs(LANDSCAPE_SCREEN);
+
+      renderHook(() => useTurnToLandscape({ enabled: true, onTurned }));
+
+      expect(onTurned).not.toHaveBeenCalled();
+
+      settle();
+
+      expect(onTurned).toHaveBeenCalledTimes(1);
+    });
+
+    it('should keep waiting while a sideways screen is still changing size', () => {
+      screenIs({ ...LANDSCAPE_SCREEN, width: 900 });
+      renderHook(() => useTurnToLandscape({ enabled: true, onTurned }));
+
+      act(() => {
+        jest.advanceTimersByTime(TURN_SETTLE_MS - 1);
+      });
+      screenIs(LANDSCAPE_SCREEN);
+      act(() => {
+        jest.advanceTimersByTime(1);
+      });
+
+      expect(onTurned).not.toHaveBeenCalled();
+
+      settle();
+
+      expect(onTurned).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not open a book whose prompt was taken down while the turn was landing', () => {
+      screenIs(LANDSCAPE_SCREEN);
+      const { unmount } = renderHook(() => useTurnToLandscape({ enabled: true, onTurned }));
+
+      unmount();
+      settle();
+
+      expect(onTurned).not.toHaveBeenCalled();
+    });
+
+    it('should stay put until it is switched on', () => {
+      screenIs(LANDSCAPE_SCREEN);
+
+      renderHook(() => useTurnToLandscape({ enabled: false, onTurned }));
+
+      expect(onTurned).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('when the screen turns sideways', () => {
+    it('should open the book, the way a tablet turns on a table', () => {
+      renderHook(() => useTurnToLandscape({ enabled: true, onTurned }));
+      expect(onTurned).not.toHaveBeenCalled();
+
+      turnScreen(LANDSCAPE_SCREEN);
+
+      expect(onTurned).toHaveBeenCalledTimes(1);
+    });
+
+    it('should let the system finish turning the screen before opening anything', () => {
+      jest.useFakeTimers();
+      renderHook(() => useTurnToLandscape({ enabled: true, onTurned }));
+
+      turnScreenWithoutSettling(LANDSCAPE_SCREEN);
+
+      expect(onTurned).not.toHaveBeenCalled();
+
+      act(() => {
+        jest.advanceTimersByTime(TURN_SETTLE_MS);
+      });
+
+      expect(onTurned).toHaveBeenCalledTimes(1);
+      jest.useRealTimers();
+    });
+
+    it('should keep waiting while the screen is still changing size', () => {
+      jest.useFakeTimers();
+      renderHook(() => useTurnToLandscape({ enabled: true, onTurned }));
+      turnScreenWithoutSettling({ ...LANDSCAPE_SCREEN, width: 900 });
+
+      act(() => {
+        jest.advanceTimersByTime(TURN_SETTLE_MS - 1);
+      });
+      screenIs(LANDSCAPE_SCREEN);
+      act(() => {
+        jest.advanceTimersByTime(1);
+      });
+
+      expect(onTurned).not.toHaveBeenCalled();
+
+      act(() => {
+        jest.advanceTimersByTime(TURN_SETTLE_MS);
+      });
+
+      expect(onTurned).toHaveBeenCalledTimes(1);
+      jest.useRealTimers();
+    });
+
+    it('should ignore a turn back to upright', () => {
+      renderHook(() => useTurnToLandscape({ enabled: true, onTurned }));
+
+      turnScreen(PORTRAIT_SCREEN);
+
+      expect(onTurned).not.toHaveBeenCalled();
+    });
+
+    it('should open the book only once, however the news arrives', () => {
+      renderHook(() => useTurnToLandscape({ enabled: true, onTurned }));
+
+      turnScreen(LANDSCAPE_SCREEN);
+      act(() => {
+        for (let i = 0; i < TURN_SAMPLES_REQUIRED; i++) emit(LANDSCAPE_SAMPLE);
+      });
+
+      expect(onTurned).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('should fire onTurned after consecutive landscape samples', () => {
+    renderHook(() => useTurnToLandscape({ enabled: true, onTurned }));
+
+    act(() => {
+      for (let i = 0; i < TURN_SAMPLES_REQUIRED; i++) emit(LANDSCAPE_SAMPLE);
+    });
+    settle();
+
+    expect(onTurned).toHaveBeenCalledTimes(1);
+  });
+
+  it('should not fire for portrait gravity', () => {
+    renderHook(() => useTurnToLandscape({ enabled: true, onTurned }));
+
+    act(() => {
+      for (let i = 0; i < TURN_SAMPLES_REQUIRED * 2; i++) emit(PORTRAIT_SAMPLE);
+    });
+    settle();
+
+    expect(onTurned).not.toHaveBeenCalled();
+  });
+
+  it('should reset the streak when a portrait sample interrupts', () => {
+    renderHook(() => useTurnToLandscape({ enabled: true, onTurned }));
+
+    act(() => {
+      for (let i = 0; i < TURN_SAMPLES_REQUIRED - 1; i++) emit(LANDSCAPE_SAMPLE);
+      emit(PORTRAIT_SAMPLE);
+      for (let i = 0; i < TURN_SAMPLES_REQUIRED - 1; i++) emit(LANDSCAPE_SAMPLE);
+    });
+
+    expect(onTurned).not.toHaveBeenCalled();
+  });
+
+  it('should fire only once even if landscape samples continue', () => {
+    renderHook(() => useTurnToLandscape({ enabled: true, onTurned }));
+
+    act(() => {
+      for (let i = 0; i < TURN_SAMPLES_REQUIRED * 3; i++) emit(LANDSCAPE_SAMPLE);
+    });
+    settle();
+
+    expect(onTurned).toHaveBeenCalledTimes(1);
+  });
+
+  it('should ignore tilted samples where gravity is split between axes', () => {
+    renderHook(() => useTurnToLandscape({ enabled: true, onTurned }));
+
+    act(() => {
+      for (let i = 0; i < TURN_SAMPLES_REQUIRED * 2; i++) emit({ x: 0.72, y: 0.65, z: 0.1 });
+    });
+    settle();
+
+    expect(onTurned).not.toHaveBeenCalled();
+  });
+
+  it('should not subscribe while disabled', () => {
+    renderHook(() => useTurnToLandscape({ enabled: false, onTurned }));
+
+    expect(Accelerometer.addListener).not.toHaveBeenCalled();
+
+    act(() => {
+      emit(LANDSCAPE_SAMPLE);
+      emit(LANDSCAPE_SAMPLE);
+      emit(LANDSCAPE_SAMPLE);
+    });
+
+    expect(onTurned).not.toHaveBeenCalled();
+  });
+
+  it('should not crash when the native sensor module is unavailable', () => {
+    // A dev client built before expo-sensors was added resolves the JS module
+    // but throws from the native bridge on first use
+    (Accelerometer.addListener as jest.Mock).mockImplementationOnce(() => {
+      throw new Error("Cannot find native module 'ExpoAccelerometer'");
+    });
+
+    expect(() =>
+      renderHook(() => useTurnToLandscape({ enabled: true, onTurned }))
+    ).not.toThrow();
+    expect(onTurned).not.toHaveBeenCalled();
+  });
+
+  it('should not crash on unmount when the sensor never subscribed', () => {
+    (Accelerometer.addListener as jest.Mock).mockImplementationOnce(() => {
+      throw new Error("Cannot find native module 'ExpoAccelerometer'");
+    });
+
+    const { unmount } = renderHook(() => useTurnToLandscape({ enabled: true, onTurned }));
+
+    expect(() => unmount()).not.toThrow();
+  });
+
+  it('should remove its listener on unmount', () => {
+    const { unmount } = renderHook(() => useTurnToLandscape({ enabled: true, onTurned }));
+
+    unmount();
+
+    act(() => {
+      for (let i = 0; i < TURN_SAMPLES_REQUIRED; i++) emit(LANDSCAPE_SAMPLE);
+    });
+    settle();
+
+    expect(onTurned).not.toHaveBeenCalled();
+  });
+
+  it('should re-arm after being disabled and re-enabled', () => {
+    const { rerender } = renderHook(
+      (props: { enabled: boolean }) => useTurnToLandscape({ enabled: props.enabled, onTurned }),
+      { initialProps: { enabled: true } }
+    );
+
+    act(() => {
+      for (let i = 0; i < TURN_SAMPLES_REQUIRED; i++) emit(LANDSCAPE_SAMPLE);
+    });
+    settle();
+    expect(onTurned).toHaveBeenCalledTimes(1);
+
+    rerender({ enabled: false });
+    rerender({ enabled: true });
+
+    act(() => {
+      for (let i = 0; i < TURN_SAMPLES_REQUIRED; i++) emit(LANDSCAPE_SAMPLE);
+    });
+    settle();
+
+    expect(onTurned).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('waitForWindowToSettle', () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+    jest.spyOn(Dimensions, 'get').mockReturnValue(LANDSCAPE_SCREEN);
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+    jest.restoreAllMocks();
+  });
+
+  it('should resolve once the window has held one size for the settle time', async () => {
+    let settled = false;
+    const underTest = waitForWindowToSettle().then(() => {
+      settled = true;
+    });
+
+    act(() => {
+      jest.advanceTimersByTime(TURN_SETTLE_MS - 1);
+    });
+    await Promise.resolve();
+    expect(settled).toBe(false);
+
+    act(() => {
+      jest.advanceTimersByTime(1);
+    });
+    await underTest;
+
+    expect(settled).toBe(true);
+  });
+
+  it('should start the wait again whenever the window changes size', async () => {
+    let settled = false;
+    const underTest = waitForWindowToSettle().then(() => {
+      settled = true;
+    });
+
+    act(() => {
+      jest.advanceTimersByTime(TURN_SETTLE_MS - 1);
+    });
+    jest.spyOn(Dimensions, 'get').mockReturnValue({ ...LANDSCAPE_SCREEN, width: 1000 });
+    act(() => {
+      jest.advanceTimersByTime(1);
+    });
+    await Promise.resolve();
+    expect(settled).toBe(false);
+
+    act(() => {
+      jest.advanceTimersByTime(TURN_SETTLE_MS);
+    });
+    await underTest;
+
+    expect(settled).toBe(true);
+  });
+});

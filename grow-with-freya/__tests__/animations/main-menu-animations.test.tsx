@@ -9,8 +9,8 @@ import { MainMenu } from '@/components/main-menu';
 import { ScreenTimeProvider } from '@/components/screen-time/screen-time-provider';
 
 // Override the global app-store mock to ensure getEffectiveTier is present
-jest.mock('@/store/app-store', () => ({
-  useAppStore: jest.fn(() => ({
+jest.mock('@/store/app-store', () => {
+  const state = {
     isAppReady: true,
     hasCompletedOnboarding: true,
     currentChildId: null,
@@ -37,9 +37,16 @@ jest.mock('@/store/app-store', () => ({
     requestReturnToMainMenu: jest.fn(),
     clearReturnToMainMenu: jest.fn(),
     updateBackgroundAnimationState: jest.fn(),
-  })),
-  BASIC_TIER_INSTRUMENTS: ['flute', 'recorder', 'ocarina'],
-}));
+    useHomeScene: false,
+    storyProgress: {},
+    getContinueReadingStoryId: () => null,
+  };
+
+  return {
+    useAppStore: jest.fn((selector) => (typeof selector === 'function' ? selector(state) : state)),
+    BASIC_TIER_INSTRUMENTS: ['flute', 'recorder', 'ocarina'],
+  };
+});
 
 describe('MainMenu Component', () => {
   const mockOnNavigate = jest.fn();

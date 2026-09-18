@@ -1,32 +1,30 @@
 /**
  * InstrumentPickerOverlay
  *
- * Full-screen overlay with blurred background showing a 3D coverflow carousel
- * of instruments. Appears when entering a story that has music challenge pages.
- * The user swipes to pick an instrument, then taps confirm to begin.
+ * Full-screen instrument picker: a night-sky panel holding a 3D coverflow
+ * carousel of medallions, with the back button and the left/right arrows sitting
+ * outside the panel against the screen edges.
  *
  * Visual design:
- * - BlurView backdrop (intensity 40, dark tint)
- * - 3D carousel: centered item at full scale, side items recede with perspective
- * - Pulsing ring around the currently centered instrument
- * - Instrument image + display name + description
- * - Confirm button at the bottom
+ * - Backdrop: a blurred night scene, a plain blur over whatever is behind, or nothing
+ * - Panel: deep indigo card, soft border, drop shadow, capped at PANEL_MAX_WIDTH
+ * - Carousel: centred medallion at full scale, neighbours recede with perspective
+ * - Gold focus ring around the centred medallion, page dots below, gold CTA
  *
- * Reuses the same carousel math as MenuCarousel (menu-carousel.tsx):
- * - Pan gesture for swiping, spring snap to nearest item
- * - 3D transforms: translateX, translateY, scale, perspective, rotateY
+ * Carousel maths is shared with MenuCarousel (menu-carousel.tsx): a pan gesture
+ * with a spring snap, and 3D transforms of translateX, translateY and scale.
  */
 
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   Pressable,
-  Image,
   useWindowDimensions,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import Animated, {
@@ -54,15 +52,177 @@ import {
   InstrumentDefinition,
 } from '@/services/music-asset-registry';
 import { StoryAccessService } from '@/services/story-access-service';
+import { InstrumentMedallion } from '@/components/stories/instrument-medallion';
+import { ContentSwap } from '@/components/child-ui/content-swap';
+import { SceneBackground } from '@/components/ui/scene-background';
+import {
+  ArcText,
+  arcPointAt,
+  arcRadiusForText,
+  DEFAULT_ARC_CURVE,
+  estimateArcTextWidth,
+} from '@/components/ui/arc-text';
+import { BlobPanel } from '@/components/ui/blob-panel';
+import { Fonts } from '@/constants/theme';
 
 // ============================================================================
-// Carousel configuration -tuned for 6 instruments
+// Layout -all sizes derive from the viewport so phone, landscape phone and
+// tablet share one set of proportions.
 // ============================================================================
-const RADIUS = 180;
+const PANEL_MAX_WIDTH = 540;
+const PANEL_PADDING = 20;
+/** Clearance between the outermost medallion and the panel's inner edge. */
+const EDGE_CLEARANCE = 4;
+/** Carousel radius as a multiple of the medallion diameter. */
+const RADIUS_RATIO = 1.12;
+const ARROW_SIZE = 48;
+const ARROW_EDGE_GAP = 12;
+/** Where every other back button in the app sits -- see `page-header.tsx`,
+ *  which pins its own to `insets.top + 20` / `left: 20`. The safe-area inset
+ *  is added on the left too, which is nought in portrait (so the two match
+ *  exactly) and clears the notch when this picker is opened side-on. */
+export const BACK_BUTTON_GAP = 20;
+/** How far outside the panel's edge the carousel arrows sit. Pinned to the
+ *  panel rather than the screen: the panel is capped at PANEL_MAX_WIDTH and
+ *  centred, so on a tablet -- a wide landscape especially -- screen-edge
+ *  arrows ended up hundreds of points adrift of the thing they scroll. */
+const ARROW_PANEL_GAP = 14;
+const MEDALLION_MAX_SIZE = 224;
+const MEDALLION_COMPACT_MAX_SIZE = 172;
 const CENTER_SCALE = 1.0;
-const SIDE_SCALE = 0.85;
-const SIDE_OPACITY = 0.3;
-const INSTRUMENT_IMAGE_SIZE = 120;
+const SIDE_SCALE = 0.78;
+/**
+ * Only the centred item and its two neighbours are drawn. With six instruments the
+ * ones behind them project to the same x as the neighbours, so leaving them faintly
+ * visible reads as a smudge behind each side medallion.
+ */
+const VISIBLE_DEPTH = 0.5;
+/** Viewport height under which the panel switches to its tight vertical rhythm. */
+const COMPACT_VIEWPORT_HEIGHT = 430;
+/** Stand-in for a viewport that has not been measured yet (0 x 0 on the first frame). */
+const UNMEASURED_VIEWPORT = { width: 390, height: 844 };
+
+const COLORS = {
+  panel: 'rgba(49, 58, 112, 0.62)',
+  panelBorder: 'rgba(255, 255, 255, 0.12)',
+  title: '#FFF8EB',
+  subtitle: '#CCD3FB',
+  centerName: '#FBF4DD',
+  sideName: '#AAB0FD',
+  description: '#BFC5E7',
+  ctaFrom: '#FFEFAE',
+  ctaTo: '#FBC55F',
+  ctaLabel: '#4A3410',
+  ctaSparkle: '#FFF6D5',
+  ctaGlow: '#FBC55F',
+  glassFill: 'rgba(30, 45, 110, 0.55)',
+  glassBorder: 'rgba(200, 212, 255, 0.55)',
+  dotActive: '#FCE680',
+  dotIdle: '#5D51A7',
+  star: '#FFD470',
+};
+
+export interface EdgeInsets {
+  top: number;
+  right: number;
+  bottom: number;
+  left: number;
+}
+
+/**
+ * Safe-area insets expressed in the picker's own frame.
+ *
+ * The rotated presentation draws its content turned -90 degrees inside a window
+ * that is still portrait, so the window's insets arrive in the wrong basis: the
+ * notch sits along what the rotated content calls its left edge, not its top.
+ * Turning the content anticlockwise cycles the edges one step, so each edge takes
+ * the inset of the window edge it now lies against.
+ */
+export function rotateInsets(insets: EdgeInsets, isRotated: boolean): EdgeInsets {
+  if (!isRotated) return insets;
+  return {
+    top: insets.right,
+    right: insets.bottom,
+    bottom: insets.left,
+    left: insets.top,
+  };
+}
+
+export interface PickerLayoutInput {
+  viewportWidth: number;
+  viewportHeight: number;
+  itemCount: number;
+}
+
+export interface PickerLayout {
+  compactLayout: boolean;
+  panelWidth: number;
+  medallionSize: number;
+  radius: number;
+  /** Horizontal distance from the centred medallion to either neighbour. */
+  neighbourPitch: number;
+  labelWidth: number;
+  carouselHeight: number;
+}
+
+/**
+ * Panel and carousel geometry for one viewport. Pure so the invariant that matters --
+ * neighbouring medallions and their labels stay inside the panel -- can be checked
+ * across every device without rendering.
+ *
+ * A zero viewport means the window has not been measured yet (the first frame, and
+ * every test under react-native-web), so a typical phone stands in for it.
+ */
+export function computePickerLayout({
+  viewportWidth: measuredWidth,
+  viewportHeight: measuredHeight,
+  itemCount,
+}: PickerLayoutInput): PickerLayout {
+  const viewportWidth = measuredWidth > 0 ? measuredWidth : UNMEASURED_VIEWPORT.width;
+  const viewportHeight = measuredHeight > 0 ? measuredHeight : UNMEASURED_VIEWPORT.height;
+  const compactLayout = viewportHeight < COMPACT_VIEWPORT_HEIGHT;
+
+  // A narrow card with the arrows outside it, widening towards full bleed only on a
+  // viewport too narrow to spare the gutters.
+  const panelWidth = Math.min(
+    Math.max(viewportWidth * 0.68, Math.min(viewportWidth - 24, 330)),
+    PANEL_MAX_WIDTH,
+  );
+  const panelInnerHalf = panelWidth / 2 - PANEL_PADDING;
+
+  // A neighbour's centre sits at sin(anglePerItem) * radius and it is SIDE_SCALE of the
+  // centred medallion, so panelInnerHalf divided by that sum is the largest medallion
+  // whose neighbours still fit. Without it a narrow viewport pushes them past the edge.
+  const anglePerItem = itemCount > 0 ? 360 / itemCount : 360;
+  const neighbourSpread = Math.max(Math.abs(Math.sin((anglePerItem * Math.PI) / 180)), 0.5);
+  const medallionSize = Math.min(
+    panelWidth * 0.38,
+    compactLayout ? MEDALLION_COMPACT_MAX_SIZE : MEDALLION_MAX_SIZE,
+    (panelInnerHalf - EDGE_CLEARANCE) / (neighbourSpread * RADIUS_RATIO + SIDE_SCALE / 2),
+  );
+
+  const radius = medallionSize * RADIUS_RATIO;
+  const neighbourPitch = neighbourSpread * radius;
+
+  // Only the two neighbours are named, and they sit either side of centre, so a label
+  // may run most of the way towards the opposite one -- but never past the panel edge.
+  const labelWidth = Math.max(
+    Math.min(medallionSize + 70, neighbourPitch * 1.55, (panelInnerHalf - neighbourPitch) * 2),
+    64,
+  );
+
+  return {
+    compactLayout,
+    panelWidth,
+    medallionSize,
+    radius,
+    neighbourPitch,
+    labelWidth,
+    carouselHeight: medallionSize + (compactLayout ? 22 : 34),
+  };
+}
+
+export type InstrumentPickerBackdrop = 'scene' | 'blur' | 'none';
 
 interface InstrumentPickerOverlayProps {
   visible: boolean;
@@ -74,7 +234,9 @@ interface InstrumentPickerOverlayProps {
   isRotated?: boolean;
   /** Optional: restrict to specific instrument IDs (e.g., only those that can play a song) */
   filterInstrumentIds?: string[];
-  /** If true, the built-in blur/dark backdrop is hidden (caller provides its own) */
+  /** What sits behind the panel. Defaults to a blur over whatever is already there. */
+  backdrop?: InstrumentPickerBackdrop;
+  /** @deprecated pass backdrop="none" instead */
   hideBackdrop?: boolean;
   /** Called when user tries to select a locked (subscription-gated) instrument */
   onLockedPress?: () => void;
@@ -89,14 +251,16 @@ export const InstrumentPickerOverlay = React.memo(function InstrumentPickerOverl
   defaultInstrumentId,
   isRotated = false,
   filterInstrumentIds,
+  backdrop,
   hideBackdrop = false,
   onLockedPress,
   hideArrows = false,
 }: InstrumentPickerOverlayProps) {
   const { t } = useTranslation();
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
-  const insets = useSafeAreaInsets();
-  // Resolve all available instruments, optionally filtered
+  const windowInsets = useSafeAreaInsets();
+  const insets = rotateInsets(windowInsets, isRotated);
+
   const instrumentIds = filterInstrumentIds ?? getAvailableInstrumentIds();
   const instruments: InstrumentDefinition[] = instrumentIds
     .map(id => getInstrument(id))
@@ -105,7 +269,6 @@ export const InstrumentPickerOverlay = React.memo(function InstrumentPickerOverl
   const itemCount = instruments.length;
   const anglePerItem = itemCount > 0 ? 360 / itemCount : 360;
 
-  // Find default index
   const defaultIndex = defaultInstrumentId
     ? instruments.findIndex(i => i.id === defaultInstrumentId)
     : 0;
@@ -115,33 +278,60 @@ export const InstrumentPickerOverlay = React.memo(function InstrumentPickerOverl
   const rotation = useSharedValue(initialRotation);
   const gestureStartRotation = useSharedValue(0);
   const overlayOpacity = useSharedValue(0);
+  const [centeredIndex, setCenteredIndex] = useState(normalizedDefaultIndex);
 
+  const { compactLayout, panelWidth, medallionSize, radius, labelWidth, carouselHeight } =
+    computePickerLayout({
+      viewportWidth: isRotated ? screenHeight : screenWidth,
+      viewportHeight: isRotated ? screenWidth : screenHeight,
+      itemCount,
+    });
+
+  // The arc is laid out across the panel minus its padding and the two stars.
+  const titleWidth = Math.max(panelWidth - PANEL_PADDING * 2, 200);
+  const titleFontSize = compactLayout ? 22 : 24;
+  // The arc centres the line in its box, so the stars are placed from the estimated
+  // line width rather than pinned to the panel edge.
+  const titleLength = Math.min(
+    estimateArcTextWidth(t('music.chooseInstrument'), titleFontSize), titleWidth);
+  const titleStarInset = Math.max((titleWidth - titleLength) / 2 - 44, 0);
+  // The stars ride the same curve as the line, so they drop and tilt with its ends.
+  const titleStarPoint = arcPointAt(
+    titleWidth / 2 - titleStarInset - 18,
+    arcRadiusForText(titleLength, DEFAULT_ARC_CURVE),
+  );
+
+  // The panel is centred, so its edge is half the leftover width. The arrows
+  // tuck just outside it, but never past the safe area on a narrow screen --
+  // there they keep the old edge placement and overlap the panel instead.
   const viewportWidth = isRotated ? screenHeight : screenWidth;
-  const viewportHeight = isRotated ? screenWidth : screenHeight;
-  const carouselWidth = Math.min(viewportWidth * 0.92, RADIUS * 2 + INSTRUMENT_IMAGE_SIZE + 40);
-  const carouselHeight = Math.min(Math.max(viewportHeight * 0.32, 200), INSTRUMENT_IMAGE_SIZE + 100);
-  const compactLayout = viewportHeight < 430;
+  const arrowEdgeInset = Math.max(
+    (viewportWidth - panelWidth) / 2 - ARROW_SIZE - ARROW_PANEL_GAP,
+    ARROW_EDGE_GAP,
+  );
+
+  const resolvedBackdrop: InstrumentPickerBackdrop =
+    backdrop ?? (hideBackdrop ? 'none' : 'blur');
 
   const getCenteredIndexFromRotation = useCallback((rotationValue: number): number => {
     if (itemCount === 0) return 0;
     const normalizedRotation = ((rotationValue % 360) + 360) % 360;
-    const centeredIndex = Math.round(normalizedRotation / anglePerItem) % itemCount;
-    return (itemCount - centeredIndex) % itemCount;
+    const index = Math.round(normalizedRotation / anglePerItem) % itemCount;
+    return (itemCount - index) % itemCount;
   }, [anglePerItem, itemCount]);
 
-  // Fade in on mount
   useEffect(() => {
     if (visible) {
       overlayOpacity.value = withTiming(1, { duration: 400 });
       rotation.value = initialRotation;
+      setCenteredIndex(normalizedDefaultIndex);
     }
-  }, [visible, initialRotation, overlayOpacity, rotation]);
+  }, [visible, initialRotation, normalizedDefaultIndex, overlayOpacity, rotation]);
 
   const handleConfirmSelection = useCallback(() => {
-    const centeredIndex = getCenteredIndexFromRotation(rotation.value);
-    const instrument = instruments[centeredIndex] ?? instruments[normalizedDefaultIndex] ?? instruments[0];
+    const index = getCenteredIndexFromRotation(rotation.value);
+    const instrument = instruments[index] ?? instruments[normalizedDefaultIndex] ?? instruments[0];
     if (!instrument) return;
-    // Block selection of locked instruments
     if (!StoryAccessService.isInstrumentUnlocked(instrument.id)) {
       onLockedPress?.();
       return;
@@ -149,14 +339,18 @@ export const InstrumentPickerOverlay = React.memo(function InstrumentPickerOverl
     onSelect(instrument.id);
   }, [getCenteredIndexFromRotation, instruments, normalizedDefaultIndex, onSelect, onLockedPress, rotation]);
 
-  // Navigate one item left or right
+  const settleOn = useCallback((target: number) => {
+    setCenteredIndex(getCenteredIndexFromRotation(target));
+  }, [getCenteredIndexFromRotation]);
+
   const goToNeighbor = useCallback((direction: -1 | 1) => {
     const currentSnapped = Math.round(rotation.value / anglePerItem) * anglePerItem;
     const target = currentSnapped + direction * anglePerItem;
     rotation.value = withSpring(target, { damping: 28, stiffness: 150 });
-  }, [anglePerItem, rotation]);
+    settleOn(target);
+  }, [anglePerItem, rotation, settleOn]);
 
-  // Tap gesture -tapping the centered instrument confirms the selection
+  // Tap gesture -tapping the centred instrument confirms the selection
   const tapGesture = useMemo(() => Gesture.Tap()
     .onEnd(() => {
       runOnJS(handleConfirmSelection)();
@@ -168,36 +362,30 @@ export const InstrumentPickerOverlay = React.memo(function InstrumentPickerOverl
       gestureStartRotation.value = rotation.value;
     })
     .onUpdate((event) => {
-      // Dampen drag so it feels controlled (max half an item of visual drag)
       const drag = event.translationX * 0.15;
       const maxDrag = anglePerItem * 0.6;
-      const clamped = Math.max(-maxDrag, Math.min(maxDrag, drag));
-      rotation.value = gestureStartRotation.value + clamped;
+      rotation.value = gestureStartRotation.value + Math.max(-maxDrag, Math.min(maxDrag, drag));
     })
     .onEnd((event) => {
-      // Snap exactly one item in the swipe direction (or stay if drag was tiny)
       const startSnapped = Math.round(gestureStartRotation.value / anglePerItem) * anglePerItem;
       const delta = rotation.value - gestureStartRotation.value;
-      const velocityHint = event.velocityX;
       let step = 0;
-      // Move one item if drag or velocity is significant enough
-      if (delta > anglePerItem * 0.15 || velocityHint > 200) {
-        step = 1; // swipe right → next item (positive rotation)
-      } else if (delta < -anglePerItem * 0.15 || velocityHint < -200) {
-        step = -1; // swipe left → previous item (negative rotation)
+      if (delta > anglePerItem * 0.15 || event.velocityX > 200) {
+        step = 1;
+      } else if (delta < -anglePerItem * 0.15 || event.velocityX < -200) {
+        step = -1;
       }
       const target = startSnapped + step * anglePerItem;
-      rotation.value = withSpring(target, {
-        damping: 28,
-        stiffness: 150,
-      });
-    }), [anglePerItem, gestureStartRotation, rotation]);
+      rotation.value = withSpring(target, { damping: 28, stiffness: 150 });
+      runOnJS(settleOn)(target);
+    }), [anglePerItem, gestureStartRotation, rotation, settleOn]);
 
-  // Compose: tap fires on quick taps, pan fires on drags -they don't conflict
   const composedGesture = useMemo(
     () => Gesture.Race(tapGesture, panGesture),
     [tapGesture, panGesture],
   );
+
+  const centeredInstrument = instruments[centeredIndex] ?? instruments[0];
 
   const overlayAnimatedStyle = useAnimatedStyle(() => ({
     opacity: overlayOpacity.value,
@@ -207,16 +395,19 @@ export const InstrumentPickerOverlay = React.memo(function InstrumentPickerOverl
 
   return (
     <Animated.View
-      style={[styles.overlay, hideBackdrop && styles.overlayTransparent, overlayAnimatedStyle]}
+      style={[styles.overlay, overlayAnimatedStyle]}
       testID="instrument-picker-overlay"
     >
-      {!hideBackdrop && <BlurView intensity={40} style={StyleSheet.absoluteFill} tint="dark" />}
+      {resolvedBackdrop === 'scene' && <SceneBackground blurIntensity={26} scrimOpacity={0.42} />}
+      {resolvedBackdrop === 'blur' && (
+        <>
+          <View style={styles.blurScrim} />
+          <BlurView intensity={40} style={StyleSheet.absoluteFill} tint="dark" />
+        </>
+      )}
+
       <View style={[
         styles.content,
-        {
-          paddingTop: Math.max(viewportHeight * 0.08, 56),
-          paddingBottom: Math.max(viewportHeight * 0.05, 28),
-        },
         isRotated && {
           transform: [{ rotate: '-90deg' }],
           width: screenHeight,
@@ -224,92 +415,189 @@ export const InstrumentPickerOverlay = React.memo(function InstrumentPickerOverl
         },
       ]}>
         <Pressable
-          style={[styles.closeButton, {
-            top: Math.max(insets.top + 20, 20),
-            left: Math.max(insets.left + 20, 20),
+          style={[styles.glassCircle, styles.closeButton, {
+            top: insets.top + BACK_BUTTON_GAP,
+            left: insets.left + BACK_BUTTON_GAP,
           }]}
           onPress={onClose}
           testID="instrument-picker-close-button"
           accessibilityLabel={t('music.closeInstrumentPicker')}
         >
-          <Ionicons name="arrow-back" size={20} color="#FFFFFF" />
+          <Ionicons name="arrow-back" size={22} color="#FFFFFF" />
         </Pressable>
 
-        <View style={[styles.headerSection, compactLayout && styles.headerSectionCompact]}>
-          <Text style={styles.title}>{t('music.chooseInstrument')}</Text>
-          <Text style={styles.subtitle}>{t('music.swipeToExplore')}</Text>
-        </View>
-
-        {/* Carousel with optional left/right arrow buttons */}
-        <View style={styles.carouselWithArrows}>
-          {/* Left arrow */}
-          {!hideArrows && (
+        {!hideArrows && (
+          <>
             <Pressable
-              style={styles.arrowButton}
+              style={[styles.glassCircle, styles.arrowButton, {
+                left: Math.max(insets.left + ARROW_EDGE_GAP, arrowEdgeInset),
+              }]}
               onPress={() => goToNeighbor(1)}
+              testID="instrument-picker-previous-button"
               accessibilityLabel={t('music.previousInstrument', { defaultValue: 'Previous instrument' })}
             >
-              <Ionicons name="chevron-back" size={22} color="rgba(255, 255, 255, 0.8)" />
+              <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
             </Pressable>
-          )}
+            <Pressable
+              style={[styles.glassCircle, styles.arrowButton, {
+                right: Math.max(insets.right + ARROW_EDGE_GAP, arrowEdgeInset),
+              }]}
+              onPress={() => goToNeighbor(-1)}
+              testID="instrument-picker-next-button"
+              accessibilityLabel={t('music.nextInstrument', { defaultValue: 'Next instrument' })}
+            >
+              <Ionicons name="chevron-forward" size={24} color="#FFFFFF" />
+            </Pressable>
+          </>
+        )}
+
+        <BlobPanel
+          fill={COLORS.panel}
+          stroke={COLORS.panelBorder}
+          style={[
+            styles.panel,
+            compactLayout && styles.panelCompact,
+            { width: panelWidth },
+          ]}
+          testID="instrument-picker-panel"
+        >
+          <View style={[styles.titleRow, { width: titleWidth }]}>
+            <TitleSparkle side="left" inset={titleStarInset} point={titleStarPoint} />
+            <ArcText
+              width={titleWidth}
+              fontSize={titleFontSize}
+              color={COLORS.title}
+              testID="instrument-picker-title"
+            >
+              {t('music.chooseInstrument')}
+            </ArcText>
+            <TitleSparkle side="right" inset={titleStarInset} point={titleStarPoint} />
+          </View>
+          <ArcText
+            width={titleWidth}
+            fontSize={14}
+            fontWeight="400"
+            color={COLORS.subtitle}
+            testID="instrument-picker-subtitle"
+          >
+            {t('music.swipeToExplore')}
+          </ArcText>
 
           <GestureHandlerRootView style={styles.gestureRoot}>
             <GestureDetector gesture={composedGesture}>
               <View
-                style={[
-                  styles.carouselContainer,
-                  compactLayout && styles.carouselContainerCompact,
-                  { width: carouselWidth, height: carouselHeight },
-                ]}
+                style={[styles.carouselContainer, { height: carouselHeight }]}
                 testID="instrument-picker-carousel"
               >
-                <Animated.View style={styles.carousel}>
-                  {instruments.map((instrument, index) => (
-                    <CarouselItem
-                      key={instrument.id}
-                      instrument={instrument}
-                      index={index}
-                      anglePerItem={anglePerItem}
-                      rotation={rotation}
-                      isLocked={!StoryAccessService.isInstrumentUnlocked(instrument.id)}
-                      onLockedPress={onLockedPress}
-                    />
-                  ))}
-                </Animated.View>
+                {instruments.map((instrument, index) => (
+                  <CarouselItem
+                    key={instrument.id}
+                    instrument={instrument}
+                    index={index}
+                    anglePerItem={anglePerItem}
+                    rotation={rotation}
+                    radius={radius}
+                    medallionSize={medallionSize}
+                    labelWidth={labelWidth}
+                    compact={compactLayout}
+                    isLocked={!StoryAccessService.isInstrumentUnlocked(instrument.id)}
+                    onLockedPress={onLockedPress}
+                  />
+                ))}
               </View>
             </GestureDetector>
           </GestureHandlerRootView>
 
-          {/* Right arrow */}
-          {!hideArrows && (
-            <Pressable
-              style={styles.arrowButton}
-              onPress={() => goToNeighbor(-1)}
-              accessibilityLabel={t('music.nextInstrument', { defaultValue: 'Next instrument' })}
-            >
-              <Ionicons name="chevron-forward" size={22} color="rgba(255, 255, 255, 0.8)" />
-            </Pressable>
-          )}
-        </View>
+          {/* the medallion takes a spring to settle on its new instrument, so
+              the name underneath it changes over rather than snapping ahead */}
+          <ContentSwap contentKey={String(centeredIndex)} testID="instrument-picker-label">
+            <View style={[styles.centerLabel, { width: panelWidth - 40 }]}>
+              <Text style={[styles.centerName, compactLayout && styles.centerNameCompact]} numberOfLines={1}>
+                {centeredInstrument?.displayName}
+              </Text>
+              <Text style={styles.centerDescription} numberOfLines={2}>
+                {centeredInstrument?.description}
+              </Text>
+            </View>
+          </ContentSwap>
 
-        <View style={[styles.footerSection, compactLayout && styles.footerSectionCompact]}>
+          {itemCount > 1 && (
+            <View style={styles.dotRow}>
+              {instruments.map((instrument, index) => {
+                const isActive = index === centeredIndex;
+                return (
+                  <View
+                    key={instrument.id}
+                    style={[styles.dot, isActive && styles.dotActive]}
+                    accessibilityLabel={instrument.displayName}
+                    testID={isActive ? 'instrument-picker-dot-active' : 'instrument-picker-dot'}
+                  />
+                );
+              })}
+            </View>
+          )}
+
           <Pressable
             style={styles.confirmButton}
             onPress={handleConfirmSelection}
             testID="confirm-instrument-selection-button"
             accessibilityLabel={t('music.useThisInstrument')}
           >
-            <Text style={styles.confirmButtonText}>{t('music.useThisInstrument')}</Text>
+            <LinearGradient
+              colors={[COLORS.ctaFrom, COLORS.ctaTo]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 0, y: 1 }}
+              style={[styles.confirmGradient, compactLayout && styles.confirmGradientCompact]}
+            >
+              <Ionicons name="sparkles" size={16} color={COLORS.ctaSparkle} />
+              <Text style={styles.confirmButtonText}>{t('music.useThisInstrument')}</Text>
+              <Ionicons name="sparkles" size={16} color={COLORS.ctaSparkle} />
+            </LinearGradient>
           </Pressable>
-        </View>
-
+        </BlobPanel>
       </View>
     </Animated.View>
   );
 });
 
 // ============================================================================
-// CarouselItem -individual instrument card with 3D positioning + pulsing ring
+// TitleSparkle -- the star and its two attendant specks beside the title
+// ============================================================================
+
+interface TitleSparkleProps {
+  side: 'left' | 'right';
+  inset: number;
+  point: { drop: number; angle: number };
+}
+
+function TitleSparkle({ side, inset, point }: TitleSparkleProps) {
+  const specks = (
+    <View style={styles.sparkleSpecks}>
+      <View style={[styles.speck, styles.speckSmall]} />
+      <View style={styles.speck} />
+    </View>
+  );
+
+  // The specks always sit on the outside, so the star is the part nearest the title.
+  return (
+    <View
+      style={[
+        styles.titleSparkle,
+        { marginTop: point.drop },
+        side === 'left'
+          ? { left: inset, transform: [{ rotate: `-${point.angle}deg` }] }
+          : { right: inset, flexDirection: 'row-reverse', transform: [{ rotate: `${point.angle}deg` }] },
+      ]}
+      pointerEvents="none"
+    >
+      {specks}
+      <Ionicons name="star" size={18} color={COLORS.star} />
+    </View>
+  );
+}
+
+// ============================================================================
+// CarouselItem -3D positioned medallion with its label
 // ============================================================================
 
 interface CarouselItemProps {
@@ -317,6 +605,10 @@ interface CarouselItemProps {
   index: number;
   anglePerItem: number;
   rotation: SharedValue<number>;
+  radius: number;
+  medallionSize: number;
+  labelWidth: number;
+  compact: boolean;
   isLocked?: boolean;
   onLockedPress?: () => void;
 }
@@ -326,126 +618,91 @@ function CarouselItem({
   index,
   anglePerItem,
   rotation,
+  radius,
+  medallionSize,
+  labelWidth,
+  compact,
   isLocked = false,
   onLockedPress,
 }: CarouselItemProps) {
-  // Pulsing ring animation -always running, only visible when centered
-  const pulseScale = useSharedValue(1);
   const pulseOpacity = useSharedValue(0);
 
   useEffect(() => {
-    pulseScale.value = withRepeat(
+    pulseOpacity.value = withRepeat(
       withSequence(
         withTiming(1, { duration: 0 }),
-        withTiming(1.2, { duration: 900, easing: Easing.out(Easing.ease) }),
+        withTiming(0.6, { duration: 900, easing: Easing.out(Easing.ease) }),
         withTiming(1, { duration: 900, easing: Easing.inOut(Easing.ease) }),
       ),
       -1,
       false,
     );
-    pulseOpacity.value = withRepeat(
-      withSequence(
-        withTiming(0.6, { duration: 0 }),
-        withTiming(0.15, { duration: 900, easing: Easing.out(Easing.ease) }),
-        withTiming(0.6, { duration: 900, easing: Easing.inOut(Easing.ease) }),
-      ),
-      -1,
-      false,
-    );
-  }, [pulseScale, pulseOpacity]);
+  }, [pulseOpacity]);
+
+  const normalizedZOf = (rotationValue: number) => {
+    'worklet';
+    const theta = ((rotationValue + index * anglePerItem) * Math.PI) / 180;
+    return (Math.cos(theta) * radius + radius) / (2 * radius);
+  };
 
   const animatedItemStyle = useAnimatedStyle(() => {
-    const itemAngle = index * anglePerItem;
-    const currentRotation = rotation.value;
-    const theta = ((currentRotation + itemAngle) * Math.PI) / 180;
+    const theta = ((rotation.value + index * anglePerItem) * Math.PI) / 180;
+    const x = Math.sin(theta) * radius;
+    const normalizedZ = normalizedZOf(rotation.value);
 
-    const x = Math.sin(theta) * RADIUS;
-    const z = Math.cos(theta) * RADIUS;
-
-    // Normalize z from [-RADIUS, RADIUS] to [0, 1] where 1 = front
-    const normalizedZ = (z + RADIUS) / (2 * RADIUS);
-
-    const scale = interpolate(normalizedZ, [0, 1], [SIDE_SCALE, CENTER_SCALE], Extrapolation.CLAMP);
-    const opacity = interpolate(normalizedZ, [0, 0.4, 0.85, 1], [0.1, SIDE_OPACITY, 0.7, 1], Extrapolation.CLAMP);
-    const translateY = interpolate(normalizedZ, [0, 1], [30, 0], Extrapolation.CLAMP);
+    // The neighbours sit at normalizedZ 0.75, so the scale ramp starts there rather
+    // than at 0 -otherwise they render almost as large as the centred medallion.
+    const scale = interpolate(normalizedZ, [0.75, 1], [SIDE_SCALE, CENTER_SCALE], Extrapolation.CLAMP);
+    const opacity = interpolate(
+      normalizedZ, [VISIBLE_DEPTH, 0.62, 0.75, 1], [0, 0.5, 0.85, 1], Extrapolation.CLAMP);
+    const translateY = interpolate(normalizedZ, [0.75, 1], [16, 0], Extrapolation.CLAMP);
 
     return {
-      transform: [
-        { translateX: x },
-        { translateY },
-        { scale },
-      ],
+      transform: [{ translateX: x }, { translateY }, { scale }],
       opacity,
       zIndex: Math.round(normalizedZ * 100),
     };
   });
 
-  // Pulsing ring -visible only when this item is at front (centered)
   const animatedRingStyle = useAnimatedStyle(() => {
-    const itemAngle = index * anglePerItem;
-    const currentRotation = rotation.value;
-    const theta = ((currentRotation + itemAngle) * Math.PI) / 180;
-    const z = Math.cos(theta) * RADIUS;
-    const normalizedZ = (z + RADIUS) / (2 * RADIUS);
-
-    // Only show ring when item is at front (normalizedZ > 0.85)
-    const ringVisible = normalizedZ > 0.85 ? 1 : 0;
-
-    return {
-      transform: [{ scale: pulseScale.value }],
-      opacity: pulseOpacity.value * ringVisible,
-    };
+    const normalizedZ = normalizedZOf(rotation.value);
+    return { opacity: pulseOpacity.value * (normalizedZ > 0.85 ? 1 : 0) };
   });
 
-  // Label text -visible only when centered
-  const animatedLabelStyle = useAnimatedStyle(() => {
-    const itemAngle = index * anglePerItem;
-    const currentRotation = rotation.value;
-    const theta = ((currentRotation + itemAngle) * Math.PI) / 180;
-    const z = Math.cos(theta) * RADIUS;
-    const normalizedZ = (z + RADIUS) / (2 * RADIUS);
-
+  // Only the two immediate neighbours are named: the centred item is named by the
+  // panel's label slot, and the items behind them share their x position, so
+  // naming those too would stack two labels on top of each other.
+  const animatedNameStyle = useAnimatedStyle(() => {
+    const normalizedZ = normalizedZOf(rotation.value);
     return {
-      opacity: interpolate(normalizedZ, [0.7, 0.9], [0, 1], Extrapolation.CLAMP),
+      opacity: interpolate(
+        normalizedZ, [0.55, 0.72, 0.86, 0.96], [0, 0.8, 0.8, 0], Extrapolation.CLAMP),
     };
   });
-
-  const hasImage = instrument.image !== 0;
 
   return (
-    <Animated.View style={[styles.itemContainer, animatedItemStyle]}>
-      {/* Pulsing ring behind the image */}
-      <Animated.View style={[styles.pulsingRing, animatedRingStyle]} />
+    <Animated.View
+      style={[styles.itemContainer, { width: labelWidth }, animatedItemStyle]}
+    >
+      <InstrumentMedallion
+        instrument={instrument}
+        size={medallionSize}
+        ringStyle={animatedRingStyle}
+        isLocked={isLocked}
+        onLockedPress={onLockedPress}
+      />
 
-      {/* Instrument image or placeholder -no touch handler here;
-          taps are detected by the parent pan gesture (tiny drag = tap → confirm).
-          Navigation is done via the arrow buttons or swiping. */}
-      <View style={styles.itemPressable} testID={`instrument-${instrument.id}`}>
-        {hasImage ? (
-          <Image source={instrument.image} style={[styles.instrumentImage, isLocked && { opacity: 0.5 }]} resizeMode="contain" />
-        ) : (
-          <View style={[styles.instrumentPlaceholder, { backgroundColor: instrument.noteLayout[0]?.color || '#666' }, isLocked && { opacity: 0.5 }]}>
-            <Ionicons name="musical-note" size={40} color="#FFFFFF" />
-          </View>
-        )}
-        {/* Lock overlay for subscription-gated instruments */}
-        {isLocked && (
-          <Pressable
-            onPress={onLockedPress}
-            style={styles.lockOverlay}
-          >
-            <View style={styles.lockBadge}>
-              <Ionicons name="lock-closed" size={18} color="#FFFFFF" />
-            </View>
-          </Pressable>
-        )}
-      </View>
-
-      {/* Name + description -visible when centered */}
-      <Animated.View style={[styles.itemLabel, animatedLabelStyle]}>
-        <Text style={styles.instrumentName}>{instrument.displayName}</Text>
-        <Text style={styles.instrumentDescription}>{instrument.description}</Text>
-      </Animated.View>
+      <Animated.Text
+        style={[
+          styles.instrumentName,
+          compact && styles.instrumentNameCompact,
+          { width: labelWidth },
+          animatedNameStyle,
+        ]}
+        numberOfLines={1}
+      >
+        {instrument.displayName}
+      </Animated.Text>
     </Animated.View>
   );
 }
@@ -460,213 +717,174 @@ const styles = StyleSheet.create({
     zIndex: 500,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.85)',
   },
-  overlayTransparent: {
-    backgroundColor: 'transparent',
+  blurScrim: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(6, 10, 34, 0.72)',
   },
   content: {
     flex: 1,
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-    paddingHorizontal: 20,
     width: '100%',
-  },
-  headerSection: {
-    width: '100%',
-    alignItems: 'center',
-    marginBottom: 12,
-    paddingHorizontal: 40,
-  },
-  headerSectionCompact: {
-    marginBottom: 8,
-  },
-  closeButton: {
-    position: 'absolute',
-    // top and left are set dynamically via safe area insets
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 2,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
   },
-  closeButtonText: {
-    color: '#FFFFFF',
-    fontSize: 20,
-    fontWeight: '700',
+  panel: {
+    paddingTop: 14,
+    paddingBottom: 14,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.35,
+    shadowRadius: 24,
+    elevation: 12,
   },
-  title: {
-    color: '#FFFFFF',
-    fontSize: 28,
-    fontWeight: '800',
-    textAlign: 'center',
-    marginBottom: 6,
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 8,
+  panelCompact: {
+    paddingTop: 10,
+    paddingBottom: 10,
   },
-  subtitle: {
-    color: 'rgba(255, 255, 255, 0.7)',
-    fontSize: 16,
-    fontWeight: '400',
-    textAlign: 'center',
+  titleRow: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  carouselWithArrows: {
-    flex: 1,
+  titleSparkle: {
+    position: 'absolute',
+    top: '26%',
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 0,
+    gap: 5,
   },
-  arrowButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+  sparkleSpecks: {
+    gap: 5,
   },
-  arrowText: {
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontSize: 32,
-    fontWeight: '300',
+  speck: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: COLORS.star,
+  },
+  speckSmall: {
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
+    marginLeft: 3,
   },
   gestureRoot: {
-    flex: 1,
+    width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
   },
   carouselContainer: {
+    width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-    marginVertical: 8,
-  },
-  carouselContainerCompact: {
-    marginVertical: 4,
-  },
-  footerSection: {
-    width: '100%',
-    alignItems: 'center',
-    marginTop: 12,
-  },
-  footerSectionCompact: {
-    marginTop: 8,
-  },
-  confirmButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.16)',
-    borderRadius: 24,
-    paddingHorizontal: 22,
-    paddingVertical: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  confirmButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '700',
-    textAlign: 'center',
-  },
-  carousel: {
-    width: '100%',
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
+    marginTop: 4,
   },
   itemContainer: {
     position: 'absolute',
     alignItems: 'center',
-    width: INSTRUMENT_IMAGE_SIZE + 40,
-  },
-  itemPressable: {
-    width: INSTRUMENT_IMAGE_SIZE,
-    height: INSTRUMENT_IMAGE_SIZE,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  instrumentImage: {
-    width: INSTRUMENT_IMAGE_SIZE,
-    height: INSTRUMENT_IMAGE_SIZE,
-    borderRadius: INSTRUMENT_IMAGE_SIZE / 2,
-  },
-  instrumentPlaceholder: {
-    width: INSTRUMENT_IMAGE_SIZE,
-    height: INSTRUMENT_IMAGE_SIZE,
-    borderRadius: INSTRUMENT_IMAGE_SIZE / 2,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 3,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-  },
-  placeholderEmoji: {
-    fontSize: 50,
-  },
-  pulsingRing: {
-    position: 'absolute',
-    width: INSTRUMENT_IMAGE_SIZE + 24,
-    height: INSTRUMENT_IMAGE_SIZE + 24,
-    borderRadius: (INSTRUMENT_IMAGE_SIZE + 24) / 2,
-    borderWidth: 3,
-    borderColor: 'rgba(255, 255, 255, 0.8)',
-    top: -12,
-  },
-  itemLabel: {
-    alignItems: 'center',
-    marginTop: 12,
   },
   instrumentName: {
-    color: '#FFFFFF',
-    fontSize: 18,
+    color: COLORS.sideName,
+    fontSize: 15,
     fontWeight: '700',
+    fontFamily: Fonts.rounded,
     textAlign: 'center',
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
+    marginTop: 8,
   },
-  instrumentDescription: {
-    color: 'rgba(255, 255, 255, 0.6)',
+  instrumentNameCompact: {
+    fontSize: 13,
+    marginTop: 6,
+  },
+  centerLabel: {
+    alignItems: 'center',
+    marginTop: 2,
+  },
+  centerName: {
+    color: COLORS.centerName,
+    fontSize: 19,
+    fontWeight: '800',
+    fontFamily: Fonts.rounded,
+    textAlign: 'center',
+  },
+  centerNameCompact: {
+    fontSize: 18,
+  },
+  centerDescription: {
+    color: COLORS.description,
     fontSize: 13,
     fontWeight: '400',
     textAlign: 'center',
-    marginTop: 4,
-    maxWidth: 200,
+    marginTop: 2,
   },
-  lockOverlay: {
-    ...StyleSheet.absoluteFillObject,
+  dotRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    marginTop: 8,
+    marginBottom: 10,
+  },
+  dot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: COLORS.dotIdle,
+  },
+  dotActive: {
+    width: 9,
+    height: 9,
+    borderRadius: 5,
+    backgroundColor: COLORS.dotActive,
+  },
+  confirmButton: {
+    alignSelf: 'center',
+    shadowColor: COLORS.ctaGlow,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.45,
+    shadowRadius: 18,
+    elevation: 10,
+  },
+  confirmGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    borderRadius: 24,
+    paddingVertical: 10,
+    paddingHorizontal: 26,
+  },
+  confirmGradientCompact: {
+    paddingVertical: 8,
+    paddingHorizontal: 22,
+    borderRadius: 20,
+  },
+  confirmButtonText: {
+    color: COLORS.ctaLabel,
+    fontSize: 16,
+    fontWeight: '800',
+    fontFamily: Fonts.rounded,
+    textAlign: 'center',
+  },
+  glassCircle: {
+    position: 'absolute',
+    width: ARROW_SIZE,
+    height: ARROW_SIZE,
+    borderRadius: ARROW_SIZE / 2,
+    backgroundColor: COLORS.glassFill,
+    borderWidth: 1,
+    borderColor: COLORS.glassBorder,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.35)',
-    borderRadius: INSTRUMENT_IMAGE_SIZE / 2,
+    zIndex: 10,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
   },
-  lockBadge: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: 'rgba(0, 0, 0, 0.55)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: 'rgba(255, 200, 50, 0.7)',
+  closeButton: {},
+  arrowButton: {
+    top: '50%',
+    marginTop: -ARROW_SIZE / 2,
   },
 });

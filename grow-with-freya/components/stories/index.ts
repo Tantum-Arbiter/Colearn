@@ -3,5 +3,4 @@ export { BookCoverAnimation } from './book-cover-animation';
 export { StorySelectionScreen } from './story-selection-screen';
 export { SimpleStoryScreen } from './simple-story-screen';
 export { StoryBookReader } from './story-book-reader';
-export { StoryPreviewModal } from './story-preview-modal';
 export { InteractiveElementComponent } from './interactive-element';

@@ -4,9 +4,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming } from 'react-native-reanimated';
+import { useAmbientLoop, type AmbientStarter } from '@/hooks/use-ambient-animation';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppStore, type SubscriptionTier } from '../../store/app-store';
+import { useShallow } from 'zustand/react/shallow';
 import { restorePurchases, isDevMode } from '@/services/subscription-service';
 import { MoonBottomImage } from '../main-menu/animated-components';
 import { mainMenuStyles } from '../main-menu/styles';
@@ -14,8 +16,8 @@ import { PageHeader } from '../ui/page-header';
 import { TermsConditionsContent } from './terms-conditions-screen';
 import { PrivacyPolicyContent } from './privacy-policy-screen';
 import { ScreenTimeContent } from '../screen-time/screen-time-screen';
-import { CustomRemindersContent, CreateReminderContent } from '../reminders';
 import ScreenTimeService from '../../services/screen-time-service';
+import NotificationService from '../../services/notification-service';
 import { useScreenTime } from '../screen-time/screen-time-provider';
 import { formatDurationCompact } from '../../utils/time-formatting';
 import { EditProfileContent } from './edit-profile-screen';
@@ -28,18 +30,22 @@ import { DeviceInfoService } from '../../services/device-info-service';
 import { CacheManager } from '../../services/cache-manager';
 import { StoryLoader } from '../../services/story-loader';
 import { TEXT_SIZE_OPTIONS, useAccessibility } from '../../hooks/use-accessibility';
-import { SettingsTipsOverlay } from '../tutorial/settings-tips-overlay';
-import { ScreenTimeTipsOverlay } from '../tutorial/screen-time-tips-overlay';
+import { OwlGuide } from '../owl-guide';
 import { Logger } from '@/utils/logger';
+import { AUTH_GRADIENT } from '@/components/auth/auth-theme';
 
 const log = Logger.create('Account');
-import { useTutorial } from '../../contexts/tutorial-context';
+import { useOwlGuide } from '../../contexts/owl-guide-context';
 import { SUPPORTED_LANGUAGES, setStoredLanguage, type SupportedLanguage } from '../../services/i18n';
 import * as Notifications from 'expo-notifications';
 
+const BREATHE_STARS: AmbientStarter = (value) => {
+  value.value = withRepeat(withTiming(0.8, { duration: 2000 }), -1, true);
+};
+
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-type SlideView = 'main' | 'screen-time' | 'custom-reminders' | 'create-reminder' | 'edit-profile' | 'terms' | 'privacy';
+type SlideView = 'main' | 'screen-time' | 'edit-profile' | 'terms' | 'privacy';
 
 // Animation duration for slide transitions
 const SLIDE_DURATION = 300;
@@ -95,8 +101,6 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
 
   // Slide animation values for each sub-page (0 = off-screen right, 1 = visible)
   const screenTimeSlide = useSharedValue(0);
-  const customRemindersSlide = useSharedValue(0);
-  const createReminderSlide = useSharedValue(0);
   const editProfileSlide = useSharedValue(0);
   const termsSlide = useSharedValue(0);
   const privacySlide = useSharedValue(0);
@@ -104,12 +108,6 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
   // Animated styles for each sub-page overlay
   const screenTimeStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: (1 - screenTimeSlide.value) * SCREEN_WIDTH }],
-  }));
-  const customRemindersStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: (1 - customRemindersSlide.value) * SCREEN_WIDTH }],
-  }));
-  const createReminderStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: (1 - createReminderSlide.value) * SCREEN_WIDTH }],
   }));
   const editProfileStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: (1 - editProfileSlide.value) * SCREEN_WIDTH }],
@@ -130,6 +128,12 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
     textSizeScale,
     isGuestMode,
     crashReportingEnabled,
+    screenTimeEnabled,
+    notificationsEnabled,
+    hasRequestedNotificationPermission,
+    setScreenTimeEnabled,
+    setNotificationsEnabled,
+    setNotificationPermissionRequested,
     setTextSizeScale,
     setCrashReportingEnabled,
     setOnboardingComplete,
@@ -142,7 +146,37 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
     getEffectiveTier,
     _devSubscriptionOverride,
     setDevSubscriptionOverride,
-  } = useAppStore();
+    trialEndPromptSeenFor,
+    setTrialEndPromptSeenFor,
+  } = useAppStore(
+    useShallow((state) => ({
+      userNickname: state.userNickname,
+      userAvatarType: state.userAvatarType,
+      textSizeScale: state.textSizeScale,
+      isGuestMode: state.isGuestMode,
+      crashReportingEnabled: state.crashReportingEnabled,
+      screenTimeEnabled: state.screenTimeEnabled,
+      notificationsEnabled: state.notificationsEnabled,
+      hasRequestedNotificationPermission: state.hasRequestedNotificationPermission,
+      setScreenTimeEnabled: state.setScreenTimeEnabled,
+      setNotificationsEnabled: state.setNotificationsEnabled,
+      setNotificationPermissionRequested: state.setNotificationPermissionRequested,
+      setTextSizeScale: state.setTextSizeScale,
+      setCrashReportingEnabled: state.setCrashReportingEnabled,
+      setOnboardingComplete: state.setOnboardingComplete,
+      setLoginComplete: state.setLoginComplete,
+      setAppReady: state.setAppReady,
+      setShowLoginAfterOnboarding: state.setShowLoginAfterOnboarding,
+      setGuestMode: state.setGuestMode,
+      clearPersistedStorage: state.clearPersistedStorage,
+      clearUserProfile: state.clearUserProfile,
+      getEffectiveTier: state.getEffectiveTier,
+      _devSubscriptionOverride: state._devSubscriptionOverride,
+      setDevSubscriptionOverride: state.setDevSubscriptionOverride,
+      trialEndPromptSeenFor: state.trialEndPromptSeenFor,
+      setTrialEndPromptSeenFor: state.setTrialEndPromptSeenFor,
+    }))
+  );
 
   // Screen time context for resetting today's usage
   const { todayUsage, refreshUsage } = useScreenTime();
@@ -151,14 +185,12 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
   const getSlideValue = useCallback((view: SlideView) => {
     switch (view) {
       case 'screen-time': return screenTimeSlide;
-      case 'custom-reminders': return customRemindersSlide;
-      case 'create-reminder': return createReminderSlide;
       case 'edit-profile': return editProfileSlide;
       case 'terms': return termsSlide;
       case 'privacy': return privacySlide;
       default: return null;
     }
-  }, [screenTimeSlide, customRemindersSlide, createReminderSlide, editProfileSlide, termsSlide, privacySlide]);
+  }, [screenTimeSlide, editProfileSlide, termsSlide, privacySlide]);
 
   // Navigate to a sub-page (slides in from right)
   const navigateToSlide = useCallback((view: SlideView) => {
@@ -202,8 +234,6 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
       case 'edit-profile': return t('profile.editTitle');
       case 'terms': return t('account.termsAndConditions');
       case 'privacy': return t('account.privacyPolicy');
-      case 'custom-reminders': return t('account.customReminders');
-      case 'create-reminder': return t('reminders.createTitle');
       default: return t('account.title');
     }
   }, [t]);
@@ -212,28 +242,51 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
   const { scaledFontSize, scaledButtonSize, scaledPadding, isTablet, contentMaxWidth } = useAccessibility();
 
   // Tutorial reset
-  const { resetAllTutorials, lastResetTimestamp } = useTutorial();
+  const { resetGuides, lastResetTimestamp } = useOwlGuide();
 
   // Star animation
   const starOpacity = useSharedValue(0.4);
   // PERFORMANCE: Use module-level memoized star positions
   const stars = MEMOIZED_ACCOUNT_STAR_POSITIONS;
 
-  // PERFORMANCE: Defer star animation until after page transition to prevent jitter
-  React.useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      starOpacity.value = withRepeat(
-        withTiming(0.8, { duration: 2000 }),
-        -1,
-        true
-      );
-    }, 600); // Wait for page transition (500ms + 100ms buffer)
-    return () => clearTimeout(timeoutId);
-  }, [starOpacity]);
+  useAmbientLoop(isActive, starOpacity, BREATHE_STARS, 0.4);
 
   const starAnimatedStyle = useAnimatedStyle(() => ({
     opacity: starOpacity.value,
   }));
+
+  // Screen time controls live here rather than on the Screen Time page: that
+  // page reports on usage, this one is where the parent changes things. They
+  // write straight to the store, like every other toggle on this page -- the
+  // old copies inside ScreenTimeContent only ever set component state, so the
+  // parent's choice was dropped the moment they navigated away.
+  const handleToggleScreenTime = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setScreenTimeEnabled(!screenTimeEnabled);
+  };
+
+  const handleToggleSmartReminders = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+    // switching on for the first time needs the OS to agree first
+    if (!notificationsEnabled && !hasRequestedNotificationPermission) {
+      const permissionStatus = await NotificationService.getInstance().requestPermissions();
+      setNotificationPermissionRequested(true);
+
+      if (permissionStatus.granted) {
+        setNotificationsEnabled(true);
+        Alert.alert(t('screenTime.notificationsEnabled'));
+      } else {
+        Alert.alert(
+          t('screenTime.permissionRequired'),
+          t('screenTime.enableNotificationsInSettings')
+        );
+      }
+      return;
+    }
+
+    setNotificationsEnabled(!notificationsEnabled);
+  };
 
   const handleLogin = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -446,7 +499,7 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
             // Clear remaining items in background (non-blocking)
             ApiClient.logout().catch(error => log.error('Background logout:', error));
             clearPersistedStorage().catch(error => log.error('Background storage clear:', error));
-            resetAllTutorials().catch(error => log.error('Background tutorial reset:', error));
+            resetGuides().catch(error => log.error('Background tutorial reset:', error));
 
             log.info('App reset complete');
           },
@@ -468,6 +521,22 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
       log.info('Screen time usage reset');
     } catch (error) {
       log.error('Failed to reset usage:', error);
+    }
+  };
+
+  const handleClearAllScreenTimeHistory = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    try {
+      const screenTimeService = ScreenTimeService.getInstance();
+      await screenTimeService.resetAllUsage();
+
+      // Refresh the usage in the context to update the UI immediately
+      await refreshUsage();
+
+      log.info('Screen time history cleared');
+    } catch (error) {
+      log.error('Failed to clear screen time history:', error);
     }
   };
 
@@ -517,12 +586,6 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
 
     if (currentView === 'main') {
       onBack();
-    } else if (currentView === 'create-reminder') {
-      // Create reminder goes back to custom reminders
-      navigateBack('create-reminder', 'custom-reminders');
-    } else if (currentView === 'custom-reminders') {
-      // Custom reminders goes back to screen time
-      navigateBack('custom-reminders', 'screen-time');
     } else if (currentView === 'screen-time') {
       // Screen time goes back to main
       navigateBack('screen-time', 'main');
@@ -535,7 +598,7 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['#1E3A8A', '#1E3A8A', '#1E3A8A']} // Darkest color from main menu gradient
+        colors={AUTH_GRADIENT} // shared night palette, matching the redesigned app
         style={styles.gradient}
       >
         {/* Animated stars background - pointerEvents none to allow scrolling through */}
@@ -569,9 +632,7 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
         <PageHeader
           title={getSlideTitle(currentView)}
           onBack={handleBack}
-          rightActionIcon={currentView === 'custom-reminders' ? 'add' : undefined}
-          onRightAction={currentView === 'custom-reminders' ? () => navigateToSlide('create-reminder') : undefined}
-          headerBackgroundColor="#1E3A8A"
+          headerBackgroundColor="#0A0F2C"
           useHomeIcon={currentView === 'main'}
           useBackArrow={currentView !== 'main'}
         />
@@ -585,9 +646,23 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
               >
                 <View style={isTablet ? { maxWidth: contentMaxWidth, width: '100%' } : undefined}>
 
+          {/* Sign in / out sits above everything: signing in is the first
+              thing a guest needs, not something to hunt for at the bottom */}
+          <Pressable
+            testID="account-login"
+            style={({ pressed }) => [styles.logoutButton, styles.logoutButtonTop, pressed && { opacity: 0.6 }]}
+            onPress={isGuestMode ? handleLogin : handleLogout}
+          >
+            <Ionicons name={isGuestMode ? 'log-in-outline' : 'log-out-outline'} size={18} color="#FFFFFF" style={{ marginRight: 6 }} />
+            <Text style={[styles.logoutButtonText, { fontSize: scaledFontSize(14) }]}>
+              {isGuestMode ? t('common.login') : t('common.logout')}
+            </Text>
+          </Pressable>
+
           {/* Button strips: Language, Screen Time, Edit Profile */}
           <View style={styles.stripContainer}>
             <Pressable
+              testID="account-language"
               style={({ pressed }) => [styles.strip, pressed && styles.stripPressed]}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -606,6 +681,7 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
             </Pressable>
 
             <Pressable
+              testID="account-screen-time"
               style={({ pressed }) => [styles.strip, pressed && styles.stripPressed]}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -644,7 +720,7 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
 
           {/* Accessibility: inline text size pills */}
           <Text style={[styles.textSizeLabel, { fontSize: scaledFontSize(13) }]}>{t('accessibility.title')}</Text>
-          <View style={styles.textSizeOptions}>
+          <View style={styles.textSizeOptions} testID="account-text-size">
             {TEXT_SIZE_OPTIONS.map((option) => (
               <Pressable
                 key={option.value}
@@ -671,6 +747,44 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
             ))}
           </View>
 
+          {/* Screen time controls -- the Screen Time page reports on usage,
+              this is where the parent changes it */}
+          <Pressable
+            style={[styles.settingItem, { paddingVertical: scaledPadding(12) }]}
+            onPress={handleToggleScreenTime}
+            testID="account-screen-time-toggle"
+          >
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.settingLabel, { fontSize: scaledFontSize(13) }]}>
+                {t('screenTime.screenTimeControls')}
+              </Text>
+              <Text style={[styles.settingHint, { fontSize: scaledFontSize(11) }]}>
+                {t('screenTime.monitorAndLimit')}
+              </Text>
+            </View>
+            <View style={[styles.toggle, screenTimeEnabled && styles.toggleEnabled]}>
+              <View style={[styles.toggleThumb, screenTimeEnabled && styles.toggleThumbEnabled]} />
+            </View>
+          </Pressable>
+
+          <Pressable
+            style={[styles.settingItem, { paddingVertical: scaledPadding(12) }]}
+            onPress={handleToggleSmartReminders}
+            testID="account-smart-reminders-toggle"
+          >
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.settingLabel, { fontSize: scaledFontSize(13) }]}>
+                {t('screenTime.smartReminders')}
+              </Text>
+              <Text style={[styles.settingHint, { fontSize: scaledFontSize(11) }]}>
+                {t('screenTime.receiveGentleNotifications')}
+              </Text>
+            </View>
+            <View style={[styles.toggle, notificationsEnabled && styles.toggleEnabled]}>
+              <View style={[styles.toggleThumb, notificationsEnabled && styles.toggleThumbEnabled]} />
+            </View>
+          </Pressable>
+
           {/* Crash Reporting Toggle */}
           <Pressable
             style={[styles.settingItem, { paddingVertical: scaledPadding(12) }]}
@@ -696,17 +810,6 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
                 crashReportingEnabled && styles.toggleThumbEnabled
               ]} />
             </View>
-          </Pressable>
-
-          {/* Logout -transparent pill button like home icon */}
-          <Pressable
-            style={({ pressed }) => [styles.logoutButton, pressed && { opacity: 0.6 }]}
-            onPress={isGuestMode ? handleLogin : handleLogout}
-          >
-            <Ionicons name={isGuestMode ? 'log-in-outline' : 'log-out-outline'} size={18} color="#FFFFFF" style={{ marginRight: 6 }} />
-            <Text style={[styles.logoutButtonText, { fontSize: scaledFontSize(14) }]}>
-              {isGuestMode ? t('common.login') : t('common.logout')}
-            </Text>
           </Pressable>
 
           {/* Delete Account -only shown for logged-in users */}
@@ -808,11 +911,35 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
             </View>
 
             <Pressable
+              testID="dev-rearm-trial-end-prompt"
+              style={[styles.button, { paddingVertical: scaledPadding(10), minHeight: scaledButtonSize(40) }]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setTrialEndPromptSeenFor(null);
+              }}
+            >
+              <Text style={[styles.buttonText, { fontSize: scaledFontSize(13) }]}>
+                {trialEndPromptSeenFor
+                  ? `Re-arm Trial-End Prompt (answered ${trialEndPromptSeenFor})`
+                  : 'Trial-End Prompt Armed'}
+              </Text>
+            </Pressable>
+
+            <Pressable
               style={[styles.button, { paddingVertical: scaledPadding(10), minHeight: scaledButtonSize(40) }]}
               onPress={handleResetTodayUsage}
             >
               <Text style={[styles.buttonText, { fontSize: scaledFontSize(13) }]}>
                 Reset Today&apos;s Screen Time ({formatDurationCompact(todayUsage)})
+              </Text>
+            </Pressable>
+
+            <Pressable
+              style={[styles.button, styles.resetButton, { paddingVertical: scaledPadding(10), minHeight: scaledButtonSize(40) }]}
+              onPress={handleClearAllScreenTimeHistory}
+            >
+              <Text style={[styles.buttonText, styles.resetButtonText, { fontSize: scaledFontSize(13) }]}>
+                Clear All Screen Time History
               </Text>
             </Pressable>
 
@@ -849,34 +976,9 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
         <Animated.View style={[styles.overlayPage, screenTimeStyle]}>
           <ScreenTimeContent
             paddingTop={insets.top + 90 + (textSizeScale - 1) * 40 + 10}
-            onNavigateToReminders={() => navigateToSlide('custom-reminders')}
-          />
-          <ScreenTimeTipsOverlay isActive={currentView === 'screen-time'} />
-        </Animated.View>
-
-        {/* Custom Reminders Page */}
-        <Animated.View style={[styles.overlayPage, customRemindersStyle]}>
-          <CustomRemindersContent
-            paddingTop={insets.top + 90 + (textSizeScale - 1) * 40 + 10}
-            onCreateNew={() => navigateToSlide('create-reminder')}
             onReminderChange={() => setReminderChangeCounter(prev => prev + 1)}
-            refreshTrigger={reminderChangeCounter}
-            isActive={currentView === 'custom-reminders'}
           />
-        </Animated.View>
-
-        {/* Create Reminder Page */}
-        <Animated.View style={[styles.overlayPage, createReminderStyle]}>
-          <CreateReminderContent
-            paddingTop={insets.top + 90 + (textSizeScale - 1) * 40 + 10}
-            onBack={() => navigateBack('create-reminder', 'custom-reminders')}
-            onSuccess={() => {
-              setReminderChangeCounter(prev => prev + 1);
-              navigateBack('create-reminder', 'custom-reminders');
-            }}
-            refreshTrigger={reminderChangeCounter}
-            isActive={currentView === 'create-reminder'}
-          />
+          <OwlGuide id="screen_time_tips" active={currentView === 'screen-time'} />
         </Animated.View>
 
         {/* Edit Profile Page */}
@@ -939,8 +1041,8 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
 
       </LinearGradient>
 
-      {/* Settings Tips Overlay - shown on first visit, key forces remount after reset */}
-      <SettingsTipsOverlay key={`settings-tips-${lastResetTimestamp}`} isActive={isActive} />
+      {/* The owl's settings walkthrough - shown on first visit, key forces remount after reset */}
+      <OwlGuide key={`settings-guide-${lastResetTimestamp}`} id="settings_walkthrough" active={isActive} />
     </View>
   );
 }
@@ -961,7 +1063,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: '#1E3A8A',
+    backgroundColor: '#0A0F2C',
     zIndex: 10,
   },
   content: {
@@ -1023,6 +1125,10 @@ const styles = StyleSheet.create({
   },
 
   // Logout -transparent pill like home icon
+  logoutButtonTop: {
+    marginTop: 0,
+    marginBottom: 16,
+  },
   logoutButton: {
     flexDirection: 'row',
     alignItems: 'center',

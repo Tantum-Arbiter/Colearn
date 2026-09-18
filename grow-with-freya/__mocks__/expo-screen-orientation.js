@@ -23,8 +23,36 @@ const unlockAsync = jest.fn(() => Promise.resolve());
 const getOrientationAsync = jest.fn(() => Promise.resolve(Orientation.PORTRAIT_UP));
 const getOrientationLockAsync = jest.fn(() => Promise.resolve(OrientationLock.DEFAULT));
 
-const addOrientationChangeListener = jest.fn(() => ({ remove: jest.fn() }));
-const removeOrientationChangeListener = jest.fn();
+// Registered listeners, so tests can drive a real orientation change instead of
+// waiting on a timer. Used by the story-garden book-opening bridge tests.
+let listeners = [];
+
+const addOrientationChangeListener = jest.fn((handler) => {
+  listeners.push(handler);
+  return {
+    remove: jest.fn(() => {
+      listeners = listeners.filter((registered) => registered !== handler);
+    }),
+  };
+});
+
+const removeOrientationChangeListener = jest.fn((handler) => {
+  listeners = listeners.filter((registered) => registered !== handler);
+});
+
+// Test helper: emit an orientation change to every registered listener.
+const __emitOrientationChange = (orientation) => {
+  const event = {
+    orientationInfo: { orientation, verticalSizeClass: undefined, horizontalSizeClass: undefined },
+    orientationLock: OrientationLock.DEFAULT,
+  };
+  listeners.forEach((handler) => handler(event));
+};
+
+// Test helper: drop every registered listener between tests.
+const __resetListeners = () => {
+  listeners = [];
+};
 
 module.exports = {
   OrientationLock,
@@ -35,4 +63,6 @@ module.exports = {
   getOrientationLockAsync,
   addOrientationChangeListener,
   removeOrientationChangeListener,
+  __emitOrientationChange,
+  __resetListeners,
 };

@@ -23,7 +23,6 @@ import * as Haptics from 'expo-haptics';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  withRepeat,
   withTiming,
   Easing,
 } from 'react-native-reanimated';
@@ -31,10 +30,10 @@ import Animated, {
 import { InstrumentPickerOverlay } from '@/components/stories/instrument-picker-overlay';
 import { MusicChallengeUI } from '@/components/stories/music-challenge-ui';
 import { MusicControl } from '@/components/ui/music-control';
-import { BearTopImage } from '@/components/main-menu/animated-components';
+import { EarthHorizon } from '@/components/ui/earth-horizon';
+import { spinStars, useAmbientLoop } from '@/hooks/use-ambient-animation';
 import { VISUAL_EFFECTS } from '@/components/main-menu/constants';
 import { generateStarPositions } from '@/components/main-menu/utils';
-import { mainMenuStyles } from '@/components/main-menu/styles';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { useMusicChallenge } from '@/hooks/use-music-challenge';
 import { useBreathDetector } from '@/hooks/use-breath-detector';
@@ -44,7 +43,10 @@ import {
 import type { MusicChallenge } from '@/types/story';
 import { useGlobalSound } from '@/contexts/global-sound-context';
 import { SubscriptionOverlay } from '@/components/ui/subscription-overlay';
-import { LearningTipsOverlay } from '@/components/tutorial';
+import { OwlGuide } from '@/components/owl-guide';
+import { SKY_GRADIENT_WORLD, NIGHT_DEEP } from '@/constants/night-palette';
+
+const SPIN_STARS = spinStars(20000);
 
 // Pre-generate star positions at module level (same as story selection screen)
 const STAR_POSITIONS = generateStarPositions(VISUAL_EFFECTS.STAR_COUNT);
@@ -311,16 +313,7 @@ export function FreeplayScreen({ onBack, isActive = false }: FreeplayScreenProps
 
   // Star rotation animation (same as story selection page)
   const starRotation = useSharedValue(0);
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      starRotation.value = withRepeat(
-        withTiming(360, { duration: 20000, easing: Easing.linear }),
-        -1,
-        false
-      );
-    }, 600);
-    return () => clearTimeout(timeoutId);
-  }, []);
+  useAmbientLoop(isActive, starRotation, SPIN_STARS, 0);
   const starAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${starRotation.value}deg` }],
   }));
@@ -329,12 +322,10 @@ export function FreeplayScreen({ onBack, isActive = false }: FreeplayScreenProps
   const renderStoriesBackground = () => (
     <>
       <LinearGradient
-        colors={['#4ECDC4', '#3B82F6', '#1E3A8A']}
+        colors={SKY_GRADIENT_WORLD}
         style={StyleSheet.absoluteFill}
       />
-      <View style={mainMenuStyles.moonContainer} pointerEvents="none">
-        <BearTopImage />
-      </View>
+      <EarthHorizon edge="top" />
       {STAR_POSITIONS.map((star) => (
         <Animated.View
           key={`star-${star.id}`}
@@ -370,7 +361,11 @@ export function FreeplayScreen({ onBack, isActive = false }: FreeplayScreenProps
       {/* Static blur overlay -always mounted, never fades.
           pointerEvents="none" so touches pass through to the rotated instrument view. */}
       <View style={styles.musicChallengeOverlay} pointerEvents="none">
-        <BlurView intensity={40} style={StyleSheet.absoluteFill} tint="dark" />
+        {isActive ? (
+          <BlurView intensity={40} style={StyleSheet.absoluteFill} tint="dark" />
+        ) : (
+          <View style={[StyleSheet.absoluteFill, styles.restingScrim]} />
+        )}
       </View>
 
       {/* Instrument rotated content -renders when instrument selected, fades in/out */}
@@ -381,6 +376,7 @@ export function FreeplayScreen({ onBack, isActive = false }: FreeplayScreenProps
               promptText={t('music.freeplayPrompt')}
               requiredSequence={[]}
               noteLayout={instrumentDef!.noteLayout}
+              artwork={instrumentDef!.artwork}
               showBreathButton={breathDetector.useFallback}
               allowSkip={false}
               onSkip={handleBack}
@@ -469,8 +465,7 @@ export function FreeplayScreen({ onBack, isActive = false }: FreeplayScreenProps
             visible
             onSelect={handleInstrumentSelect}
             onClose={handleBack}
-            hideBackdrop
-            hideArrows
+            backdrop="none"
             onLockedPress={() => setShowSubscription(true)}
           />
         </Animated.View>
@@ -483,15 +478,18 @@ export function FreeplayScreen({ onBack, isActive = false }: FreeplayScreenProps
       />
 
       {/* Freeplay mode tutorial — shown on first visit */}
-      <LearningTipsOverlay tutorialId="freeplay_tips" isActive={isActive} />
+      <OwlGuide id="freeplay_tips" active={isActive} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  restingScrim: {
+    backgroundColor: 'rgba(0, 0, 0, 0.35)',
+  },
   container: {
     flex: 1,
-    backgroundColor: '#1E3A8A',
+    backgroundColor: NIGHT_DEEP,
   },
   musicChallengeOverlay: {
     position: 'absolute',

@@ -95,9 +95,30 @@ global.waitForAnimation = (duration = 1000) => {
 
 // Mock the app store
 jest.mock('@/store/app-store', () => ({
-  useAppStore: jest.fn(() => ({
+  useAppStore: jest.fn((selector) => {
+    const state = {
     backgroundAnimationState: 'idle',
     updateBackgroundAnimationState: jest.fn(),
     requestReturnToMainMenu: jest.fn(),
-  })),
+    textSizeScale: 1.0,
+    setTextSizeScale: jest.fn(),
+    childAgeInMonths: 24,
+    markStoryAsRead: jest.fn(),
+    recordReadingSession: jest.fn(),
+    favoriteStoryIds: [],
+    toggleFavoriteStory: jest.fn(),
+    readStoryIds: [],
+    userAvatarType: null,
+    userNickname: null,
+    getEffectiveTier: () => 'free',
+    storyProgress: {},
+    useStoryGarden: false,
+    setStoryProgress: jest.fn(),
+    markStoryCompleted: jest.fn(),
+    clearStoryProgress: jest.fn(),
+    getContinueReadingStoryId: () => null,
+    setUseStoryGarden: jest.fn(),
+    };
+    return typeof selector === 'function' ? selector(state) : state;
+  }),
 }));

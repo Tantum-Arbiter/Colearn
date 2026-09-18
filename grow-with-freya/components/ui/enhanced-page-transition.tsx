@@ -8,7 +8,11 @@ import Animated, {
   Easing,
   SharedValue,
 } from 'react-native-reanimated';
+
 import { getScreenDimensions } from '@/components/main-menu/constants';
+
+const ALWAYS_MOUNTED = 'main';
+const NO_PREWARM: readonly string[] = [];
 
 interface EnhancedPageTransitionProps {
   currentPage: string;
@@ -16,6 +20,10 @@ interface EnhancedPageTransitionProps {
   duration?: number;
   /** When false, page positions are set instantly (no slide animation). Default: true */
   animate?: boolean;
+  /** Pages to mount, off screen, once the current page has been still for a moment, so sliding
+   *  to one of them does not pay for mounting it mid-slide. They stay mounted thereafter. */
+  prewarm?: readonly string[];
+  prewarmAfterMs?: number;
 }
 
 interface AnimatedPageProps {
@@ -23,13 +31,11 @@ interface AnimatedPageProps {
   pageComponent: React.ReactNode;
   isActive: boolean;
   animationValue: SharedValue<number>;
-  /** When true, block all touch input (transition in progress) */
-  touchDisabled: boolean;
 }
 
 // Memoized page component to prevent unnecessary re-renders
 const AnimatedPage: React.FC<AnimatedPageProps> = memo(function AnimatedPage({
-  pageKey, pageComponent, isActive, animationValue, touchDisabled,
+  pageKey, pageComponent, isActive, animationValue,
 }) {
   // Normal slide animation
   const slideStyle = useAnimatedStyle(() => ({
@@ -44,7 +50,7 @@ const AnimatedPage: React.FC<AnimatedPageProps> = memo(function AnimatedPage({
         slideStyle,
         { zIndex: isActive ? 1 : 0 },
       ]}
-      pointerEvents={isActive && !touchDisabled ? 'auto' : 'none'}
+      pointerEvents={isActive ? 'auto' : 'none'}
     >
       {pageComponent || (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'red' }}>
@@ -65,6 +71,8 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
   pages,
   duration = 600,
   animate = true,
+  prewarm = NO_PREWARM,
+  prewarmAfterMs = 1200,
 }) => {
   // Get initial screen height and track changes
   const [screenHeight, setScreenHeight] = React.useState(() => getScreenDimensions().height);
@@ -73,6 +81,27 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
   const [isTransitioning, setIsTransitioning] = useState(false);
   const transitionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevPageRef = useRef(currentPage);
+  const [slide, setSlide] = useState<{ from: string | null; to: string; recent: string | null }>({
+    from: null,
+    to: currentPage,
+    recent: null,
+  });
+  if (slide.to !== currentPage) {
+    setSlide({ from: slide.to, to: currentPage, recent: slide.recent === currentPage ? slide.from : slide.recent });
+  }
+  const [warmed, setWarmed] = useState<readonly string[]>(NO_PREWARM);
+  const prewarmKey = prewarm.join('|');
+  const allWarm = prewarm.every((key) => warmed.includes(key));
+
+  useEffect(() => {
+    if (prewarmKey === '' || allWarm) return undefined;
+    const timer = setTimeout(() => setWarmed(prewarmKey.split('|')), prewarmAfterMs);
+    return () => clearTimeout(timer);
+  }, [currentPage, prewarmKey, prewarmAfterMs, allWarm]);
+
+  const mounted = new Set(
+    [ALWAYS_MOUNTED, currentPage, slide.from, slide.recent, ...warmed].filter((key): key is string => key !== null)
+  );
 
   // Update screen height when dimensions change (orientation changes)
   useEffect(() => {
@@ -174,13 +203,21 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
     };
 
     // Block touch input while the slide animation is in progress
-    if (animate && prevPageRef.current !== currentPage) {
+    if (prevPageRef.current !== currentPage) {
+      const leaving = prevPageRef.current;
       if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
-      setIsTransitioning(true);
+      if (animate) {
+        setIsTransitioning(true);
+      }
       transitionTimerRef.current = setTimeout(() => {
         setIsTransitioning(false);
         transitionTimerRef.current = null;
-      }, duration);
+        setSlide((current) => ({
+          ...current,
+          from: current.from === leaving ? null : current.from,
+          recent: leaving === ALWAYS_MOUNTED ? current.recent : leaving,
+        }));
+      }, animate ? duration : 0);
     }
     prevPageRef.current = currentPage;
 
@@ -224,8 +261,10 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
       style={styles.container}
     >
       {Object.entries(pages).map(([pageKey, pageComponent]) => {
-        // Only render pages that have animation values
-        if (!pageAnimations[pageKey]) {
+        // Only render pages that have animation values, and only the ones in play:
+        // home, the page showing, the page it is sliding away from, and the last
+        // one left so a bounce back is instant. Everything else is unmounted.
+        if (!pageAnimations[pageKey] || !mounted.has(pageKey)) {
           return null;
         }
 
@@ -238,10 +277,15 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
             pageComponent={pageComponent}
             isActive={isActive}
             animationValue={pageAnimations[pageKey]}
-            touchDisabled={isTransitioning}
           />
         );
       })}
+      {/* swallows touches while pages slide, without re-rendering the pages themselves */}
+      <View
+        testID="page-transition-touch-guard"
+        style={styles.touchGuard}
+        pointerEvents={isTransitioning ? 'auto' : 'none'}
+      />
     </LinearGradient>
   );
 };
@@ -257,5 +301,13 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
+  },
+  touchGuard: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 2,
   },
 });

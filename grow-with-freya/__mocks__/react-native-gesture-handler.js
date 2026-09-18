@@ -23,6 +23,13 @@ const Gesture = {
     minDistance: () => Gesture.Pan(),
     minPointers: () => Gesture.Pan(),
     maxPointers: () => Gesture.Pan(),
+    activeOffsetX: () => Gesture.Pan(),
+    activeOffsetY: () => Gesture.Pan(),
+    failOffsetX: () => Gesture.Pan(),
+    failOffsetY: () => Gesture.Pan(),
+    simultaneousWithExternalGesture: () => Gesture.Pan(),
+    shouldCancelWhenOutside: () => Gesture.Pan(),
+    hitSlop: () => Gesture.Pan(),
   }),
   Tap: () => ({
     onStart: () => Gesture.Tap(),

@@ -142,35 +142,6 @@ export const CachedMoonImage: React.FC<{ style?: any; width?: number; height?: n
 };
 
 /**
- * Specialized component for the bear-top image with optimal caching
- */
-// Import the bear-top image at the top level - use relative path for Jest compatibility
-const bearTopImage = require('../../assets/images/ui-elements/bear-top-screen.webp');
-
-export const CachedBearTopImage: React.FC<{ style?: any; width?: number; height?: number }> = ({
-  style,
-  width = 286,
-  height = 286
-}) => {
-  return (
-    <CachedImage
-      source={bearTopImage}
-      style={[
-        {
-          width,
-          height,
-          opacity: 0.8,
-        },
-        style,
-      ]}
-      resizeMode="contain"
-      preload={true}
-      instantDisplay={true}
-    />
-  );
-};
-
-/**
  * Specialized component for the moon-bottom image with optimal caching
  */
 // Import the moon-bottom image at the top level - use relative path for Jest compatibility

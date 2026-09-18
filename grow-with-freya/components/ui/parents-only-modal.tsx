@@ -134,7 +134,7 @@ export function ParentsOnlyModal({
   }
 
   return (
-    <Animated.View style={[styles.absoluteContainer, fullScreenStyle, { opacity: entranceOpacity }]}>
+    <Animated.View testID="parents-only-modal" style={[styles.absoluteContainer, fullScreenStyle, { opacity: entranceOpacity }]}>
       <Pressable style={styles.backdrop} onPress={onClose} />
       <View style={[styles.modalOverlay, fullScreenStyle]} pointerEvents="box-none">
         <Animated.View style={[

@@ -1,5 +1,5 @@
 import React from 'react';
-import { render } from '@testing-library/react-native';
+import { render, fireEvent } from '@testing-library/react-native';
 import { BookCard } from '@/components/stories/book-card';
 import { Story } from '@/types/story';
 
@@ -31,6 +31,13 @@ const mockPlaceholderStory: Story = {
   description: 'More stories coming soon!'
 };
 
+// testID lands as data-testid under react-native-web, so query the tree directly
+function pressableFor(tree: ReturnType<typeof render>, storyId: string) {
+  return tree.UNSAFE_root.findAll(
+    (n: { props: Record<string, unknown> }) => n.props.testID === `book-card-pressable-${storyId}`
+  )[0];
+}
+
 describe('BookCard', () => {
   it('renders available story correctly', () => {
     const result = render(
@@ -61,10 +68,9 @@ describe('BookCard', () => {
       <BookCard story={mockAvailableStory} onPress={mockOnPress} />
     );
 
-    // Since we can't reliably find elements due to React Native testing setup issues,
-    // let's just verify the component renders and the onPress prop is passed
-    expect(result).toBeTruthy();
-    expect(mockOnPress).toBeDefined();
+    fireEvent.press(pressableFor(result, mockAvailableStory.id));
+
+    expect(mockOnPress).toHaveBeenCalledWith(mockAvailableStory);
   });
 
   it('does not call onPress when placeholder story is pressed', () => {
@@ -73,10 +79,9 @@ describe('BookCard', () => {
       <BookCard story={mockPlaceholderStory} onPress={mockOnPress} />
     );
 
-    // Since we can't reliably find elements due to React Native testing setup issues,
-    // let's just verify the component renders with placeholder story
-    expect(result).toBeTruthy();
-    expect(mockPlaceholderStory.isAvailable).toBe(false);
+    fireEvent.press(pressableFor(result, mockPlaceholderStory.id));
+
+    expect(mockOnPress).not.toHaveBeenCalled();
   });
 
   it('displays story emoji for available stories', () => {

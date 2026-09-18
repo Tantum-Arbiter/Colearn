@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, fireEvent, waitFor } from '@testing-library/react-native';
+import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
 import { StoryBookReader } from '../story-book-reader';
 import { Story } from '@/types/story';
 
@@ -69,6 +69,9 @@ jest.mock('@/store/app-store', () => {
     setTextSizeScale: jest.fn(),
     markStoryAsRead: jest.fn(),
     recordReadingSession: jest.fn(),
+    setStoryProgress: jest.fn(),
+    markStoryCompleted: jest.fn(),
+    storyProgress: {} as Record<string, { pageIndex: number; totalPages: number; updatedAt: string; completedCount: number }>,
     getEffectiveTier: () => 'premium' as const,
     subscriptionTier: 'premium' as const,
     devTierOverride: null,
@@ -147,6 +150,7 @@ jest.mock('expo-image', () => {
   MockImage.prefetch = jest.fn(() => Promise.resolve());
   return { Image: MockImage };
 });
+
 
 // Define __DEV__ for tests
 (global as any).__DEV__ = true;
@@ -267,6 +271,49 @@ describe('StoryBookReader', () => {
 
     expect(extractNodeText(UNSAFE_root)).toContain('reader.pagePreview');
     expect(queryByTestId('menu-change-instrument')).toBeNull();
+  });
+});
+
+describe('StoryBookReader reading progress', () => {
+  const longStory: Story = {
+    ...mockStory,
+    pages: [0, 1, 2, 3, 4].map((n) => ({ id: `p${n}`, pageNumber: n, text: `Page ${n}` })),
+  };
+
+  beforeEach(() => {
+    jest.requireMock('@/store/app-store').useAppStore.getState().storyProgress = {};
+  });
+
+  it('records where the child is up to once past the cover, for the shelf\'s Continue Reading row', () => {
+    const { useAppStore } = jest.requireMock('@/store/app-store');
+    const setStoryProgress = useAppStore.getState().setStoryProgress as jest.Mock;
+    setStoryProgress.mockClear();
+
+    render(<StoryBookReader story={mockStory} onExit={jest.fn()} skipCoverPage />);
+
+    expect(setStoryProgress).toHaveBeenCalledWith(mockStory.id, 1, mockStory.pages!.length);
+  });
+
+  it('opens a book the child is part-way through where they left off', () => {
+    const { useAppStore } = jest.requireMock('@/store/app-store');
+    const state = useAppStore.getState();
+    state.storyProgress = { [longStory.id]: { pageIndex: 3, totalPages: 5, updatedAt: '2026-09-05T09:00:00Z', completedCount: 0 } };
+    const setStoryProgress = state.setStoryProgress as jest.Mock;
+    setStoryProgress.mockClear();
+
+    render(<StoryBookReader story={longStory} onExit={jest.fn()} skipCoverPage />);
+
+    expect(setStoryProgress).toHaveBeenCalledWith(longStory.id, 3, 5);
+  });
+
+  it('opens a book with nothing saved at its first page', () => {
+    const { useAppStore } = jest.requireMock('@/store/app-store');
+    const setStoryProgress = useAppStore.getState().setStoryProgress as jest.Mock;
+    setStoryProgress.mockClear();
+
+    render(<StoryBookReader story={longStory} onExit={jest.fn()} skipCoverPage />);
+
+    expect(setStoryProgress).toHaveBeenCalledWith(longStory.id, 1, 5);
   });
 });
 
@@ -502,5 +549,64 @@ describe('StoryBookReader Text Rendering with Newlines', () => {
     );
     expect(result).toBeTruthy();
     expect(() => result.toJSON()).not.toThrow();
+  });
+});
+
+
+describe('StoryBookReader music challenge backdrop', () => {
+  const count = (view: any, testID: string) =>
+    view.UNSAFE_queryAllByProps({ testID }).length;
+
+
+  it('stands the sheet and the instrument on one night meadow, put there once', async () => {
+    const view = render(
+      <StoryBookReader story={mockStoryWithMusicChallenge} onExit={jest.fn()} skipCoverPage />
+    );
+    const press = (testID: string) => {
+      const nodes = view.UNSAFE_queryAllByProps({ testID });
+      if (nodes.length === 0) throw new Error(`nothing to press for ${testID}`);
+      act(() => { fireEvent.press(nodes[0]); });
+    };
+    press('confirm-instrument-selection-button');
+    press('right-touch-area');
+    await waitFor(() => expect(count(view, 'begin-music-challenge-button')).toBeGreaterThan(0));
+
+    press('begin-music-challenge-button');
+    await waitFor(() => expect(count(view, 'ready-to-play-button')).toBeGreaterThan(0));
+
+    // Two copies while the sheet is up: the sheet's own, which is what hides
+    // the instrument behind it, over the one the challenge stands on. They are
+    // the same picture, so the handover shows no change.
+    expect(count(view, 'music-challenge-backdrop')).toBe(1);
+    expect(count(view, 'music-backdrop')).toBe(2);
+    expect(count(view, 'scene-background')).toBe(0);
+
+    press('ready-to-play-button');
+
+    expect(count(view, 'music-challenge-backdrop')).toBe(1);
+    expect(count(view, 'music-backdrop')).toBe(1);
+    expect(count(view, 'scene-background')).toBe(0);
+  });
+
+
+  it('stands the page controls down while the sheet is up, rather than doubling its back arrow', async () => {
+    const view = render(
+      <StoryBookReader story={mockStoryWithMusicChallenge} onExit={jest.fn()} skipCoverPage />
+    );
+    const press = (testID: string) => {
+      const nodes = view.UNSAFE_queryAllByProps({ testID });
+      if (nodes.length === 0) throw new Error(`nothing to press for ${testID}`);
+      act(() => { fireEvent.press(nodes[0]); });
+    };
+    press('confirm-instrument-selection-button');
+    press('right-touch-area');
+    await waitFor(() => expect(count(view, 'begin-music-challenge-button')).toBeGreaterThan(0));
+    expect(count(view, 'story-exit-button')).toBeGreaterThan(0);
+
+    press('begin-music-challenge-button');
+    await waitFor(() => expect(count(view, 'ready-to-play-button')).toBeGreaterThan(0));
+
+    expect(count(view, 'story-exit-button')).toBe(0);
+    expect(count(view, 'music-sheet-close-button')).toBeGreaterThan(0);
   });
 });

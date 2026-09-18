@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { MainMenu } from '../../components/main-menu';
-import { useAppStore } from '../../store/app-store';
+import { useAppStore, type AppState } from '../../store/app-store';
 
 // Mock the store
 jest.mock('../../store/app-store');
@@ -22,9 +22,20 @@ jest.mock('expo-haptics', () => ({
 describe('MainMenu', () => {
   const mockOnNavigate = jest.fn();
 
+  let state: Partial<AppState>;
+
+  // the menu reads the store both bare and via selectors, so the mock has to
+  // honour a selector argument the way zustand does
+  const applyState = (next: Partial<AppState>) => {
+    state = next;
+    mockUseAppStore.mockImplementation(((selector?: (s: AppState) => unknown) =>
+      typeof selector === 'function' ? selector(state as AppState) : state
+    ) as unknown as typeof useAppStore);
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
-    mockUseAppStore.mockReturnValue({
+    applyState({
       backgroundAnimationState: {
         cloudFloat1: -200,
         cloudFloat2: -400,
@@ -40,83 +51,111 @@ describe('MainMenu', () => {
       shouldReturnToMainMenu: false,
       setAppReady: jest.fn(),
       setOnboardingComplete: jest.fn(),
-      setCurrentChildId: jest.fn(),
+      setCurrentChild: jest.fn(),
       setCurrentScreen: jest.fn(),
       setLoading: jest.fn(),
+      setShowLoginAfterOnboarding: jest.fn(),
       requestReturnToMainMenu: jest.fn(),
       clearReturnToMainMenu: jest.fn(),
+      subscriptionTier: 'free',
+      _devSubscriptionOverride: null,
+      getEffectiveTier: () => 'free',
+      useHomeScene: false,
+      storyProgress: {},
+      getContinueReadingStoryId: jest.fn(() => null),
     });
   });
 
-  it('renders main menu with center icon text', () => {
+  // testID lands as data-testid under react-native-web, so query the tree directly
+  const byTestId = (tree: ReturnType<typeof render>, testID: string) =>
+    tree.UNSAFE_root.findAll(
+      (n: { props: Record<string, unknown> }) => n.props.testID === testID
+    );
+
+  const MENU_ITEMS = [
+    { id: 'stories', destination: 'stories' },
+    { id: 'learning', destination: 'learning' },
+    { id: 'instruments', destination: 'instruments' },
+  ];
+
+  it('renders the menu carousel', () => {
     const result = render(<MainMenu onNavigate={mockOnNavigate} />);
 
-    // Check that the component renders and contains the expected text content
-    expect(result.toJSON()).toBeTruthy();
+    expect(byTestId(result, 'menu-carousel').length).toBeGreaterThan(0);
   });
 
-  it('renders settings button', () => {
+  it('renders every menu item in the carousel', () => {
     const result = render(<MainMenu onNavigate={mockOnNavigate} />);
-    expect(result.toJSON()).toBeTruthy();
+
+    for (const item of MENU_ITEMS) {
+      expect(byTestId(result, `menu-icon-${item.id}`).length).toBeGreaterThan(0);
+    }
   });
 
-  it('handles stories button press and navigates', async () => {
+  // every carousel item is intercepted by guardedOnNavigate and opens a
+  // sub-menu instead of navigating, so navigation is a two-step flow
+  it.each(MENU_ITEMS)('opens the $id sub-menu rather than navigating', ({ id }) => {
     const result = render(<MainMenu onNavigate={mockOnNavigate} />);
 
-    // Test that the component renders without crashing
-    // Note: Navigation requires pressing on the icon images, not text
-    expect(result.toJSON()).toBeTruthy();
+    fireEvent.press(byTestId(result, `menu-icon-${id}`)[0]);
+
+    expect(mockOnNavigate).not.toHaveBeenCalled();
   });
 
-  it('handles settings button press', async () => {
+  it('navigates once a story mode card is chosen from the sub-menu', () => {
     const result = render(<MainMenu onNavigate={mockOnNavigate} />);
 
-    // Test that the component renders without crashing
-    // Note: Settings button requires pressing on the emoji element, not text
-    expect(result.toJSON()).toBeTruthy();
+    fireEvent.press(byTestId(result, 'menu-icon-stories')[0]);
+    fireEvent.press(byTestId(result, 'main-mode-card-interactive')[0]);
+
+    expect(mockOnNavigate).toHaveBeenCalledWith('stories-interactive');
+  });
+
+  it('does not navigate until a menu item is pressed', () => {
+    render(<MainMenu onNavigate={mockOnNavigate} />);
+
+    expect(mockOnNavigate).not.toHaveBeenCalled();
   });
 
   it('renders background elements', () => {
-    const { root } = render(<MainMenu onNavigate={mockOnNavigate} />);
+    const result = render(<MainMenu onNavigate={mockOnNavigate} />);
 
-    // Check that the component renders without crashing
-    // Background elements are mocked and don't have testIDs
-    expect(root).toBeTruthy();
+    expect(byTestId(result, 'main-menu-container').length).toBeGreaterThan(0);
   });
 
   it('renders animated elements without crashing', () => {
-    // This test ensures that all animated components render without errors
     expect(() => render(<MainMenu onNavigate={mockOnNavigate} />)).not.toThrow();
   });
 
-  it('renders single stories button', async () => {
-    const { root } = render(<MainMenu onNavigate={mockOnNavigate} />);
+  it('renders a single stories button', () => {
+    const result = render(<MainMenu onNavigate={mockOnNavigate} />);
 
-    // Test that the component renders the single stories button
-    expect(root).toBeTruthy();
+    // findAll matches the composite and its host node, so compare against
+    // another single-instance item rather than asserting an exact count
+    expect(byTestId(result, 'menu-icon-stories').length).toBe(
+      byTestId(result, 'menu-icon-learning').length
+    );
   });
 
-  it('handles stories button press without errors', async () => {
-    const { root } = render(<MainMenu onNavigate={mockOnNavigate} />);
+  it('persists static rocket values, so no rocket is animated', () => {
+    const update = jest.fn();
+    applyState({ ...state, updateBackgroundAnimationState: update });
 
-    // Test that the component handles button press without crashing
-    expect(root).toBeTruthy();
+    render(<MainMenu onNavigate={mockOnNavigate} />).unmount();
+
+    expect(update).toHaveBeenCalledWith(
+      expect.objectContaining({ rocketFloat1: 1000, rocketFloat2: -200 })
+    );
   });
 
-  it('renders without rocket animations for performance', () => {
-    // Test that component renders without rocket animations
-    const { root } = render(<MainMenu onNavigate={mockOnNavigate} />);
+  it('saves finite cloud positions on unmount', () => {
+    const update = jest.fn();
+    applyState({ ...state, updateBackgroundAnimationState: update });
 
-    // Rockets have been removed for performance optimization
-    expect(root).toBeTruthy();
-  });
+    render(<MainMenu onNavigate={mockOnNavigate} />).unmount();
 
-  it('renders cloud animations without crashing', () => {
-    // Test that cloud components are rendered
-    const { root } = render(<MainMenu onNavigate={mockOnNavigate} />);
-
-    // Since clouds are animated and may not have text content,
-    // we test that the component renders without throwing
-    expect(root).toBeTruthy();
+    const saved = update.mock.calls[0][0] as Record<string, number>;
+    expect(Number.isFinite(saved.cloudFloat1)).toBe(true);
+    expect(Number.isFinite(saved.cloudFloat2)).toBe(true);
   });
 });

@@ -22,12 +22,15 @@ import { ParentsOnlyModal } from '@/components/ui/parents-only-modal';
 import { Ionicons } from '@expo/vector-icons';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { useParentsOnlyChallenge } from '@/hooks/use-parents-only-challenge';
-import { TutorialOverlay, StoryModeTipsOverlay } from '@/components/tutorial';
-import { useTutorial } from '@/contexts/tutorial-context';
+import { OwlGuide } from '@/components/owl-guide';
+import { useGuideScroller } from '@/components/owl-guide/use-guide-scroller';
+import { useOwlGuide } from '@/contexts/owl-guide-context';
 import { SubscriptionOverlay } from '@/components/ui/subscription-overlay';
 import * as Haptics from 'expo-haptics';
 import { STORY_MODES, type StoryMode } from '@/components/stories/story-selection-screen';
 import { Fonts } from '@/constants/theme';
+import { HomeSceneContainer } from '@/components/home';
+import { spinStars, useAmbientLoop, type AmbientStarter } from '@/hooks/use-ambient-animation';
 
 
 import { ErrorBoundary } from './error-boundary';
@@ -53,6 +56,23 @@ import {
 } from './main-menu/index';
 
 import { createCloudAnimationNew } from './main-menu/cloud-animations';
+
+const SPIN_STARS = spinStars(20000);
+const PULSE_UNLOCK: AmbientStarter = (value) => {
+  value.value = withRepeat(
+    withSequence(
+      withTiming(1.05, { duration: 1200, easing: ReanimatedEasing.inOut(ReanimatedEasing.ease) }),
+      withTiming(1, { duration: 1200, easing: ReanimatedEasing.inOut(ReanimatedEasing.ease) }),
+    ),
+    -1, true
+  );
+};
+const SHIMMER_UNLOCK: AmbientStarter = (value) => {
+  value.value = withRepeat(
+    withTiming(1, { duration: 2000, easing: ReanimatedEasing.inOut(ReanimatedEasing.ease) }),
+    -1, false
+  );
+};
 
 // PERFORMANCE: Generate star positions once at module level to prevent recalculation on every mount
 // This is safe because star positions are random and don't need to change between mounts
@@ -107,12 +127,15 @@ interface MainMenuProps {
   returnToSubMenu?: SubMenuType;
 }
 
+const HOME_GUIDE_DELAY_MS = 1200;
+
 function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entranceDelay = 0, returnToSubMenu = null }: MainMenuProps) {
+  const useHomeScene = useAppStore((state) => state.useHomeScene);
   const insets = useSafeAreaInsets();
   const { scaledButtonSize, scaledFontSize } = useAccessibility();
 
   // Subscription state
-  const { getEffectiveTier } = useAppStore();
+  const getEffectiveTier = useAppStore((state) => state.getEffectiveTier);
   const effectiveTier: SubscriptionTier = getEffectiveTier();
   const isPremium = effectiveTier === 'premium';
   const [showSubscription, setShowSubscription] = useState(false);
@@ -122,21 +145,9 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
   const unlockShimmer = useSharedValue(0);
   const unlockSlideY = useSharedValue(0);
 
-  useEffect(() => {
-    // Gentle scale pulse
-    unlockPulse.value = withRepeat(
-      withSequence(
-        withTiming(1.05, { duration: 1200, easing: ReanimatedEasing.inOut(ReanimatedEasing.ease) }),
-        withTiming(1, { duration: 1200, easing: ReanimatedEasing.inOut(ReanimatedEasing.ease) }),
-      ),
-      -1, true
-    );
-    // Shimmer sweep every 3s
-    unlockShimmer.value = withRepeat(
-      withTiming(1, { duration: 2000, easing: ReanimatedEasing.inOut(ReanimatedEasing.ease) }),
-      -1, false
-    );
-  }, []);
+  const ambientActive = !useHomeScene && Boolean(isActive);
+  useAmbientLoop(ambientActive, unlockPulse, PULSE_UNLOCK, 1);
+  useAmbientLoop(ambientActive, unlockShimmer, SHIMMER_UNLOCK, 0);
 
   const unlockBtnAnimStyle = useAnimatedStyle(() => ({
     transform: [
@@ -251,9 +262,11 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
 
   // Block navigation while the main menu tutorial is pending (first-time sign-in).
   // This prevents the user tapping a button before the tutorial overlay mounts.
-  const { shouldShowTutorial, isLoaded: tutorialLoaded } = useTutorial();
+  const { shouldShowGuide, isLoaded: tutorialLoaded } = useOwlGuide();
+  // the home page scrolls, so its tour moves the page rather than the bubble
+  const homeScroller = useGuideScroller();
   const [tutorialFinished, setTutorialFinished] = useState(false);
-  const isTutorialPending = !disableTutorial && tutorialLoaded && shouldShowTutorial('main_menu_tour') && !tutorialFinished;
+  const isTutorialPending = !useHomeScene && !disableTutorial && tutorialLoaded && shouldShowGuide('main_menu_tour') && !tutorialFinished;
 
   // Use a ref so guardedOnNavigate keeps a stable reference -avoids re-rendering
   // MenuCarousel (React.memo) when isTutorialPending changes, which would cause a flicker.
@@ -272,12 +285,26 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
     onNavigate(destination);
   }, [onNavigate, unlockSlideY, handleShowSubMenu]);
 
+  // The home scene's tiles are destinations in their own right -- Storybooks
+  // is the whole catalogue -- so they never open the carousel's sub-menus.
+  // Routing them through guardedOnNavigate swallowed 'stories' into a sub-menu
+  // the home scene does not show, and the tile did nothing at all.
+  const navigateFromHome = useCallback((destination: string) => {
+    if (isTutorialPendingRef.current) return;
+    unlockSlideY.value = withTiming(100, { duration: 300, easing: ReanimatedEasing.in(ReanimatedEasing.ease) });
+    onNavigate(destination);
+  }, [onNavigate, unlockSlideY]);
+
   const handleTutorialEnd = useCallback(() => {
     setTutorialFinished(true);
   }, []);
 
   // Parents Only modal - using shared hook
   const parentsOnly = useParentsOnlyChallenge();
+
+  const openGrownUpsCorner = useCallback(() => {
+    parentsOnly.showChallenge(() => onNavigate('account'));
+  }, [parentsOnly, onNavigate]);
 
   // Get current screen dimensions (updates with orientation changes)
   const { height: screenHeight } = getScreenDimensions();
@@ -307,16 +334,7 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
   }, [containerOpacity, skipFadeIn]);
 
   // Star twinkle rotation (matches story selection / practise screens)
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      starRotation.value = withRepeat(
-        withTiming(360, { duration: 20000, easing: ReanimatedEasing.linear }),
-        -1,
-        false,
-      );
-    }, 300);
-    return () => clearTimeout(timeoutId);
-  }, []);
+  useAmbientLoop(ambientActive, starRotation, SPIN_STARS, 0);
 
   const containerAnimatedStyle = useAnimatedStyle(() => ({
     opacity: containerOpacity.value,
@@ -333,6 +351,8 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
   const learningButtonRef = useRef<View>(null);
   const musicControlRef = useRef<View>(null);
   const settingsButtonRef = useRef<View>(null);
+  const achievementCardRef = useRef<View>(null);
+  const screenTimeRingRef = useRef<View>(null);
 
   // Per-button refs for the carousel strip buttons (keyed by menu item id)
   const carouselButtonRefs = useMemo(() => ({
@@ -346,6 +366,24 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
     'stories_button': storiesButtonRef,
     'instruments_button': instrumentsButtonRef,
     'learning_button': learningButtonRef,
+    'settings_button': settingsButtonRef,
+    'sound_control': musicControlRef,
+  }), []);
+
+  const homeGuideTargets = useMemo(() => ({
+    stories: storiesButtonRef,
+    achievement: achievementCardRef,
+    learning: learningButtonRef,
+    screenTime: screenTimeRingRef,
+    settings: settingsButtonRef,
+    sound: musicControlRef,
+  }), []);
+
+  const homeTourTargets = useMemo(() => ({
+    'stories_button': storiesButtonRef,
+    'achievement_card': achievementCardRef,
+    'learning_button': learningButtonRef,
+    'screen_time_ring': screenTimeRingRef,
     'settings_button': settingsButtonRef,
     'sound_control': musicControlRef,
   }), []);
@@ -455,6 +493,39 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
   }), [screenHeight]);
 
 
+
+  if (useHomeScene) {
+    return (
+      <>
+        <HomeSceneContainer
+          onNavigate={navigateFromHome}
+          onOpenGrownUps={openGrownUpsCorner}
+          isActive={isActive !== false}
+          guideTargets={homeGuideTargets}
+          scrollBinding={homeScroller}
+        />
+        {!disableTutorial && (
+          <OwlGuide
+            id="main_menu_tour"
+            active={isActive !== false}
+            targets={homeTourTargets}
+            delayMs={HOME_GUIDE_DELAY_MS}
+            scroller={homeScroller.scroller}
+            onEnd={handleTutorialEnd}
+          />
+        )}
+        <ParentsOnlyModal
+          visible={parentsOnly.isVisible}
+          challenge={parentsOnly.challenge}
+          inputValue={parentsOnly.inputValue}
+          onInputChange={parentsOnly.setInputValue}
+          onSubmit={parentsOnly.handleSubmit}
+          onClose={parentsOnly.handleClose}
+          isInputValid={parentsOnly.isInputValid}
+        />
+      </>
+    );
+  }
 
   return (
     <Animated.View style={[{ flex: 1 }, containerAnimatedStyle]}>
@@ -654,16 +725,16 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
 
         {/* Main Menu Tutorial - shown after carousel slide-in completes, not during login transition */}
         {!disableTutorial && carouselReady && (
-          <TutorialOverlay
-            tutorialId="main_menu_tour"
-            targetRefs={tutorialTargetRefs}
+          <OwlGuide
+            id="main_menu_tour"
+            targets={tutorialTargetRefs}
             onEnd={handleTutorialEnd}
           />
         )}
 
         {/* Story Modes Tutorial - explains Interactive, Musical & Jigsaw on first view */}
         {!disableTutorial && (
-          <StoryModeTipsOverlay isActive={activeSubMenu === 'stories'} />
+          <OwlGuide id="story_modes_tour" active={activeSubMenu === 'stories'} />
         )}
       </LinearGradient>
     </Animated.View>

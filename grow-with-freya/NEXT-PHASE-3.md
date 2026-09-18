@@ -72,6 +72,40 @@ Apple/Google Servers ←→ RevenueCat Servers ←→ RevenueCat SDK (client)
 - Adding gateway enforcement adds complexity without meaningful security gain
 - RevenueCat's server-side receipt validation IS the server validation -just not our server
 
+### Paywall Screens
+
+Two screens, each with one job. Neither carries the other's content.
+
+| Screen | File | Sells | Opened by |
+|--------|------|-------|-----------|
+| Free trial | `components/ui/subscription-overlay.tsx` | Basic, with its 5-day trial | The "Start my free trial" button, and every locked-content prompt |
+| End-of-trial upgrade | `components/ui/trial-end-upgrade-overlay.tsx` | Premium and Annual | The clock, on the trial's last day -- nothing else opens it |
+
+The plan cards themselves live in `components/subscription/plan-picker.tsx` so both
+screens draw the same list from one place. The trial screen sells the trial and
+nothing else: it has no price list and no control that opens one, and its
+"Upgrade to Premium" line is a statement rather than a link. It is also
+deliberately unscrollable -- the whole offer has to be takeable in at a glance.
+
+**When the upgrade screen appears on its own.** `getTrialStatus()` asks RevenueCat
+where the parent stands -- an entitlement whose `periodType` is `TRIAL` carries the
+date it converts. On the **last day** of the trial (`TRIAL_END_PROMPT_DAYS` = 0
+whole days remaining), and while the trial converts to anything other than Premium,
+the home screen shows the offer. Answering it -- upgrading, or choosing to stay on
+Basic -- records the trial's end date in `trialEndPromptSeenFor`, so one trial is
+asked about once. Doing nothing is a real answer: the store charges for Basic and
+the app keeps working, which is why the screen says what that costs before it sells
+anything.
+
+**Day 3 is a different message.** The trial timeline promises a warning two days
+out, and that warning exists so a parent who does *not* want the subscription goes
+and cancels in time. It is a notification, not this screen: selling a bigger plan
+while someone is still deciding whether to keep the small one reads as a sales
+pitch, and the last day is the only moment the upgrade question is genuinely live.
+
+In dev mode there is no RevenueCat to ask, so the Developer Options tier override
+stands in: choosing **Basic** there converts the trial at the end of today.
+
 ### Content Delivery Model -Catalog Browse + On-Demand Download
 
 The current bulk delta-sync model (`batch-sync-service.ts`) is replaced with a catalog-first

@@ -32,6 +32,11 @@ export interface HeatmapData {
   isOverRecommended: boolean; // true if usage exceeds age-appropriate recommendations
 }
 
+export interface DailyTotal {
+  date: string; // YYYY-MM-DD
+  seconds: number;
+}
+
 export interface ScreenTimeStats {
   todayUsage: number; // seconds
   weeklyUsage: ScreenTimeSession[];
@@ -51,6 +56,19 @@ export interface ScreenTimeWarning {
   type: 'approaching_limit' | 'limit_reached' | 'daily_complete';
   remainingTime: number; // seconds
   message: string;
+}
+
+/**
+ * YYYY-MM-DD in the device's own timezone. A child's day is a local day:
+ * the daily limit resets at the family's midnight, not at UTC's -- keyed by
+ * `toISOString()` a London child's day rolled over at 1am in summer, and a
+ * Californian child's would have reset mid-afternoon.
+ */
+export function localDateKey(referenceMs: number = Date.now()): string {
+  const d = new Date(referenceMs);
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${month}-${day}`;
 }
 
 class ScreenTimeService {
@@ -88,7 +106,7 @@ class ScreenTimeService {
       startTime: now,
       duration: 0,
       activity,
-      date: new Date().toISOString().split('T')[0],
+      date: localDateKey(now),
     };
 
     // Start monitoring for warnings with child age
@@ -111,15 +129,95 @@ class ScreenTimeService {
 
   getCurrentSessionDuration(): number {
     if (!this.currentSession) return 0;
-    return Math.floor((Date.now() - this.currentSession.startTime) / 1000);
+    // Never negative: the device clock can move backwards (NTP correction,
+    // manual change, DST), and a negative duration would silently cancel out
+    // real usage and suppress limit warnings.
+    return Math.max(0, Math.floor((Date.now() - this.currentSession.startTime) / 1000));
   }
 
   async getTodayUsage(): Promise<number> {
-    const today = new Date().toISOString().split('T')[0];
-    const sessions = await this.getSessionsForDate(today);
-    const currentDuration = this.getCurrentSessionDuration();
+    const today = localDateKey();
+    const allSessions = await this.getAllSessions();
 
-    return sessions.reduce((total, session) => total + session.duration, 0) + currentDuration;
+    // Derived from real start/end timestamps rather than the stored date+
+    // duration pair, so a record mis-attributed to today (legacy, or one that
+    // ran across midnight) contributes only the part that truly falls today.
+    const persisted = allSessions.reduce((total, session) => {
+      const todaySegment = this.splitSessionByDay(session).find(seg => seg.date === today);
+      return total + (todaySegment?.seconds ?? 0);
+    }, 0);
+
+    const elapsedToday = this.secondsSinceLocalMidnight();
+
+    // Belt and braces: the live session is checkpointed every 30s, but that is
+    // not a guarantee. Nothing about today can exceed the time that has
+    // actually passed since midnight, so clamp the whole total, not just the
+    // live part.
+    return Math.min(persisted + this.getCurrentSessionDuration(), elapsedToday);
+  }
+
+  private secondsSinceLocalMidnight(referenceMs: number = Date.now()): number {
+    const now = new Date(referenceMs);
+    const localMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    return Math.floor((referenceMs - localMidnight) / 1000);
+  }
+
+  /**
+   * Total usage per calendar day for the last `days` days (including today),
+   * oldest first, with zero entries for days without sessions -- ready for the
+   * dashboard's trend chart at any range.
+   */
+  async getDailyTotals(days: number = 30): Promise<DailyTotal[]> {
+    const allSessions = await this.getAllSessions();
+    const byDate: Record<string, number> = {};
+
+    allSessions.forEach(session => {
+      this.splitSessionByDay(session).forEach(({ date, seconds }) => {
+        byDate[date] = (byDate[date] || 0) + seconds;
+      });
+    });
+
+    const totals: DailyTotal[] = [];
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const key = localDateKey(d.getTime());
+      totals.push({ date: key, seconds: byDate[key] || 0 });
+    }
+
+    return totals;
+  }
+
+  // Derives per-day seconds from a session's actual startTime/endTime rather
+  // than trusting its stored date+duration, so a record whose whole span got
+  // written under one day (e.g. a legacy record from before checkpointing,
+  // or a session that crossed midnight) is redistributed to the days it
+  // actually happened on.
+  private splitSessionByDay(session: ScreenTimeSession): { date: string; seconds: number }[] {
+    const start = session.startTime;
+    const end = session.endTime ?? start + session.duration * 1000;
+    if (!(end > start)) {
+      return [{ date: session.date, seconds: session.duration }];
+    }
+
+    const segments: { date: string; seconds: number }[] = [];
+    let cursor = start;
+    while (cursor < end) {
+      const cursorDate = new Date(cursor);
+      // the day boundary is the device's own midnight -- see localDateKey
+      const nextMidnight = new Date(
+        cursorDate.getFullYear(),
+        cursorDate.getMonth(),
+        cursorDate.getDate() + 1
+      ).getTime();
+      const segmentEnd = Math.min(end, nextMidnight);
+      segments.push({
+        date: localDateKey(cursor),
+        seconds: Math.floor((segmentEnd - cursor) / 1000),
+      });
+      cursor = segmentEnd;
+    }
+    return segments;
   }
 
   async getScreenTimeStats(childAgeInMonths: number = 24): Promise<ScreenTimeStats> {
@@ -143,13 +241,8 @@ class ScreenTimeService {
     const todayUsage = await this.getTodayUsage();
     const remainingTime = dailyLimit - todayUsage;
 
-    // No limits for development/testing - return null
-    if (dailyLimit === 0) {
-      return null;
-    }
-
     // Check if we already showed a warning today
-    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+    const today = localDateKey();
     if (this.lastWarningDate === today) {
       return null; // Don't show duplicate warnings on the same day
     }
@@ -191,7 +284,7 @@ class ScreenTimeService {
 
   async resetTodayUsage(): Promise<void> {
     try {
-      const today = new Date().toISOString().split('T')[0];
+      const today = localDateKey();
       const allSessions = await this.getAllSessions();
 
       // Filter out today's sessions
@@ -225,9 +318,36 @@ class ScreenTimeService {
     }
   }
 
+  async resetAllUsage(): Promise<void> {
+    try {
+      await AsyncStorage.removeItem('screen_time_sessions');
+
+      // Reset current session if active (restart it from now)
+      if (this.currentSession) {
+        const activity = this.currentSession.activity;
+        this.currentSession = null;
+        this.stopWarningMonitor();
+
+        const now = Date.now();
+        this.currentSession = {
+          id: `session_${now}`,
+          startTime: now,
+          duration: 0,
+          activity,
+          date: localDateKey(now),
+        };
+      }
+
+      this.resetWarningDate();
+    } catch (error) {
+      log.error('Failed to reset all screen time usage:', error);
+      throw error;
+    }
+  }
+
   async checkAndResetDailyData(): Promise<void> {
     try {
-      const today = new Date().toISOString().split('T')[0];
+      const today = localDateKey();
       const lastResetDate = await AsyncStorage.getItem('last_daily_reset_date');
 
       if (lastResetDate !== today) {
@@ -260,20 +380,21 @@ class ScreenTimeService {
     }
   }
 
-  private async getSessionsForDate(date: string): Promise<ScreenTimeSession[]> {
+  async getRecentUsage(days: number): Promise<ScreenTimeSession[]> {
+    const now = new Date();
+    const windowStart = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
     const allSessions = await this.getAllSessions();
-    return allSessions.filter(session => session.date === date);
+
+    return allSessions.filter(session => {
+      // a bare YYYY-MM-DD parses as UTC midnight; anchoring at local noon
+      // keeps the record on its own local day in every timezone
+      const sessionDate = new Date(`${session.date}T12:00:00`);
+      return sessionDate >= windowStart && sessionDate <= now;
+    });
   }
 
-  private async getWeeklyUsage(): Promise<ScreenTimeSession[]> {
-    const now = new Date();
-    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const allSessions = await this.getAllSessions();
-    
-    return allSessions.filter(session => {
-      const sessionDate = new Date(session.date);
-      return sessionDate >= weekAgo && sessionDate <= now;
-    });
+  private getWeeklyUsage(): Promise<ScreenTimeSession[]> {
+    return this.getRecentUsage(7);
   }
 
   private calculateDailyAverages(sessions: ScreenTimeSession[]): Record<string, number> {
@@ -281,7 +402,7 @@ class ScreenTimeService {
     const dailyTotals: Record<string, number[]> = {};
 
     sessions.forEach(session => {
-      const date = new Date(session.date);
+      const date = new Date(`${session.date}T12:00:00`);
       const dayName = dayNames[date.getDay()];
       
       if (!dailyTotals[dayName]) {
@@ -371,13 +492,35 @@ class ScreenTimeService {
     return heatmapArray;
   }
 
+  // Flushes the elapsed time of the currently open session to storage and
+  // rolls its anchor forward to now, so a session left running for hours
+  // (background transition missed, or genuinely long foreground use) never
+  // dumps its whole duration onto the single calendar day it started on.
+  private async checkpointSession(): Promise<void> {
+    if (!this.currentSession) return;
+
+    const now = Date.now();
+    const elapsed = Math.floor((now - this.currentSession.startTime) / 1000);
+    if (elapsed <= 0) return;
+
+    await this.saveSession({
+      ...this.currentSession,
+      id: `${this.currentSession.id}_cp${now}`,
+      endTime: now,
+      duration: elapsed,
+    });
+
+    this.currentSession.startTime = now;
+    this.currentSession.date = localDateKey(now);
+  }
+
   private startWarningMonitor(childAgeInMonths: number = 24): void {
-    if (this.checkInterval) {
-      clearInterval(this.checkInterval);
-    }
+    this.stopWarningMonitor();
 
     // Check every 30 seconds
     this.checkInterval = setInterval(async () => {
+      await this.checkpointSession();
+
       const warning = await this.checkForWarnings(childAgeInMonths);
       if (warning) {
         this.warningCallbacks.forEach(callback => callback(warning));

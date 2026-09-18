@@ -29,10 +29,9 @@ import Animated, {
 import { Ionicons } from '@expo/vector-icons';
 
 import { PageHeader } from '@/components/ui/page-header';
-import { BearTopImage } from '@/components/main-menu/animated-components';
+import { EarthHorizon } from '@/components/ui/earth-horizon';
 import { VISUAL_EFFECTS } from '@/components/main-menu/constants';
 import { generateStarPositions } from '@/components/main-menu/utils';
-import { mainMenuStyles } from '@/components/main-menu/styles';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { Fonts } from '@/constants/theme';
 import { getSpellingStories } from '@/data/spelling-stories';
@@ -112,9 +111,7 @@ export function StoryVariationPicker({
     <View style={styles.container}>
       {/* Background */}
       <LinearGradient colors={['#4ECDC4', '#3B82F6', '#1E3A8A']} style={StyleSheet.absoluteFill} />
-      <View style={mainMenuStyles.moonContainer} pointerEvents="none">
-        <BearTopImage />
-      </View>
+      <EarthHorizon edge="top" />
       {STAR_POSITIONS.map((star) => (
         <Animated.View
           key={`star-${star.id}`}

@@ -102,60 +102,6 @@ export const styles = StyleSheet.create({
     textAlign: 'center',
   },
   
-  // Age Selector Styles
-  ageSelector: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 16,
-    padding: 24, // Increased padding
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-    marginBottom: 20, // Increased margin
-  },
-  currentAge: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 20, // Increased spacing
-    textAlign: 'center',
-  },
-  ageButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  ageButton: {
-    flex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 8,
-    marginHorizontal: 4,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  ageButtonActive: {
-    backgroundColor: 'rgba(76, 205, 196, 0.3)',
-    borderColor: '#4ECDC4',
-  },
-  ageButtonText: {
-    color: 'rgba(255, 255, 255, 0.7)',
-    fontSize: 14,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  ageButtonTextActive: {
-    color: '#FFFFFF',
-  },
-  guidelines: {
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontSize: 14,
-    lineHeight: 20,
-    fontStyle: 'italic',
-  },
   
 
   dayBarFill: {
@@ -514,83 +460,8 @@ export const styles = StyleSheet.create({
     textAlign: 'center',
     fontStyle: 'italic',
   },
-  createScheduleButton: {
-    backgroundColor: 'rgba(76, 175, 80, 0.8)',
-    borderRadius: 12,
-    padding: 15,
-    alignItems: 'center',
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  createScheduleButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
 
   // Schedule Creation Styles
-  scheduleIntro: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  scheduleIntroText: {
-    color: 'rgba(255, 255, 255, 0.9)',
-    fontSize: 14,
-    lineHeight: 20,
-    textAlign: 'center',
-  },
-  recommendedTimes: {
-    backgroundColor: 'rgba(76, 175, 80, 0.1)',
-    borderRadius: 12,
-    padding: 20,
-    marginTop: 20,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(76, 175, 80, 0.3)',
-  },
-  recommendedTimesTitle: {
-    color: '#81C784',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  recommendedTimesText: {
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontSize: 14,
-    marginBottom: 15,
-    lineHeight: 18,
-  },
-  timeSlot: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
-    marginBottom: 8,
-  },
-  timeSlotTime: {
-    color: '#4ECDC4',
-    fontSize: 14,
-    fontWeight: '600',
-    flex: 1,
-  },
-  timeSlotActivity: {
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontSize: 13,
-    flex: 2,
-    textAlign: 'right',
-  },
   bedtimeWarning: {
     backgroundColor: 'rgba(59, 130, 246, 0.1)',
     borderRadius: 12,

@@ -19,7 +19,9 @@ while all instrument images, note audio samples, and success songs remain **bund
    then taps "Let's Play!" to confirm their choice.
 2. The overlay fades out and the story begins. The child's chosen instrument applies to ALL
    music challenge pages in that story (overriding the CMS default `instrumentId`).
-3. On a music challenge page, the child sees on-screen note buttons themed to their chosen instrument
+3. On a music challenge page, the child sees on-screen note buttons themed to their chosen
+   instrument, with the song written above them on a music sheet -- one coloured note per note to
+   play, on the staff line it belongs to (see "The Music Sheet Above the Instrument")
 4. Notes only produce sound when breath/blow is detected (mic or fallback button held)
 5. The app matches played notes against the required sequence
 6. On success: page state transitions, success song plays, next-page navigation unlocks
@@ -46,6 +48,8 @@ story-book-reader.tsx (integration layer -detects music pages, gates navigation)
   ├── useBreathDetector hook (mic metering for blow detection, with fallback)
   │     └── useMicPermission (shared singleton -no double mic prompt)
   ├── MusicChallengeUI component (instrument buttons, progress, feedback)
+  │     └── MusicStaffStrip (the song written on the sheet banner)
+  │           └── staff-notation (pure geometry: pitch → staff position, sheet placement)
   └── music-analytics (structured event logging)
 ```
 
@@ -54,14 +58,23 @@ story-book-reader.tsx (integration layer -detects music pages, gates navigation)
 | File | Purpose |
 |-|-|
 | `types/story.ts` | `MusicChallenge`, `PageInteractionType` types |
-| `services/music-asset-registry.ts` | Local asset registry -maps instrument/song IDs to bundled files |
+| `services/music-asset-registry.ts` | Local asset registry -maps instrument/song IDs to bundled files, body artwork and hole positions |
+| `services/instrument-surface-layout.ts` | Pure layout -fits the body artwork into the measured area (leaving room for the bell to swell), pins one note button per hole, and turns the instrument end for end for blow mode |
+| `services/staff-notation.ts` | Pure notation geometry -staff line fractions measured off the sheet artwork, where each note sits, ledger lines, stem direction, shadow length, slot offsets, how far the row travels and where it sits (`staffHoldTravel` / `staffRowShift`), and where the sheet goes in each pose |
+| `services/sheet-transition.ts` | Pure -timings for the wrong-note and replay cues, shared by the sheet's animation and the hook's reset so the score only changes while the notes are hidden |
+| `services/sheet-flight.ts` | Pure -the one timeline for arriving at the instrument from the music sheet: the sheet's flight, the instrument's slide, the note buttons' stagger and the controls' rise, all read off a single progress value |
+| `services/hold-plan.ts` | Pure -turns a song's `rhythm` and optional `hold` into a hold target and a slot length in ms per note, the hold clamped to what blow mode can sustain; `holdRun` says how the sheet moves for a hold starting or let go |
+| `components/music/music-staff-strip.tsx` | The song written on a staff -one coloured note per entry, in its button's colour, scrolling under a playhead |
+| `services/melody-scheduler.ts` | Pure timeline for the completion melody -one slot per entry from the song's `rhythm` and `bpm`, with an articulation gap |
+| `services/note-event-bus.ts` | Start/end events for every note the instrument sounds; the bell animation subscribes to it |
+| `components/music/instrument-bell.tsx` | Reusable bell swell -scales the instrument's bell cutout while notes sound, off under reduce-motion |
 | `services/sequence-matcher.ts` | Pure note sequence matching logic |
 | `services/music-analytics.ts` | Analytics event tracking |
 | `hooks/use-mic-permission.ts` | Shared mic permission singleton -used by both recording and breath detection |
 | `hooks/use-music-challenge.ts` | React hook -state machine, audio playback, completion |
 | `hooks/use-breath-detector.ts` | Microphone breath detection with on-screen fallback (uses shared permission) |
 | `components/stories/instrument-picker-overlay.tsx` | Full-screen instrument selection carousel (3D coverflow, pulsing ring, blur) |
-| `components/stories/music-challenge-ui.tsx` | Instrument UI -note buttons, sequence progress, feedback |
+| `components/stories/music-challenge-ui.tsx` | Instrument UI -note buttons, the music sheet above the instrument, progress, feedback |
 | `components/stories/story-book-reader.tsx` | Integration -shows picker on story entry, renders challenge, blocks navigation |
 
 ### Backend/CMS Files
@@ -243,14 +256,42 @@ Every story page should declare its `interactionType`. This applies to both loca
 
 6 instruments are registered and ready for use. Each has a unique child-friendly visual theme.
 
-| ID | Display Name | Family | Notes | Theme |
-|-|-|-|-|-|
-| `flute` | Magic Flute | flute | C D E F G A (6) | Stars, moons, nature |
-| `recorder` | Woodland Recorder | recorder | C D E F G (5) | Forest, woodland creatures |
-| `ocarina` | Enchanted Ocarina | ocarina | C D E F G (5) | Magic, mystery, night sky |
-| `trumpet` | Golden Trumpet | trumpet | C D E F (4) | Knights, castles, heroic |
-| `clarinet` | Jazzy Clarinet | clarinet | C D E F G (5) | Jazz, city nightlife |
-| `saxophone` | Sunshine Saxophone | saxophone | C D E F G (5) | Funk, dance, rainbow |
+| ID | Display Name | Family | Notes | Artwork | Theme |
+|-|-|-|-|-|-|
+| `flute` | Magic Flute | flute | C D E F G A (6) | 6 holes | Stars, moons, nature |
+| `recorder` | Woodland Recorder | recorder | C D E F G A (6) | 6 holes | Forest, woodland creatures |
+| `ocarina` | Enchanted Ocarina | ocarina | C D E F G A (6) | 6 holes | Magic, mystery, night sky |
+| `trumpet` | Golden Trumpet | trumpet | C D E (3) | 3 valves | Knights, castles, heroic |
+| `clarinet` | Jazzy Clarinet | clarinet | C D E F G A (6) | 6 holes | Jazz, city nightlife |
+| `saxophone` | Sunshine Saxophone | saxophone | C D E F G (5) | 5 holes | Funk, dance, rainbow |
+
+The note count follows the artwork: one note per hole (or valve), ordered left to right from C.
+Every instrument colours its buttons from the shared `NOTE_COLORS` (C red, D orange, E amber,
+F green, G blue, A violet -Boomwhacker order), so a note keeps its colour when the child changes
+instrument; the sequence dots, music sheet and song previews use the same map. The per-instrument
+`label`/`icon` emoji remain a theme for future use -nothing renders them today.
+`recorder/A.wav`, `ocarina/A.wav` and `clarinet/A.wav` were derived from each instrument's `G.wav`
+by a two-semitone pitch shift (2026-09-08) so the sixth hole plays; replace them with real
+recordings when available.
+
+**Every sample is tuned to equal temperament (A4 = 440 Hz)** and conditioned for the instrument UI
+(2026-09-08). Each instrument sits in one register (trumpet C4–A4, clarinet/flute/ocarina/saxophone
+C5–A5, recorder C6–A6). `scripts/prepare-note-samples.py` turns a raw recording into the bundled
+sample: mono 44.1 kHz 16-bit, silence before the onset trimmed to ~6 ms so the note speaks on the
+touch, the steady tone looped to 3.2 s (whole periods found by autocorrelation, phase-aligned linear
+crossfades, the tone eased onto its exact named pitch before the loop starts), the recording's own
+release kept at the end, then every sample matched to −17 dBFS RMS with a −1 dBFS peak ceiling.
+Run it on a folder of new recordings, then check the result:
+
+```bash
+python3 scripts/prepare-note-samples.py --src /path/to/raw --out assets/music/notes   # needs numpy
+python3 scripts/check-note-pitch.py --tolerance-cents 5   # measures the held tone; exits 1 on drift
+```
+
+The pitch check finds the note spectrally, then refines the held tone (0.5–1.5 s) by autocorrelation
+around the named pitch, so it is not fooled by a breathy attack or by octave-ambiguous spectra.
+The trumpet has three valves, so it plays three notes -songs that need F, G or A are filtered out of
+its practise list and cannot be assigned to it in stories.
 
 > **Backward compatibility**: Old IDs like `flute_basic`, `trumpet_basic` etc. are aliased to the
 > new short IDs. CMS metadata using either form will work. New content should use the short form.
@@ -269,13 +310,14 @@ Create these directories under `grow-with-freya/assets/music/`:
 
 ```
 assets/music/
-├── instruments/          # Instrument images (PNG, one per instrument)
-│   ├── flute.png
-│   ├── recorder.png
-│   ├── ocarina.png
-│   ├── trumpet.png
-│   ├── clarinet.png
-│   └── saxophone.png
+├── instruments/          # Instrument art (WebP with alpha)
+│   ├── flute.webp             # square thumbnail for carousels / picker
+│   ├── flute-body.webp        # landscape body art the note buttons sit on
+│   ├── recorder.webp / recorder-body.webp
+│   ├── ocarina.webp / ocarina-body.webp
+│   ├── trumpet.webp / trumpet-body.webp
+│   ├── saxophone.webp / saxophone-body.webp
+│   └── clarinet.webp / clarinet-body.webp
 ├── notes/                # Note audio samples per instrument family
 │   ├── flute/
 │   │   ├── C.mp3
@@ -291,7 +333,7 @@ assets/music/
 │   ├── trumpet/
 │   │   ├── C.mp3  ...  F.mp3
 │   ├── clarinet/
-│   │   ├── C.mp3  ...  G.mp3
+│   │   ├── C.mp3  ...  A.mp3
 │   └── saxophone/
 │       ├── C.mp3  ...  G.mp3
 └── songs/                # Success/celebration songs (shared across instruments)
@@ -308,8 +350,9 @@ The 6 instruments are already registered in `music-asset-registry.ts` with place
 
 | Asset | Format | Spec |
 |-|-|-|
-| Note samples | MP3 or WAV | 44.1 kHz, 16-bit, < 100KB each, 0.5–2s duration |
-| Instrument image | PNG | Transparent background, 300×300px minimum |
+| Note samples | MP3 or WAV | 44.1 kHz, 16-bit, < 100KB each, 0.5–2s duration, within ±5 cents of the named note (`scripts/check-note-pitch.py`) |
+| Instrument thumbnail | WebP/PNG | Transparent background, square, 512×512px |
+| Instrument body art | WebP/PNG | Transparent background, landscape, ≤1400px wide, holes left to right |
 | Success song | MP3 | 44.1 kHz, 128–320 kbps, < 2MB, 5–30s duration |
 
 **2. Place files in the correct directories**
@@ -347,10 +390,10 @@ trumpet: {
   },
   noteCount: 4,
   noteLayout: [
-    { note: 'C', label: '🛡️', color: '#FFA000', icon: 'shield' },
-    { note: 'D', label: '⚔️', color: '#F4511E', icon: 'sword' },
-    { note: 'E', label: '👑', color: '#FFD600', icon: 'crown' },
-    { note: 'F', label: '🏰', color: '#6D4C41', icon: 'castle' },
+    { note: 'C', label: '🛡️', color: NOTE_COLORS.C, icon: 'shield' },
+    { note: 'D', label: '⚔️', color: NOTE_COLORS.D, icon: 'sword' },
+    { note: 'E', label: '👑', color: NOTE_COLORS.E, icon: 'crown' },
+    { note: 'F', label: '🏰', color: NOTE_COLORS.F, icon: 'castle' },
   ],
 },
 ```
@@ -395,17 +438,17 @@ In Firestore (CMS) or `data/bundled-stories.ts` (local), set up the story page:
 
 | ID | Type | Status |
 |-|-|-|
-| `flute` | Instrument | Registered (placeholder -`require()` calls commented out, needs audio files) |
-| `recorder` | Instrument | Registered (placeholder) |
-| `ocarina` | Instrument | Registered (placeholder) |
-| `trumpet` | Instrument | Registered (placeholder) |
-| `clarinet` | Instrument | Registered (placeholder) |
-| `saxophone` | Instrument | Registered (placeholder) |
+| `flute` | Instrument | Active -thumbnail, body art, bell cutout, 6 note samples |
+| `recorder` | Instrument | Active -thumbnail, body art, bell cutout, 6 note samples (A derived from G) |
+| `ocarina` | Instrument | Active -thumbnail, body art, mouthpiece cutout, 6 note samples (A derived from G) |
+| `trumpet` | Instrument | Active -thumbnail, body art, bell cutout, 3 valve notes (F, G, A samples unused) |
+| `clarinet` | Instrument | Active -thumbnail, body art, bell cutout, 6 note samples (A derived from G, 2026-09-08) |
+| `saxophone` | Instrument | Active -thumbnail, body art, bell cutout, 5 note samples |
 
-> **Important**: All 6 instruments are registered in `music-asset-registry.ts` with `image: 0`
-> and empty `notes: {}`. The `require()` calls are commented out. Once you add the real audio
-> and image files, uncomment them per instrument. The noteLayout (button icons/colors) is already
-> configured and does not need audio files to work.
+> All six instruments are fully wired. To replace a sample, drop the recording in
+> `assets/music/notes/{family}/` and run `scripts/prepare-note-samples.py` then
+> `scripts/check-note-pitch.py`; to replace body art, update the hole fractions and rerun
+> `scripts/make-instrument-bells.py`.
 
 ---
 
@@ -427,9 +470,208 @@ In Firestore (CMS) or `data/bundled-stories.ts` (local), set up the story page:
 
 ### Instrument Images
 
-- **Format**: PNG with transparent background
-- **Size**: 300×300px minimum, will be scaled by the app
+- **Thumbnail** (`{id}.webp`): square, transparent background, 512×512px -shown in the carousel
+  and the story instrument picker (no circular crop is applied, so the art can reach the corners)
+- **Body art** (`{id}-body.webp`): landscape, transparent background, ≤1400px wide, holes running
+  left to right. Registered as `artwork: { image, aspectRatio, holeDiameter }` where
+  `aspectRatio` is width ÷ height and `holeDiameter` is the hole width as a fraction of image width
+- **Hole positions**: each `noteLayout` entry carries `hole: { x, y }` -the hole centre as
+  fractions of the body art width/height. `MusicChallengeUI` measures the space it has, fits the
+  art with contain scaling (`services/instrument-surface-layout.ts`) and pins one `NoteButton`
+  per hole, so every instrument shares the same press, glow, pulse and playback effects
+- **Bell cutout** (`{id}-bell.webp`): the body art cropped to the bell / open end with its alpha
+  feathered where it joins the tube, generated by `scripts/make-instrument-bells.py` (which owns
+  the frame numbers). Registered as `artwork.bell: { image, frame, origin, scale }` -all fractions
+  of the body art. `InstrumentBell` draws it exactly over the body and scales it about `origin`
+  (the join) by `scale` while any note sounds, so only the bell moves and the rest of the art is
+  untouched. Only mouth-blown instruments get a bell (flute, recorder, clarinet, trumpet, saxophone)
+- **Body pulse** (`artwork.bodyPulse: { x, y }`): vessel instruments with no bell (the ocarina)
+  breathe as a whole instead -`InstrumentBodyPulse` scales the art *and* its pinned buttons
+  together by 2–3 % about the centre. Both effects share `useNoteSwell`, which follows
+  `challenge.noteEvents`, so they are in step with the sound and switch off under reduce-motion
+- **Placement** (`layoutInstrumentStage`): the body art is pinned to the left edge (tube art is drawn
+  to bleed off that edge, so the left cut must never be visible) and stops before the right
+  safe-area inset plus the bell's swell headroom, so nothing clips under the notch. Its note row is
+  placed exactly on the screen's middle line; the art is only shrunk when that would push its top
+  above `ARTWORK_TOP_MARGIN` or leave no room for the dots-and-controls block under the buttons.
+  The prompt / celebration row floats over the top, and the dots and controls form one block
+  centred between the buttons and the bottom edge (never closer than `LOWER_BLOCK_BUTTON_GAP` to a
+  button, free to overlap the rest of the art). Size and position stay identical from the first
+  note to "Amazing!"
+- **Which end blows** (`flippedSurfaceShift`, `instrumentFlipTransform`): every body art is drawn
+  with the mouthpiece on the left, cut flat to bleed off that edge, and the bell finished on the
+  right. Blowing means holding the phone upright with the *bottom* of the phone -- where the
+  microphone is -- at the child's mouth, and the landscape layout maps its own right-hand edge to
+  that bottom. So in blow mode the instrument turns end for end: the body is mirrored about the
+  middle of the surface, which swaps the ends over and keeps the bleed exactly as deep, so the flat
+  cut is still never visible. The mirror animates from the same 0 -> -90 value as the note letters,
+  passing edge-on halfway, which reads as the instrument being turned round. The letters carry the
+  mirror again (`noteLabelTransform`) so they still read the right way up -- a rotation inside a
+  mirror comes out reversed, so its sign goes with it. Both helpers are `'worklet'`s: they are
+  called from inside `useAnimatedStyle`, and a plain imported function called on the UI runtime
+  aborts the app.
+- **Only where the layout turns** (`regionTurnsForBlow`): the turn, and the sheet's move to the
+  bottom, apply only in a landscape region -- the way a phone draws this screen. A tablet held
+  upright leaves the instrument lying across the screen, so nothing turns.
+- **No artwork**: an instrument without `artwork` falls back to the generic tube with a row of
+  note buttons (no bundled instrument uses this any more). Its mouthpiece is already drawn on the
+  right, so it is never mirrored
 - **Style**: Match the app's illustration style -colorful, friendly, child-appropriate
+
+### The Music Sheet Above the Instrument
+
+`assets/music/sheet/staff-banner.webp` (2000x667, transparent) is a storybook banner with a
+treble clef and five printed staff lines. `MusicStaffStrip` draws the song on it: one note per
+sequence entry, in the same colour as that note's button on the instrument, sitting on the line or
+space the note belongs to. It replaces the row of coloured chips that used to list the sequence
+under the instrument -- only the `n/m` progress line is left there.
+
+Everything positional is measured off the artwork and lives in `services/staff-notation.ts`:
+
+| Constant | Value | What it is |
+|-|-|-|
+| `STAFF_ASPECT_RATIO` | 2000/667 | Banner width ÷ height |
+| `STAFF_TOP_LINE` / `STAFF_LINE_GAP` | 0.3651 / 0.0624 | Top printed line and line spacing, as fractions of banner height (sampled at y = 243.5, 285.5, 327.5, 369, 410) |
+| `STAFF_PAPER_TOP` / `STAFF_PAPER_BOTTOM` | 0.2 / 0.78 | Where the opaque paper starts and ends. Below `PAPER_BOTTOM` the artwork is clear, so the sheet can hang over the instrument without hiding it |
+| `STAFF_NOTE_LEFT` / `STAFF_NOTE_RIGHT` | 0.181 / 0.85 | Where the notes are cut off, right against the clef (whose ink was measured at columns 257-358 of 2000, ending at 0.179) and before the stars and leaves |
+| `STAFF_LETTER_CENTRE` | 0.695 | The one baseline under the staff that every note's letter sits on |
+
+- **Register**: the bundled samples measure 523 Hz (C5) through 880 Hz (A5), so the app's C is the
+  C *above* middle C -- the middle space of the treble staff, five half-steps up from the bottom
+  line (`APP_C_STEPS`). That is both the true pitch and the reading that keeps a whole nursery
+  melody inside the printed staff; writing it in the middle-C octave would hang most notes under
+  the staff on ledger lines. Only A reaches above the staff, and it gets one ledger line.
+- **Engraving**: stems hang down from the middle line up (`staffStemsPointDown`), which is where
+  the whole C-A scale sits. Every stem runs all the way to the bottom staff line
+  (`staffStemHeight`), so a row of them ends on one line rather than at a dozen different heights.
+  They cannot point up instead: the artwork leaves 0.165 of its height of paper above the top staff
+  line and a stem is 0.19, so an upward stem would climb out of the paper and through the song
+  title. `staffLedgerSteps` returns the short lines a note written off the staff needs.
+- **Hold shadows and the target line**: given a `holdPlan` (from `services/hold-plan.ts`, built by `useMusicChallenge`
+  off the song's `rhythm` and optional `hold`), each note carries a band behind it in its own colour
+  at 80 % opacity, running right from the head for as long as the note is held, and a taller line
+  in the same colour standing at its far end -- the point a hold has to reach. The band alone was
+  not enough to read a length off; the line makes the end unmistakable. One beat covers
+  exactly the ordinary note spacing, so a note held twice as long simply takes twice the room --
+  `staffNoteSlots` gives each note `max(spacing, shadow + gap)`. The gap is 0.3 of a slot rather
+  than the 0.15 a default hold leaves over: at that narrower figure consecutive shadows very nearly
+  touch and a run of equal notes reads as one long band instead of several separate holds. The row's
+  position works off those slot offsets rather than the note index. Holds are capped at `MAX_HOLD_MS` (2 s) because blow-mode notes
+  auto-fade at `BLOW_MAX_SUSTAIN_MS` (3 s), so the sheet can never ask for a hold the child cannot
+  achieve. - **Holding a note is how it counts.** The note being played is parked just under a head-width in
+  from the left of the window (`playheadX`, `PLAYHEAD_HEAD_WIDTHS` -- only enough for its ring to
+  clear the cut, so it sits flush against the point notes scroll out at), everything already played
+  having scrolled off behind it, and its
+  hold runs away to the right. While it sounds, the score creeps left at exactly the rate of the
+  hold, so the shadow is eaten by the left edge and what is still to the right is what is left to
+  hold; the target line reaching the edge *is* the note completing. Let go early and it rewinds at
+  full in `RELEASE_SNAP_MS` (180 ms, `holdRun`): a note counts only if it is held all the way
+  through in one go, so the sheet starts again too. **The release carries on from wherever the move
+  actually reached, and `holdRun` deliberately will not say where that is.** The move runs on the UI
+  thread, and reading an animating shared value back on the JS thread returns a stale copy; assigning
+  it cancelled the move and snapped the score to a place it had been several frames earlier, which
+  was a visible jolt -- worst on the long notes, where most progress had accumulated. `withTiming`
+  starts from the live UI value on its own, so the fix is simply not to touch it.
+- **Only a new note starts the move over.** Pressing again part-way through a snap-back carries on
+  from wherever the score is, rather than rewinding to nothing first -- rewinding teleported it by
+  whatever the snap had not yet undone, measured at 50px on device with the snap stretched to make
+  the window reachable, and that is the stutter felt when tapping the same note repeatedly. A press
+  still takes the whole hold, the same span the credit waits, so it arrives at the end of the note's
+  travel exactly as the note counts; it only shows the score a little further through the note than
+  the credit is, by however much of the snap was left, and that decays as the snap finishes. A note
+  the score has just moved on to *must* start over, because its resting place has already shifted
+  along by a whole travel. It used to rewind at half the speed it ran, which
+  meant up to twice the hold spent sliding backwards with nothing held -- that read as the sheet
+  undoing itself rather than as "hold it again". Freezing the shadow where it got to would be
+  kinder but would lie, since the credit restarts from zero on the next press. There is no clock:
+  nothing moves unless the child is holding, so there is no hurry.
+  The credit waits with it: `creditAfterHold` in `use-music-challenge` defers
+  `processNoteForSequence` by the note's `holdMs` and drops it if the key comes up first. A **wrong**
+  note is still credited instantly, so the feedback never lags behind the mistake, and every reset
+  (`start`, `skip`, `cleanup`, and the reset behind either sheet cue) clears the credits still
+  waiting.
+- **The sheet runs off the credit's clock, not the keys.** `useMusicChallenge` reports
+  `holdingIndex` -- the entry whose credit is counting down -- and the sheet creeps only while that
+  is the note in focus. Key state is not enough: a finger left down across a note boundary credits
+  the note it was pressed for and nothing more, so driving the sheet off the keys ran it ahead of
+  the score for the rest of the song.
+- **The whole position lives on shared values, and that is the point.** Resting place and move used
+  to be split -- the resting place a plain `left` from React, the move an animated transform -- and
+  the two reach the UI thread by independent routes with no ordering between them. A frame could
+  therefore be drawn pairing *this* note's resting place with the *last* note's finished move, which
+  flashed the score a whole note's travel sideways and back on every completed note: measured at
+  221 px on a two-beat note and 130 px on a one-beat, one frame, immediately undone. No amount of
+  reordering the JS writes fixes that, because the race is between two transports. `rowRest`,
+  `rowTravel` and `progress` are now written together in a single `runOnUI` tick, so there is no
+  half-applied state to draw, and rewinding for a new note is a plain assignment rather than a
+  one-millisecond animation -- as an animation it did not land until the next frame, which was the
+  flash all over again.
+  The cost is that a jest render cannot read where the row is parked (`useAnimatedStyle` returns
+  `{}`), so that is asserted against the pure layer instead: `staffRowShift` and `staffFocusIndex`.
+- **The row cannot drift.** Its position is computed, never accumulated: `staffRowShift(slots,
+  focus, held, playheadX)` is `playheadX - slots[focus] - travel * held`, so a finished hold and the
+  next note at rest give the same number -- the handover has no step in it (`staffNoteSlots` carries
+  a trailing end marker so `slots[i + 1]` exists for the last note too). Both ends of the move are
+  worked out in plain JS; the worklet only slides between them, which keeps the resting position
+  readable in a test. Measured on device across an 11-note song (`au_clair_lune`, two 2-beat notes
+  and a 4-beat close): the played note sat within 2 px of the playhead at every one of the eleven.
+  An earlier accumulating version drifted a slot per long note.
+- **Past the last note** there is nothing left to play, so the score stops on the closing note --
+  dimmed, ring off -- rather than scrolling off and leaving a blank staff behind the celebration.
+- **The light at the cut**: a glow standing where the note being held slides out of view, brightening
+  with the hold so how far through a note the child is reads as something lighting up and not only as
+  the score creeping. It sits **on that note's own row and in that note's colour** -- a pale
+  full-height line across the staff was both invisible against cream paper and silent about which
+  note it belonged to. The halo is anchored at the cut and spreads *right*, over the highlight being
+  eaten; centred on the cut it spilled back over the treble clef and bare paper, which is not what is
+  being consumed. Measured at the cut on the note's row: saturation 18 at rest against 120 mid-hold.
+- **Landing bounce**: the note the child is on springs once whenever the sheet advances onto it, so
+  a landing reads as one. The reward melody bounces harder and looser (1.5x against 1.22x, damping 6
+  against 9) so it rings rather than lands -- nothing is being asked of the child there. Off under
+  reduce-motion.
+- **Letters**: each note's name is written under the staff in the note's own colour, every one on
+  the `STAFF_LETTER_CENTRE` baseline rather than under its own head, so the row of letters reads
+  straight however high the melody climbs. They sit between the bottom staff line and the paper's
+  edge, in the band the stems now stop short of.
+- **Scrolling**: songs run to 32 notes but only about a dozen fit, so the row is always positioned
+  to put the note being played on the playhead -- everything before it has scrolled out through the
+  cut just past the treble clef. Notes already played stay on the page at 40 % opacity; the one to
+  play next carries a white ring, which follows the melody instead during the success song. The
+  reward melody holds each note itself, so the sheet runs through the song with it and the shadows
+  are eaten one by one exactly as they are under the child's own fingers. **Played back, the score
+  moves at the rate of the melody, not the rate of the hold**: `melody-scheduler` starts each note
+  one *slot* after the last, while a hold is only 0.85 of its slot (and capped at 2 s), so animating
+  the travel over the hold finished every note early and left the score still until the next one
+  sounded -- 100 ms on a one-beat note, 667 ms on the four-beat close, which read as the playback
+  stopping and starting rather than flowing. `HoldTarget.slotMs` carries the slot for exactly this,
+  rounded the way the scheduler rounds so the two stay locked; a test asserts they agree note for
+  note against `buildMelodyTimeline`.
+- **Placement** (`layoutStaffStrip`): the sheet fills the space the stage left above the instrument,
+  its paper bottom resting `STAFF_SHEET_OVERLAP` px past the top of the artwork, centred, capped at
+  55 % of the region height and never wider than the region. The prompt is written on the paper in
+  ink instead of floating over it in a pill, so the whole band above the staff is used.
+- **Blow pose**: in blow mode the instrument turns to point at the floor, so the sheet turns with
+  it -- the same box rotated -90°, scaled to the region's height (the width of the phone as the
+  child now holds it) and moved so its paper *top* lands across the top of the upright phone, clear
+  of the hand and of the mouthpiece at the bottom. `edgeInset` keeps it below the notch on that
+  edge. Turned, the sheet is also **drawn longer than the screen** (`rotatedZoom`, from
+  `TURNED_MIN_LINE_GAP`): only as long as the phone is wide, the staff comes out around 8px between
+  lines, which is too small to pick a note off. Zooming past the screen brings it to 14, and the
+  sheet is **anchored by its left edge** rather than centred -- so the moon and the treble clef stay
+  in view and the notes slide in from the right, off the end of the paper the child cannot see.
+  `visibleFraction` (1/zoom) then narrows the note window to the part actually on screen, so the
+  score is parked and scrolled where it can be seen rather than off the edge. A region already big enough (a tablet) is left at its natural size, ends and all,
+  and the song title stays on the paper -- it comes off only when zoomed, where it would be clipped
+  at both ends. It is a transform on one box, driven by the same `instrumentRotation` value as the note
+  labels, so sheet and instrument move together. This only applies where the layout really is drawn
+  the phone way (`turnsForBlow`, a landscape region); a tablet held upright leaves the instrument
+  lying across the screen, so the sheet stays above it.
+- **Depth**: lying across the screen, the instrument paints *over* the sheet -- the overlap is only
+  the sheet's empty bottom skirt, and the instrument should read as the thing in front. Stood
+  upright for blow mode the sheet comes forward instead (`staffSheetLifted`), or the bell would sit
+  over the middle of the staff and hide the notes.
+- **Touches**: the strip is `pointerEvents="none"` throughout -- it overlaps the instrument, and
+  every press has to reach the note buttons.
 
 ---
 
@@ -479,6 +721,19 @@ The music challenge reuses the same page completion model as existing interactiv
 state). This keeps the story progression system simple and consistent. A music page is just another
 kind of stateful interaction that resolves from "before" to "after" when the challenge is completed.
 
+### 5b. Notes sound from prepared players; the melody is scheduled, not replayed
+
+`useMusicChallenge` creates one warm `AudioPlayer` per note when a challenge starts and swaps a
+fresh one in after each press, so the first `play()` of a player never lands on the touch. A held
+note loops its 3.2 s sample and fades over ~150 ms on release. On completion the hook builds a
+timeline with `buildMelodyTimeline` (song `rhythm` in beats × `bpm`, default one beat per entry,
+a 40–140 ms articulation gap) and fades each entry's players at the end of its slot, so notes never
+pile up. While the melody plays, presses and previews are ignored; cleanup,
+skip, config change and unmount cancel it. Every sounded note is published on
+`challenge.noteEvents` (`press` / `preview` / `melody`, `start` / `end`), which is what the bell
+swell and the playback highlight (`challenge.playbackPosition`) follow -so the animation tracks
+the audio, not the button.
+
 ### 6. Sequence matching is simple and forgiving
 
 MVP uses exact ordered sequence matching with tolerance for accidentally repeating the previous
@@ -487,7 +742,7 @@ simple -children should succeed with patience, not precision.
 
 **Chord support**: Sequence entries can be single notes (`"C"`) or chords using `+` notation (`"C+E"`,
 `"C+E+G"`). The `SequenceMatcher.processChord(activeNotes)` method validates that all required notes
-are held simultaneously. Chord entries are used by the "Go Harder" difficulty feature (see below).
+are held simultaneously. Chord entries come from a story that asks for them in `requiredSequence`.
 
 ### 7. One instrument at a time per page
 
@@ -502,9 +757,14 @@ The music challenge follows this state flow:
 
 ```
 idle → awaiting_input → playing_note → (awaiting_input | sequence_complete)
-                                        sequence_complete → playing_success_song → completed
-                                        completed → [Go Harder!] → awaiting_input (higher difficulty)
+                                        sequence_complete → playing_success_song
+                                        playing_success_song → (replay cue) → awaiting_input
 ```
+
+**There is no resting finished state.** Once the reward melody has played, the hook tells the story
+it is done (`onComplete`, and `hasCompleted` stays true so "Continue Story" appears) and then clears
+the song back to its first note so it can simply be played again. `completed` is now only reached by
+`skip`.
 
 | State | Description |
 |-|-|
@@ -513,25 +773,179 @@ idle → awaiting_input → playing_note → (awaiting_input | sequence_complete
 | `playing_note` | A note is being played (audio) |
 | `sequence_complete` | All notes played correctly |
 | `playing_success_song` | Success song is playing |
-| `completed` | Challenge done -page unlocked for progression. "Go Harder!" available. |
+| `completed` | Only reached by `skip`; the normal finish returns to `awaiting_input` |
 | `error` | Asset validation failed -challenge disabled |
 
-## "Go Harder" Difficulty Progression
+## What the sheet says without words
 
-After completing a music challenge, the child sees three options: **↻ Retry**, **🔥 Go Harder**, and
-**Continue Story →**.
+Two things are told with the sheet rather than with buttons or text. Both timings live in
+`services/sheet-transition.ts`, and both the animation and the hook's reset work from the same
+figures -- the score is only ever reset while the notes are hidden, because the whole point of each
+cue is to cover that change.
 
-Pressing "Go Harder" generates a new, harder chord-based sequence from the instrument's available
-notes and restarts the challenge. This is session-only -no persistence.
+| Cue | What the child sees | Timing |
+|-|-|-|
+| **Wrong note** | The paper washes red and clears again, then the notes fade out and come back at the first note | red in 180 ms, red out 220 ms, notes out 260 ms, notes in 520 ms |
+| | *The wash is a second copy of the banner with a `tintColor`, not a coloured rectangle. The artwork is paper with 3 % transparent margins and a transparent skirt below it, so a rectangle over the strip's box washed 125 px of the story art above the sheet red as well -- measured. Tinting the image keeps the red inside the paper's own shape, gold border and wavy edges and all: the reddened area now matches the artwork's opaque region to within a pixel.* | |
+| **Replay** | The notes simply fade out and come back at the first note | notes out 260 ms, notes in 520 ms |
+| | *Both note fades run at an even rate and the way back in is twice the way out. Eased -- quickest at the start -- coloured notes on cream paper crossed into visibility in the first fifth of the fade and read as the song appearing rather than fading in: measured at four frames, against twenty-seven now.* | |
 
-### Difficulty Levels
+The matcher already sends the score back to the first note the instant a wrong note is pressed, but
+the hook deliberately does **not** publish that result: the sheet keeps showing where the child got
+to while the red is on, and `resetBehindCue` publishes the reset once the notes are hidden. Pushing
+it through on the press snapped the score to the start before the child had seen anything go red.
 
-| Level | Chord Size | Sequence Length | Example |
-|-|-|-|-|
-| 1 (original) | Single notes | From CMS config | `C → D → E → C` |
-| 2 | 2-note chords | 3 chords | `C·D → E·F → C·E` |
-| 3 | 3-note chords | 3 chords | `C·D·E → D·E·F → C·E·F` |
-| 4+ | 3-note chords | 4–5 chords | Longer sequences |
+**Also removed:** the manual rotate button and the `manualRotated` state behind it -- turning the
+instrument is what blow mode does, and it does it on its own, so `isRotated` is simply
+`playMode === 'blow'`. And the "Playing your song…" caption during the reward melody: the sheet
+running through the song says it.
+
+**Removed:** ↻ Retry and 🔥 Go Harder, and the difficulty progression behind them
+(`generateHarderSequence`, `difficultyLevel`, `goHarder`, `retry`). Playing the song again needs no
+button -- the sheet clears itself -- and a wrong note resets it the same way. The `music.retry`,
+`music.goHarder`, `music.goHarderLevel`, `music.levelComplete` and `music.listeningToMelody`
+strings are left in the 14 locale files rather than risk a bulk edit across them; they are unused.
+
+## From the sheet to the instrument
+
+Pressing **Ready to Play** used to be two separate fades in two different places: the sheet faded out
+where it stood, and a moment later the instrument view faded (in the reader, slid up from below) into
+its place. The sheet died at the panel's centre and was reborn at the staff, so nothing joined the
+two halves and the child had no reason to look anywhere in particular.
+
+It is now one move, about three quarters of a second long, driven by a single progress value the
+sheet and the instrument view share. The figures are in `services/sheet-flight.ts`; the lanes overlap
+deliberately, so the next thing is always already arriving before the last one has settled.
+
+The press itself starts the panel leaving. The rest waits on one thing: the instrument view has to be
+mounted and laid out before it can say where its staff is, which is where the sheet is flying to.
+That took 150-250 ms on a dev build of an iPhone 16 Pro, measured off a 60 fps capture. Everything
+below is timed from that report, not from the press.
+
+| From | To | What moves |
+|-|-|-|
+| the press | +240 ms | The panel and its buttons fade. The sheet is not part of this: it detaches on the press and stays exactly where it stood, so what fades is a panel with a sheet-shaped hole in it |
+| 0 ms | 420 ms | The sheet flies from the panel's middle onto the staff above the instrument, easing in and out |
+| 180 ms | 560 ms | The instrument slides in from the left edge, at its own even rate |
+| 400 ms | ~700 ms | The note buttons balloon onto their holes, ~25 ms apart, **in hole order left to right** rather than note-layout order |
+| 480 ms | 700 ms | The play-mode toggle, continue and skip, the progress line and the two floating buttons rise from the bottom edge |
+
+Splitting the press from the report is the whole reason for the `awaitingFlight` prop. Driving both
+off the report instead left 250 ms in which pressing the button did nothing at all, which is the one
+thing a four-year-old will read as the button not working. The alternative -- mounting the instrument
+view under the panel as soon as the preview opens, so the staff is known before the press -- would
+remove the wait entirely, but it starts the challenge's own effects (`setBreathActive`, the play-mode
+effect) a screen early, so it is not worth it for a quarter of a second.
+
+**The background does not change.** In the reader the panel used to stand on its own full-screen
+night scene and the instrument on a dark blur of the story page, so at the 240 ms mark the whole
+background swapped under the sheet. Both now stand on the same night meadow --
+`components/music/music-backdrop.tsx`, drawn full bleed with a centre crop. The reader puts one
+behind the whole challenge when the preview opens and takes it away with the instrument, and passes
+the sheet `backdrop="music"` so it carries its own copy as well. The practise screen still gets the
+random night scene, which is the prop's default.
+
+Two copies rather than one, because the sheet can also be opened *over* the instrument, and a
+backdrop underneath the instrument cannot hide it. Which is why **the blur and the darkening are
+baked into the artwork** instead of being a `BlurView` and a scrim laid over it: identical opaque
+pictures stack to the same pixels, so the sheet's copy fading out over the challenge's shows no
+change at all, where a live blur and scrim would double up and then visibly lighten. It also spares
+the device a full-screen blur redrawn every frame of the arrival. The asset was made from the
+source art with a 26 px Gaussian blur at 1448 px wide, brightness 0.65, resized to 1200x900 --
+14 KB, and any re-tune means regenerating it rather than changing a prop.
+
+**The crop is `contentFit="cover"` with `contentPosition="bottom"`, fitted by the platform.** The art
+is 4:3 and no music screen is, so something has to go; a plain centre crop threw away the meadow on a
+phone held sideways and kept an empty sky, so the bottom is what stays. Measured on the two
+simulators:
+
+| Screen | Viewport (pt) | What is seen |
+|-|-|-|
+| iPhone 16 Pro, sideways | 874 x 402 | Full width; the lower two-fifths of the art -- meadow, fireflies, water. The moon is above the cut |
+| iPad Pro 11, upright | 834 x 1210 | Taller than the art, so it scales by height instead and loses a little from each side; nothing is cut off the top or bottom |
+| iPad Pro 11, sideways | 1210 x 834 | Full width, and only about a tenth off the top -- a tablet is nearly the shape of the art |
+
+Cover means `max(width / 1200, height / 900)`, so a viewport taller than 4:3 still fills rather than
+leaving a gap -- that is the tablet-upright row.
+
+**Why the platform does the fitting and not us.** This was first written with the crop computed from
+`useWindowDimensions`, which is a React render behind the view's own bounds. A tablet turned on its
+side showed the fill behind the art for 165-400 ms of every rotation, measured frame by frame off a
+30 fps capture -- a flat panel where the meadow should be, in the one place a child is most likely to
+turn the device. `contentFit` is resolved natively against whatever bounds the view has, so there is
+nothing to be stale. It also retired the `viewport` prop: a backdrop that fits its own view needs no
+telling how big the window is, including inside the practise screen's quarter-turned container.
+
+Behind the art, the same meadow as a **gradient** (`MEADOW_GRADIENT`, four stops sampled straight
+down the artwork). A picture cannot be re-sampled in the frame a rotation resizes it -- even the
+platform takes a frame or two -- but a gradient is redrawn with the layer it is on. So what shows
+through in those frames is the meadow's own colours rather than a panel. The scene navy that was
+there before is a brighter, more saturated blue than anything in the art, which is exactly why it
+read as a hole.
+
+### The instrument on a screen held upright
+
+A tablet held upright is the one shape the instruments do not suit: the flute is 8.36:1, so drawn to
+an 834 pt screen it is a 95 pt band with its buttons at 48 pt -- barely above the 44 pt touch target,
+in the middle of a very tall screen. `layoutInstrumentStage` now lets the art bleed further off both
+edges when the region is taller than it is wide, up to `holeFitWidth`: the widest it can be drawn
+while every hole keeps a button's width of screen around it. The art is drawn at that width and then
+shifted back by half the overflow, so it stays centred on the screen rather than on the width it was
+drawn at.
+
+For the flute on an iPad Pro 11 held upright that is 794 -> ~960 pt of art, a 115 pt band with 59 pt
+buttons. A screen wider than it is tall -- every phone in the reader, and a tablet turned sideways --
+takes the branch it always did and is unchanged, which is what the "exactly as it was" test pins.
+
+This does not fill a tall screen, and nothing about this artwork can: an 8.36:1 instrument under a
+4:1 sheet leaves air above and below whatever they are scaled to. What it does is stop the child
+being asked to hit 48 pt targets on a device with room for 59.
+
+Four small things had been hidden by the old full-screen scene rather than by intent, and had to be
+handled once the background stopped changing under the arrival:
+
+- **The page's own controls.** The reader's back arrow sat under the sheet's, two arrows in the same
+  corner. They now stand down while the sheet is up, and come back on the sheet's `onLeft` -- when it
+  is actually off screen, not when it was asked to go, which would pop them back mid-exit.
+- **The challenge's caption pill.** `MusicChallengeUI` shows a floating caption when it has no sheet,
+  and for the frames between mounting and being measured it has none, so the caption flashed on the
+  fading panel. It now waits for the measurement before deciding either way.
+- **One frame of the resting pose.** Reanimated applies an animated style *after* the first paint, so
+  the controls and the floating buttons landed in place for a frame the instant the button was
+  pressed, then left. They carry a plain `opacity: 0` underneath the animated style while arriving,
+  which the worklet overrides from its first tick.
+- **The travelling sheet's paper.** The flying copy is a second `MusicStaffStrip`; mounted at the
+  moment it started moving, its banner artwork had not painted for the first frame, so the journey
+  began as notes on nothing. It is now mounted at `opacity: 0` as soon as the sheet has been
+  measured, and only made visible when it leaves.
+
+Four more things that are the way they are for a reason:
+
+- **The sheet is laid out at the panel's width and shrinks into the staff's**, rather than laid out
+  small and blown up. On a landscape phone the ratio is about 0.65, so the paper is only ever
+  sampled down; the other way round it would start the journey blurred, which is the half the child
+  is actually looking at.
+- **The instrument arrives on a timing curve, not a spring.** It is what the note buttons are pinned
+  to, so an overshoot would visibly slide them off their holes. Only the buttons get the springy
+  balloon, and they get it from `easeOutBack`, not `withSpring`, so the whole timeline stays one
+  readable set of numbers.
+- **Two sheets overlap for the last 60 ms of the flight.** The flying copy belongs to the overlay and
+  the resting one to the challenge view; by then they are the same song at the same size in the same
+  place, so the handover is a frame nobody sees. Cutting between them instead risked a blink on the
+  one thing the eye is following.
+- **The flight only happens on the way in.** Opening the sheet from inside the challenge and closing
+  it again slides down as it always did: the reader clears the staff target on those paths, and with
+  no target the overlay falls back to its old fade.
+
+The practise screen still does the old two-fade transition. Its preview and playing phases are two
+separate early returns, so the overlay is destroyed and remade at the phase change and has nothing
+left to fly; and its instrument is drawn in a quarter-turned container, so the sheet would have to
+turn as it travelled. Both are doable -- the flight was built with that in mind -- but neither is
+done.
+
+There is no reduce-motion path yet. `useAccessibility()` returns sizing only, so honouring
+`AccessibilityInfo.isReduceMotionEnabled` means collapsing the timeline to a short crossfade, which
+is its own small change.
 
 ### Chord Notation
 
@@ -543,9 +957,7 @@ notes and restarts the challenge. This is session-only -no persistence.
 ### Implementation
 
 - `SequenceMatcher.processChord(activeNotes: Set<string>)` -validates held notes against expected chord
-- `generateHarderSequence(availableNotes, level)` -procedural generator in `use-music-challenge.ts`
-- `useMusicChallenge.goHarder()` -increments difficulty, generates new sequence, resets state
-- `MusicChallengeUI` -highlights all notes in a chord entry, shows wider dots for chords
+- `MusicChallengeUI` -highlights all notes in a chord entry
 
 ---
 
@@ -602,9 +1014,18 @@ npx jest __tests__/hooks/use-music-challenge.test.ts --forceExit
 | `sequence-matcher.test.ts` | 15 | Correct/wrong sequences, repeat tolerance, reset, edge cases |
 | `music-asset-registry.test.ts` | 45 | All 6 instruments, aliases, families, note layouts, validation |
 | `music-analytics.test.ts` | 11 | All tracking functions export and execute without error |
-| `use-music-challenge.test.ts` | 14 | State transitions, note progress, mic gating, skip, cleanup, error state |
+| `use-music-challenge.test.ts` | 38 | State transitions, note progress, mic gating, skip, cleanup, error state, the hold gate, and the two sheet cues resetting the song behind them |
+| `sheet-transition.test.ts` | 6 | Cue order and timings -- the red wash before the notes clear, the notes hidden before the score is reset |
+| `sheet-flight.test.ts` | 28 | The arrival's timeline -- lane order and fit, the flight's start, middle and landing pose, the stagger tightening for a wide instrument, the balloon overshoot, and everything at rest by the end |
 | `use-mic-permission.test.ts` | 12 | Singleton caching, no double prompt, concurrent dedup, cross-hook sharing, denial propagation |
 | `instrument-picker-overlay.test.tsx` | 12 | Visibility, instrument display, title/subtitle, confirm button, placeholders, defaults |
+| `melody-scheduler.test.ts` | 11 | Rhythm slots, fallback to one beat, articulation gap, chords, tempo clamping |
+| `note-event-bus.test.ts` | 4 | Delivery, unsubscribe, listener isolation, ordering |
+| `music/instrument-bell.test.tsx` | 7 | Frame placement, touch pass-through, swell/relax on note events, reduce-motion, unmount |
+| `instrument-surface-layout.test.ts` | 33 | Artwork fit, hole pinning, bell placement, stage placement, and the blow-mode mirror (shift, pose, letter pose, landscape gate) |
+| `hold-plan.test.ts` | 31 | Hold derived from the slot, explicit holds, the blow-mode clamp, chords, mismatched rhythm, progress, the move the sheet makes for a hold starting or let go, which clock it moves on, and the slot length agreeing with the reward melody's own timeline |
+| `staff-notation.test.ts` | 71 | Pitch to staff position against the measured line pixels, ledger lines, stem direction, note metrics, shadow length, slot offsets, the row's resting position and drift-free handover, and the sheet's placement in both poses |
+| `music-staff-strip.test.tsx` | 41 | One coloured note per entry on its own line, ledger line, stems ending on the bottom line, aligned letters, hold shadows and the room they take, the row parked on the playhead (long notes and the end of the song included), played/next/melody states, chord entries, unplaceable names, touch pass-through |
 
 ### Backend Test Coverage (gateway-service)
 
@@ -653,15 +1074,26 @@ cd gateway-service
 
 ---
 
+## Hold-the-note (Phase 7)
+
+The sheet moves only when the right note is played -- there is no clock and nothing to miss. Its job
+is to show which note comes next and **how long to hold it**.
+[`../PHASE-7-MUSIC-GAME.md`](../PHASE-7-MUSIC-GAME.md) has the whole design: the `hold` metadata,
+the three latency limits from `use-breath-detector` and `use-music-challenge`, the forgiveness rules
+and five phases. **Phases 1-4 are built** (the `hold` field, `hold-plan.ts`, the shadow drawn on the
+sheet, the score creeping left as the hold runs, and the credit waiting it out). Phase 5 -- `hold`
+data for the registry songs and the CMS `noteLength` field -- is not.
+
+---
+
 ## Future Enhancements (Not in MVP)
 
 - Multiple instruments in one story
 - Difficulty levels by age
 - Timing/rhythm scoring
-- ~~Harmony/chords~~ ✅ Implemented via "Go Harder" difficulty progression
+- ~~Harmony/chords~~ ✅ Implemented -a story may ask for them in `requiredSequence`
 - Adaptive hints after repeated failures
 - Recording / playback of child's performance
 - Teacher or parent mode
 - Unlockable songs / practice mode
 - Music Mode free play with instrument selection (currently shows placeholder text for non-music pages)
-- Persistent difficulty level (currently session-only)

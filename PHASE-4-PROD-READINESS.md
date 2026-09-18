@@ -526,7 +526,9 @@ Only change the user-facing brand name, not the technical identifiers.
 - [ ] Update Cloudflare allowed user-agents
 - [ ] Update `GCS_BUCKET` env var for prod to `earlyroots-assets`
 - [ ] Keep legacy `colearnwithfreya` domains in CORS during transition
-- [ ] **Update `eas.json` production `GATEWAY_URL`** — all three build profiles (`development`, `staging`, `production`) currently point `EXPO_PUBLIC_GATEWAY_URL` to `https://api.colearnwithfreya.co.uk`. The production profile must point to `https://api.earlyroots.co.uk` before the first store build. Dev/staging can keep the old URL during transition.
+- [ ] **🔴 LAUNCH BLOCKER — `eas.json` sets no environment at all.** Re-verified 2026-09-07: `eas.json` contains **zero `env` blocks**, and the profiles are `development` / `preview` / `production` (there is no `staging`). `app.config.js:20` reads `gatewayUrl: process.env.EXPO_PUBLIC_GATEWAY_URL`, so in an EAS build that value is `undefined`, and all four consumers — `services/api-client.ts:10`, `services/auth-service.ts:29`, `services/analytics-service.ts:26`, `services/story-sync-service.ts:18` — fall through to the same hardcoded default:
+      `const GATEWAY_URL = extra.gatewayUrl || process.env.EXPO_PUBLIC_GATEWAY_URL || 'http://localhost:8080';`
+      A store build today would therefore ship pointing at `http://localhost:8080`. No `NSAppTransportSecurity` exception is configured, so iOS blocks the cleartext request outright: auth, catalogue sync and analytics all fail silently rather than hitting the wrong host. **Fix:** add an `env` block to the `production` profile with `EXPO_PUBLIC_GATEWAY_URL: https://api.earlyroots.co.uk` (and the Google/Apple/RevenueCat keys the same warning names), then confirm with a preview build before submission. Consider removing the `localhost:8080` fallback in favour of a build-time failure, so a missing value can never ship quietly again.
 - [ ] **Add `allowed-user-agents` to `application-prod.yml` Cloudflare config** — the prod Cloudflare section has `require-validation: true` but no `allowed-user-agents` list. Without this, the Cloudflare validation filter will reject every request. Add: `allowed-user-agents: EarlyRoots,GrowWithFreya,EarlyRoots-FuncTest` (matching Section 7.2).
 - [ ] **Verify `application-prod.yml` JWT property paths** — prod uses `jwt.secret` (line 86) while gcp-dev uses `app.jwt.secret` (line 34). Confirm the `JwtConfig` class resolves both paths correctly, otherwise auth will fail silently on the production VM. Run a local test with `SPRING_PROFILES_ACTIVE=prod` to validate.
 - [ ] **Rebrand `app.config.js` display name** — change production app name from `'Grow with Freya'` to `'Early Roots'` (line 7). Update `associatedDomains` from `applinks:colearnwithfreya.co.uk` to `applinks:earlyroots.co.uk` (line 37). Keep `bundleIdentifier` and `package` as `com.growwithfreya.app` to avoid store re-submission.
@@ -1205,3 +1207,76 @@ Visual style:
 - [ ] Integration test: long-press on story card opens correct guide
 - [ ] Data test: every content ID in the app has a matching guide entry (no gaps)
 - [ ] Accessibility test: all guide text is readable by screen readers, fonts scale
+
+---
+
+## 12. Security Posture — Dependency Advisories
+
+> **TL;DR: `npm audit` reports ~30 advisories. Zero of them reach shipped app code.**
+> They are all build-time tooling. **Never run `npm audit fix --force` on this project.**
+
+### Verified finding (2026-08-02, Expo SDK 54)
+
+All 12 root-flagged packages were checked against the **actual production iOS bundle**:
+
+| | Result |
+|---|---|
+| Modules in production bundle | 2,487 across 148 npm packages |
+| Vulnerable packages present in bundle | **0 of 12** |
+
+Flagged packages and where they actually run:
+
+| Package | Severity | Runs at |
+|---|---|---|
+| `tar`, `shell-quote` | critical | npm / Expo CLI unpacking, prebuild |
+| `ws` | high | Metro dev-server websocket, React DevTools |
+| `undici`, `js-yaml`, `fast-uri`, `brace-expansion` | high | CLI fetch, config parsing, schema validation, globbing |
+| `postcss`, `svgo` | high | web/asset processing at build time |
+| `@babel/core`, `@babel/plugin-transform-modules-systemjs` | high / low | transpiler — its *output* ships, the compiler does not |
+| `uuid` | moderate | `@expo/cli` → `xcode` project manipulation |
+
+Residual risk is to the **build machine** (e.g. `tar` path traversal during a malicious
+package install — a supply-chain scenario), not to users' devices.
+
+### How to re-verify (do this, don't assume)
+
+```bash
+npx expo export --platform ios --source-maps --output-dir /tmp/erexport
+# then list every npm package Metro actually bundled from the .map "sources" array
+```
+
+⚠️ **Do not grep the `.hbc` bundle** — Hermes strips module paths, so every lookup returns
+"not found" and the result is meaningless. Always run a control for packages you *know*
+ship (`react-native`, `expo-audio`, `zustand`) to prove the method works before trusting it.
+
+`npm audit --omit=dev` is **also misleading here**: `expo` is a production dependency that
+transitively pulls `@expo/cli` and `metro`, so npm attributes their advisories to
+"production" even though Metro tree-shakes them out of the bundle entirely.
+
+### Why `npm audit fix --force` is banned
+
+Run on 2026-08-02, it **downgraded `expo` 54 → 46** while separately bumping several
+`expo-*` modules to SDK 57 versions, leaving SDK-46 core + SDK-57 modules + React Native
+0.81 — an unbuildable tree. It also made the audit **worse: 20 → 25 advisories**, newly
+including 2 critical. Recovery was `git checkout -- package.json package-lock.json`
+followed by `npm ci`.
+
+### Correct dependency workflow
+
+```bash
+npx expo install --check     # report drift against the installed SDK
+npx expo install --fix       # align upward, within the SDK
+npx expo-doctor              # full project health
+```
+
+Transitive tooling advisories clear when Expo ships fixed tooling — resolve them by moving
+SDK 54 → 55 → 56 deliberately, testing at each step. Never by letting npm rewrite the graph.
+
+### Known-accepted, and what is not
+
+- **Accepted**: the build-tooling advisories above, pending SDK upgrades.
+- **Not accepted, fix immediately**: any advisory in a package that appears in the source-map
+  package list (i.e. genuinely bundled), or any missing native peer dependency —
+  `expo-doctor` flagged a missing `expo-asset` (required by `expo-audio`) that could crash
+  production builds outside Expo Go. Fixed 2026-08-02.
+- If CI should gate on audit, prefer `npm audit --audit-level=critical` over failing on noise.

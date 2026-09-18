@@ -11,8 +11,8 @@ export default {
     icon: './assets/images/icon.png',
     scheme: 'growwithfreya',
     userInterfaceStyle: 'automatic',
+    backgroundColor: '#0A0F2C',
     newArchEnabled: true,
-    schemes: ['growwithfreya'],
     extra: {
       eas: {
         projectId: '439b6b2f-be5f-4d59-98eb-73befbd1973e'
@@ -85,9 +85,9 @@ export default {
           image: './assets/images/splash-icon.png',
           imageWidth: 200,
           resizeMode: 'contain',
-          backgroundColor: '#4ECDC4',
+          backgroundColor: '#0A0F2C',
           dark: {
-            backgroundColor: '#2E8B8B'
+            backgroundColor: '#0A0F2C'
           }
         }
       ],
@@ -95,6 +95,24 @@ export default {
         'expo-audio',
         {
           microphonePermission: 'Allow $(PRODUCT_NAME) to access your microphone to record story narrations.'
+        }
+      ],
+      [
+        'expo-sensors',
+        {
+          motionPermission: 'Allow $(PRODUCT_NAME) to detect when you turn the screen so the story can begin.'
+        }
+      ],
+      [
+        'expo-build-properties',
+        {
+          ios: {
+            // GoogleSignIn's Swift pods (AppCheckCore) need these ObjC pods to expose module maps
+            extraPods: [
+              { name: 'GoogleUtilities', modular_headers: true },
+              { name: 'RecaptchaInterop', modular_headers: true }
+            ]
+          }
         }
       ],
     ],

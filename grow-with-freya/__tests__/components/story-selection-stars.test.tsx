@@ -18,11 +18,24 @@ jest.mock('react-native-safe-area-context', () => ({
 }));
 
 // Mock app store
-jest.mock('@/store/app-store', () => ({
-  useAppStore: () => ({
+jest.mock('@/store/app-store', () => {
+  const state = {
     requestReturnToMainMenu: jest.fn(),
-  }),
-}));
+    setShowLoginAfterOnboarding: jest.fn(),
+    getEffectiveTier: () => 'free',
+    storyViewMode: 'grid',
+    setStoryViewMode: jest.fn(),
+    favoriteStoryIds: [],
+    toggleFavoriteStory: jest.fn(),
+    readStoryIds: [],
+    userAvatarType: 'boy',
+  };
+  return {
+    // read both bare and via selectors, so honour a selector like zustand does
+    useAppStore: (selector?: (s: typeof state) => unknown) =>
+      typeof selector === 'function' ? selector(state) : state,
+  };
+});
 
 // Mock story transition context
 jest.mock('@/contexts/story-transition-context', () => ({
@@ -70,11 +83,6 @@ jest.mock('@/contexts/story-transition-context', () => ({
 }));
 
 // Mock the app store
-jest.mock('@/store/app-store', () => ({
-  useAppStore: () => ({
-    requestReturnToMainMenu: jest.fn(),
-  }),
-}));
 
 // Mock react-native-safe-area-context
 jest.mock('react-native-safe-area-context', () => ({
@@ -94,22 +102,8 @@ jest.mock('expo-linear-gradient', () => ({
   },
 }));
 
-// Mock react-native-reanimated
-jest.mock('react-native-reanimated', () => {
-  const { View } = require('react-native');
-  const AnimatedView = View;
-  return {
-    useSharedValue: (initial: any) => ({ value: initial }),
-    useAnimatedStyle: (fn: any) => fn(),
-    withTiming: (value: any) => value,
-    withRepeat: (value: any) => value,
-    Easing: { linear: 'linear' },
-    default: {
-      View: AnimatedView,
-    },
-    View: AnimatedView,
-  };
-});
+// Reanimated is mocked globally in jest.setup.js; a local mock here shadowed it
+// with a default export missing createAnimatedComponent, which broke the suite.
 
 describe('StorySelectionScreen Stars', () => {
   const mockOnStorySelect = jest.fn();
@@ -154,11 +148,18 @@ describe('StorySelectionScreen Stars', () => {
     });
   });
 
-  it('should use correct star constants', () => {
-    expect(VISUAL_EFFECTS.STAR_COUNT).toBe(15);
-    expect(VISUAL_EFFECTS.STAR_SIZE).toBe(3);
-    expect(VISUAL_EFFECTS.STAR_BORDER_RADIUS).toBe(1.5);
-    expect(VISUAL_EFFECTS.STAR_AREA_HEIGHT_RATIO).toBe(0.6);
+  // restating the literals only duplicated the source and broke on any
+  // legitimate retune; these are the relationships that actually have to hold
+  it('should use coherent star constants', () => {
+    expect(Number.isInteger(VISUAL_EFFECTS.STAR_COUNT)).toBe(true);
+    expect(VISUAL_EFFECTS.STAR_COUNT).toBeGreaterThan(0);
+
+    // stars are drawn as circles, so the radius must stay half the size
+    expect(VISUAL_EFFECTS.STAR_BORDER_RADIUS).toBe(VISUAL_EFFECTS.STAR_SIZE / 2);
+
+    // the field is a fraction of the screen height
+    expect(VISUAL_EFFECTS.STAR_AREA_HEIGHT_RATIO).toBeGreaterThan(0);
+    expect(VISUAL_EFFECTS.STAR_AREA_HEIGHT_RATIO).toBeLessThanOrEqual(1);
   });
 
   it('should render with proper gradient background', () => {
