@@ -198,7 +198,9 @@ lays out from `useWindowDimensions`, so it is right whichever way a tablet is he
 ## Splash (launch animation)
 
 `components/splash-screen.tsx` takes over from the native launch image, grows the logo, then
-calls `setAppReady(true)`; `app/_layout.tsx` shows it while `currentView === 'splash'`.
+calls `setAppReady(true)`. `app/_layout.tsx` keeps it as an overlay above whichever view the
+journey resolves to (onboarding, login, loading or the main menu), mounted in one place so the
+view switch does not restart it.
 
 - **The logo is cut, not redrawn.** `scripts/prepare-splash-logo.py` splits the flat
   `ui-elements/earlyroots-logo.png` into `assets/images/splash-logo/` (the book's two halves,
@@ -206,30 +208,39 @@ calls `setAppReady(true)`; `app/_layout.tsx` shows it while `currentView === 'sp
   of the canvas. Every output pixel is a source pixel and the script fails if the layers do
   not recompose to the source exactly. Re-run it if the logo art changes.
 - **Native hand-off.** The script also writes `assets/images/splash-icon.png`: the *closed*
-  book alone on the full canvas (each half folded to `bookClosedScale` about the spine). The native launch screen (`expo-splash-screen` in
+  book alone on the full canvas: the right page with the left cover lying mirrored over it
+  (the art's symmetry makes them the same shape), centred, plus a spine stroke of the art's
+  own line weight -- the one thing in it that is not a source pixel, recorded in
+  `layout.json` as `spine`. The native launch screen (`expo-splash-screen` in
   `app.config.js`, mirrored in `app.json`) shows it at `NATIVE_SPLASH_IMAGE_WIDTH` on
   `NIGHT_DEEP`, and `AnimatedLogo` opens on the same closed book at the same size, so the first
   animated frame lands on the launch image. On a tablet the logo starts at that size and
   eases up to its own. A test holds the config and the constant together. Changing either
   needs a native rebuild to be seen.
 - **Choreography lives in `constants/splash-logo.ts`**, as pure, tested functions: the book
-  opens first (each half `scaleX`-folds about the spine -- no 3D transform, which breaks
-  clipping on iOS), then the stem rises out of it and the roots spread down into it (clipped reveals), each leaf opens
+  opens first: the cover swings over the spine (`scaleX` from -1 to 1 about it -- no 3D
+  transform, which breaks clipping on iOS) while the book slides from centred-shut to
+  centred-open. The spine stroke stays solid until the cover is edge-on over it and fades
+  just after; fading it earlier shows a grey bar beside the moving cover. Then the stem rises out of it and the roots spread down into it (clipped reveals), each leaf opens
   about its neck at the moment `leafUnfurlDelayMs` says the stem tip reaches it (the inverse
   of `growEase`), then the wordmark and tagline arrive. The leaves sway afterwards. Helpers
   called from `useAnimatedStyle` carry the `'worklet'` directive.
-- **The sky stays; only the content leaves.** `SplashSky` is the home sky -- the same
-  `HOME_THEMES` gradient for the time of day, the same `StarField` and `EarthHorizon` at the
-  same size -- so the home page arrives over an unchanged sky. `SplashAura` (moonlight
-  behind the sprout, a few motes off the book) and the logo sit in `splash-content`, which is
-  the only thing that fades out. Fading the whole screen shows `RootLayout`'s white backing
-  for a frame or more; do not reintroduce it.
+- **It fades off the page the app opens on** (operator decision 2026-09-18). `setAppReady`
+  fires when the hold ends, the layout mounts the destination *under* the splash, and only
+  then (`leaving`) does the whole splash, sky included, fade out over `handoffMs + exitMs`
+  and report `onGone`. The fade starts two frames after the destination mounts: mounting the
+  main menu stalls the screen for a few hundred ms in a dev build, and a fade counted from the
+  mount spent most of itself inside the stall. `SplashSky` is still the home sky -- the same
+  `HOME_THEMES` gradient, `StarField` and `EarthHorizon` -- so the main menu cross-fades from
+  a sky that matches it. Never fade the splash before the destination has mounted: behind it
+  is `RootLayout`'s white backing.
 - **Reduce motion**: the finished logo fades in; no growth, sway, drift, motes or shooting
   star.
 - **The finished logo holds for two seconds** (operator decision 2026-09-18).
   `SPLASH_TIMELINE.exitAtMs` is derived, not typed in: `logoCompleteMs` (the latest entrance
   to finish) plus `holdMs`. Retiming any entrance moves the exit with it. A test caps
-  launch-to-ready at 4.6 s so the hold is the only thing that made it longer.
+  splash-gone at 4.9 s (hold, hand-off beat and fade) so the hold is the only thing that made it
+  longer.
 
 ## Home (returning-user dashboard)
 
@@ -410,6 +421,7 @@ highlight sits where the bubble or the perch would cover it, `placeGuideBubble` 
 which guides have been seen is persisted by `contexts/owl-guide-context.tsx` under the old
 `@tutorial_state` key, migrating the previous shape on load. A guide that has been seen can be
 replayed from a screen's own menu with `replay`, which does not mark it again.
+
 
 ## Testing
 

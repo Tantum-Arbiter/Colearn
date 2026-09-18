@@ -14,9 +14,10 @@ import {
   SPLASH_LEAVES,
   SPLASH_LOGO_LAYERS,
   SPLASH_TIMELINE,
-  bookPose,
+  bookShiftX,
   bookSpineOffset,
   layerFrame,
+  spineFrame,
   leafUnfurlDelayMs,
 } from '@/constants/splash-logo';
 
@@ -108,12 +109,10 @@ describe('AnimatedLogo', () => {
   it('should open on the closed book alone, as the native launch image leaves it', () => {
     const underTest = render(<AnimatedLogo size={SIZE} playing={false} reduceMotion={false} />);
 
-    BOOK_HALVES.forEach((half) => {
-      const style = flatStyle(layerNode(underTest, half));
-
-      expect(style.opacity ?? 1).toBe(1);
-      expect(transformOf(style, 'scaleX')).toBe(bookPose(0).scaleX);
-    });
+    expect(transformOf(flatStyle(layerNode(underTest, 'bookLeft')), 'scaleX')).toBe(-1);
+    expect(transformOf(flatStyle(layerNode(underTest, 'bookRight')), 'scaleX')).toBe(1);
+    expect(flatStyle(layerNode(underTest, 'spine')).opacity).toBe(1);
+    expect(transformOf(flatStyle(layerNode(underTest, 'book')), 'translateX')).toBeCloseTo(bookShiftX(0, SIZE), 6);
     expect(flatStyle(layerNode(underTest, 'stem')).height).toBe(0);
     expect(flatStyle(layerNode(underTest, 'roots')).height).toBe(0);
     expect(flatStyle(layerNode(underTest, 'wordmark')).opacity).toBe(0);
@@ -148,6 +147,17 @@ describe('AnimatedLogo', () => {
       expect(shifts).toEqual([bookSpineOffset(half, SIZE), -bookSpineOffset(half, SIZE)]);
       expect(bookSpineOffset(half, SIZE)).not.toBe(0);
     });
+  });
+
+  it('should draw the closed book its spine where the two halves meet', () => {
+    const frame = spineFrame(SIZE);
+
+    const underTest = render(<AnimatedLogo size={SIZE} playing={false} reduceMotion={false} />);
+
+    const style = flatStyle(layerNode(underTest, 'spine'));
+    expect(style.left).toBeCloseTo(frame.left, 6);
+    expect(style.top).toBeCloseTo(frame.top, 6);
+    expect(style.height).toBeCloseTo(frame.height, 6);
   });
 
   it('should open the book first', () => {
@@ -198,6 +208,8 @@ describe('AnimatedLogo', () => {
     BOOK_HALVES.forEach((half) => {
       expect(transformOf(flatStyle(layerNode(underTest, half)), 'scaleX')).toBe(1);
     });
+    expect(flatStyle(layerNode(underTest, 'spine')).opacity).toBe(0);
+    expect(transformOf(flatStyle(layerNode(underTest, 'book')), 'translateX')).toBe(0);
     SPLASH_LEAVES.forEach((leaf) => {
       const style = flatStyle(layerNode(underTest, leaf));
 
@@ -217,6 +229,7 @@ describe('AnimatedLogo', () => {
       BOOK_HALVES.forEach((half) => {
         expect(transformOf(flatStyle(layerNode(underTest, half)), 'scaleX')).toBe(1);
       });
+      expect(flatStyle(layerNode(underTest, 'spine')).opacity).toBe(0);
       SPLASH_LEAVES.forEach((leaf) => {
         const style = flatStyle(layerNode(underTest, leaf));
 

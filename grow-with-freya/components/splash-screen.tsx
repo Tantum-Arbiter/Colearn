@@ -25,7 +25,13 @@ import { SplashSky } from '@/components/splash/splash-sky';
 
 SplashScreen.preventAutoHideAsync();
 
-export function AppSplashScreen() {
+interface AppSplashScreenProps {
+  /** The page the app opens on has mounted behind the splash; fade off it. */
+  leaving: boolean;
+  onGone: () => void;
+}
+
+export function AppSplashScreen({ leaving, onGone }: AppSplashScreenProps) {
   const { setAppReady } = useAppStore();
   const { width, height } = useWindowDimensions();
   const reduceMotion = useReducedMotion();
@@ -34,9 +40,11 @@ export function AppSplashScreen() {
   const [playing, setPlaying] = useState(false);
 
   const taglineOpacity = useSharedValue(0);
-  const contentOpacity = useSharedValue(1);
+  const opacity = useSharedValue(1);
 
   const delayTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onGoneRef = useRef(onGone);
+  onGoneRef.current = onGone;
 
   const { t } = useTranslation();
 
@@ -66,12 +74,6 @@ export function AppSplashScreen() {
           delayTimeoutRef.current = setTimeout(resolve, SPLASH_TIMELINE.exitAtMs);
         });
 
-        contentOpacity.value = withTiming(0, { duration: SPLASH_TIMELINE.exitMs, easing: Easing.out(Easing.cubic) });
-
-        await new Promise<void>(resolve => {
-          delayTimeoutRef.current = setTimeout(resolve, SPLASH_TIMELINE.exitMs);
-        });
-
         setAppReady(true);
 
       } catch {
@@ -94,15 +96,42 @@ export function AppSplashScreen() {
     opacity: taglineOpacity.value,
   }));
 
-  const contentAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: contentOpacity.value,
+  useEffect(() => {
+    if (!leaving) {
+      return undefined;
+    }
+
+    // Mounting the page behind stalls the first frames after it; counting the
+    // fade from then would spend most of it inside the stall.
+    let frame = 0;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    frame = requestAnimationFrame(() => {
+      frame = requestAnimationFrame(() => {
+        opacity.value = withDelay(
+          SPLASH_TIMELINE.handoffMs,
+          withTiming(0, { duration: SPLASH_TIMELINE.exitMs, easing: Easing.inOut(Easing.quad) })
+        );
+        timer = setTimeout(() => onGoneRef.current(), SPLASH_TIMELINE.handoffMs + SPLASH_TIMELINE.exitMs);
+      });
+    });
+
+    return () => {
+      cancelAnimationFrame(frame);
+      if (timer) {
+        clearTimeout(timer);
+      }
+    };
+  }, [leaving, opacity]);
+
+  const splashAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
   }));
 
   return (
-    <View style={styles.container}>
+    <Animated.View testID="splash-screen" style={[styles.container, splashAnimatedStyle]}>
       <SplashSky width={width} height={height} timeOfDay={timeOfDay} playing={playing} reduceMotion={reduceMotion} />
 
-      <Animated.View testID="splash-content" style={[StyleSheet.absoluteFill, contentAnimatedStyle]} pointerEvents="none">
+      <View style={StyleSheet.absoluteFill} pointerEvents="none">
         <SplashAura
           logoLeft={logoLeft}
           logoTop={logoTop}
@@ -124,8 +153,8 @@ export function AppSplashScreen() {
         <View style={styles.versionContainer}>
           <Text style={[styles.versionText, { fontSize: scaledFontSize(12) }]}>v{DeviceInfoService.getAppVersion()}</Text>
         </View>
-      </Animated.View>
-    </View>
+      </View>
+    </Animated.View>
   );
 }
 

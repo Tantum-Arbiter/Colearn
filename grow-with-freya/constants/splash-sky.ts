@@ -22,7 +22,7 @@ export const SPLASH_MOTES = {
 } as const;
 
 export const SHOOTING_STAR = {
-  delayMs: 1850,
+  delayMs: 2100,
   durationMs: 650,
   lengthPx: 90,
   thicknessPx: 2,

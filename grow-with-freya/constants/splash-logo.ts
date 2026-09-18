@@ -24,11 +24,11 @@ export const NATIVE_SPLASH_IMAGE_WIDTH = 280;
 const PHONE_LOGO_SIZE = 280;
 const TABLET_LOGO_SIZE = 380;
 
-const BOOK = { delayMs: 100, durationMs: 700 } as const;
-const STEM = { delayMs: 700, durationMs: 1000 } as const;
-const ROOTS = { delayMs: 800, durationMs: 1000 } as const;
-const WORDMARK = { delayMs: 1600, durationMs: 450, risePx: 10 } as const;
-const TAGLINE = { delayMs: 1650, durationMs: 400 } as const;
+const BOOK = { delayMs: 150, durationMs: 850 } as const;
+const STEM = { delayMs: 1000, durationMs: 1000 } as const;
+const ROOTS = { delayMs: 1100, durationMs: 1000 } as const;
+const WORDMARK = { delayMs: 1900, durationMs: 450, risePx: 10 } as const;
+const TAGLINE = { delayMs: 1950, durationMs: 400 } as const;
 const LEAF_UNFURL_MS = 520;
 const HOLD_MS = 2000;
 
@@ -123,20 +123,44 @@ export const SPLASH_TIMELINE = {
   logoCompleteMs: LOGO_COMPLETE_MS,
   holdMs: HOLD_MS,
   exitAtMs: LOGO_COMPLETE_MS + HOLD_MS,
+  handoffMs: 120,
   exitMs: 400,
   reducedMotionFadeMs: 300,
 } as const;
+
+const COVER_EDGE_ON = 0.5;
+const SPINE_FADE = 0.1;
 
 export interface BookPose {
   scaleX: number;
 }
 
-export function bookPose(open: number): BookPose {
+export function bookPose(half: BookHalf, open: number): BookPose {
   'worklet';
-  const closedScale = layout.bookClosedScale;
   const opened = Math.min(Math.max(open, 0), 1);
 
-  return { scaleX: closedScale + (1 - closedScale) * opened };
+  return { scaleX: half === 'bookLeft' ? 2 * opened - 1 : 1 };
+}
+
+export function bookShiftX(open: number, logoSize: number): number {
+  'worklet';
+  const opened = Math.min(Math.max(open, 0), 1);
+
+  return (opened - 1) * ((layout.layers.book.width * logoSize) / 4) + 0;
+}
+
+export function spineFrame(logoSize: number): LayerFrame {
+  return {
+    left: layout.spine.x * logoSize,
+    top: layout.spine.y * logoSize,
+    width: layout.spine.width * logoSize,
+    height: layout.spine.height * logoSize,
+  };
+}
+
+export function spineOpacity(open: number): number {
+  'worklet';
+  return Math.min(Math.max(1 - (open - COVER_EDGE_ON) / SPINE_FADE, 0), 1);
 }
 
 export function bookSpineOffset(half: BookHalf, logoSize: number): number {

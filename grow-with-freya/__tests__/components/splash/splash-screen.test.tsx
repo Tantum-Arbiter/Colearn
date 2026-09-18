@@ -1,12 +1,13 @@
 /**
  * The splash screen: takes over from the native launch image, grows the logo on
- * a night sky, then hands the app on. It must never strand a family on the
+ * a night sky, then fades away whole over whichever page the app opens on. It must never strand a family on the
  * splash, whatever goes wrong while it prepares.
  */
 
 import React from 'react';
 import { act, render } from '@testing-library/react-native';
 import * as SplashScreen from 'expo-splash-screen';
+import { withDelay, withTiming } from 'react-native-reanimated';
 import { AppSplashScreen } from '@/components/splash-screen';
 import { AnimatedLogo } from '@/components/splash/animated-logo';
 import { SPLASH_TIMELINE } from '@/constants/splash-logo';
@@ -36,6 +37,7 @@ jest.mock('@/store/app-store', () => ({
 }));
 
 const hideAsync = SplashScreen.hideAsync as jest.Mock;
+const FRAMES_TO_DRAW_THE_PAGE_MS = 50;
 
 type Rendered = ReturnType<typeof render>;
 
@@ -48,33 +50,19 @@ async function settle() {
 }
 
 async function advance(ms: number) {
-  await act(async () => {
-    jest.advanceTimersByTime(ms);
-  });
-  await settle();
+  for (let left = ms; left > 0; left -= 50) {
+    const step = Math.min(50, left);
+    await act(async () => {
+      jest.advanceTimersByTime(step);
+    });
+    await settle();
+  }
 }
 
 function skyOf(rendered: Rendered) {
   return rendered.UNSAFE_root.findAll(
     (node: any) => 'timeOfDay' in node.props && 'playing' in node.props
   )[0];
-}
-
-function auraOf(rendered: Rendered) {
-  return rendered.UNSAFE_root.findAll((node: any) => 'logoSize' in node.props && 'logoLeft' in node.props)[0];
-}
-
-function isInside(node: any, testID: string): boolean {
-  let current = node.parent;
-
-  while (current) {
-    if (current.props.testID === testID) {
-      return true;
-    }
-    current = current.parent;
-  }
-
-  return false;
 }
 
 function textsOf(rendered: Rendered): string[] {
@@ -96,14 +84,14 @@ describe('AppSplashScreen', () => {
   });
 
   it('should hold the logo still until the native launch image has gone', () => {
-    const underTest = render(<AppSplashScreen />);
+    const underTest = render(<AppSplashScreen leaving={false} onGone={jest.fn()} />);
 
     expect(underTest.UNSAFE_getByType(AnimatedLogo).props.playing).toBe(false);
     expect(skyOf(underTest).props.playing).toBe(false);
   });
 
   it('should start growing the logo and waking the sky once it has', async () => {
-    const underTest = render(<AppSplashScreen />);
+    const underTest = render(<AppSplashScreen leaving={false} onGone={jest.fn()} />);
 
     await settle();
 
@@ -112,19 +100,9 @@ describe('AppSplashScreen', () => {
     expect(skyOf(underTest).props.playing).toBe(true);
   });
 
-  it('should leave the sky standing while the logo fades, so home arrives without a flash', async () => {
-    const underTest = render(<AppSplashScreen />);
-
-    await settle();
-
-    expect(isInside(skyOf(underTest), 'splash-content')).toBe(false);
-    expect(isInside(underTest.UNSAFE_getByType(AnimatedLogo), 'splash-content')).toBe(true);
-    expect(isInside(auraOf(underTest), 'splash-content')).toBe(true);
-  });
-
   it.each(['night', 'day'])('should open under the same %s sky the home page will show', async (timeOfDay) => {
     mockTimeOfDay.mockReturnValue(timeOfDay);
-    const underTest = render(<AppSplashScreen />);
+    const underTest = render(<AppSplashScreen leaving={false} onGone={jest.fn()} />);
 
     await settle();
 
@@ -132,19 +110,18 @@ describe('AppSplashScreen', () => {
   });
 
   it('should say what the app is for', async () => {
-    const underTest = render(<AppSplashScreen />);
+    const underTest = render(<AppSplashScreen leaving={false} onGone={jest.fn()} />);
 
     await settle();
 
     expect(textsOf(underTest)).toContain('splash.tagline');
   });
 
-  it('should keep the app waiting until the logo has grown and the screen has left', async () => {
-    render(<AppSplashScreen />);
+  it('should open the app once the logo has held, so the page behind it can get ready', async () => {
+    render(<AppSplashScreen leaving={false} onGone={jest.fn()} />);
     await settle();
 
-    await advance(SPLASH_TIMELINE.exitAtMs);
-    await advance(SPLASH_TIMELINE.exitMs - 1);
+    await advance(SPLASH_TIMELINE.exitAtMs - 1);
     const earlyCalls = mockSetAppReady.mock.calls.length;
     await advance(1);
 
@@ -153,9 +130,48 @@ describe('AppSplashScreen', () => {
     expect(mockSetAppReady).toHaveBeenCalledWith(true);
   });
 
+  it('should stay up, whole, until the page behind it is ready', async () => {
+    const onGone = jest.fn();
+    render(<AppSplashScreen leaving={false} onGone={onGone} />);
+    await settle();
+
+    await advance(SPLASH_TIMELINE.exitAtMs + SPLASH_TIMELINE.handoffMs + SPLASH_TIMELINE.exitMs + 1000);
+
+    expect(onGone).not.toHaveBeenCalled();
+    expect(withTiming).not.toHaveBeenCalledWith(0, expect.anything());
+  });
+
+  it('should fade out whole, sky and all, once the page behind it is ready', async () => {
+    const onGone = jest.fn();
+    const underTest = render(<AppSplashScreen leaving={false} onGone={onGone} />);
+    await settle();
+    await advance(SPLASH_TIMELINE.exitAtMs);
+
+    underTest.rerender(<AppSplashScreen leaving onGone={onGone} />);
+    await settle();
+    await advance(SPLASH_TIMELINE.handoffMs + SPLASH_TIMELINE.exitMs - 1);
+    const earlyCalls = onGone.mock.calls.length;
+    await advance(FRAMES_TO_DRAW_THE_PAGE_MS);
+
+    expect(withTiming).toHaveBeenCalledWith(0, expect.objectContaining({ duration: SPLASH_TIMELINE.exitMs }));
+    expect(withDelay).toHaveBeenCalledWith(SPLASH_TIMELINE.handoffMs, expect.anything());
+    expect(earlyCalls).toBe(0);
+    expect(onGone).toHaveBeenCalledTimes(1);
+  });
+
+  it('should hand over the moment a page is ready, even before the logo has finished', async () => {
+    const onGone = jest.fn();
+    render(<AppSplashScreen leaving onGone={onGone} />);
+    await settle();
+
+    await advance(SPLASH_TIMELINE.handoffMs + SPLASH_TIMELINE.exitMs + FRAMES_TO_DRAW_THE_PAGE_MS);
+
+    expect(onGone).toHaveBeenCalledTimes(1);
+  });
+
   it('should still open the app when the native launch image will not hide', async () => {
     hideAsync.mockRejectedValueOnce(new Error('no native splash'));
-    render(<AppSplashScreen />);
+    render(<AppSplashScreen leaving={false} onGone={jest.fn()} />);
 
     await settle();
 
@@ -163,7 +179,7 @@ describe('AppSplashScreen', () => {
   });
 
   it('should not open the app after it has been torn down', async () => {
-    const underTest = render(<AppSplashScreen />);
+    const underTest = render(<AppSplashScreen leaving={false} onGone={jest.fn()} />);
     await settle();
 
     underTest.unmount();
@@ -171,5 +187,28 @@ describe('AppSplashScreen', () => {
     await advance(SPLASH_TIMELINE.exitMs + 50);
 
     expect(mockSetAppReady).not.toHaveBeenCalled();
+  });
+
+  it('should not report itself gone when torn down part way through fading', async () => {
+    const onGone = jest.fn();
+    const underTest = render(<AppSplashScreen leaving onGone={onGone} />);
+    await settle();
+    await advance(FRAMES_TO_DRAW_THE_PAGE_MS + SPLASH_TIMELINE.handoffMs);
+
+    underTest.unmount();
+    await advance(SPLASH_TIMELINE.exitMs + FRAMES_TO_DRAW_THE_PAGE_MS);
+
+    expect(onGone).not.toHaveBeenCalled();
+  });
+
+  it('should not report itself gone after it has been torn down', async () => {
+    const onGone = jest.fn();
+    const underTest = render(<AppSplashScreen leaving onGone={onGone} />);
+    await settle();
+
+    underTest.unmount();
+    await advance(SPLASH_TIMELINE.handoffMs + SPLASH_TIMELINE.exitMs + FRAMES_TO_DRAW_THE_PAGE_MS);
+
+    expect(onGone).not.toHaveBeenCalled();
   });
 });

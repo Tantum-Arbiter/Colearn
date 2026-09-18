@@ -14,7 +14,10 @@ import {
   SPLASH_TIMELINE,
   BOOK_HALVES,
   bookPose,
+  bookShiftX,
   bookSpineOffset,
+  spineFrame,
+  spineOpacity,
   growEase,
   growEaseInverse,
   layerFrame,
@@ -30,7 +33,7 @@ import { NIGHT_DEEP } from '@/constants/night-palette';
 
 const PHONE_LOGO = 280;
 const TABLET_LOGO = 380;
-const LAUNCH_BUDGET_MS = 4600;
+const LAUNCH_BUDGET_MS = 4900;
 const HOLD_MS = 2000;
 
 describe('splashLogoSize', () => {
@@ -132,25 +135,64 @@ describe('the two halves of the book', () => {
 });
 
 describe('bookPose', () => {
-  it('should start as a closed book, narrow but not gone', () => {
-    const underTest = bookPose(0);
+  it('should start folded shut: the left cover lying mirrored over the right page', () => {
+    expect(bookPose('bookLeft', 0).scaleX).toBe(-1);
+    expect(bookPose('bookRight', 0).scaleX).toBe(1);
+  });
 
-    expect(underTest.scaleX).toBeGreaterThan(0.05);
-    expect(underTest.scaleX).toBeLessThan(0.25);
+  it('should centre the closed book, which is only half as wide as the open one', () => {
+    const book = layerFrame('book', PHONE_LOGO);
+
+    const underTest = bookShiftX(0, PHONE_LOGO);
+
+    expect(underTest).toBeCloseTo(-book.width / 4, 6);
   });
 
   it('should lie fully open exactly as drawn', () => {
-    expect(bookPose(1)).toEqual({ scaleX: 1 });
+    expect(bookPose('bookLeft', 1)).toEqual({ scaleX: 1 });
+    expect(bookPose('bookRight', 1)).toEqual({ scaleX: 1 });
+    expect(bookShiftX(1, PHONE_LOGO)).toBe(0);
   });
 
-  it('should open steadily', () => {
-    expect(bookPose(0.5).scaleX).toBeGreaterThan(bookPose(0.25).scaleX);
-    expect(bookPose(0.75).scaleX).toBeGreaterThan(bookPose(0.5).scaleX);
+  it('should swing the cover through edge-on half way, and never move the right page', () => {
+    expect(bookPose('bookLeft', 0.5).scaleX).toBeCloseTo(0, 6);
+    expect(bookPose('bookLeft', 0.25).scaleX).toBeLessThan(0);
+    expect(bookPose('bookLeft', 0.75).scaleX).toBeGreaterThan(0);
+    expect(bookPose('bookRight', 0.5).scaleX).toBe(1);
   });
 
-  it('should never fold past closed or stretch past open', () => {
-    expect(bookPose(-0.4)).toEqual(bookPose(0));
-    expect(bookPose(1.3)).toEqual(bookPose(1));
+  it('should never fold past shut or stretch past open', () => {
+    expect(bookPose('bookLeft', -0.4)).toEqual(bookPose('bookLeft', 0));
+    expect(bookPose('bookLeft', 1.3)).toEqual(bookPose('bookLeft', 1));
+    expect(bookShiftX(1.3, PHONE_LOGO)).toBe(0);
+  });
+});
+
+describe('the spine of the closed book', () => {
+  it('should run the height of the book, on the spine', () => {
+    const book = layerFrame('book', PHONE_LOGO);
+    const left = layerFrame('bookLeft', PHONE_LOGO);
+    const spineX = left.left + left.width / 2 + bookSpineOffset('bookLeft', PHONE_LOGO);
+
+    const underTest = spineFrame(PHONE_LOGO);
+
+    expect(underTest.left + underTest.width / 2).toBeCloseTo(spineX, 0);
+    expect(underTest.top).toBeGreaterThanOrEqual(book.top);
+    expect(underTest.top + underTest.height).toBeLessThanOrEqual(book.top + book.height);
+    expect(underTest.height).toBeGreaterThan(book.height * 0.95);
+    expect(underTest.width).toBeGreaterThan(1);
+    expect(underTest.width).toBeLessThan(book.width / 20);
+  });
+
+  it.each([
+    ['drawn while the book is shut', 0, 1],
+    ['solid as the cover lifts, not a half-faded bar beside it', 0.25, 1],
+    ['solid until the cover is edge-on over it', 0.5, 1],
+    ['fading once the cover has passed over', 0.55, 0.5],
+    ['gone soon after', 0.6, 0],
+    ['gone in the open book, which has no such line', 1, 0],
+  ])('should be %s', (_case, open, expected) => {
+    expect(spineOpacity(open)).toBeCloseTo(expected, 6);
   });
 });
 
@@ -301,8 +343,8 @@ describe('SPLASH_TIMELINE', () => {
     lastLeaf,
   ];
 
-  it('should open the book before anything grows out of it', () => {
-    expect(SPLASH_TIMELINE.stem.delayMs).toBeGreaterThanOrEqual(bookOpenAt - 150);
+  it('should have the book lying fully open before anything grows out of it', () => {
+    expect(SPLASH_TIMELINE.stem.delayMs).toBeGreaterThanOrEqual(bookOpenAt);
     expect(SPLASH_TIMELINE.roots.delayMs).toBeGreaterThanOrEqual(SPLASH_TIMELINE.stem.delayMs);
     expect(SPLASH_TIMELINE.book.durationMs).toBeGreaterThanOrEqual(500);
   });
@@ -321,7 +363,14 @@ describe('SPLASH_TIMELINE', () => {
   });
 
   it('should not keep a family waiting longer than the hold asks for', () => {
-    expect(SPLASH_TIMELINE.exitAtMs + SPLASH_TIMELINE.exitMs).toBeLessThanOrEqual(LAUNCH_BUDGET_MS);
+    expect(SPLASH_TIMELINE.exitAtMs + SPLASH_TIMELINE.handoffMs + SPLASH_TIMELINE.exitMs).toBeLessThanOrEqual(
+      LAUNCH_BUDGET_MS
+    );
+  });
+
+  it('should give the page behind a moment to draw before fading off it, but not a noticeable one', () => {
+    expect(SPLASH_TIMELINE.handoffMs).toBeGreaterThanOrEqual(50);
+    expect(SPLASH_TIMELINE.handoffMs).toBeLessThanOrEqual(200);
   });
 });
 

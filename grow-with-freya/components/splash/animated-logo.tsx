@@ -16,6 +16,7 @@ import {
   SPLASH_LEAVES,
   SPLASH_TIMELINE,
   bookPose,
+  bookShiftX,
   bookSpineOffset,
   growEase,
   layerFrame,
@@ -24,6 +25,8 @@ import {
   leafUnfurlDelayMs,
   logoIntroScale,
   revealHeight,
+  spineFrame,
+  spineOpacity,
   type BookHalf,
   type SplashLeaf,
 } from '@/constants/splash-logo';
@@ -71,12 +74,35 @@ function BookHalfLayer({ half, size, open }: BookHalfLayerProps) {
   const spineX = bookSpineOffset(half, size);
 
   const pose = useAnimatedStyle(() => ({
-    transform: [{ translateX: spineX }, { scaleX: bookPose(open.value).scaleX }, { translateX: -spineX }],
+    transform: [{ translateX: spineX }, { scaleX: bookPose(half, open.value).scaleX }, { translateX: -spineX }],
   }));
 
   return (
     <Animated.View testID={`splash-logo-${half}`} style={[styles.layer, frame, pose]}>
       <Image source={SPLASH_LOGO_ART[half]} style={styles.fill} fadeDuration={0} />
+    </Animated.View>
+  );
+}
+
+interface BookProps {
+  size: number;
+  open: SharedValue<number>;
+}
+
+function Book({ size, open }: BookProps) {
+  const shift = useAnimatedStyle(() => ({ transform: [{ translateX: bookShiftX(open.value, size) }] }));
+  const spine = useAnimatedStyle(() => ({ opacity: spineOpacity(open.value) }));
+  const spineShape = spineFrame(size);
+
+  return (
+    <Animated.View testID="splash-logo-book" style={[StyleSheet.absoluteFill, shift]}>
+      <Animated.View
+        testID="splash-logo-spine"
+        style={[styles.layer, styles.spine, spineShape, { borderRadius: spineShape.width / 2 }, spine]}
+      />
+      {BOOK_HALVES.map((half) => (
+        <BookHalfLayer key={half} half={half} size={size} open={open} />
+      ))}
     </Animated.View>
   );
 }
@@ -217,9 +243,7 @@ export function AnimatedLogo({ size, playing, reduceMotion, testID = 'splash-log
 
   return (
     <Animated.View testID={testID} style={[{ width: size, height: size }, logoStyle]} pointerEvents="none">
-      {BOOK_HALVES.map((half) => (
-        <BookHalfLayer key={half} half={half} size={size} open={book} />
-      ))}
+      <Book size={size} open={book} />
 
       <Animated.View style={[StyleSheet.absoluteFill, plantStyle]}>
         <GrowingLayer layer="roots" growsFrom="top" size={size} progress={roots} />
@@ -253,6 +277,9 @@ const styles = StyleSheet.create({
   },
   artFromTop: {
     top: 0,
+  },
+  spine: {
+    backgroundColor: '#FFFFFF',
   },
   fill: {
     width: '100%',

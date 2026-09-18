@@ -15,8 +15,11 @@ the wordmark is its own island. Only the plant needs cutting:
   stem    the trunk and both side branches
   leaves  cut across the neck where each leaf meets its branch
 
-The book is also halved down its spine, so it can open: each half folds about the
-spine, from BOOK_CLOSED_SCALE of its width out to the whole of it.
+The book is also halved down its spine, so it can open. Shut, the left cover lies
+mirrored over the right page, which the art's symmetry makes the same shape; the
+cover then swings over the spine. The open book has no line down its spine, so the
+closed one is given one: a stroke of the art's own line weight, recorded in
+layout.json as `spine` and drawn by the app only while the book is shut.
 
 Every cut is interior to solid white, so neighbouring layers are grown a few
 pixels into each other across it. White over white is white; without the overlap
@@ -28,8 +31,9 @@ is dropped: a pixel survives only if it sits next to solid artwork.
 Outputs, under assets/images/splash-logo/:
   <layer>.png          cropped to its own bounds
   layout.json          each layer's frame and pivot as fractions of the canvas
-and assets/images/splash-icon.png, the native launch image: the closed book alone on
-the full canvas, so the first animated frame lands exactly on top of it.
+and assets/images/splash-icon.png, the native launch image: the closed book, centred,
+alone on the full canvas, so the first animated frame lands exactly on top of it. The
+spine stroke is the one thing in it that is not a source pixel.
 
 Usage:
     python3 scripts/prepare-splash-logo.py
@@ -40,7 +44,7 @@ import os
 import sys
 
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageDraw
 from scipy import ndimage
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -53,7 +57,6 @@ EDGE_REACH_PX = 4
 OVERLAP_PX = 6
 CROP_PADDING_PX = 2
 CUT_WIDTH_PX = 3
-BOOK_CLOSED_SCALE = 0.14
 
 # Source-pixel coordinates on the 1254 px canvas.
 SOIL_LINE_Y = 580
@@ -174,7 +177,7 @@ def main():
     near_artwork = distance <= EDGE_REACH_PX
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
-    layout = {'canvas': size, 'bookClosedScale': BOOK_CLOSED_SCALE, 'layers': {}}
+    layout = {'canvas': size, 'layers': {}}
     layer_alphas = {}
     recomposed = np.zeros(alpha.shape, dtype=np.uint8)
 
@@ -223,24 +226,35 @@ def main():
         'height': round(max(half['y'] + half['height'] for half in halves) - book_y, 5),
     }
 
-    with open(os.path.join(OUTPUT_DIR, 'layout.json'), 'w') as handle:
-        json.dump(layout, handle, indent=2)
-        handle.write('\n')
+    page_column = book_right[:, int(spine_x + (book_columns.max() - spine_x) / 2)]
+    page_rows = np.where(page_column)[0]
+    stroke = int(np.argmax(np.diff(page_rows) > 1)) + 1
+    right_at_spine = np.where(book_right[:, int(spine_x) + 1])[0]
+    spine_top, spine_bottom = int(book_rows.min()), int(right_at_spine.max()) + 1
+    layout['spine'] = {
+        'x': round((spine_x - stroke / 2) / size, 5),
+        'y': round(spine_top / size, 5),
+        'width': round(stroke / size, 5),
+        'height': round((spine_bottom - spine_top) / size, 5),
+    }
 
+    shift = int(round((book_columns.max() + 1 - book_columns.min()) / 4))
     closed = np.zeros((size, size), dtype=np.uint8)
-    for half in ('bookLeft', 'bookRight'):
-        ys, xs = np.where(layer_alphas[half] > 0)
-        left, right, top, bottom = int(xs.min()), int(xs.max()) + 1, int(ys.min()), int(ys.max()) + 1
-        folded_left = int(round(spine_x - (spine_x - left) * BOOK_CLOSED_SCALE))
-        folded_right = max(int(round(spine_x + (right - spine_x) * BOOK_CLOSED_SCALE)), folded_left + 1)
-        piece = Image.fromarray(layer_alphas[half][top:bottom, left:right], 'L')
-        folded = np.array(piece.resize((folded_right - folded_left, bottom - top), Image.LANCZOS))
-        closed[top:bottom, folded_left:folded_right] = np.maximum(closed[top:bottom, folded_left:folded_right], folded)
+    closed[:, : size - shift] = layer_alphas['bookRight'][:, shift:]
+    spine_image = Image.new('L', (size, size), 0)
+    ImageDraw.Draw(spine_image).rounded_rectangle(
+        [spine_x - stroke / 2 - shift, spine_top, spine_x + stroke / 2 - shift, spine_bottom], radius=stroke / 2, fill=255
+    )
+    closed = np.maximum(closed, np.array(spine_image))
 
     icon = np.zeros((size, size, 4), dtype=np.uint8)
     icon[..., :3] = 255
     icon[..., 3] = closed
     Image.fromarray(icon, 'RGBA').save(NATIVE_ICON, optimize=True)
+
+    with open(os.path.join(OUTPUT_DIR, 'layout.json'), 'w') as handle:
+        json.dump(layout, handle, indent=2)
+        handle.write('\n')
 
     for name, entry in layout['layers'].items():
         print(f'{name:10s} {entry}')
