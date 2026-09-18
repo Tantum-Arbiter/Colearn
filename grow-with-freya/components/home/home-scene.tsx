@@ -1,13 +1,12 @@
-import React, { memo, type RefObject } from 'react';
+import React, { useCallback, useMemo, memo, type RefObject } from 'react';
 import { View, Text, ScrollView, StyleSheet, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { MusicControl } from '@/components/ui/music-control';
 import { Fonts } from '@/constants/theme';
 import { HOME_SCENE_LAYOUT, HOME_THEMES, type TimeOfDay } from '@/constants/home-scene';
-import { HOME_CARDS, HOME_CARD_TYPE, homeContentWidth, pairedCardWidth } from '@/constants/home-journey';
+import { HOME_CARDS, HOME_CARD_TYPE, homeContentWidth } from '@/constants/home-journey';
 import { HERO_SKY, heroContentTop, sunFrame } from '@/constants/home-sky';
-import { SCREEN_TIME_RING, ringCentre, ringClearance } from '@/constants/screen-time-ring';
 import { useTimeOfDay } from '@/hooks/use-time-of-day';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { useSettledAfterTransition } from '@/hooks/use-ambient-animation';
@@ -17,13 +16,12 @@ import type { GuideScrollerBinding } from '@/components/owl-guide/use-guide-scro
 import { NightSky } from './night-sky';
 import { HomeHeroSky } from './home-hero-sky';
 import { GrownUpsPill } from './grown-ups-pill';
-import { ScreenTimeRing } from './screen-time-ring';
+import { ChildBottomNavigation, navClearance, navItemCentre, type ChildNavItemId } from '@/components/child-ui/child-bottom-navigation';
 import { UnlockPlanButton } from './unlock-plan-button';
 import { ContinueCard } from './continue-card';
 import { StreakChip } from './streak-chip';
 import { WeeklyReadingChip } from './weekly-reading-chip';
 import { AchievementCard } from './achievement-card';
-import { ContinueLearningCard } from './continue-learning-card';
 
 /** The phone's own gaps beneath the stats row and above the plan button --
  *  the styles below use these, and the tablet's spacing is derived from them. */
@@ -50,13 +48,19 @@ export interface HomeGuideTargets {
   sound?: RefObject<View | null>;
 }
 
+
+const TABLET_FOOT_PADDING = 24;
+
+export type HomeSection = Exclude<ChildNavItemId, 'home' | 'screensafe'>;
+
 export interface HomeSceneProps {
   data: ChildHomeData;
   welcome: WelcomeCopy;
   celebrateAchievement?: boolean;
   onContinue: () => void;
   onOpenAchievements: () => void;
-  onContinueLearning: () => void;
+  /** An item in the bar at the foot that is a place to go: the library opens on that section. */
+  onSelectSection: (id: HomeSection) => void;
   onOpenGrownUps: () => void;
   screenTime?: ScreenTimeAllowance | null;
   /** Receives the ring's centre so the glance can open out of it. */
@@ -80,7 +84,7 @@ export const HomeScene = memo(function HomeScene({
   celebrateAchievement = false,
   onContinue,
   onOpenAchievements,
-  onContinueLearning,
+  onSelectSection,
   onOpenGrownUps,
   screenTime = null,
   onOpenScreenTime,
@@ -115,14 +119,21 @@ export const HomeScene = memo(function HomeScene({
     width,
     isTablet ? HOME_CARDS.tabletContentMaxWidth : HOME_CARDS.contentMaxWidth
   );
-  const pairedWidth = pairedCardWidth(contentWidth);
   // On a phone the content overflows the screen, so the ring's clearance
   // can live inside the scrollable padding -- it just scrolls into view.
   // On a tablet the content is centred and *fits*, so that same padding
   // gets treated as extra slack to centre around and only half of it ends
   // up as a real gap. Carved out of the ScrollView's own height instead
   // (before centring runs on what's left), it stays a full, guaranteed gap.
-  const tabletRingReserve = isTablet && screenTime ? ringClearance(28) : 0;
+  const footClearance = navClearance(insets.bottom);
+  const navItemRefs = useMemo(() => ({ screensafe: guideTargets?.screenTime }), [guideTargets?.screenTime]);
+  const handleSelect = useCallback((id: ChildNavItemId) => {
+    if (id === 'screensafe') {
+      onOpenScreenTime?.(navItemCentre('screensafe', width, height, insets.bottom, isTablet));
+      return;
+    }
+    if (id !== 'home') onSelectSection(id);
+  }, [onOpenScreenTime, onSelectSection, width, height, insets.bottom, isTablet]);
   // A tablet has room the phone's spacing never asks for, and the panels read
   // as one block without it. Portrait has hundreds of points spare and takes
   // the generous set; landscape has tens, so it takes a smaller one rather
@@ -177,13 +188,13 @@ export const HomeScene = memo(function HomeScene({
         onLayout={scrollBinding?.onLayout}
         onContentSizeChange={scrollBinding?.onContentSizeChange}
         scrollEventThrottle={16}
-        style={isTablet ? [styles.scrollTablet, { marginBottom: tabletRingReserve }] : undefined}
+        style={isTablet ? [styles.scrollTablet, { marginBottom: footClearance }] : undefined}
         contentContainerStyle={[
           styles.content,
           isTablet && styles.contentTabletCenter,
           {
             paddingTop: heroContentTop(insets.top, sun.size) + spread,
-            paddingBottom: insets.bottom + 52 + (scrollBinding?.reserve ?? 0),
+            paddingBottom: (isTablet ? TABLET_FOOT_PADDING : footClearance) + (scrollBinding?.reserve ?? 0),
           },
         ]}
         showsVerticalScrollIndicator={false}
@@ -212,39 +223,15 @@ export const HomeScene = memo(function HomeScene({
           <ContinueCard story={data.currentStory} width={contentWidth} animated={animated} onPress={onContinue} />
         </View>
 
-        {isTablet ? (
-          <View style={[styles.cardSlot, styles.pairedRow, gaps && { marginBottom: HOME_CARDS.gap + gaps.card }]}>
-            <View style={styles.pairedSlot} ref={guideTargets?.achievement} collapsable={false}>
-              <AchievementCard
-                next={data.nextAchievement}
-                width={pairedWidth}
-                animated={animated}
-                celebrate={celebrateAchievement}
-                onPress={onOpenAchievements}
-                compact
-              />
-            </View>
-            <View style={styles.pairedSlot} ref={guideTargets?.learning} collapsable={false}>
-              <ContinueLearningCard width={pairedWidth} animated={animated} onPress={onContinueLearning} compact />
-            </View>
-          </View>
-        ) : (
-          <>
-            <View style={styles.cardSlot} ref={guideTargets?.achievement} collapsable={false}>
-              <AchievementCard
-                next={data.nextAchievement}
-                width={contentWidth}
-                animated={animated}
-                celebrate={celebrateAchievement}
-                onPress={onOpenAchievements}
-              />
-            </View>
-
-            <View style={styles.cardSlot} ref={guideTargets?.learning} collapsable={false}>
-              <ContinueLearningCard width={contentWidth} animated={animated} onPress={onContinueLearning} />
-            </View>
-          </>
-        )}
+        <View style={[styles.cardSlot, gaps && { marginBottom: HOME_CARDS.gap + gaps.card }]} ref={guideTargets?.achievement} collapsable={false}>
+          <AchievementCard
+            next={data.nextAchievement}
+            width={contentWidth}
+            animated={animated}
+            celebrate={celebrateAchievement}
+            onPress={onOpenAchievements}
+          />
+        </View>
 
         <View testID="home-stats-row" style={[styles.statsRow, gaps && { marginTop: gaps.stats, marginBottom: 4 + gaps.stats }]}>
           <StreakChip days={data.readingStreakDays} animated={animated} />
@@ -259,30 +246,15 @@ export const HomeScene = memo(function HomeScene({
         ) : null}
       </ScrollView>
 
-      <View
-        style={[
-          styles.screenTimeBar,
-          { bottom: insets.bottom + SCREEN_TIME_RING.marginBottom },
-        ]}
-        pointerEvents="box-none"
-      >
-        {screenTime ? (
-          <View ref={guideTargets?.screenTime} collapsable={false}>
-          <ScreenTimeRing
-            backplate
-            usageSeconds={screenTime.usageSeconds}
-            limitSeconds={screenTime.limitSeconds}
-            tint={theme.chromeInk}
-            onPress={
-              onOpenScreenTime
-                ? () => onOpenScreenTime(ringCentre(width, height, insets.bottom))
-                : undefined
-            }
-            hidden={screenTimeHidden}
-          />
-          </View>
-        ) : null}
-      </View>
+      <ChildBottomNavigation
+        selected="home"
+        onSelect={handleSelect}
+        screenTime={screenTime}
+        collapsed={screenTimeHidden}
+        itemRefs={navItemRefs}
+        slotKey="main"
+      />
+
     </View>
   );
 });
@@ -357,16 +329,11 @@ const styles = StyleSheet.create({
   },
   // The achievement and continue-learning cards, side by side on a tablet
   // instead of stacked -- see `pairedCardWidth`.
-  pairedRow: {
-    flexDirection: 'row',
-    gap: HOME_CARDS.gap,
-  },
   // No `flex: 1` here -- each card already gets its exact pixel width from
   // `pairedCardWidth`, and flexing this wrapper on top of that fights it:
   // with no width of its own to hand out, `pairedRow` collapsed and the two
   // tiles drifted apart instead of sitting flush against the gap between
   // them.
-  pairedSlot: {},
   // The streak and the week's reading, together under the cards rather than
   // above them -- an answer to "how am I doing", read after the "here's what
   // to do next" the cards themselves are.
@@ -385,13 +352,6 @@ const styles = StyleSheet.create({
   // centred along the bottom edge: this is where the glance's orb rises
   // from and where its closing drop falls back to, so it has to match
   // `ringCentre`
-  screenTimeBar: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-    zIndex: 10,
-  },
   planSlot: {
     alignItems: 'center',
     marginTop: PLAN_BASE_GAP,

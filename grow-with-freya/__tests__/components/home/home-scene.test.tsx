@@ -13,7 +13,7 @@ import { HomeScene, STATS_CHIP_INSET } from '@/components/home/home-scene';
 import { HOME_THEMES } from '@/constants/home-scene';
 import { HOME_CARDS, HOME_CARD_TYPE } from '@/constants/home-journey';
 import { HERO_SKY, heroContentTop } from '@/constants/home-sky';
-import { ringCentre } from '@/constants/screen-time-ring';
+import { navClearance, navItemCentre } from '@/components/child-ui/child-bottom-navigation';
 import type { ChildHomeData, WelcomeCopy } from '@/types/child-home';
 
 interface RenderedNode {
@@ -61,7 +61,7 @@ function renderScene(props: Partial<React.ComponentProps<typeof HomeScene>> = {}
   const handlers = {
     onContinue: jest.fn(),
     onOpenAchievements: jest.fn(),
-    onContinueLearning: jest.fn(),
+    onSelectSection: jest.fn(),
     onOpenGrownUps: jest.fn(),
   };
 
@@ -99,16 +99,37 @@ describe('HomeScene', () => {
      * sat second was a parent's reading of the week in the middle of a child's
      * screen, and the way onward was a text pill under everything.
      */
-    it('should read continue, achievements, then the way onward', () => {
+    it('should read continue, then achievements, with the way onward in the bar at the foot rather than a third card', () => {
       const { view } = renderScene();
 
-      const ids = ['continue-card', 'achievement-card', 'continue-learning-card'].map(
-        (id) => byTestId(view, id).length > 0
-      );
+      const ids = ['continue-card', 'achievement-card'].map((id) => byTestId(view, id).length > 0);
 
-      expect(ids).toEqual([true, true, true]);
+      expect(ids).toEqual([true, true]);
+      expect(byTestId(view, 'continue-learning-card')).toHaveLength(0);
+      expect(byTestId(view, 'child-bottom-navigation').length).toBeGreaterThan(0);
       expect(byTestId(view, 'journey-card')).toHaveLength(0);
       expect(byTestId(view, 'find-story-pill')).toHaveLength(0);
+    });
+
+    it('should pin the bar to the foot of the screen, where the library has it, and keep the page clear of it', () => {
+      const { view } = renderScene();
+
+      const scroll = view.UNSAFE_root.findAll((n: any) => n.props?.contentContainerStyle !== undefined)[0];
+      const wrapper = StyleSheet.flatten(byTestId(view, 'child-bottom-navigation-positioner')[0].props.style);
+      const padding = StyleSheet.flatten(scroll.props.contentContainerStyle).paddingBottom as number;
+
+      expect(scroll.findAll((n: any) => n.props?.testID === 'child-bottom-navigation')).toHaveLength(0);
+      expect(wrapper.position).toBe('absolute');
+      expect(padding).toBeGreaterThanOrEqual(navClearance(34));
+    });
+
+    it('should send its bar to the shared slot for the main page, so one bar serves the whole journey', () => {
+      const { view } = renderScene();
+
+      const underTest = view.UNSAFE_root.findAll((n: any) => n.props?.slotKey !== undefined);
+
+      expect(underTest.length).toBeGreaterThan(0);
+      expect(underTest[0].props.slotKey).toBe('main');
     });
 
     /** The one number kept from the stats card, as encouragement above them. */
@@ -154,12 +175,28 @@ describe('HomeScene', () => {
       expect(onOpenAchievements).toHaveBeenCalledTimes(1);
     });
 
-    it('should offer a way on into the library', () => {
-      const { view, onContinueLearning } = renderScene();
+    it.each(['progress', 'search', 'profile'])('should hand %s in the bar on to be opened, like a normal selection', (id) => {
+      const { view, onSelectSection } = renderScene();
 
-      pressTestId(view, 'continue-learning-card');
+      pressTestId(view, `navigation-item-${id}`);
 
-      expect(onContinueLearning).toHaveBeenCalledTimes(1);
+      expect(onSelectSection).toHaveBeenCalledWith(id);
+    });
+
+    it('should do nothing for Home, which is where the child already is', () => {
+      const { view, onSelectSection } = renderScene();
+
+      pressTestId(view, 'navigation-item-home');
+
+      expect(onSelectSection).not.toHaveBeenCalled();
+    });
+
+    it('should mark Home as the place the child already is', () => {
+      const { view } = renderScene();
+
+      const underTest = byTestId(view, 'navigation-item-home').find((n) => n.props.accessibilityState !== undefined);
+
+      expect(underTest?.props.accessibilityState).toEqual(expect.objectContaining({ selected: true }));
     });
   });
 
@@ -194,12 +231,12 @@ describe('HomeScene', () => {
     });
 
     it('should hand off rather than navigate itself, so the gate can run', () => {
-      const { view, onOpenGrownUps, onContinueLearning } = renderScene();
+      const { view, onOpenGrownUps, onSelectSection } = renderScene();
 
       pressTestId(view, 'grown-ups-pill');
 
       expect(onOpenGrownUps).toHaveBeenCalledTimes(1);
-      expect(onContinueLearning).not.toHaveBeenCalled();
+      expect(onSelectSection).not.toHaveBeenCalled();
     });
   });
 });
@@ -238,33 +275,35 @@ describe('HomeScene time of day', () => {
 });
 
 describe('HomeScene screen time', () => {
-  it('should stay out of the way when screen time is not being tracked', () => {
+  it('should show Screensafe as a plain shield when screen time is not being tracked', () => {
     const { view } = renderScene({ screenTime: null });
 
-    expect(byTestId(view, 'screen-time-ring').length).toBe(0);
+    expect(byTestId(view, 'nav-screen-time-ring').length).toBe(0);
+    expect(byTestId(view, 'navigation-item-screensafe').length).toBeGreaterThan(0);
   });
 
-  it('should show a quiet ring while there is time left', () => {
+  it('should carry the live ring in the bar while there is time left', () => {
     const { view } = renderScene({ screenTime: { usageSeconds: 600, limitSeconds: 3600 } });
 
-    expect(byTestId(view, 'screen-time-ring').length).toBeGreaterThan(0);
-    expect(byTestId(view, 'screen-time-ring-fill').length).toBe(0);
+    expect(byTestId(view, 'nav-screen-time-ring').length).toBeGreaterThan(0);
+    expect(byTestId(view, 'screen-time-ring')).toHaveLength(0);
   });
 
-  it('should fill the ring once the allowance is spent', () => {
-    const { view } = renderScene({ screenTime: { usageSeconds: 3600, limitSeconds: 3600 } });
-
-    expect(byTestId(view, 'screen-time-ring-fill').length).toBeGreaterThan(0);
-  });
-
-  it('should report where the ring is, so the glance can open out of it', () => {
+  it('should report where the Screensafe item is, so the glance can open out of it', () => {
     const onOpenScreenTime = jest.fn();
-    const { view } = renderScene({ screenTime: { usageSeconds: 600, limitSeconds: 3600 }, onOpenScreenTime });
+    const { view, onSelectSection } = renderScene({ screenTime: { usageSeconds: 600, limitSeconds: 3600 }, onOpenScreenTime });
 
-    pressTestId(view, 'screen-time-ring');
+    pressTestId(view, 'navigation-item-screensafe');
 
     const { width, height } = Dimensions.get('window');
-    expect(onOpenScreenTime).toHaveBeenCalledWith(ringCentre(width, height, 34));
+    expect(onOpenScreenTime).toHaveBeenCalledWith(navItemCentre('screensafe', width, height, 34, false));
+    expect(onSelectSection).not.toHaveBeenCalled();
+  });
+
+  it('should draw the bar in while the glance is open, so the window opens out of the ring\'s place', () => {
+    const { view } = renderScene({ screenTime: { usageSeconds: 600, limitSeconds: 3600 }, screenTimeHidden: true });
+
+    expect(byTestId(view, 'child-bottom-navigation').length).toBeGreaterThan(0);
   });
 });
 
@@ -333,22 +372,17 @@ describe('HomeScene on a tablet', () => {
     window.dispatchEvent(new Event('resize'));
   });
 
-  it('pairs the achievement and continue-learning cards side by side, the same size', () => {
+  it('gives the achievement card the whole column, with its own way in, now nothing sits beside it', () => {
     const { view } = renderScene();
 
     const achievement = byTestId(view, 'achievement-card')[0];
-    const learning = byTestId(view, 'continue-learning-card')[0];
 
-    expect(achievement.props.width).toBe(learning.props.width);
-    // Narrower than the full content column -- actually paired, not just
-    // sitting beside each other at full width.
-    expect(achievement.props.width).toBeLessThan(400);
-    // Compact mode drops the standalone CTA row -- the whole tile is the
-    // press target instead, which is how it fits at half the width.
-    expect(byTestId(view, 'achievement-cta').length).toBe(0);
+    expect(achievement.props.width).toBeGreaterThan(400);
+    expect(byTestId(view, 'continue-learning-card')).toHaveLength(0);
+    expect(byTestId(view, 'achievement-cta').length).toBeGreaterThan(0);
   });
 
-  it('keeps every fact on the paired achievement card, laid out to fit', () => {
+  it('keeps every fact on the achievement card', () => {
     const { view } = renderScene();
 
     const underTest = textContents(view);
@@ -356,14 +390,12 @@ describe('HomeScene on a tablet', () => {
     expect(byTestId(view, 'milestone-stars').length).toBeGreaterThan(0);
   });
 
-  it('still opens the achievements and the library when their paired tiles are tapped', () => {
-    const { view, onOpenAchievements, onContinueLearning } = renderScene();
+  it('still opens the achievements when the card is tapped', () => {
+    const { view, onOpenAchievements } = renderScene();
 
     pressTestId(view, 'achievement-card');
-    pressTestId(view, 'continue-learning-card');
 
     expect(onOpenAchievements).toHaveBeenCalledTimes(1);
-    expect(onContinueLearning).toHaveBeenCalledTimes(1);
   });
 
   it('still shows the streak and the week`s reading below the cards', () => {
@@ -461,19 +493,18 @@ describe('HomeScene on a tablet in portrait', () => {
     expect(sunSize).toBeGreaterThan(Math.round(834 * HERO_SKY.sunSizeRatio));
   });
 
-  it('still pairs the achievement and continue-learning cards side by side', () => {
+  it('gives the achievement card the whole column here too', () => {
     const { view } = renderScene();
 
     const achievement = byTestId(view, 'achievement-card')[0];
-    const learning = byTestId(view, 'continue-learning-card')[0];
 
-    expect(achievement.props.width).toBe(learning.props.width);
-    expect(byTestId(view, 'achievement-cta').length).toBe(0);
+    expect(byTestId(view, 'continue-learning-card')).toHaveLength(0);
+    expect(achievement.props.width).toBeGreaterThan(400);
+    expect(byTestId(view, 'achievement-cta').length).toBeGreaterThan(0);
   });
 });
 
-/** The streak and the week's reading sit under the cards on a phone too --
- *  only the achievement/continue-learning pairing is tablet-only. */
+/** The streak and the week's reading sit under the cards on a phone too. */
 describe('HomeScene stats row', () => {
   let originalWidth: number;
   let originalHeight: number;

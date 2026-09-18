@@ -12,6 +12,7 @@ import { StoryDownloadService } from '@/services/story-download-service';
 import { CHILD_UI_MOTION } from '@/constants/child-ui-motion';
 import { glanceCloseTimeline } from '@/constants/screen-time-glance-timeline';
 import { StoryCatalogueScreen } from '@/components/stories/catalogue/story-catalogue-screen';
+import * as catalogueStoryModule from '@/components/stories/catalogue/catalogue-story';
 import { COVER_GRID_GAP } from '@/components/child-ui/tokens';
 import { coverWidthFor } from '@/constants/catalogue-columns';
 import { StyleSheet } from 'react-native';
@@ -475,6 +476,37 @@ describe('StoryCatalogueScreen', () => {
     expect(call[3].map((story: any) => story.id).sort()).toEqual(['whale', 'wombat']);
   });
 
+  it('opens straight on the section it was asked for, without drawing Stories first or fading from it', async () => {
+    const buildShelves = jest.spyOn(catalogueStoryModule, 'buildShelves');
+    const tree = render(<StoryCatalogueScreen sectionRequest={{ section: 'search', key: 1 }} />);
+
+    expect(buildShelves).not.toHaveBeenCalled();
+    buildShelves.mockRestore();
+
+    expect(byTestId(tree, 'page-title')[0].props.children).toBe('childUi.nav.search');
+    expect(byTestId(tree, 'featured-story-card')).toHaveLength(0);
+    expect(byTestId(tree, 'section-crossfade-leaving')).toHaveLength(0);
+  });
+
+  it('switches at once, with no crossfade, when it is sent to another section from outside', async () => {
+    const tree = render(<StoryCatalogueScreen sectionRequest={{ section: 'home', key: 1 }} />);
+    await waitFor(() => expect(byTestId(tree, 'featured-story-card').length).toBeGreaterThan(0));
+
+    tree.rerender(<StoryCatalogueScreen sectionRequest={{ section: 'search', key: 2 }} />);
+
+    await waitFor(() => expect(byTestId(tree, 'page-title')[0].props.children).toBe('childUi.nav.search'));
+    expect(byTestId(tree, 'section-crossfade-leaving')).toHaveLength(0);
+  });
+
+  it('still crossfades when the child changes section from the bar', async () => {
+    const tree = render(<StoryCatalogueScreen sectionRequest={{ section: 'home', key: 1 }} />);
+    await waitFor(() => expect(byTestId(tree, 'navigation-item-search').length).toBeGreaterThan(0));
+
+    fireEvent.press(byTestId(tree, 'navigation-item-search').find((n: any) => n.props.accessibilityRole === 'tab'));
+
+    await waitFor(() => expect(byTestId(tree, 'section-crossfade-leaving').length).toBeGreaterThan(0));
+  });
+
   it('leads with the book left part-way through, offered as Continue reading with the same Read Now button', async () => {
     mockAppState.storyProgress = {
       wombat: { pageIndex: 2, totalPages: 6, updatedAt: '2026-09-05T09:00:00Z', completedCount: 0 },
@@ -651,10 +683,7 @@ describe('StoryCatalogueScreen', () => {
 
     fireEvent.press(byTestId(tree, 'circle-action-back')[0]);
 
-    await waitFor(() => {
-      expect(byTestId(tree, 'featured-story-card').length).toBeGreaterThan(0);
-    }, { timeout: 4000 });
-    expect(mockAppState.requestReturnToMainMenu).not.toHaveBeenCalled();
+    expect(mockAppState.requestReturnToMainMenu).toHaveBeenCalledTimes(1);
   });
 
   it('shows the empty state without a clear-filters button when a mode matches nothing', async () => {

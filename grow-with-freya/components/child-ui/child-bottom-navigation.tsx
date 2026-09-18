@@ -27,6 +27,7 @@ import {
 } from '@/constants/child-ui-motion';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
+import { useJourneyBarPublisher } from './journey-bar-slot';
 import { ScreenTimeRing } from '@/components/home/screen-time-ring';
 import { TEXT_SECONDARY } from '@/constants/night-palette';
 import { NavigationItem } from './navigation-item';
@@ -53,7 +54,7 @@ interface ChildNavItem {
 }
 
 export const CHILD_NAV_ITEMS: readonly ChildNavItem[] = [
-  { id: 'home', icon: 'home-outline', selectedIcon: 'home', labelKey: 'childUi.nav.home' },
+  { id: 'home', icon: 'school-outline', selectedIcon: 'school', labelKey: 'childUi.nav.home' },
   { id: 'progress', icon: 'trending-up-outline', selectedIcon: 'trending-up', labelKey: 'childUi.nav.progress' },
   { id: 'screensafe', icon: 'shield-outline', selectedIcon: 'shield-checkmark', labelKey: 'childUi.nav.screensafe' },
   { id: 'search', icon: 'search-outline', selectedIcon: 'search', labelKey: 'childUi.nav.search' },
@@ -109,7 +110,7 @@ export function navItemCentre(
   };
 }
 
-interface ChildBottomNavigationProps {
+export interface ChildBottomNavigationBarProps {
   selected: ChildNavItemId;
   onSelect: (id: ChildNavItemId) => void;
   /** Today's usage, so Screensafe can be the live ring rather than a glyph.
@@ -122,7 +123,28 @@ interface ChildBottomNavigationProps {
   itemRefs?: Partial<Record<ChildNavItemId, RefObject<View | null>>>;
 }
 
-export function ChildBottomNavigation({ selected, onSelect, screenTime, collapsed = false, itemRefs }: ChildBottomNavigationProps) {
+export interface ChildBottomNavigationProps extends ChildBottomNavigationBarProps {
+  /** Names the page this bar belongs to. With a journey bar slot mounted, the bar is shown there
+   *  for that page rather than drawn here, so one bar serves every page in the journey. */
+  slotKey?: string;
+}
+
+export function ChildBottomNavigation({ slotKey, ...props }: ChildBottomNavigationProps) {
+  const publish = useJourneyBarPublisher();
+  const { selected, onSelect, screenTime, collapsed, itemRefs } = props;
+  const sendsToSlot = publish !== null && slotKey !== undefined;
+
+  useEffect(() => {
+    if (!publish || slotKey === undefined) return undefined;
+    publish(slotKey, { selected, onSelect, screenTime, collapsed, itemRefs });
+    return () => publish(slotKey, null);
+  }, [publish, slotKey, selected, onSelect, screenTime, collapsed, itemRefs]);
+
+  if (sendsToSlot) return null;
+  return <ChildBottomNavigationBar {...props} />;
+}
+
+export function ChildBottomNavigationBar({ selected, onSelect, screenTime, collapsed = false, itemRefs }: ChildBottomNavigationBarProps) {
   const insets = useSafeAreaInsets();
   const { width: windowWidth } = useWindowDimensions();
   const { isTablet } = useAccessibility();
@@ -198,6 +220,7 @@ export function ChildBottomNavigation({ selected, onSelect, screenTime, collapse
 
   return (
     <View
+      testID="child-bottom-navigation-positioner"
       style={[styles.positioner, { bottom: navBottomOffset(insets.bottom) }]}
       pointerEvents="box-none"
     >

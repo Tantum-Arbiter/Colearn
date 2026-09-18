@@ -11,12 +11,14 @@ import { useTimeOfDay } from '@/hooks/use-time-of-day';
 import { isScreenTimeExceeded } from '@/constants/screen-time-ring';
 import { ScreenTimeGlance } from './screen-time-glance';
 import type { HomeSceneProps } from './home-scene';
-import { HomeScene, type HomeGuideTargets } from './home-scene';
+import { HomeScene, type HomeSection, type HomeGuideTargets } from './home-scene';
 import { useChildHomeData } from './use-child-home-data';
 
 export const HOME_DESTINATIONS = {
   stories: 'stories',
   progress: 'progress',
+  search: 'search',
+  profile: 'profile',
 } as const;
 
 export interface HomeSceneContainerProps {
@@ -58,7 +60,7 @@ export const HomeSceneContainer = memo(function HomeSceneContainer({
   }, [currentStoryId, onNavigate, requestStoryOpen]);
 
   const handleOpenProgress = useCallback(() => onNavigate(HOME_DESTINATIONS.progress), [onNavigate]);
-  const handleContinueLearning = useCallback(() => onNavigate(HOME_DESTINATIONS.stories), [onNavigate]);
+  const handleSelectSection = useCallback((id: HomeSection) => onNavigate(HOME_DESTINATIONS[id]), [onNavigate]);
 
   // the ring reports its own centre, so the glance opens out of the control
   // the parent actually pressed
@@ -81,7 +83,7 @@ export const HomeSceneContainer = memo(function HomeSceneContainer({
         celebrateAchievement={celebrateAchievement}
         onContinue={handleContinue}
         onOpenAchievements={handleOpenProgress}
-        onContinueLearning={handleContinueLearning}
+        onSelectSection={handleSelectSection}
         onOpenGrownUps={onOpenGrownUps}
         screenTime={screenTime}
         timeOfDay={timeOfDay}

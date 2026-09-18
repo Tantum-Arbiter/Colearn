@@ -3391,7 +3391,7 @@ export default {
   },
   childUi: {
     nav: {
-      home: 'ホーム',
+      home: '学ぶ',
       screensafe: '見守り',
       progress: 'せいちょう',
       search: '検索',

@@ -31,6 +31,7 @@ import { SecureStorage } from '@/services/secure-storage';
 import { backgroundSaveService } from '@/services/background-save-service';
 import { SimpleStoryScreen } from '@/components/stories/simple-story-screen';
 import type { CatalogueSectionRequest } from '@/components/stories/catalogue/story-catalogue-screen';
+import { catalogueSectionFor } from '@/constants/catalogue-destinations';
 import { StoryBookReader } from '@/components/stories/story-book-reader';
 import { PractiseScreen } from '@/components/music/practise-screen';
 import { FreeplayScreen } from '@/components/music/freeplay-screen';
@@ -41,7 +42,10 @@ import { ScreenTimeProvider } from '@/components/screen-time/screen-time-provide
 import { Story } from '@/types/story';
 import { preloadCriticalImages, preloadSecondaryImages } from '@/services/image-preloader';
 import { EnhancedPageTransition } from '@/components/ui/enhanced-page-transition';
-import { PAGE_TRANSITION_DURATION_MS } from '@/constants/page-transition';
+import { JourneyBarProvider, JourneyBarOutlet } from '@/components/child-ui/journey-bar-slot';
+import { PAGE_TRANSITION_DURATION_MS, SLIDE_AFTER_SECTION_SWITCH_MS } from '@/constants/page-transition';
+
+const PREWARMED_PAGES = ['stories'] as const;
 import { StoryTransitionProvider, useStoryTransition } from '@/contexts/story-transition-context';
 import { ActivityTransitionProvider, useActivityTransition } from '@/contexts/ActivityTransitionContext';
 import { GlobalSoundProvider } from '@/contexts/global-sound-context';
@@ -675,6 +679,8 @@ function AppContent() {
     const destinationMap: Record<string, PageKey> = {
       'stories': 'stories',
       'progress': 'stories',
+      'search': 'stories',
+      'profile': 'stories',
       'account': 'account',
       'practise': 'practise',
       'freeplay': 'freeplay',
@@ -687,12 +693,15 @@ function AppContent() {
     if (pageKey) {
       // When navigating to plain 'stories' (not via a mode card), clear any
       // previously selected story mode so all stories are visible.
-      if (destination === 'stories' || destination === 'progress') {
+      const section = catalogueSectionFor(destination);
+      if (section) {
         setSelectedStoryMode(null);
-        setStoriesSection((current) => ({
-          section: destination === 'progress' ? 'progress' : 'home',
-          key: current.key + 1,
-        }));
+        setStoriesSection((current) => ({ section, key: current.key + 1 }));
+        setTimeout(() => {
+          setCurrentPage(pageKey);
+          setCurrentScreen(destination);
+        }, SLIDE_AFTER_SECTION_SWITCH_MS);
+        return;
       }
       setCurrentPage(pageKey);
       setCurrentScreen(destination);
@@ -934,6 +943,7 @@ function AppContent() {
     return (
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         {/* App navigation always rendered underneath */}
+        <JourneyBarProvider>
         <EnhancedPageTransition
           currentPage={currentPage as string}
           pages={{
@@ -969,7 +979,10 @@ function AppContent() {
           }}
           duration={PAGE_TRANSITION_DURATION_MS}
           animate={animatePageTransition}
+          prewarm={PREWARMED_PAGES}
         />
+        <JourneyBarOutlet pageKey={currentPage as string} holdMs={animatePageTransition ? PAGE_TRANSITION_DURATION_MS : 0} />
+        </JourneyBarProvider>
 
         {/* Story reader rendered on top - only loads AFTER mode selection is complete (not during transition) */}
         {/* zIndex 2000 ensures story reader stays above transition overlay (zIndex 1000) during exit animation */}

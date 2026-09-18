@@ -222,7 +222,14 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
   const [selectedTags, setSelectedTags] = useState<Set<StoryFilterTag>>(new Set());
   const [storyMode, setStoryMode] = useState<CatalogueMode | null>(initialMode ?? null);
   const [shareUnlockedIds, setShareUnlockedIds] = useState<Set<string>>(new Set());
-  const [navSection, setNavSection] = useState<ChildNavItemId>('home');
+  const [navSection, setNavSection] = useState<ChildNavItemId>(sectionRequest?.section ?? 'home');
+  const [sectionInstant, setSectionInstant] = useState(false);
+  const [appliedRequestKey, setAppliedRequestKey] = useState(sectionRequest?.key);
+  if (sectionRequest && sectionRequest.key !== appliedRequestKey) {
+    setAppliedRequestKey(sectionRequest.key);
+    setSectionInstant(true);
+    setNavSection(sectionRequest.section);
+  }
   const [searchQuery, setSearchQuery] = useState('');
   const [badgeDetailOpen, setBadgeDetailOpen] = useState(false);
   const [selectedBadge, setSelectedBadge] = useState<Badge | null>(null);
@@ -254,11 +261,6 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
     setStoryMode(initialMode ?? null);
   }, [initialMode]);
 
-  useEffect(() => {
-    if (sectionRequest) {
-      setNavSection(sectionRequest.section);
-    }
-  }, [sectionRequest]);
 
   useEffect(() => {
     const cachedStories = StoryLoader.getCachedStories();
@@ -443,6 +445,7 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
       setSelectedBadge(null);
       setEditProfileOpen(false);
     }
+    setSectionInstant(false);
     setNavSection(id);
   }, [afterDelay, reduceMotion]);
 
@@ -878,6 +881,7 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
   return (
     <View style={styles.fill}>
     <JourneyShell
+      navigationSlotKey="stories"
       selected={navSection}
       onSelect={handleNavSelect}
       navigationItemRefs={navItemRefs}
@@ -894,11 +898,11 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
       <CelestialBackground>
         <PlanetHeaderArtwork />
 
-        <SectionCrossfade sectionKey={navSection}>
+        <SectionCrossfade sectionKey={navSection} instant={sectionInstant}>
           {navSection === 'progress' ? (
             <ProgressScreen
               embedded
-              onBack={() => handleNavSelect('home')}
+              onBack={handleExitJourney}
               onRecommend={handleRecommend}
               onDetailVisibleChange={setBadgeDetailOpen}
               guideTargets={progressGuideTargets}

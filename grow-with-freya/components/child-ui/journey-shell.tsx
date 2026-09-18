@@ -9,10 +9,12 @@ interface JourneyShellProps {
   screenTime?: { usageSeconds: number; limitSeconds: number } | null;
   navigationCollapsed?: boolean;
   navigationItemRefs?: Partial<Record<ChildNavItemId, RefObject<View | null>>>;
+  /** The page this shell is, for the shared journey bar. */
+  navigationSlotKey?: string;
   children: ReactNode;
 }
 
-export function JourneyShell({ selected, onSelect, navigationHidden = false, screenTime, navigationCollapsed = false, navigationItemRefs, children }: JourneyShellProps) {
+export function JourneyShell({ selected, onSelect, navigationHidden = false, screenTime, navigationCollapsed = false, navigationItemRefs, navigationSlotKey, children }: JourneyShellProps) {
   return (
     <View style={styles.fill} testID="journey-shell">
       {children}
@@ -23,6 +25,7 @@ export function JourneyShell({ selected, onSelect, navigationHidden = false, scr
           screenTime={screenTime}
           collapsed={navigationCollapsed}
           itemRefs={navigationItemRefs}
+          slotKey={navigationSlotKey}
         />
       )}
     </View>

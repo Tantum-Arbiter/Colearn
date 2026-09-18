@@ -5,6 +5,7 @@
  */
 
 import React from 'react';
+import { StyleSheet } from 'react-native';
 import { render, fireEvent } from '@testing-library/react-native';
 import {
   ChildBottomNavigation,
@@ -50,6 +51,23 @@ describe('ChildBottomNavigation', () => {
     const tree = render(<ChildBottomNavigation selected="progress" onSelect={jest.fn()} />);
 
     items(tree).forEach((node) => expect(node).toBeTruthy());
+  });
+
+  it('floats above the page by default, pinned to the foot of the screen', () => {
+    const tree = render(<ChildBottomNavigation selected="progress" onSelect={jest.fn()} />);
+
+    const wrapper = tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'child-bottom-navigation-positioner')[0];
+    const underTest = StyleSheet.flatten(wrapper.props.style);
+
+    expect(underTest.position).toBe('absolute');
+    expect(underTest.bottom).toBeGreaterThan(0);
+  });
+
+  it('shows the first item as learning, with a school cap rather than a house', () => {
+    const home = CHILD_NAV_ITEMS.find((item) => item.id === 'home')!;
+
+    expect(home.icon).toBe('school-outline');
+    expect(home.selectedIcon).toBe('school');
   });
 
   it('marks exactly one item as selected', () => {

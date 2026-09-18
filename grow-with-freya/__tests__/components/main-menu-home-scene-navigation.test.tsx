@@ -78,7 +78,9 @@ describe('home scene navigation', () => {
   const WAYS_IN: [string, string][] = [
     ['continue-card', 'stories'],
     ['achievement-card', 'progress'],
-    ['continue-learning-card', 'stories'],
+    ['navigation-item-progress', 'progress'],
+    ['navigation-item-search', 'search'],
+    ['navigation-item-profile', 'profile'],
   ];
 
   beforeEach(() => {
@@ -135,19 +137,28 @@ describe('home scene navigation', () => {
     mockTourUnseen = false;
     const underTest = renderHome();
 
-    pressCard(underTest, 'continue-learning-card');
+    pressCard(underTest, 'navigation-item-search');
 
-    expect(onNavigate).toHaveBeenCalledWith('stories');
+    expect(onNavigate).toHaveBeenCalledWith('search');
   });
 
-  it('should open every story from the home, never one mode of them', () => {
+  it('should go nowhere for Home, which is where the child already is', () => {
     mockTourUnseen = false;
     const underTest = renderHome();
 
-    pressCard(underTest, 'continue-learning-card');
+    pressCard(underTest, 'navigation-item-home');
+
+    expect(onNavigate).not.toHaveBeenCalled();
+  });
+
+  it('should open the library as a section, never one mode of the stories', () => {
+    mockTourUnseen = false;
+    const underTest = renderHome();
+
+    pressCard(underTest, 'navigation-item-profile');
 
     const destination = onNavigate.mock.calls[0][0];
-    expect(destination).toBe('stories');
+    expect(destination).toBe('profile');
     expect(destination.startsWith('stories-')).toBe(false);
   });
 });

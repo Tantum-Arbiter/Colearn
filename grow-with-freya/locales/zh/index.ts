@@ -3391,7 +3391,7 @@ export default {
   },
   childUi: {
     nav: {
-      home: '首页',
+      home: '学习',
       screensafe: '护眼时间',
       progress: '进度',
       search: '搜索',

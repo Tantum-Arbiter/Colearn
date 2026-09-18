@@ -3391,7 +3391,7 @@ export default {
   },
   childUi: {
     nav: {
-      home: 'Ana Sayfa',
+      home: 'Öğren',
       screensafe: 'Ekran güvenli',
       progress: 'İlerleme',
       search: 'Ara',

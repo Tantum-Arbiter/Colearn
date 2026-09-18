@@ -3391,7 +3391,7 @@ export default {
   },
   childUi: {
     nav: {
-      home: 'الرئيسية',
+      home: 'تعلّم',
       screensafe: '‏وقت آمن',
       progress: 'التقدم',
       search: 'بحث',

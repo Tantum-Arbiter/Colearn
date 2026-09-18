@@ -3391,7 +3391,7 @@ export default {
   },
   childUi: {
     nav: {
-      home: 'Domus',
+      home: 'Disce',
       screensafe: 'Tutum Tempus',
       progress: 'Progressus',
       search: 'Quaerere',
