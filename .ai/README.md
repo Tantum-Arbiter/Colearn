@@ -31,6 +31,24 @@ Open <http://127.0.0.1:4317>. Use `node scripts/ai office --port 4318` for anoth
 checkout. The process stays in the foreground; Ctrl-C stops it. It is not a service
 or scheduled task. Existing logins and account settings are never rewritten.
 
+For the normal background launcher, install the tracked wrapper once and then use it
+from anywhere:
+
+```bash
+ln -sf /absolute/path/to/repository/.ai/scripts/office-launcher ~/.local/bin/ai-office
+ai-office          # starts if needed and opens the browser
+ai-office status
+ai-office stop
+```
+
+The office combines three read-only sources: active/recent Codex task metadata from
+the local Codex state store, running/recent Claude session metadata, and lifecycle
+events from this review orchestrator. It displays short local task/session titles,
+project names, status and tool names; it never sends them to a model or remote server.
+Claude discovery uses process/session files. Codex discovery is best-effort because
+the local task database schema is not a public compatibility API; a schema mismatch
+silently disables that adapter rather than reading arbitrary data or stopping the UI.
+
 Setup fetches Pixel Agents at commit
 `3537e140c2094761beae748592aeb92ece8edfdd`, verifies a clean pinned checkout,
 installs its lockfile with install scripts disabled, and builds its actual renderer.

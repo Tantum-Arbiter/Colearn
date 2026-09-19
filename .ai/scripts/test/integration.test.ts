@@ -139,17 +139,17 @@ test('office is local, rejects writes and cross-origin sockets, and replays real
   emitEvent(join(options.aiDir, 'state'), event);
   assert.equal(observedEvents([event], join(options.aiDir, 'state'))[0]?.event, 'interrupted');
   const release = acquireLock(join(options.aiDir, 'state')); t.after(release);
-  const office = await startOffice(options.aiDir, 0); t.after(() => { void office.close(); });
+  const office = await startOffice(options.aiDir, 0, () => []); t.after(() => { void office.close(); });
   assert.equal((await fetch(office.url + '/api/status', { method: 'POST' })).status, 405);
   assert.equal((await fetch(office.url + '/api/status', { headers: { Origin: 'https://evil.invalid' } })).status, 403);
   assert.equal((await fetch(office.url + '/pixel/%2e%2e%2f%2e%2e%2fconfig/reviewers.json')).status, 404);
-  const response = await (await fetch(office.url + '/api/status')).json() as { latest: OfficeEvent[] };
-  assert.equal(response.latest[0]?.worker, 'codex-1');
+  const response = await (await fetch(office.url + '/api/status')).json() as { agents: Array<{ key: string }> };
+  assert.equal(response.agents[0]?.key, 'review:codex-1');
   for (let i = 0; i < 2; i++) {
     await new Promise<void>((resolvePromise, reject) => {
       const socket = new WebSocket(office.url.replace('http:', 'ws:') + '/ws', { origin: office.url });
       socket.on('error', reject); socket.on('open', () => socket.send(JSON.stringify({ type: 'webviewReady' })));
-      socket.on('message', data => { const m = JSON.parse(data.toString()) as Record<string, unknown>; if (m.type === 'agentToolStart') { assert.equal(m.id, 2); socket.close(); resolvePromise(); } });
+      socket.on('message', data => { const m = JSON.parse(data.toString()) as Record<string, unknown>; if (m.type === 'agentToolStart') { assert.equal(m.id, 1); socket.close(); resolvePromise(); } });
     });
   }
   assert.equal(activityMessages({ ...event, event: 'deferred' }).length, 2);
