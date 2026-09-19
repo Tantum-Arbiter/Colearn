@@ -80,7 +80,6 @@ jest.mock('@/components/account/privacy-policy-screen', () => ({ PrivacyPolicyCo
 jest.mock('@/components/account/edit-profile-screen', () => ({ EditProfileContent: () => null }));
 jest.mock('@/components/owl-guide', () => ({ OwlGuide: () => null }));
 jest.mock('@/components/main-menu/animated-components', () => ({ MoonBottomImage: () => null }));
-jest.mock('@/components/main-menu/styles', () => ({ mainMenuStyles: { bearContainer: {} } }));
 
 jest.mock('@/services/subscription-service', () => ({
   restorePurchases: jest.fn().mockResolvedValue({ success: true }),
@@ -492,5 +491,47 @@ describe('AccountScreen navigation', () => {
       expect(reminderService.commitChanges).not.toHaveBeenCalled();
       expect(onBack).toHaveBeenCalledTimes(1);
     });
+  });
+});
+
+/**
+ * The account page is the home page's night -- its gradient, its twinkling
+ * field and its gold stars -- from the top of the screen down, with no band of
+ * another colour behind the header and nothing rising behind the last buttons.
+ */
+describe('AccountScreen background', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.useFakeTimers();
+    Object.assign(mockStore, MUTABLE_STORE_DEFAULTS);
+    (ApiClient.isAuthenticated as jest.Mock).mockResolvedValue(false);
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it('sits on the same night as the home page, with no band of another colour behind the header', () => {
+    const { tree } = renderAccount();
+
+    const header = tree.UNSAFE_root.findAll((node: any) => 'onBack' in node.props && 'title' in node.props)[0];
+
+    expect(tree.UNSAFE_root.findAll((node: any) => node.props.testID === 'home-sky-backdrop').length).toBeGreaterThan(0);
+    expect(header.props.headerBackgroundColor).toBeUndefined();
+  });
+
+  it('turns the sky over, because the page slides away upwards off the top of home', () => {
+    const { tree } = renderAccount();
+
+    const backdrop = tree.UNSAFE_root.findAll((node: any) => 'above' in node.props && 'active' in node.props)[0];
+
+    expect(backdrop.props.above).toBe(true);
+  });
+
+  it('has no moon at the foot of the page', () => {
+    const { MoonBottomImage } = jest.requireMock('@/components/main-menu/animated-components');
+    const { tree } = renderAccount();
+
+    expect(tree.UNSAFE_queryAllByType(MoonBottomImage)).toHaveLength(0);
   });
 });

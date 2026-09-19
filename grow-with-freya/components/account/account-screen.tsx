@@ -1,17 +1,13 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { View, Text, ScrollView, Pressable, StyleSheet, Dimensions, Alert, BackHandler, Platform, Image } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
-import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming } from 'react-native-reanimated';
-import { useAmbientLoop, type AmbientStarter } from '@/hooks/use-ambient-animation';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppStore, type SubscriptionTier } from '../../store/app-store';
 import { useShallow } from 'zustand/react/shallow';
 import { restorePurchases, isDevMode } from '@/services/subscription-service';
-import { MoonBottomImage } from '../main-menu/animated-components';
-import { mainMenuStyles } from '../main-menu/styles';
 import { PageHeader } from '../ui/page-header';
 import { TermsConditionsContent } from './terms-conditions-screen';
 import { PrivacyPolicyContent } from './privacy-policy-screen';
@@ -32,16 +28,13 @@ import { StoryLoader } from '../../services/story-loader';
 import { TEXT_SIZE_OPTIONS, useAccessibility } from '../../hooks/use-accessibility';
 import { OwlGuide } from '../owl-guide';
 import { Logger } from '@/utils/logger';
-import { AUTH_GRADIENT } from '@/components/auth/auth-theme';
+import { HomeSkyBackdrop } from '@/components/home/home-sky-backdrop';
 
 const log = Logger.create('Account');
+
 import { useOwlGuide } from '../../contexts/owl-guide-context';
 import { SUPPORTED_LANGUAGES, setStoredLanguage, type SupportedLanguage } from '../../services/i18n';
 import * as Notifications from 'expo-notifications';
-
-const BREATHE_STARS: AmbientStarter = (value) => {
-  value.value = withRepeat(withTiming(0.8, { duration: 2000 }), -1, true);
-};
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -55,24 +48,6 @@ interface AccountScreenProps {
   onBack: () => void;
   isActive?: boolean;
 }
-
-// PERFORMANCE: Generate star positions once at module level
-const generateStarPositions = () => {
-  const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
-  const stars = [];
-  const starCount = 15;
-
-  for (let i = 0; i < starCount; i++) {
-    stars.push({
-      id: i,
-      left: Math.random() * screenWidth,
-      top: Math.random() * (screenHeight * 0.6), // Only in top 60% of screen
-      opacity: 0.3 + Math.random() * 0.4, // Random opacity between 0.3-0.7
-    });
-  }
-  return stars;
-};
-const MEMOIZED_ACCOUNT_STAR_POSITIONS = generateStarPositions();
 
 export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
   const { i18n, t } = useTranslation();
@@ -243,17 +218,6 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
 
   // Tutorial reset
   const { resetGuides, lastResetTimestamp } = useOwlGuide();
-
-  // Star animation
-  const starOpacity = useSharedValue(0.4);
-  // PERFORMANCE: Use module-level memoized star positions
-  const stars = MEMOIZED_ACCOUNT_STAR_POSITIONS;
-
-  useAmbientLoop(isActive, starOpacity, BREATHE_STARS, 0.4);
-
-  const starAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: starOpacity.value,
-  }));
 
   // Screen time controls live here rather than on the Screen Time page: that
   // page reports on usage, this one is where the parent changes things. They
@@ -597,47 +561,17 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
 
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={AUTH_GRADIENT} // shared night palette, matching the redesigned app
-        style={styles.gradient}
-      >
-        {/* Animated stars background - pointerEvents none to allow scrolling through */}
-        <View style={StyleSheet.absoluteFill} pointerEvents="none">
-          {stars.map((star) => (
-            <Animated.View
-              key={`star-${star.id}`}
-              style={[
-                starAnimatedStyle,
-                {
-                  position: 'absolute',
-                  width: 3,
-                  height: 3,
-                  backgroundColor: '#FFFFFF',
-                  borderRadius: 1.5,
-                  opacity: star.opacity,
-                  left: star.left,
-                  top: star.top,
-                },
-              ]}
-            />
-          ))}
-        </View>
-
-        {/* Moon bottom background image - behind all other components */}
-        <View style={mainMenuStyles.bearContainer} pointerEvents="none">
-          <MoonBottomImage />
-        </View>
+      <View testID="account-background" style={styles.gradient}>
+        <HomeSkyBackdrop active={isActive} above />
 
         {/* Shared page header component - title changes based on current view */}
         <PageHeader
           title={getSlideTitle(currentView)}
           onBack={handleBack}
-          headerBackgroundColor="#0A0F2C"
           useHomeIcon={currentView === 'main'}
           useBackArrow={currentView !== 'main'}
         />
 
-        {/* Content container - z-index 10 to be above moon (z-index 1) */}
         <View style={{ flex: 1, paddingTop: insets.top + 90 + (textSizeScale - 1) * 40, zIndex: 10 }}>
           {/* Main Account Page - always rendered as base layer */}
               <ScrollView
@@ -1039,7 +973,7 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
           </Pressable>
         )}
 
-      </LinearGradient>
+      </View>
 
       {/* The owl's settings walkthrough - shown on first visit, key forces remount after reset */}
       <OwlGuide key={`settings-guide-${lastResetTimestamp}`} id="settings_walkthrough" active={isActive} />
