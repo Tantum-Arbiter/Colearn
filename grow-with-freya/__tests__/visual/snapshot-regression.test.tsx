@@ -198,6 +198,8 @@ describe('Visual Regression Tests', () => {
         'linear-gradient',
         'music-control-button',
         'music-icon-playing',
+        'page-header-row',
+        'page-header-title',
       ]);
     });
 

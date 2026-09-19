@@ -19,6 +19,10 @@ export function contentMargin(isTablet: boolean): number {
   return isTablet ? CONTENT_MARGIN_TABLET : CONTENT_MARGIN_PHONE;
 }
 
+export function journeyHeaderTop(insetTop: number, isTablet: boolean): number {
+  return insetTop + (isTablet ? SPACE_2 : 0);
+}
+
 export interface TypeRole {
   readonly phone: number;
   readonly tablet: number;

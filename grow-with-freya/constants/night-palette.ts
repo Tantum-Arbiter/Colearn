@@ -11,6 +11,8 @@ export type SkyGradient = readonly [NightStop, NightStop, NightStop];
 
 export const SKY_GRADIENT_WORLD: SkyGradient = [NIGHT_BRIGHT, NIGHT_PRIMARY, NIGHT_DEEP];
 
+export const SETTINGS_SKY: readonly [NightStop, NightStop] = [NIGHT_DEEP, NIGHT_VOID];
+
 const VEIL_SOLID_UNTIL = 0.55;
 
 export interface SkyColour {

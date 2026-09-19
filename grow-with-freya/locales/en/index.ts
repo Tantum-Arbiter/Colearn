@@ -617,6 +617,8 @@ export default {
 
   // Account screen
   account: {
+    sleepingSun: 'The sleeping sun',
+    sleepingMoon: 'The sleeping moon',
     title: 'Account',
     profile: 'Profile',
     nickname: 'Nickname',
@@ -1044,10 +1046,6 @@ export default {
       language: {
         title: 'Language',
         description: 'Choose your preferred language for the app interface.',
-      },
-      avatar: {
-        title: 'Your Avatar',
-        description: 'Personalise your child\'s experience with a custom avatar.',
       },
       accessibility: {
         title: 'Accessibility',

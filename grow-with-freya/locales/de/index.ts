@@ -490,6 +490,8 @@ export default {
     },
   },
   account: {
+    sleepingSun: 'Die schlafende Sonne',
+    sleepingMoon: 'Der schlafende Mond',
     title: 'Konto',
     profile: 'Profil',
     nickname: 'Spitzname',
@@ -812,10 +814,6 @@ export default {
       language: {
         title: 'Sprache',
         description: 'Wähle deine bevorzugte Sprache.',
-      },
-      avatar: {
-        title: 'Dein Avatar',
-        description: 'Personalisiere das Erlebnis deines Kindes.',
       },
       accessibility: {
         title: 'Barrierefreiheit',

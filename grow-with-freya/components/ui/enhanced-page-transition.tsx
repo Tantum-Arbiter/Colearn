@@ -10,6 +10,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { getScreenDimensions } from '@/components/main-menu/constants';
+import { crossesView, pageOffset } from '@/constants/page-slide';
 
 const ALWAYS_MOUNTED = 'main';
 const NO_PREWARM: readonly string[] = [];
@@ -62,9 +63,8 @@ const AnimatedPage: React.FC<AnimatedPageProps> = memo(function AnimatedPage({
 });
 
 /**
- * EnhancedPageTransition provides vertical scroll transitions between any pages
- * - Main menu stays at top (translateY: 0 when active, -screenHeight when inactive)
- * - All other pages scroll up from bottom (translateY: screenHeight when inactive, 0 when active)
+ * EnhancedPageTransition provides vertical scroll transitions between any pages.
+ * Where each page rests is `pageOffset` (constants/page-slide.ts).
  */
 export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
   currentPage,
@@ -116,26 +116,21 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
     return () => subscription?.remove();
   }, []);
 
-  // Create animation values for specific pages we know about
-  const mainTranslateY = useSharedValue(
-    currentPage === 'main' ? 0 :
-    currentPage === 'account' ? screenHeight :
-    -screenHeight
-  );
-  const storiesTranslateY = useSharedValue(currentPage === 'stories' ? 0 : screenHeight);
-  const sensoryTranslateY = useSharedValue(currentPage === 'sensory' ? 0 : screenHeight);
-  const screenTimeTranslateY = useSharedValue(currentPage === 'screen_time' ? 0 : screenHeight);
-  const practiseTranslateY = useSharedValue(currentPage === 'practise' ? 0 : screenHeight);
-  const freeplayTranslateY = useSharedValue(currentPage === 'freeplay' ? 0 : screenHeight);
-  const spellingTranslateY = useSharedValue(currentPage === 'spelling' ? 0 : screenHeight);
-  const numbersTranslateY = useSharedValue(currentPage === 'numbers' ? 0 : screenHeight);
-  const feelingsTranslateY = useSharedValue(currentPage === 'feelings' ? 0 : screenHeight);
-  const spellingGameTranslateY = useSharedValue(currentPage === 'spelling-game' ? 0 : screenHeight);
-  const accountTranslateY = useSharedValue(currentPage === 'account' ? 0 : -screenHeight);
+  const restingAt = (pageKey: string) => pageOffset(pageKey, currentPage, screenHeight);
+  const mainTranslateY = useSharedValue(restingAt('main'));
+  const storiesTranslateY = useSharedValue(restingAt('stories'));
+  const sensoryTranslateY = useSharedValue(restingAt('sensory'));
+  const screenTimeTranslateY = useSharedValue(restingAt('screen_time'));
+  const practiseTranslateY = useSharedValue(restingAt('practise'));
+  const freeplayTranslateY = useSharedValue(restingAt('freeplay'));
+  const spellingTranslateY = useSharedValue(restingAt('spelling'));
+  const numbersTranslateY = useSharedValue(restingAt('numbers'));
+  const feelingsTranslateY = useSharedValue(restingAt('feelings'));
+  const spellingGameTranslateY = useSharedValue(restingAt('spelling-game'));
+  const accountTranslateY = useSharedValue(restingAt('account'));
 
   // Map page keys to their animation values
-  // Page animations mapping - force cache refresh
-  const pageAnimations: Record<string, any> = {
+  const pageAnimations: Record<string, SharedValue<number>> = {
     main: mainTranslateY,
     stories: storiesTranslateY,
     sensory: sensoryTranslateY,
@@ -152,42 +147,9 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
   // Update animation values when screen height changes (orientation change)
   // Set values immediately without animation to prevent visual glitches
   useEffect(() => {
-    // Update positions for inactive pages when screen height changes
-    // Use direct assignment (no withTiming) to avoid animation during orientation change
-    if (currentPage !== 'main') {
-      mainTranslateY.value = currentPage === 'account' ? screenHeight : -screenHeight;
-    }
-    if (currentPage !== 'stories') {
-      storiesTranslateY.value = screenHeight;
-    }
-    if (currentPage !== 'sensory') {
-      sensoryTranslateY.value = screenHeight;
-    }
-    if (currentPage !== 'screen_time') {
-      screenTimeTranslateY.value = screenHeight;
-    }
-    if (currentPage !== 'practise') {
-      practiseTranslateY.value = screenHeight;
-    }
-    if (currentPage !== 'freeplay') {
-      freeplayTranslateY.value = screenHeight;
-    }
-    if (currentPage !== 'spelling') {
-      spellingTranslateY.value = currentPage === 'spelling-game' ? -screenHeight : screenHeight;
-    }
-    if (currentPage !== 'numbers') {
-      numbersTranslateY.value = currentPage === 'spelling-game' ? -screenHeight : screenHeight;
-    }
-    if (currentPage !== 'feelings') {
-      feelingsTranslateY.value = screenHeight;
-    }
-    if (currentPage !== 'spelling-game') {
-      spellingGameTranslateY.value = screenHeight;
-    }
-    if (currentPage !== 'account') {
-      // Account page slides down from top
-      accountTranslateY.value = -screenHeight;
-    }
+    Object.entries(pageAnimations).forEach(([pageKey, value]) => {
+      if (pageKey !== currentPage) value.value = pageOffset(pageKey, currentPage, screenHeight);
+    });
   }, [screenHeight]);
 
   useEffect(() => {
@@ -199,7 +161,7 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
 
     // Helper: set value with or without animation
     const set = (sv: SharedValue<number>, target: number) => {
-      sv.value = animate ? withTiming(target, animationConfig) : target;
+      sv.value = animate && !crossesView(sv.value, target) ? withTiming(target, animationConfig) : target;
     };
 
     // Block touch input while the slide animation is in progress
@@ -221,38 +183,9 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
     }
     prevPageRef.current = currentPage;
 
-    // Animate main menu
-    if (currentPage === 'account') {
-      // Account page: main menu slides down (positive translateY)
-      set(mainTranslateY, screenHeight);
-    } else {
-      // Other pages: main menu slides up when not active (negative translateY)
-      set(mainTranslateY, currentPage === 'main' ? 0 : -screenHeight);
-    }
-
-    // Animate all other pages
-    set(storiesTranslateY, currentPage === 'stories' ? 0 : screenHeight);
-    set(sensoryTranslateY, currentPage === 'sensory' ? 0 : screenHeight);
-    set(screenTimeTranslateY, currentPage === 'screen_time' ? 0 : screenHeight);
-    set(practiseTranslateY, currentPage === 'practise' ? 0 : screenHeight);
-    set(freeplayTranslateY, currentPage === 'freeplay' ? 0 : screenHeight);
-
-    // Learning screens slide UP when their child (spelling-game) is active,
-    // otherwise slide DOWN when a sibling page is active
-    set(spellingTranslateY,
-      currentPage === 'spelling' ? 0 :
-      currentPage === 'spelling-game' ? -screenHeight : screenHeight
-    );
-    set(numbersTranslateY,
-      currentPage === 'numbers' ? 0 :
-      currentPage === 'spelling-game' ? -screenHeight : screenHeight
-    );
-
-    set(feelingsTranslateY, currentPage === 'feelings' ? 0 : screenHeight);
-    set(spellingGameTranslateY, currentPage === 'spelling-game' ? 0 : screenHeight);
-
-    // Account page slides down from top
-    set(accountTranslateY, currentPage === 'account' ? 0 : -screenHeight);
+    Object.entries(pageAnimations).forEach(([pageKey, value]) => {
+      set(value, pageOffset(pageKey, currentPage, screenHeight));
+    });
   }, [currentPage, duration, animate]);
 
   return (

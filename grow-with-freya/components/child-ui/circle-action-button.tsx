@@ -14,18 +14,21 @@ import { CIRCLE_BUTTON_DIAMETER_PHONE, CIRCLE_BUTTON_DIAMETER_TABLET } from './t
 
 const ICON_RATIO = 0.48;
 const LABELLED_ICON_RATIO = 0.36;
+const EMOJI_RATIO = 0.5;
 const PILL_PADDING_RATIO = 0.25;
 const LABEL_MIN_SCALE = 0.7;
 
-type CircleActionType = 'back' | 'home' | 'audio' | 'settings';
+type CircleActionType = 'back' | 'home' | 'audio' | 'settings' | 'language';
 
 interface CircleActionButtonProps {
   type: CircleActionType;
   onPress: () => void;
+  onLongPress?: () => void;
   accessibilityLabel: string;
   muted?: boolean;
   /** A word beside the icon; the button becomes a pill of the same height. */
   label?: string;
+  emoji?: string;
   testID?: string;
 }
 
@@ -33,15 +36,18 @@ function iconName(type: CircleActionType, muted: boolean): keyof typeof Ionicons
   if (type === 'back') return 'arrow-back';
   if (type === 'home') return 'home';
   if (type === 'settings') return 'settings-outline';
+  if (type === 'language') return 'globe-outline';
   return muted ? 'volume-mute' : 'volume-high';
 }
 
 export function CircleActionButton({
   type,
   onPress,
+  onLongPress,
   accessibilityLabel,
   muted = false,
   label,
+  emoji,
   testID,
 }: CircleActionButtonProps) {
   const { isTablet, scaledFontSize } = useAccessibility();
@@ -58,6 +64,7 @@ export function CircleActionButton({
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       onPress={handlePress}
+      onLongPress={onLongPress}
       style={({ pressed }) => [
         styles.button,
         label ? [styles.pill, { paddingHorizontal: Math.round(diameter * PILL_PADDING_RATIO) }] : { width: diameter },
@@ -68,11 +75,17 @@ export function CircleActionButton({
         },
       ]}
     >
-      <Ionicons
-        name={iconName(type, muted)}
-        size={Math.round(diameter * (label ? LABELLED_ICON_RATIO : ICON_RATIO))}
-        color={TEXT_PRIMARY}
-      />
+      {emoji ? (
+        <Text style={{ fontSize: Math.round(diameter * EMOJI_RATIO), lineHeight: diameter }} allowFontScaling={false}>
+          {emoji}
+        </Text>
+      ) : (
+        <Ionicons
+          name={iconName(type, muted)}
+          size={Math.round(diameter * (label ? LABELLED_ICON_RATIO : ICON_RATIO))}
+          color={TEXT_PRIMARY}
+        />
+      )}
       {label ? (
         <Text
           style={[styles.label, { fontSize: scaledFontSize(isTablet ? 17 : 13) }]}

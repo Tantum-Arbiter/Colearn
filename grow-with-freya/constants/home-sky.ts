@@ -108,6 +108,19 @@ export function sunFrame(width: number, topInset: number, height: number = width
   return { centreX: width / 2, centreY: top + size / 2, top, size };
 }
 
+export const PORTRAIT_TABLET_SUN_SCALE = 1.3;
+const TABLET_MIN_SHORT_SIDE = 768;
+
+export function heroSunScale(width: number, height: number): number {
+  const portraitTablet = Math.min(width, height) >= TABLET_MIN_SHORT_SIDE && height > width;
+
+  return portraitTablet ? PORTRAIT_TABLET_SUN_SCALE : 1;
+}
+
+export function heroSunFrame(width: number, height: number, topInset: number): SunFrame {
+  return sunFrame(width, topInset, height, heroSunScale(width, height));
+}
+
 export function heroContentTop(topInset: number, sunSize: number): number {
   return topInset + HERO_SKY.sunTopInset + sunSize + HERO_SKY.welcomeGap;
 }

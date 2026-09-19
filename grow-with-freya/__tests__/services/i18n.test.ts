@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { SUPPORTED_LANGUAGES, SupportedLanguage } from '@/services/i18n';
+import { SUPPORTED_LANGUAGES, SupportedLanguage, languageFlag } from '@/services/i18n';
 
 // Helper to extract all leaf keys from a nested object
 function getLeafKeys(obj: any, prefix = ''): string[] {
@@ -194,3 +194,20 @@ describe('i18n Service', () => {
   });
 });
 
+
+describe('languageFlag', () => {
+  it('is the flag of each supported language', () => {
+    SUPPORTED_LANGUAGES.forEach((language) => {
+      expect(languageFlag(language.code)).toBe(language.flag);
+    });
+  });
+
+  it('matches a regional code to its language', () => {
+    expect(languageFlag('de-AT')).toBe('🇩🇪');
+  });
+
+  it('shows a globe for a language it does not know', () => {
+    expect(languageFlag('xx')).toBe('🌐');
+    expect(languageFlag(undefined)).toBe('🌐');
+  });
+});

@@ -490,6 +490,8 @@ export default {
     },
   },
   account: {
+    sleepingSun: 'El sol dormido',
+    sleepingMoon: 'La luna dormida',
     title: 'Cuenta',
     profile: 'Perfil',
     nickname: 'Apodo',
@@ -812,10 +814,6 @@ export default {
       language: {
         title: 'Idioma',
         description: 'Elige tu idioma preferido.',
-      },
-      avatar: {
-        title: 'Tu Avatar',
-        description: 'Personaliza la experiencia de tu hijo.',
       },
       accessibility: {
         title: 'Accesibilidad',

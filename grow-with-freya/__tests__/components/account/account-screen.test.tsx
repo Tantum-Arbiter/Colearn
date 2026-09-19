@@ -9,11 +9,19 @@
 
 import React from 'react';
 import { render, fireEvent, act, waitFor } from '@testing-library/react-native';
-import { Alert } from 'react-native';
+import { Alert, Dimensions, ScrollView, StyleSheet } from 'react-native';
 
 import { AccountScreen } from '@/components/account/account-screen';
+import { SleepingSkyFace } from '@/components/account/sleeping-sky-face';
+import { heroContentTop, heroSunFrame } from '@/constants/home-sky';
 import { reminderService } from '@/services/reminder-service';
 import { ApiClient } from '@/services/api-client';
+
+const mockTimeOfDay = jest.fn(() => 'night');
+
+jest.mock('@/hooks/use-time-of-day', () => ({
+  useTimeOfDay: () => mockTimeOfDay(),
+}));
 
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
@@ -27,13 +35,13 @@ jest.mock('react-native-reanimated', () => {
   );
   return {
     __esModule: true,
-    default: { View: AnimatedView, createAnimatedComponent: (c: any) => c },
+    default: { View: AnimatedView, Text: RN.Text, createAnimatedComponent: (c: any) => c },
     useSharedValue: jest.fn((v: any) => ({ value: v })),
     useAnimatedStyle: jest.fn(() => ({})),
     withTiming: jest.fn((v: any) => v),
     withRepeat: jest.fn((a: any) => a),
     cancelAnimation: jest.fn(),
-    Easing: { out: jest.fn((e: any) => e), in: jest.fn((e: any) => e), cubic: jest.fn() },
+    Easing: { out: jest.fn((e: any) => e), in: jest.fn((e: any) => e), inOut: jest.fn((e: any) => e), cubic: jest.fn(), sin: jest.fn(), linear: jest.fn() },
     runOnJS: jest.fn((fn: any) => fn),
   };
 });
@@ -77,7 +85,10 @@ jest.mock('@/components/reminders', () => {
 
 jest.mock('@/components/account/terms-conditions-screen', () => ({ TermsConditionsContent: () => null }));
 jest.mock('@/components/account/privacy-policy-screen', () => ({ PrivacyPolicyContent: () => null }));
-jest.mock('@/components/account/edit-profile-screen', () => ({ EditProfileContent: () => null }));
+jest.mock('@/components/account/edit-profile-screen', () => {
+  const { View } = require('react-native');
+  return { EditProfileContent: () => <View testID="edit-profile-content" /> };
+});
 jest.mock('@/components/owl-guide', () => ({ OwlGuide: () => null }));
 jest.mock('@/components/main-menu/animated-components', () => ({ MoonBottomImage: () => null }));
 
@@ -124,8 +135,9 @@ jest.mock('@/services/notification-service', () => ({
   },
 }));
 jest.mock('@/services/i18n', () => ({
-  SUPPORTED_LANGUAGES: [{ code: 'en', flag: '🇬🇧', name: 'English' }],
+  SUPPORTED_LANGUAGES: [{ code: 'en', flag: '🇬🇧', name: 'English', nativeName: 'English' }],
   setStoredLanguage: jest.fn().mockResolvedValue(undefined),
+  languageFlag: () => '🇬🇧',
 }));
 
 const mockNotificationService = {
@@ -219,22 +231,31 @@ describe('AccountScreen navigation', () => {
     jest.useRealTimers();
   });
 
-  it('opens Screen Time from the account list', () => {
+  it('opens the terms from the foot of the account list', () => {
     const { tree } = renderAccount();
 
-    press(tree, 'account-screen-time');
+    press(tree, 'account-terms');
 
-    expect(title(tree)).toBe('account.screenTime');
+    expect(title(tree)).toBe('account.termsAndConditions');
   });
 
-  it('returns to the account list from Screen Time', () => {
+  it('opens the privacy policy from the foot of the account list', () => {
+    const { tree } = renderAccount();
+
+    press(tree, 'account-privacy');
+
+    expect(title(tree)).toBe('account.privacyPolicy');
+  });
+
+  it('returns to the account list from the terms', () => {
     const { tree, onBack } = renderAccount();
-    press(tree, 'account-screen-time');
+    press(tree, 'account-terms');
 
     press(tree, 'header-back');
     settleSlide();
 
-    expect(title(tree)).toBe('account.title');
+    expect(title(tree)).toBe('');
+    expect(byTestId(tree, 'account-heading').length).toBeGreaterThan(0);
     expect(onBack).not.toHaveBeenCalled();
   });
 
@@ -381,125 +402,82 @@ describe('AccountScreen navigation', () => {
       const { tree } = renderAccount();
       expect(byTestId(tree, 'header-right')).toHaveLength(0);
 
-      press(tree, 'account-screen-time');
+      press(tree, 'account-terms');
 
       expect(byTestId(tree, 'header-right')).toHaveLength(0);
     });
-
-    it('never titles itself with a reminders page', () => {
-      const { tree } = renderAccount();
-
-      press(tree, 'account-screen-time');
-      press(tree, 'content-change');
-
-      expect(title(tree)).toBe('account.screenTime');
-    });
   });
 
-  describe('unsaved reminder changes', () => {
-    it('re-checks the live service rather than trusting the cached state it captured', () => {
-      // the outer gate is a snapshot taken when the counter last bumped; the
-      // actual commit re-reads the service fresh -- if that live read has
-      // since gone back to false, nothing should be committed even though
-      // the cached snapshot still says there was a change
-      const { tree, onBack } = renderAccount();
-      press(tree, 'account-screen-time');
-
-      (reminderService.hasUnsavedChanges as jest.Mock).mockReturnValue(true);
-      press(tree, 'content-change'); // snapshot captured as true
-
-      (reminderService.hasUnsavedChanges as jest.Mock).mockReturnValue(false); // live state now false
-
-      press(tree, 'header-back');
-      settleSlide();
-      press(tree, 'header-back');
-
-      expect(reminderService.commitChanges).not.toHaveBeenCalled();
-      expect(onBack).toHaveBeenCalledTimes(1);
-    });
-
-    it('syncs to the backend when the parent is signed in', async () => {
-      (ApiClient.isAuthenticated as jest.Mock).mockResolvedValue(true);
-      const { tree, onBack } = renderAccount();
-      press(tree, 'account-screen-time');
-
-      (reminderService.hasUnsavedChanges as jest.Mock).mockReturnValue(true);
-      press(tree, 'content-change');
-
-      press(tree, 'header-back');
-      settleSlide();
-      press(tree, 'header-back');
-
-      // the sync is a fire-and-forget async IIFE -- fake timers don't advance
-      // its microtask chain on their own, so flush it by hand
-      await act(async () => {
-        await Promise.resolve();
-        await Promise.resolve();
-      });
-
-      expect(reminderService.syncToBackend).toHaveBeenCalledTimes(1);
-      expect(onBack).toHaveBeenCalledTimes(1);
-    });
-
-    it('does not sync to the backend when the parent is not signed in', async () => {
-      (ApiClient.isAuthenticated as jest.Mock).mockResolvedValue(false);
+  describe('what Grown-ups leaves to other pages', () => {
+    it('has no Screen Time button: the ring on home opens that', () => {
       const { tree } = renderAccount();
-      press(tree, 'account-screen-time');
 
-      (reminderService.hasUnsavedChanges as jest.Mock).mockReturnValue(true);
-      press(tree, 'content-change');
-
-      press(tree, 'header-back');
-      settleSlide();
-      press(tree, 'header-back');
-
-      await act(async () => {
-        await Promise.resolve();
-        await Promise.resolve();
-      });
-
-      expect(ApiClient.isAuthenticated).toHaveBeenCalled();
-      expect(reminderService.syncToBackend).not.toHaveBeenCalled();
+      expect(byTestId(tree, 'account-screen-time')).toHaveLength(0);
+      expect(byTestId(tree, 'screen-time-content')).toHaveLength(0);
     });
 
-    it('commits them when the parent leaves', () => {
+    it('has no Edit Profile button: the Profile page edits the profile', () => {
+      const { tree } = renderAccount();
+
+      expect(byTestId(tree, 'account-edit-profile')).toHaveLength(0);
+      expect(byTestId(tree, 'edit-profile-content')).toHaveLength(0);
+      expect(tree.UNSAFE_root.findAll((node: any) => node.props.children === 'common.editProfile')).toHaveLength(0);
+    });
+
+    it('keeps the language button', () => {
+      const { tree } = renderAccount();
+
+      expect(byTestId(tree, 'account-language').length).toBeGreaterThan(0);
+    });
+
+    it('keeps the screen time switches on the page itself', () => {
+      const { tree } = renderAccount();
+
+      expect(byTestId(tree, 'account-screen-time-toggle').length).toBeGreaterThan(0);
+    });
+
+    it('leaves straight away, with nothing of the removed pages left to save', () => {
       const { tree, onBack } = renderAccount();
-      press(tree, 'account-screen-time');
-
-      // a reminder was changed inside the schedule window
-      (reminderService.hasUnsavedChanges as jest.Mock).mockReturnValue(true);
-      press(tree, 'content-change');
 
       press(tree, 'header-back');
-      settleSlide();
-      press(tree, 'header-back');
 
-      // the commit is fired synchronously on the way out, before onBack
-      expect(reminderService.commitChanges).toHaveBeenCalledTimes(1);
       expect(onBack).toHaveBeenCalledTimes(1);
-    });
-
-    it('commits nothing when no reminder was touched', () => {
-      const { tree, onBack } = renderAccount();
-      press(tree, 'account-screen-time');
-      press(tree, 'content-change');
-
-      press(tree, 'header-back');
-      settleSlide();
-      press(tree, 'header-back');
-
       expect(reminderService.commitChanges).not.toHaveBeenCalled();
-      expect(onBack).toHaveBeenCalledTimes(1);
     });
   });
 });
 
-/**
- * The account page is the home page's night -- its gradient, its twinkling
- * field and its gold stars -- from the top of the screen down, with no band of
- * another colour behind the header and nothing rising behind the last buttons.
- */
 describe('AccountScreen background', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.useFakeTimers();
+    Object.assign(mockStore, MUTABLE_STORE_DEFAULTS);
+    (ApiClient.isAuthenticated as jest.Mock).mockResolvedValue(false);
+    mockTimeOfDay.mockReturnValue('day');
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it('carries on the journey pages\' night, with no band of another colour behind the header', () => {
+    const { tree } = renderAccount();
+
+    const header = tree.UNSAFE_root.findAll((node: any) => 'onBack' in node.props && 'title' in node.props)[0];
+
+    expect(byTestId(tree, 'settings-sky-backdrop').length).toBeGreaterThan(0);
+    expect(header.props.headerBackgroundColor).toBeUndefined();
+  });
+
+  it('has no moon at the foot of the page', () => {
+    const { MoonBottomImage } = jest.requireMock('@/components/main-menu/animated-components');
+    const { tree } = renderAccount();
+
+    expect(tree.UNSAFE_queryAllByType(MoonBottomImage)).toHaveLength(0);
+  });
+});
+
+describe('AccountScreen sleeping sky', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers();
@@ -511,27 +489,71 @@ describe('AccountScreen background', () => {
     jest.useRealTimers();
   });
 
-  it('sits on the same night as the home page, with no band of another colour behind the header', () => {
+  function face(tree: ReturnType<typeof render>) {
+    return tree.UNSAFE_root.findAll((node: any) => node.type === SleepingSkyFace || node.type === (SleepingSkyFace as any).type)[0];
+  }
+
+  it.each(['day', 'night'] as const)('hands the sleeping face home\'s time of day (%s), so it sleeps the other one', (timeOfDay) => {
+    mockTimeOfDay.mockReturnValue(timeOfDay);
+
+    const { tree } = renderAccount();
+
+    expect(face(tree).props.timeOfDay).toBe(timeOfDay);
+  });
+
+  it('hangs it exactly where home hangs its sun', () => {
+    const { width, height } = Dimensions.get('window');
+    const sun = heroSunFrame(width, height, 0);
+
+    const { tree } = renderAccount();
+    const sky = StyleSheet.flatten(byTestId(tree, 'account-sky')[0].props.style);
+
+    expect(face(tree).props.size).toBe(sun.size);
+    expect(sky.paddingTop).toBe(sun.top);
+    expect(sky.alignItems).toBe('center');
+  });
+
+  it('starts the page below it, as home starts its welcome below the sun', () => {
+    const { width, height } = Dimensions.get('window');
+    const sun = heroSunFrame(width, height, 0);
+
+    const { tree } = renderAccount();
+    const sky = StyleSheet.flatten(byTestId(tree, 'account-sky')[0].props.style);
+
+    expect(sky.height).toBe(heroContentTop(0, sun.size));
+  });
+
+  it('scrolls it away with the rest of the page', () => {
+    const { tree } = renderAccount();
+
+    const scroll = tree.UNSAFE_root.findAll((node: any) => node.type === ScrollView)[0];
+
+    expect(scroll.findAll((node: any) => node.type === (SleepingSkyFace as any).type)).toHaveLength(1);
+  });
+
+  it('titles the page under it, leaving the top of the header clear for it', () => {
+    const { tree } = renderAccount();
+
+    const heading = byTestId(tree, 'account-heading')[0];
+
+    expect(heading.props.children).toBe('account.title');
+    expect(title(tree)).toBe('');
+  });
+
+  it('still titles each page inside Grown-ups in the header', () => {
+    const { tree } = renderAccount();
+
+    press(tree, 'account-privacy');
+
+    expect(title(tree)).toBe('account.privacyPolicy');
+  });
+
+  it('offers a way back up rather than a way home, since it leads back to where it was opened', () => {
     const { tree } = renderAccount();
 
     const header = tree.UNSAFE_root.findAll((node: any) => 'onBack' in node.props && 'title' in node.props)[0];
 
-    expect(tree.UNSAFE_root.findAll((node: any) => node.props.testID === 'home-sky-backdrop').length).toBeGreaterThan(0);
-    expect(header.props.headerBackgroundColor).toBeUndefined();
-  });
-
-  it('turns the sky over, because the page slides away upwards off the top of home', () => {
-    const { tree } = renderAccount();
-
-    const backdrop = tree.UNSAFE_root.findAll((node: any) => 'above' in node.props && 'active' in node.props)[0];
-
-    expect(backdrop.props.above).toBe(true);
-  });
-
-  it('has no moon at the foot of the page', () => {
-    const { MoonBottomImage } = jest.requireMock('@/components/main-menu/animated-components');
-    const { tree } = renderAccount();
-
-    expect(tree.UNSAFE_queryAllByType(MoonBottomImage)).toHaveLength(0);
+    expect(header.props.useBackArrow).toBe(true);
+    expect(header.props.useHomeIcon).toBeFalsy();
   });
 });

@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { View, Text, ScrollView, Pressable, StyleSheet, Dimensions, Alert, BackHandler, Platform, Image } from 'react-native';
+import { View, Text, ScrollView, Pressable, StyleSheet, Dimensions, Alert, BackHandler, Platform, Image, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
@@ -11,12 +11,10 @@ import { restorePurchases, isDevMode } from '@/services/subscription-service';
 import { PageHeader } from '../ui/page-header';
 import { TermsConditionsContent } from './terms-conditions-screen';
 import { PrivacyPolicyContent } from './privacy-policy-screen';
-import { ScreenTimeContent } from '../screen-time/screen-time-screen';
 import ScreenTimeService from '../../services/screen-time-service';
 import NotificationService from '../../services/notification-service';
 import { useScreenTime } from '../screen-time/screen-time-provider';
 import { formatDurationCompact } from '../../utils/time-formatting';
-import { EditProfileContent } from './edit-profile-screen';
 import { ApiClient } from '../../services/api-client';
 import { SecureStorage } from '../../services/secure-storage';
 import { reminderService } from '../../services/reminder-service';
@@ -28,17 +26,24 @@ import { StoryLoader } from '../../services/story-loader';
 import { TEXT_SIZE_OPTIONS, useAccessibility } from '../../hooks/use-accessibility';
 import { OwlGuide } from '../owl-guide';
 import { Logger } from '@/utils/logger';
-import { HomeSkyBackdrop } from '@/components/home/home-sky-backdrop';
+import { LanguagePicker } from '../ui/language-picker';
+import { SettingsSkyBackdrop } from './settings-sky-backdrop';
+import { SleepingSkyFace } from './sleeping-sky-face';
+import { heroContentTop, heroSunFrame } from '@/constants/home-sky';
+import { Fonts } from '@/constants/theme';
+import { useTimeOfDay } from '@/hooks/use-time-of-day';
+import { useReducedMotion } from '@/hooks/use-reduced-motion';
+import { useSettledAfterTransition } from '@/hooks/use-ambient-animation';
 
 const log = Logger.create('Account');
 
 import { useOwlGuide } from '../../contexts/owl-guide-context';
-import { SUPPORTED_LANGUAGES, setStoredLanguage, type SupportedLanguage } from '../../services/i18n';
+import { languageFlag } from '../../services/i18n';
 import * as Notifications from 'expo-notifications';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-type SlideView = 'main' | 'screen-time' | 'edit-profile' | 'terms' | 'privacy';
+type SlideView = 'main' | 'terms' | 'privacy';
 
 // Animation duration for slide transitions
 const SLIDE_DURATION = 300;
@@ -54,39 +59,13 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
   const [currentView, setCurrentView] = useState<SlideView>('main');
 
   const [showLanguageOverlay, setShowLanguageOverlay] = useState(false);
-  const currentLanguage = i18n.language as SupportedLanguage;
-
-  const handleLanguageChange = useCallback(async (lang: SupportedLanguage) => {
-    await setStoredLanguage(lang);
-    setShowLanguageOverlay(false);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-  }, []);
-
-  // Track reminder changes for the screen time content
-  const [reminderChangeCounter, setReminderChangeCounter] = useState(0);
-
-  // Track unsaved changes across all screens (currently mainly for reminders)
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-
-  // Re-check for unsaved changes when reminder counter changes
-  useEffect(() => {
-    const remindersChanged = reminderService.hasUnsavedChanges();
-    setHasUnsavedChanges(remindersChanged);
-  }, [reminderChangeCounter]);
+  const closeLanguageOverlay = useCallback(() => setShowLanguageOverlay(false), []);
 
   // Slide animation values for each sub-page (0 = off-screen right, 1 = visible)
-  const screenTimeSlide = useSharedValue(0);
-  const editProfileSlide = useSharedValue(0);
   const termsSlide = useSharedValue(0);
   const privacySlide = useSharedValue(0);
 
   // Animated styles for each sub-page overlay
-  const screenTimeStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: (1 - screenTimeSlide.value) * SCREEN_WIDTH }],
-  }));
-  const editProfileStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: (1 - editProfileSlide.value) * SCREEN_WIDTH }],
-  }));
   const termsStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: (1 - termsSlide.value) * SCREEN_WIDTH }],
   }));
@@ -159,13 +138,11 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
   // Get the slide animation value for a view
   const getSlideValue = useCallback((view: SlideView) => {
     switch (view) {
-      case 'screen-time': return screenTimeSlide;
-      case 'edit-profile': return editProfileSlide;
       case 'terms': return termsSlide;
       case 'privacy': return privacySlide;
       default: return null;
     }
-  }, [screenTimeSlide, editProfileSlide, termsSlide, privacySlide]);
+  }, [termsSlide, privacySlide]);
 
   // Navigate to a sub-page (slides in from right)
   const navigateToSlide = useCallback((view: SlideView) => {
@@ -176,18 +153,6 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
       slideValue.value = withTiming(1, { duration: SLIDE_DURATION });
     }
     setCurrentView(view);
-  }, [getSlideValue]);
-
-  // Navigate back (slides out to right)
-  const navigateBack = useCallback((fromView: SlideView, toView: SlideView) => {
-    log.debug(`Navigate ${fromView} → ${toView}`);
-
-    const slideValue = getSlideValue(fromView);
-    if (slideValue) {
-      slideValue.value = withTiming(0, { duration: SLIDE_DURATION });
-    }
-    // Update current view after animation starts
-    setTimeout(() => setCurrentView(toView), SLIDE_DURATION);
   }, [getSlideValue]);
 
   // Navigate back to main (closes all overlays)
@@ -205,8 +170,6 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
   // Get the title for the current slide view
   const getSlideTitle = useCallback((view: SlideView): string => {
     switch (view) {
-      case 'screen-time': return t('account.screenTime');
-      case 'edit-profile': return t('profile.editTitle');
       case 'terms': return t('account.termsAndConditions');
       case 'privacy': return t('account.privacyPolicy');
       default: return t('account.title');
@@ -215,6 +178,12 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
 
   // Accessibility scaling (textSizeScale already from useAppStore above)
   const { scaledFontSize, scaledButtonSize, scaledPadding, isTablet, contentMaxWidth } = useAccessibility();
+
+  const screen = useWindowDimensions();
+  const sun = heroSunFrame(screen.width, screen.height, insets.top);
+  const timeOfDay = useTimeOfDay();
+  const reduceMotion = useReducedMotion();
+  const skyAnimated = useSettledAfterTransition(isActive) && !reduceMotion;
 
   // Tutorial reset
   const { resetGuides, lastResetTimestamp } = useOwlGuide();
@@ -515,46 +484,13 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
 
     const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
     return () => subscription.remove();
-  }, [currentView, hasUnsavedChanges, isActive]);
+  }, [currentView, isActive]);
 
   // Handle back based on current view - respects navigation hierarchy
   const handleBack = () => {
-    // If leaving the account screen entirely (from main) and have unsaved changes, auto-save
-    if (currentView === 'main' && hasUnsavedChanges) {
-      // Save locally first (sync, non-blocking for UI)
-      if (reminderService.hasUnsavedChanges()) {
-        reminderService.commitChanges().catch(error => {
-          log.error('Failed to commit changes locally:', error);
-        });
-      }
-
-      // Sync to backend in background (fire and forget - don't block navigation)
-      // This prevents UI freezing when tokens need to be refreshed
-      (async () => {
-        try {
-          const isAuthenticated = await ApiClient.isAuthenticated();
-          if (isAuthenticated) {
-            await reminderService.syncToBackend();
-            log.debug('Reminders synced to backend');
-          }
-        } catch (syncError) {
-          log.debug('Failed to sync to backend (saved locally):', syncError);
-        }
-      })();
-
-      setHasUnsavedChanges(false);
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      onBack();
-      return;
-    }
-
     if (currentView === 'main') {
       onBack();
-    } else if (currentView === 'screen-time') {
-      // Screen time goes back to main
-      navigateBack('screen-time', 'main');
     } else {
-      // Other views (edit-profile, terms, privacy) go back to main
       navigateToMain();
     }
   };
@@ -562,22 +498,27 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
   return (
     <View style={styles.container}>
       <View testID="account-background" style={styles.gradient}>
-        <HomeSkyBackdrop active={isActive} above />
+        <SettingsSkyBackdrop active={isActive} />
 
         {/* Shared page header component - title changes based on current view */}
         <PageHeader
-          title={getSlideTitle(currentView)}
+          title={currentView === 'main' ? '' : getSlideTitle(currentView)}
           onBack={handleBack}
-          useHomeIcon={currentView === 'main'}
-          useBackArrow={currentView !== 'main'}
+          useBackArrow
         />
 
-        <View style={{ flex: 1, paddingTop: insets.top + 90 + (textSizeScale - 1) * 40, zIndex: 10 }}>
+        <View style={{ flex: 1, zIndex: 10 }}>
           {/* Main Account Page - always rendered as base layer */}
               <ScrollView
                 style={styles.scrollView}
                 contentContainerStyle={[styles.content, { paddingBottom: Dimensions.get('window').height * 0.2 }, isTablet && { alignItems: 'center' }]}
               >
+                <View testID="account-sky" style={[styles.sky, { height: heroContentTop(insets.top, sun.size), paddingTop: sun.top }]}>
+                  <SleepingSkyFace size={sun.size} timeOfDay={timeOfDay} animated={skyAnimated} />
+                </View>
+                <Text testID="account-heading" style={[styles.heading, { fontSize: scaledFontSize(isTablet ? 40 : 34) }]}>
+                  {t('account.title')}
+                </Text>
                 <View style={isTablet ? { maxWidth: contentMaxWidth, width: '100%' } : undefined}>
 
           {/* Sign in / out sits above everything: signing in is the first
@@ -593,7 +534,7 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
             </Text>
           </Pressable>
 
-          {/* Button strips: Language, Screen Time, Edit Profile */}
+          {/* Button strip: Language */}
           <View style={styles.stripContainer}>
             <Pressable
               testID="account-language"
@@ -609,47 +550,11 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
                 resizeMode="cover"
               />
               <View style={styles.stripOverlay}>
-                <Text style={{ fontSize: 28, marginRight: 12 }}>{SUPPORTED_LANGUAGES.find(l => l.code === currentLanguage)?.flag || '🌐'}</Text>
+                <Text style={{ fontSize: 28, marginRight: 12 }}>{languageFlag(i18n.language)}</Text>
                 <Text style={[styles.stripLabel, { fontSize: scaledFontSize(30) }]}>{t('account.language')}</Text>
               </View>
             </Pressable>
 
-            <Pressable
-              testID="account-screen-time"
-              style={({ pressed }) => [styles.strip, pressed && styles.stripPressed]}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                navigateToSlide('screen-time');
-              }}
-            >
-              <Image
-                source={require('../../assets/images/ui-elements/screentime-button-background.webp')}
-                style={styles.stripImage}
-                resizeMode="cover"
-              />
-              <View style={styles.stripOverlay}>
-                <Ionicons name="time-outline" size={28} color="#FFFFFF" style={{ marginRight: 12 }} />
-                <Text style={[styles.stripLabel, { fontSize: scaledFontSize(30) }]}>{t('account.screenTime')}</Text>
-              </View>
-            </Pressable>
-
-            <Pressable
-              style={({ pressed }) => [styles.strip, pressed && styles.stripPressed]}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                navigateToSlide('edit-profile');
-              }}
-            >
-              <Image
-                source={require('../../assets/images/ui-elements/choose-profile-button-background.webp')}
-                style={styles.stripImage}
-                resizeMode="cover"
-              />
-              <View style={styles.stripOverlay}>
-                <Ionicons name="person-outline" size={28} color="#FFFFFF" style={{ marginRight: 12 }} />
-                <Text style={[styles.stripLabel, { fontSize: scaledFontSize(30) }]}>{t('common.editProfile')}</Text>
-              </View>
-            </Pressable>
           </View>
 
           {/* Accessibility: inline text size pills */}
@@ -889,11 +794,11 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
 
           {/* Bottom: T&Cs + Privacy on one line, Version below */}
           <View style={styles.bottomTextRow}>
-            <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); navigateToSlide('terms'); }}>
+            <Pressable testID="account-terms" onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); navigateToSlide('terms'); }}>
               <Text style={[styles.bottomLink, { fontSize: scaledFontSize(12) }]}>{t('account.termsAndConditions')}</Text>
             </Pressable>
             <Text style={[styles.bottomSeparator, { fontSize: scaledFontSize(12) }]}>{'  |  '}</Text>
-            <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); navigateToSlide('privacy'); }}>
+            <Pressable testID="account-privacy" onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); navigateToSlide('privacy'); }}>
               <Text style={[styles.bottomLink, { fontSize: scaledFontSize(12) }]}>{t('account.privacyPolicy')}</Text>
             </Pressable>
           </View>
@@ -906,20 +811,6 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
         </View>
 
         {/* Sub-page overlays - slide in from right, same positioning as main content */}
-        {/* Screen Time Page */}
-        <Animated.View style={[styles.overlayPage, screenTimeStyle]}>
-          <ScreenTimeContent
-            paddingTop={insets.top + 90 + (textSizeScale - 1) * 40 + 10}
-            onReminderChange={() => setReminderChangeCounter(prev => prev + 1)}
-          />
-          <OwlGuide id="screen_time_tips" active={currentView === 'screen-time'} />
-        </Animated.View>
-
-        {/* Edit Profile Page */}
-        <Animated.View style={[styles.overlayPage, editProfileStyle]}>
-          <EditProfileContent paddingTop={insets.top + 90 + (textSizeScale - 1) * 40 + 10} onSaveComplete={navigateToMain} />
-        </Animated.View>
-
         {/* Terms & Conditions Page */}
         <Animated.View style={[styles.overlayPage, termsStyle]}>
           <TermsConditionsContent paddingTop={insets.top + 90 + (textSizeScale - 1) * 40 + 10} />
@@ -930,48 +821,7 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
           <PrivacyPolicyContent paddingTop={insets.top + 90 + (textSizeScale - 1) * 40 + 10} />
         </Animated.View>
 
-        {/* Language Selection Overlay */}
-        {showLanguageOverlay && (
-          <Pressable
-            style={styles.languageOverlay}
-            onPress={() => setShowLanguageOverlay(false)}
-          >
-            <Pressable
-              style={styles.languageModal}
-              onPress={(e) => e.stopPropagation()}
-            >
-              <Text style={[styles.languageModalTitle, { fontSize: scaledFontSize(18) }]}>
-                {t('account.selectLanguage')}
-              </Text>
-              <ScrollView
-                style={styles.languageScrollView}
-                showsVerticalScrollIndicator={true}
-                scrollIndicatorInsets={{ right: 4 }}
-              >
-                {SUPPORTED_LANGUAGES.map((lang) => (
-                  <Pressable
-                    key={lang.code}
-                    style={[
-                      styles.languageOption,
-                      currentLanguage === lang.code && styles.languageOptionSelected,
-                    ]}
-                    onPress={() => handleLanguageChange(lang.code)}
-                  >
-                    <Text style={[styles.languageFlag, { fontSize: scaledFontSize(24) }]}>
-                      {lang.flag}
-                    </Text>
-                    <Text style={[styles.languageName, { fontSize: scaledFontSize(16) }]}>
-                      {lang.nativeName}
-                    </Text>
-                    {currentLanguage === lang.code && (
-                      <Ionicons name="checkmark" size={scaledFontSize(18)} color="#4ECDC4" />
-                    )}
-                  </Pressable>
-                ))}
-              </ScrollView>
-            </Pressable>
-          </Pressable>
-        )}
+        <LanguagePicker visible={showLanguageOverlay} onClose={closeLanguageOverlay} />
 
       </View>
 
@@ -990,6 +840,20 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+  },
+  sky: {
+    alignSelf: 'stretch',
+    alignItems: 'center',
+  },
+  heading: {
+    color: 'white',
+    fontFamily: Fonts.primary,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 20,
+    textShadowColor: 'rgba(0, 0, 0, 0.6)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 8,
   },
   overlayPage: {
     position: 'absolute',
@@ -1264,62 +1128,6 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
 
-  languageOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1000,
-  },
-  languageModal: {
-    backgroundColor: 'rgba(30, 30, 60, 0.95)',
-    borderRadius: 20,
-    padding: 20,
-    width: '85%',
-    maxWidth: 350,
-    maxHeight: '70%',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-    flexDirection: 'column',
-  },
-  languageScrollView: {
-    maxHeight: 400,
-  },
-  languageModalTitle: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  languageOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 15,
-    borderRadius: 10,
-    marginBottom: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  languageOptionSelected: {
-    backgroundColor: 'rgba(100, 150, 255, 0.3)',
-    borderWidth: 1,
-    borderColor: 'rgba(100, 150, 255, 0.5)',
-  },
-  languageFlag: {
-    marginRight: 12,
-  },
-  languageName: {
-    color: '#FFFFFF',
-    flex: 1,
-  },
-  languageCheck: {
-    color: '#4CAF50',
-    fontWeight: 'bold',
-  },
   settingHint: {
     color: 'rgba(255, 255, 255, 0.6)',
     marginTop: 2,

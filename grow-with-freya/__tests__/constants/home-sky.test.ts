@@ -9,11 +9,14 @@
 
 import {
   HERO_SKY,
+  PORTRAIT_TABLET_SUN_SCALE,
   STAR_BASIS_CAP,
   buildHeroSky,
   starBasis,
   heroContentTop,
   heroMotionMode,
+  heroSunFrame,
+  heroSunScale,
   sunFrame,
   type HeroStarSeed,
 } from '@/constants/home-sky';
@@ -92,6 +95,34 @@ describe('sunFrame', () => {
     expect(scaled.size).toBeGreaterThan(plain.size);
     expect(scaled.centreX).toBe(plain.centreX);
     expect(scaled.top).toBe(plain.top);
+  });
+});
+
+describe('heroSunScale', () => {
+  it('should grow the sun only on an upright tablet', () => {
+    expect(heroSunScale(PHONE, 874)).toBe(1);
+    expect(heroSunScale(1194, TABLET)).toBe(1);
+    expect(heroSunScale(TABLET, 1194)).toBe(PORTRAIT_TABLET_SUN_SCALE);
+  });
+});
+
+describe('heroSunFrame', () => {
+  it('should be the plain sun on a phone', () => {
+    expect(heroSunFrame(PHONE, 874, 59)).toEqual(sunFrame(PHONE, 59, 874));
+  });
+
+  it('should be the plain sun on a tablet on its side', () => {
+    expect(heroSunFrame(1194, TABLET, 24)).toEqual(sunFrame(1194, 24, TABLET));
+  });
+
+  it('should grow the sun on an upright tablet, which has the height to spare', () => {
+    expect(heroSunFrame(TABLET, 1194, 24)).toEqual(sunFrame(TABLET, 24, 1194, PORTRAIT_TABLET_SUN_SCALE));
+    expect(PORTRAIT_TABLET_SUN_SCALE).toBe(1.3);
+  });
+
+  it('should count a screen as a tablet from a short side of 768', () => {
+    expect(heroSunFrame(768, 1024, 20)).toEqual(sunFrame(768, 20, 1024, PORTRAIT_TABLET_SUN_SCALE));
+    expect(heroSunFrame(767, 1024, 20)).toEqual(sunFrame(767, 20, 1024));
   });
 });
 

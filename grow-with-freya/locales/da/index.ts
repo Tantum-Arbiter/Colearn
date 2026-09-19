@@ -490,6 +490,8 @@ export default {
     },
   },
   account: {
+    sleepingSun: 'Den sovende sol',
+    sleepingMoon: 'Den sovende måne',
     title: 'Konto',
     profile: 'Profil',
     nickname: 'Kaldenavn',
@@ -812,10 +814,6 @@ export default {
       language: {
         title: 'Sprog',
         description: 'Vælg dit foretrukne sprog til app-grænsefladen.',
-      },
-      avatar: {
-        title: 'Din avatar',
-        description: 'Personalisér dit barns oplevelse med en brugerdefineret avatar.',
       },
       accessibility: {
         title: 'Tilgængelighed',

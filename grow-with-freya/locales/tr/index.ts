@@ -490,6 +490,8 @@ export default {
     },
   },
   account: {
+    sleepingSun: 'Uyuyan güneş',
+    sleepingMoon: 'Uyuyan ay',
     title: 'Hesap',
     profile: 'Profil',
     nickname: 'Takma Ad',
@@ -812,10 +814,6 @@ export default {
       language: {
         title: 'Dil',
         description: 'Uygulama arayüzü için tercih ettiğin dili seç.',
-      },
-      avatar: {
-        title: 'Avatarınız',
-        description: 'Özel bir avatar kullanarak çocuğunuzun deneyimini kişiselleştirin.',
       },
       accessibility: {
         title: 'Erişilebilirlik',

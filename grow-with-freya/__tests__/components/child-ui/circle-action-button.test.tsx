@@ -4,6 +4,7 @@
  */
 
 import React from 'react';
+import { StyleSheet } from 'react-native';
 import { render, fireEvent } from '@testing-library/react-native';
 import { CircleActionButton } from '@/components/child-ui/circle-action-button';
 
@@ -35,6 +36,49 @@ describe('CircleActionButton', () => {
     fireEvent.press(buttonNode(tree, 'circle-action-back'));
 
     expect(onPress).toHaveBeenCalledTimes(1);
+  });
+
+  it('calls onLongPress when held, and not onPress', () => {
+    const onPress = jest.fn();
+    const onLongPress = jest.fn();
+    const tree = render(
+      <CircleActionButton type="audio" onPress={onPress} onLongPress={onLongPress} accessibilityLabel="catalogue.sound" />
+    );
+
+    fireEvent(buttonNode(tree, 'circle-action-audio'), 'longPress');
+
+    expect(onLongPress).toHaveBeenCalledTimes(1);
+    expect(onPress).not.toHaveBeenCalled();
+  });
+
+  it('shows an emoji in place of its icon when given one, at the round button\'s size', () => {
+    const tree = render(
+      <CircleActionButton type="language" emoji="🇩🇪" onPress={jest.fn()} accessibilityLabel="account.language" />
+    );
+
+    const node = buttonNode(tree, 'circle-action-language');
+    const style = StyleSheet.flatten(node.props.style({ pressed: false }));
+
+    expect(tree.UNSAFE_root.findAll((n: any) => n.props.children === '🇩🇪').length).toBeGreaterThan(0);
+    expect(tree.UNSAFE_root.findAll((n: any) => n.props.name !== undefined && typeof n.props.name === 'string' && n.props.size !== undefined)).toHaveLength(0);
+    expect(style.width).toBe(56);
+    expect(style.height).toBe(56);
+  });
+
+  it('shows a globe for the language button when it has no flag', () => {
+    const tree = render(
+      <CircleActionButton type="language" onPress={jest.fn()} accessibilityLabel="account.language" />
+    );
+
+    expect(tree.UNSAFE_root.findAll((n: any) => n.props.name === 'globe-outline').length).toBeGreaterThan(0);
+  });
+
+  it('offers no long press unless one is given', () => {
+    const tree = render(
+      <CircleActionButton type="audio" onPress={jest.fn()} accessibilityLabel="catalogue.sound" />
+    );
+
+    expect(buttonNode(tree, 'circle-action-audio').props.onLongPress).toBeUndefined();
   });
 
   it.each([

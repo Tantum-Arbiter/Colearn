@@ -57,6 +57,7 @@ import {
   COVER_GRID_GAP,
   RADIUS_CONTROL,
   SPACE_2,
+  journeyHeaderTop,
   SPACE_3,
   SPACE_4,
   SPACE_5,
@@ -1003,7 +1004,7 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
             >
             <BalancedHeaderRow
               testID="catalogue-header-row"
-              style={{ marginTop: insets.top + (isTablet ? SPACE_2 : 0), marginHorizontal: margin }}
+              style={{ marginTop: journeyHeaderTop(insets.top, isTablet), marginHorizontal: margin }}
               left={
                 <CircleActionButton
                   type="home"

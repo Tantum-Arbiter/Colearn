@@ -9,7 +9,14 @@
 import React from 'react';
 import { Text } from 'react-native';
 import { act, render } from '@testing-library/react-native';
+import { useSharedValue, withTiming } from 'react-native-reanimated';
 import { EnhancedPageTransition } from '@/components/ui/enhanced-page-transition';
+import { getScreenDimensions } from '@/components/main-menu/constants';
+
+jest.mock('@/components/main-menu/constants', () => ({
+  ...jest.requireActual('@/components/main-menu/constants'),
+  getScreenDimensions: () => ({ width: 390, height: 844 }),
+}));
 
 const renders: Record<string, number> = {};
 
@@ -197,5 +204,90 @@ describe('EnhancedPageTransition', () => {
     const underTest = guard(view).props.pointerEvents;
 
     expect(underTest).toBe('none');
+  });
+
+  describe('Grown-ups below the library', () => {
+    const HEIGHT = getScreenDimensions().height;
+
+    beforeEach(() => {
+      (useSharedValue as jest.Mock).mockImplementation((initial: number) => React.useRef({ value: initial }).current);
+    });
+
+    afterEach(() => {
+      (useSharedValue as jest.Mock).mockImplementation((initial = 0) => ({ value: initial }));
+    });
+
+    function offset(view: ReturnType<typeof render>, pageKey: string): unknown {
+      return view.UNSAFE_root.findAll((node: any) => node.props.pageKey === pageKey && node.props.animationValue)[0]
+        .props.animationValue.value;
+    }
+
+    it('rests below until it is opened', () => {
+      const view = render(<EnhancedPageTransition currentPage="stories" pages={PAGES} duration={800} prewarm={['account']} prewarmAfterMs={10} />);
+      act(() => {
+        jest.advanceTimersByTime(10);
+      });
+
+      expect(offset(view, 'account')).toBe(HEIGHT);
+    });
+
+    it('rises into view as the library lifts away above it', () => {
+      const view = render(<EnhancedPageTransition currentPage="stories" pages={PAGES} duration={800} />);
+
+      view.rerender(<EnhancedPageTransition currentPage="account" pages={PAGES} duration={800} />);
+
+      expect(offset(view, 'account')).toBe(0);
+      expect(offset(view, 'stories')).toBe(-HEIGHT);
+      expect(offset(view, 'main')).toBe(-HEIGHT);
+    });
+
+    it('sinks away again as the library comes back down', () => {
+      const view = render(<EnhancedPageTransition currentPage="stories" pages={PAGES} duration={800} />);
+      view.rerender(<EnhancedPageTransition currentPage="account" pages={PAGES} duration={800} />);
+
+      view.rerender(<EnhancedPageTransition currentPage="stories" pages={PAGES} duration={800} />);
+
+      expect(offset(view, 'stories')).toBe(0);
+      expect(offset(view, 'account')).toBe(HEIGHT);
+    });
+
+    it('opens from below when it starts out showing', () => {
+      const view = render(<EnhancedPageTransition currentPage="account" pages={PAGES} duration={800} />);
+
+      expect(offset(view, 'account')).toBe(0);
+      expect(offset(view, 'main')).toBe(-HEIGHT);
+    });
+
+    describe('a page moving from above the screen to below it', () => {
+      beforeEach(() => {
+        (withTiming as jest.Mock).mockImplementation((to: number) => ({ slidesTo: to }));
+      });
+
+      afterEach(() => {
+        (withTiming as jest.Mock).mockImplementation((value: number, _config: unknown, callback?: (done: boolean) => void) => {
+          if (typeof callback === 'function') callback(true);
+          return value;
+        });
+      });
+
+      it('jumps straight across rather than sweeping through the view', () => {
+        const view = render(<EnhancedPageTransition currentPage="stories" pages={PAGES} duration={800} prewarm={['stories']} prewarmAfterMs={10} />);
+        act(() => {
+          jest.advanceTimersByTime(10);
+        });
+        view.rerender(<EnhancedPageTransition currentPage="account" pages={PAGES} duration={800} prewarm={['stories']} prewarmAfterMs={10} />);
+        act(() => {
+          jest.advanceTimersByTime(800);
+        });
+        (view.UNSAFE_root.findAll((node: any) => node.props.pageKey === 'stories' && node.props.animationValue)[0]
+          .props.animationValue).value = -HEIGHT;
+
+        view.rerender(<EnhancedPageTransition currentPage="main" pages={PAGES} duration={800} prewarm={['stories']} prewarmAfterMs={10} />);
+
+        expect(offset(view, 'stories')).toBe(HEIGHT);
+        expect(offset(view, 'account')).toEqual({ slidesTo: HEIGHT });
+        expect(offset(view, 'main')).toEqual({ slidesTo: 0 });
+      });
+    });
   });
 });

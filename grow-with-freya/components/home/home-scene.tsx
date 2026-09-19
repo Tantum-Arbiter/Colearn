@@ -1,12 +1,18 @@
-import React, { useCallback, useMemo, memo, type RefObject } from 'react';
+import React, { useCallback, useMemo, useState, memo, type RefObject } from 'react';
 import { View, Text, ScrollView, StyleSheet, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { MusicControl } from '@/components/ui/music-control';
+import { AudioControlModal } from '@/components/ui/audio-control-modal';
+import { LanguagePicker } from '@/components/ui/language-picker';
+import { languageFlag } from '@/services/i18n';
+import { CircleActionButton } from '@/components/child-ui/circle-action-button';
+import { CIRCLE_BUTTON_DIAMETER_PHONE, CIRCLE_BUTTON_DIAMETER_TABLET, contentMargin, journeyHeaderTop } from '@/components/child-ui/tokens';
+import { useGlobalSound } from '@/contexts/global-sound-context';
+import { useAccessibility } from '@/hooks/use-accessibility';
 import { Fonts } from '@/constants/theme';
-import { HOME_SCENE_LAYOUT, HOME_THEMES, type TimeOfDay } from '@/constants/home-scene';
+import { HOME_THEMES, type TimeOfDay } from '@/constants/home-scene';
 import { HOME_CARDS, HOME_CARD_TYPE, homeContentWidth } from '@/constants/home-journey';
-import { HERO_SKY, heroContentTop, sunFrame } from '@/constants/home-sky';
+import { HERO_SKY, heroContentTop, heroSunFrame, heroSunScale } from '@/constants/home-sky';
 import { useTimeOfDay } from '@/hooks/use-time-of-day';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { useSettledAfterTransition } from '@/hooks/use-ambient-animation';
@@ -95,9 +101,14 @@ export const HomeScene = memo(function HomeScene({
   scrollBinding,
   testID = 'home-scene',
 }: HomeSceneProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
+  const { isTablet: journeyTablet } = useAccessibility();
+  const sound = useGlobalSound();
+  const [audioSettingsOpen, setAudioSettingsOpen] = useState(false);
+  const [languageOpen, setLanguageOpen] = useState(false);
+  const closeLanguage = useCallback(() => setLanguageOpen(false), []);
   const clockTimeOfDay = useTimeOfDay();
   const activeTimeOfDay = timeOfDay ?? clockTimeOfDay;
   const theme = HOME_THEMES[activeTimeOfDay];
@@ -113,7 +124,7 @@ export const HomeScene = memo(function HomeScene({
   // spare, so it's the one that gets a bigger sun and bigger welcome text
   // rather than just more empty sky above the cards.
   const portraitTablet = isTablet && height > width;
-  const sun = sunFrame(width, insets.top, height, portraitTablet ? 1.3 : 1);
+  const sun = heroSunFrame(width, height, insets.top);
   const contentWidth = homeContentWidth(
     width,
     isTablet ? HOME_CARDS.tabletContentMaxWidth : HOME_CARDS.contentMaxWidth
@@ -178,14 +189,49 @@ export const HomeScene = memo(function HomeScene({
         topInset={insets.top}
         timeOfDay={activeTimeOfDay}
         active={isActive}
-        sizeScale={portraitTablet ? 1.3 : 1}
+        sizeScale={heroSunScale(width, height)}
       />
 
-      <View testID="home-corner-controls" style={[styles.chrome, { top: insets.top + HOME_SCENE_LAYOUT.chromeTop }]}>
+      <View
+        testID="home-corner-controls"
+        style={[
+          styles.chrome,
+          {
+            top: journeyHeaderTop(insets.top, journeyTablet),
+            left: contentMargin(journeyTablet),
+            right: contentMargin(journeyTablet),
+            height: journeyTablet ? CIRCLE_BUTTON_DIAMETER_TABLET : CIRCLE_BUTTON_DIAMETER_PHONE,
+          },
+        ]}
+      >
+        <CircleActionButton
+          type="language"
+          testID="home-language-button"
+          emoji={languageFlag(i18n.language)}
+          onPress={() => setLanguageOpen(true)}
+          accessibilityLabel={t('account.language')}
+        />
         <View ref={guideTargets?.sound} collapsable={false}>
-          <MusicControl />
+          <CircleActionButton
+            type="audio"
+            testID="home-sound-button"
+            muted={sound.isMuted}
+            onPress={() => { void sound.toggleMute(); }}
+            onLongPress={() => setAudioSettingsOpen(true)}
+            accessibilityLabel={t('catalogue.sound')}
+          />
         </View>
       </View>
+      <AudioControlModal
+        visible={audioSettingsOpen}
+        onClose={() => setAudioSettingsOpen(false)}
+        masterVolume={sound.masterVolume}
+        musicVolume={sound.musicVolume}
+        voiceOverVolume={sound.voiceOverVolume}
+        onMasterVolumeChange={sound.setMasterVolume}
+        onMusicVolumeChange={sound.setMusicVolume}
+        onVoiceOverVolumeChange={sound.setVoiceOverVolume}
+      />
 
       <ScrollView
         ref={scrollBinding?.scrollRef}
@@ -260,6 +306,7 @@ export const HomeScene = memo(function HomeScene({
         slotKey="main"
       />
 
+      <LanguagePicker visible={languageOpen} onClose={closeLanguage} />
     </View>
   );
 });
@@ -270,11 +317,9 @@ const styles = StyleSheet.create({
   },
   chrome: {
     position: 'absolute',
-    left: HOME_SCENE_LAYOUT.screenMargin,
-    right: HOME_SCENE_LAYOUT.screenMargin,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
     zIndex: 10,
   },
   content: {

@@ -490,6 +490,8 @@ export default {
     },
   },
   account: {
+    sleepingSun: 'الشمس النائمة',
+    sleepingMoon: 'القمر النائم',
     title: 'الحساب',
     profile: 'الملف الشخصي',
     nickname: 'الاسم المستعار',
@@ -812,10 +814,6 @@ export default {
       language: {
         title: 'اللغة',
         description: 'اختر لغتك المفضلة لواجهة التطبيق.',
-      },
-      avatar: {
-        title: 'أفاتارك',
-        description: 'خصص تجربة طفلك باستخدام أفاتار مخصص.',
       },
       accessibility: {
         title: 'إمكانية الوصول',

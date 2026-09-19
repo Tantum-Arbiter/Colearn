@@ -490,6 +490,8 @@ export default {
     },
   },
   account: {
+    sleepingSun: '睡着的太阳',
+    sleepingMoon: '睡着的月亮',
     title: '账户',
     profile: '个人资料',
     nickname: '昵称',
@@ -812,10 +814,6 @@ export default {
       language: {
         title: '语言',
         description: '为应用界面选择您的首选语言。',
-      },
-      avatar: {
-        title: '您的头像',
-        description: '使用自定义头像个性化孩子的体验。',
       },
       accessibility: {
         title: '无障碍',

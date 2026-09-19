@@ -8,13 +8,23 @@
 
 import React from 'react';
 import { Dimensions, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
-import { render, fireEvent, type RenderResult } from '@testing-library/react-native';
+import { render, fireEvent, act, type RenderResult } from '@testing-library/react-native';
 import { HomeScene, STATS_CHIP_INSET } from '@/components/home/home-scene';
+import { AudioControlModal } from '@/components/ui/audio-control-modal';
+import { LanguagePicker } from '@/components/ui/language-picker';
+import { useGlobalSound } from '@/contexts/global-sound-context';
+import { CIRCLE_BUTTON_DIAMETER_PHONE, contentMargin, journeyHeaderTop } from '@/components/child-ui/tokens';
 import { HOME_THEMES } from '@/constants/home-scene';
 import { HOME_CARDS, HOME_CARD_TYPE } from '@/constants/home-journey';
 import { HERO_SKY, heroContentTop } from '@/constants/home-sky';
 import { navClearance, navItemCentre } from '@/components/child-ui/child-bottom-navigation';
 import type { ChildHomeData, WelcomeCopy } from '@/types/child-home';
+
+jest.mock('@/components/ui/audio-control-modal', () => ({
+  AudioControlModal: function AudioControlModal() {
+    return null;
+  },
+}));
 
 interface RenderedNode {
   type: unknown;
@@ -228,8 +238,110 @@ describe('HomeScene', () => {
       const corner = byTestId(view, 'home-corner-controls').filter((node) => node.props.style)[0];
       const flat = StyleSheet.flatten(corner.props.style);
 
-      expect(byTestId(view, 'music-control-button').length).toBeGreaterThan(0);
-      expect(flat.justifyContent).toBe('flex-end');
+      expect(byTestId(view, 'home-sound-button').length).toBeGreaterThan(0);
+      expect(flat.justifyContent).toBe('space-between');
+    });
+
+    describe('the language flag', () => {
+      afterEach(() => {
+        jest.restoreAllMocks();
+      });
+
+      function flagButton(view: RenderResult) {
+        return byTestId(view, 'home-language-button').filter((node) => typeof node.props.onPress === 'function')[0];
+      }
+
+      it('sits in the top left, the speaker in the top right', () => {
+        const { view } = renderScene();
+
+        const corner = byTestId(view, 'home-corner-controls').filter((node) => node.props.style)[0];
+        const ids = corner.findAll((node: any) => node.props.testID === 'home-language-button' || node.props.testID === 'home-sound-button')
+          .map((node: any) => node.props.testID)
+          .filter((id: string, index: number, all: string[]) => all.indexOf(id) === index);
+
+        expect(ids).toEqual(['home-language-button', 'home-sound-button']);
+      });
+
+      it('shows the flag of the language in use', () => {
+        jest.spyOn(require('react-i18next'), 'useTranslation').mockReturnValue({
+          t: (key: string) => key,
+          i18n: { language: 'de' },
+        } as never);
+
+        const { view } = renderScene();
+
+        expect(flagButton(view).findAll((node: any) => node.props.children === '🇩🇪').length).toBeGreaterThan(0);
+      });
+
+      it('is named for what it does', () => {
+        const { view } = renderScene();
+
+        expect(flagButton(view).props.accessibilityLabel).toBe('account.language');
+      });
+
+      it('opens the language chooser, closed until then', () => {
+        const { view } = renderScene();
+        expect(view.UNSAFE_getByType(LanguagePicker).props.visible).toBe(false);
+
+        act(() => {
+          flagButton(view).props.onPress();
+        });
+
+        expect(view.UNSAFE_getByType(LanguagePicker).props.visible).toBe(true);
+      });
+
+      it('closes the chooser when it is done', () => {
+        const { view } = renderScene();
+        act(() => {
+          flagButton(view).props.onPress();
+        });
+
+        act(() => {
+          view.UNSAFE_getByType(LanguagePicker).props.onClose();
+        });
+
+        expect(view.UNSAFE_getByType(LanguagePicker).props.visible).toBe(false);
+      });
+    });
+
+    it('should put the speaker where every journey page puts its own', () => {
+      const { view } = renderScene();
+
+      const corner = byTestId(view, 'home-corner-controls').filter((node) => node.props.style)[0];
+      const flat = StyleSheet.flatten(corner.props.style);
+
+      expect(flat.top).toBe(journeyHeaderTop(44, false));
+      expect(flat.right).toBe(contentMargin(false));
+      expect(flat.left).toBe(contentMargin(false));
+      expect(flat.height).toBe(CIRCLE_BUTTON_DIAMETER_PHONE);
+    });
+
+    it('should draw the speaker as the journey pages\' own audio button', () => {
+      const { view } = renderScene();
+
+      const button = byTestId(view, 'home-sound-button').filter((node) => typeof node.props.style === 'function')[0];
+
+      expect(button.props.accessibilityLabel).toBe('catalogue.sound');
+      expect(StyleSheet.flatten(button.props.style({ pressed: false })).width).toBe(CIRCLE_BUTTON_DIAMETER_PHONE);
+    });
+
+    it('should mute on a tap', () => {
+      const toggleMute = jest.fn();
+      (useGlobalSound as jest.Mock).mockReturnValueOnce({ isMuted: false, toggleMute });
+      const { view } = renderScene();
+
+      pressTestId(view, 'home-sound-button');
+
+      expect(toggleMute).toHaveBeenCalledTimes(1);
+    });
+
+    it('should open the volume controls on a long press', () => {
+      const { view } = renderScene();
+
+      const button = byTestId(view, 'home-sound-button').filter((node) => typeof node.props.onLongPress === 'function')[0];
+      act(() => { button.props.onLongPress(); });
+
+      expect(view.UNSAFE_getByType(AudioControlModal).props.visible).toBe(true);
     });
   });
 });

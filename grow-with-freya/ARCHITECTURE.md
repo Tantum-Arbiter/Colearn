@@ -180,6 +180,11 @@ side holds a round speaker or a labelled pill. The title always keeps a third of
 sides are capped at what is left, a long label ("Dla dorosłych") shrinks to fit its side, and
 `PageTitle` itself shrinks to 70% before it would clip.
 
+The main menu's speaker is the same `CircleActionButton` (`home-sound-button`), hung from the
+same line (`journeyHeaderTop` in `components/child-ui/tokens.ts`) at the same side margin
+(`contentMargin`), so it does not jump when a journey page slides in. A long press still opens
+the volume controls there.
+
 ### Full-screen overlays opened from a page cover the bar
 
 The plans (`SubscriptionOverlay`) and the trial's end (`TrialEndUpgradeOverlay`) are rendered
@@ -195,6 +200,41 @@ hook arrived undefined on device and the whole screen stopped taking taps. A tes
 The featured book and Today's pick sit side by side across the top (`catalogueLayout` in
 `constants/catalogue-columns.ts`), and every shelf below runs the full width from the left margin,
 as upright. Previously the shelves were squeezed into a column beside the featured book.
+
+### Grown-ups lies below the Profile page
+
+Where every page rests while another shows is one function, `pageOffset` in
+`constants/page-slide.ts`, which `EnhancedPageTransition` applies to every page. Grown-ups
+(`account`) rests below: it rises into view from beneath while the library (`stories`) lifts away
+above, and its back arrow sinks it again, returning to whichever page opened it
+(`accountReturnPage`, recorded in `app/_layout.tsx` on every route in). A page that has to move
+from one side of the screen to the other -- the library, lifted above, when Grown-ups closes onto
+home -- jumps straight across (`crossesView`) instead of sweeping through the view.
+
+Its sky (`components/account/settings-sky-backdrop.tsx`, `SETTINGS_SKY`) begins in `NIGHT_DEEP`,
+the colour at the foot of every journey page, and falls to `NIGHT_VOID`, with home's star field and
+gold stars. It is the same night at any hour.
+
+At the top, exactly where home hangs its sun (`heroSunFrame`, shared with home), sleeps whichever of
+the sun and moon is off duty on home (`sleepingBody`): the moon by day, the sun by night
+(`components/account/sleeping-sky-face.tsx`). It breathes, snores a rising "zzZ", and a tap peeks
+its right eye open for a moment (`peekOpenness`) before it drifts off again; snoring pauses while
+it looks. The art is `home-sun-sleeping.webp` / `home-moon-sleeping.webp` -- the home faces with
+their painted eyes filled in -- and the eyes are drawn over them (`SLEEPING_EYES`) so they can open.
+Grown-ups has no Screen Time or Edit Profile buttons: the Screensafe ring on home opens Screen Time
+(`screen-time-glance.tsx`) and the Profile page's edit sheet edits the profile
+(`profile-edit-sheet.tsx`). Its screen time switches stay on the page, and its walkthrough has no
+avatar step.
+
+Languages are chosen in one place, `components/ui/language-picker.tsx`, opened from Grown-ups'
+Language strip and from the flag in home's top-left corner (`home-language-button`, a
+`CircleActionButton` given the flag of the language in use by `languageFlag` in `services/i18n.ts`).
+It covers the journey bar while open (`useCoversJourneyBar`). The flag and the speaker share one row,
+at the journey pages' header line.
+
+The page title sits under it, as home's welcome sits under the sun; `PageHeader` keeps its title
+for the pages inside Grown-ups and, with none, lays no title block over the page. Its button row
+lets touches through between the buttons.
 
 ### Journey pages scroll away behind the planet
 

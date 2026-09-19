@@ -154,7 +154,6 @@ export const GUIDE_STEPS: Record<GuideId, readonly GuideStep[]> = {
     ['settings_intro', 'intro'],
     ['login', 'login'],
     ['language', 'language'],
-    ['avatar', 'avatar'],
     ['accessibility', 'accessibility'],
     ['screen_time', 'screenTime'],
   ]),

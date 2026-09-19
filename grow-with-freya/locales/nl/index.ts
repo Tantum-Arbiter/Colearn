@@ -490,6 +490,8 @@ export default {
     },
   },
   account: {
+    sleepingSun: 'De slapende zon',
+    sleepingMoon: 'De slapende maan',
     title: 'Account',
     profile: 'Profiel',
     nickname: 'Bijnaam',
@@ -812,10 +814,6 @@ export default {
       language: {
         title: 'Taal',
         description: 'Kies je voorkeurstaal voor de app-interface.',
-      },
-      avatar: {
-        title: 'Je Avatar',
-        description: 'Personaliseer je kind\'s ervaring met een aangepaste avatar.',
       },
       accessibility: {
         title: 'Toegankelijkheid',

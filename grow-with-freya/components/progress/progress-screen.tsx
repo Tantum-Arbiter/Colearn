@@ -21,6 +21,7 @@ import { navClearance } from '@/components/child-ui/child-bottom-navigation';
 import {
   COVER_GRID_GAP,
   SPACE_2,
+  journeyHeaderTop,
   SPACE_3,
   SPACE_4,
   SPACE_5,
@@ -180,7 +181,7 @@ export function ProgressScreen({
       <View testID="progress-header" style={styles.header} pointerEvents="box-none" onLayout={onHeaderLayout}>
       <BalancedHeaderRow
         testID="progress-header-row"
-        style={{ marginTop: insets.top + (isTablet ? SPACE_2 : 0), marginHorizontal: margin }}
+        style={{ marginTop: journeyHeaderTop(insets.top, isTablet), marginHorizontal: margin }}
         left={<CircleActionButton type="home" label={t('common.home')} onPress={onBack} accessibilityLabel={t('common.home')} />}
         title={<PageTitle title={t('progress.title')} testID="progress-title" />}
         right={

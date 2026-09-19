@@ -490,6 +490,8 @@ export default {
     },
   },
   account: {
+    sleepingSun: 'Śpiące słońce',
+    sleepingMoon: 'Śpiący księżyc',
     title: 'Konto',
     profile: 'Profil',
     nickname: 'Pseudonim',
@@ -812,10 +814,6 @@ export default {
       language: {
         title: 'Język',
         description: 'Wybierz preferowany język.',
-      },
-      avatar: {
-        title: 'Twój Avatar',
-        description: 'Spersonalizuj doświadczenie dziecka.',
       },
       accessibility: {
         title: 'Dostępność',

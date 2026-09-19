@@ -24,6 +24,7 @@ import { OnboardingFlow } from '@/components/onboarding/onboarding-flow';
 import { LoginScreen } from '@/components/auth/login-screen';
 import { AUTH_GRADIENT } from '@/components/auth/auth-theme';
 import { AccountScreen } from '@/components/account/account-screen';
+import { accountReturnPage } from '@/constants/page-slide';
 import { MainMenu, suppressNextContainerFadeIn } from '@/components/main-menu';
 import { suppressNextCarouselAnimation } from '@/components/main-menu/menu-carousel';
 import { ApiClient } from '@/services/api-client';
@@ -211,6 +212,7 @@ function AppContent() {
   const [splashGone, setSplashGone] = useState(false);
   const handleSplashGone = useCallback(() => setSplashGone(true), []);
   const [currentPage, setCurrentPage] = useState<PageKey>('main');
+  const accountOpenedFromRef = useRef<PageKey>('main');
   const [selectedStory, setSelectedStory] = useState<Story | null>(null);
   // Story being read - kept separate so it persists during book closing animation
   const [storyBeingRead, setStoryBeingRead] = useState<Story | null>(null);
@@ -707,16 +709,18 @@ function AppContent() {
         }, SLIDE_AFTER_SECTION_SWITCH_MS);
         return;
       }
+      if (pageKey === 'account') accountOpenedFromRef.current = currentPage;
       setCurrentPage(pageKey);
       setCurrentScreen(destination);
     }
   };
 
   const handleAccountBack = () => {
-    setCurrentPage('main');
+    setCurrentPage(accountReturnPage(accountOpenedFromRef.current));
   };
 
   const handleOpenGrownUps = () => {
+    accountOpenedFromRef.current = currentPage;
     setCurrentPage('account');
     setCurrentScreen('account');
   };

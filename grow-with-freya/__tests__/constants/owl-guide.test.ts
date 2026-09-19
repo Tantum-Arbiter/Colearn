@@ -178,6 +178,19 @@ describe('GUIDE_STEPS', () => {
  * The bar is pinned below the scroll view, so the page walked off whatever the
  * owl was talking about and came back a step later, over and over.
  */
+describe('the Grown-ups walkthrough', () => {
+  it('tours only what the page still holds, with no step for the profile editor it no longer has', () => {
+    expect(GUIDE_STEPS.settings_walkthrough.map((step) => step.id)).toEqual([
+      'settings_intro',
+      'login',
+      'language',
+      'accessibility',
+      'screen_time',
+    ]);
+    expect(lookup('tutorial.settings.avatar')).toBeUndefined();
+  });
+});
+
 describe('pinned steps', () => {
   const pinnedOf = (id: GuideId) =>
     GUIDE_STEPS[id].filter((step) => step.pinned).map((step) => step.target);

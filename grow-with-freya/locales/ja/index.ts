@@ -490,6 +490,8 @@ export default {
     },
   },
   account: {
+    sleepingSun: 'ねむっている おひさま',
+    sleepingMoon: 'ねむっている おつきさま',
     title: 'アカウント',
     profile: 'プロフィール',
     nickname: 'ニックネーム',
@@ -812,10 +814,6 @@ export default {
       language: {
         title: '言語',
         description: 'アプリインターフェイスの優先言語を選択してください。',
-      },
-      avatar: {
-        title: 'あなたのアバター',
-        description: 'カスタムアバターでお子さんのエクスペリエンスをパーソナライズしてください。',
       },
       accessibility: {
         title: 'アクセシビリティ',

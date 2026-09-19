@@ -490,6 +490,8 @@ export default {
     },
   },
   account: {
+    sleepingSun: 'Sol dormiens',
+    sleepingMoon: 'Luna dormiens',
     title: 'Rationes',
     profile: 'Professio',
     nickname: 'Cognomen',
@@ -812,10 +814,6 @@ export default {
       language: {
         title: 'Lingua',
         description: 'Tuam Linguam Praefectam pro Interfacie Applicationis Elige.',
-      },
-      avatar: {
-        title: 'Tuus Avatarem',
-        description: 'Experientiam Filii Tui Customiza cum Avatare Personali.',
       },
       accessibility: {
         title: 'Accessibilitas',

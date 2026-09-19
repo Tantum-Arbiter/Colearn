@@ -490,6 +490,8 @@ export default {
     },
   },
   account: {
+    sleepingSun: 'O sol adormecido',
+    sleepingMoon: 'A lua adormecida',
     title: 'Conta',
     profile: 'Perfil',
     nickname: 'Apelido',
@@ -812,10 +814,6 @@ export default {
       language: {
         title: 'Idioma',
         description: 'Escolha seu idioma preferido para a interface do aplicativo.',
-      },
-      avatar: {
-        title: 'Seu avatar',
-        description: 'Personalize a experiência do seu filho com um avatar personalizado.',
       },
       accessibility: {
         title: 'Acessibilidade',
