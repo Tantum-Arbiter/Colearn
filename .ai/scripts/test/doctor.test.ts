@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, it } from 'node:test';
 import type { OrchestratorConfig } from '../lib/config.ts';
 import {
   codexConfigFindings,
+  blocksDispatch,
   nodeVersionOk,
   parseClaudeAuthStatus,
   parseCodexLoginStatus,
@@ -187,6 +188,13 @@ describe('runDoctor', () => {
     });
     assert.match(wrong.find((r) => r.area === 'Claude Pro')?.detail ?? '', /expected "pro"/);
     assert.equal(wrong.find((r) => r.area === 'Codex 1')?.status, 'fail');
+  });
+
+  it('keeps missing reviewer login job-local while blocking unsafe authentication', () => {
+    assert.equal(blocksDispatch({ area: 'Claude Pro', status: 'fail', detail: 'needs login', blocksDispatch: false }), false);
+    assert.equal(blocksDispatch({ area: 'Codex 1', status: 'fail', detail: 'signed in with an API key' }), true);
+    assert.equal(blocksDispatch({ area: 'Environment', status: 'fail', detail: 'paid-API variable set' }), true);
+    assert.equal(blocksDispatch({ area: 'Claude Pro', status: 'warn', detail: 'usage limited' }), false);
   });
 
   it('records a usage limit from a probe and shows queued reviews', async () => {

@@ -1,0 +1,29 @@
+name: AI orchestrator
+on:
+  pull_request:
+    paths: ['.ai/**', '.github/workflows/ai-orchestrator.yml']
+  push:
+    paths: ['.ai/**', '.github/workflows/ai-orchestrator.yml']
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: .ai
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.23.1'
+          cache: npm
+          cache-dependency-path: .ai/package-lock.json
+      - run: npm ci --ignore-scripts
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm audit --omit=dev --audit-level=moderate
+      - run: npm run office:setup
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:office
