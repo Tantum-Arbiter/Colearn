@@ -1,0 +1,46 @@
+#!/bin/zsh
+set -eu
+
+script_dir=${0:A:h}
+ai_dir=${script_dir:h}
+port=${AI_OFFICE_PORT:-4317}
+url="http://127.0.0.1:${port}"
+pid_file="$ai_dir/state/office.pid"
+log_file="$ai_dir/state/office.log"
+
+if [[ "${1:-start}" == "stop" ]]; then
+  if [[ -f "$pid_file" ]]; then
+    pid=$(<"$pid_file")
+    if [[ "$pid" == <-> ]] && kill -0 "$pid" 2>/dev/null; then kill "$pid"; fi
+    rm -f "$pid_file"
+  fi
+  print "AI Office stopped."
+  exit 0
+fi
+
+if [[ "${1:-start}" == "status" ]]; then
+  if curl -fsS "$url/api/status" >/dev/null 2>&1; then print "AI Office is running at $url"; exit 0; fi
+  print "AI Office is stopped."
+  exit 1
+fi
+
+if [[ "${1:-start}" != "start" ]]; then
+  print -u2 "Usage: ai-office [start|stop|status]"
+  exit 2
+fi
+
+mkdir -p "$ai_dir/state"
+if ! curl -fsS "$url/api/status" >/dev/null 2>&1; then
+  nohup node "$ai_dir/scripts/ai" office --port "$port" >"$log_file" 2>&1 &
+  print $! >"$pid_file"
+  for attempt in {1..40}; do
+    curl -fsS "$url/api/status" >/dev/null 2>&1 && break
+    sleep 0.1
+  done
+fi
+if ! curl -fsS "$url/api/status" >/dev/null 2>&1; then
+  print -u2 "AI Office failed to start. See $log_file"
+  exit 1
+fi
+open "$url"
+print "AI Office: $url"
