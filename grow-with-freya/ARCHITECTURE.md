@@ -167,6 +167,57 @@ This matters: the Story Garden's book-opening bridge keeps one book rendered acr
 the rotation and counter-rotates it to stay upright, which is only believable if the
 settle is frame-accurate rather than approximated.
 
+### Journey page headers, and where the grown-ups door is
+
+The grown-ups control lives only on the Profile page, as a gear with the word "Grown-ups" beside
+it; the main menu has none (operator decision 2026-09-19). The journey pages' left control is a
+house with the word "Home" (`common.home`, all fourteen locales). Both are `CircleActionButton`s
+given a `label`, which makes them a pill the height of the round button.
+
+Headers are laid out by `components/child-ui/balanced-header-row.tsx`: both side slots take the
+width of the wider control, so the title stays in the middle of the screen whether the right
+side holds a round speaker or a labelled pill. The title always keeps a third of the row -- the
+sides are capped at what is left, a long label ("Dla dorosłych") shrinks to fit its side, and
+`PageTitle` itself shrinks to 70% before it would clip.
+
+### Full-screen overlays opened from a page cover the bar
+
+The plans (`SubscriptionOverlay`) and the trial's end (`TrialEndUpgradeOverlay`) are rendered
+inside whichever page opens them, so their zIndex only counts within that page -- and the journey
+bar is drawn above every page. They call `useCoversJourneyBar(visible)`
+(`components/child-ui/journey-bar-cover.tsx`); while any overlay covers, `JourneyBarOutlet` draws
+nothing, so the bar is hidden behind them and cannot be tapped. That module must import nothing
+but React: when the hook lived in `journey-bar-slot.tsx` the overlays closed an import loop, the
+hook arrived undefined on device and the whole screen stopped taking taps. A test guards it.
+
+### The library on a tablet held sideways
+
+The featured book and Today's pick sit side by side across the top (`catalogueLayout` in
+`constants/catalogue-columns.ts`), and every shelf below runs the full width from the left margin,
+as upright. Previously the shelves were squeezed into a column beside the featured book.
+
+### Journey pages scroll away behind the planet
+
+The library (Stories, Search, Profile) and Progress hang the planet from the top and let their
+content scroll up *behind* it rather than being cut off at an invisible line. Both use
+`components/child-ui/planet-cover.tsx`:
+
+- `usePlanetCover()` gives `coverHeight`: the lower of the page's header (measured by
+  `onHeaderLayout`, estimated from `PLANET_HEADER_ESTIMATE` until then) and the planet's lowest
+  point (`earthLayout(..., 'top').cap`). Content is padded down by `coverHeight + SPACE_3`, so at
+  rest nothing sits under the globe. On a tablet the planet hangs ~115 pt below the title block;
+  starting content under the header alone hid the search bar and the profile avatar behind the
+  rim (operator request 2026-09-18).
+- Inside each section the order is the `ScrollView` (absolute, `top: 0`), then `PlanetCover`
+  (a sky veil plus a second `PlanetHeaderArtwork`), then the header with
+  `pointerEvents="box-none"`/`"none"` so a drag that starts on the globe still scrolls.
+- The veil is the sky itself (`headerSkyVeil`, colours sampled from `SKY_GRADIENT_WORLD`): solid
+  over the upper part of the cover and clear at its lower edge. The night clouds are translucent,
+  so without it text stays readable right up under the back button.
+- The planet is drawn twice on purpose. The copy behind `SectionCrossfade` keeps the globe solid
+  while sections fade; the copy in `PlanetCover` covers the content. `PinnedInSection` cancels
+  the section's lift so the two never part.
+
 ### Full-bleed backgrounds must not be sized in JS
 
 A background image sized from `useWindowDimensions()` is a React render behind the view's
@@ -226,8 +277,8 @@ view switch does not restart it.
   of `growEase`), then the wordmark and tagline arrive. The leaves sway afterwards. Helpers
   called from `useAnimatedStyle` carry the `'worklet'` directive.
 - **It fades off the page the app opens on** (operator decision 2026-09-18). `setAppReady`
-  fires when the hold ends, the layout mounts the destination *under* the splash, and only
-  then (`leaving`) does the whole splash, sky included, fade out over `handoffMs + exitMs`
+  fires `mountAllowanceMs` *before* the hold ends, the layout mounts the destination *under*
+  the splash while the logo is still holding, and only then (`leaving`) does the whole splash, sky included, fade out over `handoffMs + exitMs`
   and report `onGone`. The fade starts two frames after the destination mounts: mounting the
   main menu stalls the screen for a few hundred ms in a dev build, and a fade counted from the
   mount spent most of itself inside the stall. `SplashSky` is still the home sky -- the same
@@ -238,7 +289,13 @@ view switch does not restart it.
   star.
 - **The finished logo holds for two seconds** (operator decision 2026-09-18).
   `SPLASH_TIMELINE.exitAtMs` is derived, not typed in: `logoCompleteMs` (the latest entrance
-  to finish) plus `holdMs`. Retiming any entrance moves the exit with it. A test caps
+  to finish) plus `holdMs`. Retiming any entrance moves the exit with it. The hold is
+  what is seen, not just what is timed: readying the app only when the hold ended left the
+  logo up for the hold *plus* the destination's mount (auth check and main menu, ~0.6 s in a
+  dev build, measured 0.76 s late on device). So the app is readied `mountAllowanceMs` early
+  and the fade waits for whichever is later -- the end of the hold or the page being ready;
+  a page that is ready early never cuts the hold short. The allowance stays inside the hold,
+  so nothing mounts behind an unfinished logo. A test caps
   splash-gone at 4.9 s (hold, hand-off beat and fade) so the hold is the only thing that made it
   longer.
 
@@ -422,6 +479,19 @@ which guides have been seen is persisted by `contexts/owl-guide-context.tsx` und
 `@tutorial_state` key, migrating the previous shape on load. A guide that has been seen can be
 replayed from a screen's own menu with `replay`, which does not mark it again.
 
+The bottom bar is explained once, on the home page, where it is first seen: `main_menu_tour`
+walks the two cards, then the bar left to right (Learn, Progress, Screensafe, Search, Profile), and
+only then the sound button (operator decision 2026-09-18). The library's
+`catalogue_tour` stays on the shelf. Bar steps carry `revealsBar`, which makes the owl step back
+to `PERCH_STEP_BACK` for the whole step -- it stands on the bar's left end, and without the flag
+it only stepped back when the lit button happened to be under it. A step whose target key is
+handed to a tour is kept even if nothing on screen carries that ref: the home page used to list
+a `learning_button` it never rendered, and the tour showed a Learning bubble pointing at nothing.
+Every owl bubble -- the tours and the screen-time owl alike -- offers the word Skip
+(`tutorial.buttons.skip`, in every language) where it used to have a cross: `OwlSpeechBubble`'s
+`closeAsWord` (operator decision 2026-09-19). The title is padded by the
+word's measured width, so a long translation ("Überspringen", "Praeterire") never runs under it.
+
 A guide on an app page does not draw inside its page: pages sit under the shared journey bar
 (`JourneyBarOutlet`, zIndex 1500), which would cover the owl and the spotlight on its own
 buttons. `useGuideOnTop` (`components/owl-guide/owl-guide-layer.tsx`) hands the guide to
@@ -430,7 +500,14 @@ tests, the story reader) it draws in place. Pages are mounted before they are sh
 is wrapped by `guidePages` and a guide on a page that is not on screen draws nothing -- in the
 layer it would otherwise cover whatever page is showing. The screen-time owl alert sits at
 zIndex 3000 for the same reason: Fabric flattens the wrappers between, so it competes with the
-bar and the story reader directly.
+bar and the story reader directly. So does the story overlay in
+`contexts/story-transition-context.tsx` (the book lifting off the shelf and the story sheet):
+it is drawn at `STORY_OVERLAY_LAYER_Z` (`constants/story-overlay-layer.ts`), above the bar and
+the guide layer and below the paywall (2500) and the grown-ups check (3000). At its old 1000
+the bar painted over the sheet and hid its Record button. The bar stays mounted beneath the
+sheet, as it always has; it is covered, not removed. Anything new drawn from a root provider
+competes in this same stack -- give it a named layer and a test against
+`JOURNEY_BAR_LAYER_Z`.
 
 The bar lights the section it is on and nothing elsewhere: the main menu passes
 `selected={null}`, the highlight fades out, and it comes back up on the section chosen rather
