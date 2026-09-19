@@ -29,6 +29,7 @@ import { voiceRecordingService, VoiceOver } from '@/services/voice-recording-ser
 import { useParentsOnlyChallenge } from '@/hooks/use-parents-only-challenge';
 import { ParentsOnlyModal } from '@/components/ui/parents-only-modal';
 import { StoryCardSheet } from '@/components/stories/story-card-sheet';
+import { STORY_OVERLAY_LAYER_Z } from '@/constants/story-overlay-layer';
 import { useGuideLift } from '@/components/owl-guide/use-guide-lift';
 import { cardCoverTransform, storyCardLayout } from '@/constants/story-card';
 import { BookHinge, BookPages, BookSpineShade, bookSpineWidth } from '@/components/stories/catalogue/book-frame';
@@ -2193,7 +2194,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    zIndex: 1000,
+    zIndex: STORY_OVERLAY_LAYER_Z,
     justifyContent: 'center',
     alignItems: 'center',
   },
