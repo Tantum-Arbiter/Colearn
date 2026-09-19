@@ -659,10 +659,6 @@ export default {
         title: '乐器',
         description: '练习歌曲或在不同乐器上自由演奏。在享受乐趣的同时提升音乐技能！',
       },
-      learning: {
-        title: '学习',
-        description: '互动拼写和数字活动，帮助培养早期读写和计算能力。',
-      },
       settings: {
         title: '设置',
         description: '自定义应用以最适合您的家庭。',
@@ -1021,10 +1017,6 @@ export default {
         title: '进度',
         description: '徽章、里程碑和本周的冒险，都在一处。',
       },
-      navScreensafe: {
-        title: '安全屏幕',
-        description: '圆环显示今天的屏幕时间。点击查看全貌；时间用完会变红。',
-      },
       navSearch: {
         title: '搜索',
         description: '想找某一本书？输入书名或角色就能找到。',
@@ -1116,7 +1108,6 @@ export default {
     dailyComplete: '您今天做得很好！',
     notice: '屏幕时间通知',
     guidelines: '健康的屏幕时间遵循WHO/AAP建议',
-    closeNotification: '关闭通知',
     trySomethingNew: '一起试试吧！',
     approachingMessage: '今天的屏幕时间还剩{{minutes}}分钟。您想继续还是关闭应用？',
     limitReachedMessage: '您已达到每日屏幕时间限制。是时候关闭应用并尝试其他活动了！',

@@ -659,10 +659,6 @@ export default {
         title: '楽器',
         description: '曲を練習したり、さまざまな楽器で自由に演奏しましょう。楽しみながら音楽スキルを磨きましょう！',
       },
-      learning: {
-        title: '学習',
-        description: '初期の読み書きと計算スキルの構築に役立つインタラクティブなスペリングと数字のアクティビティ。',
-      },
       settings: {
         title: '設定',
         description: 'アプリをカスタマイズして、ご家族に最適に機能するようにしてください。',
@@ -1021,10 +1017,6 @@ export default {
         title: 'せいちょう',
         description: 'バッジ、マイルストーン、こんしゅうのぼうけんがぜんぶここに。',
       },
-      navScreensafe: {
-        title: 'スクリーンセーフ',
-        description: 'リングはきょうのスクリーンタイム。タップするとくわしくみられる。じかんがおわるとあかくなるよ。',
-      },
       navSearch: {
         title: 'けんさく',
         description: 'さがしているほんがある？タイトルやキャラクターをいれるとみつかるよ。',
@@ -1116,7 +1108,6 @@ export default {
     dailyComplete: '今日は素晴らしい仕事をしました！',
     notice: 'スクリーンタイム通知',
     guidelines: 'WHO/AAP推奨に従って健全な画面時間',
-    closeNotification: '通知を閉じる',
     trySomethingNew: '一緒に何かやってみよう！',
     approachingMessage: '今日の画面時間は{{minutes}}分だけです。続行するか、アプリを閉じますか？',
     limitReachedMessage: '1日の画面時間制限に達しました。アプリを閉じて、他のアクティビティを試す時間です！',

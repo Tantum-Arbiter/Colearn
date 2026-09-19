@@ -659,10 +659,6 @@ export default {
         title: 'Instrumentos',
         description: '¡Practica canciones o toca libremente en diferentes instrumentos. Desarrolla habilidades musicales mientras te diviertes!',
       },
-      learning: {
-        title: 'Aprendizaje',
-        description: 'Actividades interactivas de ortografía y números que ayudan a desarrollar habilidades tempranas de lectoescritura y aritmética.',
-      },
       settings: {
         title: 'Configuración',
         description: 'Personaliza la app para que funcione mejor para tu familia.',
@@ -1021,10 +1017,6 @@ export default {
         title: 'Progreso',
         description: 'Insignias, hitos y las aventuras de esta semana, todo en un lugar.',
       },
-      navScreensafe: {
-        title: 'Pantalla segura',
-        description: 'El anillo muestra el tiempo de pantalla de hoy. Tócalo para verlo todo; se pone rojo cuando se acaba.',
-      },
       navSearch: {
         title: 'Buscar',
         description: '¿Buscas un libro en concreto? Escribe un título o un personaje y lo encontrará.',
@@ -1116,7 +1108,6 @@ export default {
     dailyComplete: '¡Buen trabajo hoy!',
     notice: 'Aviso de tiempo de pantalla',
     guidelines: 'Siguiendo las recomendaciones de la OMS y AAP para un tiempo de pantalla saludable',
-    closeNotification: 'Cerrar notificación',
     trySomethingNew: '¡Intenten algo juntos!',
     approachingMessage: 'Solo quedan {{minutes}} minutos de tiempo de pantalla hoy. ¿Quieres continuar o cerrar la aplicación? ',
     limitReachedMessage: 'Se ha alcanzado el límite diario de tiempo de pantalla. ¡Es hora de cerrar la aplicación y probar otras actividades!',

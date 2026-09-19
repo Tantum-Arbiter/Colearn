@@ -659,10 +659,6 @@ export default {
         title: 'Instrumenty',
         description: 'Ćwicz piosenki lub graj swobodnie na różnych instrumentach. Rozwijaj umiejętności muzyczne, bawiąc się!',
       },
-      learning: {
-        title: 'Nauka',
-        description: 'Interaktywne ćwiczenia ortograficzne i liczbowe, które pomagają rozwijać wczesne umiejętności czytania i liczenia.',
-      },
       settings: {
         title: 'Ustawienia',
         description: 'Dostosuj aplikację do potrzeb Twojej rodziny.',
@@ -1021,10 +1017,6 @@ export default {
         title: 'Postępy',
         description: 'Odznaki, kamienie milowe i przygody z tego tygodnia w jednym miejscu.',
       },
-      navScreensafe: {
-        title: 'Bezpieczny ekran',
-        description: 'Pierścień pokazuje dzisiejszy czas przed ekranem. Dotknij, by zobaczyć całość; czerwienieje, gdy czas minie.',
-      },
       navSearch: {
         title: 'Szukaj',
         description: 'Szukasz konkretnej książki? Wpisz tytuł lub postać, a ją znajdzie.',
@@ -1116,7 +1108,6 @@ export default {
     dailyComplete: 'Świetna robota!',
     notice: 'Powiadomienie o czasie ekranu',
     guidelines: 'Zgodnie z zaleceniami WHO i AAP dotyczącymi zdrowego czasu ekranu',
-    closeNotification: 'Zamknij powiadomienie',
     trySomethingNew: 'Spróbujcie czegoś razem!',
     approachingMessage: 'Pozostało tylko {{minutes}} minut czasu ekranu na dziś. Czy chcesz kontynuować czy zamknąć aplikację? ',
     limitReachedMessage: 'Osiągnięto dzienny limit czasu ekranu. Czas zamknąć aplikację i spróbować innych aktywności!',

@@ -659,10 +659,6 @@ export default {
         title: 'Instruments',
         description: 'Pratiquez des chansons ou jouez librement sur différents instruments. Développez vos compétences musicales en vous amusant !',
       },
-      learning: {
-        title: 'Apprentissage',
-        description: 'Activités interactives d\'orthographe et de calcul qui aident à développer les compétences précoces en lecture et en numératie.',
-      },
       settings: {
         title: 'Paramètres',
         description: 'Personnalisez l\'application pour qu\'elle fonctionne au mieux pour votre famille.',
@@ -1021,10 +1017,6 @@ export default {
         title: 'Progrès',
         description: 'Badges, étapes et aventures de la semaine, réunis au même endroit.',
       },
-      navScreensafe: {
-        title: 'Écran sûr',
-        description: 'L\'anneau montre le temps d\'écran du jour. Touche-le pour tout voir ; il devient rouge quand le temps est écoulé.',
-      },
       navSearch: {
         title: 'Recherche',
         description: 'Tu cherches un livre précis ? Tape un titre ou un personnage et il le trouvera.',
@@ -1116,7 +1108,6 @@ export default {
     dailyComplete: 'Excellent travail aujourd\'hui !',
     notice: 'Avis de temps d\'écran',
     guidelines: 'Suivi des recommandations de l\'OMS et de l\'AAP pour un temps d\'écran sain',
-    closeNotification: 'Fermer la notification',
     trySomethingNew: 'Essayez quelque chose ensemble !',
     approachingMessage: 'Il ne vous reste que {{minutes}} minutes de temps d\'écran aujourd\'hui. Voulez-vous continuer ou fermer l\'application ? ',
     limitReachedMessage: 'Limite de temps d\'écran quotidienne atteinte. C\'est l\'heure de fermer l\'application et d\'essayer d\'autres activités !',

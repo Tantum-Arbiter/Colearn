@@ -659,10 +659,6 @@ export default {
         title: 'Instrumenta',
         description: 'Cantiones exerce vel libere in diversis instrumentis lude. Artes musicas cum gaudio aedifica!',
       },
-      learning: {
-        title: 'Doctrina',
-        description: 'Activitates orthographiae et numerorum interactivae quae artes primae lectionis et numerationis aedificant.',
-      },
       settings: {
         title: 'Constitutiones',
         description: 'Customiza Applicationem ut Optima pro Tua Familia Operetur.',
@@ -1021,10 +1017,6 @@ export default {
         title: 'Progressus',
         description: 'Insignia, lapides miliarii et huius hebdomadis facinora, uno loco.',
       },
-      navScreensafe: {
-        title: 'Tempus tutum',
-        description: 'Anulus tempus hodiernum ostendit. Tange ad totum; ruber fit tempore exhausto.',
-      },
       navSearch: {
         title: 'Quaere',
         description: 'Librum certum quaeris? Titulum aut personam scribe et inveniet.',
@@ -1116,7 +1108,6 @@ export default {
     dailyComplete: 'Hodie Mirabiliter Fecisti!',
     notice: 'Notificatio Temporis Ostentionis',
     guidelines: 'Tempus Ostentionis Sanum Directiones WHO/AAP Sequitur',
-    closeNotification: 'Claudere Notificationem',
     trySomethingNew: 'Aliquid una probate!',
     approachingMessage: 'Tempus Ostentionis Hodierni {{minutes}} Minuta Reliqua. Visne Pergere vel Applicationem Claudere? ',
     limitReachedMessage: 'Tuos Limites Temporis Ostentionis Diurnos Iam Attacti. Tempus est Applicationem Claudere et Alias Activitates Conari!',

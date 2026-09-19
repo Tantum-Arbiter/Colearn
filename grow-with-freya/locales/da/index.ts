@@ -659,10 +659,6 @@ export default {
         title: 'Instrumenter',
         description: 'Øv sange eller jam frit på forskellige instrumenter. Opbyg musikalske færdigheder mens du har det sjovt!',
       },
-      learning: {
-        title: 'Læring',
-        description: 'Interaktive stave- og talaktiviteter der hjælper med at opbygge tidlige læse- og regnefærdigheder.',
-      },
       settings: {
         title: 'Indstillinger',
         description: 'Tilpas appen så den fungerer bedst for din familie.',
@@ -1021,10 +1017,6 @@ export default {
         title: 'Fremskridt',
         description: 'Mærker, milepæle og ugens eventyr, samlet ét sted.',
       },
-      navScreensafe: {
-        title: 'Skærmsikker',
-        description: 'Ringen viser dagens skærmtid. Tryk for hele billedet; den bliver rød, når tiden er gået.',
-      },
       navSearch: {
         title: 'Søg',
         description: 'Leder du efter en bestemt bog? Skriv en titel eller en figur, så finder den den.',
@@ -1116,7 +1108,6 @@ export default {
     dailyComplete: 'Du gjorde det fantastisk i dag!',
     notice: 'Skærmtidsmeddelelse',
     guidelines: 'Sund skærmtid følger WHO/AAP anbefalinger',
-    closeNotification: 'Luk meddelelse',
     trySomethingNew: 'Prøv noget sammen!',
     approachingMessage: 'Dagens skærmtid {{minutes}} minutter tilbage. Vil du fortsætte eller lukke appen? ',
     limitReachedMessage: 'Du har nået din daglige skærmtidsgrænse. Tid til at lukke appen og prøve andre aktiviteter!',

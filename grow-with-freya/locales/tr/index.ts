@@ -659,10 +659,6 @@ export default {
         title: 'Enstrümanlar',
         description: 'Şarkıları pratik edin veya farklı enstrümanlarda özgürce çalın. Eğlenirken müzik becerilerinizi geliştirin!',
       },
-      learning: {
-        title: 'Öğrenme',
-        description: 'Erken okuma yazma ve sayısal becerilerin geliştirilmesine yardımcı olan etkileşimli yazım ve sayı aktiviteleri.',
-      },
       settings: {
         title: 'Ayarlar',
         description: 'Uygulamayı aileniz için en iyi şekilde çalışacak şekilde özelleştirin.',
@@ -1021,10 +1017,6 @@ export default {
         title: 'İlerleme',
         description: 'Rozetler, kilometre taşları ve bu haftanın maceraları tek yerde.',
       },
-      navScreensafe: {
-        title: 'Ekran güvenliği',
-        description: 'Halka bugünkü ekran süresini gösterir. Tam resim için dokun; süre bitince kırmızıya döner.',
-      },
       navSearch: {
         title: 'Ara',
         description: 'Belirli bir kitap mı arıyorsun? Bir başlık ya da karakter yaz, bulsun.',
@@ -1116,7 +1108,6 @@ export default {
     dailyComplete: 'Bugün Harika Çalıştın!',
     notice: 'Ekran Süresi Bildirimi',
     guidelines: 'Sağlıklı ekran süresi WHO/AAP önerilerini takip eder',
-    closeNotification: 'Bildirimi Kapat',
     trySomethingNew: 'Birlikte bir şey deneyin!',
     approachingMessage: 'Bugünün ekran süresi {{minutes}} dakika kaldı. Devam etmek mi yoksa uygulamayı kapatmak mı istiyorsunuz? ',
     limitReachedMessage: 'Günlük ekran süresi sınırınıza ulaştınız. Uygulamayı kapatıp diğer aktiviteleri deneme zamanı!',

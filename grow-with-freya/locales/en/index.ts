@@ -797,10 +797,6 @@ export default {
         title: 'Instruments',
         description: 'Practise songs or jam freely on different instruments. Build musical skills while having fun!',
       },
-      learning: {
-        title: 'Learning',
-        description: 'Interactive spelling and number activities that help build early literacy and numeracy skills.',
-      },
       settings: {
         title: 'Settings',
         description: 'Customise the app to work best for your family.',
@@ -844,10 +840,6 @@ export default {
       navProgress: {
         title: 'Progress',
         description: 'Badges, milestones and this week\'s adventures, all in one place.',
-      },
-      navScreensafe: {
-        title: 'Screensafe',
-        description: 'The ring shows today\'s screen time. Tap it for the full picture; it turns red once the time is up.',
       },
       navSearch: {
         title: 'Search',
@@ -1275,7 +1267,6 @@ export default {
     dailyComplete: 'Great Job Today!',
     notice: 'Screen Time Notice',
     guidelines: 'Following WHO & AAP recommendations for healthy screen time',
-    closeNotification: 'Close Notification',
     trySomethingNew: 'Try something together!',
     approachingMessage: 'Only {{minutes}} minutes of screen time left today. Would you like to continue or close the app? ',
     limitReachedMessage: "Daily screen time limit reached. It's time to close the app and try other activities!",

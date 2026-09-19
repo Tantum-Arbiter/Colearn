@@ -659,10 +659,6 @@ export default {
         title: 'Instrumente',
         description: 'Übe Lieder oder spiele frei auf verschiedenen Instrumenten. Baue musikalische Fähigkeiten auf und hab Spaß dabei!',
       },
-      learning: {
-        title: 'Lernen',
-        description: 'Interaktive Rechtschreib- und Zahlenaktivitäten, die beim Aufbau früher Lese- und Rechenfähigkeiten helfen.',
-      },
       settings: {
         title: 'Einstellungen',
         description: 'Passe die App an die Bedürfnisse deiner Familie an.',
@@ -1021,10 +1017,6 @@ export default {
         title: 'Fortschritt',
         description: 'Abzeichen, Meilensteine und die Abenteuer der Woche, alles an einem Ort.',
       },
-      navScreensafe: {
-        title: 'Bildschirmzeit',
-        description: 'Der Ring zeigt die heutige Bildschirmzeit. Tippe für das ganze Bild; er wird rot, wenn die Zeit um ist.',
-      },
       navSearch: {
         title: 'Suche',
         description: 'Suchst du ein bestimmtes Buch? Tippe einen Titel oder eine Figur ein und es findet es.',
@@ -1116,7 +1108,6 @@ export default {
     dailyComplete: 'Toll gemacht heute!',
     notice: 'Bildschirmzeit-Hinweis',
     guidelines: 'Gemäß WHO- und AAP-Empfehlungen für gesunde Bildschirmzeit',
-    closeNotification: 'Benachrichtigung schließen',
     trySomethingNew: 'Probiert etwas zusammen aus!',
     approachingMessage: 'Nur noch {{minutes}} Minuten Bildschirmzeit heute. Möchtest du weitermachen oder die App schließen? ',
     limitReachedMessage: 'Tägliches Bildschirmzeit-Limit erreicht. Zeit, die App zu schließen und andere Aktivitäten auszuprobieren!',

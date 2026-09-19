@@ -659,10 +659,6 @@ export default {
         title: 'Instrumenten',
         description: 'Oefen liedjes of jam vrij op verschillende instrumenten. Bouw muzikale vaardigheden op terwijl je plezier hebt!',
       },
-      learning: {
-        title: 'Leren',
-        description: 'Interactieve spelling- en rekenactiviteiten die helpen bij het opbouwen van vroege lees- en rekenvaardigheden.',
-      },
       settings: {
         title: 'Instellingen',
         description: 'Pas de app aan zodat deze het beste voor je gezin werkt.',
@@ -1021,10 +1017,6 @@ export default {
         title: 'Voortgang',
         description: 'Badges, mijlpalen en de avonturen van deze week, op één plek.',
       },
-      navScreensafe: {
-        title: 'Schermtijd',
-        description: 'De ring toont de schermtijd van vandaag. Tik voor het hele beeld; hij wordt rood als de tijd op is.',
-      },
       navSearch: {
         title: 'Zoeken',
         description: 'Op zoek naar één bepaald boek? Typ een titel of een personage en het vindt het.',
@@ -1116,7 +1108,6 @@ export default {
     dailyComplete: 'Je Hebt Vandaag Geweldig Gedaan!',
     notice: 'Schermtijd Melding',
     guidelines: 'Gezonde schermtijd volgt WHO/AAP aanbevelingen',
-    closeNotification: 'Sluit Melding',
     trySomethingNew: 'Probeer samen iets!',
     approachingMessage: 'Vandaag\'s schermtijd {{minutes}} minuten over. Wil je doorgaan of de app sluiten? ',
     limitReachedMessage: 'Je hebt je dagelijkse schermtijdlimiet bereikt. Tijd om de app te sluiten en andere activiteiten te proberen!',

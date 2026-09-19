@@ -659,10 +659,6 @@ export default {
         title: 'Instrumentos',
         description: 'Pratique músicas ou toque livremente em diferentes instrumentos. Desenvolva habilidades musicais enquanto se diverte!',
       },
-      learning: {
-        title: 'Aprendizado',
-        description: 'Atividades interativas de ortografia e números que ajudam a desenvolver habilidades iniciais de leitura e matemática.',
-      },
       settings: {
         title: 'Configurações',
         description: 'Personalize o aplicativo para funcionar melhor para sua família.',
@@ -1021,10 +1017,6 @@ export default {
         title: 'Progresso',
         description: 'Emblemas, marcos e as aventuras desta semana, tudo num só lugar.',
       },
-      navScreensafe: {
-        title: 'Ecrã seguro',
-        description: 'O anel mostra o tempo de ecrã de hoje. Toca para ver tudo; fica vermelho quando o tempo acaba.',
-      },
       navSearch: {
         title: 'Pesquisar',
         description: 'Procuras um livro em particular? Escreve um título ou uma personagem e ele encontra-o.',
@@ -1116,7 +1108,6 @@ export default {
     dailyComplete: 'Excelente trabalho hoje!',
     notice: 'Aviso de tempo de tela',
     guidelines: 'Seguindo as recomendações da OMS e AAP para tempo de tela saudável',
-    closeNotification: 'Fechar notificação',
     trySomethingNew: 'Experimentem algo juntos!',
     approachingMessage: 'Você tem apenas {{minutes}} minutos de tempo de tela restantes hoje. Deseja continuar ou fechar o aplicativo? ',
     limitReachedMessage: 'Limite de tempo de tela diário atingido. É hora de fechar o aplicativo e tentar outras atividades!',

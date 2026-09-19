@@ -15,7 +15,6 @@ export { StreakChip } from './streak-chip';
 export { WeeklyReadingChip } from './weekly-reading-chip';
 export { StatIcon } from './stat-icons';
 export { ActivityCard } from './activity-card';
-export { GrownUpsPill } from './grown-ups-pill';
 export { NightSky } from './night-sky';
 export { SkyFace } from './sky-face';
 export { ActivityBadge } from './activity-badge';
