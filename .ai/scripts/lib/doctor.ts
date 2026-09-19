@@ -21,6 +21,12 @@ export interface CheckRow {
   area: string;
   status: CheckStatus;
   detail: string;
+  /** A failed reviewer login is job-local; infrastructure and unsafe auth failures are global. */
+  blocksDispatch?: boolean;
+}
+
+export function blocksDispatch(row: CheckRow): boolean {
+  return row.status === 'fail' && row.blocksDispatch !== false;
 }
 
 export interface ClaudeAuth {
@@ -183,7 +189,12 @@ async function claudeReviewerRow(run: Runner, config: OrchestratorConfig, review
     return { area: reviewer.label, status: 'fail', detail: `auth status unreadable: ${firstLine(result.stderr) || 'no output'}` };
   }
   if (!auth.loggedIn) {
-    return { area: reviewer.label, status: 'fail', detail: `needs login (CLAUDE_CONFIG_DIR=${reviewer.profileDir} claude, then /login)` };
+    return {
+      area: reviewer.label,
+      status: 'fail',
+      detail: `needs login (CLAUDE_CONFIG_DIR=${reviewer.profileDir} claude, then /login)`,
+      blocksDispatch: false,
+    };
   }
   if (auth.authMethod !== 'claude.ai') {
     return { area: reviewer.label, status: 'fail', detail: `uses ${auth.authMethod ?? 'unknown'} auth, not a subscription login` };
@@ -219,7 +230,12 @@ async function codexReviewerRows(run: Runner, config: OrchestratorConfig, review
       rows.push({ area: reviewer.label, status: 'fail', detail: 'signed in with a non-ChatGPT method' });
       break;
     case 'logged_out':
-      rows.push({ area: reviewer.label, status: 'fail', detail: `needs login (CODEX_HOME=${reviewer.profileDir} codex login)` });
+      rows.push({
+        area: reviewer.label,
+        status: 'fail',
+        detail: `needs login (CODEX_HOME=${reviewer.profileDir} codex login)`,
+        blocksDispatch: false,
+      });
       break;
     case 'unknown':
       rows.push({ area: reviewer.label, status: 'fail', detail: `login status unreadable: ${firstLine(result.stderr) || firstLine(result.stdout) || 'no output'}` });

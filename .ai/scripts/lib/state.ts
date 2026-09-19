@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { writeFileAtomic } from './fsx.ts';
+import { resolveInside, writeFileAtomic } from './fsx.ts';
 import type { UsageLimit } from './limits.ts';
 
 export const REVIEW_KINDS = ['browser_qa', 'test', 'security', 'architecture', 'final'] as const;
@@ -54,8 +54,9 @@ export class StateFileError extends Error {
   }
 }
 
-const availabilityPath = (dir: string): string => join(dir, 'availability.json');
-const queuePath = (dir: string): string => join(dir, 'deferred-reviews.json');
+const statePath = (dir: string, file: string): string => existsSync(dir) ? resolveInside(dir, file) : join(dir, file);
+const availabilityPath = (dir: string): string => statePath(dir, 'availability.json');
+const queuePath = (dir: string): string => statePath(dir, 'deferred-reviews.json');
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);

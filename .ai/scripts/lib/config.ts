@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, realpathSync, existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { isInside } from './fsx.ts';
 
@@ -148,5 +148,14 @@ export function loadConfig(aiDir: string, home: string): OrchestratorConfig {
   } catch (error) {
     throw new ConfigError(error instanceof Error ? error.message : 'unreadable');
   }
-  return parseConfig(raw, home);
+  const config = parseConfig(raw, home);
+  const canonical = (p: string): string => existsSync(p) ? realpathSync(p) : p;
+  const protectedDirs = [join(home, '.codex'), join(home, '.claude'), config.lead.profileDir].map(canonical);
+  const seen = new Set<string>();
+  for (const reviewer of config.reviewers) {
+    const dir = canonical(reviewer.profileDir);
+    if (protectedDirs.includes(dir) || seen.has(dir)) throw new ConfigError('reviewer profile aliases another profile through a symlink');
+    seen.add(dir);
+  }
+  return config;
 }

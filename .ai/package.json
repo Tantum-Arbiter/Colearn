@@ -7,6 +7,22 @@
     "node": ">=22.18.0"
   },
   "scripts": {
-    "test": "node --test scripts/test/*.test.ts"
+    "test": "node --test scripts/test/*.test.ts",
+    "typecheck": "tsc -p tsconfig.json",
+    "office:setup": "node scripts/setup-office.mjs",
+    "office": "node scripts/ai office",
+    "smoke:live": "node scripts/smoke-review.ts",
+    "test:office": "node --test scripts/test/office.e2e.mjs"
+  },
+  "dependencies": {
+    "ajv": "8.20.0",
+    "ws": "8.21.3"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.58.2",
+    "@types/node": "22.20.4",
+    "@types/ws": "8.18.1",
+    "esbuild": "0.25.12",
+    "typescript": "5.9.3"
   }
 }

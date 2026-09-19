@@ -158,3 +158,6 @@ gradle-app.setting
 .ai/tmp/
 .ai/*.pid
 .ai/*.sock
+.ai/vendor/
+.ai/office-dist/
+.ai/test-results/
