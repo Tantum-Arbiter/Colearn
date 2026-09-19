@@ -11,6 +11,8 @@ import React from 'react';
 import { render, act } from '@testing-library/react-native';
 
 import { TrialEndUpgradeOverlay } from '@/components/ui/trial-end-upgrade-overlay';
+import { ChildBottomNavigation } from '@/components/child-ui/child-bottom-navigation';
+import { JourneyBarProvider, JourneyBarOutlet } from '@/components/child-ui/journey-bar-slot';
 import type { TrialStatus } from '@/constants/trial-end';
 
 jest.mock('@expo/vector-icons', () => {
@@ -219,5 +221,26 @@ describe('TrialEndUpgradeOverlay', () => {
     const tree = renderOverlay();
 
     expect(findByTestId(tree, 'plan-trial-note-monthly_premium')).toHaveLength(0);
+  });
+});
+
+/** The trial's end covers the whole screen, so the bar at the foot steps out while it is up. */
+describe('TrialEndUpgradeOverlay and the journey bar', () => {
+  it.each([
+    [true, 0],
+    [false, 1],
+  ])('with the overlay visible=%s, leaves %s bar on screen', (visible, expected) => {
+    const tree = render(
+      <JourneyBarProvider>
+        <ChildBottomNavigation selected="home" onSelect={jest.fn()} slotKey="main" />
+        <TrialEndUpgradeOverlay visible={visible} onClose={jest.fn()} status={trialStatus()} />
+        <JourneyBarOutlet pageKey="main" />
+      </JourneyBarProvider>
+    );
+
+    const bars = tree.UNSAFE_root.findAll(
+      (n: any) => n.props.testID === 'child-bottom-navigation' && n.props.accessibilityRole === 'tablist'
+    );
+    expect(bars).toHaveLength(expected);
   });
 });

@@ -302,9 +302,6 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
   // Parents Only modal - using shared hook
   const parentsOnly = useParentsOnlyChallenge();
 
-  const openGrownUpsCorner = useCallback(() => {
-    parentsOnly.showChallenge(() => onNavigate('account'));
-  }, [parentsOnly, onNavigate]);
 
   // Get current screen dimensions (updates with orientation changes)
   const { height: screenHeight } = getScreenDimensions();
@@ -353,6 +350,10 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
   const settingsButtonRef = useRef<View>(null);
   const achievementCardRef = useRef<View>(null);
   const screenTimeRingRef = useRef<View>(null);
+  const navLearnRef = useRef<View>(null);
+  const navProgressRef = useRef<View>(null);
+  const navSearchRef = useRef<View>(null);
+  const navProfileRef = useRef<View>(null);
 
   // Per-button refs for the carousel strip buttons (keyed by menu item id)
   const carouselButtonRefs = useMemo(() => ({
@@ -373,18 +374,22 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
   const homeGuideTargets = useMemo(() => ({
     stories: storiesButtonRef,
     achievement: achievementCardRef,
-    learning: learningButtonRef,
     screenTime: screenTimeRingRef,
-    settings: settingsButtonRef,
+    learn: navLearnRef,
+    progress: navProgressRef,
+    search: navSearchRef,
+    profile: navProfileRef,
     sound: musicControlRef,
   }), []);
 
   const homeTourTargets = useMemo(() => ({
     'stories_button': storiesButtonRef,
     'achievement_card': achievementCardRef,
-    'learning_button': learningButtonRef,
+    'nav_learn': navLearnRef,
+    'nav_progress': navProgressRef,
     'screen_time_ring': screenTimeRingRef,
-    'settings_button': settingsButtonRef,
+    'nav_search': navSearchRef,
+    'nav_profile': navProfileRef,
     'sound_control': musicControlRef,
   }), []);
 
@@ -499,7 +504,6 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
       <>
         <HomeSceneContainer
           onNavigate={navigateFromHome}
-          onOpenGrownUps={openGrownUpsCorner}
           isActive={isActive !== false}
           guideTargets={homeGuideTargets}
           scrollBinding={homeScroller}
@@ -514,15 +518,6 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
             onEnd={handleTutorialEnd}
           />
         )}
-        <ParentsOnlyModal
-          visible={parentsOnly.isVisible}
-          challenge={parentsOnly.challenge}
-          inputValue={parentsOnly.inputValue}
-          onInputChange={parentsOnly.setInputValue}
-          onSubmit={parentsOnly.handleSubmit}
-          onClose={parentsOnly.handleClose}
-          isInputValid={parentsOnly.isInputValid}
-        />
       </>
     );
   }

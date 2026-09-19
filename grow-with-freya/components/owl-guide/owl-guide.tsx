@@ -264,13 +264,14 @@ export function OwlGuide({
   // item of a fixed bottom bar sits. Rather than stand in front of the thing it
   // is pointing at, it steps back until the step has moved on.
   const inTheOwlsWay =
-    spotlight !== null &&
-    rectsOverlap(spotlightFrame(spotlight.rect, spotlight.shape, spotlight.radius), {
-      x: 0,
-      y: height - perch.height,
-      width: perch.width,
-      height: perch.height,
-    });
+    step?.revealsBar === true ||
+    (spotlight !== null &&
+      rectsOverlap(spotlightFrame(spotlight.rect, spotlight.shape, spotlight.radius), {
+        x: 0,
+        y: height - perch.height,
+        width: perch.width,
+        height: perch.height,
+      }));
   const perchPresence = useSharedValue(1);
   useEffect(() => {
     perchPresence.value = withTiming(inTheOwlsWay ? PERCH_STEP_BACK : 1, {
@@ -369,6 +370,7 @@ export function OwlGuide({
               pageCount={steps.length}
               nextLabel={t(isLast ? GUIDE_BUTTON_KEYS.finish : GUIDE_BUTTON_KEYS.next)}
               closeLabel={t(GUIDE_BUTTON_KEYS.skip)}
+              closeAsWord
               onNext={handleNext}
               onClose={handleSkip}
               leaving={phase !== 'idle'}

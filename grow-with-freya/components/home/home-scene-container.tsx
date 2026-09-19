@@ -23,7 +23,6 @@ export const HOME_DESTINATIONS = {
 
 export interface HomeSceneContainerProps {
   onNavigate: (destination: string) => void;
-  onOpenGrownUps: () => void;
   guideTargets?: HomeGuideTargets;
   /** Passed to the scene's scroll view, for the tour that runs over it. */
   scrollBinding?: HomeSceneProps['scrollBinding'];
@@ -32,7 +31,6 @@ export interface HomeSceneContainerProps {
 
 export const HomeSceneContainer = memo(function HomeSceneContainer({
   onNavigate,
-  onOpenGrownUps,
   guideTargets,
   scrollBinding,
   isActive = true,
@@ -87,7 +85,6 @@ export const HomeSceneContainer = memo(function HomeSceneContainer({
         onContinue={handleContinue}
         onOpenAchievements={handleOpenProgress}
         onSelectSection={handleSelectSection}
-        onOpenGrownUps={onOpenGrownUps}
         screenTime={screenTime}
         timeOfDay={timeOfDay}
         onOpenScreenTime={openScreenTime}

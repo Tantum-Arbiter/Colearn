@@ -17,7 +17,13 @@ import { useTranslation } from 'react-i18next';
 import { ALL_STORIES } from '@/data/stories';
 import { CatalogEntry, STORY_FILTER_TAGS, STORY_TAGS, Story, StoryFilterTag, getLocalizedText } from '@/types/story';
 import { Fonts } from '@/constants/theme';
-import { ACCENT_GOLD, BORDER_DEFAULT, SURFACE_SECONDARY, TEXT_PRIMARY, TEXT_SECONDARY } from '@/constants/night-palette';
+import {
+  ACCENT_GOLD,
+  BORDER_DEFAULT,
+  SURFACE_SECONDARY,
+  TEXT_PRIMARY,
+  TEXT_SECONDARY,
+} from '@/constants/night-palette';
 import { useAppStore, type SubscriptionTier } from '@/store/app-store';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { useStoryTransition } from '@/contexts/story-transition-context';
@@ -31,6 +37,8 @@ import { SubscriptionOverlay } from '@/components/ui/subscription-overlay';
 import { CelestialBackground } from '@/components/child-ui/celestial-background';
 import { PlanetHeaderArtwork } from '@/components/child-ui/planet-header-artwork';
 import { SectionCrossfade } from '@/components/child-ui/section-crossfade';
+import { PlanetCover, usePlanetCover } from '@/components/child-ui/planet-cover';
+import { BalancedHeaderRow } from '@/components/child-ui/balanced-header-row';
 import { ContentSwap } from '@/components/child-ui/content-swap';
 import { CircleActionButton } from '@/components/child-ui/circle-action-button';
 import { PageTitle } from '@/components/child-ui/page-title';
@@ -85,7 +93,7 @@ import {
 import { StoryFilterBar } from './story-filter-bar';
 import { FILTER_PILL_ICONS } from './story-filter-pill';
 import { FeaturedStoryCard } from './featured-story-card';
-import { coverColumns, coverWidthFor } from '@/constants/catalogue-columns';
+import { catalogueLayout, coverColumns, coverWidthFor } from '@/constants/catalogue-columns';
 import { SearchPanel } from './search-panel';
 import { StoryCoverCard } from './story-cover-card';
 import { StoryRow } from './story-row';
@@ -152,10 +160,6 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
   const filterToggleRef = useRef<View>(null);
   const featuredRef = useRef<View>(null);
   const shelvesRef = useRef<View>(null);
-  const navProgressRef = useRef<View>(null);
-  const navScreensafeRef = useRef<View>(null);
-  const navSearchRef = useRef<View>(null);
-  const navProfileRef = useRef<View>(null);
   const progressHeroRef = useRef<View>(null);
   const progressChallengesRef = useRef<View>(null);
   const progressMilestonesRef = useRef<View>(null);
@@ -166,12 +170,6 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
   const profileTabsRef = useRef<View>(null);
   const profileSettingsRef = useRef<View>(null);
 
-  const navItemRefs = useMemo(() => ({
-    progress: navProgressRef,
-    screensafe: navScreensafeRef,
-    search: navSearchRef,
-    profile: navProfileRef,
-  }), []);
   // the two scrolling pages a tour runs over: this screen's own column, and
   // the progress page's, which brings its own scroll view
   const pageScroller = useGuideScroller();
@@ -181,10 +179,6 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
     filter_toggle: filterToggleRef,
     featured_story: featuredRef,
     story_shelves: shelvesRef,
-    nav_progress: navProgressRef,
-    nav_screensafe: navScreensafeRef,
-    nav_search: navSearchRef,
-    nav_profile: navProfileRef,
   }), []);
   const progressTourTargets = useMemo(() => ({
     progress_hero: progressHeroRef,
@@ -236,6 +230,7 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
   const [editProfileOpen, setEditProfileOpen] = useState(false);
   const [showScreenTime, setShowScreenTime] = useState(false);
   const [navCollapsed, setNavCollapsed] = useState(false);
+  const { coverHeight, onHeaderLayout } = usePlanetCover();
   const { badges } = useProgressData();
   const parentsOnly = useParentsOnlyChallenge();
   const screenTime = useScreenTimeAllowance();
@@ -657,14 +652,12 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
   }, []);
 
   const contentWidth = windowWidth - margin * 2;
-  const gridAreaWidth = isLandscapeTablet ? (contentWidth - SPACE_5) * 0.55 : contentWidth;
+  const todaysPick = shelves.find((shelf) => shelf.kind === 'pick');
+  const layout = catalogueLayout({ isTablet, landscape: isLandscapeTablet, contentWidth, hasPick: Boolean(todaysPick) });
+  const gridAreaWidth = layout.shelfWidth;
   const columns = coverColumns(isTablet, gridAreaWidth);
   const coverWidth = coverWidthFor(gridAreaWidth, columns);
-  // The featured book's width on the shelf: its own column on a landscape
-  // tablet, otherwise the full content width, from the left margin
-  const featuredWidth = isLandscapeTablet
-    ? Math.floor((contentWidth - SPACE_5) * 0.45)
-    : contentWidth;
+  const featuredWidth = layout.featuredWidth;
 
   const rowCardWidth = coverWidth;
 
@@ -705,11 +698,12 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
     <View testID="story-shelves" style={styles.shelves}>
       {shelves.map((shelf) => {
         if (shelf.kind === 'pick') {
+          if (layout.pickBesideFeatured) return null;
           return (
             <View key="pick" style={styles.pickSpacing}>
               <FeaturedStoryCard
                 story={shelf.story}
-                width={isLandscapeTablet ? Math.floor(gridAreaWidth) : featuredWidth}
+                width={layout.pickWidth}
                 language={currentLanguage}
                 label={t('catalogue.todaysPick')}
                 onOpen={handleOpenStory}
@@ -726,7 +720,7 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
               heading={t('catalogue.moreStories')}
               stories={shelf.stories}
               cardWidth={rowCardWidth}
-              edgeInset={isLandscapeTablet ? 0 : margin}
+              edgeInset={margin}
               renderCard={renderRowCard(shelf.stories)}
             />
           );
@@ -740,7 +734,7 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
             iconColor={FILTER_PILL_ICONS[shelf.tag].color}
             stories={shelf.stories}
             cardWidth={rowCardWidth}
-            edgeInset={isLandscapeTablet ? 0 : margin}
+            edgeInset={margin}
             renderCard={renderRowCard(shelf.stories)}
             actionLabel={t('catalogue.seeAll')}
             onAction={() => handleSeeAll(shelf.tag)}
@@ -796,7 +790,7 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
       heading={t('catalogue.saved.activities')}
       stories={savedActivities as unknown as CatalogueStory[]}
       cardWidth={rowCardWidth}
-      edgeInset={isLandscapeTablet ? 0 : margin}
+      edgeInset={margin}
       renderCard={(entry, width) => (
         <SavedActivityCard
           key={(entry as unknown as LearningActivity).id}
@@ -822,7 +816,7 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
       heading={t('catalogue.saved.songs')}
       stories={savedSongs as unknown as CatalogueStory[]}
       cardWidth={rowCardWidth}
-      edgeInset={isLandscapeTablet ? 0 : margin}
+      edgeInset={margin}
       renderCard={(entry, width) => (
         <SavedSongCard
           key={(entry as unknown as PracticeSong).id}
@@ -854,7 +848,7 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
             heading={shelf.kind === 'more' ? t('catalogue.moreStories') : rowHeading(shelf.tag)}
             stories={shelf.stories}
             cardWidth={rowCardWidth}
-            edgeInset={isLandscapeTablet ? 0 : margin}
+            edgeInset={margin}
             renderCard={renderRowCard(shelf.stories)}
           />
         );
@@ -884,7 +878,6 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
       navigationSlotKey="stories"
       selected={navSection}
       onSelect={handleNavSelect}
-      navigationItemRefs={navItemRefs}
       navigationHidden={
         navSection === 'progress'
           ? badgeDetailOpen
@@ -909,68 +902,20 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
               scrollBinding={progressScroller}
             />
           ) : (
-            <>
-            <View
-              style={[
-                styles.headerRow,
-                {
-                  marginTop: insets.top + (isTablet ? SPACE_2 : 0),
-                  marginHorizontal: margin,
-                },
-              ]}
-            >
-              <CircleActionButton
-                type="back"
-                onPress={handleExitJourney}
-                accessibilityLabel={t('common.back')}
-              />
-              <View style={styles.titleWrapper}>
-                <PageTitle
-                  title={
-                    storyMode
-                      ? t(`storyModes.${storyMode}`)
-                      : navSection === 'search'
-                        ? t('childUi.nav.search')
-                        : navSection === 'profile'
-                          ? t('childUi.nav.profile')
-                          : t('stories.title')
-                  }
-                />
-              </View>
-              {navSection === 'profile' ? (
-                <View ref={profileSettingsRef} collapsable={false}>
-                  <CircleActionButton
-                    type="settings"
-                    onPress={handleOpenSettings}
-                    accessibilityLabel={t('profile.settings')}
-                  />
-                </View>
-              ) : (
-                <CircleActionButton
-                  type="audio"
-                  muted={isMuted}
-                  onPress={() => { void toggleMute(); }}
-                  accessibilityLabel={t('catalogue.sound')}
-                />
-              )}
-            </View>
-            {!storyMode && (
-              <View style={[styles.tagline, { marginHorizontal: margin }]}>
-                <PageTagline lines={TAGLINE_LINES[navSection](t)} width={contentWidth} />
-              </View>
-            )}
-
+            <View style={styles.fill}>
             <ScrollView
+              testID="catalogue-scroll"
               ref={pageScroller.scrollRef}
               onScroll={pageScroller.onScroll}
               onLayout={pageScroller.onLayout}
               onContentSizeChange={pageScroller.onContentSizeChange}
               scrollEventThrottle={16}
-              style={[styles.scroll, { marginBottom: navClearance(insets.bottom) }]}
+              style={[styles.scroll, { bottom: navClearance(insets.bottom) }]}
+              scrollIndicatorInsets={{ top: coverHeight }}
               contentContainerStyle={[
                 styles.scrollContent,
                 {
-                  paddingTop: isTablet ? SPACE_4 : 0,
+                  paddingTop: coverHeight + SPACE_3,
                   paddingHorizontal: margin,
                   paddingBottom: SPACE_4 + (textSizeScale - 1) * 40 + pageScroller.reserve,
                 },
@@ -1025,11 +970,21 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
                 <ContentSwap contentKey={collectionKey} testID="catalogue-collection">
                   {browsing ? (
                     moreSection
-                  ) : isLandscapeTablet && featured ? (
-                    <View style={styles.landscapeColumns}>
-                      <View style={styles.landscapeFeaturedColumn} ref={featuredRef} collapsable={false}>{featuredSection}</View>
-                      <View style={styles.landscapeGridColumn} ref={shelvesRef} collapsable={false}>{shelvesView}</View>
-                    </View>
+                  ) : layout.pickBesideFeatured && featured && todaysPick?.kind === 'pick' ? (
+                    <>
+                      <View style={styles.landscapeTopRow} testID="catalogue-top-row">
+                        <View ref={featuredRef} collapsable={false}>{featuredSection}</View>
+                        <FeaturedStoryCard
+                          story={todaysPick.story}
+                          width={layout.pickWidth}
+                          language={currentLanguage}
+                          label={t('catalogue.todaysPick')}
+                          onOpen={handleOpenStory}
+                          testID="todays-pick-card"
+                        />
+                      </View>
+                      <View ref={shelvesRef} collapsable={false}>{shelvesView}</View>
+                    </>
                   ) : (
                     <>
                       <View ref={featuredRef} collapsable={false}>{featuredSection}</View>
@@ -1039,7 +994,64 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
                 </ContentSwap>
               )}
             </ScrollView>
-            </>
+            <PlanetCover height={coverHeight} testID="catalogue-planet-over-shelves" />
+            <View
+              testID="catalogue-header"
+              style={styles.header}
+              pointerEvents="box-none"
+              onLayout={onHeaderLayout}
+            >
+            <BalancedHeaderRow
+              testID="catalogue-header-row"
+              style={{ marginTop: insets.top + (isTablet ? SPACE_2 : 0), marginHorizontal: margin }}
+              left={
+                <CircleActionButton
+                  type="home"
+                  label={t('common.home')}
+                  onPress={handleExitJourney}
+                  accessibilityLabel={t('common.home')}
+                />
+              }
+              title={
+                <PageTitle
+                  title={
+                    storyMode
+                      ? t(`storyModes.${storyMode}`)
+                      : navSection === 'search'
+                        ? t('childUi.nav.search')
+                        : navSection === 'profile'
+                          ? t('childUi.nav.profile')
+                          : t('stories.title')
+                  }
+                />
+              }
+              right={
+                navSection === 'profile' ? (
+                  <View ref={profileSettingsRef} collapsable={false}>
+                    <CircleActionButton
+                      type="settings"
+                      label={t('home.grownUps')}
+                      onPress={handleOpenSettings}
+                      accessibilityLabel={t('home.grownUps')}
+                    />
+                  </View>
+                ) : (
+                  <CircleActionButton
+                    type="audio"
+                    muted={isMuted}
+                    onPress={() => { void toggleMute(); }}
+                    accessibilityLabel={t('catalogue.sound')}
+                  />
+                )
+              }
+            />
+            {!storyMode && (
+              <View style={[styles.tagline, { marginHorizontal: margin }]} pointerEvents="none">
+                <PageTagline lines={TAGLINE_LINES[navSection](t)} width={contentWidth} />
+              </View>
+            )}
+            </View>
+            </View>
           )}
         </SectionCrossfade>
 
@@ -1120,20 +1132,17 @@ const styles = StyleSheet.create({
   fill: {
     flex: 1,
   },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    zIndex: 10,
-  },
-  titleWrapper: {
-    flex: 1,
-  },
   tagline: {
     zIndex: 10,
   },
   scroll: {
-    flex: 1,
-    zIndex: 5,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+  },
+  header: {
+    zIndex: 10,
   },
   scrollContent: {
     paddingTop: SPACE_4,
@@ -1162,15 +1171,9 @@ const styles = StyleSheet.create({
     marginTop: SPACE_2,
     marginBottom: SPACE_4,
   },
-  landscapeColumns: {
+  landscapeTopRow: {
     flexDirection: 'row',
     gap: SPACE_5,
-  },
-  landscapeFeaturedColumn: {
-    flex: 0.45,
-  },
-  landscapeGridColumn: {
-    flex: 0.55,
   },
   noResultsContainer: {
     alignItems: 'center',

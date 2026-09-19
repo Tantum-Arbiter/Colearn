@@ -10,6 +10,7 @@ import React from 'react';
 import { render, act } from '@testing-library/react-native';
 import { ChildBottomNavigation } from '@/components/child-ui/child-bottom-navigation';
 import { JourneyBarProvider, JourneyBarOutlet } from '@/components/child-ui/journey-bar-slot';
+import { useCoversJourneyBar } from '@/components/child-ui/journey-bar-cover';
 
 
 function bars(tree: ReturnType<typeof render>) {
@@ -149,5 +150,74 @@ describe('the journey bar slot', () => {
 
     tree.rerender(scene(false, 'main'));
     expect(bars(tree)).toHaveLength(0);
+  });
+});
+
+/**
+ * A full-screen overlay opened from inside a page -- the plans, the trial's
+ * end -- is drawn within that page, and the bar is drawn above every page. So
+ * an overlay says it is covering the screen, and while any overlay does, the
+ * bar steps out: hidden behind it, and out of reach of a tap.
+ */
+describe('an overlay covering the bar', () => {
+  function Cover({ active }: { active: boolean }) {
+    useCoversJourneyBar(active);
+    return null;
+  }
+
+  function renderWith(active: boolean) {
+    return render(
+      <JourneyBarProvider>
+        <ChildBottomNavigation selected="home" onSelect={jest.fn()} slotKey="main" />
+        <Cover active={active} />
+        <JourneyBarOutlet pageKey="main" />
+      </JourneyBarProvider>
+    );
+  }
+
+  it('takes the bar away while it is up', () => {
+    const tree = renderWith(true);
+
+    expect(bars(tree)).toHaveLength(0);
+  });
+
+  it('gives the bar back once it has gone', () => {
+    const tree = renderWith(true);
+
+    tree.rerender(
+      <JourneyBarProvider>
+        <ChildBottomNavigation selected="home" onSelect={jest.fn()} slotKey="main" />
+        <Cover active={false} />
+        <JourneyBarOutlet pageKey="main" />
+      </JourneyBarProvider>
+    );
+
+    expect(bars(tree)).toHaveLength(1);
+  });
+
+  it('keeps the bar away until every overlay has gone', () => {
+    const tree = render(
+      <JourneyBarProvider>
+        <ChildBottomNavigation selected="home" onSelect={jest.fn()} slotKey="main" />
+        <Cover active />
+        <Cover active />
+        <JourneyBarOutlet pageKey="main" />
+      </JourneyBarProvider>
+    );
+
+    tree.rerender(
+      <JourneyBarProvider>
+        <ChildBottomNavigation selected="home" onSelect={jest.fn()} slotKey="main" />
+        <Cover active />
+        <Cover active={false} />
+        <JourneyBarOutlet pageKey="main" />
+      </JourneyBarProvider>
+    );
+
+    expect(bars(tree)).toHaveLength(0);
+  });
+
+  it('does nothing without a bar to cover, as on every screen test', () => {
+    expect(() => render(<Cover active />)).not.toThrow();
   });
 });

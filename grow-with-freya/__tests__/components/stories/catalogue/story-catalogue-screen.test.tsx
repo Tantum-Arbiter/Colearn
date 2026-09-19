@@ -12,9 +12,10 @@ import { StoryDownloadService } from '@/services/story-download-service';
 import { CHILD_UI_MOTION } from '@/constants/child-ui-motion';
 import { glanceCloseTimeline } from '@/constants/screen-time-glance-timeline';
 import { StoryCatalogueScreen } from '@/components/stories/catalogue/story-catalogue-screen';
+import { PLANET_HEADER_ESTIMATE } from '@/components/child-ui/planet-cover';
 import * as catalogueStoryModule from '@/components/stories/catalogue/catalogue-story';
 import { COVER_GRID_GAP } from '@/components/child-ui/tokens';
-import { coverWidthFor } from '@/constants/catalogue-columns';
+import { coverColumns, coverWidthFor } from '@/constants/catalogue-columns';
 import { StyleSheet } from 'react-native';
 import { useStoryTransition } from '@/contexts/story-transition-context';
 
@@ -266,7 +267,7 @@ describe('StoryCatalogueScreen', () => {
 
     await waitFor(() => {
       expect(byTestId(tree, 'planet-header-artwork').length).toBeGreaterThan(0);
-      expect(byTestId(tree, 'circle-action-back').length).toBeGreaterThan(0);
+      expect(byTestId(tree, 'circle-action-home').length).toBeGreaterThan(0);
       expect(byTestId(tree, 'circle-action-audio').length).toBeGreaterThan(0);
       expect(byTestId(tree, 'page-title').length).toBeGreaterThan(0);
       expect(byTestId(tree, 'story-filter-bar').length).toBeGreaterThan(0);
@@ -418,13 +419,27 @@ describe('StoryCatalogueScreen', () => {
       expect(underTest).toBe(coverWidthFor(gridWidth, 4));
     });
 
-    it('fits three books beside the featured book when the same tablet is turned sideways', async () => {
+    it('runs the shelves the full width when the same tablet is turned sideways', async () => {
       viewport(1194, 834);
-      const gridWidth = (1194 - 32 * 2 - 24) * 0.55;
+      const gridWidth = 1194 - 32 * 2;
 
       const underTest = await shelfBookWidth(render(<StoryCatalogueScreen />));
 
-      expect(underTest).toBe(coverWidthFor(gridWidth, 3));
+      expect(underTest).toBe(coverWidthFor(gridWidth, coverColumns(true, gridWidth)));
+    });
+
+    it('sets the featured book and Today\'s pick side by side above the shelves when turned sideways', async () => {
+      viewport(1194, 834);
+      const tree = render(<StoryCatalogueScreen />);
+      await waitFor(() => expect(byTestId(tree, 'todays-pick-card').length).toBeGreaterThan(0));
+
+      const topRow = byTestId(tree, 'catalogue-top-row')[0];
+      const shelves = byTestId(tree, 'story-shelves')[0];
+      const inTopRow = (testID: string) => topRow.findAll((n: any) => n.props.testID === testID).length;
+
+      expect(inTopRow('featured-story-card')).toBeGreaterThan(0);
+      expect(inTopRow('todays-pick-card')).toBeGreaterThan(0);
+      expect(shelves.findAll((n: any) => n.props.testID === 'todays-pick-card')).toHaveLength(0);
     });
   });
 
@@ -657,17 +672,20 @@ describe('StoryCatalogueScreen', () => {
     await waitFor(() => expect(byTestId(tree, 'search-panel-recent')).toHaveLength(0));
   });
 
-  it('exits the journey from the floating back control', async () => {
+  it('goes home from the floating home control, named for screen readers as the way back to the menu', async () => {
     const tree = render(<StoryCatalogueScreen />);
 
-    await waitFor(() => expect(byTestId(tree, 'circle-action-back').length).toBeGreaterThan(0));
+    await waitFor(() => expect(byTestId(tree, 'circle-action-home').length).toBeGreaterThan(0));
+    const home = byTestId(tree, 'circle-action-home')[0];
 
-    fireEvent.press(byTestId(tree, 'circle-action-back')[0]);
+    fireEvent.press(home);
 
+    expect(home.props.accessibilityLabel).toBe('common.home');
+    expect(byTestId(tree, 'circle-action-back')).toHaveLength(0);
     expect(mockAppState.requestReturnToMainMenu).toHaveBeenCalledTimes(1);
   });
 
-  it('opens the Progress journey page from the Progress item and returns home from its back control', async () => {
+  it('opens the Progress journey page from the Progress item and returns home from its home control', async () => {
     const tree = render(<StoryCatalogueScreen />);
 
     await waitFor(() => expect(byTestId(tree, 'navigation-item-progress').length).toBeGreaterThan(0));
@@ -681,7 +699,7 @@ describe('StoryCatalogueScreen', () => {
     expect(byTestId(tree, 'child-bottom-navigation').length).toBeGreaterThan(0);
     expect(byTestId(tree, 'featured-story-card')).toHaveLength(0);
 
-    fireEvent.press(byTestId(tree, 'circle-action-back')[0]);
+    fireEvent.press(byTestId(tree, 'circle-action-home')[0]);
 
     expect(mockAppState.requestReturnToMainMenu).toHaveBeenCalledTimes(1);
   });
@@ -1228,18 +1246,40 @@ describe('StoryCatalogueScreen profile page', () => {
     expect(inCurrentSection(tree, 'profile-tab-manage').length).toBeGreaterThan(0);
   });
 
-  it('swaps the sound control for a way through to settings', async () => {
+  it('swaps the sound control for the grown-ups control, gear and word together', async () => {
     const tree = await renderProfile();
 
-    expect(inCurrentSection(tree, 'circle-action-settings').length).toBeGreaterThan(0);
+    const control = inCurrentSection(tree, 'circle-action-settings').find((n: any) => n.props.accessibilityRole === 'button');
+
+    expect(control.props.accessibilityLabel).toBe('home.grownUps');
+    expect(control.findAll((n: any) => n.props.children === 'home.grownUps').length).toBeGreaterThan(0);
     expect(inCurrentSection(tree, 'circle-action-audio')).toHaveLength(0);
+  });
+
+  it('labels the home control Home', async () => {
+    const tree = await renderProfile();
+
+    const control = inCurrentSection(tree, 'circle-action-home').find((n: any) => n.props.accessibilityRole === 'button');
+
+    expect(control.props.accessibilityLabel).toBe('common.home');
+    expect(control.findAll((n: any) => n.props.children === 'common.home').length).toBeGreaterThan(0);
+  });
+
+  it('keeps the title centred between controls of different widths', async () => {
+    const tree = await renderProfile();
+
+    const flexOf = (testID: string) =>
+      inCurrentSection(tree, testID).map((n: any) => StyleSheet.flatten(n.props.style).flex);
+
+    expect(new Set(flexOf('catalogue-header-row-left'))).toEqual(new Set([1]));
+    expect(new Set(flexOf('catalogue-header-row-right'))).toEqual(new Set([1]));
   });
 
   it('keeps the back button that returns to the main menu', async () => {
     const tree = await renderProfile();
 
     fireEvent.press(
-      inCurrentSection(tree, 'circle-action-back').find((n: any) => n.props.accessibilityRole === 'button'),
+      inCurrentSection(tree, 'circle-action-home').find((n: any) => n.props.accessibilityRole === 'button'),
     );
 
     expect(mockAppState.requestReturnToMainMenu).toHaveBeenCalled();
@@ -1430,14 +1470,12 @@ describe('the journey tours', () => {
     );
   }
 
-  it('runs the stories tour on the shelf, pointing at the chooser, the shelf and the bar', async () => {
+  it('runs the stories tour on the shelf, pointing at the chooser and the shelf, and leaves the bar to the home tour', async () => {
     const tree = render(<StoryCatalogueScreen />);
     await waitFor(() => expect(byTestId(tree, 'story-filter-bar').length).toBeGreaterThan(0));
 
     expect(byTestId(tree, 'owl-guide-catalogue_tour').length).toBeGreaterThan(0);
-    expect(latest('catalogue_tour')?.targets).toEqual(
-      expect.arrayContaining(['theme_tiles', 'filter_toggle', 'featured_story', 'story_shelves', 'nav_progress', 'nav_screensafe', 'nav_search', 'nav_profile']),
-    );
+    expect(latest('catalogue_tour')?.targets).toEqual(['theme_tiles', 'filter_toggle', 'featured_story', 'story_shelves']);
     for (const other of ['progress_tour', 'search_tour', 'profile_tour']) {
       expect(byTestId(tree, `owl-guide-${other}`)).toHaveLength(0);
     }
@@ -1456,5 +1494,92 @@ describe('the journey tours', () => {
     await waitFor(() => expect(byTestId(tree, `owl-guide-${tourId}`).length).toBeGreaterThan(0));
     expect(latest(tourId)?.targets).toEqual(expect.arrayContaining(targets));
     expect(byTestId(tree, 'owl-guide-catalogue_tour')).toHaveLength(0);
+  });
+});
+
+/**
+ * The shelves scroll away behind the planet and its clouds rather than being
+ * cut off at an invisible line beneath the tagline. So the scroll area runs to
+ * the top of the screen, the planet is drawn over it, and the title and the
+ * two buttons are drawn over the planet.
+ */
+describe('the shelves and the planet', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockGetCatalog.mockResolvedValue([]);
+    (useStoryTransition as jest.Mock).mockReturnValue({
+      isTransitioning: false,
+      selectedStoryId: null,
+      shouldShowStoryReader: false,
+      isExpandingToReader: false,
+      startTransition: mockStartTransition,
+    });
+  });
+
+  async function renderLibrary() {
+    const tree = render(<StoryCatalogueScreen />);
+    await waitFor(() => expect(byTestId(tree, 'story-filter-bar').length).toBeGreaterThan(0));
+
+    return tree;
+  }
+
+  function firstIndex(tree: ReturnType<typeof render>, testID: string): number {
+    const all = tree.UNSAFE_root.findAll((n: any) => typeof n.props.testID === 'string');
+
+    return all.findIndex((n: any) => n.props.testID === testID);
+  }
+
+  it('runs the scroll area to the top of the screen, under the header', async () => {
+    const tree = await renderLibrary();
+
+    const scroll = byTestId(tree, 'catalogue-scroll').find((n: any) => n.props.contentContainerStyle);
+    const frame = StyleSheet.flatten(scroll.props.style);
+
+    expect(frame.position).toBe('absolute');
+    expect(frame.top).toBe(0);
+  });
+
+  it('starts the shelves below the planet and the header, so nothing is hidden at rest', async () => {
+    const tree = await renderLibrary();
+
+    const scroll = byTestId(tree, 'catalogue-scroll').find((n: any) => n.props.contentContainerStyle);
+    const content = StyleSheet.flatten(scroll.props.contentContainerStyle);
+
+    expect(content.paddingTop).toBeGreaterThanOrEqual(PLANET_HEADER_ESTIMATE.phone);
+  });
+
+  it('draws the planet over the shelves and the title over the planet', async () => {
+    const tree = await renderLibrary();
+
+    const scroll = firstIndex(tree, 'catalogue-scroll');
+    const planet = firstIndex(tree, 'catalogue-planet-over-shelves');
+    const title = firstIndex(tree, 'page-title');
+
+    expect(scroll).toBeGreaterThanOrEqual(0);
+    expect(planet).toBeGreaterThan(scroll);
+    expect(title).toBeGreaterThan(planet);
+  });
+
+  it('dissolves the shelves into the sky as they rise under the header, before they reach the buttons', async () => {
+    const tree = await renderLibrary();
+
+    const scroll = firstIndex(tree, 'catalogue-scroll');
+    const veil = firstIndex(tree, 'catalogue-planet-over-shelves-veil');
+    const globe = firstIndex(tree, 'planet-header-artwork-globe');
+    const veilStyle = StyleSheet.flatten(byTestId(tree, 'catalogue-planet-over-shelves-veil')[0].props.style);
+
+    expect(veil).toBeGreaterThan(scroll);
+    expect(tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'planet-header-artwork-globe').length).toBeGreaterThan(1);
+    expect(globe).toBeGreaterThanOrEqual(0);
+    expect(veilStyle.top).toBe(0);
+    expect(veilStyle.height).toBeGreaterThanOrEqual(PLANET_HEADER_ESTIMATE.phone);
+  });
+
+  it('lets a drag that starts on the header reach the shelves beneath it', async () => {
+    const tree = await renderLibrary();
+
+    const header = byTestId(tree, 'catalogue-header').find((n: any) => n.props.onLayout);
+
+    expect(header.props.pointerEvents).toBe('box-none');
   });
 });

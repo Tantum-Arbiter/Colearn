@@ -69,7 +69,7 @@ const PANEL_INSET = 6;
  * glyph's, and reads as the control the bar is built around rather than as
  * one of five equals.
  */
-const NAV_RING_SIZE = 58;
+export const NAV_RING_SIZE = 58;
 
 /** Tamed from the home scene's 1.9: that halo reaches into both neighbours. */
 const NAV_RING_HALO_SCALE = 1.24;

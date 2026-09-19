@@ -7,7 +7,7 @@
  * book takes its own column and the grid is narrower -- shows three.
  */
 
-import { CATALOGUE_COLUMNS, coverColumns, coverWidthFor } from '@/constants/catalogue-columns';
+import { CATALOGUE_COLUMNS, catalogueLayout, coverColumns, coverWidthFor } from '@/constants/catalogue-columns';
 import { COVER_GRID_GAP, CONTENT_MARGIN_PHONE, CONTENT_MARGIN_TABLET, SPACE_5 } from '@/components/child-ui/tokens';
 
 const portraitGrid = (windowWidth: number) => windowWidth - CONTENT_MARGIN_TABLET * 2;
@@ -59,5 +59,48 @@ describe('coverWidthFor', () => {
   it('should split the grid into whole-point columns with the gaps taken out', () => {
     expect(coverWidthFor(770, 4)).toBe(Math.floor((770 - COVER_GRID_GAP * 3) / 4));
     expect(coverWidthFor(358, 2)).toBe(173);
+  });
+});
+
+/**
+ * A tablet on its side: the featured book and Today's pick sit side by side
+ * across the top, and every shelf below runs the full width from the left
+ * margin, as it does upright -- not squeezed into a column beside the book.
+ */
+describe('catalogueLayout', () => {
+  const CONTENT = 1194 - CONTENT_MARGIN_TABLET * 2;
+
+  it('pairs the featured book and Today\'s pick across the top of a tablet on its side', () => {
+    const underTest = catalogueLayout({ isTablet: true, landscape: true, contentWidth: CONTENT, hasPick: true });
+
+    expect(underTest.pickBesideFeatured).toBe(true);
+    expect(underTest.featuredWidth).toBe(Math.floor((CONTENT - SPACE_5) / 2));
+    expect(underTest.pickWidth).toBe(underTest.featuredWidth);
+    expect(underTest.featuredWidth * 2 + SPACE_5).toBeLessThanOrEqual(CONTENT);
+  });
+
+  it('runs every shelf the full width on a tablet on its side', () => {
+    const underTest = catalogueLayout({ isTablet: true, landscape: true, contentWidth: CONTENT, hasPick: true });
+
+    expect(underTest.shelfWidth).toBe(CONTENT);
+  });
+
+  it('lets the featured book take the whole width when there is no pick to pair it with', () => {
+    const underTest = catalogueLayout({ isTablet: true, landscape: true, contentWidth: CONTENT, hasPick: false });
+
+    expect(underTest.pickBesideFeatured).toBe(false);
+    expect(underTest.featuredWidth).toBe(CONTENT);
+  });
+
+  it.each([
+    ['a tablet upright', true, false],
+    ['a phone', false, false],
+  ])('keeps %s as it was: one column, the pick among the shelves', (_case, isTablet, landscape) => {
+    const underTest = catalogueLayout({ isTablet, landscape, contentWidth: 700, hasPick: true });
+
+    expect(underTest.pickBesideFeatured).toBe(false);
+    expect(underTest.featuredWidth).toBe(700);
+    expect(underTest.pickWidth).toBe(700);
+    expect(underTest.shelfWidth).toBe(700);
   });
 });

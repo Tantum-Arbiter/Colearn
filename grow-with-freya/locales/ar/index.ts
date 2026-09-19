@@ -1,5 +1,6 @@
 export default {
   common: {
+    home: 'الرئيسية',
     back: 'رجوع',
     backArrow: '← رجوع',
     next: 'التالي',
@@ -634,6 +635,10 @@ export default {
       startReading: 'ابدأ القراءة',
     },
     mainMenu: {
+      navLearn: {
+        title: 'تعلّم',
+        description: 'كل القصص والأغاني وألعاب التعلّم موجودة في المكتبة. اضغط هنا لفتحها.',
+      },
       welcome: {
         title: 'مرحباً بك في Grow with Freya!',
         description: 'دعنا نأخذ جولة سريعة لمساعدتك أنت وطفلك على الاستفادة القصوى من وقت القراءة.',

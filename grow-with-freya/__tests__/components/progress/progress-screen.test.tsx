@@ -5,9 +5,10 @@
  */
 
 import React from 'react';
-import type { View } from 'react-native';
+import { StyleSheet, type View } from 'react-native';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { ProgressScreen } from '@/components/progress/progress-screen';
+import { PLANET_HEADER_ESTIMATE } from '@/components/child-ui/planet-cover';
 
 jest.mock('@/data/stories', () => ({
   ALL_STORIES: [],
@@ -61,7 +62,7 @@ describe('ProgressScreen', () => {
 
     await waitFor(() => {
       expect(byTestId(tree, 'planet-header-artwork').length).toBeGreaterThan(0);
-      expect(byTestId(tree, 'circle-action-back').length).toBeGreaterThan(0);
+      expect(byTestId(tree, 'circle-action-home').length).toBeGreaterThan(0);
       expect(byTestId(tree, 'circle-action-audio').length).toBeGreaterThan(0);
       expect(textByTestId(tree, 'progress-title').props.children).toBe('progress.title');
       // the flat line became the arched two-line tagline the other pages carry
@@ -146,13 +147,16 @@ describe('ProgressScreen', () => {
     });
   });
 
-  it('reports the back control', async () => {
+  it('goes home from the home control', async () => {
     const onBack = jest.fn();
     const tree = render(<ProgressScreen onBack={onBack} />);
 
-    await waitFor(() => expect(byTestId(tree, 'circle-action-back').length).toBeGreaterThan(0));
-    fireEvent.press(byTestId(tree, 'circle-action-back')[0]);
+    await waitFor(() => expect(byTestId(tree, 'circle-action-home').length).toBeGreaterThan(0));
+    const home = byTestId(tree, 'circle-action-home')[0];
+    fireEvent.press(home);
 
+    expect(home.props.accessibilityLabel).toBe('common.home');
+    expect(home.findAll((n: any) => n.props.children === 'common.home').length).toBeGreaterThan(0);
     expect(onBack).toHaveBeenCalledTimes(1);
   });
 
@@ -169,5 +173,69 @@ describe('ProgressScreen', () => {
     fireEvent.press(byTestId(tree, 'badge-detail-recommendation')[0]);
 
     expect(onRecommend).toHaveBeenCalledWith('calming');
+  });
+});
+
+/**
+ * Like the library, Progress starts below the planet and scrolls away behind
+ * it: the scroll area runs to the top of the screen, the planet is drawn over
+ * it, and the title and buttons over the planet -- embedded in the library's
+ * sections or standing on its own.
+ */
+describe('Progress and the planet', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  function firstIndex(tree: ReturnType<typeof render>, testID: string): number {
+    const all = tree.UNSAFE_root.findAll((n: any) => typeof n.props.testID === 'string');
+
+    return all.findIndex((n: any) => n.props.testID === testID);
+  }
+
+  function scrollOf(tree: ReturnType<typeof render>) {
+    return byTestId(tree, 'progress-scroll').find((n: any) => n.props.contentContainerStyle);
+  }
+
+  it.each([
+    ['on its own', false],
+    ['inside the library', true],
+  ])('runs the scroll area to the top of the screen %s', async (_case, embedded) => {
+    const tree = render(<ProgressScreen onBack={jest.fn()} embedded={embedded} />);
+    await waitFor(() => expect(byTestId(tree, 'progress-hero-card').length).toBeGreaterThan(0));
+
+    const frame = StyleSheet.flatten(scrollOf(tree).props.style);
+
+    expect(frame.position).toBe('absolute');
+    expect(frame.top).toBe(0);
+  });
+
+  it('starts the weekly card below the planet and the header', async () => {
+    const tree = render(<ProgressScreen onBack={jest.fn()} embedded />);
+    await waitFor(() => expect(byTestId(tree, 'progress-hero-card').length).toBeGreaterThan(0));
+
+    const content = StyleSheet.flatten(scrollOf(tree).props.contentContainerStyle);
+
+    expect(content.paddingTop).toBeGreaterThanOrEqual(PLANET_HEADER_ESTIMATE.phone);
+  });
+
+  it('draws the planet over the cards and the title over the planet', async () => {
+    const tree = render(<ProgressScreen onBack={jest.fn()} embedded />);
+    await waitFor(() => expect(byTestId(tree, 'progress-hero-card').length).toBeGreaterThan(0));
+
+    const scroll = firstIndex(tree, 'progress-scroll');
+    const cover = firstIndex(tree, 'progress-planet-over-cards');
+    const title = firstIndex(tree, 'progress-title');
+
+    expect(scroll).toBeGreaterThanOrEqual(0);
+    expect(cover).toBeGreaterThan(scroll);
+    expect(title).toBeGreaterThan(cover);
+  });
+
+  it('lets a drag that starts on the header reach the cards beneath it', async () => {
+    const tree = render(<ProgressScreen onBack={jest.fn()} embedded />);
+    await waitFor(() => expect(byTestId(tree, 'progress-hero-card').length).toBeGreaterThan(0));
+
+    const header = byTestId(tree, 'progress-header').find((n: any) => n.props.onLayout);
+
+    expect(header.props.pointerEvents).toBe('box-none');
   });
 });

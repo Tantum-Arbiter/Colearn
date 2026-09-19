@@ -1,5 +1,6 @@
 export default {
   common: {
+    home: 'Domus',
     back: 'Redire',
     backArrow: '← Redire',
     next: 'Sequens',
@@ -634,6 +635,10 @@ export default {
       startReading: 'Incipe Legere',
     },
     mainMenu: {
+      navLearn: {
+        title: 'Disce',
+        description: 'Omnes fabulae, carmina et ludi discendi in bibliotheca sunt. Hic tange ut eam aperias.',
+      },
       welcome: {
         title: 'Salve in Grow with Freya!',
         description: 'Faciamus Celerem Circumductionem ut Te et Filium Tuum Adiuvemus Tempus Legendi Maxime Uti.',

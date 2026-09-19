@@ -166,7 +166,6 @@ export const HOME_SCENE_TYPE = {
   greeting: 30,
   cardTitle: 20,
   cardDescription: 13,
-  grownUps: 13,
 } as const;
 
 export function homeCardHeight(screenWidth: number): number {

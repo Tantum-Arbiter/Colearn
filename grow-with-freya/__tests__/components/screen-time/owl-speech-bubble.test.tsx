@@ -167,3 +167,54 @@ describe('OwlSpeechBubble', () => {
     expect(visibleBody(tree)).toBe(long);
   });
 });
+
+/**
+ * An owl bubble's way out can be the word Skip, in the reader's own language,
+ * where the cross used to be. Every owl in the app uses the word; the cross is
+ * only the default for a bubble that does not ask.
+ */
+describe('the way out of the bubble', () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+    mockReducedMotion.mockReturnValue(false);
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  function closeTexts(tree: ReturnType<typeof render>): string[] {
+    const control = findByTestId(tree, 'bubble-close')[0];
+
+    return control
+      .findAll((node: any) => typeof node.props.children === 'string')
+      .map((node: any) => node.props.children as string);
+  }
+
+  it('keeps the cross by default', () => {
+    const tree = renderBubble();
+
+    expect(closeTexts(tree)).toContain('×');
+  });
+
+  it('shows the word instead of the cross when asked to', () => {
+    const tree = renderBubble({ closeLabel: 'Überspringen', closeAsWord: true });
+
+    expect(closeTexts(tree)).toContain('Überspringen');
+    expect(closeTexts(tree)).not.toContain('×');
+    expect(findByTestId(tree, 'bubble-close')[0].props.accessibilityLabel).toBe('Überspringen');
+  });
+
+  it('keeps the title clear of the word, however long the word is in this language', () => {
+    const tree = renderBubble({ title: 'Progress', closeLabel: 'Überspringen', closeAsWord: true });
+    const control = findByTestId(tree, 'bubble-close').find((node: any) => node.props.onLayout);
+
+    act(() => {
+      control.props.onLayout({ nativeEvent: { layout: { x: 0, y: 0, width: 96, height: 26 } } });
+    });
+
+    const title = findByTestId(tree, 'bubble-title')[0];
+    const flat = [title.props.style].flat(3).reduce((merged: any, part: any) => ({ ...merged, ...part }), {});
+    expect(flat.paddingRight).toBe(96 + 8);
+  });
+});

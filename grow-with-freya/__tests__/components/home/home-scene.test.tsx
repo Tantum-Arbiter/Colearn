@@ -62,7 +62,6 @@ function renderScene(props: Partial<React.ComponentProps<typeof HomeScene>> = {}
     onContinue: jest.fn(),
     onOpenAchievements: jest.fn(),
     onSelectSection: jest.fn(),
-    onOpenGrownUps: jest.fn(),
   };
 
   const view = render(<HomeScene data={DATA} welcome={WELCOME} timeOfDay="night" {...handlers} {...props} />);
@@ -215,20 +214,22 @@ describe('HomeScene', () => {
     });
   });
 
-  describe('the grown-up corner', () => {
-    it('should be present but subordinate', () => {
+  describe('the corner controls', () => {
+    it('should leave the grown-ups control to the Profile page', () => {
       const { view } = renderScene();
 
-      expect(textContents(view)).toContain('home.grownUps');
+      expect(byTestId(view, 'grown-ups-pill')).toHaveLength(0);
+      expect(textContents(view)).not.toContain('home.grownUps');
     });
 
-    it('should hand off rather than navigate itself, so the gate can run', () => {
-      const { view, onOpenGrownUps, onSelectSection } = renderScene();
+    it('should keep the speaker in its corner on the right', () => {
+      const { view } = renderScene();
 
-      pressTestId(view, 'grown-ups-pill');
+      const corner = byTestId(view, 'home-corner-controls').filter((node) => node.props.style)[0];
+      const flat = StyleSheet.flatten(corner.props.style);
 
-      expect(onOpenGrownUps).toHaveBeenCalledTimes(1);
-      expect(onSelectSection).not.toHaveBeenCalled();
+      expect(byTestId(view, 'music-control-button').length).toBeGreaterThan(0);
+      expect(flat.justifyContent).toBe('flex-end');
     });
   });
 });

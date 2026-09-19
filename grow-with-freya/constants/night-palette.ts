@@ -11,6 +11,55 @@ export type SkyGradient = readonly [NightStop, NightStop, NightStop];
 
 export const SKY_GRADIENT_WORLD: SkyGradient = [NIGHT_BRIGHT, NIGHT_PRIMARY, NIGHT_DEEP];
 
+const VEIL_SOLID_UNTIL = 0.55;
+
+export interface SkyColour {
+  red: number;
+  green: number;
+  blue: number;
+}
+
+export interface SkyVeil {
+  colours: [string, string, string];
+  locations: [number, number, number];
+}
+
+function channels(hex: string): SkyColour {
+  return {
+    red: parseInt(hex.slice(1, 3), 16),
+    green: parseInt(hex.slice(3, 5), 16),
+    blue: parseInt(hex.slice(5, 7), 16),
+  };
+}
+
+export function skyWorldColourAt(fraction: number): SkyColour {
+  const along = Math.min(Math.max(fraction, 0), 1) * (SKY_GRADIENT_WORLD.length - 1);
+  const index = Math.min(Math.floor(along), SKY_GRADIENT_WORLD.length - 2);
+  const from = channels(SKY_GRADIENT_WORLD[index]);
+  const to = channels(SKY_GRADIENT_WORLD[index + 1]);
+  const blend = along - index;
+
+  return {
+    red: Math.round(from.red + (to.red - from.red) * blend),
+    green: Math.round(from.green + (to.green - from.green) * blend),
+    blue: Math.round(from.blue + (to.blue - from.blue) * blend),
+  };
+}
+
+export function headerSkyVeil(headerHeight: number, screenHeight: number): SkyVeil {
+  const share = screenHeight > 0 ? headerHeight / screenHeight : 0;
+  const paint = (at: number, alpha: number) => {
+    const colour = skyWorldColourAt(share * at);
+
+    return `rgba(${colour.red}, ${colour.green}, ${colour.blue}, ${alpha})`;
+  };
+
+  return {
+    colours: [paint(0, 1), paint(VEIL_SOLID_UNTIL, 1), paint(1, 0)],
+    locations: [0, VEIL_SOLID_UNTIL, 1],
+  };
+}
+
 export const SURFACE_PRIMARY = 'rgba(80, 120, 200, 0.32)';
 export const SURFACE_SECONDARY = 'rgba(63, 105, 184, 0.55)';
 export const SURFACE_NAV = 'rgba(14, 43, 113, 0.82)';

@@ -5,8 +5,8 @@ import { BORDER_DEFAULT, TEXT_PRIMARY } from '@/constants/night-palette';
 import { AVATAR_OPTIONS } from '@/components/onboarding/onboarding-pages';
 import { useAppStore } from '@/store/app-store';
 
-/** Kept in step with the bar's glyphs, which fill the same height it does. */
-export const PROFILE_NAV_AVATAR_SIZE = 46;
+/** As big as the Screensafe ring in the same bar: the child's own face is the bar's other landmark. */
+export const PROFILE_NAV_AVATAR_SIZE = 58;
 
 interface ProfileNavAvatarProps {
   selected: boolean;

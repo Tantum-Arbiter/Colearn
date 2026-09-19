@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { useCoversJourneyBar } from '@/components/child-ui/journey-bar-cover';
 import { Fonts } from '@/constants/theme';
 import { PlanPicker, type LivePrices } from '@/components/subscription/plan-picker';
 import { fallbackPrices, type PlanId } from '@/constants/fallback-prices';
@@ -111,6 +112,7 @@ export const TrialEndUpgradeOverlay = React.memo(function TrialEndUpgradeOverlay
   onClose,
   status,
 }: TrialEndUpgradeOverlayProps) {
+  useCoversJourneyBar(visible);
   const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
   const { width: screenW, height: screenH } = useWindowDimensions();

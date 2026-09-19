@@ -18,6 +18,8 @@ import { ScrollView } from 'react-native';
 import { render, act } from '@testing-library/react-native';
 
 import { SubscriptionOverlay } from '@/components/ui/subscription-overlay';
+import { ChildBottomNavigation } from '@/components/child-ui/child-bottom-navigation';
+import { JourneyBarProvider, JourneyBarOutlet } from '@/components/child-ui/journey-bar-slot';
 
 jest.mock('@expo/vector-icons', () => {
   const { Text } = require('react-native');
@@ -446,5 +448,49 @@ describe('SubscriptionOverlay without the plan picker', () => {
     const json = JSON.stringify(renderOverlay().toJSON());
 
     expect(json).not.toContain('subscription.unlockPlan');
+  });
+});
+
+/** The plans cover the whole screen, so the bar at the foot steps out while they are up. */
+describe('SubscriptionOverlay and the journey bar', () => {
+  it.each([
+    [true, 0],
+    [false, 1],
+  ])('with the plans visible=%s, leaves %s bar on screen', (visible, expected) => {
+    const tree = render(
+      <JourneyBarProvider>
+        <ChildBottomNavigation selected="home" onSelect={jest.fn()} slotKey="main" />
+        <SubscriptionOverlay visible={visible} onClose={jest.fn()} />
+        <JourneyBarOutlet pageKey="main" />
+      </JourneyBarProvider>
+    );
+
+    const bars = tree.UNSAFE_root.findAll(
+      (n: any) => n.props.testID === 'child-bottom-navigation' && n.props.accessibilityRole === 'tablist'
+    );
+    expect(bars).toHaveLength(expected);
+  });
+});
+
+/**
+ * The plan card's "Most recommended" badge hangs above the card's top edge. With
+ * the timeline stacked directly above, it sat on the timeline's border; the two
+ * panels need clear space between them, more than the badge's overhang.
+ */
+describe('the space between the timeline and the plan', () => {
+  const BADGE_OVERHANG = 13;
+
+  it.each([
+    ['a phone upright', 402, 874],
+    ['a tablet upright', 834, 1194],
+  ])('leaves room for the badge on %s', (_case, width, height) => {
+    setViewport(width, height);
+    mockEligible.mockReturnValue(true);
+
+    const tree = renderOverlay();
+
+    const offer = tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'trial-offer' && n.props.style)[0];
+    const gap = [offer.props.style].flat(3).reduce((merged: any, part: any) => ({ ...merged, ...part }), {}).gap;
+    expect(gap).toBeGreaterThanOrEqual(BADGE_OVERHANG + 8);
   });
 });

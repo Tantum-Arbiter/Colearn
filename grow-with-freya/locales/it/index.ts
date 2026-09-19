@@ -1,5 +1,6 @@
 export default {
   common: {
+    home: 'Home',
     back: 'Indietro',
     backArrow: '← Indietro',
     next: 'Avanti',
@@ -634,6 +635,10 @@ export default {
       startReading: 'Inizia a leggere',
     },
     mainMenu: {
+      navLearn: {
+        title: 'Impara',
+        description: 'Tutte le storie, le canzoni e i giochi per imparare sono nella biblioteca. Tocca qui per aprirla.',
+      },
       welcome: {
         title: 'Benvenuto in Grow with\nFreya!',
         description: 'Facciamo un tour veloce per aiutarti te e tuo figlio a ottenere il massimo dal tempo di lettura insieme.',

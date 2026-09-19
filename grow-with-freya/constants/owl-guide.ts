@@ -1,3 +1,5 @@
+import { CIRCLE_BUTTON_DIAMETER_PHONE } from '@/components/child-ui/tokens';
+
 export const GUIDE_IDS = [
   'main_menu_tour',
   'catalogue_tour',
@@ -42,6 +44,12 @@ export interface GuideStep {
    * step is spotlit where it stands.
    */
   pinned?: boolean;
+  /**
+   * The subject is on the bottom bar, whose left end is where the owl stands.
+   * The owl steps back for the whole step so the child sees all of the bar,
+   * not only when the lit button happens to be under it.
+   */
+  revealsBar?: boolean;
 }
 
 function keyed(section: string, id: string, key: string): Pick<GuideStep, 'titleKey' | 'descriptionKey'> {
@@ -60,10 +68,14 @@ export const GUIDE_STEPS: Record<GuideId, readonly GuideStep[]> = {
     { id: 'welcome', ...keyed('mainMenu', 'welcome', 'welcome') },
     { id: 'stories_button', ...keyed('mainMenu', 'stories_button', 'stories'), target: 'stories_button', shape: 'rounded-rect', radius: 24 },
     { id: 'achievement_card', ...keyed('mainMenu', 'achievement_card', 'achievement'), target: 'achievement_card', shape: 'rounded-rect', radius: 24 },
-    { id: 'learning_button', ...keyed('mainMenu', 'learning_button', 'learning'), target: 'learning_button', shape: 'rounded-rect', radius: 24 },
     { id: 'instruments_button', ...keyed('mainMenu', 'instruments_button', 'instruments'), target: 'instruments_button', shape: 'rounded-rect', radius: 24 },
-    { id: 'screen_time_ring', ...keyed('mainMenu', 'screen_time_ring', 'screenTime'), target: 'screen_time_ring', shape: 'circle', illustration: 'screenTimeRing', pinned: true },
-    { id: 'settings_button', ...keyed('mainMenu', 'settings_button', 'settings'), target: 'settings_button', shape: 'rounded-rect', radius: 19, pinned: true },
+    // the bar, left to right, before the corner controls
+    { id: 'nav_learn', ...keyed('mainMenu', 'nav_learn', 'navLearn'), target: 'nav_learn', shape: 'circle', pinned: true, revealsBar: true },
+    { id: 'nav_progress', ...keyed('catalogue', 'nav_progress', 'navProgress'), target: 'nav_progress', shape: 'circle', pinned: true, revealsBar: true },
+    { id: 'screen_time_ring', ...keyed('mainMenu', 'screen_time_ring', 'screenTime'), target: 'screen_time_ring', shape: 'circle', illustration: 'screenTimeRing', pinned: true, revealsBar: true },
+    { id: 'nav_search', ...keyed('catalogue', 'nav_search', 'navSearch'), target: 'nav_search', shape: 'circle', pinned: true, revealsBar: true },
+    { id: 'nav_profile', ...keyed('catalogue', 'nav_profile', 'navProfile'), target: 'nav_profile', shape: 'circle', pinned: true, revealsBar: true },
+    { id: 'settings_button', ...keyed('mainMenu', 'settings_button', 'settings'), target: 'settings_button', shape: 'rounded-rect', radius: 24, pinned: true },
     { id: 'sound_control', ...keyed('mainMenu', 'sound_control', 'sound'), target: 'sound_control', shape: 'circle', pinned: true },
   ],
   catalogue_tour: [
@@ -72,10 +84,6 @@ export const GUIDE_STEPS: Record<GuideId, readonly GuideStep[]> = {
     { id: 'filter_toggle', ...keyed('catalogue', 'filter_toggle', 'filter'), target: 'filter_toggle', shape: 'rounded-rect', radius: 22 },
     { id: 'featured_story', ...keyed('catalogue', 'featured_story', 'featured'), target: 'featured_story', shape: 'rounded-rect', radius: 22 },
     { id: 'story_shelves', ...keyed('catalogue', 'story_shelves', 'shelves'), target: 'story_shelves', shape: 'rounded-rect', radius: 22 },
-    { id: 'nav_progress', ...keyed('catalogue', 'nav_progress', 'navProgress'), target: 'nav_progress', shape: 'circle', pinned: true },
-    { id: 'nav_screensafe', ...keyed('catalogue', 'nav_screensafe', 'navScreensafe'), target: 'nav_screensafe', shape: 'circle', pinned: true },
-    { id: 'nav_search', ...keyed('catalogue', 'nav_search', 'navSearch'), target: 'nav_search', shape: 'circle', pinned: true },
-    { id: 'nav_profile', ...keyed('catalogue', 'nav_profile', 'navProfile'), target: 'nav_profile', shape: 'circle', pinned: true },
   ],
   progress_tour: [
     { id: 'progress_welcome', ...keyed('progress', 'progress_welcome', 'welcome') },
@@ -93,7 +101,7 @@ export const GUIDE_STEPS: Record<GuideId, readonly GuideStep[]> = {
     { id: 'profile_welcome', ...keyed('profile', 'profile_welcome', 'welcome') },
     { id: 'profile_hero', ...keyed('profile', 'profile_hero', 'hero'), target: 'profile_hero', shape: 'circle' },
     { id: 'profile_tabs', ...keyed('profile', 'profile_tabs', 'tabs'), target: 'profile_tabs', shape: 'rounded-rect', radius: 22 },
-    { id: 'profile_settings', ...keyed('profile', 'profile_settings', 'settings'), target: 'profile_settings', shape: 'circle', pinned: true },
+    { id: 'profile_settings', ...keyed('profile', 'profile_settings', 'settings'), target: 'profile_settings', shape: 'rounded-rect', radius: CIRCLE_BUTTON_DIAMETER_PHONE / 2, pinned: true },
   ],
   story_modes_tour: plain('storyModes', [
     ['modes_welcome', 'welcome'],

@@ -10,6 +10,8 @@ import { useGlobalSound } from '@/contexts/global-sound-context';
 import { CelestialBackground } from '@/components/child-ui/celestial-background';
 import { ContentSwap } from '@/components/child-ui/content-swap';
 import { PlanetHeaderArtwork } from '@/components/child-ui/planet-header-artwork';
+import { PlanetCover, usePlanetCover } from '@/components/child-ui/planet-cover';
+import { BalancedHeaderRow } from '@/components/child-ui/balanced-header-row';
 import { CircleActionButton } from '@/components/child-ui/circle-action-button';
 import { PageTitle } from '@/components/child-ui/page-title';
 import { PageTagline } from '@/components/child-ui/page-tagline';
@@ -66,6 +68,7 @@ export function ProgressScreen({
   scrollBinding,
 }: ProgressScreenProps) {
   const insets = useSafeAreaInsets();
+  const { coverHeight, onHeaderLayout } = usePlanetCover();
   const { width: windowWidth } = useWindowDimensions();
   const { isTablet, scaledFontSize } = useAccessibility();
   const { isMuted, toggleMute } = useGlobalSound();
@@ -107,47 +110,20 @@ export function ProgressScreen({
   }, [onRecommend, onDetailVisibleChange]);
 
   const body = (
-    <>
-
-      <View
-        style={[
-          styles.headerRow,
-          {
-            marginTop: insets.top + (isTablet ? SPACE_2 : 0),
-            marginHorizontal: margin,
-          },
-        ]}
-      >
-        <CircleActionButton type="back" onPress={onBack} accessibilityLabel={t('common.back')} />
-        <View style={styles.titleWrapper}>
-          <PageTitle title={t('progress.title')} testID="progress-title" />
-        </View>
-        <CircleActionButton
-          type="audio"
-          muted={isMuted}
-          onPress={() => { void toggleMute(); }}
-          accessibilityLabel={t('catalogue.sound')}
-        />
-      </View>
-
-      <View style={[styles.tagline, { marginHorizontal: margin }]}>
-        <PageTagline
-          testID="progress-tagline"
-          lines={[t('progress.tagline.one'), t('progress.tagline.two')]}
-          width={contentWidth}
-        />
-      </View>
+    <View style={styles.fill}>
 
       <ScrollView
+        testID="progress-scroll"
         ref={scrollBinding?.scrollRef}
         onScroll={scrollBinding?.onScroll}
         onLayout={scrollBinding?.onLayout}
         onContentSizeChange={scrollBinding?.onContentSizeChange}
         scrollEventThrottle={16}
-        style={[styles.scroll, { marginBottom: navClearance(insets.bottom) }]}
+        style={[styles.scroll, { bottom: navClearance(insets.bottom) }]}
+        scrollIndicatorInsets={{ top: coverHeight }}
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingHorizontal: margin, paddingBottom: scrollBinding?.reserve ?? 0 },
+          { paddingTop: coverHeight + SPACE_3, paddingHorizontal: margin, paddingBottom: scrollBinding?.reserve ?? 0 },
         ]}
       >
         <View style={[styles.column, { maxWidth: CONTENT_MAX_WIDTH }]}>
@@ -199,12 +175,39 @@ export function ProgressScreen({
         </View>
       </ScrollView>
 
+      <PlanetCover height={coverHeight} testID="progress-planet-over-cards" />
+
+      <View testID="progress-header" style={styles.header} pointerEvents="box-none" onLayout={onHeaderLayout}>
+      <BalancedHeaderRow
+        testID="progress-header-row"
+        style={{ marginTop: insets.top + (isTablet ? SPACE_2 : 0), marginHorizontal: margin }}
+        left={<CircleActionButton type="home" label={t('common.home')} onPress={onBack} accessibilityLabel={t('common.home')} />}
+        title={<PageTitle title={t('progress.title')} testID="progress-title" />}
+        right={
+          <CircleActionButton
+            type="audio"
+            muted={isMuted}
+            onPress={() => { void toggleMute(); }}
+            accessibilityLabel={t('catalogue.sound')}
+          />
+        }
+      />
+
+      <View style={[styles.tagline, { marginHorizontal: margin }]} pointerEvents="none">
+        <PageTagline
+          testID="progress-tagline"
+          lines={[t('progress.tagline.one'), t('progress.tagline.two')]}
+          width={contentWidth}
+        />
+      </View>
+      </View>
+
       <BadgeDetailSheet badge={selectedBadge} onClose={handleCloseSheet} onRecommend={handleRecommend} />
-    </>
+    </View>
   );
 
   if (embedded) {
-    return <View style={styles.fill}>{body}</View>;
+    return body;
   }
 
   return (
@@ -222,23 +225,19 @@ const styles = StyleSheet.create({
   // matches the catalogue's header exactly: the same top margin, the same
   // centred controls and the same absence of padding beneath, so the title and
   // its tagline sit at one height across every journey area
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    zIndex: 10,
-  },
-  titleWrapper: {
-    flex: 1,
-  },
   tagline: {
     zIndex: 10,
   },
   scroll: {
-    flex: 1,
-    zIndex: 5,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+  },
+  header: {
+    zIndex: 10,
   },
   scrollContent: {
-    paddingTop: SPACE_4,
     paddingBottom: SPACE_4,
     alignItems: 'center',
   },

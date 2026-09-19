@@ -14,6 +14,8 @@ import {
   spotlightFrame,
   type GuideId,
 } from '@/constants/owl-guide';
+import { MENU_CORNER_BUTTON } from '@/components/ui/music-control';
+import { CIRCLE_BUTTON_DIAMETER_PHONE } from '@/components/child-ui/tokens';
 import en from '@/locales/en';
 
 function lookup(key: string): unknown {
@@ -56,14 +58,53 @@ describe('GUIDE_STEPS', () => {
     expect(targets).toContain('sound_control');
   });
 
-  /** The home tour was skipping the achievement card and never mentioned the ring. */
-  it('walks the home in reading order: stories, achievement, learning, ring, grown-ups, sound', () => {
-    const ids = GUIDE_STEPS.main_menu_tour.map((step) => step.id);
+  /**
+   * The home page is where the bar is first seen, so its tour is where the bar
+   * is explained: the two cards, then the bar left to right, and only then the
+   * grown-ups corner and the sound.
+   */
+  it('walks the home: the cards, then the bar left to right, then the sound', () => {
+    const onHome = guideSteps('main_menu_tour', [
+      'stories_button',
+      'achievement_card',
+      'nav_learn',
+      'nav_progress',
+      'screen_time_ring',
+      'nav_search',
+      'nav_profile',
+      'sound_control',
+    ]);
 
-    expect(ids.indexOf('achievement_card')).toBe(ids.indexOf('stories_button') + 1);
-    expect(ids.indexOf('learning_button')).toBe(ids.indexOf('achievement_card') + 1);
-    expect(ids.indexOf('screen_time_ring')).toBeGreaterThan(ids.indexOf('learning_button'));
-    expect(ids.indexOf('settings_button')).toBe(ids.indexOf('screen_time_ring') + 1);
+    expect(onHome.map((step) => step.target)).toEqual([
+      undefined,
+      'stories_button',
+      'achievement_card',
+      'nav_learn',
+      'nav_progress',
+      'screen_time_ring',
+      'nav_search',
+      'nav_profile',
+      'sound_control',
+    ]);
+  });
+
+  it('names the Learn button with the word the bar itself shows', () => {
+    const step = GUIDE_STEPS.main_menu_tour.find((entry) => entry.target === 'nav_learn');
+
+    expect(step?.titleKey).toBe('tutorial.mainMenu.navLearn.title');
+    expect(lookup(step!.titleKey)).toBe(lookup('childUi.nav.home'));
+  });
+
+  it('no longer has a Learning step on the main menu', () => {
+    expect(GUIDE_STEPS.main_menu_tour.map((step) => step.id)).not.toContain('learning_button');
+  });
+
+  it('explains the bar in the same words the library tour used', () => {
+    const copy = (target: string) => GUIDE_STEPS.main_menu_tour.find((step) => step.target === target)?.titleKey;
+
+    expect(copy('nav_progress')).toBe('tutorial.catalogue.navProgress.title');
+    expect(copy('nav_search')).toBe('tutorial.catalogue.navSearch.title');
+    expect(copy('nav_profile')).toBe('tutorial.catalogue.navProfile.title');
   });
 
   it('shows the ring step with a picture of the ring in both its states', () => {
@@ -81,17 +122,13 @@ describe('GUIDE_STEPS', () => {
     }
   });
 
-  it('takes the stories tour along the shelf and then down the bar', () => {
+  it('takes the stories tour along the shelf only, now the bar is explained on the home page', () => {
     expect(GUIDE_STEPS.catalogue_tour.map((step) => step.target)).toEqual([
       undefined,
       'theme_tiles',
       'filter_toggle',
       'featured_story',
       'story_shelves',
-      'nav_progress',
-      'nav_screensafe',
-      'nav_search',
-      'nav_profile',
     ]);
   });
 
@@ -104,12 +141,20 @@ describe('GUIDE_STEPS', () => {
     ]);
   });
 
-  /** The grown-ups control is a pill, so its spotlight is the same pill, not a circle around it. */
-  it('spotlights the grown-ups pill as a pill', () => {
+  /** The grown-ups control is a pill as tall as the speaker, so its spotlight is that pill, not a circle. */
+  it('spotlights the grown-ups pill as a pill round at both ends', () => {
     const step = GUIDE_STEPS.main_menu_tour.find((entry) => entry.target === 'settings_button');
 
     expect(step?.shape).toBe('rounded-rect');
-    expect(step?.radius).toBe(19);
+    expect(step?.radius).toBe(MENU_CORNER_BUTTON.diameter / 2);
+  });
+
+  /** The grown-ups control on the Profile page is a pill with its word, so it is lit as that pill. */
+  it('spotlights the Profile page\'s grown-ups control as a pill', () => {
+    const step = GUIDE_STEPS.profile_tour.find((entry) => entry.target === 'profile_settings');
+
+    expect(step?.shape).toBe('rounded-rect');
+    expect(step?.radius).toBe(CIRCLE_BUTTON_DIAMETER_PHONE / 2);
   });
 
   /** The face and the name are a round subject: a circle round the two of them, not a band across the page. */
@@ -137,18 +182,17 @@ describe('pinned steps', () => {
   const pinnedOf = (id: GuideId) =>
     GUIDE_STEPS[id].filter((step) => step.pinned).map((step) => step.target);
 
-  it('pins the child nav bar on the catalogue tour', () => {
-    expect(pinnedOf('catalogue_tour')).toEqual([
-      'nav_progress',
-      'nav_screensafe',
-      'nav_search',
-      'nav_profile',
-    ]);
+  it('pins nothing on the catalogue tour, which stays on the shelf', () => {
+    expect(pinnedOf('catalogue_tour')).toEqual([]);
   });
 
-  it('pins the home page controls that sit outside its scroll view', () => {
+  it('pins the home page controls that sit outside its scroll view, the bar among them', () => {
     expect(pinnedOf('main_menu_tour')).toEqual([
+      'nav_learn',
+      'nav_progress',
       'screen_time_ring',
+      'nav_search',
+      'nav_profile',
       'settings_button',
       'sound_control',
     ]);
@@ -185,7 +229,7 @@ describe('guideSteps', () => {
   it('drops a step whose target is not on this screen, keeping the rest', () => {
     const withoutInstruments = guideSteps('main_menu_tour', [
       'stories_button',
-      'learning_button',
+      'achievement_card',
       'settings_button',
       'sound_control',
     ]);
@@ -193,7 +237,7 @@ describe('guideSteps', () => {
     expect(withoutInstruments.map((step) => step.id)).toEqual([
       'welcome',
       'stories_button',
-      'learning_button',
+      'achievement_card',
       'settings_button',
       'sound_control',
     ]);
@@ -376,3 +420,21 @@ describe('GUIDE_IDS', () => {
     expect(GUIDE_IDS).toContain(id);
   });
 });
+
+/**
+ * The owl stands at the left end of the bar. On a bar step it steps back for
+ * the whole step, not only when the spotlit button happens to be under it, so
+ * the child sees the entire bar the owl is talking about.
+ */
+describe('steps that reveal the bar', () => {
+  const BAR_TARGETS = ['nav_learn', 'nav_progress', 'screen_time_ring', 'nav_search', 'nav_profile'];
+
+  it('marks every step on the bar, and no other', () => {
+    GUIDE_IDS.forEach((id) => {
+      GUIDE_STEPS[id].forEach((step) => {
+        expect(Boolean(step.revealsBar)).toBe(id === 'main_menu_tour' && BAR_TARGETS.includes(step.target ?? ''));
+      });
+    });
+  });
+});
+

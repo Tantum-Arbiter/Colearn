@@ -1,5 +1,6 @@
 export default {
   common: {
+    home: 'Ana sayfa',
     back: 'Geri',
     backArrow: '← Geri',
     next: 'İleri',
@@ -634,6 +635,10 @@ export default {
       startReading: 'Okumaya Başla',
     },
     mainMenu: {
+      navLearn: {
+        title: 'Öğren',
+        description: 'Tüm hikâyeler, şarkılar ve öğrenme oyunları kütüphanede. Açmak için buraya dokun.',
+      },
       welcome: {
         title: 'Grow with Freya\'ya Hoş Geldiniz!',
         description: 'Siz ve çocuğunuzun okuma zamanından en iyi şekilde yararlanmanıza yardımcı olmak için hızlı bir tur alalım.',

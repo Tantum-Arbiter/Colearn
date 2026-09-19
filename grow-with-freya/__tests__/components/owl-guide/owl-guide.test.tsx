@@ -430,6 +430,18 @@ describe('OwlGuide', () => {
       expect(tree.toJSON()).toBeNull();
     });
 
+    it('offers the word Skip, in the reader\'s language, rather than a cross', async () => {
+      const tree = await renderLanded();
+
+      const control = findByTestId(tree, 'owl-guide-close')[0];
+      const words = control
+        .findAll((node: any) => typeof node.props.children === 'string')
+        .map((node: any) => node.props.children);
+
+      expect(words).toContain('tutorial.buttons.skip');
+      expect(words).not.toContain('×');
+    });
+
     it('lets the owl slip away on skip, and still counts the guide as seen', async () => {
       const onEnd = jest.fn();
       const tree = await renderLanded({ onEnd });
@@ -555,8 +567,8 @@ describe('OwlGuide', () => {
     it('fades the owl back when it would cover its own subject', async () => {
       // bottom-left, under the perch
       const tree = await renderLanded({
-        id: 'catalogue_tour',
-        targets: { nav_progress: ref(30, 800, 44, 44) },
+        id: 'main_menu_tour',
+        targets: { stories_button: ref(30, 800, 44, 44) },
       });
       (withTiming as unknown as jest.Mock).mockClear();
 
@@ -567,8 +579,8 @@ describe('OwlGuide', () => {
 
     it('leaves the owl whole for a subject it is nowhere near', async () => {
       const tree = await renderLanded({
-        id: 'catalogue_tour',
-        targets: { nav_progress: ref(300, 120, 44, 44) },
+        id: 'main_menu_tour',
+        targets: { stories_button: ref(300, 120, 44, 44) },
       });
       (withTiming as unknown as jest.Mock).mockClear();
 
@@ -577,12 +589,43 @@ describe('OwlGuide', () => {
       expect(fadedTo()).not.toContain(PERCH_STEP_BACK);
     });
 
+    /**
+     * On a bar step the owl steps back for the whole step, not only when the
+     * lit button is under it: it stands on the bar's left end, and the child
+     * should see all of the bar the owl is explaining.
+     */
+    it('fades the owl back for a bar step even when the lit button is at the far end', async () => {
+      const tree = await renderLanded({
+        id: 'main_menu_tour',
+        targets: { nav_profile: ref(330, 800, 44, 44) },
+      });
+      (withTiming as unknown as jest.Mock).mockClear();
+
+      await step(tree);
+
+      expect(fadedTo()).toContain(PERCH_STEP_BACK);
+    });
+
+    it('brings the owl back once the tour moves off the bar', async () => {
+      const tree = await renderLanded({
+        id: 'main_menu_tour',
+        targets: { nav_profile: ref(330, 800, 44, 44), settings_button: ref(20, 60, 120, 38) },
+      });
+
+      await step(tree);
+      (withTiming as unknown as jest.Mock).mockClear();
+      await step(tree);
+
+      expect(fadedTo()).toContain(1);
+      expect(fadedTo()).not.toContain(PERCH_STEP_BACK);
+    });
+
     it('never asks a page to move for a pinned subject', async () => {
       const scroller = { reveal: jest.fn(), restore: jest.fn(() => false), release: jest.fn() };
       // the child nav bar sits below the scroll view: it is at the foot of the
       // screen, right where the bubble rests, and the page cannot move it
       const tree = await renderLanded({
-        id: 'catalogue_tour',
+        id: 'main_menu_tour',
         targets: { nav_progress: ref(40, 800), nav_search: ref(240, 800) },
         scroller,
       });

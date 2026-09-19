@@ -1,5 +1,6 @@
 export default {
   common: {
+    home: '首页',
     back: '返回',
     backArrow: '← 返回',
     next: '下一个',
@@ -634,6 +635,10 @@ export default {
       startReading: '开始阅读',
     },
     mainMenu: {
+      navLearn: {
+        title: '学习',
+        description: '所有故事、歌曲和学习游戏都在图书馆里。点这里就能打开。',
+      },
       welcome: {
         title: '欢迎来到Grow with Freya!',
         description: '让我们进行快速导览，帮助您和孩子充分利用阅读时间。',

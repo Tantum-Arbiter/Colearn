@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { ChildBottomNavigationBar, type ChildBottomNavigationBarProps } from './child-bottom-navigation';
+import { JourneyBarCoverProvider, useJourneyBarCovered } from './journey-bar-cover';
 
 export const JOURNEY_BAR_LAYER_Z = 1500;
 
@@ -24,7 +25,9 @@ export function JourneyBarProvider({ children }: { children: ReactNode }) {
 
   return (
     <PublishContext.Provider value={publish}>
-      <BarsContext.Provider value={bars}>{children}</BarsContext.Provider>
+      <JourneyBarCoverProvider>
+        <BarsContext.Provider value={bars}>{children}</BarsContext.Provider>
+      </JourneyBarCoverProvider>
     </PublishContext.Provider>
   );
 }
@@ -58,8 +61,9 @@ export function JourneyBarOutlet({ pageKey, holdMs = 0 }: JourneyBarOutletProps)
     return () => clearTimeout(timer);
   }, [current, holdMs, pageKey]);
 
+  const covered = useJourneyBarCovered();
   const props = current ?? held;
-  if (!props) return null;
+  if (!props || covered) return null;
 
   return (
     <View style={styles.layer} pointerEvents="box-none" testID="journey-bar-outlet">

@@ -162,3 +162,92 @@ describe('home scene navigation', () => {
     expect(destination.startsWith('stories-')).toBe(false);
   });
 });
+
+/**
+ * The home page is where the bar is first seen, so the home tour is the one
+ * that walks the child along it. It is handed the bar's own buttons, and no
+ * Learning target: there is no Learning button on the home page to point at.
+ */
+describe('the home tour and the bar', () => {
+  const applyState = (next: Partial<AppState>) => {
+    mockUseAppStore.mockImplementation(((selector?: (s: AppState) => unknown) =>
+      typeof selector === 'function' ? selector(next as AppState) : next
+    ) as unknown as typeof useAppStore);
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockTourUnseen = true;
+    applyState({
+      backgroundAnimationState: { cloudFloat1: 0, cloudFloat2: 0, rocketFloat1: 0, rocketFloat2: 0 },
+      updateBackgroundAnimationState: jest.fn(),
+      isAppReady: true,
+      hasCompletedOnboarding: true,
+      subscriptionTier: 'free',
+      _devSubscriptionOverride: null,
+      getEffectiveTier: () => 'free',
+      useHomeScene: true,
+      storyProgress: {},
+      getContinueReadingStoryId: jest.fn(() => null),
+      userNickname: 'Freya',
+      readStoryIds: [],
+      readingStreak: 0,
+      achievementUnlockedAt: {},
+      childAgeInMonths: 36,
+      recordHomeVisit: jest.fn(),
+      recordAchievementUnlocks: jest.fn(),
+    });
+  });
+
+  function renderHome() {
+    return render(
+      <ScreenTimeProvider>
+        <MainMenu onNavigate={jest.fn()} />
+      </ScreenTimeProvider>
+    );
+  }
+
+  function tourTargets(tree: ReturnType<typeof render>): Record<string, unknown> {
+    const tour = tree.UNSAFE_root.findAll(
+      (n: { props: Record<string, unknown> }) => n.props.id === 'main_menu_tour' && n.props.targets !== undefined
+    )[0];
+
+    return tour.props.targets as Record<string, unknown>;
+  }
+
+  function barItemRefs(tree: ReturnType<typeof render>): Record<string, unknown> {
+    const bar = tree.UNSAFE_root.findAll(
+      (n: { props: Record<string, unknown> }) => n.props.itemRefs !== undefined && n.props.onSelect !== undefined
+    )[0];
+
+    return bar.props.itemRefs as Record<string, unknown>;
+  }
+
+  it.each([
+    ['nav_learn', 'home'],
+    ['nav_progress', 'progress'],
+    ['screen_time_ring', 'screensafe'],
+    ['nav_search', 'search'],
+    ['nav_profile', 'profile'],
+  ])('points the tour at the bar button itself for %s', (target, item) => {
+    const tree = renderHome();
+
+    const underTest = tourTargets(tree)[target];
+
+    expect(underTest).toBeDefined();
+    expect(underTest).toBe(barItemRefs(tree)[item]);
+  });
+
+  it('gives the tour nothing called Learning to point at', () => {
+    const tree = renderHome();
+
+    expect(Object.keys(tourTargets(tree))).not.toContain('learning_button');
+  });
+
+  it('leaves the grown-ups control to the Profile page, so the tour does not point at it here', () => {
+    const tree = renderHome();
+
+    expect(Object.keys(tourTargets(tree))).not.toContain('settings_button');
+    expect(tree.UNSAFE_root.findAll((n: { props: Record<string, unknown> }) => n.props.testID === 'grown-ups-pill')).toHaveLength(0);
+  });
+});

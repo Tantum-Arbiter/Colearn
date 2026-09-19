@@ -7,6 +7,7 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
 import { ProfileNavAvatar } from '@/components/child-ui/profile-nav-avatar';
+import { NAV_RING_SIZE } from '@/components/child-ui/child-bottom-navigation';
 import { AVATAR_OPTIONS } from '@/components/onboarding/onboarding-pages';
 import { TEXT_PRIMARY } from '@/constants/night-palette';
 
@@ -73,11 +74,11 @@ describe('ProfileNavAvatar', () => {
     expect(ringStyle(unselected).borderColor).not.toBe(TEXT_PRIMARY);
   });
 
-  /** It shares the bar with the glyphs, so it fills the same height they do. */
-  it('defaults to a diameter that keeps pace with the bar\'s glyphs', () => {
+  /** The child's own face is the biggest thing in the bar, as big as the Screensafe ring beside it. */
+  it('defaults to the size of the Screensafe ring in the same bar', () => {
     const underTest = render(<ProfileNavAvatar selected={false} />);
 
-    expect(ringStyle(underTest).width).toBeGreaterThanOrEqual(46);
+    expect(ringStyle(underTest).width).toBe(NAV_RING_SIZE);
   });
 
   it('stays a circle at whatever diameter it is given', () => {

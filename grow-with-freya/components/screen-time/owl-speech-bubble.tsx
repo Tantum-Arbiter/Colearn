@@ -45,6 +45,8 @@ export type BubbleTurn = 'forward' | 'back';
 const SLIDE_PX = 18;
 const BUBBLE_MUTE_MS = 160;
 const ARROW_SIZE = 20;
+const CLOSE_WORD_GAP = 8;
+const CLOSE_WORD_ESTIMATE = 72;
 
 export interface OwlSpeechBubbleProps {
   eyebrow?: string;
@@ -58,6 +60,8 @@ export interface OwlSpeechBubbleProps {
   pageCount: number;
   nextLabel: string;
   closeLabel: string;
+  /** Draws the way out as its label word rather than a cross; a tour is skipped, a notification closed. */
+  closeAsWord?: boolean;
   onNext: () => void;
   onClose: () => void;
   /** A way to the page before. Absent on a first page, which has none. */
@@ -150,6 +154,7 @@ export const OwlSpeechBubble = memo(function OwlSpeechBubble({
   pageCount,
   nextLabel,
   closeLabel,
+  closeAsWord = false,
   onNext,
   onClose,
   onBack,
@@ -207,6 +212,7 @@ export const OwlSpeechBubble = memo(function OwlSpeechBubble({
   // the tree) sees immediately, so the reveal is a purely visual flourish
   // and never delays or garbles the real content.
   const [revealedBody, setRevealedBody] = useState(reduceMotion ? body : '');
+  const [closeWidth, setCloseWidth] = useState(CLOSE_WORD_ESTIMATE);
   const revealTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -276,19 +282,33 @@ export const OwlSpeechBubble = memo(function OwlSpeechBubble({
           accessibilityLabel={closeLabel}
           onPress={onClose}
           hitSlop={10}
-          style={styles.close}
+          style={closeAsWord ? styles.closeWord : styles.close}
+          onLayout={closeAsWord ? (event) => setCloseWidth(Math.ceil(event.nativeEvent.layout.width)) : undefined}
         >
-          <Text style={styles.closeGlyph}>×</Text>
+          {closeAsWord ? (
+            <Text style={[styles.closeWordText, { fontSize: scaledFontSize(13) }]} numberOfLines={1}>
+              {closeLabel}
+            </Text>
+          ) : (
+            <Text style={styles.closeGlyph}>×</Text>
+          )}
         </Pressable>
 
-        <Animated.View style={[styles.content, contentStyle]}>
+        <Animated.View style={[styles.content, closeAsWord && styles.contentBesideWord, contentStyle]}>
           {eyebrow ? (
             <Text style={[styles.eyebrow, { fontSize: scaledFontSize(11) }]} testID={`${idPrefix}-eyebrow`}>
               {eyebrow}
             </Text>
           ) : null}
           {title ? (
-            <Text style={[styles.title, { fontSize: scaledFontSize(17) }]} testID={`${idPrefix}-title`}>
+            <Text
+              style={[
+                styles.title,
+                closeAsWord && { paddingRight: closeWidth + CLOSE_WORD_GAP },
+                { fontSize: scaledFontSize(17) },
+              ]}
+              testID={`${idPrefix}-title`}
+            >
               {title}
             </Text>
           ) : null}
@@ -411,6 +431,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 1,
+  },
+  closeWord: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    height: 26,
+    paddingHorizontal: 10,
+    borderRadius: 13,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1,
+  },
+  closeWordText: {
+    fontFamily: Fonts.rounded,
+    fontWeight: '700',
+    color: 'rgba(255, 255, 255, 0.72)',
+  },
+  contentBesideWord: {
+    paddingRight: 0,
   },
   closeGlyph: {
     fontFamily: Fonts.rounded,

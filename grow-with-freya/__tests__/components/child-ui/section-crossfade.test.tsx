@@ -9,9 +9,10 @@
  */
 
 import React, { useEffect } from 'react';
-import { Text } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import { act, render } from '@testing-library/react-native';
-import { SECTION_CROSSFADE, SectionCrossfade } from '@/components/child-ui/section-crossfade';
+import { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
+import { PinnedInSection, SECTION_CROSSFADE, SectionCrossfade } from '@/components/child-ui/section-crossfade';
 
 const mounts: Record<string, number> = {};
 
@@ -182,5 +183,73 @@ describe('SectionCrossfade', () => {
 
     expect(texts(view)).toEqual(['Stories', 'Progress']);
     expect(mounts.home).toBe(1);
+  });
+});
+
+/**
+ * A section lifts a little as it fades. Artwork that has to stay exactly where
+ * the same artwork sits behind the sections -- the planet the shelves slide
+ * under -- is pinned against that lift, so the two copies never part and the
+ * fade between identical pictures cannot be seen.
+ */
+describe('PinnedInSection', () => {
+  const animatedStyle = useAnimatedStyle as unknown as jest.Mock;
+  const sharedValue = useSharedValue as unknown as jest.Mock;
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+    animatedStyle.mockImplementation((worklet: () => unknown) => worklet());
+    sharedValue.mockImplementation((initial: number = 0) => React.useRef({ value: initial }).current);
+  });
+
+  afterEach(() => {
+    animatedStyle.mockImplementation(() => ({}));
+    sharedValue.mockImplementation((initial: number = 0) => ({ value: initial }));
+    jest.useRealTimers();
+  });
+
+  function shiftOf(view: ReturnType<typeof render>, testID: string): number {
+    const node = view.UNSAFE_queryAllByProps({ testID }).filter((n) => n.props.style)[0];
+    const flat = StyleSheet.flatten(node.props.style) as { transform?: { translateY?: number }[] };
+
+    return flat.transform?.find((entry) => 'translateY' in entry)?.translateY ?? 0;
+  }
+
+  it('should cancel the lift of the section it is in, exactly', () => {
+    const view = render(
+      <SectionCrossfade sectionKey="home">
+        <PinnedInSection testID="pinned">
+          <Text>planet</Text>
+        </PinnedInSection>
+      </SectionCrossfade>
+    );
+
+    view.rerender(
+      <SectionCrossfade sectionKey="library">
+        <PinnedInSection testID="pinned">
+          <Text>planet</Text>
+        </PinnedInSection>
+      </SectionCrossfade>
+    );
+
+    const lifted = shiftOf(view, 'section-crossfade-current');
+    const pinned = view.UNSAFE_queryAllByProps({ testID: 'pinned' }).filter((n) => n.props.style);
+    const enteringPin = StyleSheet.flatten(pinned[0].props.style) as { transform: { translateY: number }[] };
+
+    expect(lifted).toBe(SECTION_CROSSFADE.lift);
+    expect(enteringPin.transform[0].translateY).toBe(-SECTION_CROSSFADE.lift);
+  });
+
+  it('should stay put, and never take a touch, outside a crossfade', () => {
+    const view = render(
+      <PinnedInSection testID="pinned">
+        <Text>planet</Text>
+      </PinnedInSection>
+    );
+
+    const node = view.UNSAFE_queryAllByProps({ testID: 'pinned' }).filter((n) => n.props.style)[0];
+
+    expect(shiftOf(view, 'pinned')).toBe(0);
+    expect(node.props.pointerEvents).toBe('none');
   });
 });

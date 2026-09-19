@@ -15,7 +15,6 @@ import type { ChildHomeData, WelcomeCopy } from '@/types/child-home';
 import type { GuideScrollerBinding } from '@/components/owl-guide/use-guide-scroller';
 import { NightSky } from './night-sky';
 import { HomeHeroSky } from './home-hero-sky';
-import { GrownUpsPill } from './grown-ups-pill';
 import { ChildBottomNavigation, navClearance, navItemCentre, type ChildNavItemId } from '@/components/child-ui/child-bottom-navigation';
 import { UnlockPlanButton } from './unlock-plan-button';
 import { ContinueCard } from './continue-card';
@@ -42,9 +41,11 @@ export const STATS_CHIP_INSET = 21;
 export interface HomeGuideTargets {
   stories?: RefObject<View | null>;
   achievement?: RefObject<View | null>;
-  learning?: RefObject<View | null>;
   screenTime?: RefObject<View | null>;
-  settings?: RefObject<View | null>;
+  learn?: RefObject<View | null>;
+  progress?: RefObject<View | null>;
+  search?: RefObject<View | null>;
+  profile?: RefObject<View | null>;
   sound?: RefObject<View | null>;
 }
 
@@ -61,7 +62,6 @@ export interface HomeSceneProps {
   onOpenAchievements: () => void;
   /** An item in the bar at the foot that is a place to go: the library opens on that section. */
   onSelectSection: (id: HomeSection) => void;
-  onOpenGrownUps: () => void;
   screenTime?: ScreenTimeAllowance | null;
   /** Receives the ring's centre so the glance can open out of it. */
   onOpenScreenTime?: (origin: { x: number; y: number }) => void;
@@ -85,7 +85,6 @@ export const HomeScene = memo(function HomeScene({
   onContinue,
   onOpenAchievements,
   onSelectSection,
-  onOpenGrownUps,
   screenTime = null,
   onOpenScreenTime,
   screenTimeHidden = false,
@@ -126,7 +125,16 @@ export const HomeScene = memo(function HomeScene({
   // up as a real gap. Carved out of the ScrollView's own height instead
   // (before centring runs on what's left), it stays a full, guaranteed gap.
   const footClearance = navClearance(insets.bottom);
-  const navItemRefs = useMemo(() => ({ screensafe: guideTargets?.screenTime }), [guideTargets?.screenTime]);
+  const navItemRefs = useMemo(
+    () => ({
+      home: guideTargets?.learn,
+      progress: guideTargets?.progress,
+      screensafe: guideTargets?.screenTime,
+      search: guideTargets?.search,
+      profile: guideTargets?.profile,
+    }),
+    [guideTargets?.learn, guideTargets?.progress, guideTargets?.screenTime, guideTargets?.search, guideTargets?.profile]
+  );
   const handleSelect = useCallback((id: ChildNavItemId) => {
     if (id === 'screensafe') {
       onOpenScreenTime?.(navItemCentre('screensafe', width, height, insets.bottom, isTablet));
@@ -173,10 +181,7 @@ export const HomeScene = memo(function HomeScene({
         sizeScale={portraitTablet ? 1.3 : 1}
       />
 
-      <View style={[styles.chrome, { top: insets.top + HOME_SCENE_LAYOUT.chromeTop }]}>
-        <View ref={guideTargets?.settings} collapsable={false}>
-          <GrownUpsPill timeOfDay={activeTimeOfDay} onPress={onOpenGrownUps} />
-        </View>
+      <View testID="home-corner-controls" style={[styles.chrome, { top: insets.top + HOME_SCENE_LAYOUT.chromeTop }]}>
         <View ref={guideTargets?.sound} collapsable={false}>
           <MusicControl />
         </View>
@@ -269,7 +274,7 @@ const styles = StyleSheet.create({
     right: HOME_SCENE_LAYOUT.screenMargin,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     zIndex: 10,
   },
   content: {

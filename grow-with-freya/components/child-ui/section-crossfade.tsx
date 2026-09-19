@@ -1,6 +1,13 @@
-import React, { ReactNode, useEffect, useRef, useState } from 'react';
+import React, { ReactNode, createContext, useContext, useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Animated, { useSharedValue, useAnimatedStyle, withDelay, withTiming, Easing } from 'react-native-reanimated';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withDelay,
+  withTiming,
+  Easing,
+  type SharedValue,
+} from 'react-native-reanimated';
 
 export const SECTION_CROSSFADE = {
   outMs: 200,
@@ -10,6 +17,8 @@ export const SECTION_CROSSFADE = {
 } as const;
 
 type Phase = 'current' | 'entering' | 'leaving';
+
+const SectionLiftContext = createContext<SharedValue<number> | null>(null);
 
 interface SectionCrossfadeProps {
   sectionKey: string;
@@ -62,6 +71,25 @@ function Layer({ phase, testID, children }: LayerProps) {
       style={[phase === 'leaving' ? StyleSheet.absoluteFill : styles.fill, style]}
       pointerEvents={phase === 'leaving' ? 'none' : 'auto'}
     >
+      <SectionLiftContext.Provider value={lift}>{children}</SectionLiftContext.Provider>
+    </Animated.View>
+  );
+}
+
+interface PinnedInSectionProps {
+  children: ReactNode;
+  testID?: string;
+}
+
+export function PinnedInSection({ children, testID = 'pinned-in-section' }: PinnedInSectionProps) {
+  const lift = useContext(SectionLiftContext);
+  const still = useSharedValue(0);
+  const followed = lift ?? still;
+
+  const style = useAnimatedStyle(() => ({ transform: [{ translateY: -followed.value + 0 }] }));
+
+  return (
+    <Animated.View testID={testID} style={[StyleSheet.absoluteFill, style]} pointerEvents="none">
       {children}
     </Animated.View>
   );

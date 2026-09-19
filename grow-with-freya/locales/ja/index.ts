@@ -1,5 +1,6 @@
 export default {
   common: {
+    home: 'ホーム',
     back: '戻る',
     backArrow: '← 戻る',
     next: '次へ',
@@ -634,6 +635,10 @@ export default {
       startReading: '読み始める',
     },
     mainMenu: {
+      navLearn: {
+        title: '学ぶ',
+        description: 'おはなし、うた、まなびのゲームは、ぜんぶライブラリにあります。ここをタップしてひらいてね。',
+      },
       welcome: {
         title: 'Grow with Freyaへようこそ！',
         description: 'クイックツアーをして、あなたとお子さんが読書時間を最大限に活用できるようにしましょう。',

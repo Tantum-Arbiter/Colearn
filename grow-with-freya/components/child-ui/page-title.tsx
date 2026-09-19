@@ -5,6 +5,8 @@ import { Fonts } from '@/constants/theme';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { TYPE_ROLES, typeSize } from './tokens';
 
+const TITLE_MIN_SCALE = 0.7;
+
 interface PageTitleProps {
   title: string;
   testID?: string;
@@ -19,6 +21,8 @@ export function PageTitle({ title, testID = 'page-title' }: PageTitleProps) {
       accessibilityRole="header"
       style={[styles.title, { fontSize: scaledFontSize(typeSize('pageTitle', isTablet)) }]}
       numberOfLines={1}
+      adjustsFontSizeToFit
+      minimumFontScale={TITLE_MIN_SCALE}
     >
       {title}
     </Text>

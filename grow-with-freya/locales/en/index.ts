@@ -1,6 +1,7 @@
 export default {
   // Common UI elements
   common: {
+    home: 'Home',
     back: 'Back',
     backArrow: 'Back',
     next: 'Next',
@@ -772,6 +773,10 @@ export default {
     },
     // Main Menu Tour - shown on first login
     mainMenu: {
+      navLearn: {
+        title: 'Learn',
+        description: 'Every story, song and learning game lives in the library. Tap here to open it.',
+      },
       welcome: {
         title: 'Welcome to Grow with\nFreya!',
         description: "Let's take a quick tour to help you and your child get the most out of storytime together.",

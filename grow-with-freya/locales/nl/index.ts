@@ -1,5 +1,6 @@
 export default {
   common: {
+    home: 'Home',
     back: 'Terug',
     backArrow: '← Terug',
     next: 'Volgende',
@@ -634,6 +635,10 @@ export default {
       startReading: 'Begin met Lezen',
     },
     mainMenu: {
+      navLearn: {
+        title: 'Leren',
+        description: 'Alle verhalen, liedjes en leerspelletjes staan in de bibliotheek. Tik hier om hem te openen.',
+      },
       welcome: {
         title: 'Welkom bij Grow with Freya!',
         description: 'Laten we een snelle rondleiding doen om jou en je kind te helpen het meeste uit leestijd te halen.',

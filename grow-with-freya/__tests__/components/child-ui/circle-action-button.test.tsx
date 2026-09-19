@@ -39,6 +39,7 @@ describe('CircleActionButton', () => {
 
   it.each([
     ['back', false, 'arrow-back'],
+    ['home', false, 'home'],
     ['audio', false, 'volume-high'],
     ['audio', true, 'volume-mute'],
     ['settings', false, 'settings-outline'],
@@ -65,3 +66,61 @@ describe('CircleActionButton', () => {
     expect(style.height).toBeGreaterThanOrEqual(44);
   });
 });
+
+/**
+ * A control that says what it does: the icon with its word beside it, in a
+ * pill the height of the round button, so a row of labelled and plain
+ * controls still lines up.
+ */
+describe('CircleActionButton with a label', () => {
+  function flat(node: any) {
+    const raw = node.props.style;
+    const resolved = typeof raw === 'function' ? raw({ pressed: false }) : raw;
+
+    return [resolved].flat(3).reduce((merged: any, part: any) => ({ ...merged, ...part }), {});
+  }
+
+  it('shows the word beside the icon', () => {
+    const tree = render(<CircleActionButton type="home" label="Home" onPress={jest.fn()} accessibilityLabel="Home" />);
+
+    const node = buttonNode(tree, 'circle-action-home');
+    const words = node.findAll((n: any) => n.props.children === 'Home');
+    const icons = node.findAll((n: any) => n.props.name === 'home');
+
+    expect(words.length).toBeGreaterThan(0);
+    expect(icons.length).toBeGreaterThan(0);
+  });
+
+  it('is a pill as tall as the round button, fitted to its word', () => {
+    const round = render(<CircleActionButton type="home" onPress={jest.fn()} accessibilityLabel="Home" />);
+    const labelled = render(<CircleActionButton type="home" label="Home" onPress={jest.fn()} accessibilityLabel="Home" />);
+
+    const circle = flat(buttonNode(round, 'circle-action-home'));
+    const underTest = flat(buttonNode(labelled, 'circle-action-home'));
+
+    expect(underTest.height).toBe(circle.height);
+    expect(underTest.borderRadius).toBe(circle.height / 2);
+    expect(underTest.width).toBeUndefined();
+    expect(underTest.flexDirection).toBe('row');
+  });
+
+  it('stays a plain circle without a label', () => {
+    const tree = render(<CircleActionButton type="home" onPress={jest.fn()} accessibilityLabel="Home" />);
+
+    const underTest = flat(buttonNode(tree, 'circle-action-home'));
+
+    expect(underTest.width).toBe(underTest.height);
+  });
+});
+
+describe('a long label', () => {
+  it('shrinks its word rather than overflowing the space it is given', () => {
+    const tree = render(<CircleActionButton type="settings" label="Dla dorosłych" onPress={jest.fn()} accessibilityLabel="x" />);
+
+    const word = tree.UNSAFE_root.findAll((n: any) => n.props.children === 'Dla dorosłych' && n.props.numberOfLines === 1)[0];
+
+    expect(word.props.adjustsFontSizeToFit).toBe(true);
+    expect(word.props.minimumFontScale).toBeGreaterThanOrEqual(0.6);
+  });
+});
+

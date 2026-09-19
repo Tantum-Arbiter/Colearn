@@ -207,7 +207,8 @@ export function ScreenTimeOwlAlert({ visible, warning, onDismiss, random = Math.
             nextLabel={isLast ? t('screenTimeOwl.okay') : page === 0 ? t('screenTimeOwl.showIdeas') : t('common.next')}
             nextAsArrow
             backLabel={t('common.back')}
-            closeLabel={t('screenTimeWarning.closeNotification')}
+            closeLabel={t('tutorial.buttons.skip')}
+            closeAsWord
             onNext={isLast ? handleOkay : handleNext}
             onBack={page > 0 ? handleBack : undefined}
             onClose={handleClose}

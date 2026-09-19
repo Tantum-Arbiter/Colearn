@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { useCoversJourneyBar } from '@/components/child-ui/journey-bar-cover';
 import { Fonts } from '@/constants/theme';
 import { PrivacyPolicyContent } from '@/components/account/privacy-policy-screen';
 import { TermsConditionsContent } from '@/components/account/terms-conditions-screen';
@@ -108,6 +109,7 @@ const TRIAL_STARS = [
 interface Props { visible: boolean; onClose: () => void; }
 
 export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ visible, onClose }: Props) {
+  useCoversJourneyBar(visible);
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { width: screenW, height: screenH } = useWindowDimensions();
@@ -232,7 +234,7 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
             <Text style={[st.sub, wide && st.subWide, short && st.subShort]}>{t('subscription.trial.subtitle', { price: trialPrice })}</Text>
             </View>
 
-            <View style={short ? st.offerRowShort : undefined}>
+            <View testID="trial-offer" style={short ? st.offerRowShort : st.offerColumn}>
             <View style={[st.timeline, short && st.offerTimeline, short && st.timelineShort]} testID="trial-timeline">
               {TRIAL_STEPS.map((step, i) => (
                 <React.Fragment key={step.labelKey}>
@@ -430,6 +432,7 @@ const st = StyleSheet.create({
   // offer is made of sit beside each other instead of stacking -- which is
   // what lets the whole thing fit without a fold.
   offerRowShort: { flexDirection: 'row', alignItems: 'stretch', gap: 10 },
+  offerColumn: { gap: 24 },
   offerTimeline: { flex: 0.86 },
   offerPlan: { flex: 1.14 },
   columnShort: { maxWidth: 940 },

@@ -348,6 +348,20 @@ describe('while the owl is on screen', () => {
     expect(findByTestId(tree, 'screen-time-owl-alert')[0].props.pointerEvents).not.toBe('box-none');
   });
 
+  /** Every owl bubble offers the same way out: the word Skip, never a cross. */
+  it('offers the word Skip, like the tours, rather than a cross', () => {
+    const tree = renderLanded();
+
+    const control = findByTestId(tree, 'screen-time-owl-close')[0];
+    const words = control
+      .findAll((node: any) => typeof node.props.children === 'string')
+      .map((node: any) => node.props.children);
+
+    expect(words).toContain('tutorial.buttons.skip');
+    expect(words).not.toContain('×');
+    expect(control.props.accessibilityLabel).toBe('tutorial.buttons.skip');
+  });
+
   it('keeps the dim up while the owl is leaving', () => {
     const tree = renderLanded();
 
@@ -492,7 +506,7 @@ describe('the owl itself', () => {
       tree.UNSAFE_root.findAll((node: any) => node.props.accessibilityLabel === label);
 
     expect(labelled('screenTimeOwl.owlLabel').length).toBeGreaterThan(0);
-    expect(labelled('screenTimeWarning.closeNotification').length).toBeGreaterThan(0);
+    expect(labelled('tutorial.buttons.skip').length).toBeGreaterThan(0);
   });
 
   it('shows the bubble at once when motion is reduced', () => {
