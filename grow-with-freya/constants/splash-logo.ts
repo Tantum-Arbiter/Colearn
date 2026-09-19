@@ -31,6 +31,7 @@ const WORDMARK = { delayMs: 1900, durationMs: 450, risePx: 10 } as const;
 const TAGLINE = { delayMs: 1950, durationMs: 400 } as const;
 const LEAF_UNFURL_MS = 520;
 const HOLD_MS = 2000;
+const MOUNT_ALLOWANCE_MS = 1000;
 
 const LEAF_FOLD_DEG: Record<SplashLeaf, number> = { leafLeft: 38, leafRight: -38, leafTop: -16 };
 const LEAF_SWAY_DEG: Record<SplashLeaf, number> = { leafLeft: 2.4, leafRight: -1.9, leafTop: 1.4 };
@@ -123,6 +124,7 @@ export const SPLASH_TIMELINE = {
   logoCompleteMs: LOGO_COMPLETE_MS,
   holdMs: HOLD_MS,
   exitAtMs: LOGO_COMPLETE_MS + HOLD_MS,
+  mountAllowanceMs: MOUNT_ALLOWANCE_MS,
   handoffMs: 120,
   exitMs: 400,
   reducedMotionFadeMs: 300,

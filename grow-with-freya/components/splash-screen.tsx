@@ -43,6 +43,7 @@ export function AppSplashScreen({ leaving, onGone }: AppSplashScreenProps) {
   const opacity = useSharedValue(1);
 
   const delayTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const holdEndsAtRef = useRef<number | null>(null);
   const onGoneRef = useRef(onGone);
   onGoneRef.current = onGone;
 
@@ -70,10 +71,13 @@ export function AppSplashScreen({ leaving, onGone }: AppSplashScreenProps) {
           withTiming(1, { duration: SPLASH_TIMELINE.tagline.durationMs, easing: Easing.out(Easing.cubic) })
         );
 
+        const startedAt = Date.now();
+
         await new Promise<void>(resolve => {
-          delayTimeoutRef.current = setTimeout(resolve, SPLASH_TIMELINE.exitAtMs);
+          delayTimeoutRef.current = setTimeout(resolve, SPLASH_TIMELINE.exitAtMs - SPLASH_TIMELINE.mountAllowanceMs);
         });
 
+        holdEndsAtRef.current = startedAt + SPLASH_TIMELINE.exitAtMs;
         setAppReady(true);
 
       } catch {
@@ -107,11 +111,14 @@ export function AppSplashScreen({ leaving, onGone }: AppSplashScreenProps) {
     let timer: ReturnType<typeof setTimeout> | undefined;
     frame = requestAnimationFrame(() => {
       frame = requestAnimationFrame(() => {
+        const holdLeftMs = holdEndsAtRef.current === null ? 0 : holdEndsAtRef.current - Date.now();
+        const waitMs = Math.max(SPLASH_TIMELINE.handoffMs, holdLeftMs);
+
         opacity.value = withDelay(
-          SPLASH_TIMELINE.handoffMs,
+          waitMs,
           withTiming(0, { duration: SPLASH_TIMELINE.exitMs, easing: Easing.inOut(Easing.quad) })
         );
-        timer = setTimeout(() => onGoneRef.current(), SPLASH_TIMELINE.handoffMs + SPLASH_TIMELINE.exitMs);
+        timer = setTimeout(() => onGoneRef.current(), waitMs + SPLASH_TIMELINE.exitMs);
       });
     });
 

@@ -358,6 +358,14 @@ describe('SPLASH_TIMELINE', () => {
     expect(SPLASH_TIMELINE.exitAtMs - Math.max(...entrances)).toBe(HOLD_MS);
   });
 
+  it('should only ever open the app behind a finished logo', () => {
+    expect(SPLASH_TIMELINE.mountAllowanceMs).toBeGreaterThan(0);
+    expect(SPLASH_TIMELINE.mountAllowanceMs).toBeLessThanOrEqual(SPLASH_TIMELINE.holdMs);
+    expect(SPLASH_TIMELINE.exitAtMs - SPLASH_TIMELINE.mountAllowanceMs).toBeGreaterThanOrEqual(
+      SPLASH_TIMELINE.logoCompleteMs
+    );
+  });
+
   it('should bring the wordmark in once the sprout is mostly grown', () => {
     expect(SPLASH_TIMELINE.wordmark.delayMs).toBeGreaterThanOrEqual(leafUnfurlDelayMs('leafTop'));
   });

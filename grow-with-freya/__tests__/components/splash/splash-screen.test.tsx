@@ -71,6 +71,8 @@ function textsOf(rendered: Rendered): string[] {
     .map((node: any) => node.props.children as string);
 }
 
+const READY_AT_MS = SPLASH_TIMELINE.exitAtMs - SPLASH_TIMELINE.mountAllowanceMs;
+
 describe('AppSplashScreen', () => {
   beforeEach(() => {
     jest.useFakeTimers();
@@ -117,17 +119,53 @@ describe('AppSplashScreen', () => {
     expect(textsOf(underTest)).toContain('splash.tagline');
   });
 
-  it('should open the app once the logo has held, so the page behind it can get ready', async () => {
+  it('should open the app a little before the hold ends, so the page behind it is ready by then', async () => {
     render(<AppSplashScreen leaving={false} onGone={jest.fn()} />);
     await settle();
 
-    await advance(SPLASH_TIMELINE.exitAtMs - 1);
+    await advance(READY_AT_MS - 1);
     const earlyCalls = mockSetAppReady.mock.calls.length;
     await advance(1);
 
     expect(earlyCalls).toBe(0);
     expect(mockSetAppReady).toHaveBeenCalledTimes(1);
     expect(mockSetAppReady).toHaveBeenCalledWith(true);
+  });
+
+  it('should show the finished logo for the whole hold even when the page is ready early', async () => {
+    const onGone = jest.fn();
+    const underTest = render(<AppSplashScreen leaving={false} onGone={onGone} />);
+    await settle();
+    await advance(READY_AT_MS);
+
+    underTest.rerender(<AppSplashScreen leaving onGone={onGone} />);
+    await settle();
+    await advance(SPLASH_TIMELINE.exitAtMs - READY_AT_MS + SPLASH_TIMELINE.exitMs - 50);
+    const earlyCalls = onGone.mock.calls.length;
+    await advance(50 + FRAMES_TO_DRAW_THE_PAGE_MS);
+
+    const fadeDelays = (withDelay as jest.Mock).mock.calls
+      .filter(([, animation]) => animation === 0)
+      .map(([ms]) => ms as number);
+    expect(earlyCalls).toBe(0);
+    expect(onGone).toHaveBeenCalledTimes(1);
+    expect(fadeDelays).toHaveLength(1);
+    expect(fadeDelays[0]).toBeGreaterThan(SPLASH_TIMELINE.mountAllowanceMs - FRAMES_TO_DRAW_THE_PAGE_MS - 50);
+    expect(fadeDelays[0]).toBeLessThanOrEqual(SPLASH_TIMELINE.mountAllowanceMs);
+  });
+
+  it('should leave as soon as it can when the page takes longer than that to be ready', async () => {
+    const onGone = jest.fn();
+    const underTest = render(<AppSplashScreen leaving={false} onGone={onGone} />);
+    await settle();
+    await advance(SPLASH_TIMELINE.exitAtMs + 600);
+
+    underTest.rerender(<AppSplashScreen leaving onGone={onGone} />);
+    await settle();
+    await advance(SPLASH_TIMELINE.handoffMs + SPLASH_TIMELINE.exitMs + FRAMES_TO_DRAW_THE_PAGE_MS);
+
+    expect(withDelay).toHaveBeenCalledWith(SPLASH_TIMELINE.handoffMs, 0);
+    expect(onGone).toHaveBeenCalledTimes(1);
   });
 
   it('should stay up, whole, until the page behind it is ready', async () => {
