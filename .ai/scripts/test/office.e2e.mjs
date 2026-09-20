@@ -20,7 +20,12 @@ test('real Pixel renderer shows events, reloads current state, and fits desktop/
       worker: 'codex-1', phase: 'test', event: 'started', activity: 'reviewing', duration_ms: null, available_at: null };
     emitEvent(state, base);
     emitEvent(state, { ...base, worker: 'claude-pro', phase: 'browser_qa', event: 'deferred', activity: 'waiting', available_at: '2026-09-19T16:00:00.000Z' });
-    office = await startOffice(temp, 0);
+    const discovered = [
+      { key: 'codex:website', provider: 'codex', project: 'Website', title: 'Build the account settings page', status: 'active', detail: 'Working', updated_at: new Date().toISOString() },
+      { key: 'claude:website', provider: 'claude', project: 'Website', title: 'Review accessibility improvements', status: 'completed', detail: 'Completed', updated_at: new Date().toISOString() },
+      { key: 'codex:stale', provider: 'codex', project: 'Mobile app', title: 'Update onboarding flow', status: 'active', detail: 'Working', updated_at: new Date(Date.now() - 86_400_000).toISOString() },
+    ];
+    office = await startOffice(temp, 0, () => discovered);
     browser = await chromium.launch(process.env.CI ? {} : { channel: 'chrome' });
     const page = await browser.newPage({ viewport: { width: 1400, height: 1050 } });
     const errors = [];
@@ -30,7 +35,7 @@ test('real Pixel renderer shows events, reloads current state, and fits desktop/
     await expect(page.locator('#connection')).toContainText('Live');
     await expect(page.locator('#workers')).toContainText('Waiting for quota');
     await expect(page.locator('#workers')).toContainText('Reviewing');
-    await expect(page.locator('#pixel-office')).toHaveCSS('height', /^(6[6-9][0-9]|[7-9][0-9]{2})px$/);
+    await expect(page.locator('.scene')).toHaveCSS('height', /^(6[6-9][0-9]|[7-9][0-9]{2})px$/);
     const canvas = page.frameLocator('iframe').locator('canvas');
     await expect(canvas).toBeVisible();
     const frame = page.frames()[1];
@@ -40,9 +45,28 @@ test('real Pixel renderer shows events, reloads current state, and fits desktop/
     assert.equal(await page.frameLocator('iframe').locator('button:visible').count(), 0);
     await page.locator('#expand').click();
     await expect(page.locator('body')).toHaveClass(/office-focus/);
-    await expect(page.locator('#pixel-office')).toHaveCSS('height', '1050px');
+    await expect(page.getByRole('complementary', { name: 'Project management dashboard' })).toBeVisible();
+    await expect(page.locator('#metrics [data-kind=active] strong')).toHaveText('2');
+    await expect(page.locator('#attention')).toContainText('Confirm this agent is still running');
+    const sceneBox = await page.locator('.office-stage').boundingBox();
+    const dashboardBox = await page.locator('#dashboard').boundingBox();
+    assert.ok(sceneBox.x + sceneBox.width <= dashboardBox.x + 1, 'dashboard must sit beside the office');
+    await page.locator('#projects button').filter({ hasText: 'Website' }).click();
+    await expect(page.locator('#task-list details')).toHaveCount(2);
+    await page.locator('#task-search').fill('accessibility');
+    await expect(page.locator('#task-list details')).toHaveCount(1);
+    await page.locator('#task-list summary').click();
+    await page.waitForTimeout(1700);
+    await expect(page.locator('#task-list details')).toHaveAttribute('open', '');
+    await expect(page.locator('#task-search')).toHaveValue('accessibility');
+    await page.locator('#task-search').fill('');
+    await page.locator('#project-filter').selectOption('');
+    await page.locator('.dashboard-scroll').evaluate(el => { el.scrollTop = 0; });
+    mkdirSync(join(source, 'test-results'), { recursive: true });
+    await page.screenshot({ path: join(source, 'test-results/office-dashboard.png') });
     await page.keyboard.press('Escape');
     await expect(page.locator('body')).not.toHaveClass(/office-focus/);
+    await expect(page.locator('#dashboard')).toBeHidden();
     emitEvent(state, { ...base, event: 'completed', activity: 'waiting', duration_ms: 1000 });
     await expect(page.locator('#workers')).toContainText('Completed');
     await page.reload();
@@ -55,6 +79,16 @@ test('real Pixel renderer shows events, reloads current state, and fits desktop/
     await expect(canvas).toBeVisible();
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
     await page.screenshot({ path: join(source, 'test-results/office-mobile.png'), fullPage: true });
+    await page.locator('#expand').click();
+    await expect(page.locator('#dashboard')).toBeVisible();
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+    const mobileScene = await page.locator('.office-stage').boundingBox();
+    const mobileDashboard = await page.locator('#dashboard').boundingBox();
+    assert.ok(mobileScene.y + mobileScene.height <= mobileDashboard.y + 1, 'mobile dashboard stacks below the visible office');
+    await page.screenshot({ path: join(source, 'test-results/office-dashboard-mobile.png') });
+    await page.route('**/api/status', route => route.abort());
+    await expect(page.locator('#dashboard-live')).toContainText('Feed unavailable');
+    await expect(page.locator('#projects')).toContainText('Website');
     assert.deepEqual(errors, []);
   } finally {
     await browser?.close(); await office?.close(); release?.(); rmSync(temp, { recursive: true, force: true });

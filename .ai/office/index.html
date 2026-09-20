@@ -1,11 +1,38 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CoLearn · Agent office</title>
-<style>
-:root{color-scheme:dark;font-family:ui-sans-serif,system-ui,sans-serif;background:#101820;color:#e7f0ec}*{box-sizing:border-box}body{margin:0;padding:20px;max-width:1900px;margin-inline:auto}header{display:flex;justify-content:space-between;align-items:center;gap:24px}h1{font-size:26px;font-weight:600;margin:4px 0 8px}.eyebrow{font-size:11px;letter-spacing:.18em;color:#8eaea1;text-transform:uppercase}p{color:#9cb0ba;font-size:13px;line-height:1.6;margin:0 0 16px}#connection{font-size:12px;border:1px solid #365449;border-radius:20px;padding:8px 13px;color:#91dcb5}#workers{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:20px 0}article{background:#17242e;border:1px solid #2a3a44;border-radius:10px;padding:16px;border-top:3px solid #6c8596}article[data-active=true]{border-top-color:#80d6a6}h2{font-size:14px;margin:0 0 10px}.status{font-size:19px;margin-bottom:8px}.meta{font-size:12px;color:#a0b3bd;line-height:1.6;overflow-wrap:anywhere}.office-wrap{position:relative}.expand{position:absolute;right:14px;top:14px;z-index:3;border:1px solid #587267;border-radius:8px;background:#17242ee6;color:#d9eee4;padding:9px 13px;font:inherit;font-size:12px;cursor:pointer;box-shadow:0 4px 18px #0007}.expand:hover{background:#21343f}.office-wrap iframe{display:block;width:100%;height:clamp(660px,76vh,920px);border:1px solid #2a3a44;border-radius:12px;background:#171e28}body.office-focus{overflow:hidden;padding:0;max-width:none}body.office-focus .office-wrap{position:fixed;inset:0;z-index:100;background:#171e28}body.office-focus .office-wrap iframe{height:100dvh;border:0;border-radius:0}body.office-focus .expand{position:fixed;right:18px;top:18px}.section{margin:22px 0 10px;font-size:12px;text-transform:uppercase;letter-spacing:.12em;color:#94aea3}#history{font-family:ui-monospace,monospace;font-size:12px;max-height:180px;overflow:auto;line-height:1.9;color:#b3c5ca}.note{margin-top:12px;font-size:12px}a{color:#95dcb7}@media(max-width:700px){body{padding:14px}#workers{grid-template-columns:1fr}.office-wrap iframe{height:540px}header{align-items:start}.expand{right:9px;top:9px}}
-</style><script type="module" src="/office.js"></script></head><body>
-<header><div><div class="eyebrow">Local agent observer</div><h1>Your agent office</h1><p>Active Codex tasks, Claude sessions and orchestrated reviewers in one read-only view.</p></div><div id="connection">Connecting…</div></header>
-<div id="workers"></div><div class="office-wrap"><button class="expand" id="expand" type="button" aria-pressed="false">Expand office</button><iframe id="pixel-office" src="/pixel/" title="Pixel Agents read-only office"></iframe></div>
-<p class="note">Read-only observer · No account access or hooks · Local metadata only · Characters show task/session activity, not model thoughts or full transcripts.</p>
-<div class="section">Recent activity</div><div id="history">No review events yet.</div>
-<p class="note">Renderer: <a href="https://github.com/pixel-agents-hq/pixel-agents" target="_blank" rel="noreferrer">Pixel Agents</a> · Run reviews and retries from the terminal; this view cannot start workers.</p>
-</body></html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Agent office · Project overview</title>
+  <link rel="stylesheet" href="/office.css"><script type="module" src="/office.js"></script>
+</head>
+<body>
+  <header class="page-header"><div><div class="eyebrow">Local agent observer</div><h1>Your agent office</h1><p>Projects, people and progress. A live view across your local agents.</p></div><div id="connection" role="status">Connecting…</div></header>
+  <div id="workers"></div>
+  <main class="office-wrap">
+    <div class="office-stage">
+      <div class="office-toolbar"><div class="office-heading"><span class="live-dot"></span> THE OFFICE <span id="office-count"></span></div><button class="expand" id="expand" type="button" aria-pressed="false">Expand office</button></div>
+      <div class="scene"><iframe id="pixel-office" src="/pixel/" title="Pixel Agents read-only office"></iframe></div>
+      <div class="office-legend"><span><i class="dot working"></i> Working</span><span>✓ Idle / finished</span><span>! Needs attention</span><span class="legend-hint">Hover a character for details</span></div>
+    </div>
+    <aside id="dashboard" aria-label="Project management dashboard" hidden>
+      <div class="dashboard-header"><div class="eyebrow">Manager overview</div><div class="dashboard-title"><h2>Work in motion</h2><span id="dashboard-live" class="live-label" role="status">Connecting</span></div><p id="dashboard-summary">Waiting for agent activity…</p></div>
+      <div class="dashboard-scroll">
+        <div id="metrics" class="metrics" aria-label="Observed task counts"></div>
+        <section class="projects-section"><div class="section-heading"><h3>Projects</h3><span id="project-count"></span></div><div id="projects" class="project-list"></div></section>
+        <section class="attention-section"><div class="section-heading"><h3>Needs your attention</h3><span id="attention-count"></span></div><div id="attention"></div></section>
+        <section class="work-section"><div class="section-heading"><h3>Task monitor</h3><span id="task-count"></span></div>
+          <div class="filters"><label>Project<select id="project-filter"><option value="">All projects</option></select></label><label>Status<select id="status-filter"><option value="">All statuses</option><option value="active">Working</option><option value="attention">All attention items</option><option value="waiting">Waiting</option><option value="failed">Needs attention</option><option value="stale">Status unconfirmed</option><option value="completed">Finished</option></select></label></div>
+          <label class="search-label"><span class="sr-only">Search tasks</span><input id="task-search" type="search" placeholder="Search tasks, agents or projects…" autocomplete="off"></label>
+          <div id="task-list"></div>
+        </section>
+        <section class="activity-section"><div class="section-heading"><h3>Latest updates</h3><span>Most recent first</span></div><div id="activity-list"></div></section>
+        <p class="coverage-note">Counts cover discovered local tasks and review workers. “Finished” means the observed session or review finished; it does not confirm project delivery. Project plans, deadlines and acceptance checks are not connected.</p>
+      </div>
+      <div class="dashboard-footer"><span>Local · read-only</span><span id="last-sync">Awaiting first update</span></div>
+    </aside>
+  </main>
+  <p class="note">Read-only observer · No account access or hooks · Characters show task/session activity.</p>
+  <div class="section">Recent review activity</div><div id="history">No review events yet.</div>
+  <p class="note">Renderer: <a href="https://github.com/pixel-agents-hq/pixel-agents" target="_blank" rel="noreferrer">Pixel Agents</a> · Run reviews and retries from the terminal.</p>
+</body>
+</html>

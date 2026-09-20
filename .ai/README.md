@@ -49,6 +49,20 @@ Claude discovery uses process/session files. Codex discovery is best-effort beca
 the local task database schema is not a public compatibility API; a schema mismatch
 silently disables that adapter rather than reading arbitrary data or stopping the UI.
 
+Click **Expand office** for the office and manager dashboard side by side. The
+dashboard groups observed tasks by project, counts working/waiting/finished tasks,
+highlights failures and stale activity, and shows suggested follow-ups. Click a
+project or count to filter the searchable task monitor; expand a task for its
+reported activity, timestamp and next step. The latest-updates list uses source
+timestamps and review events. Escape or **Exit expanded view** returns to the
+standard view. On small screens the office stays above the scrolling dashboard.
+
+Activity reported as running without an update for 30 minutes is shown as
+**Status unconfirmed** and excluded from the dashboard's Working count. These
+counts describe discovered sessions/reviews, not project delivery percentages;
+project plans, deadlines and acceptance checks are not connected. A disconnected
+feed is marked explicitly and keeps the last known view available.
+
 Setup fetches Pixel Agents at commit
 `3537e140c2094761beae748592aeb92ece8edfdd`, verifies a clean pinned checkout,
 installs its lockfile with install scripts disabled, and builds its actual renderer.
