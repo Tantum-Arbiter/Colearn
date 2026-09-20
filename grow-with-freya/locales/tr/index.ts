@@ -502,7 +502,6 @@ export default {
     language: 'Dil',
     textSize: 'Metin Boyutu',
     notifications: 'Bildirimler',
-    screenTime: 'Ekran Süresi',
     legal: 'Yasal',
     termsAndConditions: 'Hizmet Şartları',
     privacyPolicy: 'Gizlilik Politikası',

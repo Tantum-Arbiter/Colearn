@@ -47,8 +47,12 @@ export const SUPPORTED_LANGUAGES: { code: SupportedLanguage; name: string; flag:
   { code: 'zh', name: 'Chinese', flag: '🇨🇳', nativeName: '中文' },
 ];
 
+export function baseLanguage(code: string | undefined): string | undefined {
+  return code?.split('-')[0];
+}
+
 export function languageFlag(code: string | undefined): string {
-  const base = code?.split('-')[0];
+  const base = baseLanguage(code);
   return SUPPORTED_LANGUAGES.find((language) => language.code === base)?.flag ?? '🌐';
 }
 

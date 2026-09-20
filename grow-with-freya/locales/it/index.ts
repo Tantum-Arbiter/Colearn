@@ -502,7 +502,6 @@ export default {
     language: 'Lingua',
     textSize: 'Dimensione testo',
     notifications: 'Notifiche',
-    screenTime: 'Tempo dello schermo',
     legal: 'Legale',
     termsAndConditions: 'Termini e condizioni',
     privacyPolicy: 'Informativa sulla privacy',

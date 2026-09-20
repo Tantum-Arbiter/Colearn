@@ -502,7 +502,6 @@ export default {
     language: 'Sprog',
     textSize: 'Tekststørrelse',
     notifications: 'Notifikationer',
-    screenTime: 'Skærmtid',
     legal: 'Juridisk',
     termsAndConditions: 'Servicevilkår',
     privacyPolicy: 'Privatlivspolitik',

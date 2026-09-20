@@ -629,7 +629,6 @@ export default {
     language: 'Language',
     textSize: 'Text Size',
     notifications: 'Notifications',
-    screenTime: 'Screen Time',
     legal: 'Legal',
     termsAndConditions: 'Terms & Conditions',
     privacyPolicy: 'Privacy Policy',

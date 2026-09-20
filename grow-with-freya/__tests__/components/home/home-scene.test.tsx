@@ -228,8 +228,8 @@ describe('HomeScene', () => {
     it('should leave the grown-ups control to the Profile page', () => {
       const { view } = renderScene();
 
-      expect(byTestId(view, 'grown-ups-pill')).toHaveLength(0);
       expect(textContents(view)).not.toContain('home.grownUps');
+      expect(byTestId(view, 'circle-action-settings')).toHaveLength(0);
     });
 
     it('should keep the speaker in its corner on the right', () => {

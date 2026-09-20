@@ -248,6 +248,5 @@ describe('the home tour and the bar', () => {
     const tree = renderHome();
 
     expect(Object.keys(tourTargets(tree))).not.toContain('settings_button');
-    expect(tree.UNSAFE_root.findAll((n: { props: Record<string, unknown> }) => n.props.testID === 'grown-ups-pill')).toHaveLength(0);
   });
 });

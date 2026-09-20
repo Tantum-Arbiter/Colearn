@@ -502,7 +502,6 @@ export default {
     language: '言語',
     textSize: 'テキストサイズ',
     notifications: '通知',
-    screenTime: '画面時間',
     legal: '法的',
     termsAndConditions: '利用規約',
     privacyPolicy: 'プライバシーポリシー',

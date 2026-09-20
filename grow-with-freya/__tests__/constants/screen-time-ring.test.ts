@@ -5,7 +5,7 @@
  * is used, and only when it is full does it become something a parent notices.
  */
 
-import { HOME_SCENE_LAYOUT } from '@/constants/home-scene';
+import { contentMargin, journeyHeaderTop } from '@/components/child-ui/tokens';
 import { glanceCloseTimeline } from '@/constants/screen-time-glance-timeline';
 import {
   SCREEN_TIME_RING,
@@ -570,16 +570,16 @@ describe('the frame the glance draws over the home scene', () => {
   it('should run outside the home content rather than through it', () => {
     const underTest = frame();
 
-    expect(underTest.left + half).toBeLessThan(HOME_SCENE_LAYOUT.screenMargin);
+    expect(underTest.left + half).toBeLessThan(contentMargin(false));
     expect(underTest.right - half).toBeGreaterThan(
-      PHONE.width - HOME_SCENE_LAYOUT.screenMargin
+      PHONE.width - contentMargin(false)
     );
   });
 
-  it('should run above the row the grown-ups control sits in', () => {
+  it('should start no lower than the row the speaker sits in, so no corner control stands above it', () => {
     const underTest = frame();
 
-    expect(underTest.top + half).toBeLessThan(INSETS.top + HOME_SCENE_LAYOUT.chromeTop);
+    expect(underTest.top).toBeLessThanOrEqual(journeyHeaderTop(INSETS.top, false));
   });
 
   it('should stay inside the safe area it is drawn in', () => {

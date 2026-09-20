@@ -502,7 +502,6 @@ export default {
     language: 'اللغة',
     textSize: 'حجم النص',
     notifications: 'الإخطارات',
-    screenTime: 'وقت الشاشة',
     legal: 'قانوني',
     termsAndConditions: 'شروط الخدمة',
     privacyPolicy: 'سياسة الخصوصية',

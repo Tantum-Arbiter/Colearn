@@ -138,6 +138,7 @@ jest.mock('@/services/i18n', () => ({
   SUPPORTED_LANGUAGES: [{ code: 'en', flag: '🇬🇧', name: 'English', nativeName: 'English' }],
   setStoredLanguage: jest.fn().mockResolvedValue(undefined),
   languageFlag: () => '🇬🇧',
+  baseLanguage: (code: string) => code?.split('-')[0],
 }));
 
 const mockNotificationService = {

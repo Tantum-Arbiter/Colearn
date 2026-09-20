@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { useCoversJourneyBar } from '@/components/child-ui/journey-bar-cover';
-import { SUPPORTED_LANGUAGES, setStoredLanguage, type SupportedLanguage } from '@/services/i18n';
+import { SUPPORTED_LANGUAGES, baseLanguage, setStoredLanguage, type SupportedLanguage } from '@/services/i18n';
 
 interface LanguagePickerProps {
   visible: boolean;
@@ -16,7 +16,7 @@ interface LanguagePickerProps {
 export function LanguagePicker({ visible, onClose, testID = 'language-picker' }: LanguagePickerProps) {
   const { t, i18n } = useTranslation();
   const { scaledFontSize } = useAccessibility();
-  const current = i18n.language?.split('-')[0];
+  const current = baseLanguage(i18n.language);
   useCoversJourneyBar(visible);
 
   const choose = useCallback(async (language: SupportedLanguage) => {
@@ -43,7 +43,7 @@ export function LanguagePicker({ visible, onClose, testID = 'language-picker' }:
                 accessibilityLabel={language.nativeName}
                 accessibilityState={{ selected }}
                 style={[styles.option, selected && styles.optionSelected]}
-                onPress={() => choose(language.code)}
+                onPress={() => { void choose(language.code); }}
               >
                 <Text style={[styles.flag, { fontSize: scaledFontSize(24) }]}>{language.flag}</Text>
                 <Text style={[styles.name, { fontSize: scaledFontSize(16) }]}>{language.nativeName}</Text>

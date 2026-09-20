@@ -502,7 +502,6 @@ export default {
     language: 'Taal',
     textSize: 'Tekstgrootte',
     notifications: 'Meldingen',
-    screenTime: 'Schermtijd',
     legal: 'Juridisch',
     termsAndConditions: 'Servicevoorwaarden',
     privacyPolicy: 'Privacybeleid',
