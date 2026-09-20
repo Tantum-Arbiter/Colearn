@@ -75,9 +75,11 @@ export async function startOffice(aiDir: string, port = 4317, discover: () => Ob
   const messagesFor = (agent: ObservedAgent): Message[] => {
     const id = idFor(agent.key); const active = agent.status === 'active';
     return [{ type: 'agentToolsClear', id }, { type: 'agentStatus', id, status: active ? 'active' : 'waiting', awaitingInput: false },
-      ...(active ? [{ type: 'agentToolStart', id, toolId: agent.key, status: agent.detail, toolName: 'Read' }] : [])];
+      ...(active ? [{ type: 'agentToolStart', id, toolId: agent.key, status: agent.detail, toolName: 'Read' }] :
+        agent.status === 'failed' ? [{ type: 'agentToolPermission', id }] : [])];
   };
   let lastObserved = JSON.stringify(agents);
+  let lastIdlePulse = 0;
   let feedError = false;
   let origin = '';
   const ws = new WebSocketServer({ noServer: true, maxPayload: 4096, perMessageDeflate: false });
@@ -152,6 +154,14 @@ export async function startOffice(aiDir: string, port = 4317, discover: () => Ob
           for (const client of ws.clients) send(client, update);
         }
         agents = nextAgents;
+      }
+      // Pixel Agents' native idle check bubble fades after two seconds. Refresh
+      // only waiting characters so their compact icon persists while active
+      // characters keep their full working/tool overlay.
+      if (Date.now() - lastIdlePulse >= 1_500) {
+        const idle = agents.filter(agent => agent.status === 'waiting' || agent.status === 'completed');
+        for (const client of ws.clients) send(client, idle.map(agent => ({ type: 'agentStatus', id: idFor(agent.key), status: 'waiting', awaitingInput: false })));
+        lastIdlePulse = Date.now();
       }
       lastObserved = current;
     } catch { feedError = true; }
