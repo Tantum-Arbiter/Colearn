@@ -176,6 +176,7 @@ export function RotatePromptOverlay({ bookRect, onTurned, onOpenAnyway, onBack }
         {showFallback && (
           <Animated.View entering={FadeIn.duration(400)}>
             <Pressable
+              testID="rotate-prompt-open-anyway"
               style={[styles.fallbackButton, { paddingVertical: scaledPadding(10), paddingHorizontal: scaledPadding(20) }]}
               onPress={onOpenAnyway}
               accessibilityLabel={t('rotatePrompt.openForMe')}

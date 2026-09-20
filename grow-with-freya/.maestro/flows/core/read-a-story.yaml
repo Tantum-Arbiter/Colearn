@@ -1,0 +1,56 @@
+appId: com.growwithfreya.app
+tags:
+  - journey
+name: A child opens a story from the shelf and comes back out
+---
+- runFlow:
+    file: ../../helpers/start-seeded.yaml
+    env:
+      SEED: "onboarded=1&guest=1&tutorials=done&screenTime=reset&progress=clear&language=en&tier=free"
+- tapOn:
+    id: "navigation-item-home"
+- extendedWaitUntil:
+    visible:
+      id: "catalogue-header-row"
+    timeout: 30000
+- tapOn: "Snuggle Little Wombat"
+- assertVisible:
+    id: "story-card-sheet"
+- tapOn:
+    id: "story-card-mode-read"
+# A phone reads sideways, and asks the family to turn it.
+- setOrientation: LANDSCAPE_LEFT
+- extendedWaitUntil:
+    visible:
+      id: "story-exit-button"
+    timeout: 60000
+# A story with music pages asks which instrument to play before it opens.
+- runFlow:
+    when:
+      visible:
+        id: "instrument-picker-overlay"
+    commands:
+      - waitForAnimationToEnd:
+          timeout: 5000
+      - tapOn:
+          id: "confirm-instrument-selection-button"
+      - extendedWaitUntil:
+          notVisible:
+            id: "instrument-picker-overlay"
+          timeout: 20000
+- tapOn:
+    id: "cover-tap-overlay"
+    optional: true
+# The page itself is not asserted here: a phone reads sideways, and the iOS
+# accessibility tree stops keeping up in landscape -- the reader is plainly on
+# screen while the tree still describes the shelf. What the pages say is held
+# by the Jest tests for the reader; this flow holds the way in and the way out.
+- tapOn:
+    id: "right-touch-area"
+- tapOn:
+    id: "story-exit-button"
+- setOrientation: PORTRAIT
+- extendedWaitUntil:
+    visible:
+      id: "catalogue-header-row"
+    timeout: 60000

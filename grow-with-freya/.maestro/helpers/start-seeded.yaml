@@ -3,11 +3,20 @@ name: Start the app in a known state
 env:
   SEED: "onboarded=1&guest=1&tutorials=done&screenTime=reset&language=en&tier=free"
 ---
+# Whatever the last flow left behind: a phone starts upright.
+- setOrientation: PORTRAIT
 - launchApp
 - openLink: "com.growwithfreya.app://?e2e=1&${SEED}"
 - extendedWaitUntil:
     visible:
       id: "home-language-button"
     timeout: 90000
+# The bar is published by the page after it mounts, and the seeding link makes
+# the page render again. Waiting for it keeps a flow from reaching for the bar
+# while the screen is still settling.
+- extendedWaitUntil:
+    visible:
+      id: "navigation-item-home"
+    timeout: 30000
 - waitForAnimationToEnd:
     timeout: 4000

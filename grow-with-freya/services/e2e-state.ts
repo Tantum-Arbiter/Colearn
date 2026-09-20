@@ -33,6 +33,7 @@ export interface E2eState {
   signedIn?: boolean;
   tutorials?: 'done' | 'fresh';
   screenTime?: 'reset';
+  progress?: 'clear';
   language?: SupportedLanguage;
   tier?: SubscriptionTier;
   childAgeMonths?: number;
@@ -76,6 +77,8 @@ export function parseE2eLink(link: string): E2eState | null {
   if (tutorials === 'done' || tutorials === 'fresh') state.tutorials = tutorials;
 
   if (params.get('screenTime') === 'reset') state.screenTime = 'reset';
+
+  if (params.get('progress') === 'clear') state.progress = 'clear';
 
   const language = params.get('language');
   if (SUPPORTED_LANGUAGES.some((supported) => supported.code === language)) {
@@ -132,6 +135,10 @@ export async function applyE2eState(state: E2eState, allowed: boolean): Promise<
 
   if (state.screenTime === 'reset') {
     await ScreenTimeService.getInstance().resetTodayUsage();
+  }
+
+  if (state.progress === 'clear') {
+    Object.keys(store.storyProgress ?? {}).forEach((storyId) => store.clearStoryProgress(storyId));
   }
 
   if (state.language) {

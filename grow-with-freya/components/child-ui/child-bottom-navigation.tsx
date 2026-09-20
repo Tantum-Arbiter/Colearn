@@ -27,7 +27,7 @@ import {
 } from '@/constants/child-ui-motion';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
-import { useJourneyBarPublisher } from './journey-bar-slot';
+import { useJourneyBarPublisher } from './journey-bar-publish';
 import { ScreenTimeRing } from '@/components/home/screen-time-ring';
 import { TEXT_SECONDARY } from '@/constants/night-palette';
 import { NavigationItem } from './navigation-item';
@@ -44,7 +44,9 @@ import {
   contentMargin,
 } from './tokens';
 
-export type ChildNavItemId = 'home' | 'progress' | 'screensafe' | 'search' | 'profile';
+export { navBottomOffset, navClearance, navWidth, navItemCentre } from './nav-metrics';
+export type { ChildNavItemId } from './nav-metrics';
+import { navBottomOffset, navWidth, type ChildNavItemId } from './nav-metrics';
 
 interface ChildNavItem {
   id: ChildNavItemId;
@@ -74,41 +76,6 @@ export const NAV_RING_SIZE = 58;
 /** Tamed from the home scene's 1.9: that halo reaches into both neighbours. */
 const NAV_RING_HALO_SCALE = 1.24;
 const SELECTED_PANEL_GRADIENT = [`${ACCENT_BLUE}73`, `${ACCENT_PURPLE}73`] as const;
-
-export function navBottomOffset(safeAreaBottom: number): number {
-  return Math.max(safeAreaBottom - NAV_HOME_INDICATOR_OVERLAP, NAV_BOTTOM_MARGIN);
-}
-
-export function navClearance(safeAreaBottom: number): number {
-  return NAV_HEIGHT + navBottomOffset(safeAreaBottom) + SPACE_4;
-}
-
-export function navWidth(windowWidth: number, isTablet: boolean): number {
-  return Math.min(windowWidth - contentMargin(isTablet) * 2, NAV_MAX_WIDTH);
-}
-
-/**
- * Where a nav item sits on screen, so a panel can open out of the button that
- * asked for it rather than out of the middle of nowhere. Derived from the same
- * numbers the bar lays itself out with -- the bar is centred and its items
- * share its width evenly, so no measurement is needed.
- */
-export function navItemCentre(
-  id: ChildNavItemId,
-  windowWidth: number,
-  windowHeight: number,
-  safeAreaBottom: number,
-  isTablet: boolean,
-): { x: number; y: number } {
-  const index = Math.max(0, CHILD_NAV_ITEMS.findIndex((item) => item.id === id));
-  const width = navWidth(windowWidth, isTablet);
-  const itemWidth = width / CHILD_NAV_ITEMS.length;
-
-  return {
-    x: (windowWidth - width) / 2 + itemWidth * (index + 0.5),
-    y: windowHeight - navBottomOffset(safeAreaBottom) - NAV_HEIGHT / 2,
-  };
-}
 
 export interface ChildBottomNavigationBarProps {
   /** Null on a page that is none of the bar's places, such as the main menu: nothing is lit. */

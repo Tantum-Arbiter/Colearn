@@ -19,6 +19,8 @@ const mockStore = {
   setChildAge: jest.fn(),
   setUserProfile: jest.fn(),
   clearPersistedStorage: jest.fn(),
+  storyProgress: { 'wombat': { pageIndex: 3, totalPages: 9, updatedAt: '2026-09-20T10:00:00Z' } },
+  clearStoryProgress: jest.fn(),
 };
 
 jest.mock('@/store/app-store', () => ({
@@ -81,7 +83,7 @@ describe('isE2eAllowed', () => {
 describe('parseE2eLink', () => {
   it('reads every part of a seeded state', () => {
     const underTest = parseE2eLink(
-      'growwithfreya://?e2e=1&reset=1&onboarded=1&guest=1&signedIn=1&tutorials=done&screenTime=reset&language=de&tier=premium&childAgeMonths=48&nickname=Freya'
+      'growwithfreya://?e2e=1&reset=1&onboarded=1&guest=1&signedIn=1&tutorials=done&screenTime=reset&progress=clear&language=de&tier=premium&childAgeMonths=48&nickname=Freya'
     );
 
     expect(underTest).toEqual({
@@ -91,6 +93,7 @@ describe('parseE2eLink', () => {
       signedIn: true,
       tutorials: 'done',
       screenTime: 'reset',
+      progress: 'clear',
       language: 'de',
       tier: 'premium',
       childAgeMonths: 48,
@@ -254,5 +257,17 @@ describe('applyE2eState', () => {
 
     expect([header, payload, signature].every(Boolean)).toBe(true);
     expect(claims.exp * 1000).toBeGreaterThan(Date.now() + 24 * 60 * 60 * 1000);
+  });
+
+  it('puts every book back to its first page, so a flow opens a cover rather than where someone left off', async () => {
+    await applyE2eState({ progress: 'clear' }, true);
+
+    expect(mockStore.clearStoryProgress).toHaveBeenCalledWith('wombat');
+  });
+
+  it('leaves reading progress alone when the link does not mention it', async () => {
+    await applyE2eState({ language: 'en' }, true);
+
+    expect(mockStore.clearStoryProgress).not.toHaveBeenCalled();
   });
 });

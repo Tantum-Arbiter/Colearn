@@ -78,7 +78,8 @@ com.growwithfreya.app://?e2e=1&onboarded=1&guest=1&tutorials=done&screenTime=res
 It is a link to the page the app already opens on, carrying an `e2e` flag, because expo-router owns
 deep links and answers a path it does not know with its "Unmatched" screen. Parameters: `reset`
 (wipe first), `onboarded`, `guest`, `tutorials=done|fresh`, `screenTime=reset`, `language`, `tier`,
-`childAgeMonths`, `nickname`. Anything the link leaves out is left alone. `.maestro/helpers/start-seeded.yaml`
+`childAgeMonths`, `nickname`, `progress=clear` (every book back to its first page). Anything the
+link leaves out is left alone. `.maestro/helpers/start-seeded.yaml`
 does this for every flow; seeding took the home flow from 63 seconds to 15.
 
 ## The gateway, stubbed
@@ -125,6 +126,15 @@ the stub reaches the shelf and the search — a flow finds it by name. Its cover
   status bar and never reaches the app, which is easy to misread as a broken tree.
 - **A `Pressable` round a group collapses it into one element.** The language chooser read as a
   single blob of fourteen languages until its scrim and card were marked `accessible={false}`.
+- **A phone reads sideways, and the tree stops keeping up there.** Turn the device with
+  `- setOrientation: LANDSCAPE_LEFT` (which is what a family does, and what makes taps land), but
+  do not expect to assert what a page says: the reader is plainly on screen while the tree still
+  describes the shelf. The way in and the way out are reliable; the pages themselves are held by the
+  reader's Jest tests.
+- **When the tree goes partial, reboot the simulator.** After hours of driving, whole subtrees stop
+  being reported — the bar vanished from the tree while plainly on screen and tappable by
+  coordinate. It is the simulator's accessibility service, not the app: `xcrun simctl shutdown` and
+  boot again, and it comes back.
 - **Constant ambient animation slows the snapshot.** Turn Reduce Motion on for the simulator
   (`xcrun simctl spawn <udid> defaults write com.apple.Accessibility ReduceMotionEnabled -bool true`).
 
