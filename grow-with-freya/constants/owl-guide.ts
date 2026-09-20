@@ -24,6 +24,8 @@ export const GUIDE_IDS = [
 
 export type GuideId = (typeof GUIDE_IDS)[number];
 
+export const GUIDE_STORAGE_KEY = '@tutorial_state';
+
 export type SpotlightShape = 'circle' | 'rounded-rect';
 
 /** A picture the bubble shows under its words, where words alone would not do. */

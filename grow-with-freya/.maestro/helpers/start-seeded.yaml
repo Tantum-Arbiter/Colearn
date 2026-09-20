@@ -1,0 +1,13 @@
+appId: com.growwithfreya.app
+name: Start the app in a known state
+env:
+  SEED: "onboarded=1&guest=1&tutorials=done&screenTime=reset&language=en&tier=free"
+---
+- launchApp
+- openLink: "com.growwithfreya.app://?e2e=1&${SEED}"
+- extendedWaitUntil:
+    visible:
+      id: "home-language-button"
+    timeout: 90000
+- waitForAnimationToEnd:
+    timeout: 4000

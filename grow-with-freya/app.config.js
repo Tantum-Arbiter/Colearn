@@ -24,6 +24,7 @@ export default {
       appleClientId: process.env.EXPO_PUBLIC_APPLE_CLIENT_ID,
       revenueCatAppleKey: process.env.EXPO_PUBLIC_RC_APPLE_KEY ?? '',
       revenueCatGoogleKey: process.env.EXPO_PUBLIC_RC_GOOGLE_KEY ?? '',
+      e2e: process.env.EXPO_PUBLIC_E2E === '1',
     },
     updates: {
       url: 'https://u.expo.dev/439b6b2f-be5f-4d59-98eb-73befbd1973e'

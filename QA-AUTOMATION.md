@@ -65,14 +65,41 @@ Playwright starts the dev server itself. Point it at a deployed environment inst
 
 ---
 
+## Starting from a known state
+
+A flow opens a seeding link before it does anything else, and the app applies it only in a
+development build or one built with `EXPO_PUBLIC_E2E=1` (`isE2eAllowed`, `services/e2e-state.ts`).
+In a shipped build the link is read and thrown away.
+
+```
+com.growwithfreya.app://?e2e=1&onboarded=1&guest=1&tutorials=done&screenTime=reset&language=en&tier=free
+```
+
+It is a link to the page the app already opens on, carrying an `e2e` flag, because expo-router owns
+deep links and answers a path it does not know with its "Unmatched" screen. Parameters: `reset`
+(wipe first), `onboarded`, `guest`, `tutorials=done|fresh`, `screenTime=reset`, `language`, `tier`,
+`childAgeMonths`, `nickname`. Anything the link leaves out is left alone. `.maestro/helpers/start-seeded.yaml`
+does this for every flow; seeding took the home flow from 63 seconds to 15.
+
+## Traps on iOS
+
+- **Text that wraps is one string with a newline in it.** `"Welcome back.*"` will not match it.
+  Match an id, or a word that sits on one line.
+- **An overlay hides the page beneath it from the accessibility tree, and closing it does not bring
+  the page back** until the app relaunches. A flow that opens a full-screen overlay should assert
+  what it needs before closing it, or relaunch afterwards — which is a better assertion anyway,
+  since it proves the choice was saved. ⚠️ UNVERIFIED whether VoiceOver suffers the same; worth an
+  hour with the screen reader on.
+- **A `Pressable` round a group collapses it into one element.** The language chooser read as a
+  single blob of fourteen languages until its scrim and card were marked `accessible={false}`.
+- **Constant ambient animation slows the snapshot.** Turn Reduce Motion on for the simulator
+  (`xcrun simctl spawn <udid> defaults write com.apple.Accessibility ReduceMotionEnabled -bool true`).
+
 ## What still needs building
 
-1. **A known starting state.** The flows currently work around whatever state the simulator happens
-   to be in — the screen-time owl, the tutorial, the current language. A flow should start from a
-   state it chose. The plan is a dev-only entry point (a deep link handled only when `__DEV__`, or a
-   build-time flag) that seeds: onboarding done, tutorials seen, screen time reset, language English,
-   and the gateway pointed at the WireMock stubs already in `wiremock-server/`. Until that exists,
-   expect the odd retry and keep flows tolerant.
+1. **The gateway stubs.** Seeding covers the app's own state; the flows still talk to whatever
+   gateway the build points at. Pointing a test build at the WireMock stubs in `wiremock-server/`
+   is what makes sign-in and sync flows possible.
 2. **The remaining journeys.** Covered so far: home opens, and the language flag switches languages.
    Still to write: the core child journey (home → library → read a story → back), the money paths
    (trial, paywall, restore, a locked story), the rest of the parent and safety paths (grown-ups

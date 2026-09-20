@@ -1,12 +1,12 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { GUIDE_IDS, type GuideId } from '@/constants/owl-guide';
+import { GUIDE_IDS, GUIDE_STORAGE_KEY, type GuideId } from '@/constants/owl-guide';
 import { Logger } from '@/utils/logger';
 
-const log = Logger.create('OwlGuide');
+export { GUIDE_STORAGE_KEY };
 
-export const GUIDE_STORAGE_KEY = '@tutorial_state';
+const log = Logger.create('OwlGuide');
 
 export interface GuideState {
   completedGuides: GuideId[];

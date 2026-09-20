@@ -1,14 +1,9 @@
 appId: com.growwithfreya.app
 tags:
   - smoke
-name: The flag on home switches the app's language
+name: The flag on home switches the app's language, and it sticks
 ---
-- launchApp
-- extendedWaitUntil:
-    visible:
-      id: "home-language-button"
-    timeout: 90000
-- runFlow: ../../helpers/dismiss-interruptions.yaml
+- runFlow: ../../helpers/start-seeded.yaml
 - tapOn:
     id: "home-language-button"
 - assertVisible:
@@ -17,9 +12,19 @@ name: The flag on home switches the app's language
     id: "language-option-de"
 - assertNotVisible:
     id: "language-picker"
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible: "Fortschritt"
+    timeout: 90000
+- assertVisible:
+    id: "home-language-button"
 - tapOn:
     id: "home-language-button"
 - tapOn:
     id: "language-option-en"
-- assertNotVisible:
-    id: "language-picker"
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible: "Progress"
+    timeout: 90000

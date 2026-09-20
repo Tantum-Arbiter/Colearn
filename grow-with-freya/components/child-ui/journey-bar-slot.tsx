@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { ChildBottomNavigationBar, type ChildBottomNavigationBarProps } from './child-bottom-navigation';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ChildBottomNavigationBar, navClearance, type ChildBottomNavigationBarProps } from './child-bottom-navigation';
 import { JourneyBarCoverProvider, useJourneyBarCovered } from './journey-bar-cover';
 
 export const JOURNEY_BAR_LAYER_Z = 1500;
@@ -62,11 +63,16 @@ export function JourneyBarOutlet({ pageKey, holdMs = 0 }: JourneyBarOutletProps)
   }, [current, holdMs, pageKey]);
 
   const covered = useJourneyBarCovered();
+  const insets = useSafeAreaInsets();
   const props = current ?? held;
   if (!props || covered) return null;
 
   return (
-    <View style={styles.layer} pointerEvents="box-none" testID="journey-bar-outlet">
+    <View
+      style={[styles.layer, { height: navClearance(insets.bottom) }]}
+      pointerEvents="box-none"
+      testID="journey-bar-outlet"
+    >
       <ChildBottomNavigationBar {...props} />
     </View>
   );
@@ -74,7 +80,10 @@ export function JourneyBarOutlet({ pageKey, holdMs = 0 }: JourneyBarOutletProps)
 
 const styles = StyleSheet.create({
   layer: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
     zIndex: JOURNEY_BAR_LAYER_Z,
   },
 });

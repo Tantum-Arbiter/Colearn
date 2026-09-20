@@ -7,8 +7,9 @@
  */
 
 import React from 'react';
+import { StyleSheet } from 'react-native';
 import { render, act } from '@testing-library/react-native';
-import { ChildBottomNavigation } from '@/components/child-ui/child-bottom-navigation';
+import { ChildBottomNavigation, navClearance } from '@/components/child-ui/child-bottom-navigation';
 import { JourneyBarProvider, JourneyBarOutlet } from '@/components/child-ui/journey-bar-slot';
 import { useCoversJourneyBar } from '@/components/child-ui/journey-bar-cover';
 
@@ -219,5 +220,22 @@ describe('an overlay covering the bar', () => {
 
   it('does nothing without a bar to cover, as on every screen test', () => {
     expect(() => render(<Cover active />)).not.toThrow();
+  });
+
+  it('covers only the foot of the screen, so the page above it stays reachable', () => {
+    const view = render(
+      <JourneyBarProvider>
+        <ChildBottomNavigation selected="home" onSelect={jest.fn()} slotKey="main" />
+        <JourneyBarOutlet pageKey="main" />
+      </JourneyBarProvider>
+    );
+
+    const layer = view.UNSAFE_root.findAll((node: any) => node.props.testID === 'journey-bar-outlet')[0];
+    const style = StyleSheet.flatten(layer.props.style);
+
+    expect(style.position).toBe('absolute');
+    expect(style.bottom).toBe(0);
+    expect(style.top).toBeUndefined();
+    expect(style.height).toBe(navClearance(34));
   });
 });
