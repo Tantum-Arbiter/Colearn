@@ -44,6 +44,17 @@ test('real Pixel renderer shows events, reloads current state, and fits desktop/
     await workerCard.hover();
     await expect(page.locator(`#workers article[data-agent-key="${workerKey}"].worker-highlight`)).toHaveCount(1);
     await expect(workerCard).toHaveClass(/worker-highlight/);
+    const boardMetrics = await page.locator('#board-columns').evaluate(el => ({
+      overflow: getComputedStyle(el).overflowY,
+      scrollHeight: el.scrollHeight,
+      clientHeight: el.clientHeight,
+    }));
+    assert.equal(boardMetrics.overflow, 'auto');
+    assert.ok(boardMetrics.scrollHeight > boardMetrics.clientHeight, 'board columns should have a vertical scroll range');
+    await page.locator(`#workers article[data-agent-key="${workerKey}"]`).click();
+    await expect(page.locator(`#workers article[data-agent-key="${workerKey}"].worker-selected`)).toHaveCount(1);
+    await expect(page.locator(`#task-list [data-agent-key="${workerKey}"].worker-selected`)).toHaveCount(1);
+    await expect(page.locator('#selected-worker')).toContainText('Selected:');
     await page.mouse.move(0, 0);
     const canvas = page.frameLocator('iframe').locator('canvas');
     await expect(canvas).toBeVisible();

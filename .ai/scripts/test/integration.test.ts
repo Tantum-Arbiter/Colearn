@@ -152,6 +152,17 @@ test('office is local, rejects writes and cross-origin sockets, and replays real
       socket.on('message', data => { const m = JSON.parse(data.toString()) as Record<string, unknown>; if (m.type === 'agentToolStart') { assert.equal(m.id, 1); socket.close(); resolvePromise(); } });
     });
   }
+  await new Promise<void>((resolvePromise, reject) => {
+    const socket = new WebSocket(office.url.replace('http:', 'ws:') + '/ws', { origin: office.url });
+    socket.on('error', reject);
+    socket.on('open', () => {
+      socket.send(JSON.stringify({ type: 'webviewReady' }));
+      socket.send(JSON.stringify({ type: 'focusAgent', id: 1 }));
+      setTimeout(() => { socket.close(); resolvePromise(); }, 20);
+    });
+  });
+  const selected = await (await fetch(office.url + '/api/status')).json() as { selectedAgent: string | null };
+  assert.equal(selected.selectedAgent, 'review:codex-1');
   assert.equal(activityMessages({ ...event, event: 'deferred' }).length, 2);
 });
 
