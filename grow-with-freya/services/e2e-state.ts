@@ -1,16 +1,36 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { GUIDE_IDS, GUIDE_STORAGE_KEY } from '@/constants/owl-guide';
 import ScreenTimeService from '@/services/screen-time-service';
+import { SecureStorage } from '@/services/secure-storage';
 import { SUPPORTED_LANGUAGES, setStoredLanguage, type SupportedLanguage } from '@/services/i18n';
 import { useAppStore, type SubscriptionTier } from '@/store/app-store';
 
 const TIERS: SubscriptionTier[] = ['free', 'basic', 'premium'];
 const SEED_AVATAR = { type: 'girl', id: 'bear' } as const;
+const SEED_SESSION = {
+  user: { id: 'e2e-parent', email: 'e2e@earlyroots.co.uk', name: 'E2E Parent', provider: 'google' },
+  refreshToken: 'gateway-refresh-token-e2e',
+  yearsValid: 1,
+} as const;
+
+function base64Url(value: object): string {
+  return btoa(JSON.stringify(value)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+/** The app reads `exp` off the token before every call, so a seeded session needs a readable one. */
+function seedAccessToken(): string {
+  const expiresAt = Math.floor(Date.now() / 1000) + SEED_SESSION.yearsValid * 365 * 24 * 60 * 60;
+  const header = base64Url({ alg: 'none', typ: 'JWT' });
+  const payload = base64Url({ sub: SEED_SESSION.user.id, email: SEED_SESSION.user.email, exp: expiresAt });
+
+  return `${header}.${payload}.e2e`;
+}
 
 export interface E2eState {
   reset?: boolean;
   onboarded?: boolean;
   guest?: boolean;
+  signedIn?: boolean;
   tutorials?: 'done' | 'fresh';
   screenTime?: 'reset';
   language?: SupportedLanguage;
@@ -48,6 +68,9 @@ export function parseE2eLink(link: string): E2eState | null {
 
   const guest = flag(params.get('guest'));
   if (guest !== undefined) state.guest = guest;
+
+  const signedIn = flag(params.get('signedIn'));
+  if (signedIn !== undefined) state.signedIn = signedIn;
 
   const tutorials = params.get('tutorials');
   if (tutorials === 'done' || tutorials === 'fresh') state.tutorials = tutorials;
@@ -88,6 +111,18 @@ export async function applyE2eState(state: E2eState, allowed: boolean): Promise<
 
   if (state.guest !== undefined) {
     store.setGuestMode(state.guest);
+  }
+
+  if (state.signedIn === true) {
+    await SecureStorage.storeTokens(seedAccessToken(), SEED_SESSION.refreshToken);
+    await SecureStorage.storeUserData({ ...SEED_SESSION.user });
+    store.setGuestMode(false);
+    store.setLoginComplete(true);
+  }
+
+  if (state.signedIn === false) {
+    await SecureStorage.clearAuthData();
+    store.setGuestMode(true);
   }
 
   if (state.tutorials !== undefined) {

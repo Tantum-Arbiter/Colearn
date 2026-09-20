@@ -26,6 +26,17 @@ jest.mock('@/store/app-store', () => ({
 }));
 
 const mockResetTodayUsage = jest.fn().mockResolvedValue(undefined);
+const mockStoreTokens = jest.fn().mockResolvedValue(undefined);
+const mockStoreUserData = jest.fn().mockResolvedValue(undefined);
+const mockClearAuthData = jest.fn().mockResolvedValue(undefined);
+jest.mock('@/services/secure-storage', () => ({
+  SecureStorage: {
+    storeTokens: (...args: unknown[]) => mockStoreTokens(...args),
+    storeUserData: (...args: unknown[]) => mockStoreUserData(...args),
+    clearAuthData: () => mockClearAuthData(),
+  },
+}));
+
 jest.mock('@/services/screen-time-service', () => ({
   __esModule: true,
   default: { getInstance: () => ({ resetTodayUsage: mockResetTodayUsage }) },
@@ -36,6 +47,20 @@ jest.mock('@/services/i18n', () => ({
   ...jest.requireActual('@/services/i18n'),
   setStoredLanguage: (language: string) => mockSetStoredLanguage(language),
 }));
+
+/**
+ * The mock above stands in for a real class. If it grows a method the class
+ * does not have, every test here passes while the app crashes on the device.
+ */
+describe('the storage this leans on', () => {
+  it('has the methods the seeding calls', () => {
+    const { SecureStorage: real } = jest.requireActual('@/services/secure-storage');
+
+    ['storeTokens', 'storeUserData', 'clearAuthData'].forEach((method) => {
+      expect(typeof real[method]).toBe('function');
+    });
+  });
+});
 
 describe('isE2eAllowed', () => {
   it('opens the door in a development build', () => {
@@ -56,13 +81,14 @@ describe('isE2eAllowed', () => {
 describe('parseE2eLink', () => {
   it('reads every part of a seeded state', () => {
     const underTest = parseE2eLink(
-      'growwithfreya://?e2e=1&reset=1&onboarded=1&guest=1&tutorials=done&screenTime=reset&language=de&tier=premium&childAgeMonths=48&nickname=Freya'
+      'growwithfreya://?e2e=1&reset=1&onboarded=1&guest=1&signedIn=1&tutorials=done&screenTime=reset&language=de&tier=premium&childAgeMonths=48&nickname=Freya'
     );
 
     expect(underTest).toEqual({
       reset: true,
       onboarded: true,
       guest: true,
+      signedIn: true,
       tutorials: 'done',
       screenTime: 'reset',
       language: 'de',
@@ -187,5 +213,46 @@ describe('applyE2eState', () => {
     expect(mockStore.clearPersistedStorage).not.toHaveBeenCalled();
     expect(mockResetTodayUsage).not.toHaveBeenCalled();
     expect(mockStore.setDevSubscriptionOverride).not.toHaveBeenCalled();
+  });
+
+  it('signs a parent in without touching Google or Apple, which no stub can answer for', async () => {
+    await applyE2eState({ signedIn: true, nickname: 'Freya' }, true);
+
+    expect(mockStoreTokens).toHaveBeenCalledWith(expect.any(String), expect.any(String));
+    expect(mockStoreUserData).toHaveBeenCalledWith(expect.objectContaining({ email: expect.stringContaining('@') }));
+    expect(mockStore.setGuestMode).toHaveBeenCalledWith(false);
+    expect(mockStore.setLoginComplete).toHaveBeenCalledWith(true);
+  });
+
+  it('signs a parent out again, taking the tokens with it', async () => {
+    await applyE2eState({ signedIn: false }, true);
+
+    expect(mockClearAuthData).toHaveBeenCalledTimes(1);
+    expect(mockStoreTokens).not.toHaveBeenCalled();
+    expect(mockStore.setGuestMode).toHaveBeenCalledWith(true);
+  });
+
+  it('leaves the session alone when the link says nothing about it', async () => {
+    await applyE2eState({ language: 'en' }, true);
+
+    expect(mockStoreTokens).not.toHaveBeenCalled();
+    expect(mockClearAuthData).not.toHaveBeenCalled();
+  });
+
+  /**
+   * The app reads the token's own expiry before every call and refreshes when
+   * it is close. A token it cannot decode reads as expired, so a seeded
+   * session that is not a real JWT sends the app round the refresh loop on
+   * every request.
+   */
+  it('seeds a token the app can read an expiry from, well into the future', async () => {
+    await applyE2eState({ signedIn: true }, true);
+
+    const [accessToken] = mockStoreTokens.mock.calls[0];
+    const [header, payload, signature] = accessToken.split('.');
+    const claims = JSON.parse(Buffer.from(payload, 'base64').toString());
+
+    expect([header, payload, signature].every(Boolean)).toBe(true);
+    expect(claims.exp * 1000).toBeGreaterThan(Date.now() + 24 * 60 * 60 * 1000);
   });
 });

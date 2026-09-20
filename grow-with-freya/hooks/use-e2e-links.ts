@@ -1,10 +1,13 @@
 import { useEffect } from 'react';
 import * as Linking from 'expo-linking';
 import { applyE2eState, parseE2eLink } from '@/services/e2e-state';
+import { useAppStore } from '@/store/app-store';
 
 export function useE2eLinks(allowed: boolean): void {
+  const hydrated = useAppStore((state) => state.hasHydrated);
+
   useEffect(() => {
-    if (!allowed) return undefined;
+    if (!allowed || !hydrated) return undefined;
 
     let live = true;
 
@@ -21,5 +24,5 @@ export function useE2eLinks(allowed: boolean): void {
       live = false;
       subscription.remove();
     };
-  }, [allowed]);
+  }, [allowed, hydrated]);
 }

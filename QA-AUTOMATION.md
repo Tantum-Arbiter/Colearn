@@ -81,6 +81,41 @@ deep links and answers a path it does not know with its "Unmatched" screen. Para
 `childAgeMonths`, `nickname`. Anything the link leaves out is left alone. `.maestro/helpers/start-seeded.yaml`
 does this for every flow; seeding took the home flow from 63 seconds to 15.
 
+## The gateway, stubbed
+
+Flows run against WireMock rather than a real gateway, so a run cannot depend on somebody's data
+or a deployment being up.
+
+```bash
+cd grow-with-freya
+npm run e2e:stubs   # WireMock on :8080, from wiremock-server/mappings
+npm run e2e:metro   # Metro with EXPO_PUBLIC_E2E=1 and the gateway pointed at the stubs
+npm run e2e         # in a third shell
+```
+
+`wiremock-server/run-local.sh` fetches the standalone jar once, so no Docker is needed; the
+docker-compose file still works if you prefer it. The app's endpoints are stubbed in
+`mappings/app-gateway-endpoints.json` (profile, stories version and delta, asset urls, account
+deletion); `/auth/google`, `/auth/apple`, `/auth/refresh` and `/auth/revoke` were already stubbed
+for the func-tests and are reused. WireMock 3 rejects a mapping whose `id` is not a UUID — give a
+mapping a `name` instead.
+
+**What no stub can reach.** Google and Apple sign-in are native SDKs, and purchases are RevenueCat
+on the device, so neither goes anywhere near the gateway. A flow gets a signed-in parent from the
+seeding link (`signedIn=1`), which writes a session the way a real sign-in would, and a plan from
+`tier=`, which sets the same dev override the Grown-ups page uses. A real purchase still needs a
+sandbox account and a human.
+
+**The token has to be a real JWT.** The app reads `exp` off the access token before every request
+and refreshes when it is close, so a seeded session carrying a plain string sends the app round the
+refresh loop forever. The seed writes an unsigned JWT with a far-future expiry.
+
+**Proven so far**: a seeded signed-in parent relaunches, and the app calls `/api/profile`,
+`/api/stories/version` and `/api/stories/delta` against the stubs, all matched. ⚠️ A story that
+exists only in the stub does **not** yet appear on the shelf — the app never asks for its assets, so
+something in the catalogue pipeline still needs tracing. Until that is understood, flows should
+assert against the bundled stories, not the stubbed one.
+
 ## Traps on iOS
 
 - **Text that wraps is one string with a newline in it.** `"Welcome back.*"` will not match it.
@@ -97,9 +132,8 @@ does this for every flow; seeding took the home flow from 63 seconds to 15.
 
 ## What still needs building
 
-1. **The gateway stubs.** Seeding covers the app's own state; the flows still talk to whatever
-   gateway the build points at. Pointing a test build at the WireMock stubs in `wiremock-server/`
-   is what makes sign-in and sync flows possible.
+1. **A stubbed story that reaches the shelf**, so a flow can open a story the test controls rather
+   than a bundled one (see above).
 2. **The remaining journeys.** Covered so far: home opens, and the language flag switches languages.
    Still to write: the core child journey (home → library → read a story → back), the money paths
    (trial, paywall, restore, a locked story), the rest of the parent and safety paths (grown-ups

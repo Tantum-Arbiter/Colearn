@@ -1,0 +1,24 @@
+appId: com.growwithfreya.app
+tags:
+  - journey
+name: A signed-in parent comes back and the app lets them straight in
+---
+- runFlow:
+    file: ../../helpers/start-seeded.yaml
+    env:
+      SEED: "onboarded=1&signedIn=1&tutorials=done&screenTime=reset&language=en&tier=free&nickname=Freya"
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: "home-language-button"
+    timeout: 90000
+- assertNotVisible:
+    id: "login-screen"
+- assertVisible: "(?s).*Freya.*"
+- tapOn:
+    id: "navigation-item-home"
+- extendedWaitUntil:
+    visible:
+      id: "catalogue-header-row"
+    timeout: 30000

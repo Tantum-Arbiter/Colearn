@@ -48,7 +48,9 @@
     "pre-commit": "lint-staged",
     "validate": "npm run type-check && npm run lint && npm run test:ci",
     "e2e": "./.maestro/run.sh",
-    "e2e:smoke": "./.maestro/run.sh --include-tags=smoke"
+    "e2e:smoke": "./.maestro/run.sh --include-tags=smoke",
+    "e2e:stubs": "../wiremock-server/run-local.sh",
+    "e2e:metro": "EXPO_PUBLIC_E2E=1 EXPO_PUBLIC_GATEWAY_URL=http://localhost:8080 expo start --dev-client --clear"
   },
   "dependencies": {
     "@expo/metro-runtime": "~6.1.2",
