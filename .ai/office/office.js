@@ -1,5 +1,14 @@
 const states = { started: 'Reviewing', resumed: 'Reviewing · resumed', progress: 'Reviewing', completed: 'Completed', failed: 'Failed', authentication_required: 'Sign-in needs attention', timed_out: 'Timed out', skipped_usage_limit: 'Waiting for quota', deferred: 'Waiting for quota', interrupted: 'Interrupted' };
 const element = (tag, text, cls) => { const el = document.createElement(tag); el.textContent = text; if (cls) el.className = cls; return el; };
+const expand = document.querySelector('#expand');
+expand.addEventListener('click', () => {
+  const focused = document.body.classList.toggle('office-focus');
+  expand.textContent = focused ? 'Exit expanded view' : 'Expand office';
+  expand.setAttribute('aria-pressed', String(focused));
+});
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape' && document.body.classList.contains('office-focus')) expand.click();
+});
 async function refresh() {
   try {
     const response = await fetch('/api/status');
