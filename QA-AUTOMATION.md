@@ -104,12 +104,31 @@ does this for every flow; seeding took the home flow from 63 seconds to 15.
    Still to write: the core child journey (home → library → read a story → back), the money paths
    (trial, paywall, restore, a locked story), the rest of the parent and safety paths (grown-ups
    gate, Screensafe limits, screen-time alert), and sign-in and sync against the stubs.
-3. **App journeys in CI.** The website suite runs on every pull request (`website-e2e.yml`). The app
-   suite does not run in CI yet, because it needs a build to drive and a runner to drive it on:
-   Android emulators run on Linux cheaply; iOS needs macOS runners, which cost roughly ten times as
-   much per minute. The sensible split is a smoke subset per pull request on Android, and the full
-   suite nightly on both.
-4. **Devices beyond the phone.** Tablet layouts and landscape are covered only by Jest today.
+3. **Devices beyond the phone.** Tablet layouts and landscape are covered only by Jest today.
+
+---
+
+## Where each layer runs in CI
+
+| When | What runs | Where | Roughly |
+|---|---|---|---|
+| Every push and pull request touching the app | Jest, types, lint, npm audit | ubuntu | 3-5 min |
+| Every push and pull request touching the website | Playwright, both viewports | ubuntu | 2 min |
+| Push to `main`, `mvp` or `develop` | **Smoke journeys on an Android emulator** | ubuntu | 20-30 min |
+| Nightly, and on demand | **Every journey, Android and iOS** | ubuntu + macOS | 30-60 min |
+| Push to `main`/`develop` | Web export, Lighthouse | ubuntu | 5 min |
+
+The journey job (`app-journeys` in `grow-with-freya-ci-cd.yml`) waits for Jest and the type check:
+there is no point booting an emulator for a branch that does not compile. It builds the app with
+`EXPO_PUBLIC_E2E=1`, so the seeding link works, serves the bundle, installs onto the emulator and
+runs the `smoke` tag. A failure keeps the recordings and Metro's log as artifacts.
+
+iOS sits in `app-e2e-nightly.yml` rather than the per-push pipeline because macOS runners cost
+roughly ten times as much per minute. Run it on demand from the Actions tab, choosing a platform
+and optionally a tag.
+
+⚠️ UNVERIFIED — both journey jobs are written but have not run in GitHub Actions yet; the first run
+may need adjusting (build times, emulator image, the wait for the bundle).
 
 ---
 

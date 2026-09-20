@@ -3,12 +3,12 @@ name: Grow with Freya - CI/CD Pipeline
 on:
   workflow_dispatch:
   push:
-    branches: [ main, develop, set-up-pipeline-frontend, fix-client-pipeline-ai ]  # Enable on main and develop branches
+    branches: [ main, mvp, develop, set-up-pipeline-frontend, fix-client-pipeline-ai ]  # Enable on main, mvp and develop branches
     paths:
       - 'grow-with-freya/**'
       - '.github/workflows/grow-with-freya-ci-cd.yml'
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main, mvp, develop ]
     paths:
       - 'grow-with-freya/**'
       - '.github/workflows/grow-with-freya-ci-cd.yml'
@@ -114,6 +114,93 @@ jobs:
       - name: Check for outdated packages
         run: npm outdated || echo "Package check completed"
 
+  # Job 4: App Journeys (Maestro on an Android emulator)
+  # The layer above unit tests: the real app, on a device, doing what a family does.
+  # Android because an emulator runs on a Linux runner; iOS journeys run nightly on
+  # macOS (app-e2e-nightly.yml), where the minutes cost roughly ten times as much.
+  app-journeys:
+    name: App Journeys (smoke)
+    runs-on: ubuntu-latest
+    needs: [test-and-lint, type-check]
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/mvp' || github.ref == 'refs/heads/develop'))
+    timeout-minutes: 45
+    env:
+      MAESTRO_VERSION: '2.10.0'
+      EXPO_PUBLIC_E2E: '1'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Enable KVM, so the emulator is not unbearably slow
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Install dependencies
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: npm install --legacy-peer-deps
+
+      - name: Install Maestro
+        run: |
+          curl -fsSL -o maestro.zip "https://github.com/mobile-dev-inc/maestro/releases/download/cli-${MAESTRO_VERSION}/maestro.zip"
+          unzip -q maestro.zip -d "$HOME"
+          echo "$HOME/maestro/bin" >> $GITHUB_PATH
+
+      - name: Generate the Android project
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: npx expo prebuild --platform android --no-install
+
+      - name: Build the app
+        working-directory: ${{ env.WORKING_DIRECTORY }}/android
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: Serve the bundle
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: |
+          npx expo start --dev-client --port 8081 > "$RUNNER_TEMP/metro.log" 2>&1 &
+          for i in $(seq 1 60); do
+            curl -sf http://localhost:8081/status | grep -q running && break
+            sleep 2
+          done
+
+      - name: Run the smoke journeys
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          script: |
+            adb install -r grow-with-freya/android/app/build/outputs/apk/debug/app-debug.apk
+            adb reverse tcp:8081 tcp:8081
+            adb shell am start -a android.intent.action.VIEW -d 'com.growwithfreya.app://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081'
+            sleep 30
+            cd grow-with-freya && ./.maestro/run.sh --include-tags=smoke
+
+      - name: Keep what failed
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: maestro-debug-${{ github.sha }}
+          path: |
+            ~/.maestro/tests
+            ${{ runner.temp }}/metro.log
+          retention-days: 7
+
   # Job 4: Build Web Application
   build-web:
     name: Build Web App
@@ -200,7 +287,7 @@ jobs:
   deployment-summary:
     name: Deployment Summary
     runs-on: ubuntu-latest
-    needs: [test-and-lint, type-check, security-audit, build-web, performance-test]
+    needs: [test-and-lint, type-check, security-audit, app-journeys, build-web, performance-test]
     if: always()
 
     steps:
@@ -212,6 +299,7 @@ jobs:
           echo "- **Tests & Lint**: ${{ needs.test-and-lint.result }}" >> $GITHUB_STEP_SUMMARY
           echo "- **TypeScript Check**: ${{ needs.type-check.result }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Security Audit**: ${{ needs.security-audit.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **App Journeys (smoke)**: ${{ needs.app-journeys.result }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Web Build**: ${{ needs.build-web.result }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Performance Tests**: ${{ needs.performance-test.result }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY

@@ -1,0 +1,212 @@
+name: App Journeys - Nightly
+
+# The smoke subset runs per push in the main pipeline, on Android only.
+# This is the rest: every flow, on both platforms, once a night — iOS lives
+# here because macOS runners cost roughly ten times as much per minute.
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: Which platform to run
+        type: choice
+        default: both
+        options: [both, android, ios]
+      tags:
+        description: Only flows with these tags (blank runs every flow)
+        type: string
+        default: ''
+
+concurrency:
+  group: app-journeys-nightly-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  WORKING_DIRECTORY: grow-with-freya
+  NODE_VERSION: '20'
+  MAESTRO_VERSION: '2.10.0'
+  EXPO_PUBLIC_E2E: '1'
+
+jobs:
+  android:
+    name: Android
+    if: github.event_name == 'schedule' || inputs.platform == 'both' || inputs.platform == 'android'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Enable KVM, so the emulator is not unbearably slow
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Install dependencies
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: npm install --legacy-peer-deps
+
+      - name: Install Maestro
+        run: |
+          curl -fsSL -o maestro.zip "https://github.com/mobile-dev-inc/maestro/releases/download/cli-${MAESTRO_VERSION}/maestro.zip"
+          unzip -q maestro.zip -d "$HOME"
+          echo "$HOME/maestro/bin" >> $GITHUB_PATH
+
+      - name: Generate the Android project
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: npx expo prebuild --platform android --no-install
+
+      - name: Build the app
+        working-directory: ${{ env.WORKING_DIRECTORY }}/android
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: Serve the bundle
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: |
+          npx expo start --dev-client --port 8081 > "$RUNNER_TEMP/metro.log" 2>&1 &
+          for i in $(seq 1 60); do
+            curl -sf http://localhost:8081/status | grep -q running && break
+            sleep 2
+          done
+
+      - name: Run the journeys
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          script: |
+            adb install -r grow-with-freya/android/app/build/outputs/apk/debug/app-debug.apk
+            adb reverse tcp:8081 tcp:8081
+            adb shell am start -a android.intent.action.VIEW -d 'com.growwithfreya.app://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081'
+            sleep 30
+            cd grow-with-freya && ./.maestro/run.sh ${{ inputs.tags && format('--include-tags={0}', inputs.tags) || '' }}
+
+      - name: Keep what failed
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: maestro-android-${{ github.run_id }}
+          path: |
+            ~/.maestro/tests
+            ${{ runner.temp }}/metro.log
+          retention-days: 14
+
+  ios:
+    name: iOS
+    if: github.event_name == 'schedule' || inputs.platform == 'both' || inputs.platform == 'ios'
+    runs-on: macos-15
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install dependencies
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: npm install --legacy-peer-deps
+
+      - name: Install Maestro
+        run: |
+          brew tap mobile-dev-inc/tap
+          brew install mobile-dev-inc/tap/maestro
+
+      - name: Generate the iOS project
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: npx expo prebuild --platform ios --no-install
+
+      - name: Install pods
+        working-directory: ${{ env.WORKING_DIRECTORY }}/ios
+        run: |
+          export LANG=en_US.UTF-8
+          pod install
+
+      - name: Build for the simulator
+        working-directory: ${{ env.WORKING_DIRECTORY }}/ios
+        run: |
+          workspace=$(ls -d *.xcworkspace | head -1)
+          xcodebuild \
+            -workspace "$workspace" \
+            -scheme "${workspace%.xcworkspace}" \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -derivedDataPath build \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO | tail -20
+
+      - name: Boot a simulator
+        run: |
+          udid=$(xcrun simctl create e2e-iphone "iPhone 16 Pro")
+          xcrun simctl boot "$udid"
+          xcrun simctl spawn "$udid" defaults write com.apple.Accessibility ReduceMotionEnabled -bool true
+          echo "MAESTRO_DEVICE=$udid" >> $GITHUB_ENV
+
+      - name: Install the app
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: xcrun simctl install "$MAESTRO_DEVICE" "$(find ios/build/Build/Products -name '*.app' -maxdepth 3 | head -1)"
+
+      - name: Serve the bundle
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: |
+          npx expo start --dev-client --port 8081 > "$RUNNER_TEMP/metro.log" 2>&1 &
+          for i in $(seq 1 60); do
+            curl -sf http://localhost:8081/status | grep -q running && break
+            sleep 2
+          done
+
+      - name: Point the app at the bundle
+        run: |
+          xcrun simctl openurl "$MAESTRO_DEVICE" 'com.growwithfreya.app://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081'
+          sleep 30
+
+      - name: Run the journeys
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: ./.maestro/run.sh ${{ inputs.tags && format('--include-tags={0}', inputs.tags) || '' }}
+
+      - name: Keep what failed
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: maestro-ios-${{ github.run_id }}
+          path: |
+            ~/.maestro/tests
+            ${{ runner.temp }}/metro.log
+          retention-days: 14
+
+  summary:
+    name: Summary
+    runs-on: ubuntu-latest
+    needs: [android, ios]
+    if: always()
+
+    steps:
+      - name: Write the summary
+        run: |
+          echo "## App journeys, nightly" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Android**: ${{ needs.android.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **iOS**: ${{ needs.ios.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Recordings and screenshots from a failed flow are attached to this run." >> $GITHUB_STEP_SUMMARY
