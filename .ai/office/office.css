@@ -26,3 +26,16 @@ body.office-focus .office-and-board .office-stage{flex-basis:var(--office-stage-
 [data-agent-key].worker-highlight{position:relative;z-index:2;border-color:var(--green)!important;box-shadow:0 0 0 2px #90dfb566,0 0 22px #90dfb522!important}
 .board-card.worker-highlight{background:#203a35;border-color:var(--green)}.board-card.worker-highlight .board-owner{color:#e4f3ea}.task-card.worker-highlight{border-color:var(--green);box-shadow:0 0 0 1px #90dfb544}.board-card{transition:background .15s,border-color .15s,box-shadow .15s,transform .15s}.board-card.worker-highlight{transform:translateY(-1px)}
 @media(max-width:700px){.board-actions{justify-content:flex-start}.office-size input{width:90px}body.office-focus #office-board-splitter{display:none}body.office-focus .office-and-board .office-stage{flex-basis:40dvh}}
+
+/* Keep the board header and filters in place while its six columns scroll. */
+#kanban{display:flex;flex-direction:column;min-height:0}
+.board-body{display:flex;flex-direction:column;min-height:0}
+.board-columns{max-height:620px;min-height:0;overflow:auto;align-items:start;scrollbar-width:thin;scrollbar-color:#3c504a transparent}
+body.office-focus .board-columns{max-height:52dvh}
+.board-expanded .board-columns{max-height:58dvh}
+
+/* A selection from the pixel office is mirrored across every matching
+   worker card in the manager view and Scrumboard. */
+[data-agent-key].worker-selected{position:relative;z-index:3;border-color:#f1d58e!important;box-shadow:0 0 0 2px #f1d58e88,0 0 24px #f1d58e2e!important;background:#29372d!important}
+[data-agent-key].worker-selected:after{content:'Selected worker';position:absolute;top:7px;right:8px;color:#f1d58e;font-size:9px;letter-spacing:.04em;text-transform:uppercase}
+@media(max-width:700px){.board-columns{max-height:460px}body.office-focus .board-columns,.board-expanded .board-columns{max-height:460px}}

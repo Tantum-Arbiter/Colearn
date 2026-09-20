@@ -7,6 +7,8 @@ const element = (tag, text = '', cls) => { const el = document.createElement(tag
 let snapshot = { agents: [], recent: [] };
 let lastGoodSync = null;
 const openTasks = new Set();
+let selectedAgentKey = '';
+let selectedFromOffice = false;
 const expand = $('#expand');
 const office = $('#pixel-office');
 const dashboard = $('#dashboard');
@@ -76,6 +78,21 @@ function replace(selector, nodes) {
   target.replaceChildren(...nodes);
   if (focusKey) [...target.querySelectorAll('[data-focus-key]')].find(node => node.dataset.focusKey === focusKey)?.focus({ preventScroll: true });
 }
+function setSelectedWorker(agentKey, fromOffice = false) {
+  selectedAgentKey = agentKey || '';
+  selectedFromOffice = Boolean(fromOffice && selectedAgentKey);
+  for (const node of document.querySelectorAll('[data-agent-key]')) {
+    node.classList.toggle('worker-selected', Boolean(selectedAgentKey) && node.dataset.agentKey === selectedAgentKey);
+  }
+  const agent = snapshot.agents.find(item => item.key === selectedAgentKey);
+  const label = $('#selected-worker');
+  if (label) label.textContent = agent ? `Selected: ${agent.title} · ${agent.project}` : 'Click an office character to trace their work';
+  document.body.dataset.selectedWorker = selectedAgentKey;
+}
+document.addEventListener('click', event => {
+  const node = event.target.closest?.('[data-agent-key]');
+  if (node?.dataset.agentKey) setSelectedWorker(node.dataset.agentKey);
+});
 function selectWork(project, status = '') {
   $('#project-filter').value = project;
   $('#status-filter').value = status;
@@ -131,6 +148,7 @@ function renderDashboard() {
   $('#attention-count').textContent = `${attention.length} follow-ups`;
   replace('#attention', attention.length ? attention.map(agent => {
     const card = element('div', '', 'attention-card');
+    card.dataset.agentKey = agent.key;
     card.append(element('div', `${agent.project} · ${labels[kind(agent)]}`, 'attention-project'), element('div', agent.title, 'attention-title'), element('p', advice(agent)));
     return card;
   }) : [element('div', 'No failures, waiting tasks or stale activity in the current feed.', 'empty-state')]);
@@ -181,6 +199,8 @@ async function refresh() {
     const data = await response.json();
     if (!Array.isArray(data.agents) || !Array.isArray(data.recent)) throw new Error('Invalid feed');
     snapshot = data;
+    if (typeof data.selectedAgent === 'string') setSelectedWorker(data.selectedAgent, true);
+    else if (data.selectedAgent === null && selectedFromOffice) setSelectedWorker('', true);
     if (data.connected) lastGoodSync = new Date();
     connection(data.connected);
     replace('#workers', data.agents.map(agent => {
@@ -193,5 +213,6 @@ async function refresh() {
   renderDashboard();
   setTimeout(refresh, 1500);
   renderBoard(snapshot.board, snapshot.agents);
+  setSelectedWorker(selectedAgentKey, selectedFromOffice);
 }
 refresh();

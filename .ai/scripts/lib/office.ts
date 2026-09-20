@@ -68,6 +68,7 @@ export async function startOffice(aiDir: string, port = 4317, discover: () => Ob
   catch { throw new Error('Office assets missing. Run npm run office:setup in .ai first.'); }
   let events = readEvents(resolveInside(aiDir, 'state'));
   let agents = mergeAgents(reviewAgents(events, resolveInside(aiDir, 'state')), discover());
+  let selectedAgentKey: string | null = null;
   void board.refresh().catch(() => {});
   let lastDiscovery = Date.now();
   const agentIds = new Map<string, number>();
@@ -106,6 +107,12 @@ export async function startOffice(aiDir: string, port = 4317, discover: () => Ob
       try {
         const message = JSON.parse(data.toString()) as Record<string, unknown>;
         if (message.type === 'webviewReady' && !initialized) { initialized = true; send(socket, snapshot()); }
+        // Pixel Agents sends this when a character is clicked. Keep the
+        // selection in the read-only observer so the manager view can mirror
+        // the office selection without granting the page any control.
+        if (message.type === 'focusAgent' && typeof message.id === 'number' && Number.isSafeInteger(message.id)) {
+          selectedAgentKey = agents.find(agent => idFor(agent.key) === message.id)?.key ?? null;
+        }
         // No other protocol handlers: cannot launch agents, install hooks or mutate settings.
       } catch { socket.close(1008, 'Invalid message'); }
     });
@@ -121,7 +128,7 @@ export async function startOffice(aiDir: string, port = 4317, discover: () => Ob
       const path = new URL(req.url ?? '/', origin).pathname;
       if (path === '/api/status') {
         res.setHeader('Content-Type', 'application/json');
-        res.end(JSON.stringify({ connected: !feedError, agents, recent: events.slice(-40), board: board.snapshot(agents) })); return;
+        res.end(JSON.stringify({ connected: !feedError, agents, selectedAgent: selectedAgentKey, recent: events.slice(-40), board: board.snapshot(agents) })); return;
       }
       const file = path.startsWith('/pixel/') ? resolveInside(join(dist, 'pixel'), decodeURIComponent(path.slice(7)) || 'index.html') :
         path === '/' ? join(aiDir, 'office/index.html') : ['/office.js', '/office.css', '/kanban.js'].includes(path) ? join(aiDir, 'office', path.slice(1)) : null;

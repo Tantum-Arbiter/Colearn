@@ -12,13 +12,13 @@
     <div class="office-and-board"><div class="office-stage">
       <div class="office-toolbar"><div class="office-heading"><span class="live-dot"></span> THE OFFICE <span id="office-count"></span></div><button class="expand" id="expand" type="button" aria-pressed="false">Expand office</button></div>
       <div class="scene"><iframe id="pixel-office" src="/pixel/" title="Pixel Agents read-only office"></iframe></div>
-      <div class="office-legend"><span><i class="dot working"></i> Working</span><span>✓ Idle / finished</span><span>! Needs attention</span><span class="legend-hint">Hover a character for details</span></div>
+      <div class="office-legend"><span><i class="dot working"></i> Working</span><span>✓ Idle / finished</span><span>! Needs attention</span><span id="selected-worker" class="legend-hint" aria-live="polite">Click an office character to trace their work</span></div>
     </div><div id="office-board-splitter" role="separator" aria-label="Resize office and Scrumboard" aria-orientation="horizontal" aria-valuemin="45" aria-valuemax="78" aria-valuenow="68" tabindex="0"></div>
     <section id="kanban" aria-label="Cross-project Kanban board">
       <div class="board-header"><div><div class="eyebrow">Delivery board</div><h2>Scrumboard · From plan to done</h2><p id="board-summary">Indexing agent plans…</p></div><div class="board-actions"><label class="office-size">Office height <input id="office-size" type="range" min="45" max="78" value="68" step="1" aria-label="Office height in expanded view"><output id="office-size-value">68%</output></label><button id="board-collapse" type="button" aria-expanded="true">Collapse board</button><button id="board-size" type="button" aria-pressed="false">More board space</button></div></div>
       <div class="board-body"><div class="board-filters"><label>Project<select id="board-project"><option value="">All projects</option></select></label><label>Agent<select id="board-agent"><option value="">All agents</option></select></label><label>Level<select id="board-level"><option value="task">Tasks</option><option value="story">User stories</option><option value="epic">Epics</option></select></label><label class="board-search">Search<input type="search" id="board-search" placeholder="Find planned work…"></label></div>
       <div id="board-columns" class="board-columns"></div>
-      <div class="board-footer"><span id="board-coverage"></span><span>Agent plans sync automatically · Hover a card to highlight its worker</span></div></div>
+      <div class="board-footer"><span id="board-coverage"></span><span>Agent plans sync automatically · Hover or click a card to highlight its worker</span></div></div>
     </section></div>
     <aside id="dashboard" aria-label="Project management dashboard" hidden>
       <div class="dashboard-header"><div class="eyebrow">Manager overview</div><div class="dashboard-title"><h2>Work in motion</h2><span id="dashboard-live" class="live-label" role="status">Connecting</span></div><p id="dashboard-summary">Waiting for agent activity…</p></div>
