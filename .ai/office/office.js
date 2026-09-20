@@ -18,6 +18,8 @@ function setExpanded(focused) {
   expand.setAttribute('aria-pressed', String(focused));
   // Keep keyboard navigation within the expanded workspace.
   for (const child of document.body.children) if (child !== $('.office-wrap')) child.inert = focused;
+  const scene = $('.scene');
+  if (scene) fitOffice({ contentRect: scene.getBoundingClientRect() });
   if (!focused) expand.focus({ preventScroll: true });
 }
 expand.addEventListener('click', () => setExpanded(!document.body.classList.contains('office-focus')));
@@ -26,14 +28,20 @@ document.addEventListener('keydown', escape);
 office.addEventListener('load', () => office.contentDocument?.addEventListener('keydown', escape));
 // Fit the entire room into a narrow office pane. Resize the iframe's viewport
 // before scaling so canvas and character overlays use the same coordinates.
-new ResizeObserver(([entry]) => {
+function fitOffice(entry) {
   const { width, height } = entry.contentRect;
   if (!width || !height) return;
-  const scale = Math.min(1, width / 760, height / 450);
+  const focused = document.body.classList.contains('office-focus');
+  const scale = Math.min(focused ? 1.25 : 1, width / 760, height / 450);
   office.style.width = `${width / scale}px`;
   office.style.height = `${height / scale}px`;
-  office.style.transform = `scale(${scale})`;
-}).observe($('.scene'));
+  office.style.position = focused ? 'absolute' : 'static';
+  office.style.left = focused ? '50%' : '';
+  office.style.top = focused ? '50%' : '';
+  office.style.transform = focused ? `translate(-50%, -50%) scale(${scale})` : `scale(${scale})`;
+}
+const sceneObserver = new ResizeObserver(([entry]) => fitOffice(entry));
+sceneObserver.observe($('.scene'));
 
 function relative(timestamp) {
   const seconds = (Date.now() - Date.parse(timestamp)) / 1000;
@@ -135,7 +143,7 @@ function renderDashboard() {
     .sort((a, b) => rank[kind(a)] - rank[kind(b)] || Date.parse(b.updated_at) - Date.parse(a.updated_at));
   $('#task-count').textContent = `${visible.length} of ${agents.length}`;
   replace('#task-list', visible.length ? visible.map(agent => {
-    const state = kind(agent); const card = element('details', '', 'task-card'); card.dataset.key = agent.key; card.open = openTasks.has(agent.key);
+    const state = kind(agent); const card = element('details', '', 'task-card'); card.dataset.key = agent.key; card.dataset.agentKey = agent.key; card.open = openTasks.has(agent.key);
     const summary = element('summary'); summary.dataset.focusKey = agent.key;
     const top = element('div', '', 'task-top'); const badge = element('span', labels[state], 'status-badge'); badge.dataset.kind = state;
     top.append(element('span', `${agent.provider.toUpperCase()} · ${agent.project}`, 'task-owner'), badge);
@@ -176,7 +184,7 @@ async function refresh() {
     if (data.connected) lastGoodSync = new Date();
     connection(data.connected);
     replace('#workers', data.agents.map(agent => {
-      const card = element('article'); card.dataset.active = String(kind(agent) === 'active');
+      const card = element('article'); card.dataset.active = String(kind(agent) === 'active'); card.dataset.agentKey = agent.key;
       card.append(element('h2', `${agent.provider.toUpperCase()} · ${agent.project}`), element('div', agent.title, 'status'), element('div', kind(agent) === 'stale' ? 'Status unconfirmed · no recent update' : agent.detail, 'meta'), element('div', `Updated ${relative(agent.updated_at)}`, 'meta'));
       return card;
     }));
