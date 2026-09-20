@@ -113,20 +113,18 @@ describe('Stories Data', () => {
       expect(availableStories).toContain(randomStory);
     });
 
-    it('should return one of the available stories', () => {
-      const stories = new Set();
+    it('should draw only from the stories that are available, however many there are', () => {
+      const available = getAvailableStories();
+      const drawn = new Set<string>();
 
-      // Call multiple times
-      for (let i = 0; i < 5; i++) {
+      for (let i = 0; i < 20; i++) {
         const story = getRandomStory();
-        if (story) {
-          stories.add(story.id);
-        }
+        expect(available).toContain(story);
+        drawn.add(story!.id);
       }
 
-      // Four available stories, so at most 4 unique IDs
-      expect(stories.size).toBeGreaterThanOrEqual(1);
-      expect(stories.size).toBeLessThanOrEqual(4);
+      expect(drawn.size).toBeGreaterThanOrEqual(1);
+      expect(drawn.size).toBeLessThanOrEqual(available.length);
     });
 
     it('should handle edge case with no available stories', () => {

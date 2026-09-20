@@ -1,0 +1,26 @@
+appId: com.growwithfreya.app
+tags:
+  - journey
+name: A story that exists only on the server reaches the shelf
+---
+- runFlow:
+    file: ../../helpers/start-seeded.yaml
+    env:
+      SEED: "onboarded=1&signedIn=1&tutorials=done&screenTime=reset&language=en&tier=free&nickname=Freya"
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: "home-language-button"
+    timeout: 90000
+- tapOn:
+    id: "navigation-item-search"
+- extendedWaitUntil:
+    visible:
+      id: "catalogue-header-row"
+    timeout: 30000
+- tapOn: "Search for a story"
+- inputText: "owl"
+- extendedWaitUntil:
+    visible: "The Sleepy Test Owl"
+    timeout: 20000

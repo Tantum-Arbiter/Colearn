@@ -233,6 +233,15 @@ jobs:
       - name: Export for web
         run: npx expo export --platform web
 
+      - name: Check the bundle can actually run
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: |
+          if grep -rl "import\.meta" dist/_expo/static/js/web/ >/dev/null 2>&1; then
+            echo "The web bundle contains import.meta, which a classic script cannot parse:" >&2
+            echo "the app will stop at the splash. See babel.config.js unstable_transformImportMeta." >&2
+            exit 1
+          fi
+
       - name: Archive web build
         uses: actions/upload-artifact@v4
         with:

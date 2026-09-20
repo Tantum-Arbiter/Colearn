@@ -110,21 +110,19 @@ sandbox account and a human.
 and refreshes when it is close, so a seeded session carrying a plain string sends the app round the
 refresh loop forever. The seed writes an unsigned JWT with a far-future expiry.
 
-**Proven so far**: a seeded signed-in parent relaunches, and the app calls `/api/profile`,
-`/api/stories/version` and `/api/stories/delta` against the stubs, all matched. ⚠️ A story that
-exists only in the stub does **not** yet appear on the shelf — the app never asks for its assets, so
-something in the catalogue pipeline still needs tracing. Until that is understood, flows should
-assert against the bundled stories, not the stubbed one.
+**Proven**: a seeded signed-in parent relaunches, the app calls `/api/profile`,
+`/api/stories/version` and `/api/stories/delta` against the stubs, and the story that exists only in
+the stub reaches the shelf and the search — a flow finds it by name. Its cover comes from
+`wiremock-server/__files/e2e/cover.webp`.
 
 ## Traps on iOS
 
 - **Text that wraps is one string with a newline in it.** `"Welcome back.*"` will not match it.
   Match an id, or a word that sits on one line.
-- **An overlay hides the page beneath it from the accessibility tree, and closing it does not bring
-  the page back** until the app relaunches. A flow that opens a full-screen overlay should assert
-  what it needs before closing it, or relaunch afterwards — which is a better assertion anyway,
-  since it proves the choice was saved. ⚠️ UNVERIFIED whether VoiceOver suffers the same; worth an
-  hour with the screen reader on.
+- **An overlay hides the page beneath it from the accessibility tree** while it is up, which is
+  correct — iOS leaves out what is covered. The page comes back when the overlay closes. If it does
+  not, the overlay did not actually close: a tap in the top few percent of the screen lands in the
+  status bar and never reaches the app, which is easy to misread as a broken tree.
 - **A `Pressable` round a group collapses it into one element.** The language chooser read as a
   single blob of fourteen languages until its scrim and card were marked `accessible={false}`.
 - **Constant ambient animation slows the snapshot.** Turn Reduce Motion on for the simulator
@@ -132,8 +130,8 @@ assert against the bundled stories, not the stubbed one.
 
 ## What still needs building
 
-1. **A stubbed story that reaches the shelf**, so a flow can open a story the test controls rather
-   than a bundled one (see above).
+1. **Opening the stubbed story**, so a flow covers the reader itself: the assets download on a tap,
+   which the stub answers but no flow exercises yet.
 2. **The remaining journeys.** Covered so far: home opens, and the language flag switches languages.
    Still to write: the core child journey (home → library → read a story → back), the money paths
    (trial, paywall, restore, a locked story), the rest of the parent and safety paths (grown-ups
