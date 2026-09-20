@@ -21,7 +21,7 @@ function byTestId(view: ReturnType<typeof render>, testID: string) {
 }
 
 function options(view: ReturnType<typeof render>) {
-  const pressable = view.UNSAFE_root.findAll((node: any) => node.props.testID === 'language-option' && typeof node.props.onPress === 'function');
+  const pressable = view.UNSAFE_root.findAll((node: any) => typeof node.props.testID === 'string' && node.props.testID.startsWith('language-option-') && typeof node.props.onPress === 'function');
   return pressable.filter((node: any, index: number) => pressable.findIndex((other: any) => other.props.accessibilityLabel === node.props.accessibilityLabel) === index);
 }
 
@@ -141,5 +141,25 @@ describe('LanguagePicker', () => {
     );
 
     expect(seen[seen.length - 1]).toBe(false);
+  });
+
+  it('names each option after its language, so a UI test can reach one by name', () => {
+    const view = render(<LanguagePicker visible onClose={jest.fn()} />);
+
+    const ids = options(view).map((node: any) => node.props.testID);
+
+    expect(ids).toEqual(SUPPORTED_LANGUAGES.map((language) => `language-option-${language.code}`));
+  });
+
+  it('leaves the scrim and the card out of the reading order, so each language is its own element', () => {
+    const view = render(<LanguagePicker visible onClose={jest.fn()} />);
+
+    const wrappers = view.UNSAFE_root.findAll((node: any) =>
+      (node.props.testID === 'language-picker' || node.props.testID === 'language-picker-card') && typeof node.props.onPress === 'function'
+    );
+
+    expect(wrappers.length).toBeGreaterThan(0);
+    wrappers.forEach((node: any) => expect(node.props.accessible).toBe(false));
+    options(view).forEach((node: any) => expect(node.props.accessibilityRole).toBe('button'));
   });
 });

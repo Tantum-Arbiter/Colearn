@@ -40,6 +40,7 @@ colearn/
 ├── scripts/                  # CMS pipeline, uploads, Firestore schema, i18n      · see AGENTS.md
 ├── .ai/                      # Local multi-model review orchestrator (`ai doctor`) · see .ai/README.md
 ├── security/                 # Penetration / security test suite (pytest)        · see AGENTS.md
+├── QA-AUTOMATION.md          # ⭐ Test layers, Maestro app journeys, Playwright website tests
 ├── wiremock-server/          # Standalone WireMock stubs used by func-tests
 ├── PHASE-4-PROD-READINESS.md # ⭐ Production checklist, infrastructure, DNS, costs
 ├── PHASE-5-SCALING-AND-WHITELABEL.md # White-label roadmap, multi-tenancy, scaling
@@ -72,6 +73,7 @@ colearn/
 | CMS pipeline / story uploads / i18n | [`scripts/AGENTS.md`](scripts/AGENTS.md) (+ [`grow-with-freya/scripts/TRANSLATIONS.md`](grow-with-freya/scripts/TRANSLATIONS.md)) |
 | AI review orchestrator / reviewer accounts | [`.ai/README.md`](.ai/README.md) |
 | Security / pen-test suite | [`security/AGENTS.md`](security/AGENTS.md) |
+| QA automation / E2E journeys | [`QA-AUTOMATION.md`](QA-AUTOMATION.md) |
 | Production readiness / infra | [`PHASE-4-PROD-READINESS.md`](PHASE-4-PROD-READINESS.md) |
 | Scaling / white-label | [`PHASE-5-SCALING-AND-WHITELABEL.md`](PHASE-5-SCALING-AND-WHITELABEL.md) |
 | Math games roadmap | [`PHASE-6-MATH-GAMES.md`](PHASE-6-MATH-GAMES.md) |

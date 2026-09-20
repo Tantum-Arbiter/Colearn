@@ -1,0 +1,15 @@
+appId: com.growwithfreya.app
+tags:
+  - smoke
+name: Home opens with its corner controls
+---
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: "home-language-button"
+    timeout: 90000
+- runFlow: ../../helpers/dismiss-interruptions.yaml
+- assertVisible:
+    id: "home-sound-button"
+- assertVisible:
+    id: "child-bottom-navigation"

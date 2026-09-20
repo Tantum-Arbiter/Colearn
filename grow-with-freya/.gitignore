@@ -320,3 +320,6 @@ logs
 app-example
 
 .env.local
+
+# Maestro
+.maestro/debug/

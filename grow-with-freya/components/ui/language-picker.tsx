@@ -28,8 +28,8 @@ export function LanguagePicker({ visible, onClose, testID = 'language-picker' }:
   if (!visible) return null;
 
   return (
-    <Pressable testID={testID} style={styles.overlay} onPress={onClose}>
-      <Pressable testID={`${testID}-card`} style={styles.card} onPress={(event) => event.stopPropagation()}>
+    <Pressable testID={testID} accessible={false} style={styles.overlay} onPress={onClose}>
+      <Pressable testID={`${testID}-card`} accessible={false} style={styles.card} onPress={(event) => event.stopPropagation()}>
         <Text style={[styles.title, { fontSize: scaledFontSize(18) }]}>{t('account.selectLanguage')}</Text>
         <ScrollView style={styles.list} showsVerticalScrollIndicator scrollIndicatorInsets={{ right: 4 }}>
           {SUPPORTED_LANGUAGES.map((language) => {
@@ -38,7 +38,7 @@ export function LanguagePicker({ visible, onClose, testID = 'language-picker' }:
             return (
               <Pressable
                 key={language.code}
-                testID="language-option"
+                testID={`language-option-${language.code}`}
                 accessibilityRole="button"
                 accessibilityLabel={language.nativeName}
                 accessibilityState={{ selected }}

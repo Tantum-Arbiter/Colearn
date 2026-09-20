@@ -22,7 +22,6 @@
     "test:auth": "jest __tests__/auth",
     "test:unit": "jest --testPathPattern=__tests__/unit",
     "test:integration": "jest --testPathPattern=__tests__/integration",
-    "test:e2e": "jest --testPathPattern=__tests__/e2e",
     "test:performance": "jest --testPathPattern=__tests__/performance",
     "test:all": "npm run test:unit && npm run test:integration && npm run test:performance",
     "type-check": "tsc --noEmit",
@@ -47,7 +46,9 @@
     "update:app-version": "node scripts/update-app-version.js",
     "prepare": "cd .. && husky install || true",
     "pre-commit": "lint-staged",
-    "validate": "npm run type-check && npm run lint && npm run test:ci"
+    "validate": "npm run type-check && npm run lint && npm run test:ci",
+    "e2e": "./.maestro/run.sh",
+    "e2e:smoke": "./.maestro/run.sh --include-tags=smoke"
   },
   "dependencies": {
     "@expo/metro-runtime": "~6.1.2",

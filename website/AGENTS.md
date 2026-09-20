@@ -38,7 +38,13 @@ Communication & code-display rules: see root `../CLAUDE.md` → **Communication 
 
 ## 4. Test-Driven Development
 
-There is **no test suite in this project yet.** Treat this as a gap, not as permission to skip testing.
+**Playwright** covers this site end to end: `website/e2e/`, run with `npm run test:e2e`, and on every
+pull request via `.github/workflows/website-e2e.yml`. It checks that every page answers, names
+itself, carries a description, fits a phone, and that the footer still leads to the pages the stores
+require. See [`../QA-AUTOMATION.md`](../QA-AUTOMATION.md).
+
+There is **no unit test setup yet** (Vitest + React Testing Library remains the lightest fit).
+Treat that as a gap, not as permission to skip testing.
 
 When adding meaningful logic (anything beyond static page content):
 1. **Propose adding a test setup first** — Vitest + React Testing Library is the lightest Next.js fit. Get approval before adding deps.
