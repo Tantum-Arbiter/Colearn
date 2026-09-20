@@ -36,6 +36,9 @@ test('real Pixel renderer shows events, reloads current state, and fits desktop/
     await expect(page.locator('#workers')).toContainText('Waiting for quota');
     await expect(page.locator('#workers')).toContainText('Reviewing');
     await expect(page.locator('.scene')).toHaveCSS('height', /^(6[6-9][0-9]|[7-9][0-9]{2})px$/);
+    await expect(page.locator('#kanban')).toContainText('Scrumboard');
+    await expect(page.locator('#board-columns .kanban-column')).toHaveCount(6);
+    await expect(page.locator('#board-summary')).toContainText('work items');
     const canvas = page.frameLocator('iframe').locator('canvas');
     await expect(canvas).toBeVisible();
     const frame = page.frames()[1];
@@ -50,7 +53,9 @@ test('real Pixel renderer shows events, reloads current state, and fits desktop/
     await expect(page.locator('#attention')).toContainText('Confirm this agent is still running');
     const sceneBox = await page.locator('.office-stage').boundingBox();
     const dashboardBox = await page.locator('#dashboard').boundingBox();
+    const boardBox = await page.locator('#kanban').boundingBox();
     assert.ok(sceneBox.x + sceneBox.width <= dashboardBox.x + 1, 'dashboard must sit beside the office');
+    assert.ok(boardBox.y >= sceneBox.y + sceneBox.height - 2, 'Scrumboard must sit below the office in expanded view');
     await page.locator('#projects button').filter({ hasText: 'Website' }).click();
     await expect(page.locator('#task-list details')).toHaveCount(2);
     await page.locator('#task-search').fill('accessibility');

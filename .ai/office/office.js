@@ -1,4 +1,5 @@
 const states = { started: 'Reviewing', resumed: 'Reviewing · resumed', progress: 'Reviewing', completed: 'Completed', failed: 'Failed', authentication_required: 'Sign-in needs attention', timed_out: 'Timed out', skipped_usage_limit: 'Waiting for quota', deferred: 'Waiting for quota', interrupted: 'Interrupted' };
+import { renderBoard } from './kanban.js';
 const labels = { active: 'Working', waiting: 'Waiting', failed: 'Needs attention', stale: 'Status unconfirmed', completed: 'Finished' };
 const rank = { failed: 0, stale: 1, active: 2, waiting: 3, completed: 4 };
 const $ = selector => document.querySelector(selector);
@@ -183,5 +184,6 @@ async function refresh() {
   } catch { connection(false); }
   renderDashboard();
   setTimeout(refresh, 1500);
+  renderBoard(snapshot.board, snapshot.agents);
 }
 refresh();

@@ -7,6 +7,7 @@ import type { OfficeEvent } from './events.ts';
 import { resolveInside } from './fsx.ts';
 import { discoverLocalAgents } from './discovery.ts';
 import type { ObservedAgent } from './discovery.ts';
+import { WorkBoard } from './kanban.ts';
 
 export const officeWorkers = ['claude-pro', 'codex-1', 'codex-2'] as const;
 const labels: Record<string, string> = { 'claude-pro': 'Claude Pro · QA', 'codex-1': 'Codex 1 · Tests / security', 'codex-2': 'Codex 2 · Final review' };
@@ -59,7 +60,7 @@ export function mergeAgents(review: ObservedAgent[], discovered: ObservedAgent[]
   return [...merged.values()].sort((a, b) => Number(b.status === 'active') - Number(a.status === 'active') || b.updated_at.localeCompare(a.updated_at));
 }
 
-export async function startOffice(aiDir: string, port = 4317, discover: () => ObservedAgent[] = discoverLocalAgents): Promise<{ url: string; close: () => Promise<void> }> {
+export async function startOffice(aiDir: string, port = 4317, discover: () => ObservedAgent[] = discoverLocalAgents, board = new WorkBoard()): Promise<{ url: string; close: () => Promise<void> }> {
   if (!Number.isInteger(port) || port < 0 || port > 65535) throw new Error('Invalid office port');
   const dist = resolveInside(aiDir, 'office-dist');
   let assets: { messages: Message[]; layout: object };
@@ -67,6 +68,7 @@ export async function startOffice(aiDir: string, port = 4317, discover: () => Ob
   catch { throw new Error('Office assets missing. Run npm run office:setup in .ai first.'); }
   let events = readEvents(resolveInside(aiDir, 'state'));
   let agents = mergeAgents(reviewAgents(events, resolveInside(aiDir, 'state')), discover());
+  void board.refresh().catch(() => {});
   let lastDiscovery = Date.now();
   const agentIds = new Map<string, number>();
   let nextId = 1;
@@ -119,10 +121,10 @@ export async function startOffice(aiDir: string, port = 4317, discover: () => Ob
       const path = new URL(req.url ?? '/', origin).pathname;
       if (path === '/api/status') {
         res.setHeader('Content-Type', 'application/json');
-        res.end(JSON.stringify({ connected: !feedError, agents, recent: events.slice(-40) })); return;
+        res.end(JSON.stringify({ connected: !feedError, agents, recent: events.slice(-40), board: board.snapshot(agents) })); return;
       }
       const file = path.startsWith('/pixel/') ? resolveInside(join(dist, 'pixel'), decodeURIComponent(path.slice(7)) || 'index.html') :
-        path === '/' ? join(aiDir, 'office/index.html') : ['/office.js', '/office.css'].includes(path) ? join(aiDir, 'office', path.slice(1)) : null;
+        path === '/' ? join(aiDir, 'office/index.html') : ['/office.js', '/office.css', '/kanban.js'].includes(path) ? join(aiDir, 'office', path.slice(1)) : null;
       if (!file) { res.writeHead(404).end(); return; }
       const types: Record<string, string> = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.woff2': 'font/woff2', '.mp3': 'audio/mpeg', '.svg': 'image/svg+xml' };
       res.setHeader('Content-Type', types[extname(file)] ?? 'application/octet-stream');
@@ -137,6 +139,7 @@ export async function startOffice(aiDir: string, port = 4317, discover: () => Ob
   const address = server.address();
   if (!address || typeof address === 'string') throw new Error('Office did not bind');
   origin = `http://127.0.0.1:${address.port}`;
+  const boardTimer = setInterval(() => { void board.refresh().catch(() => {}); }, 15_000);
   const timer = setInterval(() => {
     try {
       const next = readEvents(resolveInside(aiDir, 'state'));
@@ -168,6 +171,7 @@ export async function startOffice(aiDir: string, port = 4317, discover: () => Ob
   }, 750);
   return { url: origin, close: async () => {
     clearInterval(timer);
+    clearInterval(boardTimer);
     for (const client of ws.clients) client.terminate();
     ws.close();
     await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
