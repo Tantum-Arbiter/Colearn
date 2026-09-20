@@ -135,6 +135,9 @@ the stub reaches the shelf and the search — a flow finds it by name. Its cover
   being reported — the bar vanished from the tree while plainly on screen and tappable by
   coordinate. It is the simulator's accessibility service, not the app: `xcrun simctl shutdown` and
   boot again, and it comes back.
+- **A helper's own `env:` beats the `env:` it is called with.** A default seed in
+  `start-seeded.yaml` silently won over the seed each flow passed, so flows ran against the wrong
+  state and some passed for the wrong reason. The helper now has no default: the caller always says.
 - **Constant ambient animation slows the snapshot.** Turn Reduce Motion on for the simulator
   (`xcrun simctl spawn <udid> defaults write com.apple.Accessibility ReduceMotionEnabled -bool true`).
 
@@ -142,7 +145,18 @@ the stub reaches the shelf and the search — a flow finds it by name. Its cover
 
 1. **Opening the stubbed story**, so a flow covers the reader itself: the assets download on a tap,
    which the stub answers but no flow exercises yet.
-2. **The remaining journeys.** Covered so far: home opens, and the language flag switches languages.
+2. **Two journeys that are written but parked**, both for the same sort of reason:
+   - *A story that only the server has, wearing a lock on the free plan.* The lock only applies to
+     a catalogue entry the app has not downloaded, so it needs the shelf to re-sync. In a flow the
+     app answers `/api/stories/version` and then stops: no delta call, so the new entry never
+     arrives. ⚠️ UNVERIFIED why. Worth understanding beyond testing — if the app can skip a sync
+     it has been told is needed, families would stop receiving new stories.
+   - *The day's screen time running out.* The app only watches the clock while a child is inside a
+     story, music or emotions screen (`startWarningMonitor` runs from `startSession`), so the owl
+     cannot appear on the home page however spent the day is. A flow would have to sit inside the
+     reader, which is landscape, where the tree is unreliable. The seeding link can spend a day
+     (`screenTime=spent`) and that part is tested.
+3. **The remaining journeys.** Covered so far: home opens, and the language flag switches languages.
    Still to write: the core child journey (home → library → read a story → back), the money paths
    (trial, paywall, restore, a locked story), the rest of the parent and safety paths (grown-ups
    gate, Screensafe limits, screen-time alert), and sign-in and sync against the stubs.

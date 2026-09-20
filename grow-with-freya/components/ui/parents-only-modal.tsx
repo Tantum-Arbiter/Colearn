@@ -142,7 +142,7 @@ export function ParentsOnlyModal({
           isPhoneLandscape && styles.contentLandscape,
           { transform: [{ translateY: Animated.add(keyboardOffset, entranceTranslateY) }] },
         ]}>
-          <Pressable style={styles.closeButton} onPress={onClose}>
+          <Pressable testID="parents-only-close" style={styles.closeButton} onPress={onClose}>
             <Text style={styles.closeButtonText}>✕</Text>
           </Pressable>
 

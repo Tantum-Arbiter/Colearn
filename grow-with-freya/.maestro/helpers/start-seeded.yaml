@@ -1,7 +1,8 @@
 appId: com.growwithfreya.app
-name: Start the app in a known state
-env:
-  SEED: "onboarded=1&guest=1&tutorials=done&screenTime=reset&language=en&tier=free"
+name: Start the app in the state the calling flow asked for
+# The caller passes SEED. A default here would silently win over it -- Maestro
+# gives a flow's own env precedence over the env it is called with, so a flow
+# that set its own seed would quietly run with this one instead.
 ---
 # Whatever the last flow left behind: a phone starts upright.
 - setOrientation: PORTRAIT

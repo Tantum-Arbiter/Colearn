@@ -201,7 +201,7 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
             resizeMode="cover"
           />
           <View style={st.bgOverlay} />
-          <Pressable style={[st.closeBtn, { top: insets.top + 10 }]} onPress={handleClose} hitSlop={16}>
+          <Pressable testID="trial-close" style={[st.closeBtn, { top: insets.top + 10 }]} onPress={handleClose} hitSlop={16}>
             <Ionicons name="close" size={20} color="#FFFFFF" />
           </Pressable>
           <ScrollView

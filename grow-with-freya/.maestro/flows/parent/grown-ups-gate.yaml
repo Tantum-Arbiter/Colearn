@@ -1,0 +1,34 @@
+appId: com.growwithfreya.app
+tags:
+  - smoke
+name: The grown-ups door asks a question a child cannot answer
+---
+- runFlow:
+    file: ../../helpers/start-seeded.yaml
+    env:
+      SEED: "onboarded=1&guest=1&tutorials=done&screenTime=reset&language=en&tier=free"
+- tapOn:
+    id: "navigation-item-profile"
+- extendedWaitUntil:
+    visible:
+      id: "catalogue-header-row"
+    timeout: 30000
+- tapOn:
+    id: "circle-action-settings"
+- extendedWaitUntil:
+    visible:
+      id: "parents-only-modal"
+    timeout: 20000
+# The door stays shut: settings are behind the question, not beside it.
+- assertNotVisible:
+    id: "account-heading"
+- tapOn:
+    id: "parents-only-close"
+- extendedWaitUntil:
+    notVisible:
+      id: "parents-only-modal"
+    timeout: 20000
+- assertNotVisible:
+    id: "account-heading"
+- assertVisible:
+    id: "catalogue-header-row"

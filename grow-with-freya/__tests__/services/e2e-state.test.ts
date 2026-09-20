@@ -28,6 +28,7 @@ jest.mock('@/store/app-store', () => ({
 }));
 
 const mockResetTodayUsage = jest.fn().mockResolvedValue(undefined);
+const mockResetWarningDate = jest.fn();
 const mockStoreTokens = jest.fn().mockResolvedValue(undefined);
 const mockStoreUserData = jest.fn().mockResolvedValue(undefined);
 const mockClearAuthData = jest.fn().mockResolvedValue(undefined);
@@ -41,7 +42,7 @@ jest.mock('@/services/secure-storage', () => ({
 
 jest.mock('@/services/screen-time-service', () => ({
   __esModule: true,
-  default: { getInstance: () => ({ resetTodayUsage: mockResetTodayUsage }) },
+  default: { getInstance: () => ({ resetTodayUsage: mockResetTodayUsage, getDailyLimit: () => 1800, resetWarningDate: mockResetWarningDate }) },
 }));
 
 const mockSetStoredLanguage = jest.fn().mockResolvedValue(undefined);
@@ -174,6 +175,22 @@ describe('applyE2eState', () => {
 
     const [, value] = (AsyncStorage.setItem as jest.Mock).mock.calls.find(([name]) => name === '@tutorial_state');
     expect(JSON.parse(value).completedGuides).toEqual([]);
+  });
+
+  it('spends the whole day\'s allowance, for a flow about the limit being reached', async () => {
+    await applyE2eState({ screenTime: 'spent' }, true);
+
+    const [, value] = (AsyncStorage.setItem as jest.Mock).mock.calls.find(([name]) => name === 'screen_time_sessions');
+    const sessions = JSON.parse(value);
+    const today = new Date().toLocaleDateString('en-CA');
+
+    expect(sessions).toHaveLength(1);
+    expect(sessions[0].date).toBe(today);
+    expect(sessions[0].duration).toBeGreaterThan(1800);
+    // A filter prunes sessions that do not sit inside the day; noon always does.
+    expect(new Date(sessions[0].startTime).getHours()).toBe(12);
+    // The app warns once a day and remembers it while it runs; a seeded day has to clear that.
+    expect(mockResetWarningDate).toHaveBeenCalledTimes(1);
   });
 
   it('clears the time already spent today', async () => {

@@ -7,6 +7,7 @@ import { useAppStore, type SubscriptionTier } from '@/store/app-store';
 
 const TIERS: SubscriptionTier[] = ['free', 'basic', 'premium'];
 const SEED_AVATAR = { type: 'girl', id: 'bear' } as const;
+const SEED_CHILD_AGE_MONTHS = 36;
 const SEED_SESSION = {
   user: { id: 'e2e-parent', email: 'e2e@earlyroots.co.uk', name: 'E2E Parent', provider: 'google' },
   refreshToken: 'gateway-refresh-token-e2e',
@@ -32,7 +33,7 @@ export interface E2eState {
   guest?: boolean;
   signedIn?: boolean;
   tutorials?: 'done' | 'fresh';
-  screenTime?: 'reset';
+  screenTime?: 'reset' | 'spent';
   progress?: 'clear';
   language?: SupportedLanguage;
   tier?: SubscriptionTier;
@@ -76,7 +77,8 @@ export function parseE2eLink(link: string): E2eState | null {
   const tutorials = params.get('tutorials');
   if (tutorials === 'done' || tutorials === 'fresh') state.tutorials = tutorials;
 
-  if (params.get('screenTime') === 'reset') state.screenTime = 'reset';
+  const screenTime = params.get('screenTime');
+  if (screenTime === 'reset' || screenTime === 'spent') state.screenTime = screenTime;
 
   if (params.get('progress') === 'clear') state.progress = 'clear';
 
@@ -135,6 +137,23 @@ export async function applyE2eState(state: E2eState, allowed: boolean): Promise<
 
   if (state.screenTime === 'reset') {
     await ScreenTimeService.getInstance().resetTodayUsage();
+  }
+
+  if (state.screenTime === 'spent') {
+    const limit = ScreenTimeService.getInstance().getDailyLimit(store.childAgeInMonths ?? SEED_CHILD_AGE_MONTHS);
+    const noon = new Date();
+    noon.setHours(12, 0, 0, 0);
+    const spent = limit + 60;
+    await AsyncStorage.setItem('screen_time_sessions', JSON.stringify([{
+      id: 'e2e-spent-day',
+      startTime: noon.getTime(),
+      endTime: noon.getTime() + spent * 1000,
+      duration: spent,
+      activity: 'story',
+      date: noon.toLocaleDateString('en-CA'),
+    }]));
+    // The app warns once a day and remembers it for as long as it is running.
+    ScreenTimeService.getInstance().resetWarningDate();
   }
 
   if (state.progress === 'clear') {

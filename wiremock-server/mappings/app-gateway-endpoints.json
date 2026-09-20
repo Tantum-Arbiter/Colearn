@@ -86,13 +86,14 @@
         },
         "jsonBody": {
           "id": "current",
-          "version": 1,
+          "version": 2,
           "assetVersion": 1,
           "lastUpdated": 1767225600000,
           "storyChecksums": {
-            "e2e-bedtime-story": "e2e-checksum-1"
+            "e2e-bedtime-story": "e2e-checksum-1",
+            "e2e-premium-story": "e2e-checksum-2"
           },
-          "totalStories": 1
+          "totalStories": 2
         }
       }
     },
@@ -108,7 +109,7 @@
           "Content-Type": "application/json"
         },
         "jsonBody": {
-          "serverVersion": 1,
+          "serverVersion": 2,
           "assetVersion": 1,
           "stories": [
             {
@@ -164,9 +165,10 @@
           ],
           "deletedStoryIds": [],
           "storyChecksums": {
-            "e2e-bedtime-story": "e2e-checksum-1"
+            "e2e-bedtime-story": "e2e-checksum-1",
+            "e2e-premium-story": "e2e-checksum-2"
           },
-          "totalStories": 1,
+          "totalStories": 2,
           "updatedCount": 1,
           "lastUpdated": 1767225600000,
           "catalog": [
@@ -191,6 +193,28 @@
               "ageRange": "3-5",
               "duration": 4,
               "isPremium": false
+            },
+            {
+              "storyId": "e2e-premium-story",
+              "title": "The Locked Lantern",
+              "localizedTitle": {
+                "en": "The Locked Lantern"
+              },
+              "description": "A story only a paying family can open, so a test can see the lock.",
+              "localizedDescription": {
+                "en": "A story only a paying family can open, so a test can see the lock."
+              },
+              "category": "bedtime",
+              "tags": [
+                "bedtime",
+                "fantasy"
+              ],
+              "thumbnailUrl": "http://localhost:8080/__files/e2e/cover.webp",
+              "isFree": false,
+              "isReferralReward": false,
+              "ageRange": "3-5",
+              "duration": 4,
+              "isPremium": true
             }
           ]
         }
