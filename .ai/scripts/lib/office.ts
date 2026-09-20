@@ -122,7 +122,7 @@ export async function startOffice(aiDir: string, port = 4317, discover: () => Ob
         res.end(JSON.stringify({ connected: !feedError, agents, recent: events.slice(-40) })); return;
       }
       const file = path.startsWith('/pixel/') ? resolveInside(join(dist, 'pixel'), decodeURIComponent(path.slice(7)) || 'index.html') :
-        path === '/' ? join(aiDir, 'office/index.html') : path === '/office.js' ? join(aiDir, 'office/office.js') : null;
+        path === '/' ? join(aiDir, 'office/index.html') : ['/office.js', '/office.css'].includes(path) ? join(aiDir, 'office', path.slice(1)) : null;
       if (!file) { res.writeHead(404).end(); return; }
       const types: Record<string, string> = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.woff2': 'font/woff2', '.mp3': 'audio/mpeg', '.svg': 'image/svg+xml' };
       res.setHeader('Content-Type', types[extname(file)] ?? 'application/octet-stream');
