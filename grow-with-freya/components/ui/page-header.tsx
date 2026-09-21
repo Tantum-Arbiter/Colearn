@@ -97,7 +97,7 @@ export function PageHeader({
       )}
 
       {/* Header with back button and music control - absolute positioned */}
-      <View style={[styles.headerContainer, { top: insets.top + 20 }]}>
+      <View testID="page-header-row" pointerEvents="box-none" style={[styles.headerContainer, { top: insets.top + 20 }]}>
         <Animated.View style={backButtonAnimatedStyle}>
           <Pressable
             style={[
@@ -143,12 +143,14 @@ export function PageHeader({
       </View>
 
       {/* Title - aligned with header row */}
-      <View style={[styles.titleContainer, { top: titleContainerTop, minHeight: musicBackgroundSize, paddingBottom: 12 }]}>
-        <Text style={[styles.title, { fontSize: titleFontSize }]}>{title}</Text>
-        {subtitle && (
-          <Text style={[styles.subtitle, { fontSize: subtitleFontSize, marginTop: subtitleMarginTop }]}>{subtitle}</Text>
-        )}
-      </View>
+      {title || subtitle ? (
+        <View testID="page-header-title" style={[styles.titleContainer, { top: titleContainerTop, minHeight: musicBackgroundSize, paddingBottom: 12 }]}>
+          {title ? <Text style={[styles.title, { fontSize: titleFontSize }]}>{title}</Text> : null}
+          {subtitle && (
+            <Text style={[styles.subtitle, { fontSize: subtitleFontSize, marginTop: subtitleMarginTop }]}>{subtitle}</Text>
+          )}
+        </View>
+      ) : null}
     </>
   );
 }

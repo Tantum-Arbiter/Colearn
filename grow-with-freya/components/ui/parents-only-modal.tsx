@@ -134,7 +134,7 @@ export function ParentsOnlyModal({
   }
 
   return (
-    <Animated.View style={[styles.absoluteContainer, fullScreenStyle, { opacity: entranceOpacity }]}>
+    <Animated.View testID="parents-only-modal" style={[styles.absoluteContainer, fullScreenStyle, { opacity: entranceOpacity }]}>
       <Pressable style={styles.backdrop} onPress={onClose} />
       <View style={[styles.modalOverlay, fullScreenStyle]} pointerEvents="box-none">
         <Animated.View style={[
@@ -142,7 +142,7 @@ export function ParentsOnlyModal({
           isPhoneLandscape && styles.contentLandscape,
           { transform: [{ translateY: Animated.add(keyboardOffset, entranceTranslateY) }] },
         ]}>
-          <Pressable style={styles.closeButton} onPress={onClose}>
+          <Pressable testID="parents-only-close" style={styles.closeButton} onPress={onClose}>
             <Text style={styles.closeButtonText}>✕</Text>
           </Pressable>
 

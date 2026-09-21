@@ -6,6 +6,27 @@ import { useAccessibility } from '@/hooks/use-accessibility';
 import { AudioControlModal } from './audio-control-modal';
 import * as Haptics from 'expo-haptics';
 
+export const MENU_CORNER_BUTTON = {
+  diameter: 48,
+  iconSize: 32,
+  fill: 'rgba(255, 255, 255, 0.2)',
+  edge: 'rgba(255, 255, 255, 0.3)',
+  iconOutline: 'rgba(0, 0, 0, 0.5)',
+} as const;
+
+export const cornerButtonStyles = StyleSheet.create({
+  disc: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+});
+
 interface MusicControlProps {
   size?: number;
   color?: string;
@@ -23,7 +44,7 @@ interface MusicControlProps {
 }
 
 export const MusicControl: React.FC<MusicControlProps> = ({
-  size = 32,
+  size = MENU_CORNER_BUTTON.iconSize,
   color,
   style,
   showBackground = true,
@@ -59,22 +80,22 @@ export const MusicControl: React.FC<MusicControlProps> = ({
   }, [onAudioModalChange]);
 
   const scaledIconSize = scaledButtonSize(size);
-  const backgroundSize = scaledButtonSize(48);
+  const backgroundSize = scaledButtonSize(MENU_CORNER_BUTTON.diameter);
 
   // Determine colors based on variant
   const isStoryVariant = variant === 'story';
   const iconColor = color ?? (isStoryVariant ? '#333333' : '#FFFFFF');
-  const strokeColor = isStoryVariant ? 'rgba(0, 0, 0, 0.3)' : 'rgba(0, 0, 0, 0.5)';
+  const strokeColor = isStoryVariant ? 'rgba(0, 0, 0, 0.3)' : MENU_CORNER_BUTTON.iconOutline;
 
   const getBackgroundColor = () => {
     if (!showBackground) return 'transparent';
     // Story pages: white with 90% opacity; Menu: transparent white to match back button
-    return isStoryVariant ? 'rgba(255, 255, 255, 0.9)' : 'rgba(255, 255, 255, 0.2)';
+    return isStoryVariant ? 'rgba(255, 255, 255, 0.9)' : MENU_CORNER_BUTTON.fill;
   };
 
   const getBorderColor = () => {
     // Story pages: subtle dark border; Menu: subtle white border
-    return isStoryVariant ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.3)';
+    return isStoryVariant ? 'rgba(0, 0, 0, 0.1)' : MENU_CORNER_BUTTON.edge;
   };
 
   return (
@@ -91,7 +112,7 @@ export const MusicControl: React.FC<MusicControlProps> = ({
           testID="music-control-button"
         >
           <View style={[
-            styles.iconBackground,
+            cornerButtonStyles.disc,
             {
               backgroundColor: getBackgroundColor(),
               width: backgroundSize,
@@ -140,15 +161,5 @@ const styles = StyleSheet.create({
   iconContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  iconBackground: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
   },
 });

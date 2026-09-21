@@ -1,13 +1,10 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { View, StyleSheet, Pressable, Image, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   useSharedValue,
-  useAnimatedStyle,
-  withRepeat,
-  withTiming,
-  Easing
+  useAnimatedStyle
 } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -18,11 +15,13 @@ import { EmotionTheme } from '@/types/emotion';
 import { getThemeById, EMOTION_THEMES } from '@/data/emotion-themes';
 import { VISUAL_EFFECTS } from '@/components/main-menu/constants';
 import { generateStarPositions } from '@/components/main-menu/utils';
-import { BearTopImage } from '@/components/main-menu/animated-components';
-import { EmotionCardsTipsOverlay } from '@/components/tutorial';
+import { EarthHorizon } from '@/components/ui/earth-horizon';
+import { spinStars, useAmbientLoop } from '@/hooks/use-ambient-animation';
+import { OwlGuide } from '@/components/owl-guide';
 
-import { mainMenuStyles } from '@/components/main-menu/styles';
 import { useAccessibility } from '@/hooks/use-accessibility';
+
+const SPIN_STARS = spinStars(20000);
 
 interface EmotionsUnifiedScreenProps {
   onStartGame: (theme: EmotionTheme) => void;
@@ -30,9 +29,10 @@ interface EmotionsUnifiedScreenProps {
   onBack: () => void;
   /** When true, skip rendering gradient/bear/stars (parent owns them) */
   skipBackground?: boolean;
+  isActive?: boolean;
 }
 
-export function EmotionsUnifiedScreen({ onStartGame, onNavigateToParents, onBack, skipBackground }: EmotionsUnifiedScreenProps) {
+export function EmotionsUnifiedScreen({ onStartGame, onNavigateToParents, onBack, skipBackground, isActive = true }: EmotionsUnifiedScreenProps) {
   const [selectedTheme, setSelectedTheme] = useState<EmotionTheme>('emoji');
   const [selectedDevTheme, setSelectedDevTheme] = useState<EmotionTheme>('emoji');
   const insets = useSafeAreaInsets();
@@ -45,21 +45,7 @@ export function EmotionsUnifiedScreen({ onStartGame, onNavigateToParents, onBack
   // Star rotation animation (matching stories pattern)
   const starRotation = useSharedValue(0);
 
-  // PERFORMANCE: Defer star animation until after page transition to prevent jitter
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      starRotation.value = withRepeat(
-        withTiming(360, {
-          duration: 20000,
-          easing: Easing.linear,
-        }),
-        -1,
-        false
-      );
-    }, 600); // Wait for page transition (500ms + 100ms buffer)
-    return () => clearTimeout(timeoutId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  useAmbientLoop(isActive, starRotation, SPIN_STARS, 0);
 
   const useStarAnimatedStyle = () => {
     return useAnimatedStyle(() => ({
@@ -151,10 +137,7 @@ export function EmotionsUnifiedScreen({ onStartGame, onNavigateToParents, onBack
     <Container {...containerProps as any}>
       {!skipBackground && (
         <>
-          {/* Bear top background image */}
-          <View style={mainMenuStyles.moonContainer} pointerEvents="none">
-            <BearTopImage />
-          </View>
+          <EarthHorizon edge="top" />
 
           {/* Animated stars background (matching stories pattern) */}
           {starPositions.map((star) => (
@@ -256,8 +239,8 @@ export function EmotionsUnifiedScreen({ onStartGame, onNavigateToParents, onBack
         </View>
       </ScrollView>
 
-      {/* Tips overlay for first-time users */}
-      <EmotionCardsTipsOverlay />
+      {/* The owl's tips for first-time users */}
+      <OwlGuide id="emotion_cards_tips" />
     </Container>
   );
 }

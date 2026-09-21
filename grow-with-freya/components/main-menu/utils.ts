@@ -15,18 +15,20 @@ const seededRandom = (seed: number) => {
   return x - Math.floor(x);
 };
 
-export const generateStarPositions = (count: number = VISUAL_EFFECTS.STAR_COUNT) => {
+export const generateStarPositions = (count: number = VISUAL_EFFECTS.STAR_COUNT, seed?: number) => {
   const { width: screenWidth, height: screenHeight } = getScreenDimensions();
   const stars = [];
   const starAreaHeight = screenHeight * VISUAL_EFFECTS.STAR_AREA_HEIGHT_RATIO;
 
-  // Use deterministic positions in test environment
+  // Use deterministic positions in test environment or when a fixed seed is supplied
   const isTest = process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID !== undefined;
+  const deterministic = isTest || seed !== undefined;
+  const seedBase = seed ?? 0;
 
   for (let i = 0; i < count; i++) {
-    const randomLeft = isTest ? seededRandom(i * 1.1) : Math.random();
-    const randomTop = isTest ? seededRandom(i * 2.3) : Math.random();
-    const randomOpacity = isTest ? seededRandom(i * 3.7) : Math.random();
+    const randomLeft = deterministic ? seededRandom(seedBase + i * 1.1) : Math.random();
+    const randomTop = deterministic ? seededRandom(seedBase + i * 2.3) : Math.random();
+    const randomOpacity = deterministic ? seededRandom(seedBase + i * 3.7) : Math.random();
 
     stars.push({
       id: i,

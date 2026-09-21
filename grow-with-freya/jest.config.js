@@ -3,43 +3,14 @@ module.exports = {
   setupFiles: ['<rootDir>/jest.setup.js'],
   setupFilesAfterEnv: ['<rootDir>/jest.setup-after-env.js'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
+  // Only real suites: helper modules living under __tests__ (test-wrapper,
+  // animation-test-utils) are not test files and used to need dummy tests to
+  // satisfy Jest.
   testMatch: [
-    '**/__tests__/**/*.(ts|tsx|js)',
+    '**/__tests__/**/*.(test|spec).(ts|tsx|js)',
     '**/*.(test|spec).(ts|tsx|js)',
   ],
-  // Temporarily skip problematic tests for CI/CD pipeline
-  testPathIgnorePatterns: [
-    '/node_modules/',
-    '/__tests__/components/music/music-screen.test.tsx',
-    '/__tests__/components/music/music-selection-screen.test.tsx',
-    '/__tests__/components/music/music-player-screen.test.tsx',
-    '/__tests__/components/music/sleep-selection-screen.test.tsx',
-    '/__tests__/components/music/tantrum-selection-screen.test.tsx',
-    '/__tests__/components/music/tantrum-info-screen.test.tsx',
-    '/__tests__/components/music/music-main-menu.test.tsx',
-    // '/__tests__/services/music-player.test.ts', // Re-enabled after migrating to expo-audio
-    '/__tests__/hooks/use-music-player.test.tsx',
-    '/__tests__/components/emotions/emotions-unified-screen.test.tsx',
-    '/__tests__/components/star-background-consistency.test.tsx',
-    // Temporarily skip ALL timing-sensitive and problematic tests in CI
-    ...(process.env.CI === 'true' || process.env.GITHUB_ACTIONS === 'true' || process.env.NODE_ENV === 'test' ? [
-      '/__tests__/utils/animation-test-utils.ts',
-      '/__tests__/performance/',
-      '/__tests__/services/sleep-sequence-player.test.ts',
-      '/__tests__/components/emotions/emotions-game-screen.test.tsx',
-      '/__tests__/components/stories/story-book-reader.test.tsx',
-      '/__tests__/visual/snapshot-regression.test.tsx',
-      '/__tests__/services/background-music.test.ts',
-      '/__tests__/hooks/use-background-music.test.tsx',
-      '/__tests__/components/main-menu.test.tsx',
-      '/__tests__/components/stories/',
-      '/__tests__/components/emotions/',
-      '/__tests__/components/auth/loading-overlay.test.tsx', // Skip due to lottie-react-native module issues
-      '/__tests__/components/story-selection-stars.test.tsx', // Skip due to Reanimated Easing mock issues
-    ] : []),
-    '/__tests__/components/toddler-friendly-features.test.tsx',
-    '/__tests__/components/gradient-consistency.test.tsx',
-  ],
+  testPathIgnorePatterns: ['/node_modules/'],
   collectCoverageFrom: [
     'components/**/*.{ts,tsx}',
     'store/**/*.{ts,tsx}',
@@ -76,6 +47,7 @@ module.exports = {
     '^expo-file-system$': '<rootDir>/__mocks__/expo-file-system.js',
     '^expo-file-system/legacy$': '<rootDir>/__mocks__/expo-file-system.js',
     '^expo-image$': '<rootDir>/__mocks__/expo-image.js',
+    '^expo-system-ui$': '<rootDir>/__mocks__/expo-system-ui.js',
     '^@react-native-community/slider$': '<rootDir>/__mocks__/@react-native-community/slider.js',
     '^@/services/device-info-service$': '<rootDir>/__mocks__/device-info-service.js',
   },

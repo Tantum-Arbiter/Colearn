@@ -1,0 +1,32 @@
+appId: com.growwithfreya.app
+tags:
+  - smoke
+name: A family on the free plan can reach the offer and leave it again
+---
+- runFlow:
+    file: ../../helpers/start-seeded.yaml
+    env:
+      SEED: "onboarded=1&guest=1&tutorials=done&screenTime=reset&language=en&tier=free"
+- assertVisible:
+    id: "unlock-plan-button"
+- tapOn:
+    id: "unlock-plan-button"
+- extendedWaitUntil:
+    visible:
+      id: "trial-scroller"
+    timeout: 30000
+- assertVisible:
+    id: "trial-premium-card"
+- assertVisible:
+    id: "trial-timeline"
+# The offer is meant to be taken in at a glance: nothing of it may sit below a fold.
+- assertNotVisible:
+    id: "trial-scroller-scrollbar"
+- tapOn:
+    id: "trial-close"
+- extendedWaitUntil:
+    visible:
+      id: "home-language-button"
+    timeout: 30000
+- assertNotVisible:
+    id: "trial-scroller"

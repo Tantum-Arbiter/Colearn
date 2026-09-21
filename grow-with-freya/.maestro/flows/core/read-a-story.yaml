@@ -1,0 +1,80 @@
+appId: com.growwithfreya.app
+tags:
+  - journey
+name: A child opens a story from the shelf and comes back out
+---
+- runFlow:
+    file: ../../helpers/start-seeded.yaml
+    env:
+      SEED: "onboarded=1&guest=1&tutorials=done&screenTime=reset&progress=clear&language=en&tier=free"
+- tapOn:
+    id: "navigation-item-home"
+- extendedWaitUntil:
+    visible:
+      id: "catalogue-header-row"
+    timeout: 30000
+- scrollUntilVisible:
+    element:
+      text: "Snuggle Little Wombat"
+    direction: DOWN
+    timeout: 30000
+- tapOn: "Snuggle Little Wombat"
+- extendedWaitUntil:
+    visible:
+      id: "story-card-sheet"
+    timeout: 20000
+- tapOn:
+    id: "story-card-mode-read"
+# A phone reads sideways and asks the family to turn it; a tablet reads
+# whichever way it is being held, so only the phone is turned here.
+- extendedWaitUntil:
+    visible:
+      id: "rotate-prompt"
+    timeout: 15000
+    optional: true
+- runFlow:
+    when:
+      visible:
+        id: "rotate-prompt"
+    commands:
+      - setOrientation: LANDSCAPE_LEFT
+- extendedWaitUntil:
+    visible:
+      id: "story-exit-button"
+    timeout: 60000
+# A story with music pages asks which instrument to play before it opens.
+- runFlow:
+    when:
+      visible:
+        id: "instrument-picker-overlay"
+    commands:
+      - waitForAnimationToEnd:
+          timeout: 5000
+      - tapOn:
+          id: "confirm-instrument-selection-button"
+      - extendedWaitUntil:
+          notVisible:
+            id: "instrument-picker-overlay"
+          timeout: 20000
+- tapOn:
+    id: "cover-tap-overlay"
+    optional: true
+# The page itself is not asserted here: a phone reads sideways, and the iOS
+# accessibility tree stops keeping up in landscape -- the reader is plainly on
+# screen while the tree still describes the shelf. What the pages say is held
+# by the Jest tests for the reader; this flow holds the way in and the way out.
+- tapOn:
+    id: "right-touch-area"
+- tapOn:
+    id: "story-exit-button"
+- setOrientation: PORTRAIT
+- runFlow: ../../helpers/dismiss-interruptions.yaml
+# A phone comes back to the shelf it opened the book from; a tablet comes back
+# to the home page. What matters either way: the book is closed and the child
+# is back in the app.
+- extendedWaitUntil:
+    visible:
+      id: "navigation-item-home"
+    timeout: 90000
+- assertNotVisible:
+    id: "story-exit-button"

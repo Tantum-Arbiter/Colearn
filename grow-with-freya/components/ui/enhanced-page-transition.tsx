@@ -8,7 +8,12 @@ import Animated, {
   Easing,
   SharedValue,
 } from 'react-native-reanimated';
+
 import { getScreenDimensions } from '@/components/main-menu/constants';
+import { crossesView, pageOffset } from '@/constants/page-slide';
+
+const ALWAYS_MOUNTED = 'main';
+const NO_PREWARM: readonly string[] = [];
 
 interface EnhancedPageTransitionProps {
   currentPage: string;
@@ -16,6 +21,10 @@ interface EnhancedPageTransitionProps {
   duration?: number;
   /** When false, page positions are set instantly (no slide animation). Default: true */
   animate?: boolean;
+  /** Pages to mount, off screen, once the current page has been still for a moment, so sliding
+   *  to one of them does not pay for mounting it mid-slide. They stay mounted thereafter. */
+  prewarm?: readonly string[];
+  prewarmAfterMs?: number;
 }
 
 interface AnimatedPageProps {
@@ -23,13 +32,11 @@ interface AnimatedPageProps {
   pageComponent: React.ReactNode;
   isActive: boolean;
   animationValue: SharedValue<number>;
-  /** When true, block all touch input (transition in progress) */
-  touchDisabled: boolean;
 }
 
 // Memoized page component to prevent unnecessary re-renders
 const AnimatedPage: React.FC<AnimatedPageProps> = memo(function AnimatedPage({
-  pageKey, pageComponent, isActive, animationValue, touchDisabled,
+  pageKey, pageComponent, isActive, animationValue,
 }) {
   // Normal slide animation
   const slideStyle = useAnimatedStyle(() => ({
@@ -44,7 +51,7 @@ const AnimatedPage: React.FC<AnimatedPageProps> = memo(function AnimatedPage({
         slideStyle,
         { zIndex: isActive ? 1 : 0 },
       ]}
-      pointerEvents={isActive && !touchDisabled ? 'auto' : 'none'}
+      pointerEvents={isActive ? 'auto' : 'none'}
     >
       {pageComponent || (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'red' }}>
@@ -56,15 +63,16 @@ const AnimatedPage: React.FC<AnimatedPageProps> = memo(function AnimatedPage({
 });
 
 /**
- * EnhancedPageTransition provides vertical scroll transitions between any pages
- * - Main menu stays at top (translateY: 0 when active, -screenHeight when inactive)
- * - All other pages scroll up from bottom (translateY: screenHeight when inactive, 0 when active)
+ * EnhancedPageTransition provides vertical scroll transitions between any pages.
+ * Where each page rests is `pageOffset` (constants/page-slide.ts).
  */
 export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
   currentPage,
   pages,
   duration = 600,
   animate = true,
+  prewarm = NO_PREWARM,
+  prewarmAfterMs = 1200,
 }) => {
   // Get initial screen height and track changes
   const [screenHeight, setScreenHeight] = React.useState(() => getScreenDimensions().height);
@@ -73,6 +81,27 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
   const [isTransitioning, setIsTransitioning] = useState(false);
   const transitionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevPageRef = useRef(currentPage);
+  const [slide, setSlide] = useState<{ from: string | null; to: string; recent: string | null }>({
+    from: null,
+    to: currentPage,
+    recent: null,
+  });
+  if (slide.to !== currentPage) {
+    setSlide({ from: slide.to, to: currentPage, recent: slide.recent === currentPage ? slide.from : slide.recent });
+  }
+  const [warmed, setWarmed] = useState<readonly string[]>(NO_PREWARM);
+  const prewarmKey = prewarm.join('|');
+  const allWarm = prewarm.every((key) => warmed.includes(key));
+
+  useEffect(() => {
+    if (prewarmKey === '' || allWarm) return undefined;
+    const timer = setTimeout(() => setWarmed(prewarmKey.split('|')), prewarmAfterMs);
+    return () => clearTimeout(timer);
+  }, [currentPage, prewarmKey, prewarmAfterMs, allWarm]);
+
+  const mounted = new Set(
+    [ALWAYS_MOUNTED, currentPage, slide.from, slide.recent, ...warmed].filter((key): key is string => key !== null)
+  );
 
   // Update screen height when dimensions change (orientation changes)
   useEffect(() => {
@@ -87,26 +116,21 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
     return () => subscription?.remove();
   }, []);
 
-  // Create animation values for specific pages we know about
-  const mainTranslateY = useSharedValue(
-    currentPage === 'main' ? 0 :
-    currentPage === 'account' ? screenHeight :
-    -screenHeight
-  );
-  const storiesTranslateY = useSharedValue(currentPage === 'stories' ? 0 : screenHeight);
-  const sensoryTranslateY = useSharedValue(currentPage === 'sensory' ? 0 : screenHeight);
-  const screenTimeTranslateY = useSharedValue(currentPage === 'screen_time' ? 0 : screenHeight);
-  const practiseTranslateY = useSharedValue(currentPage === 'practise' ? 0 : screenHeight);
-  const freeplayTranslateY = useSharedValue(currentPage === 'freeplay' ? 0 : screenHeight);
-  const spellingTranslateY = useSharedValue(currentPage === 'spelling' ? 0 : screenHeight);
-  const numbersTranslateY = useSharedValue(currentPage === 'numbers' ? 0 : screenHeight);
-  const feelingsTranslateY = useSharedValue(currentPage === 'feelings' ? 0 : screenHeight);
-  const spellingGameTranslateY = useSharedValue(currentPage === 'spelling-game' ? 0 : screenHeight);
-  const accountTranslateY = useSharedValue(currentPage === 'account' ? 0 : -screenHeight);
+  const restingAt = (pageKey: string) => pageOffset(pageKey, currentPage, screenHeight);
+  const mainTranslateY = useSharedValue(restingAt('main'));
+  const storiesTranslateY = useSharedValue(restingAt('stories'));
+  const sensoryTranslateY = useSharedValue(restingAt('sensory'));
+  const screenTimeTranslateY = useSharedValue(restingAt('screen_time'));
+  const practiseTranslateY = useSharedValue(restingAt('practise'));
+  const freeplayTranslateY = useSharedValue(restingAt('freeplay'));
+  const spellingTranslateY = useSharedValue(restingAt('spelling'));
+  const numbersTranslateY = useSharedValue(restingAt('numbers'));
+  const feelingsTranslateY = useSharedValue(restingAt('feelings'));
+  const spellingGameTranslateY = useSharedValue(restingAt('spelling-game'));
+  const accountTranslateY = useSharedValue(restingAt('account'));
 
   // Map page keys to their animation values
-  // Page animations mapping - force cache refresh
-  const pageAnimations: Record<string, any> = {
+  const pageAnimations: Record<string, SharedValue<number>> = {
     main: mainTranslateY,
     stories: storiesTranslateY,
     sensory: sensoryTranslateY,
@@ -123,42 +147,9 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
   // Update animation values when screen height changes (orientation change)
   // Set values immediately without animation to prevent visual glitches
   useEffect(() => {
-    // Update positions for inactive pages when screen height changes
-    // Use direct assignment (no withTiming) to avoid animation during orientation change
-    if (currentPage !== 'main') {
-      mainTranslateY.value = currentPage === 'account' ? screenHeight : -screenHeight;
-    }
-    if (currentPage !== 'stories') {
-      storiesTranslateY.value = screenHeight;
-    }
-    if (currentPage !== 'sensory') {
-      sensoryTranslateY.value = screenHeight;
-    }
-    if (currentPage !== 'screen_time') {
-      screenTimeTranslateY.value = screenHeight;
-    }
-    if (currentPage !== 'practise') {
-      practiseTranslateY.value = screenHeight;
-    }
-    if (currentPage !== 'freeplay') {
-      freeplayTranslateY.value = screenHeight;
-    }
-    if (currentPage !== 'spelling') {
-      spellingTranslateY.value = currentPage === 'spelling-game' ? -screenHeight : screenHeight;
-    }
-    if (currentPage !== 'numbers') {
-      numbersTranslateY.value = currentPage === 'spelling-game' ? -screenHeight : screenHeight;
-    }
-    if (currentPage !== 'feelings') {
-      feelingsTranslateY.value = screenHeight;
-    }
-    if (currentPage !== 'spelling-game') {
-      spellingGameTranslateY.value = screenHeight;
-    }
-    if (currentPage !== 'account') {
-      // Account page slides down from top
-      accountTranslateY.value = -screenHeight;
-    }
+    Object.entries(pageAnimations).forEach(([pageKey, value]) => {
+      if (pageKey !== currentPage) value.value = pageOffset(pageKey, currentPage, screenHeight);
+    });
   }, [screenHeight]);
 
   useEffect(() => {
@@ -170,52 +161,31 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
 
     // Helper: set value with or without animation
     const set = (sv: SharedValue<number>, target: number) => {
-      sv.value = animate ? withTiming(target, animationConfig) : target;
+      sv.value = animate && !crossesView(sv.value, target) ? withTiming(target, animationConfig) : target;
     };
 
     // Block touch input while the slide animation is in progress
-    if (animate && prevPageRef.current !== currentPage) {
+    if (prevPageRef.current !== currentPage) {
+      const leaving = prevPageRef.current;
       if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
-      setIsTransitioning(true);
+      if (animate) {
+        setIsTransitioning(true);
+      }
       transitionTimerRef.current = setTimeout(() => {
         setIsTransitioning(false);
         transitionTimerRef.current = null;
-      }, duration);
+        setSlide((current) => ({
+          ...current,
+          from: current.from === leaving ? null : current.from,
+          recent: leaving === ALWAYS_MOUNTED ? current.recent : leaving,
+        }));
+      }, animate ? duration : 0);
     }
     prevPageRef.current = currentPage;
 
-    // Animate main menu
-    if (currentPage === 'account') {
-      // Account page: main menu slides down (positive translateY)
-      set(mainTranslateY, screenHeight);
-    } else {
-      // Other pages: main menu slides up when not active (negative translateY)
-      set(mainTranslateY, currentPage === 'main' ? 0 : -screenHeight);
-    }
-
-    // Animate all other pages
-    set(storiesTranslateY, currentPage === 'stories' ? 0 : screenHeight);
-    set(sensoryTranslateY, currentPage === 'sensory' ? 0 : screenHeight);
-    set(screenTimeTranslateY, currentPage === 'screen_time' ? 0 : screenHeight);
-    set(practiseTranslateY, currentPage === 'practise' ? 0 : screenHeight);
-    set(freeplayTranslateY, currentPage === 'freeplay' ? 0 : screenHeight);
-
-    // Learning screens slide UP when their child (spelling-game) is active,
-    // otherwise slide DOWN when a sibling page is active
-    set(spellingTranslateY,
-      currentPage === 'spelling' ? 0 :
-      currentPage === 'spelling-game' ? -screenHeight : screenHeight
-    );
-    set(numbersTranslateY,
-      currentPage === 'numbers' ? 0 :
-      currentPage === 'spelling-game' ? -screenHeight : screenHeight
-    );
-
-    set(feelingsTranslateY, currentPage === 'feelings' ? 0 : screenHeight);
-    set(spellingGameTranslateY, currentPage === 'spelling-game' ? 0 : screenHeight);
-
-    // Account page slides down from top
-    set(accountTranslateY, currentPage === 'account' ? 0 : -screenHeight);
+    Object.entries(pageAnimations).forEach(([pageKey, value]) => {
+      set(value, pageOffset(pageKey, currentPage, screenHeight));
+    });
   }, [currentPage, duration, animate]);
 
   return (
@@ -224,8 +194,10 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
       style={styles.container}
     >
       {Object.entries(pages).map(([pageKey, pageComponent]) => {
-        // Only render pages that have animation values
-        if (!pageAnimations[pageKey]) {
+        // Only render pages that have animation values, and only the ones in play:
+        // home, the page showing, the page it is sliding away from, and the last
+        // one left so a bounce back is instant. Everything else is unmounted.
+        if (!pageAnimations[pageKey] || !mounted.has(pageKey)) {
           return null;
         }
 
@@ -238,10 +210,15 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
             pageComponent={pageComponent}
             isActive={isActive}
             animationValue={pageAnimations[pageKey]}
-            touchDisabled={isTransitioning}
           />
         );
       })}
+      {/* swallows touches while pages slide, without re-rendering the pages themselves */}
+      <View
+        testID="page-transition-touch-guard"
+        style={styles.touchGuard}
+        pointerEvents={isTransitioning ? 'auto' : 'none'}
+      />
     </LinearGradient>
   );
 };
@@ -257,5 +234,13 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
+  },
+  touchGuard: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 2,
   },
 });

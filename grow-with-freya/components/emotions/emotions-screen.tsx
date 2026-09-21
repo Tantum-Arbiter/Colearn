@@ -1,11 +1,10 @@
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { View, StyleSheet, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
-  withRepeat,
   Easing,
   runOnJS,
 } from 'react-native-reanimated';
@@ -19,8 +18,10 @@ import { PageHeader } from '@/components/ui/page-header';
 import { EmotionTheme } from '@/types/emotion';
 import { VISUAL_EFFECTS } from '@/components/main-menu/constants';
 import { generateStarPositions } from '@/components/main-menu/utils';
-import { BearTopImage } from '@/components/main-menu/animated-components';
-import { mainMenuStyles } from '@/components/main-menu/styles';
+import { EarthHorizon } from '@/components/ui/earth-horizon';
+import { spinStars, useAmbientLoop } from '@/hooks/use-ambient-animation';
+
+const SPIN_STARS = spinStars(20000);
 
 // Gradient colour sets
 const FEELINGS_COLORS = ['#4ECDC4', '#3B82F6', '#1E3A8A'] as const;
@@ -28,9 +29,10 @@ const RELAX_COLORS = ['#6B73FF', '#8E95FF', '#B3B9FF'] as const;
 
 interface EmotionsScreenProps {
   onBack: () => void;
+  isActive?: boolean;
 }
 
-export function EmotionsScreen({ onBack }: EmotionsScreenProps) {
+export function EmotionsScreen({ onBack, isActive = true }: EmotionsScreenProps) {
   const [currentView, setCurrentView] = useState<'menu' | 'game' | 'parents'>('menu');
   const [selectedTheme, setSelectedTheme] = useState<EmotionTheme>('emoji');
   const { t } = useTranslation();
@@ -38,13 +40,7 @@ export function EmotionsScreen({ onBack }: EmotionsScreenProps) {
   // Shared background: stars
   const starPositions = useMemo(() => generateStarPositions(VISUAL_EFFECTS.STAR_COUNT), []);
   const starRotation = useSharedValue(0);
-
-  useEffect(() => {
-    starRotation.value = withRepeat(
-      withTiming(360, { duration: 20000, easing: Easing.linear }),
-      -1, false
-    );
-  }, []);
+  useAmbientLoop(isActive, starRotation, SPIN_STARS, 0);
 
   const starAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${starRotation.value}deg` }],
@@ -173,10 +169,7 @@ export function EmotionsScreen({ onBack }: EmotionsScreenProps) {
         />
       </Animated.View>
 
-      {/* Shared bear image — persistent, never reloads */}
-      <View style={mainMenuStyles.moonContainer} pointerEvents="none">
-        <BearTopImage />
-      </View>
+      <EarthHorizon edge="top" />
 
       {/* Shared animated stars */}
       {starPositions.map((star) => (
@@ -206,6 +199,7 @@ export function EmotionsScreen({ onBack }: EmotionsScreenProps) {
         pointerEvents={currentView === 'menu' ? 'auto' : 'none'}
       >
         <EmotionsUnifiedScreen
+          isActive={isActive && currentView === 'menu'}
           onStartGame={handleStartGame}
           onNavigateToParents={handleNavigateToParents}
           onBack={handleBack}
@@ -235,13 +229,18 @@ export function EmotionsScreen({ onBack }: EmotionsScreenProps) {
         </Animated.View>
       )}
 
-      {/* Page header — rendered LAST so it sits on top of all content, matching Stories pattern */}
-      <PageHeader
-        title={t('emotions.title')}
-        subtitle={t('emotions.subtitle')}
-        onBack={handleBack}
-        useBackArrow
-      />
+      {/* Page header — rendered LAST so it sits on top of all content, matching
+          Stories pattern. It speaks for whichever view is showing, because the
+          views it covers hand their header over to it; the game brings its own,
+          so this one stands down while that is up. */}
+      {currentView !== 'game' && (
+        <PageHeader
+          title={currentView === 'parents' ? t('relaxMusic.screenTitle') : t('emotions.title')}
+          subtitle={currentView === 'parents' ? t('relaxMusic.subtitle') : t('emotions.subtitle')}
+          onBack={currentView === 'parents' ? handleBackFromParents : handleBack}
+          useBackArrow
+        />
+      )}
     </View>
   );
 }

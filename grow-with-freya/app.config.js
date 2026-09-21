@@ -11,8 +11,8 @@ export default {
     icon: './assets/images/icon.png',
     scheme: 'growwithfreya',
     userInterfaceStyle: 'automatic',
+    backgroundColor: '#0A0F2C',
     newArchEnabled: true,
-    schemes: ['growwithfreya'],
     extra: {
       eas: {
         projectId: '439b6b2f-be5f-4d59-98eb-73befbd1973e'
@@ -24,6 +24,7 @@ export default {
       appleClientId: process.env.EXPO_PUBLIC_APPLE_CLIENT_ID,
       revenueCatAppleKey: process.env.EXPO_PUBLIC_RC_APPLE_KEY ?? '',
       revenueCatGoogleKey: process.env.EXPO_PUBLIC_RC_GOOGLE_KEY ?? '',
+      e2e: process.env.EXPO_PUBLIC_E2E === '1',
     },
     updates: {
       url: 'https://u.expo.dev/439b6b2f-be5f-4d59-98eb-73befbd1973e'
@@ -83,11 +84,11 @@ export default {
         'expo-splash-screen',
         {
           image: './assets/images/splash-icon.png',
-          imageWidth: 200,
+          imageWidth: 280,
           resizeMode: 'contain',
-          backgroundColor: '#4ECDC4',
+          backgroundColor: '#071D54',
           dark: {
-            backgroundColor: '#2E8B8B'
+            backgroundColor: '#071D54'
           }
         }
       ],
@@ -95,6 +96,24 @@ export default {
         'expo-audio',
         {
           microphonePermission: 'Allow $(PRODUCT_NAME) to access your microphone to record story narrations.'
+        }
+      ],
+      [
+        'expo-sensors',
+        {
+          motionPermission: 'Allow $(PRODUCT_NAME) to detect when you turn the screen so the story can begin.'
+        }
+      ],
+      [
+        'expo-build-properties',
+        {
+          ios: {
+            // GoogleSignIn's Swift pods (AppCheckCore) need these ObjC pods to expose module maps
+            extraPods: [
+              { name: 'GoogleUtilities', modular_headers: true },
+              { name: 'RecaptchaInterop', modular_headers: true }
+            ]
+          }
         }
       ],
     ],

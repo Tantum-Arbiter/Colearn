@@ -1,6 +1,7 @@
 export default {
   // Common UI elements
   common: {
+    home: 'Home',
     back: 'Back',
     backArrow: 'Back',
     next: 'Next',
@@ -83,12 +84,17 @@ export default {
 
   // Login screen
   login: {
-    welcomeTitle: 'Welcome to\nEarlyroots Stories',
-    subtitle: "Sign in to save your child's progress and sync across devices",
+    welcomeTitle: 'Welcome!',
+    welcomeTitleNamed: 'Welcome, {{name}}!',
+    subtitle: "Let's begin your story time",
     continueWithGoogle: 'Continue with Google',
     continueWithApple: 'Continue with Apple',
+    guestNote: 'Includes two free stories. Cloud sync is unavailable in guest mode.',
+    safePrivateTitle: 'Safe and private',
+    noAdverts: 'No adverts',
+    noTracking: 'No behavioural tracking',
     signingIn: 'Signing in...',
-    continueWithoutSignIn: 'Continue without signing in',
+    continueAsGuest: 'Continue as Guest',
     footerPrefix: 'By continuing, you agree to our',
     termsAndConditions: 'Terms & Conditions',
     and: ' and',
@@ -179,6 +185,81 @@ export default {
     },
   },
 
+  home: {
+    welcome: {
+      normal: { title: 'Welcome back, {{name}}!', titleAnonymous: 'Welcome back!', subtitle: 'Your next adventure is waiting.' },
+      firstToday: { title: 'Welcome back, {{name}}!', titleAnonymous: 'Welcome back!', subtitle: 'A brand new day of stories begins.' },
+      newAchievement: { title: 'Hooray, {{name}}!', titleAnonymous: 'Hooray!', subtitle: 'You earned {{achievement}}. Look below!' },
+      storyCompleted: { title: 'Well done, {{name}}!', titleAnonymous: 'Well done!', subtitle: 'You finished a whole story together.' },
+      streak: { title: 'Welcome back, {{name}}!', titleAnonymous: 'Welcome back!', subtitle: '{{count}} days of stories in a row. Wonderful!' },
+      longAbsence: { title: 'Lovely to see you, {{name}}!', titleAnonymous: 'Lovely to see you!', subtitle: 'Your stories are right where you left them.' },
+    },
+    continueBody: 'Pick up where you left off.',
+    continueLearning: {
+      title: 'Continue learning',
+      body: 'Stories, music and games await',
+      hint: 'Open the library',
+    },
+    continueStart: { eyebrow: 'Start a story', title: 'Pick your first adventure', body: 'A new world is waiting', hint: 'Choose a story to read together' },
+    streak: {
+      days: '{{count}} day streak!',
+      days_one: '{{count}} day streak!',
+      days_other: '{{count}} day streak!',
+      start: 'Start a streak today',
+    },
+    weeklyReading: {
+      minutes: '{{count}} min this week',
+      none: 'No reading yet this week',
+    },
+    achievements: { title: 'Look what you achieved!', cta: 'View achievements', emptyTitle: 'Your first badge is waiting', emptyBody: 'Read a story together to earn it', hint: 'See your badges' },
+    milestone: {
+      eyebrow: 'Next achievement',
+      remaining: {
+        stories: '{{count}} more stories to unlock',
+        stories_one: '{{count}} more story to unlock',
+        stories_other: '{{count}} more stories to unlock',
+        storyTimes: '{{count}} more story times to unlock',
+        storyTimes_one: '{{count}} more story time to unlock',
+        storyTimes_other: '{{count}} more story times to unlock',
+        calmMoments: '{{count}} more calm moments to unlock',
+        calmMoments_one: '{{count}} more calm moment to unlock',
+        calmMoments_other: '{{count}} more calm moments to unlock',
+        tunes: '{{count}} more tunes to unlock',
+        tunes_one: '{{count}} more tune to unlock',
+        tunes_other: '{{count}} more tunes to unlock',
+        adventures: '{{count}} more adventures to unlock',
+        adventures_one: '{{count}} more adventure to unlock',
+        adventures_other: '{{count}} more adventures to unlock',
+      },
+      allDone: 'Every badge is yours. Amazing!',
+    },
+    greeting: 'What shall we do together?',
+    grownUps: 'Grown-ups',
+    continueTogether: 'Continue together',
+    pagePosition: 'Page {{page}} of {{total}}',
+    resumeStory: 'Continue reading {{title}}',
+    storybooks: 'Storybooks',
+    storybooksDescription: 'Read, listen and explore',
+    music: 'Instruments',
+    musicDescription: 'Play, listen and learn',
+    puzzles: 'Puzzles',
+    puzzlesDescription: 'Match, build and discover',
+    screenTimeRemaining: 'Screen time used',
+    screenTimeExceeded: 'Screen time is up',
+    screenTimeOpen: 'Open screen time',
+    sun: 'The sun',
+    moon: 'The moon',
+  },
+
+  greeting: {
+    morning: 'Good morning',
+    afternoon: 'Good afternoon',
+    evening: 'Good evening',
+    morningNamed: 'Good morning, {{name}}',
+    afternoonNamed: 'Good afternoon, {{name}}',
+    eveningNamed: 'Good evening, {{name}}',
+  },
+
   // Story reader
   reader: {
     tapToContinue: 'Tap to continue',
@@ -240,7 +321,6 @@ export default {
     read: 'Read',
     record: 'Record',
     narrate: 'Narrate',
-    preview: 'Preview',
     tapToBegin: 'Tap to begin',
     recordAs: 'Record as: {{name}}',
     narrateAs: 'Narrate as: {{name}}',
@@ -257,18 +337,32 @@ export default {
     nameAlreadyExistsMessage: 'A voice over named "{{name}}" already exists. Please choose a different name.',
   },
 
+  // Story detail view (shown after tapping a book)
+  storyDetail: {
+    readTogether: 'Read Together',
+    continueReading: 'Continue reading',
+    record: 'Record',
+    playAlong: 'Play Along',
+    readNow: 'Read Now',
+    savedOffline: 'Saved for offline',
+    minutes: '{{count}} min',
+    ages: 'Ages {{range}}',
+    interactive: 'Interactive',
+    favourite: 'Favourite',
+  },
+
+  // Rotate-to-landscape prompt (shown before the book opens)
+  rotatePrompt: {
+    ready: 'Ready for our story time?',
+    turnTogether: 'Turn the screen together',
+    openWhenSideways: "We'll open the book when your device is sideways.",
+    openForMe: 'Open the book for me',
+  },
+
   // Story preview modal
   storyPreview: {
-    audience: 'Audience',
-    ages: 'Ages {{range}}',
-    duration: 'Duration',
-    durationMinutes: '{{count}} min',
-    tags: 'Tags',
-    readStory: 'Read Story',
-    aboutThisStory: 'About this story',
     removeFromDevice: 'Remove',
     removeConfirm: 'Remove "{{title}}" from this device? You can download it again anytime.',
-    preInstalledNotice: 'This story comes pre-installed with the app. It cannot be removed and does not count towards your download limit.',
   },
 
   // Story completion
@@ -282,14 +376,82 @@ export default {
 
   // Screen time
   screenTime: {
+    alert: {
+      title: 'Screen time alert!',
+      usage: "You've reached {{used}} of your daily limit.",
+      break: "Let's take a mindful break.",
+      showTips: 'Show Tips',
+    },
+    tips: {
+      title: 'Bring the story to life',
+      intro: 'The story does not have to end when the screen does. Here are three ways to carry it into the rest of the day.',
+      closing: 'A story your child retells is a story they keep.',
+      done: 'Done',
+      atHome: {
+        title: 'Retell it with toys',
+        body: 'Gather a few toys and let your child cast them as the characters. Ask “what happened next?” and let them tell it their way — the bits they change are the bits that mattered most to them.',
+      },
+      outdoors: {
+        title: 'Take the story outside',
+        body: 'On your next walk, look for something from the story — a moon, a puddle, a friendly dog. Ask what that character would do here. It turns an ordinary walk into a place the story lives.',
+      },
+      creative: {
+        title: 'Draw the best bit',
+        body: 'Paper and crayons, and one question: which part did you like best? Draw it together, then let your child tell you about their picture. What they choose says more than any quiz would.',
+      },
+      bathTime: {
+        title: 'Float the story at bath time',
+        body: 'Cups and bottles make boats; a sponge makes an island. Ask which character would sail where. Bath time is already play — the story just gives it a plot.',
+      },
+      inTheDark: {
+        title: 'Tell it back in the dark',
+        body: 'Lights off, and take turns adding one line each. It does not have to match the book. A story told in the dark is half yours and half theirs, and that is the best kind.',
+      },
+      onAPlate: {
+        title: 'Cook a page of it',
+        body: 'Toast, fruit, anything on a plate: name it after a character and let your child arrange the scene. Talking about what goes where is the story, told with food.',
+      },
+      listen: {
+        title: 'Listen for the story',
+        body: 'Stand still together somewhere outside and listen. What might a character hear here? A bird, a bus, the wind — every sound is a place the story could go next.',
+      },
+      sockShow: {
+        title: 'Put on a sock show',
+        body: 'Two socks, two voices. Let your child choose which character each one is and play the scene they remember best. What they pick is what they are still thinking about.',
+      },
+      singIt: {
+        title: 'Sing the story',
+        body: 'Make up a song about what happened, to any tune you both know. It can be silly — silly is the point. A song is a story that comes back on its own.',
+      },
+      whatIf: {
+        title: 'Ask what if',
+        body: 'What if the ending had been different? What if you were in the story? One question, then let them run. There are no wrong answers, only their answers.',
+      },
+    },
+    helpingStayBalanced: "You're helping {{name}} stay safe and balanced.",
+    helpingStayBalancedGeneric: "You're helping your child stay safe and balanced.",
+    yourChild: 'Your child',
+    activeNow: 'Active now',
+    todaysScreenTime: "Today's Screen Time",
+    ofLimit: 'of {{limit}} limit',
+    used: 'Used',
+    remaining: 'Remaining',
+    dailyLimitLabel: 'Daily Limit',
+    screenTimeTrend: 'Screen Time Trend',
+    today: 'Today',
+    trendDayUsage: '{{day}} · {{duration}}',
+    sevenDay: '7-day',
+    fourteenDay: '14-day',
+    thirtyDay: '30-day',
+    withinLimitTitle: "Great job! You're within today's limit.",
+    withinLimitBody: 'Keep encouraging balanced screen time.',
+    overLimitTitle: "Today's limit has been reached.",
+    overLimitBody: 'Time for a break - maybe a story off-screen?',
     title: 'Screen Time',
     todayUsage: "Today's Usage",
     todaysUsage: "Today's Usage",
     dailyLimit: 'Daily Limit',
     weeklyAverage: 'Weekly Average',
-    childAge: 'Child Age',
-    ageMonths: '{{age}} months',
-    ageYears: '{{years}} years {{months}} months',
     screenTimeLimit: 'Screen Time Limit',
     notifications: 'Notifications',
     customReminders: 'Custom Reminders',
@@ -302,17 +464,6 @@ export default {
     of: 'of',
     ofDailyLimit: '{{percentage}}% of daily limit',
     noScreenTimeRecommended: 'No screen time recommended',
-    childsAge: "Child's Age",
-    current: 'Current: {{age}}',
-    age18to24months: '18-24 months',
-    age2to6years: '2-6 years old',
-    age6plus: '6+ years',
-    age18to24m: '18-24m',
-    age2to6yrs: '2-6 yrs',
-    age6plusYrs: '6+ yrs',
-    guidelines18to24: 'WHO/AAP Guidelines: Up to 15 minutes of high-quality content with parent co-engagement.',
-    guidelines2to6: 'WHO/AAP Guidelines: Up to 1 hour of high-quality programming with parent involvement.',
-    guidelines6plus: 'For children 6+ years, establish consistent limits on screen time.',
     weeklyActivityHeatmap: 'Weekly Activity Heatmap',
     screenTimePatterns: "Your child's screen time patterns by day",
     screenTimeLevel: 'Screen Time Level',
@@ -321,9 +472,15 @@ export default {
     excessive: 'Excessive',
     overLimit: 'Over Limit',
     createMySchedule: 'Create My Schedule',
-    scheduleIntro: "Set up personalized notification times for your child's screen time activities. You'll receive gentle reminders when it's time for stories, emotions, or music activities.",
-    scheduleIntroShort: "Set up personalized notification times for your child's screen time activities.",
-    createCustomReminders: '+ Create Custom Reminders',
+    scheduleEmptyTitle: 'A gentle rhythm for the day',
+    scheduleEmptyBody: "Choose the moments that suit your family and we'll do the remembering — a quiet nudge when it's time for stories, feelings or music.",
+    scheduleActiveTitle: 'Your rhythm is set',
+    scheduleActiveSummary: '{{count}} set · next {{next}}',
+    scheduleNothingToday: 'nothing more today',
+    scheduleManage: 'Manage my schedule',
+    scheduleBenefitCalm: 'Calm hand-overs',
+    scheduleBenefitGentle: 'A nudge, never a nag',
+    scheduleBenefitBedtime: 'Wound down by bedtime',
     recommendedTimes: 'Recommended Times',
     recommendedTimesIntro: 'Based on child development research, the best times for screen activities are: ',
     morningStoriesEmotions: 'Morning stories & emotions',
@@ -460,6 +617,8 @@ export default {
 
   // Account screen
   account: {
+    sleepingSun: 'The sleeping sun',
+    sleepingMoon: 'The sleeping moon',
     title: 'Account',
     profile: 'Profile',
     nickname: 'Nickname',
@@ -470,8 +629,6 @@ export default {
     language: 'Language',
     textSize: 'Text Size',
     notifications: 'Notifications',
-    screenTime: 'Screen Time',
-    customReminders: 'Custom Reminders',
     legal: 'Legal',
     termsAndConditions: 'Terms & Conditions',
     privacyPolicy: 'Privacy Policy',
@@ -484,14 +641,25 @@ export default {
     deleteAccountHint: 'Permanently delete your account and all data',
   },
 
-  // Profile validation and edit profile screen
+  // The child's own page in the journey, plus profile validation and editing
   profile: {
+    settings: 'Settings',
+    noName: 'Little explorer',
+    tabs: {
+      saved: 'Saved',
+      badges: 'Badges',
+      manage: 'Manage',
+    },
+    downloadsUsed: '{{used}} of {{limit}} books on this device',
+    downloadsCount: '{{count}} books on this device',
+    downloadsEmpty: 'Nothing saved to this device yet — download a book to read it anywhere',
+    downloadMeta: '{{minutes}} min · {{pages}} pages',
     enterNickname: 'Please enter a nickname',
     nicknameTooLong: 'Nickname must be 20 characters or less',
     editTitle: 'Edit Profile',
     nickname: 'Nickname',
     nicknamePlaceholder: 'Enter your nickname...',
-    nicknameCharacters: '{{count}}/20 characters',
+    nicknameCharacters: '{{count}}/{{max}} characters',
     avatarType: 'Avatar Type',
     boy: '👦 Boy',
     girl: '👧 Girl',
@@ -544,10 +712,10 @@ export default {
         closeLabel: 'Close',
         dataSummary: {
           title: 'What we collect & why',
-          profile: "Display name & avatar -to personalise your child's experience",
-          reading: 'Reading history, favourites & progress -to track stories and streaks',
-          screenTime: 'Screen time sessions -to help manage healthy usage',
-          device: 'Device type & app version -to keep the app working properly',
+          profile: "Display name & avatar - to personalise your child's experience",
+          reading: 'Reading history, favourites & progress - to track stories and streaks',
+          screenTime: 'Screen time sessions - to help manage healthy usage',
+          device: 'Device type & app version - to keep the app working properly',
           noSell: 'We never sell data or show ads. You can delete everything at any time.',
         },
         checkboxes: {
@@ -606,6 +774,10 @@ export default {
     },
     // Main Menu Tour - shown on first login
     mainMenu: {
+      navLearn: {
+        title: 'Learn',
+        description: 'Every story, song and learning game lives in the library. Tap here to open it.',
+      },
       welcome: {
         title: 'Welcome to Grow with\nFreya!',
         description: "Let's take a quick tour to help you and your child get the most out of storytime together.",
@@ -626,10 +798,6 @@ export default {
         title: 'Instruments',
         description: 'Practise songs or jam freely on different instruments. Build musical skills while having fun!',
       },
-      learning: {
-        title: 'Learning',
-        description: 'Interactive spelling and number activities that help build early literacy and numeracy skills.',
-      },
       settings: {
         title: 'Settings',
         description: 'Customise the app to work best for your family.',
@@ -637,6 +805,104 @@ export default {
       sound: {
         title: 'Sound Control',
         description: 'Tap here to control background music and sound effects.',
+      },
+      achievement: {
+        title: 'Next achievement',
+        description: 'The badge your child is closest to earning, and how far there is still to go. Tap it to see them all.',
+      },
+      screenTime: {
+        title: 'The Screensafe ring',
+        description: 'This ring fills as today\'s screen time is used. Tap it any time to see the day. Once the time is up it becomes a red orb.',
+        remainingCaption: 'Time left',
+        spentCaption: 'Time is up',
+      },
+    },
+    catalogue: {
+      welcome: {
+        title: 'Your story shelf',
+        description: 'Every book, song and game lives here. Let\'s have a look around together.',
+      },
+      themes: {
+        title: 'Choose a theme',
+        description: 'Stories, Learning or Music. Tap a tile and the shelf sorts itself to match.',
+      },
+      filter: {
+        title: 'Finer filters',
+        description: 'Bedtime, animals, calming and more. Pick a few and the shelf narrows to just those.',
+      },
+      featured: {
+        title: 'Today\'s pick',
+        description: 'A book chosen fresh each day. Tap Read Now and it opens straight away.',
+      },
+      shelves: {
+        title: 'Shelves to swipe',
+        description: 'Swipe along any shelf, or tap See all for the whole theme at once.',
+      },
+      navProgress: {
+        title: 'Progress',
+        description: 'Badges, milestones and this week\'s adventures, all in one place.',
+      },
+      navSearch: {
+        title: 'Search',
+        description: 'Looking for one book in particular? Type a title or a character and it will find it.',
+      },
+      navProfile: {
+        title: 'Profile',
+        description: 'Saved favourites, the badge wall, and the books kept on this device.',
+      },
+    },
+    progress: {
+      welcome: {
+        title: 'Little steps, big progress',
+        description: 'Everything your child has read, played and earned, gathered here.',
+      },
+      hero: {
+        title: 'This week',
+        description: 'Minutes together, stories read and sessions played since Monday.',
+      },
+      challenges: {
+        title: 'Adventures',
+        description: 'Small weekly and monthly challenges to work towards together. Tap one to see how far along it is.',
+      },
+      milestones: {
+        title: 'Milestones',
+        description: 'The big firsts, marked as they happen.',
+      },
+      badges: {
+        title: 'Badges',
+        description: 'Earned ones glow gold; the rest wait to be discovered. Tap any badge to see what it takes.',
+      },
+    },
+    search: {
+      welcome: {
+        title: 'Find a story',
+        description: 'Type a title, a character or a theme and the shelf finds it for you.',
+      },
+      field: {
+        title: 'Search here',
+        description: 'Results appear as you type, from the books on this device and the catalogue alike.',
+      },
+      recent: {
+        title: 'Recent searches',
+        description: 'The last few things you looked for wait here for a quick tap back.',
+      },
+    },
+    profile: {
+      welcome: {
+        title: 'Your own corner',
+        description: 'Everything that is yours alone lives on this page.',
+      },
+      hero: {
+        title: 'Change the profile',
+        description: 'Tap the picture or the name to change the avatar, name or age. A grown-up answers a quick question first.',
+      },
+      tabs: {
+        title: 'Saved, Badges, Manage',
+        description: 'Favourites you have hearted, the badge wall, and the books on this device, with room to remove any.',
+      },
+      settings: {
+        title: 'Grown-ups\' settings',
+        description: 'Language, screen time and your account, behind the grown-ups\' gate.',
       },
     },
     // Screen Time Tips - keys match tutorial.screenTime.* in tutorial-content.ts
@@ -711,10 +977,6 @@ export default {
         title: 'Listen Mode',
         description: 'Listen to a pre-recorded narration of the story. Great for bedtime!',
       },
-      preview: {
-        title: 'Preview',
-        description: 'See story details, duration, and themes before you start reading.',
-      },
     },
     // Record Mode Tips - keys match tutorial.recordMode.* in tutorial-content.ts
     recordMode: {
@@ -783,10 +1045,6 @@ export default {
       language: {
         title: 'Language',
         description: 'Choose your preferred language for the app interface.',
-      },
-      avatar: {
-        title: 'Your Avatar',
-        description: 'Personalise your child\'s experience with a custom avatar.',
       },
       accessibility: {
         title: 'Accessibility',
@@ -994,13 +1252,18 @@ export default {
   },
 
   // Screen time warning modal
+  screenTimeOwl: {
+    owlLabel: 'A friendly owl with a message',
+    showIdeas: 'Show me ideas',
+    okay: 'Okay',
+  },
+
   screenTimeWarning: {
     approachingLimit: 'Screen Time Warning',
     limitReached: 'Daily Limit Reached',
     dailyComplete: 'Great Job Today!',
     notice: 'Screen Time Notice',
     guidelines: 'Following WHO & AAP recommendations for healthy screen time',
-    closeNotification: 'Close Notification',
     trySomethingNew: 'Try something together!',
     approachingMessage: 'Only {{minutes}} minutes of screen time left today. Would you like to continue or close the app? ',
     limitReachedMessage: "Daily screen time limit reached. It's time to close the app and try other activities!",
@@ -1188,6 +1451,7 @@ export default {
 
   // Music challenge UI strings
   music: {
+    saveSong: 'Save this song',
     // Celebration
     amazing: 'Amazing!',
     levelComplete: 'Level {{level}} complete!',
@@ -1219,7 +1483,7 @@ export default {
     successSong: '♫ Success Song',
     readyToPlay: '♫ Ready to Play',
     // Instrument picker
-    chooseInstrument: 'Choose Your Instrument',
+    chooseInstrument: 'Choose your instrument',
     swipeToExplore: 'Swipe to explore, tap to select',
     useThisInstrument: 'Use this instrument',
     closeInstrumentPicker: 'Close instrument picker',
@@ -1543,8 +1807,43 @@ export default {
 
   // Subscription overlay
   subscription: {
+    trialEnd: {
+      titleDays: 'Your free trial ends in {{count}} days',
+      titleTomorrow: 'Your free trial ends tomorrow',
+      titleToday: 'Your free trial ends today',
+      titleUpgrade: 'Upgrade to Premium',
+      subtitle: 'On {{date}} you move to Basic at {{price}} a month.',
+      subtitleUpgrade: 'Unlock every book, song and instrument for your family.',
+      stayingLabel: 'Staying on Basic',
+      stayingPrice: 'Billed {{price}} per month. Cancel anytime.',
+      upgradeHeading: 'What Premium adds',
+      addsAll: 'All stories, songs and learning activities unlocked',
+      addsPractice: 'Unlocks all songs in practice mode',
+      cta: 'Upgrade to Premium',
+      keepBasic: 'No thanks, continue with Basic',
+    },
+    startFreeTrial: 'Start my free trial',
+    trial: {
+      title: 'How your free trial works',
+      subtitle: 'Free for 5 days, then {{price}} a month. Cancel anytime.',
+      todayLabel: 'Today',
+      todayBody: 'Unlock learning like never before',
+      notifyLabel: 'Day 3',
+      notifyBody: 'We remind you before the trial ends',
+      chargeLabel: 'Day 5',
+      chargeBody: 'Subscribe for {{price}} or cancel',
+      mostRecommended: 'MOST RECOMMENDED',
+      planName: 'Basic',
+      planTrial: '5-day free trial',
+      benefitLearn: 'Learn to read, play instruments and a lot more!',
+      benefitMusic: 'Interactive music & games',
+      benefitNoAds: 'Ad-free experience',
+      upgrade: 'Premium unlocks every story, instrument and learning activity',
+      benefitDevices: 'Share progress across devices',
+      cta: 'Start 5-Day Free Trial',
+      includesTrial: 'Includes a 5-day free trial',
+    },
     unlockPlan: 'Unlock a Plan',
-    choosePlan: 'Choose the plan that works best for your family',
     subscribe: 'Subscribe',
     privacyPolicy: 'Privacy Policy',
     termsAndConditions: 'Terms & Conditions',
@@ -1556,7 +1855,7 @@ export default {
     perMonth: '/month',
     perYear: '/year',
     // Badges
-    mostRecommended: 'Most Recommended',
+    mostPopular: 'Most Popular',
     percentOff: '25% Off',
     // USP points
     uspStories: 'Stories crafted to support child development',
@@ -1565,7 +1864,8 @@ export default {
     uspNoAds: 'No ads, ever -safe for little ones',
     uspLanguages: 'Available in 14 languages',
     // Plan details -Basic
-    detailAllStories: 'All stories unlocked',
+    detailAllStories: 'All books unlocked',
+    detail50Stories: '50 stories unlocked',
     detailAllLearning: 'All learning activities unlocked',
     detailDownload50: 'Download up to 50 books',
     detailLimitedSongs: 'Limited songs access',
@@ -2624,6 +2924,191 @@ export default {
       sf3: { title: 'Apple Take', page1: 'Take some away! How many are left to leave?', page2: 'The ___ stay! ___ and ___!', page3: 'Eleven apples on the tree.', page4: '___ fall! ___ and ___!', page5: 'Only a few fewer left.' },
       sf4: { title: 'Star Fall', page1: 'Some stars remain while others fall.', page2: '___ and ___. Some ___!', page3: 'Take some away from the sky!', page4: '___ of them! ___ and ___!', page5: 'A few are left behind.' },
       sf5: { title: 'Sand Scoop', page1: 'Eleven scoops in the bucket!', page2: '___ away! ___ and ___!', page3: 'Everything balances!', page4: '___ scoops! ___ and ___!', page5: 'Take the last ones away.' },
+    },
+  },
+
+  splash: {
+    tagline: 'A gentle place to grow together.',
+  },
+
+  onboardingV2: {
+    stepCounter: '{{current}} of {{total}}',
+    skip: 'Skip',
+    worlds: {
+      storiesDesc: 'Gentle illustrated tales to share at bedtime, with narration you can record in your own voice.',
+      musicDesc: 'Real instrument sounds, simple songs and rhythm games to play together.',
+      learningDesc: 'Counting, letters and first words through calm, playful activities.',
+      feelingsDesc: 'Stories and cards that help little ones name and share how they feel.',
+      close: 'Close',
+      title: 'Little moments.\nBig growing.',
+      footer: 'Made to enjoy together.',
+      stories: 'Stories',
+      music: 'Music',
+      learning: 'Learning',
+      feelings: 'Feelings',
+    },
+    together: {
+      title: 'Better when\nwe play together.',
+      body: 'Early Roots is designed for children and grown-ups to explore side by side.',
+      read: 'Read together',
+      play: 'Play together',
+      talk: 'Talk together',
+    },
+    safe: {
+      title: 'A calm and safer\nkind of screen time.',
+      noAds: 'No adverts',
+      noTracking: 'No behavioural tracking',
+      noPressure: 'No streaks or pressure',
+      gentle: 'Gentle sounds and movement',
+      body: 'Quiet activities, soft learning and forgiving interactions whilst being stimulant-safe.',
+    },
+    ready: {
+      title: 'Stories ready\nwhen you need them.',
+      offlineTitle: 'Works offline',
+      offlineDesc: 'Downloaded stories are available without a connection.',
+      routinesTitle: 'Made for routines',
+      routinesDesc: 'Perfect for bedtime, travel and quiet time.',
+      parentTitle: 'Parent managed',
+      parentDesc: 'Control downloads, profiles and screen time.',
+    },
+    profile: {
+      title: 'Who is exploring today?',
+      nicknameLabel: 'Nickname',
+      nicknamePlaceholder: 'Enter a nickname',
+      ageLabel: 'Age range',
+      languageLabel: 'Language',
+      setUpLater: 'Set up later',
+      continue: 'Continue',
+      helper: 'This helps us suggest suitable stories and activities.',
+    },
+  },
+  childUi: {
+    nav: {
+      home: 'Learn',
+      progress: 'Progress',
+      screensafe: 'Screensafe',
+      search: 'Search',
+      profile: 'Profile',
+    },
+  },
+
+  catalogue: {
+    moreStories: 'More Stories',
+    read: 'Read',
+    sound: 'Sound',
+    noResults: 'No stories found with these filters',
+    clearFilters: 'Clear filters',
+    filter: 'Filter',
+    chooseTheme: 'Choose a theme',
+    tagline: {
+      one: 'A brighter world',
+      two: 'in every story',
+    },
+    featuredStory: 'Featured Story',
+    todaysPick: 'Today\'s pick',
+    seeAll: 'See all',
+    themes: {
+      stories: 'Stories',
+      learning: 'Learning',
+      music: 'Music',
+    },
+    profile: {
+      tagline: {
+        one: 'Everything that is',
+        two: 'yours alone',
+      },
+    },
+    saved: {
+      activities: 'Saved activities',
+      songs: 'Saved songs',
+      empty: 'Tap the heart on anything you love, and it will wait for you here',
+    },
+  },
+
+  search: {
+    placeholder: 'Search for a story',
+    recent: 'Your Recent Searches',
+    clearRecent: 'Clear',
+    clear: 'Clear search',
+    noResults: 'No stories found',
+    tagline: {
+      one: 'Find the story',
+      two: 'you are looking for',
+    },
+  },
+
+  progress: {
+    title: 'Progress',
+    tagline: {
+      one: 'Little steps,',
+      two: 'big progress',
+    },
+    weeklyHeading: 'Weekly Progress',
+    timeTogether: 'Time together',
+    minsSuffix: 'mins this week',
+    ringCaption: 'mins together',
+    ringThisWeek: 'this week',
+    storiesRead: 'Stories read',
+    musicSessions: 'Music sessions',
+    calmMoments: 'Calm moments',
+    milestonesHeading: 'Little Milestones',
+    badgesHeading: 'Badges to crack',
+    count: '{{current}} / {{target}}',
+    soFar: 'You\'ve enjoyed {{count}} so far.',
+    close: 'Close',
+    adventuresHeading: 'Little adventures',
+    thisWeek: 'This week',
+    thisMonth: 'This month',
+    badgesSummary: '{{earned}} of {{total}} discovered',
+    categories: {
+      all: 'All',
+      stories: 'Stories',
+      music: 'Music',
+      calm: 'Calm',
+      kindness: 'Kindness',
+      exploration: 'Exploring',
+    },
+    challenges: {
+      threeStoryTimes: { title: 'Three story times', description: 'Share three story times together this week' },
+      calmMoment: { title: 'A calm moment', description: 'Enjoy one calm activity together this week' },
+      makeMusic: { title: 'Make some music', description: 'Play music together twice this week' },
+      morningStory: { title: 'A morning story', description: 'Read or listen together one morning this week' },
+      bedtimeStory: { title: 'Bedtime stories', description: 'Share two evening story times this week' },
+      tenStoryTimes: { title: 'Ten story times', description: 'Share ten story times together this month' },
+      musicMonth: { title: 'A musical month', description: 'Enjoy five music sessions this month' },
+      calmCollector: { title: 'Calm collector', description: 'Enjoy four calm moments this month' },
+      brightMornings: { title: 'Bright mornings', description: 'Read or listen together on three mornings this month' },
+    },
+    milestones: {
+      firstFiveStories: { title: 'First 5 stories', description: 'You\'re off to a wonderful start!' },
+      bedtimeListener: { title: 'Bedtime listener', description: 'You love quiet, cosy story times.' },
+      kindMoments: { title: 'Kind moments', description: 'You\'re learning to be kind.' },
+    },
+    badges: {
+      firstStory: { title: 'First Story', description: 'Open your very first story' },
+      readingTogether: { title: 'Reading Together', description: 'Share 3 story times this week' },
+      newWorlds: { title: 'New Worlds', description: 'Explore 3 different kinds of story' },
+      favouriteFinder: { title: 'Favourite Finder', description: 'Choose a favourite story' },
+      firstNotes: { title: 'First Notes', description: 'Play some music together' },
+      musicExplorer: { title: 'Music Explorer', description: 'Enjoy 5 music sessions this month' },
+      calmMoment: { title: 'Calm Moment', description: 'Try your first calm activity' },
+      gentleEvening: { title: 'Gentle Evening', description: 'Share 3 evening story times' },
+      bedtimeListener: { title: 'Bedtime Listener', description: 'Share 3 bedtime stories' },
+      kindMoments: { title: 'Kind Moments', description: 'Read a story about kindness' },
+      curiousMind: { title: 'Curious Mind', description: 'Explore 5 kinds of story' },
+      adventureExplorer: { title: 'Adventure Explorer', description: 'Read 3 adventure stories' },
+      morningExplorer: { title: 'Morning Explorer', description: 'Read or listen in the morning' },
+      storyAdventurer: { title: 'Story Adventurer', description: 'Listen to 10 different stories' },
+      calmChampion: { title: 'Calm Champion', description: 'Enjoy 5 calm moments' },
+      kindHeart: { title: 'Kind Heart', description: 'Complete 5 kind activities' },
+    },
+    recommendations: {
+      bedtime: 'Listen to a bedtime story',
+      adventure: 'Pick an adventure story',
+      together: 'Read something together',
+      discover: 'Discover a new story',
+      calming: 'Try a calming story',
+      kindness: 'Choose a kindness story',
     },
   },
 };

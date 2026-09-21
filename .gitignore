@@ -147,6 +147,12 @@ gradle-app.setting
 *.bak
 *.swp
 *~
+
+# Local scratch / transfer artifacts (not versioned)
+_xfer/
+_to_delete/
+.claude/settings.local.json
+
 # Local ai orchestrator outputs (not versioned)
 !/.ai/
 !/.ai/scripts/lib/

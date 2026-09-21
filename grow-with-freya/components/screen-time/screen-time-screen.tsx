@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, ScrollView, Pressable, StyleSheet, Dimensions, Alert } from 'react-native';
+import { View, Text, ScrollView, Pressable, Dimensions, Alert, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,20 +11,22 @@ import { MoonBottomImage } from '../main-menu/animated-components';
 import { mainMenuStyles } from '../main-menu/styles';
 import { MusicControl } from '../ui/music-control';
 import { StarBackground } from '../ui/star-background';
-import ScreenTimeService, { ScreenTimeStats, SCREEN_TIME_LIMITS } from '../../services/screen-time-service';
+import ScreenTimeService, { ScreenTimeStats, DailyTotal } from '../../services/screen-time-service';
 import NotificationService from '../../services/notification-service';
 import { Logger } from '@/utils/logger';
 
 const log = Logger.create('ScreenTimeScreen');
 import { useScreenTime } from './screen-time-provider';
-import { CustomRemindersScreen, CreateReminderScreen } from '../reminders';
 import { styles } from './styles';
-import { formatDurationCompact } from '../../utils/time-formatting';
 import { ApiClient } from '@/services/api-client';
-import { reminderService } from '@/services/reminder-service';
+import { reminderService, type ReminderStats } from '@/services/reminder-service';
 import { useAccessibility } from '@/hooks/use-accessibility';
+import { UsageOverview } from './usage-overview';
+import { ScheduleCallout } from './schedule-callout';
+import { ScheduleWindow } from './schedule-window';
+import { AUTH_GRADIENT } from '@/components/auth/auth-theme';
 import { backgroundSaveService } from '@/services/background-save-service';
-import { ScreenTimeTipsOverlay } from '../tutorial';
+import { OwlGuide } from '../owl-guide';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -34,7 +36,21 @@ interface ScreenTimeScreenProps {
 
 interface ScreenTimeContentProps {
   paddingTop?: number;
-  onNavigateToReminders?: () => void;
+  /** Fires when a reminder is created, toggled or deleted inside the schedule
+   *  window, so the host can re-check its unsaved-changes state. */
+  onReminderChange?: () => void;
+  /** Set false for a usage-only view -- the home-screen glance opens straight
+   *  off the ring to answer "how long today?", and building a schedule is a
+   *  settings job rather than a glance one. With no callout rendered there is
+   *  nothing left that can open the schedule window either. */
+  showSchedule?: boolean;
+  /** Set false when the host already paints a surface of its own -- the night
+   *  gradient below is opaque and would cover it. */
+  showBackdrop?: boolean;
+  /** Set false when the host leads with a header of its own. The glance does
+   *  this in its alert state; the settings dashboard, which is not an alert,
+   *  keeps the greeting. */
+  showGreeting?: boolean;
 }
 
 // Generate star positions for background
@@ -60,7 +76,6 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
     screenTimeEnabled,
     notificationsEnabled,
     hasRequestedNotificationPermission,
-    setChildAge,
     setScreenTimeEnabled,
     setNotificationsEnabled,
     setNotificationPermissionRequested,
@@ -70,11 +85,13 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
   const { todayUsage: contextTodayUsage } = useScreenTime();
 
   const [stats, setStats] = useState<ScreenTimeStats | null>(null);
+  const [dailyTotals, setDailyTotals] = useState<DailyTotal[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState<'main' | 'custom-reminders' | 'create-reminder'>('main');
+  const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [reminderStats, setReminderStats] = useState<ReminderStats | null>(null);
 
-  // Track local changes (not yet saved to backend)
-  const [localChildAge, setLocalChildAge] = useState(childAgeInMonths);
+  // Track local changes (not yet saved to backend). The child's age is not one
+  // of them -- it is set on the profile screen and only read here.
   const [localScreenTimeEnabled, setLocalScreenTimeEnabled] = useState(screenTimeEnabled);
   const [localNotificationsEnabled, setLocalNotificationsEnabled] = useState(notificationsEnabled);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -84,14 +101,29 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
   // Track changes to detect unsaved state (including reminders)
   useEffect(() => {
     const settingsChanged =
-      localChildAge !== childAgeInMonths ||
       localScreenTimeEnabled !== screenTimeEnabled ||
       localNotificationsEnabled !== notificationsEnabled;
 
     const remindersChanged = reminderService.hasUnsavedChanges();
 
     setHasUnsavedChanges(settingsChanged || remindersChanged);
-  }, [localChildAge, localScreenTimeEnabled, localNotificationsEnabled, childAgeInMonths, screenTimeEnabled, notificationsEnabled, currentPage, reminderChangeCounter]); // Re-check when reminders change
+  }, [localScreenTimeEnabled, localNotificationsEnabled, screenTimeEnabled, notificationsEnabled, scheduleOpen, reminderChangeCounter]); // Re-check when reminders change
+
+  // The callout reports live state, so it reloads whenever a reminder changes
+  // or the window closes over one.
+  useEffect(() => {
+    if (scheduleOpen) return;
+    let cancelled = false;
+    reminderService
+      .getReminderStats()
+      .then((next) => {
+        if (!cancelled) setReminderStats(next);
+      })
+      .catch((error) => log.warn('Failed to load reminder stats:', error));
+    return () => {
+      cancelled = true;
+    };
+  }, [scheduleOpen, reminderChangeCounter]);
 
   // Star animation
   const starOpacity = useSharedValue(0.4);
@@ -131,6 +163,7 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
       const screenTimeService = ScreenTimeService.getInstance();
       const screenTimeStats = await screenTimeService.getScreenTimeStats(childAgeInMonths);
       setStats(screenTimeStats);
+      setDailyTotals(await screenTimeService.getDailyTotals(30));
     } catch (error) {
       log.error('Failed to load stats:', error);
     } finally {
@@ -153,7 +186,6 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
               await reminderService.revertChanges();
 
               // Reset local state to match app store
-              setLocalChildAge(childAgeInMonths);
               setLocalScreenTimeEnabled(screenTimeEnabled);
               setLocalNotificationsEnabled(notificationsEnabled);
               setHasUnsavedChanges(false);
@@ -205,18 +237,12 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
     }
   };
 
-  const handleAgeChange = (newAge: number) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setLocalChildAge(newAge);
-  };
-
   const handleSaveSettings = async () => {
     try {
       setIsSaving(true);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
       // Update local app store
-      setChildAge(localChildAge);
       setScreenTimeEnabled(localScreenTimeEnabled);
       setNotificationsEnabled(localNotificationsEnabled);
 
@@ -236,8 +262,8 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
       const isAuthenticated = await ApiClient.isAuthenticated();
       if (isAuthenticated) {
         // Convert age to age range string
-        const ageRange = localChildAge < 24 ? '18-24m' :
-                        localChildAge < 72 ? '2-6y' :
+        const ageRange = childAgeInMonths < 24 ? '18-24m' :
+                        childAgeInMonths < 72 ? '2-6y' :
                         '6+';
 
         // Get current profile info from app store for the background save
@@ -292,16 +318,6 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
     }
   };
 
-  const getDailyLimit = () => {
-    const screenTimeService = ScreenTimeService.getInstance();
-    return screenTimeService.getDailyLimit(childAgeInMonths);
-  };
-
-  const formatTime = (seconds: number) => {
-    if (seconds === 0) return t('screenTime.noScreenTimeRecommended');
-    return formatDurationCompact(seconds);
-  };
-
   const dayNames = [
     t('screenTime.sun'),
     t('screenTime.mon'),
@@ -312,40 +328,18 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
     t('screenTime.sat'),
   ];
 
-  const getUsagePercentage = (usage: number, limit: number) => {
-    if (limit === 0) return 0;
-    return Math.min((usage / limit) * 100, 100);
-  };
-
-  const getAgeRangeText = (ageInMonths: number) => {
-    if (ageInMonths < 24) return t('screenTime.age18to24months');
-    if (ageInMonths < 72) return t('screenTime.age2to6years');
-    return t('screenTime.age6plus');
-  };
-
-  const getGuidelinesText = (ageInMonths: number) => {
-    if (ageInMonths < 24) {
-      return t('screenTime.guidelines18to24');
-    }
-    if (ageInMonths < 72) {
-      return t('screenTime.guidelines2to6');
-    }
-    return t('screenTime.guidelines6plus');
-  };
-
   // Use local state for display (not yet saved)
   const dailyLimit = useMemo(() => {
     const screenTimeService = ScreenTimeService.getInstance();
-    return screenTimeService.getDailyLimit(localChildAge);
-  }, [localChildAge]);
+    return screenTimeService.getDailyLimit(childAgeInMonths);
+  }, [childAgeInMonths]);
 
   const todayUsage = contextTodayUsage; // Use real-time usage from context
-  const usagePercentage = getUsagePercentage(todayUsage, dailyLimit);
 
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['#1E3A8A', '#1E3A8A', '#1E3A8A']}
+        colors={AUTH_GRADIENT}
         style={styles.gradient}
       >
         {/* Animated stars background */}
@@ -374,694 +368,37 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
           <MoonBottomImage />
         </View>
 
-        {/* Header - Only show for main page */}
-        {currentPage === 'main' && (
-          <View style={[styles.header, { paddingTop: Math.max(insets.top + 10, 50), zIndex: 50 }]}>
-            <Pressable style={[styles.backButton, { minHeight: scaledButtonSize(40) }]} onPress={handleBack}>
-              <Ionicons name="arrow-back" size={scaledButtonSize(24)} color="rgba(255, 255, 255, 0.8)" />
-            </Pressable>
-            <View style={styles.titleContainer}>
-              <Text style={[styles.title, { fontSize: scaledFontSize(20) }]}>{t('screenTime.title')}</Text>
-            </View>
-            <MusicControl size={24} color="#FFFFFF" />
+        {/* Header */}
+        <View style={[styles.header, { paddingTop: Math.max(insets.top + 10, 50), zIndex: 50 }]}>
+          <Pressable testID="screen-time-back" style={[styles.backButton, { minHeight: scaledButtonSize(40) }]} onPress={handleBack}>
+            <Ionicons name="arrow-back" size={scaledButtonSize(24)} color="rgba(255, 255, 255, 0.8)" />
+          </Pressable>
+          <View style={styles.titleContainer}>
+            <Text style={[styles.title, { fontSize: scaledFontSize(20) }]}>{t('screenTime.title')}</Text>
           </View>
-        )}
+          <MusicControl size={24} color="#FFFFFF" />
+        </View>
 
         {/* Conditional Content */}
-        {currentPage === 'custom-reminders' && (
-          <CustomRemindersScreen
-            onBack={() => setCurrentPage('main')}
-            onCreateNew={() => setCurrentPage('create-reminder')}
-            onReminderChange={() => setReminderChangeCounter(prev => prev + 1)}
-          />
-        )}
-
-        {currentPage === 'create-reminder' && (
-          <CreateReminderScreen
-            onBack={() => setCurrentPage('custom-reminders')}
-            onSuccess={() => {
-              setReminderChangeCounter(prev => prev + 1);
-              setCurrentPage('custom-reminders');
-            }}
-          />
-        )}
-
-        {currentPage === 'main' && (
-          <ScrollView style={[styles.scrollView, { zIndex: 10 }]} contentContainerStyle={[styles.content, isTablet && { alignItems: 'center' }]}>
-          <View style={isTablet ? { maxWidth: contentMaxWidth, width: '100%' } : undefined}>
-          {/* Today's Usage */}
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>{t('screenTime.todaysUsage')}</Text>
-
-            <View style={[styles.usageCard, { padding: scaledPadding(16) }]}>
-              <View style={styles.usageHeader}>
-                <View style={styles.usageTimeContainer}>
-                  <Text style={[styles.usageTime, { fontSize: scaledFontSize(32) }]}>{formatTime(todayUsage)}</Text>
-                  <Text style={[styles.usageLimit, { fontSize: scaledFontSize(14) }]}>{t('screenTime.of')} {formatTime(dailyLimit)}</Text>
-                </View>
-              </View>
-
-              <View style={styles.progressBar}>
-                <View
-                  style={[
-                    styles.progressFill,
-                    {
-                      width: `${usagePercentage}%`,
-                      backgroundColor: usagePercentage > 90 ? '#EF4444' : usagePercentage > 70 ? '#F59E0B' : '#10B981'
-                    }
-                  ]}
-                />
-              </View>
-
-              <Text style={[styles.usagePercentage, { fontSize: scaledFontSize(14) }]}>
-                {t('screenTime.ofDailyLimit', { percentage: usagePercentage.toFixed(0) })}
-              </Text>
-            </View>
-          </View>
-
-          {/* Age Settings */}
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>{t('screenTime.childsAge')}</Text>
-
-            <View style={styles.ageSelector}>
-              <Text style={[styles.currentAge, { fontSize: scaledFontSize(16) }]}>
-                {t('screenTime.current', { age: getAgeRangeText(localChildAge) })}
-              </Text>
-
-              <View style={styles.ageButtons}>
-                <Pressable
-                  style={[styles.ageButton, { minHeight: scaledButtonSize(44), paddingVertical: scaledPadding(10), paddingHorizontal: scaledPadding(12) }, localChildAge < 24 && styles.ageButtonActive]}
-                  onPress={() => handleAgeChange(20)}
-                >
-                  <Text style={[styles.ageButtonText, { fontSize: scaledFontSize(14) }, localChildAge < 24 && styles.ageButtonTextActive]} numberOfLines={1} adjustsFontSizeToFit>
-                    {t('screenTime.age18to24m')}
-                  </Text>
-                </Pressable>
-
-                <Pressable
-                  style={[styles.ageButton, { minHeight: scaledButtonSize(44), paddingVertical: scaledPadding(10), paddingHorizontal: scaledPadding(12) }, localChildAge >= 24 && localChildAge < 72 && styles.ageButtonActive]}
-                  onPress={() => handleAgeChange(36)}
-                >
-                  <Text style={[styles.ageButtonText, { fontSize: scaledFontSize(14) }, localChildAge >= 24 && localChildAge < 72 && styles.ageButtonTextActive]} numberOfLines={1} adjustsFontSizeToFit>
-                    {t('screenTime.age2to6yrs')}
-                  </Text>
-                </Pressable>
-
-                <Pressable
-                  style={[styles.ageButton, { minHeight: scaledButtonSize(44), paddingVertical: scaledPadding(10), paddingHorizontal: scaledPadding(12) }, localChildAge >= 72 && styles.ageButtonActive]}
-                  onPress={() => handleAgeChange(84)}
-                >
-                  <Text style={[styles.ageButtonText, { fontSize: scaledFontSize(14) }, localChildAge >= 72 && styles.ageButtonTextActive]} numberOfLines={1} adjustsFontSizeToFit>
-                    {t('screenTime.age6plusYrs')}
-                  </Text>
-                </Pressable>
-              </View>
-            </View>
-
-            <Text style={[styles.guidelines, { fontSize: scaledFontSize(14) }]}>
-              {getGuidelinesText(localChildAge)}
-            </Text>
-          </View>
-
-          {/* Weekly Activity Heatmap */}
-          {stats && stats.heatmapData && stats.heatmapData.length > 0 && (
-            <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>{t('screenTime.weeklyActivityHeatmap')}</Text>
-
-              <View style={styles.chartContainer}>
-                <Text style={[styles.chartNote, { fontSize: scaledFontSize(14) }]}>
-                  {t('screenTime.screenTimePatterns')}
-                </Text>
-
-                {/* Heatmap */}
-                <View style={styles.heatmapContainer}>
-                  {/* Daily Bar Chart */}
-                  <View style={styles.dailyBarChart}>
-                    {dayNames.map((dayName, dayIndex) => {
-                      const dayData = stats.heatmapData.find(data => data.day === dayIndex);
-                      const usage = dayData?.usage || 0;
-
-                      // Get age-appropriate daily limit for proper scaling (use local age for immediate feedback)
-                      // 18-24 months: 15 min, 2-6 years: 60 min, 6+ years: 120 min
-                      const dailyLimit = localChildAge < 24 ? 15 * 60 :
-                                       localChildAge < 72 ? 60 * 60 :
-                                       120 * 60;
-
-                      // Calculate percentage of limit used (can exceed 100%)
-                      const usagePercentage = dailyLimit > 0 ? (usage / dailyLimit) * 100 : 0;
-
-                      // 5 color thresholds evenly distributed:
-                      // 0-25%: Teal light, 25-50%: Teal medium, 50-75%: Teal bright (recommended)
-                      // 75-100%: Amber (approaching limit), >100%: Red (over limit)
-                      let backgroundColor: string;
-                      if (usage === 0) {
-                        backgroundColor = 'rgba(255, 255, 255, 0.05)';
-                      } else if (usagePercentage > 100) {
-                        // Over limit - Red
-                        backgroundColor = 'rgba(239, 68, 68, 1.0)';
-                      } else if (usagePercentage > 75) {
-                        // 75-100% - Amber (approaching limit)
-                        backgroundColor = 'rgba(255, 159, 67, 0.85)';
-                      } else if (usagePercentage > 50) {
-                        // 50-75% - Teal bright (recommended zone)
-                        backgroundColor = 'rgba(78, 205, 196, 1.0)';
-                      } else if (usagePercentage > 25) {
-                        // 25-50% - Teal medium
-                        backgroundColor = 'rgba(78, 205, 196, 0.6)';
-                      } else {
-                        // 0-25% - Teal light
-                        backgroundColor = 'rgba(78, 205, 196, 0.3)';
-                      }
-
-                      // Calculate fill percentage for bar height (capped at 100% for display)
-                      const fillPercentage = Math.min(usagePercentage, 100);
-
-                      // All bars are the same height (100px), but fill based on usage
-                      const barFillHeight = Math.max(4, (fillPercentage / 100) * 100); // Minimum 4px for visibility
-
-                      return (
-                        <View key={dayIndex} style={styles.dailyBarContainer}>
-                          {/* Day label */}
-                          <Text style={[styles.dailyBarLabel, { fontSize: scaledFontSize(10) }]}>{dayName}</Text>
-
-                          {/* Usage bar - consistent container size */}
-                          <View style={styles.dailyBarWrapper}>
-                            <View style={styles.dailyBarBackground}>
-                              <View
-                                style={[
-                                  styles.dailyBarFill,
-                                  {
-                                    backgroundColor,
-                                    height: barFillHeight,
-                                  }
-                                ]}
-                              >
-                                {usage > 60 && ( // Only show time if more than 1 minute
-                                  <Text style={[styles.dailyBarText, { fontSize: scaledFontSize(8) }]}>
-                                    {formatDurationCompact(usage)}
-                                  </Text>
-                                )}
-                              </View>
-                            </View>
-                          </View>
-                        </View>
-                      );
-                    })}
-                  </View>
-
-                  {/* Legend */}
-                  <View style={styles.heatmapLegend}>
-                    <Text style={[styles.heatmapLegendTitle, { fontSize: scaledFontSize(12) }]}>{t('screenTime.screenTimeLevel')}</Text>
-
-                    {/* Color Bar - 5 cells: 0-25%, 25-50%, 50-75% (recommended), 75-100% (amber), >100% (red) */}
-                    <View style={styles.heatmapLegendColorBar}>
-                      <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(78, 205, 196, 0.3)' }]} />
-                      <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(78, 205, 196, 0.6)' }]} />
-                      <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(78, 205, 196, 1.0)' }]} />
-                      <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(255, 159, 67, 0.85)' }]} />
-                      <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(239, 68, 68, 1.0)' }]} />
-                    </View>
-
-                    {/* Arrow pointing to middle (recommended) cell */}
-                    <View style={styles.heatmapArrowContainer}>
-                      <Text style={[styles.heatmapArrow, { fontSize: scaledFontSize(12) }]}>▲</Text>
-                    </View>
-
-                    {/* Labels Row */}
-                    <View style={styles.heatmapLabelsRow}>
-                      <View style={styles.heatmapLabelContainer}>
-                        <Text style={[styles.heatmapLegendLabel, { fontSize: scaledFontSize(10) }]} numberOfLines={1}>
-                          {t('screenTime.noScreenTime')}
-                        </Text>
-                      </View>
-                      <View style={styles.heatmapLabelContainer}>
-                        <Text style={[styles.heatmapLegendLabel, { fontSize: scaledFontSize(10) }]} numberOfLines={1}>
-                          {t('screenTime.recommended')}
-                        </Text>
-                      </View>
-                      <View style={styles.heatmapLabelContainer}>
-                        <Text style={[styles.heatmapLegendLabel, { fontSize: scaledFontSize(10) }]} numberOfLines={1}>
-                          {t('screenTime.overLimit')}
-                        </Text>
-                      </View>
-                    </View>
-                  </View>
-                </View>
-              </View>
-            </View>
-          )}
-
-          {/* Create My Schedule */}
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>{t('screenTime.createMySchedule')}</Text>
-
-            <View style={styles.scheduleIntro}>
-              <Text style={[styles.scheduleIntroText, { fontSize: scaledFontSize(14) }]}>
-                {t('screenTime.scheduleIntro')}
-              </Text>
-            </View>
-
-            <Pressable
-              style={[styles.createScheduleButton, { minHeight: scaledButtonSize(48), paddingVertical: scaledPadding(12), paddingHorizontal: scaledPadding(20) }]}
-              onPress={() => setCurrentPage('custom-reminders')}
-            >
-              <Text style={[styles.createScheduleButtonText, { fontSize: scaledFontSize(16) }]}>{t('screenTime.createCustomReminders')}</Text>
-            </Pressable>
-
-            <View style={styles.recommendedTimes}>
-              <Text style={[styles.recommendedTimesTitle, { fontSize: scaledFontSize(16) }]}>{t('screenTime.recommendedTimes')}</Text>
-              <Text style={[styles.recommendedTimesText, { fontSize: scaledFontSize(14) }]}>
-                {t('screenTime.recommendedTimesIntro')}
-              </Text>
-
-              <View style={[styles.timeSlot, { paddingVertical: scaledPadding(8) }]}>
-                <Text style={[styles.timeSlotTime, { fontSize: scaledFontSize(14) }]}>9:00 AM - 10:00 AM</Text>
-                <Text style={[styles.timeSlotActivity, { fontSize: scaledFontSize(12) }]}>{t('screenTime.morningStoriesEmotions')}</Text>
-              </View>
-
-              <View style={[styles.timeSlot, { paddingVertical: scaledPadding(8) }]}>
-                <Text style={[styles.timeSlotTime, { fontSize: scaledFontSize(14) }]}>2:00 PM - 3:00 PM</Text>
-                <Text style={[styles.timeSlotActivity, { fontSize: scaledFontSize(12) }]}>{t('screenTime.afternoonLearning')}</Text>
-              </View>
-
-              <View style={[styles.timeSlot, { paddingVertical: scaledPadding(8) }]}>
-                <Text style={[styles.timeSlotTime, { fontSize: scaledFontSize(14) }]}>5:00 PM - 6:00 PM</Text>
-                <Text style={[styles.timeSlotActivity, { fontSize: scaledFontSize(12) }]}>{t('screenTime.preDinnerMusic')}</Text>
-              </View>
-            </View>
-
-            <View style={[styles.bedtimeWarning, { padding: scaledPadding(12) }]}>
-              <Text style={[styles.bedtimeWarningTitle, { fontSize: scaledFontSize(14) }]}>{t('screenTime.bedtimeGuidelines')}</Text>
-              <Text style={[styles.bedtimeWarningText, { fontSize: scaledFontSize(12) }]}>
-                {t('screenTime.bedtimeWarning')}
-              </Text>
-            </View>
-          </View>
-
-          {/* Settings */}
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>{t('screenTime.settings')}</Text>
-
-            <View style={[styles.settingItem, { paddingVertical: scaledPadding(12) }]}>
-              <View style={styles.settingInfo}>
-                <Text style={[styles.settingLabel, { fontSize: scaledFontSize(16) }]}>{t('screenTime.screenTimeControls')}</Text>
-                <Text style={[styles.settingDescription, { fontSize: scaledFontSize(12) }]}>
-                  {t('screenTime.screenTimeControlsDesc')}
-                </Text>
-              </View>
-              <Pressable
-                style={[styles.toggle, localScreenTimeEnabled && styles.toggleActive]}
-                onPress={handleToggleScreenTime}
-              >
-                <View style={[styles.toggleThumb, localScreenTimeEnabled && styles.toggleThumbActive]} />
-              </Pressable>
-            </View>
-
-            <View style={[styles.settingItem, { paddingVertical: scaledPadding(12) }]}>
-              <View style={styles.settingInfo}>
-                <Text style={[styles.settingLabel, { fontSize: scaledFontSize(16) }]}>{t('screenTime.smartReminders')}</Text>
-                <Text style={[styles.settingDescription, { fontSize: scaledFontSize(12) }]}>
-                  {t('screenTime.smartRemindersDesc')}
-                </Text>
-              </View>
-              <Pressable
-                style={[styles.toggle, localNotificationsEnabled && styles.toggleActive]}
-                onPress={handleToggleNotifications}
-              >
-                <View style={[styles.toggleThumb, localNotificationsEnabled && styles.toggleThumbActive]} />
-              </Pressable>
-            </View>
-          </View>
-
-          {/* Save Button - Only show when there are unsaved changes */}
-          {hasUnsavedChanges && (
-            <View style={styles.section}>
-              <Pressable
-                style={[styles.saveButton, { minHeight: scaledButtonSize(48), paddingVertical: scaledPadding(14) }, isSaving && styles.saveButtonDisabled]}
-                onPress={handleSaveSettings}
-                disabled={isSaving}
-              >
-                <Text style={[styles.saveButtonText, { fontSize: scaledFontSize(16) }]}>
-                  {isSaving ? t('screenTime.saving') : t('screenTime.saveSettings')}
-                </Text>
-              </Pressable>
-              <Text style={[styles.saveNote, { fontSize: scaledFontSize(12) }]}>
-                {t('screenTime.settingsSyncNote')}
-              </Text>
-            </View>
-          )}
-          </View>
-          </ScrollView>
-        )}
-      </LinearGradient>
-
-      {/* Tips overlay for first-time visitors */}
-      <ScreenTimeTipsOverlay />
-    </View>
-  );
-}
-
-// Content-only component for embedding in horizontal scroll
-export function ScreenTimeContent({ paddingTop = 0, onNavigateToReminders }: ScreenTimeContentProps) {
-  const { t } = useTranslation();
-  const { scaledFontSize, scaledButtonSize, scaledPadding, isTablet, contentMaxWidth } = useAccessibility();
-  const {
-    childAgeInMonths,
-    screenTimeEnabled,
-    notificationsEnabled,
-    hasRequestedNotificationPermission,
-    setNotificationPermissionRequested,
-  } = useAppStore();
-
-  const { todayUsage: contextTodayUsage } = useScreenTime();
-
-  const [stats, setStats] = useState<ScreenTimeStats | null>(null);
-  const [localChildAge, setLocalChildAge] = useState(childAgeInMonths);
-  const [localScreenTimeEnabled, setLocalScreenTimeEnabled] = useState(screenTimeEnabled);
-  const [localNotificationsEnabled, setLocalNotificationsEnabled] = useState(notificationsEnabled);
-
-  // Note: Save button removed - auto-save happens on account screen exit
-
-  useEffect(() => {
-    loadStats();
-  }, [childAgeInMonths]);
-
-  useEffect(() => {
-    // Refresh stats when context usage changes
-    loadStats();
-  }, [contextTodayUsage]);
-
-  const loadStats = async () => {
-    try {
-      const screenTimeService = ScreenTimeService.getInstance();
-      const screenTimeStats = await screenTimeService.getScreenTimeStats(childAgeInMonths);
-      setStats(screenTimeStats);
-    } catch (error) {
-      log.error('Failed to load stats:', error);
-    }
-  };
-
-  const handleToggleScreenTime = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setLocalScreenTimeEnabled(!localScreenTimeEnabled);
-  };
-
-  const handleToggleNotifications = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-
-    if (!localNotificationsEnabled && !hasRequestedNotificationPermission) {
-      const notificationService = NotificationService.getInstance();
-      const permissionStatus = await notificationService.requestPermissions();
-      setNotificationPermissionRequested(true);
-
-      if (permissionStatus.granted) {
-        setLocalNotificationsEnabled(true);
-        Alert.alert(t('screenTime.notificationsEnabled'));
-      } else {
-        Alert.alert(t('screenTime.permissionRequired'), t('screenTime.enableNotificationsInSettings'));
-      }
-    } else {
-      setLocalNotificationsEnabled(!localNotificationsEnabled);
-    }
-  };
-
-  const handleAgeChange = (newAge: number) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setLocalChildAge(newAge);
-  };
-
-  // Note: handleSaveSettings removed - auto-save happens on account screen exit
-
-  const formatTime = (seconds: number) => {
-    if (seconds === 0) return t('screenTime.noScreenTimeRecommended');
-    return formatDurationCompact(seconds);
-  };
-
-  const dayNames = [
-    t('screenTime.sun'),
-    t('screenTime.mon'),
-    t('screenTime.tue'),
-    t('screenTime.wed'),
-    t('screenTime.thu'),
-    t('screenTime.fri'),
-    t('screenTime.sat'),
-  ];
-
-  const getAgeRangeText = (ageInMonths: number) => {
-    if (ageInMonths < 24) return t('screenTime.age18to24months');
-    if (ageInMonths < 72) return t('screenTime.age2to6years');
-    return t('screenTime.age6plus');
-  };
-
-  const getGuidelinesText = (ageInMonths: number) => {
-    if (ageInMonths < 24) {
-      return t('screenTime.guidelines18to24');
-    }
-    if (ageInMonths < 72) {
-      return t('screenTime.guidelines2to6');
-    }
-    return t('screenTime.guidelines6plus');
-  };
-
-  const dailyLimit = useMemo(() => {
-    const screenTimeService = ScreenTimeService.getInstance();
-    return screenTimeService.getDailyLimit(localChildAge);
-  }, [localChildAge]);
-
-  const todayUsage = contextTodayUsage;
-  const usagePercentage = dailyLimit > 0 ? Math.min((todayUsage / dailyLimit) * 100, 100) : 0;
-
-  return (
-    <View style={{ flex: 1 }}>
-      <StarBackground />
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={[styles.content, { paddingTop }, isTablet && { alignItems: 'center' }]}
-      >
+        <ScrollView style={[styles.scrollView, { zIndex: 10 }]} contentContainerStyle={[styles.content, isTablet && { alignItems: 'center' }]}>
         <View style={isTablet ? { maxWidth: contentMaxWidth, width: '100%' } : undefined}>
-          {/* Today's Usage */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>{t('screenTime.todaysUsage')}</Text>
-
-          <View style={[styles.usageCard, { padding: scaledPadding(16) }]}>
-            <View style={styles.usageHeader}>
-              <View style={styles.usageTimeContainer}>
-                <Text style={[styles.usageTime, { fontSize: scaledFontSize(32) }]}>{formatTime(todayUsage)}</Text>
-                <Text style={[styles.usageLimit, { fontSize: scaledFontSize(14) }]}>{t('screenTime.of')} {formatTime(dailyLimit)}</Text>
-              </View>
-            </View>
-
-            <View style={styles.progressBar}>
-              <View
-                style={[
-                  styles.progressFill,
-                  {
-                    width: `${usagePercentage}%`,
-                    backgroundColor: usagePercentage > 90 ? '#EF4444' : usagePercentage > 70 ? '#F59E0B' : '#10B981'
-                  }
-                ]}
-              />
-            </View>
-
-            <Text style={[styles.usagePercentage, { fontSize: scaledFontSize(14) }]}>
-              {t('screenTime.ofDailyLimit', { percentage: usagePercentage.toFixed(0) })}
-            </Text>
-          </View>
-        </View>
-
-        {/* Age Settings */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>{t('screenTime.childsAge')}</Text>
-
-          <View style={styles.ageSelector}>
-            <Text style={[styles.currentAge, { fontSize: scaledFontSize(16) }]}>
-              {t('screenTime.current', { age: getAgeRangeText(localChildAge) })}
-            </Text>
-
-            <View style={styles.ageButtons}>
-              <Pressable
-                style={[styles.ageButton, { minHeight: scaledButtonSize(44), paddingVertical: scaledPadding(10), paddingHorizontal: scaledPadding(12) }, localChildAge < 24 && styles.ageButtonActive]}
-                onPress={() => handleAgeChange(20)}
-              >
-                <Text style={[styles.ageButtonText, { fontSize: scaledFontSize(14) }, localChildAge < 24 && styles.ageButtonTextActive]} numberOfLines={1} adjustsFontSizeToFit>
-                  {t('screenTime.age18to24m')}
-                </Text>
-              </Pressable>
-
-              <Pressable
-                style={[styles.ageButton, { minHeight: scaledButtonSize(44), paddingVertical: scaledPadding(10), paddingHorizontal: scaledPadding(12) }, localChildAge >= 24 && localChildAge < 72 && styles.ageButtonActive]}
-                onPress={() => handleAgeChange(36)}
-              >
-                <Text style={[styles.ageButtonText, { fontSize: scaledFontSize(14) }, localChildAge >= 24 && localChildAge < 72 && styles.ageButtonTextActive]} numberOfLines={1} adjustsFontSizeToFit>
-                  {t('screenTime.age2to6yrs')}
-                </Text>
-              </Pressable>
-
-              <Pressable
-                style={[styles.ageButton, { minHeight: scaledButtonSize(44), paddingVertical: scaledPadding(10), paddingHorizontal: scaledPadding(12) }, localChildAge >= 72 && styles.ageButtonActive]}
-                onPress={() => handleAgeChange(84)}
-              >
-                <Text style={[styles.ageButtonText, { fontSize: scaledFontSize(14) }, localChildAge >= 72 && styles.ageButtonTextActive]} numberOfLines={1} adjustsFontSizeToFit>
-                  {t('screenTime.age6plusYrs')}
-                </Text>
-              </Pressable>
-            </View>
-          </View>
-
-          <Text style={[styles.guidelines, { fontSize: scaledFontSize(14) }]}>
-            {getGuidelinesText(localChildAge)}
-          </Text>
-        </View>
-
-        {/* Weekly Activity Heatmap */}
-        {stats && stats.heatmapData && stats.heatmapData.length > 0 && (
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>{t('screenTime.weeklyActivityHeatmap')}</Text>
-
-            <View style={styles.chartContainer}>
-              <Text style={[styles.chartNote, { fontSize: scaledFontSize(14) }]}>
-                {t('screenTime.screenTimePatterns')}
-              </Text>
-
-              {/* Heatmap */}
-              <View style={styles.heatmapContainer}>
-                {/* Daily Bar Chart */}
-                <View style={styles.dailyBarChart}>
-                  {dayNames.map((dayName, dayIndex) => {
-                    const dayData = stats.heatmapData.find(data => data.day === dayIndex);
-                    const usage = dayData?.usage || 0;
-
-                    // Get age-appropriate daily limit for proper scaling
-                    // 18-24 months: 15 min, 2-6 years: 60 min, 6+ years: 120 min
-                    const ageBasedLimit = localChildAge < 24 ? 15 * 60 :
-                                     localChildAge < 72 ? 60 * 60 :
-                                     120 * 60;
-
-                    // Calculate percentage of limit used (can exceed 100%)
-                    const usagePercentage = ageBasedLimit > 0 ? (usage / ageBasedLimit) * 100 : 0;
-
-                    // 5 color thresholds evenly distributed:
-                    // 0-25%: Teal light, 25-50%: Teal medium, 50-75%: Teal bright (recommended)
-                    // 75-100%: Amber (approaching limit), >100%: Red (over limit)
-                    let backgroundColor: string;
-                    if (usage === 0) {
-                      backgroundColor = 'rgba(255, 255, 255, 0.05)';
-                    } else if (usagePercentage > 100) {
-                      // Over limit - Red
-                      backgroundColor = 'rgba(239, 68, 68, 1.0)';
-                    } else if (usagePercentage > 75) {
-                      // 75-100% - Amber (approaching limit)
-                      backgroundColor = 'rgba(255, 159, 67, 0.85)';
-                    } else if (usagePercentage > 50) {
-                      // 50-75% - Teal bright (recommended zone)
-                      backgroundColor = 'rgba(78, 205, 196, 1.0)';
-                    } else if (usagePercentage > 25) {
-                      // 25-50% - Teal medium
-                      backgroundColor = 'rgba(78, 205, 196, 0.6)';
-                    } else {
-                      // 0-25% - Teal light
-                      backgroundColor = 'rgba(78, 205, 196, 0.3)';
-                    }
-
-                    // Calculate fill percentage for bar height (capped at 100% for display)
-                    const fillPercentage = Math.min(usagePercentage, 100);
-                    const barFillHeight = Math.max(4, (fillPercentage / 100) * 100);
-
-                    return (
-                      <View key={dayIndex} style={styles.dailyBarContainer}>
-                        <Text style={[styles.dailyBarLabel, { fontSize: scaledFontSize(10) }]}>{dayName}</Text>
-                        <View style={styles.dailyBarWrapper}>
-                          <View style={styles.dailyBarBackground}>
-                            <View
-                              style={[
-                                styles.dailyBarFill,
-                                { backgroundColor, height: barFillHeight }
-                              ]}
-                            >
-                              {usage > 60 && (
-                                <Text style={[styles.dailyBarText, { fontSize: scaledFontSize(8) }]}>
-                                  {formatDurationCompact(usage)}
-                                </Text>
-                              )}
-                            </View>
-                          </View>
-                        </View>
-                      </View>
-                    );
-                  })}
-                </View>
-
-                {/* Legend - 5 cells: 0-25%, 25-50%, 50-75% (recommended), 75-100% (amber), >100% (red) */}
-                <View style={styles.heatmapLegend}>
-                  <Text style={[styles.heatmapLegendTitle, { fontSize: scaledFontSize(12) }]}>{t('screenTime.screenTimeLevel')}</Text>
-                  <View style={styles.heatmapLegendColorBar}>
-                    <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(78, 205, 196, 0.3)' }]} />
-                    <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(78, 205, 196, 0.6)' }]} />
-                    <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(78, 205, 196, 1.0)' }]} />
-                    <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(255, 159, 67, 0.85)' }]} />
-                    <View style={[styles.heatmapLegendCell, { backgroundColor: 'rgba(239, 68, 68, 1.0)' }]} />
-                  </View>
-                  {/* Arrow pointing to middle (recommended) cell */}
-                  <View style={styles.heatmapArrowContainer}>
-                    <Text style={[styles.heatmapArrow, { fontSize: scaledFontSize(12) }]}>▲</Text>
-                  </View>
-                  <View style={styles.heatmapLabelsRow}>
-                    <View style={styles.heatmapLabelContainer}>
-                      <Text style={[styles.heatmapLegendLabel, { fontSize: scaledFontSize(10) }]} numberOfLines={1}>{t('screenTime.noScreenTime')}</Text>
-                    </View>
-                    <View style={styles.heatmapLabelContainer}>
-                      <Text style={[styles.heatmapLegendLabel, { fontSize: scaledFontSize(10) }]} numberOfLines={1}>{t('screenTime.recommended')}</Text>
-                    </View>
-                    <View style={styles.heatmapLabelContainer}>
-                      <Text style={[styles.heatmapLegendLabel, { fontSize: scaledFontSize(10) }]} numberOfLines={1}>{t('screenTime.overLimit')}</Text>
-                    </View>
-                  </View>
-                </View>
-              </View>
-            </View>
-          </View>
-        )}
+        <UsageOverview
+          todayUsageSeconds={todayUsage}
+          dailyLimitSeconds={dailyLimit}
+          dailyTotals={dailyTotals}
+          dayNames={dayNames}
+        />
 
         {/* Create My Schedule */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>{t('screenTime.createMySchedule')}</Text>
-
-          <View style={styles.scheduleIntro}>
-            <Text style={[styles.scheduleIntroText, { fontSize: scaledFontSize(14) }]}>
-              {t('screenTime.scheduleIntro')}
-            </Text>
-          </View>
-
-          {onNavigateToReminders && (
-            <Pressable
-              style={[styles.createScheduleButton, { minHeight: scaledButtonSize(48), paddingVertical: scaledPadding(12), paddingHorizontal: scaledPadding(20) }]}
-              onPress={onNavigateToReminders}
-            >
-              <Text style={[styles.createScheduleButtonText, { fontSize: scaledFontSize(16) }]}>{t('screenTime.createCustomReminders')}</Text>
-            </Pressable>
-          )}
-
-          <View style={styles.recommendedTimes}>
-            <Text style={[styles.recommendedTimesTitle, { fontSize: scaledFontSize(16) }]}>{t('screenTime.recommendedTimes')}</Text>
-            <Text style={[styles.recommendedTimesText, { fontSize: scaledFontSize(14) }]}>
-              {t('screenTime.recommendedTimesIntro')}
-            </Text>
-
-            <View style={[styles.timeSlot, { paddingVertical: scaledPadding(8) }]}>
-              <Text style={[styles.timeSlotTime, { fontSize: scaledFontSize(14) }]}>9:00 AM - 10:00 AM</Text>
-              <Text style={[styles.timeSlotActivity, { fontSize: scaledFontSize(12) }]}>{t('screenTime.morningStoriesEmotions')}</Text>
-            </View>
-
-            <View style={[styles.timeSlot, { paddingVertical: scaledPadding(8) }]}>
-              <Text style={[styles.timeSlotTime, { fontSize: scaledFontSize(14) }]}>2:00 PM - 3:00 PM</Text>
-              <Text style={[styles.timeSlotActivity, { fontSize: scaledFontSize(12) }]}>{t('screenTime.afternoonLearning')}</Text>
-            </View>
-
-            <View style={[styles.timeSlot, { paddingVertical: scaledPadding(8) }]}>
-              <Text style={[styles.timeSlotTime, { fontSize: scaledFontSize(14) }]}>5:00 PM - 6:00 PM</Text>
-              <Text style={[styles.timeSlotActivity, { fontSize: scaledFontSize(12) }]}>{t('screenTime.preDinnerMusic')}</Text>
-            </View>
-          </View>
+          <ScheduleCallout
+            testID="screen-time-open-reminders"
+            stats={reminderStats}
+            onOpen={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setScheduleOpen(true);
+            }}
+          />
 
           <View style={[styles.bedtimeWarning, { padding: scaledPadding(12) }]}>
             <Text style={[styles.bedtimeWarningTitle, { fontSize: scaledFontSize(14) }]}>{t('screenTime.bedtimeGuidelines')}</Text>
@@ -1079,10 +416,11 @@ export function ScreenTimeContent({ paddingTop = 0, onNavigateToReminders }: Scr
             <View style={styles.settingInfo}>
               <Text style={[styles.settingLabel, { fontSize: scaledFontSize(16) }]}>{t('screenTime.screenTimeControls')}</Text>
               <Text style={[styles.settingDescription, { fontSize: scaledFontSize(12) }]}>
-                {t('screenTime.monitorAndLimit')}
+                {t('screenTime.screenTimeControlsDesc')}
               </Text>
             </View>
             <Pressable
+              testID="screen-time-toggle"
               style={[styles.toggle, localScreenTimeEnabled && styles.toggleActive]}
               onPress={handleToggleScreenTime}
             >
@@ -1094,10 +432,11 @@ export function ScreenTimeContent({ paddingTop = 0, onNavigateToReminders }: Scr
             <View style={styles.settingInfo}>
               <Text style={[styles.settingLabel, { fontSize: scaledFontSize(16) }]}>{t('screenTime.smartReminders')}</Text>
               <Text style={[styles.settingDescription, { fontSize: scaledFontSize(12) }]}>
-                {t('screenTime.receiveGentleNotifications')}
+                {t('screenTime.smartRemindersDesc')}
               </Text>
             </View>
             <Pressable
+              testID="screen-time-notifications-toggle"
               style={[styles.toggle, localNotificationsEnabled && styles.toggleActive]}
               onPress={handleToggleNotifications}
             >
@@ -1106,9 +445,170 @@ export function ScreenTimeContent({ paddingTop = 0, onNavigateToReminders }: Scr
           </View>
         </View>
 
-          {/* Save button removed - auto-save on exit from account screen */}
+        {/* Save Button - Only show when there are unsaved changes */}
+        {hasUnsavedChanges && (
+          <View style={styles.section}>
+            <Pressable
+              testID="screen-time-save"
+              style={[styles.saveButton, { minHeight: scaledButtonSize(48), paddingVertical: scaledPadding(14) }, isSaving && styles.saveButtonDisabled]}
+              onPress={handleSaveSettings}
+              disabled={isSaving}
+            >
+              <Text style={[styles.saveButtonText, { fontSize: scaledFontSize(16) }]}>
+                {isSaving ? t('screenTime.saving') : t('screenTime.saveSettings')}
+              </Text>
+            </Pressable>
+            <Text style={[styles.saveNote, { fontSize: scaledFontSize(12) }]}>
+              {t('screenTime.settingsSyncNote')}
+            </Text>
+          </View>
+        )}
+        </View>
+        </ScrollView>
+      </LinearGradient>
+
+      <ScheduleWindow
+        visible={scheduleOpen}
+        onClose={() => setScheduleOpen(false)}
+        onReminderChange={() => setReminderChangeCounter(prev => prev + 1)}
+      />
+
+      {/* Tips overlay for first-time visitors */}
+      <OwlGuide id="screen_time_tips" />
+    </View>
+  );
+}
+
+// Content-only component for embedding in horizontal scroll
+export function ScreenTimeContent({
+  paddingTop = 0,
+  onReminderChange,
+  showSchedule = true,
+  showBackdrop = true,
+  showGreeting = true,
+}: ScreenTimeContentProps) {
+  const { t } = useTranslation();
+  const { scaledFontSize, scaledPadding, isTablet, contentMaxWidth } = useAccessibility();
+  const { childAgeInMonths } = useAppStore();
+
+  const { todayUsage: contextTodayUsage } = useScreenTime();
+
+  const [stats, setStats] = useState<ScreenTimeStats | null>(null);
+  const [dailyTotals, setDailyTotals] = useState<DailyTotal[]>([]);
+  const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [reminderStats, setReminderStats] = useState<ReminderStats | null>(null);
+  const [reminderChangeCounter, setReminderChangeCounter] = useState(0);
+
+  // Keep the callout honest about what is actually scheduled.
+  useEffect(() => {
+    if (scheduleOpen) return;
+    let cancelled = false;
+    reminderService
+      .getReminderStats()
+      .then((next) => {
+        if (!cancelled) setReminderStats(next);
+      })
+      .catch((error) => log.warn('Failed to load reminder stats:', error));
+    return () => {
+      cancelled = true;
+    };
+  }, [scheduleOpen, reminderChangeCounter]);
+
+  useEffect(() => {
+    loadStats();
+  }, [childAgeInMonths]);
+
+  useEffect(() => {
+    // Refresh stats when context usage changes
+    loadStats();
+  }, [contextTodayUsage]);
+
+  const loadStats = async () => {
+    try {
+      const screenTimeService = ScreenTimeService.getInstance();
+      const screenTimeStats = await screenTimeService.getScreenTimeStats(childAgeInMonths);
+      setStats(screenTimeStats);
+      setDailyTotals(await screenTimeService.getDailyTotals(30));
+    } catch (error) {
+      log.error('Failed to load stats:', error);
+    }
+  };
+
+  // Note: handleSaveSettings removed - auto-save happens on account screen exit
+
+  const dayNames = [
+    t('screenTime.sun'),
+    t('screenTime.mon'),
+    t('screenTime.tue'),
+    t('screenTime.wed'),
+    t('screenTime.thu'),
+    t('screenTime.fri'),
+    t('screenTime.sat'),
+  ];
+
+  const dailyLimit = useMemo(() => {
+    const screenTimeService = ScreenTimeService.getInstance();
+    return screenTimeService.getDailyLimit(childAgeInMonths);
+  }, [childAgeInMonths]);
+
+  const todayUsage = contextTodayUsage;
+
+  return (
+    <View style={{ flex: 1 }}>
+      {/* night backing so the dashboard reads dark regardless of the host page */}
+      {showBackdrop && (
+        <LinearGradient
+          testID="screen-time-backdrop"
+          colors={AUTH_GRADIENT}
+          style={StyleSheet.absoluteFill}
+        />
+      )}
+      <StarBackground />
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={[styles.content, { paddingTop }, isTablet && { alignItems: 'center' }]}
+      >
+        <View style={isTablet ? { maxWidth: contentMaxWidth, width: '100%' } : undefined}>
+        <UsageOverview
+          todayUsageSeconds={todayUsage}
+          dailyLimitSeconds={dailyLimit}
+          dailyTotals={dailyTotals}
+          dayNames={dayNames}
+          showGreeting={showGreeting}
+        />
+
+        {/* Create My Schedule */}
+        {showSchedule && (
+          <View style={styles.section}>
+            <ScheduleCallout
+              testID="content-reminders"
+              stats={reminderStats}
+              onOpen={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setScheduleOpen(true);
+              }}
+            />
+
+            <View style={[styles.bedtimeWarning, { padding: scaledPadding(12) }]}>
+              <Text style={[styles.bedtimeWarningTitle, { fontSize: scaledFontSize(14) }]}>{t('screenTime.bedtimeGuidelines')}</Text>
+              <Text style={[styles.bedtimeWarningText, { fontSize: scaledFontSize(12) }]}>
+                {t('screenTime.bedtimeWarning')}
+              </Text>
+            </View>
+          </View>
+        )}
+
         </View>
       </ScrollView>
+
+      <ScheduleWindow
+        visible={scheduleOpen}
+        onClose={() => setScheduleOpen(false)}
+        onReminderChange={() => {
+          setReminderChangeCounter(prev => prev + 1);
+          onReminderChange?.();
+        }}
+      />
     </View>
   );
 }

@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Logger } from '@/utils/logger';
+import { rememberSearch } from '@/components/stories/catalogue/story-search';
 
 const log = Logger.create('Store');
 
@@ -20,6 +21,13 @@ export const BASIC_TIER_INSTRUMENTS = ['flute', 'recorder', 'ocarina'] as const;
 
 export type StoryViewMode = 'carousel' | 'grid';
 
+export interface StoryProgress {
+  pageIndex: number;
+  totalPages: number;
+  updatedAt: string;
+  completedCount: number;
+}
+
 export interface AppState {
   // App initialization
   isAppReady: boolean;
@@ -34,6 +42,9 @@ export interface AppState {
   /** Dev-only override: set to a tier to bypass real IAP checks during testing.
    *  Set to null to use the real subscription tier. NOT persisted. */
   _devSubscriptionOverride: SubscriptionTier | null;
+  /** The trial whose end-of-trial upgrade offer has already been answered,
+   *  keyed by the day it converts. Null while no trial has been answered. */
+  trialEndPromptSeenFor: string | null;
 
   // User profile (synced from backend)
   userNickname: string | null;
@@ -70,6 +81,11 @@ export interface AppState {
   favoriteStoryIds: string[]; // Array of story IDs that user has favorited
   // Activity favorites
   favoriteActivityIds: string[]; // Array of activity IDs that user has favorited
+  // Practice song favorites
+  favoriteSongIds: string[]; // Array of practice song IDs that user has favorited
+
+  /** What the child has searched for, newest first, capped by rememberSearch. */
+  recentSearches: string[];
 
   // Story read tracking
   readStoryIds: string[]; // Array of story IDs that user has opened/read
@@ -86,6 +102,13 @@ export interface AppState {
   storyViewMode: StoryViewMode;
   // Learning browse layout preference
   learningViewMode: StoryViewMode;
+
+  storyProgress: Record<string, StoryProgress>;
+  useHomeScene: boolean;
+
+  lastHomeVisitAt: string | null;
+  achievementUnlockedAt: Record<string, string>;
+  lastStoryCompletedAt: string | null;
 
   // Background animation state persistence
   backgroundAnimationState: {
@@ -119,17 +142,30 @@ export interface AppState {
   setTextSizeScale: (scale: number) => void;
   setSubscriptionTier: (tier: SubscriptionTier) => void;
   setDevSubscriptionOverride: (tier: SubscriptionTier | null) => void;
+  setTrialEndPromptSeenFor: (trialKey: string | null) => void;
   /** Returns the effective tier (dev override takes priority if set). */
   getEffectiveTier: () => SubscriptionTier;
   toggleFavoriteStory: (storyId: string) => void;
   isStoryFavorited: (storyId: string) => boolean;
   toggleFavoriteActivity: (activityId: string) => void;
   isActivityFavorited: (activityId: string) => boolean;
+  toggleFavoriteSong: (songId: string) => void;
+  isSongFavorited: (songId: string) => boolean;
   markStoryAsRead: (storyId: string) => void;
+  recordSearch: (term: string) => void;
+  clearRecentSearches: () => void;
   setLastRatingPromptBookCount: (count: number) => void;
   recordReadingSession: () => void; // Call when a story is opened to update streak
   setStoryViewMode: (mode: StoryViewMode) => void;
   setLearningViewMode: (mode: StoryViewMode) => void;
+
+  setStoryProgress: (storyId: string, pageIndex: number, totalPages: number) => void;
+  markStoryCompleted: (storyId: string) => void;
+  recordHomeVisit: (at: string) => void;
+  recordAchievementUnlocks: (badgeIds: string[], at: string) => void;
+  clearStoryProgress: (storyId: string) => void;
+  getContinueReadingStoryId: () => string | null;
+  setUseHomeScene: (enabled: boolean) => void;
 
   updateBackgroundAnimationState: (state: {
     cloudFloat1: number;
@@ -152,6 +188,7 @@ export const useAppStore = create<AppState>()(
       isGuestMode: false,
       subscriptionTier: 'free' as SubscriptionTier,
       _devSubscriptionOverride: null,
+      trialEndPromptSeenFor: null,
       userNickname: null,
       userAvatarType: null,
       userAvatarId: null,
@@ -169,6 +206,8 @@ export const useAppStore = create<AppState>()(
       textSizeScale: 1.0, // Default to normal size
       favoriteStoryIds: [], // Start with no favorites
       favoriteActivityIds: [], // Start with no activity favorites
+      favoriteSongIds: [], // Start with no song favorites
+      recentSearches: [],
       readStoryIds: [], // Start with no read stories
       lastRatingPromptBookCount: 0, // Never prompted for rating
       readingStreak: 0,
@@ -177,6 +216,11 @@ export const useAppStore = create<AppState>()(
       totalStoriesRead: 0,
       storyViewMode: 'carousel' as StoryViewMode,
       learningViewMode: 'carousel' as StoryViewMode,
+      storyProgress: {},
+      useHomeScene: true,
+      lastHomeVisitAt: null,
+      achievementUnlockedAt: {},
+      lastStoryCompletedAt: null,
 
       backgroundAnimationState: {
         cloudFloat1: -200,
@@ -224,6 +268,7 @@ export const useAppStore = create<AppState>()(
       }),
       setSubscriptionTier: (tier: SubscriptionTier) => set({ subscriptionTier: tier }),
       setDevSubscriptionOverride: (tier: SubscriptionTier | null) => set({ _devSubscriptionOverride: tier }),
+      setTrialEndPromptSeenFor: (trialKey: string | null) => set({ trialEndPromptSeenFor: trialKey }),
       getEffectiveTier: (): SubscriptionTier => {
         const s = get();
         return s._devSubscriptionOverride ?? s.subscriptionTier;
@@ -254,6 +299,21 @@ export const useAppStore = create<AppState>()(
       isActivityFavorited: (activityId: string) => {
         return get().favoriteActivityIds.includes(activityId);
       },
+      toggleFavoriteSong: (songId: string) => set((state) => {
+        const isFavorited = state.favoriteSongIds.includes(songId);
+        if (isFavorited) {
+          return { favoriteSongIds: state.favoriteSongIds.filter(id => id !== songId) };
+        } else {
+          return { favoriteSongIds: [...state.favoriteSongIds, songId] };
+        }
+      }),
+      isSongFavorited: (songId: string) => {
+        return get().favoriteSongIds.includes(songId);
+      },
+      recordSearch: (term: string) => set((state) => ({
+        recentSearches: rememberSearch(state.recentSearches, term),
+      })),
+      clearRecentSearches: () => set({ recentSearches: [] }),
       markStoryAsRead: (storyId: string) => set((state) => {
         if (state.readStoryIds.includes(storyId)) {
           return state; // Already marked as read
@@ -292,6 +352,64 @@ export const useAppStore = create<AppState>()(
       clearReturnToMainMenu: () => set({ shouldReturnToMainMenu: false }),
       setStoryViewMode: (mode: StoryViewMode) => set({ storyViewMode: mode }),
       setLearningViewMode: (mode: StoryViewMode) => set({ learningViewMode: mode }),
+      setStoryProgress: (storyId: string, pageIndex: number, totalPages: number) => set((state) => {
+        const existing = state.storyProgress[storyId];
+        return {
+          storyProgress: {
+            ...state.storyProgress,
+            [storyId]: {
+              pageIndex,
+              totalPages,
+              updatedAt: new Date().toISOString(),
+              completedCount: existing?.completedCount ?? 0,
+            },
+          },
+        };
+      }),
+      markStoryCompleted: (storyId: string) => set((state) => {
+        const existing = state.storyProgress[storyId];
+        const completedAt = new Date().toISOString();
+        return {
+          lastStoryCompletedAt: completedAt,
+          storyProgress: {
+            ...state.storyProgress,
+            [storyId]: {
+              pageIndex: 0,
+              totalPages: existing?.totalPages ?? 0,
+              updatedAt: completedAt,
+              completedCount: (existing?.completedCount ?? 0) + 1,
+            },
+          },
+        };
+      }),
+      recordHomeVisit: (at: string) => set({ lastHomeVisitAt: at }),
+      recordAchievementUnlocks: (badgeIds: string[], at: string) => set((state) => {
+        const unseen = badgeIds.filter((id) => !state.achievementUnlockedAt[id]);
+        if (unseen.length === 0) {
+          return state;
+        }
+        const stamped = { ...state.achievementUnlockedAt };
+        unseen.forEach((id) => {
+          stamped[id] = at;
+        });
+        return { achievementUnlockedAt: stamped };
+      }),
+      clearStoryProgress: (storyId: string) => set((state) => {
+        if (!state.storyProgress[storyId]) {
+          return state;
+        }
+        const remaining = { ...state.storyProgress };
+        delete remaining[storyId];
+        return { storyProgress: remaining };
+      }),
+      getContinueReadingStoryId: (): string | null => {
+        const entries = Object.entries(get().storyProgress)
+          .filter(([, progress]) => progress.pageIndex > 0 && progress.pageIndex < progress.totalPages)
+          .sort(([, a], [, b]) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt));
+
+        return entries.length > 0 ? entries[0][0] : null;
+      },
+      setUseHomeScene: (enabled: boolean) => set({ useHomeScene: enabled }),
       updateBackgroundAnimationState: (animationState: { cloudFloat1: number; cloudFloat2: number; rocketFloat1: number; rocketFloat2: number }) => set({ backgroundAnimationState: animationState }),
       clearPersistedStorage: async () => {
         try {
@@ -313,6 +431,7 @@ export const useAppStore = create<AppState>()(
         showLoginAfterOnboarding: state.showLoginAfterOnboarding,
         isGuestMode: state.isGuestMode,
         subscriptionTier: state.subscriptionTier,
+        trialEndPromptSeenFor: state.trialEndPromptSeenFor,
         userNickname: state.userNickname,
         userAvatarType: state.userAvatarType,
         userAvatarId: state.userAvatarId,
@@ -327,6 +446,8 @@ export const useAppStore = create<AppState>()(
         textSizeScale: state.textSizeScale,
         favoriteStoryIds: state.favoriteStoryIds,
         favoriteActivityIds: state.favoriteActivityIds,
+        favoriteSongIds: state.favoriteSongIds,
+        recentSearches: state.recentSearches,
         readStoryIds: state.readStoryIds,
         lastRatingPromptBookCount: state.lastRatingPromptBookCount,
         readingStreak: state.readingStreak,
@@ -335,6 +456,10 @@ export const useAppStore = create<AppState>()(
         totalStoriesRead: state.totalStoriesRead,
         storyViewMode: state.storyViewMode,
         learningViewMode: state.learningViewMode,
+        storyProgress: state.storyProgress,
+        lastHomeVisitAt: state.lastHomeVisitAt,
+        achievementUnlockedAt: state.achievementUnlockedAt,
+        lastStoryCompletedAt: state.lastStoryCompletedAt,
         backgroundAnimationState: state.backgroundAnimationState,
       }),
       onRehydrateStorage: () => (state, error) => {

@@ -1,0 +1,257 @@
+/**
+ * The splash logo, grown rather than faded in: the book is there from the first
+ * frame (it is what the native launch image shows), the stem rises out of it,
+ * the roots spread inside it, each leaf opens as the stem reaches it, and the
+ * wordmark arrives last.
+ */
+
+import React from 'react';
+import { render } from '@testing-library/react-native';
+import { useAnimatedStyle, useSharedValue, withDelay, withRepeat } from 'react-native-reanimated';
+import { AnimatedLogo } from '@/components/splash/animated-logo';
+import {
+  BOOK_HALVES,
+  SPLASH_LEAVES,
+  SPLASH_LOGO_LAYERS,
+  SPLASH_TIMELINE,
+  bookShiftX,
+  bookSpineOffset,
+  layerFrame,
+  spineFrame,
+  leafUnfurlDelayMs,
+} from '@/constants/splash-logo';
+
+jest.mock('@/components/splash/splash-logo-art', () => ({
+  SPLASH_LOGO_ART: {
+    bookLeft: { uri: 'test://bookLeft' },
+    bookRight: { uri: 'test://bookRight' },
+    roots: { uri: 'test://roots' },
+    stem: { uri: 'test://stem' },
+    leafLeft: { uri: 'test://leafLeft' },
+    leafRight: { uri: 'test://leafRight' },
+    leafTop: { uri: 'test://leafTop' },
+    wordmark: { uri: 'test://wordmark' },
+  },
+}));
+
+const SIZE = 280;
+const animatedStyle = useAnimatedStyle as unknown as jest.Mock;
+const sharedValue = useSharedValue as unknown as jest.Mock;
+const delay = withDelay as unknown as jest.Mock;
+const repeat = withRepeat as unknown as jest.Mock;
+
+type Rendered = ReturnType<typeof render>;
+
+function flatStyle(node: { props: { style?: unknown } }): Record<string, unknown> {
+  const flatten = (style: unknown): Record<string, unknown> => {
+    if (Array.isArray(style)) {
+      return style.reduce<Record<string, unknown>>((merged, part) => ({ ...merged, ...flatten(part) }), {});
+    }
+
+    return style && typeof style === 'object' ? (style as Record<string, unknown>) : {};
+  };
+
+  return flatten(node.props.style);
+}
+
+function styledNode(rendered: Rendered, testID: string) {
+  return rendered.UNSAFE_queryAllByProps({ testID }).filter((node) => node.props.style)[0];
+}
+
+function layerNode(rendered: Rendered, layer: string) {
+  return styledNode(rendered, `splash-logo-${layer}`);
+}
+
+function sourcesOf(rendered: Rendered): string[] {
+  return rendered.UNSAFE_root
+    .findAll((node: any) => node.props.source && typeof node.props.source.uri === 'string')
+    .map((node: any) => node.props.source.uri as string);
+}
+
+function transformOf(style: Record<string, unknown>, key: string): unknown {
+  const transform = (style.transform ?? []) as Record<string, unknown>[];
+
+  return transform.find((entry) => key in entry)?.[key];
+}
+
+describe('AnimatedLogo', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    animatedStyle.mockImplementation((worklet: () => unknown) => worklet());
+    sharedValue.mockImplementation((initial: number = 0) => React.useRef({ value: initial }).current);
+  });
+
+  afterEach(() => {
+    animatedStyle.mockImplementation(() => ({}));
+    sharedValue.mockImplementation((initial: number = 0) => ({ value: initial }));
+  });
+
+  it('should draw every layer of the logo from its own artwork', () => {
+    const underTest = render(<AnimatedLogo size={SIZE} playing={false} reduceMotion={false} />);
+
+    const sources = new Set(sourcesOf(underTest));
+
+    SPLASH_LOGO_LAYERS.forEach((layer) => {
+      expect(sources.has(`test://${layer}`)).toBe(true);
+    });
+  });
+
+  it.each(SPLASH_LOGO_LAYERS)('should place the %s layer where the logo has it', (layer) => {
+    const frame = layerFrame(layer, SIZE);
+
+    const underTest = render(<AnimatedLogo size={SIZE} playing={false} reduceMotion={false} />);
+
+    const style = flatStyle(layerNode(underTest, layer));
+    expect(style.left).toBeCloseTo(frame.left, 6);
+    expect(style.width).toBeCloseTo(frame.width, 6);
+  });
+
+  it('should open on the closed book alone, as the native launch image leaves it', () => {
+    const underTest = render(<AnimatedLogo size={SIZE} playing={false} reduceMotion={false} />);
+
+    expect(transformOf(flatStyle(layerNode(underTest, 'bookLeft')), 'scaleX')).toBe(-1);
+    expect(transformOf(flatStyle(layerNode(underTest, 'bookRight')), 'scaleX')).toBe(1);
+    expect(flatStyle(layerNode(underTest, 'spine')).opacity).toBe(1);
+    expect(transformOf(flatStyle(layerNode(underTest, 'book')), 'translateX')).toBeCloseTo(bookShiftX(0, SIZE), 6);
+    expect(flatStyle(layerNode(underTest, 'stem')).height).toBe(0);
+    expect(flatStyle(layerNode(underTest, 'roots')).height).toBe(0);
+    expect(flatStyle(layerNode(underTest, 'wordmark')).opacity).toBe(0);
+    SPLASH_LEAVES.forEach((leaf) => {
+      expect(transformOf(flatStyle(layerNode(underTest, leaf)), 'scale')).toBe(0);
+    });
+  });
+
+  it('should grow the stem up from the book and the roots down into it', () => {
+    const stem = layerFrame('stem', SIZE);
+    const roots = layerFrame('roots', SIZE);
+
+    const underTest = render(<AnimatedLogo size={SIZE} playing={false} reduceMotion={false} />);
+
+    const stemStyle = flatStyle(layerNode(underTest, 'stem'));
+    const rootsStyle = flatStyle(layerNode(underTest, 'roots'));
+    expect(stemStyle.bottom).toBeCloseTo(SIZE - (stem.top + stem.height), 6);
+    expect(stemStyle.top).toBeUndefined();
+    expect(stemStyle.overflow).toBe('hidden');
+    expect(rootsStyle.top).toBeCloseTo(roots.top, 6);
+    expect(rootsStyle.bottom).toBeUndefined();
+    expect(rootsStyle.overflow).toBe('hidden');
+  });
+
+  it('should fold each half of the book about the spine, not about its own middle', () => {
+    const underTest = render(<AnimatedLogo size={SIZE} playing={false} reduceMotion={false} />);
+
+    BOOK_HALVES.forEach((half) => {
+      const transform = (flatStyle(layerNode(underTest, half)).transform ?? []) as Record<string, number>[];
+      const shifts = transform.filter((entry) => 'translateX' in entry).map((entry) => entry.translateX);
+
+      expect(shifts).toEqual([bookSpineOffset(half, SIZE), -bookSpineOffset(half, SIZE)]);
+      expect(bookSpineOffset(half, SIZE)).not.toBe(0);
+    });
+  });
+
+  it('should draw the closed book its spine where the two halves meet', () => {
+    const frame = spineFrame(SIZE);
+
+    const underTest = render(<AnimatedLogo size={SIZE} playing={false} reduceMotion={false} />);
+
+    const style = flatStyle(layerNode(underTest, 'spine'));
+    expect(style.left).toBeCloseTo(frame.left, 6);
+    expect(style.top).toBeCloseTo(frame.top, 6);
+    expect(style.height).toBeCloseTo(frame.height, 6);
+  });
+
+  it('should open the book first', () => {
+    render(<AnimatedLogo size={SIZE} playing reduceMotion={false} />);
+
+    const delays = delay.mock.calls.map(([ms]) => ms as number);
+
+    expect(delays).toContain(SPLASH_TIMELINE.book.delayMs);
+    expect(Math.min(...delays)).toBe(SPLASH_TIMELINE.book.delayMs);
+  });
+
+  it('should wait to be told before it starts', () => {
+    render(<AnimatedLogo size={SIZE} playing={false} reduceMotion={false} />);
+
+    expect(delay).not.toHaveBeenCalled();
+    expect(repeat).not.toHaveBeenCalled();
+  });
+
+  it('should open each leaf as the stem reaches it', () => {
+    render(<AnimatedLogo size={SIZE} playing reduceMotion={false} />);
+
+    const delays = delay.mock.calls.map(([ms]) => ms as number);
+
+    SPLASH_LEAVES.forEach((leaf) => {
+      expect(delays).toContain(leafUnfurlDelayMs(leaf));
+    });
+    expect(delays).toContain(SPLASH_TIMELINE.stem.delayMs);
+    expect(delays).toContain(SPLASH_TIMELINE.roots.delayMs);
+    expect(delays).toContain(SPLASH_TIMELINE.wordmark.delayMs);
+  });
+
+  it('should leave the leaves swaying once they are open', () => {
+    render(<AnimatedLogo size={SIZE} playing reduceMotion={false} />);
+
+    expect(repeat).toHaveBeenCalledTimes(1);
+    expect(repeat.mock.calls[0][1]).toBe(-1);
+  });
+
+  it('should land as the logo exactly', () => {
+    const underTest = render(<AnimatedLogo size={SIZE} playing reduceMotion={false} testID="first" />);
+
+    underTest.rerender(<AnimatedLogo size={SIZE} playing reduceMotion={false} testID="landed" />);
+
+    expect(flatStyle(layerNode(underTest, 'stem')).height).toBeCloseTo(layerFrame('stem', SIZE).height, 6);
+    expect(flatStyle(layerNode(underTest, 'roots')).height).toBeCloseTo(layerFrame('roots', SIZE).height, 6);
+    expect(flatStyle(layerNode(underTest, 'wordmark')).opacity).toBe(1);
+    expect(transformOf(flatStyle(layerNode(underTest, 'wordmark')), 'translateY')).toBe(0);
+    BOOK_HALVES.forEach((half) => {
+      expect(transformOf(flatStyle(layerNode(underTest, half)), 'scaleX')).toBe(1);
+    });
+    expect(flatStyle(layerNode(underTest, 'spine')).opacity).toBe(0);
+    expect(transformOf(flatStyle(layerNode(underTest, 'book')), 'translateX')).toBe(0);
+    SPLASH_LEAVES.forEach((leaf) => {
+      const style = flatStyle(layerNode(underTest, leaf));
+
+      expect(transformOf(style, 'scale')).toBe(1);
+    });
+  });
+
+  describe('with reduce motion on', () => {
+    it('should show the whole logo without growing or swaying it', () => {
+      const underTest = render(<AnimatedLogo size={SIZE} playing reduceMotion testID="first" />);
+
+      underTest.rerender(<AnimatedLogo size={SIZE} playing reduceMotion testID="settled" />);
+
+      expect(delay).not.toHaveBeenCalled();
+      expect(repeat).not.toHaveBeenCalled();
+      expect(flatStyle(layerNode(underTest, 'stem')).height).toBeCloseTo(layerFrame('stem', SIZE).height, 6);
+      BOOK_HALVES.forEach((half) => {
+        expect(transformOf(flatStyle(layerNode(underTest, half)), 'scaleX')).toBe(1);
+      });
+      expect(flatStyle(layerNode(underTest, 'spine')).opacity).toBe(0);
+      SPLASH_LEAVES.forEach((leaf) => {
+        const style = flatStyle(layerNode(underTest, leaf));
+
+        expect(transformOf(style, 'scale')).toBe(1);
+        expect(transformOf(style, 'rotate')).toBe('0deg');
+      });
+    });
+  });
+
+  describe('on a tablet', () => {
+    const TABLET_SIZE = 380;
+
+    it('should start at the size of the native launch image and grow into its own', () => {
+      const underTest = render(<AnimatedLogo size={TABLET_SIZE} playing={false} reduceMotion={false} testID="logo" />);
+
+      const before = transformOf(flatStyle(styledNode(underTest, 'logo')), 'scale');
+      underTest.rerender(<AnimatedLogo size={TABLET_SIZE} playing reduceMotion={false} testID="logo" />);
+      underTest.rerender(<AnimatedLogo size={TABLET_SIZE} playing reduceMotion={false} testID="logo" />);
+      const after = transformOf(flatStyle(styledNode(underTest, 'logo')), 'scale');
+
+      expect(before).toBeCloseTo(280 / 380, 6);
+      expect(after).toBe(1);
+    });
+  });
+});

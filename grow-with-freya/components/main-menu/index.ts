@@ -4,7 +4,6 @@ export {
   Cloud1,
   Cloud2,
   BearImage,
-  BearTopImage,
   MoonImage,
   MoonBottomImage,
 } from './animated-components';

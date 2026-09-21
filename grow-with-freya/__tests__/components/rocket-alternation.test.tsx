@@ -1,7 +1,7 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
 import { MainMenu } from '../../components/main-menu';
-import { useAppStore } from '../../store/app-store';
+import { useAppStore, type AppState } from '../../store/app-store';
 import { ScreenTimeProvider } from '../../components/screen-time/screen-time-provider';
 
 // Mock the store
@@ -16,9 +16,20 @@ const mockUseAppStore = useAppStore as jest.MockedFunction<typeof useAppStore>;
 describe('Main Menu Performance Tests', () => {
   const mockOnNavigate = jest.fn();
 
+  let state: Partial<AppState>;
+
+  // the store is read both bare and via selectors, so the mock has to honour a
+  // selector argument the way zustand does
+  const applyState = (next: Partial<AppState>) => {
+    state = next;
+    mockUseAppStore.mockImplementation(((selector?: (s: AppState) => unknown) =>
+      typeof selector === 'function' ? selector(state as AppState) : state
+    ) as unknown as typeof useAppStore);
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
-    mockUseAppStore.mockReturnValue({
+    applyState({
       backgroundAnimationState: {
         cloudFloat1: -200,
         cloudFloat2: -400,
@@ -37,116 +48,118 @@ describe('Main Menu Performance Tests', () => {
       getEffectiveTier: () => 'free',
       setAppReady: jest.fn(),
       setOnboardingComplete: jest.fn(),
-      setCurrentChildId: jest.fn(),
+      setCurrentChild: jest.fn(),
       setCurrentScreen: jest.fn(),
       setLoading: jest.fn(),
       setShowLoginAfterOnboarding: jest.fn(),
       requestReturnToMainMenu: jest.fn(),
       clearReturnToMainMenu: jest.fn(),
+      // these cloud animations belong to the legacy menu, not the home scene
+      useHomeScene: false,
+      storyProgress: {},
+      getContinueReadingStoryId: jest.fn(() => null),
     });
   });
 
+  const renderMenu = () =>
+    render(
+      <ScreenTimeProvider>
+        <MainMenu onNavigate={mockOnNavigate} />
+      </ScreenTimeProvider>
+    );
+
+  // the menu writes cloud positions and the rocket values in its unmount
+  // cleanup, so that payload is the observable evidence of what it animates
+  const persistedOnUnmount = (): Record<string, number> => {
+    const update = jest.fn();
+    applyState({ ...state, updateBackgroundAnimationState: update });
+
+    renderMenu().unmount();
+
+    return update.mock.calls[0][0] as Record<string, number>;
+  };
+
   describe('Performance Optimization', () => {
     it('should render without rocket animations for optimal performance', () => {
-      // Rockets have been completely removed per user request
-      const { root } = render(
-        <ScreenTimeProvider>
-          <MainMenu onNavigate={mockOnNavigate} />
-        </ScreenTimeProvider>
-      );
-      expect(root).toBeTruthy();
+      const { toJSON } = renderMenu();
 
-      // The main menu should render successfully without any rocket animations
-      // This ensures optimal performance with no rocket-related overhead
+      expect(JSON.stringify(toJSON())).toContain('main-menu-container');
     });
 
     it('should handle static rocket values in state persistence', () => {
-      const store = mockUseAppStore();
-
-      // Verify rocket positions are static values (no animation)
-      expect(store.backgroundAnimationState.rocketFloat1).toBe(1000); // Static off-screen
-      expect(store.backgroundAnimationState.rocketFloat2).toBe(-200); // Static off-screen
-
-      const { root } = render(
-        <ScreenTimeProvider>
-          <MainMenu onNavigate={mockOnNavigate} />
-        </ScreenTimeProvider>
-      );
-      expect(root).toBeTruthy();
+      // hard-coded in the menu because rockets were removed -- if either ever
+      // becomes animated again these stop being constants
+      expect(persistedOnUnmount()).toMatchObject({
+        rocketFloat1: 1000,
+        rocketFloat2: -200,
+      });
     });
   });
 
   describe('Cloud Animation Integrity', () => {
     it('should maintain cloud animations without rocket interference', () => {
-      const { root } = render(
-        <ScreenTimeProvider>
-          <MainMenu onNavigate={mockOnNavigate} />
-        </ScreenTimeProvider>
-      );
-      expect(root).toBeTruthy();
+      const persisted = persistedOnUnmount();
 
-      // Cloud animations should work independently without rocket complexity
+      expect(Number.isFinite(persisted.cloudFloat1)).toBe(true);
+      expect(Number.isFinite(persisted.cloudFloat2)).toBe(true);
+      expect(persisted.rocketFloat1).toBe(1000);
+      expect(persisted.rocketFloat2).toBe(-200);
     });
 
     it('should handle animation resume for clouds only', () => {
-      // Test with different cloud positions
-      mockUseAppStore.mockReturnValue({
-        ...mockUseAppStore(),
+      // the menu always starts clouds from its own off-screen constants and
+      // never reads backgroundAnimationState, so a stored mid-animation
+      // position must not leak into what it writes back
+      applyState({
+        ...state,
         backgroundAnimationState: {
-          cloudFloat1: -100, // Mid-animation position
-          cloudFloat2: -300, // Different position
-          rocketFloat1: 1000, // Static
-          rocketFloat2: -200, // Static
+          cloudFloat1: -100,
+          cloudFloat2: -300,
+          rocketFloat1: 1000,
+          rocketFloat2: -200,
         },
       });
 
-      const { root } = render(
-        <ScreenTimeProvider>
-          <MainMenu onNavigate={mockOnNavigate} />
-        </ScreenTimeProvider>
-      );
-      expect(root).toBeTruthy();
+      const persisted = persistedOnUnmount();
 
-      // Component should handle cloud resume logic without rocket complexity
+      expect(persisted.cloudFloat1).not.toBe(-100);
+      expect(persisted.cloudFloat2).not.toBe(-300);
+      expect(Number.isFinite(persisted.cloudFloat1)).toBe(true);
     });
   });
 
   describe('Render Stability', () => {
     it('should maintain consistent rendering across re-renders', () => {
-      const { root, rerender } = render(
-        <ScreenTimeProvider>
-          <MainMenu onNavigate={mockOnNavigate} />
-        </ScreenTimeProvider>
-      );
-      expect(root).toBeTruthy();
+      const { toJSON, rerender } = renderMenu();
+      const first = JSON.stringify(toJSON());
 
-      // Re-render should not break the animation sequence
       rerender(
         <ScreenTimeProvider>
           <MainMenu onNavigate={mockOnNavigate} />
         </ScreenTimeProvider>
       );
-      expect(root).toBeTruthy();
+
+      expect(JSON.stringify(toJSON())).toBe(first);
     });
 
     it('should handle edge cases in cloud positioning', () => {
-      // Test with clouds at boundary positions
-      mockUseAppStore.mockReturnValue({
-        ...mockUseAppStore(),
+      // the menu guards on isFinite before saving, so absurd stored positions
+      // must never reach the persisted payload
+      applyState({
+        ...state,
         backgroundAnimationState: {
-          cloudFloat1: -1000, // Far off-screen
-          cloudFloat2: 2000,  // Far off-screen opposite
-          rocketFloat1: 1000, // Static
-          rocketFloat2: -200, // Static
+          cloudFloat1: -1000,
+          cloudFloat2: 2000,
+          rocketFloat1: 1000,
+          rocketFloat2: -200,
         },
       });
 
-      const { root } = render(
-        <ScreenTimeProvider>
-          <MainMenu onNavigate={mockOnNavigate} />
-        </ScreenTimeProvider>
-      );
-      expect(root).toBeTruthy();
+      const persisted = persistedOnUnmount();
+
+      expect(Number.isFinite(persisted.cloudFloat1)).toBe(true);
+      expect(Number.isFinite(persisted.cloudFloat2)).toBe(true);
+      expect(persisted.cloudFloat2).not.toBe(2000);
     });
   });
 });

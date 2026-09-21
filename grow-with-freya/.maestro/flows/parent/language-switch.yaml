@@ -1,0 +1,26 @@
+appId: com.growwithfreya.app
+tags:
+  - smoke
+name: The flag on home switches the app's language, and it sticks
+---
+- runFlow:
+    file: ../../helpers/start-seeded.yaml
+    env:
+      SEED: "onboarded=1&guest=1&tutorials=done&screenTime=reset&language=en&tier=free"
+- tapOn:
+    id: "home-language-button"
+- assertVisible:
+    id: "language-picker"
+- tapOn:
+    id: "language-option-de"
+- assertNotVisible:
+    id: "language-picker"
+- stopApp
+- launchApp
+- runFlow: ../../helpers/dismiss-interruptions.yaml
+- extendedWaitUntil:
+    visible: "Fortschritt"
+    timeout: 90000
+# English is not restored here: every flow seeds the language it wants, and
+# reaching for the flag again needs the corner controls to be in the tree,
+# which is the one thing that is not dependable straight after a relaunch.

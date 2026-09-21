@@ -3,9 +3,10 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native
 import { StatusBar } from 'expo-status-bar';
 import { AppState, AppStateStatus, BackHandler, Dimensions, View, Platform, DevSettings, Alert, StyleSheet } from 'react-native';
 import * as ScreenOrientation from 'expo-screen-orientation';
+import * as SystemUI from 'expo-system-ui';
 
 import 'react-native-reanimated';
-import { configureReanimatedLogger, ReanimatedLogLevel } from 'react-native-reanimated';
+import Animated, { configureReanimatedLogger, ReanimatedLogLevel } from 'react-native-reanimated';
 import * as StoreReview from 'expo-store-review';
 // Initialize i18n service - must be imported before components that use translations
 import '@/services/i18n';
@@ -14,18 +15,24 @@ import '@/services/i18n';
 import '@/services/notification-service';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAppStore } from '@/store/app-store';
+import { useShallow } from 'zustand/react/shallow';
 import { Logger } from '@/utils/logger';
 import { useBackgroundMusic } from '@/hooks/use-background-music';
+import { applyDefaultOrientation } from '@/hooks/use-story-orientation';
 import { AppSplashScreen } from '@/components/splash-screen';
 import { OnboardingFlow } from '@/components/onboarding/onboarding-flow';
 import { LoginScreen } from '@/components/auth/login-screen';
+import { AUTH_GRADIENT } from '@/components/auth/auth-theme';
 import { AccountScreen } from '@/components/account/account-screen';
+import { accountReturnPage } from '@/constants/page-slide';
 import { MainMenu, suppressNextContainerFadeIn } from '@/components/main-menu';
 import { suppressNextCarouselAnimation } from '@/components/main-menu/menu-carousel';
 import { ApiClient } from '@/services/api-client';
 import { SecureStorage } from '@/services/secure-storage';
 import { backgroundSaveService } from '@/services/background-save-service';
 import { SimpleStoryScreen } from '@/components/stories/simple-story-screen';
+import type { CatalogueSectionRequest } from '@/components/stories/catalogue/story-catalogue-screen';
+import { catalogueSectionFor } from '@/constants/catalogue-destinations';
 import { StoryBookReader } from '@/components/stories/story-book-reader';
 import { PractiseScreen } from '@/components/music/practise-screen';
 import { FreeplayScreen } from '@/components/music/freeplay-screen';
@@ -36,10 +43,15 @@ import { ScreenTimeProvider } from '@/components/screen-time/screen-time-provide
 import { Story } from '@/types/story';
 import { preloadCriticalImages, preloadSecondaryImages } from '@/services/image-preloader';
 import { EnhancedPageTransition } from '@/components/ui/enhanced-page-transition';
+import { JourneyBarProvider, JourneyBarOutlet } from '@/components/child-ui/journey-bar-slot';
+import { OwlGuideLayer, OwlGuideLayerProvider, guidePages } from '@/components/owl-guide/owl-guide-layer';
+import { PAGE_TRANSITION_DURATION_MS, SLIDE_AFTER_SECTION_SWITCH_MS } from '@/constants/page-transition';
+
+const PREWARMED_PAGES = ['stories'] as const;
 import { StoryTransitionProvider, useStoryTransition } from '@/contexts/story-transition-context';
 import { ActivityTransitionProvider, useActivityTransition } from '@/contexts/ActivityTransitionContext';
 import { GlobalSoundProvider } from '@/contexts/global-sound-context';
-import { TutorialProvider } from '@/contexts/tutorial-context';
+import { OwlGuideProvider } from '@/contexts/owl-guide-context';
 import { updateSentryConsent } from '@/services/sentry-service';
 import { AnalyticsService } from '@/services/analytics-service';
 import i18n from '@/services/i18n';
@@ -52,6 +64,9 @@ import { VersionManager } from '@/services/version-manager';
 // Import reminder service to trigger initialization and reschedule notifications on app startup
 import { reminderService } from '@/services/reminder-service';
 import { initialize as initSubscriptions } from '@/services/subscription-service';
+import Constants from 'expo-constants';
+import { isE2eAllowed } from '@/services/e2e-state';
+import { useE2eLinks } from '@/hooks/use-e2e-links';
 
 // Disable Reanimated strict mode warnings -our shared value reads are all inside
 // useAnimatedStyle / useDerivedValue, but Reanimated's heuristic still fires false positives.
@@ -86,7 +101,7 @@ export default function RootLayout() {
   return (
     <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
       <GlobalSoundProvider>
-        <TutorialProvider>
+        <OwlGuideProvider>
           <ScreenTimeProvider>
             <StoryTransitionProvider>
               <ActivityTransitionProvider>
@@ -94,14 +109,25 @@ export default function RootLayout() {
               </ActivityTransitionProvider>
             </StoryTransitionProvider>
           </ScreenTimeProvider>
-        </TutorialProvider>
+        </OwlGuideProvider>
       </GlobalSoundProvider>
     </View>
   );
 }
 
 // Main app content that can access the story transition context
+// The root view behind every React view. iOS shows it in the corners while the
+// screen turns, so it wears the night navy the story opening's veil uses --
+// otherwise the turn flashes navy-on-black.
+const ROOT_BACKGROUND = '#0A0F2C';
+
 function AppContent() {
+  useE2eLinks(isE2eAllowed(__DEV__, Constants.expoConfig?.extra));
+
+  useEffect(() => {
+    SystemUI.setBackgroundColorAsync(ROOT_BACKGROUND).catch(() => undefined);
+  }, []);
+
   // Access story transition context to know when to show story reader
   const {
     selectedStory: transitionStory,
@@ -109,7 +135,10 @@ function AppContent() {
     selectedVoiceOver: transitionVoiceOver,
     setOnBeginCallback,
     setOnReturnToModeSelectionCallback,
-    setOnCancelCallback
+    setOnCancelCallback,
+    storyOpenRequest,
+    clearStoryOpen,
+    readerRevealStyle,
   } = useStoryTransition();
 
   // Access activity transition context for learning game transitions
@@ -136,9 +165,24 @@ function AppContent() {
     setCurrentScreen,
     shouldReturnToMainMenu,
     clearReturnToMainMenu
-  } = useAppStore();
+  } = useAppStore(
+    useShallow((state) => ({
+      isAppReady: state.isAppReady,
+      hasHydrated: state.hasHydrated,
+      hasCompletedOnboarding: state.hasCompletedOnboarding,
+      showLoginAfterOnboarding: state.showLoginAfterOnboarding,
+      isGuestMode: state.isGuestMode,
+      crashReportingEnabled: state.crashReportingEnabled,
+      setOnboardingComplete: state.setOnboardingComplete,
+      setShowLoginAfterOnboarding: state.setShowLoginAfterOnboarding,
+      setGuestMode: state.setGuestMode,
+      setCurrentScreen: state.setCurrentScreen,
+      shouldReturnToMainMenu: state.shouldReturnToMainMenu,
+      clearReturnToMainMenu: state.clearReturnToMainMenu,
+    }))
+  );
 
-  const { consentTimestamp } = useAppStore();
+  const consentTimestamp = useAppStore((state) => state.consentTimestamp);
 
   // Initialize or disable Sentry based on user consent
   // This runs after store hydration and whenever consent changes
@@ -169,7 +213,11 @@ function AppContent() {
   type PageKey = 'main' | 'stories' | 'story-reader' | 'account' | 'practise' | 'freeplay' | 'spelling' | 'numbers' | 'feelings' | 'spelling-game';
 
   const [currentView, setCurrentView] = useState<AppView>('splash');
+  // The splash stays over whichever page the app opens on until it has faded off it
+  const [splashGone, setSplashGone] = useState(false);
+  const handleSplashGone = useCallback(() => setSplashGone(true), []);
   const [currentPage, setCurrentPage] = useState<PageKey>('main');
+  const accountOpenedFromRef = useRef<PageKey>('main');
   const [selectedStory, setSelectedStory] = useState<Story | null>(null);
   // Story being read - kept separate so it persists during book closing animation
   const [storyBeingRead, setStoryBeingRead] = useState<Story | null>(null);
@@ -202,16 +250,7 @@ function AppContent() {
   useEffect(() => {
     const initializeOrientation = async () => {
       try {
-        const { width, height } = Dimensions.get('window');
-        const isTablet = Math.min(width, height) >= 768; // iPad and larger
-
-        if (isTablet) {
-          // Allow all orientations on tablets
-          await ScreenOrientation.unlockAsync();
-        } else {
-          // Lock to portrait orientation for phones
-          await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
-        }
+        await applyDefaultOrientation();
       } catch (error) {
         log.warn('Failed to initialize orientation:', error);
       }
@@ -224,17 +263,8 @@ function AppContent() {
   useEffect(() => {
     const handleOrientation = async () => {
       try {
-        const { width, height } = Dimensions.get('window');
-        const isTablet = Math.min(width, height) >= 768;
-
         if (currentView !== 'story-reader') {
-          if (isTablet) {
-            // Allow all orientations on tablets
-            await ScreenOrientation.unlockAsync();
-          } else {
-            // Lock to portrait on phones
-            await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
-          }
+          await applyDefaultOrientation();
         }
       } catch (error) {
         log.warn('Failed to set orientation:', error);
@@ -524,6 +554,18 @@ function AppContent() {
     };
   }, [transitionStory, setOnBeginCallback]);
 
+  // A caller that ran its own opening ritual asks for the reader directly
+  useEffect(() => {
+    if (!storyOpenRequest) {
+      return;
+    }
+
+    setStoryBeingRead(storyOpenRequest.story);
+    setShowStoryReader(true);
+    setCurrentView('story-reader');
+    clearStoryOpen();
+  }, [storyOpenRequest, clearStoryOpen]);
+
   // Register callback for when returning to mode selection from story reader
   useEffect(() => {
     const handleReturnToModeSelection = () => {
@@ -628,6 +670,8 @@ function AppContent() {
 
   // Track the selected story mode (interactive / music / classic) from main menu
   const [selectedStoryMode, setSelectedStoryMode] = useState<string | null>(null);
+  // Which catalogue section the home asked for; the key makes a repeat request re-apply
+  const [storiesSection, setStoriesSection] = useState<CatalogueSectionRequest>({ section: 'home', key: 0 });
   // When set, MainMenu should show the specified sub-menu instead of the main carousel
   const [returnToSubMenu, setReturnToSubMenu] = useState<'stories' | 'instruments' | 'learning' | null>(null);
 
@@ -645,6 +689,9 @@ function AppContent() {
 
     const destinationMap: Record<string, PageKey> = {
       'stories': 'stories',
+      'progress': 'stories',
+      'search': 'stories',
+      'profile': 'stories',
       'account': 'account',
       'practise': 'practise',
       'freeplay': 'freeplay',
@@ -657,16 +704,30 @@ function AppContent() {
     if (pageKey) {
       // When navigating to plain 'stories' (not via a mode card), clear any
       // previously selected story mode so all stories are visible.
-      if (destination === 'stories') {
+      const section = catalogueSectionFor(destination);
+      if (section) {
         setSelectedStoryMode(null);
+        setStoriesSection((current) => ({ section, key: current.key + 1 }));
+        setTimeout(() => {
+          setCurrentPage(pageKey);
+          setCurrentScreen(destination);
+        }, SLIDE_AFTER_SECTION_SWITCH_MS);
+        return;
       }
+      if (pageKey === 'account') accountOpenedFromRef.current = currentPage;
       setCurrentPage(pageKey);
       setCurrentScreen(destination);
     }
   };
 
   const handleAccountBack = () => {
-    setCurrentPage('main');
+    setCurrentPage(accountReturnPage(accountOpenedFromRef.current));
+  };
+
+  const handleOpenGrownUps = () => {
+    accountOpenedFromRef.current = currentPage;
+    setCurrentPage('account');
+    setCurrentScreen('account');
   };
 
 
@@ -818,138 +879,163 @@ function AppContent() {
     return () => subscription.remove();
   }, [currentView, handleHardwareBack]);
 
-  if (currentView === 'splash') {
-    return <AppSplashScreen />;
-  }
-
-  if (currentView === 'onboarding') {
-    return <OnboardingFlow onComplete={handleOnboardingComplete} />;
-  }
-
-  // Login and loading views are combined so the LoginScreen instance stays mounted
-  // during the loading overlay's slide-in -preventing a flash when transitioning.
-  if (currentView === 'login' || currentView === 'loading') {
-    if (currentView === 'loading') {
-      syncInProgressRef.current = true;
-    }
-    return (
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <View style={{ flex: 1 }}>
-          {/* Login screen -stays mounted during both 'login' and 'loading' views.
-              During loading, it sits behind the overlay until the slide-in covers it,
-              then gets unmounted once the overlay is fully opaque (onSlideInComplete). */}
-          {(currentView === 'login' || showLoginBehindLoading) && (
-            <View style={StyleSheet.absoluteFill}>
-              <LoginScreen onSuccess={handleLoginSuccess} onSkip={handleLoginSkip} />
-            </View>
-          )}
-
-          {/* MainMenu mounted after the overlay fully covers the screen.
-              disableTutorial prevents tips appearing before the menu is revealed.
-              entranceDelay keeps carousel buttons hidden until the slide-up reveal. */}
-          {loadingMenuReady && (
-            <MainMenu
-              onNavigate={handleMainMenuNavigate}
-              isActive={false}
-              disableTutorial={true}
-              entranceDelay={500}
-            />
-          )}
-
-          {/* Loading overlay (zIndex 10) -slides down over login, then up to reveal menu */}
-          {currentView === 'loading' && (
-            <StartupLoadingScreen
-              onSlideInComplete={() => {
-                log.info('[Layout] Loading slide-in done -swapping login for main menu');
-                setShowLoginBehindLoading(false);
-                setLoadingMenuReady(true);
-              }}
-              onComplete={() => {
-                syncInProgressRef.current = false;
-                justLoggedInRef.current = false;
-                // Suppress carousel re-animation and container fade when MainMenu remounts in 'app' view
-                suppressNextCarouselAnimation();
-                suppressNextContainerFadeIn();
-                log.info('[Layout] Sync complete - transitioning to main menu');
-                setCurrentView('app');
-                setCurrentPage('main');
-                // Delay unmounting the loading MainMenu so the app-view MainMenu has time
-                // to mount and render its images from cache -prevents a visible flicker
-                // where strip images briefly disappear and re-decode between the two mounts.
-                setTimeout(() => setLoadingMenuReady(false), 500);
-              }}
-            />
-          )}
+  return (
+    <View style={{ flex: 1 }}>
+      {renderView()}
+      {!splashGone && (
+        <View style={[StyleSheet.absoluteFill, { zIndex: 5000 }]}>
+          <AppSplashScreen leaving={currentView !== 'splash'} onGone={handleSplashGone} />
         </View>
-        <StatusBar style="light" />
-      </ThemeProvider>
-    );
-  }
+      )}
+    </View>
+  );
 
-  // Handle main app navigation with story reader overlay
-  // Story reader is rendered on top of the app view so when it closes,
-  // the story selection page is already visible underneath - no flash
-  if (currentView === 'app' || currentView === 'story-reader') {
-    return (
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        {/* App navigation always rendered underneath */}
-        <EnhancedPageTransition
-          currentPage={currentPage as string}
-          pages={{
-            main: <MainMenu onNavigate={handleMainMenuNavigate} isActive={currentPage === 'main'} returnToSubMenu={returnToSubMenu} />,
-            stories: <SimpleStoryScreen
-              onStorySelect={handleStorySelect}
-              selectedStory={selectedStory}
-              onBack={handleBackToMainMenu}
-              initialMode={selectedStoryMode}
-            />,
-            practise: <PractiseScreen onBack={handleBackToInstruments} isActive={currentPage === 'practise'} />,
-            freeplay: <FreeplayScreen onBack={handleBackToInstruments} isActive={currentPage === 'freeplay'} />,
-            spelling: <LearningScreen mode="spelling" onBack={handleBackToLearning} onActivitySelect={handleLearningActivitySelect} isActive={currentPage === 'spelling'} />,
-            numbers: <LearningScreen mode="numbers" onBack={handleBackToLearning} onActivitySelect={handleLearningActivitySelect} isActive={currentPage === 'numbers'} />,
-            'spelling-game': spellingActivityId ? (
-              <SpellingGameScreen
-                activityId={spellingActivityId}
-                storyId={spellingStoryId}
-                onBack={() => {
-                  if (isInActivityGame) {
-                    exitActivityGame();
-                  } else {
-                    setCurrentPage(spellingReturnPage);
-                  }
-                }}
-                isActive={currentPage === 'spelling-game'}
+  function renderView() {
+    if (currentView === 'splash') {
+      return null;
+    }
+
+    if (currentView === 'onboarding') {
+      return <OnboardingFlow onComplete={handleOnboardingComplete} />;
+    }
+
+    // Login and loading views are combined so the LoginScreen instance stays mounted
+    // during the loading overlay's slide-in -preventing a flash when transitioning.
+    if (currentView === 'login' || currentView === 'loading') {
+      if (currentView === 'loading') {
+        syncInProgressRef.current = true;
+      }
+      return (
+        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          {/* the night base sits behind LoginScreen's fade-in -- an unstyled root
+              here flashes white while the screen's opacity ramps up */}
+          <View style={{ flex: 1, backgroundColor: AUTH_GRADIENT[0] }}>
+            {/* Login screen -stays mounted during both 'login' and 'loading' views.
+                During loading, it sits behind the overlay until the slide-in covers it,
+                then gets unmounted once the overlay is fully opaque (onSlideInComplete). */}
+            {(currentView === 'login' || showLoginBehindLoading) && (
+              <View style={StyleSheet.absoluteFill}>
+                <LoginScreen onSuccess={handleLoginSuccess} onSkip={handleLoginSkip} />
+              </View>
+            )}
+
+            {/* MainMenu mounted after the overlay fully covers the screen.
+                disableTutorial prevents tips appearing before the menu is revealed.
+                entranceDelay keeps carousel buttons hidden until the slide-up reveal. */}
+            {loadingMenuReady && (
+              <MainMenu
+                onNavigate={handleMainMenuNavigate}
+                isActive={false}
+                disableTutorial={true}
+                entranceDelay={500}
               />
-            ) : null,
-            feelings: <EmotionsScreen onBack={handleBackToLearning} />,
-            account: <AccountScreen onBack={handleAccountBack} isActive={currentPage === 'account'} />,
-          }}
-          duration={800}
-          animate={animatePageTransition}
-        />
+            )}
 
-        {/* Story reader rendered on top - only loads AFTER mode selection is complete (not during transition) */}
-        {/* zIndex 2000 ensures story reader stays above transition overlay (zIndex 1000) during exit animation */}
-        {(showStoryReader && storyBeingRead) && (
-          <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 2000 }}>
-            <StoryBookReader
-              story={storyBeingRead}
-              initialMode={transitionMode}
-              initialVoiceOver={transitionVoiceOver}
-              skipCoverPage={true}
-              skipInitialFadeIn={true}
-              onExit={handleBackToStories}
-            />
+            {/* Loading overlay (zIndex 10) -slides down over login, then up to reveal menu */}
+            {currentView === 'loading' && (
+              <StartupLoadingScreen
+                onSlideInComplete={() => {
+                  log.info('[Layout] Loading slide-in done -swapping login for main menu');
+                  setShowLoginBehindLoading(false);
+                  setLoadingMenuReady(true);
+                }}
+                onComplete={() => {
+                  syncInProgressRef.current = false;
+                  justLoggedInRef.current = false;
+                  // Suppress carousel re-animation and container fade when MainMenu remounts in 'app' view
+                  suppressNextCarouselAnimation();
+                  suppressNextContainerFadeIn();
+                  log.info('[Layout] Sync complete - transitioning to main menu');
+                  setCurrentView('app');
+                  setCurrentPage('main');
+                  // Delay unmounting the loading MainMenu so the app-view MainMenu has time
+                  // to mount and render its images from cache -prevents a visible flicker
+                  // where strip images briefly disappear and re-decode between the two mounts.
+                  setTimeout(() => setLoadingMenuReady(false), 500);
+                }}
+              />
+            )}
           </View>
-        )}
+          <StatusBar style="light" />
+        </ThemeProvider>
+      );
+    }
 
-        <StatusBar style="auto" />
+    // Handle main app navigation with story reader overlay
+    // Story reader is rendered on top of the app view so when it closes,
+    // the story selection page is already visible underneath - no flash
+    if (currentView === 'app' || currentView === 'story-reader') {
+      return (
+        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          {/* App navigation always rendered underneath */}
+          <JourneyBarProvider>
+          <OwlGuideLayerProvider>
+          <EnhancedPageTransition
+            currentPage={currentPage as string}
+            pages={guidePages({
+              main: <MainMenu onNavigate={handleMainMenuNavigate} isActive={currentPage === 'main'} returnToSubMenu={returnToSubMenu} />,
+              stories: <SimpleStoryScreen
+                onStorySelect={handleStorySelect}
+                selectedStory={selectedStory}
+                onBack={handleBackToMainMenu}
+                initialMode={selectedStoryMode}
+                sectionRequest={storiesSection}
+                onOpenSettings={handleOpenGrownUps}
+              />,
+              practise: <PractiseScreen onBack={handleBackToInstruments} isActive={currentPage === 'practise'} />,
+              freeplay: <FreeplayScreen onBack={handleBackToInstruments} isActive={currentPage === 'freeplay'} />,
+              spelling: <LearningScreen mode="spelling" onBack={handleBackToLearning} onActivitySelect={handleLearningActivitySelect} isActive={currentPage === 'spelling'} />,
+              numbers: <LearningScreen mode="numbers" onBack={handleBackToLearning} onActivitySelect={handleLearningActivitySelect} isActive={currentPage === 'numbers'} />,
+              'spelling-game': spellingActivityId ? (
+                <SpellingGameScreen
+                  activityId={spellingActivityId}
+                  storyId={spellingStoryId}
+                  onBack={() => {
+                    if (isInActivityGame) {
+                      exitActivityGame();
+                    } else {
+                      setCurrentPage(spellingReturnPage);
+                    }
+                  }}
+                  isActive={currentPage === 'spelling-game'}
+                />
+              ) : null,
+              feelings: <EmotionsScreen onBack={handleBackToLearning} isActive={currentPage === 'feelings'} />,
+              account: <AccountScreen onBack={handleAccountBack} isActive={currentPage === 'account'} />,
+            }, currentPage)}
+            duration={PAGE_TRANSITION_DURATION_MS}
+            animate={animatePageTransition}
+            prewarm={PREWARMED_PAGES}
+          />
+          <JourneyBarOutlet pageKey={currentPage as string} holdMs={animatePageTransition ? PAGE_TRANSITION_DURATION_MS : 0} />
+          {/* above the bar, so an owl pointing at the bar is not drawn behind it */}
+          <OwlGuideLayer />
+          </OwlGuideLayerProvider>
+          </JourneyBarProvider>
 
-      </ThemeProvider>
-    );
+          {/* Story reader rendered on top - only loads AFTER mode selection is complete (not during transition) */}
+          {/* zIndex 2000 ensures story reader stays above transition overlay (zIndex 1000) during exit animation */}
+          {(showStoryReader && storyBeingRead) && (
+            <Animated.View style={[{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 2000 }, readerRevealStyle]}>
+              <StoryBookReader
+                story={storyBeingRead}
+                initialMode={transitionMode}
+                initialVoiceOver={transitionVoiceOver}
+                skipCoverPage={true}
+                skipInitialFadeIn={true}
+                onExit={handleBackToStories}
+              />
+            </Animated.View>
+          )}
+
+          <StatusBar style="auto" />
+
+        </ThemeProvider>
+      );
+    }
+
+    // Fallback
+    return <MainMenu onNavigate={handleMainMenuNavigate} />;
   }
-
-  // Fallback
-  return <MainMenu onNavigate={handleMainMenuNavigate} />;
 }
 

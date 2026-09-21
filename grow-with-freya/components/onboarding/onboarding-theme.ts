@@ -1,0 +1,10 @@
+export const NIGHT_BASE = '#0A0F2C';
+export const NIGHT_GRADIENT: [string, string, string] = ['#050515', '#0A0F2C', '#141A47'];
+export const GOLD = '#E8B84B';
+export const PURPLE = '#6D5DF5';
+export const CARD_BG = 'rgba(255, 255, 255, 0.06)';
+export const CARD_BORDER = 'rgba(255, 255, 255, 0.12)';
+export const TEXT_MUTED = 'rgba(255, 255, 255, 0.7)';
+export const TEXT_FAINT = 'rgba(255, 255, 255, 0.5)';
+export const PROGRESS_GRADIENT: [string, string, string] = ['#6D5DF5', '#B18CF0', '#F4C86A'];
+export const PROGRESS_TRACK = 'rgba(255, 255, 255, 0.12)';

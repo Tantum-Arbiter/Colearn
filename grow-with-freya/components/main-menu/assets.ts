@@ -6,7 +6,6 @@ import {
 
 export const WEBP_ASSETS = {
   bear: require('../../assets/images/ui-elements/bear-bottom-screen.webp'),
-  bearTop: require('../../assets/images/ui-elements/bear-top-screen.webp'),
   moon: require('../../assets/images/ui-elements/moon-top-screen.webp'),
   moonBottom: require('../../assets/images/ui-elements/moon-bottom-screen.webp'),
   freyaRocket: require('../../assets/images/ui-elements/freya-rocket.svg'),
@@ -64,12 +63,6 @@ export const ASSET_DIMENSIONS = {
     };
   },
   get bear() {
-    return {
-      width: getResponsiveAssetSize(286),
-      height: getResponsiveAssetSize(286)
-    };
-  },
-  get bearTop() {
     return {
       width: getResponsiveAssetSize(286),
       height: getResponsiveAssetSize(286)

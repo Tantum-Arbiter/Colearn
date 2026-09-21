@@ -5,9 +5,15 @@
  */
 
 import React from 'react';
-import { render } from '@testing-library/react-native';
+import { StyleSheet } from 'react-native';
+import { useAnimatedStyle } from 'react-native-reanimated';
+import { render, act, fireEvent } from '@testing-library/react-native';
 import { MusicSheetOverlay } from '@/components/stories/music-sheet-overlay';
 import { NoteLayoutItem } from '@/services/music-asset-registry';
+import { buildHoldPlan } from '@/services/hold-plan';
+import { cueMaskedAtMs } from '@/services/sheet-transition';
+import { SHEET_FLIGHT_MS } from '@/services/sheet-flight';
+
 
 // Helper to search rendered JSON tree for text content (handles arrays and nested nodes)
 function treeContainsText(node: any, text: string): boolean {
@@ -64,6 +70,15 @@ function renderOverlay(props: Partial<typeof defaultProps> = {}) {
 }
 
 describe('MusicSheetOverlay', () => {
+  // The sheet is drawn to the width of the screen, which under react-native-web
+  // comes from the document -- jsdom reports 0x0 unless told otherwise, and a
+  // sheet with no width has nothing to draw. A phone in landscape, which is how
+  // the story reader is held.
+  beforeAll(() => {
+    Object.defineProperty(document.documentElement, 'clientWidth', { value: 844, configurable: true });
+    Object.defineProperty(document.documentElement, 'clientHeight', { value: 390, configurable: true });
+    window.dispatchEvent(new Event('resize'));
+  });
   describe('visibility', () => {
     it('should render when visible is true', () => {
       const { json } = renderOverlay();
@@ -91,20 +106,162 @@ describe('MusicSheetOverlay', () => {
   });
 
   describe('close button', () => {
-    it('should render the close button with Ionicons close icon', () => {
-      const { json } = renderOverlay();
-      // Close button now uses <Ionicons name="close"> instead of ✕ text
-      expect(treeContainsText(json, 'close')).toBe(true);
+    it('should render the close button as the picker\'s back arrow', () => {
+      const view = renderOverlay();
+      expect(view.UNSAFE_queryAllByProps({ testID: 'music-sheet-close-button' }).length)
+        .toBeGreaterThan(0);
+      expect(view.UNSAFE_queryAllByProps({ name: 'arrow-back' }).length).toBeGreaterThan(0);
     });
 
-    it('should accept onClose callback prop and render the close button', () => {
+    it('should call onClose when the back arrow is pressed', () => {
       const onClose = jest.fn();
-      const { json } = renderOverlay({ onClose });
-      // The Pressable close button is inside Animated.View, which the reanimated mock
-      // renders as <div> -getByTestId and pressByTestId can't traverse into it.
-      // We verify the close icon renders and onClose is accepted without error.
-      expect(treeContainsText(json, 'close')).toBe(true);
-      // onClose → Pressable interaction is verified via E2E tests
+      const view = renderOverlay({ onClose });
+      const button = view.UNSAFE_queryAllByProps({ testID: 'music-sheet-close-button' })
+        .find(node => typeof node.props.onPress === 'function')!;
+      button.props.onPress();
+      expect(onClose).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('the panel, shared with the instrument picker', () => {
+    it('stands the song on the same blob panel the picker uses', () => {
+      const view = renderOverlay();
+      expect(view.UNSAFE_queryAllByProps({ testID: 'music-sheet-panel' }).length).toBeGreaterThan(0);
+    });
+
+    it('titles it the way the picker titles itself, on an arc', () => {
+      const view = renderOverlay();
+      expect(view.UNSAFE_queryAllByProps({ testID: 'music-sheet-title' }).length).toBeGreaterThan(0);
+    });
+
+    it('shows the song on the staff rather than as a row of chips', () => {
+      const view = renderOverlay();
+      expect(view.UNSAFE_queryAllByProps({ testID: 'music-sheet-staff' }).length).toBeGreaterThan(0);
+      expect(view.UNSAFE_queryAllByProps({ testID: 'staff-banner' }).length).toBeGreaterThan(0);
+    });
+
+    it('names the instrument, as the picker does', () => {
+      const { json } = renderOverlay({ instrumentName: 'Woodland Recorder' });
+      expect(treeContainsText(json, 'Woodland Recorder')).toBe(true);
+    });
+
+    it('draws no staff at all for a page with no song', () => {
+      const view = renderOverlay({ requiredSequence: [] });
+      expect(view.UNSAFE_queryAllByProps({ testID: 'music-sheet-staff' }).length).toBe(0);
+    });
+  });
+
+  describe('playing a note from the sheet', () => {
+
+
+    it('never lets a note be pressed -- the sheet is there to be read', () => {
+      const view = renderOverlay({ onNotePressIn: jest.fn(), onNotePressOut: jest.fn() });
+      const strip = view.UNSAFE_queryAllByProps({ testID: 'music-sheet-staff' })
+        .find(node => node.props.pointerEvents !== undefined);
+      expect(strip!.props.pointerEvents).toBe('none');
+      const head = view.UNSAFE_queryAllByProps({ testID: 'staff-note-1' })
+        .find(node => typeof node.props.onPressIn === 'function');
+      expect(head).toBeUndefined();
+    });
+
+    it('runs each note\'s own hold while the preview plays it', () => {
+      const view = renderOverlay({ onNotePressIn: jest.fn(), onNotePressOut: jest.fn() });
+      const strip = view.UNSAFE_queryAllByProps({ testID: 'music-sheet-staff' })
+        .find(node => node.props.holdingCurrent !== undefined)!;
+      // At rest: the song from its first note, nothing marked, nothing running.
+      expect(strip.props.holdingCurrent).toBe(false);
+      expect(strip.props.markCurrent).toBe(false);
+      expect(strip.props.currentIndex).toBe(0);
+    });
+
+    it('offers Ready to Play only when the caller wants it', () => {
+      const withCta = renderOverlay({ onReadyToPlay: jest.fn() } as never);
+      expect(withCta.UNSAFE_queryAllByProps({ testID: 'ready-to-play-button' }).length)
+        .toBeGreaterThan(0);
+      const without = renderOverlay();
+      expect(without.UNSAFE_queryAllByProps({ testID: 'ready-to-play-button' }).length).toBe(0);
+    });
+  });
+
+  describe('the preview', () => {
+    // Real timers would make this a four-second test; the point is which
+    // durations are asked for, not the waiting.
+    beforeEach(() => { jest.useFakeTimers(); });
+    afterEach(() => { jest.useRealTimers(); });
+
+    it('holds each note for its own length, not a beat apiece', () => {
+      // A beat per note made the two-beat E as short as a one-beat C, and cut
+      // a closing four-beat note to a quarter of itself.
+      const sequence = ['C', 'E'];
+      const holdPlan = buildHoldPlan(sequence, 120, [1, 4]);   // 500ms, 2000ms
+      const sounded: string[] = [];
+      const released: string[] = [];
+      const view = renderOverlay({
+        requiredSequence: sequence,
+        holdPlan,
+        onNotePressIn: (n: string) => sounded.push(n),
+        onNotePressOut: (n: string) => released.push(n),
+      } as never);
+
+      const preview = view.UNSAFE_queryAllByProps({ testID: 'music-sheet-play-button' })
+        .find(node => typeof node.props.onPress === 'function')!;
+      act(() => preview.props.onPress());
+      expect(sounded).toEqual(['C']);
+
+      // C sounds for most of its one beat, and E does not begin until the whole
+      // beat is up.
+      act(() => { jest.advanceTimersByTime(430); });
+      expect(released).toEqual(['C']);
+      expect(sounded).toEqual(['C']);
+
+      act(() => { jest.advanceTimersByTime(80); });
+      expect(sounded).toEqual(['C', 'E']);
+
+      // E is a four-beat note: still sounding long after a beat has passed.
+      act(() => { jest.advanceTimersByTime(600); });
+      expect(released).toEqual(['C']);
+
+      act(() => { jest.advanceTimersByTime(1200); });
+      expect(released).toEqual(['C', 'E']);
+    });
+
+    it('fades the notes back in when the preview ends rather than snapping', () => {
+      const sequence = ['C', 'E'];
+      const holdPlan = buildHoldPlan(sequence, 120, [1, 1]);
+      const view = renderOverlay({
+        requiredSequence: sequence,
+        holdPlan,
+        onNotePressIn: jest.fn(),
+        onNotePressOut: jest.fn(),
+      } as never);
+      const strip = () => view.UNSAFE_queryAllByProps({ testID: 'music-sheet-staff' })
+        .find(node => node.props.replayCue !== undefined)!;
+      const cueBefore = strip().props.replayCue;
+
+      const preview = view.UNSAFE_queryAllByProps({ testID: 'music-sheet-play-button' })
+        .find(node => typeof node.props.onPress === 'function')!;
+      act(() => preview.props.onPress());
+      act(() => { jest.advanceTimersByTime(1100); });   // both notes, then the end
+
+      // The sheet is asked for a cue and *holds its place* until the notes are
+      // hidden -- putting it back straight away is what made the song reappear
+      // at the start instead of fading in.
+      expect(strip().props.replayCue).toBe(cueBefore + 1);
+      expect(strip().props.playbackIndex).toBe(1);
+
+      act(() => { jest.advanceTimersByTime(cueMaskedAtMs('replay') + 10); });
+      expect(strip().props.playbackIndex).toBe(-1);
+    });
+
+    it('takes its lengths from the hold plan when it has one', () => {
+      const sequence = ['C', 'E'];
+      const holdPlan = buildHoldPlan(sequence, 120, [1, 4]);
+      // A beat is 500ms at 120bpm, so the second note occupies four of them.
+      expect(holdPlan.targets[1].slotMs).toBe(2000);
+      expect(holdPlan.targets[0].slotMs).toBe(500);
+      // And it sounds for most of its slot rather than all of it, so the next
+      // note can articulate.
+      expect(holdPlan.targets[1].holdMs).toBeLessThan(holdPlan.targets[1].slotMs);
     });
   });
 
@@ -158,7 +315,7 @@ describe('MusicSheetOverlay', () => {
   });
 
   describe('prompt text', () => {
-    it('should display prompt text when provided', () => {
+    it('should write the prompt on the paper, as it is over the instrument', () => {
       const { json } = renderOverlay({ promptText: 'Play the flute to help Gary!' });
       expect(treeContainsText(json, 'Play the flute to help Gary!')).toBe(true);
     });
@@ -173,12 +330,11 @@ describe('MusicSheetOverlay', () => {
     it('should display success song name when provided', () => {
       const { json } = renderOverlay({ successSongName: 'Gary Lifts the Rock' });
       expect(treeContainsText(json, 'Gary Lifts the Rock')).toBe(true);
-      expect(treeContainsText(json, 'music.successSong')).toBe(true);
     });
 
     it('should not show song section when not provided', () => {
-      const { json } = renderOverlay({ successSongName: undefined });
-      expect(treeContainsText(json, 'music.successSong')).toBe(false);
+      const view = renderOverlay({ successSongName: undefined });
+      expect(view.UNSAFE_queryAllByProps({ testID: 'music-sheet-song-name' }).length).toBe(0);
     });
   });
 
@@ -206,7 +362,7 @@ describe('MusicSheetOverlay', () => {
   });
 
   describe('single note sequence', () => {
-    it('should render a single note without connection lines', () => {
+    it('should render a single note on its own', () => {
       const { json } = renderOverlay({ requiredSequence: ['C'] });
       expect(json).not.toBeNull();
       const allText = getAllText(json);
@@ -254,5 +410,231 @@ describe('MusicSheetOverlay', () => {
       expect(allText).toContain('C');
       expect(allText).toContain('D');
     });
+  });
+});
+
+describe('what the panel stands on', () => {
+  it('stands on a night scene of its own by default', () => {
+    const view = renderOverlay();
+
+    expect(view.UNSAFE_queryAllByProps({ testID: 'scene-background' }).length).toBeGreaterThan(0);
+  });
+
+  it('draws nothing of its own when the caller has put a backdrop behind it', () => {
+    const view = renderOverlay({ backdrop: 'none' } as never);
+
+    expect(view.UNSAFE_queryAllByProps({ testID: 'scene-background' }).length).toBe(0);
+    expect(view.UNSAFE_queryAllByProps({ testID: 'music-backdrop' }).length).toBe(0);
+  });
+
+  it('stands on the music meadow when asked, which is what hides the instrument behind it', () => {
+    const view = renderOverlay({ backdrop: 'music' } as never);
+
+    expect(view.UNSAFE_queryAllByProps({ testID: 'music-backdrop' }).length).toBe(1);
+    expect(view.UNSAFE_queryAllByProps({ testID: 'scene-background' }).length).toBe(0);
+  });
+});
+
+describe('reporting that it has gone', () => {
+  it('says so once it is off screen, not when it was asked to go', () => {
+    const onLeft = jest.fn();
+    const view = render(
+      <MusicSheetOverlay {...defaultProps} onClose={jest.fn()} onLeft={onLeft} />
+    );
+
+    expect(onLeft).not.toHaveBeenCalled();
+
+    view.rerender(
+      <MusicSheetOverlay {...defaultProps} onClose={jest.fn()} onLeft={onLeft} visible={false} />
+    );
+
+    expect(view.toJSON()).toBeNull();
+    expect(onLeft).toHaveBeenCalledTimes(1);
+  });
+
+  it('says nothing when it was never on screen', () => {
+    const onLeft = jest.fn();
+
+    render(
+      <MusicSheetOverlay {...defaultProps} onClose={jest.fn()} onLeft={onLeft} visible={false} />
+    );
+
+    expect(onLeft).not.toHaveBeenCalled();
+  });
+});
+
+describe('flying the sheet onto the instrument', () => {
+  const staff = { x: 208, y: 40, width: 435, height: 109 };
+  const panelAt = { x: 30, y: 90 };
+  const sheetAt = { x: 18, y: 74, width: 664, height: 166 };
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  function renderMeasured(props: Record<string, unknown> = {}) {
+    const view = render(
+      <MusicSheetOverlay
+        {...defaultProps}
+        onClose={jest.fn()}
+        onReadyToPlay={jest.fn()}
+        awaitingFlight
+        {...props}
+      />
+    );
+    const layout = (testID: string, box: Record<string, number>) =>
+      fireEvent(
+        view.UNSAFE_queryAllByProps({ testID })[0],
+        'layout',
+        { nativeEvent: { layout: box } },
+      );
+    act(() => {
+      layout('music-sheet-panel-frame', { ...panelAt, width: 700, height: 320 });
+      layout('music-sheet-frame', sheetAt);
+    });
+    return view;
+  }
+
+  const flightLayer = (view: ReturnType<typeof renderMeasured>) =>
+    view.UNSAFE_queryAllByProps({ testID: 'music-sheet-flight' })[0];
+
+  it('leaves the panel with the sheet still on screen, where the panel had it', () => {
+    const view = renderMeasured();
+
+    view.rerender(
+      <MusicSheetOverlay {...defaultProps} onClose={jest.fn()} visible={false} awaitingFlight />
+    );
+
+    const style = StyleSheet.flatten(flightLayer(view).props.style);
+    expect(style).toMatchObject({
+      left: panelAt.x + sheetAt.x,
+      top: panelAt.y + sheetAt.y,
+      width: sheetAt.width,
+      height: sheetAt.height,
+      opacity: 1,
+    });
+  });
+
+  it('keeps the travelling copy ready behind the panel, so its paper misses no frame', () => {
+    // Mounted only when it starts moving, the second staff's artwork had not
+    // painted for the first frame of the journey: notes on no paper.
+    const view = renderMeasured();
+
+    expect(StyleSheet.flatten(flightLayer(view).props.style).opacity).toBe(0);
+  });
+
+  it('takes the sheet out of the panel so only the flying one is seen', () => {
+    const view = renderMeasured();
+
+    view.rerender(
+      <MusicSheetOverlay {...defaultProps} onClose={jest.fn()} visible={false} awaitingFlight />
+    );
+
+    const inPanel = StyleSheet.flatten(
+      view.UNSAFE_queryAllByProps({ testID: 'music-sheet-frame' })[0].props.style,
+    );
+    expect(inPanel.opacity).toBe(0);
+  });
+
+  it('holds the sheet in place while the staff is still being worked out', () => {
+    const view = renderMeasured();
+
+    view.rerender(
+      <MusicSheetOverlay {...defaultProps} onClose={jest.fn()} visible={false} awaitingFlight />
+    );
+
+    act(() => { jest.advanceTimersByTime(SHEET_FLIGHT_MS * 3); });
+    expect(StyleSheet.flatten(flightLayer(view).props.style).opacity).toBe(1);
+  });
+
+  it('keeps the sheet mounted for the whole flight, then lets it go', () => {
+    const view = renderMeasured();
+
+    view.rerender(
+      <MusicSheetOverlay {...defaultProps} onClose={jest.fn()} visible={false} awaitingFlight />
+    );
+    view.rerender(
+      <MusicSheetOverlay {...defaultProps} onClose={jest.fn()} visible={false} flightTarget={staff} />
+    );
+
+    act(() => { jest.advanceTimersByTime(SHEET_FLIGHT_MS - 1); });
+    expect(StyleSheet.flatten(flightLayer(view).props.style).opacity).toBe(1);
+
+    act(() => { jest.advanceTimersByTime(1); });
+    expect(view.toJSON()).toBeNull();
+  });
+
+  it('does not send the sheet back to the start when the reader re-renders mid-flight', () => {
+    const view = renderMeasured();
+
+    view.rerender(
+      <MusicSheetOverlay {...defaultProps} onClose={jest.fn()} visible={false} awaitingFlight />
+    );
+    view.rerender(
+      <MusicSheetOverlay {...defaultProps} onClose={jest.fn()} visible={false} flightTarget={staff} />
+    );
+    act(() => { jest.advanceTimersByTime(SHEET_FLIGHT_MS - 50); });
+    view.rerender(
+      <MusicSheetOverlay {...defaultProps} onClose={jest.fn()} visible={false} flightTarget={{ ...staff }} />
+    );
+
+    act(() => { jest.advanceTimersByTime(50); });
+
+    expect(view.toJSON()).toBeNull();
+  });
+
+  it('leaves the sheet where it stood, untouched, until it has somewhere to go', () => {
+    const animatedStyle = useAnimatedStyle as unknown as jest.Mock;
+    animatedStyle.mockImplementation((worklet: () => unknown) => worklet());
+    try {
+      const view = renderMeasured();
+
+      view.rerender(
+        <MusicSheetOverlay {...defaultProps} onClose={jest.fn()} visible={false} awaitingFlight />
+      );
+
+      expect(StyleSheet.flatten(flightLayer(view).props.style).transform).toBeUndefined();
+    } finally {
+      animatedStyle.mockImplementation(() => ({}));
+    }
+  });
+
+  it('lets the sheet go when the instrument turns out to have no staff', () => {
+    const view = renderMeasured();
+
+    view.rerender(
+      <MusicSheetOverlay {...defaultProps} onClose={jest.fn()} visible={false} awaitingFlight />
+    );
+    view.rerender(
+      <MusicSheetOverlay {...defaultProps} onClose={jest.fn()} visible={false} flightTarget={null} />
+    );
+
+    expect(view.toJSON()).toBeNull();
+  });
+
+  it('fades where it stands when it was never going to fly', () => {
+    const view = renderMeasured({ awaitingFlight: false });
+
+    view.rerender(
+      <MusicSheetOverlay {...defaultProps} onClose={jest.fn()} visible={false} />
+    );
+
+    expect(flightLayer(view)).toBeUndefined();
+  });
+
+  it('has nothing to fly before the sheet has been measured', () => {
+    const view = render(
+      <MusicSheetOverlay {...defaultProps} onClose={jest.fn()} awaitingFlight />
+    );
+
+    view.rerender(
+      <MusicSheetOverlay {...defaultProps} onClose={jest.fn()} visible={false} awaitingFlight />
+    );
+
+    expect(view.UNSAFE_queryAllByProps({ testID: 'music-sheet-flight' })[0]).toBeUndefined();
   });
 });

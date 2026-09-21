@@ -12,8 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from './themed-text';
 
-import { BearTopImage } from './main-menu/animated-components';
-import { mainMenuStyles } from './main-menu/styles';
+import { EarthHorizon } from '@/components/ui/earth-horizon';
 
 import { MusicControl } from '@/components/ui/music-control';
 import { useBackButtonText } from '@/hooks/use-back-button-text';
@@ -115,10 +114,7 @@ export function DefaultPage({ icon, title, onBack }: DefaultPageProps) {
       colors={['#4ECDC4', '#3B82F6', '#1E3A8A']}
       style={styles.container}
     >
-      {/* Bear top background image */}
-      <View style={mainMenuStyles.moonContainer} pointerEvents="none">
-        <BearTopImage />
-      </View>
+      <EarthHorizon edge="top" />
 
       {/* Starry background (matching main menu) */}
       {stars.map((star) => (

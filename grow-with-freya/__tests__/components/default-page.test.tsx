@@ -66,10 +66,14 @@ describe('DefaultPage', () => {
       />
     );
 
-    // Test that the component renders without crashing
-    // Note: Back button pressing requires interacting with the actual button element
-    expect(result.toJSON()).toBeTruthy();
-    expect(mockOnBack).toBeDefined();
+    // the back button carries no testID, so find it by the handler it was given
+    const backButton = result.UNSAFE_root.findAll(
+      (n: { props: Record<string, unknown> }) => n.props.onPress === mockOnBack
+    )[0];
+
+    fireEvent.press(backButton);
+
+    expect(mockOnBack).toHaveBeenCalledTimes(1);
   });
 
   it('displays correct content for each page type', () => {

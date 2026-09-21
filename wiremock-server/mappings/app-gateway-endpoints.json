@@ -1,0 +1,267 @@
+{
+  "mappings": [
+    {
+      "name": "App - the parent's profile",
+      "request": {
+        "method": "GET",
+        "urlPath": "/api/profile"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "userId": "e2e-parent",
+          "nickname": "Freya",
+          "avatarType": "girl",
+          "avatarId": "bear",
+          "notifications": {
+            "enabled": true,
+            "storyReminders": true,
+            "emotionCheckIns": true,
+            "bedtimeReminders": true,
+            "soundEnabled": true,
+            "vibrationEnabled": false,
+            "screenTimeEnabled": true,
+            "smartRemindersEnabled": false
+          },
+          "schedule": {
+            "customReminders": []
+          },
+          "createdAt": "2026-01-01T10:00:00Z",
+          "updatedAt": "2026-01-01T10:00:00Z",
+          "version": 1
+        }
+      }
+    },
+    {
+      "name": "App - saving the parent's profile echoes it back",
+      "request": {
+        "method": "POST",
+        "urlPath": "/api/profile"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "userId": "e2e-parent",
+          "nickname": "{{jsonPath request.body '$.nickname'}}",
+          "avatarType": "{{jsonPath request.body '$.avatarType'}}",
+          "avatarId": "{{jsonPath request.body '$.avatarId'}}",
+          "notifications": {
+            "enabled": true,
+            "storyReminders": true,
+            "emotionCheckIns": true,
+            "bedtimeReminders": true,
+            "soundEnabled": true,
+            "vibrationEnabled": false,
+            "screenTimeEnabled": true,
+            "smartRemindersEnabled": false
+          },
+          "schedule": {
+            "customReminders": []
+          },
+          "createdAt": "2026-01-01T10:00:00Z",
+          "updatedAt": "{{now format='yyyy-MM-dd'}}T10:00:00Z",
+          "version": 2
+        },
+        "transformers": [
+          "response-template"
+        ]
+      }
+    },
+    {
+      "name": "App - what the shelf looks like on the server",
+      "request": {
+        "method": "GET",
+        "urlPath": "/api/stories/version"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "id": "current",
+          "version": 2,
+          "assetVersion": 1,
+          "lastUpdated": 1767225600000,
+          "storyChecksums": {
+            "e2e-bedtime-story": "e2e-checksum-1",
+            "e2e-premium-story": "e2e-checksum-2"
+          },
+          "totalStories": 2
+        }
+      }
+    },
+    {
+      "name": "App - one story to sync",
+      "request": {
+        "method": "POST",
+        "urlPath": "/api/stories/delta"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "serverVersion": 2,
+          "assetVersion": 1,
+          "stories": [
+            {
+              "id": "e2e-bedtime-story",
+              "title": "The Sleepy Test Owl",
+              "category": "bedtime",
+              "coverImage": "stories/e2e-bedtime-story/cover.webp",
+              "isAvailable": true,
+              "ageRange": "3-5",
+              "duration": 4,
+              "description": "A short story that exists so a test has something to open.",
+              "localizedTitle": {
+                "en": "The Sleepy Test Owl"
+              },
+              "localizedDescription": {
+                "en": "A short story that exists so a test has something to open."
+              },
+              "isPremium": false,
+              "isFree": true,
+              "isReferralReward": false,
+              "author": "Early Roots",
+              "tags": [
+                "bedtime",
+                "animals"
+              ],
+              "createdAt": "2026-01-01T10:00:00Z",
+              "updatedAt": "2026-01-01T10:00:00Z",
+              "version": 1,
+              "checksum": "e2e-checksum-1",
+              "pages": [
+                {
+                  "id": "e2e-page-1",
+                  "pageNumber": 1,
+                  "type": "story",
+                  "text": "The owl closed one eye, then the other.",
+                  "localizedText": {
+                    "en": "The owl closed one eye, then the other."
+                  },
+                  "backgroundImage": "stories/e2e-bedtime-story/page-1.webp"
+                },
+                {
+                  "id": "e2e-page-2",
+                  "pageNumber": 2,
+                  "type": "story",
+                  "text": "And the whole wood went quiet for the night.",
+                  "localizedText": {
+                    "en": "And the whole wood went quiet for the night."
+                  },
+                  "backgroundImage": "stories/e2e-bedtime-story/page-2.webp"
+                }
+              ]
+            }
+          ],
+          "deletedStoryIds": [],
+          "storyChecksums": {
+            "e2e-bedtime-story": "e2e-checksum-1",
+            "e2e-premium-story": "e2e-checksum-2"
+          },
+          "totalStories": 2,
+          "updatedCount": 1,
+          "lastUpdated": 1767225600000,
+          "catalog": [
+            {
+              "storyId": "e2e-bedtime-story",
+              "title": "The Sleepy Test Owl",
+              "localizedTitle": {
+                "en": "The Sleepy Test Owl"
+              },
+              "description": "A short story that exists so a test has something to open.",
+              "localizedDescription": {
+                "en": "A short story that exists so a test has something to open."
+              },
+              "category": "bedtime",
+              "tags": [
+                "bedtime",
+                "animals"
+              ],
+              "thumbnailUrl": "http://localhost:8080/__files/e2e/cover.webp",
+              "isFree": true,
+              "isReferralReward": false,
+              "ageRange": "3-5",
+              "duration": 4,
+              "isPremium": false
+            },
+            {
+              "storyId": "e2e-premium-story",
+              "title": "The Locked Lantern",
+              "localizedTitle": {
+                "en": "The Locked Lantern"
+              },
+              "description": "A story only a paying family can open, so a test can see the lock.",
+              "localizedDescription": {
+                "en": "A story only a paying family can open, so a test can see the lock."
+              },
+              "category": "bedtime",
+              "tags": [
+                "bedtime",
+                "fantasy"
+              ],
+              "thumbnailUrl": "http://localhost:8080/__files/e2e/cover.webp",
+              "isFree": false,
+              "isReferralReward": false,
+              "ageRange": "3-5",
+              "duration": 4,
+              "isPremium": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "App - signed urls for the assets it asks for",
+      "request": {
+        "method": "POST",
+        "urlPath": "/api/assets/batch-urls"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "urls": [
+            {
+              "path": "{{jsonPath request.body '$.paths[0]'}}",
+              "signedUrl": "http://localhost:8080/__files/e2e/cover.webp",
+              "expiresAt": 4102444800000
+            }
+          ],
+          "failed": []
+        },
+        "transformers": [
+          "response-template"
+        ]
+      }
+    },
+    {
+      "name": "App - deleting the account",
+      "request": {
+        "method": "DELETE",
+        "urlPath": "/api/account"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "status": "deleted",
+          "message": "Your account and all associated data have been permanently deleted."
+        }
+      }
+    }
+  ]
+}

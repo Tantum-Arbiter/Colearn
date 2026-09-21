@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { render } from '@testing-library/react-native';
+import { render, fireEvent } from '@testing-library/react-native';
 import { MainMenu } from '@/components/main-menu';
 import { StorySelectionScreen } from '@/components/stories/story-selection-screen';
 import { StoryBookReader } from '@/components/stories/story-book-reader';
@@ -22,11 +22,47 @@ jest.mock('@/contexts/story-transition-context', () => ({
   })),
 }));
 
-jest.mock('@/store/app-store', () => ({
-  useAppStore: jest.fn(() => ({
+jest.mock('@/store/app-store', () => {
+  const state = {
     requestReturnToMainMenu: jest.fn(),
-  })),
-}));
+    setShowLoginAfterOnboarding: jest.fn(),
+    getEffectiveTier: () => 'free',
+    subscriptionTier: 'free',
+    _devSubscriptionOverride: null,
+    storyViewMode: 'grid',
+    setStoryViewMode: jest.fn(),
+    favoriteStoryIds: [],
+    toggleFavoriteStory: jest.fn(),
+    readStoryIds: [],
+    userAvatarType: 'boy',
+    useHomeScene: false,
+    storyProgress: {},
+    getContinueReadingStoryId: jest.fn(() => null),
+    // read by StoryBookReader via selectors
+    setTextSizeScale: jest.fn(),
+    childAgeInMonths: 36,
+    setStoryProgress: jest.fn(),
+    markStoryCompleted: jest.fn(),
+    markStoryAsRead: jest.fn(),
+    recordReadingSession: jest.fn(),
+    textSizeScale: 1,
+    backgroundAnimationState: {
+      cloudFloat1: -200,
+      cloudFloat2: -400,
+      rocketFloat1: 1000,
+      rocketFloat2: -200,
+    },
+    updateBackgroundAnimationState: jest.fn(),
+    currentScreen: 'main',
+    isAppReady: true,
+  };
+  return {
+    // read both bare and via selectors, so honour a selector like zustand does
+    useAppStore: jest.fn((selector?: (s: typeof state) => unknown) =>
+      typeof selector === 'function' ? selector(state) : state
+    ),
+  };
+});
 
 // Test story for snapshots
 const SNAPSHOT_TEST_STORY: Story = {
@@ -77,238 +113,181 @@ describe('Visual Regression Tests', () => {
     jest.clearAllTimers();
   });
 
-  describe('MainMenu Snapshots', () => {
-    it('should match MainMenu snapshot', () => {
-      const { toJSON } = render(<MainMenu onNavigate={jest.fn()} />);
-      expect(toJSON()).toMatchSnapshot('main-menu-default');
+  // Whole-screen snapshots are ruled out by AGENTS.md and are unreviewable in a
+  // diff -- react-native-web serialises generated class names like
+  // "r-flexBasis-1mlwlqe", so an intentional tweak and a regression look alike.
+  // These assert a derived structure instead: the testIDs and accessibility
+  // labels a screen exposes. Small, stable against styling churn, and a removed
+  // control shows up as one readable line.
+  //
+  // Written as explicit expectations rather than toMatchSnapshot because
+  // .gitignore excludes **/__snapshots__/ and *.snap repo-wide -- an
+  // uncommitted snapshot is regenerated on every CI run and can never fail.
+
+  type Node = { props: Record<string, unknown> };
+
+  const structure = (tree: ReturnType<typeof render>): string[] =>
+    Array.from(
+      new Set<string>(
+        tree.UNSAFE_root
+          .findAll((n: Node) => typeof n.props.testID === 'string')
+          .map((n: Node) => n.props.testID as string)
+      )
+    ).sort();
+
+  const labels = (tree: ReturnType<typeof render>): string[] =>
+    Array.from(
+      new Set<string>(
+        tree.UNSAFE_root
+          .findAll((n: Node) => typeof n.props.accessibilityLabel === 'string')
+          .map((n: Node) => n.props.accessibilityLabel as string)
+      )
+    ).sort();
+
+  const READER_PROPS = { onExit: jest.fn() };
+
+  describe('MainMenu structure', () => {
+    it('exposes a stable set of controls', () => {
+      const tree = render(<MainMenu onNavigate={jest.fn()} />);
+
+      expect(structure(tree)).toEqual([
+        'icon-Ionicons-arrow-back',
+        'icon-Ionicons-person-outline',
+        'linear-gradient',
+        'main-menu-container',
+        'menu-carousel',
+        'menu-icon-instruments',
+        'menu-icon-learning',
+        'menu-icon-stories',
+        'mode-back-arrow',
+        'music-control-button',
+        'music-icon-playing',
+      ]);
     });
 
-    it('should match MainMenu with different states', () => {
-      // Test different navigation states if applicable
-      const { toJSON } = render(<MainMenu onNavigate={jest.fn()} />);
-      expect(toJSON()).toMatchSnapshot('main-menu-interactive');
+    it('labels every control for screen readers', () => {
+      const tree = render(<MainMenu onNavigate={jest.fn()} />);
+
+      expect(labels(tree)).toEqual([
+        'Mute background music. Long press for audio settings.',
+        'menu.instruments button',
+        'menu.learning button',
+        'menu.stories button',
+      ]);
+    });
+
+    it('renders the same structure across re-renders', () => {
+      const tree = render(<MainMenu onNavigate={jest.fn()} />);
+      const first = structure(tree);
+
+      tree.rerender(<MainMenu onNavigate={jest.fn()} />);
+
+      expect(structure(tree)).toEqual(first);
     });
   });
 
-  describe('StorySelectionScreen Snapshots', () => {
-    it('should match StorySelectionScreen snapshot', () => {
-      const { toJSON } = render(<StorySelectionScreen />);
-      expect(toJSON()).toMatchSnapshot('story-selection-default');
+  describe('StorySelectionScreen structure', () => {
+    it('exposes a stable set of controls', () => {
+      const tree = render(<StorySelectionScreen />);
+
+      expect(structure(tree)).toEqual([
+        'earth-horizon',
+        'earth-horizon-clouds',
+        'earth-horizon-globe',
+        'icon-Ionicons-arrow-back',
+        'linear-gradient',
+        'music-control-button',
+        'music-icon-playing',
+        'page-header-row',
+        'page-header-title',
+      ]);
     });
 
-    it('should match StorySelectionScreen with story selection callback', () => {
-      const { toJSON } = render(
-        <StorySelectionScreen onStorySelect={jest.fn()} />
+    it('renders the same structure with or without a selection callback', () => {
+      const withoutCallback = structure(render(<StorySelectionScreen />));
+      const withCallback = structure(
+        render(<StorySelectionScreen onStorySelect={jest.fn()} />)
       );
-      expect(toJSON()).toMatchSnapshot('story-selection-with-callback');
+
+      expect(withCallback).toEqual(withoutCallback);
     });
   });
 
-  describe('StoryBookReader Snapshots', () => {
-    it('should match StoryBookReader initial state snapshot', () => {
-      const { toJSON } = render(
-        <StoryBookReader
-          story={SNAPSHOT_TEST_STORY}
-          onExit={jest.fn()}
-        />
+  describe('StoryBookReader structure', () => {
+    it('exposes a stable set of controls on the cover page', () => {
+      const tree = render(
+        <StoryBookReader story={SNAPSHOT_TEST_STORY} {...READER_PROPS} />
       );
-      expect(toJSON()).toMatchSnapshot('story-book-reader-initial');
+
+      expect(structure(tree)).toEqual([
+        'cover-tap-overlay',
+        'icon-Ionicons-arrow-back',
+        'icon-Ionicons-book-outline',
+        'icon-Ionicons-headset-outline',
+        'icon-Ionicons-menu',
+        'icon-Ionicons-mic-outline',
+        'linear-gradient',
+        'music-control-button',
+        'music-icon-playing',
+        'story-exit-button',
+      ]);
     });
 
-    it('should match StoryBookReader with different story types', () => {
-      const bedtimeStory: Story = {
+    it('renders the story title on the cover', () => {
+      const tree = render(
+        <StoryBookReader story={SNAPSHOT_TEST_STORY} {...READER_PROPS} />
+      );
+
+      expect(JSON.stringify(tree.toJSON())).toContain(SNAPSHOT_TEST_STORY.title);
+    });
+
+    it('survives a story with no pages rather than crashing', () => {
+      const incompleteStory: Story = { ...SNAPSHOT_TEST_STORY, pages: [] };
+
+      expect(() =>
+        render(<StoryBookReader story={incompleteStory} {...READER_PROPS} />)
+      ).not.toThrow();
+    });
+
+    it('keeps the same structure regardless of page text length', () => {
+      // the cover -> page transition is animated and does not settle
+      // synchronously, so assert what is deterministic: unusually long copy
+      // must not collapse or add controls
+      const [cover, ...rest] = SNAPSHOT_TEST_STORY.pages!;
+      const longStory: Story = {
         ...SNAPSHOT_TEST_STORY,
-        id: 'bedtime-snapshot',
-        title: 'Bedtime Snapshot Story',
-        category: 'bedtime',
+        pages: [cover, { ...rest[0], text: 'A very long sentence about the moon. '.repeat(20) }],
       };
 
-      const { toJSON } = render(
-        <StoryBookReader
-          story={bedtimeStory}
-          onExit={jest.fn()}
-        />
+      const normal = structure(
+        render(<StoryBookReader story={SNAPSHOT_TEST_STORY} {...READER_PROPS} />)
       );
-      expect(toJSON()).toMatchSnapshot('story-book-reader-bedtime');
+      const long = structure(
+        render(<StoryBookReader story={longStory} {...READER_PROPS} />)
+      );
+
+      expect(long).toEqual(normal);
     });
   });
 
-  describe('Animation State Snapshots', () => {
-    it('should match components in different animation states', () => {
-      // Test initial animation state
-      const { toJSON: initialJSON } = render(<MainMenu onNavigate={jest.fn()} />);
-      expect(initialJSON()).toMatchSnapshot('main-menu-animation-initial');
+  describe('Responsive structure', () => {
+    const withDimensions = (width: number, height: number, scale: number) => {
+      const Dimensions = require('react-native').Dimensions;
+      const original = Dimensions.get;
+      Dimensions.get = jest.fn(() => ({ width, height, scale, fontScale: 1 }));
+      try {
+        return structure(render(<MainMenu onNavigate={jest.fn()} />));
+      } finally {
+        Dimensions.get = original;
+      }
+    };
 
-      // Note: In a real app, you might advance timers to test different animation states
-      // For now, we test the initial state which is most stable for snapshots
-    });
+    it('keeps the same controls on phone and tablet dimensions', () => {
+      const phone = withDimensions(375, 812, 3);
+      const tablet = withDimensions(1024, 768, 2);
 
-    it('should match story reader in different page states', () => {
-      // Cover page state
-      const { toJSON } = render(
-        <StoryBookReader
-          story={SNAPSHOT_TEST_STORY}
-          onExit={jest.fn()}
-        />
-      );
-      expect(toJSON()).toMatchSnapshot('story-reader-cover-page');
-    });
-  });
-
-  describe('Responsive Design Snapshots', () => {
-    it('should match components with different screen dimensions', () => {
-      // Mock different screen dimensions
-      const originalDimensions = require('react-native').Dimensions.get;
-      
-      // Mock phone dimensions
-      require('react-native').Dimensions.get = jest.fn(() => ({
-        width: 375,
-        height: 812,
-        scale: 3,
-        fontScale: 1,
-      }));
-
-      const { toJSON: phoneJSON } = render(<MainMenu onNavigate={jest.fn()} />);
-      expect(phoneJSON()).toMatchSnapshot('main-menu-phone-dimensions');
-
-      // Mock tablet dimensions
-      require('react-native').Dimensions.get = jest.fn(() => ({
-        width: 1024,
-        height: 768,
-        scale: 2,
-        fontScale: 1,
-      }));
-
-      const { toJSON: tabletJSON } = render(<MainMenu onNavigate={jest.fn()} />);
-      expect(tabletJSON()).toMatchSnapshot('main-menu-tablet-dimensions');
-
-      // Restore original
-      require('react-native').Dimensions.get = originalDimensions;
-    });
-  });
-
-  describe('Error State Snapshots', () => {
-    it('should match components with error boundaries', () => {
-      // Test error boundary rendering
-      const ErrorComponent = () => {
-        throw new Error('Test error for snapshot');
-      };
-
-      // This would test error boundary if implemented
-      // For now, test normal error handling
-      const { toJSON } = render(<MainMenu onNavigate={jest.fn()} />);
-      expect(toJSON()).toMatchSnapshot('main-menu-error-handling');
-    });
-
-    it('should match story reader with missing data', () => {
-      const incompleteStory: Story = {
-        ...SNAPSHOT_TEST_STORY,
-        pages: [], // Empty pages to test error handling
-      };
-
-      const { toJSON } = render(
-        <StoryBookReader
-          story={incompleteStory}
-          onExit={jest.fn()}
-        />
-      );
-      expect(toJSON()).toMatchSnapshot('story-reader-incomplete-data');
-    });
-  });
-
-  describe('Theme and Style Snapshots', () => {
-    it('should match components with consistent styling', () => {
-      // Test that styling is consistent by checking key style properties
-      const mockNavigate = jest.fn();
-      const { toJSON } = render(<MainMenu onNavigate={mockNavigate} />);
-      const snapshot = toJSON();
-
-      // Verify consistent styling elements are present
-      const snapshotString = JSON.stringify(snapshot);
-      expect(snapshotString).toContain('main-menu-container');
-      expect(snapshotString).toContain('Stories button');
-      expect(snapshotString).toContain('backgroundColor');
-      expect(snapshot).toMatchSnapshot('main-menu-consistent-styling');
-    });
-
-    it('should match story selection with consistent card styling', () => {
-      const { toJSON } = render(<StorySelectionScreen />);
-      expect(toJSON()).toMatchSnapshot('story-selection-card-styling');
-    });
-  });
-
-  describe('Accessibility Snapshots', () => {
-    it('should match components with accessibility props', () => {
-      const { toJSON } = render(<MainMenu onNavigate={jest.fn()} />);
-
-      // Verify accessibility props are included in snapshot
-      const snapshot = toJSON();
-      expect(snapshot).toMatchSnapshot('main-menu-accessibility');
-
-      // Check that component renders successfully with menu buttons
-      const snapshotString = JSON.stringify(snapshot);
-      expect(snapshotString).toContain('Stories button');
-      expect(snapshotString).toContain('aria-label');
-    });
-
-    it('should match story reader with accessibility features', () => {
-      const { toJSON } = render(
-        <StoryBookReader
-          story={SNAPSHOT_TEST_STORY}
-          onExit={jest.fn()}
-        />
-      );
-      expect(toJSON()).toMatchSnapshot('story-reader-accessibility');
-    });
-  });
-
-  describe('Content Variation Snapshots', () => {
-    it('should match components with different content lengths', () => {
-      const longTitleStory: Story = {
-        ...SNAPSHOT_TEST_STORY,
-        title: 'This is a Very Long Story Title That Should Test Text Wrapping and Layout',
-        pages: [
-          {
-            id: 'cover',
-            pageNumber: 0,
-            type: 'cover',
-            text: 'This is a Very Long Story Title That Should Test Text Wrapping and Layout',
-            backgroundImage: 'test-bg.jpg',
-          },
-        ],
-      };
-
-      const { toJSON } = render(
-        <StoryBookReader
-          story={longTitleStory}
-          onExit={jest.fn()}
-        />
-      );
-      expect(toJSON()).toMatchSnapshot('story-reader-long-content');
-    });
-
-    it('should match components with minimal content', () => {
-      const minimalStory: Story = {
-        ...SNAPSHOT_TEST_STORY,
-        title: 'Short',
-        pages: [
-          {
-            id: 'cover',
-            pageNumber: 0,
-            type: 'cover',
-            text: 'Short',
-            backgroundImage: 'test-bg.jpg',
-          },
-        ],
-      };
-
-      const { toJSON } = render(
-        <StoryBookReader
-          story={minimalStory}
-          onExit={jest.fn()}
-        />
-      );
-      expect(toJSON()).toMatchSnapshot('story-reader-minimal-content');
+      // layout changes with size, but no control may appear or disappear
+      expect(tablet).toEqual(phone);
     });
   });
 });

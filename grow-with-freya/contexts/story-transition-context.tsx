@@ -1,52 +1,76 @@
-import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
+import React, { useMemo, createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { Logger } from '@/utils/logger';
 
 const log = Logger.create('StoryTransition');
-import { Dimensions, Image, InteractionManager, StyleSheet, View, Text, Pressable, TextInput, KeyboardAvoidingView, Platform, Alert, ScrollView } from 'react-native';
+import { Dimensions, Image, InteractionManager, StyleSheet, View, Text, Pressable, TextInput, KeyboardAvoidingView, Platform, Alert, ScrollView, ScaledSize, type ViewStyle } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
-import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import * as ScreenOrientation from 'expo-screen-orientation';
+import Svg, { Path } from 'react-native-svg';
 import Animated, {
+  type AnimatedStyle,
   useSharedValue,
   useAnimatedStyle,
+  useAnimatedProps,
   withTiming,
   withRepeat,
   withSequence,
   Easing,
-  runOnJS,
   SharedValue,
-  FadeIn,
-  FadeOut,
-  SlideInDown,
-  SlideInLeft,
-  SlideOutDown,
-  SlideOutLeft,
   interpolate,
   cancelAnimation,
 } from 'react-native-reanimated';
-import { Story, STORY_TAGS } from '@/types/story';
+import { Story, STORY_TAGS, getLocalizedText } from '@/types/story';
+import type { SupportedLanguage } from '@/services/i18n';
 // All story images are loaded from local cache after batch sync - no authenticated fetching needed
 import { Fonts } from '@/constants/theme';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { voiceRecordingService, VoiceOver } from '@/services/voice-recording-service';
 import { useParentsOnlyChallenge } from '@/hooks/use-parents-only-challenge';
 import { ParentsOnlyModal } from '@/components/ui/parents-only-modal';
-import { StoryPreviewModal } from '@/components/stories/story-preview-modal';
-import { TutorialOverlay } from '@/components/tutorial/tutorial-overlay';
-import { useTutorial } from '@/contexts/tutorial-context';
+import { StoryCardSheet } from '@/components/stories/story-card-sheet';
+import { STORY_OVERLAY_LAYER_Z } from '@/constants/story-overlay-layer';
+import { useGuideLift } from '@/components/owl-guide/use-guide-lift';
+import { cardCoverTransform, storyCardLayout } from '@/constants/story-card';
+import { BookHinge, BookPages, BookSpineShade, bookSpineWidth } from '@/components/stories/catalogue/book-frame';
+import { CoverTitle } from '@/components/stories/catalogue/cover-title';
+import { SeatedBook } from '@/components/stories/catalogue/seated-book';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { RotatePromptOverlay } from '@/components/stories/rotate-prompt-overlay';
+import { OwlGuide } from '@/components/owl-guide';
+import { useOwlGuide } from '@/contexts/owl-guide-context';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppStore } from '@/store/app-store';
+import { STORY_DETAIL_OPENING, STORY_OPENING, STORY_SKETCH, bookOutlinePath, coverFaceOpacity, needsGuidedTurn, openBookGrowScale, openingSeat, seatTransform, sketchDashOffset, storySketchTimeline } from '@/constants/story-opening';
+import { allowTurnForPrompt, applyDefaultOrientation } from '@/hooks/use-story-orientation';
+import { waitForWindowToSettle } from '@/hooks/use-turn-to-landscape';
+import { useReducedMotion } from '@/hooks/use-reduced-motion';
+import { choreograph } from '@/utils/choreograph';
+
+const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 // Animation timing constants
-const MOVE_TO_CENTER_DURATION = 1600; // Slow, cinematic glide from tile to center
-const BUTTONS_DELAY = 400; // Delay before buttons slide in after book settles
+const CARD_GROUND_OPACITY = 0.74; // The shelf stays visible behind the story card, shadowed
+const LANDSCAPE_DIMENSIONS_TIMEOUT_MS = 800; // Fallback if the dimension-change event never fires
 
 export type ReadingMode = 'read' | 'record' | 'narrate';
 
+export interface StoryOpenRequest {
+  story: Story;
+  mode: ReadingMode;
+  voiceOver: VoiceOver | null;
+}
+
+export type TransitionPhase = 'flying' | 'detail' | 'sketch' | 'returning' | 'prompt' | 'opening' | null;
+
 interface StoryTransitionContextType {
+  // Direct open request, bypassing the detail/prompt overlay: the caller has
+  // already run its own opening ritual and only needs the reader mounted.
+  storyOpenRequest: StoryOpenRequest | null;
+  requestStoryOpen: (story: Story, mode: ReadingMode, voiceOver: VoiceOver | null) => void;
+  clearStoryOpen: () => void;
+
   // Animation state
   isTransitioning: boolean;
   showModeSelection: boolean;
@@ -58,6 +82,9 @@ interface StoryTransitionContextType {
 
   // Flag to indicate story reader should start loading
   shouldShowStoryReader: boolean;
+
+  // Opacity the layout applies to the mounted reader so it dissolves in over the opening book
+  readerRevealStyle: AnimatedStyle<ViewStyle>;
 
   // Callback when user taps "Begin" - the _layout listens to this
   onBeginCallback: (() => void) | null;
@@ -75,8 +102,7 @@ interface StoryTransitionContextType {
   cardPosition: { x: number; y: number; width: number; height: number } | null;
 
   // Animation functions
-  startTransition: (storyId: string, cardLayout: { x: number; y: number; width: number; height: number }, story?: Story) => void;
-  selectModeAndBegin: (mode: ReadingMode) => void;
+  startTransition: (storyId: string, cardLayout: { x: number; y: number; width: number; height: number }, story?: Story, shelf?: Story[]) => void;
   cancelTransition: () => void;
   completeTransition: () => void;
   startExitAnimation: (onComplete: () => void, currentPageIndex?: number) => Promise<void>;
@@ -110,11 +136,23 @@ interface StoryTransitionProviderProps {
 
 export function StoryTransitionProvider({ children }: StoryTransitionProviderProps) {
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const [showModeSelection, setShowModeSelection] = useState(false);
+  const [phase, setPhase] = useState<TransitionPhase>(null);
+  const phaseRef = useRef(phase);
+  phaseRef.current = phase;
+  const showModeSelection = phase === 'detail';
   const [selectedStoryId, setSelectedStoryId] = useState<string | null>(null);
+  const [storyOpenRequest, setStoryOpenRequest] = useState<StoryOpenRequest | null>(null);
   const [selectedStory, setSelectedStory] = useState<Story | null>(null);
   const [selectedMode, setSelectedMode] = useState<ReadingMode>('read');
   const [cardPosition, setCardPosition] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
+  const cardPositionRef = useRef(cardPosition);
+  cardPositionRef.current = cardPosition;
+  // The books the story card can swipe between, in shelf order, and where the
+  // child is along it. The tapped one is remembered so cancelling knows whether
+  // the flying book still matches the tile it would fly back to.
+  const [shelf, setShelf] = useState<Story[]>([]);
+  const [shelfIndex, setShelfIndex] = useState(0);
+  const tappedStoryIdRef = useRef<string | null>(null);
   const [originalCardPosition, setOriginalCardPosition] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
   const [targetBookPosition, setTargetBookPosition] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
   const [shouldShowStoryReader, setShouldShowStoryReader] = useState(false);
@@ -124,20 +162,30 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   const [isExitAnimating, setIsExitAnimating] = useState(false);
   // Track when we're animating the cancel transition - blocks touches during animation
   const [isCancelAnimating, setIsCancelAnimating] = useState(false);
-
-  // Preview page browsing -swipe through story pages on the cover overlay
-  const [previewPageIndex, setPreviewPageIndex] = useState(0);
-  const [prevPreviewPageIndex, setPrevPreviewPageIndex] = useState<number | null>(null); // For crossfade
-  const isPageFlipping = useRef(false); // Guards against concurrent flips
+  // The waiting book stays mounted past the prompt while it scrolls out of
+  // view, with the card already coming back in over it
+  const [bookLeaving, setBookLeaving] = useState(false);
 
   // Screen dimensions state - updates when orientation changes
   const [screenDimensions, setScreenDimensions] = useState(Dimensions.get('window'));
   // Track if we rotated to landscape for the current transition (to rotate back on cancel/exit)
   const wasRotatedForTransition = useRef(false);
+  // The screen the book's current transform was worked out for. A transform is
+  // only meaningful on the screen that produced it: turn the phone and the
+  // prompt's placement -- 42% down a portrait screen -- means nothing any more.
+  const transformScreenRef = useRef<{ width: number; height: number } | null>(null);
+  const noteTransformScreen = () => {
+    const { width, height } = Dimensions.get('window');
+    transformScreenRef.current = { width, height };
+  };
 
   // Store opening animation transform values so exit/cancel can use the EXACT same values
   // This prevents position mismatch when the book returns to the carousel
   const openingTransformRef = useRef<{ moveX: number; moveY: number; scale: number } | null>(null);
+  // Hero landing transform so the book can return from the rotate prompt to the detail view
+  const heroTransformRef = useRef<{ moveX: number; moveY: number; scale: number } | null>(null);
+  // Guards against double-triggering the opening sequence (sensor + fallback button)
+  const isOpeningRef = useRef(false);
 
   // Voice over state for record/narrate mode selection
   const [availableVoiceOvers, setAvailableVoiceOvers] = useState<VoiceOver[]>([]);
@@ -145,7 +193,6 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   const [showVoiceOverNameModal, setShowVoiceOverNameModal] = useState(false);
   const [showVoiceOverSelectModal, setShowVoiceOverSelectModal] = useState(false);
   const [voiceOverName, setVoiceOverName] = useState('');
-  const [showPreviewModal, setShowPreviewModal] = useState(false);
   // Ref for exit page index - synchronous, available immediately (React state is async)
   const exitPageIndexRef = useRef<number | null>(null);
 
@@ -153,28 +200,36 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   const readButtonRef = useRef<View>(null);
   const recordButtonRef = useRef<View>(null);
   const narrateButtonRef = useRef<View>(null);
-  const previewButtonRef = useRef<View>(null);
 
   // Tutorial hook
-  const { shouldShowTutorial, activeTutorial } = useTutorial();
+  const { shouldShowGuide, activeGuide } = useOwlGuide();
+  // the card sheet does not scroll, so it rises for the owl instead: a button
+  // low on it would otherwise sit behind the bubble resting on the perch
+  const sheetLift = useGuideLift();
+  const bookModeTargets = useMemo(() => ({
+    'read_button': readButtonRef,
+    'record_button': recordButtonRef,
+    'narrate_button': narrateButtonRef,
+  }), []);
 
   // Translation hook
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   // Block touches immediately when book mode tutorial should show but hasn't started yet
   const shouldBlockBookModeTouches = showModeSelection &&
-    shouldShowTutorial('book_mode_tour') && activeTutorial !== 'book_mode_tour';
+    shouldShowGuide('book_mode_tour') && activeGuide !== 'book_mode_tour';
 
-  const insets = useSafeAreaInsets();
-  const { scaledFontSize, scaledButtonSize, scaledPadding, isTablet } = useAccessibility();
+  const { scaledFontSize, scaledButtonSize, isTablet } = useAccessibility();
+  const reduceMotion = useReducedMotion();
   const parentsOnly = useParentsOnlyChallenge();
   const toggleFavoriteStory = useAppStore((s) => s.toggleFavoriteStory);
   const favoriteStoryIds = useAppStore((s) => s.favoriteStoryIds);
+  const storyProgress = useAppStore((s) => s.storyProgress);
 
   // Use screenDimensions state so layout updates when orientation changes
   const { width: screenWidth, height: screenHeight } = screenDimensions;
   const isPhone = !isTablet;
-  const isLandscape = screenWidth > screenHeight;
+  const safeArea = useSafeAreaInsets();
 
   // Border radius for book covers - matches StoryCard (computed once, used in animations)
   const bookBorderRadius = scaledButtonSize(15);
@@ -183,6 +238,34 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   useEffect(() => {
     const subscription = Dimensions.addEventListener('change', ({ window }) => {
       setScreenDimensions(window);
+
+      // A phone turned while the book is being drawn, or while the prompt is
+      // up: reseat the book for the screen it is now on, at once and without
+      // animating, so the layout iOS is turning towards already has the book
+      // at its centre. Then the book is at the centre of both layouts the
+      // system blends between, and to the child it simply stays where it is
+      // while the screen turns around it. The sketch has to be in here too:
+      // its outline is drawn against the seat, so a turn part-way through
+      // left the line hanging where the portrait seat used to be and the book
+      // jumped to the middle once the opening took over.
+      const card = cardPositionRef.current;
+      const turnable = phaseRef.current === 'prompt' || phaseRef.current === 'sketch';
+      if (turnable && card && !isOpeningRef.current) {
+        if (phaseRef.current === 'sketch') {
+          sketchOpacity.value = 0;
+          setSketchOutline(null);
+        }
+        const seat = seatTransform(window, card);
+        cancelAnimation(transitionX);
+        cancelAnimation(transitionY);
+        cancelAnimation(transitionScale);
+        transitionX.value = seat.moveX;
+        transitionY.value = seat.moveY;
+        transitionScale.value = seat.scale;
+        openingTransformRef.current = { moveX: seat.moveX, moveY: seat.moveY, scale: seat.scale };
+        transformScreenRef.current = { width: window.width, height: window.height };
+        setTargetBookPosition(seat.rect);
+      }
     });
     return () => subscription?.remove();
   }, []);
@@ -196,7 +279,6 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
   // Background image slide animation (children art texture)
   // Slides down from above viewport on entry, slides back up on exit
-  const backgroundSlideY = useSharedValue(-screenHeight);
 
   // Book page flip and expansion animation values
   const pageFlipProgress = useSharedValue(0); // 0 = closed, 1 = open (cover rotated away)
@@ -207,8 +289,26 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   // Levitation effect -gentle vertical bob while book is in flight
   const levitationY = useSharedValue(0);
 
-  // Preview carousel -simple slide offset for page flip animation
-  const pageSlideX = useSharedValue(0);
+  // Opaque full-screen mask that hides the OS rotation snap during lockAsync
+  const rotationMaskOpacity = useSharedValue(0);
+  const readerReveal = useSharedValue(1);
+
+  // The book being sketched at its seat: how much of its outline has been
+  // drawn, and how much of the drawn line is still showing over the cover
+  const sketchProgress = useSharedValue(0);
+  // The line is invisible until the moment the draw starts, whatever its dash
+  // state: an animated prop's first value is worked out before the outline
+  // exists, and it overrides the static one, so the first frames showed the
+  // whole outline at once
+  const sketchOpacity = useSharedValue(0);
+  // The outline's length, set before the phase changes so the first frame's
+  // dash offset is worked out from it rather than from a stale closure
+  const sketchLength = useSharedValue(0);
+  const [sketchOutline, setSketchOutline] = useState<{ d: string; length: number } | null>(null);
+  // 0 while the book waits at its seat as a Yoga-centred view (the sketch and
+  // the prompt); the transform-driven book is hidden then and takes over at
+  // the opening, at the same size and place
+  const bookShown = useSharedValue(1);
 
   // Current compensated border radius - updated by bookExpansionAnimatedStyle
   // Used by child views that need to match parent's borderRadius when overflow: 'visible'
@@ -268,102 +368,76 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     });
   };
 
-  // Helper to calculate and animate to center position
-  const animateToCenter = (
-    cardLayout: { x: number; y: number; width: number; height: number },
-    width: number,
-    height: number,
-    showButtons: boolean = true
-  ) => {
-    // Detect if we're in phone portrait mode (phones stay in portrait for mode selection)
-    const isLandscapeNow = width > height;
-    const isPhonePortraitNow = isPhone && !isLandscapeNow;
-
-    // For phone portrait mode: book positioned above center, buttons below
-    // Book takes about 75% of screen width for phones (larger to fill space better)
-    // For tablets: 55% of screen width
-    const targetWidth = isPhonePortraitNow ? width * 0.75 : width * 0.55;
-    const targetScale = targetWidth / cardLayout.width;
-
-    // Calculate center position for the scaled book
-    // Book + buttons group should be visually centered on screen
-    const targetCenterX = width / 2;
-    // Phone portrait: book sits slightly above true center so the book+buttons group is centered
-    // Tablet/landscape: buttons are to the side, so book itself is at true vertical center
-    const targetCenterY = isPhonePortraitNow
-      ? height * 0.44  // Near center -leaves just enough room for mode buttons + begin button below
-      : height / 2;    // True center for tablets (buttons sit beside the book)
-
-    // Current center position
-    const currentCenterX = cardLayout.x + cardLayout.width / 2;
-    const currentCenterY = cardLayout.y + cardLayout.height / 2;
-
-    // How much to move the center
-    const moveX = targetCenterX - currentCenterX;
-    const moveY = targetCenterY - currentCenterY;
-
-    // Store opening animation values so exit/cancel can reuse the EXACT same values
-    // This prevents position mismatch when the book returns to carousel
-    openingTransformRef.current = { moveX, moveY, scale: targetScale };
-
-    // Calculate final book position (after animation) for positioning close button
-    const scaledWidth = cardLayout.width * targetScale;
-    const scaledHeight = cardLayout.height * targetScale;
-    const targetBookX = targetCenterX - scaledWidth / 2;
-    const targetBookY = targetCenterY - scaledHeight / 2;
-    setTargetBookPosition({ x: targetBookX, y: targetBookY, width: scaledWidth, height: scaledHeight });
-
-    // Smooth bezier curve -gentle acceleration then long, soft deceleration
-    const glideEasing = Easing.bezier(0.25, 0.1, 0.25, 1);
-
-    // Animate card to center of screen
-    transitionX.value = withTiming(moveX, {
-      duration: MOVE_TO_CENTER_DURATION,
-      easing: glideEasing,
+  // Resolves with window dimensions once they satisfy the predicate, or after the timeout
+  const waitForDimensions = (
+    predicate: (dims: ScaledSize) => boolean,
+    timeoutMs: number
+  ): Promise<ScaledSize> => {
+    return new Promise((resolve) => {
+      const current = Dimensions.get('window');
+      if (predicate(current)) {
+        resolve(current);
+        return;
+      }
+      const timeout = setTimeout(() => {
+        subscription?.remove();
+        resolve(Dimensions.get('window'));
+      }, timeoutMs);
+      const subscription = Dimensions.addEventListener('change', ({ window }) => {
+        if (predicate(window)) {
+          clearTimeout(timeout);
+          subscription?.remove();
+          resolve(window);
+        }
+      });
     });
-
-    transitionY.value = withTiming(moveY, {
-      duration: MOVE_TO_CENTER_DURATION,
-      easing: glideEasing,
-    });
-
-    transitionScale.value = withTiming(targetScale, {
-      duration: MOVE_TO_CENTER_DURATION,
-      easing: glideEasing,
-    });
-
-    // Fade in the shadow overlay (slightly faster so it's settled before the book lands)
-    overlayOpacity.value = withTiming(1, {
-      duration: MOVE_TO_CENTER_DURATION * 0.7,
-      easing: Easing.out(Easing.quad),
-    });
-
-    // Slide the children-art background image down into view (much slower for a dramatic reveal)
-    backgroundSlideY.value = withTiming(0, {
-      duration: MOVE_TO_CENTER_DURATION * 1.8,
-      easing: glideEasing,
-    });
-
-    // ── Levitation effect: gentle bob + glow pulse while book is in flight ──
-    levitationY.value = withRepeat(
-      withSequence(
-        withTiming(-6, { duration: 600, easing: Easing.inOut(Easing.quad) }),
-        withTiming(6, { duration: 600, easing: Easing.inOut(Easing.quad) }),
-      ),
-      -1, // infinite
-      true,
-    );
-    // Show mode selection buttons after animation completes
-    if (showButtons) {
-      setTimeout(() => {
-        // Settle the levitation -ease back to 0 and stop
-        levitationY.value = withTiming(0, { duration: 400, easing: Easing.out(Easing.quad) });
-        setShowModeSelection(true);
-      }, MOVE_TO_CENTER_DURATION + BUTTONS_DELAY);
-    }
   };
 
-  const startTransition = async (storyId: string, cardLayout: { x: number; y: number; width: number; height: number }, story?: Story) => {
+  // Compute the transform that lands the card in the detail-view hero area
+  // The book flies onto the story card's cover -- centred on it and fitted
+  // inside it, so a tile of any shape lands within the card
+  const computeHeroTransform = (
+    cardLayout: { x: number; y: number; width: number; height: number },
+    width: number,
+    height: number
+  ) => cardCoverTransform(storyCardLayout({ width, height }, isTablet, safeArea), cardLayout);
+
+  // Compute the transform that centers the card on the rotate-prompt screen
+  // The prompt parks the book in the very seat the opening uses -- the exact
+  // centre of the screen. A phone turned mid-prompt is rotated by iOS about the
+  // screen centre, so a book sitting there stays put through the turn.
+  const computePromptTransform = (
+    cardLayout: { x: number; y: number; width: number; height: number },
+    width: number,
+    height: number
+  ) => seatTransform({ width, height }, cardLayout);
+
+  // Animate the card from its tile into the detail-view hero area
+  // The story card rises with the tapped book already on its cover. The
+  // transition's own book waits, hidden, on that same cover rect, so choosing
+  // a way to read can carry it onwards from exactly where the card showed it.
+  const presentCard = (
+    cardLayout: { x: number; y: number; width: number; height: number },
+    width: number,
+    height: number
+  ) => {
+    const cover = computeHeroTransform(cardLayout, width, height);
+    heroTransformRef.current = { moveX: cover.moveX, moveY: cover.moveY, scale: cover.scale };
+    openingTransformRef.current = { moveX: cover.moveX, moveY: cover.moveY, scale: cover.scale };
+    noteTransformScreen();
+    setTargetBookPosition(cover.rect);
+
+    transitionX.value = cover.moveX;
+    transitionY.value = cover.moveY;
+    transitionScale.value = cover.scale;
+    transitionOpacity.value = 0;
+
+    // The shelf falls into shadow as the card rises
+    overlayOpacity.value = withTiming(CARD_GROUND_OPACITY, { duration: STORY_DETAIL_OPENING.groundFadeMs, easing: Easing.out(Easing.quad) });
+    setPhase('detail');
+  };
+
+  const startTransition = async (storyId: string, cardLayout: { x: number; y: number; width: number; height: number }, story?: Story, shelfStories?: Story[]) => {
     // Reset ALL animation values from any previous transition FIRST
     pageFlipProgress.value = 0;
     bookExpansion.value = 0;
@@ -372,35 +446,36 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     transitionY.value = 0;
     transitionOpacity.value = 1;
     overlayOpacity.value = 0;
-    backgroundSlideY.value = -screenHeight; // Start above viewport
     cancelAnimation(levitationY);
     levitationY.value = 0;
+    sketchProgress.value = 0;
+    sketchOpacity.value = 0;
+    sketchLength.value = 0;
+    setSketchOutline(null);
+    bookShown.value = 1;
 
     // Reset ALL state that could affect rendering
+    setBookLeaving(false);
     setIsExitAnimating(false);
     setIsExpandingToReader(false);
+    isOpeningRef.current = false;
+    rotationMaskOpacity.value = 0;
 
     setSelectedStoryId(storyId);
     setSelectedStory(story || null);
+    tappedStoryIdRef.current = storyId;
+    const onShelf = story && shelfStories?.some((candidate) => candidate.id === storyId) ? shelfStories : story ? [story] : [];
+    setShelf(onShelf);
+    setShelfIndex(Math.max(0, onShelf.findIndex((candidate) => candidate.id === storyId)));
     setCardPosition(cardLayout);
     setOriginalCardPosition(cardLayout); // Save original position for exit animation
 
     setIsTransitioning(true);
+    setPhase('flying');
     setSelectedMode('read'); // Reset to default mode
-    setPreviewPageIndex(0); // Reset preview to cover
-    setPrevPreviewPageIndex(null);
-    pageSlideX.value = 1;
 
-    // Animate from card position to center
-    transitionOpacity.value = 1;
-    transitionScale.value = 1;
-    transitionX.value = 0;
-    transitionY.value = 0;
     overlayOpacity.value = 0;
-
-    // Start animation synchronously so it begins on the same frame as the overlay mount
-    // -withTiming runs on the UI thread and isn't affected by JS thread renders
-    animateToCenter(cardLayout, screenWidth, screenHeight, true);
+    presentCard(cardLayout, screenWidth, screenHeight);
 
     // Defer image preloading until the animation has settled
     // -Image.prefetch causes JS thread pressure that jitters the animation
@@ -411,136 +486,340 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     }
   };
 
-  // User selects a mode and taps "Begin"
-  const selectModeAndBegin = async (mode: ReadingMode) => {
-    log.info('Starting story, mode:', mode);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  // A way to read chosen on the story card: the card sinks and the book is
+  // sketched at its seat -- its outline drawn, then its cover appearing inside
+  // -- and opens from there, via the rotate prompt on a phone held upright
+  const openWithMode = (mode: ReadingMode) => {
+    // Only the story card can start an opening, and only once. Without this a
+    // second press -- a double tap, or the tap that stops the carousel landing
+    // on the button underneath -- ran the choreography again from the top: the
+    // outline reset to nothing and drew itself a second time.
+    if (phaseRef.current !== 'detail') return;
+
     setSelectedMode(mode);
+    if (mode === 'record' && !currentVoiceOver) {
+      setShowVoiceOverNameModal(true);
+      return;
+    }
+    if (mode === 'narrate' && !currentVoiceOver) {
+      setShowVoiceOverSelectModal(true);
+      return;
+    }
+    if (!cardPosition) return;
 
-    // Hide mode selection to trigger slide-out animation
-    setShowModeSelection(false);
-    // Reset preview to cover so the underlying book layer shows the cover image
-    // during the flip-open animation (preview overlay unmounts when showModeSelection goes false)
-    setPreviewPageIndex(0);
-    setPrevPreviewPageIndex(null);
-    pageSlideX.value = 1;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-    // Animation timing - very fast to minimize pixelation visibility during scaling
-    const BUTTON_EXIT_DURATION = 300;  // Time for buttons to slide out (SlideOutDown is 250ms + buffer)
-    const ROTATION_DURATION = 300;     // Time for rotation to landscape
-    const COVER_FLIP_DURATION = 200;   // Fast flip to reduce pixelation visibility
-    const HOLD_AFTER_FLIP = 100;       // Brief pause to see the page after cover flips
-    const SCALE_DURATION = 200;        // Very fast scale to full screen
+    // The seat is the centre of the screen, which is where the prompt keeps
+    // the book and where the opening lifts its cover: the book is drawn
+    // there outright, so nothing has to glide into place afterwards
+    const dims = Dimensions.get('window');
+    const seat = computePromptTransform(cardPosition, dims.width, dims.height);
+    openingTransformRef.current = { moveX: seat.moveX, moveY: seat.moveY, scale: seat.scale };
+    noteTransformScreen();
+    setTargetBookPosition(seat.rect);
 
-    // Just reset flip/expansion values (these don't affect position)
-    bookExpansion.value = 0;
-    pageFlipProgress.value = 0;
+    cancelAnimation(levitationY);
+    levitationY.value = 0;
+    transitionX.value = seat.moveX;
+    transitionY.value = seat.moveY;
+    transitionScale.value = seat.scale;
+    // While it waits, the book on screen is the Yoga-centred one, which the
+    // OS turns about the centre correctly; this one stays hidden until the
+    // opening takes over
+    bookShown.value = 0;
 
-    // Wait for buttons to slide out
-    await new Promise(resolve => setTimeout(resolve, BUTTON_EXIT_DURATION));
+    // The shelf behind goes dark as the card sinks
+    overlayOpacity.value = withTiming(1, { duration: 300, easing: Easing.out(Easing.quad) });
 
-    // For phones in portrait: rotate to landscape before opening the book
-    if (isPhone && !isLandscape && cardPosition) {
-      log.debug('Rotating to landscape…');
-      wasRotatedForTransition.current = true;
-
-      // Fade overlay slightly to smooth the rotation
-      overlayOpacity.value = withTiming(0.9, {
-        duration: 150,
-        easing: Easing.out(Easing.cubic)
-      });
-
-      try {
-        // Rotate to landscape
-        await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
-
-        // Wait for dimensions to settle
-        await new Promise(resolve => setTimeout(resolve, ROTATION_DURATION));
-
-        // Get new dimensions after rotation
-        const newDims = Dimensions.get('window');
-        log.debug('Landscape dims:', newDims.width, '×', newDims.height);
-        setScreenDimensions(newDims);
-
-        // Recalculate book position for landscape - center it for the opening animation
-        const targetWidth = newDims.width * 0.55;
-        const targetScale = targetWidth / cardPosition.width;
-        const targetHeight = cardPosition.height * targetScale;
-        const targetCenterX = newDims.width / 2;
-        const targetCenterY = newDims.height / 2;
-
-        // Update target book position for landscape
-        setTargetBookPosition({
-          x: targetCenterX - targetWidth / 2,
-          y: targetCenterY - targetHeight / 2,
-          width: targetWidth,
-          height: targetHeight,
-        });
-
-        // Animate book to center of landscape screen
-        const cardCenterX = cardPosition.x + cardPosition.width / 2;
-        const cardCenterY = cardPosition.y + cardPosition.height / 2;
-        const landscapeMoveX = targetCenterX - cardCenterX;
-        const landscapeMoveY = targetCenterY - cardCenterY;
-
-        transitionX.value = withTiming(landscapeMoveX, { duration: 200, easing: Easing.out(Easing.cubic) });
-        transitionY.value = withTiming(landscapeMoveY, { duration: 200, easing: Easing.out(Easing.cubic) });
-        transitionScale.value = withTiming(targetScale, { duration: 200, easing: Easing.out(Easing.cubic) });
-
-        // UPDATE opening transform ref with LANDSCAPE values
-        // This is critical for exit animation to use the correct centering values
-        openingTransformRef.current = { moveX: landscapeMoveX, moveY: landscapeMoveY, scale: targetScale };
-
-        // Wait for position animation
-        await new Promise(resolve => setTimeout(resolve, 200));
-
-      } catch (error) {
-        log.warn('Failed to rotate to landscape:', error);
+    const carryOn = async () => {
+      // Read the screen again: the child may have turned the phone while the
+      // book was being drawn. Tablets are never asked to turn -- they are
+      // unlocked, so the book just opens -- and neither is a phone that is
+      // already sideways. A phone that turned during the draw, though, is
+      // still turning: the size is reported as the system starts animating
+      // the interface round, and opening on that report put the book-opening
+      // on top of the rotation. So it waits for the window to hold still.
+      const now = Dimensions.get('window');
+      if (!needsGuidedTurn({ isTablet, width: now.width, height: now.height })) {
+        if (needsGuidedTurn({ isTablet, width: dims.width, height: dims.height })) {
+          await waitForWindowToSettle();
+        }
+        beginStory();
+        return;
       }
+
+      setPhase('prompt');
+
+      // Let the phone follow the child now that we are asking them to turn it.
+      // Until this, iOS held the interface in portrait and the prompt could only
+      // be answered by the accelerometer -- which a simulator never provides.
+      allowTurnForPrompt().catch((error) => log.warn('Failed to allow turning:', error));
+
+      levitationY.value = withRepeat(
+        withSequence(
+          withTiming(-6, { duration: 900, easing: Easing.inOut(Easing.quad) }),
+          withTiming(6, { duration: 900, easing: Easing.inOut(Easing.quad) }),
+        ),
+        -1,
+        true,
+      );
+    };
+
+    if (reduceMotion) {
+      // no sketch: the book is simply there
+      transitionOpacity.value = 1;
+      sketchProgress.value = 1;
+      sketchOpacity.value = 0;
+      carryOn();
+      return;
     }
 
-    // Set expanding state
+    // The outline is worked out here, before the phase changes, so its length
+    // is already in place when the line first renders
+    const outline = bookOutlinePath(
+      seat.rect,
+      bookBorderRadius,
+      bookSpineWidth(cardPosition.width) * (seat.rect.width / cardPosition.width)
+    );
+    sketchLength.value = outline.length;
+    setSketchOutline(outline);
+    setPhase('sketch');
+    const sketch = storySketchTimeline();
+    choreograph([
+      {
+        on: sketchProgress,
+        name: 'outline',
+        from: 0,
+        beats: [{ at: sketch.draw.at, to: 1, over: sketch.draw.over, easing: Easing.bezier(...STORY_SKETCH.drawCurve) }],
+      },
+      {
+        on: transitionOpacity,
+        name: 'cover',
+        from: 0,
+        beats: [{ at: sketch.cover.at, to: 1, over: sketch.cover.over, easing: Easing.out(Easing.quad) }],
+      },
+      {
+        on: sketchOpacity,
+        name: 'drawn line',
+        from: 0,
+        beats: [
+          { at: sketch.draw.at, to: 1, over: 16 },
+          { at: sketch.strokeOut.at, to: 0, over: sketch.strokeOut.over },
+        ],
+      },
+    ]);
+
+    setTimeout(() => {
+      if (phaseRef.current === 'sketch') carryOn();
+    }, sketch.total);
+  };
+
+  // Back tapped on the rotate prompt: the book scrolls out of view, and the
+  // card the child chose from comes back in over it
+  const returnToDetailFromPrompt = () => {
+    if (isOpeningRef.current) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+    // The child changed their mind, so take the freedom to turn back away
+    applyDefaultOrientation().catch((error) => log.warn('Failed to restore orientation:', error));
+
+    setBookLeaving(true);
+    setPhase('returning');
+    overlayOpacity.value = withTiming(CARD_GROUND_OPACITY, { duration: 350, easing: Easing.out(Easing.quad) });
+
+    // The seated book's rise and fall is its vertical offset; send it off the
+    // bottom of the screen, the way the card leaves
+    cancelAnimation(levitationY);
+    levitationY.value = withTiming(screenHeight, {
+      duration: STORY_DETAIL_OPENING.sheetSinkMs,
+      easing: Easing.in(Easing.cubic),
+    });
+
+    // The transform-driven book goes back beneath the card's cover, hidden,
+    // ready for the next choice
+    const hero = heroTransformRef.current;
+    if (hero && cardPosition) {
+      openingTransformRef.current = { ...hero };
+      noteTransformScreen();
+      setTargetBookPosition(computeHeroTransform(cardPosition, screenWidth, screenHeight).rect);
+      transitionX.value = hero.moveX;
+      transitionY.value = hero.moveY;
+      transitionScale.value = hero.scale;
+    }
+
+    setTimeout(() => {
+      if (phaseRef.current === 'returning') setPhase('detail');
+    }, STORY_DETAIL_OPENING.cardReturnsAt);
+
+    setTimeout(() => {
+      setBookLeaving(false);
+      if (phaseRef.current !== 'detail') return;
+      transitionOpacity.value = 0;
+      bookShown.value = 1;
+      levitationY.value = 0;
+    }, STORY_DETAIL_OPENING.sheetSinkMs + 40);
+  };
+
+  // Flip the cover open and expand to full screen, then hand over to the reader
+  const openBookIntoReader = () => {
     setIsExpandingToReader(true);
 
     requestAnimationFrame(() => {
-      // PHASE 1: Flip the cover (2D scaleX - no pixelation!)
       pageFlipProgress.value = withTiming(1, {
-        duration: COVER_FLIP_DURATION,
-        easing: Easing.inOut(Easing.cubic)
+        duration: STORY_OPENING.coverLiftMs,
+        easing: Easing.inOut(Easing.quad),
       });
 
-      // PHASE 2: After flip completes + hold, scale to full screen
       setTimeout(() => {
-        // Load the story reader NOW (at start of scale) so it loads behind
+        readerReveal.value = 0;
         if (onBeginCallback) {
           onBeginCallback();
         }
 
-        // Scale the book to fill the screen
-        bookExpansion.value = withTiming(1, {
-          duration: SCALE_DURATION,
-          easing: Easing.inOut(Easing.cubic)
-        });
-
-        // After scale completes, instant switch - reader is already loaded behind
         setTimeout(() => {
-          transitionOpacity.value = 0;
-          overlayOpacity.value = 0;
-          completeTransitionOnly();
-        }, SCALE_DURATION);
-      }, COVER_FLIP_DURATION + HOLD_AFTER_FLIP);
+          bookExpansion.value = withTiming(1, {
+            duration: STORY_OPENING.growMs,
+            easing: Easing.out(Easing.cubic),
+          });
+
+          setTimeout(() => {
+            readerReveal.value = withTiming(1, {
+              duration: STORY_OPENING.dissolveMs,
+              easing: Easing.out(Easing.quad),
+            });
+
+            setTimeout(() => {
+              transitionOpacity.value = 0;
+              overlayOpacity.value = 0;
+              completeTransitionOnly();
+            }, STORY_OPENING.dissolveMs);
+          }, STORY_OPENING.growMs);
+        }, STORY_OPENING.holdMs);
+      }, STORY_OPENING.coverLiftMs);
     });
+  };
+
+  // The physical turn was detected (or the fallback was tapped) -lock landscape
+  // behind an opaque mask so the OS rotation snap is never visible, then open the book
+  const beginStory = async () => {
+    if (isOpeningRef.current) return;
+    isOpeningRef.current = true;
+
+    log.info('Opening story, mode:', selectedMode);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    cancelAnimation(levitationY);
+    levitationY.value = withTiming(0, {
+      duration: STORY_OPENING.settleMs,
+      easing: Easing.out(Easing.cubic),
+    });
+    setPhase('opening');
+
+    bookExpansion.value = 0;
+    pageFlipProgress.value = 0;
+
+    const dims = Dimensions.get('window');
+    const needsRotation = needsGuidedTurn({ isTablet, width: dims.width, height: dims.height });
+
+    if (!needsRotation && cardPosition) {
+      // Nothing to turn. The book has been waiting at the seat as a
+      // Yoga-centred view; this one is snapped to the same seat, worked out
+      // from the window as it is now, and shown in its place. Snapped rather
+      // than glided: a turn reports a transitional window size first, and a
+      // glide from a seat worked out against that slid the book 15pt after
+      // the swap.
+      const seat = openingSeat(dims, cardPosition);
+      const moveX = dims.width / 2 - (cardPosition.x + cardPosition.width / 2);
+      const moveY = dims.height / 2 - (cardPosition.y + cardPosition.height / 2);
+      cancelAnimation(transitionX);
+      cancelAnimation(transitionY);
+      cancelAnimation(transitionScale);
+      transitionX.value = moveX;
+      transitionY.value = moveY;
+      transitionScale.value = seat.scale;
+      openingTransformRef.current = { moveX, moveY, scale: seat.scale };
+      noteTransformScreen();
+      setTargetBookPosition({ x: seat.x, y: seat.y, width: seat.width, height: seat.height });
+    }
+    bookShown.value = 1;
+    await new Promise(resolve => setTimeout(resolve, STORY_OPENING.settleMs));
+
+    if (needsRotation && cardPosition) {
+      bookShown.value = 1;
+      rotationMaskOpacity.value = withTiming(1, {
+        duration: STORY_OPENING.veilInMs,
+        easing: Easing.out(Easing.quad),
+      });
+      transitionOpacity.value = withTiming(0, {
+        duration: STORY_OPENING.veilInMs,
+        easing: Easing.in(Easing.quad),
+      });
+      await new Promise(resolve => setTimeout(resolve, STORY_OPENING.veilInMs + 40));
+
+      wasRotatedForTransition.current = true;
+      try {
+        await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
+      } catch (error) {
+        log.warn('Failed to rotate to landscape:', error);
+      }
+
+      const newDims = await waitForDimensions(
+        (d) => d.width > d.height,
+        LANDSCAPE_DIMENSIONS_TIMEOUT_MS
+      );
+      log.debug('Landscape dims:', newDims.width, '×', newDims.height);
+      setScreenDimensions(newDims);
+
+      // Seat the book on the landscape screen while it's hidden by the veil
+      const seat = openingSeat(newDims, cardPosition);
+      const targetScale = seat.scale;
+      const targetCenterX = newDims.width / 2;
+      const targetCenterY = newDims.height / 2;
+
+      setTargetBookPosition({ x: seat.x, y: seat.y, width: seat.width, height: seat.height });
+
+      const cardCenterX = cardPosition.x + cardPosition.width / 2;
+      const cardCenterY = cardPosition.y + cardPosition.height / 2;
+      const landscapeMoveX = targetCenterX - cardCenterX;
+      const landscapeMoveY = targetCenterY - cardCenterY;
+
+      // Seat the book a touch low and small behind the veil so it can rise into place
+      transitionX.value = landscapeMoveX;
+      transitionY.value = landscapeMoveY + STORY_OPENING.reenterLift;
+      transitionScale.value = targetScale * STORY_OPENING.reenterScale;
+
+      // UPDATE opening transform ref with LANDSCAPE values
+      // This is critical for exit animation to use the correct centering values
+      openingTransformRef.current = { moveX: landscapeMoveX, moveY: landscapeMoveY, scale: targetScale };
+
+      overlayOpacity.value = 0.9;
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      rotationMaskOpacity.value = withTiming(0, {
+        duration: STORY_OPENING.veilOutMs,
+        easing: Easing.in(Easing.quad),
+      });
+      const rise = { duration: STORY_OPENING.reenterMs, easing: Easing.out(Easing.cubic) };
+      transitionOpacity.value = withTiming(1, rise);
+      transitionY.value = withTiming(landscapeMoveY, rise);
+      transitionScale.value = withTiming(targetScale, rise);
+      await new Promise(resolve => setTimeout(resolve, STORY_OPENING.reenterMs));
+    }
+
+    openBookIntoReader();
   };
 
   // Complete transition without calling onBeginCallback (already called)
   const completeTransitionOnly = () => {
     log.debug('Transition complete');
     setIsTransitioning(false);
-    setShowModeSelection(false);
+    setPhase(null);
     setIsExpandingToReader(false);
     setCardPosition(null);
     setTargetBookPosition(null);
     setShouldShowStoryReader(false);
+    isOpeningRef.current = false;
+    readerReveal.value = 1;
 
     setTimeout(() => {
       transitionScale.value = 1;
@@ -548,6 +827,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
       transitionY.value = 0;
       transitionOpacity.value = 1;
       overlayOpacity.value = 0;
+      rotationMaskOpacity.value = 0;
       pageFlipProgress.value = 0;
       bookExpansion.value = 0;
     }, 50);
@@ -576,7 +856,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     }
   };
 
-  // User cancels (taps X) -book slides down, then background slides up
+  // User cancels (back from the detail view) -book slides down, then background slides up
   const cancelTransition = async () => {
     log.debug('Cancelling transition');
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -584,46 +864,23 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     // Block touches during the entire cancel animation
     setIsCancelAnimating(true);
 
-    // Step 1: Trigger button exit animations (SlideOutLeft takes 250ms)
-    setShowModeSelection(false);
-
-    // Step 2: Wait for button exit animations to complete
-    await new Promise(resolve => setTimeout(resolve, 280));
+    // The card sinks back out of the screen and the shadow lifts off the
+    // shelf; the book beneath the card stays hidden -- nothing flies back
+    transitionOpacity.value = 0;
+    setPhase('flying');
+    overlayOpacity.value = withTiming(0, {
+      duration: STORY_DETAIL_OPENING.sheetRiseMs,
+      easing: Easing.out(Easing.quad)
+    });
+    await new Promise(resolve => setTimeout(resolve, STORY_DETAIL_OPENING.sheetRiseMs + 40));
 
     // If we rotated for this transition, rotate back to portrait first
     if (wasRotatedForTransition.current && originalCardPosition) {
       log.debug('Cancel: rotating back to portrait');
       await returnToPortrait();
-      await new Promise(resolve => setTimeout(resolve, 150));
     }
 
-    const SLIDE_DURATION = 400;
-    const currentHeight = Dimensions.get('window').height;
-
-    // Slide book down off screen
-    transitionY.value = withTiming(currentHeight + 200, {
-      duration: SLIDE_DURATION,
-      easing: Easing.in(Easing.cubic)
-    });
-
-    // Wait for book to slide out, then slide background up
-    setTimeout(() => {
-      transitionOpacity.value = 0; // Hide the animated book (already off-screen)
-
-      backgroundSlideY.value = withTiming(-currentHeight, {
-        duration: SLIDE_DURATION,
-        easing: Easing.in(Easing.cubic)
-      });
-      overlayOpacity.value = withTiming(0, {
-        duration: SLIDE_DURATION,
-        easing: Easing.out(Easing.quad)
-      });
-
-      // Complete -resetTransition will clear selectedStoryId and unmount overlay
-      setTimeout(() => {
-        resetTransition();
-      }, SLIDE_DURATION + 50);
-    }, SLIDE_DURATION);
+    resetTransition();
   };
 
   const resetTransition = () => {
@@ -632,6 +889,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     // but React re-render is async. If we reset transitionX/Y/Scale to 0 now,
     // the book would snap back to its tile position for 1 frame before the overlay unmounts.
     setIsTransitioning(false);
+    setPhase(null);
     setSelectedStoryId(null);
     setSelectedStory(null);
     setCardPosition(null);
@@ -641,11 +899,12 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     setAvailableVoiceOvers([]);
     setVoiceOverName('');
     setIsExpandingToReader(false);
-    setShowPreviewModal(false);
     // Reset rotation tracking
     wasRotatedForTransition.current = false;
+    isOpeningRef.current = false;
     // Clear stored opening transform values
     openingTransformRef.current = null;
+    heroTransformRef.current = null;
     // Reset cancel animation flag
     setIsCancelAnimating(false);
     // Notify _layout that transition was cancelled so it can restore view state
@@ -661,7 +920,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
       transitionY.value = 0;
       transitionOpacity.value = 1;
       overlayOpacity.value = 0;
-      backgroundSlideY.value = -screenHeight;
+      rotationMaskOpacity.value = 0;
       pageFlipProgress.value = 0;
       bookExpansion.value = 0;
       bookRotation.value = 0;
@@ -679,7 +938,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     // First hide the overlay by setting isTransitioning false
     // This removes the overlay from the DOM
     setIsTransitioning(false);
-    setShowModeSelection(false);
+    setPhase(null);
     setIsExpandingToReader(false);
     // Keep selectedStory and selectedMode for the story reader to use
     setCardPosition(null);
@@ -696,7 +955,6 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
       overlayOpacity.value = 0;
       pageFlipProgress.value = 0;
       bookExpansion.value = 0;
-      backgroundSlideY.value = -screenHeight;
     }, 50);
   };
 
@@ -851,12 +1109,15 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
       });
       await new Promise(resolve => setTimeout(resolve, 150));
 
-      // Phase 4: Rotate to portrait -reverse of opening's rotate to landscape
-      try {
-        await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
-        await new Promise(resolve => setTimeout(resolve, ROTATION_WAIT));
-      } catch (error) {
-        log.warn('Failed to rotate to portrait during exit:', error);
+      // Phase 4: Rotate to portrait -reverse of opening's rotate to landscape.
+      // Only a phone was turned on the way in, so only a phone is turned back.
+      if (isPhone) {
+        try {
+          await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+          await new Promise(resolve => setTimeout(resolve, ROTATION_WAIT));
+        } catch (error) {
+          log.warn('Failed to rotate to portrait during exit:', error);
+        }
       }
 
       const portraitDims = Dimensions.get('window');
@@ -903,7 +1164,6 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
       // Phase 7: Slide background up to reveal menu
       transitionOpacity.value = 0;
-      backgroundSlideY.value = withTiming(-portraitH, { duration: SLIDE_DURATION, easing: Easing.in(Easing.cubic) });
       overlayOpacity.value = withTiming(0, { duration: SLIDE_DURATION, easing: Easing.out(Easing.quad) });
       await new Promise(resolve => setTimeout(resolve, SLIDE_DURATION + 50));
 
@@ -942,10 +1202,6 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
           duration: SLIDE_DOWN_DURATION,
           easing: Easing.out(Easing.quad)
         });
-        backgroundSlideY.value = withTiming(-currentHeight, {
-          duration: SLIDE_DOWN_DURATION,
-          easing: Easing.out(Easing.quad)
-        });
       }, phase3Start + SLIDE_DOWN_DURATION);
 
       // Complete the animation
@@ -974,7 +1230,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
       return;
     }
 
-    log.debug('Returning to mode selection');
+    log.debug('Returning to detail view');
 
     // Get CURRENT screen dimensions - we're returning from story reader which is in landscape
     // Don't use screenDimensions state as it may have stale portrait values
@@ -982,28 +1238,17 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     const currentScreenWidth = currentDims.width;
     const currentScreenHeight = currentDims.height;
     const isCurrentLandscape = currentScreenWidth > currentScreenHeight;
-    const isPhoneLandscape = isPhone && isCurrentLandscape;
-    log.debug(`Mode selection dims: ${currentDims.width}×${currentDims.height}, phone=${isPhone}, landscape=${isPhoneLandscape}`);
-
-    // IMPORTANT: Update screenDimensions state so the button rendering uses current landscape values
-    // Without this, buttons would use stale portrait dimensions and get wrong sizing
     setScreenDimensions(currentDims);
 
-    // Animation timing (reverse of selectModeAndBegin)
+    // Animation timing (reverse of the opening flow)
     const SHRINK_DURATION = 200;        // Shrink from full screen to book size
     const HOLD_AFTER_SHRINK = 100;      // Brief pause before flipping
     const COVER_FLIP_DURATION = 200;    // Flip cover back
-    const BUTTONS_DELAY = 50;           // Delay before showing buttons
 
-    // Calculate the centered position using CURRENT dimensions (landscape)
-    // For phone landscape: use 35% of width - balanced size for phone screens
-    // For tablet: use 55% of width
-    const targetWidthPercent = isPhoneLandscape ? 0.35 : 0.55;
-    const targetWidth = currentScreenWidth * targetWidthPercent;
+    // Centre the closed book on the current (landscape) screen while it shrinks
+    const targetWidth = currentScreenWidth * (isCurrentLandscape ? 0.35 : 0.55);
     const targetScale = targetWidth / originalCardPosition.width;
-    // For phone landscape: shift book slightly right to make room for buttons on left
-    const targetCenterX = isPhoneLandscape ? currentScreenWidth * 0.55 : currentScreenWidth / 2;
-    // True vertical center for all devices
+    const targetCenterX = currentScreenWidth / 2;
     const targetCenterY = currentScreenHeight / 2;
     const currentCenterX = originalCardPosition.x + originalCardPosition.width / 2;
     const currentCenterY = originalCardPosition.y + originalCardPosition.height / 2;
@@ -1011,12 +1256,10 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     const moveY = targetCenterY - currentCenterY;
     const scaledWidth = originalCardPosition.width * targetScale;
     const scaledHeight = originalCardPosition.height * targetScale;
-    const targetBookX = targetCenterX - scaledWidth / 2;
-    const targetBookY = targetCenterY - scaledHeight / 2;
 
     const centeredPosition = {
-      x: targetBookX,
-      y: targetBookY,
+      x: targetCenterX - scaledWidth / 2,
+      y: targetCenterY - scaledHeight / 2,
       width: scaledWidth,
       height: scaledHeight,
     };
@@ -1051,11 +1294,61 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     setTargetBookPosition(centeredPosition);
     setIsExitAnimating(true);
     setIsTransitioning(true);
+    isOpeningRef.current = false;
 
     // Now hide the story reader - the animated book will be visible on top
     if (onReturnToModeSelectionCallback) {
       onReturnToModeSelectionCallback();
     }
+
+    const finishOnDetail = async () => {
+      // Hide the rotation snap behind the opaque mask, restore portrait, then
+      // land the book in the detail hero and remount the detail sheet
+      rotationMaskOpacity.value = withTiming(1, {
+        duration: STORY_OPENING.veilInMs,
+        easing: Easing.out(Easing.quad)
+      });
+      await new Promise(resolve => setTimeout(resolve, STORY_OPENING.veilInMs + 40));
+
+      if (isCurrentLandscape && isPhone) {
+        try {
+          await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+        } catch (error) {
+          log.warn('Failed to restore portrait:', error);
+        }
+        wasRotatedForTransition.current = false;
+      }
+
+      const portraitDims = await waitForDimensions(
+        (d) => d.height >= d.width,
+        LANDSCAPE_DIMENSIONS_TIMEOUT_MS
+      );
+      setScreenDimensions(portraitDims);
+
+      const hero = computeHeroTransform(originalCardPosition, portraitDims.width, portraitDims.height);
+      heroTransformRef.current = { moveX: hero.moveX, moveY: hero.moveY, scale: hero.scale };
+      openingTransformRef.current = { moveX: hero.moveX, moveY: hero.moveY, scale: hero.scale };
+    noteTransformScreen();
+      setTargetBookPosition(hero.rect);
+
+      transitionX.value = hero.moveX;
+      transitionY.value = hero.moveY;
+      transitionScale.value = hero.scale;
+
+      isExitAnimatingShared.value = 0;
+      isExpandingOrExitingShared.value = 0;
+      exitPageIndexRef.current = null;
+      setIsExitAnimating(false);
+      setSelectedMode('read');
+      setPhase('detail');
+
+      await new Promise(resolve => setTimeout(resolve, 60));
+      rotationMaskOpacity.value = withTiming(0, {
+        duration: 250,
+        easing: Easing.in(Easing.quad)
+      });
+      onComplete();
+    };
 
     // PHASE 1: Shrink from full screen to book size
     requestAnimationFrame(() => {
@@ -1075,16 +1368,10 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
           easing: Easing.inOut(Easing.cubic)
         });
 
-        // PHASE 3: After flip completes, show mode selection buttons
+        // PHASE 3: After flip completes, rotate back and land on the detail view
         setTimeout(() => {
-          isExitAnimatingShared.value = 0;
-          isExpandingOrExitingShared.value = 0;
-          exitPageIndexRef.current = null; // Reset page index ref
-          setIsExitAnimating(false);
-          setShowModeSelection(true);
-          setSelectedMode('read'); // Reset to default mode
-          onComplete();
-        }, COVER_FLIP_DURATION + BUTTONS_DELAY);
+          finishOnDetail();
+        }, COVER_FLIP_DURATION + 80);
       }, SHRINK_DURATION + HOLD_AFTER_SHRINK);
     });
   };
@@ -1101,7 +1388,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
         { scale: transitionScale.value },
         { rotate: `${bookRotation.value}deg` }
       ],
-      opacity: transitionOpacity.value,
+      opacity: transitionOpacity.value * bookShown.value,
       borderRadius: compensatedBorderRadius,
     };
   });
@@ -1114,11 +1401,6 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     };
   });
 
-  const backgroundSlideAnimatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ translateY: backgroundSlideY.value }],
-    };
-  });
 
   // Check if expansion/exit animations should be active (using shared value for immediate effect)
   const isExpandingOrExitingShared = useSharedValue(0);
@@ -1142,7 +1424,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
     const halfWidth = cardPosition.width / 2;
     // Rotate from 0 to -150 degrees around left edge (spine)
-    const rotation = interpolate(pageFlipProgress.value, [0, 1], [0, -150]);
+    const rotation = interpolate(pageFlipProgress.value, [0, 1], [0, -STORY_OPENING.coverLiftDegrees]);
 
     return {
       transform: [
@@ -1165,10 +1447,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
     if (!isActive) return { opacity: 1, borderRadius: compensatedBorderRadius };
 
-    const rotation = interpolate(pageFlipProgress.value, [0, 1], [0, -150]);
-    const opacity = Math.abs(rotation) < 90 ? 1 : 0;
-
-    return { opacity, borderRadius: compensatedBorderRadius };
+    return { opacity: coverFaceOpacity(pageFlipProgress.value).front, borderRadius: compensatedBorderRadius };
   });
 
   // Animated style for cover back face - show when rotated past 90 degrees
@@ -1181,9 +1460,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
     if (!isActive) return { opacity: 0, borderRadius: compensatedBorderRadius };
 
-    const rotation = interpolate(pageFlipProgress.value, [0, 1], [0, -150]);
-    const opacity = Math.abs(rotation) >= 90 ? 1 : 0;
-    return { opacity, borderRadius: compensatedBorderRadius };
+    return { opacity: coverFaceOpacity(pageFlipProgress.value).back, borderRadius: compensatedBorderRadius };
   });
 
   // Animated style for the first page behind the cover
@@ -1191,6 +1468,31 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   const firstPageAnimatedStyle = useAnimatedStyle(() => {
     return { borderRadius: currentCompensatedBorderRadius.value };
   });
+
+  // The first page sits in the cover's shadow until the cover has lifted clear
+  const pageShadeStyle = useAnimatedStyle(() => {
+    const isActive = isExitAnimatingShared.value === 1 || isExpandingOrExitingShared.value === 1;
+    if (!isActive) return { opacity: 0 };
+    return {
+      opacity: interpolate(pageFlipProgress.value, [0, 0.6, 1], [STORY_OPENING.pageShadeAtRest, 0.16, 0]),
+    };
+  });
+
+  // The cover's face turns away from the light as it opens
+  const coverShadeStyle = useAnimatedStyle(() => {
+    const isActive = isExitAnimatingShared.value === 1 || isExpandingOrExitingShared.value === 1;
+    if (!isActive) return { opacity: 0 };
+    return {
+      opacity: interpolate(pageFlipProgress.value, [0, 0.55], [0, STORY_OPENING.coverShadeWhenTurned], 'clamp'),
+    };
+  });
+
+  const readerRevealStyle = useAnimatedStyle(() => ({ opacity: readerReveal.value }));
+
+  const sketchProps = useAnimatedProps(() => ({
+    strokeDashoffset: sketchDashOffset(sketchLength.value, sketchProgress.value),
+    opacity: sketchOpacity.value,
+  }));
 
   // Store original card position in shared values for exit animation (React state is async)
   const exitCardX = useSharedValue(0);
@@ -1219,10 +1521,12 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
       const currentScreenWidth = exitScreenWidth.value;
       const currentScreenHeight = exitScreenHeight.value;
 
-      // Calculate full screen scale based on original card size
-      const scaleToFillX = currentScreenWidth / exitCardWidth.value;
-      const scaleToFillY = currentScreenHeight / exitCardHeight.value;
-      const scaleToFill = Math.max(scaleToFillX, scaleToFillY);
+      // The grown book spans the width of the screen -- the same size the
+      // opening grew it to, so the exit starts from where the opening ended
+      const scaleToFill = openBookGrowScale(
+        { width: currentScreenWidth, height: currentScreenHeight },
+        { width: exitCardWidth.value, height: exitCardHeight.value }
+      );
 
       // Current scale: interpolate from CENTERED BOOK scale to full-screen scale
       // transitionScale.value is the scale from tile to centered book (set during opening)
@@ -1270,12 +1574,13 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
       return {};
     }
 
-    // Calculate scale needed to fill the ENTIRE screen (use the larger ratio)
-    const scaleX = screenWidth / targetBookPosition.width;
-    const scaleY = screenHeight / targetBookPosition.height;
-    const scaleToFill = Math.max(scaleX, scaleY);
+    // Grow until the book's left and right edges meet the sides of the screen
+    const scaleToFill = openBookGrowScale(
+      { width: screenWidth, height: screenHeight },
+      targetBookPosition
+    );
 
-    // Interpolate scale from 1 to full screen scale
+    // Interpolate scale from 1 to the grown size
     const expansionScale = interpolate(bookExpansion.value, [0, 1], [1, scaleToFill]);
 
     // Combined scale
@@ -1402,7 +1707,22 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     }, 300);
   };
 
+  const requestStoryOpen = useCallback((story: Story, mode: ReadingMode, voiceOver: VoiceOver | null) => {
+    setSelectedStoryId(story.id);
+    setSelectedStory(story);
+    setSelectedMode(mode);
+    setCurrentVoiceOver(voiceOver);
+    setStoryOpenRequest({ story, mode, voiceOver });
+  }, []);
+
+  const clearStoryOpen = useCallback(() => {
+    setStoryOpenRequest(null);
+  }, []);
+
   const contextValue: StoryTransitionContextType = {
+    storyOpenRequest,
+    requestStoryOpen,
+    clearStoryOpen,
     isTransitioning,
     showModeSelection,
     selectedStoryId,
@@ -1411,6 +1731,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     selectedVoiceOver: currentVoiceOver,
     isExpandingToReader,
     shouldShowStoryReader,
+    readerRevealStyle,
     onBeginCallback,
     setOnBeginCallback,
     onReturnToModeSelectionCallback,
@@ -1419,7 +1740,6 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     setOnCancelCallback,
     cardPosition,
     startTransition,
-    selectModeAndBegin,
     cancelTransition,
     completeTransition,
     startExitAnimation,
@@ -1434,6 +1754,11 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   };
 
   // Render the cover image for the selected story
+  // The title the book wore on the shelf, worn again at its seat and as it opens
+  const coverTitle = selectedStory
+    ? getLocalizedText(selectedStory.localizedTitle, selectedStory.title, i18n.language as SupportedLanguage)
+    : undefined;
+
   // Note: No borderRadius on images - parent container handles clipping with overflow: hidden
   // All images are loaded from local cache after batch sync
   const renderCoverImage = () => {
@@ -1491,53 +1816,12 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     );
   };
 
-  // Render a preview image for any page index (cover or content)
-  const renderPreviewImage = (index: number) => {
-    if (!selectedStory) return null;
-    if (index === 0) return renderCoverImage();
-    return renderPageImage(index);
-  };
-
-  // Total number of previewable pages (cover + content pages)
-  const totalPreviewPages = selectedStory?.pages?.length ?? 1;
-
-  // Two-layer crossfade page flip -matches the story book reader's transition.
-  // Previous page stays visible underneath at full opacity while the new page
-  // fades in on top, then the previous layer is cleared.
-  const flipToPage = useCallback((newIndex: number, _direction: 'forward' | 'back') => {
-    if (isPageFlipping.current) return;
-    isPageFlipping.current = true;
-
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-
-    // Step 1: Keep current page visible underneath as "previous"
-    setPrevPreviewPageIndex(previewPageIndex);
-
-    // Step 2: After React renders the previous layer, hide current & swap index
-    requestAnimationFrame(() => {
-      pageSlideX.value = 0; // instant -new image invisible
-      setPreviewPageIndex(newIndex);
-
-      // Step 3: Small delay so React renders the new page content, then fade in
-      setTimeout(() => {
-        pageSlideX.value = withTiming(1, {
-          duration: 400,
-          easing: Easing.inOut(Easing.quad),
-        });
-
-        // Step 4: Clear previous layer after crossfade completes
-        setTimeout(() => {
-          setPrevPreviewPageIndex(null);
-          isPageFlipping.current = false;
-        }, 420);
-      }, 50);
-    });
-  }, [pageSlideX, previewPageIndex]);
-
-  // Animated style for the current preview page -fades in over previous layer
-  const previewFadeStyle = useAnimatedStyle(() => ({
-    opacity: pageSlideX.value,
+  // Animated style for the opaque rotation mask
+  const rotationMaskAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: rotationMaskOpacity.value,
   }));
+
+  const isFavorite = selectedStoryId ? favoriteStoryIds.includes(selectedStoryId) : false;
 
   return (
     <StoryTransitionContext.Provider value={contextValue}>
@@ -1546,160 +1830,47 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
       {/* Book preview and mode selection overlay */}
       {/* Keep blocking touches during cancel animation to prevent taps passing through to elements below */}
       {isTransitioning && cardPosition && selectedStory && (
-        <View style={styles.overlay} pointerEvents={(showModeSelection || isCancelAnimating) ? 'auto' : 'none'}>
-          {/* Children art background image -slides down on entry, up on exit.
-              No overlay opacity -stays fully opaque so the background is always
-              full colour while sliding in/out. */}
-          <Animated.View
-            style={[styles.backgroundImageContainer, backgroundSlideAnimatedStyle]}
-            pointerEvents="none"
-          >
-            <Image
-              source={require('../assets/images/ui-elements/background-home.webp')}
-              style={styles.backgroundImage}
-              resizeMode="repeat"
-            />
-          </Animated.View>
+        <View style={styles.overlay} pointerEvents={((phase !== null && phase !== 'flying') || isCancelAnimating) ? 'auto' : 'none'}>
+          {/* Plain night-navy ground beneath the book and the sheet. It fades in
+              as the book lifts, dimming the catalogue, and out again on exit. */}
+          <Animated.View style={[styles.nightGround, overlayAnimatedStyle]} pointerEvents="none" />
 
-          {/* Tap anywhere to begin overlay - sits above shadow but below buttons */}
-          {/* Disabled when any modal is open */}
-          {showModeSelection && !showVoiceOverNameModal && !showVoiceOverSelectModal && !showPreviewModal && (
-            <Pressable
-              style={styles.tapAnywhereOverlay}
-              onPress={() => {
-                // Handle each mode appropriately
-                if (selectedMode === 'read') {
-                  selectModeAndBegin(selectedMode);
-                } else if (selectedMode === 'record') {
-                  if (currentVoiceOver) {
-                    selectModeAndBegin(selectedMode);
-                  } else {
-                    setShowVoiceOverNameModal(true);
-                  }
-                } else if (selectedMode === 'narrate') {
-                  if (currentVoiceOver) {
-                    selectModeAndBegin(selectedMode);
-                  } else {
-                    setShowVoiceOverSelectModal(true);
-                  }
-                } else if (selectedMode === 'preview') {
-                  setShowPreviewModal(true);
-                }
-              }}
-            />
+          {/* The book being sketched: its outline drawn in one line, round the
+              cover and down the spine, ahead of the cover appearing inside it */}
+          {phase === 'sketch' && sketchOutline && (
+            <Svg pointerEvents="none" style={styles.sketch} width={screenWidth} height={screenHeight}>
+              <AnimatedPath
+                testID="transition-book-sketch"
+                d={sketchOutline.d}
+                stroke={STORY_SKETCH.stroke}
+                strokeWidth={STORY_SKETCH.strokeWidth}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                fill="none"
+                opacity={0}
+                strokeDasharray={`${sketchOutline.length} ${sketchOutline.length}`}
+                strokeDashoffset={sketchDashOffset(sketchOutline.length, 0)}
+                animatedProps={sketchProps}
+              />
+            </Svg>
           )}
 
-          {/* X Close button - top left of book */}
-          {/* Stays visible when preview modal is showing, but dimmed by overlay */}
-          {showModeSelection && targetBookPosition && (() => {
-            // Determine layout mode for close button sizing
-            const isPhonePortrait = isPhone && !isLandscape;
-            const isPhoneLandscape = isPhone && isLandscape;
-
-            let closeButtonSize: number;
-            let closeButtonOffset: number;
-            let closeIconSize: number;
-
-            if (isPhonePortrait) {
-              closeButtonSize = scaledButtonSize(36);
-              closeButtonOffset = scaledButtonSize(8);
-              closeIconSize = scaledFontSize(16);
-            } else if (isPhoneLandscape) {
-              // Phone landscape: compact but tappable close button
-              closeButtonSize = scaledButtonSize(28);
-              closeButtonOffset = scaledButtonSize(6);
-              closeIconSize = scaledFontSize(14);
-            } else {
-              // Tablet
-              closeButtonSize = scaledButtonSize(44);
-              closeButtonOffset = scaledButtonSize(12);
-              closeIconSize = scaledFontSize(20);
-            }
-
-            const closeButtonRadius = closeButtonSize / 2;
-
-            // Hide close button completely when preview modal is showing to avoid z-index conflicts
-            if (showPreviewModal) return null;
-
-            return (
-            <Animated.View
-              entering={FadeIn.delay(100).duration(200)}
-              style={[styles.closeButtonContainer, {
-                left: targetBookPosition.x - closeButtonOffset,
-                top: targetBookPosition.y - closeButtonOffset,
-              }]}
+          {/* The book as it waits at its seat: laid out by Yoga at the centre, so the
+              screen turns around it rather than under it. Hands over to the
+              transform-driven book below at the opening. */}
+          {(phase === 'sketch' || phase === 'prompt' || phase === 'returning' || bookLeaving) && cardPosition && (
+            <SeatedBook
+              card={cardPosition}
+              screenWidth={screenWidth}
+              radius={bookBorderRadius}
+              title={coverTitle}
+              bob={levitationY}
+              opacity={transitionOpacity}
+              testID="seated-book"
             >
-              <Pressable
-                style={[styles.closeButton, {
-                  width: closeButtonSize,
-                  height: closeButtonSize,
-                  borderRadius: closeButtonRadius,
-                }]}
-                onPress={cancelTransition}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              >
-                <Text style={[styles.closeButtonText, { fontSize: closeIconSize }]}>✕</Text>
-              </Pressable>
-            </Animated.View>
-            );
-          })()}
-
-          {/* Favourite heart button - top right of book (mirrors close button) */}
-          {showModeSelection && targetBookPosition && !showPreviewModal && (() => {
-            const isPhonePortrait = isPhone && !isLandscape;
-            const isPhoneLandscape = isPhone && isLandscape;
-
-            let favButtonSize: number;
-            let favButtonOffset: number;
-            let favIconSize: number;
-
-            if (isPhonePortrait) {
-              favButtonSize = scaledButtonSize(36);
-              favButtonOffset = scaledButtonSize(8);
-              favIconSize = scaledFontSize(16);
-            } else if (isPhoneLandscape) {
-              favButtonSize = scaledButtonSize(28);
-              favButtonOffset = scaledButtonSize(6);
-              favIconSize = scaledFontSize(14);
-            } else {
-              favButtonSize = scaledButtonSize(44);
-              favButtonOffset = scaledButtonSize(12);
-              favIconSize = scaledFontSize(20);
-            }
-
-            const isFav = selectedStoryId ? favoriteStoryIds.includes(selectedStoryId) : false;
-
-            return (
-              <Animated.View
-                entering={FadeIn.delay(150).duration(200)}
-                style={[styles.closeButtonContainer, {
-                  left: targetBookPosition.x + targetBookPosition.width - favButtonSize + favButtonOffset,
-                  top: targetBookPosition.y - favButtonOffset,
-                }]}
-              >
-                <Pressable
-                  style={[styles.closeButton, {
-                    width: favButtonSize,
-                    height: favButtonSize,
-                    borderRadius: favButtonSize / 2,
-                  }]}
-                  onPress={() => {
-                    if (selectedStoryId) {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      toggleFavoriteStory(selectedStoryId);
-                    }
-                  }}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
-                  <Ionicons
-                    name={isFav ? 'heart' : 'heart-outline'}
-                    size={favIconSize}
-                    color={isFav ? '#FF6B6B' : '#999'}
-                  />
-                </Pressable>
-              </Animated.View>
-            );
-          })()}
+              {renderCoverImage()}
+            </SeatedBook>
+          )}
 
           {/* Centered book with page flip and expansion animation */}
           <Animated.View
@@ -1732,6 +1903,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
               ]}
             >
               {renderPageImage()}
+              <Animated.View pointerEvents="none" style={[styles.pageShade, pageShadeStyle]} />
             </Animated.View>
 
             {/* Book cover -shows current preview page when user has swiped,
@@ -1755,9 +1927,18 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
                 },
                 coverFrontFaceStyle, // Always apply - style handles inactive case
               ]}>
-                {renderPreviewImage(previewPageIndex)}
-                {/* Book spine shadow effect */}
-                <View style={styles.spineGradient} />
+                {renderCoverImage()}
+                {coverTitle !== undefined && <CoverTitle title={coverTitle} testID="transition-book-title" />}
+                <Animated.View pointerEvents="none" style={[styles.coverShade, coverShadeStyle]} />
+                {/* The same spine, hinge and pages the book wore on the shelf and the card */}
+                <View
+                  style={[styles.bookSpine, { width: bookSpineWidth(cardPosition.width), borderTopLeftRadius: bookBorderRadius, borderBottomLeftRadius: bookBorderRadius }]}
+                  pointerEvents="none"
+                >
+                  <BookSpineShade />
+                </View>
+                <BookHinge />
+                <BookPages testID="transition-book-pages" />
               </Animated.View>
 
               {/* Back of cover - white page (shown when rotation > 90deg) */}
@@ -1766,399 +1947,61 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
                   position: 'absolute',
                   width: '100%',
                   height: '100%',
-                  backgroundColor: '#FFFEF5',
+                  backgroundColor: '#F6EFE2',
                   opacity: 0, // Default: hidden until flip animation starts
                 },
                 coverBackFaceStyle, // Always apply - style handles inactive case
-              ]} />
+              ]}>
+                <View style={styles.coverBackSpine} />
+              </Animated.View>
             </Animated.View>
           </Animated.View>
 
-          {/* Swipeable page preview overlay -single layer with cross-fade on swipe */}
-          {showModeSelection && targetBookPosition && cardPosition && !isExpandingToReader && (() => {
-            const spineWidth = 8 * (targetBookPosition.width / cardPosition.width);
-
-            // Build swipe gesture for page flipping
-            const swipeGesture = Gesture.Pan()
-              .activeOffsetX([-20, 20])
-              .onEnd((e) => {
-                const SWIPE_THRESHOLD = 40;
-                if (e.translationX < -SWIPE_THRESHOLD) {
-                  const nextIndex = previewPageIndex + 1;
-                  if (nextIndex < totalPreviewPages) {
-                    runOnJS(flipToPage)(nextIndex, 'forward');
-                  }
-                } else if (e.translationX > SWIPE_THRESHOLD) {
-                  const prevIndex = previewPageIndex - 1;
-                  if (prevIndex >= 0) {
-                    runOnJS(flipToPage)(prevIndex, 'back');
-                  }
-                }
-              });
-
-            // Tap gesture that does nothing -absorbs taps on the book area
-            // so they don't fall through to the "tap anywhere to begin" overlay
-            const tapBlocker = Gesture.Tap().onEnd(() => {});
-            const composedGesture = Gesture.Race(swipeGesture, tapBlocker);
-
-            return (
-            <View
-              style={{
-                position: 'absolute',
-                left: targetBookPosition.x,
-                top: targetBookPosition.y,
-                width: targetBookPosition.width,
-                height: targetBookPosition.height,
-                zIndex: 60,
-              }}
-            >
-              <GestureHandlerRootView style={{ flex: 1 }}>
-                <GestureDetector gesture={composedGesture}>
-                  <View style={{ width: '100%', height: '100%', borderRadius: bookBorderRadius, overflow: 'hidden' }}>
-                    {/* Previous page layer -stays at full opacity during crossfade */}
-                    {prevPreviewPageIndex !== null && (
-                      <View style={{ position: 'absolute', width: '100%', height: '100%' }}>
-                        {renderPreviewImage(prevPreviewPageIndex)}
-                        <View style={[styles.spineGradient, { width: spineWidth }]} />
-                      </View>
-                    )}
-
-                    {/* Current page layer -fades in over previous page */}
-                    <Animated.View style={[{ position: 'absolute', width: '100%', height: '100%' }, previewFadeStyle]}>
-                      {renderPreviewImage(previewPageIndex)}
-                      <View style={[styles.spineGradient, { width: spineWidth }]} />
-                    </Animated.View>
-
-                    {/* Page indicator -inside the book, bottom */}
-                    {totalPreviewPages > 1 && (
-                      <View style={styles.pageIndicatorContainer}>
-                        <View style={styles.pageIndicatorPill}>
-                          <View style={styles.pageDotsRow}>
-                            {Array.from({ length: Math.min(totalPreviewPages, 5) }, (_, i) => {
-                              let pageIdx: number;
-                              if (totalPreviewPages <= 5) {
-                                pageIdx = i;
-                              } else {
-                                const half = 2;
-                                let start = previewPageIndex - half;
-                                if (start < 0) start = 0;
-                                if (start + 5 > totalPreviewPages) start = totalPreviewPages - 5;
-                                pageIdx = start + i;
-                              }
-                              return (
-                                <View
-                                  key={pageIdx}
-                                  style={[
-                                    styles.pageDot,
-                                    pageIdx === previewPageIndex && styles.pageDotActive,
-                                  ]}
-                                />
-                              );
-                            })}
-                          </View>
-                          <Text style={styles.pageCounter}>
-                            {previewPageIndex + 1}/{totalPreviewPages}
-                          </Text>
-                        </View>
-                      </View>
-                    )}
-                  </View>
-                </GestureDetector>
-              </GestureHandlerRootView>
-            </View>
-            );
-          })()}
-
-          {/* Mode selection buttons - positioned BELOW the book for phone portrait, LEFT for tablet/phone landscape */}
-          {showModeSelection && targetBookPosition && (() => {
-            // Determine layout mode: phone portrait, phone landscape, or tablet
-            const isPhonePortrait = isPhone && !isLandscape;
-            const isPhoneLandscape = isPhone && isLandscape;
-
-            // Sizing based on device and orientation
-            // Phone portrait: small boxed buttons with icon on top, text below
-            // Phone landscape: compact buttons to fit beside the book
-            // Tablet: larger horizontal buttons (icon beside text)
-            let buttonWidth: number;
-            let buttonPaddingV: number;
-            let buttonPaddingH: number;
-            let buttonRadius: number;
-            let iconSize: number;
-            let textSize: number;
-            let buttonGap: number;
-            let containerGap: number;
-            let containerMargin: number;
-            let iconMarginRight: number;
-            let buttonFlexDirection: 'row' | 'column';
-
-            if (isPhonePortrait) {
-              // Phone portrait: boxed buttons below the book
-              buttonWidth = scaledButtonSize(68);
-              buttonPaddingV = scaledPadding(10);
-              buttonPaddingH = scaledPadding(6);
-              buttonRadius = scaledButtonSize(14);
-              iconSize = scaledFontSize(22);
-              textSize = scaledFontSize(10);
-              buttonGap = scaledPadding(3);
-              containerGap = 8;
-              containerMargin = 20;
-              iconMarginRight = 0;
-              buttonFlexDirection = 'column';
-            } else if (isPhoneLandscape) {
-              // Phone landscape: compact but readable buttons
-              // Use column layout (icon on top) to save horizontal space
-              buttonWidth = scaledButtonSize(52);
-              buttonPaddingV = scaledPadding(6);
-              buttonPaddingH = scaledPadding(4);
-              buttonRadius = scaledButtonSize(10);
-              iconSize = scaledFontSize(18);
-              textSize = scaledFontSize(9);
-              buttonGap = scaledPadding(2);
-              containerGap = 6;
-              containerMargin = 16;  // More margin from left edge
-              iconMarginRight = 0;
-              buttonFlexDirection = 'column'; // Stack icon on top of text to save width
-            } else {
-              // Tablet: larger buttons
-              buttonWidth = scaledButtonSize(140);
-              buttonPaddingV = scaledPadding(12);
-              buttonPaddingH = scaledPadding(20);
-              buttonRadius = scaledButtonSize(20);
-              iconSize = scaledFontSize(22);
-              textSize = scaledFontSize(18);
-              buttonGap = scaledPadding(8);
-              containerGap = 20;
-              containerMargin = 20;
-              iconMarginRight = 10;
-              buttonFlexDirection = 'row';
-            }
-
-            // For phone portrait: position buttons horizontally below the book, centered on screen
-            // For tablet/phone landscape: position buttons vertically to the left of the book
-            const buttonContainerStyle = isPhonePortrait
-              ? {
-                  // Horizontal layout below the book, centered
-                  flexDirection: 'row' as const,
-                  top: targetBookPosition.y + targetBookPosition.height + containerMargin,
-                  left: 0,
-                  right: 0,
-                  justifyContent: 'center' as const,
-                  alignItems: 'center' as const,
-                  gap: containerGap,
-                }
-              : isPhoneLandscape
-              ? {
-                  // Phone landscape: position buttons just to the left of the book
-                  // Use 'right' positioning relative to book's left edge
-                  right: screenWidth - targetBookPosition.x + containerMargin,
-                  top: targetBookPosition.y,
-                  height: targetBookPosition.height,
-                  justifyContent: 'center' as const,
-                  gap: containerGap,
-                }
-              : {
-                  // Tablet: position buttons to the left of the book
-                  right: screenWidth - targetBookPosition.x + containerMargin,
-                  top: targetBookPosition.y,
-                  height: targetBookPosition.height,
-                  justifyContent: 'center' as const,
-                  gap: containerGap,
-                };
-
-            return (
-            <Animated.View
-              entering={isPhonePortrait ? SlideInDown.delay(0).duration(450).easing(Easing.out(Easing.cubic)) : SlideInLeft.delay(0).duration(450).easing(Easing.out(Easing.cubic))}
-              exiting={isPhonePortrait ? SlideOutDown.duration(250) : SlideOutLeft.duration(250)}
-              style={[styles.modeSelectionContainer, buttonContainerStyle]}
-            >
-              <View ref={readButtonRef} collapsable={false}>
-                <Pressable
-                  style={[
-                    styles.modeButton,
-                    selectedMode === 'read' && styles.modeButtonSelected,
-                    {
-                      flexDirection: buttonFlexDirection,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      borderRadius: buttonRadius,
-                      paddingVertical: buttonPaddingV,
-                      paddingHorizontal: buttonPaddingH,
-                      gap: buttonGap,
-                      width: buttonWidth,
-                    }
-                  ]}
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    setSelectedMode('read');
-                    setCurrentVoiceOver(null); // Clear voice over for read mode
-                  }}
-                >
-                  <Text style={[styles.modeButtonIcon, { fontSize: iconSize, marginRight: iconMarginRight }]}>∞</Text>
-                  <Text style={[styles.modeButtonText, { fontSize: textSize, textAlign: 'center' }]}>{t('storyMode.read')}</Text>
-                </Pressable>
-              </View>
-
-              <View ref={recordButtonRef} collapsable={false}>
-                <Pressable
-                  style={[
-                    styles.modeButton,
-                    selectedMode === 'record' && styles.modeButtonSelected,
-                    {
-                      flexDirection: buttonFlexDirection,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      borderRadius: buttonRadius,
-                      paddingVertical: buttonPaddingV,
-                      paddingHorizontal: buttonPaddingH,
-                      gap: buttonGap,
-                      width: buttonWidth,
-                    }
-                  ]}
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    setSelectedMode('record');
-                    // Close narrate modal if open, then show record modal
-                    setShowVoiceOverSelectModal(false);
-                    setShowVoiceOverNameModal(true);
-                  }}
-                >
-                  <Text style={[styles.modeButtonIcon, { fontSize: iconSize, marginRight: iconMarginRight }]}>●</Text>
-                  <Text style={[styles.modeButtonText, { fontSize: textSize, textAlign: 'center' }]}>{t('storyMode.record')}</Text>
-                </Pressable>
-              </View>
-
-              <View ref={narrateButtonRef} collapsable={false}>
-                <Pressable
-                  style={[
-                    styles.modeButton,
-                    selectedMode === 'narrate' && styles.modeButtonSelected,
-                    {
-                      flexDirection: buttonFlexDirection,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      borderRadius: buttonRadius,
-                      paddingVertical: buttonPaddingV,
-                      paddingHorizontal: buttonPaddingH,
-                      gap: buttonGap,
-                      width: buttonWidth,
-                    }
-                  ]}
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    setSelectedMode('narrate');
-                    // Close record modal if open, then show narrate modal
-                    setShowVoiceOverNameModal(false);
-                    setShowVoiceOverSelectModal(true);
-                  }}
-                >
-                  <Text style={[styles.modeButtonIcon, { fontSize: iconSize, marginRight: iconMarginRight }]}>♫</Text>
-                  <Text style={[styles.modeButtonText, { fontSize: textSize, textAlign: 'center' }]}>{t('storyMode.narrate')}</Text>
-                </Pressable>
-              </View>
-
-              <View ref={previewButtonRef} collapsable={false}>
-                <Pressable
-                  style={[
-                    styles.modeButton,
-                    showPreviewModal && styles.modeButtonSelected,
-                    {
-                      flexDirection: buttonFlexDirection,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      borderRadius: buttonRadius,
-                      paddingVertical: buttonPaddingV,
-                      paddingHorizontal: buttonPaddingH,
-                      gap: buttonGap,
-                      width: buttonWidth,
-                    }
-                  ]}
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    setShowPreviewModal(true);
-                  }}
-                >
-                  <Text style={[styles.modeButtonIcon, { fontSize: iconSize, marginRight: iconMarginRight }]}>◉</Text>
-                  <Text style={[styles.modeButtonText, { fontSize: textSize, textAlign: 'center' }]}>{t('storyMode.preview')}</Text>
-                </Pressable>
-              </View>
-            </Animated.View>
-            );
-          })()}
-
-          {/* Tap to begin button (bottom center with padding) */}
-          {showModeSelection && (() => {
-            // Determine layout mode for begin button sizing
-            const isPhonePortrait = isPhone && !isLandscape;
-            const isPhoneLandscape = isPhone && isLandscape;
-
-            let beginButtonRadius: number;
-            let beginButtonPaddingV: number;
-            let beginButtonPaddingH: number;
-            let beginTextSize: number;
-            let bottomPadding: number;
-
-            if (isPhonePortrait) {
-              beginButtonRadius = scaledButtonSize(18);
-              beginButtonPaddingV = scaledPadding(10);
-              beginButtonPaddingH = scaledPadding(20);
-              beginTextSize = scaledFontSize(16);
-              bottomPadding = Math.max(insets.bottom + 16, 24);
-            } else if (isPhoneLandscape) {
-              // Phone landscape: compact but readable begin button
-              beginButtonRadius = scaledButtonSize(14);
-              beginButtonPaddingV = scaledPadding(8);
-              beginButtonPaddingH = scaledPadding(16);
-              beginTextSize = scaledFontSize(14);
-              bottomPadding = Math.max(insets.bottom + 8, 12);
-            } else {
-              // Tablet
-              beginButtonRadius = scaledButtonSize(20);
-              beginButtonPaddingV = scaledPadding(12);
-              beginButtonPaddingH = scaledPadding(24);
-              beginTextSize = scaledFontSize(18);
-              bottomPadding = insets.bottom + 20;
-            }
-
-            return (
-            <Animated.View
-              entering={SlideInDown.delay(100).duration(450).easing(Easing.out(Easing.cubic))}
-              style={[styles.tapToBeginContainer, { bottom: bottomPadding }]}
-            >
-              <Pressable
-                style={[
-                  styles.modeButton,
-                  styles.modeButtonSelected,
-                  {
-                    borderRadius: beginButtonRadius,
-                    paddingVertical: beginButtonPaddingV,
-                    paddingHorizontal: beginButtonPaddingH,
-                    gap: scaledPadding(8),
-                  }
-                ]}
-                onPress={() => {
-                  // For record/narrate modes, require a voice over to be selected
-                  if (selectedMode === 'record' && !currentVoiceOver) {
-                    setShowVoiceOverNameModal(true);
-                    return;
-                  }
-                  if (selectedMode === 'narrate' && !currentVoiceOver) {
-                    setShowVoiceOverSelectModal(true);
-                    return;
-                  }
-                  selectModeAndBegin(selectedMode);
+          {/* Screen 6 -the story card, with the shelf to swipe along */}
+          {phase === 'detail' && selectedStory && (
+            <Animated.View style={[styles.detailLayer, sheetLift.style]} pointerEvents="box-none">
+              <StoryCardSheet
+                stories={shelf.length > 0 ? shelf : [selectedStory]}
+                initialIndex={shelfIndex}
+                layout={storyCardLayout({ width: screenWidth, height: screenHeight }, isTablet, safeArea)}
+                isFavorite={isFavorite}
+                progress={storyProgress}
+                onStoryChange={(story, index) => {
+                  setSelectedStory(story);
+                  setSelectedStoryId(story.id);
+                  setShelfIndex(index);
+                  // Only the tapped story was preloaded; the one swiped to has
+                  // to be fetched too, or its cover arrives after the sketch
+                  // has already handed over to it
+                  InteractionManager.runAfterInteractions(() => preloadStoryImages(story));
                 }}
-              >
-                <Text style={[styles.modeButtonText, { fontSize: beginTextSize }]}>
-                  {selectedMode === 'record' && currentVoiceOver
-                    ? t('storyMode.recordAs', { name: currentVoiceOver.name })
-                    : selectedMode === 'narrate' && currentVoiceOver
-                    ? t('storyMode.narrateAs', { name: currentVoiceOver.name })
-                    : t('storyMode.tapToBegin')}
-                </Text>
-              </Pressable>
+                onChooseMode={openWithMode}
+                onClose={cancelTransition}
+                onToggleFavorite={() => {
+                  if (selectedStoryId) toggleFavoriteStory(selectedStoryId);
+                }}
+                readButtonRef={readButtonRef}
+                recordButtonRef={recordButtonRef}
+                narrateButtonRef={narrateButtonRef}
+              />
             </Animated.View>
-            );
-          })()}
+          )}
+
+          {/* Screen 7 -rotate prompt around the floating book */}
+          {phase === 'prompt' && (
+            <RotatePromptOverlay
+              bookRect={targetBookPosition}
+              onTurned={beginStory}
+              onOpenAnyway={beginStory}
+              onBack={returnToDetailFromPrompt}
+            />
+          )}
+
+          {/* Opaque mask that hides the OS rotation snap during lockAsync */}
+          <Animated.View
+            style={[styles.rotationMask, rotationMaskAnimatedStyle]}
+            pointerEvents="none"
+          />
 
           {/* Voice Over Name Modal (for Record mode) - Using absolute positioning to avoid iOS crash during orientation changes */}
           {showVoiceOverNameModal && (
@@ -2327,13 +2170,6 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
             scaledFontSize={scaledFontSize}
           />
 
-          {/* Story Preview Modal (no Read Story button) */}
-          <StoryPreviewModal
-            story={selectedStory}
-            visible={showPreviewModal}
-            onClose={() => setShowPreviewModal(false)}
-          />
-
           {/* Touch blocking layer - shown immediately when book mode tutorial should show */}
           {/* Must have higher zIndex than modeSelectionContainer (100) to block button touches */}
           {shouldBlockBookModeTouches && (
@@ -2346,16 +2182,8 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
           )}
 
           {/* Book Mode Tutorial Overlay - shows on first book open */}
-          {showModeSelection && shouldShowTutorial('book_mode_tour') && (
-            <TutorialOverlay
-              tutorialId="book_mode_tour"
-              targetRefs={{
-                'read_button': readButtonRef,
-                'record_button': recordButtonRef,
-                'narrate_button': narrateButtonRef,
-                'preview_button': previewButtonRef,
-              }}
-            />
+          {showModeSelection && shouldShowGuide('book_mode_tour') && (
+            <OwlGuide id="book_mode_tour" targets={bookModeTargets} scroller={sheetLift.scroller} />
           )}
         </View>
       )}
@@ -2366,7 +2194,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    zIndex: 1000,
+    zIndex: STORY_OVERLAY_LAYER_Z,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -2392,42 +2220,23 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  backgroundImageContainer: {
+  nightGround: {
     ...StyleSheet.absoluteFillObject,
-    zIndex: 0, // Below buttons/book
-    overflow: 'hidden',
-    backgroundColor: '#1E3A8A', // Deep blue base matching brand gradient
+    zIndex: 0, // Below the book and the sheet
+    backgroundColor: '#0A0F2C',
   },
-  backgroundImage: {
-    width: '200%',
-    height: '200%',
-    opacity: 0.25, // Subtle texture on deep blue base
-  },
-  tapAnywhereOverlay: {
+  detailLayer: {
     ...StyleSheet.absoluteFillObject,
-    zIndex: 1, // Below all buttons and book
+    zIndex: 60, // Above the animated book card (50)
   },
-  closeButtonContainer: {
-    position: 'absolute',
-    zIndex: 1001,
+  sketch: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 55, // Over the book it outlines, beneath the card that sinks away
   },
-  closeButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  closeButtonText: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#333',
+  rotationMask: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#0A0F2C',
+    zIndex: 900, // Above everything except system modals
   },
   bookContainer: {
     position: 'absolute',
@@ -2440,118 +2249,29 @@ const styles = StyleSheet.create({
     elevation: 15,
     zIndex: 50, // Above tap-anywhere overlay (zIndex: 1)
   },
-  spineGradient: {
+  bookSpine: {
     position: 'absolute',
-    left: 0,
     top: 0,
     bottom: 0,
-    width: 8,
-    backgroundColor: 'rgba(0,0,0,0.15)',
-  },
-  // Page preview indicator -pill container with dots + counter (matches button style)
-  pageIndicatorContainer: {
-    position: 'absolute',
-    bottom: 8,
     left: 0,
-    right: 0,
-    alignItems: 'center',
-    zIndex: 10,
+    overflow: 'hidden',
+    backgroundColor: '#1D2657',
   },
-  pageIndicatorPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: 'rgba(130, 130, 130, 0.45)',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
+  pageShade: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#1A1230',
   },
-  pageDotsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
+  coverShade: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#000000',
   },
-  pageDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
-  },
-  pageDotActive: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#FFFFFF',
-  },
-  pageCounter: {
-    fontSize: 11,
-    fontFamily: Fonts.sans,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-  // Mode selection - matches cover page styling exactly
-  modeSelectionContainer: {
+  coverBackSpine: {
     position: 'absolute',
-    flexDirection: 'column',
-    gap: 8,
-    zIndex: 100,
-    alignItems: 'flex-start',
-  },
-  modeButton: {
-    backgroundColor: 'rgba(130, 130, 130, 0.45)',
-    borderRadius: 15,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    gap: 8,
-    borderWidth: 2,
-    borderColor: 'transparent',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  modeButtonSelected: {
-    backgroundColor: 'rgba(130, 130, 130, 0.5)',
-    borderColor: 'rgba(255, 255, 255, 0.6)',
-  },
-  modeButtonIcon: {
-    fontSize: 24,
-    color: '#FFFFFF',
-    textAlign: 'center',
-    // marginRight is handled inline based on button layout direction
-    zIndex: 1,
-  },
-  modeButtonText: {
-    fontSize: 12,
-    fontFamily: Fonts.sans,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    textAlign: 'center',
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-  // Tap to begin container
-  tapToBeginContainer: {
-    position: 'absolute',
-    left: 0,
     right: 0,
-    alignItems: 'center',
-    zIndex: 200,
+    top: 0,
+    bottom: 0,
+    width: 10,
+    backgroundColor: 'rgba(120, 96, 60, 0.18)',
   },
   // Modal styles
   modalOverlay: {

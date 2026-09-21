@@ -55,6 +55,16 @@ const useAudioRecorder = jest.fn((preset) => {
   };
 });
 
+// Polled by use-breath-detector; without it any screen reaching the breath
+// detector throws "useAudioRecorderState is not a function".
+const useAudioRecorderState = jest.fn(() => ({
+  isRecording: false,
+  metering: undefined,
+  durationMillis: 0,
+  mediaServicesDidReset: false,
+  url: null,
+}));
+
 const createAudioPlayer = jest.fn((source, options) => {
   const player = createMockAudioPlayer();
   return player;
@@ -101,6 +111,7 @@ const AudioModule = {
 module.exports = {
   useAudioPlayer,
   useAudioRecorder,
+  useAudioRecorderState,
   createAudioPlayer,
   setAudioModeAsync,
   AudioPlayer,

@@ -21,9 +21,10 @@ import {
   restorePurchases,
   mapPlanIdToPackage,
   getOfferingPrices,
+  getTrialStatus,
   _resetForTesting,
 } from '@/services/subscription-service';
-// useAppStore is mocked below -imported for type reference only
+import { useAppStore } from '@/store/app-store';
 
 // ─── Helpers ───
 
@@ -524,6 +525,112 @@ describe('Security', () => {
 // ════════════════════════════════════════════════
 // 10. getOfferingPrices()
 // ════════════════════════════════════════════════
+
+/**
+ * The trial-end screen is only worth showing to someone the store says is
+ * mid-trial, so the period type -- not merely an active entitlement -- is what
+ * these assertions turn on.
+ */
+describe('getTrialStatus', () => {
+  const NOW = new Date('2026-09-06T09:00:00.000Z');
+
+  function trialInfo(overrides: Record<string, unknown> = {}) {
+    return {
+      entitlements: {
+        active: {
+          basic_access: {
+            isActive: true,
+            periodType: 'TRIAL',
+            expirationDate: '2026-09-08T09:00:00.000Z',
+            ...overrides,
+          },
+        },
+      },
+    } as any;
+  }
+
+  function onDevice() {
+    (global as any).__DEV__ = false;
+    (Constants as any).appOwnership = null;
+  }
+
+  it('reads the trial off the active entitlement', async () => {
+    onDevice();
+    (Purchases.getCustomerInfo as jest.Mock).mockResolvedValueOnce(trialInfo());
+
+    const underTest = await getTrialStatus(NOW);
+
+    expect(underTest.inTrial).toBe(true);
+    expect(underTest.daysRemaining).toBe(2);
+    expect(underTest.billingTier).toBe('basic');
+    expect(underTest.endsAt?.toISOString()).toBe('2026-09-08T09:00:00.000Z');
+  });
+
+  it('reports no trial for an entitlement already past its trial', async () => {
+    onDevice();
+    (Purchases.getCustomerInfo as jest.Mock).mockResolvedValueOnce(trialInfo({ periodType: 'NORMAL' }));
+
+    expect((await getTrialStatus(NOW)).inTrial).toBe(false);
+  });
+
+  it('reports no trial when nothing is active', async () => {
+    onDevice();
+    (Purchases.getCustomerInfo as jest.Mock).mockResolvedValueOnce(mockCustomerInfo());
+
+    expect((await getTrialStatus(NOW)).inTrial).toBe(false);
+  });
+
+  it('reports no trial when the store gives no end date', async () => {
+    onDevice();
+    (Purchases.getCustomerInfo as jest.Mock).mockResolvedValueOnce(trialInfo({ expirationDate: null }));
+
+    expect((await getTrialStatus(NOW)).inTrial).toBe(false);
+  });
+
+  it('reports no trial when the end date cannot be read', async () => {
+    onDevice();
+    (Purchases.getCustomerInfo as jest.Mock).mockResolvedValueOnce(trialInfo({ expirationDate: 'soon' }));
+
+    expect((await getTrialStatus(NOW)).inTrial).toBe(false);
+  });
+
+  it('reports no trial when the store cannot be reached', async () => {
+    onDevice();
+    (Purchases.getCustomerInfo as jest.Mock).mockRejectedValueOnce(new Error('Network error'));
+
+    expect((await getTrialStatus(NOW)).inTrial).toBe(false);
+  });
+
+  it('never asks RevenueCat in dev mode', async () => {
+    (global as any).__DEV__ = true;
+
+    await getTrialStatus(NOW);
+
+    expect(Purchases.getCustomerInfo).not.toHaveBeenCalled();
+  });
+
+  /**
+   * Developer Options stands in for the store in dev, and the only state the
+   * trial-end screen is built for is the last day -- a stand-in two days out
+   * would leave the screen untestable by the people building it.
+   */
+  it('stands the dev tier override on the trial’s last day', async () => {
+    (global as any).__DEV__ = true;
+    (useAppStore as any).getState.mockReturnValueOnce({ _devSubscriptionOverride: 'basic' });
+
+    const underTest = await getTrialStatus(NOW);
+
+    expect(underTest.inTrial).toBe(true);
+    expect(underTest.daysRemaining).toBe(0);
+  });
+
+  it('reports no trial in dev mode until Basic is chosen', async () => {
+    (global as any).__DEV__ = true;
+    (useAppStore as any).getState.mockReturnValueOnce({ _devSubscriptionOverride: 'premium' });
+
+    expect((await getTrialStatus(NOW)).inTrial).toBe(false);
+  });
+});
 
 describe('getOfferingPrices', () => {
   it('returns null for all plans when offerings not loaded', () => {

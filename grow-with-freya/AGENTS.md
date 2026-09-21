@@ -38,6 +38,14 @@ Communication & code-display rules: see root `../CLAUDE.md` → **Communication 
 | Mocks | `jest.mock()` + manual mocks in `__mocks__/` |
 | Snapshots | Only for stable, intentional output — never for whole screens |
 | Coverage | Jest built-in, `jest-junit` + `jest-html-reporters` in CI |
+| App journeys (E2E) | Maestro — flows in `.maestro/flows/`, `npm run e2e` |
+
+### Journey tests (Maestro)
+Jest covers a component; Maestro covers a child getting from the splash to a story on a real
+simulator. Add a flow when a journey is worth protecting, not for every screen. Flows select by
+`testID`, never by translated text. A `Pressable` wrapped round a card collapses its contents into
+one element on iOS, hiding them from VoiceOver and from the test — keep interactive rows their own
+elements. See [`../QA-AUTOMATION.md`](../QA-AUTOMATION.md).
 
 ### React Native Specifics
 - **Never import real native modules** in tests — they have manual mocks already (`expo-audio`, `expo-secure-store`, `react-native-reanimated`, etc.). If a new native dep is added, add a `__mocks__/` entry in the same PR.

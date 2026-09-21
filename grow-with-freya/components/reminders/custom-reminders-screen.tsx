@@ -42,6 +42,10 @@ interface CustomRemindersContentProps {
   onReminderChange?: () => void;
   refreshTrigger?: number; // Increment to trigger a reload
   isActive?: boolean; // Whether this screen is currently visible
+  /** Rendered last, after the empty state or the grouped list -- the seam a
+   *  host uses to add content below the reminders without reaching into this
+   *  component's own layout. */
+  footer?: React.ReactNode;
 }
 
 export const CustomRemindersScreen: React.FC<CustomRemindersScreenProps> = ({
@@ -350,6 +354,7 @@ export const CustomRemindersContent: React.FC<CustomRemindersContentProps> = ({
   onReminderChange,
   refreshTrigger = 0,
   isActive = false,
+  footer,
 }) => {
   const { t } = useTranslation();
   const { scaledFontSize, scaledButtonSize, scaledPadding, isTablet, contentMaxWidth } = useAccessibility();
@@ -578,6 +583,8 @@ export const CustomRemindersContent: React.FC<CustomRemindersContentProps> = ({
             })}
             </View>
           )}
+
+          {footer}
         </View>
       </ScrollView>
     </View>

@@ -24,7 +24,6 @@ import { useTranslation } from 'react-i18next';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  withRepeat,
   withTiming,
   withSpring,
   withSequence,
@@ -35,19 +34,30 @@ import * as Haptics from 'expo-haptics';
 import Svg, { Rect } from 'react-native-svg';
 
 import { type AgeRange } from '@/components/learning/age-range-carousel';
+import {
+  ACTIVITIES_BY_MODE,
+  FREE_PER_AGE_GROUP,
+  type GameType,
+  type LearningActivity,
+  type LearningMode,
+} from '@/data/learning-activities';
+
+export type { GameType, LearningMode } from '@/data/learning-activities';
 import { PageHeader } from '@/components/ui/page-header';
-import { BearTopImage } from '@/components/main-menu/animated-components';
+import { EarthHorizon } from '@/components/ui/earth-horizon';
+import { spinStars, useAmbientLoop } from '@/hooks/use-ambient-animation';
 import { VISUAL_EFFECTS } from '@/components/main-menu/constants';
 import { generateStarPositions } from '@/components/main-menu/utils';
-import { mainMenuStyles } from '@/components/main-menu/styles';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { Fonts } from '@/constants/theme';
 import { SubscriptionOverlay } from '@/components/ui/subscription-overlay';
 import { StoryAccessService } from '@/services/story-access-service';
-import { LearningTipsOverlay } from '@/components/tutorial';
-import { TutorialId } from '@/contexts/tutorial-context';
+import { OwlGuide } from '@/components/owl-guide';
+import type { GuideId } from '@/constants/owl-guide';
 import { useAppStore, type StoryViewMode } from '@/store/app-store';
 import { useActivityTransition, type TransitionActivity } from '@/contexts/ActivityTransitionContext';
+
+const SLOW_SPIN_STARS = spinStars(120000);
 
 const STAR_POSITIONS = generateStarPositions(VISUAL_EFFECTS.STAR_COUNT);
 
@@ -101,91 +111,7 @@ const CarouselIcon = memo(function CarouselIcon({ size = 18, color = '#FFFFFF' }
   );
 });
 
-export type LearningMode = 'spelling' | 'numbers' | 'feelings';
 
-/** Game mechanic type for routing to the correct game screen */
-export type GameType = 'spelling' | 'choice' | 'sorting' | 'story';
-
-interface LearningActivity {
-  id: string;
-  nameKey: string;
-  descKey: string;
-  ageKey: string;
-  icon: React.ComponentProps<typeof Ionicons>['name'];
-  color: string;
-  /** Which game screen to open */
-  gameType: GameType;
-  /** Fallback story ID for 'story' game type */
-  storyId?: string;
-  /** Which age ranges this activity supports */
-  ageRanges: AgeRange[];
-}
-
-/** Number of free activities per age group (first N are free, rest locked) */
-const FREE_PER_AGE_GROUP = 3;
-
-const SPELLING_ACTIVITIES: LearningActivity[] = [
-  // Ages 1-2 (5 activities — first 3 free, last 2 locked)
-  { id: 'abc-animals', nameKey: 'learning.abcAnimals', descKey: 'learning.abcAnimalsDesc', ageKey: 'learning.abcAnimalsAge', icon: 'paw-outline', color: '#F59E0B', gameType: 'spelling', ageRanges: ['1-2'] },
-  { id: 'first-words', nameKey: 'learning.firstWords', descKey: 'learning.firstWordsDesc', ageKey: 'learning.firstWordsAge', icon: 'star-outline', color: '#EC4899', gameType: 'spelling', ageRanges: ['1-2'] },
-  { id: 'colour-spelling', nameKey: 'learning.colourSpelling', descKey: 'learning.colourSpellingDesc', ageKey: 'learning.colourSpellingAge', icon: 'color-palette-outline', color: '#EF4444', gameType: 'spelling', ageRanges: ['1-2'] },
-  { id: 'shape-names', nameKey: 'learning.shapeNames', descKey: 'learning.shapeNamesDesc', ageKey: 'learning.shapeNamesAge', icon: 'shapes-outline', color: '#06B6D4', gameType: 'spelling', ageRanges: ['1-2'] },
-  { id: 'my-name', nameKey: 'learning.myName', descKey: 'learning.myNameDesc', ageKey: 'learning.myNameAge', icon: 'happy-outline', color: '#A855F7', gameType: 'spelling', ageRanges: ['1-2'] },
-  // Ages 2-4 (5 activities — first 3 free, last 2 locked)
-  { id: 'wombat-spelling', nameKey: 'learning.wombatSpelling', descKey: 'learning.wombatSpellingDesc', ageKey: 'learning.wombatSpellingAge', icon: 'paw-outline', color: '#8B5CF6', gameType: 'spelling', ageRanges: ['2-4'] },
-  { id: 'animal-spelling', nameKey: 'learning.animalSpelling', descKey: 'learning.animalSpellingDesc', ageKey: 'learning.animalSpellingAge', icon: 'bug-outline', color: '#10B981', gameType: 'spelling', ageRanges: ['2-4'] },
-  { id: 'food-spelling', nameKey: 'learning.foodSpelling', descKey: 'learning.foodSpellingDesc', ageKey: 'learning.foodSpellingAge', icon: 'nutrition-outline', color: '#EF4444', gameType: 'spelling', ageRanges: ['2-4'] },
-  { id: 'nature-words', nameKey: 'learning.natureWords', descKey: 'learning.natureWordsDesc', ageKey: 'learning.natureWordsAge', icon: 'leaf-outline', color: '#06B6D4', gameType: 'spelling', ageRanges: ['2-4'] },
-  { id: 'garden-words', nameKey: 'learning.gardenWords', descKey: 'learning.gardenWordsDesc', ageKey: 'learning.gardenWordsAge', icon: 'flower-outline', color: '#F59E0B', gameType: 'spelling', ageRanges: ['2-4'] },
-  // Ages 4+ (5 activities — first 3 free, last 2 locked)
-  { id: 'word-builder', nameKey: 'learning.wordBuilder', descKey: 'learning.wordBuilderDesc', ageKey: 'learning.wordBuilderAge', icon: 'extension-puzzle-outline', color: '#14B8A6', gameType: 'spelling', ageRanges: ['4+'] },
-  { id: 'sentence-speller', nameKey: 'learning.sentenceSpeller', descKey: 'learning.sentenceSpellerDesc', ageKey: 'learning.sentenceSpellerAge', icon: 'create-outline', color: '#6366F1', gameType: 'spelling', ageRanges: ['4+'] },
-  { id: 'tricky-words', nameKey: 'learning.trickyWords', descKey: 'learning.trickyWordsDesc', ageKey: 'learning.trickyWordsAge', icon: 'flag-outline', color: '#F97316', gameType: 'spelling', ageRanges: ['4+'] },
-
-  { id: 'story-spelling', nameKey: 'learning.storySpelling', descKey: 'learning.storySpellingDesc', ageKey: 'learning.storySpellingAge', icon: 'book-outline', color: '#8B5CF6', gameType: 'spelling', ageRanges: ['4+'] },
-];
-
-const NUMBERS_ACTIVITIES: LearningActivity[] = [
-  // Ages 1-2 (5 activities — first 3 free, last 2 locked)
-  { id: 'counting-fun', nameKey: 'learning.countingFun', descKey: 'learning.countingFunDesc', ageKey: 'learning.countingFunAge', icon: 'calculator-outline', color: '#F59E0B', gameType: 'spelling', ageRanges: ['1-2'] },
-  { id: 'number-friends', nameKey: 'learning.numberFriends', descKey: 'learning.numberFriendsDesc', ageKey: 'learning.numberFriendsAge', icon: 'heart-outline', color: '#EC4899', gameType: 'spelling', ageRanges: ['1-2'] },
-  { id: 'colour-counting', nameKey: 'learning.colourCounting', descKey: 'learning.colourCountingDesc', ageKey: 'learning.colourCountingAge', icon: 'color-palette-outline', color: '#EF4444', gameType: 'spelling', ageRanges: ['1-2'] },
-  { id: 'shape-counting', nameKey: 'learning.shapeCounting', descKey: 'learning.shapeCountingDesc', ageKey: 'learning.shapeCountingAge', icon: 'shapes-outline', color: '#06B6D4', gameType: 'spelling', ageRanges: ['1-2'] },
-  { id: 'one-two-three', nameKey: 'learning.oneTwoThree', descKey: 'learning.oneTwoThreeDesc', ageKey: 'learning.oneTwoThreeAge', icon: 'balloon-outline', color: '#A855F7', gameType: 'spelling', ageRanges: ['1-2'] },
-  // Ages 2-4 (5 activities — first 3 free, last 2 locked)
-  { id: 'wombat-word-placing', nameKey: 'learning.wombatWordPlacing', descKey: 'learning.wombatWordPlacingDesc', ageKey: 'learning.wombatWordPlacingAge', icon: 'paw-outline', color: '#6366F1', gameType: 'spelling', ageRanges: ['2-4'] },
-  { id: 'animal-counting', nameKey: 'learning.animalCounting', descKey: 'learning.animalCountingDesc', ageKey: 'learning.animalCountingAge', icon: 'bug-outline', color: '#14B8A6', gameType: 'spelling', ageRanges: ['2-4'] },
-  { id: 'fruit-counting', nameKey: 'learning.fruitCounting', descKey: 'learning.fruitCountingDesc', ageKey: 'learning.fruitCountingAge', icon: 'nutrition-outline', color: '#EF4444', gameType: 'spelling', ageRanges: ['2-4'] },
-  { id: 'toy-counting', nameKey: 'learning.toyCounting', descKey: 'learning.toyCountingDesc', ageKey: 'learning.toyCountingAge', icon: 'cube-outline', color: '#F59E0B', gameType: 'spelling', ageRanges: ['2-4'] },
-  { id: 'garden-counting', nameKey: 'learning.gardenCounting', descKey: 'learning.gardenCountingDesc', ageKey: 'learning.gardenCountingAge', icon: 'flower-outline', color: '#10B981', gameType: 'spelling', ageRanges: ['2-4'] },
-  // Ages 4+ (5 activities — first 3 free, last 2 locked)
-  { id: 'number-puzzles', nameKey: 'learning.numberPuzzles', descKey: 'learning.numberPuzzlesDesc', ageKey: 'learning.numberPuzzlesAge', icon: 'grid-outline', color: '#14B8A6', gameType: 'spelling', ageRanges: ['4+'] },
-  { id: 'adding-fun', nameKey: 'learning.addingFun', descKey: 'learning.addingFunDesc', ageKey: 'learning.addingFunAge', icon: 'add-circle-outline', color: '#6366F1', gameType: 'spelling', ageRanges: ['4+'] },
-  { id: 'number-stories', nameKey: 'learning.numberStories', descKey: 'learning.numberStoriesDesc', ageKey: 'learning.numberStoriesAge', icon: 'book-outline', color: '#F97316', gameType: 'spelling', ageRanges: ['4+'] },
-  { id: 'number-patterns', nameKey: 'learning.numberPatterns', descKey: 'learning.numberPatternsDesc', ageKey: 'learning.numberPatternsAge', icon: 'sparkles-outline', color: '#EC4899', gameType: 'spelling', ageRanges: ['4+'] },
-  { id: 'subtraction-fun', nameKey: 'learning.subtractionFun', descKey: 'learning.subtractionFunDesc', ageKey: 'learning.subtractionFunAge', icon: 'remove-circle-outline', color: '#8B5CF6', gameType: 'spelling', ageRanges: ['4+'] },
-];
-
-const FEELINGS_ACTIVITIES: LearningActivity[] = [
-  // Ages 1-2 (5 activities — first 3 free, last 2 locked)
-  { id: 'happy-faces', nameKey: 'learning.happyFaces', descKey: 'learning.happyFacesDesc', ageKey: 'learning.happyFacesAge', icon: 'happy-outline', color: '#F59E0B', gameType: 'story', storyId: 'wombat-spelling', ageRanges: ['1-2'] },
-  { id: 'feeling-colours', nameKey: 'learning.feelingColours', descKey: 'learning.feelingColoursDesc', ageKey: 'learning.feelingColoursAge', icon: 'color-palette-outline', color: '#EC4899', gameType: 'story', storyId: 'wombat-spelling', ageRanges: ['1-2'] },
-  { id: 'mood-music', nameKey: 'learning.moodMusic', descKey: 'learning.moodMusicDesc', ageKey: 'learning.moodMusicAge', icon: 'musical-notes-outline', color: '#EF4444', gameType: 'story', storyId: 'wombat-spelling', ageRanges: ['1-2'] },
-  { id: 'animal-feelings', nameKey: 'learning.animalFeelings', descKey: 'learning.animalFeelingsDesc', ageKey: 'learning.animalFeelingsAge', icon: 'paw-outline', color: '#06B6D4', gameType: 'story', storyId: 'wombat-spelling', ageRanges: ['1-2'] },
-  { id: 'my-feelings', nameKey: 'learning.myFeelings', descKey: 'learning.myFeelingsDesc', ageKey: 'learning.myFeelingsAge', icon: 'heart-outline', color: '#A855F7', gameType: 'story', storyId: 'wombat-spelling', ageRanges: ['1-2'] },
-  // Ages 2-4 (5 activities — first 3 free, last 2 locked)
-  { id: 'emotion-faces', nameKey: 'learning.emotionFaces', descKey: 'learning.emotionFacesDesc', ageKey: 'learning.emotionFacesAge', icon: 'heart-circle-outline', color: '#8B5CF6', gameType: 'story', storyId: 'wombat-spelling', ageRanges: ['2-4'] },
-  { id: 'calm-breathing', nameKey: 'learning.calmBreathing', descKey: 'learning.calmBreathingDesc', ageKey: 'learning.calmBreathingAge', icon: 'cloud-outline', color: '#10B981', gameType: 'story', storyId: 'wombat-spelling', ageRanges: ['2-4'] },
-  { id: 'kindness-quest', nameKey: 'learning.kindnessQuest', descKey: 'learning.kindnessQuestDesc', ageKey: 'learning.kindnessQuestAge', icon: 'gift-outline', color: '#EF4444', gameType: 'story', storyId: 'wombat-spelling', ageRanges: ['2-4'] },
-  { id: 'friendship-stories', nameKey: 'learning.friendshipStories', descKey: 'learning.friendshipStoriesDesc', ageKey: 'learning.friendshipStoriesAge', icon: 'people-outline', color: '#06B6D4', gameType: 'story', storyId: 'wombat-spelling', ageRanges: ['2-4'] },
-  { id: 'worry-monster', nameKey: 'learning.worryMonster', descKey: 'learning.worryMonsterDesc', ageKey: 'learning.worryMonsterAge', icon: 'shield-outline', color: '#F59E0B', gameType: 'story', storyId: 'wombat-spelling', ageRanges: ['2-4'] },
-  // Ages 4+ (5 activities — first 3 free, last 2 locked)
-  { id: 'empathy-explorer', nameKey: 'learning.empathyExplorer', descKey: 'learning.empathyExplorerDesc', ageKey: 'learning.empathyExplorerAge', icon: 'compass-outline', color: '#14B8A6', gameType: 'story', storyId: 'wombat-spelling', ageRanges: ['4+'] },
-  { id: 'feeling-journal', nameKey: 'learning.feelingJournal', descKey: 'learning.feelingJournalDesc', ageKey: 'learning.feelingJournalAge', icon: 'journal-outline', color: '#6366F1', gameType: 'story', storyId: 'wombat-spelling', ageRanges: ['4+'] },
-  { id: 'conflict-solver', nameKey: 'learning.conflictSolver', descKey: 'learning.conflictSolverDesc', ageKey: 'learning.conflictSolverAge', icon: 'hand-left-outline', color: '#F97316', gameType: 'story', storyId: 'wombat-spelling', ageRanges: ['4+'] },
-  { id: 'gratitude-garden', nameKey: 'learning.gratitudeGarden', descKey: 'learning.gratitudeGardenDesc', ageKey: 'learning.gratitudeGardenAge', icon: 'rose-outline', color: '#EC4899', gameType: 'story', storyId: 'wombat-spelling', ageRanges: ['4+'] },
-  { id: 'self-esteem-stars', nameKey: 'learning.selfEsteemStars', descKey: 'learning.selfEsteemStarsDesc', ageKey: 'learning.selfEsteemStarsAge', icon: 'star-outline', color: '#8B5CF6', gameType: 'story', storyId: 'wombat-spelling', ageRanges: ['4+'] },
-];
 
 // ── Activity Card (thumbnail style matching story cards) ──────────────
 interface ActivityCardProps {
@@ -279,7 +205,8 @@ export function LearningScreen({ mode, onBack, onActivitySelect, isActive = fals
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { scaledFontSize, scaledButtonSize, textSizeScale } = useAccessibility();
-  const { learningViewMode, setLearningViewMode } = useAppStore();
+  const learningViewMode = useAppStore((s) => s.learningViewMode);
+  const setLearningViewMode = useAppStore((s) => s.setLearningViewMode);
   const favoriteActivityIds = useAppStore((s) => s.favoriteActivityIds);
   const toggleFavoriteActivity = useAppStore((s) => s.toggleFavoriteActivity);
   const [selectedRange, setSelectedRange] = useState<AgeRange>('all');
@@ -306,9 +233,7 @@ export function LearningScreen({ mode, onBack, onActivitySelect, isActive = fals
 
   // Star rotation
   const starRotation = useSharedValue(0);
-  React.useEffect(() => {
-    starRotation.value = withRepeat(withTiming(360, { duration: 120000, easing: Easing.linear }), -1, false);
-  }, [starRotation]);
+  useAmbientLoop(isActive, starRotation, SLOW_SPIN_STARS, 0);
   const starAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${starRotation.value}deg` }],
   }));
@@ -326,17 +251,13 @@ export function LearningScreen({ mode, onBack, onActivitySelect, isActive = fals
   }, [learningViewMode, setLearningViewMode, viewFadeOpacity]);
 
   // Map learning mode to tutorial ID
-  const tutorialId: TutorialId = mode === 'spelling'
+  const tutorialId: GuideId = mode === 'spelling'
     ? 'spelling_tips'
     : mode === 'numbers'
     ? 'numbers_tips'
     : 'feelings_tips';
 
-  const allActivities = mode === 'spelling'
-    ? SPELLING_ACTIVITIES
-    : mode === 'numbers'
-    ? NUMBERS_ACTIVITIES
-    : FEELINGS_ACTIVITIES;
+  const allActivities = ACTIVITIES_BY_MODE[mode];
 
   // Group activities by age range
   const AGE_GROUPS: AgeRange[] = ['1-2', '2-4', '4+'];
@@ -495,9 +416,7 @@ export function LearningScreen({ mode, onBack, onActivitySelect, isActive = fals
     <View style={styles.container}>
       {/* Background */}
       <LinearGradient colors={['#4ECDC4', '#3B82F6', '#1E3A8A']} style={StyleSheet.absoluteFill} />
-      <View style={mainMenuStyles.moonContainer} pointerEvents="none">
-        <BearTopImage />
-      </View>
+      <EarthHorizon edge="top" />
       {STAR_POSITIONS.map((star) => (
         <Animated.View
           key={`star-${star.id}`}
@@ -717,7 +636,7 @@ export function LearningScreen({ mode, onBack, onActivitySelect, isActive = fals
       />
 
       {/* Learning section tutorial — shown on first visit, only when page is active */}
-      <LearningTipsOverlay tutorialId={tutorialId} isActive={isActive} />
+      <OwlGuide id={tutorialId} active={isActive} />
     </View>
   );
 }

@@ -1,0 +1,12 @@
+appId: com.growwithfreya.app
+tags:
+  - smoke
+name: Home opens with its corner controls
+---
+- runFlow: ../../helpers/start-seeded.yaml
+- assertVisible:
+    id: "home-sound-button"
+- assertVisible:
+    id: "child-bottom-navigation"
+- assertNotVisible:
+    id: "screen-time-owl-alert"

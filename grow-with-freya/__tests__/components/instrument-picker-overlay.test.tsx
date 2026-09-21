@@ -10,17 +10,20 @@ jest.mock('@/services/music-asset-registry', () => {
   const instruments = [
     {
       id: 'flute', family: 'flute', displayName: 'Magic Flute',
-      description: 'A gentle flute', image: 0, notes: {}, noteCount: 6,
+      description: 'A gentle flute', medallion: { uri: 'test://flute-disc.webp' },
+      notes: {}, noteCount: 6,
       noteLayout: [{ note: 'C', label: '⭐', color: '#4FC3F7', icon: 'star' }],
     },
     {
       id: 'recorder', family: 'recorder', displayName: 'Woodland Recorder',
-      description: 'A warm recorder', image: 0, notes: {}, noteCount: 5,
+      description: 'A warm recorder', medallion: { uri: 'test://recorder-disc.webp' },
+      notes: {}, noteCount: 5,
       noteLayout: [{ note: 'C', label: '🌲', color: '#66BB6A', icon: 'tree' }],
     },
     {
       id: 'trumpet', family: 'trumpet', displayName: 'Golden Trumpet',
-      description: 'A bright trumpet', image: 0, notes: {}, noteCount: 4,
+      description: 'A bright trumpet', medallion: { uri: 'test://trumpet-disc.webp' },
+      notes: {}, noteCount: 4,
       noteLayout: [{ note: 'C', label: '🛡️', color: '#FFA000', icon: 'shield' }],
     },
   ];
@@ -43,7 +46,12 @@ jest.mock('@/store/app-store', () => {
 
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
-import { InstrumentPickerOverlay } from '@/components/stories/instrument-picker-overlay';
+import {
+  BACK_BUTTON_GAP,
+  InstrumentPickerOverlay,
+  computePickerLayout,
+  rotateInsets,
+} from '@/components/stories/instrument-picker-overlay';
 
 /**
  * Helper to search the rendered JSON tree for text content.
@@ -97,11 +105,22 @@ describe('InstrumentPickerOverlay', () => {
       expect(treeContainsText(json, 'Golden Trumpet')).toBe(true);
     });
 
-    it('should render instrument descriptions', () => {
+    // The panel shows one description at a time -the centred instrument's.
+    it('should render the centred instrument description', () => {
       const { json } = renderVisible();
       expect(treeContainsText(json, 'A gentle flute')).toBe(true);
-      expect(treeContainsText(json, 'A warm recorder')).toBe(true);
+    });
+
+    it('should not render the descriptions of the instruments either side', () => {
+      const { json } = renderVisible();
+      expect(treeContainsText(json, 'A warm recorder')).toBe(false);
+      expect(treeContainsText(json, 'A bright trumpet')).toBe(false);
+    });
+
+    it('should follow the default instrument with the description', () => {
+      const { json } = renderVisible({ defaultInstrumentId: 'trumpet' });
       expect(treeContainsText(json, 'A bright trumpet')).toBe(true);
+      expect(treeContainsText(json, 'A gentle flute')).toBe(false);
     });
   });
 
@@ -136,11 +155,24 @@ describe('InstrumentPickerOverlay', () => {
   });
 
   describe('placeholder rendering', () => {
-    it('should render Ionicons musical-note placeholder when instrument image is 0', () => {
+    it('should not render a placeholder when every instrument has a medallion', () => {
       const { json } = renderVisible();
-      // All test instruments have image: 0, so placeholders should show
-      // The component renders <Ionicons name="musical-note"> for placeholders
-      expect(treeContainsText(json, 'musical-note')).toBe(true);
+      expect(treeContainsText(json, 'musical-note')).toBe(false);
+    });
+
+    it('should render an Ionicons musical-note placeholder when a medallion is 0', () => {
+      const { getAvailableInstrumentIds, getInstrument } = require('@/services/music-asset-registry');
+      getAvailableInstrumentIds.mockReturnValueOnce(['flute']);
+      getInstrument.mockImplementationOnce(() => ({
+        id: 'flute', family: 'flute', displayName: 'Magic Flute',
+        description: 'A gentle flute', medallion: 0, notes: {}, noteCount: 6,
+        noteLayout: [{ note: 'C', label: '⭐', color: '#4FC3F7', icon: 'star' }],
+      }));
+
+      const result = render(
+        <InstrumentPickerOverlay visible={true} onSelect={jest.fn()} />
+      );
+      expect(treeContainsText(result.toJSON(), 'musical-note')).toBe(true);
     });
   });
 
@@ -217,15 +249,16 @@ describe('InstrumentPickerOverlay', () => {
     });
   });
 
-  describe('instrument with real image source', () => {
-    it('should not render placeholder emoji when instrument has a valid image', () => {
-      // Use a require()-style source object instead of a raw number to avoid
-      // react-native-web Image resolver throwing on bare integers
+  describe('instrument with a real medallion source', () => {
+    it('should not render the note-layout emoji when a medallion is provided', () => {
+      // A uri object rather than a raw number: react-native-web's Image resolver
+      // throws on bare integers.
       const { getAvailableInstrumentIds, getInstrument } = require('@/services/music-asset-registry');
       getAvailableInstrumentIds.mockReturnValueOnce(['flute']);
       getInstrument.mockImplementationOnce(() => ({
         id: 'flute', family: 'flute', displayName: 'Magic Flute',
-        description: 'A gentle flute', image: { uri: 'test://flute.png' }, notes: {}, noteCount: 6,
+        description: 'A gentle flute',
+        medallion: { uri: 'test://flute-disc.webp' }, notes: {}, noteCount: 6,
         noteLayout: [{ note: 'C', label: '⭐', color: '#4FC3F7', icon: 'star' }],
       }));
 
@@ -234,7 +267,6 @@ describe('InstrumentPickerOverlay', () => {
       );
       const json = result.toJSON();
       expect(treeContainsText(json, 'Magic Flute')).toBe(true);
-      // Placeholder emoji should NOT appear since image is provided (image !== 0)
       expect(treeContainsText(json, '⭐')).toBe(false);
     });
   });
@@ -245,7 +277,8 @@ describe('InstrumentPickerOverlay', () => {
       getAvailableInstrumentIds.mockReturnValueOnce(['flute']);
       getInstrument.mockImplementationOnce(() => ({
         id: 'flute', family: 'flute', displayName: 'Magic Flute',
-        description: 'A gentle flute', image: 0, notes: {}, noteCount: 6,
+        description: 'A gentle flute', medallion: 0,
+        notes: {}, noteCount: 6,
         noteLayout: [],
       }));
 
@@ -256,5 +289,343 @@ describe('InstrumentPickerOverlay', () => {
       // With empty noteLayout, fallback renders <Ionicons name="musical-note">
       expect(treeContainsText(json, 'musical-note')).toBe(true);
     });
+  });
+
+  // =============================================
+  // Panel redesign -card, page dots, backdrop mode
+  // react-native maps to react-native-web here, so testID never reaches the DOM;
+  // elements are queried by prop instead.
+  // =============================================
+
+  describe('panel', () => {
+    function byTestId(view: ReturnType<typeof renderVisible>, testID: string) {
+      return view.UNSAFE_queryAllByProps({ testID });
+    }
+
+    function hasTestId(view: ReturnType<typeof renderVisible>, testID: string): boolean {
+      return byTestId(view, testID).length > 0;
+    }
+
+    it('should wrap the picker content in a panel', () => {
+      expect(hasTestId(renderVisible(), 'instrument-picker-panel')).toBe(true);
+    });
+
+    it('should render a medallion disc for every instrument', () => {
+      const view = renderVisible();
+
+      const discs = byTestId(view, 'instrument-medallion-disc')
+        .map(element => element.props.source?.uri)
+        .filter(Boolean);
+
+      expect(new Set(discs)).toEqual(new Set([
+        'test://flute-disc.webp',
+        'test://recorder-disc.webp',
+        'test://trumpet-disc.webp',
+      ]));
+    });
+
+    it('should render one page dot per instrument', () => {
+      const view = renderVisible();
+
+      const dots = [
+        ...byTestId(view, 'instrument-picker-dot'),
+        ...byTestId(view, 'instrument-picker-dot-active'),
+      ];
+
+      expect(dots).toHaveLength(3);
+    });
+
+    it('should mark exactly one dot active', () => {
+      const view = renderVisible();
+
+      expect(byTestId(view, 'instrument-picker-dot-active')).toHaveLength(1);
+    });
+
+    it('should track the default instrument with the active dot', () => {
+      const view = renderVisible({ defaultInstrumentId: 'trumpet' });
+
+      expect(byTestId(view, 'instrument-picker-dot-active')[0].props.accessibilityLabel)
+        .toBe('Golden Trumpet');
+    });
+
+    it('should drop the dots when only one instrument is offered', () => {
+      const { getAvailableInstrumentIds } = require('@/services/music-asset-registry');
+      getAvailableInstrumentIds.mockReturnValueOnce(['flute']);
+
+      const view = render(<InstrumentPickerOverlay visible={true} onSelect={jest.fn()} />);
+
+      expect(view.UNSAFE_queryAllByProps({ testID: 'instrument-picker-dot' })).toHaveLength(0);
+    });
+  });
+
+  describe('backdrop', () => {
+    function hasTestId(view: ReturnType<typeof renderVisible>, testID: string): boolean {
+      return view.UNSAFE_queryAllByProps({ testID }).length > 0;
+    }
+
+    it('should blur behind the panel by default', () => {
+      const view = renderVisible();
+
+      expect(hasTestId(view, 'blur-view')).toBe(true);
+      expect(hasTestId(view, 'scene-background')).toBe(false);
+    });
+
+    it('should draw a night scene when asked for one', () => {
+      const view = renderVisible({ backdrop: 'scene' });
+
+      expect(hasTestId(view, 'scene-background')).toBe(true);
+    });
+
+    it('should draw nothing behind the panel when the backdrop is none', () => {
+      const view = renderVisible({ backdrop: 'none' });
+
+      expect(hasTestId(view, 'blur-view')).toBe(false);
+      expect(hasTestId(view, 'scene-background')).toBe(false);
+    });
+
+    it('should treat the legacy hideBackdrop flag as backdrop none', () => {
+      const view = renderVisible({ hideBackdrop: true });
+
+      expect(hasTestId(view, 'blur-view')).toBe(false);
+      expect(hasTestId(view, 'scene-background')).toBe(false);
+    });
+  });
+
+  // =============================================
+  // Panel and carousel geometry
+  //
+  // The carousel shows the centred medallion and its two neighbours. Everything on
+  // that row has to stay inside the panel, which is easy to break by nudging a size
+  // constant, and impossible to see in a single rendered viewport.
+  // =============================================
+
+  describe('computePickerLayout', () => {
+    const PANEL_PADDING = 20;
+    const SIDE_SCALE = 0.78;
+
+    const VIEWPORTS = [
+      { name: 'unmeasured', viewportWidth: 0, viewportHeight: 0 },
+      { name: 'iPhone portrait', viewportWidth: 402, viewportHeight: 874 },
+      { name: 'iPhone landscape', viewportWidth: 874, viewportHeight: 402 },
+      { name: 'small phone portrait', viewportWidth: 320, viewportHeight: 568 },
+      { name: 'iPad portrait', viewportWidth: 834, viewportHeight: 1194 },
+      { name: 'iPad landscape', viewportWidth: 1194, viewportHeight: 834 },
+      { name: 'large tablet landscape', viewportWidth: 1366, viewportHeight: 1024 },
+    ];
+
+    it.each(VIEWPORTS)(
+      'should keep a neighbouring medallion inside the panel on $name',
+      ({ viewportWidth, viewportHeight }) => {
+        const { panelWidth, medallionSize, neighbourPitch } =
+          computePickerLayout({ viewportWidth, viewportHeight, itemCount: 6 });
+
+        const neighbourOuterEdge = neighbourPitch + (medallionSize * SIDE_SCALE) / 2;
+
+        expect(neighbourOuterEdge).toBeLessThanOrEqual(panelWidth / 2 - PANEL_PADDING);
+      },
+    );
+
+    it.each(VIEWPORTS)(
+      'should keep a neighbour label inside the panel on $name',
+      ({ viewportWidth, viewportHeight }) => {
+        const { panelWidth, neighbourPitch, labelWidth } =
+          computePickerLayout({ viewportWidth, viewportHeight, itemCount: 6 });
+
+        expect(neighbourPitch + labelWidth / 2).toBeLessThanOrEqual(panelWidth / 2 - PANEL_PADDING);
+      },
+    );
+
+    it.each([2, 3, 4, 5, 6, 8])(
+      'should keep a neighbouring medallion inside the panel with %i instruments',
+      (itemCount) => {
+        const { panelWidth, medallionSize, neighbourPitch } =
+          computePickerLayout({ viewportWidth: 402, viewportHeight: 874, itemCount });
+
+        expect(neighbourPitch + (medallionSize * SIDE_SCALE) / 2)
+          .toBeLessThanOrEqual(panelWidth / 2 - PANEL_PADDING);
+      },
+    );
+
+    it('should never let the panel outgrow the viewport', () => {
+      VIEWPORTS.filter(v => v.viewportWidth > 0).forEach(({ viewportWidth, viewportHeight }) => {
+        const { panelWidth } = computePickerLayout({ viewportWidth, viewportHeight, itemCount: 6 });
+
+        expect(panelWidth).toBeLessThanOrEqual(viewportWidth);
+      });
+    });
+
+    it('should switch to the compact rhythm only on a short viewport', () => {
+      expect(computePickerLayout({ viewportWidth: 874, viewportHeight: 402, itemCount: 6 })
+        .compactLayout).toBe(true);
+      expect(computePickerLayout({ viewportWidth: 402, viewportHeight: 874, itemCount: 6 })
+        .compactLayout).toBe(false);
+    });
+
+    it('should give a tablet a larger medallion than a landscape phone', () => {
+      const tablet = computePickerLayout(
+        { viewportWidth: 834, viewportHeight: 1194, itemCount: 6 });
+      const phone = computePickerLayout(
+        { viewportWidth: 874, viewportHeight: 402, itemCount: 6 });
+
+      expect(tablet.medallionSize).toBeGreaterThan(phone.medallionSize);
+    });
+  });
+
+  // =============================================
+  // Safe-area insets in the rotated frame
+  //
+  // The rotated presentation draws its content turned -90 degrees inside a window
+  // that is still portrait. Reading the window's insets straight through puts the
+  // back button and the left arrow against the notch instead of clear of it.
+  // =============================================
+
+  describe('rotateInsets', () => {
+    const PHONE = { top: 59, right: 0, bottom: 34, left: 0 };
+
+    it('should pass insets through untouched when not rotated', () => {
+      expect(rotateInsets(PHONE, false)).toEqual(PHONE);
+    });
+
+    it('should move the notch inset onto the edge it actually lies against', () => {
+      expect(rotateInsets(PHONE, true).left).toBe(PHONE.top);
+    });
+
+    it('should leave the rotated top clear when the window has no right inset', () => {
+      expect(rotateInsets(PHONE, true).top).toBe(PHONE.right);
+    });
+
+    it('should cycle every edge exactly one step', () => {
+      const insets = { top: 1, right: 2, bottom: 3, left: 4 };
+
+      expect(rotateInsets(insets, true)).toEqual({ top: 2, right: 3, bottom: 4, left: 1 });
+    });
+
+    it('should return to the original after four rotations', () => {
+      const insets = { top: 1, right: 2, bottom: 3, left: 4 };
+      const fourTimes = [1, 2, 3, 4].reduce(current => rotateInsets(current, true), insets);
+
+      expect(fourTimes).toEqual(insets);
+    });
+
+    it('should preserve the total inset', () => {
+      const total = (i: typeof PHONE) => i.top + i.right + i.bottom + i.left;
+
+      expect(total(rotateInsets(PHONE, true))).toBe(total(PHONE));
+    });
+  });
+});
+
+/**
+ * The back button used to ride down with the panel -- it was aligned to the
+ * panel's title rather than the screen, so on a tall device it sat halfway
+ * down the left edge instead of in the corner every other back button in the
+ * app uses. `page-header.tsx` pins its own to `insets.top + 20` / `left: 20`,
+ * and this one now matches, in either orientation and on either device.
+ */
+describe('the back button', () => {
+  /** The safe area the component is handed by the global mock. */
+  const INSETS = { top: 44, bottom: 34, left: 0, right: 0 };
+
+  function backButtonStyle(isRotated = false) {
+    const view = render(
+      <InstrumentPickerOverlay visible onSelect={jest.fn()} onClose={jest.fn()} isRotated={isRotated} />
+    );
+    const node = view.UNSAFE_root.findAll(
+      (n: any) => n.props.testID === 'instrument-picker-close-button'
+    )[0];
+    return ([] as any[])
+      .concat(node.props.style ?? [])
+      .reduce((merged: Record<string, number>, layer: any) => ({ ...merged, ...(layer ?? {}) }), {});
+  }
+
+  it('sits in the top corner, clear of the safe area', () => {
+    const style = backButtonStyle();
+    const insets = rotateInsets(INSETS, false);
+
+    expect(style.top).toBe(insets.top + BACK_BUTTON_GAP);
+    expect(style.left).toBe(insets.left + BACK_BUTTON_GAP);
+  });
+
+  /** Side-on, the notch moves to a side edge -- the corner has to follow it
+   *  rather than sitting under it. */
+  it('follows the safe area round when the picker is rotated', () => {
+    const style = backButtonStyle(true);
+    const insets = rotateInsets(INSETS, true);
+
+    expect(style.top).toBe(insets.top + BACK_BUTTON_GAP);
+    expect(style.left).toBe(insets.left + BACK_BUTTON_GAP);
+  });
+
+  it('does not drift with the panel it sits beside', () => {
+    // Same corner whichever way round it is -- the old placement was measured
+    // off the panel, so it moved when the panel did.
+    expect(backButtonStyle().top).toBe(backButtonStyle().top);
+    expect(backButtonStyle(true).left).toBe(rotateInsets(INSETS, true).left + BACK_BUTTON_GAP);
+  });
+});
+
+/**
+ * The arrows scroll the carousel, so they belong beside the panel that holds
+ * it. Pinned to the screen edge instead, a wide tablet -- landscape most of
+ * all -- left them hundreds of points adrift of the thing they act on.
+ */
+describe('the carousel arrows', () => {
+  /** The component reads the viewport through `useWindowDimensions`, which
+   *  under react-native-web comes from the document -- jsdom reports 0x0
+   *  unless it is told otherwise. */
+  function setViewport(width: number, height: number) {
+    Object.defineProperty(document.documentElement, 'clientWidth', { value: width, configurable: true });
+    Object.defineProperty(document.documentElement, 'clientHeight', { value: height, configurable: true });
+    window.dispatchEvent(new Event('resize'));
+  }
+
+  afterEach(() => {
+    setViewport(0, 0);
+  });
+
+  function arrowInsets(viewport: { width: number; height: number }, isRotated = false) {
+    setViewport(viewport.width, viewport.height);
+    const view = render(
+      <InstrumentPickerOverlay visible onSelect={jest.fn()} onClose={jest.fn()} isRotated={isRotated} />
+    );
+    const flat = (testID: string) =>
+      ([] as any[])
+        .concat(view.UNSAFE_root.findAll((n: any) => n.props.testID === testID)[0].props.style ?? [])
+        .reduce((merged: Record<string, number>, layer: any) => ({ ...merged, ...(layer ?? {}) }), {});
+    return {
+      left: flat('instrument-picker-previous-button').left,
+      right: flat('instrument-picker-next-button').right,
+      panelWidth: computePickerLayout({
+        viewportWidth: isRotated ? viewport.height : viewport.width,
+        viewportHeight: isRotated ? viewport.width : viewport.height,
+        itemCount: 3,
+      }).panelWidth,
+    };
+  }
+
+  it('tucks in beside the panel on a wide screen rather than hugging the edge', () => {
+    const tabletLandscape = arrowInsets({ width: 1194, height: 834 });
+    const panelEdge = (1194 - tabletLandscape.panelWidth) / 2;
+
+    // just outside the panel, nowhere near the screen edge
+    expect(tabletLandscape.left).toBeGreaterThan(panelEdge - 100);
+    expect(tabletLandscape.left).toBeLessThan(panelEdge);
+    expect(tabletLandscape.left).toBe(tabletLandscape.right);
+  });
+
+  it('moves in as the screen widens, since the panel stops growing', () => {
+    const portrait = arrowInsets({ width: 834, height: 1194 });
+    const landscape = arrowInsets({ width: 1194, height: 834 });
+
+    expect(landscape.left).toBeGreaterThan(portrait.left);
+  });
+
+  /** A phone has no room to sit outside the panel, so it keeps the old edge
+   *  placement and overlaps it instead of being pushed off screen. */
+  it('falls back to the screen edge where the panel leaves no room', () => {
+    const phone = arrowInsets({ width: 402, height: 874 });
+
+    expect(phone.left).toBeGreaterThan(0);
+    expect(phone.left).toBeLessThan(40);
   });
 });

@@ -3,7 +3,8 @@ import { AppState, AppStateStatus } from 'react-native';
 import { useAppStore } from '../../store/app-store';
 import ScreenTimeService, { ScreenTimeWarning } from '../../services/screen-time-service';
 import NotificationService from '../../services/notification-service';
-import { ScreenTimeWarningModal } from './screen-time-warning-modal';
+import { ScreenTimeOwlAlert } from './screen-time-owl-alert';
+import { useOwlGuide } from '@/contexts/owl-guide-context';
 import { Logger } from '@/utils/logger';
 
 const log = Logger.create('ScreenTime');
@@ -57,6 +58,7 @@ const EXEMPT_SCREENS = ['sleep'];
 const IMMERSIVE_SCREENS = ['story-reader', 'practise', 'freeplay'];
 
 export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
+  const { activeGuide } = useOwlGuide();
   const {
     screenTimeEnabled,
     childAgeInMonths,
@@ -73,10 +75,8 @@ export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
   const [isPausedForExemptScreen, setIsPausedForExemptScreen] = useState(false);
   // Queued warning that arrived during an immersive screen -shown on exit
   const [pendingWarning, setPendingWarning] = useState<ScreenTimeWarning | null>(null);
-  // The last activity the user was doing — used for contextual suggestions in the warning modal
-  const [lastActivityType, setLastActivityType] = useState<ActivityType>('general');
   // Specific bridge activity ID of the last completed game (e.g. 'abc-animals')
-  const [lastCompletedActivityId, setLastCompletedActivityId] = useState<string | null>(null);
+  const lastCompletedActivityIdRef = useRef<string | null>(null);
 
   // Refs mirror React state so AppState/interval callbacks always read the
   // current value -avoids stale-closure bugs where a backgrounded app skips
@@ -102,14 +102,8 @@ export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
     currentScreen?.toLowerCase() === screen.toLowerCase()
   );
 
-  // Track screen changes to capture the last activity type
   useEffect(() => {
     if (currentScreen && currentScreen !== prevScreenRef.current) {
-      // When leaving a screen, capture its activity type
-      const prevActivity = screenToActivityType(prevScreenRef.current);
-      if (prevActivity !== 'general') {
-        setLastActivityType(prevActivity);
-      }
       prevScreenRef.current = currentScreen;
     }
   }, [currentScreen]);
@@ -139,8 +133,13 @@ export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
       setTodayUsage(usage);
     };
 
-    updateUsage();
-    const interval = setInterval(updateUsage, 50000); // Update every 50 seconds - reduces battery/CPU usage
+    const runUpdate = () => {
+      // the poll must never leave a rejection unhandled -- it fires every 50s
+      updateUsage().catch(error => log.error('Failed to update usage:', error));
+    };
+
+    runUpdate();
+    const interval = setInterval(runUpdate, 50000); // Update every 50 seconds - reduces battery/CPU usage
 
     return () => clearInterval(interval);
   }, [screenTimeEnabled]);
@@ -148,12 +147,6 @@ export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
   // Set up warning callback
   useEffect(() => {
     const handleWarning = (warning: ScreenTimeWarning) => {
-      // Capture the current activity for contextual suggestions
-      const activity = screenToActivityType(currentScreen);
-      if (activity !== 'general') {
-        setLastActivityType(activity);
-      }
-
       // If user is on an immersive screen, queue the warning for later
       if (IMMERSIVE_SCREENS.some(s => currentScreen?.toLowerCase() === s.toLowerCase())) {
         setPendingWarning(warning);
@@ -181,10 +174,14 @@ export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
   useEffect(() => {
     if (screenTimeEnabled && !isTracking && !isOnExemptScreen) {
       log.debug('Auto-starting session');
-      screenTimeService.startSession('story', childAgeInMonths).then(() => {
-        setIsTracking(true);
-        setCurrentActivity('story');
-      });
+      screenTimeService
+        .startSession('story', childAgeInMonths)
+        .then(() => {
+          setIsTracking(true);
+          setCurrentActivity('story');
+        })
+        // an unhandled rejection here surfaces as a red screen on app open
+        .catch(error => log.error('Failed to auto-start session:', error));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screenTimeEnabled]);
@@ -305,31 +302,13 @@ export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
     }
   }, [screenTimeEnabled]);
 
-  const handleContinue = useCallback(() => {
-    setShowWarningModal(false);
-    setCurrentWarning(null);
-  }, []);
-
-  const handleCloseApp = useCallback(async () => {
-    setShowWarningModal(false);
-    setCurrentWarning(null);
-    
-    // End current activity
-    if (isTracking) {
-      await endActivity();
-    }
-    
-    // In a real app, you might want to minimize the app or show a "time to stop" screen
-    // For now, we'll just end the session
-  }, [isTracking, endActivity]);
-
   const handleDismiss = useCallback(() => {
     setShowWarningModal(false);
     setCurrentWarning(null);
   }, []);
 
   const handleSetLastCompletedActivityId = useCallback((activityId: string) => {
-    setLastCompletedActivityId(activityId);
+    lastCompletedActivityIdRef.current = activityId;
   }, []);
 
   const contextValue: ScreenTimeContextType = {
@@ -347,11 +326,9 @@ export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
     <ScreenTimeContext.Provider value={contextValue}>
       {children}
       
-      <ScreenTimeWarningModal
-        visible={showWarningModal}
+      <ScreenTimeOwlAlert
+        visible={showWarningModal && activeGuide === null}
         warning={currentWarning}
-        lastActivityType={lastActivityType}
-        lastCompletedActivityId={lastCompletedActivityId}
         onDismiss={handleDismiss}
       />
     </ScreenTimeContext.Provider>

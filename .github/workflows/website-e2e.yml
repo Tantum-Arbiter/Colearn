@@ -1,0 +1,52 @@
+name: Website - End-to-End Tests
+
+on:
+  push:
+    branches: [main, mvp]
+    paths:
+      - 'website/**'
+      - '.github/workflows/website-e2e.yml'
+  pull_request:
+    paths:
+      - 'website/**'
+      - '.github/workflows/website-e2e.yml'
+
+env:
+  WORKING_DIRECTORY: website
+
+jobs:
+  e2e:
+    name: Playwright
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: website/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run end-to-end tests
+        run: npm run test:e2e
+
+      - name: Archive the report when something fails
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ github.sha }}
+          path: website/playwright-report
+          retention-days: 7

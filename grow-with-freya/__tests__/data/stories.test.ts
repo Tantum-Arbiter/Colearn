@@ -82,7 +82,14 @@ describe('Stories Data', () => {
     it('should return only available stories', () => {
       const availableStories = getAvailableStories();
 
-      expect(availableStories).toHaveLength(4); // Wombat, Jigsaw, Spelling, Word Placing
+      expect(availableStories.map(story => story.id)).toEqual([
+        'snuggle-little-wombat',
+        'wombat-jigsaw-adventure',
+        'wombat-spelling',
+        'wombat-word-placing',
+        'hold-on-juni',
+        'my-turn-to-ding',
+      ]);
       availableStories.forEach(story => {
         expect(story.isAvailable).toBe(true);
       });
@@ -106,20 +113,18 @@ describe('Stories Data', () => {
       expect(availableStories).toContain(randomStory);
     });
 
-    it('should return one of the available stories', () => {
-      const stories = new Set();
+    it('should draw only from the stories that are available, however many there are', () => {
+      const available = getAvailableStories();
+      const drawn = new Set<string>();
 
-      // Call multiple times
-      for (let i = 0; i < 5; i++) {
+      for (let i = 0; i < 20; i++) {
         const story = getRandomStory();
-        if (story) {
-          stories.add(story.id);
-        }
+        expect(available).toContain(story);
+        drawn.add(story!.id);
       }
 
-      // Four available stories, so at most 4 unique IDs
-      expect(stories.size).toBeGreaterThanOrEqual(1);
-      expect(stories.size).toBeLessThanOrEqual(4);
+      expect(drawn.size).toBeGreaterThanOrEqual(1);
+      expect(drawn.size).toBeLessThanOrEqual(available.length);
     });
 
     it('should handle edge case with no available stories', () => {
@@ -165,25 +170,39 @@ describe('Stories Data', () => {
     });
   });
 
-  describe('Performance', () => {
-    it('should load story data quickly', () => {
-      const startTime = performance.now();
+  // The old wall-clock assertion here (endTime - startTime < 10ms) measured the
+  // machine rather than the code: it could only fail from CI load or a GC pause,
+  // never from a real defect. These are the contracts worth holding instead.
+  describe('Story accessors', () => {
+    it('exposes every mock story through ALL_STORIES', () => {
+      expect(MOCK_STORIES.length).toBeGreaterThan(0);
+      expect(ALL_STORIES.length).toBeGreaterThanOrEqual(MOCK_STORIES.length);
+      expect(ALL_STORIES).toEqual(expect.arrayContaining(MOCK_STORIES));
+    });
 
-      // Access all story data
-      const mockStories = MOCK_STORIES;
-      const allStories = ALL_STORIES;
-      const availableStories = getAvailableStories();
-      const randomStory = getRandomStory();
+    it('returns only available stories, in a fresh array each call', () => {
+      const first = getAvailableStories();
 
-      const endTime = performance.now();
+      expect(first.length).toBeGreaterThan(0);
+      // NOTE: every story in the dataset is currently available, so an
+      // "every(isAvailable)" check cannot fail. Comparing against the filter
+      // applied to the source states the real contract and starts catching
+      // regressions the moment an unavailable story is added.
+      expect(first).toEqual(ALL_STORIES.filter((story) => story.isAvailable));
 
-      expect(mockStories).toBeDefined();
-      expect(allStories).toBeDefined();
-      expect(availableStories).toBeDefined();
-      expect(randomStory).toBeDefined();
+      // a defensive copy: mutating the result must not corrupt ALL_STORIES
+      const before = ALL_STORIES.length;
+      first.pop();
+      expect(getAvailableStories().length).toBe(first.length + 1);
+      expect(ALL_STORIES).toHaveLength(before);
+    });
 
-      // Should load very quickly (less than 10ms)
-      expect(endTime - startTime).toBeLessThan(10);
+    it('picks a random story from the available set', () => {
+      const available = getAvailableStories();
+
+      for (let i = 0; i < 20; i++) {
+        expect(available).toContainEqual(getRandomStory());
+      }
     });
   });
 

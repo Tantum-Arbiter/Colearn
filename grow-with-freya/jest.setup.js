@@ -1,3 +1,5 @@
+global.__DEV__ = typeof global.__DEV__ === 'boolean' ? global.__DEV__ : false;
+
 // Mock react-native-worklets first (must be before reanimated)
 jest.mock('react-native-worklets', () => ({
   __esModule: true,
@@ -9,6 +11,16 @@ jest.mock('react-native-reanimated', () => {
   const View = require('react-native').View;
   const Text = require('react-native').Text;
   const ScrollView = require('react-native').ScrollView;
+  const Image = require('react-native').Image;
+
+  // Chainable builder for entering/exiting layout animations (FadeIn.duration(300).delay(100)...)
+  const createAnimationBuilder = () => {
+    const builder = {};
+    ['duration', 'delay', 'easing', 'springify', 'damping', 'stiffness', 'withInitialValues', 'withCallback', 'build'].forEach((method) => {
+      builder[method] = () => builder;
+    });
+    return builder;
+  };
 
   return {
     __esModule: true,
@@ -16,17 +28,23 @@ jest.mock('react-native-reanimated', () => {
       View: View,
       Text: Text,
       ScrollView: ScrollView,
+      Image: Image,
       createAnimatedComponent: (component) => component,
       call: () => {},
     },
     View: View,
     Text: Text,
     ScrollView: ScrollView,
+    Image: Image,
     createAnimatedComponent: (component) => component,
-    useSharedValue: jest.fn(() => ({ value: 0 })),
+    useSharedValue: jest.fn((initial = 0) => ({ value: initial })),
     useAnimatedStyle: jest.fn(() => ({})),
+    useAnimatedScrollHandler: jest.fn(() => jest.fn()),
     useAnimatedProps: jest.fn(() => ({})),
-    withTiming: jest.fn((value) => value),
+    withTiming: jest.fn((value, _config, callback) => {
+      if (typeof callback === 'function') callback(true);
+      return value;
+    }),
     withSpring: jest.fn((value) => value),
     withDecay: jest.fn((value) => value),
     withDelay: jest.fn((delay, animation) => animation),
@@ -37,6 +55,20 @@ jest.mock('react-native-reanimated', () => {
     runOnUI: jest.fn((fn) => fn),
     interpolate: jest.fn((value, inputRange, outputRange) => outputRange[0]),
     Extrapolate: { CLAMP: 'clamp' },
+    FadeIn: createAnimationBuilder(),
+    FadeOut: createAnimationBuilder(),
+    FadeInUp: createAnimationBuilder(),
+    FadeInDown: createAnimationBuilder(),
+    FadeOutUp: createAnimationBuilder(),
+    FadeOutDown: createAnimationBuilder(),
+    SlideInUp: createAnimationBuilder(),
+    SlideInDown: createAnimationBuilder(),
+    SlideInLeft: createAnimationBuilder(),
+    SlideInRight: createAnimationBuilder(),
+    SlideOutUp: createAnimationBuilder(),
+    SlideOutDown: createAnimationBuilder(),
+    SlideOutLeft: createAnimationBuilder(),
+    SlideOutRight: createAnimationBuilder(),
     Easing: {
       linear: jest.fn(),
       ease: jest.fn(),
@@ -177,9 +209,19 @@ jest.mock('expo-audio', () => {
 
   return {
     createAudioPlayer: jest.fn(() => mockPlayer),
-    setAudioModeAsync: jest.fn(),
+    // callers chain .catch() on this, so it has to return a promise
+    setAudioModeAsync: jest.fn(() => Promise.resolve()),
     AudioPlayer: jest.fn(),
     useAudioRecorder: jest.fn(() => mockRecorder),
+    // polled by use-breath-detector; without it any screen that reaches the
+    // breath detector throws "useAudioRecorderState is not a function"
+    useAudioRecorderState: jest.fn(() => ({
+      isRecording: false,
+      metering: undefined,
+      durationMillis: 0,
+      mediaServicesDidReset: false,
+      url: null,
+    })),
     RecordingPresets: {
       HIGH_QUALITY: {
         extension: '.m4a',
@@ -223,6 +265,7 @@ jest.mock('@expo/vector-icons', () => {
     AntDesign: createIconComponent('AntDesign'),
     MaterialIcons: createIconComponent('MaterialIcons'),
     FontAwesome: createIconComponent('FontAwesome'),
+    FontAwesome5: createIconComponent('FontAwesome5'),
     Entypo: createIconComponent('Entypo'),
     Feather: createIconComponent('Feather'),
     MaterialCommunityIcons: createIconComponent('MaterialCommunityIcons'),
@@ -325,7 +368,8 @@ jest.mock('react-native-safe-area-context', () => ({
 
 // Mock app store
 jest.mock('@/store/app-store', () => ({
-  useAppStore: jest.fn(() => ({
+  useAppStore: jest.fn((selector) => {
+    const state = {
     isAppReady: true,
     hasCompletedOnboarding: true,
     currentChildId: null,
@@ -356,7 +400,21 @@ jest.mock('@/store/app-store', () => ({
     updateBackgroundAnimationState: jest.fn(),
     textSizeScale: 1.0,
     setTextSizeScale: jest.fn(),
-  })),
+    childAgeInMonths: 24,
+    markStoryAsRead: jest.fn(),
+    recordReadingSession: jest.fn(),
+    favoriteStoryIds: [],
+    toggleFavoriteStory: jest.fn(),
+    storyProgress: {},
+    useStoryGarden: false,
+    setStoryProgress: jest.fn(),
+    markStoryCompleted: jest.fn(),
+    clearStoryProgress: jest.fn(),
+    getContinueReadingStoryId: () => null,
+    setUseStoryGarden: jest.fn(),
+    };
+    return typeof selector === 'function' ? selector(state) : state;
+  }),
   BASIC_TIER_INSTRUMENTS: ['flute', 'recorder', 'ocarina'],
 }));
 
@@ -406,6 +464,9 @@ jest.mock('react-native-svg', () => {
     ClipPath: mockComponent('ClipPath'),
     Pattern: mockComponent('Pattern'),
     Mask: mockComponent('Mask'),
+    Filter: mockComponent('Filter'),
+    FeGaussianBlur: mockComponent('FeGaussianBlur'),
+    FeDropShadow: mockComponent('FeDropShadow'),
   };
 });
 
@@ -451,25 +512,22 @@ jest.mock('react-native', () => {
   return RN;
 });
 
-// Mock TutorialContext
-jest.mock('./contexts/tutorial-context', () => ({
-  TutorialProvider: ({ children }) => children,
-  useTutorial: () => ({
+// Mock the owl guide context: no guide is due, nothing is talking
+jest.mock('./contexts/owl-guide-context', () => ({
+  OwlGuideProvider: ({ children }) => children,
+  useOwlGuide: () => ({
     isLoaded: true,
-    completedTutorials: [],
-    hasSeenFirstStory: true,
-    hasSeenSettings: true,
-    activeTutorial: null,
-    currentStep: 0,
-    startTutorial: jest.fn(),
+    completedGuides: [],
+    lastResetTimestamp: 0,
+    activeGuide: null,
+    stepIndex: 0,
+    startGuide: jest.fn(),
     nextStep: jest.fn(),
-    previousStep: jest.fn(),
-    skipTutorial: jest.fn(),
-    completeTutorial: jest.fn(),
-    shouldShowTutorial: jest.fn().mockReturnValue(false),
-    markFirstStoryViewed: jest.fn(),
-    markSettingsViewed: jest.fn(),
-    resetAllTutorials: jest.fn().mockResolvedValue(undefined),
+    skipGuide: jest.fn(),
+    completeGuide: jest.fn(),
+    dismissGuide: jest.fn(),
+    shouldShowGuide: jest.fn().mockReturnValue(false),
+    resetGuides: jest.fn().mockResolvedValue(undefined),
   }),
 }));
 
@@ -484,9 +542,16 @@ jest.mock('react-native-purchases', () => ({
     getCustomerInfo: jest.fn().mockResolvedValue({ entitlements: { active: {} } }),
     restorePurchases: jest.fn().mockResolvedValue({ entitlements: { active: {} } }),
     addCustomerInfoUpdateListener: jest.fn(),
+    checkTrialOrIntroductoryPriceEligibility: jest.fn().mockResolvedValue({}),
   },
   LOG_LEVEL: { DEBUG: 4, INFO: 3, WARN: 2, ERROR: 1 },
   PURCHASES_ERROR_CODE: { PURCHASE_CANCELLED_ERROR: 1 },
+  INTRO_ELIGIBILITY_STATUS: {
+    INTRO_ELIGIBILITY_STATUS_UNKNOWN: 0,
+    INTRO_ELIGIBILITY_STATUS_INELIGIBLE: 1,
+    INTRO_ELIGIBILITY_STATUS_ELIGIBLE: 2,
+    INTRO_ELIGIBILITY_STATUS_NO_INTRO_OFFER_EXISTS: 3,
+  },
 }));
 
 // Mock console methods to reduce noise in tests

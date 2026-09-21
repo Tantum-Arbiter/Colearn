@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, Pressable, Dimensions, StatusBar, ImageBackgrou
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   useSharedValue,
@@ -15,6 +14,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import * as ScreenOrientation from 'expo-screen-orientation';
+import { applyDefaultOrientation, isTabletDevice } from '@/hooks/use-story-orientation';
 import { useTranslation } from 'react-i18next';
 import { Story, StoryPage, STORY_TAGS, InteractiveElement, getLocalizedText, resolveAgeGroup, MusicChallenge, JigsawPuzzle, ReadingChallenge } from '@/types/story';
 import type { SupportedLanguage } from '@/services/i18n';
@@ -26,6 +26,8 @@ import { JigsawPuzzleUI } from './jigsaw-puzzle-ui';
 import { ReadingChallengeUI } from './reading-challenge-ui';
 import { InstrumentPickerOverlay } from './instrument-picker-overlay';
 import { MusicSheetOverlay } from './music-sheet-overlay';
+import { ARRIVAL_TOTAL_MS, type SheetRect } from '@/services/sheet-flight';
+import { MusicBackdrop } from '@/components/music/music-backdrop';
 import { useMusicChallenge } from '@/hooks/use-music-challenge';
 import { useJigsawChallenge } from '@/hooks/use-jigsaw-challenge';
 import { useReadingChallenge } from '@/hooks/use-reading-challenge';
@@ -45,6 +47,7 @@ import { AudioControlModal } from '../ui/audio-control-modal';
 import { ParentsOnlyModal } from '../ui/parents-only-modal';
 import { SubscriptionOverlay } from '../ui/subscription-overlay';
 import { useAppStore } from '@/store/app-store';
+import { resumePageIndex } from './reading-progress';
 import { useAccessibility, TEXT_SIZE_OPTIONS } from '@/hooks/use-accessibility';
 import { useParentsOnlyChallenge } from '@/hooks/use-parents-only-challenge';
 import * as Haptics from 'expo-haptics';
@@ -55,11 +58,12 @@ import { useGlobalSound } from '@/contexts/global-sound-context';
 import { Logger } from '@/utils/logger';
 import { AnalyticsService } from '@/services/analytics-service';
 import { PagePreviewModal } from './pages-preview-modal';
-import { StoryTipsOverlay } from '@/components/tutorial/story-tips-overlay';
-import { ModeTipsOverlay } from '@/components/tutorial/mode-tips-overlay';
-import { MusicTipsOverlay } from '@/components/tutorial/music-tips-overlay';
+import { OwlGuide } from '@/components/owl-guide';
 
 const log = Logger.create('StoryBookReader');
+
+/** How long the instrument overlay takes to rise into place, and to leave. */
+const MUSIC_PRACTICE_ANIM_MS = 300;
 
 
 
@@ -119,7 +123,12 @@ export function StoryBookReader({
   }, [story.id]);
 
   // Start from page 1 if skipping cover, otherwise start from cover (page 0)
-  const [currentPageIndex, setCurrentPageIndex] = useState(skipCoverPage ? 1 : 0);
+  const savedPlace = useAppStore((state) => state.storyProgress[story.id]);
+  const [currentPageIndex, setCurrentPageIndex] = useState(() => resumePageIndex({
+    skipCoverPage,
+    savedPlace,
+    totalPages: story.pages?.length ?? 0,
+  }));
   const [previousPageIndex, setPreviousPageIndex] = useState<number | null>(null); // For crossfade
   const [isTransitioning, setIsTransitioning] = useState(false);
 
@@ -188,7 +197,6 @@ export function StoryBookReader({
   const voiceRecording = useVoiceRecording();
 
   // Music challenge state
-  const [showMusicMode, setShowMusicMode] = useState(false);
   const [musicChallengeCompleted, setMusicChallengeCompleted] = useState<Record<number, boolean>>({});
   // Music challenge phase: idle → preview (music sheet) → playing (instrument UI)
   const [musicChallengePhase, setMusicChallengePhase] = useState<'idle' | 'preview' | 'playing'>('idle');
@@ -206,6 +214,13 @@ export function StoryBookReader({
   // Animation shared value for sliding the music practice overlay down on close
   const musicPracticeSlideY = useSharedValue(0);
   const musicPracticeOpacity = useSharedValue(1);
+  const musicEnterProgress = useSharedValue(1);
+  const [staffTarget, setStaffTarget] = useState<SheetRect | null>(null);
+  const [awaitingFlight, setAwaitingFlight] = useState(false);
+  // True from the moment the sheet is asked for until it is off screen, which
+  // outlasts `showMusicSheet` by the length of its exit.
+  const [sheetOnScreen, setSheetOnScreen] = useState(false);
+  const arrivalStartedRef = useRef(false);
   // Track the current play mode for blow/press coordination.
   const currentPlayModeRef = useRef<'blow' | 'press'>('press');
 
@@ -238,7 +253,12 @@ export function StoryBookReader({
 
   // Toggle music sheet overlay
   const handleToggleMusicSheet = useCallback(() => {
-    setShowMusicSheet(prev => !prev);
+    setStaffTarget(null);
+    setAwaitingFlight(false);
+    setShowMusicSheet(prev => {
+      if (!prev) setSheetOnScreen(true);
+      return !prev;
+    });
   }, []);
 
   // Get current page's music challenge config, with user's instrument selection applied
@@ -502,7 +522,13 @@ export function StoryBookReader({
       preMusicChallengeVolumeRef.current = baseVolume;
       fadeMusicVolumeTo(0.1, 500);
 
+      // The blurred page is one layer for the whole challenge, the sheet's panel
+      // and the instrument both standing on it, so it is put in place here
+      // rather than when the instrument arrives.
+      musicPracticeSlideY.value = 0;
+      musicPracticeOpacity.value = 1;
       setMusicChallengePhase('preview');
+      setSheetOnScreen(true);
       setShowMusicSheet(true);
     };
 
@@ -519,11 +545,16 @@ export function StoryBookReader({
   // Step 2: User taps "Ready to Play" on the music sheet → close sheet, show instrument UI
   // Fade background music the rest of the way to 0 (already ducked to 0.1 from step 1)
   const handleReadyToPlay = useCallback(() => {
+    // The panel starts leaving on the press, and the sheet stays on screen: it
+    // is the thing that travels. The instrument view mounts under it at the
+    // start of its own arrival and reports where the staff sits, which is the
+    // rest of the sheet's journey -- a few frames later, which is why the panel
+    // does not wait for it.
+    arrivalStartedRef.current = false;
+    setStaffTarget(null);
+    setAwaitingFlight(true);
     setShowMusicSheet(false);
-    // Reset animation values before showing the overlay (they may be left
-    // off-screen from a previous closeMusicPractice animation)
-    musicPracticeSlideY.value = 0;
-    musicPracticeOpacity.value = 1;
+    musicEnterProgress.value = 0;
     setMusicChallengePhase('playing');
 
     // Fade background music to silence for instrument practice
@@ -537,6 +568,19 @@ export function StoryBookReader({
     // playAndRecord mode and reduces speaker volume significantly.
     // The breath detector is started/stopped via handlePlayModeChange instead.
   }, [musicChallenge, currentMusicChallenge, breathDetector, fadeMusicVolumeTo, globalSound.volume]);
+
+  // Step 3: the instrument view has worked out where its staff sits, so the
+  // sheet can leave the panel and fly onto it while everything else arrives.
+  const handleStageReady = useCallback((staff: SheetRect | null) => {
+    if (arrivalStartedRef.current) return;
+    arrivalStartedRef.current = true;
+    setStaffTarget(staff);
+    setAwaitingFlight(false);
+    musicEnterProgress.value = withTiming(1, {
+      duration: ARRIVAL_TOTAL_MS,
+      easing: Easing.linear,
+    });
+  }, [musicEnterProgress]);
 
   // Handle play-mode changes from MusicChallengeUI.
   // In "blow" mode we need the mic → start the breath detector (playAndRecord session).
@@ -571,6 +615,8 @@ export function StoryBookReader({
   }, [clearMusicVolumeFade]);
 
   const handleCloseMusicSheet = useCallback(() => {
+    setStaffTarget(null);
+    setAwaitingFlight(false);
     setShowMusicSheet(false);
     // If we were in preview phase (music sheet shown before instrument),
     // reset back to idle so the "Begin Playing" button reappears.
@@ -656,7 +702,7 @@ export function StoryBookReader({
   const closeMusicPractice = useCallback((opts?: { cleanup?: boolean; stopBreath?: boolean; resetUiHidden?: boolean }) => {
     log.debug('closeMusicPractice called', opts);
     const screenH = Dimensions.get('window').height;
-    const ANIM_DURATION = 300;
+    const ANIM_DURATION = MUSIC_PRACTICE_ANIM_MS;
     musicPracticeOpacity.value = withTiming(0, { duration: ANIM_DURATION });
     musicPracticeSlideY.value = withTiming(
       screenH,
@@ -676,8 +722,6 @@ export function StoryBookReader({
         if (opts?.resetUiHidden) { setMusicUiHidden(false); }
         restoreMusicVolume();
         // Set phase to idle LAST -this unmounts the overlay.
-        // Animation values stay off-screen; they're reset in handleReadyToPlay
-        // before the overlay is shown again, preventing any flash.
         setMusicChallengePhase('idle');
       } catch (err) {
         log.warn('closeMusicPractice cleanup error:', err);
@@ -694,6 +738,8 @@ export function StoryBookReader({
   const { scaledFontSize, scaledButtonSize, textSizeScale } = useAccessibility();
   const setTextSizeScale = useAppStore((state) => state.setTextSizeScale);
   const childAgeInMonths = useAppStore((state) => state.childAgeInMonths);
+  const setStoryProgress = useAppStore((state) => state.setStoryProgress);
+  const markStoryCompleted = useAppStore((state) => state.markStoryCompleted);
   const childAgeGroup = resolveAgeGroup(childAgeInMonths);
   const markStoryAsRead = useAppStore((state) => state.markStoryAsRead);
   const recordReadingSession = useAppStore((state) => state.recordReadingSession);
@@ -731,7 +777,17 @@ export function StoryBookReader({
   useEffect(() => {
     let isMounted = true;
 
+    // A tablet is never turned for the child: it is unlocked on both iOS and
+    // Android, so it reads whichever way it is being held. Only a phone, which
+    // is portrait-locked everywhere else, is put into landscape for the story.
+    const onTablet = isTabletDevice();
+
     const checkAndSetLandscape = async () => {
+      if (onTablet) {
+        setIsLandscapeReady(true);
+        return;
+      }
+
       try {
         const orientation = await ScreenOrientation.getOrientationAsync();
         const isLandscape = orientation === ScreenOrientation.Orientation.LANDSCAPE_LEFT ||
@@ -753,7 +809,7 @@ export function StoryBookReader({
     // story reader is mounted (e.g. app backgrounding, layout re-render race), re-lock
     // landscape immediately so the reader never stays in portrait.
     const subscription = ScreenOrientation.addOrientationChangeListener((event) => {
-      if (!isMounted || isExitingRef.current) return;
+      if (!isMounted || isExitingRef.current || onTablet) return;
       const newOrientation = event.orientationInfo.orientation;
       const isLandscape = newOrientation === ScreenOrientation.Orientation.LANDSCAPE_LEFT ||
                           newOrientation === ScreenOrientation.Orientation.LANDSCAPE_RIGHT;
@@ -768,9 +824,10 @@ export function StoryBookReader({
       if (isMounted) {
         isMounted = false;
         subscription.remove();
-        // Only restore orientation if NOT exiting via handleExit (exit animation handles rotation)
+        // Only restore orientation if NOT exiting via handleExit (exit animation handles rotation).
+        // applyDefaultOrientation gives a phone its portrait lock back and leaves a tablet unlocked.
         if (!isExitingRef.current) {
-          ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP)
+          applyDefaultOrientation()
             .catch(error => log.warn('Failed to restore orientation:', error));
         }
       }
@@ -910,6 +967,8 @@ export function StoryBookReader({
   const handleStoryCompletion = async () => {
     // Prevent double-tap on finish button
     if (isExiting) return;
+
+    markStoryCompleted(story.id);
 
     try {
       // In record mode, show completion message and return to mode selection
@@ -1057,6 +1116,16 @@ export function StoryBookReader({
 
   // Get story pages or create default pages if none exist
   const pages = story.pages || [];
+
+  // Where the child is up to, kept for the home's Continue Reading card
+  useEffect(() => {
+    if (currentPageIndex <= 0 || pages.length === 0) {
+      return;
+    }
+
+    setStoryProgress(story.id, currentPageIndex, pages.length);
+  }, [currentPageIndex, pages.length, story.id, setStoryProgress]);
+
   const currentPage = pages[currentPageIndex];
   const previousPage = previousPageIndex !== null ? pages[previousPageIndex] : null;
 
@@ -1829,15 +1898,29 @@ export function StoryBookReader({
               </>
             )}
 
+            {/* The night meadow the whole music challenge stands on -- the
+                sheet's panel while it is being read, the instrument once it
+                arrives. One layer for both, so the handover changes nothing
+                behind them. */}
+            {!isNextPage && page.interactionType === 'music_challenge' && page.musicChallenge?.enabled && musicChallengePhase !== 'idle' && (
+              <Animated.View
+                style={[styles.musicChallengeBackdrop, musicPracticeAnimatedStyle]}
+                pointerEvents="none"
+                testID="music-challenge-backdrop"
+              >
+                <MusicBackdrop />
+              </Animated.View>
+            )}
+
             {/* Music Challenge: instrument UI (only in 'playing' phase) */}
             {!isNextPage && page.interactionType === 'music_challenge' && page.musicChallenge?.enabled && musicChallengePhase === 'playing' && (
               <Animated.View style={[styles.musicChallengeOverlay, musicPracticeAnimatedStyle]}>
-                <BlurView intensity={40} style={StyleSheet.absoluteFill} tint="dark" />
                 <MusicChallengeUI
                   challenge={musicChallenge}
                   promptText={page.musicChallenge.promptText}
                   requiredSequence={musicChallenge.currentSequence.length > 0 ? musicChallenge.currentSequence : ((page.musicChallenge.requiredSequence?.length ?? 0) > 0 ? page.musicChallenge.requiredSequence! : musicChallenge.resolvedSequence)}
                   noteLayout={getInstrument(selectedInstrumentId || page.musicChallenge.instrumentId)?.noteLayout ?? []}
+                  artwork={getInstrument(selectedInstrumentId || page.musicChallenge.instrumentId)?.artwork}
                   showBreathButton={breathDetector.useFallback || !page.musicChallenge.micRequired}
                   onSkip={() => {
                     musicChallenge.skip();
@@ -1851,6 +1934,8 @@ export function StoryBookReader({
                   onRotationChange={setInstrumentIsRotated}
                   onPlayModeChange={handlePlayModeChange}
                   onVisibilityChange={setMusicUiHidden}
+                  enterProgress={musicEnterProgress}
+                  onStageReady={handleStageReady}
                 />
               </Animated.View>
             )}
@@ -2249,7 +2334,10 @@ export function StoryBookReader({
         {/* Top Left Controls - Exit Button (aligned with bottom back button) */}
         {/* During music challenge playing: X closes the challenge overlay and returns to story page */}
         {/* Otherwise: X exits the story entirely */}
-        {!musicUiHidden && (
+        {/* The music sheet carries its own back arrow, and used to cover these
+            with its own full-screen scene; on the blurred page it does not, so
+            they stand down while it is up rather than doubling up with it. */}
+        {!musicUiHidden && !sheetOnScreen && (
         <View style={[styles.topLeftControls, {
           paddingTop: Math.max(insets.top + 20, 20),
           paddingLeft: Math.max(insets.left + 20, 20)
@@ -2268,6 +2356,7 @@ export function StoryBookReader({
               closeMusicPractice({ cleanup: true, stopBreath: true, resetUiHidden: true });
             } : handleExit}
             disabled={musicChallengePhase !== 'playing' && isExiting}
+            testID="story-exit-button"
           >
             <Ionicons name="arrow-back" size={scaledFontSize(20)} color="#333333" />
           </Pressable>
@@ -2416,7 +2505,7 @@ export function StoryBookReader({
         )}
 
         {/* Top Right Controls - Sound and Settings (aligned with bottom next button) */}
-        {!musicUiHidden && (
+        {!musicUiHidden && !sheetOnScreen && (
         <View style={[styles.topRightControls, {
           paddingTop: Math.max(insets.top + 20, 20),
           paddingRight: Math.max(insets.right + 20, 20)
@@ -3160,97 +3249,34 @@ export function StoryBookReader({
         }}
       />
 
-      {/* Story Tips Overlay - shown on first story in READ mode only, or when triggered from menu */}
-      {/* Hidden while instrument picker is open so it doesn't interfere with selection */}
-      {readingMode === 'read' && !showInstrumentPicker && (
-        <StoryTipsOverlay
-          storyId={story.id}
-          forceShow={showTipsOverlay}
-          onClose={() => setShowTipsOverlay(false)}
-        />
-      )}
-
-      {/* Record Mode Tips - shown on first time using record mode, or when triggered from menu */}
-      <ModeTipsOverlay
-        mode="record"
-        isActive={readingMode === 'record' && currentPageIndex > 0}
-        forceShow={showTipsOverlay && readingMode === 'record'}
-        onClose={() => setShowTipsOverlay(false)}
+      {/* The owl's reading tips: first story in READ mode, or replayed from the menu */}
+      <OwlGuide
+        id="story_reader_tips"
+        active={readingMode === 'read' && !showInstrumentPicker}
+        replay={showTipsOverlay && readingMode === 'read'}
+        onEnd={() => setShowTipsOverlay(false)}
       />
 
-      {/* Narrate Mode Tips - shown on first time using narrate mode, or when triggered from menu */}
-      <ModeTipsOverlay
-        mode="narrate"
-        isActive={readingMode === 'narrate' && currentPageIndex > 0}
-        forceShow={showTipsOverlay && readingMode === 'narrate'}
-        onClose={() => setShowTipsOverlay(false)}
+      <OwlGuide
+        id="record_mode_tour"
+        active={readingMode === 'record' && currentPageIndex > 0}
+        replay={showTipsOverlay && readingMode === 'record'}
+        onEnd={() => setShowTipsOverlay(false)}
       />
 
-      {/* Music Mode Tips - shown on first music challenge page, or when triggered from menu */}
-      <MusicTipsOverlay
-        isActive={!!isMusicChallengePage && musicChallengePhase === 'playing'}
-        forceShow={showTipsOverlay && isMusicChallengePage && musicChallengePhase === 'playing'}
-        onClose={() => setShowTipsOverlay(false)}
+      <OwlGuide
+        id="narrate_mode_tour"
+        active={readingMode === 'narrate' && currentPageIndex > 0}
+        replay={showTipsOverlay && readingMode === 'narrate'}
+        onEnd={() => setShowTipsOverlay(false)}
       />
 
-      {/* Music Mode Overlay - Full screen instrument free play or guided challenge */}
-      {showMusicMode && (
-        <View style={styles.absoluteModalContainer}>
-          <Pressable
-            style={styles.absoluteModalBackdrop}
-            onPress={() => {
-              setShowMusicMode(false);
-              breathDetector.stopListening();
-              restoreMusicVolume();
-            }}
-          />
-          <View style={styles.musicModeOverlay}>
-            <View style={styles.musicModeHeader}>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Ionicons name="musical-note" size={18} color="#FFFFFF" style={{ marginRight: 6 }} />
-                <Text style={styles.musicModeTitle}>Music Mode</Text>
-              </View>
-              <Pressable
-                style={styles.musicModeCloseButton}
-                onPress={() => {
-                  setShowMusicMode(false);
-                  breathDetector.stopListening();
-                  restoreMusicVolume();
-                }}
-              >
-                <Ionicons name="close" size={18} color="#FFFFFF" />
-              </Pressable>
-            </View>
-            {isMusicChallengePage && currentMusicChallenge ? (
-              <MusicChallengeUI
-                challenge={musicChallenge}
-                promptText={currentMusicChallenge.promptText}
-                requiredSequence={musicChallenge.currentSequence.length > 0 ? musicChallenge.currentSequence : ((currentMusicChallenge.requiredSequence?.length ?? 0) > 0 ? currentMusicChallenge.requiredSequence! : musicChallenge.resolvedSequence)}
-                noteLayout={getInstrument(currentMusicChallenge.instrumentId)?.noteLayout ?? []}
-                showBreathButton={breathDetector.useFallback || !currentMusicChallenge.micRequired}
-                onSkip={() => musicChallenge.skip()}
-                onContinue={() => {
-                  setShowMusicMode(false);
-                  musicChallenge.cleanup();
-                  breathDetector.stopListening();
-                  restoreMusicVolume();
-                }}
-                onMusicSheet={handleToggleMusicSheet}
-                allowSkip={currentMusicChallenge.allowSkip}
-                onRotationChange={setInstrumentIsRotated}
-                onPlayModeChange={handlePlayModeChange}
-                onVisibilityChange={setMusicUiHidden}
-              />
-            ) : (
-              <View style={styles.musicModeFreePlay}>
-                <Text style={styles.musicModeFreePlayText}>
-                  No music challenge on this page.{'\n'}Free play coming soon!
-                </Text>
-              </View>
-            )}
-          </View>
-        </View>
-      )}
+      <OwlGuide
+        id="music_mode_tour"
+        active={!!isMusicChallengePage && musicChallengePhase === 'playing'}
+        replay={showTipsOverlay && !!isMusicChallengePage && musicChallengePhase === 'playing'}
+        onEnd={() => setShowTipsOverlay(false)}
+      />
 
       {/* Compare Languages Modal - Using absolute View instead of Modal to prevent iOS crash */}
       {showCompareLanguageModal && (
@@ -3485,7 +3511,12 @@ export function StoryBookReader({
         onReadyToPlay={musicChallengePhase === 'preview' ? handleReadyToPlay : undefined}
         onNotePressIn={musicChallenge.previewNote}
         onNotePressOut={musicChallenge.stopNote}
-
+        holdPlan={musicChallenge.holdPlan}
+        flightTarget={staffTarget}
+        awaitingFlight={awaitingFlight}
+        backdrop="music"
+        onLeft={() => setSheetOnScreen(false)}
+        enterProgress={musicEnterProgress}
       />
 
       {/* Instrument Picker Overlay -opened only from music challenge controls */}
@@ -3495,6 +3526,7 @@ export function StoryBookReader({
         onClose={handleCloseInstrumentPicker}
         defaultInstrumentId={selectedInstrumentId || cmsDefaultInstrumentId}
         isRotated={instrumentIsRotated}
+        backdrop="scene"
         onLockedPress={() => setShowSubscription(true)}
       />
 
@@ -3532,6 +3564,14 @@ const styles = StyleSheet.create({
     bottom: 0,
     zIndex: 1, // Ensure overlay appears on top
   },
+  musicChallengeBackdrop: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    zIndex: 14,
+  },
   musicChallengeOverlay: {
     position: 'absolute',
     left: 0,
@@ -3541,55 +3581,12 @@ const styles = StyleSheet.create({
     zIndex: 15,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
   },
 
-  musicModeOverlay: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'rgba(30, 30, 60, 0.95)',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 20,
-    maxHeight: '80%',
-    zIndex: 200,
-  },
-  musicModeHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  musicModeTitle: {
-    color: '#FFFFFF',
-    fontSize: 22,
-    fontWeight: '700',
-  },
-  musicModeCloseButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   musicModeCloseText: {
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: '600',
-  },
-  musicModeFreePlay: {
-    alignItems: 'center',
-    paddingVertical: 40,
-  },
-  musicModeFreePlayText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    textAlign: 'center',
-    opacity: 0.7,
-    lineHeight: 24,
   },
   nextPageOverlay: {
     position: 'absolute',

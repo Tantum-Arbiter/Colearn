@@ -1,0 +1,31 @@
+appId: com.growwithfreya.app
+tags:
+  - journey
+name: A family opening the app for the first time is met by onboarding
+---
+- runFlow:
+    file: ../../helpers/seed-only.yaml
+    env:
+      SEED: "onboarded=0&guest=0&signedIn=0&tutorials=fresh&screenTime=reset&language=en"
+# Give the seeded state a moment to be written before the app is stopped:
+# stopping it first would have it save the old state back over the seed.
+- extendedWaitUntil:
+    visible:
+      id: "nothing-waits-here"
+    timeout: 8000
+    optional: true
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: "onboarding-next"
+    timeout: 90000
+- assertVisible:
+    id: "onboarding-step-counter"
+# Nothing of the app itself is reachable until the family has been through it.
+- assertNotVisible:
+    id: "child-bottom-navigation"
+- tapOn:
+    id: "onboarding-next"
+- assertVisible:
+    id: "onboarding-back"

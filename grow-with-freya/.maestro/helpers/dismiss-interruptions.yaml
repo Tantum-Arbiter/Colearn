@@ -1,0 +1,28 @@
+appId: com.growwithfreya.app
+name: Clear anything the app puts in front of the page
+---
+- repeat:
+    times: 3
+    commands:
+      - waitForAnimationToEnd:
+          timeout: 4000
+      - runFlow:
+          when:
+            visible:
+              id: "screen-time-owl-close"
+          commands:
+            - tapOn:
+                id: "screen-time-owl-close"
+      - runFlow:
+          when:
+            visible:
+              id: "owl-guide-close"
+          commands:
+            - tapOn:
+                id: "owl-guide-close"
+      # iOS asks for a review of its own accord, and it covers everything.
+      - runFlow:
+          when:
+            visible: "Not Now"
+          commands:
+            - tapOn: "Not Now"
