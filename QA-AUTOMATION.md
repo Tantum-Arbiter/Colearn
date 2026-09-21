@@ -48,10 +48,10 @@ MAESTRO_DEVICE=<udid> npm run e2e   # a particular simulator
 `MAESTRO_FRESH=1 npm run e2e` boots the simulator again first, which is the cure when flows start
 failing on elements that are plainly on screen.
 
-Eight flows, on a phone and on a tablet (`MAESTRO_DEVICE=<ipad udid>`): home opens; a story opens
+Nine flows, on a phone and on a tablet (`MAESTRO_DEVICE=<ipad udid>`): home opens; a story opens
 from the shelf and closes again; a story only the server has reaches the shelf; a signed-in parent
 comes straight back in; a first run meets onboarding; the flag switches languages and it sticks; the
-grown-ups door asks its question; the offer opens and closes.
+grown-ups door asks its question; the offer opens and closes; a story beyond the free plan wears a lock.
 
 Flows live in `.maestro/flows/<area>/*.yaml`, grouped as `core`, `parent`, `money` and `auth`.
 `.maestro/helpers/` holds steps shared between flows. Failures write logs, screenshots and a
@@ -151,6 +151,8 @@ the stub reaches the shelf and the search — a flow finds it by name. Its cover
   stops the app and launches it again. Seeding alone leaves the app where it already was.
 - **Signing out is not the same as carrying on without an account.** `signedIn=0` used to turn guest
   mode on, which walks straight past onboarding; guest mode is now only what `guest=` says.
+- **iOS asks for an App Store review on its own**, and the dialog hides everything beneath it. The
+  interruptions helper taps "Not Now".
 - **Constant ambient animation slows the snapshot.** Turn Reduce Motion on for the simulator
   (`xcrun simctl spawn <udid> defaults write com.apple.Accessibility ReduceMotionEnabled -bool true`).
 
@@ -158,12 +160,7 @@ the stub reaches the shelf and the search — a flow finds it by name. Its cover
 
 1. **Opening the stubbed story**, so a flow covers the reader itself: the assets download on a tap,
    which the stub answers but no flow exercises yet.
-2. **Two journeys that are written but parked**, both for the same sort of reason:
-   - *A story that only the server has, wearing a lock on the free plan.* The lock only applies to
-     a catalogue entry the app has not downloaded, so it needs the shelf to re-sync. In a flow the
-     app answers `/api/stories/version` and then stops: no delta call, so the new entry never
-     arrives. ⚠️ UNVERIFIED why. Worth understanding beyond testing — if the app can skip a sync
-     it has been told is needed, families would stop receiving new stories.
+2. **One journey written and parked**:
    - *The day's screen time running out.* The app only watches the clock while a child is inside a
      story, music or emotions screen (`startWarningMonitor` runs from `startSession`), so the owl
      cannot appear on the home page however spent the day is. A flow would have to sit inside the

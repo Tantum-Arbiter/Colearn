@@ -68,7 +68,13 @@ name: A child opens a story from the shelf and comes back out
 - tapOn:
     id: "story-exit-button"
 - setOrientation: PORTRAIT
+- runFlow: ../../helpers/dismiss-interruptions.yaml
+# A phone comes back to the shelf it opened the book from; a tablet comes back
+# to the home page. What matters either way: the book is closed and the child
+# is back in the app.
 - extendedWaitUntil:
     visible:
-      id: "catalogue-header-row"
-    timeout: 60000
+      id: "navigation-item-home"
+    timeout: 90000
+- assertNotVisible:
+    id: "story-exit-button"

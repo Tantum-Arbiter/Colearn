@@ -1,0 +1,24 @@
+appId: com.growwithfreya.app
+tags:
+  - journey
+name: A story beyond the free plan wears a lock
+---
+- runFlow:
+    file: ../../helpers/start-seeded.yaml
+    env:
+      SEED: "onboarded=1&signedIn=1&tutorials=done&screenTime=reset&language=en&tier=free"
+- tapOn:
+    id: "navigation-item-search"
+- extendedWaitUntil:
+    visible:
+      id: "catalogue-header-row"
+    timeout: 30000
+- tapOn: "Search for a story"
+- inputText: "Locked Lantern"
+- extendedWaitUntil:
+    visible: "The Locked Lantern"
+    timeout: 30000
+- extendedWaitUntil:
+    visible:
+      id: "story-cover-lock"
+    timeout: 30000

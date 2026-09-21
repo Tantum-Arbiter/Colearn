@@ -20,3 +20,9 @@ name: Clear anything the app puts in front of the page
           commands:
             - tapOn:
                 id: "owl-guide-close"
+      # iOS asks for a review of its own accord, and it covers everything.
+      - runFlow:
+          when:
+            visible: "Not Now"
+          commands:
+            - tapOn: "Not Now"
