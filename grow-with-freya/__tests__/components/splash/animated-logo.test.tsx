@@ -1,22 +1,32 @@
 /**
- * The splash logo, grown rather than faded in: the book is there from the first
- * frame (it is what the native launch image shows), the stem rises out of it,
- * the roots spread inside it, each leaf opens as the stem reaches it, and the
- * wordmark arrives last.
+ * The splash logo, grown rather than faded in: a pen draws the outline of the
+ * shut book onto the empty sky, the book is inked in over the line and opens,
+ * the stem rises out of it, the roots spread inside it, each leaf opens as the
+ * stem reaches it, and the wordmark arrives last.
  */
 
 import React from 'react';
 import { render } from '@testing-library/react-native';
-import { useAnimatedStyle, useSharedValue, withDelay, withRepeat } from 'react-native-reanimated';
+import {
+  useAnimatedProps,
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withRepeat,
+  withTiming,
+} from 'react-native-reanimated';
 import { AnimatedLogo } from '@/components/splash/animated-logo';
 import {
   BOOK_HALVES,
+  OUTLINE_STROKES,
   SPLASH_LEAVES,
   SPLASH_LOGO_LAYERS,
   SPLASH_TIMELINE,
-  bookShiftX,
   bookSpineOffset,
   layerFrame,
+  outlineLength,
+  outlinePath,
+  outlineStrokeWidth,
   spineFrame,
   leafUnfurlDelayMs,
 } from '@/constants/splash-logo';
@@ -36,9 +46,11 @@ jest.mock('@/components/splash/splash-logo-art', () => ({
 
 const SIZE = 280;
 const animatedStyle = useAnimatedStyle as unknown as jest.Mock;
+const animatedProps = useAnimatedProps as unknown as jest.Mock;
 const sharedValue = useSharedValue as unknown as jest.Mock;
 const delay = withDelay as unknown as jest.Mock;
 const repeat = withRepeat as unknown as jest.Mock;
+const timing = withTiming as unknown as jest.Mock;
 
 type Rendered = ReturnType<typeof render>;
 
@@ -62,6 +74,15 @@ function layerNode(rendered: Rendered, layer: string) {
   return styledNode(rendered, `splash-logo-${layer}`);
 }
 
+function strokesOf(rendered: Rendered): Record<string, any>[] {
+  const byPath = new Map<string, Record<string, any>>();
+  rendered.UNSAFE_queryAllByProps({ testID: 'svg-Path' }).forEach((node) => {
+    byPath.set(node.props.d as string, node.props);
+  });
+
+  return [...byPath.values()];
+}
+
 function sourcesOf(rendered: Rendered): string[] {
   return rendered.UNSAFE_root
     .findAll((node: any) => node.props.source && typeof node.props.source.uri === 'string')
@@ -78,11 +99,13 @@ describe('AnimatedLogo', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     animatedStyle.mockImplementation((worklet: () => unknown) => worklet());
+    animatedProps.mockImplementation((worklet: () => unknown) => worklet());
     sharedValue.mockImplementation((initial: number = 0) => React.useRef({ value: initial }).current);
   });
 
   afterEach(() => {
     animatedStyle.mockImplementation(() => ({}));
+    animatedProps.mockImplementation(() => ({}));
     sharedValue.mockImplementation((initial: number = 0) => ({ value: initial }));
   });
 
@@ -106,13 +129,18 @@ describe('AnimatedLogo', () => {
     expect(style.width).toBeCloseTo(frame.width, 6);
   });
 
-  it('should open on the closed book alone, as the native launch image leaves it', () => {
+  it('should open on an empty sky, the shut book not yet drawn, as the native launch image leaves it', () => {
     const underTest = render(<AnimatedLogo size={SIZE} playing={false} reduceMotion={false} />);
 
+    expect(flatStyle(layerNode(underTest, 'ink')).opacity).toBe(0);
+    expect(flatStyle(layerNode(underTest, 'outline')).opacity).toBe(1);
+    strokesOf(underTest).forEach((stroke) => {
+      expect(stroke.animatedProps.strokeDashoffset).toBeCloseTo(Number(stroke.strokeDasharray.split(' ')[0]), 6);
+    });
     expect(transformOf(flatStyle(layerNode(underTest, 'bookLeft')), 'scaleX')).toBe(-1);
+    expect(transformOf(flatStyle(layerNode(underTest, 'bookLeft')), 'skewY')).toBe('0deg');
     expect(transformOf(flatStyle(layerNode(underTest, 'bookRight')), 'scaleX')).toBe(1);
     expect(flatStyle(layerNode(underTest, 'spine')).opacity).toBe(1);
-    expect(transformOf(flatStyle(layerNode(underTest, 'book')), 'translateX')).toBeCloseTo(bookShiftX(0, SIZE), 6);
     expect(flatStyle(layerNode(underTest, 'stem')).height).toBe(0);
     expect(flatStyle(layerNode(underTest, 'roots')).height).toBe(0);
     expect(flatStyle(layerNode(underTest, 'wordmark')).opacity).toBe(0);
@@ -146,6 +174,7 @@ describe('AnimatedLogo', () => {
 
       expect(shifts).toEqual([bookSpineOffset(half, SIZE), -bookSpineOffset(half, SIZE)]);
       expect(bookSpineOffset(half, SIZE)).not.toBe(0);
+      expect(transform.map((entry) => Object.keys(entry)[0])).toEqual(['translateX', 'scaleX', 'skewY', 'translateX']);
     });
   });
 
@@ -160,13 +189,35 @@ describe('AnimatedLogo', () => {
     expect(style.height).toBeCloseTo(frame.height, 6);
   });
 
-  it('should open the book first', () => {
+  it('should draw the shut book as two pen strokes, the cover and the page line, in the art\'s own line weight', () => {
+    const underTest = render(<AnimatedLogo size={SIZE} playing={false} reduceMotion={false} />);
+
+    const strokes = strokesOf(underTest);
+    expect(strokes.map((stroke) => stroke.d).sort()).toEqual(
+      OUTLINE_STROKES.map((stroke) => outlinePath(stroke, SIZE)).sort()
+    );
+    strokes.forEach((stroke) => {
+      expect(stroke.stroke).toBe('#FFFFFF');
+      expect(stroke.fill).toBe('none');
+      expect(stroke.strokeWidth).toBeCloseTo(outlineStrokeWidth(SIZE), 6);
+      expect(stroke.strokeLinecap).toBe('round');
+      expect(stroke.strokeLinejoin).toBe('round');
+    });
+    expect(strokes.map((stroke) => stroke.strokeDasharray).sort()).toEqual(
+      OUTLINE_STROKES.map((stroke) => `${outlineLength(stroke, SIZE)} ${outlineLength(stroke, SIZE)}`).sort()
+    );
+  });
+
+  it('should put the pen to the sky first, ink the book in once the line is drawn, and only then open it', () => {
     render(<AnimatedLogo size={SIZE} playing reduceMotion={false} />);
 
     const delays = delay.mock.calls.map(([ms]) => ms as number);
 
+    expect(Math.min(...delays)).toBe(SPLASH_TIMELINE.outline.delayMs);
+    expect(delays).toContain(SPLASH_TIMELINE.ink.delayMs);
     expect(delays).toContain(SPLASH_TIMELINE.book.delayMs);
-    expect(Math.min(...delays)).toBe(SPLASH_TIMELINE.book.delayMs);
+    expect(timing).toHaveBeenCalledWith(1, expect.objectContaining({ duration: SPLASH_TIMELINE.outline.durationMs }));
+    expect(timing).toHaveBeenCalledWith(1, expect.objectContaining({ duration: SPLASH_TIMELINE.ink.durationMs }));
   });
 
   it('should wait to be told before it starts', () => {
@@ -207,9 +258,14 @@ describe('AnimatedLogo', () => {
     expect(transformOf(flatStyle(layerNode(underTest, 'wordmark')), 'translateY')).toBe(0);
     BOOK_HALVES.forEach((half) => {
       expect(transformOf(flatStyle(layerNode(underTest, half)), 'scaleX')).toBe(1);
+      expect(transformOf(flatStyle(layerNode(underTest, half)), 'skewY')).toBe('0deg');
     });
     expect(flatStyle(layerNode(underTest, 'spine')).opacity).toBe(0);
-    expect(transformOf(flatStyle(layerNode(underTest, 'book')), 'translateX')).toBe(0);
+    expect(flatStyle(layerNode(underTest, 'ink')).opacity).toBe(1);
+    expect(flatStyle(layerNode(underTest, 'outline')).opacity).toBe(0);
+    strokesOf(underTest).forEach((stroke) => {
+      expect(stroke.animatedProps.strokeDashoffset).toBe(0);
+    });
     SPLASH_LEAVES.forEach((leaf) => {
       const style = flatStyle(layerNode(underTest, leaf));
 
@@ -225,9 +281,16 @@ describe('AnimatedLogo', () => {
 
       expect(delay).not.toHaveBeenCalled();
       expect(repeat).not.toHaveBeenCalled();
+      expect(timing).not.toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ duration: SPLASH_TIMELINE.outline.durationMs })
+      );
+      expect(flatStyle(layerNode(underTest, 'ink')).opacity).toBe(1);
+      expect(flatStyle(layerNode(underTest, 'outline')).opacity).toBe(0);
       expect(flatStyle(layerNode(underTest, 'stem')).height).toBeCloseTo(layerFrame('stem', SIZE).height, 6);
       BOOK_HALVES.forEach((half) => {
         expect(transformOf(flatStyle(layerNode(underTest, half)), 'scaleX')).toBe(1);
+        expect(transformOf(flatStyle(layerNode(underTest, half)), 'skewY')).toBe('0deg');
       });
       expect(flatStyle(layerNode(underTest, 'spine')).opacity).toBe(0);
       SPLASH_LEAVES.forEach((leaf) => {

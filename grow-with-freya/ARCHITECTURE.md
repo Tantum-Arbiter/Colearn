@@ -298,21 +298,46 @@ view switch does not restart it.
   roots, stem, three leaves, wordmark) plus `layout.json`, each layer's frame and leaf pivot as fractions
   of the canvas. Every output pixel is a source pixel and the script fails if the layers do
   not recompose to the source exactly. Re-run it if the logo art changes.
-- **Native hand-off.** The script also writes `assets/images/splash-icon.png`: the *closed*
-  book alone on the full canvas: the right page with the left cover lying mirrored over it
-  (the art's symmetry makes them the same shape), centred, plus a spine stroke of the art's
-  own line weight -- the one thing in it that is not a source pixel, recorded in
-  `layout.json` as `spine`. The native launch screen (`expo-splash-screen` in
-  `app.config.js`, mirrored in `app.json`) shows it at `NATIVE_SPLASH_IMAGE_WIDTH` on
-  `NIGHT_DEEP`, and `AnimatedLogo` opens on the same closed book at the same size, so the first
-  animated frame lands on the launch image. On a tablet the logo starts at that size and
-  eases up to its own. A test holds the config and the constant together. Changing either
-  needs a native rebuild to be seen.
-- **Choreography lives in `constants/splash-logo.ts`**, as pure, tested functions: the book
-  opens first: the cover swings over the spine (`scaleX` from -1 to 1 about it -- no 3D
-  transform, which breaks clipping on iOS) while the book slides from centred-shut to
-  centred-open. The spine stroke stays solid until the cover is edge-on over it and fades
-  just after; fading it earlier shows a grey bar beside the moving cover. Then the stem rises out of it and the roots spread down into it (clipped reveals), each leaf opens
+- **The shut book is drawn by a pen before it is shown.** The script also traces the
+  outline of the shut book: the right page with the left cover lying mirrored over it (the
+  art's symmetry makes them the same shape) plus a spine stroke of the art's own line
+  weight, recorded in `layout.json` as `spine` and drawn by the app only while the book is
+  shut. The centreline of that shape is skeletonised and traced into two pen strokes,
+  `layout.json` -> `outline`: `cover` starts at the left end of the top edge (the art leaves
+  a gap there for the stem), runs along the top, down the far edge, under the pages and up
+  the spine to just across that gap; `page`, the inner page line, forks off the cover
+  stroke where the far edge turns under (`forkAt` along the cover) and runs back to the
+  spine. Every point is on the art. `AnimatedLogo` draws them as two SVG paths in the
+  art's line weight (`strokeDashoffset` driven from one shared `drawn` value, so the page
+  line runs at the pen's own speed from the fork), then inks the book art in over the line
+  (`ink`) before the book opens. The line stays solid while the art fades in over it and is
+  dropped only once the art covers it: cross-fading two coincident white layers dips to
+  three-quarter brightness half way, which read as the book going translucent.
+- **Native hand-off.** The script writes `assets/images/splash-icon.png` as a clear canvas:
+  the animation opens on an empty sky and draws the book onto it, so the launch image shows
+  nothing but the sky. The native launch screen (`expo-splash-screen` in `app.config.js`,
+  mirrored in `app.json`) sizes it at `NATIVE_SPLASH_IMAGE_WIDTH` on `NIGHT_DEEP`; on a
+  tablet the logo starts at that size and eases up to its own. A test holds the config and
+  the constant together. Changing either needs a native rebuild to be seen.
+- **Choreography lives in `constants/splash-logo.ts`**, as pure, tested functions: the pen
+  draws the shut book, the art is inked in, then the book opens like a real one seen from
+  above: the spine stays put at the logo's centre (the shut book lies to its right) and the
+  cover turns on it, its free edge arching up over the spine and down onto the left, the
+  book sweeping out to full width. That is one affine map on the cover, `scaleX` of
+  cos(turn) after a `skewY` of atan(`COVER_ARCH` x sin(turn)): the hinge never moves and
+  every point lifts in proportion to its distance from the spine, highest edge-on. It is
+  written as those two primitives, not a `matrix`: Reanimated's animated styles drop a
+  `matrix` transform silently (only its CSS path handles one), and the skew goes before the
+  scale so the shear stays finite when the scale passes through zero. Two earlier
+  tries read wrong (operator, 2026-09-21): a flat `scaleX` flip with the book sliding to
+  stay centred looked like the cover sliding out, and a front-on `perspective` `rotateY` kept
+  the free edge on a flat path. No 3D transform is used.
+  The spine stroke stays solid until the cover is edge-on over it and fades
+  just after; fading it earlier shows a grey bar beside the moving cover. The roots start
+  spreading down into the book the moment the cover passes edge-on over the spine (operator
+  request 2026-09-21; `ROOTS.delayMs` is derived from the book's timing and `growEaseInverse`,
+  so retiming the fold moves them with it), the stem rises out of it once it lies fully open
+  (clipped reveals), each leaf opens
   about its neck at the moment `leafUnfurlDelayMs` says the stem tip reaches it (the inverse
   of `growEase`), then the wordmark and tagline arrive. The leaves sway afterwards. Helpers
   called from `useAnimatedStyle` carry the `'worklet'` directive.
@@ -329,15 +354,17 @@ view switch does not restart it.
   star.
 - **The finished logo holds for two seconds** (operator decision 2026-09-18).
   `SPLASH_TIMELINE.exitAtMs` is derived, not typed in: `logoCompleteMs` (the latest entrance
-  to finish) plus `holdMs`. Retiming any entrance moves the exit with it. The hold is
+  to finish) plus `holdMs`. Retiming any entrance moves the exit with it: the outline
+  stage (operator request 2026-09-21) pushed every later entrance back by a second, and the
+  exit with them. The hold is
   what is seen, not just what is timed: readying the app only when the hold ended left the
   logo up for the hold *plus* the destination's mount (auth check and main menu, ~0.6 s in a
   dev build, measured 0.76 s late on device). So the app is readied `mountAllowanceMs` early
   and the fade waits for whichever is later -- the end of the hold or the page being ready;
   a page that is ready early never cuts the hold short. The allowance stays inside the hold,
   so nothing mounts behind an unfinished logo. A test caps
-  splash-gone at 4.9 s (hold, hand-off beat and fade) so the hold is the only thing that made it
-  longer.
+  splash-gone at 5.9 s (outline, hold, hand-off beat and fade) so the hold is the only thing that
+  made it longer.
 
 ## Home (returning-user dashboard)
 

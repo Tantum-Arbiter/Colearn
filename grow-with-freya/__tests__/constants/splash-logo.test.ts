@@ -13,9 +13,10 @@ import {
   SPLASH_LOGO_LAYERS,
   SPLASH_TIMELINE,
   BOOK_HALVES,
+  OUTLINE_STROKES,
   bookPose,
-  bookShiftX,
   bookSpineOffset,
+  coverSkewYDeg,
   spineFrame,
   spineOpacity,
   growEase,
@@ -25,15 +26,24 @@ import {
   leafPose,
   leafUnfurlDelayMs,
   logoIntroScale,
+  outlineDashOffset,
+  outlineForkAt,
+  outlineLength,
+  outlineOpacity,
+  outlinePath,
+  outlinePoints,
+  outlineStrokeDrawn,
+  outlineStrokeWidth,
   revealHeight,
   splashLogoSize,
+  type OutlinePoint,
   type SplashLeaf,
 } from '@/constants/splash-logo';
 import { NIGHT_DEEP } from '@/constants/night-palette';
 
 const PHONE_LOGO = 280;
 const TABLET_LOGO = 380;
-const LAUNCH_BUDGET_MS = 4900;
+const LAUNCH_BUDGET_MS = 5900;
 const HOLD_MS = 2000;
 
 describe('splashLogoSize', () => {
@@ -135,36 +145,91 @@ describe('the two halves of the book', () => {
 });
 
 describe('bookPose', () => {
-  it('should start folded shut: the left cover lying mirrored over the right page', () => {
-    expect(bookPose('bookLeft', 0).scaleX).toBe(-1);
-    expect(bookPose('bookRight', 0).scaleX).toBe(1);
-  });
+  const flat = { scaleX: 1, shearY: 0 };
+  const coverWidth = layerFrame('bookLeft', PHONE_LOGO).width;
 
-  it('should centre the closed book, which is only half as wide as the open one', () => {
-    const book = layerFrame('book', PHONE_LOGO);
+  function freeEdgeRise(open: number): number {
+    return bookPose('bookLeft', open).shearY * coverWidth;
+  }
 
-    const underTest = bookShiftX(0, PHONE_LOGO);
-
-    expect(underTest).toBeCloseTo(-book.width / 4, 6);
+  it('should start folded shut: the left cover lying flat, mirrored over the right page', () => {
+    expect(bookPose('bookLeft', 0)).toEqual({ scaleX: -1, shearY: 0 });
+    expect(bookPose('bookRight', 0)).toEqual(flat);
   });
 
   it('should lie fully open exactly as drawn', () => {
-    expect(bookPose('bookLeft', 1)).toEqual({ scaleX: 1 });
-    expect(bookPose('bookRight', 1)).toEqual({ scaleX: 1 });
-    expect(bookShiftX(1, PHONE_LOGO)).toBe(0);
+    expect(bookPose('bookLeft', 1)).toEqual(flat);
+    expect(bookPose('bookRight', 1)).toEqual(flat);
   });
 
   it('should swing the cover through edge-on half way, and never move the right page', () => {
     expect(bookPose('bookLeft', 0.5).scaleX).toBeCloseTo(0, 6);
     expect(bookPose('bookLeft', 0.25).scaleX).toBeLessThan(0);
     expect(bookPose('bookLeft', 0.75).scaleX).toBeGreaterThan(0);
-    expect(bookPose('bookRight', 0.5).scaleX).toBe(1);
+    expect(bookPose('bookRight', 0.5)).toEqual(flat);
+  });
+
+  it('should arch the free edge of the cover up over the spine, highest when it stands edge-on', () => {
+    const rises = [0, 0.1, 0.25, 0.4, 0.5].map(freeEdgeRise);
+
+    expect(rises[0]).toBe(0);
+    rises.slice(1).forEach((rise, index) => {
+      expect(rise).toBeGreaterThan(rises[index]);
+    });
+    expect(rises[4]).toBeGreaterThan(coverWidth * 0.4);
+    expect(rises[4]).toBeLessThan(coverWidth * 0.7);
+  });
+
+  it('should bring the free edge down the far side of the arch the way it went up', () => {
+    expect(freeEdgeRise(0.75)).toBeCloseTo(freeEdgeRise(0.25), 6);
+    expect(freeEdgeRise(0.9)).toBeCloseTo(freeEdgeRise(0.1), 6);
+    expect(freeEdgeRise(1)).toBe(0);
   });
 
   it('should never fold past shut or stretch past open', () => {
     expect(bookPose('bookLeft', -0.4)).toEqual(bookPose('bookLeft', 0));
     expect(bookPose('bookLeft', 1.3)).toEqual(bookPose('bookLeft', 1));
-    expect(bookShiftX(1.3, PHONE_LOGO)).toBe(0);
+  });
+});
+
+describe('coverSkewYDeg', () => {
+  function apply(pose: { scaleX: number; shearY: number }, x: number, y: number): [number, number] {
+    const skew = Math.tan((coverSkewYDeg(pose) * Math.PI) / 180);
+
+    return [pose.scaleX * x + 0, y + skew * x + 0];
+  }
+
+  it('should not skew a cover lying flat', () => {
+    expect(coverSkewYDeg({ scaleX: 1, shearY: 0 })).toBe(0);
+    expect(coverSkewYDeg(bookPose('bookLeft', 0))).toBe(0);
+  });
+
+  it('should keep the hinge on the spine still whatever the cover is doing', () => {
+    const underTest = bookPose('bookLeft', 0.37);
+
+    expect(apply(underTest, 0, 12)).toEqual([0, 12]);
+    expect(apply(underTest, 0, -30)).toEqual([0, -30]);
+  });
+
+  it('should lift a point on the cover in proportion to its distance from the spine, and up not down', () => {
+    const underTest = bookPose('bookLeft', 0.5);
+
+    const [, nearY] = apply(underTest, -10, 0);
+    const [, farY] = apply(underTest, -40, 0);
+    expect(nearY).toBeLessThan(0);
+    expect(farY).toBeCloseTo(nearY * 4, 6);
+    expect(farY).toBeCloseTo(-underTest.shearY * 40, 6);
+  });
+
+  it('should stay a finite skew when the cover stands edge-on', () => {
+    const underTest = coverSkewYDeg(bookPose('bookLeft', 0.5));
+
+    expect(underTest).toBeGreaterThan(0);
+    expect(underTest).toBeLessThan(60);
+  });
+
+  it('should mirror the shut cover over the right page without lifting it', () => {
+    expect(apply(bookPose('bookLeft', 0), -40, 7)).toEqual([40, 7]);
   });
 });
 
@@ -193,6 +258,185 @@ describe('the spine of the closed book', () => {
     ['gone in the open book, which has no such line', 1, 0],
   ])('should be %s', (_case, open, expected) => {
     expect(spineOpacity(open)).toBeCloseTo(expected, 6);
+  });
+});
+
+describe('the outline of the shut book', () => {
+  const spine = spineFrame(PHONE_LOGO);
+  const spineX = spine.left + spine.width / 2;
+  const page = layerFrame('bookRight', PHONE_LOGO);
+  const book = layerFrame('book', PHONE_LOGO);
+
+  function distance(a: OutlinePoint, b: OutlinePoint): number {
+    return Math.hypot(a.x - b.x, a.y - b.y);
+  }
+
+  function pointAlong(points: OutlinePoint[], length: number): OutlinePoint {
+    let left = length;
+    for (let index = 1; index < points.length; index += 1) {
+      const step = distance(points[index - 1], points[index]);
+      if (left <= step) {
+        const t = step === 0 ? 0 : left / step;
+
+        return {
+          x: points[index - 1].x + (points[index].x - points[index - 1].x) * t,
+          y: points[index - 1].y + (points[index].y - points[index - 1].y) * t,
+        };
+      }
+      left -= step;
+    }
+
+    return points[points.length - 1];
+  }
+
+  it('should be drawn with the art\'s own line weight', () => {
+    const underTest = outlineStrokeWidth(PHONE_LOGO);
+
+    expect(underTest).toBeCloseTo(spine.width, 6);
+  });
+
+  it.each(OUTLINE_STROKES)('should keep the %s stroke on the shut book', (stroke) => {
+    const underTest = outlinePoints(stroke, PHONE_LOGO);
+
+    expect(underTest.length).toBeGreaterThan(4);
+    underTest.forEach((point) => {
+      expect(point.x).toBeGreaterThanOrEqual(spine.left);
+      expect(point.x).toBeLessThanOrEqual(page.left + page.width);
+      expect(point.y).toBeGreaterThanOrEqual(book.top);
+      expect(point.y).toBeLessThanOrEqual(book.top + book.height);
+    });
+  });
+
+  it('should start the cover stroke at the top edge, just across the stem\'s gap from the spine', () => {
+    const stem = layerFrame('stem', PHONE_LOGO);
+
+    const underTest = outlinePoints('cover', PHONE_LOGO);
+
+    const first = underTest[0];
+    expect(first.x).toBeGreaterThan(spineX);
+    expect(first.x - spineX).toBeLessThan(stem.width);
+    expect(Math.abs(first.y - spine.top)).toBeLessThan(spine.width);
+  });
+
+  it('should end the cover stroke at the top of the spine, a stem\'s gap from where it began', () => {
+    const underTest = outlinePoints('cover', PHONE_LOGO);
+
+    const first = underTest[0];
+    const last = underTest[underTest.length - 1];
+    expect(Math.abs(last.x - spineX)).toBeLessThan(spine.width);
+    expect(Math.abs(last.y - spine.top)).toBeLessThan(spine.width);
+    expect(distance(first, last)).toBeLessThan(layerFrame('stem', PHONE_LOGO).width);
+  });
+
+  it('should run the cover stroke along the top, down the far edge, under the pages and up the spine', () => {
+    const underTest = outlinePoints('cover', PHONE_LOGO);
+
+    const farthest = underTest.reduce((best, point, index) => (point.x > underTest[best].x ? index : best), 0);
+    const lowest = underTest.reduce((best, point, index) => (point.y > underTest[best].y ? index : best), 0);
+    expect(underTest[1].x).toBeGreaterThan(underTest[0].x);
+    expect(Math.abs(underTest[1].y - underTest[0].y)).toBeLessThan(spine.width);
+    expect(underTest[farthest].x).toBeGreaterThan(spineX + book.width / 3);
+    expect(farthest).toBeLessThan(lowest);
+    expect(Math.abs(underTest[lowest].x - spineX)).toBeLessThan(book.width / 4);
+    expect(underTest.slice(lowest).every((point) => point.x < spineX + spine.width)).toBe(true);
+  });
+
+  it('should fork the page line off the cover stroke where the far edge turns under, and run it to the spine', () => {
+    const cover = outlinePoints('cover', PHONE_LOGO);
+    const forkAt = outlineForkAt(PHONE_LOGO);
+
+    const underTest = outlinePoints('page', PHONE_LOGO);
+
+    const fork = underTest[0];
+    const end = underTest[underTest.length - 1];
+    expect(forkAt).toBeGreaterThan(0);
+    expect(forkAt).toBeLessThan(outlineLength('cover', PHONE_LOGO));
+    expect(distance(pointAlong(cover, forkAt), fork)).toBeLessThan(spine.width);
+    expect(fork.x).toBeGreaterThan(spineX + book.width / 3);
+    expect(Math.abs(end.x - spineX)).toBeLessThan(spine.width);
+    expect(end.y).toBeGreaterThan(book.top + book.height / 2);
+  });
+
+  it('should keep the page line shorter than the cover stroke it forks from', () => {
+    expect(outlineLength('page', PHONE_LOGO)).toBeLessThan(outlineLength('cover', PHONE_LOGO) / 2);
+    expect(outlineForkAt(PHONE_LOGO) + outlineLength('page', PHONE_LOGO)).toBeLessThan(outlineLength('cover', PHONE_LOGO));
+  });
+
+  it.each(OUTLINE_STROKES)('should scale the %s stroke with the logo', (stroke) => {
+    const small = outlineLength(stroke, 100);
+
+    const underTest = outlineLength(stroke, 300);
+
+    expect(underTest).toBeCloseTo(small * 3, 6);
+    expect(outlineStrokeWidth(300)).toBeCloseTo(outlineStrokeWidth(100) * 3, 6);
+    expect(outlineForkAt(300)).toBeCloseTo(outlineForkAt(100) * 3, 6);
+  });
+
+  it.each(OUTLINE_STROKES)('should write the %s stroke as one path the pen follows point to point', (stroke) => {
+    const points = outlinePoints(stroke, PHONE_LOGO);
+
+    const underTest = outlinePath(stroke, PHONE_LOGO);
+
+    expect(underTest).toMatch(/^M-?\d+(\.\d+)? -?\d+(\.\d+)?( L-?\d+(\.\d+)? -?\d+(\.\d+)?)+$/);
+    expect(underTest.split(' L')).toHaveLength(points.length);
+  });
+});
+
+describe('outlineStrokeDrawn', () => {
+  const coverLength = outlineLength('cover', PHONE_LOGO);
+  const pageLength = outlineLength('page', PHONE_LOGO);
+  const forkFraction = outlineForkAt(PHONE_LOGO) / coverLength;
+
+  it.each([
+    ['none of the cover before the pen starts', 0, 0],
+    ['half the cover half way', 0.5, 0.5],
+    ['all of the cover when the pen finishes', 1, 1],
+    ['no more than all of it on an overshoot', 1.2, 1],
+    ['none of it on an undershoot', -0.3, 0],
+  ])('should draw %s', (_case, drawn, expected) => {
+    const underTest = outlineStrokeDrawn('cover', drawn);
+
+    expect(underTest).toBeCloseTo(expected, 6);
+  });
+
+  it('should hold the page line until the pen reaches the fork', () => {
+    expect(outlineStrokeDrawn('page', 0)).toBe(0);
+    expect(outlineStrokeDrawn('page', forkFraction - 0.01)).toBe(0);
+    expect(outlineStrokeDrawn('page', forkFraction)).toBeCloseTo(0, 6);
+  });
+
+  it('should draw the page line at the pen\'s own speed from the fork', () => {
+    const underTest = outlineStrokeDrawn('page', (outlineForkAt(PHONE_LOGO) + pageLength / 2) / coverLength);
+
+    expect(underTest).toBeCloseTo(0.5, 6);
+  });
+
+  it('should finish the page line before the pen finishes the cover', () => {
+    expect(outlineStrokeDrawn('page', (outlineForkAt(PHONE_LOGO) + pageLength) / coverLength)).toBeCloseTo(1, 6);
+    expect(outlineStrokeDrawn('page', 1)).toBe(1);
+  });
+});
+
+describe('outlineOpacity', () => {
+  it.each([0, 0.25, 0.5, 0.75, 0.999])('should keep the line solid while the book is inked in over it, at %s', (ink) => {
+    expect(outlineOpacity(ink)).toBe(1);
+  });
+
+  it('should drop the line once the art covers it, not dip through a cross-fade', () => {
+    expect(outlineOpacity(1)).toBe(0);
+    expect(outlineOpacity(1.2)).toBe(0);
+  });
+});
+
+describe('outlineDashOffset', () => {
+  it.each([
+    ['hide the whole line before the pen starts', 0, 120],
+    ['show half of it half way', 0.5, 60],
+    ['show all of it once drawn', 1, 0],
+  ])('should %s', (_case, drawn, expected) => {
+    const underTest = outlineDashOffset(120, drawn);
+
+    expect(underTest).toBeCloseTo(expected, 6);
   });
 });
 
@@ -335,6 +579,8 @@ describe('SPLASH_TIMELINE', () => {
   const bookOpenAt = SPLASH_TIMELINE.book.delayMs + SPLASH_TIMELINE.book.durationMs;
   const lastLeaf = Math.max(...SPLASH_LEAVES.map(leafUnfurlDelayMs)) + SPLASH_TIMELINE.leafUnfurlMs;
   const entrances = [
+    SPLASH_TIMELINE.outline.delayMs + SPLASH_TIMELINE.outline.durationMs,
+    SPLASH_TIMELINE.ink.delayMs + SPLASH_TIMELINE.ink.durationMs,
     bookOpenAt,
     SPLASH_TIMELINE.stem.delayMs + SPLASH_TIMELINE.stem.durationMs,
     SPLASH_TIMELINE.roots.delayMs + SPLASH_TIMELINE.roots.durationMs,
@@ -343,10 +589,28 @@ describe('SPLASH_TIMELINE', () => {
     lastLeaf,
   ];
 
-  it('should have the book lying fully open before anything grows out of it', () => {
+  it('should draw the outline of the shut book, ink it in, and only then open it', () => {
+    expect(SPLASH_TIMELINE.outline.durationMs).toBeGreaterThanOrEqual(500);
+    expect(SPLASH_TIMELINE.outline.delayMs + SPLASH_TIMELINE.outline.durationMs).toBeLessThanOrEqual(
+      SPLASH_TIMELINE.ink.delayMs
+    );
+    expect(SPLASH_TIMELINE.ink.delayMs + SPLASH_TIMELINE.ink.durationMs).toBeLessThanOrEqual(
+      SPLASH_TIMELINE.book.delayMs
+    );
+  });
+
+  it('should have the book lying fully open before the stem rises out of it', () => {
     expect(SPLASH_TIMELINE.stem.delayMs).toBeGreaterThanOrEqual(bookOpenAt);
-    expect(SPLASH_TIMELINE.roots.delayMs).toBeGreaterThanOrEqual(SPLASH_TIMELINE.stem.delayMs);
     expect(SPLASH_TIMELINE.book.durationMs).toBeGreaterThanOrEqual(500);
+  });
+
+  it('should start the roots spreading the moment the cover passes edge-on over the spine', () => {
+    const coverEdgeOnAt = SPLASH_TIMELINE.book.delayMs + growEaseInverse(0.5) * SPLASH_TIMELINE.book.durationMs;
+
+    expect(SPLASH_TIMELINE.roots.delayMs).toBe(Math.ceil(coverEdgeOnAt));
+    expect(SPLASH_TIMELINE.roots.delayMs).toBeGreaterThan(SPLASH_TIMELINE.book.delayMs);
+    expect(SPLASH_TIMELINE.roots.delayMs).toBeLessThan(bookOpenAt);
+    expect(SPLASH_TIMELINE.roots.delayMs).toBeLessThan(SPLASH_TIMELINE.stem.delayMs);
   });
 
   it('should count the logo as there once its last piece has arrived', () => {
