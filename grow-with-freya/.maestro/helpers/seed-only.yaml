@@ -1,0 +1,12 @@
+appId: com.growwithfreya.app
+name: Put the app in the state the calling flow asked for, without assuming where it lands
+# For a flow whose state does not end at the home page -- onboarding, a login
+# screen. The caller decides what to wait for. SEED comes from the caller.
+---
+- setOrientation: PORTRAIT
+# A flow starts from a stopped app, not from wherever the last one left it.
+- stopApp
+- launchApp
+- openLink: "com.growwithfreya.app://?e2e=1&${SEED}"
+- waitForAnimationToEnd:
+    timeout: 5000

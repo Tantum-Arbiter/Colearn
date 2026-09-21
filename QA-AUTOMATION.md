@@ -45,6 +45,14 @@ npm run e2e:smoke    # the smoke subset
 MAESTRO_DEVICE=<udid> npm run e2e   # a particular simulator
 ```
 
+`MAESTRO_FRESH=1 npm run e2e` boots the simulator again first, which is the cure when flows start
+failing on elements that are plainly on screen.
+
+Eight flows, on a phone and on a tablet (`MAESTRO_DEVICE=<ipad udid>`): home opens; a story opens
+from the shelf and closes again; a story only the server has reaches the shelf; a signed-in parent
+comes straight back in; a first run meets onboarding; the flag switches languages and it sticks; the
+grown-ups door asks its question; the offer opens and closes.
+
 Flows live in `.maestro/flows/<area>/*.yaml`, grouped as `core`, `parent`, `money` and `auth`.
 `.maestro/helpers/` holds steps shared between flows. Failures write logs, screenshots and a
 recording to `~/.maestro/tests/<timestamp>/`.
@@ -138,6 +146,11 @@ the stub reaches the shelf and the search — a flow finds it by name. Its cover
 - **A helper's own `env:` beats the `env:` it is called with.** A default seed in
   `start-seeded.yaml` silently won over the seed each flow passed, so flows ran against the wrong
   state and some passed for the wrong reason. The helper now has no default: the caller always says.
+- **A flow that changes where the app opens has to start it again.** Onboarding, a login screen and
+  the shelf are all decided as the app starts, so `start-seeded.yaml` seeds, waits for the write,
+  stops the app and launches it again. Seeding alone leaves the app where it already was.
+- **Signing out is not the same as carrying on without an account.** `signedIn=0` used to turn guest
+  mode on, which walks straight past onboarding; guest mode is now only what `guest=` says.
 - **Constant ambient animation slows the snapshot.** Turn Reduce Motion on for the simulator
   (`xcrun simctl spawn <udid> defaults write com.apple.Accessibility ReduceMotionEnabled -bool true`).
 

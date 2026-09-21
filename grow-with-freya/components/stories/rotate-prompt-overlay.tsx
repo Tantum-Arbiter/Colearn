@@ -170,7 +170,7 @@ export function RotatePromptOverlay({ bookRect, onTurned, onOpenAnyway, onBack }
           <TurnArrow mirrored />
         </View>
 
-        <Text style={[styles.turnTitle, { fontSize: scaledFontSize(19) }]}>{t('rotatePrompt.turnTogether')}</Text>
+        <Text testID="rotate-prompt" style={[styles.turnTitle, { fontSize: scaledFontSize(19) }]}>{t('rotatePrompt.turnTogether')}</Text>
         <Text style={[styles.turnSubtitle, { fontSize: scaledFontSize(13) }]}>{t('rotatePrompt.openWhenSideways')}</Text>
 
         {showFallback && (

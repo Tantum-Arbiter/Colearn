@@ -6,8 +6,21 @@ name: Start the app in the state the calling flow asked for
 ---
 # Whatever the last flow left behind: a phone starts upright.
 - setOrientation: PORTRAIT
+# A flow starts from a stopped app, not from wherever the last one left it.
+- stopApp
 - launchApp
 - openLink: "com.growwithfreya.app://?e2e=1&${SEED}"
+# Where the app opens is decided as it starts, so it starts again with the
+# seeded state in hand: a flow that ran before this one may have left it in
+# onboarding, in a story, or signed in as somebody else. The wait gives the
+# state time to be written before the app is stopped.
+- extendedWaitUntil:
+    visible:
+      id: "nothing-waits-here"
+    timeout: 8000
+    optional: true
+- stopApp
+- launchApp
 - extendedWaitUntil:
     visible:
       id: "home-language-button"

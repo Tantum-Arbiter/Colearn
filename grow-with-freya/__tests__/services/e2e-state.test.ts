@@ -249,7 +249,18 @@ describe('applyE2eState', () => {
 
     expect(mockClearAuthData).toHaveBeenCalledTimes(1);
     expect(mockStoreTokens).not.toHaveBeenCalled();
-    expect(mockStore.setGuestMode).toHaveBeenCalledWith(true);
+    expect(mockStore.setLoginComplete).toHaveBeenCalledWith(false);
+  });
+
+  /**
+   * Signing out is not the same as carrying on without an account: a flow
+   * about the very first run needs neither a session nor guest mode, and used
+   * to get guest mode anyway, which walks straight past onboarding.
+   */
+  it('leaves guest mode to the link that asks for it', async () => {
+    await applyE2eState({ signedIn: false }, true);
+
+    expect(mockStore.setGuestMode).not.toHaveBeenCalled();
   });
 
   it('leaves the session alone when the link says nothing about it', async () => {

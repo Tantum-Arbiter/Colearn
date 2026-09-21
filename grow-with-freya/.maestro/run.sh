@@ -29,6 +29,18 @@ restore_motion() {
   fi
 }
 
+# A simulator driven for a long stretch starts leaving whole subtrees out of
+# the accessibility snapshot, and flows fail on elements that are plainly on
+# screen. MAESTRO_FRESH=1 boots it again first, which cures it.
+if [ -n "$device" ] && [ "${MAESTRO_FRESH:-0}" = "1" ]; then
+  echo "Rebooting $device for a clean accessibility service..."
+  xcrun simctl shutdown "$device" >/dev/null 2>&1 || true
+  sleep 5
+  xcrun simctl boot "$device" >/dev/null 2>&1 || true
+  xcrun simctl bootstatus "$device" >/dev/null 2>&1 || true
+  sleep 10
+fi
+
 if [ -n "$device" ]; then
   motion_was=$(xcrun simctl spawn "$device" defaults read com.apple.Accessibility ReduceMotionEnabled 2>/dev/null || echo 0)
   if [ "$motion_was" != "1" ]; then

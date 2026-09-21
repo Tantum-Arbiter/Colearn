@@ -13,13 +13,31 @@ name: A child opens a story from the shelf and comes back out
     visible:
       id: "catalogue-header-row"
     timeout: 30000
+- scrollUntilVisible:
+    element:
+      text: "Snuggle Little Wombat"
+    direction: DOWN
+    timeout: 30000
 - tapOn: "Snuggle Little Wombat"
-- assertVisible:
-    id: "story-card-sheet"
+- extendedWaitUntil:
+    visible:
+      id: "story-card-sheet"
+    timeout: 20000
 - tapOn:
     id: "story-card-mode-read"
-# A phone reads sideways, and asks the family to turn it.
-- setOrientation: LANDSCAPE_LEFT
+# A phone reads sideways and asks the family to turn it; a tablet reads
+# whichever way it is being held, so only the phone is turned here.
+- extendedWaitUntil:
+    visible:
+      id: "rotate-prompt"
+    timeout: 15000
+    optional: true
+- runFlow:
+    when:
+      visible:
+        id: "rotate-prompt"
+    commands:
+      - setOrientation: LANDSCAPE_LEFT
 - extendedWaitUntil:
     visible:
       id: "story-exit-button"

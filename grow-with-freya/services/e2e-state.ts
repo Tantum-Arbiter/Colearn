@@ -127,7 +127,7 @@ export async function applyE2eState(state: E2eState, allowed: boolean): Promise<
 
   if (state.signedIn === false) {
     await SecureStorage.clearAuthData();
-    store.setGuestMode(true);
+    store.setLoginComplete(false);
   }
 
   if (state.tutorials !== undefined) {
