@@ -19,6 +19,7 @@ import { AnimatedLogo } from '@/components/splash/animated-logo';
 import {
   BOOK_HALVES,
   OUTLINE_STROKES,
+  ROOT_STRAND_COUNT,
   SPLASH_LEAVES,
   SPLASH_LOGO_LAYERS,
   SPLASH_TIMELINE,
@@ -27,6 +28,10 @@ import {
   outlineLength,
   outlinePath,
   outlineStrokeWidth,
+  penDashArray,
+  rootStrandLength,
+  rootStrandPath,
+  rootsStrokeWidth,
   spineFrame,
   leafUnfurlDelayMs,
 } from '@/constants/splash-logo';
@@ -135,34 +140,72 @@ describe('AnimatedLogo', () => {
     expect(flatStyle(layerNode(underTest, 'ink')).opacity).toBe(0);
     expect(flatStyle(layerNode(underTest, 'outline')).opacity).toBe(1);
     strokesOf(underTest).forEach((stroke) => {
-      expect(stroke.animatedProps.strokeDashoffset).toBeCloseTo(Number(stroke.strokeDasharray.split(' ')[0]), 6);
+      const [line, gap] = stroke.strokeDasharray.split(' ').map(Number);
+
+      expect(stroke.animatedProps.strokeDashoffset).toBeCloseTo(line + stroke.strokeWidth, 6);
+      expect(gap).toBeCloseTo(line + 2 * stroke.strokeWidth, 6);
     });
     expect(transformOf(flatStyle(layerNode(underTest, 'bookLeft')), 'scaleX')).toBe(-1);
     expect(transformOf(flatStyle(layerNode(underTest, 'bookLeft')), 'skewY')).toBe('0deg');
     expect(transformOf(flatStyle(layerNode(underTest, 'bookRight')), 'scaleX')).toBe(1);
     expect(flatStyle(layerNode(underTest, 'spine')).opacity).toBe(1);
     expect(flatStyle(layerNode(underTest, 'stem')).height).toBe(0);
-    expect(flatStyle(layerNode(underTest, 'roots')).height).toBe(0);
+    expect(flatStyle(layerNode(underTest, 'roots')).opacity).toBe(0);
+    expect(flatStyle(layerNode(underTest, 'root-strands')).opacity).toBe(1);
     expect(flatStyle(layerNode(underTest, 'wordmark')).opacity).toBe(0);
     SPLASH_LEAVES.forEach((leaf) => {
       expect(transformOf(flatStyle(layerNode(underTest, leaf)), 'scale')).toBe(0);
     });
   });
 
-  it('should grow the stem up from the book and the roots down into it', () => {
+  it('should grow the stem up from the book', () => {
     const stem = layerFrame('stem', SIZE);
-    const roots = layerFrame('roots', SIZE);
 
     const underTest = render(<AnimatedLogo size={SIZE} playing={false} reduceMotion={false} />);
 
     const stemStyle = flatStyle(layerNode(underTest, 'stem'));
-    const rootsStyle = flatStyle(layerNode(underTest, 'roots'));
     expect(stemStyle.bottom).toBeCloseTo(SIZE - (stem.top + stem.height), 6);
     expect(stemStyle.top).toBeUndefined();
     expect(stemStyle.overflow).toBe('hidden');
+  });
+
+  it('should draw every root strand as its own pen stroke in the roots\' line weight, over the roots art', () => {
+    const roots = layerFrame('roots', SIZE);
+
+    const underTest = render(<AnimatedLogo size={SIZE} playing={false} reduceMotion={false} />);
+
+    const paths = Array.from({ length: ROOT_STRAND_COUNT }, (_, index) => rootStrandPath(index, SIZE));
+    const strokes = strokesOf(underTest).filter((stroke) => paths.includes(stroke.d));
+    expect(strokes).toHaveLength(ROOT_STRAND_COUNT);
+    strokes.forEach((stroke) => {
+      expect(stroke.stroke).toBe('#FFFFFF');
+      expect(stroke.fill).toBe('none');
+      expect(stroke.strokeWidth).toBeCloseTo(rootsStrokeWidth(SIZE), 6);
+      expect(stroke.strokeLinecap).toBe('round');
+      expect(stroke.animatedProps.strokeDashoffset).toBeCloseTo(
+        Number(stroke.strokeDasharray.split(' ')[0]) + rootsStrokeWidth(SIZE),
+        6
+      );
+    });
+    expect(strokes.map((stroke) => stroke.strokeDasharray).sort()).toEqual(
+      paths.map((_, index) => penDashArray(rootStrandLength(index, SIZE), rootsStrokeWidth(SIZE))).sort()
+    );
+    const rootsStyle = flatStyle(layerNode(underTest, 'roots'));
     expect(rootsStyle.top).toBeCloseTo(roots.top, 6);
-    expect(rootsStyle.bottom).toBeUndefined();
-    expect(rootsStyle.overflow).toBe('hidden');
+    expect(rootsStyle.left).toBeCloseTo(roots.left, 6);
+  });
+
+  it('should set the pen on the roots as the cover passes the spine, and ink them once the last strand is drawn', () => {
+    render(<AnimatedLogo size={SIZE} playing reduceMotion={false} />);
+
+    const delays = delay.mock.calls.map(([ms]) => ms as number);
+
+    expect(delays).toContain(SPLASH_TIMELINE.roots.delayMs);
+    expect(delays).toContain(SPLASH_TIMELINE.roots.delayMs + SPLASH_TIMELINE.roots.drawMs);
+    expect(timing).toHaveBeenCalledWith(
+      SPLASH_TIMELINE.roots.drawMs,
+      expect.objectContaining({ duration: SPLASH_TIMELINE.roots.drawMs })
+    );
   });
 
   it('should fold each half of the book about the spine, not about its own middle', () => {
@@ -192,10 +235,9 @@ describe('AnimatedLogo', () => {
   it('should draw the shut book as two pen strokes, the cover and the page line, in the art\'s own line weight', () => {
     const underTest = render(<AnimatedLogo size={SIZE} playing={false} reduceMotion={false} />);
 
-    const strokes = strokesOf(underTest);
-    expect(strokes.map((stroke) => stroke.d).sort()).toEqual(
-      OUTLINE_STROKES.map((stroke) => outlinePath(stroke, SIZE)).sort()
-    );
+    const outlinePaths = OUTLINE_STROKES.map((stroke) => outlinePath(stroke, SIZE));
+    const strokes = strokesOf(underTest).filter((stroke) => outlinePaths.includes(stroke.d));
+    expect(strokes.map((stroke) => stroke.d).sort()).toEqual([...outlinePaths].sort());
     strokes.forEach((stroke) => {
       expect(stroke.stroke).toBe('#FFFFFF');
       expect(stroke.fill).toBe('none');
@@ -204,7 +246,7 @@ describe('AnimatedLogo', () => {
       expect(stroke.strokeLinejoin).toBe('round');
     });
     expect(strokes.map((stroke) => stroke.strokeDasharray).sort()).toEqual(
-      OUTLINE_STROKES.map((stroke) => `${outlineLength(stroke, SIZE)} ${outlineLength(stroke, SIZE)}`).sort()
+      OUTLINE_STROKES.map((stroke) => penDashArray(outlineLength(stroke, SIZE), outlineStrokeWidth(SIZE))).sort()
     );
   });
 
@@ -253,7 +295,8 @@ describe('AnimatedLogo', () => {
     underTest.rerender(<AnimatedLogo size={SIZE} playing reduceMotion={false} testID="landed" />);
 
     expect(flatStyle(layerNode(underTest, 'stem')).height).toBeCloseTo(layerFrame('stem', SIZE).height, 6);
-    expect(flatStyle(layerNode(underTest, 'roots')).height).toBeCloseTo(layerFrame('roots', SIZE).height, 6);
+    expect(flatStyle(layerNode(underTest, 'roots')).opacity).toBe(1);
+    expect(flatStyle(layerNode(underTest, 'root-strands')).opacity).toBe(0);
     expect(flatStyle(layerNode(underTest, 'wordmark')).opacity).toBe(1);
     expect(transformOf(flatStyle(layerNode(underTest, 'wordmark')), 'translateY')).toBe(0);
     BOOK_HALVES.forEach((half) => {
@@ -287,6 +330,8 @@ describe('AnimatedLogo', () => {
       );
       expect(flatStyle(layerNode(underTest, 'ink')).opacity).toBe(1);
       expect(flatStyle(layerNode(underTest, 'outline')).opacity).toBe(0);
+      expect(flatStyle(layerNode(underTest, 'roots')).opacity).toBe(1);
+      expect(flatStyle(layerNode(underTest, 'root-strands')).opacity).toBe(0);
       expect(flatStyle(layerNode(underTest, 'stem')).height).toBeCloseTo(layerFrame('stem', SIZE).height, 6);
       BOOK_HALVES.forEach((half) => {
         expect(transformOf(flatStyle(layerNode(underTest, half)), 'scaleX')).toBe(1);

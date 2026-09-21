@@ -14,6 +14,7 @@ import {
   SPLASH_TIMELINE,
   BOOK_HALVES,
   OUTLINE_STROKES,
+  ROOT_STRAND_COUNT,
   bookPose,
   bookSpineOffset,
   coverSkewYDeg,
@@ -26,7 +27,6 @@ import {
   leafPose,
   leafUnfurlDelayMs,
   logoIntroScale,
-  outlineDashOffset,
   outlineForkAt,
   outlineLength,
   outlineOpacity,
@@ -34,7 +34,17 @@ import {
   outlinePoints,
   outlineStrokeDrawn,
   outlineStrokeWidth,
+  penDashArray,
+  penDashOffset,
   revealHeight,
+  rootStrandDelayMs,
+  rootStrandDrawn,
+  rootStrandDurationMs,
+  rootStrandLength,
+  rootStrandParent,
+  rootStrandPath,
+  rootStrandPoints,
+  rootsStrokeWidth,
   splashLogoSize,
   type OutlinePoint,
   type SplashLeaf,
@@ -428,13 +438,151 @@ describe('outlineOpacity', () => {
   });
 });
 
-describe('outlineDashOffset', () => {
+describe('the pen\'s dash', () => {
   it.each([
-    ['hide the whole line before the pen starts', 0, 120],
-    ['show half of it half way', 0.5, 60],
+    ['hide the whole line and its round cap before the pen starts', 0, 124],
+    ['show half of it half way', 0.5, 62],
     ['show all of it once drawn', 1, 0],
+    ['never overshoot', 1.4, 0],
   ])('should %s', (_case, drawn, expected) => {
-    const underTest = outlineDashOffset(120, drawn);
+    const underTest = penDashOffset(120, 4, drawn);
+
+    expect(underTest).toBeCloseTo(expected, 6);
+  });
+
+  it('should leave a gap longer than the line by two caps, so no dot of the next dash sits on the tip', () => {
+    expect(penDashArray(120, 4)).toBe('120 128');
+  });
+});
+
+describe('the roots, strand by strand', () => {
+  const roots = layerFrame('roots', PHONE_LOGO);
+  const stem = layerFrame('stem', PHONE_LOGO);
+  const strands = Array.from({ length: ROOT_STRAND_COUNT }, (_, index) => index);
+  const childrenOf = (parent: number) => strands.filter((index) => rootStrandParent(index) === parent);
+  const tips = strands.filter((index) => childrenOf(index).length === 0);
+
+  it('should branch from one trunk into several tips', () => {
+    const trunks = strands.filter((index) => rootStrandParent(index) === null);
+
+    expect(trunks).toHaveLength(1);
+    expect(tips.length).toBeGreaterThanOrEqual(4);
+    expect(ROOT_STRAND_COUNT).toBeGreaterThan(tips.length);
+  });
+
+  it('should start the trunk at the top of the roots, under the stem', () => {
+    const trunk = strands.find((index) => rootStrandParent(index) === null) as number;
+
+    const underTest = rootStrandPoints(trunk, PHONE_LOGO)[0];
+
+    expect(underTest.y - roots.top).toBeLessThan(rootsStrokeWidth(PHONE_LOGO));
+    expect(underTest.x).toBeGreaterThan(stem.left);
+    expect(underTest.x).toBeLessThan(stem.left + stem.width);
+  });
+
+  it.each(strands)('should keep strand %s inside the roots and drawn in their line weight', (index) => {
+    const underTest = rootStrandPoints(index, PHONE_LOGO);
+
+    expect(underTest.length).toBeGreaterThanOrEqual(2);
+    underTest.forEach((point) => {
+      expect(point.x).toBeGreaterThanOrEqual(roots.left);
+      expect(point.x).toBeLessThanOrEqual(roots.left + roots.width);
+      expect(point.y).toBeGreaterThanOrEqual(roots.top);
+      expect(point.y).toBeLessThanOrEqual(roots.top + roots.height);
+    });
+    expect(rootsStrokeWidth(PHONE_LOGO)).toBeGreaterThan(1);
+    expect(rootsStrokeWidth(PHONE_LOGO)).toBeLessThan(roots.width / 20);
+  });
+
+  it.each(strands.filter((index) => rootStrandParent(index) !== null))(
+    'should grow strand %s out of the fork where its parent ends',
+    (index) => {
+      const parentPoints = rootStrandPoints(rootStrandParent(index) as number, PHONE_LOGO);
+      const fork = parentPoints[parentPoints.length - 1];
+
+      const underTest = rootStrandPoints(index, PHONE_LOGO)[0];
+
+      expect(Math.hypot(underTest.x - fork.x, underTest.y - fork.y)).toBeLessThan(rootsStrokeWidth(PHONE_LOGO));
+    }
+  );
+
+  it('should write each strand as one path the pen follows point to point', () => {
+    strands.forEach((index) => {
+      expect(rootStrandPath(index, PHONE_LOGO)).toMatch(/^M-?\d+(\.\d+)? -?\d+(\.\d+)?( L-?\d+(\.\d+)? -?\d+(\.\d+)?)+$/);
+      expect(rootStrandPath(index, PHONE_LOGO).split(' L')).toHaveLength(rootStrandPoints(index, PHONE_LOGO).length);
+    });
+  });
+
+  it('should scale the strands with the logo', () => {
+    strands.forEach((index) => {
+      expect(rootStrandLength(index, 300)).toBeCloseTo(rootStrandLength(index, 100) * 3, 6);
+    });
+    expect(rootsStrokeWidth(300)).toBeCloseTo(rootsStrokeWidth(100) * 3, 6);
+  });
+
+  it('should draw the trunk first, at the moment the roots begin', () => {
+    const trunk = strands.find((index) => rootStrandParent(index) === null) as number;
+
+    expect(rootStrandDelayMs(trunk)).toBe(0);
+  });
+
+  it('should take longer over a longer strand, the pen moving at one speed', () => {
+    const [shorter, longer] = [...strands].sort((a, b) => rootStrandLength(a, PHONE_LOGO) - rootStrandLength(b, PHONE_LOGO));
+
+    expect(rootStrandDurationMs(longer)).toBeGreaterThan(rootStrandDurationMs(shorter));
+    const pace = rootStrandDurationMs(longer) / rootStrandLength(longer, PHONE_LOGO);
+    strands.forEach((index) => {
+      const ratio = rootStrandDurationMs(index) / rootStrandLength(index, PHONE_LOGO) / pace;
+
+      expect(ratio).toBeGreaterThan(0.85);
+      expect(ratio).toBeLessThan(1.15);
+    });
+  });
+
+  it.each(strands.filter((index) => rootStrandParent(index) !== null))(
+    'should not start strand %s until its parent has reached the fork',
+    (index) => {
+      const parent = rootStrandParent(index) as number;
+
+      expect(rootStrandDelayMs(index)).toBeGreaterThanOrEqual(rootStrandDelayMs(parent) + rootStrandDurationMs(parent));
+    }
+  );
+
+  it('should send the strands off a fork at different times, the longest first', () => {
+    strands
+      .map(childrenOf)
+      .filter((children) => children.length > 1)
+      .forEach((children) => {
+        const delays = children.map(rootStrandDelayMs);
+        const byLength = [...children].sort((a, b) => rootStrandLength(b, PHONE_LOGO) - rootStrandLength(a, PHONE_LOGO));
+
+        expect(new Set(delays).size).toBe(children.length);
+        expect(rootStrandDelayMs(byLength[0])).toBe(Math.min(...delays));
+      });
+  });
+
+  it('should count the roots as drawn once the last strand reaches its tip, then ink them in', () => {
+    const lastTip = Math.max(...strands.map((index) => rootStrandDelayMs(index) + rootStrandDurationMs(index)));
+
+    expect(SPLASH_TIMELINE.roots.drawMs).toBe(lastTip);
+    expect(SPLASH_TIMELINE.roots.inkMs).toBeGreaterThan(0);
+    expect(SPLASH_TIMELINE.roots.durationMs).toBe(lastTip + SPLASH_TIMELINE.roots.inkMs);
+  });
+});
+
+describe('rootStrandDrawn', () => {
+  const strand = ROOT_STRAND_COUNT - 1;
+  const starts = rootStrandDelayMs(strand);
+  const takes = rootStrandDurationMs(strand);
+
+  it.each([
+    ['nothing before its turn', starts - 1, 0],
+    ['nothing as its turn begins', starts, 0],
+    ['most of it half way, easing off towards the tip', starts + takes / 2, 0.75],
+    ['all of it at the tip', starts + takes, 1],
+    ['no more than all of it afterwards', starts + takes + 500, 1],
+  ])('should draw %s', (_case, clockMs, expected) => {
+    const underTest = rootStrandDrawn(strand, clockMs);
 
     expect(underTest).toBeCloseTo(expected, 6);
   });

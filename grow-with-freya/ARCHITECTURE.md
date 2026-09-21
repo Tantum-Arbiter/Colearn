@@ -309,7 +309,9 @@ view switch does not restart it.
   stroke where the far edge turns under (`forkAt` along the cover) and runs back to the
   spine. Every point is on the art. `AnimatedLogo` draws them as two SVG paths in the
   art's line weight (`strokeDashoffset` driven from one shared `drawn` value, so the page
-  line runs at the pen's own speed from the fork), then inks the book art in over the line
+  line runs at the pen's own speed from the fork; the dash gap is two caps longer than the
+  line and the undrawn line is hidden a cap beyond its start, or round caps leave a dot at
+  the start and the tip before the pen moves), then inks the book art in over the line
   (`ink`) before the book opens. The line stays solid while the art fades in over it and is
   dropped only once the art covers it: cross-fading two coincident white layers dips to
   three-quarter brightness half way, which read as the book going translucent.
@@ -336,8 +338,15 @@ view switch does not restart it.
   just after; fading it earlier shows a grey bar beside the moving cover. The roots start
   spreading down into the book the moment the cover passes edge-on over the spine (operator
   request 2026-09-21; `ROOTS.delayMs` is derived from the book's timing and `growEaseInverse`,
-  so retiming the fold moves them with it), the stem rises out of it once it lies fully open
-  (clipped reveals), each leaf opens
+  so retiming the fold moves them with it). **They grow strand by strand** (operator request,
+  same day): the script skeletonises the roots art into a tree of strands rooted at the
+  trunk (`layout.json` -> `roots`, each strand with its `parent`), and the app draws each as
+  a pen stroke off one shared clock. A strand starts only when its parent has reached the
+  fork, siblings leave the fork at different times (the longest first, then
+  `ROOT_BRANCH_STAGGER_MS` apart), the pen moves at one speed (`ROOT_PEN_MS_PER_CANVAS`) with
+  a little ease-off towards each tip, and once the last tip is reached the roots art is inked
+  in over the strokes the same way as the book. The stem rises out of the open book (a clipped
+  reveal), each leaf opens
   about its neck at the moment `leafUnfurlDelayMs` says the stem tip reaches it (the inverse
   of `growEase`), then the wordmark and tagline arrive. The leaves sway afterwards. Helpers
   called from `useAnimatedStyle` carry the `'worklet'` directive.

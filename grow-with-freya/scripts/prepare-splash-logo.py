@@ -177,7 +177,7 @@ def skeleton_segments(skeleton):
     return segments
 
 
-def prune_and_splice(segments, spur_px):
+def prune_and_splice(segments, spur_px, keep=None):
     def incident(node):
         return [segment for segment in segments if node in segment[:2]]
 
@@ -188,6 +188,8 @@ def prune_and_splice(segments, spur_px):
             a, b, path = segment
             is_loop = a == b
             is_spur = not is_loop and (len(incident(a)) == 1 or len(incident(b)) == 1)
+            if keep is not None and keep in (a, b):
+                continue
             if (is_loop or is_spur) and polyline_length(path) < spur_px:
                 segments.remove(segment)
                 changed = True
@@ -213,6 +215,54 @@ def prune_and_splice(segments, spur_px):
 def simplify(path):
     points = np.array([(x + 0.5, y + 0.5) for y, x in path], dtype=float)
     return approximate_polygon(points, tolerance=OUTLINE_TOLERANCE_PX)
+
+
+def trace_roots(roots, size):
+    skeleton = skeletonize(roots)
+    ys, xs = np.where(skeleton)
+    depth = ndimage.distance_transform_edt(roots)
+    stroke = float(np.median(depth[skeleton])) * 2
+    top = (int(ys.min()), int(xs[np.argmin(ys)]))
+    raw = skeleton_segments(skeleton)
+    trunk_node = next(a if path[0] == top else b for a, b, path in raw if top in (path[0], path[-1]))
+    segments = prune_and_splice(raw, stroke * SPUR_STROKES, keep=trunk_node)
+
+    def incident(node):
+        return [segment for segment in segments if node in segment[:2]]
+
+    strands = []
+    frontier = [(trunk_node, None)]
+    seen = set()
+    while frontier:
+        node, parent = frontier.pop(0)
+        for segment in incident(node):
+            if id(segment) in seen:
+                continue
+            seen.add(id(segment))
+            a, b, path = segment
+            outward = path if a == node else list(reversed(path))
+            far = b if a == node else a
+            strands.append({'points': simplify(outward), 'parent': parent})
+            frontier.append((far, len(strands) - 1))
+
+    for strand in strands:
+        for x, y in strand['points']:
+            if not roots[int(y), int(x)]:
+                fail(f'root point ({x:.1f}, {y:.1f}) is off the roots')
+    tips = [index for index, strand in enumerate(strands) if not any(other['parent'] == index for other in strands)]
+    if len(tips) < 4:
+        fail(f'expected the roots to branch into several tips, found {len(tips)}')
+
+    return {
+        'strokeWidth': round(stroke / size, 5),
+        'strands': [
+            {
+                'parent': strand['parent'],
+                'points': [[round(float(x) / size, 5), round(float(y) / size, 5)] for x, y in strand['points']],
+            }
+            for strand in strands
+        ],
+    }
 
 
 def trace_outline(shut, stroke, size):
@@ -383,6 +433,7 @@ def main():
     )
     shut = np.maximum(layer_alphas['bookRight'], np.array(spine_image)) > SOLID_ALPHA
     layout['outline'] = trace_outline(shut, stroke, size)
+    layout['roots'] = trace_roots(layer_alphas['roots'] > SOLID_ALPHA, size)
 
     Image.fromarray(np.zeros((size, size, 4), dtype=np.uint8), 'RGBA').save(NATIVE_ICON, optimize=True)
 
@@ -393,6 +444,8 @@ def main():
     for name, entry in layout['layers'].items():
         print(f'{name:10s} {entry}')
     outline = layout['outline']
+    roots = layout['roots']
+    print(f"roots      {len(roots['strands'])} strands, stroke {roots['strokeWidth']}")
     print(f"outline    cover {len(outline['cover'])} points, page {len(outline['page'])} points, fork at {outline['forkAt']}")
     print(f'layers recompose to the source exactly; wrote {len(names)} layers to {OUTPUT_DIR}')
 

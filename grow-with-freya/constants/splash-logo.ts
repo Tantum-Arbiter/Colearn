@@ -26,6 +26,45 @@ export const NATIVE_SPLASH_IMAGE_WIDTH = 280;
 const PHONE_LOGO_SIZE = 280;
 const TABLET_LOGO_SIZE = 380;
 
+interface RootStrand {
+  parent: number | null;
+  points: number[][];
+}
+
+const ROOT_STRANDS: RootStrand[] = layout.roots.strands;
+const ROOT_PEN_MS_PER_CANVAS = 2400;
+const ROOT_BRANCH_STAGGER_MS = 110;
+const ROOTS_INK_MS = 150;
+
+function rootStrandFractionLength(index: number): number {
+  return polylineLength(ROOT_STRANDS[index].points.map(([x, y]) => ({ x, y })));
+}
+
+const ROOT_STRAND_DURATIONS_MS = ROOT_STRANDS.map((_, index) =>
+  Math.ceil(rootStrandFractionLength(index) * ROOT_PEN_MS_PER_CANVAS)
+);
+
+function rootStrandRank(index: number): number {
+  const siblings = ROOT_STRANDS.map((strand, other) => ({ strand, other }))
+    .filter(({ strand }) => strand.parent === ROOT_STRANDS[index].parent)
+    .sort((a, b) => rootStrandFractionLength(b.other) - rootStrandFractionLength(a.other));
+
+  return siblings.findIndex(({ other }) => other === index);
+}
+
+const ROOT_STRAND_DELAYS_MS: number[] = [];
+ROOT_STRANDS.forEach((strand, index) => {
+  const parent = strand.parent;
+  ROOT_STRAND_DELAYS_MS[index] =
+    parent === null
+      ? 0
+      : ROOT_STRAND_DELAYS_MS[parent] + ROOT_STRAND_DURATIONS_MS[parent] + rootStrandRank(index) * ROOT_BRANCH_STAGGER_MS;
+});
+
+const ROOTS_DRAWN_MS = Math.max(...ROOT_STRANDS.map((_, index) => ROOT_STRAND_DELAYS_MS[index] + ROOT_STRAND_DURATIONS_MS[index]));
+
+export const ROOT_STRAND_COUNT = ROOT_STRANDS.length;
+
 const OUTLINE = { delayMs: 150, durationMs: 850 } as const;
 const INK = { delayMs: 1000, durationMs: 150 } as const;
 const BOOK = { delayMs: 1150, durationMs: 850 } as const;
@@ -33,7 +72,9 @@ const COVER_EDGE_ON = 0.5;
 const STEM = { delayMs: 2000, durationMs: 1000 } as const;
 const ROOTS = {
   delayMs: Math.ceil(BOOK.delayMs + growEaseInverse(COVER_EDGE_ON) * BOOK.durationMs),
-  durationMs: 1000,
+  drawMs: ROOTS_DRAWN_MS,
+  inkMs: ROOTS_INK_MS,
+  durationMs: ROOTS_DRAWN_MS + ROOTS_INK_MS,
 } as const;
 const WORDMARK = { delayMs: 2900, durationMs: 450, risePx: 10 } as const;
 const TAGLINE = { delayMs: 2950, durationMs: 400 } as const;
@@ -236,9 +277,51 @@ export function outlineStrokeDrawn(stroke: OutlineStroke, drawn: number): number
   return Math.min(Math.max((pen * COVER_LENGTH - PAGE_FORK_AT) / PAGE_LENGTH, 0), 1);
 }
 
-export function outlineDashOffset(length: number, drawn: number): number {
+export function penDashArray(length: number, strokeWidth: number): string {
+  return `${length} ${length + 2 * strokeWidth}`;
+}
+
+export function penDashOffset(length: number, strokeWidth: number, drawn: number): number {
   'worklet';
-  return length * (1 - Math.min(Math.max(drawn, 0), 1));
+  return (length + strokeWidth) * (1 - Math.min(Math.max(drawn, 0), 1));
+}
+
+export function rootsStrokeWidth(logoSize: number): number {
+  return layout.roots.strokeWidth * logoSize;
+}
+
+export function rootStrandParent(index: number): number | null {
+  return ROOT_STRANDS[index].parent;
+}
+
+export function rootStrandPoints(index: number, logoSize: number): OutlinePoint[] {
+  return ROOT_STRANDS[index].points.map(([x, y]) => ({ x: x * logoSize, y: y * logoSize }));
+}
+
+export function rootStrandPath(index: number, logoSize: number): string {
+  return rootStrandPoints(index, logoSize)
+    .map((point, step) => `${step === 0 ? 'M' : 'L'}${point.x} ${point.y}`)
+    .join(' ');
+}
+
+export function rootStrandLength(index: number, logoSize: number): number {
+  return polylineLength(rootStrandPoints(index, logoSize));
+}
+
+export function rootStrandDelayMs(index: number): number {
+  return ROOT_STRAND_DELAYS_MS[index];
+}
+
+export function rootStrandDurationMs(index: number): number {
+  return ROOT_STRAND_DURATIONS_MS[index];
+}
+
+export function rootStrandDrawn(index: number, clockMs: number): number {
+  'worklet';
+  const along = (clockMs - ROOT_STRAND_DELAYS_MS[index]) / ROOT_STRAND_DURATIONS_MS[index];
+  const time = Math.min(Math.max(along, 0), 1);
+
+  return 1 - (1 - time) * (1 - time);
 }
 
 export function outlineOpacity(ink: number): number {
