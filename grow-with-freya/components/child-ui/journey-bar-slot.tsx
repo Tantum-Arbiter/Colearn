@@ -28,24 +28,30 @@ interface JourneyBarOutletProps {
 export function JourneyBarOutlet({ pageKey, holdMs = 0 }: JourneyBarOutletProps) {
   const bars = useJourneyBars();
   const current = bars?.[pageKey];
-  const [held, setHeld] = useState<ChildBottomNavigationBarProps | undefined>(current);
+  const [held, setHeld] = useState<{ page: string; bar: ChildBottomNavigationBarProps } | undefined>(
+    current ? { page: pageKey, bar: current } : undefined
+  );
 
   useEffect(() => {
     if (current) {
-      setHeld(current);
+      setHeld({ page: pageKey, bar: current });
       return undefined;
     }
-    if (holdMs <= 0) {
+    // only a slide is bridged: a page taking its own bar away, as the profile
+    // does under its edit sheet, loses it at once rather than having it drawn
+    // over whatever rose in its place
+    if (holdMs <= 0 || held?.page === pageKey) {
       setHeld(undefined);
       return undefined;
     }
     const timer = setTimeout(() => setHeld(undefined), holdMs);
     return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- `held` is read, not watched: it is what this effect sets
   }, [current, holdMs, pageKey]);
 
   const covered = useJourneyBarCovered();
   const insets = useSafeAreaInsets();
-  const props = current ?? held;
+  const props = current ?? held?.bar;
   if (!props || covered) return null;
 
   return (
