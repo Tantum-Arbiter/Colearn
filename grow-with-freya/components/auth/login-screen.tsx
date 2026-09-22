@@ -29,11 +29,13 @@ import { MainMenu } from '../main-menu';
 import { GoogleGlyph } from './google-glyph';
 import { AuthSky } from './auth-sky';
 import { AuthPillButton } from './auth-pill-button';
+import { LoginHero } from './login-hero';
 import { GuestInfoScreen } from './guest-info-screen';
 import { AuthService } from '@/services/auth-service';
 import { SecureStorage } from '@/services/secure-storage';
 import { useAppStore } from '@/store/app-store';
 import { useAccessibility } from '@/hooks/use-accessibility';
+import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { Logger } from '@/utils/logger';
 import { Fonts } from '@/constants/theme';
 import { GOLD, TEXT_MUTED } from '../onboarding/onboarding-theme';
@@ -108,6 +110,7 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
   const insets = useSafeAreaInsets();
   const { scaledFontSize, scaledButtonSize } = useAccessibility();
   const { cardWidth, cardMaxHeight } = useAuthLayout();
+  const reduceMotion = useReducedMotion();
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [isAppleLoading, setIsAppleLoading] = useState(false);
   const [showReturningMenu, setShowReturningMenu] = useState(false);
@@ -538,12 +541,7 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
 
           {/* Hero illustration */}
           <Animated.View entering={cascade(1)} style={styles.heroContainer}>
-            <Image
-              testID="login-hero"
-              source={require('@/assets/images/login/hero-animals.webp')}
-              style={styles.heroImage}
-              resizeMode="contain"
-            />
+            <LoginHero width={HERO_WIDTH} height={HERO_HEIGHT} animated={!reduceMotion} />
           </Animated.View>
 
           {/* Sign-in options */}
@@ -736,10 +734,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: -HERO_OVERLAP,
-  },
-  heroImage: {
-    width: HERO_WIDTH,
-    height: HERO_HEIGHT,
   },
   buttonContainer: {
     width: '100%',

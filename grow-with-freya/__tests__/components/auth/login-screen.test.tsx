@@ -36,6 +36,17 @@ jest.mock('@/components/main-menu', () => ({
   MainMenu: () => null,
 }));
 
+jest.mock('@/components/auth/login-hero', () => {
+  const { View } = require('react-native');
+  return { LoginHero: (props: any) => <View testID="login-hero" {...props} /> };
+});
+
+const mockUseReducedMotion = jest.fn(() => false);
+
+jest.mock('@/hooks/use-reduced-motion', () => ({
+  useReducedMotion: () => mockUseReducedMotion(),
+}));
+
 jest.mock('@/components/account/terms-conditions-screen', () => {
   const { Text } = require('react-native');
   return { TermsConditionsScreen: () => <Text testID="terms-screen">terms</Text> };
@@ -94,11 +105,24 @@ describe('LoginScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockGetEffectiveTier.mockReturnValue('free');
+    mockUseReducedMotion.mockReturnValue(false);
     mockUserNickname = null;
   });
 
   it('renders the hero illustration', () => {
     expect(findByTestId(renderLogin(), 'login-hero').length).toBeGreaterThan(0);
+  });
+
+  describe('the animals in the hero', () => {
+    it('sway, blink and smile unless the child has asked for less motion', () => {
+      expect(findByTestId(renderLogin(), 'login-hero')[0].props.animated).toBe(true);
+    });
+
+    it('hold their painted pose when motion is reduced', () => {
+      mockUseReducedMotion.mockReturnValue(true);
+
+      expect(findByTestId(renderLogin(), 'login-hero')[0].props.animated).toBe(false);
+    });
   });
 
   it('renders the Google and guest options', () => {

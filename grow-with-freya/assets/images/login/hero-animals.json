@@ -1,0 +1,39 @@
+{
+  "canvas": {
+    "width": 900,
+    "height": 596
+  },
+  "foreground": {
+    "x": 0.0,
+    "y": 0.4698,
+    "width": 1.0,
+    "height": 0.51846
+  },
+  "laughing": false,
+  "animals": {
+    "bear": {
+      "frame": {
+        "x": 0.06333,
+        "y": 0.16946,
+        "width": 0.35111,
+        "height": 0.71477
+      }
+    },
+    "bunny": {
+      "frame": {
+        "x": 0.34222,
+        "y": 0.0,
+        "width": 0.32889,
+        "height": 0.88591
+      }
+    },
+    "fox": {
+      "frame": {
+        "x": 0.63444,
+        "y": 0.19799,
+        "width": 0.29222,
+        "height": 0.67953
+      }
+    }
+  }
+}
