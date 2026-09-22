@@ -415,6 +415,17 @@ loading screen lifting after the first sync -- is the one they go on to use, alr
 its data loaded and its images decoded. The menu's owl tour waits until nothing covers it
 (`disableTutorial={!menuRevealed(view)}`).
 
+Sign-in opened from a page (the Profile page's Login button, `useSessionActions().login`) slides
+up over that page at the pace pages slide (`AuthOverlay`, `authEntrance`) and hands the child back
+to it when they sign in or carry on as a guest (`pageAfterAuth`); reached at launch it fades in
+and leads to the main menu. The Login button no longer switches guest mode off at the tap (it
+swapped itself for the signed-in line before the login page had covered it); the login screen
+settles guest mode itself. The journey check in `_layout` re-runs whenever the sign-in flag
+changes, and it only puts the child on the main menu when the app is opening
+(`landsOnMainMenu`): once the app was up it carried a guest back from Profile to the main menu
+(operator, 2026-09-22). On a tablet the Login button stops at `PROFILE_CTA_MAX_WIDTH` (300 pt)
+rather than spanning the column.
+
 Before this (operator report 2026-09-22, "the screen appears then flickers before it seems to
 load"), the login and app views were mutually exclusive branches of one render function, and
 the login screen mounted a main menu of its own to reveal; the moment the view switched, that

@@ -9,6 +9,7 @@ import { SPACE_2, SPACE_4 } from '@/components/child-ui/tokens';
 import { GoldButton } from '@/components/child-ui/gold-button';
 
 const CTA_SHARE = 0.72;
+export const PROFILE_CTA_MAX_WIDTH = 300;
 
 interface ProfileSessionCardProps {
   needsSignIn: boolean;
@@ -50,7 +51,7 @@ export function ProfileSessionCard({ needsSignIn, width, onLogin, onLogout, guid
   }
 
   return (
-    <View testID="profile-session-card" style={[styles.card, { width: Math.round(width * CTA_SHARE) }]}>
+    <View testID="profile-session-card" style={[styles.card, { width: Math.min(Math.round(width * CTA_SHARE), PROFILE_CTA_MAX_WIDTH) }]}>
       <View ref={guideRef} collapsable={false}>
         <GoldButton testID="profile-session" label={t('common.login')} icon="log-in-outline" onPress={onLogin} style={styles.cta} />
       </View>

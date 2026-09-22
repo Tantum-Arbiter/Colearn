@@ -13,3 +13,17 @@ export function authOverlayUp(view: AppView): boolean {
 export function menuRevealed(view: AppView): boolean {
   return appTreeMounted(view) && !authOverlayUp(view);
 }
+
+export type AuthEntrance = 'slide' | 'fade';
+
+export function authEntrance(from: AppView): AuthEntrance {
+  return from === 'app' || from === 'story-reader' ? 'slide' : 'fade';
+}
+
+export function pageAfterAuth<Page extends string>(returnPage: Page | null): Page | 'main' {
+  return returnPage ?? 'main';
+}
+
+export function landsOnMainMenu(from: AppView): boolean {
+  return !appTreeMounted(from);
+}

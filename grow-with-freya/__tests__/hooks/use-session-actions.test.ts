@@ -51,12 +51,15 @@ describe('useSessionActions', () => {
     expect(result.current.needsSignIn).toBe(true);
   });
 
-  it('sends a guest to the login page, out of guest mode', () => {
+  // the login screen settles guest mode itself when the child signs in or
+  // carries on as a guest; flipping it at the tap swapped the Login button for
+  // the signed-in line before the login page had covered it
+  it('sends a guest to the login page, leaving guest mode for the login screen to settle', () => {
     const { result } = renderHook(() => useSessionActions());
 
     act(() => result.current.login());
 
-    expect(mockStore.setGuestMode).toHaveBeenCalledWith(false);
+    expect(mockStore.setGuestMode).not.toHaveBeenCalled();
     expect(mockStore.setShowLoginAfterOnboarding).toHaveBeenCalledWith(true);
     expect(Haptics.impactAsync).toHaveBeenCalled();
   });

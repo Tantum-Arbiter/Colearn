@@ -102,9 +102,10 @@ interface LoginScreenProps {
   onSuccess: () => void;
   onSkip?: () => void;
   onRevealStart?: () => void;
+  fadeIn?: boolean;
 }
 
-export function LoginScreen({ onSuccess, onSkip, onRevealStart }: LoginScreenProps) {
+export function LoginScreen({ onSuccess, onSkip, onRevealStart, fadeIn = true }: LoginScreenProps) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { scaledFontSize, scaledButtonSize } = useAccessibility();
@@ -235,7 +236,7 @@ export function LoginScreen({ onSuccess, onSkip, onRevealStart }: LoginScreenPro
   // shared values exist for the fade-out paths. cardOpacity dims only the card,
   // leaving the sky (stars, clouds, mist) in place while overlays come and go.
   const cardOpacity = useSharedValue(1);
-  const containerOpacity = useSharedValue(0); // Start at 0 for fade-in from splash
+  const containerOpacity = useSharedValue(fadeIn ? 0 : 1); // Start at 0 for fade-in from splash
   const skyOpacity = useSharedValue(1);
 
   const guestInfoSlideY = useSharedValue(-height); // Start above screen
@@ -243,8 +244,9 @@ export function LoginScreen({ onSuccess, onSkip, onRevealStart }: LoginScreenPro
   React.useEffect(() => {
     // Fade in the entire container (smooth transition from splash/onboarding);
     // the content cascade plays inside this fade
+    if (!fadeIn) return;
     containerOpacity.value = withTiming(1, { duration: 500, easing: Easing.out(Easing.cubic) });
-  }, [containerOpacity]);
+  }, [containerOpacity, fadeIn]);
 
 
   const handleGoogleLogin = async () => {

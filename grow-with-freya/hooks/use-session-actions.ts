@@ -22,16 +22,14 @@ export interface SessionActions {
 export function useSessionActions(): SessionActions {
   const { t } = useTranslation();
   const needsSignIn = useAppStore((state) => needsSignInFrom(state));
-  const setGuestMode = useAppStore((state) => state.setGuestMode);
   const setShowLoginAfterOnboarding = useAppStore((state) => state.setShowLoginAfterOnboarding);
   const setLoginComplete = useAppStore((state) => state.setLoginComplete);
   const clearUserProfile = useAppStore((state) => state.clearUserProfile);
 
   const login = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setGuestMode(false);
     setShowLoginAfterOnboarding(true);
-  }, [setGuestMode, setShowLoginAfterOnboarding]);
+  }, [setShowLoginAfterOnboarding]);
 
   const logout = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);

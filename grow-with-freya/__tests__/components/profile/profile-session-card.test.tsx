@@ -8,6 +8,7 @@ import React from 'react';
 import { StyleSheet } from 'react-native';
 import { fireEvent, render } from '@testing-library/react-native';
 import { ProfileSessionCard } from '@/components/profile/profile-session-card';
+import { PROFILE_CTA_MAX_WIDTH } from '@/components/profile/profile-session-card';
 import { ACCENT_GOLD } from '@/constants/night-palette';
 
 function texts(tree: ReturnType<typeof render>): string[] {
@@ -36,6 +37,14 @@ describe('ProfileSessionCard for a guest', () => {
     expect(underTest.UNSAFE_root.findAll((n: any) => n.props.testID === 'profile-session-icon')).toHaveLength(1);
     expect(glyphs.length).toBeGreaterThan(0);
     glyphs.forEach((glyph: any) => expect(glyph.props.color).not.toBe(ACCENT_GOLD));
+  });
+
+  it('stays a button\'s width on a tablet rather than spanning the column', () => {
+    const underTest = render(<ProfileSessionCard needsSignIn width={760} onLogin={jest.fn()} onLogout={jest.fn()} />);
+
+    const card = underTest.UNSAFE_root.findAll((n: any) => n.props.testID === 'profile-session-card')[0];
+    expect(StyleSheet.flatten(card.props.style).width).toBe(PROFILE_CTA_MAX_WIDTH);
+    expect(PROFILE_CTA_MAX_WIDTH).toBeLessThanOrEqual(320);
   });
 
   it('sits most of the way across the column, with a way in big enough for a thumb', () => {

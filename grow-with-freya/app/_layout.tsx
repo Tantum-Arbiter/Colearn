@@ -26,7 +26,8 @@ import { AUTH_GRADIENT } from '@/components/auth/auth-theme';
 import { AccountScreen } from '@/components/account/account-screen';
 import { accountReturnPage } from '@/constants/page-slide';
 import { MainMenu } from '@/components/main-menu';
-import { AUTH_OVERLAY_Z, appTreeMounted, authOverlayUp, menuRevealed, type AppView } from '@/constants/app-shell';
+import { appTreeMounted, authEntrance, authOverlayUp, landsOnMainMenu, menuRevealed, pageAfterAuth, type AppView, type AuthEntrance } from '@/constants/app-shell';
+import { AuthOverlay } from '@/components/auth/auth-overlay';
 import { ApiClient } from '@/services/api-client';
 import { SecureStorage } from '@/services/secure-storage';
 import { backgroundSaveService } from '@/services/background-save-service';
@@ -232,6 +233,16 @@ function AppContent() {
     if (currentView === 'login') setAuthBaseUp(true);
   }, [currentView]);
   const handleLoginRevealStart = useCallback(() => setAuthBaseUp(false), []);
+  const [authVisit, setAuthVisit] = useState<{ from: AppView; entrance: AuthEntrance; returnPage: PageKey | null }>({
+    from: 'splash',
+    entrance: 'fade',
+    returnPage: null,
+  });
+  if (authOverlayUp(currentView) !== authOverlayUp(authVisit.from) && authOverlayUp(currentView)) {
+    setAuthVisit({ from: currentView, entrance: authEntrance(authVisit.from), returnPage: appTreeMounted(authVisit.from) ? currentPage : null });
+  } else if (!authOverlayUp(currentView) && currentView !== authVisit.from) {
+    setAuthVisit((visit) => ({ ...visit, from: currentView }));
+  }
 
 
 
@@ -330,7 +341,7 @@ function AppContent() {
       } else if (isGuestMode) {
         // User is in guest mode - allow access without authentication (no backend calls)
         setCurrentView('app');
-        setCurrentPage('main');
+        if (landsOnMainMenu(currentView)) setCurrentPage('main');
       } else {
         // If we just logged in or sync is in progress, don't interfere
         // The StartupLoadingScreen will call onComplete() when sync finishes
@@ -364,7 +375,7 @@ function AppContent() {
               // Returning user -instant main menu with cached thumbnails (via stable cacheKey).
               // Background sync refreshes signed URLs silently.
               setCurrentView('app');
-              setCurrentPage('main');
+              if (landsOnMainMenu(currentView)) setCurrentPage('main');
 
               // Background sync -no loading screen for returning users
               (async () => {
@@ -656,7 +667,7 @@ function AppContent() {
     setGuestMode(true);
     setShowLoginAfterOnboarding(false);
     setCurrentView('app');
-    setCurrentPage('main');
+    setCurrentPage(pageAfterAuth(authVisit.returnPage));
   };
 
 
@@ -892,7 +903,7 @@ function AppContent() {
 
   function renderAuthOverlay() {
     return (
-      <View style={[StyleSheet.absoluteFill, { zIndex: AUTH_OVERLAY_Z }]} testID="auth-overlay">
+      <AuthOverlay entrance={authVisit.entrance}>
         <ThemeProvider value={theme}>
           {/* the night base sits behind LoginScreen's fade-in -- an unstyled root
               here flashes white while the screen's opacity ramps up */}
@@ -902,7 +913,12 @@ function AppContent() {
                 then gets unmounted once the overlay is fully opaque (onSlideInComplete). */}
             {(currentView === 'login' || showLoginBehindLoading) && (
               <View style={StyleSheet.absoluteFill}>
-                <LoginScreen onSuccess={handleLoginSuccess} onSkip={handleLoginSkip} onRevealStart={handleLoginRevealStart} />
+                <LoginScreen
+                  onSuccess={handleLoginSuccess}
+                  onSkip={handleLoginSkip}
+                  onRevealStart={handleLoginRevealStart}
+                  fadeIn={authVisit.entrance === 'fade'}
+                />
               </View>
             )}
 
@@ -919,14 +935,14 @@ function AppContent() {
                   justLoggedInRef.current = false;
                   log.info('[Layout] Sync complete - transitioning to main menu');
                   setCurrentView('app');
-                  setCurrentPage('main');
+                  setCurrentPage(pageAfterAuth(authVisit.returnPage));
                 }}
               />
             )}
           </View>
           <StatusBar style="light" />
         </ThemeProvider>
-      </View>
+      </AuthOverlay>
     );
   }
 
