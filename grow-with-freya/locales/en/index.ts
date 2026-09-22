@@ -619,7 +619,7 @@ export default {
   account: {
     sleepingSun: 'The sleeping sun',
     sleepingMoon: 'The sleeping moon',
-    title: 'Account',
+    title: 'Settings',
     profile: 'Profile',
     nickname: 'Nickname',
     avatarType: 'Avatar Type',
@@ -633,6 +633,7 @@ export default {
     termsAndConditions: 'Terms & Conditions',
     privacyPolicy: 'Privacy Policy',
     selectLanguage: 'Select Language',
+    chooseLanguage: 'Choose your preferred language',
     guestMode: 'Guest Mode',
     createAccount: 'Create an account to save your progress',
     crashReports: 'Crash Reports',
@@ -643,6 +644,7 @@ export default {
 
   // The child's own page in the journey, plus profile validation and editing
   profile: {
+    signedIn: 'Signed in',
     settings: 'Settings',
     noName: 'Little explorer',
     tabs: {
@@ -792,7 +794,7 @@ export default {
       },
       freeplay: {
         title: 'Freeplay',
-        description: 'Jam freely on any instrument -no rules, just fun! Experiment with sounds and create your own music.',
+        description: 'Jam freely on any instrument - no rules, just fun! Experiment with sounds and create your own music.',
       },
       instruments: {
         title: 'Instruments',
@@ -801,6 +803,10 @@ export default {
       settings: {
         title: 'Settings',
         description: 'Customise the app to work best for your family.',
+      },
+      language: {
+        title: 'Your language',
+        description: 'Tap the flag to change the language the app reads and speaks in.',
       },
       sound: {
         title: 'Sound Control',
@@ -848,7 +854,9 @@ export default {
       },
       navProfile: {
         title: 'Profile',
-        description: 'Saved favourites, the badge wall, and the books kept on this device.',
+        description: 'Saved favourites, the badge wall, and the books kept on this device. Now and then it turns into a gold sign-in symbol: that means nobody is signed in yet, and a tap here takes you to sign in.',
+        profileCaption: 'Your profile',
+        loginCaption: 'Time to sign in',
       },
     },
     progress: {
@@ -896,13 +904,21 @@ export default {
         title: 'Change the profile',
         description: 'Tap the picture or the name to change the avatar, name or age. A grown-up answers a quick question first.',
       },
+      login: {
+        title: 'Sign in',
+        description: 'Signing in saves the badges, the streak and where each story left off - and carries them to every device you use together.',
+      },
+      home: {
+        title: 'Back home',
+        description: 'Home takes you back to the night sky whenever you are done here.',
+      },
       tabs: {
         title: 'Saved, Badges, Manage',
         description: 'Favourites you have hearted, the badge wall, and the books on this device, with room to remove any.',
       },
       settings: {
         title: 'Grown-ups\' settings',
-        description: 'Language, screen time and your account, behind the grown-ups\' gate.',
+        description: 'Text size, screen time, reminders and your account, behind the grown-ups\' gate.',
       },
     },
     // Screen Time Tips - keys match tutorial.screenTime.* in tutorial-content.ts
@@ -1035,24 +1051,24 @@ export default {
     // Settings Walkthrough - keys match tutorial.settings.* in tutorial-content.ts
     settings: {
       intro: {
-        title: 'Settings',
-        description: 'Customise the app to work best for your family.',
+        title: 'Grown-ups\' settings',
+        description: 'A few choices that shape the app for your family. Change any of them whenever you like.',
       },
-      login: {
-        title: 'Account & Sync',
-        description: 'Sign in to save your progress and sync across devices.',
-      },
-      language: {
-        title: 'Language',
-        description: 'Choose your preferred language for the app interface.',
-      },
-      accessibility: {
-        title: 'Accessibility',
-        description: 'Adjust text size and other settings for easier use.',
+      textSize: {
+        title: 'Text size',
+        description: 'Make the words bigger or smaller all through the app, to suit whoever is reading.',
       },
       screenTime: {
-        title: 'Screen Time',
-        description: 'Set healthy limits and track daily usage.',
+        title: 'Screen time',
+        description: 'Turn this on for a gentle daily limit that suits your child\'s age. The Screensafe ring shows how the day is going. Turn it off at any time.',
+      },
+      reminders: {
+        title: 'Smart reminders',
+        description: 'A quiet nudge at the times you choose, for stories, feelings or music.',
+      },
+      crashReports: {
+        title: 'Crash reports',
+        description: 'If something goes wrong, an anonymous report helps us fix it. Switch it off here if you\'d rather.',
       },
     },
     // Music Mode Tips - keys match tutorial.musicMode.* in tutorial-content.ts
@@ -1086,7 +1102,7 @@ export default {
     storyModes: {
       welcome: {
         title: 'Three Ways to Explore!',
-        description: 'Every child learns differently. Choose the story experience that sparks your child\'s curiosity -each one builds essential skills through the magic of play.',
+        description: 'Every child learns differently. Choose the story experience that sparks your child\'s curiosity - each one builds essential skills through the magic of play.',
       },
       interactive: {
         title: 'Interactive Stories',
@@ -1094,7 +1110,7 @@ export default {
       },
       musical: {
         title: 'Musical Stories',
-        description: 'Read, play and perform! Musical stories weave real instrument challenges into every adventure -your child learns rhythm, melody and coordination while following the tale. Studies confirm early music exposure boosts memory, language development and emotional expression.',
+        description: 'Read, play and perform! Musical stories weave real instrument challenges into every adventure - your child learns rhythm, melody and coordination while following the tale. Studies confirm early music exposure boosts memory, language development and emotional expression.',
       },
       jigsaw: {
         title: 'Jigsaw Stories',

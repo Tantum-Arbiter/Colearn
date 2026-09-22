@@ -25,6 +25,7 @@ import {
   TEXT_SECONDARY,
 } from '@/constants/night-palette';
 import { useAppStore, type SubscriptionTier } from '@/store/app-store';
+import { useSessionActions } from '@/hooks/use-session-actions';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { useStoryTransition } from '@/contexts/story-transition-context';
 import { useGlobalSound } from '@/contexts/global-sound-context';
@@ -139,6 +140,7 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
   const insets = useSafeAreaInsets();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const { requestReturnToMainMenu, setShowLoginAfterOnboarding, getEffectiveTier } = useAppStore();
+  const session = useSessionActions();
   const favoriteStoryIds = useAppStore((state) => state.favoriteStoryIds);
   const favoriteActivityIds = useAppStore((state) => state.favoriteActivityIds);
   const favoriteSongIds = useAppStore((state) => state.favoriteSongIds);
@@ -170,6 +172,10 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
   const profileHeroRef = useRef<View>(null);
   const profileTabsRef = useRef<View>(null);
   const profileSettingsRef = useRef<View>(null);
+  const profileLoginRef = useRef<View>(null);
+  // The header's Home pill is shared by every section; the profile tour is the
+  // only one that points at it, and it only runs while profile is on show.
+  const headerHomeRef = useRef<View>(null);
 
   // the two scrolling pages a tour runs over: this screen's own column, and
   // the progress page's, which brings its own scroll view
@@ -200,10 +206,15 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
   const searchGuideTargets = useMemo(() => ({ field: searchFieldRef, recent: searchRecentRef }), []);
   const profileTourTargets = useMemo(() => ({
     profile_hero: profileHeroRef,
+    profile_login: profileLoginRef,
     profile_tabs: profileTabsRef,
+    profile_home: headerHomeRef,
     profile_settings: profileSettingsRef,
   }), []);
-  const profileGuideTargets = useMemo(() => ({ hero: profileHeroRef, tabs: profileTabsRef }), []);
+  const profileGuideTargets = useMemo(
+    () => ({ hero: profileHeroRef, tabs: profileTabsRef, login: profileLoginRef }),
+    []
+  );
 
   const margin = contentMargin(isTablet);
   const isLandscapeTablet = isTablet && windowWidth > windowHeight;
@@ -869,6 +880,9 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
       onDeleteDownload={handleDeleteStory}
       onSelectBadge={handleSelectBadge}
       onEditProfile={handleEditProfile}
+      needsSignIn={session.needsSignIn}
+      onLogin={session.login}
+      onLogout={session.logout}
       guideTargets={profileGuideTargets}
     />
   );
@@ -1006,12 +1020,14 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
               testID="catalogue-header-row"
               style={{ marginTop: journeyHeaderTop(insets.top, isTablet), marginHorizontal: margin }}
               left={
-                <CircleActionButton
-                  type="home"
-                  label={t('common.home')}
-                  onPress={handleExitJourney}
-                  accessibilityLabel={t('common.home')}
-                />
+                <View ref={headerHomeRef} collapsable={false}>
+                  <CircleActionButton
+                    type="home"
+                    label={t('common.home')}
+                    onPress={handleExitJourney}
+                    accessibilityLabel={t('common.home')}
+                  />
+                </View>
               }
               title={
                 <PageTitle

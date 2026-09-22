@@ -12,6 +12,10 @@ import {
 } from '@/constants/night-palette';
 import { Fonts } from '@/constants/theme';
 import { useAccessibility } from '@/hooks/use-accessibility';
+import { useCoversJourneyBar } from '@/components/child-ui/journey-bar-cover';
+import { PanelClouds } from '@/components/ui/panel-clouds';
+import { PanelStarfield } from '@/components/ui/panel-starfield';
+import { StarDivider } from '@/components/ui/star-divider';
 import { RADIUS_LARGE, SPACE_2, SPACE_3, SPACE_4, SPACE_5 } from '@/components/child-ui/tokens';
 import { Badge } from './progress-model';
 import { BadgeArtwork } from './badge-artwork';
@@ -28,6 +32,9 @@ interface BadgeDetailSheetProps {
 export function BadgeDetailSheet({ badge, onClose, onRecommend }: BadgeDetailSheetProps) {
   const { t } = useTranslation();
   const { scaledFontSize } = useAccessibility();
+  // Declared before the early return so the bar goes the moment a badge is
+  // chosen, rather than lingering over the sheet that just covered it.
+  useCoversJourneyBar(badge !== null);
 
   if (badge === null) return null;
 
@@ -36,6 +43,9 @@ export function BadgeDetailSheet({ badge, onClose, onRecommend }: BadgeDetailShe
       <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel={t('progress.close')} />
       {badge && (
         <View style={styles.sheet} testID="badge-detail-sheet">
+          <PanelStarfield testID="badge-detail-stars" />
+          <PanelClouds testID="badge-detail-clouds" />
+
           <Pressable
             testID="badge-detail-close"
             accessibilityRole="button"
@@ -53,6 +63,8 @@ export function BadgeDetailSheet({ badge, onClose, onRecommend }: BadgeDetailShe
           <Text style={[styles.description, { fontSize: scaledFontSize(15) }]}>
             {t(badge.descriptionKey)}
           </Text>
+          <StarDivider testID="badge-detail-divider" />
+
           <Text style={[styles.soFar, { fontSize: scaledFontSize(14) }]}>
             {t('progress.soFar', { count: badge.currentProgress })}
           </Text>
@@ -118,6 +130,8 @@ const styles = StyleSheet.create({
     padding: SPACE_5,
     paddingBottom: SPACE_5 + SPACE_4,
     alignItems: 'center',
+    // The cloud follows the sheet's rounded top corners rather than spilling.
+    overflow: 'hidden',
     gap: SPACE_3,
   },
   closeButton: {

@@ -15,6 +15,7 @@ import { AccountScreen } from '@/components/account/account-screen';
 import { SleepingSkyFace } from '@/components/account/sleeping-sky-face';
 import { heroContentTop, heroSunFrame } from '@/constants/home-sky';
 import { reminderService } from '@/services/reminder-service';
+import { GUIDE_STEPS } from '@/constants/owl-guide';
 import { ApiClient } from '@/services/api-client';
 
 const mockTimeOfDay = jest.fn(() => 'night');
@@ -89,7 +90,13 @@ jest.mock('@/components/account/edit-profile-screen', () => {
   const { View } = require('react-native');
   return { EditProfileContent: () => <View testID="edit-profile-content" /> };
 });
-jest.mock('@/components/owl-guide', () => ({ OwlGuide: () => null }));
+const mockOwlGuide: { props: any } = { props: null };
+jest.mock('@/components/owl-guide', () => ({
+  OwlGuide: (props: any) => {
+    mockOwlGuide.props = props;
+    return null;
+  },
+}));
 jest.mock('@/components/main-menu/animated-components', () => ({ MoonBottomImage: () => null }));
 
 jest.mock('@/services/subscription-service', () => ({
@@ -365,29 +372,12 @@ describe('AccountScreen navigation', () => {
     });
   });
 
-  describe('the login button', () => {
-    it('sits above the language strip', () => {
+  describe('signing in and out live on the Profile page now', () => {
+    it('has no login or logout button', () => {
       mockStore.isGuestMode = true;
       const { tree } = renderAccount();
 
-      const hits = tree.UNSAFE_root.findAll((n: any) =>
-        ['account-login', 'account-language'].includes(n.props.testID)
-      );
-      const order = hits.map((n: any) => n.props.testID);
-
-      expect(order.indexOf('account-login')).toBeGreaterThanOrEqual(0);
-      expect(order.indexOf('account-language')).toBeGreaterThan(
-        order.lastIndexOf('account-login')
-      );
-    });
-
-    it('still reaches the login flow from its new home', () => {
-      mockStore.isGuestMode = true;
-      const { tree } = renderAccount();
-
-      press(tree, 'account-login');
-
-      expect(mockStore.setShowLoginAfterOnboarding).toHaveBeenCalledWith(true);
+      expect(byTestId(tree, 'account-login')).toHaveLength(0);
     });
   });
 
@@ -425,10 +415,11 @@ describe('AccountScreen navigation', () => {
       expect(tree.UNSAFE_root.findAll((node: any) => node.props.children === 'common.editProfile')).toHaveLength(0);
     });
 
-    it('keeps the language button', () => {
+    it('has no language button: the flag on home picks the language', () => {
       const { tree } = renderAccount();
 
-      expect(byTestId(tree, 'account-language').length).toBeGreaterThan(0);
+      expect(byTestId(tree, 'account-language')).toHaveLength(0);
+      expect(byTestId(tree, 'language-picker')).toHaveLength(0);
     });
 
     it('keeps the screen time switches on the page itself', () => {
@@ -556,5 +547,69 @@ describe('AccountScreen sleeping sky', () => {
 
     expect(header.props.useBackArrow).toBe(true);
     expect(header.props.useHomeIcon).toBeFalsy();
+  });
+});
+
+/**
+ * The walkthrough lights each control it talks about, so the page hands it a
+ * ref for every one and lets it move the page to bring a low one clear of the
+ * bubble. Refs never fill under this renderer, so the hand-over is asserted.
+ */
+describe('AccountScreen walkthrough', () => {
+  beforeEach(() => {
+    mockOwlGuide.props = null;
+    Object.assign(mockStore, MUTABLE_STORE_DEFAULTS);
+  });
+
+  it('runs the Grown-ups walkthrough', () => {
+    render(<AccountScreen onBack={jest.fn()} />);
+
+    expect(mockOwlGuide.props.id).toBe('settings_walkthrough');
+  });
+
+  it('hands over a target for every control the walkthrough points at', () => {
+    render(<AccountScreen onBack={jest.fn()} />);
+
+    const wanted = GUIDE_STEPS.settings_walkthrough.flatMap((step) => (step.target ? [step.target] : []));
+
+    expect(Object.keys(mockOwlGuide.props.targets ?? {}).sort()).toEqual([...wanted].sort());
+  });
+
+  it('lets the walkthrough move the page, so a low control is not hidden behind the owl', () => {
+    const tree = render(<AccountScreen onBack={jest.fn()} />);
+
+    expect(typeof mockOwlGuide.props.scroller?.reveal).toBe('function');
+    expect(typeof mockOwlGuide.props.scroller?.release).toBe('function');
+    expect(typeof tree.UNSAFE_getByType(ScrollView).props.onScroll).toBe('function');
+  });
+});
+
+/**
+ * The page has no bar at its foot, yet it padded a fifth of the screen under
+ * its last row and bounced: a swipe threw every row up under the header and
+ * left the lower third of the screen empty. It now scrolls only as far as its
+ * content actually runs past the screen, and stops there.
+ */
+describe('AccountScreen scrolling', () => {
+  function scrollOf(tree: ReturnType<typeof render>) {
+    return tree.UNSAFE_getByType(ScrollView);
+  }
+
+  it('leaves only a small margin under the last row, not a fifth of the screen', () => {
+    const tree = render(<AccountScreen onBack={jest.fn()} />);
+
+    const padding = StyleSheet.flatten(scrollOf(tree).props.contentContainerStyle).paddingBottom as number;
+
+    // the test window has no height, so the old fifth-of-the-screen would
+    // read as nothing here: the bound is fixed instead
+    expect(padding).toBeGreaterThan(0);
+    expect(padding).toBeLessThanOrEqual(48);
+  });
+
+  it('does not bounce past its ends, so the rows stay in place', () => {
+    const tree = render(<AccountScreen onBack={jest.fn()} />);
+
+    expect(scrollOf(tree).props.bounces).toBe(false);
+    expect(scrollOf(tree).props.overScrollMode).toBe('never');
   });
 });

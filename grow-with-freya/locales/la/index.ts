@@ -492,7 +492,7 @@ export default {
   account: {
     sleepingSun: 'Sol dormiens',
     sleepingMoon: 'Luna dormiens',
-    title: 'Rationes',
+    title: 'Constitutiones',
     profile: 'Professio',
     nickname: 'Cognomen',
     avatarType: 'Genus Avataris',
@@ -506,6 +506,7 @@ export default {
     termsAndConditions: 'Conditiones Servitii',
     privacyPolicy: 'Politica Privatae',
     selectLanguage: 'Elige Linguam',
+    chooseLanguage: 'Linguam tibi gratam elige',
     guestMode: 'Modus Hospitis',
     createAccount: 'Crea Rationem ut Progressum Serves',
     crashReports: 'Relationes Collapsus',
@@ -514,6 +515,7 @@ export default {
     deleteAccountHint: 'Rationem tuam et omnia data permanenter delere',
   },
   profile: {
+    signedIn: 'Ingressus es',
     enterNickname: 'Intra Cognomen',
     nicknameTooLong: 'Cognomen Debet Esse 20 Characteres vel Minus',
     editTitle: 'Mutare Professionem',
@@ -654,7 +656,7 @@ export default {
       },
       freeplay: {
         title: 'Ludus Liber',
-        description: 'Libere lude in quovis instrumento -sine regulis, solum gaudium! Experimenta cum sonis et tuam musicam crea.',
+        description: 'Libere lude in quovis instrumento - sine regulis, solum gaudium! Experimenta cum sonis et tuam musicam crea.',
       },
       instruments: {
         title: 'Instrumenta',
@@ -663,6 +665,10 @@ export default {
       settings: {
         title: 'Constitutiones',
         description: 'Customiza Applicationem ut Optima pro Tua Familia Operetur.',
+      },
+      language: {
+        title: 'Lingua tua',
+        description: 'Vexillum tange ut linguam applicationis mutes.',
       },
       sound: {
         title: 'Moderatio Soni',
@@ -803,24 +809,24 @@ export default {
     },
     settings: {
       intro: {
-        title: 'Constitutiones',
-        description: 'Customiza Applicationem ut Optima pro Tua Familia Operetur.',
+        title: 'Optiones parentum',
+        description: 'Pauca electiones quae applicationem familiae tuae accommodant. Muta eas quandocumque vis.',
       },
-      login: {
-        title: 'Rationes et Synchronizatio',
-        description: 'Intrare ut Progressum Serves et Inter Apparatus Synchronizes.',
-      },
-      language: {
-        title: 'Lingua',
-        description: 'Tuam Linguam Praefectam pro Interfacie Applicationis Elige.',
-      },
-      accessibility: {
-        title: 'Accessibilitas',
-        description: 'Magnitudinem Textus et Alias Constitutiones Mutare ut Facilius Utaris.',
+      textSize: {
+        title: 'Magnitudo litterarum',
+        description: 'Verba per totam applicationem maiora vel minora fac, ut legenti conveniant.',
       },
       screenTime: {
-        title: 'Tempus Ostentionis',
-        description: 'Limites Sanos Constitue et Usum Diurnum Observa.',
+        title: 'Tempus scrinii',
+        description: 'Accende pro modo diurno leni, aetati pueri tui apto. Anulus Screensafe ostendit quomodo dies procedat. Quovis tempore exstingue.',
+      },
+      reminders: {
+        title: 'Monita callida',
+        description: 'Admonitio quieta horis quas eligis, pro fabulis, affectibus vel musica.',
+      },
+      crashReports: {
+        title: 'Relationes ruinarum',
+        description: 'Si quid erraverit, relatio anonyma nos adiuvat ut id corrigamus. Hic exstingue, si mavis.',
       },
     },
     musicMode: {
@@ -852,7 +858,7 @@ export default {
     storyModes: {
       welcome: {
         title: 'Tres Viae Explorandi!',
-        description: 'Quisque puer diverso modo discit. Elige experientiam fabulae quae curiositatem pueri tui excitat -unaquaeque artes essentiales per magiam ludi aedificat.',
+        description: 'Quisque puer diverso modo discit. Elige experientiam fabulae quae curiositatem pueri tui excitat - unaquaeque artes essentiales per magiam ludi aedificat.',
       },
       interactive: {
         title: 'Fabulae Interactivae',
@@ -860,7 +866,7 @@ export default {
       },
       musical: {
         title: 'Fabulae Musicales',
-        description: 'Lege, lude et age! Fabulae musicales provocationes instrumentorum verorum in omni aventura intexunt -puer tuus rhythmum, melodiam et coordinationem discit dum fabulam sequitur. Studia confirmant expositionem musicae primam memoriam, progressum linguae et expressionem emotionalem augere.',
+        description: 'Lege, lude et age! Fabulae musicales provocationes instrumentorum verorum in omni aventura intexunt - puer tuus rhythmum, melodiam et coordinationem discit dum fabulam sequitur. Studia confirmant expositionem musicae primam memoriam, progressum linguae et expressionem emotionalem augere.',
       },
       jigsaw: {
         title: 'Fabulae Dissecturae',
@@ -1020,7 +1026,9 @@ export default {
       },
       navProfile: {
         title: 'Persona',
-        description: 'Dilecta servata, paries insignium et libri in hoc instrumento.',
+        description: 'Dilecta servata, paries insignium et libri in hoc instrumento. Interdum in signum aureum ingressus mutatur: id significat neminem adhuc ingressum esse, et tactus te ad ingressum ducit.',
+        profileCaption: 'Persona tua',
+        loginCaption: 'Tempus ingrediendi',
       },
     },
     progress: {
@@ -1068,13 +1076,21 @@ export default {
         title: 'Personam muta',
         description: 'Imaginem aut nomen tange ut imaginem, nomen aut aetatem mutes. Adultus prius quaestioni brevi respondet.',
       },
+      login: {
+        title: 'Inire',
+        description: 'Si inieris, insignia, series et locus cuiusque fabulae servantur, et ad omnia instrumenta tua feruntur.',
+      },
+      home: {
+        title: 'Ad domum',
+        description: 'Domus te ad caelum nocturnum reducit, ubi hic perfeceris.',
+      },
       tabs: {
         title: 'Servata, Insignia, Curare',
         description: 'Dilecta quae corde notasti, paries insignium, et libri huius instrumenti, quorum quemlibet tollere potes.',
       },
       settings: {
         title: 'Optiones adultorum',
-        description: 'Lingua, tempus et ratio tua, post portam adultorum.',
+        description: 'Magnitudo litterarum, tempus scrinii, monita et ratio tua, post portam parentum.',
       },
     },
   },

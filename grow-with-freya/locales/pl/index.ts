@@ -492,7 +492,7 @@ export default {
   account: {
     sleepingSun: 'Śpiące słońce',
     sleepingMoon: 'Śpiący księżyc',
-    title: 'Konto',
+    title: 'Ustawienia',
     profile: 'Profil',
     nickname: 'Pseudonim',
     avatarType: 'Typ awatara',
@@ -506,6 +506,7 @@ export default {
     termsAndConditions: 'Regulamin',
     privacyPolicy: 'Polityka prywatności',
     selectLanguage: 'Wybierz język',
+    chooseLanguage: 'Wybierz preferowany język',
     guestMode: 'Tryb gościa',
     createAccount: 'Utwórz konto aby zapisać postępy',
     crashReports: 'Raporty o awariach',
@@ -514,6 +515,7 @@ export default {
     deleteAccountHint: 'Trwałe usunięcie konta i wszystkich danych',
   },
   profile: {
+    signedIn: 'Zalogowano',
     enterNickname: 'Proszę wpisać pseudonim',
     nicknameTooLong: 'Pseudonim może mieć maksymalnie 20 znaków',
     editTitle: 'Edytuj Profil',
@@ -654,7 +656,7 @@ export default {
       },
       freeplay: {
         title: 'Swobodna Gra',
-        description: 'Graj swobodnie na dowolnym instrumencie -bez zasad, tylko zabawa! Eksperymentuj z dźwiękami i twórz własną muzykę.',
+        description: 'Graj swobodnie na dowolnym instrumencie - bez zasad, tylko zabawa! Eksperymentuj z dźwiękami i twórz własną muzykę.',
       },
       instruments: {
         title: 'Instrumenty',
@@ -663,6 +665,10 @@ export default {
       settings: {
         title: 'Ustawienia',
         description: 'Dostosuj aplikację do potrzeb Twojej rodziny.',
+      },
+      language: {
+        title: 'Twój język',
+        description: 'Dotknij flagi, aby zmienić język aplikacji.',
       },
       sound: {
         title: 'Kontrola dźwięku',
@@ -803,24 +809,24 @@ export default {
     },
     settings: {
       intro: {
-        title: 'Ustawienia',
-        description: 'Dostosuj aplikację do potrzeb rodziny.',
+        title: 'Ustawienia dla dorosłych',
+        description: 'Kilka wyborów, które dopasowują aplikację do Waszej rodziny. Zmieniaj je, kiedy chcesz.',
       },
-      login: {
-        title: 'Konto i Synchronizacja',
-        description: 'Zaloguj się, aby zapisać postępy.',
-      },
-      language: {
-        title: 'Język',
-        description: 'Wybierz preferowany język.',
-      },
-      accessibility: {
-        title: 'Dostępność',
-        description: 'Dostosuj rozmiar tekstu.',
+      textSize: {
+        title: 'Rozmiar tekstu',
+        description: 'Powiększ lub zmniejsz słowa w całej aplikacji, tak by pasowały czytającemu.',
       },
       screenTime: {
-        title: 'Czas Ekranowy',
-        description: 'Ustaw zdrowe limity.',
+        title: 'Czas przed ekranem',
+        description: 'Włącz, by ustawić łagodny dzienny limit dopasowany do wieku dziecka. Pierścień Screensafe pokazuje, jak mija dzień. Możesz go wyłączyć w każdej chwili.',
+      },
+      reminders: {
+        title: 'Inteligentne przypomnienia',
+        description: 'Ciche przypomnienie o wybranych porach: na bajki, uczucia albo muzykę.',
+      },
+      crashReports: {
+        title: 'Raporty o błędach',
+        description: 'Gdy coś pójdzie nie tak, anonimowy raport pomaga nam to naprawić. Możesz go tu wyłączyć, jeśli wolisz.',
       },
     },
     musicMode: {
@@ -852,7 +858,7 @@ export default {
     storyModes: {
       welcome: {
         title: 'Trzy Sposoby na Odkrywanie!',
-        description: 'Każde dziecko uczy się inaczej. Wybierz doświadczenie z historią, które rozbudzi ciekawość Twojego dziecka -każde z nich buduje kluczowe umiejętności dzięki magii zabawy.',
+        description: 'Każde dziecko uczy się inaczej. Wybierz doświadczenie z historią, które rozbudzi ciekawość Twojego dziecka - każde z nich buduje kluczowe umiejętności dzięki magii zabawy.',
       },
       interactive: {
         title: 'Interaktywne Historie',
@@ -860,7 +866,7 @@ export default {
       },
       musical: {
         title: 'Muzyczne Historie',
-        description: 'Czytaj, graj i występuj! Muzyczne historie wplatają prawdziwe wyzwania instrumentalne w każdą przygodę -Twoje dziecko uczy się rytmu, melodii i koordynacji, śledząc opowieść. Badania potwierdzają, że wczesna ekspozycja na muzykę poprawia pamięć, rozwój językowy i ekspresję emocjonalną.',
+        description: 'Czytaj, graj i występuj! Muzyczne historie wplatają prawdziwe wyzwania instrumentalne w każdą przygodę - Twoje dziecko uczy się rytmu, melodii i koordynacji, śledząc opowieść. Badania potwierdzają, że wczesna ekspozycja na muzykę poprawia pamięć, rozwój językowy i ekspresję emocjonalną.',
       },
       jigsaw: {
         title: 'Historie z Puzzlami',
@@ -1020,7 +1026,9 @@ export default {
       },
       navProfile: {
         title: 'Profil',
-        description: 'Zapisane ulubione, ściana odznak i książki na tym urządzeniu.',
+        description: 'Zapisane ulubione, ściana odznak i książki na tym urządzeniu. Od czasu do czasu zmienia się w złoty symbol logowania: oznacza to, że nikt nie jest jeszcze zalogowany, a dotknięcie prowadzi do logowania.',
+        profileCaption: 'Twój profil',
+        loginCaption: 'Czas się zalogować',
       },
     },
     progress: {
@@ -1068,13 +1076,21 @@ export default {
         title: 'Zmień profil',
         description: 'Dotknij obrazka lub imienia, by zmienić awatar, imię lub wiek. Dorosły najpierw odpowie na krótkie pytanie.',
       },
+      login: {
+        title: 'Zaloguj się',
+        description: 'Logowanie zachowuje odznaki, passę i miejsce, w którym skończyła się każda opowieść - na wszystkich waszych urządzeniach.',
+      },
+      home: {
+        title: 'Powrót do domu',
+        description: 'Start zabiera was z powrotem na nocne niebo, gdy skończycie.',
+      },
       tabs: {
         title: 'Zapisane, Odznaki, Zarządzaj',
         description: 'Ulubione oznaczone serduszkiem, ściana odznak i książki na tym urządzeniu, z możliwością usunięcia.',
       },
       settings: {
         title: 'Ustawienia dla dorosłych',
-        description: 'Język, czas przed ekranem i twoje konto, za bramką dla dorosłych.',
+        description: 'Rozmiar tekstu, czas przed ekranem, przypomnienia i Twoje konto, za bramką dla dorosłych.',
       },
     },
   },

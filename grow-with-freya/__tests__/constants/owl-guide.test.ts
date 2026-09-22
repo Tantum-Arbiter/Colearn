@@ -72,6 +72,7 @@ describe('GUIDE_STEPS', () => {
       'screen_time_ring',
       'nav_search',
       'nav_profile',
+      'language_control',
       'sound_control',
     ]);
 
@@ -84,6 +85,7 @@ describe('GUIDE_STEPS', () => {
       'screen_time_ring',
       'nav_search',
       'nav_profile',
+      'language_control',
       'sound_control',
     ]);
   });
@@ -113,6 +115,14 @@ describe('GUIDE_STEPS', () => {
     expect(step?.target).toBe('screen_time_ring');
     expect(step?.shape).toBe('circle');
     expect(step?.illustration).toBe('screenTimeRing');
+  });
+
+  it('shows the profile step with a picture of the slot in both its states, face and sign-in', () => {
+    const step = GUIDE_STEPS.main_menu_tour.find((entry) => entry.id === 'nav_profile');
+
+    expect(step?.target).toBe('nav_profile');
+    expect(step?.shape).toBe('circle');
+    expect(step?.illustration).toBe('profileSlot');
   });
 
   it('has a tour for each journey page, each opening with a step that points at nothing', () => {
@@ -157,6 +167,40 @@ describe('GUIDE_STEPS', () => {
     expect(step?.radius).toBe(CIRCLE_BUTTON_DIAMETER_PHONE / 2);
   });
 
+  /** The language went to the home corner; the step pointing at the gate no longer promises it behind there. */
+  it('names what is actually behind the grown-ups gate, not the language that moved home', () => {
+    const copy = lookup('tutorial.profile.settings.description') as string;
+
+    expect(copy).not.toMatch(/language/i);
+    expect(copy).toMatch(/text size/i);
+    expect(copy).toMatch(/screen time/i);
+  });
+
+  /**
+   * The tour walked past the two controls a parent most needs: the way back
+   * home, and the sign-in that keeps the badges. Both are on the page, so both
+   * are on the tour.
+   */
+  it('covers the profile page down to its header, sign-in included', () => {
+    expect(GUIDE_STEPS.profile_tour.map((step) => step.target)).toEqual([
+      undefined,
+      'profile_hero',
+      'profile_login',
+      'profile_tabs',
+      'profile_home',
+      'profile_settings',
+    ]);
+  });
+
+  it('spends the sign-in step on what signing in is worth', () => {
+    const step = GUIDE_STEPS.profile_tour.find((entry) => entry.id === 'profile_login');
+    const copy = lookup(step!.descriptionKey) as string;
+
+    // It restates the benefit rather than naming the button again.
+    expect(copy.length).toBeGreaterThan(40);
+    expect(copy.toLowerCase()).toMatch(/badge|streak|device/);
+  });
+
   /** The face and the name are a round subject: a circle round the two of them, not a band across the page. */
   it('rings the profile face and name with a circle', () => {
     const step = GUIDE_STEPS.profile_tour.find((entry) => entry.target === 'profile_hero');
@@ -182,12 +226,59 @@ describe('the Grown-ups walkthrough', () => {
   it('tours only what the page still holds, with no step for the profile editor it no longer has', () => {
     expect(GUIDE_STEPS.settings_walkthrough.map((step) => step.id)).toEqual([
       'settings_intro',
-      'login',
-      'language',
-      'accessibility',
-      'screen_time',
+      'settings_text_size',
+      'settings_screen_time',
+      'settings_reminders',
+      'settings_crash_reports',
     ]);
     expect(lookup('tutorial.settings.avatar')).toBeUndefined();
+  });
+
+  /** Signing in moved to the profile page, which has its own step for it. */
+  it('leaves signing in to the profile tour, which is where the button went', () => {
+    expect(GUIDE_STEPS.settings_walkthrough.map((step) => step.id)).not.toContain('login');
+    expect(lookup('tutorial.settings.login')).toBeUndefined();
+    expect(GUIDE_STEPS.profile_tour.map((step) => step.id)).toContain('profile_login');
+  });
+
+  /** Each control is lit on the page, top to bottom, rather than described in a card with nothing to point at. */
+  it('points at every control it names, in the order the page lists them', () => {
+    const [intro, ...controls] = GUIDE_STEPS.settings_walkthrough;
+
+    expect(intro.target).toBeUndefined();
+    expect(controls.map((step) => step.target)).toEqual([
+      'settings_text_size',
+      'settings_screen_time',
+      'settings_reminders',
+      'settings_crash_reports',
+    ]);
+    for (const step of controls) expect(step.shape).toBe('rounded-rect');
+  });
+
+  it('says nothing about the developer options, which no family will ever see', () => {
+    for (const step of GUIDE_STEPS.settings_walkthrough) {
+      const copy = `${lookup(step.titleKey)} ${lookup(step.descriptionKey)}`;
+      expect(copy).not.toMatch(/developer|dev option|debug/i);
+    }
+  });
+
+  /** The screen-time step once read as the page's whole purpose; now it says what the switch does. */
+  it('describes the switches as switches a grown-up can turn off', () => {
+    expect(lookup('tutorial.settings.screenTime.description')).toMatch(/\b(on|off)\b/i);
+    expect(lookup('tutorial.settings.crashReports.description')).toMatch(/\boff\b/i);
+  });
+
+  /** The flag lives in the home corner now, and so does the step that names it. */
+  it('leaves the language to the main menu, which is where the flag went', () => {
+    expect(GUIDE_STEPS.settings_walkthrough.map((step) => step.id)).not.toContain('language');
+    expect(lookup('tutorial.settings.language')).toBeUndefined();
+
+    const step = GUIDE_STEPS.main_menu_tour.find((entry) => entry.id === 'language_control');
+
+    expect(step?.target).toBe('language_control');
+    expect(step?.shape).toBe('circle');
+    expect(step?.pinned).toBe(true);
+    expect(typeof lookup('tutorial.mainMenu.language.title')).toBe('string');
   });
 });
 
@@ -207,12 +298,13 @@ describe('pinned steps', () => {
       'nav_search',
       'nav_profile',
       'settings_button',
+      'language_control',
       'sound_control',
     ]);
   });
 
-  it('pins the gear on the profile page, which sits above its column', () => {
-    expect(pinnedOf('profile_tour')).toEqual(['profile_settings']);
+  it('pins the profile header, both controls sitting above its column', () => {
+    expect(pinnedOf('profile_tour')).toEqual(['profile_home', 'profile_settings']);
   });
 
   /** The card sheet has no scroll view but it does rise for the owl, so its

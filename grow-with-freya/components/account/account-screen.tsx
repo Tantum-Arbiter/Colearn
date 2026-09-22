@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import { View, Text, ScrollView, Pressable, StyleSheet, Dimensions, Alert, BackHandler, Platform, Image, useWindowDimensions } from 'react-native';
+import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import { View, Text, ScrollView, Pressable, StyleSheet, Dimensions, Alert, BackHandler, Platform, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
@@ -25,8 +25,8 @@ import { CacheManager } from '../../services/cache-manager';
 import { StoryLoader } from '../../services/story-loader';
 import { TEXT_SIZE_OPTIONS, useAccessibility } from '../../hooks/use-accessibility';
 import { OwlGuide } from '../owl-guide';
+import { useGuideScroller } from '../owl-guide/use-guide-scroller';
 import { Logger } from '@/utils/logger';
-import { LanguagePicker } from '../ui/language-picker';
 import { SettingsSkyBackdrop } from './settings-sky-backdrop';
 import { SleepingSkyFace } from './sleeping-sky-face';
 import { heroContentTop, heroSunFrame } from '@/constants/home-sky';
@@ -38,7 +38,6 @@ import { useSettledAfterTransition } from '@/hooks/use-ambient-animation';
 const log = Logger.create('Account');
 
 import { useOwlGuide } from '../../contexts/owl-guide-context';
-import { languageFlag } from '../../services/i18n';
 import * as Notifications from 'expo-notifications';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -55,11 +54,8 @@ interface AccountScreenProps {
 }
 
 export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
-  const { i18n, t } = useTranslation();
+  const { t } = useTranslation();
   const [currentView, setCurrentView] = useState<SlideView>('main');
-
-  const [showLanguageOverlay, setShowLanguageOverlay] = useState(false);
-  const closeLanguageOverlay = useCallback(() => setShowLanguageOverlay(false), []);
 
   // Slide animation values for each sub-page (0 = off-screen right, 1 = visible)
   const termsSlide = useSharedValue(0);
@@ -187,6 +183,17 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
 
   // Tutorial reset
   const { resetGuides, lastResetTimestamp } = useOwlGuide();
+  const textSizeRef = useRef<View>(null);
+  const screenTimeRef = useRef<View>(null);
+  const remindersRef = useRef<View>(null);
+  const crashReportsRef = useRef<View>(null);
+  const guideScroller = useGuideScroller();
+  const guideTargets = useMemo(() => ({
+    settings_text_size: textSizeRef,
+    settings_screen_time: screenTimeRef,
+    settings_reminders: remindersRef,
+    settings_crash_reports: crashReportsRef,
+  }), []);
 
   // Screen time controls live here rather than on the Screen Time page: that
   // page reports on usage, this one is where the parent changes things. They
@@ -219,59 +226,6 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
     }
 
     setNotificationsEnabled(!notificationsEnabled);
-  };
-
-  const handleLogin = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    // Clear guest mode and show login screen
-    setGuestMode(false);
-    setShowLoginAfterOnboarding(true);
-    onBack();
-  };
-
-  const handleLogout = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-
-    Alert.alert(
-      t('alerts.logout.title'),
-      t('alerts.logout.message'),
-      [
-        {
-          text: t('common.cancel'),
-          style: 'cancel',
-        },
-        {
-          text: t('common.logout'),
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              // Clear user profile data from store (instant)
-              clearUserProfile();
-
-              // Reset login state (instant)
-              setLoginComplete(false);
-              setShowLoginAfterOnboarding(true);
-
-              // Go back to main menu (which will redirect to login) - instant
-              onBack();
-
-              // Clear authentication tokens and reminders in background (non-blocking)
-              // Note: We keep story and asset caches intact for delta sync efficiency
-              // Changed assets will be detected via checksum comparison on next login
-              ApiClient.logout().catch(error => {
-                log.error('Background logout error:', error);
-              });
-              reminderService.clearAllReminders().catch(error => {
-                log.error('Background reminder clear error:', error);
-              });
-            } catch (error) {
-              log.error('Logout error:', error);
-              Alert.alert(t('common.error'), t('alerts.logout.error'));
-            }
-          },
-        },
-      ]
-    );
   };
 
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
@@ -510,8 +464,19 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
         <View style={{ flex: 1, zIndex: 10 }}>
           {/* Main Account Page - always rendered as base layer */}
               <ScrollView
+                ref={guideScroller.scrollRef}
+                onScroll={guideScroller.onScroll}
+                onLayout={guideScroller.onLayout}
+                onContentSizeChange={guideScroller.onContentSizeChange}
+                scrollEventThrottle={16}
+                bounces={false}
+                overScrollMode="never"
                 style={styles.scrollView}
-                contentContainerStyle={[styles.content, { paddingBottom: Dimensions.get('window').height * 0.2 }, isTablet && { alignItems: 'center' }]}
+                // no bar sits at the foot of this page, so it needs only the
+                // home indicator and a breath of margin under its last row; a
+                // fifth of the screen here let every row be thrown up out of
+                // view over an empty lower third
+                contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + PAGE_FOOT_MARGIN + guideScroller.reserve }, isTablet && { alignItems: 'center' }]}
               >
                 <View testID="account-sky" style={[styles.sky, { height: heroContentTop(insets.top, sun.size), paddingTop: sun.top }]}>
                   <SleepingSkyFace size={sun.size} timeOfDay={timeOfDay} animated={skyAnimated} />
@@ -521,45 +486,9 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
                 </Text>
                 <View style={isTablet ? { maxWidth: contentMaxWidth, width: '100%' } : undefined}>
 
-          {/* Sign in / out sits above everything: signing in is the first
-              thing a guest needs, not something to hunt for at the bottom */}
-          <Pressable
-            testID="account-login"
-            style={({ pressed }) => [styles.logoutButton, styles.logoutButtonTop, pressed && { opacity: 0.6 }]}
-            onPress={isGuestMode ? handleLogin : handleLogout}
-          >
-            <Ionicons name={isGuestMode ? 'log-in-outline' : 'log-out-outline'} size={18} color="#FFFFFF" style={{ marginRight: 6 }} />
-            <Text style={[styles.logoutButtonText, { fontSize: scaledFontSize(14) }]}>
-              {isGuestMode ? t('common.login') : t('common.logout')}
-            </Text>
-          </Pressable>
-
-          {/* Button strip: Language */}
-          <View style={styles.stripContainer}>
-            <Pressable
-              testID="account-language"
-              style={({ pressed }) => [styles.strip, pressed && styles.stripPressed]}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setShowLanguageOverlay(true);
-              }}
-            >
-              <Image
-                source={require('../../assets/images/ui-elements/language-button-background.webp')}
-                style={styles.stripImage}
-                resizeMode="cover"
-              />
-              <View style={styles.stripOverlay}>
-                <Text style={{ fontSize: 28, marginRight: 12 }}>{languageFlag(i18n.language)}</Text>
-                <Text style={[styles.stripLabel, { fontSize: scaledFontSize(30) }]}>{t('account.language')}</Text>
-              </View>
-            </Pressable>
-
-          </View>
-
           {/* Accessibility: inline text size pills */}
           <Text style={[styles.textSizeLabel, { fontSize: scaledFontSize(13) }]}>{t('accessibility.title')}</Text>
-          <View style={styles.textSizeOptions} testID="account-text-size">
+          <View ref={textSizeRef} collapsable={false} style={styles.textSizeOptions} testID="account-text-size">
             {TEXT_SIZE_OPTIONS.map((option) => (
               <Pressable
                 key={option.value}
@@ -592,6 +521,7 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
             style={[styles.settingItem, { paddingVertical: scaledPadding(12) }]}
             onPress={handleToggleScreenTime}
             testID="account-screen-time-toggle"
+            ref={screenTimeRef}
           >
             <View style={{ flex: 1 }}>
               <Text style={[styles.settingLabel, { fontSize: scaledFontSize(13) }]}>
@@ -610,6 +540,7 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
             style={[styles.settingItem, { paddingVertical: scaledPadding(12) }]}
             onPress={handleToggleSmartReminders}
             testID="account-smart-reminders-toggle"
+            ref={remindersRef}
           >
             <View style={{ flex: 1 }}>
               <Text style={[styles.settingLabel, { fontSize: scaledFontSize(13) }]}>
@@ -626,6 +557,7 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
 
           {/* Crash Reporting Toggle */}
           <Pressable
+            ref={crashReportsRef}
             style={[styles.settingItem, { paddingVertical: scaledPadding(12) }]}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -821,15 +753,16 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
           <PrivacyPolicyContent paddingTop={insets.top + 90 + (textSizeScale - 1) * 40 + 10} />
         </Animated.View>
 
-        <LanguagePicker visible={showLanguageOverlay} onClose={closeLanguageOverlay} />
 
       </View>
 
       {/* The owl's settings walkthrough - shown on first visit, key forces remount after reset */}
-      <OwlGuide key={`settings-guide-${lastResetTimestamp}`} id="settings_walkthrough" active={isActive} />
+      <OwlGuide key={`settings-guide-${lastResetTimestamp}`} id="settings_walkthrough" active={isActive && currentView === 'main'} targets={guideTargets} scroller={guideScroller.scroller} />
     </View>
   );
 }
+
+const PAGE_FOOT_MARGIN = 24;
 
 const styles = StyleSheet.create({
   container: {
@@ -867,65 +800,6 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: 20,
     paddingBottom: 40,
-  },
-
-  // Strip button container (vertical stack like main menu carousel)
-  stripContainer: {
-    alignItems: 'center',
-    width: '100%',
-    marginBottom: 20,
-  },
-
-  // Individual strip button (matches main menu strip style)
-  strip: {
-    width: '100%',
-    height: 110,
-    borderRadius: 14,
-    overflow: 'hidden',
-    marginBottom: 10,
-    borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.35)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.45,
-    shadowRadius: 12,
-    elevation: 10,
-  },
-  stripPressed: {
-    opacity: 0.85,
-    transform: [{ scale: 0.97 }],
-  },
-  stripImage: {
-    ...StyleSheet.absoluteFillObject,
-    width: '100%',
-    height: '100%',
-  },
-  stripOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.25)',
-  },
-  stripGradient: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  stripLabel: {
-    color: '#FFFFFF',
-    fontWeight: '900',
-    textShadowColor: 'rgba(0, 0, 0, 0.9)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 8,
-    letterSpacing: 1,
-  },
-
-  // Logout -transparent pill like home icon
-  logoutButtonTop: {
-    marginTop: 0,
-    marginBottom: 16,
   },
   logoutButton: {
     flexDirection: 'row',

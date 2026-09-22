@@ -7,6 +7,7 @@ import Animated, {
   useSharedValue,
   withRepeat,
   withTiming,
+  type SharedValue,
 } from 'react-native-reanimated';
 import type { TimeOfDay } from '@/constants/home-scene';
 import { HERO_SKY, type HeroMotionMode, type SunFrame } from '@/constants/home-sky';
@@ -16,6 +17,9 @@ export interface HeroSunContainerProps {
   sun: SunFrame;
   timeOfDay: TimeOfDay;
   mode: HeroMotionMode;
+  /** How far the page beneath has scrolled, so the sun rides up with it
+   *  instead of hanging in the corner while the content leaves. */
+  lift?: SharedValue<number>;
   testID?: string;
 }
 
@@ -23,6 +27,7 @@ export const HeroSunContainer = memo(function HeroSunContainer({
   sun,
   timeOfDay,
   mode,
+  lift,
   testID = 'hero-sun',
 }: HeroSunContainerProps) {
   const breath = useSharedValue(0);
@@ -46,7 +51,9 @@ export const HeroSunContainer = memo(function HeroSunContainer({
   }, [mode, breath]);
 
   const style = useAnimatedStyle(() => ({
-    transform: [{ translateY: -HERO_SKY.sunBreatheLift * breath.value }],
+    transform: [
+      { translateY: -HERO_SKY.sunBreatheLift * breath.value - (lift?.value ?? 0) },
+    ],
   }));
 
   return (

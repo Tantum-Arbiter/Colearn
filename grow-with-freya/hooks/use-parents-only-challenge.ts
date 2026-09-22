@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next';
 
 export interface ParentChallenge {
   type: 'emoji' | 'math';
-  emoji?: string;
+  /** Painted portrait of the animal, shown inside the starry orb. */
+  art?: number;
   word?: string; // The key used for translation lookup (e.g., 'cat', 'duck')
   // Math challenge properties
   num1?: number;
@@ -12,12 +13,12 @@ export interface ParentChallenge {
   answer?: number;
 }
 
-// Emoji challenges with English word keys
+// Animal challenges with English word keys
 export const EMOJI_CHALLENGES: ParentChallenge[] = [
-  { type: 'emoji', emoji: '🐱', word: 'cat' },
-  { type: 'emoji', emoji: '🦆', word: 'duck' },
-  { type: 'emoji', emoji: '🐕', word: 'dog' },
-  { type: 'emoji', emoji: '🐫', word: 'camel' },
+  { type: 'emoji', art: require('@/assets/images/parents-only/cat.webp'), word: 'cat' },
+  { type: 'emoji', art: require('@/assets/images/parents-only/duck.webp'), word: 'duck' },
+  { type: 'emoji', art: require('@/assets/images/parents-only/dog.webp'), word: 'dog' },
+  { type: 'emoji', art: require('@/assets/images/parents-only/camel.webp'), word: 'camel' },
 ];
 
 // Math challenges - randomly generated (simple addition & subtraction only)
@@ -54,7 +55,7 @@ export interface UseParentsOnlyChallengeReturn {
 export function useParentsOnlyChallenge(): UseParentsOnlyChallengeReturn {
   const { t } = useTranslation();
   const [isVisible, setIsVisible] = useState(false);
-  const [challenge, setChallenge] = useState<ParentChallenge>({ type: 'emoji', emoji: '🐱', word: 'cat' });
+  const [challenge, setChallenge] = useState<ParentChallenge>(EMOJI_CHALLENGES[0]);
   const [inputValue, setInputValue] = useState('');
   const [lastChallengeType, setLastChallengeType] = useState<'emoji' | 'math'>('emoji');
   const callbackRef = useRef<(() => void) | null>(null);

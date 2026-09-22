@@ -102,6 +102,44 @@ describe('the journey bar slot', () => {
       expect(jest.getTimerCount()).toBe(0);
     });
 
+    /**
+     * The hold is for a page change: the old page's bar bridges the slide
+     * until the new one mounts its own. A page that takes its own bar away --
+     * the profile's edit sheet rising over it -- is not a slide, and holding
+     * the bar there left it drawn over the sheet for the length of a slide.
+     */
+    it('should let the bar go at once when the current page takes it away, with no slide to bridge', () => {
+      const page = (withBar: boolean) => (
+        <JourneyBarProvider>
+          {withBar && <ChildBottomNavigation selected="profile" onSelect={jest.fn()} slotKey="stories" />}
+          <JourneyBarOutlet pageKey="stories" holdMs={800} />
+        </JourneyBarProvider>
+      );
+      const tree = render(page(true));
+
+      tree.rerender(page(false));
+
+      expect(bars(tree)).toHaveLength(0);
+      expect(jest.getTimerCount()).toBe(0);
+    });
+
+    it('should still hold the bar across a slide after the page it came from had hidden and shown it again', () => {
+      const page = (pageKey: string, withBar: boolean) => (
+        <JourneyBarProvider>
+          {withBar && <ChildBottomNavigation selected="home" onSelect={jest.fn()} slotKey="main" />}
+          <JourneyBarOutlet pageKey={pageKey} holdMs={800} />
+        </JourneyBarProvider>
+      );
+      const tree = render(page('main', true));
+      tree.rerender(page('main', false));
+      tree.rerender(page('main', true));
+
+      tree.rerender(page('stories', true));
+
+      expect(bars(tree)).toHaveLength(1);
+      expect(selectedItem(tree)).toEqual(['navigation-item-home']);
+    });
+
     it('should never draw a teardrop or a splash: the bar simply stays where it is', () => {
       const tree = render(lazy('main', false));
 

@@ -38,6 +38,12 @@ function textContents(view: RenderResult): string[] {
     .filter((child): child is string => typeof child === 'string');
 }
 
+function greetingProps(view: RenderResult): { titleSize: number; subtitleSize: number } {
+  return view.UNSAFE_root.findAll(
+    (node: RenderedNode) => node.props.titleSize !== undefined && node.props.subtitleSize !== undefined
+  )[0].props as { titleSize: number; subtitleSize: number };
+}
+
 function byTestId(view: RenderResult, testID: string) {
   return view.UNSAFE_queryAllByProps({ testID });
 }
@@ -84,10 +90,10 @@ describe('HomeScene', () => {
     it('should greet the child by the message the data model chose', () => {
       const { view } = renderScene();
 
-      const underTest = textContents(view);
+      const underTest = byTestId(view, 'home-welcome')[0].props.accessibilityLabel as string;
 
-      expect(underTest.some((text) => text.startsWith('home.welcome.normal.title (name:Freya'))).toBe(true);
-      expect(underTest.some((text) => text.startsWith('home.welcome.normal.subtitle'))).toBe(true);
+      expect(underTest.startsWith('home.welcome.normal.title (name:Freya')).toBe(true);
+      expect(underTest).toContain('home.welcome.normal.subtitle');
     });
 
     it('should show whichever welcome state it is handed', () => {
@@ -95,9 +101,9 @@ describe('HomeScene', () => {
         welcome: { ...WELCOME, state: 'longAbsence', titleKey: 'home.welcome.longAbsence.title', subtitleKey: 'home.welcome.longAbsence.subtitle' },
       });
 
-      const underTest = textContents(view);
+      const underTest = byTestId(view, 'home-welcome')[0].props.accessibilityLabel as string;
 
-      expect(underTest.some((text) => text.startsWith('home.welcome.longAbsence.title'))).toBe(true);
+      expect(underTest.startsWith('home.welcome.longAbsence.title')).toBe(true);
     });
   });
 
@@ -270,7 +276,9 @@ describe('HomeScene', () => {
 
         const { view } = renderScene();
 
-        expect(flagButton(view).findAll((node: any) => node.props.children === '🇩🇪').length).toBeGreaterThan(0);
+        const flag = flagButton(view).findAll((node: any) => node.props.testID === 'circle-action-flag');
+        expect(flag.length).toBeGreaterThan(0);
+        expect(flagButton(view).findAll((node: any) => node.props.children === '🇩🇪')).toHaveLength(0);
       });
 
       it('is named for what it does', () => {
@@ -356,7 +364,7 @@ describe('HomeScene time of day', () => {
 
       const underTest = byTestId(view, 'home-welcome-title')[0];
 
-      expect(StyleSheet.flatten(underTest?.props.style).color).toBe(theme.title);
+      expect(underTest?.props.fill).toBe(theme.title);
     });
 
     it('should show the horizon and the star field', () => {
@@ -513,18 +521,18 @@ describe('HomeScene on a tablet', () => {
   it('still keeps the greeting clear of the first card in landscape', () => {
     const { view } = renderScene();
 
-    const subtitle = StyleSheet.flatten(byTestId(view, 'home-welcome-subtitle')[0].props.style);
+    const greeting = StyleSheet.flatten(byTestId(view, 'home-welcome-block')[0].props.style);
 
     // The gap is a tablet thing, not a portrait thing -- at the phone's 8 the
     // subtitle sat on the first card's glow here too.
-    expect(subtitle.marginBottom).toBeGreaterThanOrEqual(HOME_CARDS.gap);
+    expect(greeting.marginBottom).toBeGreaterThanOrEqual(HOME_CARDS.gap);
   });
 
   it('keeps the ordinary welcome text size in landscape -- portrait is the one with height to spend', () => {
     const { view } = renderScene();
 
-    const title = StyleSheet.flatten(byTestId(view, 'home-welcome-title')[0].props.style);
-    expect(title.fontSize).toBe(HOME_CARD_TYPE.welcome);
+    const greeting = greetingProps(view);
+    expect(greeting.titleSize).toBe(HOME_CARD_TYPE.welcome);
   });
 });
 
@@ -554,21 +562,20 @@ describe('HomeScene on a tablet in portrait', () => {
   it('grows the welcome title and subtitle past their ordinary size', () => {
     const { view } = renderScene();
 
-    const title = StyleSheet.flatten(byTestId(view, 'home-welcome-title')[0].props.style);
-    const subtitle = StyleSheet.flatten(byTestId(view, 'home-welcome-subtitle')[0].props.style);
+    const greeting = greetingProps(view);
 
-    expect(title.fontSize).toBeGreaterThan(HOME_CARD_TYPE.welcome);
-    expect(subtitle.fontSize).toBeGreaterThan(HOME_CARD_TYPE.welcomeSubtitle);
+    expect(greeting.titleSize).toBeGreaterThan(HOME_CARD_TYPE.welcome);
+    expect(greeting.subtitleSize).toBeGreaterThan(HOME_CARD_TYPE.welcomeSubtitle);
   });
 
   it('keeps the bigger subtitle clear of the first card rather than sitting on it', () => {
     const { view } = renderScene();
 
-    const subtitle = StyleSheet.flatten(byTestId(view, 'home-welcome-subtitle')[0].props.style);
+    const greeting = StyleSheet.flatten(byTestId(view, 'home-welcome-block')[0].props.style);
 
     // Bigger type has a taller line box, so it needs *more* room beneath it
     // than the phone's 8, not less -- at 0 it sat on the first card's glow.
-    expect(subtitle.marginBottom).toBeGreaterThanOrEqual(HOME_CARDS.gap);
+    expect(greeting.marginBottom).toBeGreaterThanOrEqual(HOME_CARDS.gap);
   });
 
   /**
@@ -581,7 +588,7 @@ describe('HomeScene on a tablet in portrait', () => {
     const gapOf = (testID: string, key: 'marginTop' | 'marginBottom') =>
       (StyleSheet.flatten(byTestId(view, testID)[0].props.style) as Record<string, number>)[key] ?? 0;
 
-    const subtitleToCard = gapOf('home-welcome-subtitle', 'marginBottom');
+    const subtitleToCard = gapOf('home-welcome-block', 'marginBottom');
     const statsToButton = gapOf('home-stats-row', 'marginBottom') + gapOf('home-plan-slot', 'marginTop');
 
     // Matched by eye, not on paper: the stats chips pad themselves, so the
@@ -646,5 +653,41 @@ describe('HomeScene stats row', () => {
     expect(achievement.props.width).toBeGreaterThan(width / 2);
     // Not compact -- the standalone CTA row is still there.
     expect(byTestId(view, 'achievement-cta').length).toBeGreaterThan(0);
+  });
+});
+
+/**
+ * A tour step whose target the page never hands over is dropped in silence by
+ * `guideSteps` -- no warning, the step simply never appears. So the refs the
+ * home tour asks for are worth pinning here rather than finding out on device.
+ */
+describe('HomeScene guide targets', () => {
+  function targetFor(slot: 'language' | 'sound') {
+    const ref = React.createRef<View>();
+    const view = renderScene({ guideTargets: { [slot]: ref } });
+
+    return view;
+  }
+
+  it('hands the tour a ref for the language flag', () => {
+    const view = targetFor('language');
+    const flag = view.UNSAFE_queryAllByProps({ testID: 'home-language-button' });
+
+    expect(flag.length).toBeGreaterThan(0);
+  });
+
+  it('wraps the flag in a collapsable-false host, so the ref can be measured', () => {
+    const view = renderScene({ guideTargets: { language: React.createRef<View>() } });
+
+    // Android flattens a plain wrapper away, taking the measurable node with
+    // it. Asserted by containment rather than by the ref, which React strips
+    // out of props -- matching on it would pass no matter what.
+    const wrappers = view.UNSAFE_root.findAll(
+      (node: any) =>
+        node.props.collapsable === false
+        && node.findAll((child: any) => child.props.testID === 'home-language-button').length > 0
+    );
+
+    expect(wrappers.length).toBeGreaterThan(0);
   });
 });

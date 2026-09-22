@@ -492,7 +492,7 @@ export default {
   account: {
     sleepingSun: 'Le soleil endormi',
     sleepingMoon: 'La lune endormie',
-    title: 'Compte',
+    title: 'Paramètres',
     profile: 'Profil',
     nickname: 'Surnom',
     avatarType: 'Type d\'avatar',
@@ -506,6 +506,7 @@ export default {
     termsAndConditions: 'Conditions d\'utilisation',
     privacyPolicy: 'Politique de confidentialité',
     selectLanguage: 'Sélectionnez la langue',
+    chooseLanguage: 'Choisissez votre langue préférée',
     guestMode: 'Mode invité',
     createAccount: 'Créez un compte pour enregistrer votre progression',
     crashReports: 'Rapports de plantage',
@@ -514,6 +515,7 @@ export default {
     deleteAccountHint: 'Supprimer définitivement votre compte et toutes les données',
   },
   profile: {
+    signedIn: 'Connecté',
     enterNickname: 'Veuillez entrer un surnom',
     nicknameTooLong: 'Le surnom doit contenir 20 caractères ou moins',
     editTitle: 'Modifier le profil',
@@ -654,7 +656,7 @@ export default {
       },
       freeplay: {
         title: 'Jeu Libre',
-        description: 'Jouez librement de n\'importe quel instrument -pas de règles, juste du plaisir ! Expérimentez avec les sons et créez votre propre musique.',
+        description: 'Jouez librement de n\'importe quel instrument - pas de règles, juste du plaisir ! Expérimentez avec les sons et créez votre propre musique.',
       },
       instruments: {
         title: 'Instruments',
@@ -663,6 +665,10 @@ export default {
       settings: {
         title: 'Paramètres',
         description: 'Personnalisez l\'application pour qu\'elle fonctionne au mieux pour votre famille.',
+      },
+      language: {
+        title: "Votre langue",
+        description: "Appuyez sur le drapeau pour changer la langue de l'application.",
       },
       sound: {
         title: 'Contrôle du son',
@@ -682,11 +688,11 @@ export default {
     screenTime: {
       intro: {
         title: 'Tableau de bord du temps d\'écran',
-        description: 'Suivez et gérez le temps d\'écran quotidien de votre enfant avec des limites appropriées à l\'âge.',
+        description: 'Suivez et gérez le temps d\'écran quotidien de votre enfant avec des limites appropriées à l\' - ge.',
       },
       ageBased: {
-        title: 'Limites basées sur l\'âge',
-        description: 'Définissez l\'âge de votre enfant pour obtenir automatiquement les limites de temps d\'écran recommandées par l\'OMS/AAP.',
+        title: 'Limites basées sur l\' - ge',
+        description: 'Définissez l\' - ge de votre enfant pour obtenir automatiquement les limites de temps d\'écran recommandées par l\'OMS/AAP.',
       },
       heatmap: {
         title: 'Activité hebdomadaire',
@@ -803,24 +809,24 @@ export default {
     },
     settings: {
       intro: {
-        title: 'Paramètres',
-        description: 'Personnalisez l\'application pour qu\'elle fonctionne au mieux pour votre famille.',
+        title: 'Réglages des parents',
+        description: 'Quelques choix qui adaptent l\'app à votre famille. Modifiez-les quand vous voulez.',
       },
-      login: {
-        title: 'Compte et synchronisation',
-        description: 'Connectez-vous pour enregistrer votre progression et synchroniser entre les appareils.',
-      },
-      language: {
-        title: 'Langue',
-        description: 'Choisissez votre langue préférée pour l\'interface de l\'application.',
-      },
-      accessibility: {
-        title: 'Accessibilité',
-        description: 'Ajustez la taille du texte et d\'autres paramètres pour une utilisation plus facile.',
+      textSize: {
+        title: 'Taille du texte',
+        description: 'Agrandissez ou réduisez les mots dans toute l\'app, selon la personne qui lit.',
       },
       screenTime: {
         title: 'Temps d\'écran',
-        description: 'Définissez des limites saines et suivez l\'utilisation quotidienne.',
+        description: 'Activez-le pour une limite quotidienne douce, adaptée à l\'âge de votre enfant. L\'anneau Screensafe montre où en est la journée. Désactivable à tout moment.',
+      },
+      reminders: {
+        title: 'Rappels intelligents',
+        description: 'Un petit signal discret aux heures que vous choisissez, pour les histoires, les émotions ou la musique.',
+      },
+      crashReports: {
+        title: 'Rapports de plantage',
+        description: 'Si quelque chose ne va pas, un rapport anonyme nous aide à le corriger. Désactivez-le ici si vous préférez.',
       },
     },
     musicMode: {
@@ -852,7 +858,7 @@ export default {
     storyModes: {
       welcome: {
         title: 'Trois Façons d\'Explorer !',
-        description: 'Chaque enfant apprend différemment. Choisissez l\'expérience d\'histoire qui éveille la curiosité de votre enfant -chacune développe des compétences essentielles grâce à la magie du jeu.',
+        description: 'Chaque enfant apprend différemment. Choisissez l\'expérience d\'histoire qui éveille la curiosité de votre enfant - chacune développe des compétences essentielles gr - ce à la magie du jeu.',
       },
       interactive: {
         title: 'Histoires Interactives',
@@ -860,7 +866,7 @@ export default {
       },
       musical: {
         title: 'Histoires Musicales',
-        description: 'Lisez, jouez et interprétez ! Les histoires musicales intègrent de véritables défis d\'instruments dans chaque aventure -votre enfant apprend le rythme, la mélodie et la coordination en suivant le récit. Les études confirment que l\'exposition précoce à la musique améliore la mémoire, le développement du langage et l\'expression émotionnelle.',
+        description: 'Lisez, jouez et interprétez ! Les histoires musicales intègrent de véritables défis d\'instruments dans chaque aventure - votre enfant apprend le rythme, la mélodie et la coordination en suivant le récit. Les études confirment que l\'exposition précoce à la musique améliore la mémoire, le développement du langage et l\'expression émotionnelle.',
       },
       jigsaw: {
         title: 'Histoires Puzzle',
@@ -906,7 +912,7 @@ export default {
       },
       ages: {
         title: 'Contenu Adapté à l\'Âge',
-        description: 'Les activités sont regroupées par tranche d\'âge. Utilisez le carrousel en haut pour filtrer le niveau de votre enfant.',
+        description: 'Les activités sont regroupées par tranche d\' - ge. Utilisez le carrousel en haut pour filtrer le niveau de votre enfant.',
       },
       together: {
         title: 'Apprenez Ensemble',
@@ -924,7 +930,7 @@ export default {
       },
       ages: {
         title: 'Contenu Adapté à l\'Âge',
-        description: 'Les activités sont regroupées par tranche d\'âge. Utilisez le carrousel en haut pour trouver le bon niveau pour votre enfant.',
+        description: 'Les activités sont regroupées par tranche d\' - ge. Utilisez le carrousel en haut pour trouver le bon niveau pour votre enfant.',
       },
       together: {
         title: 'Comptez Ensemble',
@@ -942,7 +948,7 @@ export default {
       },
       ages: {
         title: 'Contenu Adapté à l\'Âge',
-        description: 'Les activités sont regroupées par tranche d\'âge. Choisissez des activités adaptées au développement émotionnel de votre enfant.',
+        description: 'Les activités sont regroupées par tranche d\' - ge. Choisissez des activités adaptées au développement émotionnel de votre enfant.',
       },
       together: {
         title: 'Explorez Ensemble',
@@ -968,7 +974,7 @@ export default {
       },
       benefit: {
         title: 'Développement Musical',
-        description: 'Apprendre à jouer des chansons développe le rythme, la coordination, la mémoire et la concentration — tout cela grâce à la joie de la musique.',
+        description: 'Apprendre à jouer des chansons développe le rythme, la coordination, la mémoire et la concentration — tout cela gr - ce à la joie de la musique.',
       },
     },
     freeplay: {
@@ -1020,7 +1026,9 @@ export default {
       },
       navProfile: {
         title: 'Profil',
-        description: 'Favoris enregistrés, le mur de badges et les livres gardés sur cet appareil.',
+        description: 'Favoris enregistrés, le mur de badges et les livres gardés sur cet appareil. De temps en temps, il se transforme en symbole de connexion doré : cela signifie que personne n’est encore connecté, et un appui vous mène à la connexion.',
+        profileCaption: 'Votre profil',
+        loginCaption: 'Connectez-vous',
       },
     },
     progress: {
@@ -1066,7 +1074,15 @@ export default {
       },
       hero: {
         title: 'Modifier le profil',
-        description: 'Touche l\'image ou le nom pour changer l\'avatar, le nom ou l\'âge. Un adulte répond d\'abord à une petite question.',
+        description: 'Touche l\'image ou le nom pour changer l\'avatar, le nom ou l\' - ge. Un adulte répond d\'abord à une petite question.',
+      },
+      login: {
+        title: 'Se connecter',
+        description: "La connexion conserve les badges, la série et la page où chaque histoire s'est arrêtée, sur tous vos appareils.",
+      },
+      home: {
+        title: "Retour à l'accueil",
+        description: 'Accueil vous ramène au ciel nocturne quand vous avez terminé.',
       },
       tabs: {
         title: 'Enregistrés, Badges, Gérer',
@@ -1074,7 +1090,7 @@ export default {
       },
       settings: {
         title: 'Réglages des adultes',
-        description: 'Langue, temps d\'écran et ton compte, derrière la porte des adultes.',
+        description: 'Taille du texte, temps d\'écran, rappels et votre compte, derrière la porte des parents.',
       },
     },
   },

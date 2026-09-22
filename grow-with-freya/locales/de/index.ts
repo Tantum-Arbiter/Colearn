@@ -492,7 +492,7 @@ export default {
   account: {
     sleepingSun: 'Die schlafende Sonne',
     sleepingMoon: 'Der schlafende Mond',
-    title: 'Konto',
+    title: 'Einstellungen',
     profile: 'Profil',
     nickname: 'Spitzname',
     avatarType: 'Avatar-Typ',
@@ -506,6 +506,7 @@ export default {
     termsAndConditions: 'Nutzungsbedingungen',
     privacyPolicy: 'Datenschutz',
     selectLanguage: 'Sprache auswählen',
+    chooseLanguage: 'Wähle deine bevorzugte Sprache',
     guestMode: 'Gastmodus',
     createAccount: 'Erstelle ein Konto um deinen Fortschritt zu speichern',
     crashReports: 'Absturzberichte',
@@ -514,6 +515,7 @@ export default {
     deleteAccountHint: 'Konto und alle Daten dauerhaft löschen',
   },
   profile: {
+    signedIn: 'Angemeldet',
     enterNickname: 'Bitte gib einen Spitznamen ein',
     nicknameTooLong: 'Der Spitzname darf maximal 20 Zeichen lang sein',
     editTitle: 'Profil Bearbeiten',
@@ -654,7 +656,7 @@ export default {
       },
       freeplay: {
         title: 'Freies Spiel',
-        description: 'Spiele frei auf jedem Instrument -keine Regeln, nur Spaß! Experimentiere mit Klängen und kreiere deine eigene Musik.',
+        description: 'Spiele frei auf jedem Instrument - keine Regeln, nur Spaß! Experimentiere mit Klängen und kreiere deine eigene Musik.',
       },
       instruments: {
         title: 'Instrumente',
@@ -663,6 +665,10 @@ export default {
       settings: {
         title: 'Einstellungen',
         description: 'Passe die App an die Bedürfnisse deiner Familie an.',
+      },
+      language: {
+        title: 'Deine Sprache',
+        description: 'Tippe auf die Flagge, um die Sprache der App zu ändern.',
       },
       sound: {
         title: 'Tonsteuerung',
@@ -803,24 +809,24 @@ export default {
     },
     settings: {
       intro: {
-        title: 'Einstellungen',
-        description: 'Passe die App an deine Familie an.',
+        title: 'Einstellungen für Erwachsene',
+        description: 'Ein paar Entscheidungen, die die App an eure Familie anpassen. Ändere sie, wann immer du willst.',
       },
-      login: {
-        title: 'Konto & Synchronisation',
-        description: 'Melde dich an, um deinen Fortschritt zu speichern.',
-      },
-      language: {
-        title: 'Sprache',
-        description: 'Wähle deine bevorzugte Sprache.',
-      },
-      accessibility: {
-        title: 'Barrierefreiheit',
-        description: 'Passe die Textgröße an.',
+      textSize: {
+        title: 'Textgröße',
+        description: 'Mach die Wörter in der ganzen App größer oder kleiner, passend für alle, die lesen.',
       },
       screenTime: {
         title: 'Bildschirmzeit',
-        description: 'Setze gesunde Limits.',
+        description: 'Schalte sie ein für ein sanftes Tageslimit, das zum Alter deines Kindes passt. Der Screensafe-Ring zeigt, wie der Tag läuft. Jederzeit wieder ausschaltbar.',
+      },
+      reminders: {
+        title: 'Smarte Erinnerungen',
+        description: 'Ein leiser Hinweis zu den Zeiten, die du wählst, für Geschichten, Gefühle oder Musik.',
+      },
+      crashReports: {
+        title: 'Absturzberichte',
+        description: 'Wenn etwas schiefgeht, hilft uns ein anonymer Bericht, es zu beheben. Schalte ihn hier aus, wenn du das lieber möchtest.',
       },
     },
     musicMode: {
@@ -852,7 +858,7 @@ export default {
     storyModes: {
       welcome: {
         title: 'Drei Wege zum Entdecken!',
-        description: 'Jedes Kind lernt anders. Wähle das Geschichtenerlebnis, das die Neugier deines Kindes weckt -jedes einzelne baut wichtige Fähigkeiten durch die Magie des Spielens auf.',
+        description: 'Jedes Kind lernt anders. Wähle das Geschichtenerlebnis, das die Neugier deines Kindes weckt - jedes einzelne baut wichtige Fähigkeiten durch die Magie des Spielens auf.',
       },
       interactive: {
         title: 'Interaktive Geschichten',
@@ -860,7 +866,7 @@ export default {
       },
       musical: {
         title: 'Musikalische Geschichten',
-        description: 'Lesen, spielen und aufführen! Musikalische Geschichten verweben echte Instrumenten-Herausforderungen in jedes Abenteuer -dein Kind lernt Rhythmus, Melodie und Koordination, während es der Geschichte folgt. Studien bestätigen, dass frühe Musikerfahrung Gedächtnis, Sprachentwicklung und emotionalen Ausdruck fördert.',
+        description: 'Lesen, spielen und aufführen! Musikalische Geschichten verweben echte Instrumenten-Herausforderungen in jedes Abenteuer - dein Kind lernt Rhythmus, Melodie und Koordination, während es der Geschichte folgt. Studien bestätigen, dass frühe Musikerfahrung Gedächtnis, Sprachentwicklung und emotionalen Ausdruck fördert.',
       },
       jigsaw: {
         title: 'Puzzle-Geschichten',
@@ -1020,7 +1026,9 @@ export default {
       },
       navProfile: {
         title: 'Profil',
-        description: 'Gespeicherte Favoriten, die Abzeichenwand und die Bücher auf diesem Gerät.',
+        description: 'Gespeicherte Favoriten, die Abzeichenwand und die Bücher auf diesem Gerät. Ab und zu wird es zu einem goldenen Anmeldesymbol: Das heißt, noch niemand ist angemeldet, und ein Tipp darauf führt zur Anmeldung.',
+        profileCaption: 'Dein Profil',
+        loginCaption: 'Zeit zum Anmelden',
       },
     },
     progress: {
@@ -1068,13 +1076,21 @@ export default {
         title: 'Profil ändern',
         description: 'Tippe auf das Bild oder den Namen, um Avatar, Name oder Alter zu ändern. Ein Erwachsener beantwortet zuerst eine kurze Frage.',
       },
+      login: {
+        title: 'Anmelden',
+        description: 'Mit der Anmeldung bleiben Abzeichen, Serie und der Stand jeder Geschichte erhalten - auf allen Geräten, die ihr gemeinsam nutzt.',
+      },
+      home: {
+        title: 'Zurück nach Hause',
+        description: 'Über Start geht es zurück zum Nachthimmel, wenn ihr hier fertig seid.',
+      },
       tabs: {
         title: 'Gespeichert, Abzeichen, Verwalten',
         description: 'Favoriten, die du geherzt hast, die Abzeichenwand und die Bücher auf diesem Gerät, mit Platz, welche zu entfernen.',
       },
       settings: {
         title: 'Einstellungen für Erwachsene',
-        description: 'Sprache, Bildschirmzeit und dein Konto, hinter dem Erwachsenen-Tor.',
+        description: 'Textgröße, Bildschirmzeit, Erinnerungen und euer Konto, hinter dem Tor für Erwachsene.',
       },
     },
   },

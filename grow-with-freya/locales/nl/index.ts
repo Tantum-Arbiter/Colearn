@@ -492,7 +492,7 @@ export default {
   account: {
     sleepingSun: 'De slapende zon',
     sleepingMoon: 'De slapende maan',
-    title: 'Account',
+    title: 'Instellingen',
     profile: 'Profiel',
     nickname: 'Bijnaam',
     avatarType: 'Avatartype',
@@ -506,6 +506,7 @@ export default {
     termsAndConditions: 'Servicevoorwaarden',
     privacyPolicy: 'Privacybeleid',
     selectLanguage: 'Selecteer Taal',
+    chooseLanguage: 'Kies je voorkeurstaal',
     guestMode: 'Gastmodus',
     createAccount: 'Maak Account aan om Voortgang op te Slaan',
     crashReports: 'Crashrapporten',
@@ -514,6 +515,7 @@ export default {
     deleteAccountHint: 'Verwijder permanent je account en alle gegevens',
   },
   profile: {
+    signedIn: 'Ingelogd',
     enterNickname: 'Voer Bijnaam in',
     nicknameTooLong: 'Bijnaam moet 20 tekens of minder zijn',
     editTitle: 'Profiel Bewerken',
@@ -654,7 +656,7 @@ export default {
       },
       freeplay: {
         title: 'Vrij Spelen',
-        description: 'Speel vrij op elk instrument -geen regels, alleen plezier! Experimenteer met geluiden en maak je eigen muziek.',
+        description: 'Speel vrij op elk instrument - geen regels, alleen plezier! Experimenteer met geluiden en maak je eigen muziek.',
       },
       instruments: {
         title: 'Instrumenten',
@@ -663,6 +665,10 @@ export default {
       settings: {
         title: 'Instellingen',
         description: 'Pas de app aan zodat deze het beste voor je gezin werkt.',
+      },
+      language: {
+        title: 'Jouw taal',
+        description: 'Tik op de vlag om de taal van de app te wijzigen.',
       },
       sound: {
         title: 'Geluidsbediening',
@@ -803,24 +809,24 @@ export default {
     },
     settings: {
       intro: {
-        title: 'Instellingen',
-        description: 'Pas de app aan zodat deze het beste voor je gezin werkt.',
+        title: 'Instellingen voor volwassenen',
+        description: 'Een paar keuzes die de app afstemmen op jullie gezin. Pas ze aan wanneer je wilt.',
       },
-      login: {
-        title: 'Account en Synchronisatie',
-        description: 'Log in om voortgang op te slaan en tussen apparaten te synchroniseren.',
-      },
-      language: {
-        title: 'Taal',
-        description: 'Kies je voorkeurstaal voor de app-interface.',
-      },
-      accessibility: {
-        title: 'Toegankelijkheid',
-        description: 'Pas tekstgrootte en andere instellingen aan voor gemakkelijker gebruik.',
+      textSize: {
+        title: 'Tekstgrootte',
+        description: 'Maak de woorden in de hele app groter of kleiner, voor wie er ook leest.',
       },
       screenTime: {
         title: 'Schermtijd',
-        description: 'Stel gezonde limieten in en monitor dagelijks gebruik.',
+        description: 'Zet dit aan voor een zachte daglimiet die past bij de leeftijd van je kind. De Screensafe-ring laat zien hoe de dag gaat. Op elk moment weer uit te zetten.',
+      },
+      reminders: {
+        title: 'Slimme herinneringen',
+        description: 'Een rustig seintje op de tijden die jij kiest, voor verhalen, gevoelens of muziek.',
+      },
+      crashReports: {
+        title: 'Crashrapporten',
+        description: 'Als er iets misgaat, helpt een anoniem rapport ons het op te lossen. Zet het hier uit als je dat liever hebt.',
       },
     },
     musicMode: {
@@ -852,7 +858,7 @@ export default {
     storyModes: {
       welcome: {
         title: 'Drie Manieren om te Ontdekken!',
-        description: 'Elk kind leert anders. Kies de verhaalervaring die de nieuwsgierigheid van je kind prikkelt -elk bouwt essentiële vaardigheden op door de magie van het spelen.',
+        description: 'Elk kind leert anders. Kies de verhaalervaring die de nieuwsgierigheid van je kind prikkelt - elk bouwt essentiële vaardigheden op door de magie van het spelen.',
       },
       interactive: {
         title: 'Interactieve Verhalen',
@@ -860,7 +866,7 @@ export default {
       },
       musical: {
         title: 'Muzikale Verhalen',
-        description: 'Lees, speel en treed op! Muzikale verhalen verweven echte instrumentuitdagingen in elk avontuur -je kind leert ritme, melodie en coördinatie terwijl het het verhaal volgt. Studies bevestigen dat vroege blootstelling aan muziek het geheugen, de taalontwikkeling en emotionele expressie verbetert.',
+        description: 'Lees, speel en treed op! Muzikale verhalen verweven echte instrumentuitdagingen in elk avontuur - je kind leert ritme, melodie en coördinatie terwijl het het verhaal volgt. Studies bevestigen dat vroege blootstelling aan muziek het geheugen, de taalontwikkeling en emotionele expressie verbetert.',
       },
       jigsaw: {
         title: 'Puzzelverhalen',
@@ -1020,7 +1026,9 @@ export default {
       },
       navProfile: {
         title: 'Profiel',
-        description: 'Bewaarde favorieten, de badgemuur en de boeken op dit apparaat.',
+        description: 'Bewaarde favorieten, de badgemuur en de boeken op dit apparaat. Af en toe verandert het in een gouden inlogsymbool: dat betekent dat er nog niemand is ingelogd, en een tik brengt je naar het inloggen.',
+        profileCaption: 'Jouw profiel',
+        loginCaption: 'Tijd om in te loggen',
       },
     },
     progress: {
@@ -1068,13 +1076,21 @@ export default {
         title: 'Profiel aanpassen',
         description: 'Tik op de afbeelding of de naam om de avatar, naam of leeftijd te veranderen. Een volwassene beantwoordt eerst een korte vraag.',
       },
+      login: {
+        title: 'Inloggen',
+        description: 'Inloggen bewaart de badges, de reeks en waar elk verhaal gebleven is, op al jullie apparaten.',
+      },
+      home: {
+        title: 'Terug naar huis',
+        description: 'Home brengt je terug naar de nachtelijke hemel als jullie klaar zijn.',
+      },
       tabs: {
         title: 'Bewaard, Badges, Beheren',
         description: 'Favorieten met een hartje, de badgemuur en de boeken op dit apparaat, met ruimte om er te verwijderen.',
       },
       settings: {
         title: 'Instellingen voor volwassenen',
-        description: 'Taal, schermtijd en je account, achter het hek voor volwassenen.',
+        description: 'Tekstgrootte, schermtijd, herinneringen en je account, achter het hek voor volwassenen.',
       },
     },
   },

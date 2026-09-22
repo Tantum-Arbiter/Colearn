@@ -348,6 +348,7 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
   const learningButtonRef = useRef<View>(null);
   const musicControlRef = useRef<View>(null);
   const settingsButtonRef = useRef<View>(null);
+  const languageButtonRef = useRef<View>(null);
   const achievementCardRef = useRef<View>(null);
   const screenTimeRingRef = useRef<View>(null);
   const navLearnRef = useRef<View>(null);
@@ -380,6 +381,7 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
     search: navSearchRef,
     profile: navProfileRef,
     sound: musicControlRef,
+    language: languageButtonRef,
   }), []);
 
   const homeTourTargets = useMemo(() => ({
@@ -390,6 +392,7 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
     'screen_time_ring': screenTimeRingRef,
     'nav_search': navSearchRef,
     'nav_profile': navProfileRef,
+    'language_control': languageButtonRef,
     'sound_control': musicControlRef,
   }), []);
 

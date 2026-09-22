@@ -492,7 +492,7 @@ export default {
   account: {
     sleepingSun: '睡着的太阳',
     sleepingMoon: '睡着的月亮',
-    title: '账户',
+    title: '设置',
     profile: '个人资料',
     nickname: '昵称',
     avatarType: '头像类型',
@@ -506,6 +506,7 @@ export default {
     termsAndConditions: '服务条款',
     privacyPolicy: '隐私政策',
     selectLanguage: '选择语言',
+    chooseLanguage: '选择你想用的语言',
     guestMode: '访客模式',
     createAccount: '创建账户以保存进度',
     crashReports: '崩溃报告',
@@ -514,6 +515,7 @@ export default {
     deleteAccountHint: '永久删除您的账户和所有数据',
   },
   profile: {
+    signedIn: '已登录',
     enterNickname: '输入昵称',
     nicknameTooLong: '昵称必须为20个字符或更少',
     editTitle: '编辑个人资料',
@@ -664,6 +666,10 @@ export default {
         title: '设置',
         description: '自定义应用以最适合您的家庭。',
       },
+      language: {
+        title: '你的语言',
+        description: '点击国旗即可更改应用的语言。',
+      },
       sound: {
         title: '声音控制',
         description: '点击此处管理背景音乐和音效。',
@@ -803,24 +809,24 @@ export default {
     },
     settings: {
       intro: {
-        title: '设置',
-        description: '自定义应用以最适合您的家庭。',
+        title: '家长设置',
+        description: '几个让应用更适合你们家庭的选项，随时都可以更改。',
       },
-      login: {
-        title: '账户和同步',
-        description: '登录以保存进度并在设备间同步。',
-      },
-      language: {
-        title: '语言',
-        description: '为应用界面选择您的首选语言。',
-      },
-      accessibility: {
-        title: '无障碍',
-        description: '调整文本大小和其他设置以便于使用。',
+      textSize: {
+        title: '文字大小',
+        description: '放大或缩小整个应用里的文字，让正在读的人看得舒服。',
       },
       screenTime: {
         title: '屏幕时间',
-        description: '设置健康限制并监控每日使用。',
+        description: '开启后，会按孩子的年龄设定一个温和的每日上限。Screensafe 圆环显示今天的使用情况。随时可以关闭。',
+      },
+      reminders: {
+        title: '智能提醒',
+        description: '在你选择的时间，轻轻提醒你们讲故事、聊感受或玩音乐。',
+      },
+      crashReports: {
+        title: '崩溃报告',
+        description: '出现问题时，一份匿名报告能帮我们修复。如果你不想发送，可以在这里关闭。',
       },
     },
     musicMode: {
@@ -1020,7 +1026,9 @@ export default {
       },
       navProfile: {
         title: '个人页',
-        description: '已收藏的最爱、徽章墙，以及本设备上的书。',
+        description: '已收藏的最爱、徽章墙，以及本设备上的书。它偶尔会变成金色的登录标志：这表示还没有人登录，点一下就能去登录。',
+        profileCaption: '你的个人页',
+        loginCaption: '该登录了',
       },
     },
     progress: {
@@ -1068,13 +1076,21 @@ export default {
         title: '修改资料',
         description: '点头像或名字可更改头像、名字或年龄。需要大人先回答一个小问题。',
       },
+      login: {
+        title: '登录',
+        description: '登录后会保存徽章、连续天数和每个故事读到的位置，并同步到你们使用的所有设备。',
+      },
+      home: {
+        title: '回到首页',
+        description: '首页会带你们回到夜空，随时可以返回。',
+      },
       tabs: {
         title: '已保存、徽章、管理',
         description: '你点过心的最爱、徽章墙和本设备上的书，也可以移除任意一本。',
       },
       settings: {
         title: '家长设置',
-        description: '语言、屏幕时间和你的账户，在家长门后。',
+        description: '文字大小、屏幕时间、提醒和你的账户，都在家长门后。',
       },
     },
   },

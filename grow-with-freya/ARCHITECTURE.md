@@ -217,14 +217,46 @@ gold stars. It is the same night at any hour.
 
 At the top, exactly where home hangs its sun (`heroSunFrame`, shared with home), sleeps whichever of
 the sun and moon is off duty on home (`sleepingBody`): the moon by day, the sun by night
-(`components/account/sleeping-sky-face.tsx`). It breathes, snores a rising "zzZ", and a tap peeks
-its right eye open for a moment (`peekOpenness`) before it drifts off again; snoring pauses while
-it looks. The art is `home-sun-sleeping.webp` / `home-moon-sleeping.webp` -- the home faces with
-their painted eyes filled in -- and the eyes are drawn over them (`SLEEPING_EYES`) so they can open.
-Grown-ups has no Screen Time or Edit Profile buttons: the Screensafe ring on home opens Screen Time
-(`screen-time-glance.tsx`) and the Profile page's edit sheet edits the profile
-(`profile-edit-sheet.tsx`). Its screen time switches stay on the page, and its walkthrough has no
-avatar step.
+(`components/account/sleeping-sky-face.tsx`). It sleeps in earnest (operator request 2026-09-21):
+it breathes with a swell that is taller than it is wide, a small lift and a halo that brightens
+on the in-breath (`breathPose`), rocks a degree or two to each side (`swayDeg`), its lids
+flutter for a moment every few seconds, the second eye a beat behind the first
+(`flutterSqueeze`), the shut lids, shallow rounded arcs rather than the pointed Vs they began as, scrunch a little deeper and lift with the cheeks on each in-breath
+(`lidBreath`), and it snores a rising, wobbling, tilting "zzZ" (`zzzAt`). A tap wakes one eye:
+the right lid opens (`lidsOpenness`), the iris glances left, then right, then up at whoever
+tapped, blinks once, settles and the lid closes again (`gazeAt`, keyed in `WAKE`); the left eye
+sleeps on, and snoring pauses while it looks. The open eye is a round white with the iris
+clipped inside it, and it closes as a real eye does: an upper lid comes down from the top
+(a clipping window over the eyeball) and the shut line fades in only over the last third of
+the way (`shutLineOpacity`); the first version squashed the whole eye to a line about its
+centre with the line fading over the top of it, and let the iris slide out past the white. The art is `home-sun-sleeping-mouthless.webp` / `home-moon-sleeping-mouthless.webp`: the
+home faces with their painted eyes filled in, and the painted smile painted out too by
+`scripts/prepare-sleeping-faces.py`, which records where it was in `sleeping-faces.json`. The
+eyes and the mouth are drawn over the art (`SLEEPING_EYES`, `SLEEPING_MOUTH`) so the eye can
+open and the smile can go flat, hinged at its corners, while the face peeks (`mouthDepth`;
+operator request 2026-09-21).
+The page is titled Settings (operator request 2026-09-21; `account.title` now carries each
+locale's word for settings) and has no Screen Time, Edit Profile, language or login buttons: the
+Screensafe ring on home opens Screen Time (`screen-time-glance.tsx`), the Profile page's edit
+sheet edits the profile (`profile-edit-sheet.tsx`), the flag on home picks the language, and
+signing in and out lives on the Profile page under the name (`ProfileSessionCard`: for a guest, one wide gold Login button and nothing else, operator's choice for simplicity -- the shared `GoldButton` in `components/child-ui/gold-button.tsx`, a lemon-to-gold face with a white top sheen and a soft gold halo, which the home's Start my free trial pill wears too; once signed in, a quiet "Signed in · Logout" line), driven by
+`useSessionActions`, which both pages could share and which the layout answers by switching to
+the login view.
+For whoever needs to sign in (`needsSignIn` in `store/session.ts`: a guest, or a family whose
+session the app could not refresh, which the API client reports down `services/session-lapse.ts`
+into `sessionLapsed`, cleared when a login completes and never persisted), the profile slot in
+the journey bar says where that is: every eighteen seconds
+the child's face warps into a gold login glyph on a gold-tinted ring, holds three seconds and
+warps back (`ProfileNavAvatar`, `constants/login-cue.ts`; under Reduce Motion it cross-fades
+without the turn). The glyph is never smaller than the bar's other glyphs.
+The home tour's profile step carries a legend of both states (`ProfileSlotLegend`, the real
+slot held still on each with `hold`), the way the ring step shows the ring with time left and
+time up, and its copy explains what the gold symbol means (operator request 2026-09-21). Its screen time switches stay on the page, and its walkthrough has no
+avatar step. The walkthrough (`settings_walkthrough`) lights what the page holds, top to bottom:
+text size, the screen time switch, smart reminders and crash reports, each through a ref the
+page hands it, with the page's `useGuideScroller` lifting a low row clear of the bubble. It
+names no developer option and no sign-in, which is the Profile tour's (operator request
+2026-09-22).
 
 Languages are chosen in one place, `components/ui/language-picker.tsx`, opened from Grown-ups'
 Language strip and from the flag in home's top-left corner (`home-language-button`, a
@@ -298,21 +330,55 @@ view switch does not restart it.
   roots, stem, three leaves, wordmark) plus `layout.json`, each layer's frame and leaf pivot as fractions
   of the canvas. Every output pixel is a source pixel and the script fails if the layers do
   not recompose to the source exactly. Re-run it if the logo art changes.
-- **Native hand-off.** The script also writes `assets/images/splash-icon.png`: the *closed*
-  book alone on the full canvas: the right page with the left cover lying mirrored over it
-  (the art's symmetry makes them the same shape), centred, plus a spine stroke of the art's
-  own line weight -- the one thing in it that is not a source pixel, recorded in
-  `layout.json` as `spine`. The native launch screen (`expo-splash-screen` in
-  `app.config.js`, mirrored in `app.json`) shows it at `NATIVE_SPLASH_IMAGE_WIDTH` on
-  `NIGHT_DEEP`, and `AnimatedLogo` opens on the same closed book at the same size, so the first
-  animated frame lands on the launch image. On a tablet the logo starts at that size and
-  eases up to its own. A test holds the config and the constant together. Changing either
-  needs a native rebuild to be seen.
-- **Choreography lives in `constants/splash-logo.ts`**, as pure, tested functions: the book
-  opens first: the cover swings over the spine (`scaleX` from -1 to 1 about it -- no 3D
-  transform, which breaks clipping on iOS) while the book slides from centred-shut to
-  centred-open. The spine stroke stays solid until the cover is edge-on over it and fades
-  just after; fading it earlier shows a grey bar beside the moving cover. Then the stem rises out of it and the roots spread down into it (clipped reveals), each leaf opens
+- **The shut book is drawn by a pen before it is shown.** The script also traces the
+  outline of the shut book: the right page with the left cover lying mirrored over it (the
+  art's symmetry makes them the same shape) plus a spine stroke of the art's own line
+  weight, recorded in `layout.json` as `spine` and drawn by the app only while the book is
+  shut. The centreline of that shape is skeletonised and traced into two pen strokes,
+  `layout.json` -> `outline`: `cover` starts at the left end of the top edge (the art leaves
+  a gap there for the stem), runs along the top, down the far edge, under the pages and up
+  the spine to just across that gap; `page`, the inner page line, forks off the cover
+  stroke where the far edge turns under (`forkAt` along the cover) and runs back to the
+  spine. Every point is on the art. `AnimatedLogo` draws them as two SVG paths in the
+  art's line weight (`strokeDashoffset` driven from one shared `drawn` value, so the page
+  line runs at the pen's own speed from the fork; the dash gap is two caps longer than the
+  line and the undrawn line is hidden a cap beyond its start, or round caps leave a dot at
+  the start and the tip before the pen moves), then inks the book art in over the line
+  (`ink`) before the book opens. The line stays solid while the art fades in over it and is
+  dropped only once the art covers it: cross-fading two coincident white layers dips to
+  three-quarter brightness half way, which read as the book going translucent.
+- **Native hand-off.** The script writes `assets/images/splash-icon.png` as a clear canvas:
+  the animation opens on an empty sky and draws the book onto it, so the launch image shows
+  nothing but the sky. The native launch screen (`expo-splash-screen` in `app.config.js`,
+  mirrored in `app.json`) sizes it at `NATIVE_SPLASH_IMAGE_WIDTH` on `NIGHT_DEEP`; on a
+  tablet the logo starts at that size and eases up to its own. A test holds the config and
+  the constant together. Changing either needs a native rebuild to be seen.
+- **Choreography lives in `constants/splash-logo.ts`**, as pure, tested functions: the pen
+  draws the shut book, the art is inked in, then the book opens like a real one seen from
+  above: the spine stays put at the logo's centre (the shut book lies to its right) and the
+  cover turns on it, its free edge arching up over the spine and down onto the left, the
+  book sweeping out to full width. That is one affine map on the cover, `scaleX` of
+  cos(turn) after a `skewY` of atan(`COVER_ARCH` x sin(turn)): the hinge never moves and
+  every point lifts in proportion to its distance from the spine, highest edge-on. It is
+  written as those two primitives, not a `matrix`: Reanimated's animated styles drop a
+  `matrix` transform silently (only its CSS path handles one), and the skew goes before the
+  scale so the shear stays finite when the scale passes through zero. Two earlier
+  tries read wrong (operator, 2026-09-21): a flat `scaleX` flip with the book sliding to
+  stay centred looked like the cover sliding out, and a front-on `perspective` `rotateY` kept
+  the free edge on a flat path. No 3D transform is used.
+  The spine stroke stays solid until the cover is edge-on over it and fades
+  just after; fading it earlier shows a grey bar beside the moving cover. The roots start
+  spreading down into the book the moment the cover passes edge-on over the spine (operator
+  request 2026-09-21; `ROOTS.delayMs` is derived from the book's timing and `growEaseInverse`,
+  so retiming the fold moves them with it). **They grow strand by strand** (operator request,
+  same day): the script skeletonises the roots art into a tree of strands rooted at the
+  trunk (`layout.json` -> `roots`, each strand with its `parent`), and the app draws each as
+  a pen stroke off one shared clock. A strand starts only when its parent has reached the
+  fork, siblings leave the fork at different times (the longest first, then
+  `ROOT_BRANCH_STAGGER_MS` apart), the pen moves at one speed (`ROOT_PEN_MS_PER_CANVAS`) with
+  a little ease-off towards each tip, and once the last tip is reached the roots art is inked
+  in over the strokes the same way as the book. The stem rises out of the open book (a clipped
+  reveal), each leaf opens
   about its neck at the moment `leafUnfurlDelayMs` says the stem tip reaches it (the inverse
   of `growEase`), then the wordmark and tagline arrive. The leaves sway afterwards. Helpers
   called from `useAnimatedStyle` carry the `'worklet'` directive.
@@ -329,15 +395,17 @@ view switch does not restart it.
   star.
 - **The finished logo holds for two seconds** (operator decision 2026-09-18).
   `SPLASH_TIMELINE.exitAtMs` is derived, not typed in: `logoCompleteMs` (the latest entrance
-  to finish) plus `holdMs`. Retiming any entrance moves the exit with it. The hold is
+  to finish) plus `holdMs`. Retiming any entrance moves the exit with it: the outline
+  stage (operator request 2026-09-21) pushed every later entrance back by a second, and the
+  exit with them. The hold is
   what is seen, not just what is timed: readying the app only when the hold ended left the
   logo up for the hold *plus* the destination's mount (auth check and main menu, ~0.6 s in a
   dev build, measured 0.76 s late on device). So the app is readied `mountAllowanceMs` early
   and the fade waits for whichever is later -- the end of the hold or the page being ready;
   a page that is ready early never cuts the hold short. The allowance stays inside the hold,
   so nothing mounts behind an unfinished logo. A test caps
-  splash-gone at 4.9 s (hold, hand-off beat and fade) so the hold is the only thing that made it
-  longer.
+  splash-gone at 5.9 s (outline, hold, hand-off beat and fade) so the hold is the only thing that
+  made it longer.
 
 ## Home (returning-user dashboard)
 
@@ -352,6 +420,38 @@ useChildHomeData()  →  ChildHomeData + WelcomeCopy + celebrateAchievement
      · ContinueCard in a HeroCardFrame · JourneyCard (4 stat tiles) · AchievementCard (next badge, View achievements beside the stars) · Find a new story pill
      Sized to fit an iPhone 16 Pro without scrolling; the ScrollView only kicks in on shorter phones.
 ```
+
+On a tall phone (portrait, 840 pt or more) the sun grows by two fifths and the greeting and
+cards sit 24 pt lower, then are raised a twentieth of the screen (operator, 2026-09-21), net about
+20 pt higher than the plain layout (`heroSunScale`, `heroContentDrop`; operator request 2026-09-21): the plain
+layout left about 140 pt of empty sky between the plan button and the bar on an iPhone 16
+Pro, and a phone-sized sun read as small over that much canvas. The stars keep their
+phone size (`starBasis`), and a short phone keeps the plain layout, which it needs to fit.
+
+The sub-pages' labelled Home and Grown-ups pills keep the same see-through `SURFACE_PRIMARY`
+as the round speaker on home (a solid fill was tried and rejected, 2026-09-21). The language
+picker (`components/ui/language-picker.tsx`, `LANGUAGE_PICKER`) is a deep-blue gradient panel
+with a lit rim, a title and subtitle, a round close button, and glass rows with a chevron; the
+language in use is a bright blue row with a glowing rim and a white check badge.
+
+The greeting is set on an arc (`ArchedGreeting`, `constants/arched-greeting.ts`; operator
+request 2026-09-21): SVG text on a path bowing up over the cards, the subtitle on a smaller
+arc about the same centre, a blurred copy behind the title for its glow, the block read out
+as one heading. The type went up to 34/18 and the block stands 24 pt clear of the first card.
+SVG text goes through the same `RCTFont` as ordinary text, so it keeps the rounded face.
+Text on a path is dropped past the path's ends, with no ellipsis, so the fit is measured, not
+guessed: `textAdvance` sums per-letter advances taken from SF Pro Rounded at the two weights
+(accents measured as their base letter, CJK at an em). A title that would shrink below
+`wrapBelow` breaks onto a second arc a line lower about the same centre, preferring the break
+after a comma, so the name gets a line of its own (`planGreetingTitle`); nothing is ever set
+larger than its arc holds. The flat half-em it replaced cut the W off "Welcome back, wdwdsd!"
+(2026-09-22). A test holds every locale's greeting, with a name at `MAX_NICKNAME_LENGTH` of the
+widest letter, to two lines at no less than `minScale` on a 375 pt phone.
+The language button's flag fills the whole button: `FlagArt` shows the real flag from
+`country-flag-icons` (MIT; its square `1x1` SVGs, imported as components through the SVG
+transformer) inside a circular clip just inside the rim. An emoji cannot do it: the glyph is
+a bitmap that sits in the middle of its box and blurs when scaled. Latin, with no country,
+keeps its emoji; the operator asked for real flags, not ones drawn here (2026-09-21).
 
 The hero sky is layers, never one flattened picture. `buildHeroSky(width, sunFrame)` places
 everything from the sun's own frame (offsets in sun-sizes for the near stars, fractions of the
@@ -385,6 +485,10 @@ the bloom, reports press state so the `CardArrowButton` can dip and glow, and ho
 Return-visit states, in priority order: new achievement → story completed → long absence
 (7+ days) → active streak (2+ days) → first visit today → normal. Messages are always
 encouraging; a lapsed streak is shown as an invitation to start one, never as a loss.
+
+The Screensafe mark inside the ring (`ScreenTimeGuard`) is the shield-and-clock artwork
+`screensafe-shield.png`, cut white-on-alpha from the operator's icon (2026-09-21) and tinted by the
+ring to its state; it replaced a hand-drawn SVG of the same idea.
 
 Motion budget: background stars twinkle, the hero stars and sparkles breathe (opacity 0.75–1,
 scale to 1.04, 2.5–6 s each, never in step), clouds drift 2–6 px over 9–15 s, the shooting star
@@ -518,6 +622,12 @@ highlight sits where the bubble or the perch would cover it, `placeGuideBubble` 
 which guides have been seen is persisted by `contexts/owl-guide-context.tsx` under the old
 `@tutorial_state` key, migrating the previous shape on load. A guide that has been seen can be
 replayed from a screen's own menu with `replay`, which does not mark it again.
+
+The bar is glass, like the round header buttons (proof of concept, operator request
+2026-09-22): a `BlurView` and a top-lit sheen over a light blue tint in place of the solid
+`SURFACE_NAV`. The Screensafe ring in it draws at full strength (`arcOpacity`) in the same
+colour as the glyphs beside it, white when it is the place chosen; at the home scene's own
+0.55 on top of the glyphs' dimmer white it read as switched off.
 
 The bottom bar is explained once, on the home page, where it is first seen: `main_menu_tour`
 walks the two cards, then the bar left to right (Learn, Progress, Screensafe, Search, Profile), and

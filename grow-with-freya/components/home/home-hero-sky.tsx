@@ -1,5 +1,6 @@
 import React, { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
+import type { SharedValue } from 'react-native-reanimated';
 import type { TimeOfDay } from '@/constants/home-scene';
 import { buildHeroSky, heroMotionMode, starBasis, sunFrame } from '@/constants/home-sky';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
@@ -18,6 +19,8 @@ export interface HomeHeroSkyProps {
   /** Grows the sun (and everything scaled off it -- the halo, the stars)
    *  beyond its ordinary share of the shorter axis. See `sunFrame`. */
   sizeScale?: number;
+  /** The page's scroll offset, which the sun rides up with. */
+  lift?: SharedValue<number>;
   testID?: string;
 }
 
@@ -28,6 +31,7 @@ export const HomeHeroSky = memo(function HomeHeroSky({
   timeOfDay,
   active = true,
   sizeScale = 1,
+  lift,
   testID = 'home-hero-sky',
 }: HomeHeroSkyProps) {
   const reduceMotion = useReducedMotion();
@@ -42,7 +46,7 @@ export const HomeHeroSky = memo(function HomeHeroSky({
         <HeroSkyBackground halo={layout.halo} timeOfDay={timeOfDay} />
         <HeroStarsLayer stars={layout.stars} mode={mode} />
       </View>
-      <HeroSunContainer sun={sun} timeOfDay={timeOfDay} mode={mode} />
+      <HeroSunContainer sun={sun} timeOfDay={timeOfDay} mode={mode} lift={lift} />
     </>
   );
 });
