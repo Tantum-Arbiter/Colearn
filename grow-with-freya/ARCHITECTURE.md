@@ -278,6 +278,24 @@ Every slide still shows at most one long frame in the slow tail of the ease-out 
 simulator, with the JS thread idle; it was not reproducible to a cause and is not visible as
 a stutter.
 
+### No line between two sliding pages
+
+Two pages meeting mid-slide once showed a thin pale line where they met. It came from two causes,
+found frame by frame on the iPad and the iPhone:
+
+- **Fractional positions.** Each page sat wherever the ease-out put it, often part way into a
+  device pixel, so the edge rows were only partly painted and whatever lay behind showed through.
+  `EnhancedPageTransition` now rounds every page's `translateY` to the device pixel
+  (`snapToPixel` in `constants/page-slide.ts`, at `PixelRatio.get()`).
+- **What lay behind.** The slider stood on a teal gradient that no page uses. It now stands on
+  `NIGHT_VOID` (`page-transition-backdrop`), the colour at the foot of every page.
+
+Even rounded, two pages still landed a device pixel apart on a few frames of a slide. Each page
+therefore reaches one device pixel below its own box (`bottom: -1 / PixelRatio.get()`), so the
+page above always covers the pixel where the next one begins. After the fix, recordings of the
+main menu to the library, Profile and Grown-ups had no line in any frame (iPad: 6 slides, 270
+moving frames; iPhone: 5 slides, 347 frames).
+
 ### Grown-ups lies below the Profile page
 
 Where every page rests while another shows is one function, `pageOffset` in

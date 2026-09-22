@@ -7,10 +7,11 @@
  */
 
 import React from 'react';
-import { Text } from 'react-native';
+import { PixelRatio, StyleSheet, Text } from 'react-native';
 import { act, render } from '@testing-library/react-native';
 import { useSharedValue, withTiming } from 'react-native-reanimated';
 import { COLD_PAGE_FRAMES, EnhancedPageTransition } from '@/components/ui/enhanced-page-transition';
+import { NIGHT_VOID } from '@/constants/night-palette';
 import { getScreenDimensions } from '@/components/main-menu/constants';
 
 jest.mock('@/components/main-menu/constants', () => ({
@@ -52,6 +53,22 @@ describe('EnhancedPageTransition', () => {
 
   afterEach(() => {
     jest.useRealTimers();
+  });
+
+  it('should sit the pages on the night navy, so nothing pale can show between two of them', () => {
+    const view = render(<EnhancedPageTransition currentPage="main" pages={PAGES} duration={800} />);
+
+    const backdrop = view.UNSAFE_root.findAll((n: any) => n.props.testID === 'page-transition-backdrop')[0];
+
+    expect(StyleSheet.flatten(backdrop.props.style).backgroundColor).toBe(NIGHT_VOID);
+  });
+
+  it('should let each page reach a device pixel below its box, so two pages rounded a pixel apart still meet', () => {
+    const view = render(<EnhancedPageTransition currentPage="main" pages={PAGES} duration={800} />);
+
+    const page = view.UNSAFE_root.findAll((n: any) => n.props.testID === 'page-transition-page-main' && typeof n.type !== 'string')[0];
+
+    expect(StyleSheet.flatten(page.props.style)).toMatchObject({ top: 0, bottom: -1 / PixelRatio.get() });
   });
 
   it('should let touches through while nothing is sliding', () => {

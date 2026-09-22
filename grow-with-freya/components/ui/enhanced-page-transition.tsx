@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState, memo } from 'react';
-import { View, StyleSheet, Text, Dimensions } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { View, StyleSheet, Text, Dimensions, PixelRatio } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -10,9 +9,11 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { getScreenDimensions } from '@/components/main-menu/constants';
-import { crossesView, pageOffset } from '@/constants/page-slide';
+import { crossesView, pageOffset, snapToPixel } from '@/constants/page-slide';
+import { NIGHT_VOID } from '@/constants/night-palette';
 
 export const COLD_PAGE_FRAMES = 2;
+const PIXEL_SCALE = PixelRatio.get();
 const ALWAYS_MOUNTED = 'main';
 const NO_PREWARM: readonly string[] = [];
 
@@ -41,12 +42,13 @@ const AnimatedPage: React.FC<AnimatedPageProps> = memo(function AnimatedPage({
 }) {
   // Normal slide animation
   const slideStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: animationValue.value }],
+    transform: [{ translateY: snapToPixel(animationValue.value, PIXEL_SCALE) }],
   }));
 
   return (
     <Animated.View
       key={pageKey}
+      testID={`page-transition-page-${pageKey}`}
       style={[
         styles.page,
         slideStyle,
@@ -213,10 +215,7 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
   });
 
   return (
-    <LinearGradient
-      colors={['#1E3A8A', '#3B82F6', '#4ECDC4']}
-      style={styles.container}
-    >
+    <View testID="page-transition-backdrop" style={styles.container}>
       {Object.entries(pages).map(([pageKey, pageComponent]) => {
         // Only render pages that have animation values, and only the ones in play:
         // home, the page showing, the page it is sliding away from, and the last
@@ -243,7 +242,7 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
         style={styles.touchGuard}
         pointerEvents={isTransitioning ? 'auto' : 'none'}
       />
-    </LinearGradient>
+    </View>
   );
 };
 
@@ -251,13 +250,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     overflow: 'hidden',
+    backgroundColor: NIGHT_VOID,
   },
   page: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    bottom: 0,
+    bottom: -1 / PIXEL_SCALE,
   },
   touchGuard: {
     position: 'absolute',

@@ -13,3 +13,8 @@ export function crossesView(from: number, to: number): boolean {
 export function accountReturnPage<Page extends string>(openedFrom: Page): Page | 'main' {
   return openedFrom === 'account' ? 'main' : openedFrom;
 }
+
+export function snapToPixel(value: number, scale: number): number {
+  'worklet';
+  return Math.round(value * scale) / scale + 0;
+}

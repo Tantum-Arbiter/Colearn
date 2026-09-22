@@ -4,7 +4,7 @@
  * lifts away above.
  */
 
-import { accountReturnPage, crossesView, pageOffset } from '@/constants/page-slide';
+import { accountReturnPage, crossesView, pageOffset, snapToPixel } from '@/constants/page-slide';
 
 const HEIGHT = 800;
 
@@ -69,5 +69,26 @@ describe('accountReturnPage', () => {
 
   it('goes home if it somehow has nothing else to return to', () => {
     expect(accountReturnPage('account')).toBe('main');
+  });
+});
+
+// a page resting between device pixels leaves the row where two pages meet
+// only partly covered by each, and whatever lies behind them shows through as a
+// pale line (operator 2026-09-22, "a weird line separating pages")
+describe('snapToPixel', () => {
+  it.each([
+    [123.4, 3, 123 + 1 / 3],
+    [-0.1, 3, 0],
+    [10.26, 2, 10.5],
+    [-597.1, 3, -597],
+  ])('puts %p on the nearest device pixel at %px scale', (value, scale, snapped) => {
+    expect(snapToPixel(value, scale)).toBeCloseTo(snapped, 9);
+  });
+
+  it('keeps two pages a screen apart flush, pixel for pixel', () => {
+    const height = 1194;
+    for (const shift of [0.1, 0.17, 0.5, 0.83, 123.45]) {
+      expect(snapToPixel(shift, 3) - snapToPixel(shift - height, 3)).toBeCloseTo(height, 9);
+    }
   });
 });
