@@ -52,7 +52,7 @@ same branch -newer runs cancel in-progress ones.
 
 ### 1. grow-with-freya-ci-cd.yml -Frontend CI/CD
 
-**Triggers:** Push to `main`/`develop` or PR targeting those branches, when `grow-with-freya/**` changes.
+**Triggers:** Push to `main`/`mvp`/`develop` or a PR targeting those branches, when `grow-with-freya/**` or the workflow itself changes. Every file under any `__tests__/` directory is picked up by `jest.config.js`'s `testMatch`, so new suites run without touching the workflow.
 
 **Jobs (5, with dependencies):**
 
