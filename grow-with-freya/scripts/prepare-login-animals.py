@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""Cut the login hero painting into layers the app can sway, and cut a second,
-beaming painting of the same scene into matching layers for the expressions.
+"""Cut the login hero painting into layers the app can sway.
 
 The hero (assets/images/login/hero-animals.webp) is one painting: a bear, a
 bunny and a fox behind an open book, under a dome of stars, with mist at their
@@ -17,18 +16,10 @@ is the painting and a lean shows only the glow going on), gives the book
 everything below its top edge (the glowing spine included), and records where
 everything sat.
 
-Expressions work like the sun and moon on home: a second painting of the same
-scene with only the faces changed (hero-animals-laughing.webp, the same size,
-the animals beaming with their eyes happily closed) is cut with the very same
-masks and frames, so the app can cross-fade each animal between its resting and
-laughing self without anything else moving. When that painting is absent the
-resting layers are cut alone and the app only sways.
-
 Outputs, under assets/images/login/:
   hero-backdrop.webp            the dome, stars, book and mist with no animals
   hero-foreground.webp          the book and the mist, to draw over the animals
-  hero-<animal>.webp            each animal on its own, resting
-  hero-<animal>-laughing.webp   each animal on its own, beaming (when supplied)
+  hero-<animal>.webp            each animal on its own
   hero-animals.json             the canvas and each layer's frame, as fractions
 and constants/login-hero-art.ts, the module the app requires the layers from.
 
@@ -53,7 +44,6 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ART_DIR = os.path.join(ROOT, 'assets/images/login')
 ART_MODULE = os.path.join(ROOT, 'constants/login-hero-art.ts')
 SOURCE = 'hero-animals.webp'
-LAUGHING_SOURCE = 'hero-animals-laughing.webp'
 CANVAS = (900, 596)
 
 DOME, BEAR, BUNNY, FOX, BOOK, MIST = 1, 2, 3, 4, 5, 6
@@ -248,26 +238,17 @@ def load_painting(name):
     return pixels
 
 
-def write_art_module(names, laughing):
+def write_art_module(names):
     lines = [
         "import type { HeroAnimal } from './login-hero';",
-        '',
-        'export interface HeroAnimalFaces {',
-        '  resting: number;',
-        '  laughing?: number;',
-        '}',
         '',
         "export const HERO_BACKDROP_ART = require('@/assets/images/login/hero-backdrop.webp');",
         "export const HERO_FOREGROUND_ART = require('@/assets/images/login/hero-foreground.webp');",
         '',
-        'export const HERO_ANIMAL_ART: Record<HeroAnimal, HeroAnimalFaces> = {',
+        'export const HERO_ANIMAL_ART: Record<HeroAnimal, number> = {',
     ]
     for name in names:
-        lines.append(f'  {name}: {{')
-        lines.append(f"    resting: require('@/assets/images/login/hero-{name}.webp'),")
-        if laughing:
-            lines.append(f"    laughing: require('@/assets/images/login/hero-{name}-laughing.webp'),")
-        lines.append('  },')
+        lines.append(f"  {name}: require('@/assets/images/login/hero-{name}.webp'),")
     lines.append('};')
     with open(ART_MODULE, 'w') as handle:
         handle.write('\n'.join(lines) + '\n')
@@ -282,8 +263,6 @@ def main():
         fail(__doc__)
 
     pixels = load_painting(SOURCE)
-    laughing_path = os.path.join(ART_DIR, LAUGHING_SOURCE)
-    laughing = load_painting(LAUGHING_SOURCE) if os.path.exists(laughing_path) else None
 
     labels = walk_labels(pixels)
     animals, foreground = split_regions(labels, pixels[..., 3])
@@ -301,24 +280,20 @@ def main():
     record = {
         'canvas': {'width': CANVAS[0], 'height': CANVAS[1]},
         'foreground': frame_json(front_frame),
-        'laughing': laughing is not None,
         'animals': {},
     }
     for name, mask in animals.items():
         layer, frame = cut_layer(pixels, mask, LAYER_MARGIN_PX, HALO_PX[name])
         save(layer, f'hero-{name}.webp')
-        if laughing is not None:
-            beaming, _ = cut_layer(laughing, mask, LAYER_MARGIN_PX, HALO_PX[name])
-            save(beaming, f'hero-{name}-laughing.webp')
         record['animals'][name] = {'frame': frame_json(frame)}
-        print(f"{name:5s} frame {record['animals'][name]['frame']}" + (' + laughing' if laughing is not None else ''))
+        print(f"{name:5s} frame {record['animals'][name]['frame']}")
         if debug_dir:
             on_green(layer).save(os.path.join(debug_dir, f'layer-{name}.png'))
 
     with open(os.path.join(ART_DIR, 'hero-animals.json'), 'w') as handle:
         json.dump(record, handle, indent=2)
         handle.write('\n')
-    write_art_module(list(animals.keys()), laughing is not None)
+    write_art_module(list(animals.keys()))
 
     if debug_dir:
         palette = np.array([[0, 0, 0], [40, 20, 80], [200, 120, 40], [190, 160, 230], [240, 110, 30], [240, 230, 140], [120, 120, 160]])

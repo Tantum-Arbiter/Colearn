@@ -15,13 +15,10 @@ import {
   HERO_FRAMES,
   HERO_LOOP_MS,
   heroFrame,
-  laughAmount,
   swayPose,
   type HeroAnimal,
 } from '@/constants/login-hero';
 import { HERO_ANIMAL_ART, HERO_BACKDROP_ART, HERO_FOREGROUND_ART } from '@/constants/login-hero-art';
-
-const AnimatedImage = Animated.createAnimatedComponent(Image);
 
 interface AnimalLayerProps {
   animal: HeroAnimal;
@@ -32,7 +29,6 @@ interface AnimalLayerProps {
 
 function AnimalLayer({ animal, width, height, clock }: AnimalLayerProps) {
   const frame = heroFrame(HERO_FRAMES[animal], width, height);
-  const faces = HERO_ANIMAL_ART[animal];
   const size = { width: frame.width, height: frame.height };
 
   const sway = useAnimatedStyle(() => {
@@ -41,24 +37,14 @@ function AnimalLayer({ animal, width, height, clock }: AnimalLayerProps) {
     return { transform: [{ rotate: `${Math.round(pose.rotateDeg * 1000) / 1000}deg` }, { scaleY: pose.scaleY }] };
   });
 
-  const laughing = useAnimatedStyle(() => ({ opacity: laughAmount(clock.value, animal) }));
-
   return (
     <Animated.View testID={`login-hero-${animal}`} pointerEvents="none" style={[styles.part, styles.hingedAtBottom, frame, sway]}>
       <Image
-        testID={`login-hero-${animal}-resting`}
-        source={faces.resting}
+        testID={`login-hero-${animal}-art`}
+        source={HERO_ANIMAL_ART[animal]}
         style={[styles.part, styles.atOrigin, size]}
         resizeMode="stretch"
       />
-      {faces.laughing ? (
-        <AnimatedImage
-          testID={`login-hero-${animal}-laughing`}
-          source={faces.laughing}
-          style={[styles.part, styles.atOrigin, size, laughing]}
-          resizeMode="stretch"
-        />
-      ) : null}
     </Animated.View>
   );
 }

@@ -1,7 +1,6 @@
 /**
  * The login hero: the dome and stars behind, a bear, a bunny and a fox each on
- * their own layer swaying about their feet, each with a beaming self to
- * cross-fade into when that art exists, and the open book in front.
+ * their own layer swaying about their feet, and the open book in front.
  */
 
 import React from 'react';
@@ -65,31 +64,12 @@ describe('LoginHero', () => {
     expect(style.transformOrigin).toBe('bottom');
   });
 
-  it.each(HERO_ANIMALS)('%s shows its resting self filling its frame', (animal) => {
-    const resting = byTestId(renderHero(), `login-hero-${animal}-resting`)[0];
+  it.each(HERO_ANIMALS)('%s shows its painted layer filling its frame', (animal) => {
+    const art = byTestId(renderHero(), `login-hero-${animal}-art`)[0];
     const frame = heroFrame(HERO_FRAMES[animal], WIDTH, HEIGHT);
 
-    expect(resting.props.source).toBe(HERO_ANIMAL_ART[animal].resting);
-    expect(styleOf(resting)).toMatchObject({ left: 0, top: 0, width: frame.width, height: frame.height });
-  });
-
-  it.each(HERO_ANIMALS)('%s has its beaming self over the resting one exactly when that art exists', (animal) => {
-    const view = renderHero();
-    const laughing = byTestId(view, `login-hero-${animal}-laughing`);
-    const art = HERO_ANIMAL_ART[animal].laughing;
-
-    if (art === undefined) {
-      expect(laughing).toHaveLength(0);
-      return;
-    }
-    const frame = heroFrame(HERO_FRAMES[animal], WIDTH, HEIGHT);
-
-    expect(laughing[0].props.source).toBe(art);
-    expect(styleOf(laughing[0])).toMatchObject({ left: 0, top: 0, width: frame.width, height: frame.height });
-    const layer = byTestId(view, `login-hero-${animal}`)[0];
-    const faces = layer.findAll((node: any) => /login-hero-.*-(resting|laughing)$/.test(node.props.testID ?? '') && typeof node.type !== 'string');
-
-    expect(faces.map((node: any) => node.props.testID)).toEqual([`login-hero-${animal}-resting`, `login-hero-${animal}-laughing`]);
+    expect(art.props.source).toBe(HERO_ANIMAL_ART[animal]);
+    expect(styleOf(art)).toMatchObject({ left: 0, top: 0, width: frame.width, height: frame.height });
   });
 
   it('runs one clock round the loop for as long as it is on screen', () => {
