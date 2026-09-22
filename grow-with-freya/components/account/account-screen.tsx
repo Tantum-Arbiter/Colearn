@@ -469,8 +469,14 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
                 onLayout={guideScroller.onLayout}
                 onContentSizeChange={guideScroller.onContentSizeChange}
                 scrollEventThrottle={16}
+                bounces={false}
+                overScrollMode="never"
                 style={styles.scrollView}
-                contentContainerStyle={[styles.content, { paddingBottom: Dimensions.get('window').height * 0.2 + guideScroller.reserve }, isTablet && { alignItems: 'center' }]}
+                // no bar sits at the foot of this page, so it needs only the
+                // home indicator and a breath of margin under its last row; a
+                // fifth of the screen here let every row be thrown up out of
+                // view over an empty lower third
+                contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + PAGE_FOOT_MARGIN + guideScroller.reserve }, isTablet && { alignItems: 'center' }]}
               >
                 <View testID="account-sky" style={[styles.sky, { height: heroContentTop(insets.top, sun.size), paddingTop: sun.top }]}>
                   <SleepingSkyFace size={sun.size} timeOfDay={timeOfDay} animated={skyAnimated} />
@@ -755,6 +761,8 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
     </View>
   );
 }
+
+const PAGE_FOOT_MARGIN = 24;
 
 const styles = StyleSheet.create({
   container: {

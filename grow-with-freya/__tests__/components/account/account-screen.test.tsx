@@ -583,3 +583,33 @@ describe('AccountScreen walkthrough', () => {
     expect(typeof tree.UNSAFE_getByType(ScrollView).props.onScroll).toBe('function');
   });
 });
+
+/**
+ * The page has no bar at its foot, yet it padded a fifth of the screen under
+ * its last row and bounced: a swipe threw every row up under the header and
+ * left the lower third of the screen empty. It now scrolls only as far as its
+ * content actually runs past the screen, and stops there.
+ */
+describe('AccountScreen scrolling', () => {
+  function scrollOf(tree: ReturnType<typeof render>) {
+    return tree.UNSAFE_getByType(ScrollView);
+  }
+
+  it('leaves only a small margin under the last row, not a fifth of the screen', () => {
+    const tree = render(<AccountScreen onBack={jest.fn()} />);
+
+    const padding = StyleSheet.flatten(scrollOf(tree).props.contentContainerStyle).paddingBottom as number;
+
+    // the test window has no height, so the old fifth-of-the-screen would
+    // read as nothing here: the bound is fixed instead
+    expect(padding).toBeGreaterThan(0);
+    expect(padding).toBeLessThanOrEqual(48);
+  });
+
+  it('does not bounce past its ends, so the rows stay in place', () => {
+    const tree = render(<AccountScreen onBack={jest.fn()} />);
+
+    expect(scrollOf(tree).props.bounces).toBe(false);
+    expect(scrollOf(tree).props.overScrollMode).toBe('never');
+  });
+});
