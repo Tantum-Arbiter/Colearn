@@ -492,7 +492,7 @@ export default {
   account: {
     sleepingSun: 'Uyuyan güneş',
     sleepingMoon: 'Uyuyan ay',
-    title: 'Hesap',
+    title: 'Ayarlar',
     profile: 'Profil',
     nickname: 'Takma Ad',
     avatarType: 'Avatar Türü',
@@ -506,6 +506,7 @@ export default {
     termsAndConditions: 'Hizmet Şartları',
     privacyPolicy: 'Gizlilik Politikası',
     selectLanguage: 'Dil Seçin',
+    chooseLanguage: 'Tercih ettiğiniz dili seçin',
     guestMode: 'Misafir Modu',
     createAccount: 'İlerlemeyi Kaydetmek için Hesap Oluşturun',
     crashReports: 'Çökme Raporları',
@@ -514,6 +515,7 @@ export default {
     deleteAccountHint: 'Hesabınızı ve tüm verilerinizi kalıcı olarak silin',
   },
   profile: {
+    signedIn: 'Giriş yapıldı',
     enterNickname: 'Takma Ad Girin',
     nicknameTooLong: 'Takma ad 20 karakter veya daha az olmalıdır',
     editTitle: 'Profili Düzenle',
@@ -638,7 +640,7 @@ export default {
     mainMenu: {
       navLearn: {
         title: 'Öğren',
-        description: 'Tüm hikâyeler, şarkılar ve öğrenme oyunları kütüphanede. Açmak için buraya dokun.',
+        description: 'Tüm hik - yeler, şarkılar ve öğrenme oyunları kütüphanede. Açmak için buraya dokun.',
       },
       welcome: {
         title: 'Grow with Freya\'ya Hoş Geldiniz!',
@@ -654,7 +656,7 @@ export default {
       },
       freeplay: {
         title: 'Serbest Çalma',
-        description: 'Herhangi bir enstrümanı özgürce çalın -kural yok, sadece eğlence! Seslerle deney yapın ve kendi müziğinizi yaratın.',
+        description: 'Herhangi bir enstrümanı özgürce çalın - kural yok, sadece eğlence! Seslerle deney yapın ve kendi müziğinizi yaratın.',
       },
       instruments: {
         title: 'Enstrümanlar',
@@ -663,6 +665,10 @@ export default {
       settings: {
         title: 'Ayarlar',
         description: 'Uygulamayı aileniz için en iyi şekilde çalışacak şekilde özelleştirin.',
+      },
+      language: {
+        title: 'Diliniz',
+        description: 'Uygulamanın dilini değiştirmek için bayrağa dokunun.',
       },
       sound: {
         title: 'Ses Kontrolü',
@@ -803,24 +809,24 @@ export default {
     },
     settings: {
       intro: {
-        title: 'Ayarlar',
-        description: 'Uygulamayı aileniz için en iyi şekilde çalışacak şekilde özelleştirin.',
+        title: 'Yetişkin ayarları',
+        description: 'Uygulamayı ailenize göre şekillendiren birkaç seçim. İstediğiniz zaman değiştirin.',
       },
-      login: {
-        title: 'Hesap ve Senkronizasyon',
-        description: 'İlerlemeyi kaydetmek ve cihazlar arasında senkronize etmek için giriş yapın.',
-      },
-      language: {
-        title: 'Dil',
-        description: 'Uygulama arayüzü için tercih ettiğin dili seç.',
-      },
-      accessibility: {
-        title: 'Erişilebilirlik',
-        description: 'Metin boyutunu ve diğer ayarları kullanımı kolaylaştırmak için ayarlayın.',
+      textSize: {
+        title: 'Yazı boyutu',
+        description: 'Uygulamanın her yerinde yazıları, okuyan kişiye göre büyütün ya da küçültün.',
       },
       screenTime: {
-        title: 'Ekran Süresi',
-        description: 'Sağlıklı sınırlar belirleyin ve günlük kullanımı izleyin.',
+        title: 'Ekran süresi',
+        description: 'Çocuğunuzun yaşına uygun, nazik bir günlük sınır için açın. Screensafe halkası günün nasıl geçtiğini gösterir. İstediğiniz zaman kapatabilirsiniz.',
+      },
+      reminders: {
+        title: 'Akıllı hatırlatmalar',
+        description: 'Seçtiğiniz saatlerde hikâyeler, duygular ya da müzik için sessiz bir hatırlatma.',
+      },
+      crashReports: {
+        title: 'Çökme raporları',
+        description: 'Bir şeyler ters giderse, anonim bir rapor sorunu düzeltmemize yardım eder. İsterseniz buradan kapatın.',
       },
     },
     musicMode: {
@@ -852,7 +858,7 @@ export default {
     storyModes: {
       welcome: {
         title: 'Keşfetmenin Üç Yolu!',
-        description: 'Her çocuk farklı öğrenir. Çocuğunuzun merakını uyandıran hikaye deneyimini seçin -her biri oyunun büyüsü aracılığıyla temel becerileri geliştirir.',
+        description: 'Her çocuk farklı öğrenir. Çocuğunuzun merakını uyandıran hikaye deneyimini seçin - her biri oyunun büyüsü aracılığıyla temel becerileri geliştirir.',
       },
       interactive: {
         title: 'Etkileşimli Hikayeler',
@@ -860,7 +866,7 @@ export default {
       },
       musical: {
         title: 'Müzikli Hikayeler',
-        description: 'Oku, çal ve sahneye çık! Müzikli hikayeler her maceraya gerçek enstrüman zorlukları örer -çocuğunuz hikayeyi takip ederken ritim, melodi ve koordinasyon öğrenir. Çalışmalar, erken müzik maruziyetinin hafıza, dil gelişimi ve duygusal ifadeyi artırdığını doğrulamaktadır.',
+        description: 'Oku, çal ve sahneye çık! Müzikli hikayeler her maceraya gerçek enstrüman zorlukları örer - çocuğunuz hikayeyi takip ederken ritim, melodi ve koordinasyon öğrenir. Çalışmalar, erken müzik maruziyetinin hafıza, dil gelişimi ve duygusal ifadeyi artırdığını doğrulamaktadır.',
       },
       jigsaw: {
         title: 'Yapboz Hikayeleri',
@@ -991,12 +997,12 @@ export default {
     },
     catalogue: {
       welcome: {
-        title: 'Hikâye rafın',
+        title: 'Hik - ye rafın',
         description: 'Her kitap, şarkı ve oyun burada. Hep birlikte bir göz atalım.',
       },
       themes: {
         title: 'Bir tema seç',
-        description: 'Hikâyeler, öğrenme ya da müzik. Bir karoya dokun, raf kendini düzenlesin.',
+        description: 'Hik - yeler, öğrenme ya da müzik. Bir karoya dokun, raf kendini düzenlesin.',
       },
       filter: {
         title: 'İnce filtreler',
@@ -1020,7 +1026,9 @@ export default {
       },
       navProfile: {
         title: 'Profil',
-        description: 'Kaydedilen favoriler, rozet duvarı ve bu cihazdaki kitaplar.',
+        description: 'Kaydedilen favoriler, rozet duvarı ve bu cihazdaki kitaplar. Ara sıra altın rengi bir giriş simgesine dönüşür: bu, henüz kimsenin giriş yapmadığı anlamına gelir ve dokunmak sizi girişe götürür.',
+        profileCaption: 'Profiliniz',
+        loginCaption: 'Giriş zamanı',
       },
     },
     progress: {
@@ -1030,7 +1038,7 @@ export default {
       },
       hero: {
         title: 'Bu hafta',
-        description: 'Pazartesiden beri birlikte geçen dakikalar, okunan hikâyeler ve oturumlar.',
+        description: 'Pazartesiden beri birlikte geçen dakikalar, okunan hik - yeler ve oturumlar.',
       },
       challenges: {
         title: 'Maceralar',
@@ -1047,7 +1055,7 @@ export default {
     },
     search: {
       welcome: {
-        title: 'Bir hikâye bul',
+        title: 'Bir hik - ye bul',
         description: 'Bir başlık, karakter ya da tema yaz, raf senin için bulsun.',
       },
       field: {
@@ -1068,13 +1076,21 @@ export default {
         title: 'Profili değiştir',
         description: 'Avatarı, adı ya da yaşı değiştirmek için resme veya ada dokun. Önce bir yetişkin kısa bir soruyu yanıtlar.',
       },
+      login: {
+        title: 'Giriş yap',
+        description: 'Giriş yapmak rozetleri, seriyi ve her masalın kaldığı yeri saklar; hepsi kullandığınız tüm cihazlara taşınır.',
+      },
+      home: {
+        title: 'Ana sayfaya dön',
+        description: 'Ana sayfa, işiniz bittiğinde sizi gece gökyüzüne geri götürür.',
+      },
       tabs: {
         title: 'Kayıtlı, Rozetler, Yönet',
         description: 'Kalp verdiğin favoriler, rozet duvarı ve bu cihazdaki kitaplar; istediğini kaldırabilirsin.',
       },
       settings: {
         title: 'Yetişkin ayarları',
-        description: 'Dil, ekran süresi ve hesabın; yetişkin kapısının ardında.',
+        description: 'Yazı boyutu, ekran süresi, hatırlatmalar ve hesabınız, yetişkin kapısının ardında.',
       },
     },
   },

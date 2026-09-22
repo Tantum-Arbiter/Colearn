@@ -24,12 +24,25 @@ import {
   NAV_ANTICIPATION_SHARE,
   springRiseMs,
 } from '@/constants/child-ui-motion';
-import { TEXT_PRIMARY } from '@/constants/night-palette';
+import { SURFACE_NAV, TEXT_PRIMARY } from '@/constants/night-palette';
 
+/**
+ * The bar's own navigation glyphs. The profile face carries decoration of its
+ * own — the settings cog pinned to it — which is not one of the bar's icons and
+ * answers to neither its colour nor its size.
+ */
 function glyphs(tree: ReturnType<typeof render>) {
-  return tree.UNSAFE_root.findAll(
-    (node: any) => typeof node.props.name === 'string' && typeof node.props.size === 'number',
-  );
+  const decoration = new Set<unknown>();
+  for (const node of tree.UNSAFE_root.findAll(
+    (n: any) => n.props.testID === 'profile-nav-avatar-settings',
+  )) {
+    decoration.add(node);
+    for (const child of node.findAll(() => true)) decoration.add(child);
+  }
+
+  return tree.UNSAFE_root
+    .findAll((node: any) => typeof node.props.name === 'string' && typeof node.props.size === 'number')
+    .filter((node: any) => !decoration.has(node));
 }
 
 function items(tree: ReturnType<typeof render>) {
@@ -273,9 +286,7 @@ describe('an icon-only bar', () => {
   it('draws its glyphs larger than a labelled bar could afford', () => {
     const tree = render(<ChildBottomNavigation selected="home" onSelect={jest.fn()} />);
 
-    const glyphSizes = tree.UNSAFE_root
-      .findAll((node: any) => typeof node.props.name === 'string' && typeof node.props.size === 'number')
-      .map((node: any) => node.props.size);
+    const glyphSizes = glyphs(tree).map((node: any) => node.props.size);
 
     expect(glyphSizes.length).toBeGreaterThan(0);
     // the bar is 76 tall and carries no labels, so a 32pt glyph left room
@@ -483,5 +494,106 @@ describe('pointing at a slot', () => {
     const tree = render(<ChildBottomNavigation selected="home" onSelect={jest.fn()} />);
 
     expect(items(tree)).toHaveLength(CHILD_NAV_ITEMS.length);
+  });
+});
+
+/**
+ * The bar is glass, like the round buttons above it: the sky shows through,
+ * frosted, with light catching its top edge. The frosting sits beneath the
+ * slots and takes no touches, so every tap still lands on a place.
+ */
+describe('the glass bar', () => {
+  function glassIn(tree: ReturnType<typeof render>) {
+    return tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'child-nav-glass');
+  }
+
+  it('frosts whatever it sits over', () => {
+    const tree = render(<ChildBottomNavigation selected="home" onSelect={jest.fn()} />);
+
+    const [glass] = glassIn(tree);
+
+    expect(glass).toBeDefined();
+    expect(glass.findAll((n: any) => typeof n.props.intensity === 'number').length).toBeGreaterThan(0);
+  });
+
+  it('lets every tap through to the slots beneath it', () => {
+    const tree = render(<ChildBottomNavigation selected="home" onSelect={jest.fn()} />);
+
+    expect(glassIn(tree)[0].props.pointerEvents).toBe('none');
+  });
+
+  it('only tints the sky behind it rather than covering it as the old solid surface did', () => {
+    const tree = render(<ChildBottomNavigation selected="home" onSelect={jest.fn()} />);
+
+    const bar = tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'child-bottom-navigation')[0];
+    const fill = StyleSheet.flatten(bar.props.style).backgroundColor as string;
+    const alpha = Number(/,\s*([\d.]+)\)$/.exec(fill)?.[1]);
+
+    expect(fill).not.toBe(SURFACE_NAV);
+    expect(alpha).toBeLessThan(0.5);
+  });
+
+  it('still reports a tap through onSelect', () => {
+    const onSelect = jest.fn();
+    const tree = render(<ChildBottomNavigation selected="home" onSelect={onSelect} />);
+
+    fireEvent.press(items(tree)[1]);
+
+    expect(onSelect).toHaveBeenCalledWith('progress');
+  });
+});
+
+/**
+ * The ring stands in for a glyph, so it reads as one. The home scene draws its
+ * arc faint over the sky, and inside the bar that faintness stacked on the
+ * glyphs' own dimmer white: the ring looked switched off beside its
+ * neighbours. In the bar it takes the same colour, at full strength, as the
+ * glyphs either side of it.
+ */
+describe('the ring beside its neighbours', () => {
+  const SCREEN_TIME = { usageSeconds: 900, limitSeconds: 3600 };
+
+  function arc(tree: ReturnType<typeof render>) {
+    return tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'nav-screen-time-ring-arc')[0];
+  }
+
+  function guard(tree: ReturnType<typeof render>) {
+    return tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'screen-time-guard')[0];
+  }
+
+  it('draws its arc in the colour of an unlit glyph, at full strength', () => {
+    const tree = render(
+      <ChildBottomNavigation selected="home" onSelect={jest.fn()} screenTime={SCREEN_TIME} />,
+    );
+    const unlit = glyphs(tree)[1].props.color;
+
+    expect(arc(tree).props.stroke).toBe(unlit);
+    expect(arc(tree).props.strokeOpacity).toBe(1);
+  });
+
+  it('draws its guard mark at full strength too', () => {
+    const tree = render(
+      <ChildBottomNavigation selected="home" onSelect={jest.fn()} screenTime={SCREEN_TIME} />,
+    );
+
+    expect(guard(tree).props.opacity).toBe(1);
+  });
+
+  it('lights up white like any other glyph when it is the place chosen', () => {
+    const tree = render(
+      <ChildBottomNavigation selected="screensafe" onSelect={jest.fn()} screenTime={SCREEN_TIME} />,
+    );
+
+    expect(arc(tree).props.stroke).toBe(TEXT_PRIMARY);
+  });
+
+  it('leaves the home scene its own fainter arc', () => {
+    const { ScreenTimeRing } = require('@/components/home/screen-time-ring');
+    const { SCREEN_TIME_RING } = require('@/constants/screen-time-ring');
+    const tree = render(<ScreenTimeRing usageSeconds={900} limitSeconds={3600} />);
+
+    const homeArc = tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'screen-time-ring-arc')[0];
+
+    expect(homeArc.props.strokeOpacity).toBe(SCREEN_TIME_RING.arcOpacity);
   });
 });

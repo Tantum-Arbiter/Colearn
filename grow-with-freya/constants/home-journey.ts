@@ -145,8 +145,8 @@ export const HOME_CARDS = {
 } as const;
 
 export const HOME_CARD_TYPE = {
-  welcome: 28,
-  welcomeSubtitle: 15,
+  welcome: 34,
+  welcomeSubtitle: 18,
   eyebrow: 11,
   title: 19,
   cardHeading: 16,

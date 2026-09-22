@@ -492,7 +492,7 @@ export default {
   account: {
     sleepingSun: 'Il sole addormentato',
     sleepingMoon: 'La luna addormentata',
-    title: 'Account',
+    title: 'Impostazioni',
     profile: 'Profilo',
     nickname: 'Soprannome',
     avatarType: 'Tipo di avatar',
@@ -506,6 +506,7 @@ export default {
     termsAndConditions: 'Termini e condizioni',
     privacyPolicy: 'Informativa sulla privacy',
     selectLanguage: 'Seleziona lingua',
+    chooseLanguage: 'Scegli la tua lingua preferita',
     guestMode: 'Modalità ospite',
     createAccount: 'Crea un account per salvare i tuoi progressi',
     crashReports: 'Rapporti di arresto',
@@ -514,6 +515,7 @@ export default {
     deleteAccountHint: 'Elimina permanentemente il tuo account e tutti i dati',
   },
   profile: {
+    signedIn: 'Accesso effettuato',
     enterNickname: 'Inserisci un soprannome',
     nicknameTooLong: 'Il soprannome deve contenere 20 caratteri o meno',
     editTitle: 'Modifica profilo',
@@ -654,7 +656,7 @@ export default {
       },
       freeplay: {
         title: 'Gioco Libero',
-        description: 'Suona liberamente qualsiasi strumento -niente regole, solo divertimento! Sperimenta con i suoni e crea la tua musica.',
+        description: 'Suona liberamente qualsiasi strumento - niente regole, solo divertimento! Sperimenta con i suoni e crea la tua musica.',
       },
       instruments: {
         title: 'Strumenti',
@@ -663,6 +665,10 @@ export default {
       settings: {
         title: 'Impostazioni',
         description: 'Personalizza l\'app per funzionare al meglio per la tua famiglia.',
+      },
+      language: {
+        title: "La tua lingua",
+        description: "Tocca la bandiera per cambiare la lingua dell'app.",
       },
       sound: {
         title: 'Controllo del suono',
@@ -803,24 +809,24 @@ export default {
     },
     settings: {
       intro: {
-        title: 'Impostazioni',
-        description: 'Personalizza l\'app per funzionare al meglio per la tua famiglia.',
+        title: 'Impostazioni per adulti',
+        description: 'Alcune scelte che adattano l\'app alla vostra famiglia. Cambiatele quando volete.',
       },
-      login: {
-        title: 'Account e sincronizzazione',
-        description: 'Accedi per salvare i tuoi progressi e sincronizzare tra i dispositivi.',
-      },
-      language: {
-        title: 'Lingua',
-        description: 'Scegli la tua lingua preferita per l\'interfaccia dell\'app.',
-      },
-      accessibility: {
-        title: 'Accessibilità',
-        description: 'Regola la dimensione del testo e altre impostazioni per un utilizzo più facile.',
+      textSize: {
+        title: 'Dimensione del testo',
+        description: 'Rendi le parole più grandi o più piccole in tutta l\'app, per chi sta leggendo.',
       },
       screenTime: {
-        title: 'Tempo dello schermo',
-        description: 'Imposta limiti sani e monitora l\'utilizzo giornaliero.',
+        title: 'Tempo davanti allo schermo',
+        description: 'Attivalo per un limite giornaliero delicato, adatto all\'età del tuo bambino. L\'anello Screensafe mostra come va la giornata. Puoi disattivarlo in qualsiasi momento.',
+      },
+      reminders: {
+        title: 'Promemoria intelligenti',
+        description: 'Un piccolo avviso negli orari che scegli, per storie, emozioni o musica.',
+      },
+      crashReports: {
+        title: 'Segnalazioni di arresto',
+        description: 'Se qualcosa va storto, una segnalazione anonima ci aiuta a sistemarlo. Disattivala qui se preferisci.',
       },
     },
     musicMode: {
@@ -852,7 +858,7 @@ export default {
     storyModes: {
       welcome: {
         title: 'Tre Modi per Esplorare!',
-        description: 'Ogni bambino impara in modo diverso. Scegli l\'esperienza di storia che accende la curiosità del tuo bambino -ognuna sviluppa competenze essenziali attraverso la magia del gioco.',
+        description: 'Ogni bambino impara in modo diverso. Scegli l\'esperienza di storia che accende la curiosità del tuo bambino - ognuna sviluppa competenze essenziali attraverso la magia del gioco.',
       },
       interactive: {
         title: 'Storie Interattive',
@@ -860,7 +866,7 @@ export default {
       },
       musical: {
         title: 'Storie Musicali',
-        description: 'Leggi, suona e recita! Le storie musicali intrecciano vere sfide di strumenti in ogni avventura -il tuo bambino impara ritmo, melodia e coordinazione seguendo il racconto. Gli studi confermano che l\'esposizione precoce alla musica migliora la memoria, lo sviluppo del linguaggio e l\'espressione emotiva.',
+        description: 'Leggi, suona e recita! Le storie musicali intrecciano vere sfide di strumenti in ogni avventura - il tuo bambino impara ritmo, melodia e coordinazione seguendo il racconto. Gli studi confermano che l\'esposizione precoce alla musica migliora la memoria, lo sviluppo del linguaggio e l\'espressione emotiva.',
       },
       jigsaw: {
         title: 'Storie Puzzle',
@@ -1020,7 +1026,9 @@ export default {
       },
       navProfile: {
         title: 'Profilo',
-        description: 'Preferiti salvati, il muro dei distintivi e i libri su questo dispositivo.',
+        description: 'Preferiti salvati, il muro dei distintivi e i libri su questo dispositivo. Ogni tanto diventa un simbolo dorato di accesso: significa che nessuno ha ancora effettuato l’accesso, e un tocco ti porta ad accedere.',
+        profileCaption: 'Il tuo profilo',
+        loginCaption: 'È ora di accedere',
       },
     },
     progress: {
@@ -1068,13 +1076,21 @@ export default {
         title: 'Cambia il profilo',
         description: 'Tocca l\'immagine o il nome per cambiare avatar, nome o età. Prima un adulto risponde a una domanda veloce.',
       },
+      login: {
+        title: 'Accedi',
+        description: 'Accedendo si conservano medaglie, serie e il punto in cui ogni storia si è interrotta, su tutti i vostri dispositivi.',
+      },
+      home: {
+        title: 'Torna alla home',
+        description: 'Home riporta al cielo notturno quando avete finito.',
+      },
       tabs: {
         title: 'Salvati, Distintivi, Gestisci',
         description: 'I preferiti che hai segnato, il muro dei distintivi e i libri su questo dispositivo, con la possibilità di rimuoverne.',
       },
       settings: {
         title: 'Impostazioni per adulti',
-        description: 'Lingua, tempo davanti allo schermo e il tuo account, dietro il cancello per adulti.',
+        description: 'Dimensione del testo, tempo davanti allo schermo, promemoria e il tuo account, dietro il cancello degli adulti.',
       },
     },
   },

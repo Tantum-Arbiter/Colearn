@@ -492,7 +492,7 @@ export default {
   account: {
     sleepingSun: 'El sol dormido',
     sleepingMoon: 'La luna dormida',
-    title: 'Cuenta',
+    title: 'Configuración',
     profile: 'Perfil',
     nickname: 'Apodo',
     avatarType: 'Tipo de avatar',
@@ -506,6 +506,7 @@ export default {
     termsAndConditions: 'Términos y condiciones',
     privacyPolicy: 'Política de privacidad',
     selectLanguage: 'Seleccionar idioma',
+    chooseLanguage: 'Elige tu idioma preferido',
     guestMode: 'Modo invitado',
     createAccount: 'Crea una cuenta para guardar tu progreso',
     crashReports: 'Informes de errores',
@@ -514,6 +515,7 @@ export default {
     deleteAccountHint: 'Eliminar permanentemente tu cuenta y todos los datos',
   },
   profile: {
+    signedIn: 'Sesión iniciada',
     enterNickname: 'Por favor ingresa un apodo',
     nicknameTooLong: 'El apodo debe tener 20 caracteres o menos',
     editTitle: 'Editar Perfil',
@@ -654,7 +656,7 @@ export default {
       },
       freeplay: {
         title: 'Juego Libre',
-        description: 'Toca libremente cualquier instrumento -¡sin reglas, solo diversión! Experimenta con sonidos y crea tu propia música.',
+        description: 'Toca libremente cualquier instrumento - ¡sin reglas, solo diversión! Experimenta con sonidos y crea tu propia música.',
       },
       instruments: {
         title: 'Instrumentos',
@@ -663,6 +665,10 @@ export default {
       settings: {
         title: 'Configuración',
         description: 'Personaliza la app para que funcione mejor para tu familia.',
+      },
+      language: {
+        title: 'Tu idioma',
+        description: 'Toca la bandera para cambiar el idioma de la aplicación.',
       },
       sound: {
         title: 'Control de sonido',
@@ -803,24 +809,24 @@ export default {
     },
     settings: {
       intro: {
-        title: 'Configuración',
-        description: 'Personaliza la app para tu familia.',
+        title: 'Ajustes para adultos',
+        description: 'Algunas opciones que adaptan la app a tu familia. Cámbialas cuando quieras.',
       },
-      login: {
-        title: 'Cuenta y Sincronización',
-        description: 'Inicia sesión para guardar tu progreso.',
-      },
-      language: {
-        title: 'Idioma',
-        description: 'Elige tu idioma preferido.',
-      },
-      accessibility: {
-        title: 'Accesibilidad',
-        description: 'Ajusta el tamaño del texto.',
+      textSize: {
+        title: 'Tamaño del texto',
+        description: 'Haz las palabras más grandes o más pequeñas en toda la app, según quien lea.',
       },
       screenTime: {
-        title: 'Tiempo de Pantalla',
-        description: 'Establece límites saludables.',
+        title: 'Tiempo de pantalla',
+        description: 'Actívalo para un límite diario suave adecuado a la edad de tu hijo. El anillo Screensafe muestra cómo va el día. Desactívalo cuando quieras.',
+      },
+      reminders: {
+        title: 'Recordatorios inteligentes',
+        description: 'Un aviso tranquilo a las horas que elijas, para cuentos, emociones o música.',
+      },
+      crashReports: {
+        title: 'Informes de errores',
+        description: 'Si algo falla, un informe anónimo nos ayuda a arreglarlo. Desactívalo aquí si lo prefieres.',
       },
     },
     musicMode: {
@@ -852,7 +858,7 @@ export default {
     storyModes: {
       welcome: {
         title: '¡Tres Formas de Explorar!',
-        description: 'Cada niño aprende de manera diferente. Elige la experiencia de historia que despierte la curiosidad de tu hijo -cada una desarrolla habilidades esenciales a través de la magia del juego.',
+        description: 'Cada niño aprende de manera diferente. Elige la experiencia de historia que despierte la curiosidad de tu hijo - cada una desarrolla habilidades esenciales a través de la magia del juego.',
       },
       interactive: {
         title: 'Historias Interactivas',
@@ -860,7 +866,7 @@ export default {
       },
       musical: {
         title: 'Historias Musicales',
-        description: '¡Lee, toca e interpreta! Las historias musicales entrelazan desafíos de instrumentos reales en cada aventura -tu hijo aprende ritmo, melodía y coordinación mientras sigue el relato. Los estudios confirman que la exposición temprana a la música mejora la memoria, el desarrollo del lenguaje y la expresión emocional.',
+        description: '¡Lee, toca e interpreta! Las historias musicales entrelazan desafíos de instrumentos reales en cada aventura - tu hijo aprende ritmo, melodía y coordinación mientras sigue el relato. Los estudios confirman que la exposición temprana a la música mejora la memoria, el desarrollo del lenguaje y la expresión emocional.',
       },
       jigsaw: {
         title: 'Historias de Rompecabezas',
@@ -1020,7 +1026,9 @@ export default {
       },
       navProfile: {
         title: 'Perfil',
-        description: 'Favoritos guardados, el muro de insignias y los libros de este dispositivo.',
+        description: 'Favoritos guardados, el muro de insignias y los libros de este dispositivo. De vez en cuando se convierte en un símbolo dorado de inicio de sesión: significa que nadie ha iniciado sesión aún, y al tocarlo irás a iniciar sesión.',
+        profileCaption: 'Tu perfil',
+        loginCaption: 'Hora de iniciar sesión',
       },
     },
     progress: {
@@ -1068,13 +1076,21 @@ export default {
         title: 'Cambia el perfil',
         description: 'Toca la imagen o el nombre para cambiar el avatar, el nombre o la edad. Un adulto responde antes una pregunta rápida.',
       },
+      login: {
+        title: 'Iniciar sesión',
+        description: 'Al iniciar sesión se guardan las medallas, la racha y dónde se quedó cada cuento, en todos vuestros dispositivos.',
+      },
+      home: {
+        title: 'Volver al inicio',
+        description: 'Inicio te lleva de vuelta al cielo nocturno cuando hayáis terminado.',
+      },
       tabs: {
         title: 'Guardados, Insignias, Gestionar',
         description: 'Los favoritos que has marcado, el muro de insignias y los libros de este dispositivo, con opción de quitar alguno.',
       },
       settings: {
         title: 'Ajustes de adultos',
-        description: 'Idioma, tiempo de pantalla y tu cuenta, tras la puerta de los adultos.',
+        description: 'Tamaño del texto, tiempo de pantalla, recordatorios y tu cuenta, tras la puerta de los adultos.',
       },
     },
   },

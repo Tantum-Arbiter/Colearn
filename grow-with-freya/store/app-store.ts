@@ -3,6 +3,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Logger } from '@/utils/logger';
 import { rememberSearch } from '@/components/stories/catalogue/story-search';
+import { onSessionLapse } from '@/services/session-lapse';
 
 const log = Logger.create('Store');
 
@@ -36,6 +37,7 @@ export interface AppState {
   hasCompletedLogin: boolean;
   showLoginAfterOnboarding: boolean;
   isGuestMode: boolean; // User continued without signing in
+  sessionLapsed: boolean; // Signed in once, but the app could not refresh the session
 
   // Subscription
   subscriptionTier: SubscriptionTier; // Current active subscription tier
@@ -125,6 +127,7 @@ export interface AppState {
   setLoginComplete: (complete: boolean) => void;
   setShowLoginAfterOnboarding: (show: boolean) => void;
   setGuestMode: (isGuest: boolean) => void;
+  markSessionLapsed: () => void;
   resetAppForTesting: () => void; // Temporary function to reset app state
   setUserProfile: (nickname: string, avatarType: 'boy' | 'girl', avatarId: string) => void;
   clearUserProfile: () => void;
@@ -186,6 +189,7 @@ export const useAppStore = create<AppState>()(
       hasCompletedLogin: false,
       showLoginAfterOnboarding: false,
       isGuestMode: false,
+      sessionLapsed: false,
       subscriptionTier: 'free' as SubscriptionTier,
       _devSubscriptionOverride: null,
       trialEndPromptSeenFor: null,
@@ -233,9 +237,10 @@ export const useAppStore = create<AppState>()(
       setAppReady: (ready) => set({ isAppReady: ready }),
       setHasHydrated: (hydrated) => set({ hasHydrated: hydrated }),
       setOnboardingComplete: (complete) => set({ hasCompletedOnboarding: complete }),
-      setLoginComplete: (complete) => set({ hasCompletedLogin: complete }),
+      setLoginComplete: (complete) => set(complete ? { hasCompletedLogin: true, sessionLapsed: false } : { hasCompletedLogin: false }),
       setShowLoginAfterOnboarding: (show) => set({ showLoginAfterOnboarding: show }),
       setGuestMode: (isGuest) => set({ isGuestMode: isGuest }),
+      markSessionLapsed: () => set({ sessionLapsed: true }),
       resetAppForTesting: () => set({
         hasCompletedOnboarding: false,
         hasCompletedLogin: false,
@@ -475,3 +480,5 @@ export const useAppStore = create<AppState>()(
     }
   )
 );
+
+onSessionLapse(() => useAppStore.getState().markSessionLapsed());

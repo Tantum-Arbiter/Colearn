@@ -492,7 +492,7 @@ export default {
   account: {
     sleepingSun: 'ねむっている おひさま',
     sleepingMoon: 'ねむっている おつきさま',
-    title: 'アカウント',
+    title: '設定',
     profile: 'プロフィール',
     nickname: 'ニックネーム',
     avatarType: 'アバタータイプ',
@@ -506,6 +506,7 @@ export default {
     termsAndConditions: '利用規約',
     privacyPolicy: 'プライバシーポリシー',
     selectLanguage: '言語を選択',
+    chooseLanguage: '使う言語を選んでください',
     guestMode: 'ゲストモード',
     createAccount: 'アカウントを作成して進捗を保存',
     crashReports: 'クラッシュレポート',
@@ -514,6 +515,7 @@ export default {
     deleteAccountHint: 'アカウントとすべてのデータを完全に削除',
   },
   profile: {
+    signedIn: 'サインイン済み',
     enterNickname: 'ニックネームを入力',
     nicknameTooLong: 'ニックネームは20文字以下である必要があります',
     editTitle: 'プロフィール編集',
@@ -654,7 +656,7 @@ export default {
       },
       freeplay: {
         title: 'フリープレイ',
-        description: 'どんな楽器でも自由に演奏 -ルールなし、楽しさだけ！音を試して自分だけの音楽を作りましょう。',
+        description: 'どんな楽器でも自由に演奏 - ルールなし、楽しさだけ！音を試して自分だけの音楽を作りましょう。',
       },
       instruments: {
         title: '楽器',
@@ -663,6 +665,10 @@ export default {
       settings: {
         title: '設定',
         description: 'アプリをカスタマイズして、ご家族に最適に機能するようにしてください。',
+      },
+      language: {
+        title: 'あなたの言語',
+        description: '旗をタップすると、アプリの言語を変更できます。',
       },
       sound: {
         title: 'サウンドコントロール',
@@ -803,24 +809,24 @@ export default {
     },
     settings: {
       intro: {
-        title: '設定',
-        description: 'アプリをカスタマイズして、ご家族に最適に機能するようにしてください。',
+        title: 'おとなの設定',
+        description: 'アプリをご家族に合わせるための、いくつかの選択です。いつでも変更できます。',
       },
-      login: {
-        title: 'アカウントと同期',
-        description: 'ログインして進捗を保存し、デバイス間で同期します。',
-      },
-      language: {
-        title: '言語',
-        description: 'アプリインターフェイスの優先言語を選択してください。',
-      },
-      accessibility: {
-        title: 'アクセシビリティ',
-        description: 'テキストサイズおよびその他の設定を調整して、より簡単に使用できるようにしてください。',
+      textSize: {
+        title: '文字の大きさ',
+        description: '読む人に合わせて、アプリ全体の文字を大きくしたり小さくしたりできます。',
       },
       screenTime: {
         title: 'スクリーンタイム',
-        description: '健全な制限を設定し、毎日の使用を監視します。',
+        description: 'オンにすると、お子さまの年齢に合ったやさしい1日の上限が設定されます。Screensafeのリングで1日の様子がわかります。いつでもオフにできます。',
+      },
+      reminders: {
+        title: 'スマートリマインダー',
+        description: '選んだ時間に、おはなし・きもち・音楽のためのそっとしたお知らせが届きます。',
+      },
+      crashReports: {
+        title: 'クラッシュレポート',
+        description: '問題が起きたとき、匿名のレポートが修正に役立ちます。不要ならここでオフにできます。',
       },
     },
     musicMode: {
@@ -852,7 +858,7 @@ export default {
     storyModes: {
       welcome: {
         title: '3つの探検方法！',
-        description: 'お子さまはそれぞれ違う方法で学びます。お子さまの好奇心を刺激するストーリー体験を選びましょう -それぞれが遊びの魔法を通じて大切なスキルを育みます。',
+        description: 'お子さまはそれぞれ違う方法で学びます。お子さまの好奇心を刺激するストーリー体験を選びましょう - それぞれが遊びの魔法を通じて大切なスキルを育みます。',
       },
       interactive: {
         title: 'インタラクティブストーリー',
@@ -860,7 +866,7 @@ export default {
       },
       musical: {
         title: 'ミュージカルストーリー',
-        description: '読んで、演奏して、パフォーマンス！ミュージカルストーリーは、すべての冒険に本物の楽器チャレンジを織り込みます -お子さまは物語を追いながらリズム、メロディー、コーディネーションを学びます。研究により、音楽への早期接触は記憶力、言語発達、感情表現を向上させることが確認されています。',
+        description: '読んで、演奏して、パフォーマンス！ミュージカルストーリーは、すべての冒険に本物の楽器チャレンジを織り込みます - お子さまは物語を追いながらリズム、メロディー、コーディネーションを学びます。研究により、音楽への早期接触は記憶力、言語発達、感情表現を向上させることが確認されています。',
       },
       jigsaw: {
         title: 'ジグソーストーリー',
@@ -1020,7 +1026,9 @@ export default {
       },
       navProfile: {
         title: 'プロフィール',
-        description: 'おきにいり、バッジのかべ、このデバイスにあるほん。',
+        description: 'おきにいり、バッジのかべ、このデバイスにあるほん。ときどき金色のサインイン記号に変わります。まだ誰もサインインしていない合図で、タップするとサインインできます。',
+        profileCaption: 'あなたのプロフィール',
+        loginCaption: 'サインインしましょう',
       },
     },
     progress: {
@@ -1068,13 +1076,21 @@ export default {
         title: 'プロフィールをかえる',
         description: 'えやなまえをタップすると、アバター、なまえ、ねんれいをかえられる。さきにおとなのひとがしつもんにこたえるよ。',
       },
+      login: {
+        title: 'サインイン',
+        description: 'サインインすると、バッジや連続記録、お話のつづきが保存され、使っているすべての端末に引き継がれます。',
+      },
+      home: {
+        title: 'ホームへ戻る',
+        description: 'ホームをタップすると、いつでも夜空に戻れます。',
+      },
       tabs: {
         title: 'ほぞん、バッジ、かんり',
         description: 'ハートをつけたおきにいり、バッジのかべ、このデバイスのほん。けすこともできるよ。',
       },
       settings: {
         title: 'おとなのせってい',
-        description: 'ことば、スクリーンタイム、アカウント。おとなのゲートのむこうに。',
+        description: '文字の大きさ、スクリーンタイム、リマインダー、アカウントは、おとなの扉の向こうにあります。',
       },
     },
   },

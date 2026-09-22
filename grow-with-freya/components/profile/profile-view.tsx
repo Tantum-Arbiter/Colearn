@@ -15,6 +15,7 @@ import type { Badge } from '@/components/progress/progress-model';
 import { BadgeWall } from './badge-wall';
 import { DownloadRow, type DownloadOpenHandler } from './download-row';
 import { ProfileTabs, type ProfileTab } from './profile-tabs';
+import { ProfileSessionCard } from './profile-session-card';
 
 const HERO_AVATAR_SIZE = 96;
 
@@ -33,8 +34,16 @@ interface ProfileViewProps {
   onSelectBadge: (badge: Badge) => void;
   /** The face and name are the way to change them. */
   onEditProfile: () => void;
+  /** Whoever needs to sign in is offered the login page here; a signed-in family, the way out. */
+  needsSignIn: boolean;
+  onLogin: () => void;
+  onLogout: () => void;
   /** So the profile tour can point the owl at the hero and the tabs. */
-  guideTargets?: { hero?: RefObject<View | null>; tabs?: RefObject<View | null> };
+  guideTargets?: {
+    hero?: RefObject<View | null>;
+    tabs?: RefObject<View | null>;
+    login?: RefObject<View | null>;
+  };
 }
 
 export function ProfileView({
@@ -48,6 +57,9 @@ export function ProfileView({
   onDeleteDownload,
   onSelectBadge,
   onEditProfile,
+  needsSignIn,
+  onLogin,
+  onLogout,
   guideTargets,
 }: ProfileViewProps) {
   const { t } = useTranslation();
@@ -97,6 +109,14 @@ export function ProfileView({
           </View>
         </View>
       </Pressable>
+
+      <ProfileSessionCard
+        needsSignIn={needsSignIn}
+        width={width}
+        onLogin={onLogin}
+        onLogout={onLogout}
+        guideRef={guideTargets?.login}
+      />
 
       <View ref={guideTargets?.tabs} collapsable={false}>
         <ProfileTabs selected={tab} onSelect={setTab} />

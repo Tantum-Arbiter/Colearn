@@ -2,6 +2,7 @@ import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import { SecureStorage } from './secure-storage';
 import { DeviceInfoService } from './device-info-service';
+import { reportSessionLapse } from './session-lapse';
 import { Logger } from '@/utils/logger';
 
 const log = Logger.create('API');
@@ -89,6 +90,8 @@ export class ApiClient {
 
     if (!refreshToken) {
       log.warn('No refresh token - login required');
+      await SecureStorage.clearAuthData();
+      reportSessionLapse();
       throw new Error('No refresh token available');
     }
     const controller = new AbortController();
@@ -128,6 +131,7 @@ export class ApiClient {
       if (error.message?.includes('No refresh token') ||
           error.message?.includes('Token refresh failed')) {
         await SecureStorage.clearAuthData();
+        reportSessionLapse();
       }
       throw error;
     }
@@ -200,6 +204,7 @@ export class ApiClient {
           if (error.message?.includes('Token refresh failed') ||
               error.message?.includes('No refresh token')) {
             await SecureStorage.clearAuthData();
+            reportSessionLapse();
             throw new Error('Authentication failed - please login again');
           }
           throw error;
@@ -332,6 +337,7 @@ export class ApiClient {
       return true;
     } catch (error) {
       log.warn('Token refresh failed - login required');
+      reportSessionLapse();
       return false;
     }
   }

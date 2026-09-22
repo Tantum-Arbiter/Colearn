@@ -10,6 +10,7 @@ import React from 'react';
 import { StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 import { Image } from 'expo-image';
 import { render, type RenderResult } from '@testing-library/react-native';
+import { useAnimatedStyle } from 'react-native-reanimated';
 import { HomeHeroSky } from '@/components/home/home-hero-sky';
 import { HERO_HALO } from '@/constants/home-sky';
 import { buildHeroSky, sunFrame } from '@/constants/home-sky';
@@ -85,5 +86,43 @@ describe('HomeHeroSky', () => {
     const { view } = renderSky({ active: false });
 
     expect(artByTestIdPrefix(view, 'hero-star-').length).toBe(layout.stars.length);
+  });
+});
+
+/**
+ * The sky is painted behind the page rather than inside it, so the sun has to
+ * be told how far the page has travelled or it hangs in the corner while the
+ * content scrolls away beneath it.
+ */
+describe('HomeHeroSky riding the page', () => {
+  // The shared stub returns {} for every pose, which would make any assertion
+  // about a transform vacuous; run the worklet for this suite only.
+  const animatedStyle = useAnimatedStyle as unknown as jest.Mock;
+
+  beforeEach(() => animatedStyle.mockImplementation((worklet: () => unknown) => worklet()));
+  afterEach(() => animatedStyle.mockImplementation(() => ({})));
+
+  function sunLift(lift?: { value: number }) {
+    const { view } = renderSky({ lift: lift as never });
+    const sun = byTestId(view, 'hero-sun')[0];
+    const style = [sun.props.style]
+      .flat(Infinity)
+      .filter(Boolean)
+      .reduce((merged: any, part: any) => ({ ...merged, ...part }), {});
+
+    return style.transform.find((part: any) => 'translateY' in part).translateY;
+  }
+
+  it('leaves the sun where it is on a page that has not moved', () => {
+    // toBeCloseTo, because the resting pose multiplies out to -0.
+    expect(sunLift({ value: 0 })).toBeCloseTo(0);
+  });
+
+  it('carries the sun up by however far the page has scrolled', () => {
+    expect(sunLift({ value: 140 })).toBe(-140);
+  });
+
+  it('still draws a sun for a caller that never passes a scroll', () => {
+    expect(sunLift(undefined)).toBeCloseTo(0);
   });
 });

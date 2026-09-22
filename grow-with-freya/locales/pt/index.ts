@@ -492,7 +492,7 @@ export default {
   account: {
     sleepingSun: 'O sol adormecido',
     sleepingMoon: 'A lua adormecida',
-    title: 'Conta',
+    title: 'Configurações',
     profile: 'Perfil',
     nickname: 'Apelido',
     avatarType: 'Tipo de avatar',
@@ -506,6 +506,7 @@ export default {
     termsAndConditions: 'Termos e Condições',
     privacyPolicy: 'Política de Privacidade',
     selectLanguage: 'Selecionar idioma',
+    chooseLanguage: 'Escolha o seu idioma preferido',
     guestMode: 'Modo convidado',
     createAccount: 'Crie uma conta para salvar seu progresso',
     crashReports: 'Relatórios de falha',
@@ -514,6 +515,7 @@ export default {
     deleteAccountHint: 'Eliminar permanentemente a sua conta e todos os dados',
   },
   profile: {
+    signedIn: 'Sessão iniciada',
     enterNickname: 'Digite um apelido',
     nicknameTooLong: 'O apelido deve ter 20 caracteres ou menos',
     editTitle: 'Editar perfil',
@@ -654,7 +656,7 @@ export default {
       },
       freeplay: {
         title: 'Jogo Livre',
-        description: 'Toque livremente qualquer instrumento -sem regras, só diversão! Experimente sons e crie a sua própria música.',
+        description: 'Toque livremente qualquer instrumento - sem regras, só diversão! Experimente sons e crie a sua própria música.',
       },
       instruments: {
         title: 'Instrumentos',
@@ -663,6 +665,10 @@ export default {
       settings: {
         title: 'Configurações',
         description: 'Personalize o aplicativo para funcionar melhor para sua família.',
+      },
+      language: {
+        title: 'O seu idioma',
+        description: 'Toque na bandeira para mudar o idioma da aplicação.',
       },
       sound: {
         title: 'Controle de som',
@@ -803,24 +809,24 @@ export default {
     },
     settings: {
       intro: {
-        title: 'Configurações',
-        description: 'Personalize o aplicativo para funcionar melhor para sua família.',
+        title: 'Definições para adultos',
+        description: 'Algumas escolhas que adaptam a app à sua família. Mude-as sempre que quiser.',
       },
-      login: {
-        title: 'Conta e sincronização',
-        description: 'Faça login para salvar seu progresso e sincronizar entre dispositivos.',
-      },
-      language: {
-        title: 'Idioma',
-        description: 'Escolha seu idioma preferido para a interface do aplicativo.',
-      },
-      accessibility: {
-        title: 'Acessibilidade',
-        description: 'Ajuste o tamanho do texto e outras configurações para uso mais fácil.',
+      textSize: {
+        title: 'Tamanho do texto',
+        description: 'Aumente ou diminua as palavras em toda a app, para quem estiver a ler.',
       },
       screenTime: {
-        title: 'Tempo de tela',
-        description: 'Defina limites saudáveis e monitore o uso diário.',
+        title: 'Tempo de ecrã',
+        description: 'Ative para um limite diário suave, adequado à idade do seu filho. O anel Screensafe mostra como vai o dia. Desative a qualquer momento.',
+      },
+      reminders: {
+        title: 'Lembretes inteligentes',
+        description: 'Um aviso discreto nas horas que escolher, para histórias, emoções ou música.',
+      },
+      crashReports: {
+        title: 'Relatórios de falhas',
+        description: 'Se algo correr mal, um relatório anónimo ajuda-nos a corrigir. Desative aqui se preferir.',
       },
     },
     musicMode: {
@@ -852,7 +858,7 @@ export default {
     storyModes: {
       welcome: {
         title: 'Três Formas de Explorar!',
-        description: 'Cada criança aprende de forma diferente. Escolha a experiência de história que desperta a curiosidade do seu filho -cada uma desenvolve habilidades essenciais através da magia da brincadeira.',
+        description: 'Cada criança aprende de forma diferente. Escolha a experiência de história que desperta a curiosidade do seu filho - cada uma desenvolve habilidades essenciais através da magia da brincadeira.',
       },
       interactive: {
         title: 'Histórias Interativas',
@@ -860,7 +866,7 @@ export default {
       },
       musical: {
         title: 'Histórias Musicais',
-        description: 'Leia, toque e apresente! As histórias musicais entrelaçam desafios de instrumentos reais em cada aventura -o seu filho aprende ritmo, melodia e coordenação enquanto segue a história. Estudos confirmam que a exposição precoce à música melhora a memória, o desenvolvimento da linguagem e a expressão emocional.',
+        description: 'Leia, toque e apresente! As histórias musicais entrelaçam desafios de instrumentos reais em cada aventura - o seu filho aprende ritmo, melodia e coordenação enquanto segue a história. Estudos confirmam que a exposição precoce à música melhora a memória, o desenvolvimento da linguagem e a expressão emocional.',
       },
       jigsaw: {
         title: 'Histórias de Quebra-Cabeça',
@@ -1020,7 +1026,9 @@ export default {
       },
       navProfile: {
         title: 'Perfil',
-        description: 'Favoritos guardados, o mural de emblemas e os livros neste dispositivo.',
+        description: 'Favoritos guardados, o mural de emblemas e os livros neste dispositivo. De vez em quando transforma-se num símbolo dourado de início de sessão: significa que ninguém iniciou sessão ainda, e um toque leva-o a iniciar sessão.',
+        profileCaption: 'O seu perfil',
+        loginCaption: 'Hora de iniciar sessão',
       },
     },
     progress: {
@@ -1068,13 +1076,21 @@ export default {
         title: 'Alterar o perfil',
         description: 'Toca na imagem ou no nome para mudar o avatar, o nome ou a idade. Um adulto responde primeiro a uma pergunta rápida.',
       },
+      login: {
+        title: 'Iniciar sessão',
+        description: 'Iniciar sessão guarda os emblemas, a sequência e onde cada história ficou, em todos os vossos dispositivos.',
+      },
+      home: {
+        title: 'Voltar ao início',
+        description: 'Início leva-vos de volta ao céu nocturno quando terminarem.',
+      },
       tabs: {
         title: 'Guardados, Emblemas, Gerir',
         description: 'Favoritos que marcaste, o mural de emblemas e os livros neste dispositivo, com espaço para remover algum.',
       },
       settings: {
         title: 'Definições dos adultos',
-        description: 'Idioma, tempo de ecrã e a tua conta, atrás do portão dos adultos.',
+        description: 'Tamanho do texto, tempo de ecrã, lembretes e a sua conta, atrás do portão dos adultos.',
       },
     },
   },

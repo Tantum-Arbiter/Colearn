@@ -492,7 +492,7 @@ export default {
   account: {
     sleepingSun: 'Den sovende sol',
     sleepingMoon: 'Den sovende måne',
-    title: 'Konto',
+    title: 'Indstillinger',
     profile: 'Profil',
     nickname: 'Kaldenavn',
     avatarType: 'Avatartype',
@@ -506,6 +506,7 @@ export default {
     termsAndConditions: 'Servicevilkår',
     privacyPolicy: 'Privatlivspolitik',
     selectLanguage: 'Vælg sprog',
+    chooseLanguage: 'Vælg dit foretrukne sprog',
     guestMode: 'Gæstetilstand',
     createAccount: 'Opret konto for at gemme fremskridt',
     crashReports: 'Nedbrudrapporter',
@@ -514,6 +515,7 @@ export default {
     deleteAccountHint: 'Slet permanent din konto og alle data',
   },
   profile: {
+    signedIn: 'Logget ind',
     enterNickname: 'Angiv kaldenavn',
     nicknameTooLong: 'Kaldenavn skal være 20 tegn eller mindre',
     editTitle: 'Rediger profil',
@@ -654,7 +656,7 @@ export default {
       },
       freeplay: {
         title: 'Fri Leg',
-        description: 'Spil frit på ethvert instrument -ingen regler, bare sjov! Eksperimenter med lyde og skab din egen musik.',
+        description: 'Spil frit på ethvert instrument - ingen regler, bare sjov! Eksperimenter med lyde og skab din egen musik.',
       },
       instruments: {
         title: 'Instrumenter',
@@ -663,6 +665,10 @@ export default {
       settings: {
         title: 'Indstillinger',
         description: 'Tilpas appen så den fungerer bedst for din familie.',
+      },
+      language: {
+        title: 'Dit sprog',
+        description: 'Tryk på flaget for at skifte appens sprog.',
       },
       sound: {
         title: 'Lydkontrol',
@@ -803,24 +809,24 @@ export default {
     },
     settings: {
       intro: {
-        title: 'Indstillinger',
-        description: 'Tilpas appen så den fungerer bedst for din familie.',
+        title: 'Indstillinger for voksne',
+        description: 'Nogle få valg, der tilpasser appen til jeres familie. Skift dem, når I vil.',
       },
-      login: {
-        title: 'Konto og synkronisering',
-        description: 'Log ind for at gemme fremskridt og synkronisere på tværs af enheder.',
-      },
-      language: {
-        title: 'Sprog',
-        description: 'Vælg dit foretrukne sprog til app-grænsefladen.',
-      },
-      accessibility: {
-        title: 'Tilgængelighed',
-        description: 'Juster tekststørrelse og andre indstillinger for lettere brug.',
+      textSize: {
+        title: 'Tekststørrelse',
+        description: 'Gør ordene større eller mindre i hele appen, så det passer til den, der læser.',
       },
       screenTime: {
         title: 'Skærmtid',
-        description: 'Sæt sunde grænser og overvåg daglig brug.',
+        description: 'Slå det til for en blid daglig grænse, der passer til dit barns alder. Screensafe-ringen viser, hvordan dagen går. Slå det fra når som helst.',
+      },
+      reminders: {
+        title: 'Smarte påmindelser',
+        description: 'Et stille puf på de tidspunkter, I vælger, til historier, følelser eller musik.',
+      },
+      crashReports: {
+        title: 'Nedbrudsrapporter',
+        description: 'Hvis noget går galt, hjælper en anonym rapport os med at rette det. Slå det fra her, hvis I hellere vil.',
       },
     },
     musicMode: {
@@ -852,7 +858,7 @@ export default {
     storyModes: {
       welcome: {
         title: 'Tre Måder at Udforske!',
-        description: 'Hvert barn lærer forskelligt. Vælg den historieoplevelse, der vækker dit barns nysgerrighed -hver enkelt opbygger vigtige færdigheder gennem legens magi.',
+        description: 'Hvert barn lærer forskelligt. Vælg den historieoplevelse, der vækker dit barns nysgerrighed - hver enkelt opbygger vigtige færdigheder gennem legens magi.',
       },
       interactive: {
         title: 'Interaktive Historier',
@@ -860,7 +866,7 @@ export default {
       },
       musical: {
         title: 'Musikalske Historier',
-        description: 'Læs, spil og optræd! Musikalske historier fletter rigtige instrumentudfordringer ind i hvert eventyr -dit barn lærer rytme, melodi og koordination, mens de følger fortællingen. Studier bekræfter, at tidlig musikeksponering styrker hukommelse, sprogudvikling og følelsesmæssigt udtryk.',
+        description: 'Læs, spil og optræd! Musikalske historier fletter rigtige instrumentudfordringer ind i hvert eventyr - dit barn lærer rytme, melodi og koordination, mens de følger fortællingen. Studier bekræfter, at tidlig musikeksponering styrker hukommelse, sprogudvikling og følelsesmæssigt udtryk.',
       },
       jigsaw: {
         title: 'Puslespilshistorier',
@@ -1020,7 +1026,9 @@ export default {
       },
       navProfile: {
         title: 'Profil',
-        description: 'Gemte favoritter, mærkevæggen og bøgerne gemt på denne enhed.',
+        description: 'Gemte favoritter, mærkevæggen og bøgerne gemt på denne enhed. Af og til bliver det til et gyldent login-symbol: det betyder, at ingen er logget ind endnu, og et tryk fører dig til login.',
+        profileCaption: 'Din profil',
+        loginCaption: 'Tid til at logge ind',
       },
     },
     progress: {
@@ -1068,13 +1076,21 @@ export default {
         title: 'Skift profilen',
         description: 'Tryk på billedet eller navnet for at ændre avatar, navn eller alder. En voksen svarer først på et hurtigt spørgsmål.',
       },
+      login: {
+        title: 'Log ind',
+        description: 'Når I logger ind, gemmes badges, stimen og hvor hver historie slap - på alle jeres enheder.',
+      },
+      home: {
+        title: 'Tilbage til start',
+        description: 'Hjem fører jer tilbage til nattehimlen, når I er færdige.',
+      },
       tabs: {
         title: 'Gemte, Mærker, Administrér',
         description: 'Favoritter du har givet et hjerte, mærkevæggen og bøgerne på denne enhed, med plads til at fjerne dem.',
       },
       settings: {
         title: 'Voksnes indstillinger',
-        description: 'Sprog, skærmtid og din konto, bag de voksnes port.',
+        description: 'Tekststørrelse, skærmtid, påmindelser og jeres konto, bag de voksnes låge.',
       },
     },
   },
