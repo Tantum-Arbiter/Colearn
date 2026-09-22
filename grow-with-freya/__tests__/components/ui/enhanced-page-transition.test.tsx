@@ -10,7 +10,7 @@ import React from 'react';
 import { Text } from 'react-native';
 import { act, render } from '@testing-library/react-native';
 import { useSharedValue, withTiming } from 'react-native-reanimated';
-import { EnhancedPageTransition } from '@/components/ui/enhanced-page-transition';
+import { COLD_PAGE_FRAMES, EnhancedPageTransition } from '@/components/ui/enhanced-page-transition';
 import { getScreenDimensions } from '@/components/main-menu/constants';
 
 jest.mock('@/components/main-menu/constants', () => ({
@@ -111,6 +111,16 @@ describe('EnhancedPageTransition', () => {
         jest.advanceTimersByTime(1);
       });
       expect(Object.keys(renders).sort()).toEqual(['main', 'stories']);
+    });
+
+    it('should warm every listed page together, so the library and Grown-ups are both ready', () => {
+      render(<EnhancedPageTransition currentPage="main" pages={PAGES} duration={800} prewarm={['stories', 'account']} prewarmAfterMs={1200} />);
+
+      act(() => {
+        jest.advanceTimersByTime(1200);
+      });
+
+      expect(Object.keys(renders).sort()).toEqual(['account', 'main', 'stories']);
     });
 
     it('should not mount it again when the child then opens it, so the slide pays for nothing', () => {
@@ -235,10 +245,36 @@ describe('EnhancedPageTransition', () => {
       const view = render(<EnhancedPageTransition currentPage="stories" pages={PAGES} duration={800} />);
 
       view.rerender(<EnhancedPageTransition currentPage="account" pages={PAGES} duration={800} />);
+      act(() => {
+        jest.advanceTimersByTime(16 * COLD_PAGE_FRAMES + 16);
+      });
 
       expect(offset(view, 'account')).toBe(0);
       expect(offset(view, 'stories')).toBe(-HEIGHT);
       expect(offset(view, 'main')).toBe(-HEIGHT);
+    });
+
+    it('lets a page built for the slide be built before it moves, then moves it', () => {
+      const view = render(<EnhancedPageTransition currentPage="stories" pages={PAGES} duration={800} />);
+
+      view.rerender(<EnhancedPageTransition currentPage="account" pages={PAGES} duration={800} />);
+
+      expect(offset(view, 'account')).toBe(HEIGHT);
+      act(() => {
+        jest.advanceTimersByTime(16 * COLD_PAGE_FRAMES + 16);
+      });
+      expect(offset(view, 'account')).toBe(0);
+    });
+
+    it('moves an already mounted page at once', () => {
+      const view = render(<EnhancedPageTransition currentPage="stories" pages={PAGES} duration={800} prewarm={['account']} prewarmAfterMs={10} />);
+      act(() => {
+        jest.advanceTimersByTime(10);
+      });
+
+      view.rerender(<EnhancedPageTransition currentPage="account" pages={PAGES} duration={800} prewarm={['account']} prewarmAfterMs={10} />);
+
+      expect(offset(view, 'account')).toBe(0);
     });
 
     it('sinks away again as the library comes back down', () => {

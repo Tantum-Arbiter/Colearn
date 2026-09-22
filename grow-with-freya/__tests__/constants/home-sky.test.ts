@@ -23,6 +23,8 @@ import {
   TALL_PHONE_CONTENT_DROP,
   TALL_PHONE_CONTENT_LIFT,
   heroContentDrop,
+  heroContentLift,
+  PORTRAIT_TABLET_CONTENT_LIFT,
 } from '@/constants/home-sky';
 
 const PHONE = 402;
@@ -118,6 +120,19 @@ describe('heroSunScale', () => {
     expect(heroSunScale(375, 667)).toBe(1);
     expect(heroSunScale(375, 812)).toBe(1);
     expect(heroSunScale(874, PHONE)).toBe(1);
+  });
+});
+
+describe('heroContentLift', () => {
+  it('should lift the greeting-to-trial block by a twentieth of a portrait tablet', () => {
+    expect(PORTRAIT_TABLET_CONTENT_LIFT).toBe(0.05);
+    expect(heroContentLift(TABLET, 1194)).toBe(Math.round(1194 * 0.05));
+    expect(heroContentLift(1024, 1366)).toBe(Math.round(1366 * 0.05));
+  });
+
+  it('should leave a landscape tablet and every phone where they are', () => {
+    expect(heroContentLift(1194, TABLET)).toBe(0);
+    expect(heroContentLift(PHONE, 874)).toBe(0);
   });
 });
 

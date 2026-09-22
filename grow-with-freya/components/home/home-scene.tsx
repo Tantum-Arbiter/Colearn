@@ -19,7 +19,7 @@ import { useGlobalSound } from '@/contexts/global-sound-context';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { HOME_THEMES, type TimeOfDay } from '@/constants/home-scene';
 import { HOME_CARDS, HOME_CARD_TYPE, homeContentWidth } from '@/constants/home-journey';
-import { HERO_SKY, heroContentDrop, heroContentTop, heroSunFrame, heroSunScale } from '@/constants/home-sky';
+import { HERO_SKY, heroContentDrop, heroContentLift, heroContentTop, heroSunFrame, heroSunScale } from '@/constants/home-sky';
 import { useTimeOfDay } from '@/hooks/use-time-of-day';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { useSettledAfterTransition } from '@/hooks/use-ambient-animation';
@@ -66,7 +66,7 @@ export interface HomeGuideTargets {
 }
 
 
-const TABLET_FOOT_PADDING = 24;
+export const TABLET_FOOT_PADDING = 24;
 
 export type HomeSection = Exclude<ChildNavItemId, 'screensafe'>;
 
@@ -199,6 +199,7 @@ export const HomeScene = memo(function HomeScene({
   // stays small enough to still fit -- past that the plan button runs off the
   // bottom instead of merely sitting lower.
   const spread = gaps ? gaps.card * 2 + gaps.stats * 2 + gaps.plan - subtitleGap : 0;
+  const lift = heroContentLift(width, height);
 
   return (
     <View testID={testID} style={[styles.root, { backgroundColor: theme.skyTop }]}>
@@ -269,8 +270,8 @@ export const HomeScene = memo(function HomeScene({
           styles.content,
           isTablet && styles.contentTabletCenter,
           {
-            paddingTop: heroContentTop(insets.top, sun.size) + heroContentDrop(width, height) + spread,
-            paddingBottom: (isTablet ? TABLET_FOOT_PADDING : footClearance) + (scrollBinding?.reserve ?? 0),
+            paddingTop: heroContentTop(insets.top, sun.size) + heroContentDrop(width, height) + spread - lift,
+            paddingBottom: (isTablet ? TABLET_FOOT_PADDING : footClearance) + lift + (scrollBinding?.reserve ?? 0),
           },
         ]}
         showsVerticalScrollIndicator={false}

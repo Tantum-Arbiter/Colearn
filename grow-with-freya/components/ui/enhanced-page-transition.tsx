@@ -12,6 +12,7 @@ import Animated, {
 import { getScreenDimensions } from '@/components/main-menu/constants';
 import { crossesView, pageOffset } from '@/constants/page-slide';
 
+export const COLD_PAGE_FRAMES = 2;
 const ALWAYS_MOUNTED = 'main';
 const NO_PREWARM: readonly string[] = [];
 
@@ -102,6 +103,7 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
   const mounted = new Set(
     [ALWAYS_MOUNTED, currentPage, slide.from, slide.recent, ...warmed].filter((key): key is string => key !== null)
   );
+  const committedMounted = useRef<ReadonlySet<string>>(mounted);
 
   // Update screen height when dimensions change (orientation changes)
   useEffect(() => {
@@ -181,12 +183,34 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
         }));
       }, animate ? duration : 0);
     }
+    const arriving = prevPageRef.current !== currentPage;
     prevPageRef.current = currentPage;
 
-    Object.entries(pageAnimations).forEach(([pageKey, value]) => {
-      set(value, pageOffset(pageKey, currentPage, screenHeight));
+    const slideAll = () => {
+      Object.entries(pageAnimations).forEach(([pageKey, value]) => {
+        set(value, pageOffset(pageKey, currentPage, screenHeight));
+      });
+    };
+
+    if (!animate || !arriving || committedMounted.current.has(currentPage)) {
+      slideAll();
+      return undefined;
+    }
+    let frame = 0;
+    let handle = requestAnimationFrame(function wait() {
+      frame += 1;
+      if (frame >= COLD_PAGE_FRAMES) {
+        slideAll();
+        return;
+      }
+      handle = requestAnimationFrame(wait);
     });
+    return () => cancelAnimationFrame(handle);
   }, [currentPage, duration, animate]);
+
+  useEffect(() => {
+    committedMounted.current = mounted;
+  });
 
   return (
     <LinearGradient

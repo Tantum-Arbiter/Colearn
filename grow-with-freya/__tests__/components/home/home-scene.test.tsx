@@ -9,14 +9,14 @@
 import React from 'react';
 import { Dimensions, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { render, fireEvent, act, type RenderResult } from '@testing-library/react-native';
-import { HomeScene, STATS_CHIP_INSET } from '@/components/home/home-scene';
+import { HomeScene, STATS_CHIP_INSET, TABLET_FOOT_PADDING } from '@/components/home/home-scene';
 import { AudioControlModal } from '@/components/ui/audio-control-modal';
 import { LanguagePicker } from '@/components/ui/language-picker';
 import { useGlobalSound } from '@/contexts/global-sound-context';
 import { CIRCLE_BUTTON_DIAMETER_PHONE, contentMargin, journeyHeaderTop } from '@/components/child-ui/tokens';
 import { HOME_THEMES } from '@/constants/home-scene';
 import { HOME_CARDS, HOME_CARD_TYPE } from '@/constants/home-journey';
-import { HERO_SKY, heroContentTop } from '@/constants/home-sky';
+import { HERO_SKY, heroContentLift, heroContentTop } from '@/constants/home-sky';
 import { navClearance, navItemCentre } from '@/components/child-ui/child-bottom-navigation';
 import type { ChildHomeData, WelcomeCopy } from '@/types/child-home';
 
@@ -595,6 +595,20 @@ describe('HomeScene on a tablet in portrait', () => {
     // margin under them looks larger than it measures and the greeting's has
     // to add that back. See STATS_CHIP_INSET.
     expect(subtitleToCard).toBe(statsToButton + STATS_CHIP_INSET);
+  });
+
+  // the block from the greeting to the trial button is centred between the sun
+  // and the bar, so taking the lift off the top alone would move it only half
+  // as far: it comes off the top and goes on the bottom (operator 2026-09-22)
+  it('lifts the greeting-to-trial block by the whole lift, taken from above it and given below', () => {
+    const { view } = renderScene({ onOpenPlans: jest.fn() });
+
+    const scroll = view.UNSAFE_root.findAll((n: any) => n.props?.contentContainerStyle !== undefined)[0];
+    const style = StyleSheet.flatten(scroll.props.contentContainerStyle);
+    const lift = heroContentLift(834, 1194);
+
+    expect(lift).toBeGreaterThan(0);
+    expect(style.paddingBottom).toBe(TABLET_FOOT_PADDING + lift);
   });
 
   it('grows the sun to match', () => {

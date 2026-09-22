@@ -1,11 +1,11 @@
 export const LOGIN_CUE = {
   firstDelayMs: 2500,
   everyMs: 18000,
-  warpMs: 450,
+  warpMs: 1200,
   holdMs: 3000,
-  spinDeg: 90,
-  avatarShrink: 0.25,
-  glyphGrow: 0.3,
+  spinDeg: 30,
+  avatarShrink: 0.15,
+  glyphGrow: 0.15,
   glyphRatio: 0.68,
   glyphMinSize: 38,
 } as const;

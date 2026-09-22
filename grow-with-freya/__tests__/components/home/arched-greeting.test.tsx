@@ -7,7 +7,7 @@ import React from 'react';
 import { StyleSheet } from 'react-native';
 import { render } from '@testing-library/react-native';
 import { ArchedGreeting } from '@/components/home/arched-greeting';
-import { archedGreetingLayout } from '@/constants/arched-greeting';
+import { archedGreetingLayout, textAdvance } from '@/constants/arched-greeting';
 
 type Node = { props: Record<string, any>; parent: Node | null };
 
@@ -68,13 +68,18 @@ describe('ArchedGreeting', () => {
     });
   });
 
-  it('should take exactly the height its arcs need, centred on the screen', () => {
+  it('should take exactly the height its words need on their arcs, centred on the screen', () => {
     const view = render(<ArchedGreeting {...PROPS} />);
 
     const block = view.UNSAFE_queryAllByProps({ testID: 'home-welcome' })[0];
     const style = StyleSheet.flatten(block.props.style);
     expect(style.width).toBe(402);
-    expect(style.height).toBe(archedGreetingLayout(402, 34, 18).height);
+    expect(style.height).toBe(
+      archedGreetingLayout(402, 34, 18, 1, {
+        title: [textAdvance(PROPS.title, 34, 'heavy')],
+        subtitle: textAdvance(PROPS.subtitle, 18, 'medium'),
+      }).height
+    );
     expect(style.alignSelf).toBe('center');
   });
 
@@ -119,7 +124,12 @@ describe('ArchedGreeting over two lines', () => {
     const view = render(<ArchedGreeting {...PROPS} title={title} />);
 
     const block = view.UNSAFE_root.findAll((n: any) => n.props.testID === 'home-welcome')[0];
-    expect(StyleSheet.flatten(block.props.style).height).toBe(archedGreetingLayout(402, 34, 18, 2).height);
+    expect(StyleSheet.flatten(block.props.style).height).toBe(
+      archedGreetingLayout(402, 34, 18, 2, {
+        title: ['Welcome back,', 'wdwdsd!'].map((line) => textAdvance(line, 34, 'heavy')),
+        subtitle: textAdvance(PROPS.subtitle, 18, 'medium'),
+      }).height
+    );
   });
 
   it('should still read out as one heading', () => {

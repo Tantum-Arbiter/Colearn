@@ -64,7 +64,7 @@ export function ProfileNavAvatar({
       cue.value = hold === 'login' ? 1 : 0;
       return undefined;
     }
-    const warp = { duration: LOGIN_CUE.warpMs, easing: Easing.inOut(Easing.cubic) };
+    const warp = { duration: LOGIN_CUE.warpMs, easing: Easing.inOut(Easing.sin) };
     cue.value = 0;
     cue.value = withDelay(
       LOGIN_CUE.firstDelayMs,

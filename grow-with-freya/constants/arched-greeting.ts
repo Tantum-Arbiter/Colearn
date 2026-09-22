@@ -138,11 +138,24 @@ function arc(centreX: number, halfChord: number, endY: number, radius: number): 
   return `M${centreX - halfChord} ${endY} A${radius} ${radius} 0 0 1 ${centreX + halfChord} ${endY}`;
 }
 
+export interface GreetingWords {
+  title: number[];
+  subtitle: number;
+}
+
+function dropAlong(runWidth: number, radius: number, halfChord: number): number {
+  if (radius <= 0) return 0;
+  const reach = Math.asin(Math.min(halfChord / radius, 1));
+  const angle = Math.min(runWidth / 2 / radius, reach);
+  return radius * (1 - Math.cos(angle));
+}
+
 export function archedGreetingLayout(
   width: number,
   titleSize: number,
   subtitleSize: number,
-  titleLines: number = 1
+  titleLines: number = 1,
+  words?: GreetingWords
 ): ArchedGreetingLayout {
   const centreX = width / 2;
   const halfChord = Math.max(width / 2 - ARCHED_GREETING.sidePadding, 1);
@@ -165,9 +178,22 @@ export function archedGreetingLayout(
   const subtitleApex = titleApex + lastDrop + apexDrop;
   const subtitleSag = sagOf(subtitleRadius, subtitleHalfChord);
   const subtitleEnd = subtitleApex + subtitleSag;
+  const arcHeight = Math.ceil(subtitleEnd + subtitleSize * ARCHED_GREETING.subtitleDescent + ARCHED_GREETING.glowPadding);
+
+  const inkHeight = words
+    ? Math.ceil(
+        Math.max(
+          ...titlePaths.map((_, index) => {
+            const radius = ARCHED_GREETING.radius - lineDrop * index;
+            return titleApex + lineDrop * index + dropAlong(words.title[index] ?? 0, radius, halfChord) + titleSize * ARCHED_GREETING.titleDescent;
+          }),
+          subtitleApex + dropAlong(words.subtitle, subtitleRadius, subtitleHalfChord) + subtitleSize * ARCHED_GREETING.subtitleDescent
+        ) + ARCHED_GREETING.glowPadding
+      )
+    : arcHeight;
 
   return {
-    height: Math.ceil(subtitleEnd + subtitleSize * ARCHED_GREETING.subtitleDescent + ARCHED_GREETING.glowPadding),
+    height: Math.min(inkHeight, arcHeight),
     titlePaths,
     titlePath: titlePaths[0],
     subtitlePath: arc(centreX, subtitleHalfChord, subtitleEnd, subtitleRadius),

@@ -56,6 +56,16 @@ describe('the cue rhythm', () => {
 });
 
 describe('loginGlyphSize', () => {
+  // at 450 ms with a quarter turn and a quarter shrink it read as a flicker
+  // (operator 2026-09-22: too fast, over stimulating); it now eases over
+  // more than a second, tips rather than spins, and barely changes size
+  it('turns face to glyph slowly and gently, not in a quick spin', () => {
+    expect(LOGIN_CUE.warpMs).toBeGreaterThanOrEqual(1000);
+    expect(LOGIN_CUE.spinDeg).toBeLessThanOrEqual(30);
+    expect(LOGIN_CUE.avatarShrink).toBeLessThanOrEqual(0.15);
+    expect(LOGIN_CUE.glyphGrow).toBeLessThanOrEqual(0.15);
+  });
+
   it('draws the glyph no smaller than the bar\'s other glyphs, whatever the avatar\'s size', () => {
     expect(loginGlyphSize(58)).toBeGreaterThanOrEqual(38);
     expect(loginGlyphSize(40)).toBe(38);

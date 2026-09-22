@@ -10,6 +10,7 @@ export const GOLD_BUTTON = {
   height: 52,
   fontSize: 18,
   iconSize: 24,
+  iconDrop: 2,
   paddingHorizontal: 26,
   gap: 8,
   glowOpacity: 0.8,
@@ -52,7 +53,17 @@ export function GoldButton({
   testID = 'gold-button',
 }: GoldButtonProps) {
   const { scaledFontSize } = useAccessibility();
-  const glyph = <Ionicons name={icon} size={iconSize} color={HERO_CARD.arrowInk} />;
+  const glyph = (seen: boolean) => (
+    <View
+      testID={seen ? `${testID}-icon` : `${testID}-icon-twin`}
+      accessibilityElementsHidden={!seen}
+      importantForAccessibility={seen ? 'auto' : 'no-hide-descendants'}
+      style={[styles.glyph, !seen && styles.glyphTwin]}
+    >
+      <Ionicons name={icon} size={iconSize} color={HERO_CARD.arrowInk} />
+    </View>
+  );
+
 
   return (
     <Pressable
@@ -69,11 +80,13 @@ export function GoldButton({
         style={[styles.face, { minHeight: height, borderRadius: height / 2 }]}
       >
         <LinearGradient colors={[...GOLD_BUTTON.sheen]} style={styles.sheen} pointerEvents="none" />
-        {iconPosition === 'leading' ? glyph : null}
-        <Text style={[styles.label, { fontSize: scaledFontSize(fontSize) }]} numberOfLines={1}>
-          {label}
-        </Text>
-        {iconPosition === 'trailing' ? glyph : null}
+        <View testID={`${testID}-word`} style={styles.word}>
+          {glyph(iconPosition === 'leading')}
+          <Text style={[styles.label, { fontSize: scaledFontSize(fontSize) }]} numberOfLines={1}>
+            {label}
+          </Text>
+          {glyph(iconPosition === 'trailing')}
+        </View>
       </LinearGradient>
     </Pressable>
   );
@@ -97,12 +110,21 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   face: {
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: GOLD_BUTTON.gap,
     paddingHorizontal: GOLD_BUTTON.paddingHorizontal,
     overflow: 'hidden',
+  },
+  word: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: GOLD_BUTTON.gap,
+  },
+  glyph: {
+    paddingTop: GOLD_BUTTON.iconDrop,
+  },
+  glyphTwin: {
+    opacity: 0,
   },
   sheen: {
     position: 'absolute',

@@ -32,8 +32,10 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { Fonts } from '@/constants/theme';
+import { useAccessibility } from '@/hooks/use-accessibility';
 import { useCoversJourneyBar } from '@/components/child-ui/journey-bar-cover';
 import { PanelClouds } from '@/components/ui/panel-clouds';
 import { PanelStarfield } from '@/components/ui/panel-starfield';
@@ -72,6 +74,16 @@ const RHYTHM = {
 
 /** Under this viewport height the card uses the tight rhythm. */
 const TIGHT_BELOW = 780;
+
+export const KEYPAD_ROWS = [
+  ['1', '2', '3'],
+  ['4', '5', '6'],
+  ['7', '8', '9'],
+  ['', '0', 'delete'],
+] as const;
+export const ANSWER_MAX_DIGITS = 3;
+const KEYPAD_KEY_HEIGHT = 56;
+const KEYPAD_GAP = 8;
 
 /**
  * Where the board's green writing surface sits inside the framed art, measured
@@ -147,6 +159,7 @@ export function ParentsOnlyModal({
   scaledFontSize = (size) => size,
 }: ParentsOnlyModalProps) {
   const { t } = useTranslation();
+  const { isTablet } = useAccessibility();
   const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<TextInput>(null);
   const { width, height } = useWindowDimensions();
@@ -162,6 +175,7 @@ export function ParentsOnlyModal({
 
   // Detect phone in landscape (small height + landscape orientation)
   const isPhoneLandscape = height < 500 && width > height;
+  const drawsKeypad = isMath && isTablet && !isPhoneLandscape;
 
   // Entrance animation — fade in backdrop + settle the card up into place
   useEffect(() => {
@@ -267,6 +281,8 @@ export function ParentsOnlyModal({
         placeholder={isMath ? '' : t('parentsOnly.placeholder')}
         placeholderTextColor="rgba(255, 255, 255, 0.5)"
         keyboardType={isMath ? 'number-pad' : 'default'}
+        editable={!drawsKeypad}
+        showSoftInputOnFocus={!drawsKeypad}
         // At chalk size the caret is tall enough to strike through the centred
         // hint, so it only appears once there is an answer to sit beside.
         caretHidden={isMath && inputValue.length === 0}
@@ -302,6 +318,44 @@ export function ParentsOnlyModal({
 
     return <View style={compact ? styles.neonWrapCompact : styles.neonWrap}>{field}</View>;
   };
+
+  const pressKey = (key: string) => {
+    if (key === 'delete') {
+      onInputChange(inputValue.slice(0, -1));
+      return;
+    }
+    if (inputValue.length >= ANSWER_MAX_DIGITS) return;
+    onInputChange(inputValue + key);
+  };
+
+  const renderKeypad = () => (
+    <View testID="parents-only-keypad" style={[styles.keypad, { width: m.board, marginBottom: m.gap }]}>
+      {KEYPAD_ROWS.map((row, rowIndex) => (
+        <View key={rowIndex} style={styles.keypadRow}>
+          {row.map((key, keyIndex) =>
+            key === '' ? (
+              <View key={keyIndex} style={styles.keypadBlank} />
+            ) : (
+              <Pressable
+                key={keyIndex}
+                testID={`parents-only-key-${key}`}
+                accessibilityRole="button"
+                accessibilityLabel={key === 'delete' ? t('common.delete') : key}
+                onPress={() => pressKey(key)}
+                style={({ pressed }) => [styles.keypadKey, pressed && styles.keypadKeyPressed]}
+              >
+                {key === 'delete' ? (
+                  <Ionicons name="backspace-outline" size={scaledFontSize(26)} color={COLORS.chalk} />
+                ) : (
+                  <Text style={[styles.keypadKeyText, { fontSize: scaledFontSize(m.title) }]}>{key}</Text>
+                )}
+              </Pressable>
+            )
+          )}
+        </View>
+      ))}
+    </View>
+  );
 
   const renderCta = (compact: boolean) => (
     <Pressable
@@ -435,6 +489,7 @@ export function ParentsOnlyModal({
                 )}
 
                 {renderInput(false)}
+                {drawsKeypad ? renderKeypad() : null}
                 {renderCta(false)}
               </>
             )}
@@ -558,6 +613,34 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: COLORS.white,
     textAlign: 'center',
+  },
+  keypad: {
+    gap: KEYPAD_GAP,
+  },
+  keypadRow: {
+    flexDirection: 'row',
+    gap: KEYPAD_GAP,
+  },
+  keypadBlank: {
+    flex: 1,
+  },
+  keypadKey: {
+    flex: 1,
+    height: KEYPAD_KEY_HEIGHT,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: COLORS.sumPillBorder,
+    backgroundColor: COLORS.sumPill,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  keypadKeyPressed: {
+    backgroundColor: COLORS.orbFill,
+    transform: [{ scale: 0.96 }],
+  },
+  keypadKeyText: {
+    fontFamily: CHALK_FONT,
+    color: COLORS.chalk,
   },
   // Wooden-framed chalkboard (maths variant)
   chalkGlow: {

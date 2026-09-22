@@ -31,9 +31,11 @@ describe('ProfileSessionCard for a guest', () => {
   it('draws the login glyph in the ink the gold buttons use, not the bar\'s gold', () => {
     const underTest = render(<ProfileSessionCard needsSignIn width={340} onLogin={jest.fn()} onLogout={jest.fn()} />);
 
+    // the button balances its glyph with an unseen twin; both are counted here
     const glyphs = underTest.UNSAFE_root.findAll((n: any) => n.props.name === 'log-in-outline');
-    expect(glyphs).toHaveLength(1);
-    expect(glyphs[0].props.color).not.toBe(ACCENT_GOLD);
+    expect(underTest.UNSAFE_root.findAll((n: any) => n.props.testID === 'profile-session-icon')).toHaveLength(1);
+    expect(glyphs.length).toBeGreaterThan(0);
+    glyphs.forEach((glyph: any) => expect(glyph.props.color).not.toBe(ACCENT_GOLD));
   });
 
   it('sits most of the way across the column, with a way in big enough for a thumb', () => {

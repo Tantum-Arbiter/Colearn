@@ -25,7 +25,6 @@ import * as Google from 'expo-auth-session/providers/google';
 import { ThemedText } from '../themed-text';
 import { TermsConditionsScreen } from '../account/terms-conditions-screen';
 import { PrivacyPolicyScreen } from '../account/privacy-policy-screen';
-import { MainMenu } from '../main-menu';
 import { GoogleGlyph } from './google-glyph';
 import { AuthSky } from './auth-sky';
 import { AuthPillButton } from './auth-pill-button';
@@ -102,10 +101,10 @@ const HERO_OVERLAP = Math.round(HERO_HEIGHT * 0.16);
 interface LoginScreenProps {
   onSuccess: () => void;
   onSkip?: () => void;
-  onNavigate?: (destination: string) => void;
+  onRevealStart?: () => void;
 }
 
-export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps) {
+export function LoginScreen({ onSuccess, onSkip, onRevealStart }: LoginScreenProps) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { scaledFontSize, scaledButtonSize } = useAccessibility();
@@ -113,9 +112,7 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
   const reduceMotion = useReducedMotion();
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [isAppleLoading, setIsAppleLoading] = useState(false);
-  const [showReturningMenu, setShowReturningMenu] = useState(false);
   const [showGuestInfo, setShowGuestInfo] = useState(false);
-  const [showGuestMenu, setShowGuestMenu] = useState(false);
   const [currentView, setCurrentView] = useState<'main' | 'terms' | 'privacy'>('main');
   const [processedResponseId, setProcessedResponseId] = useState<string | null>(null);
 
@@ -239,6 +236,7 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
   // leaving the sky (stars, clouds, mist) in place while overlays come and go.
   const cardOpacity = useSharedValue(1);
   const containerOpacity = useSharedValue(0); // Start at 0 for fade-in from splash
+  const skyOpacity = useSharedValue(1);
 
   const guestInfoSlideY = useSharedValue(-height); // Start above screen
 
@@ -387,20 +385,14 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
     if (tier !== 'free') {
       DEBUG_LOGS && console.log('[LoginScreen] Returning subscriber -skipping guest info');
       setGuestMode(true);
+      onRevealStart?.();
 
-      // Fade out the login card first, then the whole screen
       cardOpacity.value = withTiming(0, { duration: 400, easing: Easing.out(Easing.cubic) });
-      // Fade out the login background (gradient, stars, moon, bear)
-      containerOpacity.value = withTiming(0, { duration: 600, easing: Easing.out(Easing.cubic) });
-
-      // Mount MainMenu behind the fading login -carousel buttons animate in naturally
-      setShowReturningMenu(true);
-
-      // After the carousel buttons have animated in (~2s), call onSkip to finish
-      setTimeout(() => {
-        const callback = onSkip || onSuccess;
-        callback();
-      }, 2000);
+      containerOpacity.value = withTiming(0, { duration: 600, easing: Easing.out(Easing.cubic) }, (finished) => {
+        if (finished) {
+          runOnJS(finishHandoff)();
+        }
+      });
       return;
     }
 
@@ -429,24 +421,26 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
     });
   };
 
+  const finishHandoff = () => {
+    const callback = onSkip || onSuccess;
+    callback();
+  };
+
   const handleGuestContinue = () => {
     // Set guest mode - no backend calls will be made
     setGuestMode(true);
     DEBUG_LOGS && console.log('[LoginScreen] Continuing as guest - no backend calls');
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
-    // Mount the MainMenu underneath the guest info overlay
-    setShowGuestMenu(true);
-
-    // Slide the guest info overlay up out of view to reveal the menu
+    skyOpacity.value = 0;
+    onRevealStart?.();
     setTimeout(() => {
       guestInfoSlideY.value = withTiming(-height, {
         duration: 1200,
         easing: Easing.in(Easing.cubic),
       }, (finished) => {
         if (finished) {
-          const callback = onSkip || onSuccess;
-          runOnJS(callback)();
+          runOnJS(finishHandoff)();
         }
       });
     }, 300);
@@ -461,6 +455,10 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
 
   const containerAnimatedStyle = useAnimatedStyle(() => ({
     opacity: containerOpacity.value,
+  }));
+
+  const skyAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: skyOpacity.value,
   }));
 
   const guestInfoAnimatedStyle = useAnimatedStyle(() => ({
@@ -478,8 +476,7 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
 
   return (
     <Animated.View style={[styles.container, containerAnimatedStyle]}>
-      {/* Login Screen - slides out to the left */}
-      <View style={styles.loginScreenWrapper}>
+      <Animated.View style={[styles.loginScreenWrapper, skyAnimatedStyle]} testID="login-sky-and-card">
         <AuthSky stars={stars}>
         {/* Storybook panel -- fades as one while the sky behind stays put */}
         <Animated.View
@@ -640,7 +637,7 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
           </Animated.View>
         </Animated.View>
       </AuthSky>
-      </View>
+      </Animated.View>
 
       {/* Guest Info Overlay - slides down from top */}
       {showGuestInfo && (
@@ -651,21 +648,6 @@ export function LoginScreen({ onSuccess, onSkip, onNavigate }: LoginScreenProps)
           <GuestInfoScreen onContinue={handleGuestContinue} onBack={handleGuestBack} />
         </Animated.View>
       )}
-
-      {/* MainMenu for guest flow -mounted behind the guest info overlay, revealed by slide-up */}
-      {showGuestMenu && (
-        <View style={styles.guestMenuContainer}>
-          <MainMenu onNavigate={onNavigate || (() => {})} isActive={true} disableTutorial={true} entranceDelay={1500} />
-        </View>
-      )}
-
-      {/* Returning subscriber: MainMenu mounted behind fading login, carousel buttons animate in */}
-      {showReturningMenu && (
-        <View style={styles.returningMenuContainer}>
-          <MainMenu onNavigate={onNavigate || (() => {})} isActive={true} disableTutorial={true} entranceDelay={400} />
-        </View>
-      )}
-
 
     </Animated.View>
   );
@@ -678,14 +660,6 @@ const styles = StyleSheet.create({
   loginScreenWrapper: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 1,
-  },
-  returningMenuContainer: {
-    ...StyleSheet.absoluteFillObject,
-    zIndex: 1,
-  },
-  guestMenuContainer: {
-    ...StyleSheet.absoluteFillObject,
-    zIndex: 2,
   },
   card: {
     flex: 1,

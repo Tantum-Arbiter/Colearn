@@ -252,6 +252,52 @@ function centreOf(path: string): number {
   return apexOf(path) + pointsOf(path).radius;
 }
 
+// The arc runs edge to edge but the words sit in its middle. On an iPad the
+// arc's ends droop about a hundred points below its apex, and a box sized to
+// them left that much empty sky under the subtitle, a hole between the
+// greeting and the cards (operator 2026-09-22, "not well centred").
+describe('archedGreetingLayout sized to the words it sets', () => {
+  const IPAD = 834;
+  const T = Math.round(TITLE * 1.3);
+  const S = Math.round(SUBTITLE * 1.3);
+  const words = (title: string, subtitle: string) => ({
+    title: [textAdvance(title, T, 'heavy')],
+    subtitle: textAdvance(subtitle, S, 'medium'),
+  });
+  const arcOnly = archedGreetingLayout(IPAD, T, S);
+  const short = archedGreetingLayout(IPAD, T, S, 1, words('Welcome back, Rrr!', '2 days of stories in a row. Wonderful!'));
+
+  it('should end where short words end on a wide screen, not where the arc does', () => {
+    expect(short.height).toBeLessThan(arcOnly.height - 40);
+  });
+
+  it('should never be taller than the arcs themselves', () => {
+    const huge = archedGreetingLayout(IPAD, T, S, 1, { title: [100000], subtitle: 100000 });
+
+    expect(huge.height).toBe(arcOnly.height);
+  });
+
+  it('should grow as the subtitle runs further round its arc, so its ends are never cut', () => {
+    const longer = archedGreetingLayout(IPAD, T, S, 1, words('Welcome back, Rrr!', 'A very much longer subtitle that runs well round the arc'));
+
+    expect(longer.height).toBeGreaterThan(short.height);
+  });
+
+  it('should leave the arcs where they were, only the box changes', () => {
+    expect(short.titlePaths).toEqual(arcOnly.titlePaths);
+    expect(short.subtitlePath).toEqual(arcOnly.subtitlePath);
+  });
+
+  it('should barely change a phone, whose arc hardly droops', () => {
+    const phone = archedGreetingLayout(PHONE, TITLE, SUBTITLE, 1, {
+      title: [textAdvance('Welcome back, Rrr!', TITLE, 'heavy')],
+      subtitle: textAdvance('2 days of stories in a row. Wonderful!', SUBTITLE, 'medium'),
+    });
+
+    expect(archedGreetingLayout(PHONE, TITLE, SUBTITLE).height - phone.height).toBeLessThanOrEqual(12);
+  });
+});
+
 describe('archedGreetingLayout over two lines', () => {
   const one = archedGreetingLayout(PHONE, TITLE, SUBTITLE);
   const two = archedGreetingLayout(PHONE, TITLE, SUBTITLE, 2);

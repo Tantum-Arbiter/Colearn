@@ -34,6 +34,9 @@ import { Fonts } from '@/constants/theme';
 import { useTimeOfDay } from '@/hooks/use-time-of-day';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { useSettledAfterTransition } from '@/hooks/use-ambient-animation';
+import { ChildBottomNavigation, navClearance, type ChildNavItemId } from '@/components/child-ui/child-bottom-navigation';
+import { useScreenTimeAllowance } from '@/hooks/use-screen-time-allowance';
+import { destinationForSection } from '@/constants/catalogue-destinations';
 
 const log = Logger.create('Account');
 
@@ -50,10 +53,11 @@ const SLIDE_DURATION = 300;
 
 interface AccountScreenProps {
   onBack: () => void;
+  onNavigate?: (destination: string) => void;
   isActive?: boolean;
 }
 
-export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
+export function AccountScreen({ onBack, onNavigate, isActive = true }: AccountScreenProps) {
   const { t } = useTranslation();
   const [currentView, setCurrentView] = useState<SlideView>('main');
 
@@ -180,6 +184,7 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
   const timeOfDay = useTimeOfDay();
   const reduceMotion = useReducedMotion();
   const skyAnimated = useSettledAfterTransition(isActive) && !reduceMotion;
+  const screenTimeAllowance = useScreenTimeAllowance();
 
   // Tutorial reset
   const { resetGuides, lastResetTimestamp } = useOwlGuide();
@@ -449,6 +454,20 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
     }
   };
 
+  const handleNavSelect = useCallback((id: ChildNavItemId) => {
+    if (id === 'screensafe') {
+      const scroll = guideScroller.scrollRef.current;
+      screenTimeRef.current?.measureLayout(
+        scroll as unknown as number,
+        (_x, y) => scroll?.scrollTo({ y: Math.max(y - insets.top - 90, 0), animated: true }),
+        () => undefined
+      );
+      return;
+    }
+    const destination = destinationForSection(id);
+    if (destination) onNavigate?.(destination);
+  }, [guideScroller.scrollRef, insets.top, onNavigate]);
+
   return (
     <View style={styles.container}>
       <View testID="account-background" style={styles.gradient}>
@@ -472,11 +491,11 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
                 bounces={false}
                 overScrollMode="never"
                 style={styles.scrollView}
-                // no bar sits at the foot of this page, so it needs only the
-                // home indicator and a breath of margin under its last row; a
-                // fifth of the screen here let every row be thrown up out of
-                // view over an empty lower third
-                contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + PAGE_FOOT_MARGIN + guideScroller.reserve }, isTablet && { alignItems: 'center' }]}
+                // the journey bar sits at the foot of this page, so the last
+                // row needs its clearance and no more; a fifth of the screen
+                // here let every row be thrown up out of view over an empty
+                // lower third
+                contentContainerStyle={[styles.content, { paddingBottom: navClearance(insets.bottom) + guideScroller.reserve }, isTablet && { alignItems: 'center' }]}
               >
                 <View testID="account-sky" style={[styles.sky, { height: heroContentTop(insets.top, sun.size), paddingTop: sun.top }]}>
                   <SleepingSkyFace size={sun.size} timeOfDay={timeOfDay} animated={skyAnimated} />
@@ -756,13 +775,16 @@ export function AccountScreen({ onBack, isActive = true }: AccountScreenProps) {
 
       </View>
 
+      {currentView === 'main' && (
+        <ChildBottomNavigation selected="profile" onSelect={handleNavSelect} screenTime={screenTimeAllowance} slotKey="account" />
+      )}
+
       {/* The owl's settings walkthrough - shown on first visit, key forces remount after reset */}
       <OwlGuide key={`settings-guide-${lastResetTimestamp}`} id="settings_walkthrough" active={isActive && currentView === 'main'} targets={guideTargets} scroller={guideScroller.scroller} />
     </View>
   );
 }
 
-const PAGE_FOOT_MARGIN = 24;
 
 const styles = StyleSheet.create({
   container: {

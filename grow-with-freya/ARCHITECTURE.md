@@ -242,6 +242,52 @@ The featured book and Today's pick sit side by side across the top (`catalogueLa
 `constants/catalogue-columns.ts`), and every shelf below runs the full width from the left margin,
 as upright. Previously the shelves were squeezed into a column beside the featured book.
 
+### The grown-ups gate draws its own keypad on a tablet
+
+The maths challenge in `components/ui/parents-only-modal.tsx` asks iOS for a number pad. On a
+phone that keyboard docks at the foot of the screen and the card rides up above it; on an iPad
+it floats over the middle of the screen, on top of the card and the very board it is meant to
+write on (operator, 2026-09-22). So on a tablet (`useAccessibility().isTablet`, not phone
+landscape) the maths gate keeps the system keyboard away (`showSoftInputOnFocus` off, the
+field not editable) and draws a three-by-four keypad of its own under the chalkboard
+(`KEYPAD_ROWS`, digits in the chalk hand, a backspace key named `common.delete` for the
+screen reader), capped at `ANSWER_MAX_DIGITS`. The animal challenge still needs letters and
+keeps the real keyboard everywhere.
+
+`GoldButton` keeps its word in the middle of the pill: the glyph hangs off the word's edge in
+an absolute box, taking no room in the row, and the face pads both sides alike (operator,
+2026-09-22: with the glyph in the row the word sat half a glyph off centre). The glyph is
+dropped by `GOLD_BUTTON.iconDrop` (2 pt): an icon box is centred on its drawing while a text
+box carries descender room below the baseline, so without the drop it rode above the word.
+
+Grown-ups carries the journey bar like every other journey page (operator, 2026-09-22: it hid
+there). Profile stays lit, since Grown-ups lies below the Profile page; the other items are
+pages the main menu can send to (`destinationForSection`, the inverse of
+`catalogueSectionFor`, through `AccountScreen`'s `onNavigate`); Screensafe scrolls to this
+page's own screen-time card. The bar leaves with the terms and privacy sub-pages.
+
+### Sliding into Grown-ups without a stutter
+
+Three things made the slide from Profile into Grown-ups judder (operator, 2026-09-22), each
+measured frame by frame on the iPad:
+
+- **The gate's keyboard.** The animal challenge types into the system keyboard, and the page
+  slide started while it was still sliding away, so the two shared every frame and the page
+  moved on every second one. `afterKeyboardGone` in `hooks/use-parents-only-challenge.ts` closes
+  the gate at once but opens the door only when the keyboard's announced hide animation ends
+  (`keyboardWillHide` plus its duration; on the iPad `keyboardDidHide` never arrived, and waiting
+  for it left the page standing still for a quarter of a second), with `KEYBOARD_GONE_WAIT_MS`
+  as a backstop.
+- **Grown-ups built from cold.** It is now kept mounted off screen with the library
+  (`PREWARMED_PAGES` in `constants/page-transition.ts`).
+- **Any page built in the same commit as its slide.** Its native views were created during the
+  slide's first frames. `EnhancedPageTransition` now waits `COLD_PAGE_FRAMES` (2) before sliding
+  onto a page that was not already mounted; a mounted page slides at once.
+
+Every slide still shows at most one long frame in the slow tail of the ease-out on the
+simulator, with the JS thread idle; it was not reproducible to a cause and is not visible as
+a stutter.
+
 ### Grown-ups lies below the Profile page
 
 Where every page rests while another shows is one function, `pageOffset` in
@@ -287,9 +333,10 @@ For whoever needs to sign in (`needsSignIn` in `store/session.ts`: a guest, or a
 session the app could not refresh, which the API client reports down `services/session-lapse.ts`
 into `sessionLapsed`, cleared when a login completes and never persisted), the profile slot in
 the journey bar says where that is: every eighteen seconds
-the child's face warps into a gold login glyph on a gold-tinted ring, holds three seconds and
-warps back (`ProfileNavAvatar`, `constants/login-cue.ts`; under Reduce Motion it cross-fades
-without the turn). The glyph is never smaller than the bar's other glyphs.
+the child's face eases into a gold login glyph on a gold-tinted ring over 1.2 s with a small
+30° tip, holds three seconds and eases back (`ProfileNavAvatar`, `constants/login-cue.ts`; under
+Reduce Motion it cross-fades without the tip). It was a 450 ms quarter-turn with a quarter
+shrink until the operator found it too fast and over-stimulating (2026-09-22). The glyph is never smaller than the bar's other glyphs.
 The home tour's profile step carries a legend of both states (`ProfileSlotLegend`, the real
 slot held still on each with `hold`), the way the ring step shows the ring with time left and
 time up, and its copy explains what the gold symbol means (operator request 2026-09-21). Its screen time switches stay on the page, and its walkthrough has no
@@ -365,6 +412,28 @@ lays out from `useWindowDimensions`, so it is right whichever way a tablet is he
 calls `setAppReady(true)`. `app/_layout.tsx` keeps it as an overlay above whichever view the
 journey resolves to (onboarding, login, loading or the main menu), mounted in one place so the
 view switch does not restart it.
+
+### The app shell: one main menu, with sign-in floated above it
+
+`app/_layout.tsx` mounts the app tree (the journey bar, the page slider with the main menu and
+every page, the story reader) as soon as the journey reaches login, and never mounts it again
+(`appTreeMounted` in `constants/app-shell.ts`). The login screen and the startup loading
+screen float above it in one overlay (`authOverlayUp`, `AUTH_OVERLAY_Z`), the way the splash
+floats above everything, and leave when the view becomes `app`. So the main menu a child sees
+revealed -- by the guest card sliding up, the login fading for a returning subscriber, or the
+loading screen lifting after the first sync -- is the one they go on to use, already settled,
+its data loaded and its images decoded. The menu's owl tour waits until nothing covers it
+(`disableTutorial={!menuRevealed(view)}`).
+
+Before this (operator report 2026-09-22, "the screen appears then flickers before it seems to
+load"), the login and app views were mutually exclusive branches of one render function, and
+the login screen mounted a main menu of its own to reveal; the moment the view switched, that
+menu was destroyed and a fresh one mounted in the same commit. On device that was one dark
+frame 0.8 s after the reveal with the sun, both card thumbnails and the badge blank, then the
+ambient motion, milestone stars and greeting settling all over again. The half-second timers
+meant to overlap the two were reading flags inside the branch that had already gone. The root
+view behind everything is now the night navy (`ROOT_BACKGROUND`) rather than white, so an
+unpainted frame anywhere is dark, not a flash.
 
 - **The logo is cut, not redrawn.** `scripts/prepare-splash-logo.py` splits the flat
   `ui-elements/earlyroots-logo.png` into `assets/images/splash-logo/` (the book's two halves,
@@ -488,6 +557,16 @@ after a comma, so the name gets a line of its own (`planGreetingTitle`); nothing
 larger than its arc holds. The flat half-em it replaced cut the W off "Welcome back, wdwdsd!"
 (2026-09-22). A test holds every locale's greeting, with a name at `MAX_NICKNAME_LENGTH` of the
 widest letter, to two lines at no less than `minScale` on a 375 pt phone.
+The block is as tall as its words reach, not as its arcs: each line is told how wide its words
+are, and the box ends where the lowest word ends on its arc (`archedGreetingLayout`'s `words`).
+The arc spans the screen but the words sit in its middle; on a portrait iPad, with the full-width
+arc and 1.3x type, the arc's ends droop about a hundred points below the apex, and a box sized to
+them left that much empty sky between the subtitle and the first card, which read as the page
+sitting off centre (operator, 2026-09-22). A phone's arc barely droops, so it moved a few points.
+On a portrait tablet the whole block, greeting to trial button, then sits a twentieth of the
+screen higher (`heroContentLift`, `PORTRAIT_TABLET_CONTENT_LIFT`; operator, 2026-09-22). The block
+is centred between the sun and the bar, so the lift comes off the space above it and goes onto
+the space below; taken off the top alone, centring would have moved it only half as far.
 The language button's flag fills the whole button: `FlagArt` shows the real flag from
 `country-flag-icons` (MIT; its square `1x1` SVGs, imported as components through the SVG
 transformer) inside a circular clip just inside the rim. An emoji cannot do it: the glyph is

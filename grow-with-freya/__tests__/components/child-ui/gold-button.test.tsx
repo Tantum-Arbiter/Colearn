@@ -20,8 +20,8 @@ function pressable(tree: ReturnType<typeof render>) {
 
 function glyphOrder(tree: ReturnType<typeof render>, icon: string, label: string): string[] {
   return tree.UNSAFE_root
-    .findAll((n: any) => n.props.name === icon || n.props.children === label)
-    .map((n: any) => (n.props.name === icon ? 'icon' : 'label'))
+    .findAll((n: any) => n.props.testID === 'gold-button-icon' || n.props.children === label)
+    .map((n: any) => (n.props.testID === 'gold-button-icon' ? 'icon' : 'label'))
     .filter((kind: string, index: number, all: string[]) => all.indexOf(kind) === index);
 }
 
@@ -61,6 +61,35 @@ describe('GoldButton', () => {
 
     const glyph = tree.UNSAFE_root.findAll((n: any) => n.props.name === 'log-in-outline')[0];
     expect(glyph.props.color).toBe(HERO_CARD.arrowInk);
+  });
+
+  it('should drop its glyph a touch so it sits level with the word, not above it', () => {
+    const tree = render(<GoldButton label="x" icon="log-in-outline" onPress={jest.fn()} />);
+
+    const icon = byTestId(tree, 'gold-button-icon')[0];
+    expect(StyleSheet.flatten(icon.props.style).paddingTop).toBe(GOLD_BUTTON.iconDrop);
+    expect(GOLD_BUTTON.iconDrop).toBeGreaterThan(0);
+  });
+
+  // the word is what the eye centres on the pill; a glyph that took room on
+  // one side pushed it off by half the glyph, so an unseen twin balances it
+  it('should keep the word in the middle of the pill, an unseen twin of the glyph balancing it', () => {
+    const leading = render(<GoldButton label="L" icon="log-in-outline" onPress={jest.fn()} />);
+    const trailing = render(<GoldButton label="T" icon="lock-closed" iconPosition="trailing" onPress={jest.fn()} />);
+
+    for (const tree of [leading, trailing]) {
+      const twin = byTestId(tree, 'gold-button-icon-twin')[0];
+      expect(StyleSheet.flatten(twin.props.style).opacity).toBe(0);
+      expect(twin.props.accessibilityElementsHidden).toBe(true);
+      expect(StyleSheet.flatten(byTestId(tree, 'gold-button-icon')[0].props.style).opacity).toBeUndefined();
+    }
+    const seenThenTwin = (tree: ReturnType<typeof render>) =>
+      tree.UNSAFE_root
+        .findAll((n: any) => n.props.testID === 'gold-button-icon' || n.props.testID === 'gold-button-icon-twin')
+        .map((n: any) => n.props.testID)
+        .filter((id: string, index: number, all: string[]) => all.indexOf(id) === index);
+    expect(seenThenTwin(leading)).toEqual(['gold-button-icon', 'gold-button-icon-twin']);
+    expect(seenThenTwin(trailing)).toEqual(['gold-button-icon-twin', 'gold-button-icon']);
   });
 
   it('should lead with its glyph by default and trail it when asked', () => {

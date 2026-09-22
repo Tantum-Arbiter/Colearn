@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useMemo } from 'react';
+import { Keyboard } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 export interface ParentChallenge {
@@ -52,6 +53,33 @@ export interface UseParentsOnlyChallengeReturn {
   isInputValid: boolean;
 }
 
+export const KEYBOARD_GONE_WAIT_MS = 450;
+
+export function afterKeyboardGone(open: () => void): void {
+  if (!Keyboard.isVisible()) {
+    open();
+    return;
+  }
+  let opened = false;
+  let settle: ReturnType<typeof setTimeout> | null = null;
+  const finish = () => {
+    if (opened) return;
+    opened = true;
+    willHide.remove();
+    didHide.remove();
+    clearTimeout(fallback);
+    if (settle) clearTimeout(settle);
+    open();
+  };
+  const willHide = Keyboard.addListener('keyboardWillHide', (event) => {
+    if (settle) clearTimeout(settle);
+    settle = setTimeout(finish, event?.duration ?? 0);
+  });
+  const didHide = Keyboard.addListener('keyboardDidHide', finish);
+  const fallback = setTimeout(finish, KEYBOARD_GONE_WAIT_MS);
+  Keyboard.dismiss();
+}
+
 export function useParentsOnlyChallenge(): UseParentsOnlyChallengeReturn {
   const { t } = useTranslation();
   const [isVisible, setIsVisible] = useState(false);
@@ -96,10 +124,9 @@ export function useParentsOnlyChallenge(): UseParentsOnlyChallengeReturn {
     if (isInputValid) {
       setIsVisible(false);
       setInputValue('');
-      if (callbackRef.current) {
-        callbackRef.current();
-        callbackRef.current = null;
-      }
+      const open = callbackRef.current;
+      callbackRef.current = null;
+      if (open) afterKeyboardGone(open);
     }
   }, [isInputValid]);
 

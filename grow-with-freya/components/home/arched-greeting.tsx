@@ -1,7 +1,7 @@
 import React, { memo, useId } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Svg, { Defs, FeGaussianBlur, Filter, Path, Text as SvgText, TextPath } from 'react-native-svg';
-import { ARCHED_GREETING, archedGreetingLayout, fitToArc, planGreetingTitle } from '@/constants/arched-greeting';
+import { ARCHED_GREETING, archedGreetingLayout, fitToArc, planGreetingTitle, textAdvance } from '@/constants/arched-greeting';
 import { Fonts } from '@/constants/theme';
 
 export interface ArchedGreetingProps {
@@ -31,7 +31,10 @@ export const ArchedGreeting = memo(function ArchedGreeting({
   const plan = planGreetingTitle(title, titleSize, width);
   const fittedTitle = plan.size;
   const fittedSubtitle = fitToArc(subtitle, subtitleSize, width, ARCHED_GREETING.subtitleChordRatio, 'medium');
-  const layout = archedGreetingLayout(width, fittedTitle, fittedSubtitle, plan.lines.length);
+  const layout = archedGreetingLayout(width, fittedTitle, fittedSubtitle, plan.lines.length, {
+    title: plan.lines.map((line) => textAdvance(line, fittedTitle, 'heavy')),
+    subtitle: textAdvance(subtitle, fittedSubtitle, 'medium'),
+  });
   const titleArc = (index: number) => `${id}-title-${index}`;
   const subtitleArc = `${id}-subtitle`;
   const glow = `${id}-glow`;

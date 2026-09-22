@@ -8,9 +8,15 @@
  */
 
 import React from 'react';
-import { render, type RenderResult } from '@testing-library/react-native';
-import { ParentsOnlyModal } from '@/components/ui/parents-only-modal';
+import { fireEvent, render, type RenderResult } from '@testing-library/react-native';
+import { ANSWER_MAX_DIGITS, ParentsOnlyModal } from '@/components/ui/parents-only-modal';
 import type { ParentChallenge } from '@/hooks/use-parents-only-challenge';
+
+let mockIsTablet = false;
+
+jest.mock('@/hooks/use-accessibility', () => ({
+  useAccessibility: () => ({ isTablet: mockIsTablet, scaledFontSize: (size: number) => size, scaledButtonSize: (size: number) => size }),
+}));
 
 const MATH_CHALLENGE: ParentChallenge = {
   type: 'math',
@@ -50,6 +56,70 @@ function renderGate(props: Partial<React.ComponentProps<typeof ParentsOnlyModal>
 }
 
 describe('ParentsOnlyModal', () => {
+  beforeEach(() => {
+    mockIsTablet = false;
+  });
+
+  // iPadOS floats its number pad over the middle of the screen, on top of the
+  // card and the board it is meant to write on, so a tablet gets its own keys
+  describe('on a tablet', () => {
+    beforeEach(() => {
+      mockIsTablet = true;
+    });
+
+    it('should draw its own keypad under the maths board and keep the system keyboard away', () => {
+      const view = renderGate({ challenge: MATH_CHALLENGE });
+
+      expect(byTestId(view, 'parents-only-keypad')).toHaveLength(1);
+      for (const digit of ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']) {
+        expect(byTestId(view, `parents-only-key-${digit}`).length).toBeGreaterThan(0);
+      }
+      expect(byTestId(view, 'parents-only-key-delete').length).toBeGreaterThan(0);
+      expect(byTestId(view, 'parents-only-input')[0].props.editable).toBe(false);
+      expect(byTestId(view, 'parents-only-input')[0].props.showSoftInputOnFocus).toBe(false);
+    });
+
+    it('should write the pressed digit after the answer so far, and rub the last one out on delete', () => {
+      const onInputChange = jest.fn();
+      const view = renderGate({ challenge: MATH_CHALLENGE, inputValue: '1', onInputChange });
+
+      fireEvent.press(byTestId(view, 'parents-only-key-5')[0]);
+      fireEvent.press(byTestId(view, 'parents-only-key-delete')[0]);
+
+      expect(onInputChange).toHaveBeenNthCalledWith(1, '15');
+      expect(onInputChange).toHaveBeenNthCalledWith(2, '');
+    });
+
+    it('should not take more digits than an answer can have', () => {
+      const onInputChange = jest.fn();
+      const view = renderGate({ challenge: MATH_CHALLENGE, inputValue: '1'.repeat(ANSWER_MAX_DIGITS), onInputChange });
+
+      fireEvent.press(byTestId(view, 'parents-only-key-2')[0]);
+
+      expect(onInputChange).not.toHaveBeenCalled();
+    });
+
+    it('should name its delete key for the screen reader', () => {
+      const view = renderGate({ challenge: MATH_CHALLENGE });
+
+      expect(byTestId(view, 'parents-only-key-delete')[0].props.accessibilityLabel).toBe('common.delete');
+    });
+
+    it('should still let the animal challenge use the real keyboard', () => {
+      const view = renderGate({ challenge: ANIMAL_CHALLENGE });
+
+      expect(byTestId(view, 'parents-only-keypad')).toHaveLength(0);
+      expect(byTestId(view, 'parents-only-input')[0].props.editable).toBe(true);
+    });
+  });
+
+  it('should leave a phone to its own number pad', () => {
+    const view = renderGate({ challenge: MATH_CHALLENGE });
+
+    expect(byTestId(view, 'parents-only-keypad')).toHaveLength(0);
+    expect(byTestId(view, 'parents-only-input')[0].props.editable).toBe(true);
+  });
+
   it('should render nothing while it is not visible', () => {
     const view = renderGate({ visible: false });
 

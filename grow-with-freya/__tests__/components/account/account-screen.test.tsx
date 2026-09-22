@@ -12,6 +12,7 @@ import { render, fireEvent, act, waitFor } from '@testing-library/react-native';
 import { Alert, Dimensions, ScrollView, StyleSheet } from 'react-native';
 
 import { AccountScreen } from '@/components/account/account-screen';
+import { navClearance } from '@/components/child-ui/child-bottom-navigation';
 import { SleepingSkyFace } from '@/components/account/sleeping-sky-face';
 import { heroContentTop, heroSunFrame } from '@/constants/home-sky';
 import { reminderService } from '@/services/reminder-service';
@@ -40,6 +41,12 @@ jest.mock('react-native-reanimated', () => {
     useSharedValue: jest.fn((v: any) => ({ value: v })),
     useAnimatedStyle: jest.fn(() => ({})),
     withTiming: jest.fn((v: any) => v),
+    withSpring: jest.fn((v: any) => v),
+    withSequence: jest.fn((...steps: any[]) => steps[steps.length - 1]),
+    withDelay: jest.fn((_ms: number, a: any) => a),
+    interpolate: jest.fn((v: any) => v),
+    useAnimatedProps: jest.fn(() => ({})),
+    useDerivedValue: jest.fn((fn: any) => ({ value: fn() })),
     withRepeat: jest.fn((a: any) => a),
     cancelAnimation: jest.fn(),
     Easing: { out: jest.fn((e: any) => e), in: jest.fn((e: any) => e), inOut: jest.fn((e: any) => e), cubic: jest.fn(), sin: jest.fn(), linear: jest.fn() },
@@ -108,6 +115,7 @@ jest.mock('@/services/screen-time-service', () => ({
   default: {
     getInstance: () => ({
       getScreenTimeStats: jest.fn().mockResolvedValue({ todayUsage: 0, dailyLimit: 3600 }),
+      getDailyLimit: jest.fn(() => 3600),
       clearAllData: jest.fn().mockResolvedValue(undefined),
     }),
   },
@@ -585,25 +593,24 @@ describe('AccountScreen walkthrough', () => {
 });
 
 /**
- * The page has no bar at its foot, yet it padded a fifth of the screen under
- * its last row and bounced: a swipe threw every row up under the header and
- * left the lower third of the screen empty. It now scrolls only as far as its
- * content actually runs past the screen, and stops there.
+ * The page padded a fifth of the screen under its last row and bounced: a
+ * swipe threw every row up under the header and left the lower third of the
+ * screen empty. It now scrolls only as far as its content actually runs past
+ * the screen, plus the journey bar's clearance, and stops there.
  */
 describe('AccountScreen scrolling', () => {
   function scrollOf(tree: ReturnType<typeof render>) {
     return tree.UNSAFE_getByType(ScrollView);
   }
 
-  it('leaves only a small margin under the last row, not a fifth of the screen', () => {
+  it('leaves the journey bar its clearance under the last row, not a fifth of the screen', () => {
     const tree = render(<AccountScreen onBack={jest.fn()} />);
 
     const padding = StyleSheet.flatten(scrollOf(tree).props.contentContainerStyle).paddingBottom as number;
 
     // the test window has no height, so the old fifth-of-the-screen would
     // read as nothing here: the bound is fixed instead
-    expect(padding).toBeGreaterThan(0);
-    expect(padding).toBeLessThanOrEqual(48);
+    expect(padding).toBe(navClearance(0));
   });
 
   it('does not bounce past its ends, so the rows stay in place', () => {
@@ -611,5 +618,48 @@ describe('AccountScreen scrolling', () => {
 
     expect(scrollOf(tree).props.bounces).toBe(false);
     expect(scrollOf(tree).props.overScrollMode).toBe('never');
+  });
+});
+
+/**
+ * Grown-ups is a journey page like the rest, so the bar stays at its foot
+ * (operator report 2026-09-22: it hid there). The Profile lamp stays lit,
+ * since Grown-ups lies below the Profile page, and every other item is a page
+ * the main menu can send to; Screensafe is this page's own screen-time card.
+ */
+describe('AccountScreen journey bar', () => {
+  function navItem(tree: ReturnType<typeof render>, id: string) {
+    return tree.UNSAFE_root.findAll((n: any) => n.props.testID === `navigation-item-${id}` && n.props.accessibilityRole === 'tab')[0];
+  }
+
+  it('keeps the journey bar at its foot, for the account page, with Profile lit', () => {
+    const tree = render(<AccountScreen onBack={jest.fn()} />);
+
+    const bar = tree.UNSAFE_root.findAll((n: any) => n.props.slotKey === 'account')[0];
+    expect(bar).toBeDefined();
+    expect(bar.props.selected).toBe('profile');
+  });
+
+  it.each([
+    ['home', 'stories'],
+    ['progress', 'progress'],
+    ['search', 'search'],
+    ['profile', 'profile'],
+  ])('sends a tap on %s to the %s page', (id, destination) => {
+    const onNavigate = jest.fn();
+    const tree = render(<AccountScreen onBack={jest.fn()} onNavigate={onNavigate} />);
+
+    fireEvent.press(navItem(tree, id));
+
+    expect(onNavigate).toHaveBeenCalledWith(destination);
+  });
+
+  it('keeps Screensafe on this page rather than leaving it', () => {
+    const onNavigate = jest.fn();
+    const tree = render(<AccountScreen onBack={jest.fn()} onNavigate={onNavigate} />);
+
+    fireEvent.press(navItem(tree, 'screensafe'));
+
+    expect(onNavigate).not.toHaveBeenCalled();
   });
 });
