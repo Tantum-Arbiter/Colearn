@@ -52,25 +52,28 @@ same branch -newer runs cancel in-progress ones.
 
 ### 1. grow-with-freya-ci-cd.yml -Frontend CI/CD
 
-**Triggers:** Push to `main`/`mvp`/`develop` or a PR targeting those branches, when `grow-with-freya/**` or the workflow itself changes. Every file under any `__tests__/` directory is picked up by `jest.config.js`'s `testMatch`, so new suites run without touching the workflow.
+**Triggers:** Push to `main`/`mvp`/`develop` or a PR targeting those branches, when `grow-with-freya/**` or the workflow itself changes. `jest.config.js`'s `testMatch` picks up files named `*.test.*` or `*.spec.*`, so new suites run without touching the workflow.
 
-**Jobs (5, with dependencies):**
+**Jobs:**
 
-| Job | Depends On | Purpose |
-|-----|-----------|---------|
-| `test-and-lint` | -| `npm run lint` + `npm run test:ci` with coverage |
-| `type-check` | -| `npx tsc --noEmit` (parallel with test) |
-| `security-audit` | -| `npm audit --audit-level=high` (parallel) |
-| `build-web` | all 3 above | `npx expo export --platform web` (push only) |
-| `lighthouse` | build-web | Lighthouse CI performance audit |
-| `pipeline-summary` | all above | GitHub Step Summary with results |
+| Job | Depends On | Runs on | Purpose |
+|-----|-----------|---------|---------|
+| `test-and-lint` | - | every push and PR | `npm run lint` + `npm run test:ci` with coverage |
+| `type-check` | - | every push and PR | `npm run type-check` |
+| `security-audit` | - | every push and PR | `npm audit` and `npm outdated`; informational, never fails |
+| `app-journeys` | test-and-lint, type-check | PRs into `main`, manual | Android debug build (x86_64 only) on an emulator, Maestro `smoke` flows |
+| `build-web` | the first three | every PR, pushes to `main`/`develop`, manual | `npx expo export --platform web`, then fails if the bundle contains `import.meta` |
+| `performance-test` | build-web | pushes to `main`/`develop` | Lighthouse CI; informational, never fails |
+| `deployment-summary` | all above | always | GitHub Step Summary with results |
 
 **Key decisions:**
-- `--legacy-peer-deps` is required due to React Native dependency conflicts
-- `NODE_OPTIONS=--max-old-space-size=4096` prevents OOM on test runs
-- Web build artifacts retained 30 days
-- Build only runs on push (not PRs) to save CI minutes
-- No automatic native builds -those go through EAS (see below)
+- `npm ci --legacy-peer-deps` everywhere, with no fallback to `npm install`: a lockfile that has drifted from `package.json` fails the install rather than being papered over. `--legacy-peer-deps` is required for React Native's peer conflicts.
+- The Expo CLI is the project's own (`npx expo`), not a global `latest`.
+- The Android journeys gate pull requests into `main`, the release branch, not every push to `mvp`: a build and emulator run takes the better part of an hour, and on `mvp` it gated nothing. Every journey also runs nightly on Android and iOS (`app-e2e-nightly.yml`).
+- The journeys' debug app is built for x86_64 only (`-PreactNativeArchitectures=x86_64`), the emulator's CPU: all four ABIs ran the runner out of disk. Store builds come from EAS and carry every ABI.
+- The web build and its `import.meta` check run on every PR, so a web bundle that would stop at the splash is caught before merging.
+- `NODE_OPTIONS=--max-old-space-size=4096` prevents OOM on test runs.
+- No automatic native builds; those go through EAS (see below). `deploy-eas.yml` needs a green run of this pipeline on the branch it builds from.
 
 ### 2. deploy-eas.yml -EAS Build (Manual)
 
