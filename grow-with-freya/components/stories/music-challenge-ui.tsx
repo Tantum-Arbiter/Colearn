@@ -49,6 +49,7 @@ import {
 } from '@/services/sheet-flight';
 import { InstrumentBell } from '@/components/music/instrument-bell';
 import { MusicStaffStrip } from '@/components/music/music-staff-strip';
+import { rgba } from '@/utils/worklet-colour';
 
 const log = Logger.create('MusicChallengeUI');
 
@@ -201,7 +202,7 @@ const NoteButton = React.memo(function NoteButton({
   // Animated border/shadow glow that fades in on press and out on release
   const glowStyle = useAnimatedStyle(() => ({
     borderWidth: 3 * glowIntensity.value,
-    borderColor: `rgba(255, 255, 255, ${glowIntensity.value})`,
+    borderColor: rgba(255, 255, 255, glowIntensity.value),
     shadowOpacity: 0.8 * glowIntensity.value,
     shadowRadius: 12 * glowIntensity.value,
   }));
