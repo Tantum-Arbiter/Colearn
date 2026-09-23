@@ -164,6 +164,14 @@ jobs:
           path: ${{ env.WORKING_DIRECTORY }}/android/app/build/outputs/apk/debug/app-debug.apk
           key: journeys-apk-${{ runner.os }}-${{ hashFiles('grow-with-freya/package.json', 'grow-with-freya/package-lock.json', 'grow-with-freya/app.config.js', 'grow-with-freya/assets/images/icon.png', 'grow-with-freya/assets/images/android-icon-*.png', 'grow-with-freya/assets/images/splash-icon.png') }}
 
+      - name: Free disk the build and the emulator need
+        if: steps.apk.outputs.cache-hit != 'true'
+        run: |
+          df -h /
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup /opt/hostedtoolcache/CodeQL \
+            /usr/share/swift /usr/local/share/powershell /usr/local/share/boost
+          df -h /
+
       - name: Generate the Android project
         if: steps.apk.outputs.cache-hit != 'true'
         working-directory: ${{ env.WORKING_DIRECTORY }}
@@ -182,6 +190,14 @@ jobs:
           set -o pipefail
           ./gradlew assembleDebug --no-daemon -PreactNativeArchitectures=x86_64 2>&1 \
             | grep --line-buffered -v 'amazon-appstore-sdk.*Expected stack map table'
+
+      - name: Keep the app, drop what built it
+        if: steps.apk.outputs.cache-hit != 'true'
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: |
+          rm -rf android/app/.cxx android/app/build/intermediates android/app/build/tmp android/build
+          find node_modules -path '*/android/build' -type d -prune -exec rm -rf {} +
+          df -h /
 
       - name: Serve the bundle
         if: github.event_name != 'push'
