@@ -127,31 +127,8 @@ jest.mock('expo-font', () => ({
   loadAsync: jest.fn(),
 }));
 
-// Mock expo-file-system
-jest.mock('expo-file-system', () => ({
-  documentDirectory: 'file:///mock-document-directory/',
-  cacheDirectory: 'file:///mock-cache-directory/',
-  makeDirectoryAsync: jest.fn(() => Promise.resolve()),
-  getInfoAsync: jest.fn(() => Promise.resolve({ exists: false, isDirectory: false })),
-  readAsStringAsync: jest.fn(() => Promise.resolve('')),
-  writeAsStringAsync: jest.fn(() => Promise.resolve()),
-  deleteAsync: jest.fn(() => Promise.resolve()),
-  moveAsync: jest.fn(() => Promise.resolve()),
-  copyAsync: jest.fn(() => Promise.resolve()),
-  readDirectoryAsync: jest.fn(() => Promise.resolve([])),
-  downloadAsync: jest.fn(() => Promise.resolve({ uri: '' })),
-  EncodingType: {
-    UTF8: 'utf8',
-    Base64: 'base64',
-  },
-  FileSystemUploadType: {
-    BINARY_CONTENT: 0,
-    MULTIPART: 1,
-  },
-}));
-
-// Mock expo-file-system/next (new API with Paths, Directory, File classes)
-jest.mock('expo-file-system/next', () => {
+// Mock expo-file-system (Paths, Directory, File classes, and the legacy calls)
+jest.mock('expo-file-system', () => {
   const mockFile = {
     exists: false,
     uri: 'file:///mock-file-uri',
@@ -168,6 +145,25 @@ jest.mock('expo-file-system/next', () => {
   };
 
   return {
+    documentDirectory: 'file:///mock-document-directory/',
+    cacheDirectory: 'file:///mock-cache-directory/',
+    makeDirectoryAsync: jest.fn(() => Promise.resolve()),
+    getInfoAsync: jest.fn(() => Promise.resolve({ exists: false, isDirectory: false })),
+    readAsStringAsync: jest.fn(() => Promise.resolve('')),
+    writeAsStringAsync: jest.fn(() => Promise.resolve()),
+    deleteAsync: jest.fn(() => Promise.resolve()),
+    moveAsync: jest.fn(() => Promise.resolve()),
+    copyAsync: jest.fn(() => Promise.resolve()),
+    readDirectoryAsync: jest.fn(() => Promise.resolve([])),
+    downloadAsync: jest.fn(() => Promise.resolve({ uri: '' })),
+    EncodingType: {
+      UTF8: 'utf8',
+      Base64: 'base64',
+    },
+    FileSystemUploadType: {
+      BINARY_CONTENT: 0,
+      MULTIPART: 1,
+    },
     Paths: {
       document: 'file:///mock-document-directory/',
       cache: 'file:///mock-cache-directory/',

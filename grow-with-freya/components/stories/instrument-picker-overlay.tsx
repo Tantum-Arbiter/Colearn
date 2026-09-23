@@ -713,13 +713,13 @@ function CarouselItem({
 
 const styles = StyleSheet.create({
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 500,
     justifyContent: 'center',
     alignItems: 'center',
   },
   blurScrim: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(6, 10, 34, 0.72)',
   },
   content: {

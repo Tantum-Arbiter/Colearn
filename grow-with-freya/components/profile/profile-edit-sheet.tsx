@@ -88,12 +88,12 @@ export function ProfileEditSheet({ visible, onClose }: ProfileEditSheetProps) {
 
 const styles = StyleSheet.create({
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     justifyContent: 'flex-end',
     zIndex: 40,
   },
   backdrop: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(4, 16, 47, 0.55)',
   },
   sheet: {

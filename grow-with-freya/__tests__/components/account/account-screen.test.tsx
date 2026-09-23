@@ -205,7 +205,7 @@ jest.mock('@/hooks/use-session-actions', () => ({
   useSessionActions: () => mockSession,
 }));
 
-function byTestId(tree: ReturnType<typeof render>, testID: string) {
+function byTestId(tree: ReturnType<typeof render>, testID: string): any[] {
   return tree.UNSAFE_root.findAll((n: any) => n.props.testID === testID);
 }
 

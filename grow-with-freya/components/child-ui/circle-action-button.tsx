@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   glass: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     overflow: 'hidden',
   },
   flagClip: {

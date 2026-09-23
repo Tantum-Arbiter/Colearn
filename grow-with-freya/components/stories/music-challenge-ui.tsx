@@ -21,6 +21,7 @@ import Animated, {
   withSpring,
   Easing,
   type SharedValue,
+  type AnimatedStyle,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { Logger } from '@/utils/logger';
@@ -142,7 +143,7 @@ const NoteButton = React.memo(function NoteButton({
   /** Incrementing counter to force re-trigger even when the same note repeats */
   playbackTick: number;
   /** Animated pose applied to just the letter */
-  rotationStyle?: StyleProp<TextStyle>;
+  rotationStyle?: StyleProp<AnimatedStyle<TextStyle>>;
   /** Scaled button size */
   size?: number;
   /** Scaled font size */
@@ -544,7 +545,7 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
     item: NoteLayoutItem,
     size: number,
     fontSize: number,
-    labelStyle: StyleProp<TextStyle> = instrumentRotationStyle,
+    labelStyle: StyleProp<AnimatedStyle<TextStyle>> = instrumentRotationStyle,
     entryIndex = 0,
   ) => {
     // Disable next-note highlight during playback to avoid double-flash

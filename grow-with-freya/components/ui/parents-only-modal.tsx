@@ -674,7 +674,7 @@ const styles = StyleSheet.create({
   },
   // Sits over the empty board; the input behind it stays tappable.
   chalkHintWrap: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -731,7 +731,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.5,
   },
   ctaFill: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -739,7 +739,7 @@ const styles = StyleSheet.create({
   },
   // Greys the pill back while the answer is still wrong.
   ctaVeil: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(28, 38, 66, 0.62)',
     borderRadius: 999,
   },

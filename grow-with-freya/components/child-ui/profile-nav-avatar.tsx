@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(4, 16, 47, 0.55)',
   },
   layer: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   centred: {
     alignItems: 'center',

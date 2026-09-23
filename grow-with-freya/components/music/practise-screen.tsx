@@ -808,7 +808,7 @@ const styles = StyleSheet.create({
   },
 
   songsLayer: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   songSwap: {
     flex: 1,

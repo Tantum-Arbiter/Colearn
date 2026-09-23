@@ -402,7 +402,7 @@ function StoryCard({
 
 const styles = StyleSheet.create({
   container: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   carousel: {
     flex: 1,
@@ -420,7 +420,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   shade: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: '#04091F',
   },
   cover: {

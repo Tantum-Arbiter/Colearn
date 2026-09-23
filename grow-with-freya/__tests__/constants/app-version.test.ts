@@ -18,7 +18,7 @@ describe('the app version', () => {
   });
 
   it('is the version the Expo config gives every build and update', () => {
-    const { getConfig } = jest.requireActual('@expo/config');
+    const { getConfig } = jest.requireActual('expo/config');
     const { exp } = getConfig(path.resolve(__dirname, '../..'), { skipSDKVersionRequirement: true, isPublicConfig: true });
 
     expect(exp.version).toBe(pkg.version);

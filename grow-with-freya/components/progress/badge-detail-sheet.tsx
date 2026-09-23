@@ -112,13 +112,13 @@ export function BadgeDetailSheet({ badge, onClose, onRecommend }: BadgeDetailShe
 
 const styles = StyleSheet.create({
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     justifyContent: 'flex-end',
     zIndex: 50,
     elevation: 50,
   },
   backdrop: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(4, 16, 47, 0.6)',
   },
   sheet: {

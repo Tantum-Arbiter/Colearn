@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
     transform: [{ scale: HERO_CARD.pressScale }],
   },
   glow: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: HERO_CARD.arrowBottom,
     shadowColor: HERO_CARD.arrowBottom,
     shadowOpacity: GOLD_BUTTON.glowOpacity,

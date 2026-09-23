@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
     height: 1,
   },
   innerHighlight: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     borderWidth: 1,
     borderColor: HERO_CARD.innerRim,
   },

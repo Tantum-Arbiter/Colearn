@@ -2193,7 +2193,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
 const styles = StyleSheet.create({
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: STORY_OVERLAY_LAYER_Z,
     justifyContent: 'center',
     alignItems: 'center',
@@ -2221,20 +2221,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   nightGround: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 0, // Below the book and the sheet
     backgroundColor: '#0A0F2C',
   },
   detailLayer: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 60, // Above the animated book card (50)
   },
   sketch: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 55, // Over the book it outlines, beneath the card that sinks away
   },
   rotationMask: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: '#0A0F2C',
     zIndex: 900, // Above everything except system modals
   },
@@ -2258,11 +2258,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#1D2657',
   },
   pageShade: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: '#1A1230',
   },
   coverShade: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: '#000000',
   },
   coverBackSpine: {

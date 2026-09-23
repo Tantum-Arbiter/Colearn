@@ -431,7 +431,7 @@ export class StorySyncService {
         const paths = JSON.parse(data) as Record<string, string>;
         if (paths[storyId]) {
           // Verify the cached file still exists
-          const FileSystem = await import('expo-file-system');
+          const FileSystem = await import('expo-file-system/legacy');
           const info = await FileSystem.getInfoAsync(paths[storyId]);
           if (info.exists) {
             return paths[storyId];

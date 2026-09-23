@@ -363,7 +363,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
   },
   fill: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   mouth: {
     transformOrigin: 'top',

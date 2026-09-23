@@ -660,7 +660,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   loginScreenWrapper: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 1,
   },
   card: {
@@ -800,7 +800,7 @@ const styles = StyleSheet.create({
   // the overlay is positioned here; its content styling lives in
   // guest-info-screen.tsx
   guestInfoOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 500,
   },
 });

@@ -35,14 +35,14 @@ describe('the app name', () => {
   });
 
   it('is Early Roots under the icon on a store build', () => {
-    const { getConfig } = jest.requireActual('@expo/config');
+    const { getConfig } = jest.requireActual('expo/config');
     const { exp } = getConfig(ROOT, { skipSDKVersionRequirement: true, isPublicConfig: true });
 
     expect(exp.name).toBe('Early Roots');
   });
 
   it('keeps the identifiers the stores and EAS are bound to', () => {
-    const { getConfig } = jest.requireActual('@expo/config');
+    const { getConfig } = jest.requireActual('expo/config');
     const { exp } = getConfig(ROOT, { skipSDKVersionRequirement: true, isPublicConfig: true });
 
     expect(exp.ios.bundleIdentifier).toBe('com.growwithfreya.app');

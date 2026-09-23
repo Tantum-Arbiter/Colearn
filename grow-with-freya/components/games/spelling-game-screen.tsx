@@ -623,7 +623,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   bgTextureContainer: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     opacity: 0.09,
     zIndex: 0,
   },
@@ -892,7 +892,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.2)',
   },
   slotWrongOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     borderRadius: 14,
     borderWidth: 3,
     borderColor: '#FF6B6B',

@@ -192,7 +192,7 @@ export const ReadingChallengeUI: React.FC<ReadingChallengeUIProps> = ({
 
 const styles = StyleSheet.create({
   // ── Shared ──
-  overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center', padding: 20 },
+  overlay: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center', padding: 20 },
   center: { alignItems: 'center', justifyContent: 'center', flex: 1 },
   big: { color: '#fff', fontFamily: Fonts.rounded, fontWeight: '700', textAlign: 'center', marginBottom: 12 },
   sub: { color: '#ccc', fontFamily: Fonts.sans, textAlign: 'center', marginBottom: 8 },
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
 
   // ── spell_word — letter card game ──
   spellOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(15, 23, 60, 0.92)',
     justifyContent: 'center',
     alignItems: 'center',

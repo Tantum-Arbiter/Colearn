@@ -272,11 +272,11 @@ export function StartupLoadingScreen({ onComplete, onSlideInComplete, onError }:
 
 const styles = StyleSheet.create({
   container: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 10,
   },
   backgroundImageContainer: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     overflow: 'hidden',
     backgroundColor: '#0F1D45',
   },

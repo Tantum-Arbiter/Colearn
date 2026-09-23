@@ -294,7 +294,7 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   tileFill: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     borderRadius: TILE_RADIUS - 1.5,
   },
   tileLabel: {

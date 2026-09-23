@@ -366,10 +366,10 @@ export function ActivityTransitionProvider({ children }: { children: React.React
 
 
 const styles = StyleSheet.create({
-  overlay: { ...StyleSheet.absoluteFillObject, zIndex: 1000, justifyContent: 'center', alignItems: 'center' },
-  bgContainer: { ...StyleSheet.absoluteFillObject, zIndex: 0, overflow: 'hidden', backgroundColor: '#1E3A8A' },
+  overlay: { ...StyleSheet.absoluteFill, zIndex: 1000, justifyContent: 'center', alignItems: 'center' },
+  bgContainer: { ...StyleSheet.absoluteFill, zIndex: 0, overflow: 'hidden', backgroundColor: '#1E3A8A' },
   bgImage: { width: '200%', height: '200%', opacity: 0.25 },
-  tapAnywhere: { ...StyleSheet.absoluteFillObject, zIndex: 1 },
+  tapAnywhere: { ...StyleSheet.absoluteFill, zIndex: 1 },
   closeBtnWrap: { position: 'absolute', zIndex: 1001 },
   closeBtn: {
     backgroundColor: 'rgba(255,255,255,0.95)', justifyContent: 'center', alignItems: 'center',
@@ -398,7 +398,7 @@ const styles = StyleSheet.create({
   },
   tapToBegin: { position: 'absolute', left: 0, right: 0, alignItems: 'center', zIndex: 200 },
   previewOverlay: {
-    ...StyleSheet.absoluteFillObject, zIndex: 2000, backgroundColor: 'rgba(0,0,0,0.6)',
+    ...StyleSheet.absoluteFill, zIndex: 2000, backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'center', alignItems: 'center',
   },
   previewContent: { backgroundColor: 'white', borderRadius: 20, padding: 24, width: '85%', maxWidth: 400 },

@@ -265,7 +265,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   face: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     overflow: 'hidden',
   },
   backFace: {

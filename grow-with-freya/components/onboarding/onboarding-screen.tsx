@@ -354,7 +354,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   starsLayer: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   star: {
     position: 'absolute',

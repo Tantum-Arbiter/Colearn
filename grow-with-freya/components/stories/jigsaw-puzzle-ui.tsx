@@ -477,7 +477,7 @@ export const JigsawPuzzleUI: React.FC<JigsawPuzzleUIProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(0, 0, 0, 0.85)',
   },
   puzzleContainer: {
@@ -487,7 +487,7 @@ const styles = StyleSheet.create({
   },
   // Overlay layer that sits above all puzzle tiles for buttons / celebration
   uiOverlayLayer: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 80,
   },
   tile: {
@@ -496,7 +496,7 @@ const styles = StyleSheet.create({
 
   // Celebration overlay
   celebrationOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
     alignItems: 'center',
     justifyContent: 'center',
@@ -600,7 +600,7 @@ const styles = StyleSheet.create({
   },
   // Preview overlay
   previewOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 200,
   },
   previewBackdrop: {

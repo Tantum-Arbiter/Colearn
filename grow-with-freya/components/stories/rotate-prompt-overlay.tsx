@@ -192,7 +192,7 @@ export function RotatePromptOverlay({ bookRect, onTurned, onOpenAnyway, onBack }
 
 const styles = StyleSheet.create({
   container: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 40,
   },
   backButtonWrap: {

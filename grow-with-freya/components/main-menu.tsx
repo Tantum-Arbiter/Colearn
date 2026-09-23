@@ -791,7 +791,7 @@ const legacyStyles = StyleSheet.create({
     elevation: 6,
   },
   menuContainer: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden' as const,
@@ -836,14 +836,14 @@ const legacyStyles = StyleSheet.create({
     textShadowRadius: 2,
   },
   unlockShimmer: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(255,255,255,1)',
     borderTopLeftRadius: getResponsiveSize(18),
     borderTopRightRadius: getResponsiveSize(18),
   },
   // Story mode cards (strip-button style, same art as carousel)
   modeCardsOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     justifyContent: 'center',
     alignItems: 'center',
     gap: 10,
@@ -863,12 +863,12 @@ const legacyStyles = StyleSheet.create({
     opacity: 0.85,
   },
   modeStripImage: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     width: '100%' as const,
     height: '100%' as const,
   },
   modeStripTextOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     justifyContent: 'center' as const,
     alignItems: 'center' as const,
     backgroundColor: 'rgba(0, 0, 0, 0.35)',

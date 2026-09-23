@@ -12,7 +12,6 @@ export default {
     scheme: 'growwithfreya',
     userInterfaceStyle: 'automatic',
     backgroundColor: '#0A0F2C',
-    newArchEnabled: true,
     extra: {
       eas: {
         projectId: '439b6b2f-be5f-4d59-98eb-73befbd1973e'
@@ -57,7 +56,6 @@ export default {
         backgroundImage: './assets/images/android-icon-background.png',
         monochromeImage: './assets/images/android-icon-monochrome.png'
       },
-      edgeToEdgeEnabled: true,
       predictiveBackGestureEnabled: false,
       permissions: [
         'RECORD_AUDIO',
@@ -108,6 +106,7 @@ export default {
         'expo-build-properties',
         {
           ios: {
+            enableSceneSupport: true,
             // GoogleSignIn's Swift pods (AppCheckCore) need these ObjC pods to expose module maps
             extraPods: [
               { name: 'GoogleUtilities', modular_headers: true },
