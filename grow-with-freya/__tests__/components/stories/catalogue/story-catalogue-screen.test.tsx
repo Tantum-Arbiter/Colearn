@@ -1510,6 +1510,29 @@ describe('the journey tours', () => {
     );
   }
 
+  /**
+   * The catalogue is mounted off screen before the child opens it, and under the
+   * login page. A tour that ran there took the owl from the page on show, so after
+   * a reset the main menu's tour never came.
+   */
+  it('runs none of its tours while it waits off screen, whatever section it holds', async () => {
+    const tree = render(<StoryCatalogueScreen isActive={false} />);
+    await waitFor(() => expect(byTestId(tree, 'story-filter-bar').length).toBeGreaterThan(0));
+
+    for (const id of ['catalogue_tour', 'progress_tour', 'search_tour', 'profile_tour']) {
+      expect(latest(id)?.active).toBe(false);
+    }
+  });
+
+  it('runs the tour for its section once it comes on screen', async () => {
+    const tree = render(<StoryCatalogueScreen isActive={false} />);
+    await waitFor(() => expect(byTestId(tree, 'story-filter-bar').length).toBeGreaterThan(0));
+
+    tree.rerender(<StoryCatalogueScreen isActive />);
+
+    expect(latest('catalogue_tour')?.active).toBe(true);
+  });
+
   it('runs the stories tour on the shelf, pointing at the chooser and the shelf, and leaves the bar to the home tour', async () => {
     const tree = render(<StoryCatalogueScreen />);
     await waitFor(() => expect(byTestId(tree, 'story-filter-bar').length).toBeGreaterThan(0));

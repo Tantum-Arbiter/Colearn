@@ -347,20 +347,16 @@ export class ApiClient {
 
   static async logout(): Promise<void> {
     const refreshToken = await SecureStorage.getRefreshToken();
-    if (refreshToken) {
-      try {
-        await fetch(`${GATEWAY_URL}/auth/revoke`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ refreshToken }),
-        });
-      } catch (error) {
-        log.error('Failed to revoke tokens:', error);
-      }
-    }
     await SecureStorage.clearAuthData();
+    if (refreshToken) {
+      fetch(`${GATEWAY_URL}/auth/revoke`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ refreshToken }),
+      }).catch((error) => log.error('Failed to revoke tokens:', error));
+    }
   }
 
   static async getBatchSignedUrls(paths: string[]): Promise<{

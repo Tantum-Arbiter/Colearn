@@ -89,3 +89,32 @@ describe('ApiClient reporting a session lapse', () => {
     expect(SecureStorage.clearAuthData).not.toHaveBeenCalled();
   });
 });
+
+describe('ApiClient signing out', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('clears the tokens on the device at once, and asks the server to revoke them without waiting on it', async () => {
+    (SecureStorage.getRefreshToken as jest.Mock).mockResolvedValue('refresh');
+    global.fetch = jest.fn(() => new Promise(() => {})) as any;
+
+    await ApiClient.logout();
+
+    expect(SecureStorage.clearAuthData).toHaveBeenCalled();
+    expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('/auth/revoke'), expect.objectContaining({ method: 'POST' }));
+  });
+
+  it('does not wipe a newer sign-in when the revoke answers late', async () => {
+    (SecureStorage.getRefreshToken as jest.Mock).mockResolvedValue('old-refresh');
+    let answer: (value: unknown) => void = () => undefined;
+    global.fetch = jest.fn(() => new Promise((resolve) => { answer = resolve; })) as any;
+
+    await ApiClient.logout();
+    (SecureStorage.clearAuthData as jest.Mock).mockClear();
+    answer({ ok: true });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(SecureStorage.clearAuthData).not.toHaveBeenCalled();
+  });
+});

@@ -323,6 +323,8 @@ function AppContent() {
 
       if (!isAppReady) {
         setCurrentView('splash');
+        setCurrentPage('main');
+        setSplashGone(false);
         return;
       }
 
@@ -973,6 +975,7 @@ function AppContent() {
               initialMode={selectedStoryMode}
               sectionRequest={storiesSection}
               onOpenSettings={handleOpenGrownUps}
+              isActive={currentPage === 'stories' && menuRevealed(currentView)}
             />,
             practise: <PractiseScreen onBack={handleBackToInstruments} isActive={currentPage === 'practise'} />,
             freeplay: <FreeplayScreen onBack={handleBackToInstruments} isActive={currentPage === 'freeplay'} />,
@@ -993,7 +996,7 @@ function AppContent() {
               />
             ) : null,
             feelings: <EmotionsScreen onBack={handleBackToLearning} isActive={currentPage === 'feelings'} />,
-            account: <AccountScreen onBack={handleAccountBack} onNavigate={handleMainMenuNavigate} isActive={currentPage === 'account'} />,
+            account: <AccountScreen onBack={handleAccountBack} onNavigate={handleMainMenuNavigate} isActive={currentPage === 'account' && menuRevealed(currentView)} />,
           }, currentPage)}
           duration={PAGE_TRANSITION_DURATION_MS}
           animate={animatePageTransition}

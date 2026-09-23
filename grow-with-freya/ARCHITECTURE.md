@@ -446,6 +446,23 @@ changes, and it only puts the child on the main menu when the app is opening
 (operator, 2026-09-22). On a tablet the Login button stops at `PROFILE_CTA_MAX_WIDTH` (300 pt)
 rather than spanning the column.
 
+Only one owl tour runs at a time, so a page's tours run only while that page is on show and
+nothing covers it: the catalogue takes `isActive` (`currentPage === 'stories'` and
+`menuRevealed`), and so does Grown-ups. The catalogue is warmed off screen and mounted under the
+login page, and its shelf tour, started there, held the owl, so after a reset the main menu's
+tour never came (operator report 2026-09-22).
+
+Reset App on Grown-ups leaves the device as a fresh install leaves it (`resetApp` in
+`services/app-reset.ts`, operator report 2026-09-22: it had kept the Grown-ups page and the
+family's state on screen). It signs out, drops the downloaded stories, cancels every scheduled
+reminder, clears all saved data, returns to the device's language and puts the store back to its
+first-launch values (`resetToFreshInstall`), app not yet ready. The layout answers "not ready" by
+going back to the splash with the page slider on the main menu and the splash mounted afresh
+(it is one-shot on launch, so without that the screen stayed blank), and the splash then leads
+into onboarding. Each step is tried on its own, so a failing one leaves the rest done. Signing
+out clears the tokens on the device before it asks the server to revoke them, and does not wait
+for the answer, so a slow revoke can never wipe a newer sign-in.
+
 Before this (operator report 2026-09-22, "the screen appears then flickers before it seems to
 load"), the login and app views were mutually exclusive branches of one render function, and
 the login screen mounted a main menu of its own to reveal; the moment the view switched, that

@@ -141,7 +141,7 @@ jest.mock('@/services/device-info-service', () => ({ DeviceInfoService: { getApp
 jest.mock('@/services/cache-manager', () => ({ CacheManager: { getInstance: () => ({ clearAll: jest.fn() }) } }));
 jest.mock('@/services/story-loader', () => ({ StoryLoader: { getInstance: () => ({}) } }));
 jest.mock('@/contexts/owl-guide-context', () => ({
-  useOwlGuide: () => ({ resetGuides: jest.fn(), lastResetTimestamp: 0 }),
+  useOwlGuide: () => ({ resetGuides: jest.fn(() => Promise.resolve()), lastResetTimestamp: 0 }),
 }));
 jest.mock('@/services/notification-service', () => ({
   __esModule: true,
@@ -196,6 +196,9 @@ const mockStore = {
 jest.mock('@/store/app-store', () => ({
   useAppStore: () => mockStore,
 }));
+
+const mockResetApp = jest.fn(() => Promise.resolve());
+jest.mock('@/services/app-reset', () => ({ resetApp: () => mockResetApp() }));
 
 const mockSession = { needsSignIn: false, login: jest.fn(), logout: jest.fn() };
 jest.mock('@/hooks/use-session-actions', () => ({
@@ -407,6 +410,34 @@ describe('AccountScreen navigation', () => {
 
       expect(byTestId(tree, 'account-logout')).toHaveLength(0);
       expect(byTestId(tree, 'account-login')).toHaveLength(0);
+    });
+  });
+
+  describe('resetting the app', () => {
+    function confirmReset() {
+      const [, , buttons] = (Alert.alert as jest.Mock).mock.calls[(Alert.alert as jest.Mock).mock.calls.length - 1];
+
+      return buttons.find((button: { style?: string }) => button.style === 'destructive').onPress();
+    }
+
+    it('asks before it resets anything', () => {
+      const { tree } = renderAccount();
+
+      press(tree, 'account-reset-app');
+
+      expect(Alert.alert).toHaveBeenCalled();
+      expect(mockResetApp).not.toHaveBeenCalled();
+    });
+
+    it('resets to a fresh install once confirmed, so the journey starts again at the splash', async () => {
+      const { tree } = renderAccount();
+      press(tree, 'account-reset-app');
+
+      await act(async () => {
+        await confirmReset();
+      });
+
+      expect(mockResetApp).toHaveBeenCalledTimes(1);
     });
   });
 

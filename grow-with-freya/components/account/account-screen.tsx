@@ -18,11 +18,7 @@ import { formatDurationCompact } from '../../utils/time-formatting';
 import { ApiClient } from '../../services/api-client';
 import { SecureStorage } from '../../services/secure-storage';
 import { reminderService } from '../../services/reminder-service';
-import { StorySyncService } from '../../services/story-sync-service';
-import { VersionManager } from '../../services/version-manager';
 import { DeviceInfoService } from '../../services/device-info-service';
-import { CacheManager } from '../../services/cache-manager';
-import { StoryLoader } from '../../services/story-loader';
 import { TEXT_SIZE_OPTIONS, useAccessibility } from '../../hooks/use-accessibility';
 import { OwlGuide } from '../owl-guide';
 import { useGuideScroller } from '../owl-guide/use-guide-scroller';
@@ -38,6 +34,7 @@ import { ChildBottomNavigation, navClearance, type ChildNavItemId } from '@/comp
 import { useScreenTimeAllowance } from '@/hooks/use-screen-time-allowance';
 import { destinationForSection } from '@/constants/catalogue-destinations';
 import { useSessionActions } from '@/hooks/use-session-actions';
+import { resetApp } from '@/services/app-reset';
 
 const log = Logger.create('Account');
 
@@ -92,12 +89,9 @@ export function AccountScreen({ onBack, onNavigate, isActive = true }: AccountSc
     setNotificationPermissionRequested,
     setTextSizeScale,
     setCrashReportingEnabled,
-    setOnboardingComplete,
     setLoginComplete,
-    setAppReady,
     setShowLoginAfterOnboarding,
     setGuestMode,
-    clearPersistedStorage,
     clearUserProfile,
     getEffectiveTier,
     _devSubscriptionOverride,
@@ -119,12 +113,9 @@ export function AccountScreen({ onBack, onNavigate, isActive = true }: AccountSc
       setNotificationPermissionRequested: state.setNotificationPermissionRequested,
       setTextSizeScale: state.setTextSizeScale,
       setCrashReportingEnabled: state.setCrashReportingEnabled,
-      setOnboardingComplete: state.setOnboardingComplete,
       setLoginComplete: state.setLoginComplete,
-      setAppReady: state.setAppReady,
       setShowLoginAfterOnboarding: state.setShowLoginAfterOnboarding,
       setGuestMode: state.setGuestMode,
-      clearPersistedStorage: state.clearPersistedStorage,
       clearUserProfile: state.clearUserProfile,
       getEffectiveTier: state.getEffectiveTier,
       _devSubscriptionOverride: state._devSubscriptionOverride,
@@ -362,40 +353,8 @@ export function AccountScreen({ onBack, onNavigate, isActive = true }: AccountSc
           text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
-            log.info('Clearing all app data…');
-
-            // Clear cache FIRST (blocking) - this must complete before navigation
-            // Otherwise the sync will start before the cache is cleared
-            try {
-              await VersionManager.clearLocalVersion();
-              await CacheManager.clearAll();
-              await StorySyncService.clearCache();
-              StoryLoader.invalidateCache();
-              log.info('Caches cleared');
-            } catch (error) {
-              log.error('Error clearing caches:', error);
-            }
-
-            // Reset all state to initial values
-            setOnboardingComplete(false);
-            setLoginComplete(false);
-            setShowLoginAfterOnboarding(false);
-            setAppReady(false);
-
-            // Clear user profile (nickname, avatar, etc.)
-            clearUserProfile();
-
-            // Set app ready to trigger navigation
-            setTimeout(() => {
-              setAppReady(true);
-            }, 100);
-
-            // Clear remaining items in background (non-blocking)
-            ApiClient.logout().catch(error => log.error('Background logout:', error));
-            clearPersistedStorage().catch(error => log.error('Background storage clear:', error));
+            await resetApp();
             resetGuides().catch(error => log.error('Background tutorial reset:', error));
-
-            log.info('App reset complete');
           },
         },
       ]
@@ -749,6 +708,7 @@ export function AccountScreen({ onBack, onNavigate, isActive = true }: AccountSc
             </Pressable>
 
             <Pressable
+              testID="account-reset-app"
               style={[styles.button, styles.resetButton, { paddingVertical: scaledPadding(10), minHeight: scaledButtonSize(40) }]}
               onPress={handleResetApp}
             >

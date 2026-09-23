@@ -129,6 +129,7 @@ export interface AppState {
   setGuestMode: (isGuest: boolean) => void;
   markSessionLapsed: () => void;
   markSignedIn: () => void;
+  resetToFreshInstall: () => void;
   resetAppForTesting: () => void; // Temporary function to reset app state
   setUserProfile: (nickname: string, avatarType: 'boy' | 'girl', avatarId: string) => void;
   clearUserProfile: () => void;
@@ -182,7 +183,7 @@ export interface AppState {
 
 export const useAppStore = create<AppState>()(
   persist(
-    (set, get) => ({
+    (set, get, api) => ({
       // Initial state
       isAppReady: false,
       hasHydrated: false, // Will be set to true after AsyncStorage loads
@@ -243,6 +244,7 @@ export const useAppStore = create<AppState>()(
       setGuestMode: (isGuest) => set({ isGuestMode: isGuest }),
       markSessionLapsed: () => set({ sessionLapsed: true }),
       markSignedIn: () => set({ isGuestMode: false, sessionLapsed: false, hasCompletedLogin: true }),
+      resetToFreshInstall: () => set({ ...api.getInitialState(), hasHydrated: true, isAppReady: false }),
       resetAppForTesting: () => set({
         hasCompletedOnboarding: false,
         hasCompletedLogin: false,

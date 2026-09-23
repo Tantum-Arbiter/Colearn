@@ -191,9 +191,9 @@ export function OnboardingScreen({
 
   return (
     <GestureHandlerRootView style={styles.container}>
+      <OnboardingSqueezeContext.Provider value={squeeze}>
       <GestureDetector gesture={swipe}>
-        <OnboardingSqueezeContext.Provider value={squeeze}>
-        <View style={styles.container}>
+        <View style={styles.container} collapsable={false}>
           <LinearGradient colors={NIGHT_GRADIENT} style={StyleSheet.absoluteFill} />
 
           <View style={styles.starsLayer} pointerEvents="none">
@@ -343,8 +343,8 @@ export function OnboardingScreen({
           </View>
 
         </View>
-        </OnboardingSqueezeContext.Provider>
       </GestureDetector>
+      </OnboardingSqueezeContext.Provider>
     </GestureHandlerRootView>
   );
 }

@@ -135,9 +135,10 @@ interface StoryCatalogueScreenProps {
   onOpenSettings?: () => void;
   initialMode?: CatalogueMode | null;
   sectionRequest?: CatalogueSectionRequest;
+  isActive?: boolean;
 }
 
-export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionRequest, onNavigateToMusic, onOpenSettings }: StoryCatalogueScreenProps) {
+export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionRequest, onNavigateToMusic, onOpenSettings, isActive = true }: StoryCatalogueScreenProps) {
   const insets = useSafeAreaInsets();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const { requestReturnToMainMenu, setShowLoginAfterOnboarding, getEffectiveTier } = useAppStore();
@@ -1123,25 +1124,25 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
         each starts only while its own section is the one on show */}
     <OwlGuide
       id="catalogue_tour"
-      active={navSection === 'home' && !interactionLocked}
+      active={isActive && navSection === 'home' && !interactionLocked}
       targets={catalogueTourTargets}
       scroller={pageScroller.scroller}
     />
     <OwlGuide
       id="progress_tour"
-      active={navSection === 'progress'}
+      active={isActive && navSection === 'progress'}
       targets={progressTourTargets}
       scroller={progressScroller.scroller}
     />
     <OwlGuide
       id="search_tour"
-      active={navSection === 'search'}
+      active={isActive && navSection === 'search'}
       targets={searchTourTargets}
       scroller={pageScroller.scroller}
     />
     <OwlGuide
       id="profile_tour"
-      active={navSection === 'profile' && !editProfileOpen}
+      active={isActive && navSection === 'profile' && !editProfileOpen}
       targets={profileTourTargets}
       scroller={pageScroller.scroller}
     />
