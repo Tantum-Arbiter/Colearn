@@ -1270,7 +1270,9 @@ npx expo-doctor              # full project health
 ```
 
 Transitive tooling advisories clear when Expo ships fixed tooling — resolve them by moving
-SDK 54 → 55 → 56 deliberately, testing at each step. Never by letting npm rewrite the graph.
+SDK upgrades deliberately, through `npx expo install expo@^<sdk> --fix`, testing each one. Never by
+letting npm rewrite the graph. The app moved from SDK 54 to 57 this way on 2026-09-23, so that it
+opens in the current Expo Go.
 
 ### Known-accepted, and what is not
 

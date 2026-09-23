@@ -15,7 +15,7 @@ updated: 2026-07-28
 
 ## Overview
 
-**Grow with Freya** is a React Native app built with Expo (SDK 54) for iOS and Android.
+**Grow with Freya** is a React Native app built with Expo (SDK 57) for iOS and Android.
 It is an interactive children's storybook app with localized content, music challenges,
 voice recording, and parental controls. The app is written in TypeScript using Expo Router
 for navigation and Zustand for state management.
@@ -24,17 +24,17 @@ for navigation and Zustand for state management.
 
 | Layer | Technology | Version |
 |-------|-----------|---------|
-| Framework | Expo (Managed Workflow) | SDK 54 |
-| Language | TypeScript | 5.9 |
-| Runtime | React Native | 0.81 |
-| Navigation | Expo Router | 6.0 |
+| Framework | Expo (Managed Workflow) | SDK 57 |
+| Language | TypeScript | 6.0 |
+| Runtime | React Native | 0.86 |
+| Navigation | Expo Router | 57 |
 | State | Zustand + AsyncStorage | 5.0 |
-| Animations | React Native Reanimated | 4.1 |
+| Animations | React Native Reanimated | 4.5 |
 | Auth | Google Sign-In + Apple Auth | -|
-| Analytics | Sentry | 7.8 |
+| Analytics | Sentry | 7.11 |
 | i18n | i18next + react-i18next | 24 / 15 |
-| Audio | expo-audio | 1.1 |
-| Images | expo-image | 3.0 |
+| Audio | expo-audio | 57 |
+| Images | expo-image | 57 |
 | Build | EAS Build | -|
 
 ## App Architecture

@@ -85,11 +85,11 @@ colearn/
 
 | Layer | Technology |
 |---|---|
-| Mobile | React Native 0.81 / Expo SDK 54 / TypeScript 5.9 |
-| Navigation | Expo Router 6.0 |
+| Mobile | React Native 0.86 / Expo SDK 57 / TypeScript 6.0 |
+| Navigation | Expo Router 57 |
 | State | Zustand 5.0 + AsyncStorage |
-| Animations | React Native Reanimated 4.1 |
-| Audio | expo-audio 1.1 |
+| Animations | React Native Reanimated 4.5 |
+| Audio | expo-audio 57 |
 | Auth | Google Sign-In + Apple Sign-In → JWT |
 | Subscriptions | RevenueCat |
 | Crash reporting | Sentry (mobile replay disabled in production) |
