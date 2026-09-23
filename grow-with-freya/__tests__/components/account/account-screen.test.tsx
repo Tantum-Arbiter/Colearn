@@ -137,7 +137,7 @@ jest.mock('@/services/reminder-service', () => ({
 }));
 jest.mock('@/services/story-sync-service', () => ({ StorySyncService: { getInstance: () => ({}) } }));
 jest.mock('@/services/version-manager', () => ({ VersionManager: { getInstance: () => ({}) } }));
-jest.mock('@/services/device-info-service', () => ({ DeviceInfoService: { getAppVersion: () => '1.0.0' } }));
+jest.mock('@/services/device-info-service', () => ({ DeviceInfoService: { getAppVersion: () => '1.2.0', getVersionLabel: () => '1.2.0 (42)' } }));
 jest.mock('@/services/cache-manager', () => ({ CacheManager: { getInstance: () => ({ clearAll: jest.fn() }) } }));
 jest.mock('@/services/story-loader', () => ({ StoryLoader: { getInstance: () => ({}) } }));
 jest.mock('@/contexts/owl-guide-context', () => ({
@@ -411,6 +411,13 @@ describe('AccountScreen navigation', () => {
       expect(byTestId(tree, 'account-logout')).toHaveLength(0);
       expect(byTestId(tree, 'account-login')).toHaveLength(0);
     });
+  });
+
+  it('shows the version, with the store build beside it, at the foot of the page', () => {
+    const { tree } = renderAccount();
+
+    const line = byTestId(tree, 'account-version').find((n: any) => typeof n.type === 'string' || n.props.children);
+    expect([line.props.children].flat().join('')).toBe('common.version 1.2.0 (42)');
   });
 
   describe('resetting the app', () => {

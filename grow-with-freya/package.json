@@ -1,7 +1,7 @@
 {
   "name": "grow-with-freya",
   "main": "expo-router/entry",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "_comment": "CI/CD pipeline test - snapshots aligned with CI environment",
   "scripts": {
     "start": "expo start",
@@ -39,11 +39,7 @@
     "local:build": "npm run type-check && npm run test:ci && npm run build:web",
     "version:patch": "npm version patch --no-git-tag-version",
     "version:minor": "npm version minor --no-git-tag-version",
-    "version:major": "npm version major --no-git-tag-version",
-    "version:prerelease": "npm version prerelease --no-git-tag-version",
     "release:prepare": "npm run ci:setup && npm run build:web",
-    "postversion": "npm run update:app-version",
-    "update:app-version": "node scripts/update-app-version.js",
     "prepare": "cd .. && husky install || true",
     "pre-commit": "lint-staged",
     "validate": "npm run type-check && npm run lint && npm run test:ci",
@@ -67,6 +63,7 @@
     "country-flag-icons": "^1.6.20",
     "expo": "~54.0.10",
     "expo-apple-authentication": "^8.0.7",
+    "expo-application": "~7.0.8",
     "expo-asset": "~12.0.13",
     "expo-audio": "~1.1.1",
     "expo-auth-session": "^7.0.9",

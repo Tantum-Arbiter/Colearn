@@ -6,7 +6,7 @@ export default {
   expo: {
     name: IS_DEV ? 'Grow with Freya (Dev)' : IS_PREVIEW ? 'Grow with Freya (Preview)' : 'Grow with Freya',
     slug: 'grow-with-freya',
-    version: '1.1.0',
+    version: require('./package.json').version,
     orientation: 'default',
     icon: './assets/images/icon.png',
     scheme: 'growwithfreya',

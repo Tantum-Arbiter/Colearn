@@ -40,6 +40,7 @@ module.exports = {
     '^@expo/vector-icons$': '<rootDir>/__mocks__/@expo/vector-icons.js',
     '^expo-notifications$': '<rootDir>/__mocks__/expo-notifications.js',
     '^expo-device$': '<rootDir>/__mocks__/expo-device.js',
+    '^expo-application$': '<rootDir>/__mocks__/expo-application.js',
     '^@react-native-community/datetimepicker$': '<rootDir>/__mocks__/@react-native-community/datetimepicker.js',
     '^expo/virtual/env$': '<rootDir>/__mocks__/expo-env.js',
     '^expo-constants$': '<rootDir>/__mocks__/expo-constants.js',

@@ -534,7 +534,7 @@ Only change the user-facing brand name, not the technical identifiers.
 - [ ] **Rebrand `app.config.js` display name** — change production app name from `'Grow with Freya'` to `'Early Roots'` (line 7). Update `associatedDomains` from `applinks:colearnwithfreya.co.uk` to `applinks:earlyroots.co.uk` (line 37). Keep `bundleIdentifier` and `package` as `com.growwithfreya.app` to avoid store re-submission.
 - [ ] **Rebrand share text** — `story-selection-screen.tsx` line 767 says "Check out X on Grow with Freya!". Update to "Early Roots".
 - [ ] **Rebrand notification text** — `notification-service.ts` lines 106 and 223 say "Time for Grow with Freya! 🌟". Update to "Early Roots".
-- [ ] **Rename Sentry project references** — `app.json` lines 69–70 reference `project: "grow-with-freya"` and `organization: "grow-with-freya"`. Update to match the new Sentry project/org name (or rename in Sentry dashboard). Not user-facing but avoids dashboard confusion.
+- [ ] **Rename Sentry project references** — the `@sentry/react-native/expo` plugin (with `project: "grow-with-freya"` and `organization: "grow-with-freya"`) was only ever listed in `app.json`, which Expo never read, so no build has applied it (source maps are not uploaded). `app.json` was removed on 2026-09-22; add the plugin to `app.config.js` with the right project and org. Update to match the new Sentry project/org name (or rename in Sentry dashboard). Not user-facing but avoids dashboard confusion.
 
 ### 9.5 CI/CD
 

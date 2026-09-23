@@ -142,6 +142,10 @@ npm run test:ci                       # with coverage, fails on no-tests
 # Full local validation (run before pushing)
 npm run validate                      # type-check + lint + test:ci
 
+# Version (1.<minor>.<patch>; see ARCHITECTURE.md → Versions)
+npm run version:minor                 # a release with new features
+npm run version:patch                 # a release of fixes
+
 # Dev
 npm run start:clear                   # Expo dev server, cleared cache
 npm run ios                           # iOS build + run

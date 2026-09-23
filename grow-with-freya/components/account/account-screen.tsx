@@ -728,8 +728,8 @@ export function AccountScreen({ onBack, onNavigate, isActive = true }: AccountSc
               <Text style={[styles.bottomLink, { fontSize: scaledFontSize(12) }]}>{t('account.privacyPolicy')}</Text>
             </Pressable>
           </View>
-          <Text style={[styles.versionText, { fontSize: scaledFontSize(11) }]}>
-            {t('common.version')} {DeviceInfoService.getAppVersion()}
+          <Text testID="account-version" style={[styles.versionText, { fontSize: scaledFontSize(11) }]}>
+            {t('common.version')} {DeviceInfoService.getVersionLabel()}
           </Text>
 
                 </View>

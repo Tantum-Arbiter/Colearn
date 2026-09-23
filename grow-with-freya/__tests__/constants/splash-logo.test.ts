@@ -811,24 +811,8 @@ describe('the native launch screen', () => {
     };
   }
 
-  function fromAppJson(): NativeSplash {
-    const plugins: unknown[] = JSON.parse(readFileSync(join(__dirname, '../../app.json'), 'utf8')).expo.plugins;
-    const entry = plugins.find((plugin) => Array.isArray(plugin) && plugin[0] === 'expo-splash-screen') as [
-      string,
-      { imageWidth: number; backgroundColor: string; dark: { backgroundColor: string } },
-    ];
-
-    return {
-      imageWidth: entry[1].imageWidth,
-      backgrounds: [entry[1].backgroundColor, entry[1].dark.backgroundColor],
-    };
-  }
-
-  it.each([
-    ['app.config.js', fromAppConfig],
-    ['app.json', fromAppJson],
-  ])('should hand over to the animated book at the same size and on the same sky in %s', (_file, read) => {
-    const underTest = read();
+  it('should hand over to the animated book at the same size and on the same sky in app.config.js', () => {
+    const underTest = fromAppConfig();
 
     expect(underTest.imageWidth).toBe(NATIVE_SPLASH_IMAGE_WIDTH);
     expect(underTest.backgrounds).toEqual([NIGHT_DEEP, NIGHT_DEEP]);

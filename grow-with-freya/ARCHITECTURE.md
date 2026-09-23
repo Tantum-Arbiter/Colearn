@@ -278,6 +278,22 @@ Every slide still shows at most one long frame in the slow tail of the ease-out 
 simulator, with the JS thread idle; it was not reproducible to a cause and is not visible as
 a stutter.
 
+### Versions: 1.<minor>.<patch>
+
+`package.json` holds the one version. `app.config.js` reads it, so every EAS build and the
+`appVersion` runtime policy for over-the-air updates follow it: an update only ever reaches
+binaries of its own version. A release with new features runs `npm run version:minor`; a release
+of fixes runs `npm run version:patch`; there is no script for the major, and
+`__tests__/constants/app-version.test.ts` fails on anything that is not `1.<minor>.<patch>`, or on
+a config that no longer takes its version from `package.json`. Store build numbers are EAS's
+(`appVersionSource: remote`, `autoIncrement` on production), never edited by hand. Any change that
+touches native code or native assets (the launch image, a new native module) needs at least a
+patch bump, or an update would reach binaries built without it. Grown-ups shows the version with
+the store build beside it, as the App Store lists it (`DeviceInfoService.getVersionLabel`, for
+example "Version 1.2.0 (42)"). There is no `app.json`: it was never read while `app.config.js`
+exported an object (the resolved config is identical without it), so it only carried a stale
+version and build number, and was removed with the hook that copied the version into it.
+
 ### No line between two sliding pages
 
 Two pages meeting mid-slide once showed a thin pale line where they met. It came from two causes,
@@ -497,8 +513,8 @@ unpainted frame anywhere is dark, not a flash.
   three-quarter brightness half way, which read as the book going translucent.
 - **Native hand-off.** The script writes `assets/images/splash-icon.png` as a clear canvas:
   the animation opens on an empty sky and draws the book onto it, so the launch image shows
-  nothing but the sky. The native launch screen (`expo-splash-screen` in `app.config.js`,
-  mirrored in `app.json`) sizes it at `NATIVE_SPLASH_IMAGE_WIDTH` on `NIGHT_DEEP`; on a
+  nothing but the sky. The native launch screen (`expo-splash-screen` in `app.config.js`)
+  sizes it at `NATIVE_SPLASH_IMAGE_WIDTH` on `NIGHT_DEEP`; on a
   tablet the logo starts at that size and eases up to its own. A test holds the config and
   the constant together. Changing either needs a native rebuild to be seen.
 - **Choreography lives in `constants/splash-logo.ts`**, as pure, tested functions: the pen
