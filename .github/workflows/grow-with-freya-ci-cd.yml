@@ -108,6 +108,7 @@ jobs:
         run: npm outdated || echo "Package check completed"
 
   # Job 4: Build the Android app the journeys drive
+  # Paused with the journeys (operator, 2026-09-23): runs only when started by hand.
   # Starts at once, alongside the checks. The journeys load their JavaScript from Metro,
   # so the app only needs building when a native input changes; otherwise the build
   # saved for those inputs is reused. A build saved on main is shared with every pull
@@ -116,7 +117,7 @@ jobs:
   build-android:
     name: Build Android App
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.base_ref == 'main') || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    if: github.event_name == 'workflow_dispatch'
     timeout-minutes: 45
 
     steps:
@@ -185,6 +186,8 @@ jobs:
           if-no-files-found: error
 
   # Job 5: App Journeys (Maestro on an Android emulator)
+  # Paused (operator, 2026-09-23): runs only when started by hand, until it is worth
+  # gating pull requests into main on it again.
   # The layer above unit tests: the real app, on a device, doing what a family does.
   # It gates pull requests into main, the release branch, rather than every push to
   # mvp. It runs on a fresh runner with the app built above, so the emulator has the
@@ -194,7 +197,7 @@ jobs:
     name: App Journeys (smoke)
     runs-on: ubuntu-latest
     needs: [build-android]
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.base_ref == 'main')
+    if: github.event_name == 'workflow_dispatch'
     timeout-minutes: 30
     env:
       MAESTRO_VERSION: '2.10.0'
