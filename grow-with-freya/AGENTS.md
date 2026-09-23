@@ -13,6 +13,9 @@ Communication & code-display rules: see root `../CLAUDE.md` → **Communication 
 
 ## 2. Test-Driven Development
 
+What a change must prove — the layers, the edge-case checklist, the done list — is in
+[`../TESTING-STANDARD.md`](../TESTING-STANDARD.md). This section covers how to do it in this project.
+
 ### Workflow (non-negotiable)
 1. Find or create a **failing test first**.
 2. Match the style of surrounding tests: same file → same `__tests__/` subdir → same module.
@@ -26,6 +29,8 @@ Communication & code-display rules: see root `../CLAUDE.md` → **Communication 
 - One behaviour per test. Test names describe behaviour, not implementation.
 - Deterministic — no real timers, no real network, no real `Date.now()` without mocking.
 - Prefer **`describe.each` / `it.each`** over duplicating tests with different inputs.
+- **Every service that talks to the gateway or to storage has its own test file.** Being `jest.mock`ed inside a component test does not count: `story-loader`, `story-access-service`, `profile-sync-service`, `background-save-service` and `auth-service` have none today, which is how an empty `{}` came to overwrite bundled translations (`services/story-loader.ts:190`).
+- Anything sent to the gateway: assert the exact set of fields, as `services/__tests__/analytics-service.test.ts` does, so a new field fails the test.
 - Variable name for the unit under test: **`underTest`** (adopt going forward; don't retrofit existing tests).
 - Use AAA structure (Arrange / Act / Assert) with blank lines between sections.
 
@@ -37,7 +42,8 @@ Communication & code-display rules: see root `../CLAUDE.md` → **Communication 
 | Component testing | `@testing-library/react-native` |
 | Mocks | `jest.mock()` + manual mocks in `__mocks__/` |
 | Snapshots | Only for stable, intentional output — never for whole screens |
-| Coverage | Jest built-in, `jest-junit` + `jest-html-reporters` in CI |
+| Coverage | Jest built-in, `jest-junit` + `jest-html-reporters` in CI. The global floor is 10% (`jest.config.js:70-75`), so a green run says little about coverage — the checklist does the work |
+| Mutation sweep | By hand: break the code (flip a condition, drop a guard), confirm a test fails, restore. No tool yet |
 | App journeys (E2E) | Maestro — flows in `.maestro/flows/`, `npm run e2e` |
 
 ### Journey tests (Maestro)

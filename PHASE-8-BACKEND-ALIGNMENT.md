@@ -3,21 +3,31 @@
 > **Status:** planned, nothing built. Written 2026-09-23 against `mvp` @ `ec5fd12d`, from an audit of
 > every client call, every gateway controller and Firestore model, and the CMS schema and upload
 > scripts. Findings cite `file:line` on that commit; re-check before acting if `mvp` has moved.
-> Read [`gateway-service/AGENTS.md`](gateway-service/AGENTS.md),
+> Read [`TESTING-STANDARD.md`](TESTING-STANDARD.md), [`gateway-service/AGENTS.md`](gateway-service/AGENTS.md),
 > [`grow-with-freya/AGENTS.md`](grow-with-freya/AGENTS.md) and
 > [`grow-with-freya/ACHIEVEMENTS-PLAN.md`](grow-with-freya/ACHIEVEMENTS-PLAN.md) first.
 
 **The shape of it.** The client and gateway agree on request and response shapes, and nothing the
 client added since July reaches the wire. What is broken is on the server's edge: a request filter
 that rejects legitimate traffic, and a story model that silently drops every translation. Those are
-release blockers (§2). Behind them sits the real product gap: everything a family builds up —
-progress, favourites, badges, recordings — lives on one device and is lost on reinstall (§4–§7).
+release blockers (§3). Behind them sits the real product gap: everything a family builds up —
+progress, favourites, badges, recordings — lives on one device and is lost on reinstall (§5–§8).
 
 **Decided by the operator, 2026-09-23:**
 
 - Achievements record **that** something was done, never **when**. No timestamps leave the device.
 - Store the minimum needed to restore a family's app on another device. Nothing behavioural.
-- Voice recordings may be synced, as a separate opt-in feature, after MVP (§7).
+- Voice recordings may be synced, as a separate opt-in feature, after MVP (§8).
+
+**Decided by the operator, later on 2026-09-23** (the answers to §10):
+
+- No story content exists yet, so which stories are free stays as it is today. A5 is off the release path.
+- `isShareToUnlock` is deferred. B2 is parked.
+- No `springdoc-openapi`. B7 is a plain README rewrite.
+- Model many children, ship with one (the recommended default; not yet confirmed).
+- Phase E comes after Phase C, before any push on paid content.
+- The app is on TestFlight only, with no store release, so no installed app depends on `/api/profile`.
+  Phase C replaces it outright; there is no old-client window.
 
 ---
 
@@ -30,11 +40,14 @@ progress, favourites, badges, recordings — lives on one device and is lost on 
 | B1 | **Every analytics batch is rejected in prod.** The client omits device headers on purpose; the gateway requires them on any authenticated `/api/**` call → 400. The client never reads the response, and no func-test covers analytics. | `grow-with-freya/services/analytics-service.ts:233-238`, `gateway-service/.../security/RequestValidationFilter.java:175-187` |
 | B2 | **The body pattern filter rejects real data.** Any JSON body under 100 KB matching `;`, `<`, `>`, `\|`, `&&`, `#`+SQL word, or the substring `script` → 400. Hits: event `subscription_overlay_shown` (sub**script**ion), free-text reminder titles/messages, any key like `description`. Firestore has no query language and nothing shells out, so the filter guards against nothing here. | `RequestValidationFilter.java:47-69,237-243`; reminders typed at `grow-with-freya/components/reminders/create-reminder-screen.tsx:401` and sent via `services/api-client.ts:279-306` |
 | B3 | **Every CMS story arrives with no translations.** CMS page `localizedText` is age-group-keyed (`{"4-6": {en, pl, …}}`, all 140 stories); Java maps it as flat `LocalizedText`, Firestore drops the unknown key, the client receives `{}`, and `{}` then overwrites bundled translations in the merge. | `scripts/story-schema.json:137-173`, `gateway-service/.../model/StoryPage.java:31-37`, `grow-with-freya/services/story-loader.ts:190` |
-| B4 | **Free-tier users can open no CMS story.** No CMS story sets `isFree: true`. | grep over `scripts/cms-stories/*/story-data.json`; gate at `grow-with-freya/services/story-access-service.ts:50-89` |
+| B4 | **Free-tier users can open no CMS story.** No CMS story sets `isFree: true`. *Deferred: there is no content yet (§10).* | grep over `scripts/cms-stories/*/story-data.json`; gate at `grow-with-freya/services/story-access-service.ts:50-89` |
 | B5 | **The website privacy page is already inaccurate:** "No voice recordings (voice features are deferred)" — recording shipped. | `website/src/app/privacy/page.tsx:32` |
 
 B1 and B2 do not reproduce on the dev deployment: `gcp-dev` turns request validation off
-(`gateway-service/src/main/resources/application-gcp-dev.yml:38-39`). That is why they were missed.
+(`gateway-service/src/main/resources/application-gcp-dev.yml:38-39`), and the only func-tests CI runs
+are the `@gcp-dev` ones against that deployment (`.github/workflows/gateway-build.yml:228`). The
+local `test` profile leaves validation on, but no scenario sends analytics, and every gateway
+controller test switches the filters off. That is why they were missed — see Phase 0.
 
 ### Contract drift (fix soon, not blocking)
 
@@ -56,37 +69,59 @@ B1 and B2 do not reproduce on the dev deployment: `gcp-dev` turns request valida
 ### Dead code (removal needs operator approval)
 
 - Client: `ApiClient.getDeltaContent`, `getContentVersion`, `getBatchSignedUrls`; `AuthService.refreshToken`, `signOut`; `StorySyncService` network paths; `StorySyncRequest`/`StorySyncResponse` types.
-- Server: `dto/StorySyncRequest`, `StorySyncResponse`, `dto/UserDTOs`; `ChildProfile`, `UserPreferences` and the `UserService` child methods no controller reaches — superseded by §4.
+- Server: `dto/StorySyncRequest`, `StorySyncResponse`, `dto/UserDTOs`; `ChildProfile`, `UserPreferences` and the `UserService` child methods no controller reaches — superseded by §5.
 
 ---
 
-## 2. Phase A — release blockers (before the client ships)
+## 2. Phase 0 — test gates (first, alongside the start of A)
+
+The audit behind [`TESTING-STANDARD.md`](TESTING-STANDARD.md) §7 found the safety net thinner than
+it looks: the gateway's unit tests never run in CI, the func-tests CI runs skip request
+validation, and the app's backend-facing services are only ever mocked. Phases A–F lean on
+those tests, so they come first. Every task in this plan is done only when it meets the
+standard's §6 done list.
+
+| Task | Change | Done when |
+|-|-|-|
+| **0.1** Gateway tests in CI | A workflow job runs `./gradlew test` on every push and pull request touching `gateway-service/`; the image build waits for it. **CI change — ask first.** | A deliberately failing test fails the workflow. |
+| **0.2** Func-tests in CI, validation on | Run the Docker stack (`docker-compose.functional-tests.yml`, profiles `test,emulator`) in CI with every scenario except `@ignore`, not only `@gcp-dev`. **CI change — ask first.** | The job runs A3's scenarios; they fail on today's code. |
+| **0.3** Coverage floors that only rise | JaCoCo `jacocoTestCoverageVerification` and the Jest `coverageThreshold` set to today's measured numbers, not 10%. Raised at the end of each phase, never lowered. **Build change — ask first.** | Dropping a test below the floor fails the build. |
+| **0.4** Controller slice pattern | The first `@WebMvcTest` slices, filters **on**: `AnalyticsController` (feeds A1) and `ProfileController` (feeds A2). They become the pattern for every new controller test. | A legitimate body with `subscription_overlay_shown` and `"Bath; then story"` reaches the controller; today it gets 400. |
+| **0.5** Untested app services | Tests of today's behaviour for `story-loader` (feeds A4), `story-access-service`, `profile-sync-service`, `background-save-service`, `auth-service`, before Phase C changes them. | Each has its own test file; the mutation sweep finds no survivor. |
+| **0.6** Tests that prove less than they claim | `TokenTamperingTest` with real signed tokens; account-deletion 404/409/500 scenarios driven through a real failure, not an unused stub; `RequestValidationFilterTest` stubs method and content type and becomes `@ParameterizedTest` tables, blocked **and** accepted. | Each test fails when its guard is removed. |
+| **0.7** Shared contract fixtures | One fixtures directory read by the Java and Jest round-trip tests: a real CMS `story-data.json`, a profile body with reminders, an analytics batch. A4, B5 and Phase C use it. | Changing a fixture's shape fails both sides. |
+
+The mutation sweep stays by hand for now; PIT (gateway) and Stryker (app) are a later decision.
+
+---
+
+## 3. Phase A — release blockers (before the client ships)
 
 | Task | Change | Done when |
 |-|-|-|
 | **A1** Analytics headers | Exempt `POST /api/analytics/events` from the client-header rule (keeps the no-persistent-identifier intent). | Filter unit test: authed analytics POST with no device headers → passes; other `/api/**` without headers → still 400. |
 | **A2** Body filter | Stop pattern-scanning JSON bodies. Keep size limits, content-type and header checks; keep URL/query-string scanning. | Tests: bodies containing `subscription_overlay_shown`, `"Bath; then story"`, `"<3"`, `description` → accepted. Traversal in a URL → still rejected. **Security-sensitive: flag in the PR.** |
-| **A3** Prod-parity func-test | Func-test profile with request validation **on**, covering analytics, profile-with-reminders, delta and download. | The suite fails on today's code and passes after A1–A2. |
+| **A3** Prod-parity func-test | The local `test` profile already has request validation on. Add scenarios for analytics, profile-with-reminders (free text with `;`, `<3`, `&`), delta and download, each with its 4xx cases; they run in CI once 0.2 lands. | The suite fails on today's code and passes after A1–A2. |
 | **A4** Page translations | Java `StoryPage.localizedText` becomes `Map<String, LocalizedText>` keyed by age group; delete the unused `ageGroupText`; update `TestAdminController` seeding. Client: treat an empty `localizedText` as absent in `story-loader.ts:190`. | Java test round-trips a real CMS `story-data.json` through Firestore mapping and JSON with every language intact. Jest: `{}` never overwrites bundled text. Func-test: delta returns Polish text for a CMS story. |
-| **A5** Free stories | Operator picks which CMS stories are free; set `isFree` in `story-data.json`; upload with `FORCE_UPLOAD` (D1 hides the change otherwise). | A free-tier account can open those stories on the simulator. |
+| **A5** Free stories — *deferred, no content yet (§10)* | When content exists, the operator picks which CMS stories are free; set `isFree` in `story-data.json`; upload with `FORCE_UPLOAD` (D1 hides the change otherwise). | A free-tier account can open those stories on the simulator. |
 | **A6** Website privacy line | Replace with: recordings are made by grown-ups and stay on the device. | Page renders; Playwright test updated if it asserts the copy. |
 
-Order: A2 → A1 → A3 (proves both) → A4 → A5 → A6. A1–A4 are server deploys and do not need the
+Order: A2 → A1 → A3 (proves both) → A4 → A6. A5 waits for content. A1–A4 are server deploys and do not need the
 app resubmitted, except the one-line `story-loader.ts` guard in A4.
 
 ---
 
-## 3. Phase B — contract hygiene (the sprint after release)
+## 4. Phase B — contract hygiene (the sprint after release)
 
 | Task | Change |
 |-|-|
 | **B1** One checksum | A single function: SHA-256 of the story's canonical JSON, minus `checksum`, `createdAt`, `updatedAt`, `version`. Used by the upload script and `cms-manager`; Java stops computing its own. Covers D1. Test: changing any content field changes the checksum. |
-| **B2** `isShareToUnlock` | Add to CMS schema, `Story.java`, `CatalogEntry.java`, the catalogue mapper. (Or remove from the client — operator decision.) |
+| **B2** `isShareToUnlock` — *deferred (§10)* | Later: add to CMS schema, `Story.java`, `CatalogEntry.java`, the catalogue mapper. Not in this phase. |
 | **B3** One tag and category vocabulary | The CMS schema enum is the source; the TS unions follow; migrate existing `story-data.json` tags. Rename `duration` to `pageCount` or document it as pages everywhere. |
 | **B4** `isPremium` mapping | Add `@PropertyName("isPremium")`; test a Java write-then-read. |
 | **B5** Age fallback parity | Port Java's 4-6 → 2-4 → 0-2 chain to `types/story.ts`; shared fixture tests on both sides. |
 | **B6** Firestore rules and indexes | Rewrite for the collections the code uses; add the `user_sessions` composite indexes; delete the nested stale copy (approval). Deploy is an infrastructure change — **ask first**. |
-| **B7** API reference | Rewrite the README endpoint section from the code. Proposed: add `springdoc-openapi` so the spec is generated and diffable in CI (**new dependency — ask first**). |
+| **B7** API reference | Rewrite the README endpoint section from the code. No generated spec (§10). |
 | **B8** Tooling fixes | Un-ignore `scripts/cms-manager/lib/`; fix `format.js:104`. |
 | **B9** Analytics via `ApiClient` | Route through `ApiClient` with an opt-out of device headers, gaining the 401 refresh. |
 | **B10** No placeholder nickname | The screen-time save sends only `notifications`/`schedule`; the server accepts a partial update. |
@@ -94,7 +129,7 @@ app resubmitted, except the one-line `story-loader.ts` guard in A4.
 
 ---
 
-## 4. Phase C — the child's data, synced
+## 5. Phase C — the child's data, synced
 
 ### What is stored, and what is not
 
@@ -105,11 +140,11 @@ app resubmitted, except the one-line `story-loader.ts` guard in A4.
 | Language, text size | Yes | Restores the app as the family left it |
 | Favourite stories, activities, songs | Yes | Restore |
 | Story position (`pageIndex`, `totalPages`), finished-count | Yes, **no timestamps** | Resume on another device |
-| Finished story ids, challenge counts by kind, earned achievements | Yes, **no timestamps** | §5 |
+| Finished story ids, challenge counts by kind, earned achievements | Yes, **no timestamps** | §6 |
 | Screen-time **settings** (enabled, reminders on, custom reminders) | Yes (already) | |
 | Screen-time **sessions and daily totals** | **No** | A timestamped usage record is behavioural profiling; the parent's heatmap stays on the device |
 | Reading streak, last-read date, recent searches, `achievementUnlockedAt` | **No** | Time-based or incidental |
-| Voice recordings | **Not in this phase** | §7 |
+| Voice recordings | **Not in this phase** | §8 |
 | Exact birth date | **Never** | Age bucket only |
 
 ### Model
@@ -148,8 +183,8 @@ Writes carry `version`; a stale write gets 409, the client pulls, merges by the 
 
 | Task | Change |
 |-|-|
-| **C1** Models and DTOs | Typed request DTOs with `@Valid` and size caps (no raw `Map` like today's `POST /api/profile`). `@JsonIgnoreProperties(ignoreUnknown = true)` so older clients keep working. |
-| **C2** Endpoints | `GET/PUT /api/children/{childId}`; `POST /api/consents`; `GET /api/account/export` (UK-GDPR right of access). `POST /api/profile` keeps working for shipped clients by writing through to the default child. |
+| **C1** Models and DTOs | Typed request DTOs with `@Valid` and size caps (no raw `Map` like today's `POST /api/profile`). `@JsonIgnoreProperties(ignoreUnknown = true)` so an older TestFlight build does not fail on a new field. |
+| **C2** Endpoints | `GET/PUT /api/children/{childId}`; `POST /api/consents`; `GET /api/account/export` (UK-GDPR right of access). `/api/profile` (`GET`, `POST`, `DELETE`, `ProfileController.java:38,72,103`) is replaced, not kept alongside: the app is on TestFlight only, so no installed build needs it. The app's calls (`services/api-client.ts:251,273`) move to the child document in the same change, and the endpoint is removed once that build is on TestFlight. |
 | **C3** Deletion | `AccountDeletionService` deletes the `children` and `consents` subcollections. Test fails first. |
 | **C4** Client sync | Extend `background-save-service` (offline queue, retry) and `profile-sync-service` (pull on start and token refresh) to the child document; merge by the table above. |
 | **C5** Consent | Write the consent record at the existing consent step; backfill on first sync for existing installs. |
@@ -158,7 +193,7 @@ Writes carry `version`; a stale write gets 409, the client pulls, merges by the 
 
 ---
 
-## 5. Phase D — achievements as data
+## 6. Phase D — achievements as data
 
 Builds on [`ACHIEVEMENTS-PLAN.md`](grow-with-freya/ACHIEVEMENTS-PLAN.md) §6.2 (`BadgeSpec` /
 `BadgeRule`), with three changes from this session: definitions live in the CMS, stories point at
@@ -169,7 +204,7 @@ awards, and outcomes sync without dates.
 1. **Definitions change freely; outcomes do not.** A definition is CMS content with a `version`.
    An earned achievement is an id in `achievements[]`. Editing, re-scoring or retiring a
    definition never removes an earned one.
-2. **Store facts, derive badges.** The device keeps `finishedStoryIds` and `challengeCounts` (§4).
+2. **Store facts, derive badges.** The device keeps `finishedStoryIds` and `challengeCounts` (§5).
    When a definition is added or loosened, re-evaluating those facts grants it to children who
    already qualify — no migration.
 3. **Time-shaped badges are judged on the device, in the moment.** Rhythm (morning/evening) and
@@ -208,13 +243,13 @@ without an app release.
 | **D3** Story awards | `awards` on CMS schema, `Story.java`, `CatalogEntry` if the catalogue needs it, `types/story.ts`; covered by the B1 checksum. |
 | **D4** Evaluator | Pure `(definitions, facts, catalogue) → earned ids`; the 16 current badges re-expressed as bundled definitions with identical thresholds, so today's tests still pass. Bundled definitions are the offline fallback; CMS versions win by id+version. |
 | **D5** Facts | `markStoryCompleted` feeds `finishedStoryIds` (finished, not opened — ACHIEVEMENTS-PLAN decision 5, with its one-time migration from `completedCount > 0`). Challenge completions increment `challengeCounts`. |
-| **D6** Sync | `achievements`, `finishedStoryIds`, `challengeCounts` ride on the child document (§4); union / max merge. `achievementUnlockedAt` stays device-only for the "new since last visit" moment. |
+| **D6** Sync | `achievements`, `finishedStoryIds`, `challengeCounts` ride on the child document (§5); union / max merge. `achievementUnlockedAt` stays device-only for the "new since last visit" moment. |
 | **D7** Copy parity | The 14-locale parity test and the forbidden-phrases lint extend to definition copy. |
 | **D8** Docs | Revise ACHIEVEMENTS-PLAN.md §6.1, §7 and §8: no dated ledger; outcomes and facts sync. |
 
 ---
 
-## 6. Phase E — server-side entitlements (decide timing)
+## 7. Phase E — server-side entitlements (decide timing)
 
 D12: tiers and download caps exist only in the app. Proper enforcement needs the gateway to know
 a user's tier: a RevenueCat webhook writing `users/{uid}.entitlement`, and `/download` checking
@@ -223,7 +258,7 @@ release blocker while the catalogue is small.
 
 ---
 
-## 7. Phase F — voice recording sync (after MVP, opt-in)
+## 8. Phase F — voice recording sync (after MVP, opt-in)
 
 Recordings are grown-ups reading aloud ("so your child hears you — even apart",
 `grow-with-freya/locales/en/index.ts:702,990`). Until this phase, the phone's own backup already
@@ -241,11 +276,11 @@ carries them to a new iPhone (Documents directory, `services/voice-recording-ser
 
 ---
 
-## 8. Compliance workstream (runs alongside)
+## 9. Compliance workstream (runs alongside)
 
 | Task | When |
 |-|-|
-| **L1** DPIA covering §4, §5, §7 (required by the UK Children's Code) | Before Phase C ships |
+| **L1** DPIA covering §5, §6, §8 (required by the UK Children's Code) | Before Phase C ships |
 | **L2** Privacy policy data list updated per phase | With each phase |
 | **L3** Confirm the Firestore region (⚠️ unverified); document any transfer | Before Phase C |
 | **L4** Retention statement: child data lives until account deletion; nothing else kept | With Phase C |
@@ -253,25 +288,29 @@ carries them to a new iPhone (Documents directory, `services/voice-recording-ser
 
 ---
 
-## 9. Decisions for the operator
+## 10. Decisions for the operator — answered 2026-09-23
 
-1. **A5 — which CMS stories are free.** Blocks release.
-2. **B2 — `isShareToUnlock`:** add to the backend (recommended; the client feature exists) or remove it from the client.
-3. **B7 — `springdoc-openapi`** for a generated spec. Recommended.
-4. **Phase C — one child now or many.** Recommended: model many (`children/{childId}`), ship with one.
-5. **Phase E timing.** Recommended: after Phase C, before a paid catalogue push.
-6. **Old-client window.** How long `POST /api/profile` must keep working for installed versions.
+| # | Question | Decision |
+|-|-|-|
+| 1 | A5 — which CMS stories are free | Keep things as they are; there is no content yet. A5 is deferred and does not block release. |
+| 2 | B2 — `isShareToUnlock` | Later. Not in this phase. |
+| 3 | B7 — `springdoc-openapi` | No. The README rewrite is enough. |
+| 4 | Phase C — one child or many | Recommended default, not yet confirmed: model many (`children/{childId}`), ship with one. |
+| 5 | Phase E timing | After Phase C, before any push on paid content. |
+| 6 | Old-client window for `/api/profile` | None needed: TestFlight only, no store release. Phase C replaces it outright (C2). |
 
-## 10. Order and rough size
+## 11. Order and rough size
 
 | Phase | Size | Gate |
 |-|-|-|
+| 0 — test gates | ~3–4 days | First; 0.4, 0.5 (`story-loader`) and 0.7 before the A tasks that use them |
 | A — blockers | ~2–3 days | Before the client ships |
 | B — hygiene | ~1 week | The sprint after |
 | C — child sync | ~2 weeks | L1, L3 done |
 | D — achievements | ~2 weeks | Needs C's child document |
-| E — entitlements | ~1 week | Operator timing |
+| E — entitlements | ~1 week | After C, before paid content |
 | F — voice sync | ~1–2 weeks | Post-MVP; F6 ships with it |
 
 Every task follows the house loop: failing test first, implement, mutation sweep, simulator check
-on phone and tablet for app work, and a commit only on the operator's word.
+on phone and tablet for app work, and a commit only on the operator's word. A task is done when it
+meets [`TESTING-STANDARD.md`](TESTING-STANDARD.md) §6.
