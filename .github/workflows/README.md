@@ -63,8 +63,8 @@ same branch -newer runs cancel in-progress ones.
 | `security-audit` | - | every push and PR | `npm audit` and `npm outdated`; informational, never fails |
 | `build-android` | - | manual only (paused) | Android debug build (x86_64 only), reused from cache while native inputs are unchanged; handed on as an artifact |
 | `app-journeys` | build-android | manual only (paused) | The built app on an emulator on a fresh runner, Maestro `smoke` flows |
-| `build-web` | the first three | every PR, pushes to `main`/`develop`, manual | `npx expo export --platform web`, then fails if the bundle contains `import.meta` |
-| `performance-test` | build-web | pushes to `main`/`develop` | Lighthouse CI; informational, never fails |
+| `build-web` | the first three | every push and PR, manual | `npx expo export --platform web`, then fails if the bundle contains `import.meta` |
+| `performance-test` | build-web | whenever the web build succeeds | Lighthouse CI; informational, never fails |
 | `deployment-summary` | all above | always | GitHub Step Summary with results |
 
 **Key decisions:**
@@ -73,7 +73,7 @@ same branch -newer runs cancel in-progress ones.
 - The Android journeys (`build-android` + `app-journeys`) are paused (operator, 2026-09-23) and run only when the workflow is started by hand. When re-enabled they are meant to gate pull requests into `main`, the release branch, not every push to `mvp`. Every journey also runs nightly on Android and iOS (`app-e2e-nightly.yml`).
 - The journeys' debug app is built for x86_64 only (`-PreactNativeArchitectures=x86_64`), the emulator's CPU: all four ABIs ran the runner out of disk. Store builds come from EAS and carry every ABI.
 - The Android app is built in its own job (`build-android`), which starts at once alongside the checks, and handed to `app-journeys` as an artifact, so the emulator runs on a fresh runner with the disk to itself. The journeys load their JavaScript from Metro, so the built app is cached (`actions/cache`), keyed on the native inputs: `package.json`, `package-lock.json`, `app.config.js`, the icon, adaptive-icon and splash images. A hit skips prebuild and Gradle, which take about 25 minutes. A cache saved in a pull request serves only that PR, so pushes to `main` run the build alone, only when native inputs changed, to keep a build every PR can reuse. Gradle's downloads are cached too (`gradle/actions/setup-gradle`), and the harmless D8 warnings from `amazon-appstore-sdk` are filtered out of the log.
-- The web build and its `import.meta` check run on every PR, so a web bundle that would stop at the splash is caught before merging.
+- The web build and its `import.meta` check run on every push and PR, so a web bundle that would stop at the splash is caught before merging, and Lighthouse runs on every web build.
 - `NODE_OPTIONS=--max-old-space-size=4096` prevents OOM on test runs.
 - No automatic native builds; those go through EAS (see below). `deploy-eas.yml` needs a green run of this pipeline on the branch it builds from.
 
