@@ -197,6 +197,11 @@ jest.mock('@/store/app-store', () => ({
   useAppStore: () => mockStore,
 }));
 
+const mockSession = { needsSignIn: false, login: jest.fn(), logout: jest.fn() };
+jest.mock('@/hooks/use-session-actions', () => ({
+  useSessionActions: () => mockSession,
+}));
+
 function byTestId(tree: ReturnType<typeof render>, testID: string) {
   return tree.UNSAFE_root.findAll((n: any) => n.props.testID === testID);
 }
@@ -380,11 +385,27 @@ describe('AccountScreen navigation', () => {
     });
   });
 
-  describe('signing in and out live on the Profile page now', () => {
-    it('has no login or logout button', () => {
-      mockStore.isGuestMode = true;
+  describe('signing out', () => {
+    afterEach(() => {
+      mockSession.needsSignIn = false;
+    });
+
+    it('offers a signed-in family Log out here, behind the question that guards the page', () => {
       const { tree } = renderAccount();
 
+      const logout = byTestId(tree, 'account-logout').find((n: any) => n.props.accessibilityRole === 'button');
+      expect(logout.props.accessibilityLabel).toBe('common.logout');
+      fireEvent.press(logout);
+
+      expect(mockSession.logout).toHaveBeenCalledTimes(1);
+      expect(mockSession.login).not.toHaveBeenCalled();
+    });
+
+    it('offers whoever needs to sign in no Log out, and no Login either: that is on the Profile page', () => {
+      mockSession.needsSignIn = true;
+      const { tree } = renderAccount();
+
+      expect(byTestId(tree, 'account-logout')).toHaveLength(0);
       expect(byTestId(tree, 'account-login')).toHaveLength(0);
     });
   });

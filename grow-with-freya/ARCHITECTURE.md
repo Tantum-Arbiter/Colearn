@@ -334,9 +334,8 @@ The page is titled Settings (operator request 2026-09-21; `account.title` now ca
 locale's word for settings) and has no Screen Time, Edit Profile, language or login buttons: the
 Screensafe ring on home opens Screen Time (`screen-time-glance.tsx`), the Profile page's edit
 sheet edits the profile (`profile-edit-sheet.tsx`), the flag on home picks the language, and
-signing in and out lives on the Profile page under the name (`ProfileSessionCard`: for a guest, one wide gold Login button and nothing else, operator's choice for simplicity -- the shared `GoldButton` in `components/child-ui/gold-button.tsx`, a lemon-to-gold face with a white top sheen and a soft gold halo, which the home's Start my free trial pill wears too; once signed in, a quiet "Signed in · Logout" line), driven by
-`useSessionActions`, which both pages could share and which the layout answers by switching to
-the login view.
+signing in lives on the Profile page under the name (`ProfileSessionCard`: for a guest, one wide gold Login button and nothing else, operator's choice for simplicity -- the shared `GoldButton` in `components/child-ui/gold-button.tsx`, a lemon-to-gold face with a white top sheen and a soft gold halo, which the home's Start my free trial pill wears too; once signed in, a quiet "Signed in" line). Both are grown-up actions, so both sit behind the parents-only question (operator, 2026-09-22): the Login button asks it before the login page comes up, since signing in leaves the app for Google or Apple, and Log out lives on Grown-ups (`account-logout`, shown only when signed in), which asks it at the door. Sign-in reached during first-time setup is not gated; a parent is doing the setup. Both are driven by
+`useSessionActions`, which the layout answers by switching to the login view.
 For whoever needs to sign in (`needsSignIn` in `store/session.ts`: a guest, or a family whose
 session the app could not refresh, which the API client reports down `services/session-lapse.ts`
 into `sessionLapsed`, cleared by `markSignedIn` on every sign-in path and never persisted; only a
@@ -435,7 +434,8 @@ loading screen lifting after the first sync -- is the one they go on to use, alr
 its data loaded and its images decoded. The menu's owl tour waits until nothing covers it
 (`disableTutorial={!menuRevealed(view)}`).
 
-Sign-in opened from a page (the Profile page's Login button, `useSessionActions().login`) slides
+Sign-in opened from a page (the Profile page's Login button, once the parents-only question is
+answered, `useSessionActions().login`) slides
 up over that page at the pace pages slide (`AuthOverlay`, `authEntrance`) and hands the child back
 to it when they sign in or carry on as a guest (`pageAfterAuth`); reached at launch it fades in
 and leads to the main menu. The Login button no longer switches guest mode off at the tap (it

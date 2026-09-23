@@ -1,5 +1,5 @@
 import React, { type RefObject } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { ACCENT_GOLD, TEXT_SECONDARY } from '@/constants/night-palette';
@@ -17,15 +17,14 @@ interface ProfileSessionCardProps {
   onLogin: () => void;
   /** The tour points at the sign-in button from here. */
   guideRef?: RefObject<View | null>;
-  onLogout: () => void;
 }
 
 /**
  * Where signing in lives. Whoever needs to sign in gets one gold Login button under the name,
  * in the gold of the sign-in symbol the profile slot turns into, and nothing
- * else to read; a signed-in family sees a quiet line saying so, and the way out.
+ * else to read; a signed-in family sees a quiet line saying so. Signing out lives on Grown-ups.
  */
-export function ProfileSessionCard({ needsSignIn, width, onLogin, onLogout, guideRef }: ProfileSessionCardProps) {
+export function ProfileSessionCard({ needsSignIn, width, onLogin, guideRef }: ProfileSessionCardProps) {
   const { t } = useTranslation();
   const { scaledFontSize } = useAccessibility();
 
@@ -34,18 +33,6 @@ export function ProfileSessionCard({ needsSignIn, width, onLogin, onLogout, guid
       <View testID="profile-session-card" style={styles.signedIn}>
         <Ionicons name="checkmark-circle" size={16} color={ACCENT_GOLD} />
         <Text style={[styles.signedInText, { fontSize: scaledFontSize(13) }]}>{t('profile.signedIn')}</Text>
-        <View style={styles.dot} />
-        <Pressable
-          testID="profile-session"
-          accessibilityRole="button"
-          accessibilityLabel={t('common.logout')}
-          onPress={onLogout}
-          hitSlop={10}
-          style={({ pressed }) => [styles.logout, pressed && styles.pressed]}
-        >
-          <Ionicons name="log-out-outline" size={15} color={TEXT_SECONDARY} />
-          <Text style={[styles.logoutText, { fontSize: scaledFontSize(13) }]}>{t('common.logout')}</Text>
-        </Pressable>
       </View>
     );
   }
@@ -78,25 +65,5 @@ const styles = StyleSheet.create({
     color: TEXT_SECONDARY,
     fontFamily: Fonts.rounded,
     fontWeight: '600',
-  },
-  dot: {
-    width: 3,
-    height: 3,
-    borderRadius: 1.5,
-    backgroundColor: TEXT_SECONDARY,
-  },
-  logout: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  logoutText: {
-    color: TEXT_SECONDARY,
-    fontFamily: Fonts.rounded,
-    fontWeight: '700',
-    textDecorationLine: 'underline',
-  },
-  pressed: {
-    opacity: 0.6,
   },
 });

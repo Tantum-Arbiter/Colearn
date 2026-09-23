@@ -37,6 +37,7 @@ import { useSettledAfterTransition } from '@/hooks/use-ambient-animation';
 import { ChildBottomNavigation, navClearance, type ChildNavItemId } from '@/components/child-ui/child-bottom-navigation';
 import { useScreenTimeAllowance } from '@/hooks/use-screen-time-allowance';
 import { destinationForSection } from '@/constants/catalogue-destinations';
+import { useSessionActions } from '@/hooks/use-session-actions';
 
 const log = Logger.create('Account');
 
@@ -59,6 +60,7 @@ interface AccountScreenProps {
 
 export function AccountScreen({ onBack, onNavigate, isActive = true }: AccountScreenProps) {
   const { t } = useTranslation();
+  const session = useSessionActions();
   const [currentView, setCurrentView] = useState<SlideView>('main');
 
   // Slide animation values for each sub-page (0 = off-screen right, 1 = visible)
@@ -601,6 +603,19 @@ export function AccountScreen({ onBack, onNavigate, isActive = true }: AccountSc
               ]} />
             </View>
           </Pressable>
+
+          {!session.needsSignIn && (
+            <Pressable
+              testID="account-logout"
+              accessibilityRole="button"
+              accessibilityLabel={t('common.logout')}
+              style={({ pressed }) => [styles.logoutButton, pressed && { opacity: 0.6 }]}
+              onPress={session.logout}
+            >
+              <Ionicons name="log-out-outline" size={18} color="#FFFFFF" style={{ marginRight: 6 }} />
+              <Text style={[styles.logoutButtonText, { fontSize: scaledFontSize(14) }]}>{t('common.logout')}</Text>
+            </Pressable>
+          )}
 
           {/* Delete Account -only shown for logged-in users */}
           {!isGuestMode && (

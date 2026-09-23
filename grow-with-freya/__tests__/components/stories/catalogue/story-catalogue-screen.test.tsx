@@ -1355,6 +1355,46 @@ describe('StoryCatalogueScreen profile page', () => {
     await waitFor(() => expect(byTestId(tree, 'badge-detail-sheet').length).toBeGreaterThan(0));
   });
 
+  /** Signing in leaves the app for Google or Apple, so a grown-up says yes first. */
+  describe('signing in from the profile', () => {
+    beforeEach(() => {
+      (mockAppState as Record<string, unknown>).isGuestMode = true;
+    });
+
+    afterEach(() => {
+      delete (mockAppState as Record<string, unknown>).isGuestMode;
+    });
+
+    function pressLogin(tree: ReturnType<typeof render>) {
+      fireEvent.press(
+        inCurrentSection(tree, 'profile-session').find((n: any) => n.props.accessibilityRole === 'button'),
+      );
+    }
+
+    it('asks the parents-only question before the login page comes up', async () => {
+      const tree = await renderProfile();
+
+      pressLogin(tree);
+
+      expect(mockAppState.setShowLoginAfterOnboarding).not.toHaveBeenCalled();
+      expect(byTestId(tree, 'parents-only-modal').length).toBeGreaterThan(0);
+    });
+
+    it('brings the login page up once the question is answered', async () => {
+      const tree = await renderProfile();
+      pressLogin(tree);
+
+      await act(async () => {
+        byTestId(tree, 'parents-only-modal')[0].props.onTouchEnd();
+      });
+      await act(async () => {
+        byTestId(tree, 'parents-only-modal')[0].props.onTouchStart();
+      });
+
+      await waitFor(() => expect(mockAppState.setShowLoginAfterOnboarding).toHaveBeenCalledWith(true));
+    });
+  });
+
   /** Editing the child's details is a grown-up's job, like the settings gear. */
   it('challenges a grown-up before opening the edit page from the hero', async () => {
     const tree = await renderProfile();

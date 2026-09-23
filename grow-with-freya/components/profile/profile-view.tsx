@@ -37,7 +37,6 @@ interface ProfileViewProps {
   /** Whoever needs to sign in is offered the login page here; a signed-in family, the way out. */
   needsSignIn: boolean;
   onLogin: () => void;
-  onLogout: () => void;
   /** So the profile tour can point the owl at the hero and the tabs. */
   guideTargets?: {
     hero?: RefObject<View | null>;
@@ -59,7 +58,6 @@ export function ProfileView({
   onEditProfile,
   needsSignIn,
   onLogin,
-  onLogout,
   guideTargets,
 }: ProfileViewProps) {
   const { t } = useTranslation();
@@ -114,7 +112,6 @@ export function ProfileView({
         needsSignIn={needsSignIn}
         width={width}
         onLogin={onLogin}
-        onLogout={onLogout}
         guideRef={guideTargets?.login}
       />
 

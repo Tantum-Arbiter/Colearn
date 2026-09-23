@@ -71,7 +71,6 @@ function defaults() {
     onEditProfile: jest.fn(),
     needsSignIn: true,
     onLogin: jest.fn(),
-    onLogout: jest.fn(),
   };
 }
 
@@ -300,7 +299,6 @@ describe('signing in from the profile', () => {
     expect(pill.props.accessibilityLabel).toBe('common.login');
     fireEvent.press(pill);
     expect(props.onLogin).toHaveBeenCalledTimes(1);
-    expect(props.onLogout).not.toHaveBeenCalled();
     const order = tree.UNSAFE_root
       .findAll((n: any) => ['profile-hero', 'profile-session', 'profile-tab-saved'].includes(n.props.testID))
       .map((n: any) => n.props.testID)
@@ -308,14 +306,11 @@ describe('signing in from the profile', () => {
     expect(order).toEqual(['profile-hero', 'profile-session', 'profile-tab-saved']);
   });
 
-  it('offers a signed-in family the way out instead', () => {
+  it('tells a signed-in family so, with no button to sign in or out here', () => {
     const props = defaults();
     const tree = render(<ProfileView {...props} needsSignIn={false} />);
 
-    const pill = byTestId(tree, 'profile-session').filter((n: any) => n.props.accessibilityRole === 'button')[0];
-    expect(pill.props.accessibilityLabel).toBe('common.logout');
-    fireEvent.press(pill);
-    expect(props.onLogout).toHaveBeenCalledTimes(1);
-    expect(props.onLogin).not.toHaveBeenCalled();
+    expect(byTestId(tree, 'profile-session-card').length).toBeGreaterThan(0);
+    expect(byTestId(tree, 'profile-session').filter((n: any) => n.props.accessibilityRole === 'button')).toHaveLength(0);
   });
 });

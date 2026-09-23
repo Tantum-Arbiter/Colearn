@@ -579,6 +579,10 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
     parentsOnly.showChallenge(() => onOpenSettings?.());
   }, [parentsOnly, onOpenSettings]);
 
+  const handleSignIn = useCallback(() => {
+    parentsOnly.showChallenge(session.login);
+  }, [parentsOnly, session.login]);
+
   /** So does changing the child's name and age. */
   const handleEditProfile = useCallback(() => {
     parentsOnly.showChallenge(() => setEditProfileOpen(true));
@@ -882,8 +886,7 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
       onSelectBadge={handleSelectBadge}
       onEditProfile={handleEditProfile}
       needsSignIn={session.needsSignIn}
-      onLogin={session.login}
-      onLogout={session.logout}
+      onLogin={handleSignIn}
       guideTargets={profileGuideTargets}
     />
   );
