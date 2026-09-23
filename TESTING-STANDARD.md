@@ -162,7 +162,7 @@ What the audit found, so no one assumes a safety net that is not there. Phase 0 
 - **The mutation sweep is by hand**; no tool runs it.
 - **No test at all:** gateway `SecurityConfig`, `CloudflareValidationFilter`,
   `InboundRequestTimeoutFilter`, `AssetController`, `FirebaseAuthController`, the content- and
-  asset-version repositories, every DTO's serialisation; app `story-loader`, `story-access-service`,
+  asset-version repositories, every DTO's serialisation; app `story-loader`,
   `profile-sync-service`, `background-save-service`, `auth-service`.
 - **No func-test scenario:** `POST /api/analytics/events`, `GET /api/stories/{id}/download`.
   Reminders are happy-path only; `DELETE /api/profile` is never asserted.

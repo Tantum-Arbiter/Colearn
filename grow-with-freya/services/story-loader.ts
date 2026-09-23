@@ -7,6 +7,12 @@ import { Logger } from '@/utils/logger';
 
 const log = Logger.create('StoryLoader');
 
+function hasText(value: unknown): boolean {
+  if (typeof value === 'string') return value.length > 0;
+  if (value && typeof value === 'object') return Object.values(value).some(hasText);
+  return false;
+}
+
 export class StoryLoader {
   private static cachedStories: Story[] | null = null;
   private static isLoading: boolean = false;
@@ -169,11 +175,11 @@ export class StoryLoader {
   private static mergeBundledWithCms(bundled: Story, cms: Story): Story {
     const merged: Story = { ...bundled };
 
-    if (cms.localizedTitle) {
+    if (hasText(cms.localizedTitle)) {
       merged.localizedTitle = cms.localizedTitle;
     }
 
-    if (cms.localizedDescription) {
+    if (hasText(cms.localizedDescription)) {
       merged.localizedDescription = cms.localizedDescription;
     }
 
@@ -187,7 +193,7 @@ export class StoryLoader {
 
         return {
           ...bundledPage,
-          localizedText: cmsPage.localizedText || bundledPage.localizedText,
+          localizedText: hasText(cmsPage.localizedText) ? cmsPage.localizedText : bundledPage.localizedText,
         };
       });
     }

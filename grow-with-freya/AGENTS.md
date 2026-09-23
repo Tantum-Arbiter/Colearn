@@ -29,7 +29,7 @@ What a change must prove — the layers, the edge-case checklist, the done list 
 - One behaviour per test. Test names describe behaviour, not implementation.
 - Deterministic — no real timers, no real network, no real `Date.now()` without mocking.
 - Prefer **`describe.each` / `it.each`** over duplicating tests with different inputs.
-- **Every service that talks to the gateway or to storage has its own test file.** Being `jest.mock`ed inside a component test does not count: `story-loader`, `story-access-service`, `profile-sync-service`, `background-save-service` and `auth-service` have none today, which is how an empty `{}` came to overwrite bundled translations (`services/story-loader.ts:190`).
+- **Every service that talks to the gateway or to storage has its own test file.** Being `jest.mock`ed inside a component test does not count. Until 2026-09-24 `story-loader` had no test of its own, which is how an empty `{}` came to overwrite bundled translations.
 - Anything sent to the gateway: assert the exact set of fields, as `services/__tests__/analytics-service.test.ts` does, so a new field fails the test.
 - Variable name for the unit under test: **`underTest`** (adopt going forward; don't retrofit existing tests).
 - Use AAA structure (Arrange / Act / Assert) with blank lines between sections.

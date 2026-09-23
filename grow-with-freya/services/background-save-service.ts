@@ -25,13 +25,15 @@ interface ProfileUpdateData {
 
 class BackgroundSaveServiceClass {
   private isProcessing = false;
+  private rerunRequested = false;
+  private sequence = 0;
   private retryTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
   async queueProfileSave(data: ProfileUpdateData): Promise<void> {
     log.debug('Queueing profile save');
 
     const pendingSave: PendingSave = {
-      id: Date.now().toString(),
+      id: `${Date.now()}-${++this.sequence}`,
       data,
       timestamp: Date.now(),
       retryCount: 0,
@@ -47,7 +49,7 @@ class BackgroundSaveServiceClass {
 
   private async processQueue(): Promise<void> {
     if (this.isProcessing) {
-      // Already processing
+      this.rerunRequested = true;
       return;
     }
 
@@ -62,11 +64,8 @@ class BackgroundSaveServiceClass {
 
       log.debug(`Processing ${pendingSaves.length} pending save(s)`);
 
-      // Process each pending save (most recent first for profile updates)
-      const sortedSaves = pendingSaves.sort((a, b) => b.timestamp - a.timestamp);
-
-      // For profile updates, only keep the most recent one
-      const mostRecent = sortedSaves[0];
+      const mostRecent = pendingSaves[pendingSaves.length - 1];
+      const coveredIds = new Set(pendingSaves.map(s => s.id));
 
       try {
         // Check if user is authenticated
@@ -80,8 +79,7 @@ class BackgroundSaveServiceClass {
         await ApiClient.updateProfile(mostRecent.data);
         log.info('Profile saved');
 
-        // Remove all pending saves (they're all superseded by this one)
-        await this.clearPendingSaves();
+        await this.removePendingSaves(coveredIds);
 
       } catch (error: any) {
         log.warn('Save failed:', error.message);
@@ -91,7 +89,7 @@ class BackgroundSaveServiceClass {
 
         if (mostRecent.retryCount >= MAX_RETRIES) {
           log.warn('Max retries reached, discarding save');
-          await this.removePendingSave(mostRecent.id);
+          await this.removePendingSaves(coveredIds);
         } else {
           // Update the save with new retry count
           await this.updatePendingSave(mostRecent);
@@ -109,6 +107,10 @@ class BackgroundSaveServiceClass {
       log.error('Error processing queue:', error);
     } finally {
       this.isProcessing = false;
+      if (this.rerunRequested) {
+        this.rerunRequested = false;
+        this.processQueue();
+      }
     }
   }
 
@@ -137,14 +139,14 @@ class BackgroundSaveServiceClass {
     }
   }
 
-  private async removePendingSave(id: string): Promise<void> {
+  private async removePendingSaves(ids: Set<string>): Promise<void> {
     const saves = await this.getPendingSaves();
-    const filtered = saves.filter(s => s.id !== id);
-    await AsyncStorage.setItem(PENDING_SAVES_KEY, JSON.stringify(filtered));
-  }
-
-  private async clearPendingSaves(): Promise<void> {
-    await AsyncStorage.removeItem(PENDING_SAVES_KEY);
+    const remaining = saves.filter(s => !ids.has(s.id));
+    if (remaining.length === 0) {
+      await AsyncStorage.removeItem(PENDING_SAVES_KEY);
+      return;
+    }
+    await AsyncStorage.setItem(PENDING_SAVES_KEY, JSON.stringify(remaining));
   }
 
   async hasPendingSaves(): Promise<boolean> {
