@@ -327,3 +327,21 @@ describe('archedGreetingLayout over two lines', () => {
     expect(two.height).toBeGreaterThan(one.height + TITLE * 0.9);
   });
 });
+
+/**
+ * react-native-svg on iOS lays the subtitle's weight 500 out as wide as the
+ * rounded face's Bold: measured on the iPhone 16 Pro simulator, "Your next
+ * adventure is waiting." ran 255 pt at 18 pt, 7% past a Medium estimate, and
+ * a subtitle judged to fit lost its first and last letters off the arc.
+ */
+describe('the subtitle as the device sets it', () => {
+  it.each([
+    ['Your next adventure is waiting.', 18, 255],
+    ['ou earned Reading Together. Look below', 16.98, 318],
+    ['Proxima tua peregrinatio te exspectat.', 18, 313],
+  ])('measures "%s" at %s pt within 2%% of the %s pt the device drew', (text, size, drawn) => {
+    const underTest = textAdvance(text, size, 'medium');
+
+    expect(Math.abs(underTest - drawn) / drawn).toBeLessThan(0.02);
+  });
+});

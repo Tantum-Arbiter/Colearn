@@ -468,6 +468,14 @@ nothing covers it: the catalogue takes `isActive` (`currentPage === 'stories'` a
 login page, and its shelf tour, started there, held the owl, so after a reset the main menu's
 tour never came (operator report 2026-09-22).
 
+The home greeting's arcs are keyed by their paths (`components/home/arched-greeting.tsx`):
+react-native-svg keeps text on the arc it was first laid along, so when a two-line title gave
+way to a one-line one the subtitle stayed an arc too low and all but the tops of its middle
+letters fell below the greeting's box (operator report 2026-09-22, "something wrong with the
+streak text"). Its width table is measured at Bold, not Medium: on iOS react-native-svg lays
+weight 500 out as wide as Bold, and long subtitles judged to fit lost their first and last
+letters off the arc. Three lines measured on the iPhone hold the table to the device.
+
 Reset App on Grown-ups leaves the device as a fresh install leaves it (`resetApp` in
 `services/app-reset.ts`, operator report 2026-09-22: it had kept the Grown-ups page and the
 family's state on screen). It signs out, drops the downloaded stories, cancels every scheduled

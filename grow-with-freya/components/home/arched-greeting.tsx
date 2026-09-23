@@ -52,14 +52,14 @@ export const ArchedGreeting = memo(function ArchedGreeting({
           {layout.titlePaths.map((d, index) => (
             <Path key={d} id={titleArc(index)} d={d} />
           ))}
-          <Path id={subtitleArc} d={layout.subtitlePath} />
+          <Path key={layout.subtitlePath} id={subtitleArc} d={layout.subtitlePath} />
           <Filter id={glow} x="-10%" y="-40%" width="120%" height="180%">
             <FeGaussianBlur stdDeviation={ARCHED_GREETING.glowBlur} />
           </Filter>
         </Defs>
         {plan.lines.map((line, index) => (
           <SvgText
-            key={`glow-${index}`}
+            key={`glow-${layout.titlePaths[index]}`}
             fill={glowColor}
             filter={`url(#${glow})`}
             fontSize={fittedTitle}
@@ -74,7 +74,7 @@ export const ArchedGreeting = memo(function ArchedGreeting({
         ))}
         {plan.lines.map((line, index) => (
           <SvgText
-            key={`title-${index}`}
+            key={`title-${layout.titlePaths[index]}`}
             testID="home-welcome-title"
             fill={titleColor}
             fontSize={fittedTitle}
@@ -88,6 +88,7 @@ export const ArchedGreeting = memo(function ArchedGreeting({
           </SvgText>
         ))}
         <SvgText
+          key={layout.subtitlePath}
           testID="home-welcome-subtitle"
           fill={subtitleColor}
           fontSize={fittedSubtitle}

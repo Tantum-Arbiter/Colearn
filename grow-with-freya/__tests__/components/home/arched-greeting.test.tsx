@@ -9,6 +9,28 @@ import { render } from '@testing-library/react-native';
 import { ArchedGreeting } from '@/components/home/arched-greeting';
 import { archedGreetingLayout, textAdvance } from '@/constants/arched-greeting';
 
+const mockMounts: string[] = [];
+jest.mock('react-native-svg', () => {
+  const React = jest.requireActual('react');
+  const { View } = jest.requireActual('react-native');
+  const part = (name: string) => (props: Record<string, any>) => {
+    React.useEffect(() => {
+      mockMounts.push(`${name}:${props.id ?? props.href ?? ''}`);
+    }, []);
+    return React.createElement(View, { ...props, testID: `svg-${name}` });
+  };
+  return {
+    __esModule: true,
+    default: part('Svg'),
+    Defs: part('Defs'),
+    FeGaussianBlur: part('FeGaussianBlur'),
+    Filter: part('Filter'),
+    Path: part('Path'),
+    Text: part('Text'),
+    TextPath: part('TextPath'),
+  };
+});
+
 type Node = { props: Record<string, any>; parent: Node | null };
 
 function svgTexts(view: ReturnType<typeof render>, text: string): Record<string, any>[] {
@@ -131,6 +153,20 @@ describe('ArchedGreeting over two lines', () => {
         subtitle: textAdvance(PROPS.subtitle, 18, 'medium'),
       }).height
     );
+  });
+
+  /**
+   * The renderer keeps text on the arc it was first laid along: when a
+   * two-line title gave way to a one-line one, the subtitle stayed an arc too
+   * low and all but the tops of its middle letters fell below the box.
+   */
+  it('should rebuild the subtitle and its arc whenever the arc moves', () => {
+    const view = render(<ArchedGreeting {...PROPS} title={title} />);
+    mockMounts.length = 0;
+
+    view.rerender(<ArchedGreeting {...PROPS} />);
+
+    expect(mockMounts.filter((mount) => mount.endsWith('-subtitle')).map((mount) => mount.split(':')[0]).sort()).toEqual(['Path', 'TextPath']);
   });
 
   it('should still read out as one heading', () => {
