@@ -128,6 +128,7 @@ export interface AppState {
   setShowLoginAfterOnboarding: (show: boolean) => void;
   setGuestMode: (isGuest: boolean) => void;
   markSessionLapsed: () => void;
+  markSignedIn: () => void;
   resetAppForTesting: () => void; // Temporary function to reset app state
   setUserProfile: (nickname: string, avatarType: 'boy' | 'girl', avatarId: string) => void;
   clearUserProfile: () => void;
@@ -241,6 +242,7 @@ export const useAppStore = create<AppState>()(
       setShowLoginAfterOnboarding: (show) => set({ showLoginAfterOnboarding: show }),
       setGuestMode: (isGuest) => set({ isGuestMode: isGuest }),
       markSessionLapsed: () => set({ sessionLapsed: true }),
+      markSignedIn: () => set({ isGuestMode: false, sessionLapsed: false, hasCompletedLogin: true }),
       resetAppForTesting: () => set({
         hasCompletedOnboarding: false,
         hasCompletedLogin: false,

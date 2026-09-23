@@ -339,7 +339,9 @@ signing in and out lives on the Profile page under the name (`ProfileSessionCard
 the login view.
 For whoever needs to sign in (`needsSignIn` in `store/session.ts`: a guest, or a family whose
 session the app could not refresh, which the API client reports down `services/session-lapse.ts`
-into `sessionLapsed`, cleared when a login completes and never persisted), the profile slot in
+into `sessionLapsed`, cleared by `markSignedIn` on every sign-in path and never persisted; only a
+refresh the server refuses, or a missing refresh token, counts as a lapse, never being offline or
+a refresh that timed out), the profile slot in
 the journey bar says where that is: every eighteen seconds
 the child's face eases into a gold login glyph on a gold-tinted ring over 1.2 s with a small
 30° tip, holds three seconds and eases back (`ProfileNavAvatar`, `constants/login-cue.ts`; under
@@ -438,7 +440,7 @@ up over that page at the pace pages slide (`AuthOverlay`, `authEntrance`) and ha
 to it when they sign in or carry on as a guest (`pageAfterAuth`); reached at launch it fades in
 and leads to the main menu. The Login button no longer switches guest mode off at the tap (it
 swapped itself for the signed-in line before the login page had covered it); the login screen
-settles guest mode itself. The journey check in `_layout` re-runs whenever the sign-in flag
+marks the family signed in itself (`markSignedIn`, which also clears a lapsed session). The journey check in `_layout` re-runs whenever the sign-in flag
 changes, and it only puts the child on the main menu when the app is opening
 (`landsOnMainMenu`): once the app was up it carried a guest back from Profile to the main menu
 (operator, 2026-09-22). On a tablet the Login button stops at `PROFILE_CTA_MAX_WIDTH` (300 pt)

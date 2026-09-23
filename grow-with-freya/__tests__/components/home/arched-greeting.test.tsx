@@ -83,10 +83,11 @@ describe('ArchedGreeting', () => {
     expect(style.alignSelf).toBe('center');
   });
 
-  it('should read out as one heading', () => {
+  it('should read out as one heading, since the words drawn on the arc are invisible to a screen reader', () => {
     const view = render(<ArchedGreeting {...PROPS} />);
 
     const block = view.UNSAFE_queryAllByProps({ testID: 'home-welcome' })[0];
+    expect(block.props.accessible).toBe(true);
     expect(block.props.accessibilityRole).toBe('header');
     expect(block.props.accessibilityLabel).toBe(`${PROPS.title} ${PROPS.subtitle}`);
   });

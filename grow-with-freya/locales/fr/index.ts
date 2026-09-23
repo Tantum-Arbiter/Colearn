@@ -688,11 +688,11 @@ export default {
     screenTime: {
       intro: {
         title: 'Tableau de bord du temps d\'écran',
-        description: 'Suivez et gérez le temps d\'écran quotidien de votre enfant avec des limites appropriées à l\' - ge.',
+        description: 'Suivez et gérez le temps d\'écran quotidien de votre enfant avec des limites appropriées à l\'âge.',
       },
       ageBased: {
-        title: 'Limites basées sur l\' - ge',
-        description: 'Définissez l\' - ge de votre enfant pour obtenir automatiquement les limites de temps d\'écran recommandées par l\'OMS/AAP.',
+        title: 'Limites basées sur l\'âge',
+        description: 'Définissez l\'âge de votre enfant pour obtenir automatiquement les limites de temps d\'écran recommandées par l\'OMS/AAP.',
       },
       heatmap: {
         title: 'Activité hebdomadaire',
@@ -858,7 +858,7 @@ export default {
     storyModes: {
       welcome: {
         title: 'Trois Façons d\'Explorer !',
-        description: 'Chaque enfant apprend différemment. Choisissez l\'expérience d\'histoire qui éveille la curiosité de votre enfant - chacune développe des compétences essentielles gr - ce à la magie du jeu.',
+        description: 'Chaque enfant apprend différemment. Choisissez l\'expérience d\'histoire qui éveille la curiosité de votre enfant - chacune développe des compétences essentielles grâce à la magie du jeu.',
       },
       interactive: {
         title: 'Histoires Interactives',
@@ -912,7 +912,7 @@ export default {
       },
       ages: {
         title: 'Contenu Adapté à l\'Âge',
-        description: 'Les activités sont regroupées par tranche d\' - ge. Utilisez le carrousel en haut pour filtrer le niveau de votre enfant.',
+        description: 'Les activités sont regroupées par tranche d\'âge. Utilisez le carrousel en haut pour filtrer le niveau de votre enfant.',
       },
       together: {
         title: 'Apprenez Ensemble',
@@ -930,7 +930,7 @@ export default {
       },
       ages: {
         title: 'Contenu Adapté à l\'Âge',
-        description: 'Les activités sont regroupées par tranche d\' - ge. Utilisez le carrousel en haut pour trouver le bon niveau pour votre enfant.',
+        description: 'Les activités sont regroupées par tranche d\'âge. Utilisez le carrousel en haut pour trouver le bon niveau pour votre enfant.',
       },
       together: {
         title: 'Comptez Ensemble',
@@ -948,7 +948,7 @@ export default {
       },
       ages: {
         title: 'Contenu Adapté à l\'Âge',
-        description: 'Les activités sont regroupées par tranche d\' - ge. Choisissez des activités adaptées au développement émotionnel de votre enfant.',
+        description: 'Les activités sont regroupées par tranche d\'âge. Choisissez des activités adaptées au développement émotionnel de votre enfant.',
       },
       together: {
         title: 'Explorez Ensemble',
@@ -974,7 +974,7 @@ export default {
       },
       benefit: {
         title: 'Développement Musical',
-        description: 'Apprendre à jouer des chansons développe le rythme, la coordination, la mémoire et la concentration — tout cela gr - ce à la joie de la musique.',
+        description: 'Apprendre à jouer des chansons développe le rythme, la coordination, la mémoire et la concentration — tout cela grâce à la joie de la musique.',
       },
     },
     freeplay: {
@@ -1074,7 +1074,7 @@ export default {
       },
       hero: {
         title: 'Modifier le profil',
-        description: 'Touche l\'image ou le nom pour changer l\'avatar, le nom ou l\' - ge. Un adulte répond d\'abord à une petite question.',
+        description: 'Touche l\'image ou le nom pour changer l\'avatar, le nom ou l\'âge. Un adulte répond d\'abord à une petite question.',
       },
       login: {
         title: 'Se connecter',

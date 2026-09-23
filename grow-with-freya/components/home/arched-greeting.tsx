@@ -42,6 +42,7 @@ export const ArchedGreeting = memo(function ArchedGreeting({
   return (
     <View
       testID={testID}
+      accessible
       accessibilityRole="header"
       accessibilityLabel={`${title} ${subtitle}`}
       style={[styles.greeting, { width, height: layout.height }]}

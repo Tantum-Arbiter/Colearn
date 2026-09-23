@@ -218,6 +218,24 @@ export function guideSteps(id: GuideId, availableTargets: readonly string[] = []
   return GUIDE_STEPS[id].filter((step) => !step.target || availableTargets.includes(step.target));
 }
 
+export interface ProfileTourRefs<Ref> {
+  hero: Ref;
+  login: Ref;
+  tabs: Ref;
+  home: Ref;
+  settings: Ref;
+}
+
+export function profileTourTargets<Ref>(refs: ProfileTourRefs<Ref>, needsSignIn: boolean): Record<string, Ref> {
+  return {
+    profile_hero: refs.hero,
+    ...(needsSignIn ? { profile_login: refs.login } : {}),
+    profile_tabs: refs.tabs,
+    profile_home: refs.home,
+    profile_settings: refs.settings,
+  };
+}
+
 export const GUIDE_TIMING = {
   showDelayMs: 600,
   landscapeShowDelayMs: 1500,

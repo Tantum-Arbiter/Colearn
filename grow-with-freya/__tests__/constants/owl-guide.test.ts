@@ -5,6 +5,7 @@ import {
   GUIDE_IDS,
   GUIDE_STEPS,
   GUIDE_OWL_WIDTH,
+  profileTourTargets,
   GUIDE_BUBBLE_MAX,
   SPOTLIGHT_PADDING,
   guideRevealShift,
@@ -190,6 +191,22 @@ describe('GUIDE_STEPS', () => {
       'profile_home',
       'profile_settings',
     ]);
+  });
+
+  describe('the sign-in step', () => {
+    const refs = { hero: 'hero', login: 'login', tabs: 'tabs', home: 'home', settings: 'settings' };
+
+    it('is on the tour while the family needs to sign in', () => {
+      const steps = guideSteps('profile_tour', Object.keys(profileTourTargets(refs, true)));
+
+      expect(steps.map((step) => step.id)).toContain('profile_login');
+    });
+
+    it('is left out once the family is signed in, since the page has no Login button to point at', () => {
+      const steps = guideSteps('profile_tour', Object.keys(profileTourTargets(refs, false)));
+
+      expect(steps.map((step) => step.id)).toEqual(['profile_welcome', 'profile_hero', 'profile_tabs', 'profile_home', 'profile_settings']);
+    });
   });
 
   it('spends the sign-in step on what signing in is worth', () => {

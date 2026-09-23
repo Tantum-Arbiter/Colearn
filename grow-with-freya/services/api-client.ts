@@ -335,9 +335,8 @@ export class ApiClient {
       await this.ensureValidToken();
       log.debug('Token refreshed');
       return true;
-    } catch (error) {
+    } catch {
       log.warn('Token refresh failed - login required');
-      reportSessionLapse();
       return false;
     }
   }

@@ -26,6 +26,7 @@ import {
 } from '@/constants/night-palette';
 import { useAppStore, type SubscriptionTier } from '@/store/app-store';
 import { useSessionActions } from '@/hooks/use-session-actions';
+import { profileTourTargets as profileTourTargetsFor } from '@/constants/owl-guide';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { useStoryTransition } from '@/contexts/story-transition-context';
 import { useGlobalSound } from '@/contexts/global-sound-context';
@@ -204,13 +205,13 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
     search_recent: searchRecentRef,
   }), []);
   const searchGuideTargets = useMemo(() => ({ field: searchFieldRef, recent: searchRecentRef }), []);
-  const profileTourTargets = useMemo(() => ({
-    profile_hero: profileHeroRef,
-    profile_login: profileLoginRef,
-    profile_tabs: profileTabsRef,
-    profile_home: headerHomeRef,
-    profile_settings: profileSettingsRef,
-  }), []);
+  const profileTourTargets = useMemo(
+    () => profileTourTargetsFor(
+      { hero: profileHeroRef, login: profileLoginRef, tabs: profileTabsRef, home: headerHomeRef, settings: profileSettingsRef },
+      session.needsSignIn
+    ),
+    [session.needsSignIn]
+  );
   const profileGuideTargets = useMemo(
     () => ({ hero: profileHeroRef, tabs: profileTabsRef, login: profileLoginRef }),
     []

@@ -32,6 +32,10 @@ jest.mock('@/services/auth-service', () => ({
   },
 }));
 
+jest.mock('@/services/secure-storage', () => ({
+  SecureStorage: { storeTokens: jest.fn().mockResolvedValue(undefined), storeUserData: jest.fn().mockResolvedValue(undefined) },
+}));
+
 jest.mock('@/components/auth/login-hero', () => {
   const { View } = require('react-native');
   return { LoginHero: (props: any) => <View testID="login-hero" {...props} /> };
@@ -54,6 +58,7 @@ jest.mock('@/components/account/privacy-policy-screen', () => {
 });
 
 const mockSetGuestMode = jest.fn();
+const mockMarkSignedIn = jest.fn();
 const mockGetEffectiveTier = jest.fn(() => 'free');
 
 let mockUserNickname: string | null = null;
@@ -61,6 +66,7 @@ let mockUserNickname: string | null = null;
 jest.mock('@/store/app-store', () => ({
   useAppStore: () => ({
     setGuestMode: mockSetGuestMode,
+    markSignedIn: mockMarkSignedIn,
     getEffectiveTier: mockGetEffectiveTier,
     userNickname: mockUserNickname,
   }),
@@ -138,6 +144,24 @@ describe('LoginScreen', () => {
     expect(findByTestId(renderLogin(), 'login-apple')).toHaveLength(0);
 
     Platform.OS = original;
+  });
+
+  it('marks the family signed in, clearing guest mode and any lapsed session, when Apple sign-in succeeds', async () => {
+    const { AuthService } = jest.requireMock('@/services/auth-service');
+    AuthService.signInWithApple.mockResolvedValueOnce({ tokens: { accessToken: 'a', refreshToken: 'r' }, user: { id: 'u' } });
+    const original = Platform.OS;
+    Platform.OS = 'ios';
+    const onSuccess = jest.fn();
+    const tree = renderLogin({ onSuccess });
+
+    await act(async () => {
+      fireEvent.press(findByTestId(tree, 'login-apple')[0]);
+    });
+    Platform.OS = original;
+
+    expect(mockMarkSignedIn).toHaveBeenCalledTimes(1);
+    expect(mockSetGuestMode).not.toHaveBeenCalled();
+    expect(onSuccess).toHaveBeenCalledTimes(1);
   });
 
   it('renders the guest note beside its cloud badge', () => {

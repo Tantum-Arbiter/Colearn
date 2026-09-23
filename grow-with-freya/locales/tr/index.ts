@@ -640,7 +640,7 @@ export default {
     mainMenu: {
       navLearn: {
         title: 'Öğren',
-        description: 'Tüm hik - yeler, şarkılar ve öğrenme oyunları kütüphanede. Açmak için buraya dokun.',
+        description: 'Tüm hikâyeler, şarkılar ve öğrenme oyunları kütüphanede. Açmak için buraya dokun.',
       },
       welcome: {
         title: 'Grow with Freya\'ya Hoş Geldiniz!',
@@ -997,12 +997,12 @@ export default {
     },
     catalogue: {
       welcome: {
-        title: 'Hik - ye rafın',
+        title: 'Hikâye rafın',
         description: 'Her kitap, şarkı ve oyun burada. Hep birlikte bir göz atalım.',
       },
       themes: {
         title: 'Bir tema seç',
-        description: 'Hik - yeler, öğrenme ya da müzik. Bir karoya dokun, raf kendini düzenlesin.',
+        description: 'Hikâyeler, öğrenme ya da müzik. Bir karoya dokun, raf kendini düzenlesin.',
       },
       filter: {
         title: 'İnce filtreler',
@@ -1038,7 +1038,7 @@ export default {
       },
       hero: {
         title: 'Bu hafta',
-        description: 'Pazartesiden beri birlikte geçen dakikalar, okunan hik - yeler ve oturumlar.',
+        description: 'Pazartesiden beri birlikte geçen dakikalar, okunan hikâyeler ve oturumlar.',
       },
       challenges: {
         title: 'Maceralar',
@@ -1055,7 +1055,7 @@ export default {
     },
     search: {
       welcome: {
-        title: 'Bir hik - ye bul',
+        title: 'Bir hikâye bul',
         description: 'Bir başlık, karakter ya da tema yaz, raf senin için bulsun.',
       },
       field: {

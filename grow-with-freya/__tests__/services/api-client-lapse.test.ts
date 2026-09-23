@@ -17,10 +17,14 @@ jest.mock('@/services/secure-storage', () => ({
   },
 }));
 
-function expiredToken(): string {
-  const payload = Buffer.from(JSON.stringify({ exp: 1, sub: 'family' })).toString('base64');
+function tokenExpiringAt(exp: number): string {
+  const payload = Buffer.from(JSON.stringify({ exp, sub: 'family' })).toString('base64');
 
   return `header.${payload}.signature`;
+}
+
+function expiredToken(): string {
+  return tokenExpiringAt(1);
 }
 
 describe('ApiClient reporting a session lapse', () => {
@@ -49,7 +53,7 @@ describe('ApiClient reporting a session lapse', () => {
     expect(reportSessionLapse).toHaveBeenCalled();
   });
 
-  it('should not report a lapse while the tokens are still good', async () => {
+  it('should not report a lapse for a guest, who has no tokens at all', async () => {
     (SecureStorage.getAccessToken as jest.Mock).mockResolvedValue(null);
     (SecureStorage.getRefreshToken as jest.Mock).mockResolvedValue(null);
 
@@ -57,5 +61,31 @@ describe('ApiClient reporting a session lapse', () => {
 
     expect(underTest).toBe(false);
     expect(reportSessionLapse).not.toHaveBeenCalled();
+  });
+
+  it('should not report a lapse while the access token is still good', async () => {
+    (SecureStorage.getAccessToken as jest.Mock).mockResolvedValue(tokenExpiringAt(Math.floor(Date.now() / 1000) + 3600));
+    (SecureStorage.getRefreshToken as jest.Mock).mockResolvedValue('refresh');
+    global.fetch = jest.fn() as any;
+
+    const underTest = await ApiClient.isAuthenticated();
+
+    expect(underTest).toBe(true);
+    expect(global.fetch).not.toHaveBeenCalled();
+    expect(reportSessionLapse).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['cannot reach the server', () => Promise.reject(new TypeError('Network request failed'))],
+    ['times out', () => Promise.reject(Object.assign(new Error('Aborted'), { name: 'AbortError' }))],
+  ])('should keep the family signed in, reporting no lapse and keeping the tokens, when the refresh %s', async (_case, refresh) => {
+    (SecureStorage.getAccessToken as jest.Mock).mockResolvedValue(expiredToken());
+    (SecureStorage.getRefreshToken as jest.Mock).mockResolvedValue('refresh');
+    global.fetch = jest.fn(refresh) as any;
+
+    await ApiClient.isAuthenticated();
+
+    expect(reportSessionLapse).not.toHaveBeenCalled();
+    expect(SecureStorage.clearAuthData).not.toHaveBeenCalled();
   });
 });

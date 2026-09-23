@@ -192,6 +192,27 @@ describe('i18n Service', () => {
       }
     );
   });
+
+  describe('No word split by a dash', () => {
+    const SPLIT_ALLOWED = new Set(['en:tutorial.profile.login.description']);
+
+    function stringValues(obj: any, prefix = ''): { key: string; value: string }[] {
+      return Object.entries(obj).flatMap(([key, value]) => {
+        const fullKey = prefix ? `${prefix}.${key}` : key;
+        if (typeof value === 'string') return [{ key: fullKey, value }];
+        return value && typeof value === 'object' ? stringValues(value, fullKey) : [];
+      });
+    }
+
+    it.each(ALL_LOCALE_CODES)('%s keeps every accented letter rather than a spaced dash in its place', (code) => {
+      const split = stringValues(localeModules[code])
+        .filter(({ key }) => !SPLIT_ALLOWED.has(`${code}:${key}`))
+        .filter(({ value }) => /['’] - /.test(value) || /(?<![\p{L}\p{N}])\p{L}{1,3} - \p{Ll}{1,5}(?!\p{L})/u.test(value))
+        .map(({ key, value }) => `${key}: ${value.substring(0, 60)}`);
+
+      expect(split).toEqual([]);
+    });
+  });
 });
 
 

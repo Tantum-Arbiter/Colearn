@@ -117,7 +117,7 @@ export function LoginScreen({ onSuccess, onSkip, onRevealStart, fadeIn = true }:
   const [currentView, setCurrentView] = useState<'main' | 'terms' | 'privacy'>('main');
   const [processedResponseId, setProcessedResponseId] = useState<string | null>(null);
 
-  const { setGuestMode, getEffectiveTier, userNickname } = useAppStore();
+  const { setGuestMode, markSignedIn, getEffectiveTier, userNickname } = useAppStore();
   // Onboarding always asks for a nickname now, but installs that predate that
   // -- and any cleared profile -- fall back to the plain greeting
   const greetingName = userNickname?.trim() || null;
@@ -190,7 +190,7 @@ export function LoginScreen({ onSuccess, onSkip, onRevealStart, fadeIn = true }:
           DEBUG_LOGS && console.log('[LoginScreen] Login complete, tokens stored');
 
           // Clear guest mode since user is now authenticated
-          setGuestMode(false);
+          markSignedIn();
 
           // Keep isGoogleLoading=true so button stays as "Signing in..." while
           // the loading overlay slides down over the login screen
@@ -273,7 +273,7 @@ export function LoginScreen({ onSuccess, onSkip, onRevealStart, fadeIn = true }:
         DEBUG_LOGS && console.log('[LoginScreen] Login complete, tokens stored');
 
         // Clear guest mode since user is now authenticated
-        setGuestMode(false);
+        markSignedIn();
 
         // Keep isGoogleLoading=true so button stays as "Signing in..." while
         // the loading overlay slides down over the login screen
@@ -341,7 +341,7 @@ export function LoginScreen({ onSuccess, onSkip, onRevealStart, fadeIn = true }:
       await SecureStorage.storeUserData(result.user);
 
       // Clear guest mode since user is now authenticated
-      setGuestMode(false);
+      markSignedIn();
 
       // Keep isAppleLoading=true so button stays as "Signing in..." while
       // the loading overlay slides down over the login screen

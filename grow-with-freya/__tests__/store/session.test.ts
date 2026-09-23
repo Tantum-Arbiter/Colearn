@@ -46,6 +46,18 @@ describe('the session lapse in the store', () => {
     expect(useAppStore.getState().hasCompletedLogin).toBe(true);
   });
 
+  it.each([
+    ['a guest', { isGuestMode: true, sessionLapsed: false }],
+    ['a family whose session lapsed', { isGuestMode: false, sessionLapsed: true }],
+  ])('should need no sign-in once %s signs in', (_case, state) => {
+    useAppStore.setState({ ...state, hasCompletedLogin: false });
+
+    useAppStore.getState().markSignedIn();
+
+    expect(needsSignIn(useAppStore.getState())).toBe(false);
+    expect(useAppStore.getState().hasCompletedLogin).toBe(true);
+  });
+
   it('should not remember a lapse across launches: the login check on launch decides afresh', () => {
     const persisted = (useAppStore as any).persist?.getOptions?.().partialize?.({ ...useAppStore.getState(), sessionLapsed: true });
 
