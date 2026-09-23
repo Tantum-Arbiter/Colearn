@@ -643,7 +643,7 @@ export default {
         description: 'Alle verhalen, liedjes en leerspelletjes staan in de bibliotheek. Tik hier om hem te openen.',
       },
       welcome: {
-        title: 'Welkom bij Grow with Freya!',
+        title: 'Welkom bij Early Roots!',
         description: 'Laten we een snelle rondleiding doen om jou en je kind te helpen het meeste uit leestijd te halen.',
       },
       stories: {

@@ -643,7 +643,7 @@ export default {
         description: '所有故事、歌曲和学习游戏都在图书馆里。点这里就能打开。',
       },
       welcome: {
-        title: '欢迎来到Grow with Freya!',
+        title: '欢迎来到Early Roots!',
         description: '让我们进行快速导览，帮助您和孩子充分利用阅读时间。',
       },
       stories: {

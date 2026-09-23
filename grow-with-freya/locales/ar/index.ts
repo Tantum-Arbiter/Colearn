@@ -643,7 +643,7 @@ export default {
         description: 'كل القصص والأغاني وألعاب التعلّم موجودة في المكتبة. اضغط هنا لفتحها.',
       },
       welcome: {
-        title: 'مرحباً بك في Grow with Freya!',
+        title: 'مرحباً بك في Early Roots!',
         description: 'دعنا نأخذ جولة سريعة لمساعدتك أنت وطفلك على الاستفادة القصوى من وقت القراءة.',
       },
       stories: {

@@ -781,7 +781,7 @@ export default {
         description: 'Every story, song and learning game lives in the library. Tap here to open it.',
       },
       welcome: {
-        title: 'Welcome to Grow with\nFreya!',
+        title: 'Welcome to\nEarly Roots!',
         description: "Let's take a quick tour to help you and your child get the most out of storytime together.",
       },
       stories: {

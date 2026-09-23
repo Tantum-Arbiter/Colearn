@@ -643,7 +643,7 @@ export default {
         description: 'Omnes fabulae, carmina et ludi discendi in bibliotheca sunt. Hic tange ut eam aperias.',
       },
       welcome: {
-        title: 'Salve in Grow with Freya!',
+        title: 'Salve in Early Roots!',
         description: 'Faciamus Celerem Circumductionem ut Te et Filium Tuum Adiuvemus Tempus Legendi Maxime Uti.',
       },
       stories: {

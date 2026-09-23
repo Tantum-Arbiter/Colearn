@@ -643,7 +643,7 @@ export default {
         description: 'Tüm hikâyeler, şarkılar ve öğrenme oyunları kütüphanede. Açmak için buraya dokun.',
       },
       welcome: {
-        title: 'Grow with Freya\'ya Hoş Geldiniz!',
+        title: 'Early Roots\'a Hoş Geldiniz!',
         description: 'Siz ve çocuğunuzun okuma zamanından en iyi şekilde yararlanmanıza yardımcı olmak için hızlı bir tur alalım.',
       },
       stories: {

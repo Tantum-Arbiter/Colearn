@@ -643,7 +643,7 @@ export default {
         description: 'Tutte le storie, le canzoni e i giochi per imparare sono nella biblioteca. Tocca qui per aprirla.',
       },
       welcome: {
-        title: 'Benvenuto in Grow with\nFreya!',
+        title: 'Benvenuto in\nEarly Roots!',
         description: 'Facciamo un tour veloce per aiutarti te e tuo figlio a ottenere il massimo dal tempo di lettura insieme.',
       },
       stories: {

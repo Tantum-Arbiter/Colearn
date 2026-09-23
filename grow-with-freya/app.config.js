@@ -4,7 +4,7 @@ const IS_PROD = process.env.EXPO_PUBLIC_APP_ENV === 'production';
 
 export default {
   expo: {
-    name: IS_DEV ? 'Grow with Freya (Dev)' : IS_PREVIEW ? 'Grow with Freya (Preview)' : 'Grow with Freya',
+    name: IS_DEV ? 'Early Roots (Dev)' : IS_PREVIEW ? 'Early Roots (Preview)' : 'Early Roots',
     slug: 'grow-with-freya',
     version: require('./package.json').version,
     orientation: 'default',

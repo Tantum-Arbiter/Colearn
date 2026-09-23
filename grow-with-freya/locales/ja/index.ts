@@ -643,7 +643,7 @@ export default {
         description: 'おはなし、うた、まなびのゲームは、ぜんぶライブラリにあります。ここをタップしてひらいてね。',
       },
       welcome: {
-        title: 'Grow with Freyaへようこそ！',
+        title: 'Early Rootsへようこそ！',
         description: 'クイックツアーをして、あなたとお子さんが読書時間を最大限に活用できるようにしましょう。',
       },
       stories: {

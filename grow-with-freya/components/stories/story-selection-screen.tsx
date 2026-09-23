@@ -732,7 +732,7 @@ export function StorySelectionScreen({ onStorySelect, initialMode }: StorySelect
   const handleShareToUnlock = useCallback(async (entry: CatalogEntry) => {
     try {
       const result = await Share.share({
-        message: `Check out "${entry.title}" on Grow with Freya! A magical story app for kids`,
+        message: `Check out "${entry.title}" on Early Roots! A magical story app for kids`,
       });
       if (result.action === Share.sharedAction) {
         // User completed the share -permanently unlock
