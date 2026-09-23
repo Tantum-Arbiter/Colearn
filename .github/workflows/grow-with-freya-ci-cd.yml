@@ -165,7 +165,7 @@ jobs:
 
       - name: Build the app
         working-directory: ${{ env.WORKING_DIRECTORY }}/android
-        run: ./gradlew assembleDebug --no-daemon
+        run: ./gradlew assembleDebug --no-daemon -PreactNativeArchitectures=x86_64
 
       - name: Serve the bundle
         working-directory: ${{ env.WORKING_DIRECTORY }}
