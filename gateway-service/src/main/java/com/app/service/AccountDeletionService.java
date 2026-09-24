@@ -45,6 +45,7 @@ public class AccountDeletionService {
     private final ChildRepository childRepository;
     private final ConsentRepository consentRepository;
     private final DownloadRepository downloadRepository;
+    private final ConsentLog consentLog;
 
     /** Guard against concurrent deletion requests for the same userId. */
     private final ConcurrentMap<String, Boolean> deletionsInProgress = new ConcurrentHashMap<>();
@@ -57,7 +58,8 @@ public class AccountDeletionService {
                                   CircuitBreakerRegistry circuitBreakerRegistry,
                                   ChildRepository childRepository,
                                   ConsentRepository consentRepository,
-                                  DownloadRepository downloadRepository) {
+                                  DownloadRepository downloadRepository,
+                                  ConsentLog consentLog) {
         this.userRepository = userRepository;
         this.userProfileRepository = userProfileRepository;
         this.userSessionRepository = userSessionRepository;
@@ -67,6 +69,7 @@ public class AccountDeletionService {
         this.childRepository = childRepository;
         this.consentRepository = consentRepository;
         this.downloadRepository = downloadRepository;
+        this.consentLog = consentLog;
     }
 
     /**
@@ -103,7 +106,7 @@ public class AccountDeletionService {
                         // ── Step 1: Delete profile ──
                         deleteProfile(userId);
 
-                        deleteChildrenAndConsents(userId);
+                        deleteChildrenAndConsents(user);
 
                         // ── Step 2: Revoke and delete all sessions (all devices) ──
                         revokeAndDeleteSessions(userId);
@@ -154,10 +157,12 @@ public class AccountDeletionService {
         }
     }
 
-    private void deleteChildrenAndConsents(String userId) {
+    private void deleteChildrenAndConsents(User user) {
+        String userId = user.getId();
         long stepStart = System.currentTimeMillis();
         try {
             int children = childRepository.deleteAll(userId).join();
+            consentLog.preserve(user, consentRepository.findAll(userId).join()).join();
             int consents = consentRepository.deleteAll(userId).join();
             int downloads = downloadRepository.deleteAll(userId).join();
             logger.debug("Deleted {} children, {} consent records and {} downloads for user: {}", children, consents, downloads, userId);

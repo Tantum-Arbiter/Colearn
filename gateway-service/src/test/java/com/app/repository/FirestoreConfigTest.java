@@ -72,7 +72,22 @@ class FirestoreConfigTest {
 
     @Test
     void knowsTheCollectionNames() throws Exception {
-        assertEquals(Set.of("users", "user_sessions", "user_profiles", "stories", "content_versions", "asset_versions"),
+        assertEquals(Set.of("users", "user_sessions", "user_profiles", "stories", "content_versions", "asset_versions", "consent_log"),
                 collectionsTheGatewayUses());
+    }
+
+    @Test
+    void letsFirestoreRemoveConsentLogEntriesOnceTheyExpire() throws Exception {
+        JsonNode config = new ObjectMapper().readTree(INDEXES.toFile());
+
+        boolean found = false;
+        for (JsonNode override : config.get("fieldOverrides")) {
+            if ("consent_log".equals(override.get("collectionGroup").asText())
+                    && "expiresAt".equals(override.get("fieldPath").asText())
+                    && override.path("ttl").asBoolean(false)) {
+                found = true;
+            }
+        }
+        assertTrue(found, "consent_log.expiresAt has no TTL policy");
     }
 }

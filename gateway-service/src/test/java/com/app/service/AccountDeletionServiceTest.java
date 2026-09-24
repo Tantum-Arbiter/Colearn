@@ -39,6 +39,7 @@ class AccountDeletionServiceTest {
     @Mock private ChildRepository childRepository;
     @Mock private ConsentRepository consentRepository;
     @Mock private com.app.repository.DownloadRepository downloadRepository;
+    @Mock private ConsentLog consentLog;
 
     private AccountDeletionService deletionService;
     private CircuitBreakerRegistry circuitBreakerRegistry;
@@ -60,8 +61,10 @@ class AccountDeletionServiceTest {
         deletionService = new AccountDeletionService(
                 userRepository, userProfileRepository, userSessionRepository,
                 sessionService, metricsService, circuitBreakerRegistry,
-                childRepository, consentRepository, downloadRepository
+                childRepository, consentRepository, downloadRepository, consentLog
         );
+        org.mockito.Mockito.lenient().when(consentRepository.findAll(USER_ID)).thenReturn(CompletableFuture.completedFuture(List.of(new com.app.model.Consent())));
+        org.mockito.Mockito.lenient().when(consentLog.preserve(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.anyList())).thenReturn(CompletableFuture.completedFuture(null));
         org.mockito.Mockito.lenient().when(downloadRepository.deleteAll(USER_ID)).thenReturn(CompletableFuture.completedFuture(3));
         org.mockito.Mockito.lenient().when(childRepository.deleteAll(USER_ID)).thenReturn(CompletableFuture.completedFuture(1));
         org.mockito.Mockito.lenient().when(consentRepository.deleteAll(USER_ID)).thenReturn(CompletableFuture.completedFuture(2));
@@ -104,7 +107,9 @@ class AccountDeletionServiceTest {
         inOrder.verify(userProfileRepository).exists(USER_ID);
         inOrder.verify(userProfileRepository).delete(USER_ID);
         verify(childRepository).deleteAll(USER_ID);
-        verify(consentRepository).deleteAll(USER_ID);
+        var consentOrder = inOrder(consentLog, consentRepository);
+        consentOrder.verify(consentLog).preserve(org.mockito.ArgumentMatchers.eq(testUser), org.mockito.ArgumentMatchers.anyList());
+        consentOrder.verify(consentRepository).deleteAll(USER_ID);
         verify(downloadRepository).deleteAll(USER_ID);
         inOrder.verify(sessionService).revokeAllUserSessions(USER_ID);
         inOrder.verify(userSessionRepository).deleteAllUserSessions(USER_ID);
@@ -318,6 +323,20 @@ class AccountDeletionServiceTest {
 
         org.junit.jupiter.api.Assertions.assertThrows(Exception.class, () -> deletionService.deleteAccount(USER_ID).get());
 
+        verify(userRepository, never()).deleteUser(USER_ID);
+    }
+
+    @Test
+    @DisplayName("A failure keeping the consent log stops before the consents or the account are removed")
+    void deleteAccount_ConsentLogFails_Aborts() {
+        when(userRepository.findById(USER_ID)).thenReturn(CompletableFuture.completedFuture(Optional.of(testUser)));
+        when(userProfileRepository.exists(USER_ID)).thenReturn(CompletableFuture.completedFuture(false));
+        when(consentLog.preserve(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.anyList()))
+                .thenReturn(CompletableFuture.failedFuture(new RuntimeException("firestore down")));
+
+        org.junit.jupiter.api.Assertions.assertThrows(Exception.class, () -> deletionService.deleteAccount(USER_ID).get());
+
+        verify(consentRepository, never()).deleteAll(USER_ID);
         verify(userRepository, never()).deleteUser(USER_ID);
     }
 

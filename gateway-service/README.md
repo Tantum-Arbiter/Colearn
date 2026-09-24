@@ -81,7 +81,7 @@ customReminders[] }`. No server times are returned. The app's merge rules are in
 |-|-|
 | `POST /api/consents` | Body `{ policyVersion, scope: core, acceptedAt?, appVersion? }` → `201` |
 | `GET /api/account/export` | Account, older profile, children, consents, subscription, `downloadedStories` |
-| `DELETE /api/account` | Deletes profile, children, consents, downloads, sessions and the user; stops before the user is deleted if any step fails (`500 GTW-412`); `409 GTW-413` while a deletion is running |
+| `DELETE /api/account` | Deletes profile, children, consents, downloads, sessions and the user, first copying each consent to `consent_log` (policy version, times, a SHA-256 of the sign-in identity; removed after 3 years by Firestore TTL, `CONSENT_LOG_RETENTION_DAYS`); stops before the user is deleted if any step fails (`500 GTW-412`); `409 GTW-413` while a deletion is running |
 
 ### Profile (deprecated)
 
