@@ -29,7 +29,7 @@ export default function PrivacyPage() {
             <ul className="list-disc pl-6 space-y-2 mb-4">
               <li>No advertising identifiers, no third-party ads, no behavioral tracking.</li>
               <li>No payment data.</li>
-              <li>No voice recordings (voice features are deferred).</li>
+              <li>No voice recordings on our servers. Recordings are made by grown-ups and stay on the device.</li>
               <li>No precise location.</li>
             </ul>
             <h3 className="font-rounded text-xl font-semibold text-brand-text mb-2">2.3 Automatic data (app operations)</h3>

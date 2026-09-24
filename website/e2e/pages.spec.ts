@@ -46,6 +46,13 @@ test('a page that does not exist says so rather than failing', async ({ page }) 
   expect(response?.status()).toBe(404);
 });
 
+test('the privacy page says voice recordings stay on the device', async ({ page }) => {
+  await page.goto('/privacy');
+
+  await expect(page.getByText(/recordings are made by grown-ups and stay on the device/i)).toBeVisible();
+  await expect(page.getByText(/voice features are deferred/i)).toHaveCount(0);
+});
+
 test('the contact page offers a way to reach a person', async ({ page }) => {
   await page.goto('/contact');
 
