@@ -114,6 +114,8 @@ services:
       - GCS_EMULATOR_HOST=http://fake-gcs:4443
       - GCS_BUCKET=colearnwithfreya-assets-test
       - GCS_PROJECT_ID=test-project
+      # RevenueCat webhook secret for the entitlements feature; a test value, not a credential
+      - REVENUECAT_WEBHOOK_SECRET=func-test-webhook-secret
 
     depends_on:
       wiremock:

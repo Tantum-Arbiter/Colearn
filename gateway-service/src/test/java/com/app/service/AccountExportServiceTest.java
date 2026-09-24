@@ -33,11 +33,15 @@ class AccountExportServiceTest {
     private final UserProfileRepository profiles = mock(UserProfileRepository.class);
     private final ChildRepository children = mock(ChildRepository.class);
     private final ConsentRepository consents = mock(ConsentRepository.class);
+    private final com.app.repository.DownloadRepository downloads = mock(com.app.repository.DownloadRepository.class);
+    private final com.app.repository.EntitlementRepository entitlements = mock(com.app.repository.EntitlementRepository.class);
     private AccountExportService underTest;
 
     @BeforeEach
     void setUp() {
-        underTest = new AccountExportService(users, profiles, children, consents);
+        underTest = new AccountExportService(users, profiles, children, consents, downloads, entitlements);
+        when(downloads.list(USER)).thenReturn(CompletableFuture.completedFuture(List.of()));
+        when(entitlements.find(USER)).thenReturn(CompletableFuture.completedFuture(Optional.empty()));
         User user = new User(USER, "google", "google-sub-123");
         user.setCreatedAt(Instant.parse("2026-01-02T03:04:05Z"));
         when(users.findById(USER)).thenReturn(CompletableFuture.completedFuture(Optional.of(user)));
@@ -122,5 +126,28 @@ class AccountExportServiceTest {
         Instant made = Instant.parse((String) underTest.export(USER).get("exportedAt"));
 
         assertFalse(made.isBefore(before.minusSeconds(1)));
+    }
+
+    @Test
+    void includesTheSubscriptionTheGatewayHoldsAndTheStoriesOnTheFamilysDevices() {
+        com.app.model.Entitlement entitlement = new com.app.model.Entitlement();
+        entitlement.setTier("premium");
+        entitlement.setExpiresAtMs(1790000000000L);
+        entitlement.setEnvironment("SANDBOX");
+        when(entitlements.find(USER)).thenReturn(CompletableFuture.completedFuture(Optional.of(entitlement)));
+        when(downloads.list(USER)).thenReturn(CompletableFuture.completedFuture(List.of("snowy", "wombat")));
+
+        Map<String, Object> export = underTest.export(USER);
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> subscription = (Map<String, Object>) export.get("subscription");
+        assertEquals("premium", subscription.get("tier"));
+        assertEquals(Instant.ofEpochMilli(1790000000000L).toString(), subscription.get("expiresAt"));
+        assertEquals(List.of("snowy", "wombat"), export.get("downloadedStories"));
+    }
+
+    @Test
+    void hasNoSubscriptionWhenNoneWasBought() {
+        assertNull(underTest.export(USER).get("subscription"));
     }
 }

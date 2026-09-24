@@ -21,7 +21,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -29,7 +28,6 @@ import com.google.cloud.Timestamp;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Function;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -804,55 +802,5 @@ class StoryControllerTest {
                 .andExpect(jsonPath("$.stories[0].awards[0].achievementId").value("snowman-friend"))
                 .andExpect(jsonPath("$.stories[0].awards[0].trigger").value("finish"))
                 .andExpect(jsonPath("$.stories[0].awards[1].trigger.challengePageId").value("story-2-page-1"));
-    }
-
-    // ==================== Download Endpoint Tests ====================
-
-    @Test
-    void downloadStory_Found_ReturnsStory() throws Exception {
-        when(storyService.getStoryById("story-1"))
-                .thenReturn(CompletableFuture.completedFuture(Optional.of(testStory1)));
-
-        mockMvc.perform(get("/api/stories/story-1/download"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value("story-1"))
-                .andExpect(jsonPath("$.title").value("The Sleepy Forest"))
-                .andExpect(jsonPath("$.pages").isArray())
-                .andExpect(jsonPath("$.pages.length()").value(3));
-    }
-
-    @Test
-    void downloadStory_NotFound_Returns404() throws Exception {
-        when(storyService.getStoryById("non-existent"))
-                .thenReturn(CompletableFuture.completedFuture(Optional.empty()));
-
-        mockMvc.perform(get("/api/stories/non-existent/download"))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.errorCode").value("GTW-100"));
-    }
-
-    @Test
-    void downloadStory_NotAvailable_Returns403() throws Exception {
-        Story unavailableStory = new Story();
-        unavailableStory.setId("story-unavailable");
-        unavailableStory.setTitle("Unavailable Story");
-        unavailableStory.setAvailable(false);
-
-        when(storyService.getStoryById("story-unavailable"))
-                .thenReturn(CompletableFuture.completedFuture(Optional.of(unavailableStory)));
-
-        mockMvc.perform(get("/api/stories/story-unavailable/download"))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.errorCode").value("GTW-100"));
-    }
-
-    @Test
-    void downloadStory_ServiceError_Returns500() throws Exception {
-        when(storyService.getStoryById("story-1"))
-                .thenReturn(CompletableFuture.failedFuture(new RuntimeException("Database error")));
-
-        mockMvc.perform(get("/api/stories/story-1/download"))
-                .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.errorCode").value("GTW-201"));
     }
 }

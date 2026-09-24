@@ -16,7 +16,10 @@ class ErrorCodeStatusTest {
             "PROFILE_NOT_FOUND, 404",
             "DATABASE_ERROR, 500",
             "INVALID_NICKNAME, 400",
-            "UNAUTHORIZED_ACCESS, 401"
+            "UNAUTHORIZED_ACCESS, 401",
+            "SUBSCRIPTION_REQUIRED, 403",
+            "DOWNLOAD_LIMIT_REACHED, 403",
+            "CHILD_VERSION_CONFLICT, 409"
     })
     void mapsEachCodeToTheStatusThatDescribesIt(ErrorCode code, int status) {
         assertEquals(status, code.getHttpStatusCode());

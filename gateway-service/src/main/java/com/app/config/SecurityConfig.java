@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
+import org.springframework.http.HttpMethod;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.security.config.Customizer;
@@ -132,6 +133,7 @@ public class SecurityConfig {
                     auth.requestMatchers("/health/**").denyAll();
                 }
                 auth.requestMatchers("/auth/**").permitAll();
+                auth.requestMatchers(HttpMethod.POST, "/webhooks/revenuecat").permitAll();
                 auth.requestMatchers("/").permitAll();
                 auth.requestMatchers("/api/**").authenticated();
                 auth.anyRequest().denyAll();
