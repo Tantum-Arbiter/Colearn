@@ -542,6 +542,8 @@ jest.mock('react-native-purchases', () => ({
     restorePurchases: jest.fn().mockResolvedValue({ entitlements: { active: {} } }),
     addCustomerInfoUpdateListener: jest.fn(),
     checkTrialOrIntroductoryPriceEligibility: jest.fn().mockResolvedValue({}),
+    logIn: jest.fn().mockResolvedValue({ customerInfo: { entitlements: { active: {} } }, created: false }),
+    logOut: jest.fn().mockResolvedValue({ entitlements: { active: {} } }),
   },
   LOG_LEVEL: { DEBUG: 4, INFO: 3, WARN: 2, ERROR: 1 },
   PURCHASES_ERROR_CODE: { PURCHASE_CANCELLED_ERROR: 1 },

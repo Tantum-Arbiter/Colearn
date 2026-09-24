@@ -7,6 +7,7 @@ import { needsSignIn as needsSignInFrom } from '@/store/session';
 import { ApiClient } from '@/services/api-client';
 import { reminderService } from '@/services/reminder-service';
 import { ChildSyncService } from '@/services/child-sync-service';
+import { forgetAccount as forgetSubscriptionAccount } from '@/services/subscription-service';
 import { Logger } from '@/utils/logger';
 
 const log = Logger.create('Session');
@@ -53,6 +54,7 @@ export function useSessionActions(): SessionActions {
             ChildSyncService.forgetAccount().catch((error) => {
               log.error('Background child sync reset error:', error);
             });
+            forgetSubscriptionAccount();
           } catch (error) {
             log.error('Logout error:', error);
             Alert.alert(t('common.error'), t('alerts.logout.error'));

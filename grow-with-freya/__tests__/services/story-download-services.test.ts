@@ -3,7 +3,7 @@ import { StoryAccessService } from '../../services/story-access-service';
 import { CatalogService } from '../../services/catalog-service';
 import { AssetDownloadUtils } from '../../services/asset-download-utils';
 import { CacheManager } from '../../services/cache-manager';
-import { ApiClient } from '../../services/api-client';
+import { ApiClient, ApiError } from '../../services/api-client';
 import { CatalogEntry, Story } from '../../types/story';
 
 jest.mock('../../services/cache-manager');
@@ -520,6 +520,55 @@ describe('StoryDownloadService', () => {
     const result = await StoryDownloadService.downloadStory('premium-story', premiumCatalogEntry);
     expect(result.success).toBe(false);
     expect(result.error).toBe('subscription_required');
+  });
+
+  it.each([
+    ['GTW-416', 'subscription_required'],
+    ['GTW-417', 'download_limit_reached'],
+  ])('reports the gateway refusing with %s as %s, the same as the app\'s own check', async (errorCode, reason) => {
+    const refusal = Object.assign(new ApiError(403, null), { status: 403, body: { errorCode } });
+    mockApiClient.request.mockRejectedValueOnce(refusal);
+    const progress: DownloadProgress[] = [];
+
+    const result = await StoryDownloadService.downloadStory('free-story', freeCatalogEntry, (p) => progress.push(p));
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBe(reason);
+    expect(progress[progress.length - 1]).toMatchObject({ phase: 'failed', message: reason });
+    expect(mockAssetUtils.extractAssetPaths).not.toHaveBeenCalled();
+  });
+
+  it('reads the refusal codes only from a 403', async () => {
+    mockApiClient.request.mockRejectedValueOnce(Object.assign(new ApiError(500, null), { status: 500, body: { errorCode: 'GTW-416' } }));
+
+    const result = await StoryDownloadService.downloadStory('free-story', freeCatalogEntry);
+
+    expect(result.error).not.toBe('subscription_required');
+  });
+
+  it('treats any other refusal as a failure', async () => {
+    mockApiClient.request.mockRejectedValueOnce(Object.assign(new ApiError(403, null), { status: 403, body: { errorCode: 'GTW-100' } }));
+
+    const result = await StoryDownloadService.downloadStory('free-story', freeCatalogEntry);
+
+    expect(result.error).not.toBe('subscription_required');
+    expect(result.error).not.toBe('download_limit_reached');
+  });
+
+  it('tells the gateway when a story leaves the device, so it no longer counts', async () => {
+    mockCacheManager.getStory.mockResolvedValueOnce(mockStory);
+    mockApiClient.request.mockResolvedValueOnce(undefined);
+
+    await expect(StoryDownloadService.deleteStory('free-story')).resolves.toBe(true);
+
+    expect(mockApiClient.request).toHaveBeenCalledWith('/api/stories/free-story/download', { method: 'DELETE' });
+  });
+
+  it('still deletes the story when the gateway cannot be told', async () => {
+    mockCacheManager.getStory.mockResolvedValueOnce(mockStory);
+    mockApiClient.request.mockRejectedValueOnce(new Error('offline'));
+
+    await expect(StoryDownloadService.deleteStory('free-story')).resolves.toBe(true);
   });
 
   it('should handle API errors gracefully', async () => {

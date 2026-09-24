@@ -22,6 +22,9 @@ import {
   mapPlanIdToPackage,
   getOfferingPrices,
   getTrialStatus,
+  identifyAccount,
+  identifySignedInAccount,
+  forgetAccount,
   _resetForTesting,
 } from '@/services/subscription-service';
 import { useAppStore } from '@/store/app-store';
@@ -676,5 +679,129 @@ describe('getOfferingPrices', () => {
     expect(prices.monthly_basic).toBeNull(); // $rc_monthly_basic not in offerings
     expect(prices.monthly_premium?.priceString).toBe('$9.99');
     expect(prices.yearly).toBeNull(); // $rc_annual not in offerings
+  });
+});
+
+
+// ════════════════════════════════════════════════
+// Account identity: the gateway's user id is RevenueCat's app user id, so
+// the RevenueCat webhook can tell the gateway which account paid.
+// ════════════════════════════════════════════════
+
+describe('identifyAccount / forgetAccount', () => {
+  function onDevice() {
+    (global as any).__DEV__ = false;
+    (Constants as any).appOwnership = null;
+    (Platform as any).OS = 'ios';
+    (Constants as any).expoConfig = { extra: { revenueCatAppleKey: 'appl_test_key' } };
+  }
+
+  it('logs RevenueCat in as the signed-in account, and takes the tier it returns', async () => {
+    onDevice();
+    (Purchases.logIn as jest.Mock).mockResolvedValueOnce({
+      customerInfo: mockCustomerInfo({ premium_access: { isActive: true } }),
+      created: false,
+    });
+    await initialize();
+
+    await identifyAccount('user-42');
+
+    expect(Purchases.logIn).toHaveBeenCalledWith('user-42');
+    expect(mockSetSubscriptionTier).toHaveBeenLastCalledWith('premium');
+  });
+
+  it('waits for RevenueCat to be configured before logging in', async () => {
+    onDevice();
+
+    const identified = identifyAccount('user-42');
+    expect(Purchases.logIn).not.toHaveBeenCalled();
+    await initialize();
+    await identified;
+
+    expect(Purchases.logIn).toHaveBeenCalledWith('user-42');
+  });
+
+  it('does not log in again as the same account', async () => {
+    onDevice();
+    await initialize();
+
+    await identifyAccount('user-42');
+    await identifyAccount('user-42');
+
+    expect(Purchases.logIn).toHaveBeenCalledTimes(1);
+  });
+
+  it('does nothing in dev mode', async () => {
+    (global as any).__DEV__ = true;
+    await initialize();
+
+    await identifyAccount('user-42');
+    await forgetAccount();
+
+    expect(Purchases.logIn).not.toHaveBeenCalled();
+    expect(Purchases.logOut).not.toHaveBeenCalled();
+  });
+
+  it('keeps going when RevenueCat cannot be reached', async () => {
+    onDevice();
+    (Purchases.logIn as jest.Mock).mockRejectedValueOnce(new Error('offline'));
+    await initialize();
+
+    await expect(identifyAccount('user-42')).resolves.toBeUndefined();
+    await identifyAccount('user-42');
+
+    expect(Purchases.logIn).toHaveBeenCalledTimes(2);
+  });
+
+  it('logs RevenueCat out on sign-out, so the next account starts clean', async () => {
+    onDevice();
+    await initialize();
+    await identifyAccount('user-42');
+
+    await forgetAccount();
+    await identifyAccount('user-42');
+
+    expect(Purchases.logOut).toHaveBeenCalledTimes(1);
+    expect(Purchases.logIn).toHaveBeenCalledTimes(2);
+  });
+
+  it('identifies whoever is signed in on this device', async () => {
+    onDevice();
+    const { SecureStorage } = require('@/services/secure-storage');
+    jest.spyOn(SecureStorage, 'getUserData').mockResolvedValueOnce({ id: 'user-7', email: '', name: '', provider: 'google' });
+    await initialize();
+
+    await identifySignedInAccount();
+
+    expect(Purchases.logIn).toHaveBeenCalledWith('user-7');
+  });
+
+  it('identifies nobody when nobody is signed in', async () => {
+    onDevice();
+    const { SecureStorage } = require('@/services/secure-storage');
+    jest.spyOn(SecureStorage, 'getUserData').mockResolvedValueOnce(null);
+    await initialize();
+
+    await identifySignedInAccount();
+
+    expect(Purchases.logIn).not.toHaveBeenCalled();
+  });
+
+  it('does not log out when nobody was logged in', async () => {
+    onDevice();
+    await initialize();
+
+    await forgetAccount();
+
+    expect(Purchases.logOut).not.toHaveBeenCalled();
+  });
+
+  it('keeps going when logging out fails', async () => {
+    onDevice();
+    (Purchases.logOut as jest.Mock).mockRejectedValueOnce(new Error('already anonymous'));
+    await initialize();
+    await identifyAccount('user-42');
+
+    await expect(forgetAccount()).resolves.toBeUndefined();
   });
 });

@@ -11,6 +11,7 @@ import * as Haptics from 'expo-haptics';
 import { useSessionActions } from '@/hooks/use-session-actions';
 import { ApiClient } from '@/services/api-client';
 import { reminderService } from '@/services/reminder-service';
+import { forgetAccount as forgetSubscriptionAccount } from '@/services/subscription-service';
 
 const mockStore = {
   isGuestMode: true,
@@ -26,6 +27,7 @@ jest.mock('@/store/app-store', () => ({
 }));
 jest.mock('@/services/api-client', () => ({ ApiClient: { logout: jest.fn(() => Promise.resolve()) } }));
 jest.mock('@/services/reminder-service', () => ({ reminderService: { clearAllReminders: jest.fn(() => Promise.resolve()) } }));
+jest.mock('@/services/subscription-service', () => ({ forgetAccount: jest.fn(() => Promise.resolve()) }));
 
 function confirmButtons(): { text: string; onPress?: () => void }[] {
   return (Alert.alert as jest.Mock).mock.calls[0][2];
@@ -89,5 +91,6 @@ describe('useSessionActions', () => {
     expect(mockStore.setShowLoginAfterOnboarding).toHaveBeenCalledWith(true);
     expect(ApiClient.logout).toHaveBeenCalledTimes(1);
     expect(reminderService.clearAllReminders).toHaveBeenCalledTimes(1);
+    expect(forgetSubscriptionAccount).toHaveBeenCalledTimes(1);
   });
 });

@@ -62,7 +62,7 @@ import { ChildSyncService } from '@/services/child-sync-service';
 import { VersionManager } from '@/services/version-manager';
 // Import reminder service to trigger initialization and reschedule notifications on app startup
 import { reminderService } from '@/services/reminder-service';
-import { initialize as initSubscriptions } from '@/services/subscription-service';
+import { initialize as initSubscriptions, identifySignedInAccount } from '@/services/subscription-service';
 import Constants from 'expo-constants';
 import { isE2eAllowed } from '@/services/e2e-state';
 import { useE2eLinks } from '@/hooks/use-e2e-links';
@@ -394,6 +394,7 @@ function AppContent() {
                   // Sync profile
                   await ChildSyncService.sync();
                   await ChildSyncService.recordConsentIfNeeded();
+                  await identifySignedInAccount();
                   // Validate cache
                   await CacheManager.validateAndCleanCache();
                   // Metadata sync

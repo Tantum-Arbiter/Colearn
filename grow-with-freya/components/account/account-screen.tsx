@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppStore, type SubscriptionTier } from '../../store/app-store';
 import { useShallow } from 'zustand/react/shallow';
-import { restorePurchases, isDevMode } from '@/services/subscription-service';
+import { restorePurchases, isDevMode, forgetAccount as forgetSubscriptionAccount } from '@/services/subscription-service';
 import { PageHeader } from '../ui/page-header';
 import { TermsConditionsContent } from './terms-conditions-screen';
 import { PrivacyPolicyContent } from './privacy-policy-screen';
@@ -243,6 +243,7 @@ export function AccountScreen({ onBack, onNavigate, isActive = true }: AccountSc
       await SecureStorage.clearAuthData();
       await reminderService.clearAllReminders();
       await ChildSyncService.forgetAccount();
+      await forgetSubscriptionAccount();
 
       Alert.alert(t('common.success'), t('alerts.deleteAccount.success'));
       onBack();

@@ -17,6 +17,7 @@ import { CacheManager } from '@/services/cache-manager';
 import { StoryLoader } from '@/services/story-loader';
 import { ApiClient } from '@/services/api-client';
 import { ChildSyncService } from '@/services/child-sync-service';
+import { identifySignedInAccount } from '@/services/subscription-service';
 import { Logger } from '@/utils/logger';
 
 const log = Logger.create('StartupLoading');
@@ -111,6 +112,7 @@ export function StartupLoadingScreen({ onComplete, onSlideInComplete, onError }:
         log.info('Syncing child...');
         await ChildSyncService.sync();
         await ChildSyncService.recordConsentIfNeeded();
+        await identifySignedInAccount();
 
         // Validate cache and remove any corrupted files before sync
         log.info('Validating cache...');

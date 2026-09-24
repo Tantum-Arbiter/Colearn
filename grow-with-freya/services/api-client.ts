@@ -201,7 +201,7 @@ export class ApiClient {
               throw await failure(retryResponse);
             }
 
-            return await retryResponse.json();
+            return retryResponse.status === 204 ? (undefined as T) : await retryResponse.json();
           } finally {
             clearTimeout(retryTimeoutId);
           }
@@ -220,7 +220,7 @@ export class ApiClient {
         throw await failure(response);
       }
 
-      return await response.json();
+      return response.status === 204 ? (undefined as T) : await response.json();
     } catch (error: any) {
       clearTimeout(timeoutId);
       const durationMs = Date.now() - requestStartTime;

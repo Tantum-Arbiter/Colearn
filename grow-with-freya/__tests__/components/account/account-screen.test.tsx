@@ -109,6 +109,7 @@ jest.mock('@/components/main-menu/animated-components', () => ({ MoonBottomImage
 jest.mock('@/services/subscription-service', () => ({
   restorePurchases: jest.fn().mockResolvedValue({ success: true }),
   isDevMode: () => true,
+  forgetAccount: jest.fn().mockResolvedValue(undefined),
 }));
 jest.mock('@/services/screen-time-service', () => ({
   __esModule: true,
