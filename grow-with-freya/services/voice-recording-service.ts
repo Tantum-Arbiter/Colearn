@@ -56,9 +56,8 @@ class VoiceRecordingService {
       if (!this.recordingsDir) {
         await this.initialize();
       }
-      const filename = `${voiceOverId}_page${pageIndex}.m4a`;
       const tempFile = new File(tempUri);
-      const targetPath = `${this.recordingsDir!.uri}${filename}`;
+      const targetPath = await this.recordingPath(voiceOverId, pageIndex);
       const permanentFile = new File(targetPath);
 
       // Delete existing file if it exists (for overwrites)
@@ -79,6 +78,20 @@ class VoiceRecordingService {
       log.error('Failed to save recording:', error);
       return null;
     }
+  }
+
+  async recordingPath(voiceOverId: string, pageIndex: number): Promise<string> {
+    if (!this.recordingsDir) {
+      await this.initialize();
+    }
+    return `${this.recordingsDir!.uri}${voiceOverId}_page${pageIndex}.m4a`;
+  }
+
+  async importVoiceOver(voiceOver: VoiceOver): Promise<void> {
+    const voiceOvers = await this.getVoiceOvers();
+    if (voiceOvers.some(vo => vo.id === voiceOver.id)) return;
+    voiceOvers.push(voiceOver);
+    await this.saveVoiceOvers(voiceOvers);
   }
 
   async getVoiceOvers(): Promise<VoiceOver[]> {

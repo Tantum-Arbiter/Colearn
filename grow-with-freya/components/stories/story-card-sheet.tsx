@@ -50,12 +50,13 @@ interface ModeOption {
   mode: ReadingMode;
   labelKey: string;
   icon: keyof typeof Ionicons.glyphMap;
+  grownUpsOnly?: boolean;
 }
 
 export const MODE_OPTIONS: ModeOption[] = [
   { mode: 'read', labelKey: 'storyDetail.readTogether', icon: 'book-outline' },
   { mode: 'narrate', labelKey: 'storyDetail.playAlong', icon: 'volume-medium-outline' },
-  { mode: 'record', labelKey: 'storyDetail.record', icon: 'mic-outline' },
+  { mode: 'record', labelKey: 'storyDetail.record', icon: 'mic-outline', grownUpsOnly: true },
 ];
 
 /** How far a card that is not the chosen one drops back, and how much it shrinks and darkens. */

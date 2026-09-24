@@ -28,7 +28,8 @@ import { useAccessibility } from '@/hooks/use-accessibility';
 import { voiceRecordingService, VoiceOver } from '@/services/voice-recording-service';
 import { useParentsOnlyChallenge } from '@/hooks/use-parents-only-challenge';
 import { ParentsOnlyModal } from '@/components/ui/parents-only-modal';
-import { StoryCardSheet } from '@/components/stories/story-card-sheet';
+import { VoiceSyncService } from '@/services/voice-sync-service';
+import { MODE_OPTIONS, StoryCardSheet } from '@/components/stories/story-card-sheet';
 import { STORY_OVERLAY_LAYER_Z } from '@/constants/story-overlay-layer';
 import { useGuideLift } from '@/components/owl-guide/use-guide-lift';
 import { cardCoverTransform, storyCardLayout } from '@/constants/story-card';
@@ -490,6 +491,15 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   // sketched at its seat -- its outline drawn, then its cover appearing inside
   // -- and opens from there, via the rotate prompt on a phone held upright
   const openWithMode = (mode: ReadingMode) => {
+    if (phaseRef.current !== 'detail') return;
+    if (MODE_OPTIONS.find((option) => option.mode === mode)?.grownUpsOnly) {
+      parentsOnly.showChallenge(() => startMode(mode));
+      return;
+    }
+    startMode(mode);
+  };
+
+  const startMode = (mode: ReadingMode) => {
     // Only the story card can start an opening, and only once. Without this a
     // second press -- a double tap, or the tap that stops the carousel landing
     // on the button underneath -- ran the choreography again from the top: the
@@ -1685,6 +1695,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
               onPress: async () => {
                 try {
                   await voiceRecordingService.deleteVoiceOver(voiceOver.id);
+                  VoiceSyncService.forget(voiceOver.id);
                   if (selectedStory) {
                     const updated = await voiceRecordingService.getVoiceOversForStory(selectedStory.id);
                     setAvailableVoiceOvers(updated);

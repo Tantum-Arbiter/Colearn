@@ -87,6 +87,7 @@ export interface AppState {
 
   // Privacy settings
   crashReportingEnabled: boolean; // User consent for Sentry crash reporting
+  voiceSyncEnabled: boolean;
 
   // Parental consent (COPPA/GDPR)
   consentTimestamp: string | null; // ISO timestamp when parent gave consent
@@ -163,6 +164,7 @@ export interface AppState {
   setNotificationsEnabled: (enabled: boolean) => void;
   setNotificationPermissionRequested: (requested: boolean) => void;
   setCrashReportingEnabled: (enabled: boolean) => void;
+  setVoiceSyncEnabled: (enabled: boolean) => void;
   setConsent: (policyVersion: string) => void;
   setTextSizeScale: (scale: number) => void;
   setSubscriptionTier: (tier: SubscriptionTier) => void;
@@ -229,6 +231,7 @@ export const useAppStore = create<AppState>()(
       notificationsEnabled: false,
       hasRequestedNotificationPermission: false,
       crashReportingEnabled: false, // Default to disabled until user consents
+      voiceSyncEnabled: false,
       consentTimestamp: null,
       consentPolicyVersion: null,
       textSizeScale: 1.0, // Default to normal size
@@ -297,6 +300,7 @@ export const useAppStore = create<AppState>()(
       setNotificationsEnabled: (enabled) => set({ notificationsEnabled: enabled }),
       setNotificationPermissionRequested: (requested) => set({ hasRequestedNotificationPermission: requested }),
       setCrashReportingEnabled: (enabled) => set({ crashReportingEnabled: enabled }),
+      setVoiceSyncEnabled: (enabled) => set({ voiceSyncEnabled: enabled }),
       setConsent: (policyVersion) => set({
         consentTimestamp: new Date().toISOString(),
         consentPolicyVersion: policyVersion,
@@ -486,6 +490,7 @@ export const useAppStore = create<AppState>()(
         notificationsEnabled: state.notificationsEnabled,
         hasRequestedNotificationPermission: state.hasRequestedNotificationPermission,
         crashReportingEnabled: state.crashReportingEnabled,
+        voiceSyncEnabled: state.voiceSyncEnabled,
         consentTimestamp: state.consentTimestamp,
         consentPolicyVersion: state.consentPolicyVersion,
         textSizeScale: state.textSizeScale,

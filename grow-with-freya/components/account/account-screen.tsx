@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAppStore, type SubscriptionTier } from '../../store/app-store';
 import { useShallow } from 'zustand/react/shallow';
 import { restorePurchases, isDevMode, forgetAccount as forgetSubscriptionAccount } from '@/services/subscription-service';
+import { VoiceSyncService } from '@/services/voice-sync-service';
 import { PageHeader } from '../ui/page-header';
 import { TermsConditionsContent } from './terms-conditions-screen';
 import { PrivacyPolicyContent } from './privacy-policy-screen';
@@ -82,6 +83,7 @@ export function AccountScreen({ onBack, onNavigate, isActive = true }: AccountSc
     textSizeScale,
     isGuestMode,
     crashReportingEnabled,
+    voiceSyncEnabled,
     screenTimeEnabled,
     notificationsEnabled,
     hasRequestedNotificationPermission,
@@ -106,6 +108,7 @@ export function AccountScreen({ onBack, onNavigate, isActive = true }: AccountSc
       textSizeScale: state.textSizeScale,
       isGuestMode: state.isGuestMode,
       crashReportingEnabled: state.crashReportingEnabled,
+      voiceSyncEnabled: state.voiceSyncEnabled,
       screenTimeEnabled: state.screenTimeEnabled,
       notificationsEnabled: state.notificationsEnabled,
       hasRequestedNotificationPermission: state.hasRequestedNotificationPermission,
@@ -225,6 +228,31 @@ export function AccountScreen({ onBack, onNavigate, isActive = true }: AccountSc
     }
 
     setNotificationsEnabled(!notificationsEnabled);
+  };
+
+  const handleToggleVoiceSync = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const failed = () => Alert.alert(t('account.voiceSync.failed'));
+    if (!voiceSyncEnabled) {
+      Alert.alert(t('account.voiceSync.enableTitle'), t('account.voiceSync.enableMessage'), [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('account.voiceSync.enable'),
+          onPress: async () => {
+            if (!(await VoiceSyncService.enable())) failed();
+          },
+        },
+      ]);
+      return;
+    }
+    const turnOff = (removeOnlineCopies: boolean) => async () => {
+      if (!(await VoiceSyncService.disable({ removeOnlineCopies }))) failed();
+    };
+    Alert.alert(t('account.voiceSync.disableTitle'), t('account.voiceSync.disableMessage'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('account.voiceSync.keepCopies'), onPress: turnOff(false) },
+      { text: t('account.voiceSync.removeCopies'), style: 'destructive', onPress: turnOff(true) },
+    ]);
   };
 
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
@@ -565,6 +593,29 @@ export function AccountScreen({ onBack, onNavigate, isActive = true }: AccountSc
               ]} />
             </View>
           </Pressable>
+
+          {!isGuestMode && VoiceSyncService.isAvailable() && (
+            <Pressable
+              style={[styles.settingItem, { paddingVertical: scaledPadding(12) }]}
+              onPress={handleToggleVoiceSync}
+              testID="account-voice-sync-toggle"
+              accessibilityRole="switch"
+              accessibilityState={{ checked: voiceSyncEnabled }}
+              accessibilityLabel={t('account.voiceSync.title')}
+            >
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.settingLabel, { fontSize: scaledFontSize(13) }]}>
+                  {t('account.voiceSync.title')}
+                </Text>
+                <Text style={[styles.settingHint, { fontSize: scaledFontSize(11) }]}>
+                  {t('account.voiceSync.hint')}
+                </Text>
+              </View>
+              <View style={[styles.toggle, voiceSyncEnabled && styles.toggleEnabled]}>
+                <View style={[styles.toggleThumb, voiceSyncEnabled && styles.toggleThumbEnabled]} />
+              </View>
+            </Pressable>
+          )}
 
           {!session.needsSignIn && (
             <Pressable

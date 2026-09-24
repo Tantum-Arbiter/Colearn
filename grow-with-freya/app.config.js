@@ -17,6 +17,7 @@ export default {
         projectId: '439b6b2f-be5f-4d59-98eb-73befbd1973e'
       },
       gatewayUrl: process.env.EXPO_PUBLIC_GATEWAY_URL,
+      voiceSyncAvailable: process.env.EXPO_PUBLIC_VOICE_SYNC_AVAILABLE === 'true',
       googleIosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
       googleAndroidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
       googleWebClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
