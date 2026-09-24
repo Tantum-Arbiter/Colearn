@@ -140,7 +140,8 @@ export class ApiClient {
   static async request<T>(
     endpoint: string,
     options: RequestInit = {},
-    timeoutMs: number = DEFAULT_TIMEOUT_MS
+    timeoutMs: number = DEFAULT_TIMEOUT_MS,
+    { deviceHeaders = true }: { deviceHeaders?: boolean } = {}
   ): Promise<T> {
     const accessToken = await this.ensureValidToken();
 
@@ -149,7 +150,7 @@ export class ApiClient {
     }
     const headers = {
       'Content-Type': 'application/json',
-      ...DeviceInfoService.getDeviceHeaders(),
+      ...(deviceHeaders ? DeviceInfoService.getDeviceHeaders() : {}),
       ...options.headers,
       'Authorization': `Bearer ${accessToken}`,
     };

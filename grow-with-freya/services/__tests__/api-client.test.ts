@@ -288,4 +288,27 @@ describe('ApiClient', () => {
       await expect(ApiClient.deleteAccount()).rejects.toThrow('Not authenticated');
     });
   });
+
+  describe('device headers', () => {
+    beforeEach(() => {
+      (SecureStorage.getAccessToken as jest.Mock).mockResolvedValue(mockAccessToken);
+      global.fetch = jest.fn(() => Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve({}) })) as jest.Mock;
+    });
+
+    it('sends the client headers the gateway requires on an ordinary call', async () => {
+      await ApiClient.request('/api/profile');
+
+      const headers = (global.fetch as jest.Mock).mock.calls[0][1].headers;
+      expect(headers['X-Client-Platform']).toBeDefined();
+      expect(headers['X-Client-Version']).toBeDefined();
+      expect(headers['X-Device-ID']).toBeDefined();
+    });
+
+    it('sends only content type and token when asked to leave the device out', async () => {
+      await ApiClient.request('/api/analytics/events', { method: 'POST', body: '{}' }, 5000, { deviceHeaders: false });
+
+      const headers = (global.fetch as jest.Mock).mock.calls[0][1].headers;
+      expect(Object.keys(headers).sort()).toEqual(['Authorization', 'Content-Type']);
+    });
+  });
 });
