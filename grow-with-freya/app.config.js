@@ -50,6 +50,7 @@ export default {
     },
     android: {
       package: 'com.growwithfreya.app',
+      allowBackup: false,
       adaptiveIcon: {
         backgroundColor: '#E6F4FE',
         foregroundImage: './assets/images/android-icon-foreground.png',

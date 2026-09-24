@@ -72,7 +72,9 @@ removed so it cannot mislead.
 
 - **Minimisation.** Age is held as a bucket, not a birth date. The child's nickname is an alias.
   Progress is outcomes, not a log of sessions. Analytics are counters.
-- **The most sensitive data stays on the phone.** Voice recordings are never sent to the backend.
+- **The most sensitive data stays on the phone.** Voice recordings are never sent to the backend,
+  and Android Auto Backup is off (`android.allowBackup: false`), so they are not copied to Google
+  Drive either. On iOS the family's own iCloud backup includes the app's documents.
 - **Adult data, not child data.** Recording is behind the parents-only gate
   (`MODE_OPTIONS` `grownUpsOnly`); the recordings are of grown-ups reading.
 - **Security.** Firestore rules deny every client (`firestore.rules`, `FirestoreConfigTest`); all

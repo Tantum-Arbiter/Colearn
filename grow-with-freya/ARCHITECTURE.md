@@ -213,7 +213,9 @@ app's own access check.
 
 Choosing **Record** asks the parents-only question first (`MODE_OPTIONS` `grownUpsOnly`), so
 recordings are made by grown-ups. They live in the app's documents folder and are never sent to
-the gateway; the phone's own backup is the only way they reach a new device. Syncing them was
+the gateway. On Android, Auto Backup is switched off (`android.allowBackup: false` in
+`app.config.js`, held by `__tests__/config/android-backup.test.ts`), so they never leave the
+phone there either; on iOS the device's own iCloud backup still includes them. Syncing them was
 built and then dropped by the operator on 2026-09-24 (PHASE-8 §8).
 
 ## Orientation Strategy
