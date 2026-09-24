@@ -348,37 +348,3 @@ export const STORY_TAGS: Record<StoryCategory, StoryTag> = {
   }
 };
 
-// Content version tracking for delta-sync
-export interface ContentVersion {
-  version: number;           // Story/content version
-  assetVersion: number;      // Asset version (tracked separately by CMS)
-  lastUpdated: number;       // Timestamp in milliseconds
-  storyChecksums: Record<string, string>; // storyId -> checksum
-  totalStories: number;
-}
-
-// Story sync request (sent to backend)
-export interface StorySyncRequest {
-  clientVersion: number;
-  storyChecksums: Record<string, string>; // storyId -> checksum
-  lastSyncTimestamp: number; // Timestamp in milliseconds
-}
-
-// Story sync response (received from backend)
-export interface StorySyncResponse {
-  serverVersion: number;
-  assetVersion: number; // Server's current asset version for unified version tracking
-  stories: Story[]; // Only changed/new stories
-  storyChecksums: Record<string, string>; // All current checksums
-  totalStories: number;
-  updatedStories: number;
-  lastUpdated: number; // Timestamp in milliseconds
-}
-
-// Local storage structure for synced stories
-export interface StorySyncMetadata {
-  version: number;
-  lastSyncTimestamp: number;
-  storyChecksums: Record<string, string>;
-  stories: Story[];
-}

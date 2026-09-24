@@ -16,9 +16,6 @@ jest.mock('@/services/cache-manager', () => ({
 jest.mock('@/services/story-download-service', () => ({
   StoryDownloadService: { getHiddenBundledStoryIds: jest.fn() },
 }));
-jest.mock('@/services/story-sync-service', () => ({
-  StorySyncService: { syncStories: jest.fn(), getSyncStatus: jest.fn() },
-}));
 
 import { StoryLoader } from '@/services/story-loader';
 import { CacheManager } from '@/services/cache-manager';

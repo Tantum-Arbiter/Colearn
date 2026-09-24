@@ -335,15 +335,6 @@ public class ApplicationMetricsService {
         logger.debug("User login metric recorded: {} user via {}", safeUserType, safeProvider);
     }
 
-    public void recordUserPreferencesUpdate(String userId) {
-        String safeUserId = userId != null ? userId : "unknown";
-        Counter.builder("app.users.preferences.updates")
-                .tags("user_id", safeUserId)
-                .description("Number of user preference updates")
-                .register(meterRegistry)
-                .increment();
-        logger.debug("User preferences update metric recorded for user: {}", safeUserId);
-    }
 
     public void recordUserDeactivated(String userId) {
         String safeUserId = userId != null ? userId : "unknown";

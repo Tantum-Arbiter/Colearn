@@ -360,46 +360,4 @@ export class ApiClient {
     }
   }
 
-  static async getBatchSignedUrls(paths: string[]): Promise<{
-    urls: Array<{ path: string; signedUrl: string; expiresAt: number }>;
-    failed: string[];
-  }> {
-    return this.request('/api/assets/batch-urls', {
-      method: 'POST',
-      body: JSON.stringify({ paths }),
-    });
-  }
-
-  static async getDeltaContent(
-    clientVersion: number,
-    storyChecksums: Record<string, string>
-  ): Promise<{
-    serverVersion: number;
-    assetVersion: number;
-    stories: any[];
-    deletedStoryIds: string[];
-    storyChecksums: Record<string, string>;
-    totalStories: number;
-    updatedCount: number;
-    lastUpdated: number;
-  }> {
-    return this.request('/api/stories/delta', {
-      method: 'POST',
-      body: JSON.stringify({
-        clientVersion,
-        storyChecksums,
-      }),
-    });
-  }
-
-  static async getContentVersion(): Promise<{
-    id: string;
-    version: number;
-    assetVersion: number;
-    lastUpdated: number;
-    storyChecksums: Record<string, string>;
-    totalStories: number;
-  }> {
-    return this.request('/api/stories/version', { method: 'GET' }, 5000);
-  }
 }

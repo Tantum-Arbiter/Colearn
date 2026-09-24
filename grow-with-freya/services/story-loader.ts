@@ -1,6 +1,5 @@
 import { Story } from '@/types/story';
 import { CacheManager } from './cache-manager';
-import { StorySyncService } from './story-sync-service';
 import { StoryDownloadService } from './story-download-service';
 import { ALL_STORIES, getAvailableStories } from '@/data/stories';
 import { Logger } from '@/utils/logger';
@@ -110,33 +109,9 @@ export class StoryLoader {
     return stories.filter(story => story.isAvailable);
   }
 
-  static async isSynced(): Promise<boolean> {
-    const status = await StorySyncService.getSyncStatus();
-    return status.hasLocalData;
-  }
-
   static invalidateCache(): void {
     log.debug('Invalidating story cache');
     this.cachedStories = null;
-  }
-
-  static async refreshStories(): Promise<Story[]> {
-    try {
-      log.debug('Forcing story refresh...');
-      this.invalidateCache();
-      const stories = await StorySyncService.syncStories();
-      // Update cache with fresh stories
-      this.cachedStories = await this.loadStoriesInternal();
-      log.debug(`Refreshed ${this.cachedStories.length} stories`);
-      return this.cachedStories;
-    } catch (error) {
-      log.error('Refresh failed:', error);
-      throw error;
-    }
-  }
-
-  static async getSyncStatus() {
-    return await StorySyncService.getSyncStatus();
   }
 
   static isLocalStory(storyId: string): boolean {
