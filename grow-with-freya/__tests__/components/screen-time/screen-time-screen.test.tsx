@@ -706,12 +706,19 @@ describe('ScreenTimeScreen', () => {
 
       await waitFor(() =>
         expect(backgroundSaveService.queueProfileSave).toHaveBeenCalledWith(
-          expect.objectContaining({
-            nickname: 'Liam',
-            schedule: { childAgeRange: '6+' },
-          })
+          expect.objectContaining({ schedule: { childAgeRange: '6+' } })
         )
       );
+    });
+
+    it('sends only the settings it changed, never a name or avatar it did not edit', async () => {
+      (ApiClient.isAuthenticated as jest.Mock).mockResolvedValue(true);
+
+      await saveWithStoredAge(84);
+
+      await waitFor(() => expect(backgroundSaveService.queueProfileSave).toHaveBeenCalled());
+      const saved = (backgroundSaveService.queueProfileSave as jest.Mock).mock.calls[0][0];
+      expect(Object.keys(saved).sort()).toEqual(['notifications', 'schedule']);
     });
 
     it.each([

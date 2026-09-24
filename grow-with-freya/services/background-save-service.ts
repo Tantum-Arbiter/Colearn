@@ -15,12 +15,25 @@ interface PendingSave {
   retryCount: number;
 }
 
-interface ProfileUpdateData {
-  nickname: string;
-  avatarType: 'boy' | 'girl';
-  avatarId: string;
-  notifications?: any;
-  schedule?: any;
+export interface ProfileUpdateData {
+  nickname?: string;
+  avatarType?: 'boy' | 'girl';
+  avatarId?: string;
+  notifications?: Record<string, unknown>;
+  schedule?: Record<string, unknown>;
+}
+
+function mergeSaves(saves: PendingSave[]): ProfileUpdateData {
+  return saves.reduce<ProfileUpdateData>((merged, save) => ({
+    ...merged,
+    ...save.data,
+    ...(merged.notifications || save.data.notifications
+      ? { notifications: { ...merged.notifications, ...save.data.notifications } }
+      : {}),
+    ...(merged.schedule || save.data.schedule
+      ? { schedule: { ...merged.schedule, ...save.data.schedule } }
+      : {}),
+  }), {});
 }
 
 class BackgroundSaveServiceClass {
@@ -75,8 +88,7 @@ class BackgroundSaveServiceClass {
           return;
         }
 
-        // Attempt to save
-        await ApiClient.updateProfile(mostRecent.data);
+        await ApiClient.updateProfile(mergeSaves(pendingSaves));
         log.info('Profile saved');
 
         await this.removePendingSaves(coveredIds);

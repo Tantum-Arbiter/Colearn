@@ -255,11 +255,11 @@ export class ApiClient {
   }
 
   static async updateProfile(data: {
-    nickname: string;
-    avatarType: 'boy' | 'girl';
-    avatarId: string;
-    notifications?: any;
-    schedule?: any;
+    nickname?: string;
+    avatarType?: 'boy' | 'girl';
+    avatarId?: string;
+    notifications?: Record<string, unknown>;
+    schedule?: Record<string, unknown>;
   }): Promise<{
     userId: string;
     nickname: string;

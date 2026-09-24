@@ -1,7 +1,8 @@
 /**
  * A profile edit made offline, or while the server is failing, is kept and
- * sent later. Only the newest edit is sent, an older one never comes back
- * after a newer one, and an edit made while another is in flight is not lost.
+ * sent later. Queued edits are merged in order, so a later field wins and
+ * nothing edited is lost; an older edit never comes back after a newer one,
+ * and an edit made while another is in flight is not lost.
  */
 
 type SaveData = { nickname: string; avatarType: 'boy' | 'girl'; avatarId: string };
@@ -227,5 +228,41 @@ describe('backgroundSaveService', () => {
     await settle();
 
     expect(api.updateProfile).toHaveBeenCalledTimes(1);
+  });
+
+  it('merges a name edit and a later settings save made offline, so neither is lost', async () => {
+    const { underTest, api } = load();
+    api.isAuthenticated.mockResolvedValue(false);
+    await underTest.queueProfileSave(edit('Freya'));
+    await settle();
+    await underTest.queueProfileSave({ notifications: { screenTimeEnabled: true } });
+    await settle();
+
+    api.isAuthenticated.mockResolvedValue(true);
+    api.updateProfile.mockResolvedValue({});
+    await underTest.retryPendingSaves();
+    await settle();
+
+    expect(api.updateProfile).toHaveBeenCalledTimes(1);
+    expect(api.updateProfile).toHaveBeenCalledWith({ ...edit('Freya'), notifications: { screenTimeEnabled: true } });
+  });
+
+  it('lets a later edit of the same field win, and merges nested settings', async () => {
+    const { underTest, api } = load();
+    api.isAuthenticated.mockResolvedValue(false);
+    await underTest.queueProfileSave({ nickname: 'Old', notifications: { screenTimeEnabled: true } });
+    await settle();
+    await underTest.queueProfileSave({ nickname: 'New', notifications: { smartRemindersEnabled: false } });
+    await settle();
+
+    api.isAuthenticated.mockResolvedValue(true);
+    api.updateProfile.mockResolvedValue({});
+    await underTest.retryPendingSaves();
+    await settle();
+
+    expect(api.updateProfile).toHaveBeenCalledWith({
+      nickname: 'New',
+      notifications: { screenTimeEnabled: true, smartRemindersEnabled: false },
+    });
   });
 });

@@ -266,14 +266,8 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
                         childAgeInMonths < 72 ? '2-6y' :
                         '6+';
 
-        // Get current profile info from app store for the background save
-        const { userNickname, userAvatarType, userAvatarId } = useAppStore.getState();
-
         // Queue profile update to run in background with retry
         backgroundSaveService.queueProfileSave({
-          nickname: userNickname || 'User',
-          avatarType: userAvatarType || 'girl',
-          avatarId: userAvatarId || 'girl-1',
           notifications: {
             screenTimeEnabled: localScreenTimeEnabled,
             smartRemindersEnabled: localNotificationsEnabled,
