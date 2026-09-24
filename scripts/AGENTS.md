@@ -66,7 +66,18 @@ CMS scripts don't ship as a library — they run once per operator action. TDD h
 3. Only after local validation, run against the dev Firestore.
 4. Promote to staging / prod only with explicit human approval and emulator parity confirmed.
 
-There is **no formal test suite for `scripts/`** today — flag this if it becomes a problem; don't silently introduce one without approval.
+Shared logic that the gateway or the app depends on is tested with Node's built-in runner (`node:test`, no dependencies), added in phase 8 (operator approval 2026-09-24):
+
+| Suite | Covers | Run |
+|-|-|-|
+| `lib/story-checksum.test.js` | The one story checksum: canonical JSON, SHA-256, metadata ignored, parity with the gateway via `../contract-fixtures/story-checksums.json` | `node --test lib/*.test.js` |
+| `cms-manager/src/lib/*.test.js` | Story loading and saving, schema and custom validation (every story in `cms-stories/` must pass), formatting | `cd cms-manager && npm test` |
+
+`backend-checks.yml` runs both on every pull request that touches `scripts/`. Follow [`../TESTING-STANDARD.md`](../TESTING-STANDARD.md).
+
+**`cms-manager` has no `prepare` script on purpose.** npm runs a script named `prepare` after every `npm install`; the CMS prepare step rewrites every `story-data.json`. It is `npm run prepare-upload`.
+
+**`cms-manager format --all` renames page ids** to `<story-id>-cover` / `<story-id>-<n>`: 1,379 pages across the current catalogue would change. The app merges bundled books with CMS text by page id (falling back to position), so review that diff before committing it.
 
 ---
 
@@ -110,7 +121,7 @@ npm run generate-bundled-ts         # emit grow-with-freya/data/stories.ts
 # CMS Manager CLI (from scripts/cms-manager/)
 npm run validate                    # JSON schema validation
 npm run format                      # canonicalise story JSON
-npm run prepare                     # build Firestore/GCS payloads
+npm run prepare-upload              # build Firestore/GCS payloads (not "prepare": npm runs that on every install)
 npm run import                      # push to target project
 npm run list                        # inventory
 

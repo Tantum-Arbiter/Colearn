@@ -9,6 +9,7 @@ on:
       - 'wiremock-server/**'
       - 'firestore-emulator/**'
       - 'contract-fixtures/**'
+      - 'scripts/**'
       - 'docker-compose.functional-tests.yml'
       - '.github/workflows/backend-checks.yml'
   push:
@@ -19,6 +20,7 @@ on:
       - 'wiremock-server/**'
       - 'firestore-emulator/**'
       - 'contract-fixtures/**'
+      - 'scripts/**'
       - 'docker-compose.functional-tests.yml'
       - '.github/workflows/backend-checks.yml'
 
@@ -30,6 +32,27 @@ permissions:
   contents: read
 
 jobs:
+  cms-tooling-tests:
+    name: CMS checksum, loader, validator and every story
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Shared story checksum
+        working-directory: scripts
+        run: node --test lib/*.test.js
+
+      - name: CMS manager
+        working-directory: scripts/cms-manager
+        run: |
+          npm ci --no-audit --no-fund
+          npm test
+
   gateway-unit-tests:
     name: Gateway unit, slice and contract tests
     runs-on: ubuntu-latest

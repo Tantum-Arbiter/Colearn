@@ -12,6 +12,7 @@ import com.app.model.StoryPage;
 import com.app.model.User;
 import com.app.model.UserSession;
 import com.app.security.RateLimitingFilter;
+import com.app.service.StoryChecksums;
 import com.app.service.SessionService;
 import com.app.service.UserService;
 import com.app.testing.TestSimulationFlags;
@@ -440,64 +441,11 @@ public class TestAdminController {
         return stories;
     }
 
+    private static final com.fasterxml.jackson.databind.ObjectMapper CHECKSUM_MAPPER =
+            new com.fasterxml.jackson.databind.ObjectMapper().findAndRegisterModules();
+
     private String calculateStoryChecksum(Story story) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            StringBuilder content = new StringBuilder();
-            content.append(story.getId());
-            content.append(story.getTitle());
-            content.append(serializeLocalizedText(story.getLocalizedTitle()));
-            content.append(story.getCategory());
-            content.append(story.getDescription() != null ? story.getDescription() : "");
-            content.append(serializeLocalizedText(story.getLocalizedDescription()));
-            content.append(story.getVersion());
-
-            if (story.getPages() != null) {
-                story.getPages().forEach(page -> {
-                    content.append(page.getId());
-                    content.append(page.getText());
-                    content.append(serializeAgeGroupedText(page.getLocalizedText()));
-                    content.append(page.getPageNumber());
-                });
-            }
-
-            byte[] hash = digest.digest(content.toString().getBytes(StandardCharsets.UTF_8));
-            StringBuilder hexString = new StringBuilder();
-            for (byte b : hash) {
-                String hex = Integer.toHexString(0xff & b);
-                if (hex.length() == 1) hexString.append('0');
-                hexString.append(hex);
-            }
-            return hexString.toString();
-        } catch (Exception e) {
-            logger.error("Error calculating story checksum for: {}", story.getId(), e);
-            throw new RuntimeException("Failed to calculate checksum", e);
-        }
-    }
-
-    private String serializeLocalizedText(LocalizedText localizedText) {
-        if (localizedText == null) {
-            return "";
-        }
-        StringBuilder sb = new StringBuilder();
-        if (localizedText.getEn() != null) sb.append("en:").append(localizedText.getEn()).append("|");
-        if (localizedText.getPl() != null) sb.append("pl:").append(localizedText.getPl()).append("|");
-        if (localizedText.getEs() != null) sb.append("es:").append(localizedText.getEs()).append("|");
-        if (localizedText.getDe() != null) sb.append("de:").append(localizedText.getDe()).append("|");
-        return sb.toString();
-    }
-
-    private String serializeAgeGroupedText(Map<String, LocalizedText> ageGroupedText) {
-        if (ageGroupedText == null) {
-            return "";
-        }
-        StringBuilder sb = new StringBuilder();
-        new java.util.TreeMap<>(ageGroupedText).forEach((ageGroup, lt) -> {
-            sb.append(ageGroup).append(":{");
-            sb.append(serializeLocalizedText(lt));
-            sb.append("}|");
-        });
-        return sb.toString();
+        return StoryChecksums.of(CHECKSUM_MAPPER.valueToTree(story));
     }
 
     private LocalizedText parseLocalizedText(Map<?, ?> map) {
@@ -719,7 +667,7 @@ public class TestAdminController {
             // Calculate checksum if not provided
             String checksum = (String) storyData.get("checksum");
             if (checksum == null || checksum.isBlank()) {
-                checksum = calculateStoryChecksum(story);
+                checksum = StoryChecksums.of(CHECKSUM_MAPPER.valueToTree(storyData));
             }
             story.setChecksum(checksum);
 

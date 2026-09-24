@@ -6,9 +6,9 @@
 import chalk from 'chalk';
 import fs from 'fs/promises';
 import path from 'path';
-import crypto from 'crypto';
 import { loadAllStories, saveStory, getStoryAssets, CMS_STORIES_DIR } from '../lib/story-loader.js';
 import { fullValidation } from '../lib/schema-validator.js';
+import { formatStoryData } from '../lib/story-format.js';
 
 export async function prepareCommand(options) {
   console.log(chalk.cyan.bold('\n📦 CMS Prepare for Upload\n'));
@@ -58,7 +58,7 @@ export async function prepareCommand(options) {
     for (const story of stories) {
       if (!story.data || invalidStories.includes(story.id)) continue;
 
-      const formatted = formatStoryData(story.data);
+      const { formatted } = formatStoryData(story.data);
       if (!options.dryRun) {
         await saveStory(story.id, formatted);
       }
@@ -118,32 +118,3 @@ export async function prepareCommand(options) {
     process.exit(1);
   }
 }
-
-function formatStoryData(data) {
-  const formatted = JSON.parse(JSON.stringify(data));
-  
-  formatted.isAvailable = formatted.isAvailable ?? true;
-  formatted.isPremium = formatted.isPremium ?? false;
-  formatted.version = formatted.version ?? 1;
-  formatted.author = formatted.author ?? 'earlyroots';
-  formatted.tags = formatted.tags ?? [];
-  formatted.duration = formatted.pages?.length ?? formatted.duration;
-
-  const checksum = crypto.createHash('sha256')
-    .update(JSON.stringify({
-      title: formatted.title,
-      pages: formatted.pages?.map(p => ({
-        text: p.text,
-        localizedText: p.localizedText,
-        interactionType: p.interactionType,
-        interactiveElements: p.interactiveElements,
-        musicChallenge: p.musicChallenge,
-        readingChallenge: p.readingChallenge,
-      })),
-    }))
-    .digest('hex').substring(0, 16);
-  formatted.checksum = checksum;
-
-  return formatted;
-}
-
