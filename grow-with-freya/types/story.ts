@@ -183,16 +183,25 @@ export interface CatalogEntry {
   gender?: 'boy' | 'girl' | 'unisex';
 }
 
+const AGE_GROUP_FALLBACK: Record<AgeGroup, readonly AgeGroup[]> = {
+  '0-2': ['0-2', '2-4', '4-6'],
+  '2-4': ['2-4', '0-2', '4-6'],
+  '4-6': ['4-6', '2-4', '0-2'],
+};
+
+export function ageGroupFallbackChain(ageGroup?: AgeGroup): readonly AgeGroup[] {
+  return (ageGroup && AGE_GROUP_FALLBACK[ageGroup]) || AGE_GROUP_FALLBACK['4-6'];
+}
+
 /**
  * Get localized text with fallback to English.
- * When ageGroupText and ageGroup are provided, prioritises age-appropriate text.
  *
- * Resolution order:
- *  1. ageGroupText[ageGroup][language]
- *  2. ageGroupText[ageGroup].en
- *  3. localized[language]
- *  4. localized.en
- *  5. fallback
+ * Resolution order when ageGroupText is given:
+ *  1. the requested language, in the child's age group and then the nearest ones
+ *  2. English, in the same order
+ *  3. localized[language], localized.en
+ *  4. fallback
+ * The gateway resolves in the same order (StoryPage.getTextForLanguageAndAgeGroup).
  */
 export function getLocalizedText(
   localized: LocalizedText | undefined,
@@ -201,12 +210,14 @@ export function getLocalizedText(
   ageGroupText?: AgeGroupText,
   ageGroup?: AgeGroup,
 ): string {
-  // Try age-group-specific text first
-  if (ageGroupText && ageGroup) {
-    const ageLocalized = ageGroupText[ageGroup];
-    if (ageLocalized) {
-      const ageResult = language ? (ageLocalized[language] || ageLocalized.en) : ageLocalized.en;
-      if (ageResult) return ageResult;
+  if (ageGroupText) {
+    const chain = ageGroupFallbackChain(ageGroup);
+    const languages = language && language !== 'en' ? [language, 'en' as const] : ['en' as const];
+    for (const lang of languages) {
+      for (const group of chain) {
+        const text = ageGroupText[group]?.[lang];
+        if (text) return text;
+      }
     }
 
     // If ageGroupText is actually a flat LocalizedText (keys are language codes, not age groups),
