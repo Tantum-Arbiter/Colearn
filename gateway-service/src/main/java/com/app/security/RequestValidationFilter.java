@@ -38,10 +38,6 @@ public class RequestValidationFilter extends OncePerRequestFilter {
     public RequestValidationFilter(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
     }
-    // Default constructor for tests
-    public RequestValidationFilter() {
-        this(new ObjectMapper());
-    }
 
 
     private static final List<Pattern> SUSPICIOUS_PATTERNS = Arrays.asList(
@@ -70,13 +66,11 @@ public class RequestValidationFilter extends OncePerRequestFilter {
 
     private static final long MAX_REQUEST_SIZE = 1 * 1024 * 1024;
     private static final long MAX_SYNC_REQUEST_SIZE = 600 * 1024;
-    private static final int MAX_REQUESTS_PER_MINUTE = 100;
+    private static final int MAX_BATCH_ITEMS = 10000;
+    private static final String ANALYTICS_EVENTS_PATH = "/api/analytics/events";
 
     @Value("${app.security.request-validation.enabled:true}")
     private boolean filterEnabled = true;
-
-    @Value("${app.security.request-validation.inspect-body:true}")
-    private boolean inspectBodyEnabled = true;
 
     @Value("${app.security.request-validation.validate-headers:true}")
     private boolean validateHeadersEnabled = true;
@@ -98,21 +92,11 @@ public class RequestValidationFilter extends OncePerRequestFilter {
             // Check User-Agent header; warn if missing but do not block
             String userAgent = request.getHeader("User-Agent");
             if (userAgent == null || userAgent.trim().isEmpty()) {
-                // Touch common request properties so tests' stubbings are not considered unnecessary
-                request.getRequestURI();
-                request.getQueryString();
-                request.getContentLength();
-
                 logger.warn("Missing User-Agent header from IP: {}", getClientIpAddress(request));
             }
 
             // Validate suspicious user-agents (e.g., sqlmap, nikto)
             if (!validateUserAgent(request)) {
-                // Touch common props to satisfy strict stubbing in tests
-                request.getRequestURI();
-                request.getQueryString();
-                request.getContentLength();
-
                 int status = ErrorCode.INVALID_USER_AGENT.getHttpStatusCode();
                 writeError(response, status, ErrorCode.INVALID_USER_AGENT,
                         "Suspicious user agent detected", request, Map.of("userAgent", userAgent));
@@ -124,10 +108,6 @@ public class RequestValidationFilter extends OncePerRequestFilter {
             boolean isBatchEndpoint = uri != null && (uri.endsWith("/assets/batch-urls") || uri.endsWith("/stories/delta"));
             if (!validateRequestSize(request)) {
                 logger.warn("Request size too large from IP: {}", getClientIpAddress(request));
-
-                // Touch properties to satisfy strict stubbing in tests
-                request.getRequestURI();
-                request.getQueryString();
 
                 // For batch endpoints, return 400 (bad request - too many items) instead of 413
                 if (isBatchEndpoint) {
@@ -161,19 +141,14 @@ public class RequestValidationFilter extends OncePerRequestFilter {
             if (validateHeadersEnabled && !validateHeaders(request)) {
                 logger.warn("Suspicious headers detected from IP: {}", getClientIpAddress(request));
 
-                // Touch URI/query to satisfy strict stubbing when tests set them
-                request.getRequestURI();
-                request.getQueryString();
-
                 writeError(response, HttpServletResponse.SC_BAD_REQUEST, ErrorCode.REQUEST_VALIDATION_FAILED,
                         "Suspicious headers detected", request, Map.of("reason", "headers"));
                 return;
             }
 
-            // Enforce mandatory client headers for API endpoints when Authorization is present
-            // uri is already retrieved earlier for sync endpoint detection
             if (uri != null && uri.startsWith("/api/") && request.getHeader("Authorization") != null
-                    && !"OPTIONS".equalsIgnoreCase(request.getMethod())) {
+                    && !"OPTIONS".equalsIgnoreCase(request.getMethod())
+                    && !isAnalyticsBatch(request)) {
                 List<String> missingHeaders = new ArrayList<>();
                 String clientPlatform = request.getHeader("X-Client-Platform");
                 String clientVersion = request.getHeader("X-Client-Version");
@@ -215,55 +190,21 @@ public class RequestValidationFilter extends OncePerRequestFilter {
                 return;
             }
 
-            // Inspect request body when enabled. In tests, we also support reader-based bodies
             HttpServletRequest requestToUse = request;
-            if (inspectBodyEnabled && shouldInspectBody(request)) {
-                CachedBodyHttpServletRequest wrapped = new CachedBodyHttpServletRequest(request);
-                String body = new String(wrapped.getCachedBody(), StandardCharsets.UTF_8);
-
-                // For batch endpoints, validate item count early before expensive processing
-                if (isBatchEndpoint && !body.isEmpty()) {
-                    int itemCount = countJsonMapEntries(body, "paths", "storyChecksums");
-                    if (itemCount > 10000) {
-                        logger.warn("Batch request with excessive items ({}) from IP: {}", itemCount, getClientIpAddress(request));
-                        writeError(response, HttpServletResponse.SC_BAD_REQUEST, ErrorCode.REQUEST_VALIDATION_FAILED,
-                                "Request contains too many items (max: 10000)", request, Map.of("reason", "excessive_items", "count", itemCount));
-                        return;
-                    }
-                }
-
-                // Skip expensive regex pattern matching on large bodies (>100KB) to avoid performance issues
-                // Large JSON payloads (like batch requests) are validated by their structure/schema, not patterns
-                boolean skipPatternMatching = body.length() > 100 * 1024;
-                if (!body.isEmpty() && !skipPatternMatching && containsSuspiciousPattern(body)) {
-                    logger.warn("Suspicious request body detected from IP: {}", getClientIpAddress(request));
+            if (isBatchEndpoint) {
+                CachedBodyHttpServletRequest wrapped = new CachedBodyHttpServletRequest(request, MAX_SYNC_REQUEST_SIZE);
+                if (wrapped.exceededLimit()) {
                     writeError(response, HttpServletResponse.SC_BAD_REQUEST, ErrorCode.REQUEST_VALIDATION_FAILED,
-                            "Suspicious request body detected", request, Map.of("reason", "body"));
+                            "Request contains too many items", request, Map.of("reason", "excessive_items"));
                     return;
                 }
-                requestToUse = wrapped;
-            } else if (inspectBodyEnabled) {
-                // Fallback: wrap request to safely read via reader or stream without consuming the original
-                CachedBodyHttpServletRequest wrapped = new CachedBodyHttpServletRequest(request);
                 String body = new String(wrapped.getCachedBody(), StandardCharsets.UTF_8);
-
-                // For batch endpoints, validate item count early before expensive processing
-                if (isBatchEndpoint && !body.isEmpty()) {
-                    int itemCount = countJsonMapEntries(body, "paths", "storyChecksums");
-                    if (itemCount > 10000) {
-                        logger.warn("Batch request with excessive items ({}) from IP: {}", itemCount, getClientIpAddress(request));
-                        writeError(response, HttpServletResponse.SC_BAD_REQUEST, ErrorCode.REQUEST_VALIDATION_FAILED,
-                                "Request contains too many items (max: 10000)", request, Map.of("reason", "excessive_items", "count", itemCount));
-                        return;
-                    }
-                }
-
-                // Skip expensive regex pattern matching on large bodies (>100KB)
-                boolean skipPatternMatching = body.length() > 100 * 1024;
-                if (!body.isEmpty() && !skipPatternMatching && containsSuspiciousPattern(body)) {
-                    logger.warn("Suspicious request body detected from IP: {}", getClientIpAddress(request));
+                int itemCount = countJsonMapEntries(body, "paths", "storyChecksums");
+                if (itemCount > MAX_BATCH_ITEMS) {
+                    logger.warn("Batch request with excessive items ({}) from IP: {}", itemCount, getClientIpAddress(request));
                     writeError(response, HttpServletResponse.SC_BAD_REQUEST, ErrorCode.REQUEST_VALIDATION_FAILED,
-                            "Suspicious request body detected", request, Map.of("reason", "body"));
+                            "Request contains too many items (max: " + MAX_BATCH_ITEMS + ")", request,
+                            Map.of("reason", "excessive_items", "count", itemCount));
                     return;
                 }
                 requestToUse = wrapped;
@@ -417,8 +358,6 @@ public class RequestValidationFilter extends OncePerRequestFilter {
         // Check URL path
         String requestURI = request.getRequestURI();
         if (containsSuspiciousPattern(requestURI)) {
-            // Touch query to satisfy tests that stub it alongside suspicious path
-            request.getQueryString();
             return false;
         }
 
@@ -475,52 +414,8 @@ public class RequestValidationFilter extends OncePerRequestFilter {
         return v.contains("*)(") || v.contains(")(&") || v.contains(")(|");
     }
 
-    private boolean shouldInspectBody(HttpServletRequest request) {
-        String method = request.getMethod();
-        if (!("POST".equals(method) || "PUT".equals(method) || "PATCH".equals(method))) {
-            return false;
-        }
-        String contentType = request.getContentType();
-        if (contentType == null) {
-            return false;
-        }
-        if (!contentType.toLowerCase().startsWith("application/json")) {
-            return false;
-        }
-        int length = request.getContentLength();
-        return length != 0; // -1 or >0 means there may be a body
-    }
-
-    private boolean hasReadableBodyViaReader(HttpServletRequest request) {
-        try {
-            BufferedReader r = request.getReader();
-            if (r == null) return false;
-            r.mark(1);
-            int ch = r.read();
-            if (ch == -1) return false;
-            r.reset();
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    private String safeReadBodyFromReader(HttpServletRequest request) {
-        try (BufferedReader r = request.getReader()) {
-            if (r == null) return "";
-            StringBuilder sb = new StringBuilder();
-            char[] buf = new char[1024];
-            int n;
-            while ((n = r.read(buf)) != -1) {
-                sb.append(buf, 0, n);
-                if (sb.length() > MAX_REQUEST_SIZE) {
-                    break;
-                }
-            }
-            return sb.toString();
-        } catch (Exception e) {
-            return "";
-        }
+    private boolean isAnalyticsBatch(HttpServletRequest request) {
+        return "POST".equalsIgnoreCase(request.getMethod()) && ANALYTICS_EVENTS_PATH.equals(request.getRequestURI());
     }
 
     private boolean validateUserAgent(HttpServletRequest request) {
@@ -639,44 +534,19 @@ public class RequestValidationFilter extends OncePerRequestFilter {
      */
     private static class CachedBodyHttpServletRequest extends HttpServletRequestWrapper {
         private final byte[] cachedBody;
+        private final boolean exceededLimit;
 
-        CachedBodyHttpServletRequest(HttpServletRequest request) throws IOException {
+        CachedBodyHttpServletRequest(HttpServletRequest request, long limit) throws IOException {
             super(request);
-            byte[] data = new byte[0];
             try (ServletInputStream is = request.getInputStream()) {
-                if (is != null) {
-                    data = is.readAllBytes();
-                } else {
-                    // Fallback to reader if input stream is not available (common in unit tests)
-                    try (BufferedReader reader = request.getReader()) {
-                        if (reader != null) {
-                            StringBuilder sb = new StringBuilder();
-                            char[] buf = new char[1024];
-                            int n;
-                            while ((n = reader.read(buf)) != -1) {
-                                sb.append(buf, 0, n);
-                            }
-                            data = sb.toString().getBytes(StandardCharsets.UTF_8);
-                        }
-                    }
-                }
-            } catch (Exception ex) {
-                // As a last resort, try reading from reader
-                try (BufferedReader reader = request.getReader()) {
-                    if (reader != null) {
-                        StringBuilder sb = new StringBuilder();
-                        char[] buf = new char[1024];
-                        int n;
-                        while ((n = reader.read(buf)) != -1) {
-                            sb.append(buf, 0, n);
-                        }
-                        data = sb.toString().getBytes(StandardCharsets.UTF_8);
-                    }
-                } catch (Exception ignore) {
-                    data = new byte[0];
-                }
+                byte[] data = is.readNBytes((int) limit + 1);
+                this.exceededLimit = data.length > limit;
+                this.cachedBody = data;
             }
-            this.cachedBody = data;
+        }
+
+        boolean exceededLimit() {
+            return this.exceededLimit;
         }
 
         byte[] getCachedBody() {
