@@ -28,7 +28,6 @@ import { useAccessibility } from '@/hooks/use-accessibility';
 import { voiceRecordingService, VoiceOver } from '@/services/voice-recording-service';
 import { useParentsOnlyChallenge } from '@/hooks/use-parents-only-challenge';
 import { ParentsOnlyModal } from '@/components/ui/parents-only-modal';
-import { VoiceSyncService } from '@/services/voice-sync-service';
 import { MODE_OPTIONS, StoryCardSheet } from '@/components/stories/story-card-sheet';
 import { STORY_OVERLAY_LAYER_Z } from '@/constants/story-overlay-layer';
 import { useGuideLift } from '@/components/owl-guide/use-guide-lift';
@@ -1695,7 +1694,6 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
               onPress: async () => {
                 try {
                   await voiceRecordingService.deleteVoiceOver(voiceOver.id);
-                  VoiceSyncService.forget(voiceOver.id);
                   if (selectedStory) {
                     const updated = await voiceRecordingService.getVoiceOversForStory(selectedStory.id);
                     setAvailableVoiceOvers(updated);

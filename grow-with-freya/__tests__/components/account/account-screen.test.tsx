@@ -157,17 +157,6 @@ jest.mock('@/services/i18n', () => ({
   baseLanguage: (code: string) => code?.split('-')[0],
 }));
 
-const mockVoiceSync = {
-  isAvailable: jest.fn(() => true),
-  enable: jest.fn().mockResolvedValue(true),
-  disable: jest.fn().mockResolvedValue(true),
-};
-jest.mock('@/services/voice-sync-service', () => ({
-  get VoiceSyncService() {
-    return mockVoiceSync;
-  },
-}));
-
 const mockNotificationService = {
   requestPermissions: jest.fn().mockResolvedValue({ granted: true }),
 };
@@ -181,7 +170,6 @@ const MUTABLE_STORE_DEFAULTS = {
   screenTimeEnabled: true,
   notificationsEnabled: false,
   hasRequestedNotificationPermission: false,
-  voiceSyncEnabled: false,
 };
 
 const mockStore = {
@@ -398,80 +386,6 @@ describe('AccountScreen navigation', () => {
         expect(mockStore.setNotificationsEnabled).toHaveBeenCalledWith(false);
         expect(mockNotificationService.requestPermissions).not.toHaveBeenCalled();
       });
-    });
-  });
-
-  describe('keeping recordings on every device', () => {
-    const buttons = () => (Alert.alert as jest.Mock).mock.calls[0][2] as { text: string; onPress?: () => void }[];
-
-    it('is offered to a signed-in family, off until a grown-up turns it on', () => {
-      const { tree } = renderAccount();
-
-      const toggle = byTestId(tree, 'account-voice-sync-toggle')[0];
-      expect(toggle).toBeTruthy();
-      expect(toggle.props.accessibilityState).toEqual({ checked: false });
-    });
-
-    it('shows when it is on', () => {
-      mockStore.voiceSyncEnabled = true;
-      const { tree } = renderAccount();
-
-      expect(byTestId(tree, 'account-voice-sync-toggle')[0].props.accessibilityState).toEqual({ checked: true });
-    });
-
-    it('is not offered to a guest, whose recordings have no account to go to', () => {
-      mockStore.isGuestMode = true;
-      const { tree } = renderAccount();
-
-      expect(byTestId(tree, 'account-voice-sync-toggle')).toHaveLength(0);
-    });
-
-    it('is not offered in a build without it', () => {
-      mockVoiceSync.isAvailable.mockReturnValueOnce(false);
-      const { tree } = renderAccount();
-
-      expect(byTestId(tree, 'account-voice-sync-toggle')).toHaveLength(0);
-    });
-
-    it('explains what is kept, and where, before turning it on', async () => {
-      const { tree } = renderAccount();
-
-      press(tree, 'account-voice-sync-toggle');
-
-      expect(Alert.alert).toHaveBeenCalledWith('account.voiceSync.enableTitle', 'account.voiceSync.enableMessage', expect.any(Array));
-      expect(mockVoiceSync.enable).not.toHaveBeenCalled();
-      await act(async () => {
-        buttons().find((b) => b.text === 'account.voiceSync.enable')?.onPress?.();
-      });
-      expect(mockVoiceSync.enable).toHaveBeenCalledTimes(1);
-    });
-
-    it('says so when it could not be turned on', async () => {
-      mockVoiceSync.enable.mockResolvedValueOnce(false);
-      const { tree } = renderAccount();
-
-      press(tree, 'account-voice-sync-toggle');
-      await act(async () => {
-        await buttons().find((b) => b.text === 'account.voiceSync.enable')?.onPress?.();
-      });
-
-      expect(Alert.alert).toHaveBeenLastCalledWith('account.voiceSync.failed');
-    });
-
-    it.each([
-      ['account.voiceSync.keepCopies', false],
-      ['account.voiceSync.removeCopies', true],
-    ])('turns off with "%s", removing the online copies: %s', async (choice, removeOnlineCopies) => {
-      mockStore.voiceSyncEnabled = true;
-      const { tree } = renderAccount();
-
-      press(tree, 'account-voice-sync-toggle');
-      expect(Alert.alert).toHaveBeenCalledWith('account.voiceSync.disableTitle', 'account.voiceSync.disableMessage', expect.any(Array));
-      await act(async () => {
-        await buttons().find((b) => b.text === choice)?.onPress?.();
-      });
-
-      expect(mockVoiceSync.disable).toHaveBeenCalledWith({ removeOnlineCopies });
     });
   });
 

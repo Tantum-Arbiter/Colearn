@@ -18,7 +18,7 @@ progress, favourites, badges, recordings — lives on one device and is lost on 
 
 - Achievements record **that** something was done, never **when**. No timestamps leave the device.
 - Store the minimum needed to restore a family's app on another device. Nothing behavioural.
-- Voice recordings may be synced, as a separate opt-in feature, after MVP (§8).
+- ~~Voice recordings may be synced, as a separate opt-in feature, after MVP (§8).~~ **Changed 2026-09-24: voice recordings are not synced at all.** Only F1 (recording behind the parents-only gate) is kept.
 
 **Decided by the operator, later on 2026-09-23** (the answers to §10):
 
@@ -40,11 +40,10 @@ progress, favourites, badges, recordings — lives on one device and is lost on 
 | C — child sync | Done: child document, consent, export, deletion, app merge and auto-sync, func tests. `/api/profile` stays until the Phase C build is on TestFlight (C2). | `4f7bd845` `0e0c0d9f` `1d93f8bc` |
 | D — achievements | Done: definitions as data, facts, story awards, CMS authoring and upload (dry run by default), delta delivery, copy lint | `bf882114` `43025ed3` `791a983a` |
 | E — entitlements | Built, **switched off**: webhook answers 503 until `REVENUECAT_WEBHOOK_SECRET` is set; `/download` only logs refusals until `ENTITLEMENTS_ENFORCE=true` | `9c581678` `d8d38aa8` |
-| F — voice sync | Built, **switched off**: gateway answers 503 until `VOICE_BUCKET` is set; the app offers it only in builds with `EXPO_PUBLIC_VOICE_SYNC_AVAILABLE=true`. F1 (recording behind the gate) is live. F7: `app.config.js` does not set `android.allowBackup`, and Expo's default is on, so Android Auto Backup likely already carries recordings (⚠️ confirm in a prebuilt manifest). | `9eee8484` `e85bf7e2` |
+| F — voice sync | **Dropped by the operator 2026-09-24.** The sync was built (`9eee8484`, `e85bf7e2`) and reverted; only F1 remains: choosing Record asks the parents-only question. F7: `app.config.js` does not set `android.allowBackup`, and Expo's default is on, so Android Auto Backup likely already carries recordings (⚠️ confirm in a prebuilt manifest). | revert commit |
 | Compliance | L1 DPIA and L2 policy changes drafted in [`compliance/`](compliance/) for the operator; L3 Firestore region ⚠️ unverified; L4 retention stated in the DPIA, with one decision open (consent records) | this commit |
 
-Operator actions before any of it is live: create the voice bucket (private, `europe-west2`);
-set the three secrets/flags; configure the RevenueCat webhook; deploy `firestore.rules` and
+Operator actions before any of it is live: set the two Phase E secrets/flags; configure the RevenueCat webhook; deploy `firestore.rules` and
 indexes; approve the privacy-policy changes; confirm the Firestore region.
 
 ---
@@ -169,7 +168,7 @@ app resubmitted, except the one-line `story-loader.ts` guard in A4.
 
 ```
 users/{uid}                              existing
-users/{uid}/consents/{autoId}            { policyVersion, scope: 'core'|'voiceSync', acceptedAt, appVersion }
+users/{uid}/consents/{autoId}            { policyVersion, scope: 'core', acceptedAt, appVersion }
 users/{uid}/children/{childId}           {
   nickname, avatarType, avatarId, ageBucket,
   language, textSizeScale,
@@ -276,7 +275,10 @@ release blocker while the catalogue is small.
 
 ---
 
-## 8. Phase F — voice recording sync (after MVP, opt-in)
+## 8. Phase F — voice recording sync — *dropped 2026-09-24, F1 kept*
+
+> The operator decided recordings are not synced at all. Only F1 below stands; F2–F6 are
+> withdrawn and the consent scope is `core` only. The table is kept as the record of what was planned.
 
 Recordings are grown-ups reading aloud ("so your child hears you — even apart",
 `grow-with-freya/locales/en/index.ts:702,990`). Until this phase, the phone's own backup already
@@ -327,7 +329,7 @@ carries them to a new iPhone (Documents directory, `services/voice-recording-ser
 | C — child sync | ~2 weeks | L1, L3 done |
 | D — achievements | ~2 weeks | Needs C's child document |
 | E — entitlements | ~1 week | After C, before paid content |
-| F — voice sync | ~1–2 weeks | Post-MVP; F6 ships with it |
+| F — voice sync | — | Dropped; F1 only |
 
 Every task follows the house loop: failing test first, implement, mutation sweep, simulator check
 on phone and tablet for app work, and a commit only on the operator's word. A task is done when it

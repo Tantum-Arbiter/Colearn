@@ -48,7 +48,7 @@ colearn/
 ├── PHASE-6-MATH-GAMES.md    # ⭐ Math games roadmap, age-appropriate mechanics, technical plan
 ├── PHASE-7-MUSIC-GAME.md    # Timed music play — hold-the-note mechanic, metadata, phases
 ├── compliance/               # DPIA and privacy-policy change drafts
-├── PHASE-8-BACKEND-ALIGNMENT.md # ⭐ API audit fixes, child data sync, achievements as data, voice sync
+├── PHASE-8-BACKEND-ALIGNMENT.md # ⭐ API audit fixes, child data sync, achievements as data, entitlements
 └── CLAUDE.md                 # This file — root operating instructions
 ```
 

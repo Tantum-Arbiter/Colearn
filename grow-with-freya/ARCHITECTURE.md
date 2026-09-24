@@ -209,16 +209,12 @@ webhook can tell the gateway which account paid; sign-out and account deletion l
 gateway can then check `/download` itself; a refusal (`GTW-416`, `GTW-417`) is reported like the
 app's own access check.
 
-## Voice recordings (Phase 8 F, opt-in)
+## Voice recordings stay on the phone
 
-Choosing **Record** asks the parents-only question first (`MODE_OPTIONS` `grownUpsOnly`).
-Recordings live in the app's documents folder. Only if a grown-up turns on "Keep recordings on
-all your devices" (account page; offered only in builds with
-`EXPO_PUBLIC_VOICE_SYNC_AVAILABLE=true`) does `services/voice-sync-service.ts` record a
-`voiceSync` consent and keep them on the gateway: new or re-recorded pages go up through signed
-links, voice-overs from another phone come down, and a deletion anywhere reaches every phone —
-deletions made offline are queued and sent before anything is downloaded. Turning it off offers to
-remove the online copies.
+Choosing **Record** asks the parents-only question first (`MODE_OPTIONS` `grownUpsOnly`), so
+recordings are made by grown-ups. They live in the app's documents folder and are never sent to
+the gateway; the phone's own backup is the only way they reach a new device. Syncing them was
+built and then dropped by the operator on 2026-09-24 (PHASE-8 §8).
 
 ## Orientation Strategy
 
@@ -759,7 +755,7 @@ Parent-facing exits (Parent corner, Record a Voice) go through
 
 Persisted state: onboarding status, auth state, user profile, screen time settings, text size,
 notification preferences, crash reporting consent, story progress, finished books, challenge
-counts, earned badges, voice sync switch.
+counts, earned badges.
 
 The store is persisted at `version: 1`. `migrateAppState` moves a version-0 store forward by
 counting as finished every book with `completedCount > 0`.

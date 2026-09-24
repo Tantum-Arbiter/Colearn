@@ -35,13 +35,11 @@ class AccountExportServiceTest {
     private final ConsentRepository consents = mock(ConsentRepository.class);
     private final com.app.repository.DownloadRepository downloads = mock(com.app.repository.DownloadRepository.class);
     private final com.app.repository.EntitlementRepository entitlements = mock(com.app.repository.EntitlementRepository.class);
-    private final VoiceSyncService voice = mock(VoiceSyncService.class);
     private AccountExportService underTest;
 
     @BeforeEach
     void setUp() {
-        underTest = new AccountExportService(users, profiles, children, consents, downloads, entitlements, voice);
-        when(voice.exportSummary(USER)).thenReturn(List.of());
+        underTest = new AccountExportService(users, profiles, children, consents, downloads, entitlements);
         when(downloads.list(USER)).thenReturn(CompletableFuture.completedFuture(List.of()));
         when(entitlements.find(USER)).thenReturn(CompletableFuture.completedFuture(Optional.empty()));
         User user = new User(USER, "google", "google-sub-123");
@@ -151,12 +149,5 @@ class AccountExportServiceTest {
     @Test
     void hasNoSubscriptionWhenNoneWasBought() {
         assertNull(underTest.export(USER).get("subscription"));
-    }
-
-    @Test
-    void describesTheRecordingsKeptOnline_butNotTheAudio() {
-        when(voice.exportSummary(USER)).thenReturn(List.of(Map.of("id", "vo_1", "storyId", "snowy", "label", "Mum", "pages", 2, "bytes", 2048L)));
-
-        assertEquals(List.of(Map.of("id", "vo_1", "storyId", "snowy", "label", "Mum", "pages", 2, "bytes", 2048L)), underTest.export(USER).get("voiceOvers"));
     }
 }

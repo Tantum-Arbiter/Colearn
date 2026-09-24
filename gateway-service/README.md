@@ -79,9 +79,9 @@ customReminders[] }`. No server times are returned. The app's merge rules are in
 
 | Method and path | Answer |
 |-|-|
-| `POST /api/consents` | Body `{ policyVersion, scope: core \| voiceSync, acceptedAt?, appVersion? }` → `201` |
-| `GET /api/account/export` | Account, older profile, children, consents, subscription, `downloadedStories`, `voiceOvers` (no audio) |
-| `DELETE /api/account` | Deletes profile, children, consents, downloads, voice records and audio, sessions and the user; stops before the user is deleted if any step fails (`500 GTW-412`); `409 GTW-413` while a deletion is running |
+| `POST /api/consents` | Body `{ policyVersion, scope: core, acceptedAt?, appVersion? }` → `201` |
+| `GET /api/account/export` | Account, older profile, children, consents, subscription, `downloadedStories` |
+| `DELETE /api/account` | Deletes profile, children, consents, downloads, sessions and the user; stops before the user is deleted if any step fails (`500 GTW-412`); `409 GTW-413` while a deletion is running |
 
 ### Profile (deprecated)
 
@@ -116,18 +116,6 @@ shared canonical-JSON SHA-256 (`StoryChecksums`, `scripts/lib/story-checksum.js`
 | `GET /api/assets/version` | Asset version and checksums |
 | `POST /api/assets/batch-urls` | Body `{ paths: [...] }` (at most 100) → `{ urls: [{ path, signedUrl, expiresAt }], failed }` |
 
-## Voice-overs — `/api/voice-overs/**` (Phase F, opt-in)
-
-Answers `503 GTW-508` until `VOICE_BUCKET` is set. Every call except deletion needs a
-`voiceSync` consent record (`403 GTW-418`).
-
-| Method and path | Answer |
-|-|-|
-| `GET /api/voice-overs` | `{ voiceOvers: [{ id, storyId, label, pages: [{ pageIndex, bytes, url }] }] }` — links last 15 minutes |
-| `POST /api/voice-overs/{id}/uploads` | Body `{ storyId, label (≤ 40), pages: [{ pageIndex, bytes }] }` → `{ uploads: [{ pageIndex, url, headers }], usedBytes, limitBytes }`. `PUT` each file to its `url` with exactly those `headers`. At most 10 MB a page and 200 MB an account (`403 GTW-419`). |
-| `DELETE /api/voice-overs/{id}` | Removes the audio and the record → `204` |
-| `DELETE /api/voice-overs` | Removes every voice-over → `204` |
-
 ## Analytics
 
 `POST /api/analytics/events` — `{ sessionId, platform, appVersion, locale, events: [{ event,
@@ -149,7 +137,6 @@ IGNORED | NO_ACCOUNT }`. Writes `users/{uid}.entitlement` (`EntitlementService`)
 | `REVENUECAT_WEBHOOK_SECRET` | Turns the webhook on |
 | `REVENUECAT_ACCEPT_SANDBOX` | `true` (default) while the app is TestFlight-only |
 | `ENTITLEMENTS_ENFORCE` | `false` (default): `/download` only logs what it would refuse |
-| `VOICE_BUCKET` | Turns voice-overs on; a private bucket in `europe-west2` |
 
 ---
 
@@ -230,8 +217,6 @@ Error codes follow the format `GTW-XXX` where the number range indicates the cat
 | `GTW-415` | 409 | No more children can be added |
 | `GTW-416` | 403 | This story needs a subscription |
 | `GTW-417` | 403 | The plan's story limit is reached |
-| `GTW-418` | 403 | Keeping recordings online has not been agreed |
-| `GTW-419` | 403 | The account's space for recordings is full |
 
 ### System Errors (GTW-500 to GTW-599)
 | Code | HTTP | Description |

@@ -48,7 +48,6 @@ import { ParentsOnlyModal } from '../ui/parents-only-modal';
 import { SubscriptionOverlay } from '../ui/subscription-overlay';
 import { useAppStore } from '@/store/app-store';
 import { useAchievementEvents } from '@/components/progress/use-achievement-events';
-import { VoiceSyncService } from '@/services/voice-sync-service';
 import { resumePageIndex } from './reading-progress';
 import { useAccessibility, TEXT_SIZE_OPTIONS } from '@/hooks/use-accessibility';
 import { useParentsOnlyChallenge } from '@/hooks/use-parents-only-challenge';
@@ -1390,7 +1389,6 @@ export function StoryBookReader({
           savedUri,
           tempRecordingDuration
         );
-        VoiceSyncService.sync();
         // Refresh voice over data
         const updatedVoiceOvers = await voiceRecordingService.getVoiceOversForStory(story.id);
         setAvailableVoiceOvers(updatedVoiceOvers);
@@ -2983,7 +2981,6 @@ export function StoryBookReader({
                                       style: 'destructive',
                                       onPress: async () => {
                                         await voiceRecordingService.deleteVoiceOver(vo.id);
-                                        VoiceSyncService.forget(vo.id);
                                         const updated = await voiceRecordingService.getVoiceOversForStory(story.id);
                                         setAvailableVoiceOvers(updated);
                                         if (currentVoiceOver?.id === vo.id) {
@@ -3104,7 +3101,6 @@ export function StoryBookReader({
                                         style: 'destructive',
                                         onPress: async () => {
                                           await voiceRecordingService.deleteVoiceOver(vo.id);
-                                          VoiceSyncService.forget(vo.id);
                                           const updated = await voiceRecordingService.getVoiceOversForStory(story.id);
                                           setAvailableVoiceOvers(updated);
                                           if (currentVoiceOver?.id === vo.id) {

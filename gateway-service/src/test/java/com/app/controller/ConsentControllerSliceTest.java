@@ -93,7 +93,7 @@ class ConsentControllerSliceTest {
 
     @Test
     void usesTheRecordingTimeWhenTheAppSendsNone() throws Exception {
-        mockMvc.perform(record("{\"policyVersion\":\"1.0\",\"scope\":\"voiceSync\"}")).andExpect(status().isCreated());
+        mockMvc.perform(record("{\"policyVersion\":\"1.0\",\"scope\":\"core\"}")).andExpect(status().isCreated());
 
         Consent consent = recorded();
         assertEquals(consent.getRecordedAt(), consent.getAcceptedAt());
@@ -114,6 +114,7 @@ class ConsentControllerSliceTest {
             "{\"scope\":\"core\"}",
             "{\"policyVersion\":\"1.0\"}",
             "{\"policyVersion\":\"1.0\",\"scope\":\"marketing\"}",
+            "{\"policyVersion\":\"1.0\",\"scope\":\"voiceSync\"}",
             "{\"policyVersion\":\"<script>\",\"scope\":\"core\"}",
             "{\"policyVersion\":\"1.0\",\"scope\":\"core\",\"acceptedAt\":\"yesterday\"}"
     })

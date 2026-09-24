@@ -28,19 +28,16 @@ public class AccountExportService {
     private final ConsentRepository consentRepository;
     private final DownloadRepository downloadRepository;
     private final EntitlementRepository entitlementRepository;
-    private final VoiceSyncService voiceSyncService;
 
     public AccountExportService(UserRepository userRepository, UserProfileRepository userProfileRepository,
                                 ChildRepository childRepository, ConsentRepository consentRepository,
-                                DownloadRepository downloadRepository, EntitlementRepository entitlementRepository,
-                                VoiceSyncService voiceSyncService) {
+                                DownloadRepository downloadRepository, EntitlementRepository entitlementRepository) {
         this.userRepository = userRepository;
         this.userProfileRepository = userProfileRepository;
         this.childRepository = childRepository;
         this.consentRepository = consentRepository;
         this.downloadRepository = downloadRepository;
         this.entitlementRepository = entitlementRepository;
-        this.voiceSyncService = voiceSyncService;
     }
 
     public Map<String, Object> export(String userId) {
@@ -62,7 +59,6 @@ public class AccountExportService {
         export.put("consents", consentRepository.findAll(userId).join().stream().map(AccountExportService::consent).toList());
         export.put("subscription", entitlementRepository.find(userId).join().map(AccountExportService::subscription).orElse(null));
         export.put("downloadedStories", downloadRepository.list(userId).join());
-        export.put("voiceOvers", voiceSyncService.exportSummary(userId));
         return export;
     }
 

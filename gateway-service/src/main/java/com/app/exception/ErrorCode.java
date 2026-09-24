@@ -88,8 +88,6 @@ public enum ErrorCode {
     CHILD_LIMIT_REACHED("GTW-415", "No more children can be added to this account"),
     SUBSCRIPTION_REQUIRED("GTW-416", "This story needs a subscription"),
     DOWNLOAD_LIMIT_REACHED("GTW-417", "The subscription's story limit is reached"),
-    VOICE_SYNC_NOT_CONSENTED("GTW-418", "Keeping recordings online has not been agreed"),
-    VOICE_QUOTA_EXCEEDED("GTW-419", "The account's space for recordings is full"),
 
     // System & Infrastructure errors (GTW-500 to GTW-599)
     INTERNAL_SERVER_ERROR("GTW-500", "Internal server error"),
@@ -178,8 +176,7 @@ public enum ErrorCode {
     }
     
     private boolean isEntitlementDenial() {
-        return this == SUBSCRIPTION_REQUIRED || this == DOWNLOAD_LIMIT_REACHED
-                || this == VOICE_SYNC_NOT_CONSENTED || this == VOICE_QUOTA_EXCEEDED;
+        return this == SUBSCRIPTION_REQUIRED || this == DOWNLOAD_LIMIT_REACHED;
     }
 
     private boolean isOperationFailure() {

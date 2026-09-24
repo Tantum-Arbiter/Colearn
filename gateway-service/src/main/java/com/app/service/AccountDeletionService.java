@@ -45,7 +45,6 @@ public class AccountDeletionService {
     private final ChildRepository childRepository;
     private final ConsentRepository consentRepository;
     private final DownloadRepository downloadRepository;
-    private final VoiceSyncService voiceSyncService;
 
     /** Guard against concurrent deletion requests for the same userId. */
     private final ConcurrentMap<String, Boolean> deletionsInProgress = new ConcurrentHashMap<>();
@@ -58,8 +57,7 @@ public class AccountDeletionService {
                                   CircuitBreakerRegistry circuitBreakerRegistry,
                                   ChildRepository childRepository,
                                   ConsentRepository consentRepository,
-                                  DownloadRepository downloadRepository,
-                                  VoiceSyncService voiceSyncService) {
+                                  DownloadRepository downloadRepository) {
         this.userRepository = userRepository;
         this.userProfileRepository = userProfileRepository;
         this.userSessionRepository = userSessionRepository;
@@ -69,7 +67,6 @@ public class AccountDeletionService {
         this.childRepository = childRepository;
         this.consentRepository = consentRepository;
         this.downloadRepository = downloadRepository;
-        this.voiceSyncService = voiceSyncService;
     }
 
     /**
@@ -163,7 +160,6 @@ public class AccountDeletionService {
             int children = childRepository.deleteAll(userId).join();
             int consents = consentRepository.deleteAll(userId).join();
             int downloads = downloadRepository.deleteAll(userId).join();
-            voiceSyncService.deleteAll(userId);
             logger.debug("Deleted {} children, {} consent records and {} downloads for user: {}", children, consents, downloads, userId);
             metricsService.recordAccountDeletionStep("delete_children_consents", true,
                     System.currentTimeMillis() - stepStart);
