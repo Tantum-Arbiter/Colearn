@@ -99,37 +99,28 @@ re-downloading unchanged content.
 
 ```
 1. VERSION CHECK (1 API call)
-   VersionManager.checkVersions()
-   → GET /api/stories/version
-   → Compare local integers vs server integers
+   VersionManager.checkVersions() → GET /api/stories/version
    → If server unreachable → use cached content (offline mode)
-   → If local == server → skip sync entirely
 
-2. DELTA SYNC (1 API call)
+2. DELTA SYNC (1 API call, on every launch)
    POST /api/stories/delta
-   → Send: {clientVersion, storyChecksums: {storyId: "sha256", ...}}
-   → Receive: only stories with different checksums + list of deleted IDs
-   → Handle deletions: remove from local cache
+   → Send: {clientVersion, storyChecksums, achievementChecksums}
+   → Receive: changed stories (only when behind), deleted ids, the catalogue with fresh
+     signed thumbnails, and changed badge definitions + removed badge ids
+   → Bundled stories that changed are saved to the cache; CMS-only stories stay in the
+     catalogue (CatalogService) until the family downloads one
+   → Badge definitions go to AchievementDefinitionsService (art fetched once)
 
-3. ASSET DISCOVERY
-   Extract all image paths from changed stories (coverImage, backgroundImage)
-   → Filter out already-cached assets (CacheManager.hasAsset)
-   → Result: list of uncached asset paths
-
-4. BATCH URL GENERATION (N API calls, 100 paths per batch)
-   POST /api/assets/batch-urls
-   → Send: {paths: ["stories/xyz/cover/cover.webp", ...]}
-   → Receive: {urls: [{path, signedUrl, expiresAt}], failed: [...]}
-
-5. PARALLEL DOWNLOAD (5 concurrent)
-   Download images via signed URLs → save to local filesystem
-   → CacheManager.downloadAndCacheAsset(signedUrl, path)
-
-6. SAVE TO CACHE
-   CacheManager.updateStories(deltaResult.stories)
-   → Stories saved to AsyncStorage
-   → Version updated locally
+3. ON-DEMAND DOWNLOAD (StoryDownloadService.downloadStory)
+   GET /api/stories/{id}/download → the full story
+   → POST /api/assets/batch-urls for uncached images → download 5 at a time
+   → Deleting a story sends DELETE /api/stories/{id}/download so it no longer counts
+     against the plan's limit
 ```
+
+Story checksums are one canonical-JSON SHA-256 shared by the upload script, `cms-manager` and
+the gateway (`scripts/lib/story-checksum.js`, `StoryChecksums.java`), held to
+`contract-fixtures/story-checksums.json`.
 
 ## Authentication Flow
 
@@ -181,6 +172,53 @@ call). The sway reads one clock (`HERO_LOOP_MS`, 120 s; every rhythm in `HERO_RH
 so the loop wraps without a jump) through a pure worklet, `swayPose` in
 `constants/login-hero.ts`. The three never rock in step. Under Reduce Motion the clock stays at
 zero and the animals hold the painted pose.
+
+## The family's data, synced (Phase 8 C)
+
+`services/child-sync-service.ts` keeps one **child document** per child on the gateway
+(`/api/children/{childId}`): alias, avatar, age bucket, language, text size, favourites, per-story
+progress, finished books, challenge counts, earned badges, screen-time and reminder settings.
+
+- **When.** On launch after sign-in, and 2 s after any synced field changes
+  (`startAutoSync`, debounced). Guests never sync.
+- **Merge** (`services/child-document.ts`), using the last document both sides agreed on (the
+  *base*): lists that only grow (finished books, badges) are united; counts take the larger;
+  everything else is last-writer-wins against the base. With no base (a new phone), the account
+  wins and favourites are united. A value absent on the phone never erases the account's.
+- **Conflicts.** The `PUT` carries the version last read; `409 GTW-414` returns the current
+  document, which is merged and written again (up to 3 attempts).
+- **No times leave the phone.** Progress is outcomes; `achievementUnlockedAt` and screen-time
+  history stay local.
+- **Consent.** The parent's consent is recorded once per policy version (`POST /api/consents`).
+
+## Badges (Phase 8 D)
+
+Badges are data (`components/progress/achievements.ts`). Sixteen definitions are bundled with
+the app; CMS definitions arrive through delta sync and replace a bundled one of the same id when
+their `version` is at least as high. `evaluateAchievements` judges them from **facts** in the
+store — `finishedStoryIds` (finished, not merely opened), `challengeCounts` per kind, and
+`earnedAchievementIds` — and never takes an earned badge away. The reader reports challenges and
+finishes through `useAchievementEvents`, which also grants any `awards` the book names. The
+authoring side is in `scripts/cms-achievements/` (see `ACHIEVEMENTS-PLAN.md` §6.2).
+
+## Subscriptions and the gateway (Phase 8 E)
+
+RevenueCat stays the source of the tier on the phone. After sign-in the app logs RevenueCat in
+with the gateway account id (`subscription-service.ts` `identifyAccount`), so RevenueCat's
+webhook can tell the gateway which account paid; sign-out and account deletion log it out. The
+gateway can then check `/download` itself; a refusal (`GTW-416`, `GTW-417`) is reported like the
+app's own access check.
+
+## Voice recordings (Phase 8 F, opt-in)
+
+Choosing **Record** asks the parents-only question first (`MODE_OPTIONS` `grownUpsOnly`).
+Recordings live in the app's documents folder. Only if a grown-up turns on "Keep recordings on
+all your devices" (account page; offered only in builds with
+`EXPO_PUBLIC_VOICE_SYNC_AVAILABLE=true`) does `services/voice-sync-service.ts` record a
+`voiceSync` consent and keep them on the gateway: new or re-recorded pages go up through signed
+links, voice-overs from another phone come down, and a deletion anywhere reaches every phone —
+deletions made offline are queued and sent before anything is downloaded. Turning it off offers to
+remove the online copies.
 
 ## Orientation Strategy
 
@@ -720,7 +758,11 @@ Parent-facing exits (Parent corner, Record a Voice) go through
 **Zustand** (`store/app-store.ts`) with `persist` middleware backed by AsyncStorage.
 
 Persisted state: onboarding status, auth state, user profile, screen time settings, text size,
-notification preferences, crash reporting consent.
+notification preferences, crash reporting consent, story progress, finished books, challenge
+counts, earned badges, voice sync switch.
+
+The store is persisted at `version: 1`. `migrateAppState` moves a version-0 store forward by
+counting as finished every book with `completedCount > 0`.
 
 **Not persisted**: `isAppReady`, `hasHydrated`, loading states, navigation state.
 

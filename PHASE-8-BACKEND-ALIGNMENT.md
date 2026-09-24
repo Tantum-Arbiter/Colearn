@@ -1,8 +1,9 @@
 # Phase 8 — Backend alignment, device sync, achievements as data
 
-> **Status:** planned, nothing built. Written 2026-09-23 against `mvp` @ `ec5fd12d`, from an audit of
-> every client call, every gateway controller and Firestore model, and the CMS schema and upload
-> scripts. Findings cite `file:line` on that commit; re-check before acting if `mvp` has moved.
+> **Status:** built on branch `claude/backend-spec-phases-plan-d460bf` (2026-09-24), not yet on `mvp`
+> or deployed. Written 2026-09-23 against `mvp` @ `ec5fd12d`; findings below cite `file:line` on
+> that commit. See **Delivery status** at the end of this header for what is done, switched off, or
+> waiting on the operator.
 > Read [`TESTING-STANDARD.md`](TESTING-STANDARD.md), [`gateway-service/AGENTS.md`](gateway-service/AGENTS.md),
 > [`grow-with-freya/AGENTS.md`](grow-with-freya/AGENTS.md) and
 > [`grow-with-freya/ACHIEVEMENTS-PLAN.md`](grow-with-freya/ACHIEVEMENTS-PLAN.md) first.
@@ -28,6 +29,23 @@ progress, favourites, badges, recordings — lives on one device and is lost on 
 - Phase E comes after Phase C, before any push on paid content.
 - The app is on TestFlight only, with no store release, so no installed app depends on `/api/profile`.
   Phase C replaces it outright; there is no old-client window.
+
+**Delivery status (2026-09-24).** Every task was written test-first and mutation-swept by hand.
+
+| Phase | State | Commits |
+|-|-|-|
+| 0 — test gates | Done. JaCoCo floor, Jest thresholds, `backend-checks.yml` (⚠️ not yet run in CI) | `8f9d1cf5` `9ae00902` `da0a67ad` |
+| A — blockers | A1–A4, A6 done; A5 deferred (no content) | `614d801b` `48395568` `2e711842` `51c9af13` |
+| B — hygiene | B1, B3–B6, B8–B11 done; B2 parked; B7 README rewritten | `f81a043f` `2608be6f` `c34e15b8` `5b789708` `b80e3727` `b5821eb6` `2715eb6d` |
+| C — child sync | Done: child document, consent, export, deletion, app merge and auto-sync, func tests. `/api/profile` stays until the Phase C build is on TestFlight (C2). | `4f7bd845` `0e0c0d9f` `1d93f8bc` |
+| D — achievements | Done: definitions as data, facts, story awards, CMS authoring and upload (dry run by default), delta delivery, copy lint | `bf882114` `43025ed3` `791a983a` |
+| E — entitlements | Built, **switched off**: webhook answers 503 until `REVENUECAT_WEBHOOK_SECRET` is set; `/download` only logs refusals until `ENTITLEMENTS_ENFORCE=true` | `9c581678` `d8d38aa8` |
+| F — voice sync | Built, **switched off**: gateway answers 503 until `VOICE_BUCKET` is set; the app offers it only in builds with `EXPO_PUBLIC_VOICE_SYNC_AVAILABLE=true`. F1 (recording behind the gate) is live. F7: `app.config.js` does not set `android.allowBackup`, and Expo's default is on, so Android Auto Backup likely already carries recordings (⚠️ confirm in a prebuilt manifest). | `9eee8484` `e85bf7e2` |
+| Compliance | L1 DPIA and L2 policy changes drafted in [`compliance/`](compliance/) for the operator; L3 Firestore region ⚠️ unverified; L4 retention stated in the DPIA, with one decision open (consent records) | this commit |
+
+Operator actions before any of it is live: create the voice bucket (private, `europe-west2`);
+set the three secrets/flags; configure the RevenueCat webhook; deploy `firestore.rules` and
+indexes; approve the privacy-policy changes; confirm the Firestore region.
 
 ---
 

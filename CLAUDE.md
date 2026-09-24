@@ -47,6 +47,7 @@ colearn/
 ├── PHASE-5-SCALING-AND-WHITELABEL.md # White-label roadmap, multi-tenancy, scaling
 ├── PHASE-6-MATH-GAMES.md    # ⭐ Math games roadmap, age-appropriate mechanics, technical plan
 ├── PHASE-7-MUSIC-GAME.md    # Timed music play — hold-the-note mechanic, metadata, phases
+├── compliance/               # DPIA and privacy-policy change drafts
 ├── PHASE-8-BACKEND-ALIGNMENT.md # ⭐ API audit fixes, child data sync, achievements as data, voice sync
 └── CLAUDE.md                 # This file — root operating instructions
 ```
@@ -75,6 +76,7 @@ colearn/
 | CMS pipeline / story uploads / i18n | [`scripts/AGENTS.md`](scripts/AGENTS.md) (+ [`grow-with-freya/scripts/TRANSLATIONS.md`](grow-with-freya/scripts/TRANSLATIONS.md)) |
 | AI review orchestrator / reviewer accounts | [`.ai/README.md`](.ai/README.md) |
 | Security / pen-test suite | [`security/AGENTS.md`](security/AGENTS.md) |
+| DPIA, privacy-policy changes | [`compliance/DPIA.md`](compliance/DPIA.md), [`compliance/PRIVACY-POLICY-CHANGES.md`](compliance/PRIVACY-POLICY-CHANGES.md) |
 | Writing any test — edge-case checklist | [`TESTING-STANDARD.md`](TESTING-STANDARD.md) |
 | QA automation / E2E journeys | [`QA-AUTOMATION.md`](QA-AUTOMATION.md) |
 | Production readiness / infra | [`PHASE-4-PROD-READINESS.md`](PHASE-4-PROD-READINESS.md) |

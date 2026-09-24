@@ -19,8 +19,10 @@ Communication & code-display rules: see root `../CLAUDE.md` → **Communication 
 | Story generation | `generate-story-files.js`, `generate-mock-stories.js`, `generate-bundled-stories-ts.js` | Author + emit story JSON |
 | CMS stories (data) | `cms-stories/<story-id>/` | Source-of-truth story content |
 | Translation pipeline | `translate-all-cms-stories.js`, `apply-all-translations.js`, `translation-dictionary*.js`, `scan-and-translate-all-stories.js` | Apply hand-curated translation dictionaries (see also `../grow-with-freya/scripts/i18n-manager.js`) |
-| Upload | `upload-stories-to-firestore.js`, `upload-assets-to-firestore.js` (run via `package.json` scripts) | Push to Firestore + GCS |
-| Schema | `story-schema.json`, `story-catalog.json` | Validation contracts |
+| Upload | `upload-stories-to-firestore.js`, `upload-assets-to-firestore.js`, `upload-achievements-to-firestore.js` (a dry run unless `--apply`) (run via `package.json` scripts) | Push to Firestore + GCS |
+| Badge definitions (data) | `cms-achievements/<id>.json` | Badges as data; validated by `cms-manager achievements` |
+| Schema | `story-schema.json`, `achievement-schema.json`, `story-catalog.json` | Validation contracts |
+| Shared checksums | `lib/story-checksum.js`, `lib/achievement-checksum.js` | One canonical-JSON SHA-256 for stories (shared with the gateway) and badges |
 | CMS Manager | `cms-manager/` | Local CLI (`@earlyroots/cms-manager`) for validate / format / prepare / import |
 | Python tools | `code-to-word/`, `image-trace-venv/` | Standalone Python utilities — each owns its venv |
 
