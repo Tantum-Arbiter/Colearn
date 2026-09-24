@@ -41,10 +41,10 @@ progress, favourites, badges, recordings — lives on one device and is lost on 
 | D — achievements | Done: definitions as data, facts, story awards, CMS authoring and upload (dry run by default), delta delivery, copy lint | `bf882114` `43025ed3` `791a983a` |
 | E — entitlements | Built, **switched off**: webhook answers 503 until `REVENUECAT_WEBHOOK_SECRET` is set; `/download` only logs refusals until `ENTITLEMENTS_ENFORCE=true` | `9c581678` `d8d38aa8` |
 | F — voice sync | **Dropped by the operator 2026-09-24.** The sync was built (`9eee8484`, `e85bf7e2`) and reverted; only F1 remains: choosing Record asks the parents-only question. F7: Android Auto Backup is switched off (`android.allowBackup: false`; `expo config --type introspect` shows `android:allowBackup="false"` in the generated manifest), so recordings never leave an Android phone. | revert commit |
-| Compliance | L1 DPIA and L2 policy changes drafted in [`compliance/`](compliance/) for the operator; L3 Firestore region ⚠️ unverified; L4 retention stated in the DPIA, with one decision open (consent records) | this commit |
+| Compliance | L1 DPIA drafted in [`compliance/`](compliance/); L2 privacy policy updated on the website and in the app (approved 2026-09-24); L3 Firestore is in the EU; L4 consent records kept 3 years after deletion in `consent_log` | `e4d7ebe4` and later |
 
 Operator actions before any of it is live: set the two Phase E secrets/flags; configure the RevenueCat webhook; deploy `firestore.rules` and
-indexes; approve the privacy-policy changes; confirm the Firestore region.
+indexes; enable the `consent_log.expiresAt` TTL by deploying the indexes; confirm RevenueCat's and Sentry's data processing terms.
 
 ---
 

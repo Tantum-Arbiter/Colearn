@@ -58,7 +58,7 @@ were opened but not finished (`readStoryIds`), and all voice recordings.
 
 | Processor | What it receives | Location |
 |-|-|-|
-| Google Cloud (Firestore, Cloud Storage, Cloud Run / Compute Engine) | Everything in §2.1 | Compute in `europe-west1` (Belgium), `PHASE-4-PROD-READINESS.md`, `.github/workflows/gateway-build.yml`. **Firestore location ⚠️ UNVERIFIED (L3)**. |
+| Google Cloud (Firestore, Cloud Storage, Cloud Run / Compute Engine) | Everything in §2.1 | Compute in `europe-west1` (Belgium), `PHASE-4-PROD-READINESS.md`, `.github/workflows/gateway-build.yml`. Firestore in the EU (confirmed by the operator 2026-09-24, L3). |
 | Apple, Google | Sign-in | Their own terms |
 | RevenueCat | The app user id, which is the gateway account id since Phase E (`subscription-service.ts` `identifyAccount`), and store receipts | ⚠️ UNVERIFIED region; a US company — a transfer needs a UK IDTA or addendum |
 | Sentry | Crash reports, only with the parent's opt-in; `sendDefaultPii: false`; replay off in production (CLAUDE.md) | ⚠️ UNVERIFIED region |
@@ -90,7 +90,7 @@ removed so it cannot mislead.
 | Data | Kept |
 |-|-|
 | Account, child document, downloads, subscription | Until the account is deleted |
-| Consent records | **Until the account is deleted** — the code deletes them with the account (`AccountDeletionService.deleteChildrenAndConsents`). The live privacy policy says seven years. **Operator decision needed:** either keep a minimal consent log after deletion (and change the code) or change the policy. |
+| Consent records | While the account exists, then **3 years after deletion** in `consent_log` (policy version, scope, times, and a SHA-256 of the sign-in provider and subject — no name, no child data), removed by a Firestore TTL policy on `expiresAt` (`ConsentLog`, `firestore.indexes.json`). Decided by the operator 2026-09-24. |
 | Sessions | Until expiry or revocation; all revoked and deleted with the account |
 | Analytics | Not stored per user; aggregate counters only |
 
@@ -102,7 +102,7 @@ removed so it cannot mislead.
 | Parent-typed reminder text contains personal information | Medium / low | Stored only in the family's child document; exported and deleted with it | Low |
 | Subscription data mis-attributed on a shared phone | Low / low | RevenueCat logged out on sign-out and account deletion | Low |
 | Cross-account merge of local progress on a shared device | Medium / low | ⚠️ Known gap: signing in to a second account on the same phone merges that phone's local progress into it (PHASE-8 flags) | Medium — operator decision |
-| Transfer to the US without safeguards (RevenueCat, Sentry, possibly Firestore) | ⚠️ / medium | Confirm regions; put IDTA or addendum in place | Open |
+| Transfer to the US without safeguards (RevenueCat, Sentry) | ⚠️ / medium | EU SCCs with the UK Addendum in their data processing terms (as the privacy policy now states) — ⚠️ confirm both DPAs are accepted | Low once confirmed |
 
 ## 7. Children's Code standards touched
 
@@ -113,9 +113,9 @@ pressure to return — `contract-fixtures/badge-copy-forbidden.json`), transpare
 
 ## 8. Before sign-off
 
-1. Confirm the Firestore location (L3) and record it here.
-2. Decide consent-record retention (§5).
-3. Confirm processor regions and transfer mechanisms (§3).
+1. ~~Confirm the Firestore location (L3)~~ — EU.
+2. ~~Decide consent-record retention (§5)~~ — 3 years after deletion.
+3. Confirm RevenueCat's and Sentry's data processing terms (SCCs + UK Addendum) are accepted (§3).
 4. Approve the privacy policy changes in `PRIVACY-POLICY-CHANGES.md` — they must ship **with** the
    phases they describe.
 5. Sign-off: name, role, date — ______________________

@@ -1,7 +1,7 @@
 ---
 title: "Privacy policy — changes the Phase 8 backend needs"
 type: proposal
-status: draft — not applied; website/AGENTS.md requires the operator's confirmation before legal copy changes
+status: applied 2026-09-24 with the operator's approval — website version 1.1, in-app version 2.1
 page: website/src/app/privacy/page.tsx
 updated: 2026-09-24
 ---
@@ -9,8 +9,9 @@ updated: 2026-09-24
 # Privacy policy changes (L2)
 
 The live policy (`website/src/app/privacy/page.tsx`) no longer matches what the app and gateway
-do. Each row says what the page says now, what is true now, and proposed wording. Nothing here
-has been applied to the website. The in-app copy in `grow-with-freya/legal/` was not reviewed
+do. Each row says what the page says now, what is true now, and proposed wording. The operator approved these on 2026-09-24; they are applied to
+`website/src/app/privacy/page.tsx` and `grow-with-freya/components/account/privacy-policy-screen.tsx`,
+with Firestore in the EU and consent records kept 3 years after deletion. The in-app copy in `grow-with-freya/legal/` was not reviewed
 (that file is stale and unused — see the Phase 8 flags).
 
 | § | The page says | What the code does now | Proposed wording |

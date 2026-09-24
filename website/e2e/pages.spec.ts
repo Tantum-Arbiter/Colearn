@@ -53,6 +53,34 @@ test('the privacy page says voice recordings stay on the device', async ({ page 
   await expect(page.getByText(/voice features are deferred/i)).toHaveCount(0);
 });
 
+test('the privacy page lists what the app keeps for a child, and says no times are kept', async ({ page }) => {
+  await page.goto('/privacy');
+
+  await expect(page.getByText(/which books have been read and finished, badges earned/i)).toBeVisible();
+  await expect(page.getByText(/we do not keep a record of when your child used the app/i)).toBeVisible();
+});
+
+test('the privacy page names every company that receives a family\'s data', async ({ page }) => {
+  await page.goto('/privacy');
+
+  for (const processor of [/RevenueCat/, /Sentry/, /Google Cloud/]) {
+    await expect(page.getByText(processor).first()).toBeVisible();
+  }
+});
+
+test('the privacy page says account data is held in the EU', async ({ page }) => {
+  await page.goto('/privacy');
+
+  await expect(page.getByText(/stored in the European Union/i)).toBeVisible();
+});
+
+test('the privacy page keeps proof of consent for three years after deletion, and no longer promises seven', async ({ page }) => {
+  await page.goto('/privacy');
+
+  await expect(page.getByText(/for 3 years after you delete your account/i)).toBeVisible();
+  await expect(page.getByText(/7 years/)).toHaveCount(0);
+});
+
 test('the contact page offers a way to reach a person', async ({ page }) => {
   await page.goto('/contact');
 

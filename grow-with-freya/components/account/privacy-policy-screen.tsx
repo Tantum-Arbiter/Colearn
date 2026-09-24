@@ -61,8 +61,8 @@ export function PrivacyPolicyScreen({ onBack }: PrivacyPolicyScreenProps) {
               Controller: Tantum Arbiter, United Kingdom{'\n'}
               Contact (privacy): privacy@earlyroots.co.uk{'\n'}
               Data Protection Officer: N/A{'\n'}
-              Effective date: May 23, 2026{'\n'}
-              Version: 2.0
+              Effective date: September 24, 2026{'\n'}
+              Version: 2.1
             </Text>
           </View>
 
@@ -78,8 +78,9 @@ export function PrivacyPolicyScreen({ onBack }: PrivacyPolicyScreenProps) {
             <Text style={[styles.subsectionTitle, { fontSize: scaledFontSize(16) }]}>2.1 Data you provide</Text>
             <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
               • Parent account sign-in: Your Apple/Google account identifier (token), not your password.{'\n'}
-              • Child profiles: Display name/alias and avatar selection.{'\n'}
-              • Voice recordings: Parent narrations of stories, stored on-device only and never transmitted to our servers.{'\n'}
+              • Child profiles: an alias, an avatar, an age range (never a birth date), the app language and text size, favourite stories and songs, which books have been read and finished, badges earned, and screen-time and reminder settings, including any reminder text you write. We keep these so they are the same on every phone you sign in on. We do not keep a record of when your child used the app.{'\n'}
+              • Subscription: your plan (free, basic or premium) and when it renews or ends, as reported by the App Store or Google Play through RevenueCat, and which stories are downloaded, so we can honour your plan&apos;s limits.{'\n'}
+              • Voice recordings: Parent narrations of stories, stored on-device only and never transmitted to our servers. The app asks a parents-only question before recording.{'\n'}
               • Consents: Records of parent/guardian consents (terms version, consent scope, timestamp).{'\n'}
               • Device registration: Device identifier, platform, and model to keep profiles in sync.{'\n'}
               • Support: Emails or messages you send us.
@@ -106,7 +107,7 @@ export function PrivacyPolicyScreen({ onBack }: PrivacyPolicyScreenProps) {
             <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
               • Contract: To provide the app, sign you in, sync content, and show your profiles.{'\n'}
               • Consent: To record parental consent, crash reporting, and any optional features that require it.{'\n'}
-              • Legal obligation: To respond to data subject requests.{'\n'}
+              • Legal obligation: To respond to data subject requests, and to be able to show the consents you gave.{'\n'}
               • Legitimate interests (minimal, balanced): Security, fraud prevention, service analytics strictly necessary to operate the app. We process a pseudonymous device identifier to protect the app, prevent abuse, and ensure secure access. This identifier cannot be used to identify a person and is not shared with third parties.
             </Text>
           </View>
@@ -127,7 +128,7 @@ export function PrivacyPolicyScreen({ onBack }: PrivacyPolicyScreenProps) {
             <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>5. Children&apos;s data &amp; parental consent</Text>
             <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
               • The app is designed to be used with a parent/guardian present.{'\n'}
-              • We only process children&apos;s data (profile alias and avatar) with verifiable parental consent collected via the in-app parental gate.{'\n'}
+              • We only process children&apos;s data (the child profile described in Section 2.1) with verifiable parental consent collected via the in-app parental gate.{'\n'}
               • Voice recordings are stored on-device only and are under the parent&apos;s control.{'\n'}
               • Parents can review, export, or delete children&apos;s data at any time (see Section 9).
             </Text>
@@ -149,16 +150,16 @@ export function PrivacyPolicyScreen({ onBack }: PrivacyPolicyScreenProps) {
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>7. International transfers</Text>
             <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
-              Some processors (e.g. RevenueCat, Sentry) may process data outside the UK/EU. Where this occurs, we rely on recognised safeguards such as UK Addendum to SCCs / EU SCCs or a valid adequacy decision. Details are available on request.
+              Your account and child profile data are stored in the European Union (Google Cloud), which the UK recognises as providing adequate protection. RevenueCat and Sentry are based in the United States; transfers to them are protected by the EU Standard Contractual Clauses with the UK Addendum in their data processing terms. Details are available on request.
             </Text>
           </View>
 
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>8. Data retention</Text>
             <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
-              • Account data &amp; profiles: kept while your account is active.{'\n'}
+              • Account data, child profiles, subscription status and the list of downloaded stories: kept while your account is active, and deleted when you delete it.{'\n'}
               • Voice recordings: stored on-device only; deleted when you remove them or uninstall the app.{'\n'}
-              • Consent records: kept for 7 years for compliance.{'\n'}
+              • Consent records: kept while your account is active and for 3 years after you delete your account, as proof of the consents you gave. After deletion they hold only the policy version, the times, and a one-way coded form of your sign-in ID, never your name or your child&apos;s data.{'\n'}
               • Crash reports: retained by Sentry for up to 90 days.{'\n'}
               • Diagnostics logs: up to 30 days, unless required to investigate issues.{'\n\n'}
               When you request erasure, we delete personal data without undue delay unless retention is required by law.
@@ -169,14 +170,14 @@ export function PrivacyPolicyScreen({ onBack }: PrivacyPolicyScreenProps) {
             <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>9. Your rights (UK/EU)</Text>
             <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
               You can exercise these rights by emailing privacy@earlyroots.co.uk:{'\n'}
-              • Access (copy of your data){'\n'}
+              • Access (a copy of your data, which we can send in a machine-readable format){'\n'}
               • Rectification (fix inaccuracies){'\n'}
               • Erasure (delete data){'\n'}
               • Restriction (limit processing){'\n'}
               • Portability (get data in a machine-readable format){'\n'}
               • Objection (where we rely on legitimate interests){'\n'}
               • Withdraw consent (for consent-based features){'\n\n'}
-              You can also delete your account and all associated data directly in the app via Account → Delete Account. Upon deletion, your profile, child profiles, reading history, and all server-side data are permanently removed.{'\n\n'}
+              You can also delete your account and all associated data directly in the app via Account → Delete Account. Upon deletion, your profile, child profiles, reading history, subscription status and all other server-side data are permanently removed, except the consent records described in Section 8.{'\n\n'}
               You can also request account deletion at https://earlyroots.co.uk/delete-account.{'\n\n'}
               You have the right to complain to the UK ICO or your local data protection authority. UK ICO: https://ico.org.uk
             </Text>

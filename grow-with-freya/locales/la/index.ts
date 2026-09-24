@@ -3525,7 +3525,7 @@ export default {
     badges: {
       firstStory: {
         title: 'Prima fabula',
-        description: 'Primam fabulam tuam aperi',
+        description: 'Primam fabulam tuam perlege',
       },
       readingTogether: {
         title: 'Una legere',

@@ -3525,7 +3525,7 @@ export default {
     badges: {
       firstStory: {
         title: 'İlk Hikâye',
-        description: 'İlk hikâyeni aç',
+        description: 'İlk hikâyeni sonuna kadar oku',
       },
       readingTogether: {
         title: 'Birlikte Okuma',

@@ -32,6 +32,11 @@ describe('bundled badge copy', () => {
     expect(found).toEqual([]);
   });
 
+  it('asks for a finished first story, since the badge counts finished books, not opened ones', () => {
+    expect(en.progress.badges.firstStory.description).toMatch(/finish/i);
+    expect(en.progress.badges.firstStory.description).not.toMatch(/open/i);
+  });
+
   it('catches a forbidden phrase when one is used', () => {
     expect(forbidden.some((phrase) => new RegExp(`\\b${escape(phrase)}\\b`, 'i').test('Come back tomorrow for more'))).toBe(true);
   });

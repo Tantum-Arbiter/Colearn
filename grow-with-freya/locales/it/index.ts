@@ -3525,7 +3525,7 @@ export default {
     badges: {
       firstStory: {
         title: 'Prima storia',
-        description: 'Apri la tua primissima storia',
+        description: 'Finisci la tua primissima storia',
       },
       readingTogether: {
         title: 'Leggere insieme',

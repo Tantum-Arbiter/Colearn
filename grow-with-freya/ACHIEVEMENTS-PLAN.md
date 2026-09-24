@@ -432,9 +432,8 @@ flat or gently up — families finishing more books, not opening the app more.
    `ART.moon`, and so on) as stand-ins. Stickers use covers; theme, doing and together
    badges need bespoke art. Commission list attached to Phase 2.
 5. **"Read" meaning finished** — *decided and built*: the one-time migration grants
-   finished-status to books with `completedCount > 0`. Open copy point: the First Story
-   badge still reads "Open your very first story" in all 14 locales; it now needs a
-   finished book. The wording change needs translating, so it is left for the operator.
+   finished-status to books with `completedCount > 0`. The First Story badge now reads
+   "Finish your very first story" in all 14 locales (2026-09-24; translations want a native check).
 6. **Weekly parent note channel** — reminder notification (exists) vs email (does not).
 7. **Whether the streak count is shown to the child at all.** This plan shows it only in
    the parent corner, and only as "nights together: 14".

@@ -3525,7 +3525,7 @@ export default {
     badges: {
       firstStory: {
         title: 'Eerste verhaal',
-        description: 'Open je allereerste verhaal',
+        description: 'Lees je allereerste verhaal uit',
       },
       readingTogether: {
         title: 'Samen lezen',

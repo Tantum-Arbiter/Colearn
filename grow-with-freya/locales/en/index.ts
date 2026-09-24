@@ -3101,7 +3101,7 @@ export default {
       kindMoments: { title: 'Kind moments', description: 'You\'re learning to be kind.' },
     },
     badges: {
-      firstStory: { title: 'First Story', description: 'Open your very first story' },
+      firstStory: { title: 'First Story', description: 'Finish your very first story' },
       readingTogether: { title: 'Reading Together', description: 'Share 3 story times this week' },
       newWorlds: { title: 'New Worlds', description: 'Explore 3 different kinds of story' },
       favouriteFinder: { title: 'Favourite Finder', description: 'Choose a favourite story' },

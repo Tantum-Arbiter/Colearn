@@ -3525,7 +3525,7 @@ export default {
     badges: {
       firstStory: {
         title: 'はじめてのおはなし',
-        description: 'さいしょのおはなしをひらこう',
+        description: 'さいしょのおはなしをさいごまでよもう',
       },
       readingTogether: {
         title: 'いっしょによむ',
