@@ -144,28 +144,30 @@ to say why it cannot happen.
 
 ---
 
-## 7. Where the suites stand (2026-09-23)
+## 7. Where the suites stand
 
-What the audit found, so no one assumes a safety net that is not there. Phase 0 of
-[`PHASE-8-BACKEND-ALIGNMENT.md`](PHASE-8-BACKEND-ALIGNMENT.md) closes these.
+What the audit of 2026-09-23 found, and what Phase 0 of
+[`PHASE-8-BACKEND-ALIGNMENT.md`](PHASE-8-BACKEND-ALIGNMENT.md) did about it on 2026-09-24, so no
+one assumes a safety net that is not there.
 
-- **The gateway's unit tests never run in CI.** `gateway-service/Dockerfile:14` builds with
-  `-x test`; no workflow runs `./gradlew test`. JaCoCo reports but sets no floor.
-- **CI's func-tests run only `@gcp-dev` scenarios against the `gcp-dev` deployment**
-  (`.github/workflows/gateway-build.yml:228`), where request validation is off
-  (`application-gcp-dev.yml:38-39`). Locally the `test` profile leaves it on.
-- **Every gateway controller test disables the filters** (`@AutoConfigureMockMvc(addFilters = false)`,
-  six files). The integration tests that keep them on send attack payloads
-  (`SecurityScenarioIntegrationTest`), never the app's real traffic, so nothing proves a
-  legitimate body gets through `RequestValidationFilter`.
-- **The Jest coverage floor is 10%** (`grow-with-freya/jest.config.js:70-75`).
-- **The mutation sweep is by hand**; no tool runs it.
-- **No test at all:** gateway `SecurityConfig`, `CloudflareValidationFilter`,
+| Found | Now |
+|-|-|
+| The gateway's unit tests never ran in CI (`Dockerfile` builds with `-x test`) | `gateway-build.yml` runs them before the image is built; `backend-checks.yml` runs them on every pull request |
+| JaCoCo reported but set no floor; the Jest floor was 10% | Floors at the measured numbers: gateway 58% lines, 44% branches; app 59/55/55/60. Raise at the end of each phase, never lower |
+| CI's only func-tests were `@gcp-dev`, against `gcp-dev`, with request validation off | `backend-checks.yml` runs the local stack (`test,emulator`, validation on) with every scenario but `@ignore` and `@gcp-func-only` |
+| Every controller test switched the filters off | New controller tests are `@WebMvcTest` slices through the real chain (`SecuredWebMvcTest`, `TestTokens`): analytics, profile, account |
+| Nothing proved a legitimate body got through the filter | `RequestValidationFilterTest` tables: blocked **and** accepted, at each limit and one past it |
+| `TokenTamperingTest` stubbed the validator to throw | Real signed tokens: changed signature, swapped payload, `alg: none`, another secret, ±1 s expiry, wrong issuer, refresh-as-access |
+| Account-deletion 404/409/500 scenarios stubbed a route the controller never calls | 404 is driven for real; 409 and 500 are proven by `AccountControllerSliceTest` |
+| No func-test for analytics or download; reminders happy-path only | `analytics.feature`, `story-download.feature`, a reminder Scenario Outline |
+| App `story-loader`, `profile-sync-service`, `background-save-service`, `auth-service` only ever mocked | Each has its own test file |
+| No test crossed the app/gateway/CMS boundary with a real payload | `contract-fixtures/` read by both sides |
+
+**Still open:**
+- No test at all: gateway `SecurityConfig`, `CloudflareValidationFilter`,
   `InboundRequestTimeoutFilter`, `AssetController`, `FirebaseAuthController`, the content- and
-  asset-version repositories, every DTO's serialisation; app `story-loader`,
-  `profile-sync-service`, `background-save-service`, `auth-service`.
-- **No func-test scenario:** `POST /api/analytics/events`, `GET /api/stories/{id}/download`.
-  Reminders are happy-path only; `DELETE /api/profile` is never asserted.
-- **Tests that prove less than they claim:** `TokenTamperingTest` stubs the validator to throw;
-  the account-deletion 404/409/500 scenarios stub WireMock routes the controller never calls;
-  `user-management-unhappy-cases` exercises WireMock through the test proxy, not gateway logic.
+  asset-version repositories.
+- `user-management-unhappy-cases.feature` exercises WireMock through the test proxy, not gateway logic.
+- The mutation sweep is by hand.
+- ⚠️ UNVERIFIED: the two CI workflows have not yet run in GitHub Actions, and the local func-test
+  stack has not run since these changes.

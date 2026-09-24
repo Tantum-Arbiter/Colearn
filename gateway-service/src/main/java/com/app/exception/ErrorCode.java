@@ -147,7 +147,10 @@ public enum ErrorCode {
         } else if (code.compareTo("GTW-400") < 0) {
             return isRateLimit() ? 429 : 403;
         } else if (code.compareTo("GTW-500") < 0) {
-            return isNotFound() ? 404 : 409;
+            if (isNotFound()) {
+                return 404;
+            }
+            return isOperationFailure() ? 500 : 409;
         } else {
             return isServiceUnavailable() ? 503 : 500;
         }
@@ -165,6 +168,10 @@ public enum ErrorCode {
         return this == USER_NOT_FOUND || this == CHILD_PROFILE_NOT_FOUND || this == PROFILE_NOT_FOUND;
     }
     
+    private boolean isOperationFailure() {
+        return this == ACCOUNT_DELETION_FAILED || this == PROFILE_UPDATE_FAILED;
+    }
+
     private boolean isServiceUnavailable() {
         return this == SERVICE_UNAVAILABLE || this == MAINTENANCE_MODE || this == SYSTEM_OVERLOADED;
     }
