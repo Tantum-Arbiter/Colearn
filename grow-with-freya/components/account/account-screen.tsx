@@ -18,6 +18,7 @@ import { formatDurationCompact } from '../../utils/time-formatting';
 import { ApiClient } from '../../services/api-client';
 import { SecureStorage } from '../../services/secure-storage';
 import { reminderService } from '../../services/reminder-service';
+import { ChildSyncService } from '../../services/child-sync-service';
 import { DeviceInfoService } from '../../services/device-info-service';
 import { TEXT_SIZE_OPTIONS, useAccessibility } from '../../hooks/use-accessibility';
 import { OwlGuide } from '../owl-guide';
@@ -241,6 +242,7 @@ export function AccountScreen({ onBack, onNavigate, isActive = true }: AccountSc
       // Clear tokens and reminders
       await SecureStorage.clearAuthData();
       await reminderService.clearAllReminders();
+      await ChildSyncService.forgetAccount();
 
       Alert.alert(t('common.success'), t('alerts.deleteAccount.success'));
       onBack();

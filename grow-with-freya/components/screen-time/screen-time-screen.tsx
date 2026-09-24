@@ -18,14 +18,12 @@ import { Logger } from '@/utils/logger';
 const log = Logger.create('ScreenTimeScreen');
 import { useScreenTime } from './screen-time-provider';
 import { styles } from './styles';
-import { ApiClient } from '@/services/api-client';
 import { reminderService, type ReminderStats } from '@/services/reminder-service';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { UsageOverview } from './usage-overview';
 import { ScheduleCallout } from './schedule-callout';
 import { ScheduleWindow } from './schedule-window';
 import { AUTH_GRADIENT } from '@/components/auth/auth-theme';
-import { backgroundSaveService } from '@/services/background-save-service';
 import { OwlGuide } from '../owl-guide';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -258,39 +256,8 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
         await notificationService.cancelAllScheduledNotifications();
       }
 
-      // Sync to backend in background (only if authenticated)
-      const isAuthenticated = await ApiClient.isAuthenticated();
-      if (isAuthenticated) {
-        // Convert age to age range string
-        const ageRange = childAgeInMonths < 24 ? '18-24m' :
-                        childAgeInMonths < 72 ? '2-6y' :
-                        '6+';
-
-        // Queue profile update to run in background with retry
-        backgroundSaveService.queueProfileSave({
-          notifications: {
-            screenTimeEnabled: localScreenTimeEnabled,
-            smartRemindersEnabled: localNotificationsEnabled,
-          },
-          schedule: {
-            childAgeRange: ageRange,
-          },
-        });
-
-        // Sync reminders to backend (in background, don't block)
-        if (reminderService.hasUnsavedChanges()) {
-          log.debug('Syncing reminders to backend…');
-          reminderService.syncToBackend().catch((error: any) => {
-            log.warn('Failed to sync reminders:', error);
-          });
-        }
-
-        log.debug('Settings queued for sync');
-      } else {
-        // Not authenticated - just commit reminders locally
-        if (reminderService.hasUnsavedChanges()) {
-          await reminderService.commitChanges();
-        }
+      if (reminderService.hasUnsavedChanges()) {
+        await reminderService.syncToBackend();
       }
 
       // Reload stats with new age

@@ -12,18 +12,10 @@ import { MIN_NICKNAME_LENGTH } from '@/constants/profile';
 
 const mockSetUserProfile = jest.fn();
 const mockSetChildAge = jest.fn();
-const mockQueueProfileSave = jest.fn();
-
 let mockStore: Record<string, unknown>;
 
 jest.mock('@/store/app-store', () => ({
   useAppStore: () => mockStore,
-}));
-
-jest.mock('../../../services/background-save-service', () => ({
-  backgroundSaveService: {
-    queueProfileSave: (...args: unknown[]) => mockQueueProfileSave(...args),
-  },
 }));
 
 jest.mock('@/components/ui/star-background', () => ({
@@ -100,26 +92,12 @@ describe('EditProfileContent', () => {
     expect(onSaveComplete).toHaveBeenCalled();
   });
 
-  it('queues a background save for signed-in users', () => {
+  it('saves to the store alone; the child sync sends it', () => {
     const tree = render(<EditProfileContent />);
 
     fireEvent.press(saveButton(tree));
 
-    expect(mockQueueProfileSave).toHaveBeenCalledWith({
-      nickname: 'Ava',
-      avatarType: 'girl',
-      avatarId: 'fox',
-    });
-  });
-
-  it('does not queue a background save in guest mode', () => {
-    mockStore.isGuestMode = true;
-    const tree = render(<EditProfileContent />);
-
-    fireEvent.press(saveButton(tree));
-
-    expect(mockSetUserProfile).toHaveBeenCalled();
-    expect(mockQueueProfileSave).not.toHaveBeenCalled();
+    expect(mockSetUserProfile).toHaveBeenCalledWith('Ava', 'girl', 'fox');
   });
 
   it('falls back to the first animal for a profile saved before the animal avatars', () => {

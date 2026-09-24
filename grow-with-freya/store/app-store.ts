@@ -106,6 +106,10 @@ export interface AppState {
   learningViewMode: StoryViewMode;
 
   storyProgress: Record<string, StoryProgress>;
+  finishedStoryIds: string[];
+  challengeCounts: Record<string, number>;
+  earnedAchievementIds: string[];
+  consentRecordedVersion: string | null;
   useHomeScene: boolean;
 
   lastHomeVisitAt: string | null;
@@ -223,6 +227,10 @@ export const useAppStore = create<AppState>()(
       storyViewMode: 'carousel' as StoryViewMode,
       learningViewMode: 'carousel' as StoryViewMode,
       storyProgress: {},
+      finishedStoryIds: [],
+      challengeCounts: {},
+      earnedAchievementIds: [],
+      consentRecordedVersion: null,
       useHomeScene: true,
       lastHomeVisitAt: null,
       achievementUnlockedAt: {},
@@ -466,6 +474,10 @@ export const useAppStore = create<AppState>()(
         storyViewMode: state.storyViewMode,
         learningViewMode: state.learningViewMode,
         storyProgress: state.storyProgress,
+        finishedStoryIds: state.finishedStoryIds,
+        challengeCounts: state.challengeCounts,
+        earnedAchievementIds: state.earnedAchievementIds,
+        consentRecordedVersion: state.consentRecordedVersion,
         lastHomeVisitAt: state.lastHomeVisitAt,
         achievementUnlockedAt: state.achievementUnlockedAt,
         lastStoryCompletedAt: state.lastStoryCompletedAt,

@@ -16,7 +16,7 @@ import { BatchSyncService, BatchSyncProgress } from '@/services/batch-sync-servi
 import { CacheManager } from '@/services/cache-manager';
 import { StoryLoader } from '@/services/story-loader';
 import { ApiClient } from '@/services/api-client';
-import { ProfileSyncService } from '@/services/profile-sync-service';
+import { ChildSyncService } from '@/services/child-sync-service';
 import { Logger } from '@/utils/logger';
 
 const log = Logger.create('StartupLoading');
@@ -108,15 +108,9 @@ export function StartupLoadingScreen({ onComplete, onSlideInComplete, onError }:
       try {
         // Sync user profile first (nickname, avatar, settings)
         // This ensures profile is restored from server after app reset
-        try {
-          log.info('Syncing profile...');
-          const profile = await ApiClient.getProfile();
-          await ProfileSyncService.fullSync(profile);
-          log.info('Profile synced');
-        } catch (profileError) {
-          // Profile sync is non-critical - user may not have a profile yet
-          log.warn('Profile sync skipped:', profileError);
-        }
+        log.info('Syncing child...');
+        await ChildSyncService.sync();
+        await ChildSyncService.recordConsentIfNeeded();
 
         // Validate cache and remove any corrupted files before sync
         log.info('Validating cache...');

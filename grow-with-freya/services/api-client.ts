@@ -7,6 +7,18 @@ import { Logger } from '@/utils/logger';
 
 const log = Logger.create('API');
 
+export class ApiError extends Error {
+  constructor(readonly status: number, readonly body: unknown) {
+    super(`API request failed: ${status}`);
+    this.name = 'ApiError';
+  }
+}
+
+async function failure(response: Response): Promise<ApiError> {
+  const body = await response.json().catch(() => null);
+  return new ApiError(response.status, body);
+}
+
 const extra = Constants.expoConfig?.extra || {};
 const GATEWAY_URL = extra.gatewayUrl || process.env.EXPO_PUBLIC_GATEWAY_URL || 'http://localhost:8080';
 
@@ -61,11 +73,7 @@ export class ApiClient {
       return accessToken;
     }
     if (this.isRefreshing && this.refreshPromise) {
-      const profile = await this.refreshPromise;
-      if (profile) {
-        const { ProfileSyncService } = await import('./profile-sync-service');
-        await ProfileSyncService.syncProfileData(profile);
-      }
+      await this.refreshPromise;
       return await SecureStorage.getAccessToken();
     }
 
@@ -73,11 +81,7 @@ export class ApiClient {
     this.refreshPromise = this.performTokenRefresh();
 
     try {
-      const profile = await this.refreshPromise;
-      if (profile) {
-        const { ProfileSyncService } = await import('./profile-sync-service');
-        await ProfileSyncService.syncProfileData(profile);
-      }
+      await this.refreshPromise;
       return await SecureStorage.getAccessToken();
     } finally {
       this.isRefreshing = false;
@@ -194,7 +198,7 @@ export class ApiClient {
             clearTimeout(retryTimeoutId);
 
             if (!retryResponse.ok) {
-              throw new Error(`API request failed: ${retryResponse.status}`);
+              throw await failure(retryResponse);
             }
 
             return await retryResponse.json();
@@ -213,7 +217,7 @@ export class ApiClient {
       }
 
       if (!response.ok) {
-        throw new Error(`API request failed: ${response.status}`);
+        throw await failure(response);
       }
 
       return await response.json();
@@ -234,87 +238,6 @@ export class ApiClient {
       await this.performTokenRefresh();
     } catch (error) {
       log.error('Failed to refresh token:', error);
-      throw error;
-    }
-  }
-
-  static async getProfile(): Promise<{
-    userId: string;
-    nickname: string;
-    avatarType: 'boy' | 'girl';
-    avatarId: string;
-    notifications: any;
-    schedule: any;
-    createdAt: string;
-    updatedAt: string;
-    version: number;
-  }> {
-    return this.request('/api/profile', {
-      method: 'GET',
-    });
-  }
-
-  static async updateProfile(data: {
-    nickname?: string;
-    avatarType?: 'boy' | 'girl';
-    avatarId?: string;
-    notifications?: Record<string, unknown>;
-    schedule?: Record<string, unknown>;
-  }): Promise<{
-    userId: string;
-    nickname: string;
-    avatarType: 'boy' | 'girl';
-    avatarId: string;
-    notifications: any;
-    schedule: any;
-    createdAt: string;
-    updatedAt: string;
-    version: number;
-  }> {
-    return this.request('/api/profile', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  }
-
-  static async syncReminders(reminders: any[]): Promise<void> {
-    let profile;
-    try {
-      profile = await this.getProfile();
-    } catch (error: any) {
-      if (error.message?.includes('404')) {
-        log.info('No profile found - creating new profile with reminders');
-        await this.updateProfile({
-          nickname: 'User',
-          avatarType: 'boy',
-          avatarId: 'default',
-          schedule: { customReminders: reminders },
-        });
-        return;
-      }
-      throw error;
-    }
-
-    const schedule = profile.schedule || {};
-    schedule.customReminders = reminders;
-    await this.updateProfile({
-      nickname: profile.nickname,
-      avatarType: profile.avatarType,
-      avatarId: profile.avatarId,
-      notifications: profile.notifications || {},
-      schedule,
-    });
-  }
-
-  static async getReminders(): Promise<any[]> {
-    try {
-      const profile = await this.getProfile();
-      return profile.schedule?.customReminders || [];
-    } catch (error: any) {
-      if (error.message?.includes('404')) {
-        log.info('No profile found - returning empty reminders');
-        return [];
-      }
       throw error;
     }
   }

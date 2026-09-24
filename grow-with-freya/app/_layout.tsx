@@ -30,7 +30,6 @@ import { appTreeMounted, authEntrance, authOverlayUp, landsOnMainMenu, menuRevea
 import { AuthOverlay } from '@/components/auth/auth-overlay';
 import { ApiClient } from '@/services/api-client';
 import { SecureStorage } from '@/services/secure-storage';
-import { backgroundSaveService } from '@/services/background-save-service';
 import { SimpleStoryScreen } from '@/components/stories/simple-story-screen';
 import type { CatalogueSectionRequest } from '@/components/stories/catalogue/story-catalogue-screen';
 import { catalogueSectionFor } from '@/constants/catalogue-destinations';
@@ -59,7 +58,7 @@ import { StartupLoadingScreen } from '@/components/startup-loading-screen';
 import { BatchSyncService } from '@/services/batch-sync-service';
 import { CacheManager } from '@/services/cache-manager';
 import { StoryLoader } from '@/services/story-loader';
-import { ProfileSyncService } from '@/services/profile-sync-service';
+import { ChildSyncService } from '@/services/child-sync-service';
 import { VersionManager } from '@/services/version-manager';
 // Import reminder service to trigger initialization and reschedule notifications on app startup
 import { reminderService } from '@/services/reminder-service';
@@ -127,6 +126,8 @@ function AppContent() {
   useEffect(() => {
     SystemUI.setBackgroundColorAsync(ROOT_BACKGROUND).catch(() => undefined);
   }, []);
+
+  useEffect(() => ChildSyncService.startAutoSync(), []);
 
   // Access story transition context to know when to show story reader
   const {
@@ -391,10 +392,8 @@ function AppContent() {
                     }
                   } catch (e) { log.warn('[Layout] Background token validation skipped:', e); }
                   // Sync profile
-                  try {
-                    const profile = await ApiClient.getProfile();
-                    await ProfileSyncService.fullSync(profile);
-                  } catch (e) { log.warn('[Layout] Background profile sync skipped:', e); }
+                  await ChildSyncService.sync();
+                  await ChildSyncService.recordConsentIfNeeded();
                   // Validate cache
                   await CacheManager.validateAndCleanCache();
                   // Metadata sync
@@ -488,7 +487,7 @@ function AppContent() {
           } else if (isAuthenticated) {
             // Auth successful - retry any pending background saves
             log.info('[AppState] Authentication valid');
-            backgroundSaveService.retryPendingSaves();
+            ChildSyncService.requestSync();
           }
           // If not authenticated and no onboarding completed, do nothing
         } catch (error) {
