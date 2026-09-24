@@ -19,6 +19,8 @@ class ErrorCodeStatusTest {
             "UNAUTHORIZED_ACCESS, 401",
             "SUBSCRIPTION_REQUIRED, 403",
             "DOWNLOAD_LIMIT_REACHED, 403",
+            "VOICE_SYNC_NOT_CONSENTED, 403",
+            "VOICE_QUOTA_EXCEEDED, 403",
             "CHILD_VERSION_CONFLICT, 409"
     })
     void mapsEachCodeToTheStatusThatDescribesIt(ErrorCode code, int status) {

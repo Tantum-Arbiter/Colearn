@@ -39,6 +39,7 @@ class AccountDeletionServiceTest {
     @Mock private ChildRepository childRepository;
     @Mock private ConsentRepository consentRepository;
     @Mock private com.app.repository.DownloadRepository downloadRepository;
+    @Mock private VoiceSyncService voiceSyncService;
 
     private AccountDeletionService deletionService;
     private CircuitBreakerRegistry circuitBreakerRegistry;
@@ -60,7 +61,7 @@ class AccountDeletionServiceTest {
         deletionService = new AccountDeletionService(
                 userRepository, userProfileRepository, userSessionRepository,
                 sessionService, metricsService, circuitBreakerRegistry,
-                childRepository, consentRepository, downloadRepository
+                childRepository, consentRepository, downloadRepository, voiceSyncService
         );
         org.mockito.Mockito.lenient().when(downloadRepository.deleteAll(USER_ID)).thenReturn(CompletableFuture.completedFuture(3));
         org.mockito.Mockito.lenient().when(childRepository.deleteAll(USER_ID)).thenReturn(CompletableFuture.completedFuture(1));
@@ -106,6 +107,7 @@ class AccountDeletionServiceTest {
         verify(childRepository).deleteAll(USER_ID);
         verify(consentRepository).deleteAll(USER_ID);
         verify(downloadRepository).deleteAll(USER_ID);
+        verify(voiceSyncService).deleteAll(USER_ID);
         inOrder.verify(sessionService).revokeAllUserSessions(USER_ID);
         inOrder.verify(userSessionRepository).deleteAllUserSessions(USER_ID);
         inOrder.verify(userRepository).deleteUser(USER_ID);
@@ -315,6 +317,18 @@ class AccountDeletionServiceTest {
         when(userRepository.findById(USER_ID)).thenReturn(CompletableFuture.completedFuture(Optional.of(testUser)));
         when(userProfileRepository.exists(USER_ID)).thenReturn(CompletableFuture.completedFuture(false));
         when(downloadRepository.deleteAll(USER_ID)).thenReturn(CompletableFuture.failedFuture(new RuntimeException("firestore down")));
+
+        org.junit.jupiter.api.Assertions.assertThrows(Exception.class, () -> deletionService.deleteAccount(USER_ID).get());
+
+        verify(userRepository, never()).deleteUser(USER_ID);
+    }
+
+    @Test
+    @DisplayName("A failure deleting the recordings kept online stops before the account is removed")
+    void deleteAccount_VoiceDeleteFails_Aborts() {
+        when(userRepository.findById(USER_ID)).thenReturn(CompletableFuture.completedFuture(Optional.of(testUser)));
+        when(userProfileRepository.exists(USER_ID)).thenReturn(CompletableFuture.completedFuture(false));
+        org.mockito.Mockito.doThrow(new IllegalStateException("gcs down")).when(voiceSyncService).deleteAll(USER_ID);
 
         org.junit.jupiter.api.Assertions.assertThrows(Exception.class, () -> deletionService.deleteAccount(USER_ID).get());
 
