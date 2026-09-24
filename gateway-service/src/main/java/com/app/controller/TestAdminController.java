@@ -346,7 +346,7 @@ public class TestAdminController {
 
         // Create pages with localized text
         StoryPage page1 = new StoryPage("page-1-1", 1, "Once upon a time, there was a sleepy bear.");
-        page1.setLocalizedText(new LocalizedText(
+        page1.setLocalizedText(Map.of("4-6", new LocalizedText(
             "Once upon a time, there was a sleepy bear.",
             "Dawno, dawno temu żył sobie śpiący miś.",
             "Había una vez un oso muy dormido.",
@@ -361,11 +361,11 @@ public class TestAdminController {
             "Der var engang en meget søvnig bjørn.",
             "Olim erat ursus valde somnolentus.",
             "从前有一只非常困倦的熊。"
-        ));
+        )));
 
         StoryPage page2 = new StoryPage("page-1-2", 2, "The bear yawned and stretched.");
         page2.setBackgroundImage("assets/stories/test-story-1/page-2/background.webp");
-        page2.setLocalizedText(new LocalizedText(
+        page2.setLocalizedText(Map.of("4-6", new LocalizedText(
             "The bear yawned and stretched.",
             "Miś ziewnął i przeciągnął się.",
             "El oso bostezó y se estiró.",
@@ -380,7 +380,7 @@ public class TestAdminController {
             "Bjørnen gjalp og strakte sig.",
             "Ursus oscitavit et se extendit.",
             "熊打了个哈欠，伸了个懒腰。"
-        ));
+        )));
 
         // Add interactive element to page 2 for functional tests
         InteractiveElement doorElement = new InteractiveElement("door", "reveal", "assets/stories/test-story-1/page-2/door-open.webp");
@@ -389,7 +389,7 @@ public class TestAdminController {
         page2.setInteractiveElements(List.of(doorElement));
 
         StoryPage page3 = new StoryPage("page-1-3", 3, "Time for bed, said the bear.");
-        page3.setLocalizedText(new LocalizedText(
+        page3.setLocalizedText(Map.of("4-6", new LocalizedText(
             "Time for bed, said the bear.",
             "Pora spać, powiedział miś.",
             "Es hora de dormir, dijo el oso.",
@@ -404,7 +404,7 @@ public class TestAdminController {
             "Tid til at gå i seng, sagde bjørnen.",
             "Tempus cubile, inquit ursus.",
             "该睡觉了，熊说。"
-        ));
+        )));
 
         story1.setPages(List.of(page1, page2, page3));
         stories.add(story1);
@@ -456,8 +456,7 @@ public class TestAdminController {
                 story.getPages().forEach(page -> {
                     content.append(page.getId());
                     content.append(page.getText());
-                    content.append(serializeLocalizedText(page.getLocalizedText()));
-                    content.append(serializeAgeGroupedText(page.getAgeGroupText()));
+                    content.append(serializeAgeGroupedText(page.getLocalizedText()));
                     content.append(page.getPageNumber());
                 });
             }
@@ -493,7 +492,7 @@ public class TestAdminController {
             return "";
         }
         StringBuilder sb = new StringBuilder();
-        ageGroupedText.forEach((ageGroup, lt) -> {
+        new java.util.TreeMap<>(ageGroupedText).forEach((ageGroup, lt) -> {
             sb.append(ageGroup).append(":{");
             sb.append(serializeLocalizedText(lt));
             sb.append("}|");
@@ -668,10 +667,7 @@ public class TestAdminController {
                         page.setCharacterImage((String) pageMap.get("characterImage"));
 
                         if (pageMap.get("localizedText") instanceof Map<?, ?> localizedTextMap) {
-                            page.setLocalizedText(parseLocalizedText(localizedTextMap));
-                        }
-                        if (pageMap.get("ageGroupText") instanceof Map<?, ?> ageGroupTextMap) {
-                            page.setAgeGroupText(parseAgeGroupedText(ageGroupTextMap));
+                            page.setLocalizedText(parseAgeGroupedText(localizedTextMap));
                         }
 
                         // Parse interactiveElements

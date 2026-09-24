@@ -181,8 +181,7 @@ public class StoryService {
                 story.getPages().forEach(page -> {
                     content.append(page.getId());
                     content.append(page.getText());
-                    content.append(serializeLocalizedText(page.getLocalizedText()));
-                    content.append(serializeAgeGroupedText(page.getAgeGroupText()));
+                    content.append(serializeAgeGroupedText(page.getLocalizedText()));
                     content.append(page.getPageNumber());
                 });
             }
@@ -219,7 +218,7 @@ public class StoryService {
             return "";
         }
         StringBuilder sb = new StringBuilder();
-        ageGroupedText.forEach((ageGroup, lt) -> {
+        new java.util.TreeMap<>(ageGroupedText).forEach((ageGroup, lt) -> {
             sb.append(ageGroup).append(":{");
             sb.append(serializeLocalizedText(lt));
             sb.append("}|");

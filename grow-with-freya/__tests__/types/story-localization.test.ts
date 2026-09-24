@@ -263,4 +263,16 @@ describe('Story Localization', () => {
       expect(getLocalizedText(undefined, 'Page text', 'pl', { '4-6': {} } as AgeGroupText, '4-6')).toBe('Page text');
     });
   });
+
+  describe('the contract shared with the gateway', () => {
+    const fixture = require('../../../contract-fixtures/age-group-text-cases.json');
+
+    it.each(Object.entries(fixture.chains) as [string, string[]][])('orders the groups for %s as the gateway does', (ageGroup, chain) => {
+      expect(ageGroupFallbackChain(ageGroup === 'unknown' ? undefined : (ageGroup as never))).toEqual(chain);
+    });
+
+    it.each(fixture.cases.map((c: { name: string }) => [c.name, c]))('%s', (_name, c: any) => {
+      expect(getLocalizedText(undefined, c.fallback, c.language ?? undefined, c.text, c.ageGroup ?? undefined)).toBe(c.expected);
+    });
+  });
 });

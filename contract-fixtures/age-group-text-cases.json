@@ -1,0 +1,21 @@
+{
+  "chains": {
+    "0-2": ["0-2", "2-4", "4-6"],
+    "2-4": ["2-4", "0-2", "4-6"],
+    "4-6": ["4-6", "2-4", "0-2"],
+    "unknown": ["4-6", "2-4", "0-2"]
+  },
+  "cases": [
+    { "name": "own group, own language", "text": { "0-2": { "en": "Tiny", "pl": "Mały" }, "4-6": { "en": "Big", "pl": "Duży" } }, "ageGroup": "0-2", "language": "pl", "fallback": "page", "expected": "Mały" },
+    { "name": "toddler on a book written only for older children", "text": { "4-6": { "en": "Big", "pl": "Duży" } }, "ageGroup": "0-2", "language": "pl", "fallback": "page", "expected": "Duży" },
+    { "name": "middle child on a book written only for babies", "text": { "0-2": { "en": "Tiny", "pl": "Mały" } }, "ageGroup": "2-4", "language": "pl", "fallback": "page", "expected": "Mały" },
+    { "name": "middle child prefers the younger neighbour", "text": { "0-2": { "en": "Tiny" }, "4-6": { "en": "Big" } }, "ageGroup": "2-4", "language": "en", "fallback": "page", "expected": "Tiny" },
+    { "name": "older child when only the middle group exists", "text": { "2-4": { "en": "Middle" } }, "ageGroup": "4-6", "language": "en", "fallback": "page", "expected": "Middle" },
+    { "name": "requested language in another group beats English in the own group", "text": { "0-2": { "en": "Tiny" }, "4-6": { "en": "Big", "pl": "Duży" } }, "ageGroup": "0-2", "language": "pl", "fallback": "page", "expected": "Duży" },
+    { "name": "English from the nearest group when no group has the language", "text": { "2-4": { "en": "Middle" }, "4-6": { "en": "Big" } }, "ageGroup": "4-6", "language": "de", "fallback": "page", "expected": "Big" },
+    { "name": "empty translations are skipped", "text": { "4-6": { "en": "", "pl": "" }, "2-4": { "en": "Middle" } }, "ageGroup": "4-6", "language": "pl", "fallback": "page", "expected": "Middle" },
+    { "name": "unknown age reads the oldest group first", "text": { "0-2": { "en": "Tiny" }, "4-6": { "en": "Big" } }, "ageGroup": null, "language": "en", "fallback": "page", "expected": "Big" },
+    { "name": "no text anywhere shows the page text", "text": { "4-6": {} }, "ageGroup": "4-6", "language": "pl", "fallback": "page", "expected": "page" },
+    { "name": "no language asked reads English", "text": { "4-6": { "en": "Big", "pl": "Duży" } }, "ageGroup": "4-6", "language": null, "fallback": "page", "expected": "Big" }
+  ]
+}
