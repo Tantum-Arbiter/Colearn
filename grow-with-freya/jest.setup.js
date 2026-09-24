@@ -376,6 +376,9 @@ jest.mock('@/store/app-store', () => ({
     _devSubscriptionOverride: null,
     getEffectiveTier: () => 'free',
     readStoryIds: [],
+    finishedStoryIds: [],
+    challengeCounts: {},
+    earnedAchievementIds: [],
     userAvatarType: null,
     backgroundAnimationState: {
       cloudFloat1: 0,

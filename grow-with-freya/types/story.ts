@@ -132,6 +132,11 @@ export interface StoryPage {
   readingChallenge?: ReadingChallenge; // Present when interactionType === 'reading_challenge'
 }
 
+export interface StoryAward {
+  achievementId: string;
+  trigger: 'finish' | { challengePageId: string };
+}
+
 export interface Story {
   id: string;
   title: string;
@@ -141,6 +146,7 @@ export interface Story {
   isAvailable: boolean;
   ageRange?: string;
   pageCount?: number;
+  awards?: StoryAward[];
   duration?: number; // legacy page count written by older story-factory exports; read storyPageCount()
   description?: string;
   localizedDescription?: LocalizedText; // Translated descriptions

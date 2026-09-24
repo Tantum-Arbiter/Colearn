@@ -3,12 +3,19 @@ import { VersionManager, VersionCheckResult } from '../../services/version-manag
 import { CacheManager } from '../../services/cache-manager';
 import { CatalogService } from '../../services/catalog-service';
 import { ApiClient } from '../../services/api-client';
+import { AchievementDefinitionsService } from '../../services/achievement-definitions-service';
 import { Story } from '../../types/story';
 
 jest.mock('../../services/version-manager');
 jest.mock('../../services/cache-manager');
 jest.mock('../../services/api-client');
 jest.mock('../../services/catalog-service');
+jest.mock('../../services/achievement-definitions-service', () => ({
+  AchievementDefinitionsService: {
+    getChecksums: jest.fn().mockResolvedValue({}),
+    applyDelta: jest.fn().mockResolvedValue(undefined),
+  },
+}));
 jest.mock('expo-file-system/legacy', () => ({
   getInfoAsync: jest.fn().mockResolvedValue({ exists: true, size: 1024 }),
 }));
@@ -25,6 +32,7 @@ const mockVersionManager = VersionManager as jest.Mocked<typeof VersionManager>;
 const mockCacheManager = CacheManager as jest.Mocked<typeof CacheManager>;
 const mockCatalogService = CatalogService as jest.Mocked<typeof CatalogService>;
 const mockApiClient = ApiClient as jest.Mocked<typeof ApiClient>;
+const mockDefinitions = AchievementDefinitionsService as jest.Mocked<typeof AchievementDefinitionsService>;
 
 // Test data - CMS-only story (not in bundled ALL_STORIES)
 const mockCmsStory: Story = {
@@ -519,6 +527,71 @@ describe('BatchSyncService', () => {
       expect(mockCatalogService.updateCatalog).toHaveBeenCalledWith(mockDeltaResponse.catalog);
       expect(stats.storiesUpdated).toBe(2);
       expect(stats.assetsDownloaded).toBe(0); // No asset downloads in on-demand model
+    });
+  });
+
+  describe('badge definitions ride on the delta', () => {
+    const upToDate: VersionCheckResult = {
+      localVersion: { stories: 10, assets: 5, lastUpdated: '2026-09-01T00:00:00Z' },
+      serverVersion: { stories: 10, assets: 5, lastUpdated: '2026-09-01T00:00:00Z' },
+      needsStorySync: false,
+      needsAssetSync: false,
+    };
+    const behind: VersionCheckResult = { ...upToDate, serverVersion: { stories: 11, assets: 5, lastUpdated: '2026-09-02T00:00:00Z' }, needsStorySync: true };
+    const badge = { id: 'theme-calming', version: 2, checksum: 'sum-2' };
+
+    beforeEach(() => {
+      mockCacheManager.getStories.mockResolvedValue([]);
+      mockCacheManager.updateStories.mockResolvedValue();
+      mockVersionManager.updateLocalVersion.mockResolvedValue();
+      mockDefinitions.getChecksums.mockResolvedValue({ 'theme-calming': 'sum-1' });
+      mockDefinitions.applyDelta.mockResolvedValue(undefined);
+    });
+
+    it('sends the checksums of the definitions the device holds', async () => {
+      mockVersionManager.checkVersions.mockResolvedValue(upToDate);
+      mockApiClient.request.mockResolvedValueOnce({ ...mockDeltaResponse, stories: [] });
+
+      await BatchSyncService.performBatchSync();
+
+      const body = JSON.parse((mockApiClient.request.mock.calls[0][1] as RequestInit).body as string);
+      expect(body.achievementChecksums).toEqual({ 'theme-calming': 'sum-1' });
+    });
+
+    it.each([
+      ['stories are up to date', upToDate],
+      ['stories changed', behind],
+    ])('keeps changed and deleted definitions when %s', async (_label, versions) => {
+      mockVersionManager.checkVersions.mockResolvedValue(versions);
+      mockApiClient.request.mockResolvedValueOnce({
+        ...mockDeltaResponse,
+        achievementDefinitions: [badge],
+        deletedAchievementIds: ['gone'],
+      });
+
+      await BatchSyncService.performBatchSync();
+
+      expect(mockDefinitions.applyDelta).toHaveBeenCalledWith([badge], ['gone']);
+    });
+
+    it('leaves the definitions alone when the gateway sends none', async () => {
+      mockVersionManager.checkVersions.mockResolvedValue(behind);
+      mockApiClient.request.mockResolvedValueOnce(mockDeltaResponse);
+
+      await BatchSyncService.performBatchSync();
+
+      expect(mockDefinitions.applyDelta).not.toHaveBeenCalled();
+    });
+
+    it('still syncs the stories when the definitions cannot be kept', async () => {
+      mockVersionManager.checkVersions.mockResolvedValue(behind);
+      mockApiClient.request.mockResolvedValueOnce({ ...mockDeltaResponse, achievementDefinitions: [badge], deletedAchievementIds: [] });
+      mockDefinitions.applyDelta.mockRejectedValue(new Error('disk full'));
+
+      const stats = await BatchSyncService.performBatchSync();
+
+      expect(stats.errors).toEqual([]);
+      expect(mockVersionManager.updateLocalVersion).toHaveBeenCalled();
     });
   });
 });

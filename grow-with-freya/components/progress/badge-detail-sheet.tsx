@@ -17,7 +17,7 @@ import { PanelClouds } from '@/components/ui/panel-clouds';
 import { PanelStarfield } from '@/components/ui/panel-starfield';
 import { StarDivider } from '@/components/ui/star-divider';
 import { RADIUS_LARGE, SPACE_2, SPACE_3, SPACE_4, SPACE_5 } from '@/components/child-ui/tokens';
-import { Badge } from './progress-model';
+import { Badge, badgeDescription, badgeTitle } from './progress-model';
 import { BadgeArtwork } from './badge-artwork';
 import { BadgeProgress } from './badge-progress';
 
@@ -59,9 +59,9 @@ export function BadgeDetailSheet({ badge, onClose, onRecommend }: BadgeDetailShe
 
           <BadgeArtwork artwork={badge.artwork} status={badge.status} />
 
-          <Text style={[styles.title, { fontSize: scaledFontSize(22) }]}>{t(badge.titleKey)}</Text>
+          <Text style={[styles.title, { fontSize: scaledFontSize(22) }]}>{badgeTitle(badge, t)}</Text>
           <Text style={[styles.description, { fontSize: scaledFontSize(15) }]}>
-            {t(badge.descriptionKey)}
+            {badgeDescription(badge, t)}
           </Text>
           <StarDivider testID="badge-detail-divider" />
 

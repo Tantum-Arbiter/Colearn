@@ -63,6 +63,7 @@ function applyState(next: Partial<AppState>) {
     storyProgress: {},
     getContinueReadingStoryId: () => null,
     readStoryIds: [],
+    finishedStoryIds: [],
     readingStreak: 0,
     lastReadDate: null,
     achievementUnlockedAt: {},
@@ -159,7 +160,8 @@ describe('useChildHomeData', () => {
     mockSessions.push({ activity: 'story', duration: 84 * 60, date: new Date().toISOString().slice(0, 10) });
     mockTotals.push({ date: '2026-09-05', seconds: 1200 }, { date: '2026-09-06', seconds: 5000 });
     applyState({
-      readStoryIds: ['a', 'b', 'c'],
+      readStoryIds: ['a', 'b', 'c', 'opened-only'],
+      finishedStoryIds: ['a', 'b', 'c'],
       readingStreak: 4,
       lastReadDate: new Date().toISOString().slice(0, 10),
       storyProgress: { moonlight: { pageIndex: 7, totalPages: 14, updatedAt: '2026-09-06T08:00:00.000Z', completedCount: 0 } },
@@ -193,6 +195,19 @@ describe('useChildHomeData', () => {
 
     expect(result.current.data.newestAchievement).toMatchObject({ id: 'first-story', icon: 'book', title: 'progress.badges.first-story.title' });
     expect(result.current.data.nextAchievement).toMatchObject({ title: 'progress.badges.story-adventurer.title', current: 8, required: 10, unit: 'stories' });
+  });
+
+  it('should show CMS badges by their own copy', () => {
+    mockBadges.push(
+      { ...badge('theme-calming', 'earned', 2, 2), titleKey: '', descriptionKey: '', title: 'Calm Collector', description: 'You finished two calming books' },
+      { ...badge('theme-animals', 'in_progress', 1, 2), titleKey: '', descriptionKey: '', title: 'Animal Friend', description: 'Finish two animal books' },
+    );
+    applyState({ achievementUnlockedAt: { 'theme-calming': '2026-09-01T00:00:00.000Z' } });
+
+    const { result } = renderHook(() => useChildHomeData());
+
+    expect(result.current.data.newestAchievement).toMatchObject({ title: 'Calm Collector', description: 'You finished two calming books' });
+    expect(result.current.data.nextAchievement).toMatchObject({ title: 'Animal Friend' });
   });
 
   it('should remember the visit and stamp any badge seen earned for the first time', () => {

@@ -22,6 +22,22 @@ export const BASIC_TIER_INSTRUMENTS = ['flute', 'recorder', 'ocarina'] as const;
 
 export type StoryViewMode = 'carousel' | 'grid';
 
+export type ChallengeKind = 'music' | 'jigsaw' | 'reading';
+
+function unite(existing: string[], added: string[]): string[] {
+  const fresh = added.filter((id) => !existing.includes(id));
+  return fresh.length === 0 ? existing : [...existing, ...fresh];
+}
+
+export function migrateAppState(persisted: Record<string, any>, fromVersion: number): Record<string, any> {
+  if (fromVersion >= 1) return persisted;
+  const progress: Record<string, StoryProgress> = persisted.storyProgress ?? {};
+  const finished = Object.entries(progress)
+    .filter(([, entry]) => (entry?.completedCount ?? 0) > 0)
+    .map(([id]) => id);
+  return { ...persisted, finishedStoryIds: unite(persisted.finishedStoryIds ?? [], finished) };
+}
+
 export interface StoryProgress {
   pageIndex: number;
   totalPages: number;
@@ -172,6 +188,8 @@ export interface AppState {
   markStoryCompleted: (storyId: string) => void;
   recordHomeVisit: (at: string) => void;
   recordAchievementUnlocks: (badgeIds: string[], at: string) => void;
+  recordChallengeCompleted: (kind: ChallengeKind) => void;
+  grantAchievements: (achievementIds: string[]) => void;
   clearStoryProgress: (storyId: string) => void;
   getContinueReadingStoryId: () => string | null;
   setUseHomeScene: (enabled: boolean) => void;
@@ -388,6 +406,7 @@ export const useAppStore = create<AppState>()(
         const completedAt = new Date().toISOString();
         return {
           lastStoryCompletedAt: completedAt,
+          finishedStoryIds: unite(state.finishedStoryIds, [storyId]),
           storyProgress: {
             ...state.storyProgress,
             [storyId]: {
@@ -409,7 +428,14 @@ export const useAppStore = create<AppState>()(
         unseen.forEach((id) => {
           stamped[id] = at;
         });
-        return { achievementUnlockedAt: stamped };
+        return { achievementUnlockedAt: stamped, earnedAchievementIds: unite(state.earnedAchievementIds, unseen) };
+      }),
+      recordChallengeCompleted: (kind: ChallengeKind) => set((state) => ({
+        challengeCounts: { ...state.challengeCounts, [kind]: (state.challengeCounts[kind] ?? 0) + 1 },
+      })),
+      grantAchievements: (achievementIds: string[]) => set((state) => {
+        const earned = unite(state.earnedAchievementIds, achievementIds);
+        return earned === state.earnedAchievementIds ? state : { earnedAchievementIds: earned };
       }),
       clearStoryProgress: (storyId: string) => set((state) => {
         if (!state.storyProgress[storyId]) {
@@ -439,6 +465,8 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: 'app-storage',
+      version: 1,
+      migrate: (persisted, fromVersion) => migrateAppState(persisted as Record<string, any>, fromVersion) as AppState,
       storage: createJSONStorage(() => safeAsyncStorage),
       // Persist important app state including background animation positions
       // Note: isAppReady and hasHydrated are NOT persisted

@@ -6,7 +6,7 @@ import { getLocalizedText } from '@/types/story';
 import type { SupportedLanguage } from '@/services/i18n';
 import ScreenTimeService, { type ScreenTimeSession } from '@/services/screen-time-service';
 import { useProgressData } from '@/components/progress/use-progress-data';
-import type { Badge, BadgeCategory } from '@/components/progress/progress-model';
+import { badgeDescription, badgeTitle, type Badge, type BadgeCategory } from '@/components/progress/progress-model';
 import {
   READING_HISTORY_DAYS,
   SAFETY_HISTORY_DAYS,
@@ -92,7 +92,7 @@ export function useChildHomeData(): ChildHome {
   const userNickname = useAppStore((state) => state.userNickname);
   const storyProgress = useAppStore((state) => state.storyProgress);
   const getContinueReadingStoryId = useAppStore((state) => state.getContinueReadingStoryId);
-  const readStoryIds = useAppStore((state) => state.readStoryIds);
+  const finishedStoryIds = useAppStore((state) => state.finishedStoryIds);
   const readingStreak = useAppStore((state) => state.readingStreak);
   const lastReadDate = useAppStore((state) => state.lastReadDate);
   const achievementUnlockedAt = useAppStore((state) => state.achievementUnlockedAt);
@@ -190,7 +190,7 @@ export function useChildHomeData(): ChildHome {
     const data: ChildHomeData = {
       firstName: userNickname?.trim() ?? '',
       currentStory,
-      storiesCompleted: readStoryIds.length,
+      storiesCompleted: finishedStoryIds.length,
       readingMinutes,
       weeklyReadingMinutes,
       readingStreakDays: effectiveStreak(readingStreak, lastReadDate, now),
@@ -198,15 +198,15 @@ export function useChildHomeData(): ChildHome {
       newestAchievement: newest
         ? {
             id: newest.id,
-            title: t(newest.titleKey),
-            description: t(newest.descriptionKey),
+            title: badgeTitle(newest, t),
+            description: badgeDescription(newest, t),
             icon: ICON_BY_CATEGORY[newest.category],
             artwork: newest.artwork,
           }
         : undefined,
       nextAchievement: next
         ? {
-            title: t(next.titleKey),
+            title: badgeTitle(next, t),
             current: next.currentProgress,
             required: next.targetProgress,
             unit: UNIT_BY_CATEGORY[next.category],
@@ -244,7 +244,7 @@ export function useChildHomeData(): ChildHome {
     achievementUnlockedAt,
     userNickname,
     currentStory,
-    readStoryIds.length,
+    finishedStoryIds.length,
     readingMinutes,
     weeklyReadingMinutes,
     screenTimeSafety,

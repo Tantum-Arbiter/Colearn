@@ -69,6 +69,14 @@ describe('BadgeDetailSheet', () => {
     expect(byTestId(tree, 'badge-detail-clouds').length).toBeGreaterThan(0);
   });
 
+  it('shows a CMS badge by its own copy', () => {
+    const cms = { ...badge(2, 5), titleKey: '', descriptionKey: '', title: 'Calm Collector', description: 'Finish two calming books' };
+    const tree = render(<BadgeDetailSheet badge={cms} onClose={jest.fn()} onRecommend={jest.fn()} />);
+
+    expect(tree.UNSAFE_root.findAll((n: any) => n.props.children === 'Calm Collector').length).toBeGreaterThan(0);
+    expect(tree.UNSAFE_root.findAll((n: any) => n.props.children === 'Finish two calming books').length).toBeGreaterThan(0);
+  });
+
   it('renders nothing when no badge is selected', () => {
     const tree = render(<BadgeDetailSheet badge={null} onClose={jest.fn()} onRecommend={jest.fn()} />);
 

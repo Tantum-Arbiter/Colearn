@@ -48,6 +48,8 @@ jest.mock('@/store/app-store', () => {
     setTextSizeScale: jest.fn(),
     setStoryProgress: jest.fn(),
     markStoryCompleted: jest.fn(),
+    recordChallengeCompleted: jest.fn(),
+    grantAchievements: jest.fn(),
     markStoryAsRead: jest.fn(),
     recordReadingSession: jest.fn(),
   };

@@ -15,8 +15,10 @@ jest.mock('@/data/stories', () => ({
 }));
 
 const mockAppState = {
-  readStoryIds: ['a', 'b'],
+  finishedStoryIds: ['a', 'b'],
   favoriteStoryIds: [] as string[],
+  challengeCounts: {},
+  earnedAchievementIds: [] as string[],
   childAgeInMonths: 36,
 };
 jest.mock('@/store/app-store', () => ({
