@@ -84,6 +84,8 @@ public enum ErrorCode {
     PROFILE_NOT_FOUND("GTW-411", "User profile not found"),
     ACCOUNT_DELETION_FAILED("GTW-412", "Account deletion failed"),
     ACCOUNT_DELETION_IN_PROGRESS("GTW-413", "Account deletion already in progress"),
+    CHILD_VERSION_CONFLICT("GTW-414", "The child has changed on another device"),
+    CHILD_LIMIT_REACHED("GTW-415", "No more children can be added to this account"),
 
     // System & Infrastructure errors (GTW-500 to GTW-599)
     INTERNAL_SERVER_ERROR("GTW-500", "Internal server error"),

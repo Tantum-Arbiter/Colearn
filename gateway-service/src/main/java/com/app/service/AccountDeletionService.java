@@ -3,6 +3,8 @@ package com.app.service;
 import com.app.exception.ErrorCode;
 import com.app.exception.GatewayException;
 import com.app.model.User;
+import com.app.repository.ChildRepository;
+import com.app.repository.ConsentRepository;
 import com.app.repository.UserProfileRepository;
 import com.app.repository.UserRepository;
 import com.app.repository.UserSessionRepository;
@@ -39,6 +41,8 @@ public class AccountDeletionService {
     private final SessionService sessionService;
     private final ApplicationMetricsService metricsService;
     private final CircuitBreaker circuitBreaker;
+    private final ChildRepository childRepository;
+    private final ConsentRepository consentRepository;
 
     /** Guard against concurrent deletion requests for the same userId. */
     private final ConcurrentMap<String, Boolean> deletionsInProgress = new ConcurrentHashMap<>();
@@ -48,13 +52,17 @@ public class AccountDeletionService {
                                   UserSessionRepository userSessionRepository,
                                   SessionService sessionService,
                                   ApplicationMetricsService metricsService,
-                                  CircuitBreakerRegistry circuitBreakerRegistry) {
+                                  CircuitBreakerRegistry circuitBreakerRegistry,
+                                  ChildRepository childRepository,
+                                  ConsentRepository consentRepository) {
         this.userRepository = userRepository;
         this.userProfileRepository = userProfileRepository;
         this.userSessionRepository = userSessionRepository;
         this.sessionService = sessionService;
         this.metricsService = metricsService;
         this.circuitBreaker = circuitBreakerRegistry.circuitBreaker("accountDeletion");
+        this.childRepository = childRepository;
+        this.consentRepository = consentRepository;
     }
 
     /**
@@ -90,6 +98,8 @@ public class AccountDeletionService {
 
                         // ── Step 1: Delete profile ──
                         deleteProfile(userId);
+
+                        deleteChildrenAndConsents(userId);
 
                         // ── Step 2: Revoke and delete all sessions (all devices) ──
                         revokeAndDeleteSessions(userId);
@@ -135,6 +145,21 @@ public class AccountDeletionService {
                     System.currentTimeMillis() - stepStart);
         } catch (Exception e) {
             metricsService.recordAccountDeletionStep("delete_profile", false,
+                    System.currentTimeMillis() - stepStart);
+            throw e;
+        }
+    }
+
+    private void deleteChildrenAndConsents(String userId) {
+        long stepStart = System.currentTimeMillis();
+        try {
+            int children = childRepository.deleteAll(userId).join();
+            int consents = consentRepository.deleteAll(userId).join();
+            logger.debug("Deleted {} children and {} consent records for user: {}", children, consents, userId);
+            metricsService.recordAccountDeletionStep("delete_children_consents", true,
+                    System.currentTimeMillis() - stepStart);
+        } catch (Exception e) {
+            metricsService.recordAccountDeletionStep("delete_children_consents", false,
                     System.currentTimeMillis() - stepStart);
             throw e;
         }

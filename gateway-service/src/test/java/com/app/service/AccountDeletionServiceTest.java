@@ -4,6 +4,8 @@ import com.app.exception.ErrorCode;
 import com.app.exception.GatewayException;
 import com.app.model.User;
 import com.app.model.UserSession;
+import com.app.repository.ChildRepository;
+import com.app.repository.ConsentRepository;
 import com.app.repository.UserProfileRepository;
 import com.app.repository.UserRepository;
 import com.app.repository.UserSessionRepository;
@@ -34,6 +36,8 @@ class AccountDeletionServiceTest {
     @Mock private UserSessionRepository userSessionRepository;
     @Mock private SessionService sessionService;
     @Mock private ApplicationMetricsService metricsService;
+    @Mock private ChildRepository childRepository;
+    @Mock private ConsentRepository consentRepository;
 
     private AccountDeletionService deletionService;
     private CircuitBreakerRegistry circuitBreakerRegistry;
@@ -54,8 +58,11 @@ class AccountDeletionServiceTest {
 
         deletionService = new AccountDeletionService(
                 userRepository, userProfileRepository, userSessionRepository,
-                sessionService, metricsService, circuitBreakerRegistry
+                sessionService, metricsService, circuitBreakerRegistry,
+                childRepository, consentRepository
         );
+        org.mockito.Mockito.lenient().when(childRepository.deleteAll(USER_ID)).thenReturn(CompletableFuture.completedFuture(1));
+        org.mockito.Mockito.lenient().when(consentRepository.deleteAll(USER_ID)).thenReturn(CompletableFuture.completedFuture(2));
 
         testUser = new User();
         testUser.setId(USER_ID);
@@ -94,6 +101,8 @@ class AccountDeletionServiceTest {
                 userSessionRepository, userRepository);
         inOrder.verify(userProfileRepository).exists(USER_ID);
         inOrder.verify(userProfileRepository).delete(USER_ID);
+        verify(childRepository).deleteAll(USER_ID);
+        verify(consentRepository).deleteAll(USER_ID);
         inOrder.verify(sessionService).revokeAllUserSessions(USER_ID);
         inOrder.verify(userSessionRepository).deleteAllUserSessions(USER_ID);
         inOrder.verify(userRepository).deleteUser(USER_ID);
@@ -270,5 +279,38 @@ class AccountDeletionServiceTest {
         session.setLastAccessedAt(Instant.now());
         session.setExpiresAt(Instant.now().plusSeconds(86400));
         return session;
+    }
+
+    @Test
+    @DisplayName("A failure deleting the children stops before the account is removed")
+    void deleteAccount_ChildDeleteFails_Aborts() {
+        when(userRepository.findById(USER_ID)).thenReturn(CompletableFuture.completedFuture(Optional.of(testUser)));
+        when(userProfileRepository.exists(USER_ID)).thenReturn(CompletableFuture.completedFuture(false));
+        when(childRepository.deleteAll(USER_ID)).thenReturn(CompletableFuture.failedFuture(new RuntimeException("firestore down")));
+
+        Exception e = org.junit.jupiter.api.Assertions.assertThrows(Exception.class, () -> deletionService.deleteAccount(USER_ID).get());
+
+        assertEquals(ErrorCode.ACCOUNT_DELETION_FAILED, ((com.app.exception.GatewayException) rootGateway(e)).getErrorCode());
+        verify(userRepository, never()).deleteUser(USER_ID);
+    }
+
+    @Test
+    @DisplayName("A failure deleting the consents stops before the account is removed")
+    void deleteAccount_ConsentDeleteFails_Aborts() {
+        when(userRepository.findById(USER_ID)).thenReturn(CompletableFuture.completedFuture(Optional.of(testUser)));
+        when(userProfileRepository.exists(USER_ID)).thenReturn(CompletableFuture.completedFuture(false));
+        when(consentRepository.deleteAll(USER_ID)).thenReturn(CompletableFuture.failedFuture(new RuntimeException("firestore down")));
+
+        org.junit.jupiter.api.Assertions.assertThrows(Exception.class, () -> deletionService.deleteAccount(USER_ID).get());
+
+        verify(userRepository, never()).deleteUser(USER_ID);
+    }
+
+    private static Throwable rootGateway(Throwable e) {
+        Throwable current = e;
+        while (current != null && !(current instanceof com.app.exception.GatewayException)) {
+            current = current.getCause();
+        }
+        return current;
     }
 }

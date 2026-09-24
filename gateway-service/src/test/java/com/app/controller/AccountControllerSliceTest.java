@@ -5,6 +5,7 @@ import com.app.exception.ErrorCode;
 import com.app.exception.GatewayException;
 import com.app.security.RateLimitingFilter;
 import com.app.service.AccountDeletionService;
+import com.app.service.AccountExportService;
 import com.app.testsupport.SecuredWebMvcTest;
 import com.app.testsupport.TestTokens;
 import org.junit.jupiter.api.AfterEach;
@@ -43,6 +44,9 @@ class AccountControllerSliceTest {
 
     @MockitoBean
     private AccountDeletionService accountDeletionService;
+
+    @MockitoBean
+    private AccountExportService accountExportService;
 
     @BeforeEach
     void setUp() {
@@ -118,5 +122,30 @@ class AccountControllerSliceTest {
         deleteAccount()
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.errorCode").value("GTW-412"));
+    }
+
+    @Test
+    void exportsTheSignedInFamilysDataAsADownload() throws Exception {
+        when(accountExportService.export(USER)).thenReturn(java.util.Map.of("account", java.util.Map.of("id", USER)));
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/account/export")
+                        .header("Authorization", "Bearer " + TestTokens.accessToken(jwtConfig, USER))
+                        .header("X-Client-Platform", "ios")
+                        .header("X-Client-Version", "1.4.0")
+                        .header("X-Device-ID", "device-1234"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.account.id").value(USER))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header()
+                        .string("Content-Disposition", org.hamcrest.Matchers.containsString("attachment")));
+
+        verify(accountExportService).export(USER);
+    }
+
+    @Test
+    void refusesAnExportWithoutAToken() throws Exception {
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/account/export"))
+                .andExpect(status().isUnauthorized());
+
+        verify(accountExportService, never()).export(anyString());
     }
 }
