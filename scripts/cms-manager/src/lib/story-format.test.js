@@ -15,7 +15,7 @@ function story(overrides = {}) {
     version: 1,
     author: 'earlyroots',
     tags: [],
-    duration: 2,
+    pageCount: 2,
     pages: [
       { id: 'snowy-cover', pageNumber: 0, text: 'Snowy Day' },
       { id: 'snowy-1', pageNumber: 1, text: 'It snowed.' },
@@ -65,10 +65,22 @@ for (const [field, value] of [['isAvailable', true], ['isPremium', false], ['ver
   });
 }
 
-test('sets duration to the number of pages', () => {
-  const { formatted, changes } = formatStoryData(story({ duration: 9 }));
+test('sets pageCount to the number of pages', () => {
+  const { formatted, changes } = formatStoryData(story({ pageCount: 9 }));
 
-  assert.equal(formatted.duration, 2);
+  assert.equal(formatted.pageCount, 2);
+  assert.ok(changes.some((c) => c.includes('pageCount')));
+});
+
+test('replaces the old duration field with pageCount', () => {
+  const input = story();
+  delete input.pageCount;
+  input.duration = 2;
+
+  const { formatted, changes } = formatStoryData(input);
+
+  assert.equal(formatted.pageCount, 2);
+  assert.equal('duration' in formatted, false);
   assert.ok(changes.some((c) => c.includes('duration')));
 });
 
@@ -82,7 +94,7 @@ test('renames page ids to the story id convention', () => {
 });
 
 test('computes the checksum after every other change, with the shared algorithm', () => {
-  const input = story({ duration: 9 });
+  const input = story({ pageCount: 9 });
   input.pages[1].id = 'page-one';
 
   const { formatted } = formatStoryData(input);
@@ -91,7 +103,7 @@ test('computes the checksum after every other change, with the shared algorithm'
 });
 
 test('does not change the input', () => {
-  const input = story({ duration: 9 });
+  const input = story({ pageCount: 9 });
   const copy = JSON.parse(JSON.stringify(input));
 
   formatStoryData(input);

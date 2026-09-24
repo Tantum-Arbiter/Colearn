@@ -531,7 +531,6 @@ export default {
     noName: 'Lille opdager',
     downloadsUsed: '{{used}} af {{limit}} bøger på denne enhed',
     downloadsEmpty: 'Intet gemt på denne enhed endnu — hent en bog, så kan du læse den overalt',
-    downloadMeta: '{{minutes}} min · {{pages}} sider',
     downloadsCount: '{{count}} bøger på denne enhed',
     tabs: {
       saved: 'Gemte',
@@ -3225,7 +3224,8 @@ export default {
     playAlong: 'Leg med',
     readNow: 'Læs nu',
     savedOffline: 'Gemt offline',
-    minutes: '{{count}} min.',
+    pages_one: '{{count}} side',
+    pages_other: '{{count}} sider',
     ages: 'Alder {{range}}',
     interactive: 'Interaktiv',
     favourite: 'Favorit',

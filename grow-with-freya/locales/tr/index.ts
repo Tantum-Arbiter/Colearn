@@ -531,7 +531,6 @@ export default {
     noName: 'Küçük kâşif',
     downloadsUsed: 'Bu cihazda {{limit}} kitaptan {{used}} tanesi',
     downloadsEmpty: 'Bu cihazda henüz bir şey yok — bir kitap indir, her yerde oku',
-    downloadMeta: '{{minutes}} dk · {{pages}} sayfa',
     downloadsCount: 'Bu cihazda {{count}} kitap',
     tabs: {
       saved: 'Kayıtlı',
@@ -3225,7 +3224,8 @@ export default {
     playAlong: 'Birlikte oyna',
     readNow: 'Şimdi oku',
     savedOffline: 'Çevrimdışı kaydedildi',
-    minutes: '{{count}} dk',
+    pages_one: '{{count}} sayfa',
+    pages_other: '{{count}} sayfa',
     ages: 'Yaş {{range}}',
     interactive: 'Etkileşimli',
     favourite: 'Favori',

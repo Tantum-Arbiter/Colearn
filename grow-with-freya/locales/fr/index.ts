@@ -531,7 +531,6 @@ export default {
     noName: 'Petit explorateur',
     downloadsUsed: '{{used}} livres sur {{limit}} sur cet appareil',
     downloadsEmpty: 'Rien d\'enregistré sur cet appareil pour l\'instant — télécharge un livre pour le lire partout',
-    downloadMeta: '{{minutes}} min · {{pages}} pages',
     downloadsCount: '{{count}} livres sur cet appareil',
     tabs: {
       saved: 'Enregistrés',
@@ -3225,7 +3224,8 @@ export default {
     playAlong: 'Jouer ensemble',
     readNow: 'Lire maintenant',
     savedOffline: 'Enregistré hors ligne',
-    minutes: '{{count}} min',
+    pages_one: '{{count}} page',
+    pages_other: '{{count}} pages',
     ages: 'Âges {{range}}',
     interactive: 'Interactif',
     favourite: 'Favori',

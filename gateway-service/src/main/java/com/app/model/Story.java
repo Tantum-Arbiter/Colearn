@@ -32,8 +32,9 @@ public class Story {
     @JsonProperty("ageRange")
     private String ageRange;
 
-    @JsonProperty("duration")
-    private Integer duration;
+    @JsonProperty("pageCount")
+    @PropertyName("pageCount")
+    private Integer pageCount;
 
     @JsonProperty("description")
     private String description;
@@ -164,12 +165,14 @@ public class Story {
         this.ageRange = ageRange;
     }
 
-    public Integer getDuration() {
-        return duration;
+    @PropertyName("pageCount")
+    public Integer getPageCount() {
+        return pageCount;
     }
 
-    public void setDuration(Integer duration) {
-        this.duration = duration;
+    @PropertyName("pageCount")
+    public void setPageCount(Integer pageCount) {
+        this.pageCount = pageCount;
     }
 
     public String getDescription() {

@@ -271,8 +271,11 @@ describe('Story Localization', () => {
       expect(ageGroupFallbackChain(ageGroup === 'unknown' ? undefined : (ageGroup as never))).toEqual(chain);
     });
 
-    it.each(fixture.cases.map((c: { name: string }) => [c.name, c]))('%s', (_name, c: any) => {
-      expect(getLocalizedText(undefined, c.fallback, c.language ?? undefined, c.text, c.ageGroup ?? undefined)).toBe(c.expected);
+    type Case = { name: string; fallback: string; language: string | null; text: AgeGroupText; ageGroup: string | null; expected: string };
+    const cases = (fixture.cases as Case[]).map(c => [c.name, c] as [string, Case]);
+
+    it.each(cases)('%s', (_name, c) => {
+      expect(getLocalizedText(undefined, c.fallback, (c.language ?? undefined) as never, c.text, (c.ageGroup ?? undefined) as never)).toBe(c.expected);
     });
   });
 });

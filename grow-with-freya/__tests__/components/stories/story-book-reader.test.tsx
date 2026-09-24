@@ -67,7 +67,7 @@ const mockStory: Story = {
   isAvailable: true,
   ageRange: '3-6',
   duration: 5,
-  tags: ['adventure', 'creativity'],
+  tags: ['adventure', 'imagination-games'],
   pages: [
     {
       id: 'cover',

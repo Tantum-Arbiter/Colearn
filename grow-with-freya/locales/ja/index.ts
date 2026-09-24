@@ -531,7 +531,6 @@ export default {
     noName: 'ちいさなたんけんか',
     downloadsUsed: 'このデバイスに {{limit}} さつちゅう {{used}} さつ',
     downloadsEmpty: 'このデバイスにはまだなにもないよ — ダウンロードすればどこでもよめるよ',
-    downloadMeta: '{{minutes}}ふん · {{pages}}ページ',
     downloadsCount: 'このデバイスに {{count}} さつ',
     tabs: {
       saved: 'ほぞん',
@@ -3225,7 +3224,8 @@ export default {
     playAlong: 'いっしょに遊ぶ',
     readNow: 'いま読む',
     savedOffline: 'オフラインに保存済み',
-    minutes: '{{count}}分',
+    pages_one: '{{count}}ページ',
+    pages_other: '{{count}}ページ',
     ages: '対象年齢 {{range}}',
     interactive: 'インタラクティブ',
     favourite: 'お気に入り',

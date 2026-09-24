@@ -531,7 +531,6 @@ export default {
     noName: 'Piccolo esploratore',
     downloadsUsed: '{{used}} di {{limit}} libri su questo dispositivo',
     downloadsEmpty: 'Non c\'è ancora nulla su questo dispositivo: scarica un libro per leggerlo ovunque',
-    downloadMeta: '{{minutes}} min · {{pages}} pagine',
     downloadsCount: '{{count}} libri su questo dispositivo',
     tabs: {
       saved: 'Salvati',
@@ -3225,7 +3224,8 @@ export default {
     playAlong: 'Gioca insieme',
     readNow: 'Leggi ora',
     savedOffline: 'Salvato offline',
-    minutes: '{{count}} min',
+    pages_one: '{{count}} pagina',
+    pages_other: '{{count}} pagine',
     ages: 'Età {{range}}',
     interactive: 'Interattivo',
     favourite: 'Preferito',

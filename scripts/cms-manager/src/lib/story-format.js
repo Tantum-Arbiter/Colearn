@@ -21,9 +21,15 @@ export function formatStoryData(data) {
     }
   }
 
-  if (formatted.pages && formatted.duration !== formatted.pages.length) {
-    formatted.duration = formatted.pages.length;
-    changes.push(`Updated duration to ${formatted.pages.length}`);
+  if ('duration' in formatted) {
+    formatted.pageCount = formatted.pageCount ?? formatted.duration;
+    delete formatted.duration;
+    changes.push('Renamed duration to pageCount');
+  }
+
+  if (formatted.pages && formatted.pageCount !== formatted.pages.length) {
+    formatted.pageCount = formatted.pages.length;
+    changes.push(`Updated pageCount to ${formatted.pages.length}`);
   }
 
   (formatted.pages || []).forEach((page, index) => {

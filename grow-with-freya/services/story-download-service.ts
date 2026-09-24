@@ -4,7 +4,7 @@ import { ApiClient } from './api-client';
 import { AssetDownloadUtils } from './asset-download-utils';
 import { StoryAccessService, AccessCheckResult } from './story-access-service';
 import { CatalogService } from './catalog-service';
-import { Story, CatalogEntry } from '../types/story';
+import { Story, CatalogEntry, storyPageCount } from '../types/story';
 import { Logger } from '@/utils/logger';
 
 const log = Logger.create('StoryDownloadService');
@@ -409,7 +409,7 @@ export class StoryDownloadService {
         isPremium: storyData.isPremium ?? false,
         isReferralReward: storyData.isReferralReward ?? false,
         ageRange: storyData.ageRange,
-        duration: storyData.duration,
+        pageCount: storyPageCount(storyData),
         gender: storyData.gender,
       };
 

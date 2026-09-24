@@ -21,7 +21,7 @@
   "coverImage": "assets/stories/reading-story-1/cover/cover.webp",
   "isAvailable": true,
   "ageRange": "3-6",
-  "duration": 4,
+  "pageCount": 4,
   "description": "A gentle reading challenge adventure where children fill in missing words.",
   "localizedDescription": {
     "en": "A gentle reading challenge adventure where children fill in missing words.",

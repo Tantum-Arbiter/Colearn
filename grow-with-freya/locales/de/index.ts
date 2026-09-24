@@ -531,7 +531,6 @@ export default {
     noName: 'Kleiner Entdecker',
     downloadsUsed: '{{used}} von {{limit}} Büchern auf diesem Gerät',
     downloadsEmpty: 'Noch nichts auf diesem Gerät — lade ein Buch herunter und lies es überall',
-    downloadMeta: '{{minutes}} Min · {{pages}} Seiten',
     downloadsCount: '{{count}} Bücher auf diesem Gerät',
     tabs: {
       saved: 'Gespeichert',
@@ -3225,7 +3224,8 @@ export default {
     playAlong: 'Mitspielen',
     readNow: 'Jetzt lesen',
     savedOffline: 'Offline gespeichert',
-    minutes: '{{count}} Min.',
+    pages_one: '{{count}} Seite',
+    pages_other: '{{count}} Seiten',
     ages: 'Alter {{range}}',
     interactive: 'Interaktiv',
     favourite: 'Favorit',

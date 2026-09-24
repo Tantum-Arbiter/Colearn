@@ -531,7 +531,6 @@ export default {
     noName: '小小探险家',
     downloadsUsed: '本设备上有 {{used}}/{{limit}} 本书',
     downloadsEmpty: '本设备上还没有内容 — 下载一本书，随时随地都能看',
-    downloadMeta: '{{minutes}} 分钟 · {{pages}} 页',
     downloadsCount: '本设备上有 {{count}} 本书',
     tabs: {
       saved: '已保存',
@@ -3225,7 +3224,8 @@ export default {
     playAlong: '一起玩',
     readNow: '现在阅读',
     savedOffline: '已离线保存',
-    minutes: '{{count}} 分钟',
+    pages_one: '{{count}}页',
+    pages_other: '{{count}}页',
     ages: '适龄 {{range}}',
     interactive: '互动',
     favourite: '收藏',

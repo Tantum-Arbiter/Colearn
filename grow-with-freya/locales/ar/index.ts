@@ -531,7 +531,6 @@ export default {
     noName: 'مستكشف صغير',
     downloadsUsed: '{{used}} من {{limit}} كتاب على هذا الجهاز',
     downloadsEmpty: 'لا شيء محفوظ على هذا الجهاز بعد — نزّل كتابًا لتقرأه في أي مكان',
-    downloadMeta: '{{minutes}} دقيقة · {{pages}} صفحة',
     downloadsCount: '{{count}} كتاب على هذا الجهاز',
     tabs: {
       saved: 'المحفوظات',
@@ -3225,7 +3224,8 @@ export default {
     playAlong: 'العب معنا',
     readNow: 'اقرأ الآن',
     savedOffline: 'محفوظة دون اتصال',
-    minutes: '{{count}} دقائق',
+    pages_one: 'الصفحات: {{count}}',
+    pages_other: 'الصفحات: {{count}}',
     ages: 'الأعمار {{range}}',
     interactive: 'تفاعلية',
     favourite: 'المفضلة',

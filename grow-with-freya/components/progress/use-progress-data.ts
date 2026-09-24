@@ -17,7 +17,7 @@ import {
   summariseBadges,
 } from './progress-model';
 
-const KIND_TAGS = ['friendship', 'family', 'emotions'];
+const KIND_TAGS = ['friendship', 'family-exercises', 'emotions'];
 const MORNING_END_HOUR = 12;
 const EVENING_START_HOUR = 18;
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;

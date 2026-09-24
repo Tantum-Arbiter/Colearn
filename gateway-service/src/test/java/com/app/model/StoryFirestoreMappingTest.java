@@ -64,4 +64,15 @@ class StoryFirestoreMappingTest {
         assertEquals("value", stored.get(field));
         assertFalse(stored.containsKey(field.substring(1)));
     }
+
+    @org.junit.jupiter.api.Test
+    void storesPageCountUnderItsOwnName() {
+        Story story = CustomClassMapper.convertToCustomClass(Map.of("id", "s", "pageCount", 12), Story.class, null);
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> stored = (Map<String, Object>) CustomClassMapper.serialize(story);
+
+        assertEquals(12, stored.get("pageCount"));
+        assertFalse(stored.containsKey("duration"));
+    }
 }

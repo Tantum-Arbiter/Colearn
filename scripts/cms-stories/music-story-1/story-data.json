@@ -21,7 +21,7 @@
   "coverImage": "assets/stories/music-story-1/cover/cover.webp",
   "isAvailable": true,
   "ageRange": "2-5",
-  "duration": 11,
+  "pageCount": 11,
   "description": "Music integration story 1. Music challenges on pages 2, 3, 4, 5 with interactive element coexistence on pages 2 and 4. Uses Flute and Recorder.",
   "localizedDescription": {
     "en": "A musical adventure where squirrels explore winter with flute and recorder challenges.",

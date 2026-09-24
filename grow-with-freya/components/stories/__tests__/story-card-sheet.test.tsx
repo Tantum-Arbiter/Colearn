@@ -71,7 +71,7 @@ const makeStory = (id: string, title: string): Story => ({
   category: 'bedtime',
   isAvailable: true,
   ageRange: '2-5',
-  duration: 8,
+  pageCount: 8,
   description: `${title} is a gentle story.`,
   tags: ['bedtime', 'emotions'],
   pages: [
@@ -104,7 +104,8 @@ describe('StoryCardSheet', () => {
     const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} />);
 
     expect(findByText(UNSAFE_root, 'Snuggle Little Wombat').length).toBeGreaterThan(0);
-    expect(findByText(UNSAFE_root, 'storyDetail.minutes').length).toBeGreaterThan(0);
+    expect(findByText(UNSAFE_root, 'storyDetail.pages').length).toBeGreaterThan(0);
+    expect(findByText(UNSAFE_root, 'storyDetail.minutes')).toHaveLength(0);
     expect(findByText(UNSAFE_root, 'storyDetail.ages').length).toBeGreaterThan(0);
     expect(findByText(UNSAFE_root, 'storyDetail.interactive').length).toBeGreaterThan(0);
     expect(findByText(UNSAFE_root, 'stories.filterTags.bedtime').length).toBeGreaterThan(0);

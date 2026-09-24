@@ -108,7 +108,7 @@ import { useActivityTransition } from '@/contexts/ActivityTransitionContext';
 
 // The finer themes behind Filter. Learning and Music are tiles, not pills
 const FILTER_TAG_SET: StoryFilterTag[] = [
-  'bedtime', 'adventure', 'calming', 'family', 'creativity', 'animals',
+  'bedtime', 'adventure', 'calming', 'family-exercises', 'imagination-games', 'animals',
   'friendship', 'nature', 'fantasy', 'counting', 'emotions', 'silly', 'rhymes',
 ];
 

@@ -14,7 +14,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
-import { Story, getLocalizedText } from '@/types/story';
+import { Story, getLocalizedText, storyPageCount } from '@/types/story';
 import { storyThemeChips } from './story-theme-chips';
 import type { SupportedLanguage } from '@/services/i18n';
 import type { ReadingMode } from '@/contexts/story-transition-context';
@@ -229,6 +229,7 @@ function StoryCard({
   const displayTitle = getLocalizedText(story.localizedTitle, story.title, currentLanguage);
   const displayDescription = getLocalizedText(story.localizedDescription, story.description || '', currentLanguage);
   const themeChips = storyThemeChips(story);
+  const pageCount = storyPageCount(story);
   const hasInteractiveContent = Boolean(
     story.pages?.some(
       (page) => (page.interactionType && page.interactionType !== 'none') || page.interactiveElements?.length
@@ -286,10 +287,10 @@ function StoryCard({
           <Text style={[styles.title, { fontSize: scaledFontSize(22) }]} numberOfLines={2}>{displayTitle}</Text>
 
           <View style={styles.metaRow}>
-            {typeof story.duration === 'number' && (
+            {pageCount !== undefined && (
               <View style={styles.metaPill}>
-                <Ionicons name="time-outline" size={scaledFontSize(12)} color="rgba(255,255,255,0.8)" />
-                <Text style={[styles.metaText, { fontSize: scaledFontSize(12) }]}>{t('storyDetail.minutes', { count: story.duration })}</Text>
+                <Ionicons name="book-outline" size={scaledFontSize(12)} color="rgba(255,255,255,0.8)" />
+                <Text style={[styles.metaText, { fontSize: scaledFontSize(12) }]}>{t('storyDetail.pages', { count: pageCount })}</Text>
               </View>
             )}
             {story.ageRange && (

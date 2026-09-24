@@ -531,7 +531,6 @@ export default {
     noName: 'Kleine ontdekker',
     downloadsUsed: '{{used}} van {{limit}} boeken op dit apparaat',
     downloadsEmpty: 'Nog niets opgeslagen op dit apparaat — download een boek om het overal te lezen',
-    downloadMeta: '{{minutes}} min · {{pages}} pagina\'s',
     downloadsCount: '{{count}} boeken op dit apparaat',
     tabs: {
       saved: 'Bewaard',
@@ -3225,7 +3224,8 @@ export default {
     playAlong: 'Meespelen',
     readNow: 'Nu lezen',
     savedOffline: 'Offline opgeslagen',
-    minutes: '{{count}} min',
+    pages_one: '{{count}} pagina',
+    pages_other: '{{count}} pagina\'s',
     ages: 'Leeftijd {{range}}',
     interactive: 'Interactief',
     favourite: 'Favoriet',

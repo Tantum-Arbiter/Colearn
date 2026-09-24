@@ -531,7 +531,6 @@ export default {
     noName: 'Mały odkrywca',
     downloadsUsed: '{{used}} z {{limit}} książek na tym urządzeniu',
     downloadsEmpty: 'Nic jeszcze nie zapisano na tym urządzeniu — pobierz książkę, by czytać ją wszędzie',
-    downloadMeta: '{{minutes}} min · {{pages}} stron',
     downloadsCount: '{{count}} książek na tym urządzeniu',
     tabs: {
       saved: 'Zapisane',
@@ -3225,7 +3224,8 @@ export default {
     playAlong: 'Graj razem',
     readNow: 'Czytaj teraz',
     savedOffline: 'Zapisano offline',
-    minutes: '{{count}} min',
+    pages_one: '{{count}} str.',
+    pages_other: '{{count}} str.',
     ages: 'Wiek {{range}}',
     interactive: 'Interaktywna',
     favourite: 'Ulubione',

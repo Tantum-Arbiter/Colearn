@@ -162,8 +162,8 @@ const TAG_ICONS: Record<StoryFilterTag, keyof typeof Ionicons.glyphMap> = {
   adventure: 'compass-outline',
   learning: 'book-outline',
   music: 'musical-notes-outline',
-  family: 'people-outline',
-  creativity: 'color-palette-outline',
+  'family-exercises': 'people-outline',
+  'imagination-games': 'color-palette-outline',
   animals: 'paw-outline',
   friendship: 'heart-outline',
   nature: 'flower-outline',
@@ -172,6 +172,7 @@ const TAG_ICONS: Record<StoryFilterTag, keyof typeof Ionicons.glyphMap> = {
   emotions: 'happy-outline',
   silly: 'happy-outline',
   rhymes: 'chatbubble-ellipses-outline',
+  interactive: 'hand-left-outline',
 };
 
 // Constants for card dimensions - defined once, not on every render
@@ -515,7 +516,7 @@ export function StorySelectionScreen({ onStorySelect, initialMode }: StorySelect
   // Available filter tags -children's storybook themes
   const filterTags: StoryFilterTag[] = [
     'calming', 'bedtime', 'adventure', 'learning', 'music',
-    'family', 'creativity', 'animals', 'friendship',
+    'family-exercises', 'imagination-games', 'animals', 'friendship',
     'nature', 'fantasy', 'counting', 'emotions', 'silly', 'rhymes'
   ];
 

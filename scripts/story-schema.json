@@ -33,10 +33,10 @@
       "pattern": "^[0-9]+-[0-9]+$",
       "description": "Age range like 2-5"
     },
-    "duration": {
+    "pageCount": {
       "type": "integer",
       "minimum": 1,
-      "description": "Number of pages"
+      "description": "Number of pages in the story"
     },
     "description": {
       "type": "string",

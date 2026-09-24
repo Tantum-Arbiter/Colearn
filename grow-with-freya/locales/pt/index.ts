@@ -531,7 +531,6 @@ export default {
     noName: 'Pequeno explorador',
     downloadsUsed: '{{used}} de {{limit}} livros neste dispositivo',
     downloadsEmpty: 'Ainda não há nada guardado neste dispositivo — transfere um livro para o leres onde quiseres',
-    downloadMeta: '{{minutes}} min · {{pages}} páginas',
     downloadsCount: '{{count}} livros neste dispositivo',
     tabs: {
       saved: 'Guardados',
@@ -3225,7 +3224,8 @@ export default {
     playAlong: 'Brincar juntos',
     readNow: 'Ler agora',
     savedOffline: 'Guardado offline',
-    minutes: '{{count}} min',
+    pages_one: '{{count}} página',
+    pages_other: '{{count}} páginas',
     ages: 'Idades {{range}}',
     interactive: 'Interativo',
     favourite: 'Favorito',

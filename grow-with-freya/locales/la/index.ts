@@ -531,7 +531,6 @@ export default {
     noName: 'Parvus explorator',
     downloadsUsed: '{{used}} ex {{limit}} libris in hoc instrumento',
     downloadsEmpty: 'Nihil adhuc in hoc instrumento servatum est — librum depone ut ubique legas',
-    downloadMeta: '{{minutes}} min · {{pages}} paginae',
     downloadsCount: '{{count}} libri in hoc instrumento',
     tabs: {
       saved: 'Servata',
@@ -3225,7 +3224,8 @@ export default {
     playAlong: 'Simul ludere',
     readNow: 'Nunc lege',
     savedOffline: 'Sine conexu servatum',
-    minutes: '{{count}} min',
+    pages_one: '{{count}} pagina',
+    pages_other: '{{count}} paginae',
     ages: 'Aetates {{range}}',
     interactive: 'Interactivum',
     favourite: 'Dilectum',
