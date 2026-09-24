@@ -147,6 +147,24 @@ Feature: User Profile Management
     And the response should have field "error"
     And the response should have field "message"
 
+  @reminders @validation
+  Scenario Outline: A reminder is saved exactly as the parent typed it
+    When I send an authenticated POST request to "/api/profile" with body:
+      """
+      {"nickname":"Freya","avatarType":"girl","avatarId":"girl-1",
+       "schedule":{"customReminders":[{"title":"<title>","message":"<message>","time":"19:00"}]}}
+      """
+    Then the response status should be 201
+    And the custom reminder at index 0 should have field "title" with value "<title>"
+    And the custom reminder at index 0 should have field "message" with value "<message>"
+
+    Examples:
+      | title             | message                         |
+      | Bath; then story  | Teeth & pyjamas                 |
+      | Story time <3     | Pick one - or the other         |
+      | Tom and Anna      | A description of the script     |
+      | Kąpiel            | Łóżko o 19:30 🌙                |
+
   @security @error-handling
   Scenario: Unauthorized access without token
     When I send an unauthenticated GET request to "/api/profile"
