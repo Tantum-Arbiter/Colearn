@@ -75,4 +75,26 @@ class StoryFirestoreMappingTest {
         assertEquals(12, stored.get("pageCount"));
         assertFalse(stored.containsKey("duration"));
     }
+
+    @org.junit.jupiter.api.Test
+    void readsTheBadgesABookAwards_forFinishingItAndForAPageChallenge() {
+        Story underTest = CustomClassMapper.convertToCustomClass(Map.of("id", "s", "awards", java.util.List.of(
+                Map.of("achievementId", "snowman-friend", "trigger", "finish"),
+                Map.of("achievementId", "snow-song", "trigger", Map.of("challengePageId", "s-4")))), Story.class, null);
+
+        assertEquals(2, underTest.getAwards().size());
+        assertEquals("snowman-friend", underTest.getAwards().get(0).getAchievementId());
+        assertEquals("finish", underTest.getAwards().get(0).getTrigger());
+        assertEquals(Map.of("challengePageId", "s-4"), underTest.getAwards().get(1).getTrigger());
+    }
+
+    @org.junit.jupiter.api.Test
+    void keepsTheAwardsThroughAWriteThenRead() {
+        Story story = CustomClassMapper.convertToCustomClass(Map.of("id", "s", "awards", java.util.List.of(
+                Map.of("achievementId", "snow-song", "trigger", Map.of("challengePageId", "s-4")))), Story.class, null);
+
+        Story underTest = CustomClassMapper.convertToCustomClass(CustomClassMapper.serialize(story), Story.class, null);
+
+        assertEquals(CustomClassMapper.serialize(story), CustomClassMapper.serialize(underTest));
+    }
 }

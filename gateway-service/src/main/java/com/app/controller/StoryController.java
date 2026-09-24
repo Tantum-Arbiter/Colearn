@@ -8,6 +8,7 @@ import com.app.exception.ErrorResponse;
 import com.app.model.AssetVersion;
 import com.app.model.ContentVersion;
 import com.app.model.Story;
+import com.app.service.AchievementService;
 import com.app.service.ApplicationMetricsService;
 import com.app.service.AssetService;
 import com.app.service.StoryService;
@@ -41,12 +42,25 @@ public class StoryController {
     private final StoryService storyService;
     private final AssetService assetService;
     private final ApplicationMetricsService metricsService;
+    private final AchievementService achievementService;
 
     @Autowired
-    public StoryController(StoryService storyService, AssetService assetService, ApplicationMetricsService metricsService) {
+    public StoryController(StoryService storyService, AssetService assetService, ApplicationMetricsService metricsService,
+                           AchievementService achievementService) {
         this.storyService = storyService;
         this.assetService = assetService;
         this.metricsService = metricsService;
+        this.achievementService = achievementService;
+    }
+
+    private void addAchievementDelta(DeltaSyncResponse response, ContentVersion serverVersion, DeltaSyncRequest request, String reqId) {
+        try {
+            AchievementService.Delta delta = achievementService.delta(serverVersion, request.getAchievementChecksums()).join();
+            response.setAchievementDefinitions(delta.definitions());
+            response.setDeletedAchievementIds(delta.deletedIds());
+        } catch (RuntimeException e) {
+            logger.warn("[Delta] [reqId={}] Badge definitions left out: {}", reqId, e.getMessage());
+        }
     }
 
     private String getRequestId() {
@@ -201,6 +215,7 @@ public class StoryController {
                 response.setTotalStories(serverVersion.getTotalStories());
                 response.setLastUpdated(serverVersion.getLastUpdated().toDate().getTime());
                 response.setCatalog(catalog);
+                addAchievementDelta(response, serverVersion, request, reqId);
 
                 long durationMs = System.currentTimeMillis() - startTime;
                 logger.info("[Delta] [reqId={}] COMPLETE - No changes needed, catalogEntries={}, durationMs={}", reqId, catalog.size(), durationMs);
@@ -248,6 +263,7 @@ public class StoryController {
             response.setTotalStories(serverVersion.getTotalStories());
             response.setLastUpdated(serverVersion.getLastUpdated().toDate().getTime());
             response.setCatalog(catalog);
+            addAchievementDelta(response, serverVersion, request, reqId);
 
             long durationMs = System.currentTimeMillis() - startTime;
             metricsService.recordStorySync(clientStoriesCount, storiesToSync.size(), durationMs);

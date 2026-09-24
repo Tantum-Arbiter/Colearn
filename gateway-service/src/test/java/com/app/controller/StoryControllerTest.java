@@ -7,6 +7,9 @@ import com.app.model.InteractiveElement;
 import com.app.model.MusicChallenge;
 import com.app.model.Story;
 import com.app.model.StoryPage;
+import com.app.model.AchievementDefinition;
+import com.app.model.StoryAward;
+import com.app.service.AchievementService;
 import com.app.service.ApplicationMetricsService;
 import com.app.service.AssetService;
 import com.app.service.GatewayServiceApplication;
@@ -49,6 +52,9 @@ class StoryControllerTest {
 
     @MockBean
     private ApplicationMetricsService metricsService;
+
+    @MockBean
+    private AchievementService achievementService;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -156,6 +162,8 @@ class StoryControllerTest {
         // Default mock for assetService.getCurrentAssetVersion() - used by most tests
         when(assetService.getCurrentAssetVersion())
                 .thenReturn(CompletableFuture.completedFuture(testAssetVersion));
+        when(achievementService.delta(any(), any()))
+                .thenReturn(CompletableFuture.completedFuture(new AchievementService.Delta(List.of(), List.of())));
     }
 
     @Test
@@ -684,6 +692,118 @@ class StoryControllerTest {
                         .content(requestBody))
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.errorCode").value("GTW-201"));
+    }
+
+    private static AchievementDefinition calmCollector() {
+        AchievementDefinition definition = new AchievementDefinition();
+        definition.setId("theme-calming");
+        definition.setVersion(2);
+        definition.setStatus("active");
+        definition.setRule(Map.of("kind", "finishedWithTag", "tags", List.of("calming"), "target", 2));
+        definition.setArt("assets/badges/calming.webp");
+        definition.setCopy(Map.of("title", Map.of("en", "Calm Collector")));
+        definition.setChecksum("sum-2");
+        return definition;
+    }
+
+    @Test
+    void deltaSync_UpToDate_StillCarriesChangedBadgeDefinitions() throws Exception {
+        when(storyService.getCurrentContentVersion())
+                .thenReturn(CompletableFuture.completedFuture(testContentVersion));
+        when(storyService.getCatalogEntries(anySet(), anyMap(), any()))
+                .thenReturn(CompletableFuture.completedFuture(Collections.emptyList()));
+        when(achievementService.delta(eq(testContentVersion), eq(Map.of("theme-calming", "sum-1", "gone", "sum-9"))))
+                .thenReturn(CompletableFuture.completedFuture(new AchievementService.Delta(List.of(calmCollector()), List.of("gone"))));
+
+        mockMvc.perform(post("/api/stories/delta")
+                        .contentType("application/json")
+                        .content("{\"clientVersion\":1,\"storyChecksums\":{},\"achievementChecksums\":{\"theme-calming\":\"sum-1\",\"gone\":\"sum-9\"}}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.achievementDefinitions.length()").value(1))
+                .andExpect(jsonPath("$.achievementDefinitions[0].id").value("theme-calming"))
+                .andExpect(jsonPath("$.achievementDefinitions[0].checksum").value("sum-2"))
+                .andExpect(jsonPath("$.achievementDefinitions[0].rule.kind").value("finishedWithTag"))
+                .andExpect(jsonPath("$.achievementDefinitions[0].copy.title.en").value("Calm Collector"))
+                .andExpect(jsonPath("$.achievementDefinitions[0].points").doesNotExist())
+                .andExpect(jsonPath("$.deletedAchievementIds[0]").value("gone"));
+    }
+
+    @Test
+    void deltaSync_Outdated_CarriesChangedBadgeDefinitions() throws Exception {
+        when(storyService.getCurrentContentVersion())
+                .thenReturn(CompletableFuture.completedFuture(testContentVersion));
+        when(storyService.getStoriesToSync(anyMap()))
+                .thenReturn(CompletableFuture.completedFuture(Collections.emptyList()));
+        when(storyService.getCatalogEntries(anySet(), anyMap(), any()))
+                .thenReturn(CompletableFuture.completedFuture(Collections.emptyList()));
+        when(achievementService.delta(eq(testContentVersion), eq(Map.of())))
+                .thenReturn(CompletableFuture.completedFuture(new AchievementService.Delta(List.of(calmCollector()), List.of())));
+
+        mockMvc.perform(post("/api/stories/delta")
+                        .contentType("application/json")
+                        .content("{\"clientVersion\":0,\"storyChecksums\":{}}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.achievementDefinitions[0].id").value("theme-calming"))
+                .andExpect(jsonPath("$.deletedAchievementIds").isArray());
+    }
+
+    @Test
+    void deltaSync_BadgeDefinitionsUnreadable_StoriesStillSync() throws Exception {
+        when(storyService.getCurrentContentVersion())
+                .thenReturn(CompletableFuture.completedFuture(testContentVersion));
+        when(storyService.getStoriesToSync(anyMap()))
+                .thenReturn(CompletableFuture.completedFuture(List.of(testStory2)));
+        when(storyService.getCatalogEntries(anySet(), anyMap(), any()))
+                .thenReturn(CompletableFuture.completedFuture(Collections.emptyList()));
+        when(achievementService.delta(any(), any()))
+                .thenReturn(CompletableFuture.failedFuture(new RuntimeException("Firestore down")));
+
+        mockMvc.perform(post("/api/stories/delta")
+                        .contentType("application/json")
+                        .content("{\"clientVersion\":0,\"storyChecksums\":{}}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.stories[0].id").value("story-2"))
+                .andExpect(jsonPath("$.achievementDefinitions").doesNotExist())
+                .andExpect(jsonPath("$.deletedAchievementIds").doesNotExist());
+    }
+
+    @Test
+    void deltaSync_TooManyBadgeChecksums_Returns400() throws Exception {
+        StringBuilder checksums = new StringBuilder();
+        for (int i = 0; i <= com.app.dto.DeltaSyncRequest.MAX_ACHIEVEMENT_CHECKSUMS; i++) {
+            if (i > 0) checksums.append(',');
+            checksums.append("\"a").append(i).append("\":\"x\"");
+        }
+
+        mockMvc.perform(post("/api/stories/delta")
+                        .contentType("application/json")
+                        .content("{\"clientVersion\":0,\"storyChecksums\":{},\"achievementChecksums\":{" + checksums + "}}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void deltaSync_StoryCarriesTheBadgesItAwards() throws Exception {
+        StoryAward finish = new StoryAward();
+        finish.setAchievementId("snowman-friend");
+        finish.setTrigger("finish");
+        StoryAward page = new StoryAward();
+        page.setAchievementId("snow-song");
+        page.setTrigger(Map.of("challengePageId", "story-2-page-1"));
+        testStory2.setAwards(List.of(finish, page));
+        when(storyService.getCurrentContentVersion())
+                .thenReturn(CompletableFuture.completedFuture(testContentVersion));
+        when(storyService.getStoriesToSync(anyMap()))
+                .thenReturn(CompletableFuture.completedFuture(List.of(testStory2)));
+        when(storyService.getCatalogEntries(anySet(), anyMap(), any()))
+                .thenReturn(CompletableFuture.completedFuture(Collections.emptyList()));
+
+        mockMvc.perform(post("/api/stories/delta")
+                        .contentType("application/json")
+                        .content("{\"clientVersion\":0,\"storyChecksums\":{}}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.stories[0].awards[0].achievementId").value("snowman-friend"))
+                .andExpect(jsonPath("$.stories[0].awards[0].trigger").value("finish"))
+                .andExpect(jsonPath("$.stories[0].awards[1].trigger.challengePageId").value("story-2-page-1"));
     }
 
     // ==================== Download Endpoint Tests ====================

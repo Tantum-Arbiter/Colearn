@@ -89,6 +89,9 @@ public class Story {
     @JsonProperty("gender")
     private String gender; // "boy", "girl", or "unisex" (defaults to "unisex")
 
+    @JsonProperty("awards")
+    private List<StoryAward> awards;
+
     public Story() {
         this.pages = new ArrayList<>();
         this.tags = new ArrayList<>();
@@ -327,6 +330,14 @@ public class Story {
 
     public void setGender(String gender) {
         this.gender = gender;
+    }
+
+    public List<StoryAward> getAwards() {
+        return awards;
+    }
+
+    public void setAwards(List<StoryAward> awards) {
+        this.awards = awards;
     }
 
     @Override

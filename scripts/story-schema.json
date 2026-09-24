@@ -112,6 +112,29 @@
       "minimum": 1,
       "default": 1
     },
+    "awards": {
+      "type": "array",
+      "description": "Badges this book awards: for finishing it, or for completing the challenge on one page. Each achievementId must be defined in cms-achievements/.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["achievementId", "trigger"],
+        "properties": {
+          "achievementId": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+          "trigger": {
+            "oneOf": [
+              { "const": "finish" },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["challengePageId"],
+                "properties": { "challengePageId": { "type": "string" } }
+              }
+            ]
+          }
+        }
+      }
+    },
     "pages": {
       "type": "array",
       "minItems": 1,

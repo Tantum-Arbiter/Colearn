@@ -138,3 +138,18 @@ test('passes every story in the repository without errors', async () => {
   assert.deepEqual(failures, []);
   assert.ok(stories.length > 100);
 });
+
+test('accepts the badges a book awards', async () => {
+  const result = await fullValidation(story({ awards: [
+    { achievementId: 'snowman-friend', trigger: 'finish' },
+    { achievementId: 'snow-song', trigger: { challengePageId: 'snowy-1' } },
+  ] }), options);
+
+  assert.deepEqual(result.schemaErrors, []);
+});
+
+test('rejects an award with a trigger the app does not know', async () => {
+  const result = await fullValidation(story({ awards: [{ achievementId: 'snowman-friend', trigger: 'open' }] }), options);
+
+  assert.equal(result.valid, false);
+});
