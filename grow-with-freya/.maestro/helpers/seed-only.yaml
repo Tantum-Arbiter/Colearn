@@ -8,5 +8,9 @@ name: Put the app in the state the calling flow asked for, without assuming wher
 - stopApp
 - launchApp
 - openLink: "com.growwithfreya.app://?e2e=1&${SEED}"
+# iOS may ask "Open in <app>?" first; on CI nobody is there to answer it.
+- tapOn:
+    text: "Open"
+    optional: true
 - waitForAnimationToEnd:
     timeout: 5000

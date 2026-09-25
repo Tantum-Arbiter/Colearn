@@ -37,6 +37,11 @@ jobs:
     timeout-minutes: 60
 
     steps:
+      - name: Make room for the native build
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup /usr/share/swift /opt/hostedtoolcache/CodeQL
+          df -h /
+
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -73,7 +78,7 @@ jobs:
 
       - name: Build the app
         working-directory: ${{ env.WORKING_DIRECTORY }}/android
-        run: ./gradlew assembleDebug --no-daemon
+        run: ./gradlew assembleDebug --no-daemon -PreactNativeArchitectures=x86_64
 
       - name: Serve the bundle
         working-directory: ${{ env.WORKING_DIRECTORY }}
@@ -177,9 +182,8 @@ jobs:
           done
 
       - name: Point the app at the bundle
-        run: |
-          xcrun simctl openurl "$MAESTRO_DEVICE" 'com.growwithfreya.app://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081'
-          sleep 30
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: maestro --device "$MAESTRO_DEVICE" test .maestro/helpers/connect-dev-client.yaml
 
       - name: Run the journeys
         working-directory: ${{ env.WORKING_DIRECTORY }}

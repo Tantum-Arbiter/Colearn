@@ -258,6 +258,23 @@ jobs:
 
           echo "JOB_NAME=$JOB_NAME" >> $GITHUB_ENV
 
+      - name: Show why the functional tests failed
+        if: failure() && steps.execute-tests.outcome == 'failure'
+        run: |
+          EXECUTION=$(gcloud run jobs executions list \
+            --job gateway-functional-test-job \
+            --region ${{ env.REGION }} \
+            --project ${{ env.PROJECT_ID }} \
+            --limit 1 \
+            --format="value(metadata.name)")
+          echo "Logs of $EXECUTION:"
+          gcloud logging read \
+            "resource.type=cloud_run_job AND resource.labels.job_name=gateway-functional-test-job AND labels.\"run.googleapis.com/execution_name\"=$EXECUTION" \
+            --project ${{ env.PROJECT_ID }} \
+            --order asc \
+            --limit 2000 \
+            --format="value(textPayload)" || echo "Could not read the job's logs (the deploy account may lack roles/logging.viewer)"
+
       - name: Cleanup previous instance
         run: |
           gcloud run revisions list \

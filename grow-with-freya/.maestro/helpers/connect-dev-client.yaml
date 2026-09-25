@@ -1,0 +1,16 @@
+appId: com.growwithfreya.app
+name: Point the development build at the bundler, and wait for the app to load
+# iOS asks "Open in <app>?" before it hands a link to an app. On a laptop someone
+# taps Open; on a CI simulator nobody does, the development build stays on its
+# launcher, and every flow then fails on its first check. This taps it. The dev
+# client remembers the bundler afterwards, so flows can stop and relaunch freely.
+---
+- launchApp
+- openLink: "com.growwithfreya.app://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081"
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    notVisible:
+      text: "Enter URL manually"
+    timeout: 240000
