@@ -4,11 +4,13 @@ import { CatalogService } from '../../services/catalog-service';
 import { AssetDownloadUtils } from '../../services/asset-download-utils';
 import { CacheManager } from '../../services/cache-manager';
 import { ApiClient, ApiError } from '../../services/api-client';
+import { refreshServerEntitlement } from '../../services/entitlement-refresh';
 import { CatalogEntry, Story } from '../../types/story';
 
 jest.mock('../../services/cache-manager');
 jest.mock('../../services/api-client');
 jest.mock('../../services/asset-download-utils');
+jest.mock('../../services/entitlement-refresh', () => ({ refreshServerEntitlement: jest.fn().mockResolvedValue(null) }));
 jest.mock('../../services/story-loader', () => ({
   StoryLoader: {
     getStories: jest.fn().mockResolvedValue([]),
@@ -526,6 +528,7 @@ describe('StoryDownloadService', () => {
     ['GTW-416', 'subscription_required'],
     ['GTW-417', 'download_limit_reached'],
   ])('reports the gateway refusing with %s as %s, the same as the app\'s own check', async (errorCode, reason) => {
+    mockSubscriptionTier = 'free';
     const refusal = Object.assign(new ApiError(403, null), { status: 403, body: { errorCode } });
     mockApiClient.request.mockRejectedValueOnce(refusal);
     const progress: DownloadProgress[] = [];
@@ -536,6 +539,55 @@ describe('StoryDownloadService', () => {
     expect(result.error).toBe(reason);
     expect(progress[progress.length - 1]).toMatchObject({ phase: 'failed', message: reason });
     expect(mockAssetUtils.extractAssetPaths).not.toHaveBeenCalled();
+  });
+
+  describe('when the gateway refuses a family the phone knows has paid', () => {
+    const refusal = (errorCode = 'GTW-416') => Object.assign(new ApiError(403, null), { status: 403, body: { errorCode } });
+
+    beforeEach(() => {
+      mockSubscriptionTier = 'premium';
+      mockAssetUtils.extractAssetPaths.mockReturnValue([]);
+      mockAssetUtils.filterUncachedAssets.mockResolvedValue([]);
+      mockCacheManager.updateStories.mockResolvedValue();
+    });
+
+    it.each(['GTW-416', 'GTW-417'])('asks the gateway to refresh the subscription and tries once more (%s)', async (code) => {
+      mockApiClient.request.mockRejectedValueOnce(refusal(code)).mockResolvedValueOnce(mockStory);
+
+      const result = await StoryDownloadService.downloadStory('free-story', freeCatalogEntry);
+
+      expect(refreshServerEntitlement).toHaveBeenCalledTimes(1);
+      expect(mockApiClient.request).toHaveBeenCalledTimes(2);
+      expect(result.success).toBe(true);
+    });
+
+    it('shows the refusal when the second try is refused too, without looping', async () => {
+      mockApiClient.request.mockRejectedValueOnce(refusal()).mockRejectedValueOnce(refusal());
+
+      const result = await StoryDownloadService.downloadStory('free-story', freeCatalogEntry);
+
+      expect(result.error).toBe('subscription_required');
+      expect(refreshServerEntitlement).toHaveBeenCalledTimes(1);
+      expect(mockApiClient.request).toHaveBeenCalledTimes(2);
+    });
+
+    it('still tries once more when the refresh itself fails', async () => {
+      (refreshServerEntitlement as jest.Mock).mockResolvedValueOnce(null);
+      mockApiClient.request.mockRejectedValueOnce(refusal()).mockResolvedValueOnce(mockStory);
+
+      expect((await StoryDownloadService.downloadStory('free-story', freeCatalogEntry)).success).toBe(true);
+    });
+
+    it('does not refresh for a family the phone also sees as free', async () => {
+      mockSubscriptionTier = 'free';
+      mockApiClient.request.mockRejectedValueOnce(refusal());
+
+      const result = await StoryDownloadService.downloadStory('free-story', freeCatalogEntry);
+
+      expect(result.error).toBe('subscription_required');
+      expect(refreshServerEntitlement).not.toHaveBeenCalled();
+      expect(mockApiClient.request).toHaveBeenCalledTimes(1);
+    });
   });
 
   it('reads the refusal codes only from a 403', async () => {

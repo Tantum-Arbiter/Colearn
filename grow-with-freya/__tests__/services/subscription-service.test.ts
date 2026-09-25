@@ -28,6 +28,9 @@ import {
   _resetForTesting,
 } from '@/services/subscription-service';
 import { useAppStore } from '@/store/app-store';
+import { refreshServerEntitlement } from '@/services/entitlement-refresh';
+
+jest.mock('@/services/entitlement-refresh', () => ({ refreshServerEntitlement: jest.fn().mockResolvedValue(null) }));
 
 // ─── Helpers ───
 
@@ -803,5 +806,94 @@ describe('identifyAccount / forgetAccount', () => {
     await identifyAccount('user-42');
 
     await expect(forgetAccount()).resolves.toBeUndefined();
+  });
+});
+
+
+// ════════════════════════════════════════════════
+// The gateway's copy of the subscription: every change the store reports is
+// followed by one refresh, so paid downloads open at once.
+// ════════════════════════════════════════════════
+
+describe('refreshing the gateway after a change', () => {
+  function onDevice() {
+    (global as any).__DEV__ = false;
+    (Constants as any).appOwnership = null;
+    (Platform as any).OS = 'ios';
+    (Constants as any).expoConfig = { extra: { revenueCatAppleKey: 'appl_test_key' } };
+  }
+
+  it('refreshes after a purchase', async () => {
+    onDevice();
+    (Purchases.purchasePackage as jest.Mock).mockResolvedValueOnce({ customerInfo: mockCustomerInfo({ basic_access: { isActive: true } }) });
+
+    await purchasePackage(mockPackage('$rc_monthly_basic'));
+
+    expect(refreshServerEntitlement).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not refresh when the purchase was cancelled or failed', async () => {
+    onDevice();
+    (Purchases.purchasePackage as jest.Mock).mockRejectedValueOnce({ userCancelled: true });
+    await purchasePackage(mockPackage('$rc_monthly'));
+    (Purchases.purchasePackage as jest.Mock).mockRejectedValueOnce(new Error('store down'));
+    await purchasePackage(mockPackage('$rc_monthly'));
+
+    expect(refreshServerEntitlement).not.toHaveBeenCalled();
+  });
+
+  it('refreshes after a restore', async () => {
+    onDevice();
+    (Purchases.restorePurchases as jest.Mock).mockResolvedValueOnce(mockCustomerInfo({ premium_access: { isActive: true } }));
+
+    await restorePurchases();
+
+    expect(refreshServerEntitlement).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not refresh when the restore failed', async () => {
+    onDevice();
+    (Purchases.restorePurchases as jest.Mock).mockRejectedValueOnce(new Error('store down'));
+
+    await restorePurchases();
+
+    expect(refreshServerEntitlement).not.toHaveBeenCalled();
+  });
+
+  it('does not hold up a purchase while the gateway is slow', async () => {
+    onDevice();
+    (refreshServerEntitlement as jest.Mock).mockReturnValueOnce(new Promise(() => undefined));
+    (Purchases.purchasePackage as jest.Mock).mockResolvedValueOnce({ customerInfo: mockCustomerInfo({ premium_access: { isActive: true } }) });
+
+    await expect(purchasePackage(mockPackage('$rc_monthly'))).resolves.toMatchObject({ success: true, tier: 'premium' });
+  });
+
+  it('refreshes when RevenueCat reports the tier changed (a renewal after lapsing, an upgrade)', async () => {
+    onDevice();
+    await initialize();
+    const listener = (Purchases.addCustomerInfoUpdateListener as jest.Mock).mock.calls[0][0];
+
+    listener(mockCustomerInfo({ premium_access: { isActive: true } }));
+
+    expect(refreshServerEntitlement).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not refresh when RevenueCat reports the same tier again', async () => {
+    onDevice();
+    await initialize();
+    const listener = (Purchases.addCustomerInfoUpdateListener as jest.Mock).mock.calls[0][0];
+
+    listener(mockCustomerInfo({}));
+
+    expect(refreshServerEntitlement).not.toHaveBeenCalled();
+  });
+
+  it('never refreshes in dev mode', async () => {
+    (global as any).__DEV__ = true;
+
+    await purchasePackage(mockPackage('$rc_monthly'));
+    await restorePurchases();
+
+    expect(refreshServerEntitlement).not.toHaveBeenCalled();
   });
 });

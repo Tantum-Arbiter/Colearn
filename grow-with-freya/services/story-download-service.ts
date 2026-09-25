@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CacheManager } from './cache-manager';
 import { ApiClient, ApiError } from './api-client';
+import { refreshServerEntitlement } from './entitlement-refresh';
 import { AssetDownloadUtils } from './asset-download-utils';
 import { StoryAccessService, AccessCheckResult, type AccessDeniedReason } from './story-access-service';
 import { CatalogService } from './catalog-service';
@@ -247,11 +248,20 @@ export class StoryDownloadService {
       reportProgress({ phase: 'fetching-story', progress: 15, message: 'Fetching story data...' });
 
       let story: Story;
+      const fetchStory = () => ApiClient.request<Story>(
+        `/api/stories/${encodeURIComponent(storyId)}/download`,
+        { method: 'GET' }
+      );
       try {
-        story = await ApiClient.request<Story>(
-          `/api/stories/${encodeURIComponent(storyId)}/download`,
-          { method: 'GET' }
-        );
+        try {
+          story = await fetchStory();
+        } catch (firstError) {
+          if (!gatewayRefusal(firstError) || !(await StoryAccessService.hasActiveSubscription())) throw firstError;
+          log.info(`The gateway refused ${storyId} for a family the phone sees as subscribed; refreshing and trying once more`);
+          await refreshServerEntitlement();
+          checkAbort();
+          story = await fetchStory();
+        }
       } catch (apiError) {
         const refusal = gatewayRefusal(apiError);
         if (refusal) {

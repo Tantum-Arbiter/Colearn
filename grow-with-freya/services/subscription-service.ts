@@ -23,6 +23,7 @@ import Purchases, {
 } from 'react-native-purchases';
 import { useAppStore, type SubscriptionTier } from '@/store/app-store';
 import { SecureStorage } from './secure-storage';
+import { refreshServerEntitlement } from './entitlement-refresh';
 import { trialDaysRemaining, type TrialStatus } from '@/constants/trial-end';
 import { Logger } from '@/utils/logger';
 
@@ -183,6 +184,7 @@ export async function purchasePackage(pkg: PurchasesPackage): Promise<PurchaseRe
     const tier = mapEntitlementsToTier(customerInfo);
     useAppStore.getState().setSubscriptionTier(tier);
     log.info(`Purchase successful -tier set to: ${tier}`);
+    void refreshServerEntitlement();
     return { success: true, tier };
   } catch (err: unknown) {
     const rcError = err as { code?: string; userCancelled?: boolean };
@@ -313,6 +315,7 @@ export async function restorePurchases(): Promise<PurchaseResult> {
     const tier = mapEntitlementsToTier(customerInfo);
     useAppStore.getState().setSubscriptionTier(tier);
     log.info(`Restore successful -tier: ${tier}`);
+    void refreshServerEntitlement();
     return { success: true, tier };
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown restore error';
@@ -328,7 +331,9 @@ function handleCustomerInfoUpdate(customerInfo: CustomerInfo): void {
     return;
   }
   const tier = mapEntitlementsToTier(customerInfo);
+  const changed = useAppStore.getState().subscriptionTier !== tier;
   useAppStore.getState().setSubscriptionTier(tier);
+  if (changed) void refreshServerEntitlement();
   log.info(`CustomerInfo updated -tier: ${tier}`);
 }
 
