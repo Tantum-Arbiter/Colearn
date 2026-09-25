@@ -319,7 +319,9 @@ public class StoryController {
             }
 
             String userId = AuthenticatedUser.id();
-            DownloadAccessService.Decision decision = downloadAccessService.check(userId, story).join();
+            DownloadAccessService.Check check = downloadAccessService.check(userId, story);
+            DownloadAccessService.Decision decision = check.decision();
+            metricsService.recordEntitlementDecision(decision.name().toLowerCase(java.util.Locale.ROOT), check.source(), enforceEntitlements);
             if (decision != DownloadAccessService.Decision.ALLOWED) {
                 if (enforceEntitlements) {
                     ErrorCode code = decision == DownloadAccessService.Decision.LIMIT_REACHED

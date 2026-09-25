@@ -1,6 +1,5 @@
 package com.app.service;
 
-import com.app.dto.RevenueCatWebhook;
 import com.app.model.Entitlement;
 import com.app.repository.EntitlementRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -9,27 +8,33 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.UnaryOperator;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 class EntitlementServiceTest {
 
-    private static final Instant NOW = Instant.parse("2026-09-24T12:00:00Z");
+    private static final Instant NOW = Instant.parse("2026-09-25T12:00:00Z");
     private static final long HOUR = 3_600_000L;
+    private static final String USER = "user-1";
 
     private final Map<String, Entitlement> stored = new HashMap<>();
-    private final Map<String, Boolean> users = new HashMap<>();
+    private final RevenueCatClient revenueCat = mock(RevenueCatClient.class);
+    private boolean storeFails;
     private EntitlementService underTest;
 
     private final EntitlementRepository repository = new EntitlementRepository() {
@@ -40,8 +45,8 @@ class EntitlementServiceTest {
 
         @Override
         public CompletableFuture<Boolean> update(String userId, UnaryOperator<Entitlement> change) {
-            if (!users.getOrDefault(userId, false)) {
-                return CompletableFuture.completedFuture(false);
+            if (storeFails) {
+                return CompletableFuture.failedFuture(new IllegalStateException("firestore down"));
             }
             Entitlement next = change.apply(stored.get(userId));
             if (next != null) {
@@ -53,166 +58,299 @@ class EntitlementServiceTest {
 
     @BeforeEach
     void setUp() {
-        users.put("user-1", true);
-        underTest = new EntitlementService(repository, Clock.fixed(NOW, ZoneOffset.UTC), true);
-    }
-
-    private static RevenueCatWebhook event(String type, String appUserId, List<String> entitlements, Long expiresAt, long at) {
-        RevenueCatWebhook.Event event = new RevenueCatWebhook.Event();
-        event.setType(type);
-        event.setAppUserId(appUserId);
-        event.setEntitlementIds(entitlements);
-        event.setExpirationAtMs(expiresAt);
-        event.setEventTimestampMs(at);
-        event.setEnvironment("SANDBOX");
-        RevenueCatWebhook webhook = new RevenueCatWebhook();
-        webhook.setEvent(event);
-        return webhook;
+        underTest = new EntitlementService(repository, revenueCat, Clock.fixed(NOW, ZoneOffset.UTC), "");
     }
 
     private long now() {
         return NOW.toEpochMilli();
     }
 
+    private void cached(Tier tier, Long expiresAtMs, long checkedAgoMs) {
+        Entitlement entitlement = new Entitlement();
+        entitlement.setTier(tier.name().toLowerCase());
+        entitlement.setExpiresAtMs(expiresAtMs);
+        entitlement.setCheckedAtMs(now() - checkedAgoMs);
+        entitlement.setEnvironment("PRODUCTION");
+        stored.put(USER, entitlement);
+    }
+
+    private void revenueCatSays(Tier tier, Long expiresAtMs) {
+        when(revenueCat.lookup(USER)).thenReturn(new RevenueCatClient.Lookup(tier, expiresAtMs, false));
+    }
+
+    private void revenueCatIsDown() {
+        when(revenueCat.lookup(anyString())).thenThrow(new RevenueCatClient.UnavailableException("timeout", "down"));
+    }
+
+    private EntitlementService.Resolution resolve() {
+        return underTest.resolve(USER, EntitlementService.PAID_MAX_AGE);
+    }
+
     @Test
-    void aUserWithNoEntitlementIsFree() {
-        assertEquals(Tier.FREE, underTest.tierOf("user-1").join());
+    void asksRevenueCatAboutSomeoneItKnowsNothingAbout_andRemembersTheAnswer() {
+        revenueCatSays(Tier.PREMIUM, now() + HOUR);
+
+        EntitlementService.Resolution resolution = resolve();
+
+        assertEquals(Tier.PREMIUM, resolution.tier());
+        assertEquals("revenuecat", resolution.source());
+        Entitlement remembered = stored.get(USER);
+        assertEquals("premium", remembered.getTier());
+        assertEquals(now() + HOUR, remembered.getExpiresAtMs());
+        assertEquals(now(), remembered.getCheckedAtMs());
+        assertEquals("PRODUCTION", remembered.getEnvironment());
+    }
+
+    @Test
+    void remembersASandboxAnswerAsSandbox() {
+        when(revenueCat.lookup(USER)).thenReturn(new RevenueCatClient.Lookup(Tier.BASIC, now() + HOUR, true));
+
+        resolve();
+
+        assertEquals("SANDBOX", stored.get(USER).getEnvironment());
+    }
+
+    @Test
+    void usesARecentPaidAnswerWithoutAsking() {
+        cached(Tier.BASIC, now() + HOUR, 6 * 24 * HOUR);
+
+        EntitlementService.Resolution resolution = resolve();
+
+        assertEquals(Tier.BASIC, resolution.tier());
+        assertEquals("cache", resolution.source());
+        verify(revenueCat, never()).lookup(anyString());
+    }
+
+    @Test
+    void asksAgainOnceAPaidAnswerIsAWeekOld_toCatchRefunds() {
+        cached(Tier.PREMIUM, now() + 10 * 24 * HOUR, 7 * 24 * HOUR + 1);
+        revenueCatSays(Tier.FREE, null);
+
+        assertEquals(Tier.FREE, resolve().tier());
+    }
+
+    @Test
+    void asksAgainOnceAPaidAnswerHasExpired() {
+        cached(Tier.PREMIUM, now() - 1, HOUR);
+        revenueCatSays(Tier.PREMIUM, now() + 30 * 24 * HOUR);
+
+        EntitlementService.Resolution resolution = resolve();
+
+        assertEquals(Tier.PREMIUM, resolution.tier());
+        assertEquals("revenuecat", resolution.source());
+    }
+
+    @Test
+    void aSavedPaidAnswerEndingThisVeryMomentIsCheckedAgain() {
+        cached(Tier.PREMIUM, now(), HOUR);
+        revenueCatSays(Tier.PREMIUM, now() + 30 * 24 * HOUR);
+
+        assertEquals("revenuecat", resolve().source());
+    }
+
+    @Test
+    void aSavedPaidAnswerExactlyAWeekOldIsCheckedAgain() {
+        cached(Tier.PREMIUM, now() + 30 * 24 * HOUR, 7 * 24 * HOUR);
+        revenueCatSays(Tier.PREMIUM, now() + 30 * 24 * HOUR);
+
+        assertEquals("revenuecat", resolve().source());
+    }
+
+    @Test
+    void trustsALifetimePurchaseUntilItIsRechecked() {
+        cached(Tier.PREMIUM, null, HOUR);
+
+        assertEquals("cache", resolve().source());
+    }
+
+    @Test
+    void usesAFreeAnswerForHalfAMinute() {
+        cached(Tier.FREE, null, 29_000);
+
+        EntitlementService.Resolution resolution = resolve();
+
+        assertEquals(Tier.FREE, resolution.tier());
+        assertEquals("cache", resolution.source());
+        verify(revenueCat, never()).lookup(anyString());
+    }
+
+    @Test
+    void asksAgainAfterHalfAMinute_soSomeoneWhoJustSubscribedGetsIn() {
+        cached(Tier.FREE, null, 31_000);
+        revenueCatSays(Tier.BASIC, now() + HOUR);
+
+        assertEquals(Tier.BASIC, resolve().tier());
+    }
+
+    @Test
+    void aShorterMaxAgeForcesARecheckOfARecentPaidAnswer() {
+        cached(Tier.BASIC, now() + HOUR, 60_000);
+        revenueCatSays(Tier.PREMIUM, now() + HOUR);
+
+        EntitlementService.Resolution resolution = underTest.resolve(USER, EntitlementService.UPGRADE_MAX_AGE);
+
+        assertEquals(Tier.PREMIUM, resolution.tier());
+    }
+
+    @Test
+    void aShorterMaxAgeStillUsesAnAnswerFromTheLastHalfMinute() {
+        cached(Tier.BASIC, now() + HOUR, 10_000);
+
+        underTest.resolve(USER, EntitlementService.UPGRADE_MAX_AGE);
+
+        verify(revenueCat, never()).lookup(anyString());
+    }
+
+    @Test
+    void whenRevenueCatIsDown_anUnexpiredPaidAnswerIsUsedHoweverOld() {
+        cached(Tier.PREMIUM, now() + HOUR, 8 * 24 * HOUR);
+        revenueCatIsDown();
+
+        EntitlementService.Resolution resolution = resolve();
+
+        assertEquals(Tier.PREMIUM, resolution.tier());
+        assertEquals("stale_cache", resolution.source());
+    }
+
+    @Test
+    void whenRevenueCatIsDown_andNothingIsKnown_theFamilyIsLetIn_countedAsUnverified_neverTurnedFree() {
+        revenueCatIsDown();
+
+        EntitlementService.Resolution resolution = resolve();
+
+        assertEquals(Tier.PREMIUM, resolution.tier());
+        assertEquals("unverified", resolution.source());
+        assertNull(stored.get(USER));
+    }
+
+    @Test
+    void whenRevenueCatIsDown_anExpiredPaidAnswerDoesNotCount() {
+        cached(Tier.PREMIUM, now() - 1, HOUR);
+        revenueCatIsDown();
+
+        assertEquals("unverified", resolve().source());
+    }
+
+
+
+    @Test
+    void theAnswerStandsEvenWhenItCannotBeRemembered() {
+        storeFails = true;
+        revenueCatSays(Tier.BASIC, now() + HOUR);
+
+        assertEquals(Tier.BASIC, resolve().tier());
+    }
+
+    @Test
+    void theAnswerStandsEvenWhenTheCacheCannotBeRead() {
+        EntitlementRepository unreadable = new EntitlementRepository() {
+            @Override
+            public CompletableFuture<Optional<Entitlement>> find(String userId) {
+                return CompletableFuture.failedFuture(new IllegalStateException("firestore down"));
+            }
+
+            @Override
+            public CompletableFuture<Boolean> update(String userId, UnaryOperator<Entitlement> change) {
+                return CompletableFuture.completedFuture(true);
+            }
+        };
+        underTest = new EntitlementService(unreadable, revenueCat, Clock.fixed(NOW, ZoneOffset.UTC), "");
+        revenueCatSays(Tier.PREMIUM, now() + HOUR);
+
+        assertEquals(Tier.PREMIUM, resolve().tier());
+    }
+
+    @Test
+    void anUnreadableCachedTierIsTreatedAsUnknown() {
+        cached(Tier.PREMIUM, now() + HOUR, 60_000);
+        stored.get(USER).setTier("platinum");
+        revenueCatSays(Tier.BASIC, now() + HOUR);
+
+        assertEquals(Tier.BASIC, resolve().tier());
+        verify(revenueCat, times(1)).lookup(USER);
+    }
+
+    @Test
+    void theMaxAgesAreAWeekHalfAMinuteAndTenSeconds() {
+        assertEquals(Duration.ofDays(7), EntitlementService.PAID_MAX_AGE);
+        assertEquals(Duration.ofSeconds(30), EntitlementService.UPGRADE_MAX_AGE);
+        assertEquals(Duration.ofSeconds(30), EntitlementService.FREE_MAX_AGE);
+        assertEquals(Duration.ofSeconds(10), EntitlementService.REFRESH_MAX_AGE);
+    }
+
+    @Test
+    void aRefreshAsksRevenueCatEvenWhenAPaidAnswerIsSaved_soAnUpgradeShowsAtOnce() {
+        cached(Tier.BASIC, now() + 20 * 24 * HOUR, 60_000);
+        revenueCatSays(Tier.PREMIUM, now() + 30 * 24 * HOUR);
+
+        EntitlementService.Resolution resolution = underTest.refresh(USER);
+
+        assertEquals(Tier.PREMIUM, resolution.tier());
+        assertEquals("revenuecat", resolution.source());
+        assertEquals("premium", stored.get(USER).getTier());
+    }
+
+    @Test
+    void aRefreshAsksRevenueCatWhenFreeIsSaved_soANewPurchaseShowsAtOnce() {
+        cached(Tier.FREE, null, 11_000);
+        revenueCatSays(Tier.BASIC, now() + HOUR);
+
+        assertEquals(Tier.BASIC, underTest.refresh(USER).tier());
+    }
+
+    @Test
+    void refreshesInQuickSuccessionAskRevenueCatOnlyOnce() {
+        cached(Tier.FREE, null, 9_000);
+
+        EntitlementService.Resolution resolution = underTest.refresh(USER);
+
+        assertEquals("cache", resolution.source());
+        verify(revenueCat, never()).lookup(anyString());
+    }
+
+    @Test
+    void aRefreshWhileRevenueCatIsDownFallsBackLikeADownload() {
+        cached(Tier.PREMIUM, now() + HOUR, 60_000);
+        revenueCatIsDown();
+
+        assertEquals("stale_cache", underTest.refresh(USER).source());
+    }
+
+    @Test
+    void answersSavedBeforeTheCacheEpochAreIgnored_soABadCopyCanBeThrownAway() {
+        underTest = new EntitlementService(repository, revenueCat, Clock.fixed(NOW, ZoneOffset.UTC), NOW.minusSeconds(60).toString());
+        cached(Tier.PREMIUM, now() + 10 * 24 * HOUR, 120_000);
+        revenueCatSays(Tier.FREE, null);
+
+        EntitlementService.Resolution resolution = resolve();
+
+        assertEquals(Tier.FREE, resolution.tier());
+        assertEquals("revenuecat", resolution.source());
+    }
+
+    @Test
+    void anAnswerSavedBeforeTheEpochIsNotUsedAsAFallback_theFamilyIsLetInUnverifiedInstead() {
+        underTest = new EntitlementService(repository, revenueCat, Clock.fixed(NOW, ZoneOffset.UTC), NOW.minusSeconds(60).toString());
+        cached(Tier.PREMIUM, now() + 10 * 24 * HOUR, 120_000);
+        revenueCatIsDown();
+
+        assertEquals("unverified", resolve().source());
+    }
+
+    @Test
+    void answersSavedAfterTheEpochAreKept() {
+        underTest = new EntitlementService(repository, revenueCat, Clock.fixed(NOW, ZoneOffset.UTC), NOW.minusSeconds(60).toString());
+        cached(Tier.PREMIUM, now() + 10 * 24 * HOUR, 30_000);
+
+        assertEquals("cache", resolve().source());
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"INITIAL_PURCHASE", "RENEWAL", "PRODUCT_CHANGE", "UNCANCELLATION", "NON_RENEWING_PURCHASE", "SUBSCRIPTION_EXTENDED", "TEMPORARY_ENTITLEMENT_GRANT"})
-    void grantsTheTierAPurchaseCarries(String type) {
-        underTest.apply(event(type, "user-1", List.of("basic_access"), now() + HOUR, now())).join();
+    @ValueSource(strings = {"", "  ", "not a time"})
+    void anEmptyOrUnreadableEpochThrowsNothingAway(String epoch) {
+        underTest = new EntitlementService(repository, revenueCat, Clock.fixed(NOW, ZoneOffset.UTC), epoch);
+        cached(Tier.PREMIUM, now() + 10 * 24 * HOUR, 120_000);
 
-        assertEquals(Tier.BASIC, underTest.tierOf("user-1").join());
-    }
-
-    @Test
-    void theHighestEntitlementWins() {
-        underTest.apply(event("INITIAL_PURCHASE", "user-1", List.of("basic_access", "premium_access"), now() + HOUR, now())).join();
-
-        assertEquals(Tier.PREMIUM, underTest.tierOf("user-1").join());
-    }
-
-    @Test
-    void aPurchaseWithoutAnExpiryLastsUntilExpiredByAnEvent() {
-        underTest.apply(event("NON_RENEWING_PURCHASE", "user-1", List.of("premium_access"), null, now())).join();
-
-        assertEquals(Tier.PREMIUM, underTest.tierOf("user-1").join());
-    }
-
-    @Test
-    void aSubscriptionPastItsExpiryIsFree_evenBeforeTheExpirationEventArrives() {
-        underTest.apply(event("INITIAL_PURCHASE", "user-1", List.of("basic_access"), now() - 1, now() - HOUR)).join();
-
-        assertEquals(Tier.FREE, underTest.tierOf("user-1").join());
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = {"CANCELLATION", "BILLING_ISSUE", "SUBSCRIPTION_PAUSED"})
-    void keepsTheTierUntilTheSubscriptionEnds(String type) {
-        underTest.apply(event("INITIAL_PURCHASE", "user-1", List.of("basic_access"), now() + 2 * HOUR, now() - HOUR)).join();
-
-        underTest.apply(event(type, "user-1", List.of("basic_access"), now() + HOUR, now())).join();
-
-        assertEquals(Tier.BASIC, underTest.tierOf("user-1").join());
-        assertEquals(now() + HOUR, stored.get("user-1").getExpiresAtMs());
-    }
-
-    @Test
-    void expirationEndsTheTier() {
-        underTest.apply(event("INITIAL_PURCHASE", "user-1", List.of("premium_access"), now() + HOUR, now() - HOUR)).join();
-
-        underTest.apply(event("EXPIRATION", "user-1", List.of("premium_access"), now(), now())).join();
-
-        assertEquals(Tier.FREE, underTest.tierOf("user-1").join());
-    }
-
-    @Test
-    void ignoresAnEventOlderThanTheOneAlreadyApplied() {
-        underTest.apply(event("RENEWAL", "user-1", List.of("premium_access"), now() + HOUR, now())).join();
-
-        underTest.apply(event("EXPIRATION", "user-1", List.of("premium_access"), now() - HOUR, now() - HOUR)).join();
-
-        assertEquals(Tier.PREMIUM, underTest.tierOf("user-1").join());
-    }
-
-    @Test
-    void ignoresAPurchaseOlderThanTheRenewalAlreadyApplied() {
-        underTest.apply(event("RENEWAL", "user-1", List.of("premium_access"), now() + HOUR, now())).join();
-
-        underTest.apply(event("INITIAL_PURCHASE", "user-1", List.of("basic_access"), now() + HOUR, now() - HOUR)).join();
-
-        assertEquals(Tier.PREMIUM, underTest.tierOf("user-1").join());
-    }
-
-    @Test
-    void findsTheAccountBehindAnAnonymousId() {
-        RevenueCatWebhook webhook = event("INITIAL_PURCHASE", "$RCAnonymousID:abc", List.of("basic_access"), now() + HOUR, now());
-        webhook.getEvent().setAliases(List.of("$RCAnonymousID:abc", "user-1"));
-
-        assertEquals(EntitlementService.Outcome.APPLIED, underTest.apply(webhook).join());
-        assertEquals(Tier.BASIC, underTest.tierOf("user-1").join());
-    }
-
-    @Test
-    void ignoresAPurchaseNoAccountOwnsYet() {
-        assertEquals(EntitlementService.Outcome.NO_ACCOUNT,
-                underTest.apply(event("INITIAL_PURCHASE", "$RCAnonymousID:abc", List.of("basic_access"), now() + HOUR, now())).join());
-    }
-
-    @Test
-    void ignoresAnIdThatIsNotAnAccount() {
-        assertEquals(EntitlementService.Outcome.NO_ACCOUNT,
-                underTest.apply(event("INITIAL_PURCHASE", "stranger", List.of("basic_access"), now() + HOUR, now())).join());
-        assertTrue(stored.isEmpty());
-    }
-
-    @Test
-    void ignoresAPurchaseOfSomethingThatIsNotATier() {
-        assertEquals(EntitlementService.Outcome.IGNORED,
-                underTest.apply(event("INITIAL_PURCHASE", "user-1", List.of("sticker_pack"), now() + HOUR, now())).join());
-        assertTrue(stored.isEmpty());
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = {"TEST", "SOMETHING_NEW"})
-    void acknowledgesEventsItHasNoUseFor(String type) {
-        assertEquals(EntitlementService.Outcome.IGNORED, underTest.apply(event(type, "user-1", List.of(), null, now())).join());
-        assertTrue(stored.isEmpty());
-    }
-
-    @Test
-    void aTransferEndsTheTierOnTheAccountItLeft() {
-        users.put("user-2", true);
-        underTest.apply(event("INITIAL_PURCHASE", "user-1", List.of("basic_access"), now() + HOUR, now() - HOUR)).join();
-        RevenueCatWebhook transfer = event("TRANSFER", null, null, null, now());
-        transfer.getEvent().setTransferredFrom(List.of("user-1"));
-        transfer.getEvent().setTransferredTo(List.of("user-2"));
-
-        underTest.apply(transfer).join();
-
-        assertEquals(Tier.FREE, underTest.tierOf("user-1").join());
-        assertEquals(Tier.FREE, underTest.tierOf("user-2").join());
-    }
-
-    @Test
-    void refusesSandboxPurchasesWhenTheStoreIsLive() {
-        EntitlementService live = new EntitlementService(repository, Clock.fixed(NOW, ZoneOffset.UTC), false);
-
-        assertEquals(EntitlementService.Outcome.IGNORED,
-                live.apply(event("INITIAL_PURCHASE", "user-1", List.of("basic_access"), now() + HOUR, now())).join());
-        assertNull(stored.get("user-1"));
-    }
-
-    @Test
-    void recordsWhereTheEntitlementCameFrom() {
-        underTest.apply(event("INITIAL_PURCHASE", "user-1", List.of("basic_access"), now() + HOUR, now())).join();
-
-        Entitlement underTestEntitlement = stored.get("user-1");
-        assertEquals("basic", underTestEntitlement.getTier());
-        assertEquals(now(), underTestEntitlement.getEventAtMs());
-        assertEquals("SANDBOX", underTestEntitlement.getEnvironment());
-        assertFalse(underTestEntitlement.getTier().isBlank());
+        assertEquals("cache", resolve().source());
     }
 }

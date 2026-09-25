@@ -265,7 +265,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return false;
         }
         return path.startsWith("/auth/") ||
-               path.equals("/webhooks/revenuecat") ||
                path.startsWith("/health") ||
                path.startsWith("/actuator/") ||
                path.startsWith("/private/") ||

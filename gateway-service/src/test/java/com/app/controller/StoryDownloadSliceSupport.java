@@ -4,6 +4,7 @@ import com.app.config.JwtConfig;
 import com.app.model.Story;
 import com.app.security.RateLimitingFilter;
 import com.app.service.AchievementService;
+import com.app.service.ApplicationMetricsService;
 import com.app.service.AssetService;
 import com.app.service.DownloadAccessService;
 import com.app.service.StoryService;
@@ -49,6 +50,9 @@ abstract class StoryDownloadSliceSupport {
     @MockitoBean
     DownloadAccessService downloadAccessService;
 
+    @Autowired
+    ApplicationMetricsService metricsService;
+
     Story paid;
 
     @BeforeEach
@@ -60,7 +64,7 @@ abstract class StoryDownloadSliceSupport {
         paid.setAvailable(true);
         paid.setPages(List.of());
         when(storyService.getStoryById("story-1")).thenReturn(CompletableFuture.completedFuture(Optional.of(paid)));
-        when(downloadAccessService.check(anyString(), any())).thenReturn(CompletableFuture.completedFuture(DownloadAccessService.Decision.ALLOWED));
+        when(downloadAccessService.check(anyString(), any())).thenReturn(new DownloadAccessService.Check(DownloadAccessService.Decision.ALLOWED, "revenuecat"));
         when(downloadAccessService.recordDownload(anyString(), anyString())).thenReturn(CompletableFuture.completedFuture(null));
         when(downloadAccessService.release(anyString(), anyString())).thenReturn(CompletableFuture.completedFuture(null));
     }

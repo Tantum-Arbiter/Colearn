@@ -1,34 +1,40 @@
 @entitlements @local @docker @emulator-only
 Feature: The gateway knows what a family has paid for
   As the business
-  I want RevenueCat to tell the gateway about purchases
-  So that paid stories can be checked on the server, not only in the app
+  I want the gateway to check subscriptions with RevenueCat itself
+  So that paid stories are protected on the server, not only in the app
 
   Background:
     Given the gateway service is running
     And I authenticate with Google using a valid ID token
 
   @smoke
-  Scenario: A purchase RevenueCat reports is held against the account
-    When RevenueCat reports an "INITIAL_PURCHASE" of "premium_access" for the signed-in account
+  Scenario: After a purchase the app asks for a refresh, and the gateway checks with RevenueCat
+    When the app asks the gateway to refresh the subscription
     Then the response status should be 200
-    And the response JSON field "outcome" should be "APPLIED"
+    And the response JSON field "tier" should be "premium"
+    And the response JSON field "source" should be "revenuecat"
     And the export shows the subscription "premium"
 
-  Scenario: An expiry ends the subscription
-    Given RevenueCat reports an "INITIAL_PURCHASE" of "basic_access" for the signed-in account
-    When RevenueCat reports an "EXPIRATION" of "basic_access" for the signed-in account
-    Then the export shows the subscription "free"
+  Scenario: A second refresh straight after the first does not ask RevenueCat again
+    Given the app asks the gateway to refresh the subscription
+    When the app asks the gateway to refresh the subscription
+    Then the response status should be 200
+    And the response JSON field "source" should be "cache"
 
   @security
-  Scenario: A webhook without RevenueCat's secret is refused
-    When a webhook arrives with the secret "not-the-secret"
-    Then the response status should be 401
-
-  Scenario: A purchase for someone who is not an account changes nothing
-    When RevenueCat reports an "INITIAL_PURCHASE" of "premium_access" for the account "no-such-user"
+  Scenario: The app cannot tell the gateway which plan it is on
+    When the app asks the gateway to refresh the subscription with body:
+      """
+      {"tier":"free","expiresAt":"2000-01-01T00:00:00Z"}
+      """
     Then the response status should be 200
-    And the response JSON field "outcome" should be "NO_ACCOUNT"
+    And the response JSON field "tier" should be "premium"
+
+  @security
+  Scenario: A refresh without signing in is refused
+    When I send an unauthenticated POST request to "/api/entitlements/refresh"
+    Then the response status should be 401
 
   Scenario: The gateway counts the stories on the family's devices, and forgets one that is deleted
     Given the story "cms-test-1-snowman-squirrel" is in the catalogue

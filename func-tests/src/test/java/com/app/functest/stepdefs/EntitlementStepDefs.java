@@ -12,43 +12,23 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class EntitlementStepDefs extends BaseStepDefs {
 
-    private static final String WEBHOOK_SECRET = System.getenv().getOrDefault("REVENUECAT_WEBHOOK_SECRET", "func-test-webhook-secret");
-
-    private static long eventClock = System.currentTimeMillis();
-
-    private String signedInAccountId() {
-        String id = applyAuthenticatedHeaders(given()).when().get("/api/account/export").jsonPath().getString("account.id");
-        assertTrue(id != null && !id.isBlank(), "no signed-in account");
-        return id;
+    @When("the app asks the gateway to refresh the subscription")
+    public void theAppAsksTheGatewayToRefreshTheSubscription() {
+        lastResponse = applyAuthenticatedHeaders(given()).when().post("/api/entitlements/refresh");
     }
 
-    private void sendWebhook(String secret, String type, String entitlement, String account) {
-        long at = ++eventClock;
-        String body = """
-                {"api_version":"1.0","event":{"type":"%s","app_user_id":"%s","entitlement_ids":["%s"],
-                "expiration_at_ms":%d,"event_timestamp_ms":%d,"environment":"SANDBOX"}}
-                """.formatted(type, account, entitlement, at + 30L * 24 * 3600 * 1000, at);
-        lastResponse = given()
-                .header("Authorization", "Bearer " + secret)
+    @When("the app asks the gateway to refresh the subscription with body:")
+    public void theAppAsksTheGatewayToRefreshTheSubscriptionWithBody(String body) {
+        lastResponse = applyAuthenticatedHeaders(given())
                 .contentType("application/json")
                 .body(body)
                 .when()
-                .post("/webhooks/revenuecat");
+                .post("/api/entitlements/refresh");
     }
 
-    @When("RevenueCat reports an {string} of {string} for the signed-in account")
-    public void revenueCatReportsForTheSignedInAccount(String type, String entitlement) {
-        sendWebhook(WEBHOOK_SECRET, type, entitlement, signedInAccountId());
-    }
-
-    @When("RevenueCat reports an {string} of {string} for the account {string}")
-    public void revenueCatReportsForTheAccount(String type, String entitlement, String account) {
-        sendWebhook(WEBHOOK_SECRET, type, entitlement, account);
-    }
-
-    @When("a webhook arrives with the secret {string}")
-    public void aWebhookArrivesWithTheSecret(String secret) {
-        sendWebhook(secret, "INITIAL_PURCHASE", "premium_access", "anyone");
+    @When("I send an unauthenticated POST request to {string}")
+    public void iSendAnUnauthenticatedPostRequestTo(String endpoint) {
+        lastResponse = applyDefaultClientHeaders(given()).contentType("application/json").when().post(endpoint);
     }
 
     @When("the app says {string} left the device")

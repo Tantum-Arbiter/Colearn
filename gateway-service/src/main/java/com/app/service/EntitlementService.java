@@ -1,6 +1,5 @@
 package com.app.service;
 
-import com.app.dto.RevenueCatWebhook;
 import com.app.model.Entitlement;
 import com.app.repository.EntitlementRepository;
 import org.slf4j.Logger;
@@ -10,137 +9,116 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.Clock;
-import java.util.ArrayList;
-import java.util.List;
+import java.time.Duration;
 import java.util.Locale;
-import java.util.Objects;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.function.UnaryOperator;
+import java.util.Optional;
 
 @Service
 public class EntitlementService {
 
-    public enum Outcome { APPLIED, IGNORED, NO_ACCOUNT }
+    public static final Duration PAID_MAX_AGE = Duration.ofDays(7);
+    public static final Duration UPGRADE_MAX_AGE = Duration.ofSeconds(30);
+    public static final Duration FREE_MAX_AGE = Duration.ofSeconds(30);
+    public static final Duration REFRESH_MAX_AGE = Duration.ofSeconds(10);
+
+    public record Resolution(Tier tier, String source) {
+    }
 
     private static final Logger logger = LoggerFactory.getLogger(EntitlementService.class);
-    private static final String ANONYMOUS_PREFIX = "$RCAnonymousID:";
-    private static final String PREMIUM_ENTITLEMENT = "premium_access";
-    private static final String BASIC_ENTITLEMENT = "basic_access";
-    private static final Set<String> GRANTS = Set.of("INITIAL_PURCHASE", "RENEWAL", "PRODUCT_CHANGE", "UNCANCELLATION",
-            "NON_RENEWING_PURCHASE", "SUBSCRIPTION_EXTENDED", "TEMPORARY_ENTITLEMENT_GRANT");
-    private static final Set<String> KEEPS_UNTIL_EXPIRY = Set.of("CANCELLATION", "BILLING_ISSUE", "SUBSCRIPTION_PAUSED");
 
     private final EntitlementRepository repository;
+    private final RevenueCatClient revenueCat;
     private final Clock clock;
-    private final boolean acceptSandbox;
+    private final long cacheEpochMs;
 
     @Autowired
-    public EntitlementService(EntitlementRepository repository,
-                              @Value("${app.revenuecat.accept-sandbox:true}") boolean acceptSandbox) {
-        this(repository, Clock.systemUTC(), acceptSandbox);
+    public EntitlementService(EntitlementRepository repository, RevenueCatClient revenueCat,
+                              @Value("${app.entitlements.cache-epoch:}") String cacheEpoch) {
+        this(repository, revenueCat, Clock.systemUTC(), cacheEpoch);
     }
 
-    public EntitlementService(EntitlementRepository repository, Clock clock, boolean acceptSandbox) {
+    public EntitlementService(EntitlementRepository repository, RevenueCatClient revenueCat, Clock clock, String cacheEpoch) {
         this.repository = repository;
+        this.revenueCat = revenueCat;
         this.clock = clock;
-        this.acceptSandbox = acceptSandbox;
+        this.cacheEpochMs = parseEpoch(cacheEpoch);
     }
 
-    public CompletableFuture<Tier> tierOf(String userId) {
-        return repository.find(userId).thenApply(found -> found
-                .filter(entitlement -> entitlement.getExpiresAtMs() == null || entitlement.getExpiresAtMs() > clock.millis())
-                .map(entitlement -> parse(entitlement.getTier()))
-                .orElse(Tier.FREE));
+    public Resolution refresh(String userId) {
+        return resolve(userId, REFRESH_MAX_AGE);
     }
 
-    public CompletableFuture<Outcome> apply(RevenueCatWebhook webhook) {
-        RevenueCatWebhook.Event event = webhook.getEvent();
-        String type = event.getType() == null ? "" : event.getType();
-        if (!acceptSandbox && "SANDBOX".equalsIgnoreCase(event.getEnvironment())) {
-            logger.info("[RevenueCat] Ignored a sandbox {} event", type);
-            return CompletableFuture.completedFuture(Outcome.IGNORED);
+    public Resolution resolve(String userId, Duration paidMaxAge) {
+        long now = clock.millis();
+        Optional<Entitlement> cached = readCache(userId).filter(e -> e.getCheckedAtMs() >= cacheEpochMs);
+        Duration freeMaxAge = paidMaxAge.compareTo(FREE_MAX_AGE) < 0 ? paidMaxAge : FREE_MAX_AGE;
+        Tier cachedTier = cached.map(e -> parse(e.getTier())).orElse(null);
+        long age = cached.map(e -> now - e.getCheckedAtMs()).orElse(Long.MAX_VALUE);
+        boolean paidAndUnexpired = cachedTier != null && cachedTier.isPaid()
+                && (cached.get().getExpiresAtMs() == null || cached.get().getExpiresAtMs() > now);
+
+        if (paidAndUnexpired && age < paidMaxAge.toMillis()) {
+            return new Resolution(cachedTier, "cache");
         }
-        if (type.equals("TRANSFER")) {
-            return transfer(event);
+        if (cachedTier == Tier.FREE && age < freeMaxAge.toMillis()) {
+            return new Resolution(Tier.FREE, "cache");
         }
 
-        UnaryOperator<Entitlement> change;
-        if (GRANTS.contains(type)) {
-            Tier tier = tierFrom(event.getEntitlementIds());
-            if (tier == null) {
-                return CompletableFuture.completedFuture(Outcome.IGNORED);
+        try {
+            RevenueCatClient.Lookup lookup = revenueCat.lookup(userId);
+            remember(userId, lookup, now);
+            return new Resolution(lookup.tier(), "revenuecat");
+        } catch (RevenueCatClient.UnavailableException e) {
+            if (paidAndUnexpired) {
+                return new Resolution(cachedTier, "stale_cache");
             }
-            change = current -> newer(current, event) ? entitlement(tier, event.getExpirationAtMs(), event) : null;
-        } else if (KEEPS_UNTIL_EXPIRY.contains(type)) {
-            change = current -> current != null && newer(current, event)
-                    ? entitlement(parse(current.getTier()), event.getExpirationAtMs(), event) : null;
-        } else if (type.equals("EXPIRATION")) {
-            change = current -> newer(current, event) ? entitlement(Tier.FREE, event.getExpirationAtMs(), event) : null;
-        } else {
-            return CompletableFuture.completedFuture(Outcome.IGNORED);
+            logger.warn("[Entitlements] RevenueCat unavailable ({}); letting the family in unverified", e.outcome());
+            return new Resolution(Tier.PREMIUM, "unverified");
         }
-
-        String account = accountOf(event);
-        if (account == null) {
-            return CompletableFuture.completedFuture(Outcome.NO_ACCOUNT);
-        }
-        return repository.update(account, change).thenApply(found -> found ? Outcome.APPLIED : Outcome.NO_ACCOUNT);
     }
 
-    private CompletableFuture<Outcome> transfer(RevenueCatWebhook.Event event) {
-        List<CompletableFuture<Boolean>> updates = new ArrayList<>();
-        for (String from : event.getTransferredFrom() == null ? List.<String>of() : event.getTransferredFrom()) {
-            if (isAccount(from)) {
-                updates.add(repository.update(from, current -> newer(current, event) ? entitlement(Tier.FREE, null, event) : null));
-            }
+    private Optional<Entitlement> readCache(String userId) {
+        try {
+            return repository.find(userId).join();
+        } catch (RuntimeException e) {
+            logger.warn("[Entitlements] Could not read the cached entitlement: {}", e.getMessage());
+            return Optional.empty();
         }
-        return CompletableFuture.allOf(updates.toArray(new CompletableFuture[0]))
-                .thenApply(done -> updates.stream().anyMatch(CompletableFuture::join) ? Outcome.APPLIED : Outcome.NO_ACCOUNT);
     }
 
-    private static boolean newer(Entitlement current, RevenueCatWebhook.Event event) {
-        return current == null || event.getEventTimestampMs() >= current.getEventAtMs();
-    }
-
-    private static Entitlement entitlement(Tier tier, Long expiresAtMs, RevenueCatWebhook.Event event) {
+    private void remember(String userId, RevenueCatClient.Lookup lookup, long now) {
         Entitlement entitlement = new Entitlement();
-        entitlement.setTier(tier.name().toLowerCase(Locale.ROOT));
-        entitlement.setExpiresAtMs(expiresAtMs);
-        entitlement.setEventAtMs(event.getEventTimestampMs());
-        entitlement.setEnvironment(event.getEnvironment());
-        return entitlement;
+        entitlement.setTier(lookup.tier().name().toLowerCase(Locale.ROOT));
+        entitlement.setExpiresAtMs(lookup.expiresAtMs());
+        entitlement.setCheckedAtMs(now);
+        entitlement.setEnvironment(lookup.sandbox() ? "SANDBOX" : "PRODUCTION");
+        try {
+            repository.update(userId, current -> entitlement).join();
+        } catch (RuntimeException e) {
+            logger.warn("[Entitlements] Could not remember the entitlement: {}", e.getMessage());
+        }
     }
 
-    private static Tier tierFrom(List<String> entitlementIds) {
-        if (entitlementIds == null) {
-            return null;
+    private static long parseEpoch(String cacheEpoch) {
+        if (cacheEpoch == null || cacheEpoch.isBlank()) {
+            return 0;
         }
-        if (entitlementIds.contains(PREMIUM_ENTITLEMENT)) {
-            return Tier.PREMIUM;
+        try {
+            return java.time.Instant.parse(cacheEpoch.trim()).toEpochMilli();
+        } catch (java.time.format.DateTimeParseException e) {
+            logger.warn("[Entitlements] ENTITLEMENTS_CACHE_EPOCH '{}' is not an ISO instant; no saved answers are thrown away", cacheEpoch);
+            return 0;
         }
-        return entitlementIds.contains(BASIC_ENTITLEMENT) ? Tier.BASIC : null;
     }
 
     private static Tier parse(String tier) {
+        if (tier == null) {
+            return null;
+        }
         try {
-            return tier == null ? Tier.FREE : Tier.valueOf(tier.toUpperCase(Locale.ROOT));
+            return Tier.valueOf(tier.toUpperCase(Locale.ROOT));
         } catch (IllegalArgumentException e) {
-            return Tier.FREE;
+            return null;
         }
-    }
-
-    private static boolean isAccount(String id) {
-        return id != null && !id.isBlank() && !id.startsWith(ANONYMOUS_PREFIX);
-    }
-
-    private static String accountOf(RevenueCatWebhook.Event event) {
-        List<String> candidates = new ArrayList<>();
-        candidates.add(event.getAppUserId());
-        candidates.add(event.getOriginalAppUserId());
-        if (event.getAliases() != null) {
-            candidates.addAll(event.getAliases());
-        }
-        return candidates.stream().filter(Objects::nonNull).filter(EntitlementService::isAccount).findFirst().orElse(null);
     }
 }

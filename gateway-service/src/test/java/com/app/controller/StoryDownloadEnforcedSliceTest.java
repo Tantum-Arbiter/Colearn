@@ -25,18 +25,19 @@ class StoryDownloadEnforcedSliceTest extends StoryDownloadSliceSupport {
     @Test
     void refusesAPaidStoryWithoutASubscription() throws Exception {
         when(downloadAccessService.check(anyString(), any()))
-                .thenReturn(CompletableFuture.completedFuture(DownloadAccessService.Decision.SUBSCRIPTION_REQUIRED));
+                .thenReturn(new DownloadAccessService.Check(DownloadAccessService.Decision.SUBSCRIPTION_REQUIRED, "revenuecat"));
 
         mockMvc.perform(signedIn(get("/api/stories/story-1/download")))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.errorCode").value("GTW-416"));
         verify(downloadAccessService, never()).recordDownload(anyString(), anyString());
+        verify(metricsService).recordEntitlementDecision("subscription_required", "revenuecat", true);
     }
 
     @Test
     void refusesAStoryBeyondTheTiersLimit() throws Exception {
         when(downloadAccessService.check(anyString(), any()))
-                .thenReturn(CompletableFuture.completedFuture(DownloadAccessService.Decision.LIMIT_REACHED));
+                .thenReturn(new DownloadAccessService.Check(DownloadAccessService.Decision.LIMIT_REACHED, "revenuecat"));
 
         mockMvc.perform(signedIn(get("/api/stories/story-1/download")))
                 .andExpect(status().isForbidden())

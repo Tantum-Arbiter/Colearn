@@ -84,8 +84,17 @@ class StoryDownloadSliceTest extends StoryDownloadSliceSupport {
     @Test
     void whileEnforcementIsOff_aDenialIsOnlyLogged() throws Exception {
         when(downloadAccessService.check(anyString(), any()))
-                .thenReturn(CompletableFuture.completedFuture(DownloadAccessService.Decision.SUBSCRIPTION_REQUIRED));
+                .thenReturn(new DownloadAccessService.Check(DownloadAccessService.Decision.SUBSCRIPTION_REQUIRED, "revenuecat"));
 
         mockMvc.perform(signedIn(get("/api/stories/story-1/download"))).andExpect(status().isOk());
+
+        verify(metricsService).recordEntitlementDecision("subscription_required", "revenuecat", false);
+    }
+
+    @Test
+    void countsAnAllowedDownloadAndWhereItsTierCameFrom() throws Exception {
+        mockMvc.perform(signedIn(get("/api/stories/story-1/download"))).andExpect(status().isOk());
+
+        verify(metricsService).recordEntitlementDecision("allowed", "revenuecat", false);
     }
 }
