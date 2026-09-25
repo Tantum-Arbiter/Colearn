@@ -7,7 +7,7 @@ export default function PrivacyPage() {
           UK/EU GDPR &amp; Child-Appropriate<br />
           App: earlyroots<br />
           Controller: Tantum Arbiter, United Kingdom<br />
-          Contact (privacy): <a href="mailto:privacy@growwithfreya.com" className="text-primary hover:underline">privacy@growwithfreya.com</a><br />
+          Contact (privacy): <a href="mailto:contact@earlyroots.co.uk" className="text-primary hover:underline">contact@earlyroots.co.uk</a><br />
           Effective date: September 24, 2026 &middot; Version 1.1
         </p>
         <div className="prose prose-lg max-w-none text-gray-600">
@@ -94,7 +94,7 @@ export default function PrivacyPage() {
           <section className="mb-8">
             <h2 className="font-rounded text-2xl font-semibold text-brand-text mb-4">9. Your rights (UK/EU)</h2>
             <p className="mb-4">You can exercise these rights by emailing{' '}
-              <a href="mailto:privacy@growwithfreya.com" className="text-primary hover:underline">privacy@growwithfreya.com</a>:</p>
+              <a href="mailto:contact@earlyroots.co.uk" className="text-primary hover:underline">contact@earlyroots.co.uk</a>:</p>
             <ul className="list-disc pl-6 space-y-2">
               <li>Access (a copy of your data, which we can send in a machine-readable format)</li>
               <li>Rectification (fix inaccuracies)</li>
@@ -104,7 +104,7 @@ export default function PrivacyPage() {
               <li>Objection (where we rely on legitimate interests)</li>
               <li>Withdraw consent (for consent-based features)</li>
             </ul>
-            <p className="mt-4">You can also delete your account and all associated data directly in the app via Account → Delete Account, or by emailing <a href="mailto:support@growwithfreya.com" className="text-primary hover:underline">support@growwithfreya.com</a>. Upon deletion, your profile, child profiles, reading history, subscription status and all other server-side data are permanently removed, except the consent records described in Section 8.</p>
+            <p className="mt-4">You can also delete your account and all associated data directly in the app via Account → Delete Account, or by emailing <a href="mailto:contact@earlyroots.co.uk" className="text-primary hover:underline">contact@earlyroots.co.uk</a>. Upon deletion, your profile, child profiles, reading history, subscription status and all other server-side data are permanently removed, except the consent records described in Section 8.</p>
             <p className="mt-4">You also have the right to complain to the{' '}
               <a href="https://ico.org.uk" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">UK ICO</a>{' '}
               or your local data protection authority.</p>

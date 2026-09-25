@@ -59,7 +59,7 @@ export function PrivacyPolicyScreen({ onBack }: PrivacyPolicyScreenProps) {
             <Text style={[styles.appInfo, { fontSize: scaledFontSize(14) }]}>
               App: Early Roots{'\n'}
               Controller: Tantum Arbiter, United Kingdom{'\n'}
-              Contact (privacy): privacy@earlyroots.co.uk{'\n'}
+              Contact (privacy): contact@earlyroots.co.uk{'\n'}
               Data Protection Officer: N/A{'\n'}
               Effective date: September 24, 2026{'\n'}
               Version: 2.1
@@ -169,7 +169,7 @@ export function PrivacyPolicyScreen({ onBack }: PrivacyPolicyScreenProps) {
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>9. Your rights (UK/EU)</Text>
             <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
-              You can exercise these rights by emailing privacy@earlyroots.co.uk:{'\n'}
+              You can exercise these rights by emailing contact@earlyroots.co.uk:{'\n'}
               • Access (a copy of your data, which we can send in a machine-readable format){'\n'}
               • Rectification (fix inaccuracies){'\n'}
               • Erasure (delete data){'\n'}
@@ -336,7 +336,7 @@ export function PrivacyPolicyContent({ paddingTop = 0 }: PrivacyPolicyContentPro
           <Text style={[styles.appInfo, { fontSize: scaledFontSize(14) }]}>
             App: Early Roots{'\n'}
             Controller: Tantum Arbiter, United Kingdom{'\n'}
-            Contact (privacy): privacy@earlyroots.co.uk{'\n'}
+            Contact (privacy): contact@earlyroots.co.uk{'\n'}
             Effective date: May 23, 2026{'\n'}
             Version: 2.0
           </Text>
@@ -385,7 +385,7 @@ export function PrivacyPolicyContent({ paddingTop = 0 }: PrivacyPolicyContentPro
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>9. Your rights</Text>
           <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
-            Email privacy@earlyroots.co.uk for: Access, Rectification, Erasure, Restriction, Portability, Objection, Withdraw consent.{'\n\n'}
+            Email contact@earlyroots.co.uk for: Access, Rectification, Erasure, Restriction, Portability, Objection, Withdraw consent.{'\n\n'}
             Delete your account in-app via Account → Delete Account, or at https://earlyroots.co.uk/delete-account.{'\n\n'}
             Complain to the UK ICO: https://ico.org.uk
           </Text>
@@ -394,7 +394,7 @@ export function PrivacyPolicyContent({ paddingTop = 0 }: PrivacyPolicyContentPro
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>10. Contact</Text>
           <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
-            Questions? privacy@earlyroots.co.uk
+            Questions? contact@earlyroots.co.uk
           </Text>
         </View>
         </View>

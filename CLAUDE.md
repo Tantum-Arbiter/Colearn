@@ -225,8 +225,7 @@ When generating image prompts:
 |---|---|
 | Bundle ID | `com.growwithfreya.app` — do NOT change (store re-submission) |
 | Brand name | "Early Roots" in all user-facing text |
-| Privacy email | `privacy@earlyroots.co.uk` |
-| Support email | `support@earlyroots.co.uk` |
+| Contact email | `contact@earlyroots.co.uk` — the one address for privacy, support and everything else |
 | Domain | `earlyroots.co.uk` / `api.earlyroots.co.uk` |
 | Orientation | **Phones**: portrait-locked everywhere, turned to landscape for the story reader and given the lock back on the way out. **Tablets (iOS + Android)**: never locked, anywhere, including the reader — a child turns them as they wish. |
 | i18n | 14 languages, English fallback, RTL partial (Arabic text OK, layout LTR) |

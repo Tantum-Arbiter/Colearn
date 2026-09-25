@@ -32,7 +32,7 @@ Communication & code-display rules: see root `../CLAUDE.md` → **Communication 
 - **`next-intl`** for translations, **not** `react-i18next`. Different API.
 - **React 18** (not 19 like the mobile app).
 - **No subscription / auth flows here** — sign-in, payments, RevenueCat all live in the mobile app.
-- This site is the **canonical home for privacy policy, terms, and contact endpoints** — `privacy@earlyroots.co.uk`, `support@earlyroots.co.uk` (root CLAUDE.md).
+- This site is the **canonical home for privacy policy, terms, and contact endpoints** — `contact@earlyroots.co.uk` (root CLAUDE.md).
 
 ---
 

@@ -59,7 +59,7 @@ export function TermsConditionsScreen({ onBack }: TermsConditionsScreenProps) {
             <Text style={[styles.appInfo, { fontSize: scaledFontSize(14) }]}>
               App: Early Roots{'\n'}
               Provider: Tantum Arbiter, United Kingdom{'\n'}
-              Contact: support@earlyroots.co.uk{'\n'}
+              Contact: contact@earlyroots.co.uk{'\n'}
               Effective date: November 1, 2025{'\n'}
               Version: 1.0
             </Text>
@@ -142,7 +142,7 @@ export function TermsConditionsScreen({ onBack }: TermsConditionsScreenProps) {
             <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>10. Termination &amp; account deletion</Text>
             <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
               We may suspend or terminate your access if you breach these Terms or we must do so by law. You may stop using the app at any time.{'\n\n'}
-              You can delete your account and all associated data at any time via Account → Delete Account in the app, or by emailing support@earlyroots.co.uk. Upon deletion, your profile, child profiles, reading history, and all server-side data are permanently removed (see Privacy Policy for retention details).
+              You can delete your account and all associated data at any time via Account → Delete Account in the app, or by emailing contact@earlyroots.co.uk. Upon deletion, your profile, child profiles, reading history, and all server-side data are permanently removed (see Privacy Policy for retention details).
             </Text>
           </View>
 
@@ -177,7 +177,7 @@ export function TermsConditionsScreen({ onBack }: TermsConditionsScreenProps) {
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>15. Contact</Text>
             <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
-              Questions? support@earlyroots.co.uk. You can also write to Tantum Arbiter, United Kingdom.
+              Questions? contact@earlyroots.co.uk. You can also write to Tantum Arbiter, United Kingdom.
             </Text>
           </View>
           </View>
@@ -291,7 +291,7 @@ export function TermsConditionsContent({ paddingTop = 0 }: TermsConditionsConten
           <Text style={[styles.appInfo, { fontSize: scaledFontSize(14) }]}>
             App: Early Roots{'\n'}
             Provider: Tantum Arbiter, United Kingdom{'\n'}
-            Contact: support@earlyroots.co.uk{'\n'}
+            Contact: contact@earlyroots.co.uk{'\n'}
             Effective date: November 1, 2025{'\n'}
             Version: 1.0
           </Text>
@@ -374,7 +374,7 @@ export function TermsConditionsContent({ paddingTop = 0 }: TermsConditionsConten
           <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>10. Termination &amp; account deletion</Text>
           <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
             We may suspend or terminate your access if you breach these Terms or we must do so by law. You may stop using the app at any time.{'\n\n'}
-            You can delete your account and all associated data at any time via Account → Delete Account in the app, or by emailing support@earlyroots.co.uk. Upon deletion, your profile, child profiles, reading history, and all server-side data are permanently removed (see Privacy Policy for retention details).
+            You can delete your account and all associated data at any time via Account → Delete Account in the app, or by emailing contact@earlyroots.co.uk. Upon deletion, your profile, child profiles, reading history, and all server-side data are permanently removed (see Privacy Policy for retention details).
           </Text>
         </View>
 
@@ -409,7 +409,7 @@ export function TermsConditionsContent({ paddingTop = 0 }: TermsConditionsConten
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(18) }]}>15. Contact</Text>
             <Text style={[styles.bodyText, { fontSize: scaledFontSize(14) }]}>
-              Questions? support@earlyroots.co.uk. You can also write to Tantum Arbiter, United Kingdom.
+              Questions? contact@earlyroots.co.uk. You can also write to Tantum Arbiter, United Kingdom.
             </Text>
           </View>
         </View>

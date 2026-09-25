@@ -81,6 +81,16 @@ test('the privacy page keeps proof of consent for three years after deletion, an
   await expect(page.getByText(/7 years/)).toHaveCount(0);
 });
 
+for (const path of ['/privacy', '/terms', '/contact', '/support/delete-account']) {
+  test(`${path} gives contact@earlyroots.co.uk as the one address to write to`, async ({ page }) => {
+    await page.goto(path);
+
+    await expect(page.getByText('contact@earlyroots.co.uk').first()).toBeVisible();
+    const addresses = (await page.locator('body').innerText()).match(/[\w.+-]+@[\w-]+(\.[\w-]+)+/g) ?? [];
+    expect(addresses.filter((address) => address !== 'contact@earlyroots.co.uk')).toEqual([]);
+  });
+}
+
 test('the contact page offers a way to reach a person', async ({ page }) => {
   await page.goto('/contact');
 

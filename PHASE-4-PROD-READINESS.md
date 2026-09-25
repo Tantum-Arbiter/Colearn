@@ -553,13 +553,13 @@ Only change the user-facing brand name, not the technical identifiers.
 
 ### 9.7 Security & Legal (Launch Blockers)
 
-- [x] **Privacy policy rewrite** — updated to disclose voice recordings (on-device), Sentry (crash reports), RevenueCat (subscriptions), new brand name (Early Roots), and correct contact email (privacy@earlyroots.co.uk). Effective date set to May 23, 2026, version 2.0.
+- [x] **Privacy policy rewrite** — updated to disclose voice recordings (on-device), Sentry (crash reports), RevenueCat (subscriptions), new brand name (Early Roots), and correct contact email (contact@earlyroots.co.uk). Effective date set to May 23, 2026, version 2.0.
 - [x] **Sentry mobile replay disabled in production** — `mobileReplayIntegration()` only loads when `__DEV__` is true. `replaysSessionSampleRate` and `replaysOnErrorSampleRate` are both `0` in production. This prevents children's screens (names, avatars) from being captured and sent to Sentry.
 - [x] **CORS wildcard annotations removed** — `@CrossOrigin(origins = "*")` removed from `AuthController`, `AccountController`, `ProfileController`, and `FirebaseAuthController`. All CORS is now handled centrally via `SecurityConfig.corsConfigurationSource()`.
 - [ ] **Web-based account deletion page** — Google Play requires a web URL (not just in-app) for account deletion requests. Host a simple form or info page at `https://earlyroots.co.uk/delete-account` that links to the support email or submits a deletion request to the API.
 - [ ] **Sentry DSN via environment config** — move the hardcoded DSN in `sentry-service.ts` into `app.config.js` (via `extra` or env vars) so dev and prod can use different Sentry projects. Not a security issue (DSNs are client-side), but best practice for environment separation.
 - [ ] **Privacy policy processor list audit** — before each submission, verify that the processor list in the privacy policy matches the actual SDKs in the app. Any new SDK (analytics, A/B testing, push notifications) must be disclosed under Section 6.
-- [x] **Rebrand Terms & Conditions screen** (2026-09-22: `Early Roots`, `support@earlyroots.co.uk`) — `terms-conditions-screen.tsx` has 9 references to "Grow with Freya" and `support@growwithfreya.com` across both the full and embedded versions. Must match the privacy policy branding ("Early Roots", `support@earlyroots.co.uk`). Apple/Google reviewers will flag inconsistent branding between privacy policy and T&Cs.
+- [x] **Rebrand Terms & Conditions screen** (2026-09-22: `Early Roots`, `contact@earlyroots.co.uk`) — `terms-conditions-screen.tsx` has 9 references to "Grow with Freya" and `contact@earlyroots.co.uk` across both the full and embedded versions. Must match the privacy policy branding ("Early Roots", `contact@earlyroots.co.uk`). Apple/Google reviewers will flag inconsistent branding between privacy policy and T&Cs.
 
 ### 9.8 Data Protection & Backup
 
