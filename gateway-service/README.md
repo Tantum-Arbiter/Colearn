@@ -99,7 +99,7 @@ the child document is on TestFlight (PHASE-8 C2); the current app no longer call
 | `GET /api/stories/category/{category}` | Stories in a category |
 | `GET /api/stories/version` | `{ id, version, assetVersion, lastUpdated, storyChecksums, totalStories }` |
 | `POST /api/stories/delta` | See below |
-| `GET /api/stories/{storyId}/download` | The full story, and the device is recorded as holding it. With `ENTITLEMENTS_ENFORCE=true`: `403 GTW-416` for a paid story without a subscription, `403 GTW-417` past the plan's limit (free 2, basic 50, premium 125 stories). `404` unknown, `403 GTW-100` withdrawn. |
+| `GET /api/stories/{storyId}/download` | The full story, and the device is recorded as holding it. The subscription comes from the saved snapshot, verified with RevenueCat only at lifecycle boundaries. With `ENTITLEMENTS_ENFORCE=true`: `403 GTW-416` for a paid story without a subscription, `403 GTW-417` past the plan's limit (free 2, basic 50, premium 125 stories). `404` unknown, `403 GTW-100` withdrawn. |
 | `DELETE /api/stories/{storyId}/download` | The device no longer holds the story → `204` |
 
 **Delta sync.** Body: `{ clientVersion, storyChecksums: { id: checksum }, achievementChecksums: { id: checksum } }`
@@ -123,20 +123,24 @@ properties }] }`. Turned into anonymous counters; nothing is stored per user.
 
 ---
 
-## RevenueCat webhook — `POST /webhooks/revenuecat`
+## Subscriptions — `POST /api/entitlements/refresh`
 
-Authenticated by `Authorization: Bearer <REVENUECAT_WEBHOOK_SECRET>` (the `Bearer ` prefix is
-optional), not by a user token. `503` until the secret is set; `401` with the wrong secret; `500`
-when the entitlement cannot be stored, so RevenueCat retries. Answers `{ outcome: APPLIED |
-IGNORED | NO_ACCOUNT }`. Writes `users/{uid}.entitlement` (`EntitlementService`).
+The app calls it after a purchase, restore or tier change, and before showing the paywall when a
+download is refused. The gateway asks RevenueCat itself (nothing in the request is trusted),
+saves the answer in `users/{uid}.entitlement`, and answers `{ tier: free | basic | premium,
+source }`, `source` being `revenuecat`, `cache` (checked within the last 10 s), `stale_cache` or
+`unverified` (RevenueCat could not answer). How downloads use the saved answer:
+PHASE-8-BACKEND-ALIGNMENT.md §7; what to do when it goes wrong: `RUNBOOK-ENTITLEMENTS.md`.
 
 ## Configuration
 
 | Variable | Effect |
 |-|-|
-| `REVENUECAT_WEBHOOK_SECRET` | Turns the webhook on |
+| `REVENUECAT_SECRET_API_KEY` | RevenueCat v1 secret key (`sk_…`); without it every lookup counts as unavailable |
+| `REVENUECAT_API_URL` | `https://api.revenuecat.com` (WireMock in the functional tests) |
 | `REVENUECAT_ACCEPT_SANDBOX` | `true` (default) while the app is TestFlight-only |
 | `ENTITLEMENTS_ENFORCE` | `false` (default): `/download` only logs what it would refuse |
+| `ENTITLEMENTS_CACHE_EPOCH` | ISO instant: saved subscription answers checked before it are ignored (recovery lever) |
 
 ---
 

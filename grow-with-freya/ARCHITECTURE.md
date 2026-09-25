@@ -204,10 +204,15 @@ authoring side is in `scripts/cms-achievements/` (see `ACHIEVEMENTS-PLAN.md` §6
 ## Subscriptions and the gateway (Phase 8 E)
 
 RevenueCat stays the source of the tier on the phone. After sign-in the app logs RevenueCat in
-with the gateway account id (`subscription-service.ts` `identifyAccount`), so RevenueCat's
-webhook can tell the gateway which account paid; sign-out and account deletion log it out. The
-gateway can then check `/download` itself; a refusal (`GTW-416`, `GTW-417`) is reported like the
-app's own access check.
+with the gateway account id (`subscription-service.ts` `identifyAccount`), so the gateway can look
+the family up by that id. The gateway keeps its own snapshot of the subscription and checks paid
+downloads against it, asking RevenueCat only at lifecycle boundaries (PHASE-8 §7).
+
+The app keeps that snapshot current: after a purchase, restore or a tier change RevenueCat reports,
+it calls `refreshServerEntitlement()` (`services/entitlement-refresh.ts`) without waiting for it.
+When the gateway refuses a download (`GTW-416`, `GTW-417`) that the phone believes is paid for,
+`StoryDownloadService` refreshes and retries once before reporting the refusal like the app's own
+access check. The app never sends its tier as proof; the gateway asks RevenueCat.
 
 ## Voice recordings stay on the phone
 

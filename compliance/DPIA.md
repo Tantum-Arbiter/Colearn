@@ -31,7 +31,7 @@ repository is marked **⚠️ UNVERIFIED**.
 | Data | Where | About whom | Written by |
 |-|-|-|-|
 | Sign-in identity: provider, provider subject id, created and last-login times | `users/{uid}` | Parent | `UserService` |
-| Subscription: tier, expiry, event time, sandbox or production | `users/{uid}.entitlement` | Parent | `EntitlementService` (RevenueCat webhook) |
+| Subscription: tier, expiry, when it was last checked, sandbox or production — a copy of RevenueCat's answer | `users/{uid}.entitlement` | Parent | `EntitlementService` (asks RevenueCat) |
 | Sessions: hashed refresh token, device id, device type, platform, app version, times | `user_sessions/{id}` | Parent's device | `SessionService` |
 | Legacy profile: nickname, avatar | `user_profiles/{uid}` | Child | read only since Phase C; export includes it while it exists |
 | **Child document**: nickname, avatar, age bucket (0–2, 2–4, 4–6; never a birth date), language, text size, favourite stories, activities and songs, per-story page and finish count, finished-story ids, challenge counts, earned badge ids, screen-time and reminder switches, **custom reminder title and message typed by the parent** | `users/{uid}/children/{childId}` | Child (and parent-typed text) | `ChildController` / `FirebaseChildRepository` |
@@ -79,7 +79,7 @@ removed so it cannot mislead.
   (`MODE_OPTIONS` `grownUpsOnly`); the recordings are of grown-ups reading.
 - **Security.** Firestore rules deny every client (`firestore.rules`, `FirestoreConfigTest`); all
   access is through the gateway with short-lived JWTs. Refresh tokens are stored
-  hashed. The RevenueCat webhook is authenticated with a shared secret compared in constant time.
+  hashed. The gateway authenticates to RevenueCat with a secret key held only on the server; nothing the app sends can change a family's plan (`EntitlementSpoofingSliceTest`).
 - **Rights.** Export: `GET /api/account/export` returns the account, profile, children,
   consents, subscription and stories held. Erasure: account deletion removes profile, children, consents, downloads,
   sessions and the user record, and stops before removing the account if

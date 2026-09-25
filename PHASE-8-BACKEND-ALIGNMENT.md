@@ -39,11 +39,11 @@ progress, favourites, badges, recordings — lives on one device and is lost on 
 | B — hygiene | B1, B3–B6, B8–B11 done; B2 parked; B7 README rewritten | `f81a043f` `2608be6f` `c34e15b8` `5b789708` `b80e3727` `b5821eb6` `2715eb6d` |
 | C — child sync | Done: child document, consent, export, deletion, app merge and auto-sync, func tests. `/api/profile` stays until the Phase C build is on TestFlight (C2). | `4f7bd845` `0e0c0d9f` `1d93f8bc` |
 | D — achievements | Done: definitions as data, facts, story awards, CMS authoring and upload (dry run by default), delta delivery, copy lint | `bf882114` `43025ed3` `791a983a` |
-| E — entitlements | Built, **switched off**: webhook answers 503 until `REVENUECAT_WEBHOOK_SECRET` is set; `/download` only logs refusals until `ENTITLEMENTS_ENFORCE=true` | `9c581678` `d8d38aa8` |
+| E — entitlements | Built, **switched off**: revised 2026-09-25 to ask RevenueCat directly instead of a webhook (§7); `/download` only logs refusals until `ENTITLEMENTS_ENFORCE=true` | `9c581678` `d8d38aa8` and the E2 commits |
 | F — voice sync | **Dropped by the operator 2026-09-24.** The sync was built (`9eee8484`, `e85bf7e2`) and reverted; only F1 remains: choosing Record asks the parents-only question. F7: Android Auto Backup is switched off (`android.allowBackup: false`; `expo config --type introspect` shows `android:allowBackup="false"` in the generated manifest), so recordings never leave an Android phone. | revert commit |
 | Compliance | L1 DPIA drafted in [`compliance/`](compliance/); L2 privacy policy updated on the website and in the app (approved 2026-09-24); L3 Firestore is in the EU; L4 consent records kept 3 years after deletion in `consent_log` | `e4d7ebe4` and later |
 
-Operator actions before any of it is live: set the two Phase E secrets/flags; configure the RevenueCat webhook; deploy `firestore.rules` and
+Operator actions before any of it is live: set `REVENUECAT_SECRET_API_KEY`, then `ENTITLEMENTS_ENFORCE` once the logs look right; deploy `firestore.rules` and
 indexes; enable the `consent_log.expiresAt` TTL by deploying the indexes; confirm RevenueCat's and Sentry's data processing terms.
 
 ---
@@ -266,12 +266,117 @@ without an app release.
 
 ---
 
-## 7. Phase E — server-side entitlements (decide timing)
+## 7. Phase E — server-side entitlements
 
-D12: tiers and download caps exist only in the app. Proper enforcement needs the gateway to know
-a user's tier: a RevenueCat webhook writing `users/{uid}.entitlement`, and `/download` checking
-tier plus a server-side count. Worth doing before paid content has real value to take; not a
-release blocker while the catalogue is small.
+D12: tiers and download caps existed only in the app, so anyone calling `/api/stories/{id}/download`
+directly got paid stories without subscribing. The first cut (2026-09-24) learned tiers from a
+RevenueCat webhook. **Revised 2026-09-25 (operator): the gateway keeps a small snapshot of each
+family's subscription and asks RevenueCat only at lifecycle boundaries; the webhook is removed.**
+
+Two promises the design is built around, each with its own test class:
+
+1. **A family whose subscription was verified never loses paid-period access because checking
+   failed** — RevenueCat, the snapshot, the download counts or the network (`EntitlementInvariantsTest`).
+2. **Nothing the app sends can grant Premium on the server** — headers, parameters, cookies, a
+   refresh body or a self-signed token (`EntitlementSpoofingSliceTest`).
+
+An inability to verify is not a verified lack of subscription.
+
+### E2 — the snapshot and when RevenueCat is asked
+
+`users/{uid}.entitlement` = `{ tier, expiresAtMs, checkedAtMs, environment }`, a copy of
+RevenueCat's answer. RevenueCat stays the truth; the copy can always be thrown away.
+
+| State of the snapshot | On a paid download | RevenueCat called? |
+|-|-|-|
+| none | verify, save, decide | once |
+| paid, before `expiresAt`, checked < 7 days ago | allow | **no** — the hot path |
+| paid, checked ≥ 7 days ago | verify (catches refunds and revocations) | weekly |
+| paid, past `expiresAt` | verify: a renewal moves the date on, none means free | at each period end |
+| free, checked < 30 s ago | refuse | no |
+| free, older | verify (someone who just subscribed gets in) | yes |
+| basic, at the 50-story limit, checked ≥ 30 s ago | verify (picks up an upgrade) | yes |
+| checked before `ENTITLEMENTS_CACHE_EPOCH` | treated as none | yes |
+
+**Refresh.** After a purchase, restore or a tier change RevenueCat reports, the app calls
+`POST /api/entitlements/refresh`; the gateway verifies (at most once per 10 s per family) and
+saves. When the gateway refuses a download that the phone believes is paid for, the app refreshes
+and retries once before it shows the paywall. The app sends nothing but its token; the gateway
+asks RevenueCat itself.
+
+**When verification fails** (timeout, 5xx, 429, malformed, key rejected, key missing, breaker
+open): a saved paid tier still inside its paid period is used however old; with no such tier the
+family is let in and counted `unverified`. It is never turned free. If the download counts cannot
+be read, the download is allowed as `unverified` too (a family RevenueCat says is free is still
+refused a paid story).
+
+**Free and referral stories** need no RevenueCat call while the family holds fewer than two
+stories (the free limit); past that the tier decides the limit.
+
+Cancellation needs nothing: RevenueCat keeps `expires_date` at the end of the paid period.
+`premium_access` beats `basic_access`; unknown entitlement ids are ignored; a sandbox purchase
+counts only while `REVENUECAT_ACCEPT_SANDBOX=true`.
+
+### Resilience
+
+Its own `RestTemplate` (connect 1 s, read 2 s) and the Resilience4j breaker `revenuecat`
+(`application.properties`, every profile), whose state feeds `app.circuitbreaker.*` and the
+existing `CircuitBreakerOpen` alert. No retries on the request path. Deliberately nothing more:
+RevenueCat is off the hot path, so its outages matter little.
+
+### Recovery levers (environment, no code change)
+
+`ENTITLEMENTS_ENFORCE=false` (stop all refusals), `ENTITLEMENTS_CACHE_EPOCH=<ISO instant>` (throw
+the copies away), `REVENUECAT_ACCEPT_SANDBOX`. What to do for each alert, and the support script
+for "I paid but it's locked": [`gateway-service/RUNBOOK-ENTITLEMENTS.md`](gateway-service/RUNBOOK-ENTITLEMENTS.md).
+
+### Metrics and alerts
+
+| Metric | Tags |
+|-|-|
+| `app.revenuecat.requests` + `app.revenuecat.request.duration` | `outcome`: `active`, `inactive`, `unauthorized`, `rate_limited`, `server_error`, `timeout`, `bad_response`, `circuit_open`, `not_configured` |
+| `app.entitlements.decisions` | `decision`, `source` (`free_story`, `referral`, `cache`, `revenuecat`, `stale_cache`, `unverified`), `enforced` |
+| `app.entitlements.refresh` | `source` |
+
+Alerts (`gateway-entitlements`): `RevenueCatUnauthorized` (critical), `RevenueCatErrorRate`,
+`EntitlementsUnverifiedSpike`, `EntitlementsRefusalSpike`. Each links to a runbook section.
+
+### Testing (TESTING-STANDARD, test-first, mutation-swept)
+
+| Layer | What it proves | Where |
+|-|-|-|
+| Unit — RevenueCat boundary | Every answer and failure of the real API shape: active/expired/lifetime/sandbox/unknown entitlement/both tiers, 401/403/404/429/5xx, timeout, malformed body, unreadable expiry, missing key, id escaping, breaker opening, metrics per outcome | `RevenueCatClientTest` (`MockRestServiceServer`) |
+| Unit — state machine | Every row of the table above, refresh, cache epoch, snapshot unreadable/unwritable | `EntitlementServiceTest` |
+| Unit — decisions | Free/referral/paid, limits per tier, held stories, lapsed re-download, upgrade re-check, counts unreadable | `DownloadAccessServiceTest` |
+| Invariants | Promise 1 across every failure × three kinds of verified payer; not-verifiable ≠ free; verified free is refused | `EntitlementInvariantsTest` |
+| Slice (real security filters) | Refresh endpoint; enforced vs log-only; decision metric recorded; promise 2 with the real services | `EntitlementControllerSliceTest`, `StoryDownload*SliceTest`, `EntitlementSpoofingSliceTest` |
+| Contract | Every alert reads a metric the gateway emits, links a runbook section that exists; `promtool check rules` in CI | `AlertRulesTest`, `backend-checks.yml` `alert-rules` |
+| Functional (Docker, WireMock for RevenueCat) | Refresh verifies and saves; a second refresh uses the copy; a refresh body cannot set the plan; unauthenticated refused | `entitlements.feature`, `wiremock-server/mappings/revenuecat.json` |
+| App | Refresh after purchase/restore/tier change, never blocking; refresh-and-retry once on a refusal the phone disagrees with; no loop; nothing sent as proof | `entitlement-refresh.test.ts`, `subscription-service.test.ts`, `story-download-services.test.ts` |
+
+**CI:** every PR runs all of the above except the Docker functional tests' GCP variant
+(`backend-checks.yml`: gateway tests with the coverage floor, alert rules, Docker functional tests;
+the app pipeline runs Jest). No test calls the real RevenueCat.
+
+**Not yet built — sandbox contract test.** The table encodes assumptions about RevenueCat and the
+stores (cancellation keeps `expires_date`, refunds end it early, renewal moves it, grace periods
+keep it active) that should be proven against RevenueCat, not inferred. Proposed:
+a `workflow_dispatch` job with a sandbox project key that grants and revokes a promotional
+entitlement through RevenueCat's REST API and checks the gateway's reading of each answer; store
+behaviour (renewal, refund) checked by hand with a sandbox tester before launch and recorded here.
+
+### Removed
+
+The webhook (`POST /webhooks/revenuecat`, its DTO, security exemptions, `REVENUECAT_WEBHOOK_SECRET`).
+Delete that GitHub secret and any webhook saved in RevenueCat.
+
+### Operator steps
+
+1. RevenueCat → Project settings → API keys → create a **secret** key (`sk_…`, v1).
+2. `gh secret set REVENUECAT_SECRET_API_KEY --repo Tantum-Arbiter/Colearn` (never in the app).
+3. Deploy; ship a TestFlight build with the refresh calls; watch
+   `app_entitlements_decisions_total{enforced="false"}` for wrongful `subscription_required`.
+4. Set `ENTITLEMENTS_ENFORCE=true` in `gateway-build.yml`.
 
 ---
 
