@@ -245,6 +245,7 @@ out/
 # Generated native folders
 /ios
 /android
+/e2e-build
 
 # Nested project directories (avoid accidental nesting)
 grow-with-freya/grow-with-freya/

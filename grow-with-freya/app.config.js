@@ -26,6 +26,7 @@ export default {
       e2e: process.env.EXPO_PUBLIC_E2E === '1',
     },
     updates: {
+      enabled: process.env.EXPO_PUBLIC_E2E !== '1',
       url: 'https://u.expo.dev/439b6b2f-be5f-4d59-98eb-73befbd1973e'
     },
     runtimeVersion: {

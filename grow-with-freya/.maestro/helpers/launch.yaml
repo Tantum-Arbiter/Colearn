@@ -6,23 +6,37 @@ name: Launch the app and let it load the bundle
 ---
 - runFlow:
     when:
-      platform: iOS
+      true: ${typeof APP_BUILD !== 'undefined' && APP_BUILD == 'release'}
     commands:
-      - openLink: "com.growwithfreya.app://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081&disableOnboarding=1"
-      - tapOn:
-          text: "Open"
+      - launchApp
+      - extendedWaitUntil:
+          visible:
+            id: "nothing-waits-here"
+          timeout: 5000
           optional: true
 - runFlow:
     when:
-      platform: Android
+      true: ${typeof APP_BUILD === 'undefined' || APP_BUILD != 'release'}
     commands:
-      - openLink: "exp+grow-with-freya://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081&disableOnboarding=1"
-# A link sent while the bundle is still loading is lost.
-- extendedWaitUntil:
-    visible:
-      id: "nothing-waits-here"
-    timeout: 15000
-    optional: true
+      - runFlow:
+          when:
+            platform: iOS
+          commands:
+            - openLink: "com.growwithfreya.app://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081&disableOnboarding=1"
+            - tapOn:
+                text: "Open"
+                optional: true
+      - runFlow:
+          when:
+            platform: Android
+          commands:
+            - openLink: "exp+grow-with-freya://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081&disableOnboarding=1"
+      # A link sent while the bundle is still loading is lost.
+      - extendedWaitUntil:
+          visible:
+            id: "nothing-waits-here"
+          timeout: 15000
+          optional: true
 # The development build introduces its developer menu once, over the app.
 - tapOn:
     text: "Continue"

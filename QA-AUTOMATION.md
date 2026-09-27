@@ -206,12 +206,25 @@ iOS sits in `app-e2e-nightly.yml` rather than the per-push pipeline because macO
 roughly ten times as much per minute. Run it on demand from the Actions tab, choosing a platform
 and optionally a tag.
 
-Both platforms wait for Metro's first bundle before a flow runs. Android watches Metro's log for
-"Android Bundled"; iOS asks Metro for its manifest and fetches the bundle it names, because the
-iOS development build gives up on a first build that outlasts its request ("Failed to load app
-from http://localhost:8081 with error: The request timed out"). A failed nightly Android run also
-keeps the emulator's logcat, the runner's memory every ten seconds, the kernel log and the
-emulator's crash store, so an emulator that disappears mid-flow leaves a cause behind.
+The nightly tests **release builds**: the JavaScript is inside the app, so no Metro and no
+development launcher run on CI. Every failure the nightly hit with development builds came from
+that pairing on a slow runner (the developer-menu sheet, iOS's "Open in" prompt, a first bundle or
+a manifest request outlasting the launcher's timeout). The flows are told with `-e APP_BUILD=release`,
+and `launch.yaml` then starts the app with a plain `launchApp`; without it they keep using the
+bundler link, as the per-push pipeline and local runs do. `EXPO_PUBLIC_E2E=1` switches over-the-air
+updates off in `app.config.js`, so a release build never swaps in a published bundle, and keeps
+the seeding link working (`isE2eAllowed` reads `extra.e2e` when `__DEV__` is false).
+
+Each job keeps its built app in the Actions cache, keyed on the app's source (not on `.maestro`,
+tests or docs), and saves it as soon as it is built, so a rerun after a flow or workflow change
+skips prebuild, pods and the native build. Change the `-v1` in the key when the build steps
+themselves change. A failed Android run keeps the emulator's logcat, the runner's memory every ten
+seconds, the kernel log and the emulator's crash store; a failed iOS run keeps the runner's memory
+pressure and busiest processes every twenty seconds.
+
+Where a development build is used, both platforms wait for Metro's first bundle before a flow
+runs: iOS gives up on a first build that outlasts its request ("Failed to load app from
+http://localhost:8081 with error: The request timed out").
 
 A software-rendered emulator can be too busy to answer the system in time, and Android then puts
 "Pixel Launcher isn't responding" over whatever is on screen. It stays until someone answers it, so
@@ -223,8 +236,10 @@ timeout (10 seconds on the CI iOS build). The build makes one attempt and stops:
 launcher. `connect-dev-client.yaml` waits up to a minute at a time and retries up to four times,
 tapping Reload or opening the bundler link again.
 
-⚠️ UNVERIFIED — both journey jobs are written but have not run in GitHub Actions yet; the first run
-may need adjusting (build times, emulator image, the wait for the bundle).
+**Open (2026-09-27):** on CI the Android emulator froze as the grown-ups flow tapped into the
+library, three runs out of three, and exited about fifty seconds later with no crash report and no
+memory pressure on the host. Its logcat stops mid-tap, system services included, which points at
+the emulator rather than the app.
 
 ---
 

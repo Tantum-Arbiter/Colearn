@@ -47,12 +47,21 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Reuse the app built from this source
+        id: app-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: grow-with-freya/e2e-build
+          key: nightly-android-release-v1-${{ hashFiles('grow-with-freya/app/**', 'grow-with-freya/components/**', 'grow-with-freya/constants/**', 'grow-with-freya/contexts/**', 'grow-with-freya/data/**', 'grow-with-freya/hooks/**', 'grow-with-freya/services/**', 'grow-with-freya/store/**', 'grow-with-freya/types/**', 'grow-with-freya/utils/**', 'grow-with-freya/locales/**', 'grow-with-freya/assets/**', 'grow-with-freya/app.config.js', 'grow-with-freya/package.json', 'grow-with-freya/package-lock.json', 'grow-with-freya/babel.config.js', 'grow-with-freya/metro.config.js', 'grow-with-freya/tsconfig.json', '!grow-with-freya/**/__tests__/**') }}
+
       - name: Setup Node.js
+        if: steps.app-cache.outputs.cache-hit != 'true'
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Setup Java
+        if: steps.app-cache.outputs.cache-hit != 'true'
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
@@ -65,6 +74,7 @@ jobs:
           sudo udevadm trigger --name-match=kvm
 
       - name: Install dependencies
+        if: steps.app-cache.outputs.cache-hit != 'true'
         working-directory: ${{ env.WORKING_DIRECTORY }}
         run: npm install --legacy-peer-deps
 
@@ -75,21 +85,24 @@ jobs:
           echo "$HOME/maestro/bin" >> $GITHUB_PATH
 
       - name: Generate the Android project
+        if: steps.app-cache.outputs.cache-hit != 'true'
         working-directory: ${{ env.WORKING_DIRECTORY }}
         run: npx expo prebuild --platform android --no-install
 
-      - name: Build the app
-        working-directory: ${{ env.WORKING_DIRECTORY }}/android
-        run: ./gradlew assembleDebug --no-daemon -PreactNativeArchitectures=x86_64
-
-      - name: Serve the bundle
+      - name: Build the app, with its JavaScript inside
+        if: steps.app-cache.outputs.cache-hit != 'true'
         working-directory: ${{ env.WORKING_DIRECTORY }}
         run: |
-          npx expo start --dev-client --port 8081 > "$RUNNER_TEMP/metro.log" 2>&1 &
-          for i in $(seq 1 60); do
-            curl -sf http://localhost:8081/status | grep -q running && break
-            sleep 2
-          done
+          (cd android && ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=x86_64)
+          mkdir -p e2e-build
+          cp android/app/build/outputs/apk/release/app-release.apk e2e-build/
+
+      - name: Keep the app for the next run
+        if: steps.app-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: grow-with-freya/e2e-build
+          key: ${{ steps.app-cache.outputs.cache-primary-key }}
 
       - name: Record host memory while the journeys run
         run: |
@@ -105,12 +118,9 @@ jobs:
           profile: pixel_6
           disable-animations: true
           script: |
-            adb install -r grow-with-freya/android/app/build/outputs/apk/debug/app-debug.apk
-            adb reverse tcp:8081 tcp:8081
-            adb shell am start -a android.intent.action.VIEW -d 'exp+grow-with-freya://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081&disableOnboarding=1'
-            timeout 300 sh -c 'until grep -q "Android Bundled" "$RUNNER_TEMP/metro.log"; do sleep 5; done' || true
+            adb install -r grow-with-freya/e2e-build/app-release.apk
             nohup adb logcat -v threadtime > "$RUNNER_TEMP/logcat.txt" 2>&1 < /dev/null &
-            cd grow-with-freya && ./.maestro/run.sh ${{ inputs.tags && format('--include-tags={0}', inputs.tags) || '' }}
+            cd grow-with-freya && ./.maestro/run.sh -e APP_BUILD=release ${{ inputs.tags && format('--include-tags={0}', inputs.tags) || '' }}
 
       - name: Collect what the host saw
         if: failure()
@@ -125,7 +135,6 @@ jobs:
           name: maestro-android-${{ github.run_id }}
           path: |
             ~/.maestro/tests
-            ${{ runner.temp }}/metro.log
             ${{ runner.temp }}/logcat.txt
             ${{ runner.temp }}/host-memory.log
             ${{ runner.temp }}/dmesg.txt
@@ -142,12 +151,21 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Reuse the app built from this source
+        id: app-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: grow-with-freya/e2e-build
+          key: nightly-ios-release-v1-${{ hashFiles('grow-with-freya/app/**', 'grow-with-freya/components/**', 'grow-with-freya/constants/**', 'grow-with-freya/contexts/**', 'grow-with-freya/data/**', 'grow-with-freya/hooks/**', 'grow-with-freya/services/**', 'grow-with-freya/store/**', 'grow-with-freya/types/**', 'grow-with-freya/utils/**', 'grow-with-freya/locales/**', 'grow-with-freya/assets/**', 'grow-with-freya/app.config.js', 'grow-with-freya/package.json', 'grow-with-freya/package-lock.json', 'grow-with-freya/babel.config.js', 'grow-with-freya/metro.config.js', 'grow-with-freya/tsconfig.json', '!grow-with-freya/**/__tests__/**') }}
+
       - name: Setup Node.js
+        if: steps.app-cache.outputs.cache-hit != 'true'
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Install dependencies
+        if: steps.app-cache.outputs.cache-hit != 'true'
         working-directory: ${{ env.WORKING_DIRECTORY }}
         run: npm install --legacy-peer-deps
 
@@ -157,16 +175,19 @@ jobs:
           brew install mobile-dev-inc/tap/maestro
 
       - name: Generate the iOS project
+        if: steps.app-cache.outputs.cache-hit != 'true'
         working-directory: ${{ env.WORKING_DIRECTORY }}
         run: npx expo prebuild --platform ios --no-install
 
       - name: Install pods
+        if: steps.app-cache.outputs.cache-hit != 'true'
         working-directory: ${{ env.WORKING_DIRECTORY }}/ios
         run: |
           export LANG=en_US.UTF-8
           pod install
 
-      - name: Build for the simulator
+      - name: Build the app, with its JavaScript inside
+        if: steps.app-cache.outputs.cache-hit != 'true'
         working-directory: ${{ env.WORKING_DIRECTORY }}/ios
         run: |
           set -o pipefail
@@ -174,48 +195,42 @@ jobs:
           xcodebuild \
             -workspace "$workspace" \
             -scheme "${workspace%.xcworkspace}" \
-            -configuration Debug \
+            -configuration Release \
             -sdk iphonesimulator \
             -derivedDataPath build \
             -destination 'generic/platform=iOS Simulator' \
             ARCHS=arm64 \
             CODE_SIGNING_ALLOWED=NO | tail -40
+          mkdir -p ../e2e-build
+          cp -R "$(find build/Build/Products -name '*.app' -maxdepth 3 | head -1)" ../e2e-build/
+
+      - name: Keep the app for the next run
+        if: steps.app-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: grow-with-freya/e2e-build
+          key: ${{ steps.app-cache.outputs.cache-primary-key }}
 
       - name: Boot a simulator
         run: |
           udid=$(xcrun simctl create e2e-iphone "iPhone 16 Pro")
           xcrun simctl boot "$udid"
+          xcrun simctl bootstatus "$udid" -b
           xcrun simctl spawn "$udid" defaults write com.apple.Accessibility ReduceMotionEnabled -bool true
           echo "MAESTRO_DEVICE=$udid" >> $GITHUB_ENV
 
       - name: Install the app
         working-directory: ${{ env.WORKING_DIRECTORY }}
-        run: xcrun simctl install "$MAESTRO_DEVICE" "$(find ios/build/Build/Products -name '*.app' -maxdepth 3 | head -1)"
+        run: xcrun simctl install "$MAESTRO_DEVICE" "$(find e2e-build -name '*.app' -maxdepth 1 | head -1)"
 
-      - name: Serve the bundle
-        working-directory: ${{ env.WORKING_DIRECTORY }}
+      - name: Record host load while the journeys run
         run: |
-          npx expo start --dev-client --port 8081 > "$RUNNER_TEMP/metro.log" 2>&1 &
-          for i in $(seq 1 60); do
-            curl -sf http://localhost:8081/status | grep -q running && break
-            sleep 2
-          done
-
-      - name: Build the iOS bundle before the app asks for it
-        working-directory: ${{ env.WORKING_DIRECTORY }}
-        run: |
-          bundle_url=$(curl -sf -H 'expo-platform: ios' -H 'accept: application/expo+json,application/json' http://localhost:8081/ \
-            | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>console.log(JSON.parse(s).launchAsset.url))')
-          echo "$bundle_url"
-          time curl -sf --max-time 900 -o /dev/null "$bundle_url"
-
-      - name: Point the app at the bundle
-        working-directory: ${{ env.WORKING_DIRECTORY }}
-        run: maestro --device "$MAESTRO_DEVICE" test .maestro/helpers/connect-dev-client.yaml
+          nohup sh -c 'while true; do date -u +%T; memory_pressure | tail -1; top -l 1 -n 5 -o cpu -stats pid,command,cpu,mem | tail -6; sleep 20; done' \
+            > "$RUNNER_TEMP/host-load.log" 2>&1 < /dev/null &
 
       - name: Run the journeys
         working-directory: ${{ env.WORKING_DIRECTORY }}
-        run: ./.maestro/run.sh ${{ inputs.tags && format('--include-tags={0}', inputs.tags) || '' }}
+        run: ./.maestro/run.sh -e APP_BUILD=release ${{ inputs.tags && format('--include-tags={0}', inputs.tags) || '' }}
 
       - name: Keep what failed
         if: failure()
@@ -224,7 +239,7 @@ jobs:
           name: maestro-ios-${{ github.run_id }}
           path: |
             ~/.maestro/tests
-            ${{ runner.temp }}/metro.log
+            ${{ runner.temp }}/host-load.log
           retention-days: 14
 
   summary:
