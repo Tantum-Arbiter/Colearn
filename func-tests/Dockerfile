@@ -20,6 +20,9 @@ FROM gcr.io/google.com/cloudsdktool/google-cloud-cli:slim AS gcloud
 # Runtime stage
 FROM amazoncorretto:21
 
+# gradlew needs xargs, which this base image leaves out
+RUN yum install -y findutils && yum clean all
+
 # Copy gcloud from the official image
 COPY --from=gcloud /usr/lib/google-cloud-sdk /usr/lib/google-cloud-sdk
 
