@@ -8,7 +8,7 @@ name: Start the app in the state the calling flow asked for
 - setOrientation: PORTRAIT
 # A flow starts from a stopped app, not from wherever the last one left it.
 - stopApp
-- launchApp
+- runFlow: launch.yaml
 # Each platform's development build answers a different scheme.
 - runFlow:
     when:
@@ -34,7 +34,7 @@ name: Start the app in the state the calling flow asked for
     timeout: 8000
     optional: true
 - stopApp
-- launchApp
+- runFlow: launch.yaml
 - extendedWaitUntil:
     visible:
       id: "home-language-button"

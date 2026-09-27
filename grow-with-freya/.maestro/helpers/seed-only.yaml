@@ -6,7 +6,7 @@ name: Put the app in the state the calling flow asked for, without assuming wher
 - setOrientation: PORTRAIT
 # A flow starts from a stopped app, not from wherever the last one left it.
 - stopApp
-- launchApp
+- runFlow: launch.yaml
 # Each platform's development build answers a different scheme.
 - runFlow:
     when:
