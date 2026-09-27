@@ -8,7 +8,7 @@ name: Launch the app and let it load the bundle
     when:
       platform: iOS
     commands:
-      - openLink: "com.growwithfreya.app://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081"
+      - openLink: "com.growwithfreya.app://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081&disableOnboarding=1"
       - tapOn:
           text: "Open"
           optional: true
@@ -16,7 +16,7 @@ name: Launch the app and let it load the bundle
     when:
       platform: Android
     commands:
-      - openLink: "exp+grow-with-freya://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081"
+      - openLink: "exp+grow-with-freya://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081&disableOnboarding=1"
 # A link sent while the bundle is still loading is lost.
 - extendedWaitUntil:
     visible:

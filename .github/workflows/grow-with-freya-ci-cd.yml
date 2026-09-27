@@ -261,7 +261,7 @@ jobs:
           script: |
             adb install -r grow-with-freya/android/app/build/outputs/apk/debug/app-debug.apk
             adb reverse tcp:8081 tcp:8081
-            adb shell am start -a android.intent.action.VIEW -d 'exp+grow-with-freya://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081'
+            adb shell am start -a android.intent.action.VIEW -d 'exp+grow-with-freya://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081&disableOnboarding=1'
             timeout 300 sh -c 'until grep -q "Android Bundled" "$RUNNER_TEMP/metro.log"; do sleep 5; done' || true
             cd grow-with-freya && ./.maestro/run.sh --include-tags=smoke
 

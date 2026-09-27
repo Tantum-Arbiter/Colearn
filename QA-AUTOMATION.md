@@ -96,6 +96,12 @@ build at the bundler, `exp+grow-with-freya://expo-development-client/?url=…`. 
 platform. On CI both development builds forget the bundler whenever they are stopped, so flows
 launch through `.maestro/helpers/launch.yaml`, never a bare `launchApp`.
 
+Every bundler link ends in `&disableOnboarding=1`. On a fresh simulator or emulator the development
+build otherwise opens its "This is the developer menu" sheet over the app on first load, and the
+sheet hides the page from the accessibility tree: home draws, but `home-language-button` is never
+found. The flag marks that introduction as seen, on both platforms, for as long as the app stays
+installed. `launch.yaml` still taps "Continue" in case the sheet appears anyway.
+
 ## The gateway, stubbed
 
 Flows run against WireMock rather than a real gateway, so a run cannot depend on somebody's data
