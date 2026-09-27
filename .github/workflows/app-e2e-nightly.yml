@@ -36,7 +36,7 @@ jobs:
     name: Android
     if: github.event_name == 'schedule' || inputs.platform == 'both' || inputs.platform == 'android'
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 120
 
     steps:
       - name: Make room for the native build
@@ -74,6 +74,7 @@ jobs:
           sudo udevadm trigger --name-match=kvm
 
       - name: Install dependencies
+        timeout-minutes: 10
         if: steps.app-cache.outputs.cache-hit != 'true'
         working-directory: ${{ env.WORKING_DIRECTORY }}
         run: npm install --legacy-peer-deps
@@ -85,11 +86,13 @@ jobs:
           echo "$HOME/maestro/bin" >> $GITHUB_PATH
 
       - name: Generate the Android project
+        timeout-minutes: 10
         if: steps.app-cache.outputs.cache-hit != 'true'
         working-directory: ${{ env.WORKING_DIRECTORY }}
         run: npx expo prebuild --platform android --no-install
 
       - name: Build the app, with its JavaScript inside
+        timeout-minutes: 35
         if: steps.app-cache.outputs.cache-hit != 'true'
         working-directory: ${{ env.WORKING_DIRECTORY }}
         run: |
@@ -118,6 +121,7 @@ jobs:
             > "$RUNNER_TEMP/host-memory.log" 2>&1 < /dev/null &
 
       - name: Run the journeys
+        timeout-minutes: 40
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
@@ -153,7 +157,7 @@ jobs:
     name: iOS
     if: github.event_name == 'schedule' || inputs.platform == 'both' || inputs.platform == 'ios'
     runs-on: macos-26
-    timeout-minutes: 90
+    timeout-minutes: 150
 
     steps:
       - name: Checkout code
@@ -173,6 +177,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Install dependencies
+        timeout-minutes: 10
         if: steps.app-cache.outputs.cache-hit != 'true'
         working-directory: ${{ env.WORKING_DIRECTORY }}
         run: npm install --legacy-peer-deps
@@ -183,11 +188,13 @@ jobs:
           brew install mobile-dev-inc/tap/maestro
 
       - name: Generate the iOS project
+        timeout-minutes: 10
         if: steps.app-cache.outputs.cache-hit != 'true'
         working-directory: ${{ env.WORKING_DIRECTORY }}
         run: npx expo prebuild --platform ios --no-install
 
       - name: Install pods
+        timeout-minutes: 20
         if: steps.app-cache.outputs.cache-hit != 'true'
         working-directory: ${{ env.WORKING_DIRECTORY }}/ios
         run: |
@@ -195,6 +202,7 @@ jobs:
           pod install
 
       - name: Build the app, with its JavaScript inside
+        timeout-minutes: 45
         if: steps.app-cache.outputs.cache-hit != 'true'
         working-directory: ${{ env.WORKING_DIRECTORY }}/ios
         run: |
@@ -220,6 +228,7 @@ jobs:
           key: ${{ steps.app-cache.outputs.cache-primary-key }}
 
       - name: Boot a simulator
+        timeout-minutes: 15
         run: |
           udid=$(xcrun simctl create e2e-iphone "iPhone 16 Pro")
           xcrun simctl boot "$udid"
@@ -237,6 +246,7 @@ jobs:
             > "$RUNNER_TEMP/host-load.log" 2>&1 < /dev/null &
 
       - name: Run the journeys
+        timeout-minutes: 50
         working-directory: ${{ env.WORKING_DIRECTORY }}
         run: ./.maestro/run.sh -e APP_BUILD=release ${{ inputs.tags && format('--include-tags={0}', inputs.tags) || '' }}
 
