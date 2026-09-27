@@ -260,7 +260,7 @@ jobs:
           script: |
             adb install -r grow-with-freya/android/app/build/outputs/apk/debug/app-debug.apk
             adb reverse tcp:8081 tcp:8081
-            adb shell am start -a android.intent.action.VIEW -d 'com.growwithfreya.app://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081'
+            adb shell am start -a android.intent.action.VIEW -d 'exp+grow-with-freya://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081'
             sleep 30
             cd grow-with-freya && ./.maestro/run.sh --include-tags=smoke
 

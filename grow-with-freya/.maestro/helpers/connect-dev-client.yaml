@@ -6,7 +6,17 @@ name: Point the development build at the bundler, and wait for the app to load
 # client remembers the bundler afterwards, so flows can stop and relaunch freely.
 ---
 - launchApp
-- openLink: "com.growwithfreya.app://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081"
+# Each platform's development build answers a different scheme.
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - openLink: "com.growwithfreya.app://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081"
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - openLink: "exp+grow-with-freya://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081"
 - tapOn:
     text: "Open"
     optional: true

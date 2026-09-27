@@ -90,6 +90,11 @@ deep links and answers a path it does not know with its "Unmatched" screen. Para
 link leaves out is left alone. `.maestro/helpers/start-seeded.yaml`
 does this for every flow; seeding took the home flow from 63 seconds to 15.
 
+The scheme differs by platform. The iOS development build answers only `com.growwithfreya.app://`;
+the Android one answers `growwithfreya://` (the app's own scheme) and, for pointing the development
+build at the bundler, `exp+grow-with-freya://expo-development-client/?url=…`. The helpers choose by
+platform.
+
 ## The gateway, stubbed
 
 Flows run against WireMock rather than a real gateway, so a run cannot depend on somebody's data

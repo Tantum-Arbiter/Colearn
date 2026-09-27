@@ -100,7 +100,7 @@ jobs:
           script: |
             adb install -r grow-with-freya/android/app/build/outputs/apk/debug/app-debug.apk
             adb reverse tcp:8081 tcp:8081
-            adb shell am start -a android.intent.action.VIEW -d 'com.growwithfreya.app://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081'
+            adb shell am start -a android.intent.action.VIEW -d 'exp+grow-with-freya://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081'
             sleep 30
             cd grow-with-freya && ./.maestro/run.sh ${{ inputs.tags && format('--include-tags={0}', inputs.tags) || '' }}
 
@@ -117,7 +117,7 @@ jobs:
   ios:
     name: iOS
     if: github.event_name == 'schedule' || inputs.platform == 'both' || inputs.platform == 'ios'
-    runs-on: macos-15
+    runs-on: macos-26
     timeout-minutes: 90
 
     steps:
@@ -151,6 +151,7 @@ jobs:
       - name: Build for the simulator
         working-directory: ${{ env.WORKING_DIRECTORY }}/ios
         run: |
+          set -o pipefail
           workspace=$(ls -d *.xcworkspace | head -1)
           xcodebuild \
             -workspace "$workspace" \
@@ -159,7 +160,8 @@ jobs:
             -sdk iphonesimulator \
             -derivedDataPath build \
             -destination 'generic/platform=iOS Simulator' \
-            CODE_SIGNING_ALLOWED=NO | tail -20
+            ARCHS=arm64 \
+            CODE_SIGNING_ALLOWED=NO | tail -40
 
       - name: Boot a simulator
         run: |
