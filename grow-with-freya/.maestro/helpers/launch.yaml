@@ -27,3 +27,6 @@ name: Launch the app and let it load the bundle
 - tapOn:
     text: "Continue"
     optional: true
+- tapOn:
+    id: "android:id/aerr_wait"
+    optional: true

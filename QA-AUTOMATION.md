@@ -212,6 +212,10 @@ from http://localhost:8081 with error: The request timed out"). A failed nightly
 keeps the emulator's logcat, the runner's memory every ten seconds, the kernel log and the
 emulator's crash store, so an emulator that disappears mid-flow leaves a cause behind.
 
+A software-rendered emulator can be too busy to answer the system in time, and Android then puts
+"Pixel Launcher isn't responding" over whatever is on screen. It stays until someone answers it, so
+`launch.yaml` and `dismiss-interruptions.yaml` tap its "Wait" (`android:id/aerr_wait`).
+
 ⚠️ UNVERIFIED — both journey jobs are written but have not run in GitHub Actions yet; the first run
 may need adjusting (build times, emulator image, the wait for the bundle).
 
