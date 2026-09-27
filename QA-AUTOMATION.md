@@ -215,6 +215,17 @@ bundler link, as the per-push pipeline and local runs do. `EXPO_PUBLIC_E2E=1` sw
 updates off in `app.config.js`, so a release build never swaps in a published bundle, and keeps
 the seeding link working (`isE2eAllowed` reads `extra.e2e` when `__DEV__` is false).
 
+**An E2E build never talks to the live API.** A release build loads `.env.production`, whose
+`EXPO_PUBLIC_GATEWAY_URL` is the production gateway, so the first release runs sent the seeded,
+unsigned session there (rejected, and the flows fell back to the sign-in screen). The nightly now
+sets `EXPO_PUBLIC_GATEWAY_URL=http://localhost:8080`, which a `.env` file cannot override, and
+`app.config.js` refuses to build an E2E app whose gateway is not `localhost`, `127.0.0.1` or
+`10.0.2.2`. Both jobs start WireMock (`wiremock-server/run-local.sh`) before the journeys; Android
+reaches it through `adb reverse tcp:8080 tcp:8080`, and an E2E build is the only one that allows
+plain HTTP on Android (`usesCleartextTraffic`). The iOS build is signed ad hoc
+(`CODE_SIGN_IDENTITY=-`): unsigned, the app has no entitlements and SecureStore fails in the
+simulator, so a seeded session is never stored.
+
 Each job keeps its built app in the Actions cache, keyed on the app's source (not on `.maestro`,
 tests or docs), and saves it as soon as it is built, so a rerun after a flow or workflow change
 skips prebuild, pods and the native build. Change the `-v1` in the key when the build steps

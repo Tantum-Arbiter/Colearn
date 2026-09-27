@@ -1,6 +1,14 @@
 const IS_DEV = process.env.EXPO_PUBLIC_APP_ENV === 'development';
 const IS_PREVIEW = process.env.EXPO_PUBLIC_APP_ENV === 'staging';
 const IS_PROD = process.env.EXPO_PUBLIC_APP_ENV === 'production';
+const IS_E2E = process.env.EXPO_PUBLIC_E2E === '1';
+const LOCAL_GATEWAY = /^http:\/\/(localhost|127\.0\.0\.1|10\.0\.2\.2)(:\d+)?\/?$/;
+
+if (IS_E2E && process.env.EXPO_PUBLIC_GATEWAY_URL && !LOCAL_GATEWAY.test(process.env.EXPO_PUBLIC_GATEWAY_URL)) {
+  throw new Error(
+    `An E2E build must use a local gateway, not ${process.env.EXPO_PUBLIC_GATEWAY_URL}. Set EXPO_PUBLIC_GATEWAY_URL=http://localhost:8080.`
+  );
+}
 
 export default {
   expo: {
@@ -23,10 +31,10 @@ export default {
       appleClientId: process.env.EXPO_PUBLIC_APPLE_CLIENT_ID,
       revenueCatAppleKey: process.env.EXPO_PUBLIC_RC_APPLE_KEY ?? '',
       revenueCatGoogleKey: process.env.EXPO_PUBLIC_RC_GOOGLE_KEY ?? '',
-      e2e: process.env.EXPO_PUBLIC_E2E === '1',
+      e2e: IS_E2E,
     },
     updates: {
-      enabled: process.env.EXPO_PUBLIC_E2E !== '1',
+      enabled: !IS_E2E,
       url: 'https://u.expo.dev/439b6b2f-be5f-4d59-98eb-73befbd1973e'
     },
     runtimeVersion: {
@@ -114,7 +122,8 @@ export default {
               { name: 'GoogleUtilities', modular_headers: true },
               { name: 'RecaptchaInterop', modular_headers: true }
             ]
-          }
+          },
+          ...(IS_E2E ? { android: { usesCleartextTraffic: true } } : {})
         }
       ],
     ],

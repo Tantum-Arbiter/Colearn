@@ -28,6 +28,7 @@ env:
   NODE_VERSION: '20'
   MAESTRO_VERSION: '2.10.0'
   EXPO_PUBLIC_E2E: '1'
+  EXPO_PUBLIC_GATEWAY_URL: 'http://localhost:8080'
   MAESTRO_DRIVER_STARTUP_TIMEOUT: '900000'
   MAESTRO_CLI_NO_ANALYTICS: '1'
 
@@ -52,7 +53,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: grow-with-freya/e2e-build
-          key: nightly-android-release-v1-${{ hashFiles('grow-with-freya/app/**', 'grow-with-freya/components/**', 'grow-with-freya/constants/**', 'grow-with-freya/contexts/**', 'grow-with-freya/data/**', 'grow-with-freya/hooks/**', 'grow-with-freya/services/**', 'grow-with-freya/store/**', 'grow-with-freya/types/**', 'grow-with-freya/utils/**', 'grow-with-freya/locales/**', 'grow-with-freya/assets/**', 'grow-with-freya/app.config.js', 'grow-with-freya/package.json', 'grow-with-freya/package-lock.json', 'grow-with-freya/babel.config.js', 'grow-with-freya/metro.config.js', 'grow-with-freya/tsconfig.json', '!grow-with-freya/**/__tests__/**') }}
+          key: nightly-android-release-v2-${{ hashFiles('grow-with-freya/app/**', 'grow-with-freya/components/**', 'grow-with-freya/constants/**', 'grow-with-freya/contexts/**', 'grow-with-freya/data/**', 'grow-with-freya/hooks/**', 'grow-with-freya/services/**', 'grow-with-freya/store/**', 'grow-with-freya/types/**', 'grow-with-freya/utils/**', 'grow-with-freya/locales/**', 'grow-with-freya/assets/**', 'grow-with-freya/app.config.js', 'grow-with-freya/package.json', 'grow-with-freya/package-lock.json', 'grow-with-freya/babel.config.js', 'grow-with-freya/metro.config.js', 'grow-with-freya/tsconfig.json', '!grow-with-freya/**/__tests__/**') }}
 
       - name: Setup Node.js
         if: steps.app-cache.outputs.cache-hit != 'true'
@@ -61,7 +62,6 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Setup Java
-        if: steps.app-cache.outputs.cache-hit != 'true'
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
@@ -115,6 +115,16 @@ jobs:
           path: grow-with-freya/e2e-build
           key: ${{ steps.app-cache.outputs.cache-primary-key }}
 
+      - name: Serve the stubbed gateway
+        timeout-minutes: 5
+        run: |
+          nohup ./wiremock-server/run-local.sh > "$RUNNER_TEMP/wiremock.log" 2>&1 < /dev/null &
+          for i in $(seq 1 90); do
+            curl -sf http://localhost:8080/__admin/health > /dev/null && break
+            sleep 2
+          done
+          curl -sf http://localhost:8080/__admin/health
+
       - name: Record host memory while the journeys run
         run: |
           nohup sh -c 'while true; do date -u +%T; free -m | sed -n 2p; ps -eo rss,comm --sort=-rss | sed -n 2,5p; sleep 10; done' \
@@ -131,6 +141,7 @@ jobs:
           disable-animations: true
           script: |
             adb install -r grow-with-freya/e2e-build/app-release.apk
+            adb reverse tcp:8080 tcp:8080
             nohup adb logcat -v threadtime > "$RUNNER_TEMP/logcat.txt" 2>&1 < /dev/null &
             cd grow-with-freya && ./.maestro/run.sh -e APP_BUILD=release ${{ inputs.tags && format('--include-tags={0}', inputs.tags) || '' }}
 
@@ -148,6 +159,7 @@ jobs:
           path: |
             ~/.maestro/tests
             ${{ runner.temp }}/logcat.txt
+            ${{ runner.temp }}/wiremock.log
             ${{ runner.temp }}/host-memory.log
             ${{ runner.temp }}/dmesg.txt
             ${{ runner.temp }}/emulator-crash
@@ -168,7 +180,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: grow-with-freya/e2e-build
-          key: nightly-ios-release-v2-${{ hashFiles('grow-with-freya/app/**', 'grow-with-freya/components/**', 'grow-with-freya/constants/**', 'grow-with-freya/contexts/**', 'grow-with-freya/data/**', 'grow-with-freya/hooks/**', 'grow-with-freya/services/**', 'grow-with-freya/store/**', 'grow-with-freya/types/**', 'grow-with-freya/utils/**', 'grow-with-freya/locales/**', 'grow-with-freya/assets/**', 'grow-with-freya/app.config.js', 'grow-with-freya/package.json', 'grow-with-freya/package-lock.json', 'grow-with-freya/babel.config.js', 'grow-with-freya/metro.config.js', 'grow-with-freya/tsconfig.json', '!grow-with-freya/**/__tests__/**') }}
+          key: nightly-ios-release-v3-${{ hashFiles('grow-with-freya/app/**', 'grow-with-freya/components/**', 'grow-with-freya/constants/**', 'grow-with-freya/contexts/**', 'grow-with-freya/data/**', 'grow-with-freya/hooks/**', 'grow-with-freya/services/**', 'grow-with-freya/store/**', 'grow-with-freya/types/**', 'grow-with-freya/utils/**', 'grow-with-freya/locales/**', 'grow-with-freya/assets/**', 'grow-with-freya/app.config.js', 'grow-with-freya/package.json', 'grow-with-freya/package-lock.json', 'grow-with-freya/babel.config.js', 'grow-with-freya/metro.config.js', 'grow-with-freya/tsconfig.json', '!grow-with-freya/**/__tests__/**') }}
 
       - name: Setup Node.js
         if: steps.app-cache.outputs.cache-hit != 'true'
@@ -240,6 +252,22 @@ jobs:
         working-directory: ${{ env.WORKING_DIRECTORY }}
         run: xcrun simctl install "$MAESTRO_DEVICE" "$(find e2e-build -name '*.app' -maxdepth 1 | head -1)"
 
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Serve the stubbed gateway
+        timeout-minutes: 5
+        run: |
+          nohup ./wiremock-server/run-local.sh > "$RUNNER_TEMP/wiremock.log" 2>&1 < /dev/null &
+          for i in $(seq 1 90); do
+            curl -sf http://localhost:8080/__admin/health > /dev/null && break
+            sleep 2
+          done
+          curl -sf http://localhost:8080/__admin/health
+
       - name: Record host load while the journeys run
         run: |
           nohup sh -c 'while true; do date -u +%T; memory_pressure | tail -1; top -l 1 -n 5 -o cpu -stats pid,command,cpu,mem | tail -6; sleep 20; done' \
@@ -258,6 +286,7 @@ jobs:
           path: |
             ~/.maestro/tests
             ${{ runner.temp }}/host-load.log
+            ${{ runner.temp }}/wiremock.log
           retention-days: 14
 
   summary:
