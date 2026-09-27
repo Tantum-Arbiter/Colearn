@@ -28,7 +28,7 @@ env:
   NODE_VERSION: '20'
   MAESTRO_VERSION: '2.10.0'
   EXPO_PUBLIC_E2E: '1'
-  MAESTRO_DRIVER_STARTUP_TIMEOUT: '300000'
+  MAESTRO_DRIVER_STARTUP_TIMEOUT: '900000'
   MAESTRO_CLI_NO_ANALYTICS: '1'
 
 jobs:
@@ -103,7 +103,7 @@ jobs:
             adb install -r grow-with-freya/android/app/build/outputs/apk/debug/app-debug.apk
             adb reverse tcp:8081 tcp:8081
             adb shell am start -a android.intent.action.VIEW -d 'exp+grow-with-freya://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081'
-            sleep 30
+            timeout 300 sh -c 'until grep -q "Android Bundled" "$RUNNER_TEMP/metro.log"; do sleep 5; done' || true
             cd grow-with-freya && ./.maestro/run.sh ${{ inputs.tags && format('--include-tags={0}', inputs.tags) || '' }}
 
       - name: Keep what failed
