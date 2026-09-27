@@ -1,22 +1,29 @@
 appId: com.growwithfreya.app
 name: Launch the app and let it load the bundle
-# The iOS development build reopens the last bundler it used. The Android one
-# opens on its launcher after every stop, and drops a link that arrives while
-# it is still starting, so there the link itself starts the app.
+# On a CI device neither development build reopens the bundler by itself after
+# a stop, and Android drops a link that arrives while the app is still
+# starting, so the bundler link itself starts the app.
 ---
 - runFlow:
     when:
       platform: iOS
     commands:
-      - launchApp
+      - openLink: "com.growwithfreya.app://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081"
+      - tapOn:
+          text: "Open"
+          optional: true
 - runFlow:
     when:
       platform: Android
     commands:
       - openLink: "exp+grow-with-freya://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081"
-      # A link sent while the bundle is still loading is lost.
-      - extendedWaitUntil:
-          visible:
-            id: "nothing-waits-here"
-          timeout: 15000
-          optional: true
+# A link sent while the bundle is still loading is lost.
+- extendedWaitUntil:
+    visible:
+      id: "nothing-waits-here"
+    timeout: 15000
+    optional: true
+# The development build introduces its developer menu once, over the app.
+- tapOn:
+    text: "Continue"
+    optional: true

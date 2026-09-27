@@ -93,7 +93,7 @@ does this for every flow; seeding took the home flow from 63 seconds to 15.
 The scheme differs by platform. The iOS development build answers only `com.growwithfreya.app://`;
 the Android one answers `growwithfreya://` (the app's own scheme) and, for pointing the development
 build at the bundler, `exp+grow-with-freya://expo-development-client/?url=…`. The helpers choose by
-platform. The Android development build also forgets the bundler whenever it is stopped, so flows
+platform. On CI both development builds forget the bundler whenever they are stopped, so flows
 launch through `.maestro/helpers/launch.yaml`, never a bare `launchApp`.
 
 ## The gateway, stubbed
