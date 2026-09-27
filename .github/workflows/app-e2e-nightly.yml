@@ -168,7 +168,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: grow-with-freya/e2e-build
-          key: nightly-ios-release-v1-${{ hashFiles('grow-with-freya/app/**', 'grow-with-freya/components/**', 'grow-with-freya/constants/**', 'grow-with-freya/contexts/**', 'grow-with-freya/data/**', 'grow-with-freya/hooks/**', 'grow-with-freya/services/**', 'grow-with-freya/store/**', 'grow-with-freya/types/**', 'grow-with-freya/utils/**', 'grow-with-freya/locales/**', 'grow-with-freya/assets/**', 'grow-with-freya/app.config.js', 'grow-with-freya/package.json', 'grow-with-freya/package-lock.json', 'grow-with-freya/babel.config.js', 'grow-with-freya/metro.config.js', 'grow-with-freya/tsconfig.json', '!grow-with-freya/**/__tests__/**') }}
+          key: nightly-ios-release-v2-${{ hashFiles('grow-with-freya/app/**', 'grow-with-freya/components/**', 'grow-with-freya/constants/**', 'grow-with-freya/contexts/**', 'grow-with-freya/data/**', 'grow-with-freya/hooks/**', 'grow-with-freya/services/**', 'grow-with-freya/store/**', 'grow-with-freya/types/**', 'grow-with-freya/utils/**', 'grow-with-freya/locales/**', 'grow-with-freya/assets/**', 'grow-with-freya/app.config.js', 'grow-with-freya/package.json', 'grow-with-freya/package-lock.json', 'grow-with-freya/babel.config.js', 'grow-with-freya/metro.config.js', 'grow-with-freya/tsconfig.json', '!grow-with-freya/**/__tests__/**') }}
 
       - name: Setup Node.js
         if: steps.app-cache.outputs.cache-hit != 'true'
@@ -216,7 +216,7 @@ jobs:
             -derivedDataPath build \
             -destination 'generic/platform=iOS Simulator' \
             ARCHS=arm64 \
-            CODE_SIGNING_ALLOWED=NO | tail -40
+            CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM= | tail -40
           mkdir -p ../e2e-build
           cp -R "$(find build/Build/Products -name '*.app' -maxdepth 3 | head -1)" ../e2e-build/
 
