@@ -261,6 +261,7 @@ class AccountDeletionServiceTest {
 
         // Act -start first deletion (will hang on findById)
         deletionService.deleteAccount(USER_ID);
+        verify(userRepository, org.mockito.Mockito.timeout(5000)).findById(USER_ID);
 
         // Second deletion should fail immediately
         CompletableFuture<String> second = deletionService.deleteAccount(USER_ID);
