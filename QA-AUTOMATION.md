@@ -99,8 +99,9 @@ launch through `.maestro/helpers/launch.yaml`, never a bare `launchApp`.
 Every bundler link ends in `&disableOnboarding=1`. On a fresh simulator or emulator the development
 build otherwise opens its "This is the developer menu" sheet over the app on first load, and the
 sheet hides the page from the accessibility tree: home draws, but `home-language-button` is never
-found. The flag marks that introduction as seen, on both platforms, for as long as the app stays
-installed. `launch.yaml` still taps "Continue" in case the sheet appears anyway.
+found. On Android the flag marks that introduction as seen for as long as the app stays installed.
+The iOS launcher reads it only inside the `url` parameter, so there it does nothing, and
+`launch.yaml` taps "Continue" whenever the sheet appears.
 
 ## The gateway, stubbed
 
@@ -215,6 +216,12 @@ emulator's crash store, so an emulator that disappears mid-flow leaves a cause b
 A software-rendered emulator can be too busy to answer the system in time, and Android then puts
 "Pixel Launcher isn't responding" over whatever is on screen. It stays until someone answers it, so
 `launch.yaml` and `dismiss-interruptions.yaml` tap its "Wait" (`android:id/aerr_wait`).
+
+A loaded runner can also leave the development build's first request to Metro unanswered past its
+timeout (10 seconds on the CI iOS build). The build makes one attempt and stops: newer builds show
+"There was a problem loading the project." with a Reload button, older ones drop back to their
+launcher. `connect-dev-client.yaml` waits up to a minute at a time and retries up to four times,
+tapping Reload or opening the bundler link again.
 
 ⚠️ UNVERIFIED — both journey jobs are written but have not run in GitHub Actions yet; the first run
 may need adjusting (build times, emulator image, the wait for the bundle).

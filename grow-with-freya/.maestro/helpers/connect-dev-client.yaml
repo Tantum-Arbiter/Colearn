@@ -20,6 +20,39 @@ name: Point the development build at the bundler, and wait for the app to load
 - tapOn:
     text: "Open"
     optional: true
+- repeat:
+    while:
+      visible: "Enter URL manually"
+    times: 4
+    commands:
+      - extendedWaitUntil:
+          notVisible:
+            text: "Enter URL manually"
+          timeout: 60000
+          optional: true
+      - runFlow:
+          when:
+            visible: "Enter URL manually"
+            notVisible: "There was a problem loading the project."
+          commands:
+            - runFlow:
+                when:
+                  platform: iOS
+                commands:
+                  - openLink: "com.growwithfreya.app://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081&disableOnboarding=1"
+            - runFlow:
+                when:
+                  platform: Android
+                commands:
+                  - openLink: "exp+grow-with-freya://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081&disableOnboarding=1"
+            - tapOn:
+                text: "Open"
+                optional: true
+      - runFlow:
+          when:
+            visible: "There was a problem loading the project."
+          commands:
+            - tapOn: "Reload"
 - extendedWaitUntil:
     notVisible:
       text: "Enter URL manually"
