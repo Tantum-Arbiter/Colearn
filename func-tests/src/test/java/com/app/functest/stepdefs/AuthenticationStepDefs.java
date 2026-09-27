@@ -71,11 +71,20 @@ public class AuthenticationStepDefs extends BaseStepDefs {
         RestAssured.baseURI = gatewayBaseUrl;
 
         // Verify gateway is accessible
-        given()
-            .when()
-                .get("/auth/status")
-            .then()
-                .statusCode(200);
+        int status = 0;
+        for (int attempt = 1; attempt <= 5; attempt++) {
+            status = given().when().get("/auth/status").then().extract().statusCode();
+            if (status != 429 && status != 503) {
+                break;
+            }
+            try {
+                Thread.sleep(1000L * attempt);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
+        assertEquals(200, status, "GET /auth/status");
     }
 
     @Given("WireMock is configured for {string} OAuth provider")
