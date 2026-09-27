@@ -93,7 +93,15 @@ jobs:
         if: steps.app-cache.outputs.cache-hit != 'true'
         working-directory: ${{ env.WORKING_DIRECTORY }}
         run: |
-          (cd android && ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=x86_64)
+          sed -i 's/^org.gradle.jvmargs=.*/org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g/' android/gradle.properties
+          cat > "$RUNNER_TEMP/no-release-lint.gradle" <<'EOF'
+          allprojects {
+            plugins.withId('com.android.application') {
+              android.lint.checkReleaseBuilds = false
+            }
+          }
+          EOF
+          (cd android && ./gradlew assembleRelease --no-daemon --init-script "$RUNNER_TEMP/no-release-lint.gradle" -PreactNativeArchitectures=x86_64)
           mkdir -p e2e-build
           cp android/app/build/outputs/apk/release/app-release.apk e2e-build/
 

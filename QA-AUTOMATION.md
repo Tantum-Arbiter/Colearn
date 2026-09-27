@@ -218,7 +218,9 @@ the seeding link working (`isE2eAllowed` reads `extra.e2e` when `__DEV__` is fal
 Each job keeps its built app in the Actions cache, keyed on the app's source (not on `.maestro`,
 tests or docs), and saves it as soon as it is built, so a rerun after a flow or workflow change
 skips prebuild, pods and the native build. Change the `-v1` in the key when the build steps
-themselves change. A failed Android run keeps the emulator's logcat, the runner's memory every ten
+themselves change. The Android release build skips release lint (an init script sets
+`checkReleaseBuilds = false`) and runs Gradle with a 4 GB heap and 1 GB metaspace: with Expo's
+defaults, `lintVitalAnalyzeRelease` ran out of metaspace and the build hung instead of failing. A failed Android run keeps the emulator's logcat, the runner's memory every ten
 seconds, the kernel log and the emulator's crash store; a failed iOS run keeps the runner's memory
 pressure and busiest processes every twenty seconds.
 
