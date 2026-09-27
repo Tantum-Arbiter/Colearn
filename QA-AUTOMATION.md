@@ -205,6 +205,13 @@ iOS sits in `app-e2e-nightly.yml` rather than the per-push pipeline because macO
 roughly ten times as much per minute. Run it on demand from the Actions tab, choosing a platform
 and optionally a tag.
 
+Both platforms wait for Metro's first bundle before a flow runs. Android watches Metro's log for
+"Android Bundled"; iOS asks Metro for its manifest and fetches the bundle it names, because the
+iOS development build gives up on a first build that outlasts its request ("Failed to load app
+from http://localhost:8081 with error: The request timed out"). A failed nightly Android run also
+keeps the emulator's logcat, the runner's memory every ten seconds, the kernel log and the
+emulator's crash store, so an emulator that disappears mid-flow leaves a cause behind.
+
 ⚠️ UNVERIFIED — both journey jobs are written but have not run in GitHub Actions yet; the first run
 may need adjusting (build times, emulator image, the wait for the bundle).
 

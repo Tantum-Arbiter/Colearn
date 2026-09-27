@@ -91,6 +91,11 @@ jobs:
             sleep 2
           done
 
+      - name: Record host memory while the journeys run
+        run: |
+          nohup sh -c 'while true; do date -u +%T; free -m | sed -n 2p; ps -eo rss,comm --sort=-rss | sed -n 2,5p; sleep 10; done' \
+            > "$RUNNER_TEMP/host-memory.log" 2>&1 < /dev/null &
+
       - name: Run the journeys
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -104,7 +109,14 @@ jobs:
             adb reverse tcp:8081 tcp:8081
             adb shell am start -a android.intent.action.VIEW -d 'exp+grow-with-freya://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081&disableOnboarding=1'
             timeout 300 sh -c 'until grep -q "Android Bundled" "$RUNNER_TEMP/metro.log"; do sleep 5; done' || true
+            nohup adb logcat -v threadtime > "$RUNNER_TEMP/logcat.txt" 2>&1 < /dev/null &
             cd grow-with-freya && ./.maestro/run.sh ${{ inputs.tags && format('--include-tags={0}', inputs.tags) || '' }}
+
+      - name: Collect what the host saw
+        if: failure()
+        run: |
+          sudo dmesg -T | tail -200 > "$RUNNER_TEMP/dmesg.txt" || true
+          cp -R /tmp/android-runner "$RUNNER_TEMP/emulator-crash" 2>/dev/null || true
 
       - name: Keep what failed
         if: failure()
@@ -114,6 +126,10 @@ jobs:
           path: |
             ~/.maestro/tests
             ${{ runner.temp }}/metro.log
+            ${{ runner.temp }}/logcat.txt
+            ${{ runner.temp }}/host-memory.log
+            ${{ runner.temp }}/dmesg.txt
+            ${{ runner.temp }}/emulator-crash
           retention-days: 14
 
   ios:
@@ -184,6 +200,14 @@ jobs:
             curl -sf http://localhost:8081/status | grep -q running && break
             sleep 2
           done
+
+      - name: Build the iOS bundle before the app asks for it
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: |
+          bundle_url=$(curl -sf -H 'expo-platform: ios' -H 'accept: application/expo+json,application/json' http://localhost:8081/ \
+            | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>console.log(JSON.parse(s).launchAsset.url))')
+          echo "$bundle_url"
+          time curl -sf --max-time 900 -o /dev/null "$bundle_url"
 
       - name: Point the app at the bundle
         working-directory: ${{ env.WORKING_DIRECTORY }}
