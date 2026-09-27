@@ -241,7 +241,11 @@ http://localhost:8081 with error: The request timed out").
 
 A software-rendered emulator can be too busy to answer the system in time, and Android then puts
 "Pixel Launcher isn't responding" over whatever is on screen. It stays until someone answers it, so
-`launch.yaml` and `dismiss-interruptions.yaml` tap its "Wait" (`android:id/aerr_wait`).
+`launch.yaml` and `dismiss-interruptions.yaml` tap its "Wait" (`android:id/aerr_wait`). On the
+nightly the launcher hangs as the emulator boots and stays hung, so "Wait" alone does not keep the
+dialog away: the job disables Pixel Launcher before the journeys (the flows launch the app
+directly and never go home) and gives the emulator three of the runner's four cores and 4 GB, since
+frames on the library screen took over two seconds with the default two cores.
 
 A loaded runner can also leave the development build's first request to Metro unanswered past its
 timeout (10 seconds on the CI iOS build). The build makes one attempt and stops: newer builds show
