@@ -61,8 +61,8 @@ same branch -newer runs cancel in-progress ones.
 | `test-and-lint` | - | every push and PR | `npm run lint` + `npm run test:ci` with coverage |
 | `type-check` | - | every push and PR | `npm run type-check` |
 | `security-audit` | - | every push and PR | `npm audit` and `npm outdated`; informational, never fails |
-| `build-android` | - | manual only (paused) | Android debug build (x86_64 only), reused from cache while native inputs are unchanged; handed on as an artifact |
-| `app-journeys` | build-android | manual only (paused) | The built app on an emulator on a fresh runner, Maestro `smoke` flows |
+| `build-android` | - | manual only (paused) | The shared E2E release build (`app-e2e-build.yml`, x86_64 only), reused from cache while the app's source is unchanged |
+| `app-journeys` | build-android | manual only (paused) | Exactly that app on an emulator on a fresh runner (`app-e2e-journeys.yml`), Maestro `smoke` flows |
 | `build-web` | the first three | every push and PR, manual | `npx expo export --platform web`, then fails if the bundle contains `import.meta` |
 | `performance-test` | build-web | whenever the web build succeeds | Lighthouse CI; informational, never fails |
 | `deployment-summary` | all above | always | GitHub Step Summary with results |
@@ -71,11 +71,25 @@ same branch -newer runs cancel in-progress ones.
 - `npm ci --legacy-peer-deps` everywhere, with no fallback to `npm install`: a lockfile that has drifted from `package.json` fails the install rather than being papered over. `--legacy-peer-deps` is required for React Native's peer conflicts.
 - The Expo CLI is the project's own (`npx expo`), not a global `latest`.
 - The Android journeys (`build-android` + `app-journeys`) are paused (operator, 2026-09-23) and run only when the workflow is started by hand. When re-enabled they are meant to gate pull requests into `main`, the release branch, not every push to `mvp`. Every journey also runs nightly on Android and iOS (`app-e2e-nightly.yml`).
-- The journeys' debug app is built for x86_64 only (`-PreactNativeArchitectures=x86_64`), the emulator's CPU: all four ABIs ran the runner out of disk. Store builds come from EAS and carry every ABI.
-- The Android app is built in its own job (`build-android`), which starts at once alongside the checks, and handed to `app-journeys` as an artifact, so the emulator runs on a fresh runner with the disk to itself. The journeys load their JavaScript from Metro, so the built app is cached (`actions/cache`), keyed on the native inputs: `package.json`, `package-lock.json`, `app.config.js`, the icon, adaptive-icon and splash images. A hit skips prebuild and Gradle, which take about 25 minutes. A cache saved in a pull request serves only that PR, so pushes to `main` run the build alone, only when native inputs changed, to keep a build every PR can reuse. Gradle's downloads are cached too (`gradle/actions/setup-gradle`), and the harmless D8 warnings from `amazon-appstore-sdk` are filtered out of the log.
+- The journeys' app is built for x86_64 only (`-PreactNativeArchitectures=x86_64`), the emulator's CPU: all four ABIs ran the runner out of disk. Store builds come from EAS and carry every ABI.
+- The Android app is built in its own job (`build-android`), which starts at once alongside the checks, and `app-journeys` fetches it by cache key on a fresh runner, so the emulator has the disk to itself. Both jobs are the shared E2E workflows below, so the per-push smoke flows and the nightly test the same build of a given source and neither builds it twice. A cache saved in a pull request serves only that PR; one saved on `main` serves every PR.
 - The web build and its `import.meta` check run on every push and PR, so a web bundle that would stop at the splash is caught before merging, and Lighthouse runs on every web build.
 - `NODE_OPTIONS=--max-old-space-size=4096` prevents OOM on test runs.
 - No automatic native builds; those go through EAS (see below). `deploy-eas.yml` needs a green run of this pipeline on the branch it builds from.
+
+### 1b. App E2E -shared build and journeys
+
+Three workflows, one principle: **the app under test is built once per source, and every test stage uses that build.** Store builds are separate and come from EAS (below), because the E2E app must never ship.
+
+| Workflow | Triggered by | Does |
+|----------|--------------|------|
+| `app-e2e-build.yml` | `workflow_call` (`platform`: android or ios) | Looks up the cache for an app built from this source (key: `e2e-<platform>-release-v1-<hash of app/, components/, …, package-lock.json, app.config.js>`; `.maestro`, tests and docs are not part of it). Only on a miss: `npm ci --legacy-peer-deps`, prebuild, then a release build with the JavaScript inside and `EXPO_PUBLIC_E2E=1` (Android `assembleRelease` x86_64, release lint off, 4 GB Gradle heap; iOS `xcodebuild -configuration Release` for the simulator, signed ad hoc so the keychain works). Saves it at once and returns the key as `app-key`. |
+| `app-e2e-journeys.yml` | `workflow_call` (`platform`, `app-key`, `tags`) | Restores exactly that app (`fail-on-cache-miss`: it never builds), starts WireMock on :8080, boots an API 31 emulator (Pixel Launcher off, 3 cores, 4 GB) or an iPhone 16 Pro simulator (Reduce Motion on), and runs Maestro through `.maestro/run-with-device-retry.sh` with `APP_BUILD=release`. A failure keeps screenshots, Maestro logs, logcat or host load, and WireMock's log. |
+| `app-e2e-nightly.yml` | schedule 02:00 UTC, manual (`platform`, `tags`) | Build and journeys for Android and for iOS, each platform on its own so one failing build does not stop the other; every flow. |
+
+- Bump the `-v1` in the cache key when the build steps change without the app's source changing, so no stale app is reused.
+- E2E builds only ever talk to the stub: the workflows set `EXPO_PUBLIC_GATEWAY_URL=http://localhost:8080` (a `.env` file never overrides a variable already set), and `app.config.js` refuses to build an E2E app with any other gateway, because a release build otherwise reads `.env.production`.
+- Retries and the reasons for each emulator and simulator setting are in `QA-AUTOMATION.md`.
 
 ### 2. deploy-eas.yml -EAS Build (Manual)
 

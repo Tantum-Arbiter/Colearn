@@ -3,6 +3,8 @@ name: App Journeys - Nightly
 # The smoke subset runs per push in the main pipeline, on Android only.
 # This is the rest: every flow, on both platforms, once a night — iOS lives
 # here because macOS runners cost roughly ten times as much per minute.
+# Both pipelines test the same E2E build of a given source (app-e2e-build.yml),
+# so a night with no app changes reuses the app instead of building it again.
 
 on:
   schedule:
@@ -23,279 +25,43 @@ concurrency:
   group: app-journeys-nightly-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  WORKING_DIRECTORY: grow-with-freya
-  NODE_VERSION: '20'
-  MAESTRO_VERSION: '2.10.0'
-  EXPO_PUBLIC_E2E: '1'
-  EXPO_PUBLIC_GATEWAY_URL: 'http://localhost:8080'
-  MAESTRO_DRIVER_STARTUP_TIMEOUT: '900000'
-  MAESTRO_CLI_NO_ANALYTICS: '1'
-
 jobs:
+  build-android:
+    name: Android app
+    if: github.event_name == 'schedule' || inputs.platform == 'both' || inputs.platform == 'android'
+    uses: ./.github/workflows/app-e2e-build.yml
+    with:
+      platform: android
+
   android:
     name: Android
-    if: github.event_name == 'schedule' || inputs.platform == 'both' || inputs.platform == 'android'
-    runs-on: ubuntu-latest
-    timeout-minutes: 120
+    needs: [build-android]
+    uses: ./.github/workflows/app-e2e-journeys.yml
+    with:
+      platform: android
+      app-key: ${{ needs.build-android.outputs.app-key }}
+      tags: ${{ inputs.tags }}
 
-    steps:
-      - name: Make room for the native build
-        run: |
-          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup /usr/share/swift /opt/hostedtoolcache/CodeQL
-          df -h /
-
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Reuse the app built from this source
-        id: app-cache
-        uses: actions/cache/restore@v4
-        with:
-          path: grow-with-freya/e2e-build
-          key: nightly-android-release-v2-${{ hashFiles('grow-with-freya/app/**', 'grow-with-freya/components/**', 'grow-with-freya/constants/**', 'grow-with-freya/contexts/**', 'grow-with-freya/data/**', 'grow-with-freya/hooks/**', 'grow-with-freya/services/**', 'grow-with-freya/store/**', 'grow-with-freya/types/**', 'grow-with-freya/utils/**', 'grow-with-freya/locales/**', 'grow-with-freya/assets/**', 'grow-with-freya/app.config.js', 'grow-with-freya/package.json', 'grow-with-freya/package-lock.json', 'grow-with-freya/babel.config.js', 'grow-with-freya/metro.config.js', 'grow-with-freya/tsconfig.json', '!grow-with-freya/**/__tests__/**') }}
-
-      - name: Setup Node.js
-        if: steps.app-cache.outputs.cache-hit != 'true'
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      - name: Enable KVM, so the emulator is not unbearably slow
-        run: |
-          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-          sudo udevadm control --reload-rules
-          sudo udevadm trigger --name-match=kvm
-
-      - name: Install dependencies
-        timeout-minutes: 10
-        if: steps.app-cache.outputs.cache-hit != 'true'
-        working-directory: ${{ env.WORKING_DIRECTORY }}
-        run: npm install --legacy-peer-deps
-
-      - name: Install Maestro
-        run: |
-          curl -fsSL -o maestro.zip "https://github.com/mobile-dev-inc/maestro/releases/download/cli-${MAESTRO_VERSION}/maestro.zip"
-          unzip -q maestro.zip -d "$HOME"
-          echo "$HOME/maestro/bin" >> $GITHUB_PATH
-
-      - name: Generate the Android project
-        timeout-minutes: 10
-        if: steps.app-cache.outputs.cache-hit != 'true'
-        working-directory: ${{ env.WORKING_DIRECTORY }}
-        run: npx expo prebuild --platform android --no-install
-
-      - name: Build the app, with its JavaScript inside
-        timeout-minutes: 35
-        if: steps.app-cache.outputs.cache-hit != 'true'
-        working-directory: ${{ env.WORKING_DIRECTORY }}
-        run: |
-          sed -i 's/^org.gradle.jvmargs=.*/org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g/' android/gradle.properties
-          cat > "$RUNNER_TEMP/no-release-lint.gradle" <<'EOF'
-          allprojects {
-            plugins.withId('com.android.application') {
-              android.lint.checkReleaseBuilds = false
-            }
-          }
-          EOF
-          (cd android && ./gradlew assembleRelease --no-daemon --init-script "$RUNNER_TEMP/no-release-lint.gradle" -PreactNativeArchitectures=x86_64)
-          mkdir -p e2e-build
-          cp android/app/build/outputs/apk/release/app-release.apk e2e-build/
-
-      - name: Keep the app for the next run
-        if: steps.app-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
-        with:
-          path: grow-with-freya/e2e-build
-          key: ${{ steps.app-cache.outputs.cache-primary-key }}
-
-      - name: Serve the stubbed gateway
-        timeout-minutes: 5
-        run: |
-          nohup ./wiremock-server/run-local.sh > "$RUNNER_TEMP/wiremock.log" 2>&1 < /dev/null &
-          for i in $(seq 1 90); do
-            curl -sf http://localhost:8080/__admin/health > /dev/null && break
-            sleep 2
-          done
-          curl -sf http://localhost:8080/__admin/health
-
-      - name: Record host memory while the journeys run
-        run: |
-          nohup sh -c 'while true; do date -u +%T; free -m | sed -n 2p; ps -eo rss,comm --sort=-rss | sed -n 2,5p; sleep 10; done' \
-            > "$RUNNER_TEMP/host-memory.log" 2>&1 < /dev/null &
-
-      - name: Run the journeys
-        timeout-minutes: 40
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 31
-          target: google_apis
-          arch: x86_64
-          profile: pixel_6
-          cores: 3
-          ram-size: 4096M
-          disable-animations: true
-          script: |
-            adb install -r grow-with-freya/e2e-build/app-release.apk
-            adb reverse tcp:8080 tcp:8080
-            adb shell pm disable-user --user 0 com.google.android.apps.nexuslauncher || true
-            nohup adb logcat -v threadtime > "$RUNNER_TEMP/logcat.txt" 2>&1 < /dev/null &
-            cd grow-with-freya && ./.maestro/run-with-device-retry.sh -e APP_BUILD=release ${{ inputs.tags && format('--include-tags={0}', inputs.tags) || '' }}
-
-      - name: Collect what the host saw
-        if: failure()
-        run: |
-          sudo dmesg -T | tail -200 > "$RUNNER_TEMP/dmesg.txt" || true
-          cp -R /tmp/android-runner "$RUNNER_TEMP/emulator-crash" 2>/dev/null || true
-
-      - name: Keep what failed
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: maestro-android-${{ github.run_id }}
-          path: |
-            ~/.maestro/tests
-            ${{ runner.temp }}/logcat.txt
-            ${{ runner.temp }}/wiremock.log
-            ${{ runner.temp }}/host-memory.log
-            ${{ runner.temp }}/dmesg.txt
-            ${{ runner.temp }}/emulator-crash
-          retention-days: 14
+  build-ios:
+    name: iOS app
+    if: github.event_name == 'schedule' || inputs.platform == 'both' || inputs.platform == 'ios'
+    uses: ./.github/workflows/app-e2e-build.yml
+    with:
+      platform: ios
 
   ios:
     name: iOS
-    if: github.event_name == 'schedule' || inputs.platform == 'both' || inputs.platform == 'ios'
-    runs-on: macos-26
-    timeout-minutes: 150
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Reuse the app built from this source
-        id: app-cache
-        uses: actions/cache/restore@v4
-        with:
-          path: grow-with-freya/e2e-build
-          key: nightly-ios-release-v3-${{ hashFiles('grow-with-freya/app/**', 'grow-with-freya/components/**', 'grow-with-freya/constants/**', 'grow-with-freya/contexts/**', 'grow-with-freya/data/**', 'grow-with-freya/hooks/**', 'grow-with-freya/services/**', 'grow-with-freya/store/**', 'grow-with-freya/types/**', 'grow-with-freya/utils/**', 'grow-with-freya/locales/**', 'grow-with-freya/assets/**', 'grow-with-freya/app.config.js', 'grow-with-freya/package.json', 'grow-with-freya/package-lock.json', 'grow-with-freya/babel.config.js', 'grow-with-freya/metro.config.js', 'grow-with-freya/tsconfig.json', '!grow-with-freya/**/__tests__/**') }}
-
-      - name: Setup Node.js
-        if: steps.app-cache.outputs.cache-hit != 'true'
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: Install dependencies
-        timeout-minutes: 10
-        if: steps.app-cache.outputs.cache-hit != 'true'
-        working-directory: ${{ env.WORKING_DIRECTORY }}
-        run: npm install --legacy-peer-deps
-
-      - name: Install Maestro
-        run: |
-          brew tap mobile-dev-inc/tap
-          brew install mobile-dev-inc/tap/maestro
-
-      - name: Generate the iOS project
-        timeout-minutes: 10
-        if: steps.app-cache.outputs.cache-hit != 'true'
-        working-directory: ${{ env.WORKING_DIRECTORY }}
-        run: npx expo prebuild --platform ios --no-install
-
-      - name: Install pods
-        timeout-minutes: 20
-        if: steps.app-cache.outputs.cache-hit != 'true'
-        working-directory: ${{ env.WORKING_DIRECTORY }}/ios
-        run: |
-          export LANG=en_US.UTF-8
-          pod install
-
-      - name: Build the app, with its JavaScript inside
-        timeout-minutes: 45
-        if: steps.app-cache.outputs.cache-hit != 'true'
-        working-directory: ${{ env.WORKING_DIRECTORY }}/ios
-        run: |
-          set -o pipefail
-          workspace=$(ls -d *.xcworkspace | head -1)
-          xcodebuild \
-            -workspace "$workspace" \
-            -scheme "${workspace%.xcworkspace}" \
-            -configuration Release \
-            -sdk iphonesimulator \
-            -derivedDataPath build \
-            -destination 'generic/platform=iOS Simulator' \
-            ARCHS=arm64 \
-            CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM= | tail -40
-          mkdir -p ../e2e-build
-          cp -R "$(find build/Build/Products -name '*.app' -maxdepth 3 | head -1)" ../e2e-build/
-
-      - name: Keep the app for the next run
-        if: steps.app-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
-        with:
-          path: grow-with-freya/e2e-build
-          key: ${{ steps.app-cache.outputs.cache-primary-key }}
-
-      - name: Boot a simulator
-        timeout-minutes: 15
-        run: |
-          udid=$(xcrun simctl create e2e-iphone "iPhone 16 Pro")
-          xcrun simctl boot "$udid"
-          xcrun simctl bootstatus "$udid" -b
-          xcrun simctl spawn "$udid" defaults write com.apple.Accessibility ReduceMotionEnabled -bool true
-          echo "MAESTRO_DEVICE=$udid" >> $GITHUB_ENV
-
-      - name: Install the app
-        working-directory: ${{ env.WORKING_DIRECTORY }}
-        run: xcrun simctl install "$MAESTRO_DEVICE" "$(find e2e-build -name '*.app' -maxdepth 1 | head -1)"
-
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      - name: Serve the stubbed gateway
-        timeout-minutes: 5
-        run: |
-          nohup ./wiremock-server/run-local.sh > "$RUNNER_TEMP/wiremock.log" 2>&1 < /dev/null &
-          for i in $(seq 1 90); do
-            curl -sf http://localhost:8080/__admin/health > /dev/null && break
-            sleep 2
-          done
-          curl -sf http://localhost:8080/__admin/health
-
-      - name: Record host load while the journeys run
-        run: |
-          nohup sh -c 'while true; do date -u +%T; memory_pressure | tail -1; top -l 1 -n 5 -o cpu -stats pid,command,cpu,mem | tail -6; sleep 20; done' \
-            > "$RUNNER_TEMP/host-load.log" 2>&1 < /dev/null &
-
-      - name: Run the journeys
-        timeout-minutes: 50
-        working-directory: ${{ env.WORKING_DIRECTORY }}
-        run: ./.maestro/run-with-device-retry.sh -e APP_BUILD=release ${{ inputs.tags && format('--include-tags={0}', inputs.tags) || '' }}
-
-      - name: Keep what failed
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: maestro-ios-${{ github.run_id }}
-          path: |
-            ~/.maestro/tests
-            ${{ runner.temp }}/host-load.log
-            ${{ runner.temp }}/wiremock.log
-          retention-days: 14
+    needs: [build-ios]
+    uses: ./.github/workflows/app-e2e-journeys.yml
+    with:
+      platform: ios
+      app-key: ${{ needs.build-ios.outputs.app-key }}
+      tags: ${{ inputs.tags }}
 
   summary:
     name: Summary
     runs-on: ubuntu-latest
-    needs: [android, ios]
+    needs: [build-android, android, build-ios, ios]
     if: always()
 
     steps:
@@ -303,7 +69,7 @@ jobs:
         run: |
           echo "## App journeys, nightly" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **Android**: ${{ needs.android.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **iOS**: ${{ needs.ios.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Android**: build ${{ needs.build-android.result }}, journeys ${{ needs.android.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **iOS**: build ${{ needs.build-ios.result }}, journeys ${{ needs.ios.result }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Recordings and screenshots from a failed flow are attached to this run." >> $GITHUB_STEP_SUMMARY

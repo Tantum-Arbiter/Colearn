@@ -197,10 +197,12 @@ the stub reaches the shelf and the search — a flow finds it by name. Its cover
 | Nightly, and on demand | **Every journey, Android and iOS** | ubuntu + macOS | 30-60 min |
 | Push to `main`/`develop` | Web export, Lighthouse | ubuntu | 5 min |
 
-The journey job (`app-journeys` in `grow-with-freya-ci-cd.yml`) waits for Jest and the type check:
-there is no point booting an emulator for a branch that does not compile. It builds the app with
-`EXPO_PUBLIC_E2E=1`, so the seeding link works, serves the bundle, installs onto the emulator and
-runs the `smoke` tag. A failure keeps the recordings and Metro's log as artifacts.
+Both pipelines test **one build per source**: `app-e2e-build.yml` builds the E2E release app, or
+finds it already built from the same source, and `app-e2e-journeys.yml` runs flows against exactly
+that app. The per-push pipeline runs the `smoke` tag on Android (`build-android` then
+`app-journeys`, manual only while paused); the nightly runs every flow on both platforms. A night
+with no app changes, or a rerun after a flow change, reuses the app and goes straight to the
+device. A failure keeps the recordings and logs as artifacts.
 
 iOS sits in `app-e2e-nightly.yml` rather than the per-push pipeline because macOS runners cost
 roughly ten times as much per minute. Run it on demand from the Actions tab, choosing a platform
