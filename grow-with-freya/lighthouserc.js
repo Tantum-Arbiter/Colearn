@@ -3,7 +3,7 @@ module.exports = {
     collect: {
       url: ['http://localhost:3000'],
       startServerCommand: 'npx serve -s dist -l 3000',
-      startServerReadyPattern: 'Local:',
+      startServerReadyPattern: 'Accepting connections',
       startServerReadyTimeout: 10000,
     },
     assert: {
@@ -16,7 +16,8 @@ module.exports = {
       },
     },
     upload: {
-      target: 'temporary-public-storage',
+      target: 'filesystem',
+      outputDir: './lighthouse-report',
     },
   },
 };

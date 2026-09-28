@@ -204,7 +204,7 @@ Android, after the checks (security audit, tests and lint, type check) have pass
 `build-android` builds or reuses the app, and `app-journeys` runs against it (manual only while
 paused). The nightly runs every flow on both platforms. A night
 with no app changes, or a rerun after a flow change, reuses the app and goes straight to the
-device. A failure keeps the recordings and logs as artifacts.
+device. Every run, passed or failed, keeps a JUnit report (the first pass, and the rerun if there was one) and puts a table of each journey's result on the run summary: passed, passed on retry, or failed. A failure also keeps the recordings and logs.
 
 iOS sits in `app-e2e-nightly.yml` rather than the per-push pipeline because macOS runners cost
 roughly ten times as much per minute. Run it on demand from the Actions tab, choosing a platform

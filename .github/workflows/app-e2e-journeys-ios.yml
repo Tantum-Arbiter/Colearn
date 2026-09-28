@@ -30,10 +30,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Fetch the app this run built
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: grow-with-freya/e2e-build
           key: ${{ inputs.app-key }}
@@ -58,7 +58,7 @@ jobs:
         run: xcrun simctl install "$MAESTRO_DEVICE" "$(find e2e-build -name '*.app' -maxdepth 1 | head -1)"
 
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
           distribution: 'temurin'
           java-version: '17'
@@ -81,11 +81,30 @@ jobs:
       - name: Run the journeys
         timeout-minutes: 50
         working-directory: ${{ env.WORKING_DIRECTORY }}
+        env:
+          MAESTRO_REPORT: ${{ runner.temp }}/maestro-junit.xml
         run: ./.maestro/run-with-device-retry.sh -e APP_BUILD=release ${{ inputs.tags && format('--include-tags={0}', inputs.tags) || '' }}
+
+      - name: Summarise the journeys
+        if: always()
+        run: |
+          python3 .github/scripts/junit-summary.py --title "iOS journeys" --list-cases \
+            --report "$RUNNER_TEMP/maestro-junit.xml" --retry "$RUNNER_TEMP/maestro-junit-retry.xml"
+
+      - name: Keep the journeys report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: maestro-report-ios-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/maestro-junit.xml
+            ${{ runner.temp }}/maestro-junit-retry.xml
+          if-no-files-found: ignore
+          retention-days: 30
 
       - name: Keep what failed
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: maestro-ios-${{ github.run_id }}-${{ github.run_attempt }}
           path: |

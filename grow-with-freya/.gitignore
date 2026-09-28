@@ -246,6 +246,8 @@ out/
 /ios
 /android
 /e2e-build
+/.lighthouseci
+/lighthouse-report
 
 # Nested project directories (avoid accidental nesting)
 grow-with-freya/grow-with-freya/

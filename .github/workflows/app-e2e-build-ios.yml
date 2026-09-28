@@ -30,11 +30,11 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Look for the app built from this source
         id: app-cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: grow-with-freya/e2e-build
           lookup-only: true
@@ -42,7 +42,7 @@ jobs:
 
       - name: Setup Node.js
         if: steps.app-cache.outputs.cache-hit != 'true'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
 
@@ -87,7 +87,7 @@ jobs:
 
       - name: Keep the app for every stage that tests it
         if: steps.app-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v6
         with:
           path: grow-with-freya/e2e-build
           key: ${{ steps.app-cache.outputs.cache-primary-key }}

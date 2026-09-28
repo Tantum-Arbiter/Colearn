@@ -33,28 +33,54 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
 
-      - name: Run ESLint
-        run: npm run lint
+      - name: Run ESLint (no errors, and no more warnings than the 501 there are today)
+        run: npm run lint -- --max-warnings 501
 
       - name: Run tests with coverage
         id: test_run
-        run: npm run test:ci
+        run: npm run test:ci -- --reporters=default --reporters=jest-junit
         env:
           CI: true
           NODE_ENV: test
           NODE_OPTIONS: '--max-old-space-size=4096'
+          JEST_JUNIT_OUTPUT_DIR: ${{ runner.temp }}/jest
+          JEST_JUNIT_OUTPUT_NAME: junit.xml
+
+      - name: Summarise the tests and coverage
+        if: always()
+        run: |
+          python3 ../.github/scripts/junit-summary.py --title "Unit tests" --report "$RUNNER_TEMP/jest/junit.xml"
+          if [ -f coverage/coverage-summary.json ]; then
+            python3 - <<'PY' | tee -a "$GITHUB_STEP_SUMMARY"
+          import json
+          total = json.load(open("coverage/coverage-summary.json"))["total"]
+          kinds = ("statements", "branches", "functions", "lines")
+          print("Coverage: " + ", ".join("%s %s%%" % (k, total[k]["pct"]) for k in kinds))
+          PY
+          fi
+
+      - name: Keep the test report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: unit-test-report-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/jest/junit.xml
+            ${{ env.WORKING_DIRECTORY }}/coverage/coverage-summary.json
+          if-no-files-found: ignore
+          retention-days: 30
 
 
   # Job 2: TypeScript Type Checking
@@ -67,10 +93,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
 
@@ -90,19 +116,20 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
 
-      - name: Run npm audit
-        run: npm audit --audit-level=moderate || echo "Audit found issues but continuing (known React version conflict)"
-        continue-on-error: true
+      - name: Run npm audit (informational, never fails)
+        run: |
+          npm audit --json > "$RUNNER_TEMP/npm-audit.json" || true
+          python3 ../.github/scripts/audit-summary.py "$RUNNER_TEMP/npm-audit.json"
 
       - name: Check for outdated packages
         run: npm outdated || echo "Package check completed"
@@ -148,10 +175,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
 
@@ -173,9 +200,10 @@ jobs:
             echo "the app will stop at the splash. See babel.config.js unstable_transformImportMeta." >&2
             exit 1
           fi
+          echo "The web bundle has no import.meta, so a classic script can run it."
 
       - name: Archive web build
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: expo-web-build-${{ github.sha }}
           path: ${{ env.WORKING_DIRECTORY }}/dist
@@ -184,7 +212,7 @@ jobs:
   # Job 7: Performance Testing
   # Runs after web build completes
   performance-test:
-    name: Performance Tests (informational)
+    name: Lighthouse
     runs-on: ubuntu-latest
     needs: [build-web]
     if: needs.build-web.result == 'success'
@@ -194,10 +222,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
 
@@ -205,7 +233,7 @@ jobs:
         run: npm ci --legacy-peer-deps
 
       - name: Download web build
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: expo-web-build-${{ github.sha }}
           path: ${{ env.WORKING_DIRECTORY }}/dist
@@ -213,16 +241,39 @@ jobs:
       - name: Setup Lighthouse CI
         run: npm install -g @lhci/cli@0.12.x
 
-      - name: Serve web app
-        run: |
-          npx serve -s dist -l 3000 &
-          sleep 5
+      - name: Run Lighthouse CI (accessibility below 0.9 fails; the other scores warn)
+        run: lhci autorun
 
-      - name: Run Lighthouse CI
-        run: lhci autorun || echo "Lighthouse CI completed with warnings"
-        env:
-          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
-        continue-on-error: true
+      - name: Summarise the scores
+        if: always()
+        run: |
+          python3 - <<'PY' | tee -a "$GITHUB_STEP_SUMMARY"
+          import glob, json
+          runs = sorted(glob.glob(".lighthouseci/lhr-*.json"))
+          print("### Lighthouse")
+          print()
+          if not runs:
+              print("No Lighthouse result was written.")
+          else:
+              cats = ["performance", "accessibility", "best-practices", "seo", "pwa"]
+              print("| Run | " + " | ".join(cats) + " |")
+              print("|---|" + "---|" * len(cats))
+              for i, path in enumerate(runs, 1):
+                  c = json.load(open(path)).get("categories", {})
+                  print(f"| {i} | " + " | ".join(str(round((c.get(k) or {}).get("score") or 0, 2)) for k in cats) + " |")
+          PY
+
+      - name: Keep the Lighthouse report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: lighthouse-report-${{ github.sha }}
+          path: |
+            ${{ env.WORKING_DIRECTORY }}/.lighthouseci
+            ${{ env.WORKING_DIRECTORY }}/lighthouse-report
+          include-hidden-files: true
+          if-no-files-found: ignore
+          retention-days: 30
 
   # Job 8: Deployment Summary
   deployment-summary:
@@ -233,34 +284,52 @@ jobs:
 
     steps:
       - name: Create deployment summary
+        env:
+          TESTS: ${{ needs.test-and-lint.result }}
+          TYPES: ${{ needs.type-check.result }}
+          AUDIT: ${{ needs.security-audit.result }}
+          WEB: ${{ needs.build-web.result }}
+          LIGHTHOUSE: ${{ needs.performance-test.result }}
+          ANDROID_BUILD: ${{ needs.build-android.result }}
+          JOURNEYS: ${{ needs.app-journeys.result }}
         run: |
-          echo "##  Grow with Freya - CI/CD Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "###  Build Status:" >> $GITHUB_STEP_SUMMARY
-          echo "- **Tests & Lint**: ${{ needs.test-and-lint.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **TypeScript Check**: ${{ needs.type-check.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Security Audit**: ${{ needs.security-audit.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **App Journeys (smoke)**: ${{ needs.app-journeys.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Web Build**: ${{ needs.build-web.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Performance Tests**: ${{ needs.performance-test.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-
-          echo "###  Available Artifacts:" >> $GITHUB_STEP_SUMMARY
-          echo "- Web build available for download (30 days retention)" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-
-          # Check if all required jobs passed
-          if [[ "${{ needs.test-and-lint.result }}" == "success" && "${{ needs.type-check.result }}" == "success" && "${{ needs.build-web.result }}" != "failure" && "${{ needs.app-journeys.result }}" != "failure" ]]; then
-            echo "###  EAS Build Ready" >> $GITHUB_STEP_SUMMARY
-            echo "All CI checks passed! You can now trigger EAS build manually:" >> $GITHUB_STEP_SUMMARY
-            echo "1. Go to **Actions** → **EAS Build (Manual)**" >> $GITHUB_STEP_SUMMARY
-            echo "2. Click **Run workflow**" >> $GITHUB_STEP_SUMMARY
-            echo "3. Select platform and profile" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-          fi
-
-          echo "###  Quick Links:" >> $GITHUB_STEP_SUMMARY
-          echo "- [Repository](https://github.com/${{ github.repository }})" >> $GITHUB_STEP_SUMMARY
-          echo "- [Commit](https://github.com/${{ github.repository }}/commit/${{ github.sha }})" >> $GITHUB_STEP_SUMMARY
-          echo "- [EAS Builds](https://expo.dev/accounts/tantum-arbiter/projects/grow-with-freya/builds)" >> $GITHUB_STEP_SUMMARY
-          echo "- [Trigger EAS Build](https://github.com/${{ github.repository }}/actions/workflows/deploy-eas.yml)" >> $GITHUB_STEP_SUMMARY
+          shown() { if [ "$1" = "skipped" ]; then echo "skipped (paused: runs when started by hand)"; else echo "$1"; fi; }
+          {
+            echo "## Grow with Freya - CI/CD Summary"
+            echo ""
+            echo "Commit \`${GITHUB_SHA:0:8}\`"
+            echo ""
+            echo "| Stage | Job | Result |"
+            echo "|---|---|---|"
+            echo "| 1 checks | Test & Lint | $TESTS |"
+            echo "| 1 checks | TypeScript | $TYPES |"
+            echo "| 1 checks | Security audit (informational) | $AUDIT |"
+            echo "| 2 build | Web build | $WEB |"
+            echo "| 2 build | Android E2E app | $(shown "$ANDROID_BUILD") |"
+            echo "| 3 test | Lighthouse | $LIGHTHOUSE |"
+            echo "| 3 test | Smoke journeys | $(shown "$JOURNEYS") |"
+            echo ""
+            if [ "$TESTS" = success ] && [ "$TYPES" = success ] && [ "$WEB" = success ] && [ "$LIGHTHOUSE" = success ] \
+              && [ "$ANDROID_BUILD" != failure ] && [ "$JOURNEYS" != failure ] && [ "$JOURNEYS" != cancelled ]; then
+              echo "### Release readiness"
+              echo "Every gate that ran passed for this commit."
+              if [ "$JOURNEYS" = success ]; then
+                echo "The smoke journeys ran against this commit's app and passed."
+              else
+                echo "**The smoke journeys did not run.** Check the nightly journeys for this commit before releasing."
+              fi
+            else
+              echo "### Not ready to release"
+              echo "A gate failed or was cancelled: see the table above."
+            fi
+            echo ""
+            echo "### Kept with this run"
+            echo "- Unit test report and coverage summary (30 days)"
+            echo "- Lighthouse report (30 days)"
+            echo "- Web build (30 days)"
+            if [ "$JOURNEYS" = success ] || [ "$JOURNEYS" = failure ]; then echo "- Journeys report (30 days)"; fi
+            echo ""
+            echo "### Quick Links"
+            echo "- [Commit](https://github.com/$GITHUB_REPOSITORY/commit/$GITHUB_SHA)"
+            echo "- [EAS Builds](https://expo.dev/accounts/tantum-arbiter/projects/grow-with-freya/builds)"
+          } >> "$GITHUB_STEP_SUMMARY"

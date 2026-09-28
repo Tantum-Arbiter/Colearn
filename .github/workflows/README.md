@@ -64,14 +64,14 @@ same branch -newer runs cancel in-progress ones.
 
 | Job | Depends On | Runs on | Purpose |
 |-----|-----------|---------|---------|
-| `test-and-lint` | - | every push and PR | `npm run lint` + `npm run test:ci` with coverage |
+| `test-and-lint` | - | every push and PR | `npm run lint -- --max-warnings 501` (no errors, and the warning count may only fall) + `npm run test:ci` with coverage thresholds; a JUnit report and the coverage totals go on the run summary and are kept 30 days |
 | `type-check` | - | every push and PR | `npm run type-check` |
-| `security-audit` | - | every push and PR | `npm audit` and `npm outdated`; informational, never fails |
+| `security-audit` | - | every push and PR | `npm audit` and `npm outdated`; informational, never fails. The run summary lists the advisory counts by severity and every high or critical package (`.github/scripts/audit-summary.py`) |
 | `build-android` | security-audit, test-and-lint, type-check | manual only (paused) | The shared E2E release build (`app-e2e-build-android.yml`, x86_64 only), reused from cache while the app's source and the build recipe are unchanged; the job says which on the run summary |
 | `app-journeys` | build-android | manual only (paused) | Exactly that app on an emulator on a fresh runner (`app-e2e-journeys-android.yml`), Maestro `smoke` flows |
 | `build-web` | security-audit, test-and-lint, type-check | every push and PR, manual | `npx expo export --platform web`, then fails if the bundle contains `import.meta` |
-| `performance-test` | build-web | whenever the web build succeeds | Lighthouse CI; informational, never fails |
-| `deployment-summary` | all above | always | GitHub Step Summary with results |
+| `performance-test` (Lighthouse) | build-web | whenever the web build succeeds | Lighthouse CI, three runs. Accessibility below 0.9 fails the job; performance, best practices, SEO and PWA below their minimums only warn. Scores go on the run summary; the report is kept as an artifact (never uploaded to public storage) |
+| `deployment-summary` | all above | always | A table of every job by stage, and release readiness: says plainly when the smoke journeys did not run, so the nightly must be checked before releasing (releases are made by hand, outside CI) |
 
 **Key decisions:**
 - `npm ci --legacy-peer-deps` everywhere, with no fallback to `npm install`: a lockfile that has drifted from `package.json` fails the install rather than being papered over. `--legacy-peer-deps` is required for React Native's peer conflicts.
@@ -81,6 +81,8 @@ same branch -newer runs cancel in-progress ones.
 - The pipeline runs in stages: the checks (security audit, tests and lint, type check) first and in parallel; then the builds (web, and the Android E2E app, which is usually reused from cache in seconds); then what tests them (Lighthouse, the smoke journeys, on a fresh runner that fetches the app by cache key); then the summary. A branch that fails a check never builds. The security audit is ordered first but is informational: it cannot fail the pipeline (operator decision, 2026-09-28: keep it informational rather than fail on high or critical advisories in shipped dependencies). Both Android jobs are the shared E2E workflows below, so the per-push smoke flows and the nightly test the same build of a given source and neither builds it twice. A cache saved in a pull request serves only that PR; one saved on `main` serves every PR.
 - The web build and its `import.meta` check run on every push and PR, so a web bundle that would stop at the splash is caught before merging, and Lighthouse runs on every web build.
 - `NODE_OPTIONS=--max-old-space-size=4096` prevents OOM on test runs.
+- Actions are on their Node 24 majors (checkout v7, setup-node v7, setup-java v6, cache v6, upload-artifact v7, download-artifact v8). `gradle/actions/setup-gradle` stays on **v5**: v6 moved its caching into a proprietary component whose Terms of Use you accept by upgrading, which is the operator's decision to make.
+- No step hides a failure behind `|| echo` any more, except the informational audit and Expo doctor, which is reported until the dependencies match the SDK and then becomes a gate.
 - No automatic native builds; those go through EAS (see below). `deploy-eas.yml` needs a green run of this pipeline on the branch it builds from.
 
 ### 1b. App E2E -shared build and journeys
