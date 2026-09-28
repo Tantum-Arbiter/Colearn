@@ -115,6 +115,7 @@ jobs:
   # one saved in a pull request only with that PR.
   build-android:
     name: Build Android App
+    needs: [security-audit, test-and-lint, type-check]
     if: github.event_name == 'workflow_dispatch'
     uses: ./.github/workflows/app-e2e-build-android.yml
 
@@ -129,7 +130,7 @@ jobs:
   # roughly ten times as much.
   app-journeys:
     name: App Journeys (smoke)
-    needs: [test-and-lint, type-check, build-android]
+    needs: [build-android]
     if: github.event_name == 'workflow_dispatch'
     uses: ./.github/workflows/app-e2e-journeys-android.yml
     with:
@@ -140,7 +141,7 @@ jobs:
   build-web:
     name: Build Web App
     runs-on: ubuntu-latest
-    needs: [test-and-lint, type-check]
+    needs: [security-audit, test-and-lint, type-check]
     defaults:
       run:
         working-directory: ${{ env.WORKING_DIRECTORY }}

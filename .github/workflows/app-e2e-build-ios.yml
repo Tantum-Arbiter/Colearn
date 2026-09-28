@@ -22,7 +22,7 @@ env:
 
 jobs:
   build:
-    name: Build
+    name: Build or reuse
     runs-on: macos-26
     timeout-minutes: 90
     outputs:
@@ -38,7 +38,7 @@ jobs:
         with:
           path: grow-with-freya/e2e-build
           lookup-only: true
-          key: e2e-ios-release-v1-${{ hashFiles('grow-with-freya/app/**', 'grow-with-freya/components/**', 'grow-with-freya/constants/**', 'grow-with-freya/contexts/**', 'grow-with-freya/data/**', 'grow-with-freya/hooks/**', 'grow-with-freya/services/**', 'grow-with-freya/store/**', 'grow-with-freya/types/**', 'grow-with-freya/utils/**', 'grow-with-freya/locales/**', 'grow-with-freya/assets/**', 'grow-with-freya/app.config.js', 'grow-with-freya/package.json', 'grow-with-freya/package-lock.json', 'grow-with-freya/babel.config.js', 'grow-with-freya/metro.config.js', 'grow-with-freya/tsconfig.json', '!grow-with-freya/**/__tests__/**') }}
+          key: e2e-ios-release-v1-${{ hashFiles('grow-with-freya/app/**', 'grow-with-freya/components/**', 'grow-with-freya/constants/**', 'grow-with-freya/contexts/**', 'grow-with-freya/data/**', 'grow-with-freya/hooks/**', 'grow-with-freya/services/**', 'grow-with-freya/store/**', 'grow-with-freya/types/**', 'grow-with-freya/utils/**', 'grow-with-freya/locales/**', 'grow-with-freya/assets/**', 'grow-with-freya/app.config.js', 'grow-with-freya/package.json', 'grow-with-freya/package-lock.json', 'grow-with-freya/babel.config.js', 'grow-with-freya/metro.config.js', 'grow-with-freya/tsconfig.json', '!grow-with-freya/**/__tests__/**', '.github/workflows/app-e2e-build-ios.yml') }}
 
       - name: Setup Node.js
         if: steps.app-cache.outputs.cache-hit != 'true'
@@ -91,3 +91,19 @@ jobs:
         with:
           path: grow-with-freya/e2e-build
           key: ${{ steps.app-cache.outputs.cache-primary-key }}
+
+      - name: Say whether the app was built or reused
+        run: |
+          if [ "${{ steps.app-cache.outputs.cache-hit }}" = "true" ]; then
+            what="Reused the iOS E2E app already built from this source: nothing to build."
+          else
+            what="Built the iOS E2E app from this source and stored it for every stage that tests it."
+          fi
+          echo "$what"
+          echo "Cache key: ${{ steps.app-cache.outputs.cache-primary-key }}"
+          {
+            echo "### iOS E2E app"
+            echo "$what"
+            echo ""
+            echo "Cache key: \`${{ steps.app-cache.outputs.cache-primary-key }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -200,9 +200,9 @@ the stub reaches the shelf and the search — a flow finds it by name. Its cover
 Both pipelines test **one build per source**: `app-e2e-build-android.yml` / `-ios.yml` build the
 E2E release app, or find it already built from the same source, and `app-e2e-journeys-android.yml`
 / `-ios.yml` run flows against exactly that app. The per-push pipeline runs the `smoke` tag on
-Android (`build-android` starts at once; `app-journeys` waits for it and for the tests, lint and
-type check, so no emulator boots for a failing branch; manual only while paused); the nightly
-runs every flow on both platforms. A night
+Android, after the checks (security audit, tests and lint, type check) have passed: then
+`build-android` builds or reuses the app, and `app-journeys` runs against it (manual only while
+paused). The nightly runs every flow on both platforms. A night
 with no app changes, or a rerun after a flow change, reuses the app and goes straight to the
 device. A failure keeps the recordings and logs as artifacts.
 
@@ -232,8 +232,8 @@ simulator, so a seeded session is never stored.
 
 Each job keeps its built app in the Actions cache, keyed on the app's source (not on `.maestro`,
 tests or docs), and saves it as soon as it is built, so a rerun after a flow or workflow change
-skips prebuild, pods and the native build. Change the `-v1` in the key when the build steps
-themselves change. The Android release build skips release lint (an init script sets
+skips prebuild, pods and the native build. The build workflow is part of the key too, so a change
+to how the app is built rebuilds it; the build job's summary says whether it built or reused. The Android release build skips release lint (an init script sets
 `checkReleaseBuilds = false`) and runs Gradle with a 4 GB heap and 1 GB metaspace: with Expo's
 defaults, `lintVitalAnalyzeRelease` ran out of metaspace and the build hung instead of failing. A failed Android run keeps the emulator's logcat, the runner's memory every ten
 seconds, the kernel log and the emulator's crash store; a failed iOS run keeps the runner's memory

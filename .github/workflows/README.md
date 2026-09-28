@@ -17,11 +17,10 @@ same branch -newer runs cancel in-progress ones.
 │                                                                     │
 │  grow-with-freya-ci-cd.yml                                          │
 │    (push/PR to main/develop)                                        │
-│    1 checks:  test-and-lint + type-check   (security-audit: info)   │
-│               build-android  (starts at once; usually a cache hit)  │
-│    2 gated:   build-web ──→ lighthouse (info)                       │
-│               app-journeys   (needs checks + build-android)         │
-│    3 summary: deployment-summary ("EAS ready" only if all pass)     │
+│    1 checks:  security-audit + test-and-lint + type-check           │
+│    2 build:   build-web · build-android (build or reuse)            │
+│    3 test:    lighthouse (info) · app-journeys (smoke)              │
+│    4 summary: deployment-summary ("EAS ready" only if all pass)     │
 │                                                                     │
 │  app-e2e-nightly.yml ──→ build-android ──→ journeys (every flow)    │
 │    (02:00 UTC, manual)   build-ios     ──→ journeys (every flow)    │
@@ -68,9 +67,9 @@ same branch -newer runs cancel in-progress ones.
 | `test-and-lint` | - | every push and PR | `npm run lint` + `npm run test:ci` with coverage |
 | `type-check` | - | every push and PR | `npm run type-check` |
 | `security-audit` | - | every push and PR | `npm audit` and `npm outdated`; informational, never fails |
-| `build-android` | - | manual only (paused) | The shared E2E release build (`app-e2e-build-android.yml`, x86_64 only), reused from cache while the app's source is unchanged; starts at once, alongside the checks |
-| `app-journeys` | test-and-lint, type-check, build-android | manual only (paused) | Exactly that app on an emulator on a fresh runner (`app-e2e-journeys-android.yml`), Maestro `smoke` flows; no emulator boots for a branch that fails the checks |
-| `build-web` | test-and-lint, type-check | every push and PR, manual | `npx expo export --platform web`, then fails if the bundle contains `import.meta` |
+| `build-android` | security-audit, test-and-lint, type-check | manual only (paused) | The shared E2E release build (`app-e2e-build-android.yml`, x86_64 only), reused from cache while the app's source and the build recipe are unchanged; the job says which on the run summary |
+| `app-journeys` | build-android | manual only (paused) | Exactly that app on an emulator on a fresh runner (`app-e2e-journeys-android.yml`), Maestro `smoke` flows |
+| `build-web` | security-audit, test-and-lint, type-check | every push and PR, manual | `npx expo export --platform web`, then fails if the bundle contains `import.meta` |
 | `performance-test` | build-web | whenever the web build succeeds | Lighthouse CI; informational, never fails |
 | `deployment-summary` | all above | always | GitHub Step Summary with results |
 
@@ -79,7 +78,7 @@ same branch -newer runs cancel in-progress ones.
 - The Expo CLI is the project's own (`npx expo`), not a global `latest`.
 - The Android journeys (`build-android` + `app-journeys`) are paused (operator, 2026-09-23) and run only when the workflow is started by hand. When re-enabled they are meant to gate pull requests into `main`, the release branch, not every push to `mvp`. Every journey also runs nightly on Android and iOS (`app-e2e-nightly.yml`).
 - The journeys' app is built for x86_64 only (`-PreactNativeArchitectures=x86_64`), the emulator's CPU: all four ABIs ran the runner out of disk. Store builds come from EAS and carry every ABI.
-- The Android app is built in its own job (`build-android`), which starts at once alongside the checks, and `app-journeys` fetches it by cache key on a fresh runner, so the emulator has the disk to itself. Both jobs are the shared E2E workflows below, so the per-push smoke flows and the nightly test the same build of a given source and neither builds it twice. A cache saved in a pull request serves only that PR; one saved on `main` serves every PR.
+- The pipeline runs in stages: the checks (security audit, tests and lint, type check) first and in parallel; then the builds (web, and the Android E2E app, which is usually reused from cache in seconds); then what tests them (Lighthouse, the smoke journeys, on a fresh runner that fetches the app by cache key); then the summary. A branch that fails a check never builds. The security audit is ordered first but is informational: it cannot fail the pipeline. Both Android jobs are the shared E2E workflows below, so the per-push smoke flows and the nightly test the same build of a given source and neither builds it twice. A cache saved in a pull request serves only that PR; one saved on `main` serves every PR.
 - The web build and its `import.meta` check run on every push and PR, so a web bundle that would stop at the splash is caught before merging, and Lighthouse runs on every web build.
 - `NODE_OPTIONS=--max-old-space-size=4096` prevents OOM on test runs.
 - No automatic native builds; those go through EAS (see below). `deploy-eas.yml` needs a green run of this pipeline on the branch it builds from.
@@ -94,7 +93,7 @@ One build and one journeys workflow per platform, one principle: **the app under
 | `app-e2e-journeys-android.yml`, `app-e2e-journeys-ios.yml` | `workflow_call` (`app-key`, `tags`) | Restores exactly that app (`fail-on-cache-miss`: it never builds), starts WireMock on :8080, boots an API 31 emulator (Pixel Launcher off, 3 cores, 4 GB) or an iPhone 16 Pro simulator (Reduce Motion on), and runs Maestro through `.maestro/run-with-device-retry.sh` with `APP_BUILD=release`. A failure keeps screenshots, Maestro logs, logcat or host load, and WireMock's log. |
 | `app-e2e-nightly.yml` | schedule 02:00 UTC, manual (`platform`, `tags`) | Build and journeys for Android and for iOS, each platform on its own so one failing build does not stop the other; every flow. |
 
-- Bump the `-v1` in the cache key when the build steps change without the app's source changing, so no stale app is reused.
+- The build workflow file itself is part of its cache key, so changing how the app is built rebuilds it. The `-v1` is there to force a rebuild by hand, if ever needed.
 - E2E builds only ever talk to the stub: the workflows set `EXPO_PUBLIC_GATEWAY_URL=http://localhost:8080` (a `.env` file never overrides a variable already set), and `app.config.js` refuses to build an E2E app with any other gateway, because a release build otherwise reads `.env.production`.
 - Retries and the reasons for each emulator and simulator setting are in `QA-AUTOMATION.md`.
 
