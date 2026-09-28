@@ -82,7 +82,7 @@ same branch -newer runs cancel in-progress ones.
 - The web build and its `import.meta` check run on every push and PR, so a web bundle that would stop at the splash is caught before merging, and Lighthouse runs on every web build.
 - `NODE_OPTIONS=--max-old-space-size=4096` prevents OOM on test runs.
 - Actions are on their Node 24 majors (checkout v7, setup-node v7, setup-java v6, cache v6, upload-artifact v7, download-artifact v8). `gradle/actions/setup-gradle` stays on **v5**: v6 moved its caching into a proprietary component whose Terms of Use you accept by upgrading, which is the operator's decision to make.
-- No step hides a failure behind `|| echo` any more, except the informational audit and Expo doctor, which is reported until the dependencies match the SDK and then becomes a gate.
+- No step hides a failure behind `|| echo` any more, except the informational audit. Expo doctor is a gate in the web build: dependencies that drift from the installed Expo SDK fail the pipeline; fix them with `npx expo install --fix`, never `npm audit fix --force`.
 - No automatic native builds; those go through EAS (see below). `deploy-eas.yml` needs a green run of this pipeline on the branch it builds from.
 
 ### 1b. App E2E -shared build and journeys

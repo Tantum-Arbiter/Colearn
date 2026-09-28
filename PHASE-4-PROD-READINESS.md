@@ -1212,10 +1212,28 @@ Visual style:
 
 ## 12. Security Posture — Dependency Advisories
 
-> **TL;DR: `npm audit` reports ~30 advisories. Zero of them reach shipped app code.**
-> They are all build-time tooling. **Never run `npm audit fix --force` on this project.**
+> **TL;DR: `npm audit` reports 26 advisories. One package among them reaches shipped app code:
+> `decode-uri-component` (moderate), below.** The rest are build-time tooling.
+> **Never run `npm audit fix --force` on this project.**
 
-### Verified finding (2026-08-02, Expo SDK 54)
+### Verified finding (2026-09-28, Expo SDK 57)
+
+The same source-map method on an iOS export of the app (2,991 modules across 104 npm packages;
+controls `react-native`, `expo-audio` and `zustand` all present):
+
+| Package | Severity | In the bundle | Route |
+|---|---|---|---|
+| `decode-uri-component` 0.2.2 | moderate | **yes** | `expo-router` → `query-string` 7.1.3, which parses deep-link query strings |
+| `shell-quote`, `ws`, `js-yaml`, `svgo`, `brace-expansion`, `browserslist`, `@xmldom/xmldom`, `uuid`, `@babel/plugin-transform-modules-systemjs`, `@humanfs/node`, `baseline-browser-mapping` | critical to moderate | no | build, CLI and test tooling |
+
+`decode-uri-component` (GHSA-vcc3-ghjq-m6fr): a crafted, malformed percent-encoded link can make
+decoding take exponential time, so the worst case is a deep link that hangs the app on the device
+that opens it. It is **accepted for now**: every version up to 0.4.2 is affected, the fix (0.5.0)
+is ESM-only while `query-string` 7 loads it with `require()`, so an npm `overrides` entry would
+break link parsing, and npm's own suggestion (`expo-router` 5.1.11) is the `--force` trap below.
+It clears when `expo-router` moves off `query-string` 7; check at each SDK upgrade.
+
+### Earlier finding (2026-08-02, Expo SDK 54)
 
 All 12 root-flagged packages were checked against the **actual production iOS bundle**:
 
