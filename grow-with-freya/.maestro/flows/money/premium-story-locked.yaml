@@ -15,6 +15,7 @@ name: A story beyond the free plan wears a lock
     timeout: 30000
 - tapOn: "Search for a story"
 - inputText: "Locked Lantern"
+- pressKey: Enter
 - extendedWaitUntil:
     visible: "The Locked Lantern"
     timeout: 30000

@@ -255,6 +255,16 @@ happened once on API 31 with the emulator still alive, `.maestro/run-with-device
 it to come back and runs the suite once more, and says so with a warning on the run. Any other
 failure, an assertion included, is never retried.
 
+Two iOS steps failed once on a build that had passed them (run 36362242417). The tap on the home
+tab in "A child opens a story" reported success and left the app on home, so that tap and its wait
+for the library sit in a `retry` (two more tries, the library must still appear). In "A story
+beyond the free plan wears a lock" the lock was on screen but not in the accessibility tree while
+the keyboard was up; the flow now presses the search key first, as a parent would, which closes
+the keyboard before the lock is looked for. The lock sits inside the card's `Pressable`, which
+carries its own label, so iOS may fold it into the card: saying "locked" in the card's
+`accessibilityLabel` would make it reliable for VoiceOver and the flow alike (needs the word in
+all 14 locales).
+
 A loaded runner can also leave the development build's first request to Metro unanswered past its
 timeout (10 seconds on the CI iOS build). The build makes one attempt and stops: newer builds show
 "There was a problem loading the project." with a Reload button, older ones drop back to their
