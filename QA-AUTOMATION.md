@@ -275,12 +275,13 @@ and check the prompt has gone (twice more if it has not).
 Two iOS steps failed once on a build that had passed them (run 36362242417). The tap on the home
 tab in "A child opens a story" reported success and left the app on home, so that tap and its wait
 for the library sit in a `retry` (two more tries, the library must still appear). In "A story
-beyond the free plan wears a lock" the lock was on screen but not in the accessibility tree while
-the keyboard was up; the flow now presses the search key first, as a parent would, which closes
-the keyboard before the lock is looked for. The lock sits inside the card's `Pressable`, which
-carries its own label, so iOS may fold it into the card: saying "locked" in the card's
-`accessibilityLabel` would make it reliable for VoiceOver and the flow alike (needs the word in
-all 14 locales).
+beyond the free plan wears a lock" the lock was on screen but not in the accessibility tree, with
+the keyboard up and, in later runs, with it closed: the lock sits inside the card's `Pressable`,
+which carries its own label, and iOS folds the card's children into it more often than not. The
+flow now checks the lock badge on Android only, and on both platforms checks what the lock is
+for: tapping the story opens the offer (`trial-scroller`), not the story, and the offer closes
+again. Saying "locked" in the card's `accessibilityLabel` would let VoiceOver hear it too and put
+the badge check back on iOS (needs the word in all 14 locales).
 
 A loaded runner can also leave the development build's first request to Metro unanswered past its
 timeout (10 seconds on the CI iOS build). The build makes one attempt and stops: newer builds show
