@@ -12,15 +12,17 @@ if [ "$status" -eq 0 ]; then
   exit 0
 fi
 
-if ! grep -qE "device offline|device '[^']+' not found" "$first_attempt"; then
+if grep -qE "device offline|device '[^']+' not found" "$first_attempt"; then
+  if ! timeout 120 adb wait-for-device; then
+    echo "::error title=Emulator lost::adb lost the emulator during the journeys and it did not come back."
+    exit "$status"
+  fi
+  adb reverse tcp:8080 tcp:8080
+  echo "::warning title=Emulator lost::adb lost the emulator during the journeys; they are running once more."
+elif grep -qE "Device became unreachable|Transport unreachable" "$first_attempt"; then
+  echo "::warning title=Driver lost::Maestro lost its iOS driver during the journeys; they are running once more."
+else
   exit "$status"
 fi
 
-if ! timeout 120 adb wait-for-device; then
-  echo "::error title=Emulator lost::adb lost the emulator during the journeys and it did not come back."
-  exit "$status"
-fi
-
-echo "::warning title=Emulator lost::adb lost the emulator during the journeys; they are running once more."
-adb reverse tcp:8080 tcp:8080
 ./.maestro/run.sh "$@"

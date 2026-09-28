@@ -279,7 +279,7 @@ jobs:
       - name: Run the journeys
         timeout-minutes: 50
         working-directory: ${{ env.WORKING_DIRECTORY }}
-        run: ./.maestro/run.sh -e APP_BUILD=release ${{ inputs.tags && format('--include-tags={0}', inputs.tags) || '' }}
+        run: ./.maestro/run-with-device-retry.sh -e APP_BUILD=release ${{ inputs.tags && format('--include-tags={0}', inputs.tags) || '' }}
 
       - name: Keep what failed
         if: failure()

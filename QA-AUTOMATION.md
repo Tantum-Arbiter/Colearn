@@ -252,8 +252,12 @@ The emulator runs **Android 12 (API 31)**. On the API 34 image it froze as the l
 option tried (`swiftshader_indirect`, `guest`), then exited about 45 seconds later with no crash
 report. On API 31 the same flows pass. If adb drops the emulator mid-run ("device offline"), which
 happened once on API 31 with the emulator still alive, `.maestro/run-with-device-retry.sh` waits for
-it to come back and runs the suite once more, and says so with a warning on the run. Any other
-failure, an assertion included, is never retried.
+it to come back and runs the suite once more, and says so with a warning on the run. iOS gets
+the same single rerun when Maestro loses its driver ("Device became unreachable"): on a freshly
+booted simulator the driver's first call can time out waiting on the accessibility service
+(`XC_kAXXCAttributeFocusedApplications`) even after `bootstatus` reports the boot complete, and
+Maestro then fails every flow without starting any. Any other failure, an assertion included, is
+never retried.
 
 Two iOS steps failed once on a build that had passed them (run 36362242417). The tap on the home
 tab in "A child opens a story" reported success and left the app on home, so that tap and its wait
