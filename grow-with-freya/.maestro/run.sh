@@ -19,6 +19,8 @@ fi
 
 export MAESTRO_DRIVER_STARTUP_TIMEOUT="${MAESTRO_DRIVER_STARTUP_TIMEOUT:-120000}"
 
+read -ra flows <<< "${MAESTRO_FLOWS:-.maestro}"
+
 # The app's ambient animation (twinkling stars, a breathing sun) keeps the
 # accessibility snapshot moving, which makes a flow miss elements that are
 # plainly on screen. Reduce Motion settles it -- and it is put back afterwards,
@@ -51,7 +53,7 @@ if [ -n "$device" ]; then
     sleep 3
   fi
   trap restore_motion EXIT INT TERM
-  maestro --device "$device" test "$@" .maestro
+  maestro --device "$device" test "$@" "${flows[@]}"
   status=$?
   restore_motion
   trap - EXIT INT TERM
@@ -59,7 +61,7 @@ if [ -n "$device" ]; then
 fi
 
 if command -v adb >/dev/null 2>&1 && [ -n "$(adb devices | sed -n '2p')" ]; then
-  exec maestro test "$@" .maestro
+  exec maestro test "$@" "${flows[@]}"
 fi
 
 echo "No device to test on. Boot a simulator or an emulator, or set MAESTRO_DEVICE=<id>." >&2

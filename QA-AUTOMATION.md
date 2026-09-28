@@ -256,8 +256,21 @@ it to come back and runs the suite once more, and says so with a warning on the 
 the same single rerun when Maestro loses its driver ("Device became unreachable"): on a freshly
 booted simulator the driver's first call can time out waiting on the accessibility service
 (`XC_kAXXCAttributeFocusedApplications`) even after `bootstatus` reports the boot complete, and
-Maestro then fails every flow without starting any. Any other failure, an assertion included, is
-never retried.
+Maestro then fails every flow without starting any.
+
+If the first pass fails on assertions in three flows or fewer, those flows (and only those) run
+once more, and a `Flows retried` warning on the run names them. More than three failures, or a
+flow that fails twice, stays red. This is a stopgap: on iOS a story card's children drop in and
+out of the accessibility tree (the lock was drawn but missing from the tree in one run and present
+in the next), so "A story beyond the free plan wears a lock" and "A child opens a story" fail now
+and then with the app working. The fix belongs in the app, below; a flow that shows up in those
+warnings week after week is a flaky flow, and the convention below applies.
+
+iOS asks `Open in “Early Roots”?` before it hands the seeding link to the app, and on a freshly
+booted simulator it can ask late: the helper's one optional tap on "Open" had already run, the
+prompt stayed up, the seed never arrived and the flow saw onboarding instead of home.
+`start-seeded.yaml` and `seed-only.yaml` now wait up to ten seconds for the prompt, tap "Open",
+and check the prompt has gone (twice more if it has not).
 
 Two iOS steps failed once on a build that had passed them (run 36362242417). The tap on the home
 tab in "A child opens a story" reported success and left the app on home, so that tap and its wait

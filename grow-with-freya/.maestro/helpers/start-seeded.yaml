@@ -15,6 +15,21 @@ name: Start the app in the state the calling flow asked for
       platform: iOS
     commands:
       - openLink: "com.growwithfreya.app://?e2e=1&${SEED}"
+      - extendedWaitUntil:
+          visible: "Open in .*"
+          timeout: 10000
+          optional: true
+      - retry:
+          maxRetries: 2
+          commands:
+            - runFlow:
+                when:
+                  visible: "Open in .*"
+                commands:
+                  - tapOn: "Open"
+            - extendedWaitUntil:
+                notVisible: "Open in .*"
+                timeout: 5000
 - runFlow:
     when:
       platform: Android
