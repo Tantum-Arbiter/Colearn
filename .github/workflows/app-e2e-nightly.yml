@@ -146,7 +146,7 @@ jobs:
             adb reverse tcp:8080 tcp:8080
             adb shell pm disable-user --user 0 com.google.android.apps.nexuslauncher || true
             nohup adb logcat -v threadtime > "$RUNNER_TEMP/logcat.txt" 2>&1 < /dev/null &
-            cd grow-with-freya && ./.maestro/run.sh -e APP_BUILD=release ${{ inputs.tags && format('--include-tags={0}', inputs.tags) || '' }}
+            cd grow-with-freya && ./.maestro/run-with-device-retry.sh -e APP_BUILD=release ${{ inputs.tags && format('--include-tags={0}', inputs.tags) || '' }}
 
       - name: Collect what the host saw
         if: failure()

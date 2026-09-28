@@ -247,16 +247,20 @@ dialog away: the job disables Pixel Launcher before the journeys (the flows laun
 directly and never go home) and gives the emulator three of the runner's four cores and 4 GB, since
 frames on the library screen took over two seconds with the default two cores.
 
+The emulator runs **Android 12 (API 31)**. On the API 34 image it froze as the library screen drew
+(right after decoding the globe and cloud banks), five runs out of five and under every renderer
+option tried (`swiftshader_indirect`, `guest`), then exited about 45 seconds later with no crash
+report. On API 31 the same flows pass. If adb drops the emulator mid-run ("device offline"), which
+happened once on API 31 with the emulator still alive, `.maestro/run-with-device-retry.sh` waits for
+it to come back and runs the suite once more, and says so with a warning on the run. Any other
+failure, an assertion included, is never retried.
+
 A loaded runner can also leave the development build's first request to Metro unanswered past its
 timeout (10 seconds on the CI iOS build). The build makes one attempt and stops: newer builds show
 "There was a problem loading the project." with a Reload button, older ones drop back to their
 launcher. `connect-dev-client.yaml` waits up to a minute at a time and retries up to four times,
 tapping Reload or opening the bundler link again.
 
-**Open (2026-09-27):** on CI the Android emulator froze as the grown-ups flow tapped into the
-library, three runs out of three, and exited about fifty seconds later with no crash report and no
-memory pressure on the host. Its logcat stops mid-tap, system services included, which points at
-the emulator rather than the app.
 
 ---
 
