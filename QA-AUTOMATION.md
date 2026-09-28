@@ -197,10 +197,12 @@ the stub reaches the shelf and the search — a flow finds it by name. Its cover
 | Nightly, and on demand | **Every journey, Android and iOS** | ubuntu + macOS | 30-60 min |
 | Push to `main`/`develop` | Web export, Lighthouse | ubuntu | 5 min |
 
-Both pipelines test **one build per source**: `app-e2e-build.yml` builds the E2E release app, or
-finds it already built from the same source, and `app-e2e-journeys.yml` runs flows against exactly
-that app. The per-push pipeline runs the `smoke` tag on Android (`build-android` then
-`app-journeys`, manual only while paused); the nightly runs every flow on both platforms. A night
+Both pipelines test **one build per source**: `app-e2e-build-android.yml` / `-ios.yml` build the
+E2E release app, or find it already built from the same source, and `app-e2e-journeys-android.yml`
+/ `-ios.yml` run flows against exactly that app. The per-push pipeline runs the `smoke` tag on
+Android (`build-android` starts at once; `app-journeys` waits for it and for the tests, lint and
+type check, so no emulator boots for a failing branch; manual only while paused); the nightly
+runs every flow on both platforms. A night
 with no app changes, or a rerun after a flow change, reuses the app and goes straight to the
 device. A failure keeps the recordings and logs as artifacts.
 

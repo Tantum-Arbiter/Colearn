@@ -109,31 +109,30 @@ jobs:
 
   # Job 4: Build the Android app the journeys drive
   # Paused with the journeys (operator, 2026-09-23): runs only when started by hand.
-  # The same E2E release build the nightly tests (app-e2e-build.yml): keyed on the
+  # The same E2E release build the nightly tests (app-e2e-build-android.yml): keyed on the
   # app's source, so a source that was built once, here or by the nightly, is reused
   # rather than built again. A build saved on main is shared with every pull request,
   # one saved in a pull request only with that PR.
   build-android:
     name: Build Android App
     if: github.event_name == 'workflow_dispatch'
-    uses: ./.github/workflows/app-e2e-build.yml
-    with:
-      platform: android
+    uses: ./.github/workflows/app-e2e-build-android.yml
 
   # Job 5: App Journeys (Maestro on an Android emulator)
   # Paused (operator, 2026-09-23): runs only when started by hand, until it is worth
   # gating pull requests into main on it again.
   # The layer above unit tests: the real app, on a device, doing what a family does.
-  # It runs the smoke flows against exactly the app built above (app-e2e-journeys.yml
-  # fetches it by key and never builds). Every journey runs nightly on Android and iOS
-  # (app-e2e-nightly.yml), where macOS minutes cost roughly ten times as much.
+  # It runs the smoke flows against exactly the app built above (app-e2e-journeys-android.yml
+  # fetches it by key and never builds), and only once the tests, lint and type check
+  # have passed: the build starts early, the emulator waits for the gate. Every journey
+  # runs nightly on Android and iOS (app-e2e-nightly.yml), where macOS minutes cost
+  # roughly ten times as much.
   app-journeys:
     name: App Journeys (smoke)
-    needs: [build-android]
+    needs: [test-and-lint, type-check, build-android]
     if: github.event_name == 'workflow_dispatch'
-    uses: ./.github/workflows/app-e2e-journeys.yml
+    uses: ./.github/workflows/app-e2e-journeys-android.yml
     with:
-      platform: android
       app-key: ${{ needs.build-android.outputs.app-key }}
       tags: smoke
 
@@ -141,7 +140,7 @@ jobs:
   build-web:
     name: Build Web App
     runs-on: ubuntu-latest
-    needs: [test-and-lint, type-check, security-audit]
+    needs: [test-and-lint, type-check]
     defaults:
       run:
         working-directory: ${{ env.WORKING_DIRECTORY }}

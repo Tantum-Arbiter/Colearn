@@ -3,7 +3,7 @@ name: App Journeys - Nightly
 # The smoke subset runs per push in the main pipeline, on Android only.
 # This is the rest: every flow, on both platforms, once a night — iOS lives
 # here because macOS runners cost roughly ten times as much per minute.
-# Both pipelines test the same E2E build of a given source (app-e2e-build.yml),
+# Both pipelines test the same E2E build of a given source (app-e2e-build-*.yml),
 # so a night with no app changes reuses the app instead of building it again.
 
 on:
@@ -29,32 +29,26 @@ jobs:
   build-android:
     name: Android app
     if: github.event_name == 'schedule' || inputs.platform == 'both' || inputs.platform == 'android'
-    uses: ./.github/workflows/app-e2e-build.yml
-    with:
-      platform: android
+    uses: ./.github/workflows/app-e2e-build-android.yml
 
   android:
     name: Android
     needs: [build-android]
-    uses: ./.github/workflows/app-e2e-journeys.yml
+    uses: ./.github/workflows/app-e2e-journeys-android.yml
     with:
-      platform: android
       app-key: ${{ needs.build-android.outputs.app-key }}
       tags: ${{ inputs.tags }}
 
   build-ios:
     name: iOS app
     if: github.event_name == 'schedule' || inputs.platform == 'both' || inputs.platform == 'ios'
-    uses: ./.github/workflows/app-e2e-build.yml
-    with:
-      platform: ios
+    uses: ./.github/workflows/app-e2e-build-ios.yml
 
   ios:
     name: iOS
     needs: [build-ios]
-    uses: ./.github/workflows/app-e2e-journeys.yml
+    uses: ./.github/workflows/app-e2e-journeys-ios.yml
     with:
-      platform: ios
       app-key: ${{ needs.build-ios.outputs.app-key }}
       tags: ${{ inputs.tags }}
 

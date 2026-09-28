@@ -1,18 +1,14 @@
-name: App E2E Journeys
+name: App E2E Journeys - Android
 
-# Runs the Maestro journeys against the app app-e2e-build.yml stored under
-# app-key. It never builds: a missing app fails the job, so every stage tests
-# exactly the build it was handed.
+# Runs the Maestro journeys against the Android app app-e2e-build-android.yml
+# stored under app-key. It never builds: a missing app fails the job, so every
+# stage tests exactly the build it was handed.
 
 on:
   workflow_call:
     inputs:
-      platform:
-        description: android or ios
-        type: string
-        required: true
       app-key:
-        description: The cache key app-e2e-build.yml returned
+        description: The cache key app-e2e-build-android.yml returned
         type: string
         required: true
       tags:
@@ -27,9 +23,8 @@ env:
   MAESTRO_CLI_NO_ANALYTICS: '1'
 
 jobs:
-  android:
+  journeys:
     name: Journeys
-    if: inputs.platform == 'android'
     runs-on: ubuntu-latest
     timeout-minutes: 60
 
@@ -113,76 +108,4 @@ jobs:
             ${{ runner.temp }}/host-memory.log
             ${{ runner.temp }}/dmesg.txt
             ${{ runner.temp }}/emulator-crash
-          retention-days: 14
-
-  ios:
-    name: Journeys
-    if: inputs.platform == 'ios'
-    runs-on: macos-26
-    timeout-minutes: 90
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Fetch the app this run built
-        uses: actions/cache/restore@v4
-        with:
-          path: grow-with-freya/e2e-build
-          key: ${{ inputs.app-key }}
-          fail-on-cache-miss: true
-
-      - name: Install Maestro
-        run: |
-          brew tap mobile-dev-inc/tap
-          brew install mobile-dev-inc/tap/maestro
-
-      - name: Boot a simulator
-        timeout-minutes: 15
-        run: |
-          udid=$(xcrun simctl create e2e-iphone "iPhone 16 Pro")
-          xcrun simctl boot "$udid"
-          xcrun simctl bootstatus "$udid" -b
-          xcrun simctl spawn "$udid" defaults write com.apple.Accessibility ReduceMotionEnabled -bool true
-          echo "MAESTRO_DEVICE=$udid" >> $GITHUB_ENV
-
-      - name: Install the app
-        working-directory: ${{ env.WORKING_DIRECTORY }}
-        run: xcrun simctl install "$MAESTRO_DEVICE" "$(find e2e-build -name '*.app' -maxdepth 1 | head -1)"
-
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      - name: Serve the stubbed gateway
-        timeout-minutes: 5
-        run: |
-          nohup ./wiremock-server/run-local.sh > "$RUNNER_TEMP/wiremock.log" 2>&1 < /dev/null &
-          for i in $(seq 1 90); do
-            curl -sf http://localhost:8080/__admin/health > /dev/null && break
-            sleep 2
-          done
-          curl -sf http://localhost:8080/__admin/health
-
-      - name: Record host load while the journeys run
-        run: |
-          nohup sh -c 'while true; do date -u +%T; memory_pressure | tail -1; top -l 1 -n 5 -o cpu -stats pid,command,cpu,mem | tail -6; sleep 20; done' \
-            > "$RUNNER_TEMP/host-load.log" 2>&1 < /dev/null &
-
-      - name: Run the journeys
-        timeout-minutes: 50
-        working-directory: ${{ env.WORKING_DIRECTORY }}
-        run: ./.maestro/run-with-device-retry.sh -e APP_BUILD=release ${{ inputs.tags && format('--include-tags={0}', inputs.tags) || '' }}
-
-      - name: Keep what failed
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: maestro-ios-${{ github.run_id }}-${{ github.run_attempt }}
-          path: |
-            ~/.maestro/tests
-            ${{ runner.temp }}/host-load.log
-            ${{ runner.temp }}/wiremock.log
           retention-days: 14

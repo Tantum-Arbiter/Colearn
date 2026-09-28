@@ -15,10 +15,17 @@ same branch -newer runs cancel in-progress ones.
 ┌─────────────────────────────────────────────────────────────────────┐
 │                        FRONTEND (Expo/React Native)                 │
 │                                                                     │
-│  grow-with-freya-ci-cd.yml ──→ test-and-lint                       │
-│    (push/PR to main/develop)    ├─→ type-check                     │
-│                                 ├─→ security-audit                  │
-│                                 └─→ build-web ──→ lighthouse ──→ summary │
+│  grow-with-freya-ci-cd.yml                                          │
+│    (push/PR to main/develop)                                        │
+│    1 checks:  test-and-lint + type-check   (security-audit: info)   │
+│               build-android  (starts at once; usually a cache hit)  │
+│    2 gated:   build-web ──→ lighthouse (info)                       │
+│               app-journeys   (needs checks + build-android)         │
+│    3 summary: deployment-summary ("EAS ready" only if all pass)     │
+│                                                                     │
+│  app-e2e-nightly.yml ──→ build-android ──→ journeys (every flow)    │
+│    (02:00 UTC, manual)   build-ios     ──→ journeys (every flow)    │
+│    (both pipelines share app-e2e-build-* / app-e2e-journeys-*)      │
 │                                                                     │
 │  deploy-eas.yml ──→ check-ci-status ──→ eas-build (iOS/Android)   │
 │    (manual only)    (verifies CI green)                              │
@@ -61,9 +68,9 @@ same branch -newer runs cancel in-progress ones.
 | `test-and-lint` | - | every push and PR | `npm run lint` + `npm run test:ci` with coverage |
 | `type-check` | - | every push and PR | `npm run type-check` |
 | `security-audit` | - | every push and PR | `npm audit` and `npm outdated`; informational, never fails |
-| `build-android` | - | manual only (paused) | The shared E2E release build (`app-e2e-build.yml`, x86_64 only), reused from cache while the app's source is unchanged |
-| `app-journeys` | build-android | manual only (paused) | Exactly that app on an emulator on a fresh runner (`app-e2e-journeys.yml`), Maestro `smoke` flows |
-| `build-web` | the first three | every push and PR, manual | `npx expo export --platform web`, then fails if the bundle contains `import.meta` |
+| `build-android` | - | manual only (paused) | The shared E2E release build (`app-e2e-build-android.yml`, x86_64 only), reused from cache while the app's source is unchanged; starts at once, alongside the checks |
+| `app-journeys` | test-and-lint, type-check, build-android | manual only (paused) | Exactly that app on an emulator on a fresh runner (`app-e2e-journeys-android.yml`), Maestro `smoke` flows; no emulator boots for a branch that fails the checks |
+| `build-web` | test-and-lint, type-check | every push and PR, manual | `npx expo export --platform web`, then fails if the bundle contains `import.meta` |
 | `performance-test` | build-web | whenever the web build succeeds | Lighthouse CI; informational, never fails |
 | `deployment-summary` | all above | always | GitHub Step Summary with results |
 
@@ -79,12 +86,12 @@ same branch -newer runs cancel in-progress ones.
 
 ### 1b. App E2E -shared build and journeys
 
-Three workflows, one principle: **the app under test is built once per source, and every test stage uses that build.** Store builds are separate and come from EAS (below), because the E2E app must never ship.
+One build and one journeys workflow per platform, one principle: **the app under test is built once per source, and every test stage uses that build.** Store builds are separate and come from EAS (below), because the E2E app must never ship.
 
 | Workflow | Triggered by | Does |
 |----------|--------------|------|
-| `app-e2e-build.yml` | `workflow_call` (`platform`: android or ios) | Looks up the cache for an app built from this source (key: `e2e-<platform>-release-v1-<hash of app/, components/, …, package-lock.json, app.config.js>`; `.maestro`, tests and docs are not part of it). Only on a miss: `npm ci --legacy-peer-deps`, prebuild, then a release build with the JavaScript inside and `EXPO_PUBLIC_E2E=1` (Android `assembleRelease` x86_64, release lint off, 4 GB Gradle heap; iOS `xcodebuild -configuration Release` for the simulator, signed ad hoc so the keychain works). Saves it at once and returns the key as `app-key`. |
-| `app-e2e-journeys.yml` | `workflow_call` (`platform`, `app-key`, `tags`) | Restores exactly that app (`fail-on-cache-miss`: it never builds), starts WireMock on :8080, boots an API 31 emulator (Pixel Launcher off, 3 cores, 4 GB) or an iPhone 16 Pro simulator (Reduce Motion on), and runs Maestro through `.maestro/run-with-device-retry.sh` with `APP_BUILD=release`. A failure keeps screenshots, Maestro logs, logcat or host load, and WireMock's log. |
+| `app-e2e-build-android.yml`, `app-e2e-build-ios.yml` | `workflow_call` | Looks up the cache for an app built from this source (key: `e2e-android-release-v1-` / `e2e-ios-release-v1-`, then `<hash of app/, components/, …, package-lock.json, app.config.js>`; `.maestro`, tests and docs are not part of it). Only on a miss: `npm ci --legacy-peer-deps`, prebuild, then a release build with the JavaScript inside and `EXPO_PUBLIC_E2E=1` (Android `assembleRelease` x86_64, release lint off, 4 GB Gradle heap; iOS `xcodebuild -configuration Release` for the simulator, signed ad hoc so the keychain works). Saves it at once and returns the key as `app-key`. |
+| `app-e2e-journeys-android.yml`, `app-e2e-journeys-ios.yml` | `workflow_call` (`app-key`, `tags`) | Restores exactly that app (`fail-on-cache-miss`: it never builds), starts WireMock on :8080, boots an API 31 emulator (Pixel Launcher off, 3 cores, 4 GB) or an iPhone 16 Pro simulator (Reduce Motion on), and runs Maestro through `.maestro/run-with-device-retry.sh` with `APP_BUILD=release`. A failure keeps screenshots, Maestro logs, logcat or host load, and WireMock's log. |
 | `app-e2e-nightly.yml` | schedule 02:00 UTC, manual (`platform`, `tags`) | Build and journeys for Android and for iOS, each platform on its own so one failing build does not stop the other; every flow. |
 
 - Bump the `-v1` in the cache key when the build steps change without the app's source changing, so no stale app is reused.
