@@ -52,8 +52,8 @@ export const EarthHorizon = memo(function EarthHorizon({
         pointerEvents="none"
       >
         <LinearGradient colors={[...MIST]} locations={[...MIST_STOPS]} style={[styles.mist, { height: clouds.mistHeight }]} />
-        <Image source={CLOUD_LEFT} style={[styles.cloudLeft, bank]} contentFit="contain" transition={0} />
-        <Image source={CLOUD_RIGHT} style={[styles.cloudRight, bank]} contentFit="contain" transition={0} />
+        <Image source={CLOUD_LEFT} style={[styles.cloudLeft, bank]} contentFit="contain" transition={0} alt="" />
+        <Image source={CLOUD_RIGHT} style={[styles.cloudRight, bank]} contentFit="contain" transition={0} alt="" />
       </View>
       <View testID={testID} style={[styles.window, edgeStyle, { height: layout.cap }]} pointerEvents="none">
         <Image
@@ -62,6 +62,7 @@ export const EarthHorizon = memo(function EarthHorizon({
           style={[styles.globe, globe]}
           contentFit="contain"
           transition={0}
+          alt=""
         />
       </View>
     </>

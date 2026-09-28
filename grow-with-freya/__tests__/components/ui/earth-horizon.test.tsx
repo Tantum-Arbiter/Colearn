@@ -118,4 +118,18 @@ describe('EarthHorizon', () => {
     expect(underTest.length).toBeGreaterThan(0);
     expect(byTestId(view, 'home-horizon-globe').length).toBeGreaterThan(0);
   });
+
+  it.each(['bottom', 'top'] as const)(
+    'should mark the %s globe and its clouds as decoration, so screen readers and the web pass over them',
+    (edge) => {
+      const view = renderEarth({ edge });
+
+      const art = view.UNSAFE_root.findAll(
+        (node) => typeof node.type !== 'string' && node.props.source !== undefined && node.props.contentFit === 'contain'
+      );
+
+      expect(art.length).toBeGreaterThanOrEqual(3);
+      art.forEach((image) => expect(image.props.alt).toBe(''));
+    }
+  );
 });
