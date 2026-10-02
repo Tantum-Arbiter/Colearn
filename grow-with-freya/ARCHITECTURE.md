@@ -4,7 +4,7 @@ type: architecture
 status: living
 owner: CoLearn
 tags: [architecture, frontend, mobile, react-native, expo]
-updated: 2026-07-28
+updated: 2026-10-02
 ---
 
 
@@ -634,6 +634,15 @@ useChildHomeData()  →  ChildHomeData + WelcomeCopy + celebrateAchievement
      Sized to fit an iPhone 16 Pro without scrolling; the ScrollView only kicks in on shorter phones.
 ```
 
+Since 2026-10-02 (operator requests): the achievement card is labelled **Your Learning Journey**
+(`home.milestone.eyebrow`, and the tour names it the same), its link reads **Explore**, and
+pressing it sets off for the island (next section) instead of opening the badges, which stay on
+the Progress item in the bar. The row under the cards has a third part beside the streak and the
+week's reading: `AchievementTallyChip`, "N unlocked, M to go", counted from the badges
+(`achievementTally` in `use-child-home-data.ts`; no chip when there are no badges). On a tablet
+the three sit on one line; on a phone three will not fit, so the tally takes a second line
+tucked up under the first (`STATS_LINE_TUCK`).
+
 On a tall phone (portrait, 840 pt or more) the sun grows by two fifths and the greeting and
 cards sit 24 pt lower, then are raised a twentieth of the screen (operator, 2026-09-21), net about
 20 pt higher than the plain layout (`heroSunScale`, `heroContentDrop`; operator request 2026-09-21): the plain
@@ -703,7 +712,7 @@ the bloom, reports press state so the `CardArrowButton` can dip and glow, and ho
 | Visit memory (`lastHomeVisitAt`, `achievementUnlockedAt`, `lastStoryCompletedAt`) | `store/app-store.ts` (persisted) |
 | Glowing book / clock / shield / flame icons | `components/home/stat-icons.tsx` |
 | Badge medallions; the newest one shines once when new | `components/home/achievement-card.tsx` |
-| Destinations | `stories` (catalogue) and `progress` (catalogue opened at Progress via `sectionRequest`) |
+| Destinations | `stories` (catalogue) and `progress` (catalogue opened at Progress via `sectionRequest`), both from the bar; the island, from the Your Learning Journey card |
 
 Return-visit states, in priority order: new achievement → story completed → long absence
 (7+ days) → active streak (2+ days) → first visit today → normal. Messages are always
@@ -722,6 +731,145 @@ in sequence on arrival, the newest medallion shines once when a badge is new. Ca
 about 2.5% on touch, the continue arrow dips to 90% and brightens, and arrows nudge on tap.
 Under Reduce Motion the sky keeps only faint opacity changes (`heroMotionMode` → `gentle`);
 everything stops while the page is not the one showing.
+
+## The island (from the Your Learning Journey card)
+
+Built 2026-10-02 at the operator's request. Pressing the card does not slide to a page: the
+home's parts slide out of view, the sky dives at the earth, cloud closes over the screen, and
+it opens on an island seen from the air, with the same sun or moon as the home screen a good
+deal bigger on its horizon. The island's header is the one the other pages have (operator,
+2026-10-02): the labelled Home pill on the left, which plays the trip back the other way, and
+the speaker on the right, which turns the sound off and on. The island holds nothing else yet;
+what goes on it is a later decision.
+
+```
+AchievementCard press → voyage.depart()
+  home → leaving → crossing → arriving → island → returning → recrossing → landing → home
+         (main page)   (island page, under cloud)          (island page)   (main page, under cloud)
+```
+
+| Concern | Location |
+|---------|----------|
+| Phases, which page each shows, timings (full and reduced), and every curve as a pure worklet | `constants/island-voyage.ts` |
+| The state machine: three shared values (`travel`, `clouds`, `arrival`), timers, the page change | `contexts/island-voyage-context.tsx` (`useIslandVoyageController` in `app/_layout.tsx`, handed down by `IslandVoyageProvider`) |
+| The cloud, and the touch guard while travelling (above the bar, zIndex 1600) | `components/island/voyage-layer.tsx` |
+| The home's parts leaving, and the sky's dive | `components/home/voyage-row.tsx` (`VoyageRow`, `useVoyageZoom`), used by `home-scene.tsx` and `home-hero-sky.tsx` |
+| The bar sinking | `JourneyBarOutlet` reads the voyage and translates the bar by `barSink` |
+| The island screen | `components/island/island-scene.tsx` |
+| Where the picture, the horizon band and the sun sit on any screen | `constants/island-scene.ts` (`islandLayout`) |
+| The painting, the layers cut from it, and the numbers they are laid out from | `assets/images/island/`, `constants/island-art.ts` (generated), `scripts/prepare-island-art.py` |
+
+How it holds together:
+
+- **Three numbers drive everything.** `travel` (0 home at rest, 1 home gone) moves the rows, the
+  bar and the zoom; `clouds` (0 clear, 1 covered, 2 clear again on the far side) drives the cover,
+  so the cloud always travels towards the eye, in and out; `arrival` (0 to 1) settles the island
+  and raises the sun. The controller runs them in time and changes phase on JS timers of the
+  same length.
+- **The page changes only under full cloud**, and at once: `island` is in `INSTANT_PAGES`, so
+  `EnhancedPageTransition` places it without a slide. The island is mounted half a second into
+  the leaving (`PREWARMED_FOR_THE_ISLAND`) and says when its picture has loaded; the cloud waits
+  for that, for at most `crossingMaxMs`.
+- **The zoom is about the foot of the screen**, which is where the earth's centre is
+  (`constants/earth.ts`), far enough to bring the globe past the far corners (`voyageMaxZoom`).
+  The sun is zoomed in a layer of its own so it stays above the scroll view and can still be
+  touched.
+- **The sun stands behind the horizon.** Three layers: the picture, the sun, then the band of the
+  picture round the horizon with the sky cut out of it, so the foot of the disc is hidden by the
+  mountains, the trees and the low cloud. `islandLayout` makes the sun as big as it can be with
+  the whole face (the top 76% of the art) above the tallest thing in front of it and its top
+  clear of the status bar. The sun is clipped at the foot of the band, and rises from below it.
+  The cloud on the horizon is fuller in the band than in the picture: as painted it was two
+  banks with sky between, and the foot of the moon showed through in patches (operator,
+  2026-10-02), so `prepare-island-art.py` sets copies of the picture's own cloud behind the
+  painted cloud (`CLOUD_FILLS`) until nothing of the disc shows below the cloud tops. To move
+  or add a copy, change that list and run the script; the picture itself is never edited.
+- **Night** is the same picture under a navy tint, with the band tinted by the same amount in
+  its own shape (`tintColor`), so the moon between them is not dimmed.
+- **Reduce Motion**: nothing slides or zooms; the screen fades through plain fog and back
+  (`VOYAGE_TIMING.reduced`, no cloud shapes).
+- **Leaving by another road** (a sign-out, a deep link) while on the island: `_layout` tells the
+  voyage the island is no longer showing (`settleHome`) so the home is not left zoomed.
+- A new page must be in `PageKey`, in `EnhancedPageTransition`'s map of shared values, and in the
+  pages handed to it, or it never mounts.
+
+### The island alive
+
+Since 2026-10-02 (operator request) the island moves: the trees sway, the clouds drift, the
+water ripples and gulls fly across. The painting is still one file the operator supplied and is
+never edited; `scripts/prepare-island-art.py` takes it apart into layers, and the app draws the
+layers and moves them.
+
+```
+back  island-base      the painting with everything that moves painted out
+      island-water-1…3 wave marks, cross-faded in turn
+      waterfalls       streaks running down each fall and ripples spreading in its
+                       pool, behind covers cut to their shape; spray at the foot
+      low trees        each on its own, leaning about its foot
+      far clouds       high left and right, drifting; corner cloud, swelling
+      (night tint)
+      the sun or moon
+      horizon cloud    drifting, in front of the sun
+      island-land      the horizon band, sky and cloud and water cut out
+      horizon trees
+front gulls by day     drawn in code
+      lights by night  lit windows, lamps by the houses and on the bridge, and the
+                       lighthouse: glow, twin beams, a pulse of light
+```
+
+| Concern | Location |
+|---------|----------|
+| Every curve (sway, drift, swell, ripple, flight, wingbeat), as pure worklets, and the gulls' courses | `constants/island-life.ts` |
+| Seven clocks, each turning 0→1 for ever; stopped and reset when the island is not showing | `hooks/use-island-clocks.ts` |
+| The pieces | `components/island/island-clouds.tsx`, `island-trees.tsx`, `island-water.tsx`, `island-falls.tsx`, `island-gulls.tsx`, `island-lights.tsx`, `moonlit-image.tsx` |
+| Which pieces exist and where each sits in the painting | `constants/island-art.ts` (generated: `farClouds`, `nearClouds`, `billows`, `lowTrees`, `horizonTrees`, `water`, `falls`, `litWindows`, `villageLamps`, `lighthouse`) |
+
+- **Everything is a function of a clock**, so nothing accumulates: a tree's lean is
+  `treeSway(wind, index, sway)`, a cloud's place `cloudDrift(tide, …)`. All of it runs on the UI
+  thread; no state changes while the island is alive.
+- **A cloud only drifts away from where it was painted and back**, and each is carried on a
+  little way under the land in its own colour, so no hole opens where a tree stood in front of it.
+- **A tree leaves a gap when it leans.** What was behind it is not in the painting, so the script
+  fills the gap with a blur of what is round it; on the horizon, where the tree stood against
+  cloud, the land is left open so the moving cloud shows through.
+- **The water is three sheets of drawn wave marks**, each stroke a little further along on the
+  next sheet; `waterGlow` cross-fades them so that the light on show is always the same.
+- **A waterfall is a strip of streaks running down behind a cover** (operator, 2026-10-02: the
+  first version, wave marks on the water sheets, could not be seen). The strip repeats every
+  `tile` rows, so `fallShift` only ever moves it within one tile and the join is never seen. The
+  cover is the painting round the fall with a hole the shape of the falling water, so the streaks
+  show nowhere else. Two puffs of spray swell and fade at the foot.
+- **The pool at the foot of each fall ripples** (operator, 2026-10-02): three rings spread one
+  after another from where the water lands (`poolRing`), in a window behind a cover of the pool's
+  own shape. Every cover, fall or pool, has a hole wherever *any* fall or pool lies, and all the
+  windows are drawn before all the covers (`IslandWaterfalls`), so one cover never hides what
+  moves under its neighbour. A ripple cannot be seen over painted foam; the lowest pool's rings
+  start further out, in open water, for that reason.
+- **The gulls are drawn**, not cut from the painting (the painted ones are painted out): two
+  wings hinged at a body, flapping in bursts and gliding between. Their courses are numbers in
+  `GULL_COURSES`. **They fly by day only** (operator, 2026-10-02).
+- **Night**: pieces behind the moon take the night from the one tint over the painting; pieces in
+  front of it (horizon cloud, land, horizon trees) are each dimmed in their own shape
+  (`MoonlitImage`).
+- **Night lights** (operator, 2026-10-02), drawn over everything in place of the gulls: the
+  windows of the three cottages, the lighthouse and its keeper's house are lit (one steady
+  sheet); eleven lamps stand by the houses and on the bridge posts, in two sheets that glimmer
+  out of step (lamps scattered along the paths were tried and removed at the operator's request
+  the same day); and the lighthouse behaves like a pulsar (operator's word): twin thin beams
+  turn about the lamp (`beamReach` is the cosine of the turn, so they shorten to nothing as they
+  swing through the eye), the lamp flashes at that moment, twice a turn (`lampFlare`), and a ring
+  of light spreads from each flash and fades (`pulseRing`). Where
+  the windows and lamps are is written in the script (`WINDOWS`, `VILLAGE_LAMPS`,
+  `LIGHTHOUSE_LAMP`); the script stops if a lamp is on water or on a tree that sways. With the
+  clocks stopped the lights are still lit, only steady.
+- **Reduce Motion, or the island not showing**: the clocks stay at nought and the scene is the
+  painting at rest.
+- To add or move a tree, cloud or gull, change the lists at the top of the script (or
+  `GULL_COURSES`) and run it; `--debug <dir>` writes the layers put back together at rest and
+  with everything moved as far as it goes, and prints how far the first is from the painting.
+
+Not yet seen on a device: Android, a small phone, a tablet on its side, Reduce Motion. Frame
+rate with about fifty pieces moving has been watched in the simulator only, not measured on a phone.
 
 ## Story Garden (feature-flagged)
 

@@ -5,7 +5,7 @@ phase: 4
 status: in-progress
 owner: CoLearn
 tags: [phase-4, production, infrastructure, monitoring, roadmap]
-updated: 2026-07-02
+updated: 2026-09-30
 ---
 
 
@@ -565,6 +565,59 @@ Only change the user-facing brand name, not the technical identifiers.
 
 - [ ] **Firestore scheduled exports** — set up automated Firestore exports to a GCS bucket (e.g. `gs://earlyroots-firestore-backups`) using `gcloud firestore export` on a daily cron. This provides point-in-time recovery if a bad deploy corrupts data or an accidental deletion occurs. GCS lifecycle policy can auto-delete exports older than 30 days to control costs.
 - [ ] **GCS asset bucket versioning** — enable object versioning on `earlyroots-assets` so story asset overwrites can be rolled back: `gsutil versioning set on gs://earlyroots-assets`.
+
+### 9.9 Must do before go-live — the customer-ready gate
+
+> **Nobody says "customer ready" until every box here is ticked, with a name and a date.**
+> This is the one list to read before the claim is made. It holds the data-protection and
+> intellectual-property checks, and points at the launch blockers above so none is missed.
+> Added 2026-09-28 (operator request). None of it is legal advice; where a box needs a
+> qualified view, it says so.
+
+#### A. Data protection (UK GDPR, ICO Children's Code)
+
+- [ ] **Registered with the ICO and the annual fee paid.** ⚠️ UNVERIFIED whether CoLearn is registered; nothing in the repository says. The fee for a micro organisation (turnover up to £632,000 or up to 10 staff) was £52 a year, £47 by direct debit, on 2026-09-28 ([ICO](https://ico.org.uk/for-organisations/data-protection-fee/data-protection-fee/)). Record the registration number here: ________
+- [ ] **DPIA finished and signed.** [`compliance/DPIA.md`](compliance/DPIA.md) is a draft. Its §8 still has three open items: processor terms (item 3), privacy policy approval (item 4), sign-off (item 5).
+- [ ] **RevenueCat and Sentry data processing terms accepted**, with the UK Addendum (DPIA §3, §8 item 3).
+- [ ] **The DPIA covers everything that ships.** It was written for Phase 8. Learning games are not in it. Add them before they reach a family.
+- [ ] **Profiling is decided, written down and built to match.** Today the DPIA says "profiling (none)" (§7) and that is true. It stops being true the day difficulty adapts to what a child has done ([`PHASE-9-LEARNING-THROUGH-PLAY.md`](PHASE-9-LEARNING-THROUGH-PLAY.md) §9). The Children's Code asks for profiling to be off by default unless there is a compelling reason ([standard 12](https://ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/childrens-information/childrens-code-guidance-and-resources/age-appropriate-design-a-code-of-practice-for-online-services/12-profiling/)). So one of these must be true at go-live:
+  - [ ] Games set difficulty from the child's age band and the parent's setting only, and the DPIA still says "profiling (none)"; **or**
+  - [ ] Adaptive difficulty ships behind a switch in the grown-ups' area, off by default, with the DPIA and privacy policy updated; **or**
+  - [ ] Adaptive difficulty ships on by default, with a written reason a qualified adviser has agreed.
+- [ ] **No synced data is used for recommendations or analytics without a separate opt-in** (standing rule L5, `PHASE-8-BACKEND-ALIGNMENT.md` §9).
+- [ ] **Privacy policy matches the build**, in the app and on the website: every kind of data, every processor, every SDK (§9.7 processor audit). Version raised, and parents asked to accept the new version through the existing consent step.
+- [ ] **Adviser review: decided either way, and recorded.** The law asks for the DPIA, not for a hired adviser. Write down who reviewed it, or that the operator chose to sign without one: ________
+- [ ] **United States.** If the app is listed on a US store, COPPA applies separately and has not been assessed. Assess it, or do not list there.
+
+#### B. Intellectual property
+
+The research behind these is in [`PHASE-9-LEARNING-THROUGH-PLAY.md`](PHASE-9-LEARNING-THROUGH-PLAY.md) §20.
+
+- [ ] **Every game and feature name cleared.** Searched on the UKIPO and USPTO registers (classes 9, 28, 41) and on both app stores. The names in Phase 9 are working titles and have had a web search only. Two came back high-risk (Story Path, Stepping Stones) and six medium; none of those eight ships under that name without a decision (Phase 9 §20.3).
+- [ ] **Asset and licence register complete** ([`compliance/ASSET-REGISTER.md`](compliance/ASSET-REGISTER.md), started 2026-09-29 for a game since undone; nothing that ships has a row yet). One row for every image, sound, voice, font and piece of music in the build: where it came from, who made it, under what licence, and proof. Nothing ships that has no row. **This includes the artwork already in the app** (avatars, feelings animals, story illustrations), whose origin is not recorded anywhere in the repository — ⚠️ UNVERIFIED.
+- [ ] **Nothing of anyone else's.** No competitor's character, name, artwork, sound, wording or screen layout. Games take the idea of a mechanic and never the look of someone's game.
+- [ ] **No borrowed brand or method names** in the app, the store listing or its keywords: Memory (a Ravensburger mark — the game is "pairs"), Montessori, Numicon, Cuisenaire, Jolly Phonics, Bee-Bot, LEGO, DUPLO, Simon, or any competitor.
+- [ ] **No vendor emoji artwork shipped as image files.** Emoji drawn by the device's own font as text are the device's; image files of Apple's or Google's emoji are theirs. The spelling game shows emoji as pictures: confirm they are drawn as text.
+- [ ] **Fonts.** The app bundles no font files today and asks each platform for its own. If one is ever bundled, it has a licence covering iOS and Android. Apple's system fonts are never bundled.
+- [ ] **Voices.** Written consent from every person recorded. No cloned voice.
+- [ ] **Generated art and audio have a licence trail.** For anything made with a model: which model, its licence terms for commercial use, the prompt, and what a person changed, kept in the register. Checked by eye against well-known characters.
+
+#### C. The launch blockers already listed above
+
+- [ ] §9.4 — `eas.json` production environment (the app would ship pointing at `localhost`)
+- [ ] §9.4 — `allowed-user-agents` and JWT property paths in `application-prod.yml`
+- [ ] §9.6 — store submissions, privacy policy URLs on `earlyroots.co.uk`
+- [ ] §9.7 — web-based account deletion page
+- [ ] §9.8 — Firestore exports and bucket versioning
+
+#### Sign-off
+
+| | Name | Date |
+|---|---|---|
+| Data protection (A) | | |
+| Intellectual property (B) | | |
+| Launch blockers (C) | | |
+| **Customer ready** | | |
 
 ---
 

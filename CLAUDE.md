@@ -77,6 +77,7 @@ colearn/
 | AI review orchestrator / reviewer accounts | [`.ai/README.md`](.ai/README.md) |
 | Security / pen-test suite | [`security/AGENTS.md`](security/AGENTS.md) |
 | DPIA, privacy-policy changes | [`compliance/DPIA.md`](compliance/DPIA.md), [`compliance/PRIVACY-POLICY-CHANGES.md`](compliance/PRIVACY-POLICY-CHANGES.md) |
+| Asset and licence register (go-live gate) | [`compliance/ASSET-REGISTER.md`](compliance/ASSET-REGISTER.md) |
 | Writing any test — edge-case checklist | [`TESTING-STANDARD.md`](TESTING-STANDARD.md) |
 | QA automation / E2E journeys | [`QA-AUTOMATION.md`](QA-AUTOMATION.md) |
 | Production readiness / infra | [`PHASE-4-PROD-READINESS.md`](PHASE-4-PROD-READINESS.md) |
@@ -84,6 +85,7 @@ colearn/
 | Math games roadmap | [`PHASE-6-MATH-GAMES.md`](PHASE-6-MATH-GAMES.md) |
 | Timed music play roadmap | [`PHASE-7-MUSIC-GAME.md`](PHASE-7-MUSIC-GAME.md) |
 | Backend alignment / device sync / achievements data | [`PHASE-8-BACKEND-ALIGNMENT.md`](PHASE-8-BACKEND-ALIGNMENT.md) |
+| Learning games (proposal, not yet accepted) | [`PHASE-9-LEARNING-THROUGH-PLAY.md`](PHASE-9-LEARNING-THROUGH-PLAY.md) |
 
 ---
 
