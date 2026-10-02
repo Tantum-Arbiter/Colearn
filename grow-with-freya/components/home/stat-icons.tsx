@@ -38,6 +38,12 @@ const LEAF = 'M32 22 C40 24 44 32 40 41 C36 46 30 46 26 42 C22 36 25 27 32 22 Z 
 const FLAME_OUTER =
   'M33 4 C36 14 46 18 46 32 C46 42 40 50 33 52 C22 51 14 43 16 30 C17 24 21 21 22 15 C25 21 30 22 30 28 C34 22 31 12 33 4 Z';
 const FLAME_INNER = 'M33 28 C36 34 40 36 39 43 C38 48 35 50 32 50 C28 49 25 46 26 41 C27 37 31 34 33 28 Z';
+const TROPHY_CUP = 'M18 9 H46 C47.5 9 48 10 48 11 V24 C48 34 41 41 32 41 C23 41 16 34 16 24 V11 C16 10 16.5 9 18 9 Z';
+const TROPHY_HANDLE_LEFT = 'M16 14 H11 C9 14 8 15 8 17 C8 24 11 29 18 30';
+const TROPHY_HANDLE_RIGHT = 'M48 14 H53 C55 14 56 15 56 17 C56 24 53 29 46 30';
+const TROPHY_BASE = 'M23 49 H41 C43.5 49 45 50.5 45 53 V56 H19 V53 C19 50.5 20.5 49 23 49 Z';
+const TROPHY_SHINE = 'M22 13 H27 V25 C27 30 28.5 33.5 31 36 C25.5 34.5 22 30 22 24 Z';
+const GLEAM = 'M8 0 L9.6 6.4 L16 8 L9.6 9.6 L8 16 L6.4 9.6 L0 8 L6.4 6.4 Z';
 
 function useLoop(animated: boolean, delayMs: number, build: () => number): SharedValue<number> {
   const value = useSharedValue(0);
@@ -81,6 +87,15 @@ const flicker = () =>
     withTiming(0.15, { duration: 160, easing: Easing.inOut(Easing.quad) }),
     withTiming(0.6, { duration: 260, easing: Easing.inOut(Easing.quad) }),
     withTiming(0, { duration: 200, easing: Easing.inOut(Easing.quad) })
+  );
+
+const gleam = () =>
+  withSequence(
+    withDelay(
+      HOME_JOURNEY_MOTION.trophyRestMs,
+      withTiming(1, { duration: HOME_JOURNEY_MOTION.trophyGleamMs * 0.4, easing: Easing.out(Easing.quad) })
+    ),
+    withTiming(0, { duration: HOME_JOURNEY_MOTION.trophyGleamMs * 0.6, easing: Easing.inOut(Easing.quad) })
   );
 
 interface LayerProps {
@@ -249,6 +264,46 @@ const FlameIcon = memo(function FlameIcon({ size, animated, delayMs }: LayerProp
   );
 });
 
+const TrophyIcon = memo(function TrophyIcon({ size, animated, delayMs }: LayerProps) {
+  const tint = STAT_ICON_TINTS.trophy;
+  const shine = useLoop(animated, delayMs, gleam);
+  const glint = Math.round(size * 0.42);
+
+  const cupStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: 1 + 0.04 * shine.value }],
+  }));
+
+  const gleamStyle = useAnimatedStyle(() => ({
+    opacity: shine.value,
+    transform: [{ scale: 0.5 + 0.7 * shine.value }, { rotate: `${shine.value * 45}deg` }],
+  }));
+
+  return (
+    <View style={{ width: size, height: size }}>
+      <Animated.View style={[{ width: size, height: size }, cupStyle]}>
+        <Svg width={size} height={size} viewBox={VIEWBOX}>
+          <Gradient id="stat-trophy" kind="trophy" />
+          <Path d={TROPHY_HANDLE_LEFT} fill="none" stroke={tint.to} strokeWidth={4} strokeLinecap="round" />
+          <Path d={TROPHY_HANDLE_RIGHT} fill="none" stroke={tint.to} strokeWidth={4} strokeLinecap="round" />
+          <Rect x="29" y="39" width="6" height="11" fill={tint.accent} />
+          <Path d={TROPHY_BASE} fill="url(#stat-trophy)" />
+          <Path d={TROPHY_CUP} fill="url(#stat-trophy)" />
+          <Path d={TROPHY_SHINE} fill={tint.light} opacity={0.7} />
+        </Svg>
+      </Animated.View>
+      <Animated.View
+        testID="stat-trophy-gleam"
+        pointerEvents="none"
+        style={[styles.gleam, { left: size * 0.7 - glint / 2, top: size * 0.2 - glint / 2 }, gleamStyle]}
+      >
+        <Svg width={glint} height={glint} viewBox="0 0 16 16">
+          <Path d={GLEAM} fill="#FFFFFF" />
+        </Svg>
+      </Animated.View>
+    </View>
+  );
+});
+
 export interface StatIconProps {
   kind: StatIconKind;
   size: number;
@@ -266,6 +321,7 @@ export const StatIcon = memo(function StatIcon({ kind, size, index = 0, animated
       {kind === 'clock' ? <ClockIcon kind={kind} size={size} animated={animated} delayMs={delayMs} /> : null}
       {kind === 'shield' ? <ShieldIcon kind={kind} size={size} animated={animated} delayMs={delayMs} /> : null}
       {kind === 'flame' ? <FlameIcon kind={kind} size={size} animated={animated} delayMs={delayMs} /> : null}
+      {kind === 'trophy' ? <TrophyIcon kind={kind} size={size} animated={animated} delayMs={delayMs} /> : null}
     </View>
   );
 });
@@ -302,5 +358,8 @@ const styles = StyleSheet.create({
   icon: {
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  gleam: {
+    position: 'absolute',
   },
 });

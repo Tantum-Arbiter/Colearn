@@ -618,6 +618,9 @@ export default {
       consent: 'Votre consentement protège votre famille',
     },
   },
+  island: {
+    scene: 'Une île vue du ciel, avec des montagnes enneigées, des forêts, une rivière et un phare',
+  },
   tutorial: {
     welcomeTitle: 'Bienvenue dans\nEarlyroots !',
     welcomeDescription: 'Faisons une visite rapide pour vous aider, vous et votre enfant, à tirer le meilleur parti du temps de lecture ensemble.',
@@ -674,8 +677,8 @@ export default {
         description: 'Appuyez ici pour contrôler la musique de fond et les effets sonores.',
       },
       achievement: {
-        title: 'Prochain succès',
-        description: 'Le badge dont ton enfant est le plus proche, et ce qu\'il reste à faire. Touche pour les voir tous.',
+        title: 'Ton parcours d\'apprentissage',
+        description: 'Le badge dont ton enfant est le plus proche, et ce qu\'il reste à faire. Touche pour descendre en volant vers son île.',
       },
       screenTime: {
         title: 'L\'anneau Écran sûr',
@@ -3345,15 +3348,18 @@ export default {
       minutes: '{{count}} min cette semaine',
       none: 'Pas de lecture cette semaine',
     },
+    achievementTally: {
+      label: 'Débloqués : {{unlocked}}, restants : {{remaining}}',
+    },
     achievements: {
       title: 'Regarde ce que tu as accompli !',
-      cta: 'Voir les réussites',
+      cta: 'Explorer',
       emptyTitle: 'Ton premier badge t\'attend',
       emptyBody: 'Lisez une histoire ensemble pour le gagner',
-      hint: 'Voir tes badges',
+      hint: 'Descends en volant vers ton île',
     },
     milestone: {
-      eyebrow: 'Prochain badge',
+      eyebrow: 'Ton parcours d\'apprentissage',
       remaining: {
         stories: 'Encore {{count}} histoires pour le débloquer',
         stories_one: 'Encore {{count}} histoire pour le débloquer',

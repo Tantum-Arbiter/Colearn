@@ -3,6 +3,7 @@ import { useAppStore } from '@/store/app-store';
 import { SubscriptionOverlay } from '@/components/ui/subscription-overlay';
 import { TrialEndUpgradeOverlay } from '@/components/ui/trial-end-upgrade-overlay';
 import { shouldOfferPlan } from '@/constants/unlock-plan';
+import { useIslandVoyage } from '@/contexts/island-voyage-context';
 import { useStoryTransition } from '@/contexts/story-transition-context';
 import { ALL_STORIES } from '@/data/stories';
 import { useScreenTimeAllowance } from '@/hooks/use-screen-time-allowance';
@@ -37,6 +38,7 @@ export const HomeSceneContainer = memo(function HomeSceneContainer({
 }: HomeSceneContainerProps) {
   const { data, welcome, celebrateAchievement } = useChildHomeData();
   const { requestStoryOpen } = useStoryTransition();
+  const { depart } = useIslandVoyage();
   const screenTime = useScreenTimeAllowance();
   const timeOfDay = useTimeOfDay();
   const trialEnd = useTrialEndPrompt();
@@ -57,7 +59,6 @@ export const HomeSceneContainer = memo(function HomeSceneContainer({
     onNavigate(HOME_DESTINATIONS.stories);
   }, [currentStoryId, onNavigate, requestStoryOpen]);
 
-  const handleOpenProgress = useCallback(() => onNavigate(HOME_DESTINATIONS.progress), [onNavigate]);
   const handleSelectSection = useCallback(
     (id: HomeSection) => onNavigate(id === 'home' ? HOME_DESTINATIONS.stories : HOME_DESTINATIONS[id]),
     [onNavigate]
@@ -83,7 +84,7 @@ export const HomeSceneContainer = memo(function HomeSceneContainer({
         welcome={welcome}
         celebrateAchievement={celebrateAchievement}
         onContinue={handleContinue}
-        onOpenAchievements={handleOpenProgress}
+        onOpenJourney={depart}
         onSelectSection={handleSelectSection}
         screenTime={screenTime}
         timeOfDay={timeOfDay}

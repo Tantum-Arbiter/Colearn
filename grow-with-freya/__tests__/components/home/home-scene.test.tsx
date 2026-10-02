@@ -9,7 +9,7 @@
 import React from 'react';
 import { Dimensions, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { render, fireEvent, act, type RenderResult } from '@testing-library/react-native';
-import { HomeScene, STATS_CHIP_INSET, TABLET_FOOT_PADDING } from '@/components/home/home-scene';
+import { HomeScene, STATS_CHIP_INSET, STATS_LINE_TUCK, TABLET_FOOT_PADDING } from '@/components/home/home-scene';
 import { AudioControlModal } from '@/components/ui/audio-control-modal';
 import { LanguagePicker } from '@/components/ui/language-picker';
 import { useGlobalSound } from '@/contexts/global-sound-context';
@@ -66,6 +66,26 @@ const DATA: ChildHomeData = {
   nextAchievement: { title: 'Moon Explorer', current: 3, required: 5, unit: 'stories' },
 };
 
+const WITH_TALLY: ChildHomeData = { ...DATA, achievementTally: { unlocked: 2, remaining: 19 } };
+
+const STAT_CHIPS = ['streak-chip', 'weekly-reading-chip', 'achievement-tally-chip'];
+
+function hostCount(view: RenderResult, testID: string): number {
+  return byTestId(view, testID).filter((node) => node.parent?.props.testID !== testID).length;
+}
+
+function chipsOn(view: RenderResult, lineTestID: string): string[] {
+  const line = byTestId(view, lineTestID)[0];
+
+  if (!line) {
+    return [];
+  }
+
+  return line
+    .findAll((node) => STAT_CHIPS.includes(node.props.testID as string) && node.parent?.props.testID !== node.props.testID)
+    .map((node) => node.props.testID as string);
+}
+
 const WELCOME: WelcomeCopy = {
   state: 'normal',
   titleKey: 'home.welcome.normal.title',
@@ -76,7 +96,7 @@ const WELCOME: WelcomeCopy = {
 function renderScene(props: Partial<React.ComponentProps<typeof HomeScene>> = {}) {
   const handlers = {
     onContinue: jest.fn(),
-    onOpenAchievements: jest.fn(),
+    onOpenJourney: jest.fn(),
     onSelectSection: jest.fn(),
   };
 
@@ -182,12 +202,12 @@ describe('HomeScene', () => {
       expect(onContinue).toHaveBeenCalledTimes(1);
     });
 
-    it('should open the achievements from the badge card', () => {
-      const { view, onOpenAchievements } = renderScene();
+    it('should set off on the learning journey from its card', () => {
+      const { view, onOpenJourney } = renderScene();
 
       pressTestId(view, 'achievement-card');
 
-      expect(onOpenAchievements).toHaveBeenCalledTimes(1);
+      expect(onOpenJourney).toHaveBeenCalledTimes(1);
     });
 
     it.each(['home', 'progress', 'search', 'profile'])('should hand %s in the bar on to be opened, like a normal selection', (id) => {
@@ -485,6 +505,14 @@ describe('HomeScene on a tablet', () => {
     window.dispatchEvent(new Event('resize'));
   });
 
+  it('sets the badge tally beside the streak and the reading, all on the one line', () => {
+    const { view } = renderScene({ data: WITH_TALLY });
+
+    expect(chipsOn(view, 'home-stats-first-line')).toEqual(['streak-chip', 'weekly-reading-chip', 'achievement-tally-chip']);
+    expect(byTestId(view, 'home-stats-second-line')).toHaveLength(0);
+    expect(hostCount(view, 'home-stats-divider')).toBe(2);
+  });
+
   it('gives the achievement card the whole column, with its own way in, now nothing sits beside it', () => {
     const { view } = renderScene();
 
@@ -503,12 +531,12 @@ describe('HomeScene on a tablet', () => {
     expect(byTestId(view, 'milestone-stars').length).toBeGreaterThan(0);
   });
 
-  it('still opens the achievements when the card is tapped', () => {
-    const { view, onOpenAchievements } = renderScene();
+  it('still sets off on the learning journey when the card is tapped', () => {
+    const { view, onOpenJourney } = renderScene();
 
     pressTestId(view, 'achievement-card');
 
-    expect(onOpenAchievements).toHaveBeenCalledTimes(1);
+    expect(onOpenJourney).toHaveBeenCalledTimes(1);
   });
 
   it('still shows the streak and the week`s reading below the cards', () => {
@@ -557,6 +585,14 @@ describe('HomeScene on a tablet in portrait', () => {
     Object.defineProperty(document.documentElement, 'clientWidth', { value: originalWidth, configurable: true });
     Object.defineProperty(document.documentElement, 'clientHeight', { value: originalHeight, configurable: true });
     window.dispatchEvent(new Event('resize'));
+  });
+
+  it('sets the badge tally beside the streak and the reading, all on the one line', () => {
+    const { view } = renderScene({ data: WITH_TALLY });
+
+    expect(chipsOn(view, 'home-stats-first-line')).toEqual(['streak-chip', 'weekly-reading-chip', 'achievement-tally-chip']);
+    expect(byTestId(view, 'home-stats-second-line')).toHaveLength(0);
+    expect(hostCount(view, 'home-stats-divider')).toBe(2);
   });
 
   it('grows the welcome title and subtitle past their ordinary size', () => {
@@ -657,6 +693,51 @@ describe('HomeScene stats row', () => {
     expect(byTestId(view, 'weekly-reading-chip').length).toBeGreaterThan(0);
   });
 
+  it('should put the badge tally on a line of its own beneath them, where three will not fit abreast', () => {
+    const { view } = renderScene({ data: WITH_TALLY });
+
+    expect(chipsOn(view, 'home-stats-first-line')).toEqual(['streak-chip', 'weekly-reading-chip']);
+    expect(chipsOn(view, 'home-stats-second-line')).toEqual(['achievement-tally-chip']);
+    expect(hostCount(view, 'home-stats-divider')).toBe(1);
+  });
+
+  it('should tuck the second line up under the first, so the two read as one block and the plan button stays off the earth', () => {
+    const { view } = renderScene({ data: WITH_TALLY });
+
+    const first = StyleSheet.flatten(byTestId(view, 'home-stats-first-line')[0].props.style) as { marginTop?: number };
+    const second = StyleSheet.flatten(byTestId(view, 'home-stats-second-line')[0].props.style) as { marginTop?: number };
+
+    expect(STATS_LINE_TUCK).toBeGreaterThan(0);
+    expect(second.marginTop).toBe(-STATS_LINE_TUCK);
+    expect(first.marginTop ?? 0).toBe(0);
+  });
+
+  it('should hand the tally the numbers from the data model', () => {
+    const { view } = renderScene({ data: WITH_TALLY });
+
+    expect(textContents(view)).toContain('home.achievementTally.label (unlocked:2, remaining:19)');
+  });
+
+  it('should leave the row as it was when there are no badges to count', () => {
+    const { view } = renderScene();
+
+    expect(chipsOn(view, 'home-stats-first-line')).toEqual(['streak-chip', 'weekly-reading-chip']);
+    expect(byTestId(view, 'achievement-tally-chip')).toHaveLength(0);
+    expect(byTestId(view, 'home-stats-second-line')).toHaveLength(0);
+    expect(hostCount(view, 'home-stats-divider')).toBe(1);
+  });
+
+  it('should keep the gap beneath the stats on the block as a whole, however many lines it has', () => {
+    const one = renderScene({ onOpenPlans: jest.fn() });
+    const two = renderScene({ data: WITH_TALLY, onOpenPlans: jest.fn() });
+
+    const gapUnder = (view: RenderResult) =>
+      (StyleSheet.flatten(byTestId(view, 'home-stats-row')[0].props.style) as { marginBottom?: number }).marginBottom;
+
+    expect(gapUnder(two.view)).toBe(gapUnder(one.view));
+    expect(gapUnder(one.view)).toBeGreaterThan(0);
+  });
+
   it('should not pair the cards on a phone-width screen', () => {
     const { view } = renderScene();
 
@@ -667,6 +748,68 @@ describe('HomeScene stats row', () => {
     expect(achievement.props.width).toBeGreaterThan(width / 2);
     // Not compact -- the standalone CTA row is still there.
     expect(byTestId(view, 'achievement-cta').length).toBeGreaterThan(0);
+  });
+});
+
+/**
+ * Setting off for the island, every part of the page leaves in its turn and
+ * the sky dives at the earth. The parts are handed to the voyage by name, so
+ * a part added later and not handed over would simply sit there as the rest
+ * left.
+ */
+describe('HomeScene setting off for the island', () => {
+  function rows(view: RenderResult): string[] {
+    return view.UNSAFE_root
+      .findAll((node) => typeof node.props.row === 'string' && node.parent?.props.row !== node.props.row)
+      .map((node) => node.props.row as string);
+  }
+
+  it('hands over every part of the page, in the order they leave', () => {
+    const { view } = renderScene({ onOpenPlans: jest.fn() });
+
+    expect(rows(view)).toEqual(['chrome', 'greeting', 'story', 'journey', 'stats', 'plan']);
+  });
+
+  it('hands over no plan row when no plan is on offer', () => {
+    const { view } = renderScene();
+
+    expect(rows(view)).toEqual(['chrome', 'greeting', 'story', 'journey', 'stats']);
+  });
+
+  it.each([
+    ['chrome', 'home-corner-controls'],
+    ['greeting', 'home-welcome-block'],
+    ['story', 'continue-card'],
+    ['journey', 'achievement-card'],
+    ['stats', 'home-stats-row'],
+    ['plan', 'home-plan-slot'],
+  ])('carries the %s row away with what it holds (%s)', (row, holds) => {
+    const { view } = renderScene({ onOpenPlans: jest.fn() });
+
+    const carried = view.UNSAFE_root.findAll((node) => node.props.row === row)[0];
+
+    expect(carried.findAll((node) => node.props.testID === holds).length).toBeGreaterThan(0);
+  });
+
+  it('dives the night sky and the earth together, taking no touches', () => {
+    const { view } = renderScene();
+
+    const zoom = byTestId(view, 'home-sky-zoom')[0];
+
+    expect(zoom.props.pointerEvents).toBe('none');
+    expect(zoom.findAll((node) => node.props.testID === 'night-sky').length).toBeGreaterThan(0);
+    expect(zoom.findAll((node) => node.props.testID === 'home-horizon').length).toBeGreaterThan(0);
+    expect(zoom.findAll((node) => node.props.testID === 'continue-card')).toHaveLength(0);
+  });
+
+  it('dives the sun with them, and leaves it where a finger can still reach it', () => {
+    const { view } = renderScene();
+
+    const sunLayer = byTestId(view, 'hero-sun-zoom')[0];
+
+    expect(sunLayer.props.pointerEvents).toBe('box-none');
+    expect(StyleSheet.flatten(sunLayer.props.style).zIndex).toBeGreaterThanOrEqual(10);
+    expect(sunLayer.findAll((node) => node.props.testID === 'sky-face').length).toBeGreaterThan(0);
   });
 });
 

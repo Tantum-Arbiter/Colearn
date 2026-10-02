@@ -618,6 +618,9 @@ export default {
       consent: 'Deine Zustimmung schützt deine Familie',
     },
   },
+  island: {
+    scene: 'Eine Insel von oben gesehen, mit verschneiten Bergen, Wäldern, einem Fluss und einem Leuchtturm',
+  },
   tutorial: {
     welcomeTitle: 'Willkommen bei\nEarlyroots!',
     welcomeDescription: 'Lass uns eine kurze Tour machen, um dir und deinem Kind zu helfen, das Beste aus der Geschichtenzeit zu machen.',
@@ -674,8 +677,8 @@ export default {
         description: 'Tippe hier, um Hintergrundmusik und Soundeffekte zu steuern.',
       },
       achievement: {
-        title: 'Nächste Auszeichnung',
-        description: 'Das Abzeichen, dem dein Kind am nächsten ist, und wie weit es noch ist. Tippe, um alle zu sehen.',
+        title: 'Deine Lernreise',
+        description: 'Das Abzeichen, dem dein Kind am nächsten ist, und wie weit es noch ist. Tippe, um zur Insel hinunterzufliegen.',
       },
       screenTime: {
         title: 'Der Bildschirmzeit-Ring',
@@ -3345,15 +3348,18 @@ export default {
       minutes: '{{count}} Min. diese Woche',
       none: 'Diese Woche noch nicht gelesen',
     },
+    achievementTally: {
+      label: 'Freigeschaltet: {{unlocked}}, offen: {{remaining}}',
+    },
     achievements: {
       title: 'Schau, was du geschafft hast!',
-      cta: 'Abzeichen ansehen',
+      cta: 'Entdecken',
       emptyTitle: 'Dein erstes Abzeichen wartet',
       emptyBody: 'Lest zusammen eine Geschichte, um es zu verdienen',
-      hint: 'Deine Abzeichen ansehen',
+      hint: 'Flieg hinunter zu deiner Insel',
     },
     milestone: {
-      eyebrow: 'Nächstes Abzeichen',
+      eyebrow: 'Deine Lernreise',
       remaining: {
         stories: 'Noch {{count}} Geschichten bis zur Freischaltung',
         stories_one: 'Noch {{count}} Geschichte bis zur Freischaltung',

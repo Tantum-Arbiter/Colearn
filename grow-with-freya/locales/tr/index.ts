@@ -618,6 +618,9 @@ export default {
       consent: 'Onayınız ailenizi korur',
     },
   },
+  island: {
+    scene: 'Gökyüzünden görülen bir ada; karlı dağlar, ormanlar, bir nehir ve bir deniz feneri',
+  },
   tutorial: {
     welcomeTitle: 'Earlyroots\'a\nHoş Geldiniz!',
     welcomeDescription: 'Siz ve çocuğunuzun okuma zamanından en iyi şekilde yararlanmanıza yardımcı olmak için hızlı bir tur alalım.',
@@ -674,8 +677,8 @@ export default {
         description: 'Arka plan müziği ve ses efektlerini kontrol etmek için buraya dokunun.',
       },
       achievement: {
-        title: 'Sıradaki başarı',
-        description: 'Çocuğunun en yakın olduğu rozet ve ne kadar kaldığı. Hepsini görmek için dokun.',
+        title: 'Öğrenme yolculuğun',
+        description: 'Çocuğunun en yakın olduğu rozet ve ne kadar kaldığı. Adaya uçmak için dokun.',
       },
       screenTime: {
         title: 'Ekran süresi halkası',
@@ -3345,15 +3348,18 @@ export default {
       minutes: 'Bu hafta {{count}} dk',
       none: 'Bu hafta henüz okuma yok',
     },
+    achievementTally: {
+      label: 'Açılan: {{unlocked}}, kalan: {{remaining}}',
+    },
     achievements: {
       title: 'Bak neler başardın!',
-      cta: 'Başarıları gör',
+      cta: 'Keşfet',
       emptyTitle: 'İlk rozetin seni bekliyor',
       emptyBody: 'Kazanmak için birlikte bir hikâye okuyun',
-      hint: 'Rozetlerini gör',
+      hint: 'Adana doğru uç',
     },
     milestone: {
-      eyebrow: 'Sıradaki rozet',
+      eyebrow: 'Öğrenme yolculuğun',
       remaining: {
         stories: 'Açmak için {{count}} hikâye daha',
         stories_one: 'Açmak için {{count}} hikâye daha',

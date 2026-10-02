@@ -12,6 +12,9 @@ import { render, act } from '@testing-library/react-native';
 import { ChildBottomNavigation, navClearance } from '@/components/child-ui/child-bottom-navigation';
 import { JourneyBarProvider, JourneyBarOutlet } from '@/components/child-ui/journey-bar-slot';
 import { useCoversJourneyBar } from '@/components/child-ui/journey-bar-cover';
+import { useAnimatedStyle } from 'react-native-reanimated';
+import { IslandVoyageProvider, type IslandVoyage } from '@/contexts/island-voyage-context';
+import { barSink } from '@/constants/island-voyage';
 
 
 function bars(tree: ReturnType<typeof render>) {
@@ -198,6 +201,64 @@ describe('the journey bar slot', () => {
  * an overlay says it is covering the screen, and while any overlay does, the
  * bar steps out: hidden behind it, and out of reach of a tap.
  */
+describe('setting off for the island', () => {
+  const animatedStyle = useAnimatedStyle as unknown as jest.Mock;
+
+  beforeEach(() => animatedStyle.mockImplementation((worklet: () => unknown) => worklet()));
+  afterEach(() => animatedStyle.mockImplementation(() => ({})));
+
+  const sailing = (travel: number) =>
+    ({
+      phase: 'leaving',
+      travel: { value: travel },
+      clouds: { value: 0 },
+      arrival: { value: 0 },
+      reduceMotion: false,
+      depart: jest.fn(),
+      comeBack: jest.fn(),
+      islandReady: jest.fn(),
+      settleHome: jest.fn(),
+    }) as unknown as IslandVoyage;
+
+  const sunk = (travel: number | null) => {
+    const bar = (
+      <JourneyBarProvider>
+        <ChildBottomNavigation selected="home" onSelect={jest.fn()} slotKey="main" />
+        <JourneyBarOutlet pageKey="main" />
+      </JourneyBarProvider>
+    );
+    const tree = render(travel === null ? bar : <IslandVoyageProvider voyage={sailing(travel)}>{bar}</IslandVoyageProvider>);
+    const found = tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'journey-bar-sink');
+    const outlet = tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'journey-bar-outlet')[0];
+
+    return {
+      tree,
+      style: StyleSheet.flatten(found[found.length - 1].props.style),
+      clearance: StyleSheet.flatten(outlet.props.style).height as number,
+    };
+  };
+
+  it('leaves the bar where it is with no voyage under way', () => {
+    const { tree, style } = sunk(null);
+
+    expect(style.transform).toEqual([{ translateY: 0 }]);
+    expect(bars(tree)).toHaveLength(1);
+  });
+
+  it.each([0.05, 0.1, 1])('sinks the bar out of the foot of the screen as the voyage says, at %p', (travel) => {
+    const { style, clearance } = sunk(travel);
+
+    expect(clearance).toBeGreaterThanOrEqual(navClearance(0));
+    expect(style.transform).toEqual([{ translateY: barSink(travel) * clearance }]);
+  });
+
+  it('has the bar wholly below the screen once the page has gone', () => {
+    const { style, clearance } = sunk(1);
+
+    expect(style.transform[0].translateY).toBe(clearance);
+  });
+});
+
 describe('an overlay covering the bar', () => {
   function Cover({ active }: { active: boolean }) {
     useCoversJourneyBar(active);

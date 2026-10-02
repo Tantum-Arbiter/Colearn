@@ -618,6 +618,9 @@ export default {
       consent: 'Jouw toestemming beschermt je gezin',
     },
   },
+  island: {
+    scene: 'Een eiland vanuit de lucht gezien, met besneeuwde bergen, bossen, een rivier en een vuurtoren',
+  },
   tutorial: {
     welcomeTitle: 'Welkom bij\nEarlyroots!',
     welcomeDescription: 'Laten we een snelle rondleiding doen om jou en je kind te helpen het meeste uit leestijd te halen.',
@@ -674,8 +677,8 @@ export default {
         description: 'Tik hier om achtergrondmuziek en geluidseffecten te beheren.',
       },
       achievement: {
-        title: 'Volgende prestatie',
-        description: 'De badge waar je kind het dichtst bij is, en hoe ver het nog is. Tik om ze allemaal te zien.',
+        title: 'Jouw leerreis',
+        description: 'De badge waar je kind het dichtst bij is, en hoe ver het nog is. Tik om omlaag te vliegen naar het eiland.',
       },
       screenTime: {
         title: 'De schermtijdring',
@@ -3345,15 +3348,18 @@ export default {
       minutes: '{{count}} min deze week',
       none: 'Nog niet gelezen deze week',
     },
+    achievementTally: {
+      label: 'Ontgrendeld: {{unlocked}}, nog te gaan: {{remaining}}',
+    },
     achievements: {
       title: 'Kijk wat je hebt bereikt!',
-      cta: 'Bekijk prestaties',
+      cta: 'Ontdek',
       emptyTitle: 'Je eerste badge wacht',
       emptyBody: 'Lees samen een verhaal om hem te verdienen',
-      hint: 'Bekijk je badges',
+      hint: 'Vlieg omlaag naar jouw eiland',
     },
     milestone: {
-      eyebrow: 'Volgende badge',
+      eyebrow: 'Jouw leerreis',
       remaining: {
         stories: 'Nog {{count}} verhalen om te ontgrendelen',
         stories_one: 'Nog {{count}} verhaal om te ontgrendelen',

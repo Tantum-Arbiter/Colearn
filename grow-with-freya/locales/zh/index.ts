@@ -618,6 +618,9 @@ export default {
       consent: '您的同意保护您的家庭',
     },
   },
+  island: {
+    scene: '从空中看到的小岛，有雪山、森林、河流和灯塔',
+  },
   tutorial: {
     welcomeTitle: '欢迎来到\nEarlyroots!',
     welcomeDescription: '让我们进行快速导览，帮助您和孩子充分利用阅读时间。',
@@ -674,8 +677,8 @@ export default {
         description: '点击此处管理背景音乐和音效。',
       },
       achievement: {
-        title: '下一个成就',
-        description: '孩子最接近获得的徽章，以及还差多少。点击查看全部。',
+        title: '你的学习之旅',
+        description: '孩子最接近获得的徽章，以及还差多少。点击飞向小岛。',
       },
       screenTime: {
         title: '屏幕时间圆环',
@@ -3345,15 +3348,18 @@ export default {
       minutes: '本周阅读 {{count}} 分钟',
       none: '本周还没有阅读',
     },
+    achievementTally: {
+      label: '已解锁 {{unlocked}}，还剩 {{remaining}}',
+    },
     achievements: {
       title: '看看你的成就！',
-      cta: '查看成就',
+      cta: '去探索',
       emptyTitle: '你的第一枚徽章在等你',
       emptyBody: '一起读一个故事来获得它',
-      hint: '查看你的徽章',
+      hint: '飞向你的小岛',
     },
     milestone: {
-      eyebrow: '下一枚徽章',
+      eyebrow: '你的学习之旅',
       remaining: {
         stories: '再读 {{count}} 个故事即可解锁',
         stories_one: '再读 {{count}} 个故事即可解锁',

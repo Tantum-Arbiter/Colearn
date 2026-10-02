@@ -618,6 +618,9 @@ export default {
       consent: 'O seu consentimento protege a sua família',
     },
   },
+  island: {
+    scene: 'Uma ilha vista do céu, com montanhas nevadas, florestas, um rio e um farol',
+  },
   tutorial: {
     welcomeTitle: 'Bem-vindo ao\nEarlyroots!',
     welcomeDescription: 'Vamos fazer um tour rápido para ajudá-lo a você e seu filho a aproveitar ao máximo o tempo de leitura juntos.',
@@ -674,8 +677,8 @@ export default {
         description: 'Toque aqui para controlar a música de fundo e efeitos sonoros.',
       },
       achievement: {
-        title: 'Próxima conquista',
-        description: 'O emblema mais perto de ser ganho e o que ainda falta. Toca para ver todos.',
+        title: 'A tua jornada de aprendizagem',
+        description: 'O emblema mais perto de ser ganho e o que ainda falta. Toca para voar até à ilha.',
       },
       screenTime: {
         title: 'O anel de tempo de ecrã',
@@ -3345,15 +3348,18 @@ export default {
       minutes: '{{count}} min esta semana',
       none: 'Sem leitura esta semana',
     },
+    achievementTally: {
+      label: 'Conquistadas: {{unlocked}}, por conquistar: {{remaining}}',
+    },
     achievements: {
       title: 'Olha o que conseguiste!',
-      cta: 'Ver conquistas',
+      cta: 'Explorar',
       emptyTitle: 'A tua primeira medalha está à espera',
       emptyBody: 'Leiam uma história juntos para a ganhar',
-      hint: 'Ver as tuas medalhas',
+      hint: 'Voa até à tua ilha',
     },
     milestone: {
-      eyebrow: 'Próxima medalha',
+      eyebrow: 'A tua jornada de aprendizagem',
       remaining: {
         stories: 'Mais {{count}} histórias para desbloquear',
         stories_one: 'Mais {{count}} história para desbloquear',

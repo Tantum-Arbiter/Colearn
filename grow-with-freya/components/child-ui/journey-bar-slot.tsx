@@ -1,6 +1,9 @@
 import React, { useEffect, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Animated, { useAnimatedStyle } from 'react-native-reanimated';
+import { barSink } from '@/constants/island-voyage';
+import { useIslandVoyage } from '@/contexts/island-voyage-context';
 import { ChildBottomNavigationBar, type ChildBottomNavigationBarProps } from './child-bottom-navigation';
 import { JourneyBarCoverProvider, useJourneyBarCovered } from './journey-bar-cover';
 import { JourneyBarPublishProvider, useJourneyBars } from './journey-bar-publish';
@@ -51,16 +54,21 @@ export function JourneyBarOutlet({ pageKey, holdMs = 0 }: JourneyBarOutletProps)
 
   const covered = useJourneyBarCovered();
   const insets = useSafeAreaInsets();
+  const { travel } = useIslandVoyage();
+  const clearance = navClearance(insets.bottom);
+  const sink = useAnimatedStyle(() => ({ transform: [{ translateY: barSink(travel.value) * clearance }] }));
   const props = current ?? held?.bar;
   if (!props || covered) return null;
 
   return (
     <View
-      style={[styles.layer, { height: navClearance(insets.bottom) }]}
+      style={[styles.layer, { height: clearance }]}
       pointerEvents="box-none"
       testID="journey-bar-outlet"
     >
-      <ChildBottomNavigationBar {...props} />
+      <Animated.View testID="journey-bar-sink" style={[styles.sink, sink]} pointerEvents="box-none">
+        <ChildBottomNavigationBar {...props} />
+      </Animated.View>
     </View>
   );
 }
@@ -72,5 +80,8 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     zIndex: JOURNEY_BAR_LAYER_Z,
+  },
+  sink: {
+    flex: 1,
   },
 });

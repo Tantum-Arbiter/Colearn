@@ -26,6 +26,11 @@ export interface ChildHomeNextAchievement {
   artwork?: ImageSourcePropType;
 }
 
+export interface ChildHomeAchievementTally {
+  unlocked: number;
+  remaining: number;
+}
+
 export interface ChildHomeData {
   firstName: string;
   currentStory?: ChildHomeStory;
@@ -38,6 +43,7 @@ export interface ChildHomeData {
   screenTimeSafety?: number;
   newestAchievement?: ChildHomeAchievement;
   nextAchievement?: ChildHomeNextAchievement;
+  achievementTally?: ChildHomeAchievementTally;
 }
 
 export type ReturnVisitState =

@@ -16,6 +16,7 @@ export const COLD_PAGE_FRAMES = 2;
 const PIXEL_SCALE = PixelRatio.get();
 const ALWAYS_MOUNTED = 'main';
 const NO_PREWARM: readonly string[] = [];
+const NONE_INSTANT: readonly string[] = [];
 
 interface EnhancedPageTransitionProps {
   currentPage: string;
@@ -27,6 +28,7 @@ interface EnhancedPageTransitionProps {
    *  to one of them does not pay for mounting it mid-slide. They stay mounted thereafter. */
   prewarm?: readonly string[];
   prewarmAfterMs?: number;
+  instant?: readonly string[];
 }
 
 interface AnimatedPageProps {
@@ -76,6 +78,7 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
   animate = true,
   prewarm = NO_PREWARM,
   prewarmAfterMs = 1200,
+  instant = NONE_INSTANT,
 }) => {
   // Get initial screen height and track changes
   const [screenHeight, setScreenHeight] = React.useState(() => getScreenDimensions().height);
@@ -132,6 +135,7 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
   const feelingsTranslateY = useSharedValue(restingAt('feelings'));
   const spellingGameTranslateY = useSharedValue(restingAt('spelling-game'));
   const accountTranslateY = useSharedValue(restingAt('account'));
+  const islandTranslateY = useSharedValue(restingAt('island'));
 
   // Map page keys to their animation values
   const pageAnimations: Record<string, SharedValue<number>> = {
@@ -146,6 +150,7 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
     feelings: feelingsTranslateY,
     'spelling-game': spellingGameTranslateY,
     account: accountTranslateY,
+    island: islandTranslateY,
   };
 
   // Update animation values when screen height changes (orientation change)
@@ -163,16 +168,18 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
       easing: Easing.bezier(0.25, 0.1, 0.25, 1), // Smooth ease-out curve
     };
 
+    const slides = animate && !instant.includes(currentPage) && !instant.includes(prevPageRef.current);
+
     // Helper: set value with or without animation
     const set = (sv: SharedValue<number>, target: number) => {
-      sv.value = animate && !crossesView(sv.value, target) ? withTiming(target, animationConfig) : target;
+      sv.value = slides && !crossesView(sv.value, target) ? withTiming(target, animationConfig) : target;
     };
 
     // Block touch input while the slide animation is in progress
     if (prevPageRef.current !== currentPage) {
       const leaving = prevPageRef.current;
       if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
-      if (animate) {
+      if (slides) {
         setIsTransitioning(true);
       }
       transitionTimerRef.current = setTimeout(() => {
@@ -183,7 +190,7 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
           from: current.from === leaving ? null : current.from,
           recent: leaving === ALWAYS_MOUNTED ? current.recent : leaving,
         }));
-      }, animate ? duration : 0);
+      }, slides ? duration : 0);
     }
     const arriving = prevPageRef.current !== currentPage;
     prevPageRef.current = currentPage;
@@ -194,7 +201,7 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
       });
     };
 
-    if (!animate || !arriving || committedMounted.current.has(currentPage)) {
+    if (!slides || !arriving || committedMounted.current.has(currentPage)) {
       slideAll();
       return undefined;
     }

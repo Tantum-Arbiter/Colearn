@@ -17,6 +17,7 @@ import {
   welcomeCopy,
 } from '@/constants/home-journey';
 import type {
+  ChildHomeAchievementTally,
   ChildHomeData,
   ChildHomeStory,
   NextAchievementUnit,
@@ -52,6 +53,16 @@ export function pickNextAchievement(badges: Badge[]): Badge | undefined {
   return badges
     .filter((badge) => badge.status !== 'earned')
     .sort((a, b) => fraction(b) - fraction(a) || a.targetProgress - b.targetProgress)[0];
+}
+
+export function achievementTally(badges: Badge[]): ChildHomeAchievementTally | undefined {
+  if (badges.length === 0) {
+    return undefined;
+  }
+
+  const unlocked = badges.filter((badge) => badge.status === 'earned').length;
+
+  return { unlocked, remaining: badges.length - unlocked };
 }
 
 export function storyMinutes(sessions: ScreenTimeSession[]): number {
@@ -213,6 +224,7 @@ export function useChildHomeData(): ChildHome {
             artwork: next.artwork,
           }
         : undefined,
+      achievementTally: achievementTally(badges),
     };
 
     const hasNewAchievement =

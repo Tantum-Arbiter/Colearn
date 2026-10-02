@@ -137,6 +137,64 @@ describe('i18n Service', () => {
     );
   });
 
+  describe('The learning journey card on the home', () => {
+    const cardName = (code: string): string => localeModules[code].home.milestone.eyebrow;
+
+    it('is called Your Learning Journey in English', () => {
+      expect(cardName('en')).toBe('Your Learning Journey');
+    });
+
+    it.each(ALL_LOCALE_CODES)('%s has the tour call the card what the card calls itself', (code) => {
+      expect(localeModules[code].tutorial.mainMenu.achievement.title).toBe(cardName(code));
+    });
+
+    it.each(ALL_LOCALE_CODES.filter((code) => code !== 'en'))('%s has its own words for it, not the English', (code) => {
+      expect(cardName(code)).not.toBe(cardName('en'));
+      expect(cardName(code).trim().length).toBeGreaterThan(0);
+    });
+
+    it.each(ALL_LOCALE_CODES)('%s says both how many badges are unlocked and how many remain', (code) => {
+      const underTest: string = localeModules[code].home.achievementTally.label;
+
+      expect(underTest).toContain('{{unlocked}}');
+      expect(underTest).toContain('{{remaining}}');
+      expect(underTest.indexOf('{{unlocked}}')).toBeLessThan(underTest.indexOf('{{remaining}}'));
+    });
+  });
+
+  describe('The way to the island', () => {
+    it('invites the child to explore, in English, now the card no longer opens the badges', () => {
+      expect(localeModules.en.home.achievements.cta).toBe('Explore');
+      expect(localeModules.en.home.achievements.hint).toBe('Fly down to your island');
+    });
+
+    it.each(ALL_LOCALE_CODES)('%s no longer promises the badges from the card or the tour', (code) => {
+      const before: Record<string, { cta: string; hint: string; tour: string }> = {
+        en: { cta: 'View achievements', hint: 'See your badges', tour: 'Tap it to see them all.' },
+      };
+      const home = localeModules[code].home.achievements;
+      const tour: string = localeModules[code].tutorial.mainMenu.achievement.description;
+
+      expect(home.cta.trim().length).toBeGreaterThan(0);
+      expect(home.hint.trim().length).toBeGreaterThan(0);
+      expect(tour.trim().length).toBeGreaterThan(0);
+      if (before[code]) {
+        expect(home.cta).not.toBe(before[code].cta);
+        expect(home.hint).not.toBe(before[code].hint);
+        expect(tour).not.toContain(before[code].tour);
+      }
+    });
+
+    it.each(ALL_LOCALE_CODES.filter((code) => code !== 'en'))('%s has its own words for exploring and for the island', (code) => {
+      expect(localeModules[code].island.scene).not.toBe(localeModules.en.island.scene);
+      expect(localeModules[code].island.scene.trim().length).toBeGreaterThan(0);
+    });
+
+    it('describes the island for someone who cannot see it', () => {
+      expect(localeModules.en.island.scene).toBe('An island seen from the sky, with snowy mountains, forests, a river and a lighthouse');
+    });
+  });
+
   describe('No decorative symbols in translation strings', () => {
     // These symbols should be rendered as Ionicons in UI buttons/labels,
     // not embedded in translation strings

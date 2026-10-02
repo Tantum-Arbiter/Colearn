@@ -211,9 +211,12 @@ export default {
       minutes: '{{count}} min this week',
       none: 'No reading yet this week',
     },
-    achievements: { title: 'Look what you achieved!', cta: 'View achievements', emptyTitle: 'Your first badge is waiting', emptyBody: 'Read a story together to earn it', hint: 'See your badges' },
+    achievementTally: {
+      label: '{{unlocked}} unlocked, {{remaining}} to go',
+    },
+    achievements: { title: 'Look what you achieved!', cta: 'Explore', emptyTitle: 'Your first badge is waiting', emptyBody: 'Read a story together to earn it', hint: 'Fly down to your island' },
     milestone: {
-      eyebrow: 'Next achievement',
+      eyebrow: 'Your Learning Journey',
       remaining: {
         stories: '{{count}} more stories to unlock',
         stories_one: '{{count}} more story to unlock',
@@ -755,6 +758,9 @@ export default {
   },
 
   // Tutorial
+  island: {
+    scene: 'An island seen from the sky, with snowy mountains, forests, a river and a lighthouse',
+  },
   tutorial: {
     welcomeTitle: 'Welcome to\nEarlyroots!',
     welcomeDescription: "Let's take a quick tour to help you and your child get the most out of storytime together.",
@@ -813,8 +819,8 @@ export default {
         description: 'Tap here to control background music and sound effects.',
       },
       achievement: {
-        title: 'Next achievement',
-        description: 'The badge your child is closest to earning, and how far there is still to go. Tap it to see them all.',
+        title: 'Your Learning Journey',
+        description: 'The badge your child is closest to earning, and how far there is still to go. Tap it to fly down to their island.',
       },
       screenTime: {
         title: 'The Screensafe ring',

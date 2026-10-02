@@ -618,6 +618,9 @@ export default {
       consent: 'Dit samtykke beskytter din familie',
     },
   },
+  island: {
+    scene: 'En ø set fra himlen, med sneklædte bjerge, skove, en flod og et fyrtårn',
+  },
   tutorial: {
     welcomeTitle: 'Velkommen til\nEarlyroots!',
     welcomeDescription: 'Lad os tage en hurtig rundvisning for at hjælpe dig og dit barn med at få mest ud af lesetiden.',
@@ -674,8 +677,8 @@ export default {
         description: 'Tryk her for at styre baggrundsmusik og lydeffekter.',
       },
       achievement: {
-        title: 'Næste præstation',
-        description: 'Det mærke dit barn er tættest på, og hvor langt der er igen. Tryk for at se dem alle.',
+        title: 'Din læringsrejse',
+        description: 'Det mærke dit barn er tættest på, og hvor langt der er igen. Tryk for at flyve ned til barnets ø.',
       },
       screenTime: {
         title: 'Skærmsikker-ringen',
@@ -3345,15 +3348,18 @@ export default {
       minutes: '{{count}} min. denne uge',
       none: 'Ingen læsning endnu denne uge',
     },
+    achievementTally: {
+      label: 'Låst op: {{unlocked}}, tilbage: {{remaining}}',
+    },
     achievements: {
       title: 'Se hvad du har opnået!',
-      cta: 'Se præstationer',
+      cta: 'Udforsk',
       emptyTitle: 'Dit første mærke venter',
       emptyBody: 'Læs en historie sammen for at få det',
-      hint: 'Se dine mærker',
+      hint: 'Flyv ned til din ø',
     },
     milestone: {
-      eyebrow: 'Næste mærke',
+      eyebrow: 'Din læringsrejse',
       remaining: {
         stories: '{{count}} historier mere for at låse op',
         stories_one: '{{count}} historie mere for at låse op',

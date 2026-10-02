@@ -618,6 +618,9 @@ export default {
       consent: 'Twoja zgoda chroni Twoją rodzinę',
     },
   },
+  island: {
+    scene: 'Wyspa widziana z nieba, z ośnieżonymi górami, lasami, rzeką i latarnią morską',
+  },
   tutorial: {
     welcomeTitle: 'Witaj w\nEarlyroots!',
     welcomeDescription: 'Zróbmy szybką wycieczkę, która pomoże Tobie i Twojemu dziecku w pełni korzystać z czytania bajek.',
@@ -674,8 +677,8 @@ export default {
         description: 'Dotknij tutaj, aby kontrolować muzykę tła i efekty dźwiękowe.',
       },
       achievement: {
-        title: 'Następne osiągnięcie',
-        description: 'Odznaka, do której dziecku najbliżej, i ile jeszcze brakuje. Dotknij, by zobaczyć wszystkie.',
+        title: 'Twoja droga nauki',
+        description: 'Odznaka, do której dziecku najbliżej, i ile jeszcze brakuje. Dotknij, by zlecieć na wyspę.',
       },
       screenTime: {
         title: 'Pierścień czasu ekranowego',
@@ -3345,15 +3348,18 @@ export default {
       minutes: '{{count}} min w tym tygodniu',
       none: 'Brak czytania w tym tygodniu',
     },
+    achievementTally: {
+      label: 'Odblokowane: {{unlocked}}, pozostało: {{remaining}}',
+    },
     achievements: {
       title: 'Zobacz, co osiągnęliście!',
-      cta: 'Zobacz osiągnięcia',
+      cta: 'Odkrywaj',
       emptyTitle: 'Twoja pierwsza odznaka czeka',
       emptyBody: 'Przeczytajcie razem opowieść, aby ją zdobyć',
-      hint: 'Zobacz swoje odznaki',
+      hint: 'Zleć na swoją wyspę',
     },
     milestone: {
-      eyebrow: 'Następna odznaka',
+      eyebrow: 'Twoja droga nauki',
       remaining: {
         stories: 'Jeszcze {{count}} opowieści do odblokowania',
         stories_one: 'Jeszcze {{count}} opowieść do odblokowania',

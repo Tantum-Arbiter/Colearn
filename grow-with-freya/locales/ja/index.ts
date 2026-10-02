@@ -618,6 +618,9 @@ export default {
       consent: 'あなたの同意がご家族を守ります',
     },
   },
+  island: {
+    scene: 'そらから みた しま。ゆきの やま、もり、かわ、とうだいが あります',
+  },
   tutorial: {
     welcomeTitle: 'Earlyrootsへ\nようこそ！',
     welcomeDescription: 'クイックツアーをして、あなたとお子さんが読書時間を最大限に活用できるようにしましょう。',
@@ -674,8 +677,8 @@ export default {
         description: 'ここをタップして、背景音楽と音響効果を制御してください。',
       },
       achievement: {
-        title: 'つぎのバッジ',
-        description: 'もうすぐもらえるバッジと、あとどれくらいか。タップでぜんぶみられるよ。',
+        title: 'きみの まなびの たび',
+        description: 'もうすぐもらえるバッジと、あとどれくらいか。タップでしまへおりていくよ。',
       },
       screenTime: {
         title: 'スクリーンタイムのリング',
@@ -3345,15 +3348,18 @@ export default {
       minutes: '今週{{count}}分',
       none: '今週はまだ読んでいません',
     },
+    achievementTally: {
+      label: 'かくとく {{unlocked}}、のこり {{remaining}}',
+    },
     achievements: {
       title: 'みて、こんなに できたよ！',
-      cta: 'できたことを みる',
+      cta: 'たんけんする',
       emptyTitle: 'はじめての バッジが まっているよ',
       emptyBody: 'いっしょに おはなしを よんで もらおう',
-      hint: 'バッジを みる',
+      hint: 'きみの しまへ おりていこう',
     },
     milestone: {
-      eyebrow: 'つぎの バッジ',
+      eyebrow: 'きみの まなびの たび',
       remaining: {
         stories: 'あと {{count}}さつで もらえるよ',
         stories_one: 'あと {{count}}さつで もらえるよ',

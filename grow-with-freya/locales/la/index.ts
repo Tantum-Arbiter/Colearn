@@ -618,6 +618,9 @@ export default {
       consent: 'Consensus tuus familiam tuam protegit',
     },
   },
+  island: {
+    scene: 'Insula de caelo visa, cum montibus nivosis, silvis, flumine et pharo',
+  },
   tutorial: {
     welcomeTitle: 'Salve in\nEarlyroots!',
     welcomeDescription: 'Faciamus Celerem Circumductionem ut Te et Filium Tuum Adiuvemus Tempus Legendi Maxime Uti.',
@@ -674,8 +677,8 @@ export default {
         description: 'Tange Hic ut Musicam Fundalem et Effectus Soni Modereres.',
       },
       achievement: {
-        title: 'Proximum praemium',
-        description: 'Insigne cui liberi proximi sunt, et quantum restat. Tange ut omnia videas.',
+        title: 'Iter tuum discendi',
+        description: 'Insigne cui liberi proximi sunt, et quantum restat. Tange ut ad insulam devoles.',
       },
       screenTime: {
         title: 'Anulus temporis',
@@ -3345,15 +3348,18 @@ export default {
       minutes: '{{count}} minuta hac hebdomade',
       none: 'Nulla lectio hac hebdomade',
     },
+    achievementTally: {
+      label: 'Reserata: {{unlocked}}, reliqua: {{remaining}}',
+    },
     achievements: {
       title: 'Vide quid effeceris!',
-      cta: 'Praemia vide',
+      cta: 'Explora',
       emptyTitle: 'Primum insigne tuum te exspectat',
       emptyBody: 'Fabulam una legite ut id mereamini',
-      hint: 'Insignia tua vide',
+      hint: 'Ad insulam tuam devola',
     },
     milestone: {
-      eyebrow: 'Proximum insigne',
+      eyebrow: 'Iter tuum discendi',
       remaining: {
         stories: 'Adhuc {{count}} fabulae ut reseretur',
         stories_one: 'Adhuc {{count}} fabula ut reseretur',

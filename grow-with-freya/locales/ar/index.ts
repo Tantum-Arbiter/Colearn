@@ -618,6 +618,9 @@ export default {
       consent: 'موافقتك تحمي عائلتك',
     },
   },
+  island: {
+    scene: 'جزيرة تُرى من السماء، فيها جبال مكسوة بالثلج وغابات ونهر ومنارة',
+  },
   tutorial: {
     welcomeTitle: 'مرحباً بك في\nEarlyroots!',
     welcomeDescription: 'دعنا نأخذ جولة سريعة لمساعدتك أنت وطفلك على الاستفادة القصوى من وقت القراءة.',
@@ -674,8 +677,8 @@ export default {
         description: 'اضغط هنا للتحكم في الموسيقى الخلفية والمؤثرات الصوتية.',
       },
       achievement: {
-        title: 'الإنجاز التالي',
-        description: 'الوسام الأقرب لطفلك، وكم بقي حتى ينال. اضغط لرؤية الجميع.',
+        title: 'رحلة تعلّمك',
+        description: 'الوسام الأقرب لطفلك، وكم بقي حتى ينال. اضغط للنزول إلى جزيرته.',
       },
       screenTime: {
         title: 'حلقة الشاشة الآمنة',
@@ -3345,15 +3348,18 @@ export default {
       minutes: '‏{{count}} دقيقة هذا الأسبوع',
       none: '‏لا قراءة بعد هذا الأسبوع',
     },
+    achievementTally: {
+      label: '‏المفتوحة: {{unlocked}}، المتبقية: {{remaining}}',
+    },
     achievements: {
       title: 'انظر ماذا أنجزت!',
-      cta: 'عرض الإنجازات',
+      cta: 'استكشف',
       emptyTitle: 'شارتك الأولى بانتظارك',
       emptyBody: 'اقرآ حكاية معاً لتحصل عليها',
-      hint: 'عرض شاراتك',
+      hint: 'انزل إلى جزيرتك',
     },
     milestone: {
-      eyebrow: 'الشارة التالية',
+      eyebrow: 'رحلة تعلّمك',
       remaining: {
         stories: '{{count}} حكايات أخرى لفتحها',
         stories_one: 'حكاية واحدة أخرى لفتحها',

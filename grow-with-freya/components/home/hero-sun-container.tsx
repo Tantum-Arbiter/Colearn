@@ -20,6 +20,7 @@ export interface HeroSunContainerProps {
   /** How far the page beneath has scrolled, so the sun rides up with it
    *  instead of hanging in the corner while the content leaves. */
   lift?: SharedValue<number>;
+  animated?: boolean;
   testID?: string;
 }
 
@@ -28,6 +29,7 @@ export const HeroSunContainer = memo(function HeroSunContainer({
   timeOfDay,
   mode,
   lift,
+  animated = true,
   testID = 'hero-sun',
 }: HeroSunContainerProps) {
   const breath = useSharedValue(0);
@@ -62,7 +64,7 @@ export const HeroSunContainer = memo(function HeroSunContainer({
       style={[styles.sun, { left: sun.centreX - sun.size / 2, top: sun.top, width: sun.size, height: sun.size }, style]}
       pointerEvents="box-none"
     >
-      <SkyFace size={sun.size} timeOfDay={timeOfDay} />
+      <SkyFace size={sun.size} timeOfDay={timeOfDay} animated={animated} />
     </Animated.View>
   );
 });

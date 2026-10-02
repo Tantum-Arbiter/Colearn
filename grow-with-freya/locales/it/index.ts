@@ -618,6 +618,9 @@ export default {
       consent: 'Il tuo consenso protegge la tua famiglia',
     },
   },
+  island: {
+    scene: 'Un\'isola vista dal cielo, con montagne innevate, boschi, un fiume e un faro',
+  },
   tutorial: {
     welcomeTitle: 'Benvenuto in\nEarlyroots!',
     welcomeDescription: 'Facciamo un tour veloce per aiutarti te e tuo figlio a ottenere il massimo dal tempo di lettura insieme.',
@@ -674,8 +677,8 @@ export default {
         description: 'Tocca qui per controllare la musica di sottofondo e gli effetti sonori.',
       },
       achievement: {
-        title: 'Prossimo traguardo',
-        description: 'Il distintivo più vicino a tuo figlio e quanto manca. Tocca per vederli tutti.',
+        title: 'Il tuo percorso di apprendimento',
+        description: 'Il distintivo più vicino a tuo figlio e quanto manca. Tocca per volare giù fino alla sua isola.',
       },
       screenTime: {
         title: 'L\'anello del tempo davanti allo schermo',
@@ -3345,15 +3348,18 @@ export default {
       minutes: '{{count}} min questa settimana',
       none: 'Nessuna lettura questa settimana',
     },
+    achievementTally: {
+      label: 'Sbloccati: {{unlocked}}, mancanti: {{remaining}}',
+    },
     achievements: {
       title: 'Guarda cosa hai fatto!',
-      cta: 'Vedi i traguardi',
+      cta: 'Esplora',
       emptyTitle: 'Il tuo primo distintivo ti aspetta',
       emptyBody: 'Leggete una storia insieme per ottenerlo',
-      hint: 'Vedi i tuoi distintivi',
+      hint: 'Vola giù fino alla tua isola',
     },
     milestone: {
-      eyebrow: 'Prossimo distintivo',
+      eyebrow: 'Il tuo percorso di apprendimento',
       remaining: {
         stories: 'Ancora {{count}} storie per sbloccarlo',
         stories_one: 'Ancora {{count}} storia per sbloccarlo',

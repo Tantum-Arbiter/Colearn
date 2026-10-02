@@ -45,7 +45,11 @@ import { preloadCriticalImages, preloadSecondaryImages } from '@/services/image-
 import { EnhancedPageTransition } from '@/components/ui/enhanced-page-transition';
 import { JourneyBarProvider, JourneyBarOutlet } from '@/components/child-ui/journey-bar-slot';
 import { OwlGuideLayer, OwlGuideLayerProvider, guidePages } from '@/components/owl-guide/owl-guide-layer';
-import { PAGE_TRANSITION_DURATION_MS, PREWARMED_PAGES, SLIDE_AFTER_SECTION_SWITCH_MS } from '@/constants/page-transition';
+import { INSTANT_PAGES, ISLAND_PREWARM_AFTER_MS, PAGE_TRANSITION_DURATION_MS, PREWARMED_FOR_THE_ISLAND, PREWARMED_PAGES, SLIDE_AFTER_SECTION_SWITCH_MS } from '@/constants/page-transition';
+import { IslandVoyageProvider, useIslandVoyageController } from '@/contexts/island-voyage-context';
+import { IslandScene } from '@/components/island/island-scene';
+import { VoyageLayer } from '@/components/island/voyage-layer';
+import type { VoyagePage } from '@/constants/island-voyage';
 
 import { StoryTransitionProvider, useStoryTransition } from '@/contexts/story-transition-context';
 import { ActivityTransitionProvider, useActivityTransition } from '@/contexts/ActivityTransitionContext';
@@ -210,7 +214,7 @@ function AppContent() {
   // Track if we've already started background music to prevent auto-restart after manual pause
   const [hasStartedBackgroundMusic, setHasStartedBackgroundMusic] = useState(false);
 
-  type PageKey = 'main' | 'stories' | 'story-reader' | 'account' | 'practise' | 'freeplay' | 'spelling' | 'numbers' | 'feelings' | 'spelling-game';
+  type PageKey = 'main' | 'stories' | 'story-reader' | 'account' | 'practise' | 'freeplay' | 'spelling' | 'numbers' | 'feelings' | 'spelling-game' | 'island';
 
   const [currentView, setCurrentView] = useState<AppView>('splash');
   // The splash stays over whichever page the app opens on until it has faded off it
@@ -218,6 +222,14 @@ function AppContent() {
   const handleSplashGone = useCallback(() => setSplashGone(true), []);
   const [currentPage, setCurrentPage] = useState<PageKey>('main');
   const accountOpenedFromRef = useRef<PageKey>('main');
+  const handleVoyagePage = useCallback((page: VoyagePage) => setCurrentPage(page), []);
+  const voyage = useIslandVoyageController(handleVoyagePage);
+  const settleVoyageHome = voyage.settleHome;
+  const comeBackFromIsland = voyage.comeBack;
+
+  useEffect(() => {
+    if (currentPage !== 'island') settleVoyageHome();
+  }, [currentPage, settleVoyageHome]);
   const [selectedStory, setSelectedStory] = useState<Story | null>(null);
   // Story being read - kept separate so it persists during book closing animation
   const [storyBeingRead, setStoryBeingRead] = useState<Story | null>(null);
@@ -855,6 +867,10 @@ function AppContent() {
     if (currentPage !== 'main') {
       // Account screen handles its own internal back navigation
       if (currentPage === 'account') return false;
+      if (currentPage === 'island') {
+        comeBackFromIsland();
+        return true;
+      }
       // Practise/freeplay go back to instruments sub-menu
       if (currentPage === 'practise' || currentPage === 'freeplay') {
         handleBackToInstruments();
@@ -875,7 +891,7 @@ function AppContent() {
 
     // On main menu - let Android handle it (exit/minimize app)
     return false;
-  }, [currentPage, showStoryReader, storyBeingRead, isInActivityGame, exitActivityGame]);
+  }, [currentPage, showStoryReader, storyBeingRead, isInActivityGame, exitActivityGame, comeBackFromIsland]);
 
   useEffect(() => {
     if (Platform.OS !== 'android') return;
@@ -955,6 +971,7 @@ function AppContent() {
     return (
       <ThemeProvider value={theme}>
         {/* App navigation always rendered underneath */}
+        <IslandVoyageProvider voyage={voyage}>
         <JourneyBarProvider>
         <OwlGuideLayerProvider>
         <EnhancedPageTransition
@@ -997,16 +1014,21 @@ function AppContent() {
             ) : null,
             feelings: <EmotionsScreen onBack={handleBackToLearning} isActive={currentPage === 'feelings'} />,
             account: <AccountScreen onBack={handleAccountBack} onNavigate={handleMainMenuNavigate} isActive={currentPage === 'account' && menuRevealed(currentView)} />,
+            island: <IslandScene isActive={currentPage === 'island'} />,
           }, currentPage)}
           duration={PAGE_TRANSITION_DURATION_MS}
           animate={animatePageTransition}
-          prewarm={PREWARMED_PAGES}
+          prewarm={voyage.phase === 'home' ? PREWARMED_PAGES : PREWARMED_FOR_THE_ISLAND}
+          prewarmAfterMs={voyage.phase === 'leaving' ? ISLAND_PREWARM_AFTER_MS : undefined}
+          instant={INSTANT_PAGES}
         />
-        <JourneyBarOutlet pageKey={currentPage as string} holdMs={animatePageTransition ? PAGE_TRANSITION_DURATION_MS : 0} />
+        <JourneyBarOutlet pageKey={currentPage as string} holdMs={animatePageTransition && currentPage !== 'island' ? PAGE_TRANSITION_DURATION_MS : 0} />
+        <VoyageLayer />
         {/* above the bar, so an owl pointing at the bar is not drawn behind it */}
         <OwlGuideLayer />
         </OwlGuideLayerProvider>
         </JourneyBarProvider>
+        </IslandVoyageProvider>
 
         {/* Story reader rendered on top - only loads AFTER mode selection is complete (not during transition) */}
         {/* zIndex 2000 ensures story reader stays above transition overlay (zIndex 1000) during exit animation */}

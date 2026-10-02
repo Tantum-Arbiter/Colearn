@@ -170,6 +170,8 @@ export const HOME_JOURNEY_MOTION = {
   bookRestMs: 5200,
   clockTurnMs: 24000,
   leafSwayMs: 1900,
+  trophyRestMs: 4200,
+  trophyGleamMs: 900,
   breatheMs: 3400,
   breatheLift: 3,
   breatheScale: 1.014,
@@ -201,13 +203,14 @@ export const HOME_CARD_TINTS = {
   starUnlit: 'rgba(255,255,255,0.30)',
 } as const;
 
-export type StatIconKind = 'book' | 'clock' | 'shield' | 'flame';
+export type StatIconKind = 'book' | 'clock' | 'shield' | 'flame' | 'trophy';
 
 export const STAT_ICON_TINTS = {
   book: { from: '#5FB0FF', to: '#2A74EA', light: '#E3F2FF', accent: '#A9D4FF' },
   clock: { from: '#D48CFF', to: '#8E44F0', light: '#F5EBFF', accent: '#7B3FE4' },
   shield: { from: '#7CF0C6', to: '#1FB48A', light: '#E6FFF6', accent: '#137A5E' },
   flame: { from: '#FFB347', to: '#FF6B1A', light: '#FFE58A', accent: '#FF4E1A' },
+  trophy: { from: '#FFE27A', to: '#F2A91E', light: '#FFF6D2', accent: '#C9820C' },
 } as const satisfies Record<StatIconKind, { from: string; to: string; light: string; accent: string }>;
 
 export function homeContentWidth(

@@ -618,6 +618,9 @@ export default {
       consent: 'Tu consentimiento protege a tu familia',
     },
   },
+  island: {
+    scene: 'Una isla vista desde el cielo, con montañas nevadas, bosques, un río y un faro',
+  },
   tutorial: {
     welcomeTitle: '¡Bienvenido a\nEarlyroots!',
     welcomeDescription: 'Hagamos un recorrido rápido para ayudarte a ti y a tu hijo a aprovechar al máximo la hora del cuento.',
@@ -674,8 +677,8 @@ export default {
         description: 'Toca aquí para controlar la música de fondo y los efectos de sonido.',
       },
       achievement: {
-        title: 'Próximo logro',
-        description: 'La insignia que tu hijo está más cerca de ganar y cuánto falta. Toca para verlas todas.',
+        title: 'Tu viaje de aprendizaje',
+        description: 'La insignia que tu hijo está más cerca de ganar y cuánto falta. Toca para bajar volando a su isla.',
       },
       screenTime: {
         title: 'El anillo de tiempo de pantalla',
@@ -3345,15 +3348,18 @@ export default {
       minutes: '{{count}} min esta semana',
       none: 'Sin lectura esta semana',
     },
+    achievementTally: {
+      label: 'Conseguidas: {{unlocked}}, pendientes: {{remaining}}',
+    },
     achievements: {
       title: '¡Mira lo que has logrado!',
-      cta: 'Ver logros',
+      cta: 'Explorar',
       emptyTitle: 'Tu primera insignia te espera',
       emptyBody: 'Leed un cuento juntos para ganarla',
-      hint: 'Ver tus insignias',
+      hint: 'Baja volando a tu isla',
     },
     milestone: {
-      eyebrow: 'Próxima insignia',
+      eyebrow: 'Tu viaje de aprendizaje',
       remaining: {
         stories: '{{count}} cuentos más para desbloquearla',
         stories_one: '{{count}} cuento más para desbloquearla',

@@ -16,6 +16,7 @@ import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import { MainMenu } from '@/components/main-menu';
 import { ScreenTimeProvider } from '@/components/screen-time/screen-time-provider';
+import { IslandVoyageProvider, type IslandVoyage } from '@/contexts/island-voyage-context';
 import { useAppStore, type AppState } from '@/store/app-store';
 
 jest.mock('@/store/app-store');
@@ -77,7 +78,6 @@ describe('home scene navigation', () => {
 
   const WAYS_IN: [string, string][] = [
     ['continue-card', 'stories'],
-    ['achievement-card', 'progress'],
     ['navigation-item-progress', 'progress'],
     ['navigation-item-search', 'search'],
     ['navigation-item-profile', 'profile'],
@@ -135,6 +135,32 @@ describe('home scene navigation', () => {
       expect(onNavigate).toHaveBeenCalledWith(destination);
     }
   );
+
+  it('should set off for the island from achievement-card even though the carousel tour is unseen, opening no page for it', () => {
+    const voyage = {
+      phase: 'home',
+      travel: { value: 0 },
+      clouds: { value: 0 },
+      arrival: { value: 0 },
+      reduceMotion: false,
+      depart: jest.fn(),
+      comeBack: jest.fn(),
+      islandReady: jest.fn(),
+      settleHome: jest.fn(),
+    } as unknown as IslandVoyage;
+    const underTest = render(
+      <IslandVoyageProvider voyage={voyage}>
+        <ScreenTimeProvider>
+          <MainMenu onNavigate={onNavigate} />
+        </ScreenTimeProvider>
+      </IslandVoyageProvider>
+    );
+
+    pressCard(underTest, 'achievement-card');
+
+    expect(voyage.depart).toHaveBeenCalledTimes(1);
+    expect(onNavigate).not.toHaveBeenCalled();
+  });
 
   it('should still navigate once the tour has been seen', () => {
     mockTourUnseen = false;

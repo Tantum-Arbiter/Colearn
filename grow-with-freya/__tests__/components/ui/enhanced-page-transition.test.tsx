@@ -233,6 +233,80 @@ describe('EnhancedPageTransition', () => {
     expect(underTest).toBe('none');
   });
 
+  describe('a page that makes its own entrance', () => {
+    const HEIGHT = getScreenDimensions().height;
+    const WITH_ISLAND = { ...PAGES, island: <Page name="island" /> };
+    const INSTANT = ['island'];
+
+    beforeEach(() => {
+      (useSharedValue as jest.Mock).mockImplementation((initial: number) => React.useRef({ value: initial }).current);
+      (withTiming as jest.Mock).mockImplementation((to: number) => ({ slidesTo: to }));
+    });
+
+    afterEach(() => {
+      (useSharedValue as jest.Mock).mockImplementation((initial = 0) => ({ value: initial }));
+      (withTiming as jest.Mock).mockImplementation((value: number, _config: unknown, callback?: (done: boolean) => void) => {
+        if (typeof callback === 'function') callback(true);
+        return value;
+      });
+    });
+
+    function offset(view: ReturnType<typeof render>, pageKey: string): unknown {
+      return view.UNSAFE_root.findAll((node: any) => node.props.pageKey === pageKey && node.props.animationValue)[0]
+        .props.animationValue.value;
+    }
+
+    it('is put in place at once, with no slide and no wait, and the home page taken away as quickly', () => {
+      const view = render(<EnhancedPageTransition currentPage="main" pages={WITH_ISLAND} duration={800} instant={INSTANT} />);
+
+      view.rerender(<EnhancedPageTransition currentPage="island" pages={WITH_ISLAND} duration={800} instant={INSTANT} />);
+
+      expect(offset(view, 'island')).toBe(0);
+      expect(offset(view, 'main')).toBe(-HEIGHT);
+    });
+
+    it('gives the home page back at once on the way out', () => {
+      const view = render(<EnhancedPageTransition currentPage="main" pages={WITH_ISLAND} duration={800} instant={INSTANT} />);
+      view.rerender(<EnhancedPageTransition currentPage="island" pages={WITH_ISLAND} duration={800} instant={INSTANT} />);
+
+      view.rerender(<EnhancedPageTransition currentPage="main" pages={WITH_ISLAND} duration={800} instant={INSTANT} />);
+
+      expect(offset(view, 'main')).toBe(0);
+      expect(offset(view, 'island')).toBe(HEIGHT);
+    });
+
+    it('swallows no touches, having no slide to guard', () => {
+      const view = render(<EnhancedPageTransition currentPage="main" pages={WITH_ISLAND} duration={800} instant={INSTANT} />);
+
+      view.rerender(<EnhancedPageTransition currentPage="island" pages={WITH_ISLAND} duration={800} instant={INSTANT} />);
+
+      expect(guard(view).props.pointerEvents).toBe('none');
+    });
+
+    it('rests below the screen until it is opened', () => {
+      const view = render(<EnhancedPageTransition currentPage="main" pages={WITH_ISLAND} duration={800} instant={INSTANT} prewarm={['island']} prewarmAfterMs={10} />);
+      act(() => {
+        jest.advanceTimersByTime(10);
+      });
+
+      const underTest = offset(view, 'island');
+
+      expect(typeof underTest === 'number' ? underTest : (underTest as { slidesTo: number }).slidesTo).toBe(HEIGHT);
+    });
+
+    it('leaves every other page sliding as before', () => {
+      const view = render(<EnhancedPageTransition currentPage="main" pages={WITH_ISLAND} duration={800} instant={INSTANT} prewarm={['stories']} prewarmAfterMs={10} />);
+      act(() => {
+        jest.advanceTimersByTime(10);
+      });
+
+      view.rerender(<EnhancedPageTransition currentPage="stories" pages={WITH_ISLAND} duration={800} instant={INSTANT} prewarm={['stories']} prewarmAfterMs={10} />);
+
+      expect(offset(view, 'stories')).toEqual({ slidesTo: 0 });
+      expect(guard(view).props.pointerEvents).toBe('auto');
+    });
+  });
+
   describe('Grown-ups below the library', () => {
     const HEIGHT = getScreenDimensions().height;
 

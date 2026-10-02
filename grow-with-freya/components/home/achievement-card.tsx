@@ -221,7 +221,7 @@ export const AchievementCard = memo(function AchievementCard({
               </View>
             ) : null}
           </View>
-          <Text style={styles.eyebrowCompact} numberOfLines={1}>
+          <Text style={styles.eyebrowCompact} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
             {t('home.milestone.eyebrow')}
           </Text>
           {next ? (
@@ -256,7 +256,7 @@ export const AchievementCard = memo(function AchievementCard({
               celebrate={celebrate}
             />
             <View style={styles.words}>
-              <Text style={styles.eyebrow} numberOfLines={1}>
+              <Text style={styles.eyebrow} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
                 {t('home.milestone.eyebrow')}
               </Text>
               {next ? (

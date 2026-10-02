@@ -13,6 +13,7 @@ import { AchievementCard } from '@/components/home/achievement-card';
 import { ContinueLearningCard } from '@/components/home/continue-learning-card';
 import { StreakChip } from '@/components/home/streak-chip';
 import { WeeklyReadingChip } from '@/components/home/weekly-reading-chip';
+import { AchievementTallyChip } from '@/components/home/achievement-tally-chip';
 import { Ionicons } from '@expo/vector-icons';
 import { MILESTONE_STARS } from '@/constants/home-journey';
 
@@ -279,6 +280,77 @@ describe('WeeklyReadingChip', () => {
     const view = renderChip();
 
     expect(byTestId(view, 'weekly-reading-chip')[0].props.accessibilityRole).toBe('text');
+  });
+});
+
+describe('AchievementTallyChip', () => {
+  const renderChip = (props: Partial<React.ComponentProps<typeof AchievementTallyChip>> = {}) =>
+    render(<AchievementTallyChip unlocked={2} remaining={19} animated={false} {...props} />);
+
+  const trophy = (view: RenderResult) =>
+    view.UNSAFE_root.findAll((node: RenderedNode) => node.props.kind === 'trophy')[0];
+
+  it('should count the badges unlocked and those still to go, beside a trophy', () => {
+    const view = renderChip();
+
+    expect(textContents(view)).toContain('home.achievementTally.label (unlocked:2, remaining:19)');
+    expect(byTestId(view, 'achievement-tally-chip-trophy').length).toBeGreaterThan(0);
+  });
+
+  it.each([
+    [0, 21, true],
+    [1, 20, false],
+    [21, 0, false],
+  ])('with %i unlocked and %i to go, banks the trophy down: %p', (unlocked, remaining, banked) => {
+    const view = renderChip({ unlocked, remaining });
+
+    const slot = StyleSheet.flatten(byTestId(view, 'achievement-tally-chip-trophy-slot')[0].props.style) ?? {};
+
+    expect(textContents(view)).toContain(`home.achievementTally.label (unlocked:${unlocked}, remaining:${remaining})`);
+    expect(byTestId(view, 'achievement-tally-chip-trophy').length).toBeGreaterThan(0);
+    expect((slot.opacity ?? 1) < 1).toBe(banked);
+  });
+
+  it.each([
+    [true, 2, true],
+    [true, 0, false],
+    [false, 2, false],
+  ])('moves the trophy only when motion is on (%p) and something is unlocked (%i): %p', (animated, unlocked, moving) => {
+    const view = renderChip({ animated, unlocked });
+
+    expect(trophy(view).props.animated).toBe(moving);
+  });
+
+  it('should say the same to a screen reader, as text rather than something to press', () => {
+    const view = renderChip();
+
+    const underTest = byTestId(view, 'achievement-tally-chip')[0].props;
+
+    expect(underTest.accessibilityRole).toBe('text');
+    expect(underTest.accessibilityLabel).toBe('home.achievementTally.label (unlocked:2, remaining:19)');
+    expect(underTest.onPress).toBeUndefined();
+  });
+});
+
+describe('AchievementCard label', () => {
+  const NEXT = { title: 'Moon Explorer', current: 3, required: 5, unit: 'stories' as const };
+
+  it.each([
+    ['full width', false, 358],
+    ['paired', true, 170],
+  ])('lets a long name for the card shrink to fit rather than be cut off (%s)', (_name, compact, width) => {
+    const view = render(
+      <AchievementCard next={NEXT} width={width} compact={compact} animated={false} celebrate={false} onPress={jest.fn()} />
+    );
+
+    const underTest = view
+      .UNSAFE_queryAllByType(Text)
+      .find((node) => node.props.children === 'home.milestone.eyebrow');
+
+    expect(underTest?.props.numberOfLines).toBe(1);
+    expect(underTest?.props.adjustsFontSizeToFit).toBe(true);
+    expect(underTest?.props.minimumFontScale).toBeLessThan(1);
+    expect(underTest?.props.minimumFontScale).toBeGreaterThanOrEqual(0.7);
   });
 });
 

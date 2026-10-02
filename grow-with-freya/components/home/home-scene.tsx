@@ -8,7 +8,7 @@ import {
   type NativeSyntheticEvent,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useSharedValue } from 'react-native-reanimated';
+import Animated, { useSharedValue } from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
 import { AudioControlModal } from '@/components/ui/audio-control-modal';
 import { LanguagePicker } from '@/components/ui/language-picker';
@@ -33,6 +33,8 @@ import { UnlockPlanButton } from './unlock-plan-button';
 import { ContinueCard } from './continue-card';
 import { StreakChip } from './streak-chip';
 import { WeeklyReadingChip } from './weekly-reading-chip';
+import { AchievementTallyChip } from './achievement-tally-chip';
+import { VoyageRow, useVoyageZoom } from './voyage-row';
 import { AchievementCard } from './achievement-card';
 import { ArchedGreeting } from './arched-greeting';
 
@@ -52,6 +54,8 @@ const GREETING_CARD_GAP = 24;
  * folded silently into the gap.
  */
 export const STATS_CHIP_INSET = 21;
+
+export const STATS_LINE_TUCK = 6;
 
 export interface HomeGuideTargets {
   stories?: RefObject<View | null>;
@@ -75,7 +79,7 @@ export interface HomeSceneProps {
   welcome: WelcomeCopy;
   celebrateAchievement?: boolean;
   onContinue: () => void;
-  onOpenAchievements: () => void;
+  onOpenJourney: () => void;
   /** An item in the bar at the foot that is a place to go: the library opens on that section. */
   onSelectSection: (id: HomeSection) => void;
   screenTime?: ScreenTimeAllowance | null;
@@ -99,7 +103,7 @@ export const HomeScene = memo(function HomeScene({
   welcome,
   celebrateAchievement = false,
   onContinue,
-  onOpenAchievements,
+  onOpenJourney,
   onSelectSection,
   screenTime = null,
   onOpenScreenTime,
@@ -200,10 +204,17 @@ export const HomeScene = memo(function HomeScene({
   // bottom instead of merely sitting lower.
   const spread = gaps ? gaps.card * 2 + gaps.stats * 2 + gaps.plan - subtitleGap : 0;
   const lift = heroContentLift(width, height);
+  const tally = data.achievementTally;
+  const zoom = useVoyageZoom(width, height);
+  const tallyChip = tally ? (
+    <AchievementTallyChip unlocked={tally.unlocked} remaining={tally.remaining} animated={animated} />
+  ) : null;
 
   return (
     <View testID={testID} style={[styles.root, { backgroundColor: theme.skyTop }]}>
-      <NightSky width={width} height={height} timeOfDay={activeTimeOfDay} active={isActive} />
+      <Animated.View testID="home-sky-zoom" style={[StyleSheet.absoluteFill, zoom]} pointerEvents="none">
+        <NightSky width={width} height={height} timeOfDay={activeTimeOfDay} active={isActive} />
+      </Animated.View>
 
       <HomeHeroSky
         width={width}
@@ -213,9 +224,11 @@ export const HomeScene = memo(function HomeScene({
         active={isActive}
         sizeScale={heroSunScale(width, height)}
         lift={skyLift}
+        zoomStyle={zoom}
       />
 
-      <View
+      <VoyageRow
+        row="chrome"
         testID="home-corner-controls"
         style={[
           styles.chrome,
@@ -247,7 +260,7 @@ export const HomeScene = memo(function HomeScene({
             accessibilityLabel={t('catalogue.sound')}
           />
         </View>
-      </View>
+      </VoyageRow>
       <AudioControlModal
         visible={audioSettingsOpen}
         onClose={() => setAudioSettingsOpen(false)}
@@ -277,7 +290,7 @@ export const HomeScene = memo(function HomeScene({
         showsVerticalScrollIndicator={false}
         bounces={false}
       >
-        <View testID="home-welcome-block" style={[styles.greeting, gaps && { marginBottom: HOME_CARDS.gap + subtitleGap }]}>
+        <VoyageRow row="greeting" testID="home-welcome-block" style={[styles.greeting, gaps && { marginBottom: HOME_CARDS.gap + subtitleGap }]}>
           <ArchedGreeting
             title={t(welcome.titleKey, welcome.params)}
             subtitle={t(welcome.subtitleKey, welcome.params)}
@@ -288,32 +301,49 @@ export const HomeScene = memo(function HomeScene({
             subtitleColor={theme.subtitle}
             glowColor={HERO_SKY.welcomeGlow}
           />
-        </View>
+        </VoyageRow>
 
-        <View style={[styles.cardSlot, gaps && { marginBottom: HOME_CARDS.gap + gaps.card }]} ref={guideTargets?.stories} collapsable={false}>
-          <ContinueCard story={data.currentStory} width={contentWidth} animated={animated} onPress={onContinue} />
-        </View>
+        <VoyageRow row="story">
+          <View style={[styles.cardSlot, gaps && { marginBottom: HOME_CARDS.gap + gaps.card }]} ref={guideTargets?.stories} collapsable={false}>
+            <ContinueCard story={data.currentStory} width={contentWidth} animated={animated} onPress={onContinue} />
+          </View>
+        </VoyageRow>
 
+        <VoyageRow row="journey">
         <View style={[styles.cardSlot, gaps && { marginBottom: HOME_CARDS.gap + gaps.card }]} ref={guideTargets?.achievement} collapsable={false}>
           <AchievementCard
             next={data.nextAchievement}
             width={contentWidth}
             animated={animated}
             celebrate={celebrateAchievement}
-            onPress={onOpenAchievements}
+            onPress={onOpenJourney}
           />
         </View>
+        </VoyageRow>
 
-        <View testID="home-stats-row" style={[styles.statsRow, gaps && { marginTop: gaps.stats, marginBottom: 4 + gaps.stats }]}>
-          <StreakChip days={data.readingStreakDays} animated={animated} />
-          <View style={styles.statsDivider} />
-          <WeeklyReadingChip minutes={data.weeklyReadingMinutes} animated={animated} />
-        </View>
+        <VoyageRow row="stats" testID="home-stats-row" style={[styles.statsBlock, gaps && { marginTop: gaps.stats, marginBottom: 4 + gaps.stats }]}>
+          <View testID="home-stats-first-line" style={styles.statsLine}>
+            <StreakChip days={data.readingStreakDays} animated={animated} />
+            <View testID="home-stats-divider" style={styles.statsDivider} />
+            <WeeklyReadingChip minutes={data.weeklyReadingMinutes} animated={animated} />
+            {tallyChip && isTablet ? (
+              <>
+                <View testID="home-stats-divider" style={styles.statsDivider} />
+                {tallyChip}
+              </>
+            ) : null}
+          </View>
+          {tallyChip && !isTablet ? (
+            <View testID="home-stats-second-line" style={[styles.statsLine, styles.statsSecondLine]}>
+              {tallyChip}
+            </View>
+          ) : null}
+        </VoyageRow>
 
         {onOpenPlans ? (
-          <View testID="home-plan-slot" style={[styles.planSlot, gaps && { marginTop: PLAN_BASE_GAP + gaps.plan }]}>
+          <VoyageRow row="plan" testID="home-plan-slot" style={[styles.planSlot, gaps && { marginTop: PLAN_BASE_GAP + gaps.plan }]}>
             <UnlockPlanButton onPress={onOpenPlans} />
-          </View>
+          </VoyageRow>
         ) : null}
       </ScrollView>
 
@@ -373,11 +403,17 @@ const styles = StyleSheet.create({
   // The streak and the week's reading, together under the cards rather than
   // above them -- an answer to "how am I doing", read after the "here's what
   // to do next" the cards themselves are.
-  statsRow: {
+  statsBlock: {
+    alignItems: 'center',
+    marginBottom: STATS_BASE_GAP,
+  },
+  statsLine: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: STATS_BASE_GAP,
+  },
+  statsSecondLine: {
+    marginTop: -STATS_LINE_TUCK,
   },
   statsDivider: {
     width: 1,
