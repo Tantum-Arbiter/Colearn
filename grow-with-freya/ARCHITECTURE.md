@@ -757,7 +757,8 @@ AchievementCard press → voyage.depart()
 | The bar sinking | `JourneyBarOutlet` reads the voyage and translates the bar by `barSink` |
 | The island screen | `components/island/island-scene.tsx` |
 | Where the picture, the horizon band and the sun sit on any screen | `constants/island-scene.ts` (`islandLayout`) |
-| The painting, the layers cut from it, and the numbers they are laid out from | `assets/images/island/`, `constants/island-art.ts` (generated), `scripts/prepare-island-art.py` |
+| The paintings, the layers cut from them, and the numbers they are laid out from | `assets/images/island/` (tablets), `assets/images/island-phone/` (phones), `constants/island-art.ts` and `constants/island-art-phone.ts` (generated), `scripts/prepare-island-art.py` |
+| Which painting, trail and gulls a device is given | `constants/island-map.ts` (`islandMapFor`, `TABLET_ISLAND`, `PHONE_ISLAND`) |
 
 How it holds together:
 
@@ -819,9 +820,32 @@ How it holds together:
 ### The island alive
 
 Since 2026-10-02 (operator request) the island moves: the trees sway, the clouds drift, the
-water ripples and gulls fly across. The painting is still one file the operator supplied and is
+water ripples and gulls fly across. Each painting is one file the operator supplied and is
 never edited; `scripts/prepare-island-art.py` takes it apart into layers, and the app draws the
 layers and moves them.
+
+**Two paintings, one per kind of device** (operator, 2026-10-03). Tablets show the wide painting
+(`assets/images/island/island.webp`, 1122×1402). Phones show a second painting of the same
+island made for a tall screen (`assets/images/island-phone/island.webp`, 941×1672): cropped to
+a phone, the wide one lost its sides and crowded the trail. `useAccessibility().isTablet` picks
+between them through `islandMapFor` (`constants/island-map.ts`), and each `IslandMap` carries
+everything that differs: the art, the trail and its guide points, the dash spacing, a
+`trailScale` for the dash and glow sizes, and the gulls' courses. The scene hands the map's
+parts to the water, the falls, the lights, the gulls, the trail and `useLearningPlan`. The
+script makes both: with no option, or `--art tablet`, the wide one exactly as before (checked:
+regenerating it changed no file); with `--art phone`, the phone's layers into
+`assets/images/island-phone/` and its places into `constants/island-art-phone.ts`
+(`ISLAND_ART_PHONE`). Everything read off the phone painting (the sky, sea line and sun,
+the mountains, clouds, trees, falls, windows, lamps and lighthouse) is in the script's `PHONE`
+table. On the phone painting the clouds on the right and the cloud bank on the horizon are one
+mass, so they drift as one near cloud, and the line between it and the far clouds on the left
+runs at x 370, where no cloud is cut (at first it ran at x 430, and a small cloud by the
+mountain peak was half in front of the sun and half behind it). As on the tablet, the bank
+in front of the sun is filled out with copies of the painting's own low cloud (`CLOUD_BANK`,
+`CLOUD_FILLS`): as painted it has open sky between it and the mountain, under its low middle,
+and between two peaks, and the foot of the sun showed through there (operator, 2026-10-03). It has no swelling corner cloud, and only the waterfall
+a phone can see moves (the lower falls and the beach island sit under the step card on every
+phone).
 
 ```
 back  island-base      the painting with everything that moves painted out
@@ -952,17 +976,26 @@ island        PlanTrail (glowing dashes along each leg's own curve through its g
   same flag; the flag and `planRun` are cleared whenever the page is the island or the home.
 - **Only main ↔ island is instant** in `EnhancedPageTransition` (both ends in
   `[main, ...instant]`); island ↔ activity slides like any other pair.
-- **A phone sees the painting from x≈296 to x≈944** (the sun is kept centred) and the card
-  covers the foot. A checkpoint's name is tucked over the foot of its circle unless it would run
-  under the card, and then sits above its number badge (`checkpointLabelTop`, against a floor
-  the scene works out from the card's measured height); on a 390×844 phone that is the last two,
-  as the operator chose over shortening the card. `island-trail.test.ts` pins every circle
-  (number badge included, `checkpointReachAbove`), every name and the card clear of each other
-  and of the edges on that phone with the English place names, so a move of one point is caught
-  before a device is.
-  Labels take their own width and are clamped to the screen; checkpoint 1's label sits against
-  the right edge by design. Checkpoints 4, 6 and 7 were moved up to make the room; 7 is still
-  on the bridge.
+- **The phone trail is laid for six phones at once** (2026-10-03, on the phone painting): an
+  iPhone SE (375×667), a 16e (390×844), a 16 Pro (402×874), a 16 Pro Max (440×956) and Android
+  phones 412 and 360 points wide. It snakes: from the islet top right along the top, back across
+  the middle, and home along the foot to the head of the bridge (the bridge itself is under the
+  step card on most phones). The places were found by a search that scored overlaps on all six
+  screens, kept the circles on land and off the lighthouse and the cottages, and held them near a
+  hand-drawn snake; each leg's guide point was then chosen so no dash hides on any phone but the
+  SE, which loses 6 of 31 under names. An iPhone SE has about 200 points between the horizon and
+  the card, too little for seven full checkpoints, so a phone under `CHECKPOINT_COMPACT_BELOW`
+  (700 points) tall gets `CHECKPOINT_DIAMETER_COMPACT` (48 points, still over the 44-point touch
+  target) and 10-point names (`checkpointSize`). A name is tucked over the foot of its circle
+  unless it would run under the card, and then sits above its number badge
+  (`checkpointLabelTop`, against a floor the scene works out from the card's measured height).
+  `island-trail.test.ts` pins every circle (badge included, `checkpointReachAbove`), every name,
+  the header room and the card clear of each other on each of the six phones, and the tablet
+  trail on four iPads (mini, Air 11, Pro 11, Pro 13), so a move of one point is caught before a
+  device is. Labels take their own width and are clamped to the screen. The phone painting is
+  laid out like the tablet one, the sun kept centred where the screen is narrower than the
+  painting: phones but the SE see about x 135 to 905 of its 941, the lighthouse included; the SE
+  sees all of it.
 - **The checkpoints follow the operator's mock** (2026-10-03, the third look that day, matched
   to a close-up they supplied): a disc with a thin pale ring, filled from the centre out, and a
   small round number badge sitting on its top edge. A day not yet open is blue, darker in the

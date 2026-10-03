@@ -1,7 +1,7 @@
 ---
 title: "Asset and licence register — Early Roots app"
 type: register
-status: started — the island picture (§5) is the only row for something in the build; the plan's lock art (§6) is no longer drawn; the Otter Raft rows are for a game undone 2026-09-30
+status: started — the two island pictures (§5 tablets, §5a phones) are the only rows for something in the build; the plan's lock art (§6) is no longer drawn; the Otter Raft rows are for a game undone 2026-09-30
 covers: PHASE-4-PROD-READINESS.md §9.9 B (asset and licence register; generated art has a licence trail)
 updated: 2026-10-03
 ---
@@ -20,6 +20,7 @@ marked **⚠️ UNVERIFIED**.
 |---|---|
 | Otter Raft game art and sound | Registered below, §2–§4, on 2026-09-29. **The game was undone on 2026-09-30** and its files are gone; the rows stand as the shape a row should take, and §2.1 and §2.3 still describe the sources and licence questions of the book *Hold On, Juni*, which is in the app |
 | The island picture behind the Your Learning Journey screen | Registered below, §5 — origin and licence ⚠️ UNVERIFIED |
+| The island picture shown on phones (a second painting of the same island, for a tall screen) | Registered below, §5a — origin and licence ⚠️ UNVERIFIED |
 | The lock on the island's learning-plan checkpoints | Registered below, §6 — the supplied picture is not drawn since 2026-10-03 (a padlock drawn in code replaced it); the file remains, origin ⚠️ UNVERIFIED |
 | Everything else — avatars, feelings animals, story illustrations, instrument art, music, fonts, voices | **Not registered.** Origin is not recorded anywhere in the repository — ⚠️ UNVERIFIED |
 
@@ -103,6 +104,25 @@ the stage and a SHA-256 of the result. The hashes below were taken from the file
 | Terms for commercial use, and who owns it | ⚠️ UNVERIFIED — depends on the answer above |
 | Checked by eye against well-known games and films | **Not yet done by a person.** An isometric cartoon island of this kind resembles the art of several well-known games in general style; that is not an infringement in itself, but it wants the operator's eye before go-live |
 | The sun and moon drawn on it | The app's own `home-sun` and `home-moon` art, already in the build; their origin is not recorded either — ⚠️ UNVERIFIED |
+
+## 5a. The island on phones
+
+Phones show a second painting of the same island, made for a tall screen; tablets keep §5's.
+
+| File (under `grow-with-freya/assets/images/island-phone/`) | Where from | What was changed |
+|---|---|---|
+| `island.webp` (941×1672, SHA-256 `518408fce8ec20557f64c6ee26206178e79d2d25224fb561931d32879aafc29e`) | Supplied by the operator, pasted into the working session on 2026-10-03 | Nothing; stored byte for byte |
+| `island-base.webp`, `island-land.webp`, `island-cloud-*.webp`, `island-tree-*.webp`, `island-fall-1-cover.webp`, `island-pool-1-cover.webp` | Cut from this `island.webp` by `grow-with-freya/scripts/prepare-island-art.py --art phone` (2026-10-03) | As in §5: the moving clouds, gulls and swaying trees painted out of `island-base` by blurring in what lies round them; `island-land` is the band round the horizon (rows 518 to 720) with sky, cloud and water cut out. The horizon cloud is filled out with four copies of the painting's own low cloud bank, set behind the painted cloud. Nothing from outside the painting is added |
+| `island-water-1…3.webp`, `island-fall-1-streaks.webp`, `island-spray.webp`, `island-lit-*.webp`, `island-lamp-*.webp`, `island-ring.webp` | Drawn by the same script | Made for the app |
+
+| Question | Answer |
+|---|---|
+| Who made it, and with what | ⚠️ UNVERIFIED — as §5. A second operator-supplied picture of the same island, with the look of a generated image |
+| Terms for commercial use, and who owns it | ⚠️ UNVERIFIED — depends on the answer above |
+| Checked by eye against well-known games and films | **Not yet done by a person**, as §5 |
+
+A third picture of the island (1024×1536) was offered the same day and not used: on current
+iPhones it lost a third of its width, the lighthouse included, so it is not in the repository.
 
 ## 6. The lock on the learning-plan checkpoints
 
