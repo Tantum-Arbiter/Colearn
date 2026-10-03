@@ -310,6 +310,19 @@ describe('IslandScene', () => {
       expect(sun.props.animated).toBe(alive);
       expect(sun.props.mode).toBe(mode);
     });
+
+    it.each([
+      ['crossing', 'off'],
+      ['arriving', 'off'],
+      ['island', 'full'],
+    ] as [VoyagePhase, string][])('while %s, shown and long settled, moves: %s, so its motion starts once the island is at rest', (phase, mode) => {
+      const { root } = renderScene(voyage({ phase }), { isActive: true });
+      act(() => { jest.advanceTimersByTime(2000); });
+
+      const sun = root.findAll((node) => node.props.sun !== undefined && node.props.timeOfDay !== undefined)[0];
+
+      expect(sun.props.mode).toBe(mode);
+    });
   });
 
   describe('by day and by night', () => {
@@ -466,6 +479,22 @@ describe('IslandScene', () => {
       expect(mockAlive[mockAlive.length - 1]).toBe(alive);
     });
 
+    // starting every tree, cloud and wave at once stalled the screen for 70-230 ms; started while
+    // the cloud was parting it showed, started once the island has settled it cannot
+    it.each([
+      ['crossing', false],
+      ['arriving', false],
+      ['island', true],
+      ['returning', true],
+      ['recrossing', true],
+      ['landing', true],
+    ] as [VoyagePhase, boolean][])('while %s, shown and long settled, is alive: %p', (phase, alive) => {
+      renderScene(voyage({ phase }), { isActive: true });
+      act(() => { jest.advanceTimersByTime(2000); });
+
+      expect(mockAlive[mockAlive.length - 1]).toBe(alive);
+    });
+
     it('keeps everything that moves from a screen reader, and lets no touch land on it', () => {
       const { root } = renderScene();
 
@@ -489,26 +518,49 @@ describe('IslandScene', () => {
       expect(styleOf(root, 'island-chrome').opacity).toBe(chromeOpacity(arrival));
     });
 
-    it('says it is ready once its picture has loaded, while the cloud is shut and waiting', () => {
+    const drawFrames = (count: number) => {
+      for (let frame = 0; frame < count; frame += 1) act(() => { jest.advanceTimersByTime(17); });
+    };
+
+    it('says it is ready once its picture has loaded and two frames have been drawn, while the cloud is shut', () => {
       const given = voyage({ phase: 'crossing' });
       const { root } = renderScene(given);
-      expect(given.islandReady).not.toHaveBeenCalled();
 
       act(() => { picture(root, 'island-picture').props.onLoad(); });
+      expect(given.islandReady).not.toHaveBeenCalled();
+      drawFrames(1);
+      expect(given.islandReady).not.toHaveBeenCalled();
+      drawFrames(1);
 
       expect(given.islandReady).toHaveBeenCalledTimes(1);
     });
 
-    it('says so at once on a later visit, when the picture is already there', () => {
+    it('says so two frames into a later visit, when the picture is already there', () => {
       const first = voyage({ phase: 'home' });
       const { root, show } = renderScene(first);
       act(() => { picture(root, 'island-picture').props.onLoad(); });
+      drawFrames(3);
       expect(first.islandReady).not.toHaveBeenCalled();
 
       const second = voyage({ phase: 'crossing' });
       show(second);
+      expect(second.islandReady).not.toHaveBeenCalled();
+      drawFrames(2);
 
       expect(second.islandReady).toHaveBeenCalledTimes(1);
+    });
+
+    it('says nothing if the cloud stops waiting before the frames are drawn', () => {
+      const first = voyage({ phase: 'crossing' });
+      const { root, show } = renderScene(first);
+      act(() => { picture(root, 'island-picture').props.onLoad(); });
+
+      const moved = voyage({ phase: 'arriving' });
+      show(moved);
+      drawFrames(3);
+
+      expect(first.islandReady).not.toHaveBeenCalled();
+      expect(moved.islandReady).not.toHaveBeenCalled();
     });
 
     it.each(['home', 'leaving', 'arriving', 'island', 'returning', 'recrossing', 'landing'] as VoyagePhase[])(
@@ -518,6 +570,7 @@ describe('IslandScene', () => {
         const { root } = renderScene(given);
 
         act(() => { picture(root, 'island-picture').props.onLoad(); });
+        act(() => { jest.advanceTimersByTime(100); });
 
         expect(given.islandReady).not.toHaveBeenCalled();
       }

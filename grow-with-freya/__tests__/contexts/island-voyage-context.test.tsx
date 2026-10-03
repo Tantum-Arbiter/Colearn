@@ -7,11 +7,33 @@ import {
   type IslandVoyage,
 } from '@/contexts/island-voyage-context';
 import { VOYAGE_TIMING, type VoyagePage } from '@/constants/island-voyage';
+import { CALM } from '@/utils/when-calm';
 
 let mockReduceMotion = false;
 jest.mock('@/hooks/use-reduced-motion', () => ({
   useReducedMotion: () => mockReduceMotion,
 }));
+
+let mockCalm: 'at once' | 'held' = 'at once';
+const mockHeld: (() => void)[] = [];
+const mockWaits: (number | undefined)[] = [];
+const mockCalledOff = jest.fn();
+jest.mock('@/utils/when-calm', () => ({
+  ...jest.requireActual('@/utils/when-calm'),
+  whenCalm: (run: () => void, maxWaitMs?: number) => {
+    mockWaits.push(maxWaitMs);
+    if (mockCalm === 'at once') {
+      run();
+      return () => undefined;
+    }
+    mockHeld.push(run);
+    return mockCalledOff;
+  },
+}));
+
+function settle() {
+  act(() => { mockHeld.splice(0).forEach((run) => run()); });
+}
 
 const FULL = VOYAGE_TIMING.full;
 const REDUCED = VOYAGE_TIMING.reduced;
@@ -22,8 +44,8 @@ function sailing() {
   return { ...rendered, onShowPage };
 }
 
-function wait(ms: number) {
-  act(() => { jest.advanceTimersByTime(ms); });
+function wait(...steps: number[]) {
+  steps.forEach((ms) => act(() => { jest.advanceTimersByTime(ms); }));
 }
 
 function depart(result: { current: IslandVoyage }) {
@@ -42,6 +64,10 @@ describe('useIslandVoyageController', () => {
   beforeEach(() => {
     jest.useFakeTimers();
     mockReduceMotion = false;
+    mockCalm = 'at once';
+    mockHeld.length = 0;
+    mockWaits.length = 0;
+    mockCalledOff.mockClear();
   });
 
   afterEach(() => {
@@ -95,7 +121,7 @@ describe('useIslandVoyageController', () => {
       const { result } = sailing();
       reachTheIsland(result);
       act(() => { result.current.comeBack(); });
-      wait(FULL.returnMs + FULL.recrossingMs + FULL.landMs);
+      wait(FULL.returnMs, FULL.recrossingMs, FULL.landMs);
 
       act(() => { result.current.islandReady(); });
       expect(result.current.phase).toBe('home');
@@ -276,7 +302,7 @@ describe('useIslandVoyageController', () => {
       const { result, onShowPage } = sailing();
       reachTheIsland(result);
       act(() => { result.current.comeBack(); });
-      wait(FULL.returnMs + FULL.recrossingMs + FULL.landMs);
+      wait(FULL.returnMs, FULL.recrossingMs, FULL.landMs);
 
       expect(result.current.phase).toBe('home');
       expect(result.current.travel.value).toBe(0);
@@ -294,10 +320,158 @@ describe('useIslandVoyageController', () => {
       act(() => { result.current.comeBack(); });
 
       act(() => { result.current.comeBack(); });
-      wait(FULL.returnMs + FULL.recrossingMs + FULL.landMs);
+      wait(FULL.returnMs, FULL.recrossingMs, FULL.landMs);
 
       expect(result.current.phase).toBe('home');
       expect(onShowPage).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  // started before the new phase was drawn, the redraw landed on the motion's first frames and
+  // the dive and the parting cloud hitched by 60-100 ms on an iPhone 16 Pro
+  describe('starting to move only once the new phase is drawn', () => {
+    type Drawn = { phase: string; travel: number; clouds: number; arrival: number };
+
+    function watching() {
+      const onShowPage = jest.fn<void, [VoyagePage]>();
+      const drawn: Drawn[] = [];
+      const rendered = renderHook(() => {
+        const voyage = useIslandVoyageController(onShowPage);
+        drawn.push({ phase: voyage.phase, travel: voyage.travel.value, clouds: voyage.clouds.value, arrival: voyage.arrival.value });
+        return voyage;
+      });
+      return { ...rendered, drawn };
+    }
+
+    const firstDrawOf = (drawn: Drawn[], phase: string) => drawn.find((frame) => frame.phase === phase);
+
+    it('draws the leaving with nothing yet moved, then sets off', () => {
+      const { result, drawn } = watching();
+
+      depart(result);
+
+      expect(firstDrawOf(drawn, 'leaving')).toEqual({ phase: 'leaving', travel: 0, clouds: 0, arrival: 0 });
+      expect(result.current.travel.value).toBe(1);
+      expect(result.current.clouds.value).toBe(1);
+    });
+
+    it('draws the arriving with the cloud still shut, then opens it', () => {
+      const { result, drawn } = watching();
+      depart(result);
+      wait(FULL.leaveMs);
+      act(() => { result.current.islandReady(); });
+
+      wait(FULL.crossingMinMs);
+
+      expect(firstDrawOf(drawn, 'arriving')).toEqual({ phase: 'arriving', travel: 1, clouds: 1, arrival: 0 });
+      expect(result.current.clouds.value).toBe(2);
+      expect(result.current.arrival.value).toBe(1);
+    });
+
+    it('draws the way back with the island still clear, then closes the cloud', () => {
+      const { result, drawn } = watching();
+      reachTheIsland(result);
+
+      act(() => { result.current.comeBack(); });
+
+      expect(firstDrawOf(drawn, 'returning')).toEqual({ phase: 'returning', travel: 1, clouds: 0, arrival: 1 });
+      expect(result.current.clouds.value).toBe(1);
+    });
+
+    it('draws the landing with the home still away, then brings it back', () => {
+      const { result, drawn } = watching();
+      reachTheIsland(result);
+      act(() => { result.current.comeBack(); });
+
+      wait(FULL.returnMs, FULL.recrossingMs);
+
+      expect(firstDrawOf(drawn, 'landing')).toEqual(expect.objectContaining({ phase: 'landing', travel: 1, clouds: 1 }));
+      expect(result.current.travel.value).toBe(0);
+      expect(result.current.clouds.value).toBe(2);
+    });
+  });
+
+  // the island's first draw landed on the parting cloud's first frames however the motion was
+  // ordered; waiting under the shut cloud for frames to come on time again cannot be seen
+  describe('moving out from under the cloud only once the screen has settled', () => {
+    it('holds the cloud shut until the screen has taken in the island, then opens it and arrives', () => {
+      mockCalm = 'held';
+      const { result } = sailing();
+      depart(result);
+      settle();
+      wait(FULL.leaveMs);
+      act(() => { result.current.islandReady(); });
+      wait(FULL.crossingMinMs);
+
+      wait(FULL.arriveMs * 2);
+      expect(result.current.phase).toBe('arriving');
+      expect(result.current.clouds.value).toBe(1);
+      expect(result.current.arrival.value).toBe(0);
+
+      settle();
+      expect(result.current.clouds.value).toBe(2);
+      expect(result.current.arrival.value).toBe(1);
+      wait(FULL.arriveMs);
+
+      expect(result.current.phase).toBe('island');
+    });
+
+    it('holds the home away until the screen has taken it back in, then lands', () => {
+      const { result } = sailing();
+      reachTheIsland(result);
+      mockCalm = 'held';
+      act(() => { result.current.comeBack(); });
+      settle();
+      wait(FULL.returnMs, FULL.recrossingMs);
+
+      wait(FULL.landMs * 2);
+      expect(result.current.phase).toBe('landing');
+      expect(result.current.travel.value).toBe(1);
+      expect(result.current.clouds.value).toBe(1);
+
+      settle();
+      expect(result.current.travel.value).toBe(0);
+      wait(FULL.landMs);
+
+      expect(result.current.phase).toBe('home');
+    });
+
+    it('sets off when the child asks once the screen has taken in the tap, waiting only a moment', () => {
+      mockCalm = 'held';
+      const { result } = sailing();
+
+      depart(result);
+      expect(result.current.phase).toBe('leaving');
+      expect(result.current.travel.value).toBe(0);
+      settle();
+      expect(result.current.travel.value).toBe(1);
+
+      wait(FULL.leaveMs);
+      act(() => { result.current.islandReady(); });
+      wait(FULL.crossingMinMs);
+      settle();
+      wait(FULL.arriveMs);
+      act(() => { result.current.comeBack(); });
+      expect(result.current.clouds.value).toBe(0);
+      settle();
+
+      expect(result.current.clouds.value).toBe(1);
+      expect(mockWaits).toEqual([CALM.afterTapMs, undefined, CALM.afterTapMs]);
+    });
+
+    it('stops waiting if the voyage is taken away under the cloud', () => {
+      mockCalm = 'held';
+      const { result, unmount } = sailing();
+      depart(result);
+      settle();
+      wait(FULL.leaveMs);
+      act(() => { result.current.islandReady(); });
+      wait(FULL.crossingMinMs);
+      mockCalledOff.mockClear();
+
+      unmount();
+
+      expect(mockCalledOff).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -367,11 +541,11 @@ describe('useIslandVoyageController', () => {
       wait(REDUCED.leaveMs);
       expect(result.current.phase).toBe('crossing');
       act(() => { result.current.islandReady(); });
-      wait(REDUCED.crossingMinMs + REDUCED.arriveMs);
+      wait(REDUCED.crossingMinMs, REDUCED.arriveMs);
       expect(result.current.phase).toBe('island');
 
       act(() => { result.current.comeBack(); });
-      wait(REDUCED.returnMs + REDUCED.recrossingMs + REDUCED.landMs);
+      wait(REDUCED.returnMs, REDUCED.recrossingMs, REDUCED.landMs);
       expect(result.current.phase).toBe('home');
       expect(result.current.travel.value).toBe(0);
       expect(onShowPage.mock.calls.map(([page]) => page)).toEqual(['island', 'main']);

@@ -96,14 +96,14 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
     setSlide({ from: slide.to, to: currentPage, recent: slide.recent === currentPage ? slide.from : slide.recent });
   }
   const [warmed, setWarmed] = useState<readonly string[]>(NO_PREWARM);
-  const prewarmKey = prewarm.join('|');
-  const allWarm = prewarm.every((key) => warmed.includes(key));
+  const showing = [currentPage, slide.from, slide.recent];
+  const coldKey = prewarm.filter((key) => !warmed.includes(key) && !showing.includes(key)).join('|');
 
   useEffect(() => {
-    if (prewarmKey === '' || allWarm) return undefined;
-    const timer = setTimeout(() => setWarmed(prewarmKey.split('|')), prewarmAfterMs);
+    if (coldKey === '') return undefined;
+    const timer = setTimeout(() => setWarmed((current) => [...current, ...coldKey.split('|')]), prewarmAfterMs);
     return () => clearTimeout(timer);
-  }, [currentPage, prewarmKey, prewarmAfterMs, allWarm]);
+  }, [currentPage, coldKey, prewarmAfterMs]);
 
   const mounted = new Set(
     [ALWAYS_MOUNTED, currentPage, slide.from, slide.recent, ...warmed].filter((key): key is string => key !== null)

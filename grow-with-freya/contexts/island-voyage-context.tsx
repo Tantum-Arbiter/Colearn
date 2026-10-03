@@ -3,6 +3,7 @@ import { Easing, withDelay, withTiming, type SharedValue } from 'react-native-re
 import { VOYAGE_PAGE, voyageTiming, type VoyagePage, type VoyagePhase } from '@/constants/island-voyage';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { useSteadySharedValue } from '@/hooks/use-steady-shared-value';
+import { CALM, whenCalm } from '@/utils/when-calm';
 
 export interface IslandVoyage {
   phase: VoyagePhase;
@@ -60,33 +61,38 @@ export function useIslandVoyageController(onShowPage: (page: VoyagePage) => void
   useEffect(() => clearTimers, [clearTimers]);
 
   const enter = useCallback((next: VoyagePhase) => {
-    const timing = timingRef.current;
-
     phaseRef.current = next;
     setPhase(next);
+    if (next === 'crossing') crossing.current = { ready: false, held: false };
     if (VOYAGE_PAGE[next] !== pageRef.current) {
       pageRef.current = VOYAGE_PAGE[next];
       showPageRef.current(pageRef.current);
     }
+  }, []);
 
-    switch (next) {
+  useEffect(() => {
+    const timing = timingRef.current;
+    let callOff: (() => void) | undefined;
+
+    switch (phase) {
       case 'leaving':
-        if (timing.moves) {
-          aim(travel, withTiming(1, { duration: timing.leaveMs, easing: Easing.linear }));
-        }
-        aim(clouds, 0);
-        aim(
-          clouds,
-          withDelay(
-            timing.leaveMs - timing.cloudsInMs,
-            withTiming(1, { duration: timing.cloudsInMs, easing: Easing.inOut(Easing.quad) })
-          )
-        );
-        later(timing.leaveMs, () => enterRef.current('crossing'));
+        callOff = whenCalm(() => {
+          if (timing.moves) {
+            aim(travel, withTiming(1, { duration: timing.leaveMs, easing: Easing.linear }));
+          }
+          aim(clouds, 0);
+          aim(
+            clouds,
+            withDelay(
+              timing.leaveMs - timing.cloudsInMs,
+              withTiming(1, { duration: timing.cloudsInMs, easing: Easing.inOut(Easing.quad) })
+            )
+          );
+          later(timing.leaveMs, () => enterRef.current('crossing'));
+        }, CALM.afterTapMs);
         break;
       case 'crossing':
         aim(arrival, 0);
-        crossing.current = { ready: false, held: false };
         later(timing.crossingMinMs, () => {
           crossing.current.held = true;
           if (crossing.current.ready) enterRef.current('arriving');
@@ -96,25 +102,31 @@ export function useIslandVoyageController(onShowPage: (page: VoyagePage) => void
         });
         break;
       case 'arriving':
-        aim(clouds, withTiming(2, { duration: timing.cloudsOutMs, easing: Easing.out(Easing.quad) }));
-        aim(arrival, timing.moves ? withTiming(1, { duration: timing.arriveMs, easing: Easing.linear }) : 1);
-        later(timing.arriveMs, () => enterRef.current('island'));
+        callOff = whenCalm(() => {
+          aim(clouds, withTiming(2, { duration: timing.cloudsOutMs, easing: Easing.out(Easing.quad) }));
+          aim(arrival, timing.moves ? withTiming(1, { duration: timing.arriveMs, easing: Easing.linear }) : 1);
+          later(timing.arriveMs, () => enterRef.current('island'));
+        });
         break;
       case 'island':
         aim(clouds, 0);
         break;
       case 'returning':
-        aim(clouds, 0);
-        aim(clouds, withTiming(1, { duration: timing.returnMs, easing: Easing.inOut(Easing.quad) }));
-        later(timing.returnMs, () => enterRef.current('recrossing'));
+        callOff = whenCalm(() => {
+          aim(clouds, 0);
+          aim(clouds, withTiming(1, { duration: timing.returnMs, easing: Easing.inOut(Easing.quad) }));
+          later(timing.returnMs, () => enterRef.current('recrossing'));
+        }, CALM.afterTapMs);
         break;
       case 'recrossing':
         later(timing.recrossingMs, () => enterRef.current('landing'));
         break;
       case 'landing':
-        aim(clouds, withTiming(2, { duration: timing.cloudsOutMs, easing: Easing.out(Easing.quad) }));
-        aim(travel, withTiming(0, { duration: timing.landMs, easing: Easing.linear }));
-        later(timing.landMs, () => enterRef.current('home'));
+        callOff = whenCalm(() => {
+          aim(clouds, withTiming(2, { duration: timing.cloudsOutMs, easing: Easing.out(Easing.quad) }));
+          aim(travel, withTiming(0, { duration: timing.landMs, easing: Easing.linear }));
+          later(timing.landMs, () => enterRef.current('home'));
+        });
         break;
       case 'home':
         aim(clouds, 0);
@@ -122,7 +134,9 @@ export function useIslandVoyageController(onShowPage: (page: VoyagePage) => void
         aim(travel, 0);
         break;
     }
-  }, [arrival, clouds, later, travel]);
+
+    return callOff;
+  }, [phase, arrival, clouds, later, travel]);
 
   useEffect(() => {
     enterRef.current = enter;

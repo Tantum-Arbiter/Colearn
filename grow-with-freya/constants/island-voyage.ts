@@ -229,7 +229,9 @@ export function sunRise(arrival: number, riseFrom: number): number {
   return riseFrom * (1 - risen);
 }
 
+export const CHROME_TRACE = 0.01;
+
 export function chromeOpacity(arrival: number): number {
   'worklet';
-  return clamp01((arrival - VOYAGE_MOTION.chromeFrom) / (1 - VOYAGE_MOTION.chromeFrom));
+  return Math.max(CHROME_TRACE, clamp01((arrival - VOYAGE_MOTION.chromeFrom) / (1 - VOYAGE_MOTION.chromeFrom)));
 }

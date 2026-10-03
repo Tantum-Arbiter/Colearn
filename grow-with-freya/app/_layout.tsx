@@ -49,7 +49,7 @@ import { preloadCriticalImages, preloadSecondaryImages } from '@/services/image-
 import { EnhancedPageTransition } from '@/components/ui/enhanced-page-transition';
 import { JourneyBarProvider, JourneyBarOutlet } from '@/components/child-ui/journey-bar-slot';
 import { OwlGuideLayer, OwlGuideLayerProvider, guidePages } from '@/components/owl-guide/owl-guide-layer';
-import { INSTANT_PAGES, ISLAND_PREWARM_AFTER_MS, PAGE_TRANSITION_DURATION_MS, PREWARMED_FOR_THE_ISLAND, PREWARMED_PAGES, SLIDE_AFTER_SECTION_SWITCH_MS } from '@/constants/page-transition';
+import { INSTANT_PAGES, PAGE_TRANSITION_DURATION_MS, SLIDE_AFTER_SECTION_SWITCH_MS, prewarmedDuring } from '@/constants/page-transition';
 import { IslandVoyageProvider, useIslandVoyageController } from '@/contexts/island-voyage-context';
 import { IslandScene } from '@/components/island/island-scene';
 import { VoyageLayer } from '@/components/island/voyage-layer';
@@ -1086,8 +1086,7 @@ function AppContent() {
           }, currentPage)}
           duration={PAGE_TRANSITION_DURATION_MS}
           animate={animatePageTransition}
-          prewarm={voyage.phase === 'home' ? PREWARMED_PAGES : PREWARMED_FOR_THE_ISLAND}
-          prewarmAfterMs={voyage.phase === 'leaving' ? ISLAND_PREWARM_AFTER_MS : undefined}
+          prewarm={prewarmedDuring(voyage.phase)}
           instant={INSTANT_PAGES}
         />
         <JourneyBarOutlet pageKey={currentPage as string} holdMs={animatePageTransition && currentPage !== 'island' ? PAGE_TRANSITION_DURATION_MS : 0} />

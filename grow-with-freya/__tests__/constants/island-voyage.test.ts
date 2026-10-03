@@ -4,6 +4,7 @@ import {
   VOYAGE_MOTION,
   VOYAGE_PAGE,
   VOYAGE_ROWS,
+  CHROME_TRACE,
   VOYAGE_TIMING,
   barSink,
   chromeOpacity,
@@ -311,12 +312,20 @@ describe('arriving on the island', () => {
     expect(Math.max(...steps)).toBe(300);
   });
 
+  // at nothing iOS never draws the header and the step card, and their first draw landed on the
+  // arrival's frames as they began to fade in; a trace too faint to see has them drawn under the cloud
   it.each([
-    [0, 0],
-    [VOYAGE_MOTION.chromeFrom, 0],
+    [0, CHROME_TRACE],
+    [VOYAGE_MOTION.chromeFrom, CHROME_TRACE],
     [1, 1],
-    [Number.NaN, 0],
+    [Number.NaN, CHROME_TRACE],
   ])('at an arrival of %p shows the way home at %p', (arrival, expected) => {
     expect(chromeOpacity(arrival)).toBe(expected);
+  });
+
+  it('keeps the header and card a trace too faint to see until they fade in, never nothing', () => {
+    expect(CHROME_TRACE).toBeGreaterThan(0);
+    expect(CHROME_TRACE).toBeLessThanOrEqual(0.01);
+    expect(chromeOpacity(VOYAGE_MOTION.chromeFrom + (1 - VOYAGE_MOTION.chromeFrom) / 2)).toBeCloseTo(0.5, 6);
   });
 });

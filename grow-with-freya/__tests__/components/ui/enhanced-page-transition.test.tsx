@@ -283,6 +283,35 @@ describe('EnhancedPageTransition', () => {
       expect(guard(view).props.pointerEvents).toBe('none');
     });
 
+    // warming a page already on screen changed nothing but re-rendered every page 1.2 s after the
+    // switch, which landed on the arrival's frames as a 35-40 ms hitch
+    it('does not stir again to warm the island while the child is already on it', () => {
+      let commits = 0;
+      const tree = (page: string) => (
+        <React.Profiler id="pages" onRender={() => { commits += 1; }}>
+          <EnhancedPageTransition currentPage={page} pages={WITH_ISLAND} duration={800} instant={INSTANT} prewarm={['island']} prewarmAfterMs={1200} />
+        </React.Profiler>
+      );
+      const view = render(tree('main'));
+      view.rerender(tree('island'));
+      act(() => { jest.advanceTimersByTime(1000); });
+      const settled = commits;
+
+      act(() => { jest.advanceTimersByTime(1000); });
+
+      expect(commits).toBe(settled);
+      expect(shown(view)).toContain('island');
+    });
+
+    it('still warms a listed page the child is not on', () => {
+      const view = render(<EnhancedPageTransition currentPage="island" pages={WITH_ISLAND} duration={800} instant={INSTANT} prewarm={['island', 'stories']} prewarmAfterMs={1200} />);
+
+      act(() => { jest.advanceTimersByTime(1200); });
+
+      expect(Object.keys(renders)).toEqual(expect.arrayContaining(['island', 'stories']));
+      expect(shown(view)).toContain('island');
+    });
+
     it('rests below the screen until it is opened', () => {
       const view = render(<EnhancedPageTransition currentPage="main" pages={WITH_ISLAND} duration={800} instant={INSTANT} prewarm={['island']} prewarmAfterMs={10} />);
       act(() => {

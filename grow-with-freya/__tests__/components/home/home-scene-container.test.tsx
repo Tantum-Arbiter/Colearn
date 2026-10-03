@@ -66,6 +66,33 @@ describe('HomeSceneContainer', () => {
     expect(onNavigate).not.toHaveBeenCalled();
   });
 
+  // counted as settled from the page switch under the cloud, the home started its sky and sun
+  // 0.8 s later, in the middle of the landing, and the landing hitched
+  it.each([
+    ['home', true],
+    ['leaving', true],
+    ['recrossing', false],
+    ['landing', false],
+  ] as const)('while the voyage is %s, tells the home it is active: %p', (phase, active) => {
+    render(
+      <IslandVoyageProvider voyage={{ ...voyage(), phase }}>
+        <HomeSceneContainer onNavigate={jest.fn()} isActive />
+      </IslandVoyageProvider>
+    );
+
+    expect(mockSceneProps[mockSceneProps.length - 1].isActive).toBe(active);
+  });
+
+  it('keeps a home that is not shown inactive whatever the voyage is doing', () => {
+    render(
+      <IslandVoyageProvider voyage={voyage()}>
+        <HomeSceneContainer onNavigate={jest.fn()} isActive={false} />
+      </IslandVoyageProvider>
+    );
+
+    expect(mockSceneProps[mockSceneProps.length - 1].isActive).toBe(false);
+  });
+
   it('still opens the badges from the bar at the foot of the screen', () => {
     const onNavigate = jest.fn();
     render(

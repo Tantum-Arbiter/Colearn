@@ -38,7 +38,8 @@ export const HomeSceneContainer = memo(function HomeSceneContainer({
 }: HomeSceneContainerProps) {
   const { data, welcome, celebrateAchievement } = useChildHomeData();
   const { requestStoryOpen } = useStoryTransition();
-  const { depart } = useIslandVoyage();
+  const { depart, phase } = useIslandVoyage();
+  const landing = phase === 'recrossing' || phase === 'landing';
   const screenTime = useScreenTimeAllowance();
   const timeOfDay = useTimeOfDay();
   const trialEnd = useTrialEndPrompt();
@@ -91,7 +92,7 @@ export const HomeSceneContainer = memo(function HomeSceneContainer({
         onOpenScreenTime={openScreenTime}
         screenTimeHidden={showScreenTime}
         onOpenPlans={offerPlan ? openPlans : undefined}
-        isActive={isActive}
+        isActive={isActive && !landing}
         guideTargets={guideTargets}
         scrollBinding={scrollBinding}
       />

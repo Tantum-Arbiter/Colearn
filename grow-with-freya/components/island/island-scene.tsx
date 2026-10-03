@@ -58,10 +58,11 @@ export const IslandScene = memo(function IslandScene({
   const { width, height } = useWindowDimensions();
   const { isTablet } = useAccessibility();
   const { phase, arrival, islandReady, comeBack } = useIslandVoyage();
+  const arriving = phase === 'crossing' || phase === 'arriving';
   const { isMuted, toggleMute } = useGlobalSound();
   const clockTimeOfDay = useTimeOfDay();
   const reduceMotion = useReducedMotion();
-  const settled = useSettledAfterTransition(isActive);
+  const settled = useSettledAfterTransition(isActive && !arriving);
   const [loaded, setLoaded] = useState(false);
   const clocks = useIslandClocks(settled && !reduceMotion);
   const plan = useLearningPlan(isActive);
@@ -72,7 +73,15 @@ export const IslandScene = memo(function IslandScene({
   const riseFrom = layout.riseFrom;
 
   useEffect(() => {
-    if (loaded && phase === 'crossing') islandReady();
+    if (!loaded || phase !== 'crossing') return undefined;
+    let drawn = 0;
+    const drawing = requestAnimationFrame(() => {
+      drawn = requestAnimationFrame(() => islandReady());
+    });
+    return () => {
+      cancelAnimationFrame(drawing);
+      cancelAnimationFrame(drawn);
+    };
   }, [loaded, phase, islandReady]);
 
   const handleLoad = useCallback(() => setLoaded(true), []);
