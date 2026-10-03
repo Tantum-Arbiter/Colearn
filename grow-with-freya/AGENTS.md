@@ -127,7 +127,30 @@ Commit rules: see root `../CLAUDE.md` → **Commits**.
 
 ---
 
-## 9. Commands
+## 9. Simulators and Memory
+
+Booted simulators are what run this Mac out of memory. On 2026-10-03 four of them, with Jest
+beside them, filled 20 GB of swap and then the disk, and every command, git included, failed
+until they were shut down.
+
+- **One simulator booted at a time.** Run `xcrun simctl list devices booted` first; if one is
+  booted, use it. Never boot a second beside it.
+- **Keep to the same device.** Use the iPhone already booted, or the one used last, for every
+  check in a session. Don't boot a fresh device to get a clean state; reseed with the E2E link or
+  relaunch the app on the same one.
+- **Restart it rather than add another.** If it is slow, stuck or showing stale code, shut it
+  down (`xcrun simctl shutdown <udid>`) and boot the same one again.
+- **Tablet checks** (phone and tablet are both required, root `../CLAUDE.md`): shut the phone
+  down, then boot the iPad; shut the iPad down when done.
+- **One Metro.** Reuse a running dev server rather than starting another, and stop it with the
+  simulator when the work is finished. Nothing is left running at the end of a session.
+- While a simulator is up, run Jest with `--maxWorkers=2`. Before a long run (full suite,
+  mutation sweep) check `df -h /` and `sysctl vm.swapusage`; with less than ~3 GB of disk free,
+  shut the simulator down first.
+
+---
+
+## 10. Commands
 
 ```bash
 # Type check
