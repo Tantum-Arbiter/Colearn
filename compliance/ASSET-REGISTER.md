@@ -20,7 +20,7 @@ marked **⚠️ UNVERIFIED**.
 |---|---|
 | Otter Raft game art and sound | Registered below, §2–§4, on 2026-09-29. **The game was undone on 2026-09-30** and its files are gone; the rows stand as the shape a row should take, and §2.1 and §2.3 still describe the sources and licence questions of the book *Hold On, Juni*, which is in the app |
 | The island picture behind the Your Learning Journey screen | Registered below, §5 — origin and licence ⚠️ UNVERIFIED |
-| The lock on the island's learning-plan checkpoints | Registered below, §6 — not drawn since 2026-10-03 (a system glyph replaced it); the file remains, origin ⚠️ UNVERIFIED |
+| The lock on the island's learning-plan checkpoints | Registered below, §6 — the supplied picture is not drawn since 2026-10-03 (a padlock drawn in code replaced it); the file remains, origin ⚠️ UNVERIFIED |
 | Everything else — avatars, feelings animals, story illustrations, instrument art, music, fonts, voices | **Not registered.** Origin is not recorded anywhere in the repository — ⚠️ UNVERIFIED |
 
 ## 2. Otter Raft — pictures
@@ -107,7 +107,8 @@ the stage and a SHA-256 of the result. The hashes below were taken from the file
 ## 6. The lock on the learning-plan checkpoints
 
 **No longer drawn, since 2026-10-03.** The checkpoints now wear the operator's later mock: a
-navy badge with the system padlock glyph (Ionicons `lock-closed`, MIT licence). Nothing
+white padlock with a navy keyhole, drawn in code in the middle of the disc
+(`components/island/plan-checkpoint.tsx`, made for the app, no outside art). Nothing
 requires `lock.webp`, so it is not bundled, and it was kept out of the commit: it sits in the
 working copy until the operator decides whether to delete it. The rows below stand for the file
 as it is.

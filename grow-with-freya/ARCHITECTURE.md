@@ -884,7 +884,7 @@ mock like for like. The older screens keep their own design; the plan only sets 
 them, opens their own preview cards, and hears when they are finished.
 
 ```
-island        PlanTrail (dashes along a Catmull-Rom curve through the checkpoints; lit as far as the open day)
+island        PlanTrail (glowing dashes along each leg's own curve through its guide points; gold as far as the open day)
               PlanCheckpoint ×7 (on the stage, so they settle in with the island; the open one breathes with the wind)
               PlanPanel (a floating card outside the stage, fading in with the header)
   Start / open checkpoint → useLearningPlan().start(view) → store.beginPlanStep(run) → _layout.handleStartActivity(launch)
@@ -903,7 +903,7 @@ island        PlanTrail (dashes along a Catmull-Rom curve through the checkpoint
 | The plan's shape: steps, kinds, skills, launches | `types/learning-plan.ts` |
 | The week itself (`ISLAND_WEEK`): which story or activity each day is, by age for words and numbers | `data/learning-plan.ts` |
 | The rules: a step is done, open, opens tomorrow or locked; local days; which activity for this child; which days can be previewed | `constants/learning-plan.ts` (`stepStates`, `localDayKey`, `activityFor`, `launchFor`, `previewable`, `previewActivity`) |
-| Where the checkpoints are in the painting, the trail's geometry, and where a checkpoint's name goes | `constants/island-trail.ts` (`ISLAND_TRAIL`, `trailPath`, `trailDashes`, `checkpointLabelTop`) |
+| Where the checkpoints are in the painting, the guide points the trail bends through, the trail's geometry, and where a checkpoint's name goes | `constants/island-trail.ts` (`ISLAND_TRAIL`, `ISLAND_TRAIL_VIA`, `trailPath`, `trailDashes`, `checkpointLabelTop`) |
 | What is remembered: `learningPlanProgress` (persisted) and `planRun` (not persisted, what the child set off on) | `store/app-store.ts` (`beginPlanStep`, `leavePlanStep`, `recordActivityFinished`, `markStoryCompleted`, `stepTickedOff`) |
 | The view the island draws from, refreshed each minute so midnight opens the next step | `hooks/use-learning-plan.ts` |
 | The pieces | `components/island/plan-trail.tsx`, `plan-checkpoint.tsx`, `plan-panel.tsx` |
@@ -930,24 +930,28 @@ island        PlanTrail (dashes along a Catmull-Rom curve through the checkpoint
 - **Only main ↔ island is instant** in `EnhancedPageTransition` (both ends in
   `[main, ...instant]`); island ↔ activity slides like any other pair.
 - **A phone sees the painting from x≈296 to x≈944** (the sun is kept centred) and the card
-  covers the foot. A checkpoint's name hangs under its circle unless it would run under the
-  card, and then sits above it (`checkpointLabelTop`, against a floor the scene works out from
-  the card's measured height); on a 390×844 phone that is the last two, as the operator chose
-  over shortening the card. `island-trail.test.ts` pins every circle (lock badge included,
-  `checkpointReachBelow`), every name and the card clear of each other and of the edges on that
-  phone with the English place names, so a move of one point is caught before a device is.
+  covers the foot. A checkpoint's name is tucked over the foot of its circle unless it would run
+  under the card, and then sits above its number badge (`checkpointLabelTop`, against a floor
+  the scene works out from the card's measured height); on a 390×844 phone that is the last two,
+  as the operator chose over shortening the card. `island-trail.test.ts` pins every circle
+  (number badge included, `checkpointReachAbove`), every name and the card clear of each other
+  and of the edges on that phone with the English place names, so a move of one point is caught
+  before a device is.
   Labels take their own width and are clamped to the screen; checkpoint 1's label sits against
   the right edge by design. Checkpoints 4, 6 and 7 were moved up to make the room; 7 is still
   on the bridge.
-- **The checkpoints follow the operator's mock** (2026-10-03): a large white rounded number
-  in a disc with a thick white ring — amber for the open and finished days, periwinkle for the
-  rest — and a finished day keeps its tick in place of the number. A day not yet open wears a
-  small navy padlock badge at the disc's lower right, ringed in white. Only the open day glows:
-  a soft yellow wash about two and a half discs across, solid to just beyond the ring, which
-  breathes with the wind. Labels are cream under warm discs and lavender under cool ones, in
-  navy. Colours were sampled from the mock and live in `CHECKPOINT_TINTS`; the first version
-  (a gold disc with a kind icon, a number badge, and the supplied glossy padlock art) was
-  replaced the same day.
+- **The checkpoints follow the operator's mock** (2026-10-03, the third look that day, matched
+  to a close-up they supplied): a disc with a thin pale ring, filled from the centre out, and a
+  small round number badge sitting on its top edge. A day not yet open is blue, darker in the
+  middle, with a white padlock and a navy keyhole and a soft blue aura; the open day is bright
+  yellow with its activity in the middle (an open book for a story, the activity's glyph in the
+  book's red otherwise) and a wide yellow glow that breathes with the wind; a finished day is
+  amber with a white tick. Badges are navy on blue discs and brown on warm ones. The name sits
+  on a rounded tag tucked over the foot of its disc (`CHECKPOINT_SHAPE.labelOverlap`), pale blue
+  under blue discs and cream under warm ones, in heavy navy or near-black. Proportions are in
+  `CHECKPOINT_SHAPE` (`constants/island-trail.ts`), colours in `CHECKPOINT_TINTS`; both were
+  sampled from the operator's images. The names are a point smaller than the mock's proportion
+  would make them on a phone (11 pt), to stay readable.
 - **The card is the operator's mock, like for like, with the plan's own content** (2026-10-03,
   the third card that day): deep night blue with a pale blue edge and a scatter of sparkles and
   dots (`PLAN_CARD_STARS`, its own set for the phone so no sparkle sits on the words), floating
@@ -969,12 +973,24 @@ island        PlanTrail (dashes along a Catmull-Rom curve through the checkpoint
   day practises patience.
 - **Progress is on the device only.** `learningPlanProgress` is persisted with the store and is
   not in the Phase 8 child sync; a second device starts the week afresh.
+- **The trail glows, like the operator's mock** (2026-10-03): small slim capsules (`TRAIL_DASH`,
+  13 × 8 painting units, 10 apart, sized against a checkpoint as in the mock). Under each leg runs
+  one continuous soft band of light (`plan-ribbon-<leg>`, a blurred round-capped stroke through
+  the leg's dashes): pale blue along the way ahead, warm along the legs walked. Each dash has a
+  tight glint of its own colour; the way ahead is lemon cream on a pale yellow glint, the legs
+  walked are near-white on an orange-gold glint, as in the mock's walked leg, so they still
+  read inside the open day's yellow glow. Each leg is its own curve from checkpoint to
+  checkpoint through one guide point (`ISLAND_TRAIL_VIA`), chosen so that no dash falls under a
+  disc, a number badge or a name on a 390×844 phone or an 834×1210 tablet, and so the curve
+  stays close to a straight line; `island-trail.test.ts` counts the hidden dashes (none, on
+  either) and keeps every dash above the step card. To reroute a leg, move its guide point and
+  run that test.
 - Seen in daylight and at night on an iPhone 17e, and on an iPad Pro 11, including Preview for a
   story (card, read, close, back on the island) and for a words day (game card, ✕, back on the
   island). Not yet seen: Android, Reduce Motion, the week-done card, a child older than four
   (word builder, number puzzles), a phone reading a previewed book through (the simulator could
   not be turned). By day the lit dashes are yellow on sand and green, and read less strongly
-  than at night; the operator has asked for glowing dots like their mock (next).
+  than at night; the glowing trail was seen by day on both, not yet at night.
 
 ## Story Garden (feature-flagged)
 
