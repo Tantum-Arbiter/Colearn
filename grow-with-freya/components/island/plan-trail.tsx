@@ -1,24 +1,44 @@
 import React, { memo, useMemo } from 'react';
 import { StyleSheet } from 'react-native';
-import Svg, { Rect } from 'react-native-svg';
+import Svg, { Defs, FeGaussianBlur, Filter, Path, Rect } from 'react-native-svg';
 import { ISLAND_ART } from '@/constants/island-art';
-import { ISLAND_TRAIL, TRAIL_DASH, trailDashes } from '@/constants/island-trail';
+import { ISLAND_TRAIL, ISLAND_TRAIL_VIA, TRAIL_DASH, trailDashes, type TrailDash } from '@/constants/island-trail';
 import type { IslandLayout } from '@/constants/island-scene';
 
-export const TRAIL_LIT = '#FFE27A';
-export const TRAIL_LIT_HALO = 'rgba(255, 226, 122, 0.38)';
-export const TRAIL_PALE = 'rgba(255, 255, 255, 0.78)';
+export const TRAIL_LIT = '#FFFBE0';
+export const TRAIL_PALE = '#FEF9CD';
+export const TRAIL_RIBBON = '#8EC5FF';
+export const TRAIL_RIBBON_LIT = '#FFE08A';
+export const TRAIL_GLINT_LIT = '#FFA81E';
+export const TRAIL_GLINT_AHEAD = '#F8EFA8';
+export const TRAIL_DASH_WIDTH = 8;
 
-const DASH_WIDTH = 15;
-const HALO_SPREAD = 10;
+const RIBBON = { width: 24, blur: 6, opacity: 0.85 } as const;
+const GLINT = { spread: 5, blur: 1.8, opacityLit: 1, opacityAhead: 0.85 } as const;
 
 export interface PlanTrailProps {
   layout: IslandLayout;
   litLegs: number;
 }
 
+function capsule(x: number, y: number, length: number, width: number) {
+  return { x: x - length / 2, y: y - width / 2, width: length, height: width, rx: width / 2 };
+}
+
+export function ribbonPath(points: readonly TrailDash[]): string {
+  const [first, ...rest] = points;
+  const after = rest.length > 0 ? rest : [first];
+
+  return `M ${first.x} ${first.y}${after.map((point) => ` L ${point.x} ${point.y}`).join('')}`;
+}
+
 export const PlanTrail = memo(function PlanTrail({ layout, litLegs }: PlanTrailProps) {
-  const dashes = useMemo(() => trailDashes(ISLAND_TRAIL, TRAIL_DASH), []);
+  const dashes = useMemo(() => trailDashes(ISLAND_TRAIL, TRAIL_DASH, ISLAND_TRAIL_VIA), []);
+  const legs = useMemo(() => {
+    const byLeg = new Map<number, TrailDash[]>();
+    dashes.forEach((dash) => byLeg.set(dash.leg, [...(byLeg.get(dash.leg) ?? []), dash]));
+    return [...byLeg.entries()];
+  }, [dashes]);
 
   return (
     <Svg
@@ -30,36 +50,53 @@ export const PlanTrail = memo(function PlanTrail({ layout, litLegs }: PlanTrailP
       viewBox={`0 0 ${ISLAND_ART.width} ${ISLAND_ART.height}`}
       preserveAspectRatio="none"
     >
+      <Defs>
+        <Filter id="plan-trail-glow" x="-50%" y="-50%" width="200%" height="200%">
+          <FeGaussianBlur stdDeviation={RIBBON.blur} />
+        </Filter>
+        <Filter id="plan-trail-glint" x="-100%" y="-100%" width="300%" height="300%">
+          <FeGaussianBlur stdDeviation={GLINT.blur} />
+        </Filter>
+      </Defs>
+      {legs.map(([leg, onLeg]) => (
+        <Path
+          key={`ribbon-${leg}`}
+          testID={`plan-ribbon-${leg}`}
+          d={ribbonPath(onLeg)}
+          fill="none"
+          stroke={leg < litLegs ? TRAIL_RIBBON_LIT : TRAIL_RIBBON}
+          strokeWidth={RIBBON.width}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          opacity={RIBBON.opacity}
+          filter="url(#plan-trail-glow)"
+        />
+      ))}
       {dashes.map((dash, index) => {
         const lit = dash.leg < litLegs;
         const rotate = `rotate(${dash.angle} ${dash.x} ${dash.y})`;
 
         return (
-          <React.Fragment key={index}>
-            {lit ? (
-              <Rect
-                x={dash.x - (TRAIL_DASH.length + HALO_SPREAD) / 2}
-                y={dash.y - (DASH_WIDTH + HALO_SPREAD) / 2}
-                width={TRAIL_DASH.length + HALO_SPREAD}
-                height={DASH_WIDTH + HALO_SPREAD}
-                rx={(DASH_WIDTH + HALO_SPREAD) / 2}
-                fill={TRAIL_LIT_HALO}
-                transform={rotate}
-              />
-            ) : null}
-            <Rect
-              testID={`plan-dash-${index}`}
-              x={dash.x - TRAIL_DASH.length / 2}
-              y={dash.y - DASH_WIDTH / 2}
-              width={TRAIL_DASH.length}
-              height={DASH_WIDTH}
-              rx={DASH_WIDTH / 2}
-              fill={lit ? TRAIL_LIT : TRAIL_PALE}
-              transform={rotate}
-            />
-          </React.Fragment>
+          <Rect
+            key={`glint-${index}`}
+            testID={`plan-glint-${index}`}
+            {...capsule(dash.x, dash.y, TRAIL_DASH.length + GLINT.spread, TRAIL_DASH_WIDTH + GLINT.spread)}
+            fill={lit ? TRAIL_GLINT_LIT : TRAIL_GLINT_AHEAD}
+            opacity={lit ? GLINT.opacityLit : GLINT.opacityAhead}
+            filter="url(#plan-trail-glint)"
+            transform={rotate}
+          />
         );
       })}
+      {dashes.map((dash, index) => (
+        <Rect
+          key={`dash-${index}`}
+          testID={`plan-dash-${index}`}
+          {...capsule(dash.x, dash.y, TRAIL_DASH.length, TRAIL_DASH_WIDTH)}
+          fill={dash.leg < litLegs ? TRAIL_LIT : TRAIL_PALE}
+          transform={`rotate(${dash.angle} ${dash.x} ${dash.y})`}
+        />
+      ))}
     </Svg>
   );
 });

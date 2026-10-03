@@ -1,11 +1,15 @@
-import { CHECKPOINT_DIAMETER_PHONE, checkpointReachBelow } from '@/components/island/plan-checkpoint';
+import { CHECKPOINT_DIAMETER_PHONE, CHECKPOINT_DIAMETER_TABLET } from '@/components/island/plan-checkpoint';
 import { PLAN_CARD, planCardTop } from '@/components/island/plan-panel';
 import { ISLAND_ART } from '@/constants/island-art';
 import { artPoint, islandLayout } from '@/constants/island-scene';
 import { PLAN_STEPS_PER_WEEK } from '@/constants/learning-plan';
 import {
   CHECKPOINT_LABEL_CLEARANCE,
+  CHECKPOINT_LABEL_GAP,
+  CHECKPOINT_SHAPE,
+  checkpointReachAbove,
   ISLAND_TRAIL,
+  ISLAND_TRAIL_VIA,
   TRAIL_DASH,
   checkpointLabelTop,
   trailDashes,
@@ -73,13 +77,13 @@ describe('the trail across the island', () => {
     const radius = CHECKPOINT_DIAMETER_PHONE / 2;
     const boxes = ISLAND_TRAIL.map((point, index) => {
       const centre = artPoint(point.x, point.y, layout);
-      const width = Math.round(PLACES[index].length * 12 * 0.56 + 28);
+      const width = Math.round(PLACES[index].length * 11 * 0.56 + 28);
       const left = Math.min(Math.max(centre.x - width / 2, 8), PHONE.width - 8 - width);
-      const label = checkpointLabelTop(centre.y, radius, LABEL_HEIGHT, cardTop - CHECKPOINT_LABEL_CLEARANCE);
+      const label = checkpointLabelTop(centre.y, CHECKPOINT_DIAMETER_PHONE, LABEL_HEIGHT, cardTop - CHECKPOINT_LABEL_CLEARANCE);
       return {
         centre,
         above: label.above,
-        disc: { left: centre.x - radius, right: centre.x + radius, top: centre.y - radius, bottom: centre.y + radius },
+        disc: { left: centre.x - radius, right: centre.x + radius, top: centre.y - checkpointReachAbove(CHECKPOINT_DIAMETER_PHONE), bottom: centre.y + radius },
         label: { left, right: left + width, top: label.top, bottom: label.top + LABEL_HEIGHT },
       };
     });
@@ -91,7 +95,7 @@ describe('the trail across the island', () => {
     const sideRoom = CHECKPOINT_DIAMETER_PHONE / 2 + 8;
 
     boxes.forEach((box) => {
-      expect(box.centre.y + checkpointReachBelow(CHECKPOINT_DIAMETER_PHONE)).toBeLessThanOrEqual(cardTop - 4);
+      expect(box.disc.bottom).toBeLessThanOrEqual(cardTop - 4);
       expect(box.label.bottom).toBeLessThanOrEqual(cardTop - 4);
       expect(box.centre.x).toBeGreaterThanOrEqual(sideRoom);
       expect(box.centre.x).toBeLessThanOrEqual(PHONE.width - sideRoom);
@@ -102,6 +106,63 @@ describe('the trail across the island', () => {
     const { boxes } = phoneMap();
 
     expect(boxes.map((box) => box.above)).toEqual([false, false, false, false, false, true, true]);
+  });
+
+  function dashesSeenOn(screen: { width: number; height: number; topInset: number; bottomInset: number }, diameter: number, font: number, cardHeight: number) {
+    const layout = islandLayout(screen);
+    const radius = diameter / 2;
+    const labelHeight = Math.round(font * 1.25 + 8);
+    const floor = planCardTop(screen.height, screen.bottomInset, cardHeight) - CHECKPOINT_LABEL_CLEARANCE;
+    const badge = (diameter * CHECKPOINT_SHAPE.badge) / 2;
+    const circles = ISLAND_TRAIL.flatMap((point) => {
+      const centre = artPoint(point.x, point.y, layout);
+      return [
+        { x: centre.x, y: centre.y, r: radius },
+        { x: centre.x, y: centre.y - radius - diameter * CHECKPOINT_SHAPE.badgeRise, r: badge },
+      ];
+    });
+    const labels: Box[] = ISLAND_TRAIL.map((point, index) => {
+      const centre = artPoint(point.x, point.y, layout);
+      const width = Math.round(PLACES[index].length * font * 0.56 + 28);
+      const left = Math.min(Math.max(centre.x - width / 2, 8), screen.width - 8 - width);
+      const top = checkpointLabelTop(centre.y, diameter, labelHeight, floor).top;
+      return { left, right: left + width, top, bottom: top + labelHeight };
+    });
+    const seen = new Map<number, { shown: number; all: number }>();
+    trailDashes(ISLAND_TRAIL, TRAIL_DASH, ISLAND_TRAIL_VIA).forEach((dash) => {
+      const at = artPoint(dash.x, dash.y, layout);
+      const hidden =
+        circles.some((circle) => Math.hypot(at.x - circle.x, at.y - circle.y) <= circle.r + 4) ||
+        labels.some((box) => at.x >= box.left - 4 && at.x <= box.right + 4 && at.y >= box.top - 4 && at.y <= box.bottom + 4);
+      const leg = seen.get(dash.leg) ?? { shown: 0, all: 0 };
+      seen.set(dash.leg, { shown: leg.shown + (hidden ? 0 : 1), all: leg.all + 1 });
+    });
+    return [...seen.values()];
+  }
+
+  it('shows every leg of the trail on a phone, wound round the names rather than under them', () => {
+    const legs = dashesSeenOn(PHONE, CHECKPOINT_DIAMETER_PHONE, 11, PLAN_CARD.phoneHeight);
+
+    expect(legs).toHaveLength(ISLAND_TRAIL.length - 1);
+    legs.forEach((leg) => {
+      expect(leg.shown).toBeGreaterThanOrEqual(4);
+      expect(leg.shown).toBe(leg.all);
+    });
+  });
+
+  it('shows every dash of the trail on a tablet', () => {
+    const legs = dashesSeenOn({ width: 834, height: 1210, topInset: 24, bottomInset: 20 }, CHECKPOINT_DIAMETER_TABLET, 13, PLAN_CARD.tabletHeight);
+
+    legs.forEach((leg) => expect(leg.shown).toBe(leg.all));
+  });
+
+  it('keeps every dash above the step card on a phone', () => {
+    const layout = islandLayout(PHONE);
+    const cardTop = planCardTop(PHONE.height, PHONE.bottomInset, PLAN_CARD.phoneHeight);
+
+    trailDashes(ISLAND_TRAIL, TRAIL_DASH, ISLAND_TRAIL_VIA).forEach((dash) => {
+      expect(artPoint(dash.x, dash.y, layout).y).toBeLessThan(cardTop - 12);
+    });
   });
 
   it('keeps every label clear of every other disc and label on a phone', () => {
@@ -127,20 +188,42 @@ describe('the trail across the island', () => {
 });
 
 describe('checkpointLabelTop', () => {
-  it('hangs a label just under its circle when there is room above the floor', () => {
-    expect(checkpointLabelTop(100, 28, 24, 200)).toEqual({ top: 132, above: false });
+  const DIAMETER = 56;
+  const tucked = (centreY: number) => centreY + DIAMETER / 2 - DIAMETER * CHECKPOINT_SHAPE.labelOverlap;
+
+  it('tucks a label over the foot of its circle when there is room above the floor', () => {
+    const label = checkpointLabelTop(100, DIAMETER, 24, 200);
+
+    expect(label.above).toBe(false);
+    expect(label.top).toBeCloseTo(tucked(100), 6);
+    expect(label.top).toBeLessThan(100 + DIAMETER / 2);
   });
 
-  it('sets it just over its circle when hanging it would cross the floor', () => {
-    expect(checkpointLabelTop(180, 28, 24, 200)).toEqual({ top: 124, above: true });
+  it('sets it over the number badge when tucking it would cross the floor', () => {
+    const label = checkpointLabelTop(180, DIAMETER, 24, 200);
+
+    expect(label.above).toBe(true);
+    expect(label.top + 24).toBeCloseTo(180 - checkpointReachAbove(DIAMETER) - CHECKPOINT_LABEL_GAP, 6);
   });
 
-  it('hangs it under when it ends exactly on the floor', () => {
-    expect(checkpointLabelTop(144, 28, 24, 200)).toEqual({ top: 176, above: false });
+  it('tucks it under when it ends exactly on the floor', () => {
+    expect(checkpointLabelTop(100, DIAMETER, 24, tucked(100) + 24).above).toBe(false);
   });
 
-  it('hangs it under when there is no floor', () => {
-    expect(checkpointLabelTop(800, 28, 24, Number.POSITIVE_INFINITY)).toEqual({ top: 832, above: false });
+  it('tucks it under when there is no floor', () => {
+    expect(checkpointLabelTop(800, DIAMETER, 24, Number.POSITIVE_INFINITY)).toEqual({ top: tucked(800), above: false });
+  });
+});
+
+describe('checkpointReachAbove', () => {
+  it('reaches from the centre to the top of the number badge, which sits on the circle`s top edge', () => {
+    const DIAMETER = 56;
+
+    expect(checkpointReachAbove(DIAMETER)).toBeCloseTo(
+      DIAMETER / 2 + DIAMETER * CHECKPOINT_SHAPE.badgeRise + (DIAMETER * CHECKPOINT_SHAPE.badge) / 2,
+      6
+    );
+    expect(checkpointReachAbove(DIAMETER)).toBeGreaterThan(DIAMETER / 2);
   });
 });
 
@@ -156,11 +239,35 @@ describe('trailPath', () => {
     expect(path).toHaveLength(3 * 20 + 1);
   });
 
-  it('is a curve, not a chain of straight lines', () => {
+  it('runs straight from checkpoint to checkpoint where no guide point bends it', () => {
     const path = trailPath(SQUARE, 20);
-    const halfway = path[10];
 
-    expect(halfway.y).not.toBeCloseTo(0, 1);
+    path.slice(0, 21).forEach((point) => expect(point.y).toBeCloseTo(0, 6));
+  });
+
+  it('bends through the guide points between two checkpoints', () => {
+    const path = trailPath([{ x: 0, y: 0 }, { x: 100, y: 0 }], 10, [[{ x: 50, y: 30 }]]);
+
+    expect(path[10]).toEqual({ x: 50, y: 30 });
+    expect(path[5].y).toBeGreaterThan(0);
+    expect(path[15].y).toBeGreaterThan(0);
+    expect(path[path.length - 1]).toEqual({ x: 100, y: 0 });
+    expect(path).toHaveLength(2 * 10 + 1);
+  });
+
+  it('sets off from a checkpoint heading for the leg`s first guide point', () => {
+    const path = trailPath([{ x: 0, y: 0 }, { x: 100, y: 100 }], 10, [[{ x: 100, y: 0 }]]);
+
+    const heading = (Math.atan2(path[1].y - path[0].y, path[1].x - path[0].x) * 180) / Math.PI;
+
+    expect(Math.abs(heading)).toBeLessThan(6);
+    expect(path[1].x).toBeGreaterThan(5);
+  });
+
+  it('lets each leg set off on its own, so turning back at a checkpoint does not swing the next leg past it', () => {
+    const path = trailPath([{ x: 100, y: 0 }, { x: 0, y: 0 }, { x: 50, y: 40 }], 20);
+
+    path.slice(20).forEach((point) => expect(point.x).toBeGreaterThanOrEqual(-1e-9));
   });
 
   it('is a straight line between two checkpoints', () => {
@@ -220,9 +327,21 @@ describe('trailDashes', () => {
     expect(trailDashes([{ x: 0, y: 0 }, { x: 10, y: 0 }], { length: 30, gap: 20, inset: 40 })).toEqual([]);
   });
 
+  it('follows the guide points, numbering its dashes by the checkpoints they run between', () => {
+    const LINE_WITH_BEND: TrailPoint[] = [{ x: 0, y: 0 }, { x: 300, y: 0 }, { x: 600, y: 0 }];
+    const dashes = trailDashes(LINE_WITH_BEND, { length: 30, gap: 20, inset: 0 }, [[{ x: 150, y: 60 }], []]);
+
+    expect(dashes.some((dash) => dash.leg === 0 && dash.y > 30)).toBe(true);
+    expect(dashes.filter((dash) => dash.leg === 1).every((dash) => Math.abs(dash.y) < 1e-6)).toBe(true);
+  });
+
+  it('has one list of guide points for each leg of the island`s trail', () => {
+    expect(ISLAND_TRAIL_VIA).toHaveLength(ISLAND_TRAIL.length - 1);
+  });
+
   it('is the same dash every time for the island itself', () => {
-    const once = trailDashes(ISLAND_TRAIL, TRAIL_DASH);
-    const again = trailDashes(ISLAND_TRAIL, TRAIL_DASH);
+    const once = trailDashes(ISLAND_TRAIL, TRAIL_DASH, ISLAND_TRAIL_VIA);
+    const again = trailDashes(ISLAND_TRAIL, TRAIL_DASH, ISLAND_TRAIL_VIA);
 
     expect(again).toEqual(once);
     expect(once.length).toBeGreaterThanOrEqual(14);
