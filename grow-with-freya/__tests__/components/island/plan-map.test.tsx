@@ -75,7 +75,6 @@ describe('PlanTrail', () => {
   const dashes = trailDashes(ISLAND_TRAIL, TRAIL_DASH, ISLAND_TRAIL_VIA);
   const paintingPerPoint = 1 / LAYOUT.scale;
   const disc = CHECKPOINT_DIAMETER_PHONE * paintingPerPoint;
-  const glintOf = (root: ReactTestInstance, index: number) => one(`plan-glint-${index}`, root);
 
   it('draws every dash of the trail over the painting, in the painting`s own coordinates', () => {
     const { UNSAFE_root: root } = render(<PlanTrail layout={LAYOUT} litLegs={0} />);
@@ -102,22 +101,42 @@ describe('PlanTrail', () => {
     expect(TRAIL_DASH.inset).toBeGreaterThanOrEqual(disc / 2 + 4);
   });
 
-  it('lays a soft band of light along each leg, under its dashes, as in the mock', () => {
+  const layersOf = (root: ReactTestInstance, prefix: string) =>
+    root
+      .findAll((node) => typeof node.props.testID === 'string' && node.props.testID.startsWith(`${prefix}-`) && node.parent?.props.testID !== node.props.testID)
+      .sort((a, b) => Number(a.props.testID.slice(prefix.length + 1)) - Number(b.props.testID.slice(prefix.length + 1)));
+  const together = (opacities: number[]) => 1 - opacities.reduce((clear, opacity) => clear * (1 - opacity), 1);
+
+  it('draws no SVG filter: a blur per dash froze the screen for 12 s as the island mounted on iOS', () => {
+    const { UNSAFE_root: root } = render(<PlanTrail layout={LAYOUT} litLegs={2} />);
+
+    expect(root.findAll((node) => node.props.testID === 'svg-Filter' || node.props.testID === 'svg-FeGaussianBlur')).toHaveLength(0);
+    expect(root.findAll((node) => node.props.filter !== undefined)).toHaveLength(0);
+  });
+
+  it('lays a soft band of light along each leg, under its dashes: many faint layers widening outward, so no edge shows', () => {
     const { UNSAFE_root: root } = render(<PlanTrail layout={LAYOUT} litLegs={2} />);
     const legs = [...new Set(dashes.map((dash) => dash.leg))];
 
-    expect(root.findAll((node) => node.props.testID === 'svg-FeGaussianBlur').length).toBeGreaterThanOrEqual(2);
     legs.forEach((leg) => {
-      const band = one(`plan-ribbon-${leg}`, root);
+      const layers = layersOf(root, `plan-ribbon-${leg}`);
       const onLeg = dashes.filter((dash) => dash.leg === leg);
-      expect(band.props.fill).toBe('none');
-      expect(band.props.stroke).toBe(leg < 2 ? TRAIL_RIBBON_LIT : TRAIL_RIBBON);
-      expect(band.props.strokeWidth).toBeGreaterThanOrEqual(TRAIL_DASH_WIDTH * 2.5);
-      expect(band.props.strokeLinecap).toBe('round');
-      expect(band.props.filter).toBe('url(#plan-trail-glow)');
-      expect(band.props.opacity).toBeGreaterThanOrEqual(0.8);
-      expect(band.props.d.startsWith(`M ${onLeg[0].x} ${onLeg[0].y}`)).toBe(true);
-      expect((band.props.d.match(/L /g) ?? []).length).toBe(Math.max(1, onLeg.length - 1));
+      const widths = layers.map((layer) => layer.props.strokeWidth);
+      const opacities = layers.map((layer) => layer.props.opacity);
+
+      expect(layers.length).toBeGreaterThanOrEqual(5);
+      layers.forEach((layer) => {
+        expect(layer.props.opacity).toBeLessThanOrEqual(0.15);
+        expect(layer.props.fill).toBe('none');
+        expect(layer.props.stroke).toBe(leg < 2 ? TRAIL_RIBBON_LIT : TRAIL_RIBBON);
+        expect(layer.props.strokeLinecap).toBe('round');
+        expect(layer.props.d.startsWith(`M ${onLeg[0].x} ${onLeg[0].y}`)).toBe(true);
+        expect((layer.props.d.match(/L /g) ?? []).length).toBe(Math.max(1, onLeg.length - 1));
+      });
+      widths.slice(1).forEach((width, index) => expect(width).toBeLessThan(widths[index]));
+      expect(widths[0]).toBeGreaterThanOrEqual(TRAIL_DASH_WIDTH * 4);
+      expect(widths[widths.length - 1]).toBeGreaterThanOrEqual(TRAIL_DASH_WIDTH * 2.5);
+      expect(together(opacities)).toBeGreaterThanOrEqual(0.5);
     });
   });
 
@@ -126,23 +145,32 @@ describe('PlanTrail', () => {
     expect(ribbonPath([{ x: 10, y: 20, angle: 0, leg: 0 }, { x: 30, y: 40, angle: 0, leg: 0 }])).toBe('M 10 20 L 30 40');
   });
 
-  it('rings each dash with a tight glint of its own colour: gold where walked, lemon ahead', () => {
+  it('rings each dash with a tight glint of its own colour, softening outward: gold where walked, lemon ahead', () => {
     const { UNSAFE_root: root } = render(<PlanTrail layout={LAYOUT} litLegs={2} />);
 
     dashes.forEach((dash, index) => {
-      const glint = glintOf(root, index);
+      const layers = layersOf(root, `plan-glint-${index}`);
       const core = one(`plan-dash-${index}`, root);
-      expect(glint.props.height).toBeGreaterThan(core.props.height);
-      expect(glint.props.height).toBeLessThan(core.props.height * 2);
-      expect(glint.props.filter).toBe('url(#plan-trail-glint)');
-      expect(glint.props.fill).toBe(dash.leg < 2 ? TRAIL_GLINT_LIT : TRAIL_GLINT_AHEAD);
+      const heights = layers.map((layer) => layer.props.height);
+
+      expect(layers.length).toBeGreaterThanOrEqual(2);
+      layers.forEach((layer) => {
+        expect(layer.props.width).toBeGreaterThan(core.props.width);
+        expect(layer.props.height).toBeGreaterThan(core.props.height);
+        expect(layer.props.fill).toBe(dash.leg < 2 ? TRAIL_GLINT_LIT : TRAIL_GLINT_AHEAD);
+        expect(layer.props.transform).toBe(core.props.transform);
+      });
+      heights.slice(1).forEach((height, i) => expect(height).toBeLessThan(heights[i]));
+      expect(heights[heights.length - 1]).toBeLessThan(core.props.height * 2);
+      expect(layers[0].props.opacity).toBeLessThan(layers[layers.length - 1].props.opacity);
     });
   });
 
   it('draws every band, then the glints, then the dashes, so each dash sits on its light', () => {
     const { UNSAFE_root: root } = render(<PlanTrail layout={LAYOUT} litLegs={1} />);
-    const last = dashes.length - 1;
-    const ids = ['plan-ribbon-0', `plan-ribbon-${dashes[last].leg}`, 'plan-glint-0', 'plan-dash-0'];
+    const lastLeg = dashes[dashes.length - 1].leg;
+    const lastBand = layersOf(root, `plan-ribbon-${lastLeg}`).length - 1;
+    const ids = ['plan-ribbon-0-0', `plan-ribbon-${lastLeg}-${lastBand}`, 'plan-glint-0-0', 'plan-glint-0-1', 'plan-dash-0'];
 
     const order = root
       .findAll((node) => ids.includes(node.props.testID) && node.parent?.props.testID !== node.props.testID)
@@ -155,9 +183,10 @@ describe('PlanTrail', () => {
     const { UNSAFE_root: root } = render(<PlanTrail layout={LAYOUT} litLegs={2} />);
     const walked = dashes.findIndex((dash) => dash.leg < 2);
     const ahead = dashes.findIndex((dash) => dash.leg >= 2);
+    const brightest = (index: number) => Math.max(...layersOf(root, `plan-glint-${index}`).map((layer) => layer.props.opacity));
 
-    expect(glintOf(root, walked).props.opacity).toBeGreaterThan(glintOf(root, ahead).props.opacity);
-    expect(glintOf(root, ahead).props.opacity).toBeGreaterThanOrEqual(0.5);
+    expect(brightest(walked)).toBeGreaterThan(brightest(ahead));
+    expect(brightest(ahead)).toBeGreaterThanOrEqual(0.5);
   });
 
   it('lights the walked legs as in the mock, near-white cores in an orange-gold glint, and the way ahead in lemon cream', () => {
