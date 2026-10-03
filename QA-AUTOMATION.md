@@ -86,8 +86,9 @@ com.growwithfreya.app://?e2e=1&onboarded=1&guest=1&tutorials=done&screenTime=res
 It is a link to the page the app already opens on, carrying an `e2e` flag, because expo-router owns
 deep links and answers a path it does not know with its "Unmatched" screen. Parameters: `reset`
 (wipe first), `onboarded`, `guest`, `tutorials=done|fresh`, `screenTime=reset`, `language`, `tier`,
-`childAgeMonths`, `nickname`, `progress=clear` (every book back to its first page). Anything the
-link leaves out is left alone. `.maestro/helpers/start-seeded.yaml`
+`childAgeMonths`, `nickname`, `progress=clear` (every book back to its first page), `planDone=0..7`
+(the first N days of the island's learning plan done yesterday, so day N+1 is open today; 0 clears
+the plan). Anything the link leaves out is left alone. `.maestro/helpers/start-seeded.yaml`
 does this for every flow; seeding took the home flow from 63 seconds to 15.
 
 The scheme differs by platform. The iOS development build answers only `com.growwithfreya.app://`;
