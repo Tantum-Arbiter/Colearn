@@ -767,9 +767,32 @@ How it holds together:
   and raises the sun. The controller runs them in time and changes phase on JS timers of the
   same length.
 - **The page changes only under full cloud**, and at once: `island` is in `INSTANT_PAGES`, so
-  `EnhancedPageTransition` places it without a slide. The island is mounted half a second into
-  the leaving (`PREWARMED_FOR_THE_ISLAND`) and says when its picture has loaded; the cloud waits
-  for that, for at most `crossingMaxMs`.
+  `EnhancedPageTransition` places it without a slide. The island is mounted there too, under the
+  shut cloud (`prewarmedDuring(phase)` keeps it unmounted while `home` and `leaving`), and says it
+  is ready once its picture has loaded and two frames have been drawn; the cloud waits for that,
+  for at most `crossingMaxMs`.
+- **No work lands on a moving frame** (2026-10-03, after the operator saw the voyage jitter).
+  Each rule below came from a recording of the first trip after launch on an iPhone 16 Pro
+  simulator, reading the gaps in `xcrun simctl io recordVideo`'s frame timestamps:
+  - A phase's motion and its timers start from an effect after the phase has been drawn, and
+    only once `whenCalm` (`utils/when-calm.ts`) has seen three frames come on time: at most
+    `CALM.maxWaitMs` (500 ms) for a motion that starts under the cloud (`arriving`, `landing`),
+    `CALM.afterTapMs` (200 ms) for one a tap starts (`leaving`, `returning`). Started first, the
+    phase's re-render landed on the motion's opening frames: 60-100 ms hitches at the tap and as
+    the cloud parted.
+  - The island and the home count as settled (their trees, waves, sky and sun start moving) only
+    once they have arrived: the island not while `crossing` or `arriving`, the home not while
+    `recrossing` or `landing`. Counted from the page switch, both started 0.8 s later, mid-arrival.
+  - `EnhancedPageTransition` warms only pages that are not already showing; warming the island
+    while the child was on it re-rendered every page 1.2 s after the switch, mid-arrival.
+  - The header and the step card are never fully transparent (`CHROME_TRACE`, 1%), so iOS draws
+    them under the cloud rather than for the first time as they begin to fade in.
+  Measured on the first trip after launch: the dive went from 17 frames lost (worst 168 ms) to
+  1-6 (worst under 40 ms, and none while anything was moving in the last run); the arrival from a
+  72 ms hitch as the cloud parted to 1-4 frames lost, worst 25-40 ms. The work is still there; it
+  happens under the shut cloud, which now holds about a second rather than half of one. The Mac
+  was swapping heavily throughout, so small single hitches varied from run to run; the trip home
+  was measured once, before its fixes.
 - **The zoom is about the foot of the screen**, which is where the earth's centre is
   (`constants/earth.ts`), far enough to bring the globe past the far corners (`voyageMaxZoom`).
   The sun is zoomed in a layer of its own so it stays above the scroll view and can still be
@@ -975,11 +998,17 @@ island        PlanTrail (glowing dashes along each leg's own curve through its g
   not in the Phase 8 child sync; a second device starts the week afresh.
 - **The trail glows, like the operator's mock** (2026-10-03): small slim capsules (`TRAIL_DASH`,
   13 × 8 painting units, 10 apart, sized against a checkpoint as in the mock). Under each leg runs
-  one continuous soft band of light (`plan-ribbon-<leg>`, a blurred round-capped stroke through
-  the leg's dashes): pale blue along the way ahead, warm along the legs walked. Each dash has a
-  tight glint of its own colour; the way ahead is lemon cream on a pale yellow glint, the legs
-  walked are near-white on an orange-gold glint, as in the mock's walked leg, so they still
-  read inside the open day's yellow glow. Each leg is its own curve from checkpoint to
+  one continuous soft band of light (`plan-ribbon-<leg>-<layer>`, six faint round-capped strokes
+  through the leg's dashes, widening and fading outward): pale blue along the way ahead, warm
+  along the legs walked. Each dash has a tight glint of its own colour, two capsules that soften
+  outward; the way ahead is lemon cream on a pale yellow glint, the legs walked are near-white
+  on an orange-gold glint, as in the mock's walked leg, so they still read inside the open day's
+  yellow glow. **The trail draws no SVG filter.** The first version blurred every band and glint
+  with `FeGaussianBlur`; on iOS that blocked the main thread for about 12 s when the island was
+  mounted, then half a second into the voyage, so the dive froze before
+  the clouds came in. The stacked layers look the same and the longest freeze is now 0.24 s on
+  the iPhone 17e and 0.29 s on the iPad Pro 11, first trip after launch. `plan-map.test.tsx`
+  fails if any filter comes back. Each leg is its own curve from checkpoint to
   checkpoint through one guide point (`ISLAND_TRAIL_VIA`), chosen so that no dash falls under a
   disc, a number badge or a name on a 390×844 phone or an 834×1210 tablet, and so the curve
   stays close to a straight line; `island-trail.test.ts` counts the hidden dashes (none, on
