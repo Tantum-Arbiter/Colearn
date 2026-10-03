@@ -1,6 +1,8 @@
 import { ISLAND_ART } from '@/constants/island-art';
+import { ISLAND_ART_PHONE } from '@/constants/island-art-phone';
 import {
   GULL_COURSES,
+  GULL_COURSES_PHONE,
   ISLAND_LIFE,
   beamReach,
   billowSwell,
@@ -424,42 +426,45 @@ describe('waterGlow', () => {
   });
 });
 
-describe('the gulls', () => {
+describe.each([
+  ['on a tablet', GULL_COURSES, ISLAND_ART],
+  ['on a phone', GULL_COURSES_PHONE, ISLAND_ART_PHONE],
+] as const)('the gulls %s', (_device, COURSES, ART) => {
   it('are a few, not a flock', () => {
-    expect(GULL_COURSES.length).toBeGreaterThanOrEqual(3);
-    expect(GULL_COURSES.length).toBeLessThanOrEqual(5);
+    expect(COURSES.length).toBeGreaterThanOrEqual(3);
+    expect(COURSES.length).toBeLessThanOrEqual(5);
   });
 
-  it.each(GULL_COURSES.map((course, index) => [index, course] as const))('gull %i begins and ends out of sight, off either side of the painting', (_index, course) => {
+  it.each(COURSES.map((course, index) => [index, course] as const))('gull %i begins and ends out of sight, off either side of the painting', (_index, course) => {
     const margin = course.size;
 
     expect(Math.min(course.fromX, course.toX)).toBeLessThanOrEqual(-margin);
-    expect(Math.max(course.fromX, course.toX)).toBeGreaterThanOrEqual(ISLAND_ART.width + margin);
+    expect(Math.max(course.fromX, course.toX)).toBeGreaterThanOrEqual(ART.width + margin);
   });
 
-  it.each(GULL_COURSES.map((course, index) => [index, course] as const))('gull %i stays inside the painting from top to bottom, bob and all', (_index, course) => {
+  it.each(COURSES.map((course, index) => [index, course] as const))('gull %i stays inside the painting from top to bottom, bob and all', (_index, course) => {
     STEPS.forEach((progress) => {
       const place = gullPlace(progress, course);
 
       expect(place.y).toBeGreaterThan(course.size);
-      expect(place.y).toBeLessThan(ISLAND_ART.height - course.size);
+      expect(place.y).toBeLessThan(ART.height - course.size);
     });
   });
 
-  it.each(GULL_COURSES.map((course, index) => [index, course] as const))('gull %i crosses in a whole number of laps, so the sky can turn for ever', (_index, course) => {
+  it.each(COURSES.map((course, index) => [index, course] as const))('gull %i crosses in a whole number of laps, so the sky can turn for ever', (_index, course) => {
     expect(Number.isInteger(course.laps)).toBe(true);
     expect(course.laps).toBeGreaterThanOrEqual(1);
     expect(ISLAND_LIFE.skyMs / course.laps).toBeGreaterThanOrEqual(14000);
   });
 
   it('do not all set off together', () => {
-    const lags = GULL_COURSES.map((course) => gullProgress(0, course));
+    const lags = COURSES.map((course) => gullProgress(0, course));
 
-    expect(new Set(lags.map((lag) => lag.toFixed(2))).size).toBe(GULL_COURSES.length);
+    expect(new Set(lags.map((lag) => lag.toFixed(2))).size).toBe(COURSES.length);
   });
 
   describe('gullProgress', () => {
-    const course = { ...GULL_COURSES[0], laps: 3, lag: 0.25 };
+    const course = { ...COURSES[0], laps: 3, lag: 0.25 };
 
     it.each([
       [0, 0.25],

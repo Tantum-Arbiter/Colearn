@@ -80,8 +80,16 @@ lamps stand by the houses and on the posts of the bridge, and nowhere else
 (operator, 2026-10-02); the script stops if one is on water or on a tree that
 sways.
 
+There are two paintings of the island. Tablets show the first, which is wide.
+Phones show a second, made for a tall screen (operator, 2026-10-03), stored as
+assets/images/island-phone/island.webp. Everything above is done the same way
+for both; only what is read off each painting differs, and that is written down
+twice: once below for the tablet painting, and once in PHONE for the phone's.
+The phone's layers go to assets/images/island-phone/ and its places to
+constants/island-art-phone.ts.
+
 Usage:
-    python3 scripts/prepare-island-art.py [--debug <dir>]
+    python3 scripts/prepare-island-art.py [--art tablet|phone] [--debug <dir>]
 
 With --debug, pictures for checking by eye are written: the layers put back
 together at rest and with everything moved as far as it goes, with a sun and
@@ -100,6 +108,12 @@ APP_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ART_DIR = os.path.join(APP_ROOT, 'assets', 'images', 'island')
 PICTURE = os.path.join(ART_DIR, 'island.webp')
 MODULE_PATH = os.path.join(APP_ROOT, 'constants', 'island-art.ts')
+ASSET_FOLDER = 'island'
+EXPORT_NAME = 'ISLAND_ART'
+OWN_TYPES = True
+DEBUG_FACES = (('moon-phone', 'moon', 324), ('moon-tablet', 'moon', 426), ('sun-tablet', 'sun', 426))
+DEBUG_NIGHT_FACE = 426
+DEBUG_TOP = 620
 MADE_HERE = ('island-base', 'island-land', 'island-horizon', 'island-cloud-', 'island-billow-', 'island-tree-',
              'island-water-', 'island-fall-', 'island-pool-', 'island-ring', 'island-spray', 'island-lit-', 'island-lamp-')
 
@@ -237,6 +251,71 @@ POOLS = [
 POOL_RING = (256, 116)
 
 
+PHONE = {
+    'ART_DIR': os.path.join(APP_ROOT, 'assets', 'images', 'island-phone'),
+    'PICTURE': os.path.join(APP_ROOT, 'assets', 'images', 'island-phone', 'island.webp'),
+    'MODULE_PATH': os.path.join(APP_ROOT, 'constants', 'island-art-phone.ts'),
+    'ASSET_FOLDER': 'island-phone',
+    'EXPORT_NAME': 'ISLAND_ART_PHONE',
+    'OWN_TYPES': False,
+    'DEBUG_FACES': (('moon-iphone-16-pro', 'moon', 384), ('moon-iphone-se', 'moon', 470), ('sun-iphone-16-pro', 'sun', 384)),
+    'DEBUG_NIGHT_FACE': 384,
+    'DEBUG_TOP': 760,
+    'BAND_TOP': 518,
+    'BAND_BOTTOM': 720,
+    'SEA_LINE': 628,
+    'SUN_X': 520,
+    'FACE_FLOOR': 590,
+    'MOUNTAINS': [(100, 660), (122, 610), (160, 575), (214, 524), (240, 547), (268, 559), (312, 586), (345, 566),
+                  (374, 548), (410, 577), (452, 613), (488, 644), (522, 690), (522, 760), (100, 760)],
+    'CLOUDS': {
+        'left': {'within': (0, 200, 370, 640), 'red': 48, 'reach': -12, 'beats': 3, 'lag': 0.15, 'near': False},
+        'horizon': {'within': (370, 230, 941, 670), 'red': 100, 'reach': 7, 'beats': 2, 'lag': 0.0, 'near': True},
+    },
+    'CLOUD_BANK': (604, 570, 702, 630),
+    'CLOUD_FILLS': [
+        {'left': 412, 'foot': 626, 'scale': 0.62, 'turned': True},
+        {'left': 548, 'foot': 634, 'scale': 1.0, 'turned': False},
+        {'left': 612, 'foot': 636, 'scale': 1.05, 'turned': True},
+        {'left': 290, 'foot': 606, 'scale': 0.5, 'turned': False},
+    ],
+    'BILLOWS': {},
+    'GULLS': [(855, 740, 899, 765), (876, 795, 912, 816), (870, 1027, 904, 1048), (701, 1233, 749, 1254)],
+    'TREES': [
+        {'box': (466, 607, 506, 662), 'kind': 'pine'},
+        {'box': (503, 623, 532, 662), 'kind': 'pine'},
+        {'box': (538, 645, 565, 676), 'kind': 'pine'},
+        {'box': (405, 628, 436, 676), 'kind': 'pine'},
+        {'box': (620, 672, 650, 715), 'kind': 'pine'},
+        {'box': (55, 562, 112, 660), 'kind': 'pine'},
+        {'box': (8, 585, 52, 648), 'kind': 'pine'},
+        {'box': (115, 618, 145, 668), 'kind': 'pine'},
+        {'box': (142, 622, 175, 670), 'kind': 'pine'},
+        {'box': (184, 648, 216, 698), 'kind': 'pine'},
+        {'box': (648, 920, 678, 970), 'kind': 'pine'},
+        {'box': (714, 950, 750, 1003), 'kind': 'pine'},
+        {'box': (212, 1093, 292, 1142), 'kind': 'palm', 'among_leaves': True, 'pivot': (252, 1118)},
+        {'box': (821, 1169, 869, 1204), 'kind': 'palm', 'pivot': (846, 1190)},
+        {'box': (867, 1175, 921, 1218), 'kind': 'palm', 'pivot': (894, 1200)},
+        {'box': (809, 1208, 848, 1230), 'kind': 'palm', 'pivot': (828, 1218)},
+    ],
+    'FALLS': [{'box': (55, 995, 130, 1102), 'spray': (105, 1105, 60)}],
+    'POOLS': [{'box': (110, 1100, 240, 1170), 'ring': (175, 1140, 90)}],
+    'WINDOWS': [
+        (496, 831, 4, 6), (511, 833, 2, 4), (525, 829, 2, 6), (493, 816, 2, 3),
+        (465, 1016, 2, 7), (480, 1021, 2, 3), (491, 1023, 2, 5), (506, 1018, 2, 6), (500, 1006, 2, 6),
+        (832, 809, 3, 6), (840, 810, 4, 5), (848, 809, 2, 5), (831, 842, 3, 6), (847, 844, 2, 7),
+        (829, 874, 3, 7), (848, 880, 3, 6), (870, 894, 2, 5), (881, 884, 2, 3),
+    ],
+    'VILLAGE_LAMPS': [
+        (486, 845), (534, 843), (457, 1033), (522, 1031), (893, 903),
+        (158, 1171), (172, 1189), (239, 1160), (255, 1172), (284, 1160),
+    ],
+    'LIGHTHOUSE_LAMP': (840, 810),
+}
+PAINTINGS = {'tablet': {}, 'phone': PHONE}
+
+
 def sky_of(pixels):
     red, blue = pixels[..., 0], pixels[..., 2]
     blue_enough = (blue >= SKY_BLUE_AT_LEAST) & (red <= SKY_RED_AT_MOST) & (blue - red >= SKY_BLUE_OVER_RED)
@@ -363,6 +442,8 @@ def cloud_bank(cloud_layer):
 
 
 def filled_out(cloud_layer):
+    if not CLOUD_FILLS:
+        return cloud_layer
     bank = cloud_bank(cloud_layer)
     further_off = Image.new('RGBA', cloud_layer.size, (0, 0, 0, 0))
 
@@ -707,10 +788,9 @@ def take_apart(picture):
 
 def write_module(picture, parts):
     def source(name):
-        return f"require('@/assets/images/island/{name}.webp')"
+        return f"require('@/assets/images/{ASSET_FOLDER}/{name}.webp')"
 
-    lines = [
-        '// Written by scripts/prepare-island-art.py. Change the script, not this file.',
+    types = [
         "import type { ImageSourcePropType } from 'react-native';",
         '',
         'export interface ArtFrame {',
@@ -810,7 +890,13 @@ def write_module(picture, parts):
         '  readonly lighthouse: IslandLampArt;',
         '}',
         '',
-        'export const ISLAND_ART: IslandArt = {',
+    ]
+    if not OWN_TYPES:
+        types = ["import type { IslandArt } from '@/constants/island-art';", '']
+    lines = [
+        '// Written by scripts/prepare-island-art.py. Change the script, not this file.',
+        *types,
+        f'export const {EXPORT_NAME}: IslandArt = {{',
         f"  picture: {source('island-base')},",
         f"  horizon: {source('island-land')},",
         f'  width: {picture.width},',
@@ -946,7 +1032,7 @@ def write_debug(folder, picture, base, land, parts):
           f'{(difference > 40).mean() * 100:.2f}% of it by more than 40')
     Image.fromarray(np.clip(difference * 4, 0, 255).astype(np.uint8)).save(os.path.join(folder, 'difference.png'))
 
-    night = np.asarray(put_together(base, land, parts, 0, 0, moon, 426)).astype(np.float32)
+    night = np.asarray(put_together(base, land, parts, 0, 0, moon, DEBUG_NIGHT_FACE)).astype(np.float32)
     night = night * (1 - NIGHT[1]) + np.array(NIGHT[0], dtype=np.float32) * NIGHT[1]
     night = Image.fromarray(night.astype(np.uint8)).convert('RGBA')
     for sheet in [parts['windows']] + parts['village']:
@@ -974,16 +1060,19 @@ def write_debug(folder, picture, base, land, parts):
 
     put_together(base, land, parts, 1, 1).save(os.path.join(folder, 'moved.png'))
     put_together(base, land, parts, 1, -1).save(os.path.join(folder, 'moved-back.png'))
-    for name, face, width in (('moon-phone', moon, 324), ('moon-tablet', moon, 426), ('sun-tablet', sun, 426)):
+    for name, which, width in DEBUG_FACES:
+        face = moon if which == 'moon' else sun
         for moved in (0, 1):
-            put_together(base, land, parts, moved, moved, face, width).crop((0, 0, picture.width, 620)).save(
+            put_together(base, land, parts, moved, moved, face, width).crop((0, 0, picture.width, DEBUG_TOP)).save(
                 os.path.join(folder, f'{name}-{"moved" if moved else "rest"}.png'))
 
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument('--art', choices=sorted(PAINTINGS), default='tablet')
     parser.add_argument('--debug')
     arguments = parser.parse_args()
+    globals().update(PAINTINGS[arguments.art])
 
     picture = Image.open(PICTURE).convert('RGB')
     base, land, parts = take_apart(picture)

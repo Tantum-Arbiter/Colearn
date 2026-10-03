@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
-import { ISLAND_ART, type IslandSheetArt } from '@/constants/island-art';
+import { ISLAND_ART, type IslandArt, type IslandSheetArt } from '@/constants/island-art';
 import { beamReach, lampFlare, pulseRing, villageGlow } from '@/constants/island-life';
 import { artFrame, artPoint, type IslandLayout } from '@/constants/island-scene';
 import { MoonlitImage } from './moonlit-image';
@@ -30,12 +30,13 @@ const LampSheet = memo(function LampSheet({ sheet, index, layout, lamp }: LampSh
 });
 
 export interface IslandLightsProps {
+  art?: IslandArt;
   layout: IslandLayout;
   lamp: SharedValue<number>;
 }
 
-export const IslandLights = memo(function IslandLights({ layout, lamp }: IslandLightsProps) {
-  const { lighthouse, litWindows, villageLamps } = ISLAND_ART;
+export const IslandLights = memo(function IslandLights({ art = ISLAND_ART, layout, lamp }: IslandLightsProps) {
+  const { lighthouse, litWindows, villageLamps } = art;
   const at = artPoint(lighthouse.x, lighthouse.y, layout);
   const glow = lighthouse.glowSize * layout.scale;
   const length = lighthouse.beamLength * layout.scale;

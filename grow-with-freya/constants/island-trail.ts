@@ -35,6 +35,25 @@ export const ISLAND_TRAIL_VIA: readonly (readonly TrailPoint[])[] = [
   [{ x: 496, y: 936 }],
 ];
 
+export const ISLAND_TRAIL_PHONE: readonly TrailPoint[] = [
+  { x: 796, y: 682 },
+  { x: 482, y: 713 },
+  { x: 225, y: 757 },
+  { x: 412, y: 930 },
+  { x: 793, y: 1003 },
+  { x: 607, y: 1056 },
+  { x: 220, y: 1043 },
+];
+
+export const ISLAND_TRAIL_VIA_PHONE: readonly (readonly TrailPoint[])[] = [
+  [{ x: 639, y: 698 }],
+  [{ x: 354, y: 735 }],
+  [{ x: 278, y: 868 }],
+  [{ x: 602, y: 958 }],
+  [{ x: 700, y: 974 }],
+  [{ x: 414, y: 1050 }],
+];
+
 export const CHECKPOINT_LABEL_GAP = 4;
 export const CHECKPOINT_LABEL_CLEARANCE = 8;
 
@@ -56,6 +75,7 @@ export function checkpointLabelTop(centreY: number, diameter: number, labelHeigh
 }
 
 export const TRAIL_DASH: DashSpacing = { length: 13, gap: 10, inset: 52 };
+export const TRAIL_DASH_PHONE: DashSpacing = { length: 16, gap: 12, inset: 76 };
 
 const SAMPLES_PER_LEG = 40;
 

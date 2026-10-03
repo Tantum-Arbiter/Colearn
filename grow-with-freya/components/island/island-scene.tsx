@@ -14,7 +14,7 @@ import {
 import { HeroSunContainer } from '@/components/home/hero-sun-container';
 import { heroMotionMode } from '@/constants/home-sky';
 import type { TimeOfDay } from '@/constants/home-scene';
-import { ISLAND_ART } from '@/constants/island-art';
+import { islandMapFor } from '@/constants/island-map';
 import { CHECKPOINT_LABEL_CLEARANCE } from '@/constants/island-trail';
 import { ISLAND_NIGHT, ISLAND_SKY, islandLayout } from '@/constants/island-scene';
 import { chromeOpacity, islandScale, sunRise } from '@/constants/island-voyage';
@@ -65,11 +65,12 @@ export const IslandScene = memo(function IslandScene({
   const settled = useSettledAfterTransition(isActive && !arriving);
   const [loaded, setLoaded] = useState(false);
   const clocks = useIslandClocks(settled && !reduceMotion);
-  const plan = useLearningPlan(isActive);
+  const map = islandMapFor(isTablet);
+  const plan = useLearningPlan(isActive, map.trail);
 
   const time = timeOfDay ?? clockTimeOfDay;
   const night = time === 'night';
-  const layout = useMemo(() => islandLayout({ width, height, topInset: insets.top }), [width, height, insets.top]);
+  const layout = useMemo(() => islandLayout({ width, height, topInset: insets.top }, map.art), [width, height, insets.top, map]);
   const riseFrom = layout.riseFrom;
 
   useEffect(() => {
@@ -117,7 +118,7 @@ export const IslandScene = memo(function IslandScene({
       <Animated.View testID="island-stage" style={[styles.fill, stage]}>
         <Image
           testID="island-picture"
-          source={ISLAND_ART.picture}
+          source={map.art.picture}
           style={[styles.layer, layout.picture]}
           contentFit="fill"
           transition={0}
@@ -127,15 +128,15 @@ export const IslandScene = memo(function IslandScene({
           onLoad={handleLoad}
         />
 
-        <IslandWater layout={layout} ripple={clocks.ripple} />
-        <IslandWaterfalls layout={layout} clock={clocks.fall} />
-        {ISLAND_ART.lowTrees.map((tree, index) => (
+        <IslandWater art={map.art} layout={layout} ripple={clocks.ripple} />
+        <IslandWaterfalls art={map.art} layout={layout} clock={clocks.fall} />
+        {map.art.lowTrees.map((tree, index) => (
           <SwayingTree key={tree.id} tree={tree} layout={layout} wind={clocks.wind} index={index} />
         ))}
-        {ISLAND_ART.farClouds.map((cloud) => (
+        {map.art.farClouds.map((cloud) => (
           <DriftingCloud key={cloud.id} cloud={cloud} layout={layout} tide={clocks.tide} />
         ))}
-        {ISLAND_ART.billows.map((billow, index) => (
+        {map.art.billows.map((billow, index) => (
           <BillowingCloud key={billow.id} billow={billow} layout={layout} tide={clocks.tide} index={index} />
         ))}
 
@@ -162,33 +163,34 @@ export const IslandScene = memo(function IslandScene({
           </Animated.View>
         </View>
 
-        {ISLAND_ART.nearClouds.map((cloud) => (
+        {map.art.nearClouds.map((cloud) => (
           <DriftingCloud key={cloud.id} cloud={cloud} layout={layout} tide={clocks.tide} night={night} />
         ))}
-        <MoonlitImage testID="island-horizon" source={ISLAND_ART.horizon} frame={layout.band} night={night} />
-        {ISLAND_ART.horizonTrees.map((tree, index) => (
+        <MoonlitImage testID="island-horizon" source={map.art.horizon} frame={layout.band} night={night} />
+        {map.art.horizonTrees.map((tree, index) => (
           <SwayingTree
             key={tree.id}
             tree={tree}
             layout={layout}
             wind={clocks.wind}
-            index={ISLAND_ART.lowTrees.length + index}
+            index={map.art.lowTrees.length + index}
             night={night}
           />
         ))}
         {night ? (
-          <IslandLights layout={layout} lamp={clocks.lamp} />
+          <IslandLights art={map.art} layout={layout} lamp={clocks.lamp} />
         ) : (
-          <IslandGulls layout={layout} sky={clocks.sky} beat={clocks.beat} />
+          <IslandGulls courses={map.gulls} layout={layout} sky={clocks.sky} beat={clocks.beat} />
         )}
 
-        <PlanTrail layout={layout} litLegs={litLegs} />
+        <PlanTrail map={map} layout={layout} litLegs={litLegs} />
         {plan.steps.map((view) => (
           <PlanCheckpoint
             key={view.step.id}
             view={view}
             layout={layout}
             screenWidth={width}
+            screenHeight={height}
             onPress={handleStart}
             pulse={clocks.wind}
             labelFloor={labelFloor}

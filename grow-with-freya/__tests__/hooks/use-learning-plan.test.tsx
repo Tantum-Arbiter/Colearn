@@ -1,7 +1,7 @@
 import { act, renderHook } from '@testing-library/react-native';
 import { useLearningPlan } from '@/hooks/use-learning-plan';
 import { ISLAND_WEEK } from '@/data/learning-plan';
-import { ISLAND_TRAIL } from '@/constants/island-trail';
+import { ISLAND_TRAIL, ISLAND_TRAIL_PHONE } from '@/constants/island-trail';
 import type { LearningPlanProgress } from '@/constants/learning-plan';
 
 let mockProgress: LearningPlanProgress | null = null;
@@ -51,6 +51,14 @@ describe('useLearningPlan', () => {
     result.current.steps.forEach((view, index) => {
       expect(view.step).toBe(ISLAND_WEEK.steps[index]);
       expect(view.point).toEqual(ISLAND_TRAIL[index]);
+    });
+  });
+
+  it('puts each step on the trail it is given, so a phone can have a trail of its own', () => {
+    const { result } = renderHook(() => useLearningPlan(true, ISLAND_TRAIL_PHONE));
+
+    result.current.steps.forEach((view, index) => {
+      expect(view.point).toEqual(ISLAND_TRAIL_PHONE[index]);
     });
   });
 

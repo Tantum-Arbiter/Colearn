@@ -4,10 +4,11 @@ import { act, render } from '@testing-library/react-native';
 import { useAnimatedStyle } from 'react-native-reanimated';
 import type { ReactTestInstance } from 'react-test-renderer';
 import { PlanTrail, ribbonPath, TRAIL_DASH_WIDTH, TRAIL_GLINT_AHEAD, TRAIL_GLINT_LIT, TRAIL_LIT, TRAIL_PALE, TRAIL_RIBBON, TRAIL_RIBBON_LIT } from '@/components/island/plan-trail';
-import { CHECKPOINT_DIAMETER_PHONE, CHECKPOINT_DIAMETER_TABLET, CHECKPOINT_TINTS, PlanCheckpoint } from '@/components/island/plan-checkpoint';
+import { CHECKPOINT_COMPACT_BELOW, CHECKPOINT_DIAMETER_COMPACT, CHECKPOINT_DIAMETER_PHONE, CHECKPOINT_DIAMETER_TABLET, CHECKPOINT_TINTS, PlanCheckpoint, checkpointSize } from '@/components/island/plan-checkpoint';
 import { PLAN_CARD, PLAN_CARD_STARS, PLAN_CARD_TINTS, PlanPanel, SKILL_ICON, planCardTop } from '@/components/island/plan-panel';
 import { contentMargin } from '@/components/child-ui/tokens';
 import { CHECKPOINT_LABEL_GAP, CHECKPOINT_SHAPE, ISLAND_TRAIL, ISLAND_TRAIL_VIA, TRAIL_DASH, checkpointReachAbove, trailDashes } from '@/constants/island-trail';
+import { PHONE_ISLAND } from '@/constants/island-map';
 import { artPoint, islandLayout } from '@/constants/island-scene';
 import { ISLAND_WEEK } from '@/data/learning-plan';
 import type { PlanStepView } from '@/hooks/use-learning-plan';
@@ -212,6 +213,27 @@ describe('PlanTrail', () => {
     expect(everything.findAll((node) => node.props.fill === TRAIL_PALE)).toHaveLength(0);
   });
 
+  it('draws the phone trail over the phone painting, every part of it 1.2 times as big, so it looks the same size on a phone', () => {
+    const phoneLayout = islandLayout({ width: 402, height: 874, topInset: 62 }, PHONE_ISLAND.art);
+    const onPhone = trailDashes(PHONE_ISLAND.trail, PHONE_ISLAND.dash, PHONE_ISLAND.via);
+    const tablet = render(<PlanTrail layout={LAYOUT} litLegs={0} />).UNSAFE_root;
+    const { UNSAFE_root: root } = render(<PlanTrail map={PHONE_ISLAND} layout={phoneLayout} litLegs={0} />);
+    const scale = PHONE_ISLAND.trailScale;
+
+    expect(one('plan-trail', root).props.viewBox).toBe(`0 0 ${PHONE_ISLAND.art.width} ${PHONE_ISLAND.art.height}`);
+    expect(StyleSheet.flatten(one('plan-trail', root).props.style)).toEqual(expect.objectContaining(phoneLayout.picture));
+    expect(all('plan-dash-' + (onPhone.length - 1), root)).toHaveLength(1);
+    expect(all('plan-dash-' + onPhone.length, root)).toHaveLength(0);
+    expect(one('plan-dash-0', root).props.x + one('plan-dash-0', root).props.width / 2).toBeCloseTo(onPhone[0].x, 6);
+    expect(one('plan-dash-0', root).props.width).toBe(PHONE_ISLAND.dash.length);
+    expect(one('plan-dash-0', root).props.height).toBeCloseTo(TRAIL_DASH_WIDTH * scale, 6);
+    expect(one('plan-ribbon-0-0', root).props.strokeWidth).toBeCloseTo(one('plan-ribbon-0-0', tablet).props.strokeWidth * scale, 6);
+    expect(one('plan-glint-0-0', root).props.height - one('plan-dash-0', root).props.height).toBeCloseTo(
+      (one('plan-glint-0-0', tablet).props.height - one('plan-dash-0', tablet).props.height) * scale,
+      6
+    );
+  });
+
   it('is kept from a screen reader', () => {
     const { UNSAFE_root: root } = render(<PlanTrail layout={LAYOUT} litLegs={0} />);
 
@@ -245,6 +267,32 @@ describe('PlanCheckpoint', () => {
     expect(style.top).toBeCloseTo(centre.y - DIAMETER / 2, 5);
     expect(style.width).toBe(DIAMETER);
     expect(DIAMETER).toBeGreaterThanOrEqual(44);
+  });
+
+  // a short phone (an iPhone SE) has about 200 points between the horizon and the step card, and
+  // seven full-size checkpoints with their names cannot fit there without covering each other
+  it.each([
+    [false, 667, CHECKPOINT_DIAMETER_COMPACT, 10],
+    [false, 699, CHECKPOINT_DIAMETER_COMPACT, 10],
+    [false, 700, CHECKPOINT_DIAMETER_PHONE, 11],
+    [false, 874, CHECKPOINT_DIAMETER_PHONE, 11],
+    [true, 667, CHECKPOINT_DIAMETER_TABLET, 13],
+    [true, 1210, CHECKPOINT_DIAMETER_TABLET, 13],
+  ])('on a tablet: %p, %p points tall, is %p across with names in %p-point type', (isTablet, height, diameter, font) => {
+    expect(checkpointSize(isTablet, height)).toEqual({ diameter, font });
+  });
+
+  it('stays a full touch target at its smallest', () => {
+    expect(CHECKPOINT_DIAMETER_COMPACT).toBeGreaterThanOrEqual(44);
+    expect(CHECKPOINT_COMPACT_BELOW).toBe(700);
+  });
+
+  it('is smaller on a short phone, and names its place in smaller type', () => {
+    const { root } = renderOne('locked', 1, { screenHeight: 667 });
+
+    expect(StyleSheet.flatten(one('plan-checkpoint-2', root).props.style).width).toBe(CHECKPOINT_DIAMETER_COMPACT);
+    const words = one('plan-checkpoint-2-label', root).findAll((node) => node.props.children === 'plan.places.wordGarden' && node.props.style !== undefined)[0];
+    expect(StyleSheet.flatten(words.props.style).fontSize).toBe(10);
   });
 
   it('is bigger on a tablet', () => {

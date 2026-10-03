@@ -102,6 +102,13 @@ export const GULL_COURSES: readonly GullCourse[] = [
   { fromX: -110, fromY: 1290, toX: 1230, toY: 1200, laps: 2, lag: 0.85, bob: 6, bobs: 3, size: 30, near: 1, far: 0.85 },
 ];
 
+export const GULL_COURSES_PHONE: readonly GullCourse[] = [
+  { fromX: 1060, fromY: 760, toX: -120, toY: 660, laps: 3, lag: 0.05, bob: 12, bobs: 3, size: 48, near: 1, far: 0.8 },
+  { fromX: -130, fromY: 905, toX: 1070, toY: 800, laps: 2, lag: 0.4, bob: 16, bobs: 2, size: 54, near: 1.1, far: 0.9 },
+  { fromX: 1050, fromY: 1040, toX: -110, toY: 975, laps: 3, lag: 0.62, bob: 10, bobs: 4, size: 40, near: 0.9, far: 1.05 },
+  { fromX: -110, fromY: 1150, toX: 1050, toY: 1085, laps: 2, lag: 0.85, bob: 7, bobs: 3, size: 36, near: 1, far: 0.85 },
+];
+
 export function gullProgress(sky: number, course: GullCourse): number {
   'worklet';
   if (!steady(sky)) return 0;

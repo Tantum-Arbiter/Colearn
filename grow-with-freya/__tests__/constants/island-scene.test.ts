@@ -1,4 +1,5 @@
 import { ISLAND_ART } from '@/constants/island-art';
+import { ISLAND_ART_PHONE } from '@/constants/island-art-phone';
 import { ISLAND_SUN, artFrame, artPoint, islandLayout, type IslandScreen } from '@/constants/island-scene';
 import { heroSunScale, sunFrame } from '@/constants/home-sky';
 
@@ -169,5 +170,54 @@ describe('islandLayout', () => {
 
     expect(underTest.sun.top).toBeGreaterThanOrEqual(0);
     expect(underTest.sun.size).toBeGreaterThan(0);
+  });
+});
+
+describe('the phone painting on a phone', () => {
+  const PHONES = [
+    ['an iPhone SE', { width: 375, height: 667, topInset: 20 }],
+    ['an iPhone 16e', { width: 390, height: 844, topInset: 47 }],
+    ['an iPhone 16 Pro', { width: 402, height: 874, topInset: 62 }],
+    ['an iPhone 16 Pro Max', { width: 440, height: 956, topInset: 62 }],
+    ['a 360-point Android phone', { width: 360, height: 800, topInset: 24 }],
+  ] as const;
+
+  it('is the tall painting, a little more than half as wide as it is high', () => {
+    expect(ISLAND_ART_PHONE.width).toBe(941);
+    expect(ISLAND_ART_PHONE.height).toBe(1672);
+    expect(ISLAND_ART_PHONE.seaLine).toBeGreaterThan(ISLAND_ART_PHONE.faceFloor);
+    expect(ISLAND_ART_PHONE.bandTop).toBeLessThan(ISLAND_ART_PHONE.faceFloor);
+    expect(ISLAND_ART_PHONE.bandBottom).toBeGreaterThan(ISLAND_ART_PHONE.seaLine);
+  });
+
+  it.each(PHONES)('covers %s from top to bottom, side to side', (_name, screen) => {
+    const layout = islandLayout(screen, ISLAND_ART_PHONE);
+
+    expect(layout.picture.top).toBe(0);
+    expect(layout.picture.left).toBeLessThanOrEqual(0);
+    expect(layout.picture.height).toBeGreaterThanOrEqual(screen.height - 1e-6);
+    expect(layout.picture.left + layout.picture.width).toBeGreaterThanOrEqual(screen.width - 1e-6);
+  });
+
+  it.each(PHONES)('keeps the lighthouse and its lamp in sight on %s', (_name, screen) => {
+    const layout = islandLayout(screen, ISLAND_ART_PHONE);
+    const lamp = artPoint(ISLAND_ART_PHONE.lighthouse.x, ISLAND_ART_PHONE.lighthouse.y, layout);
+
+    expect(lamp.x).toBeGreaterThan(16);
+    expect(lamp.x).toBeLessThan(screen.width - 16);
+  });
+
+  it.each(PHONES.filter(([name]) => name !== 'an iPhone SE'))('centres the sun on %s, which shows less than the whole width', (_name, screen) => {
+    const layout = islandLayout(screen, ISLAND_ART_PHONE);
+
+    expect(layout.sun.centreX).toBeCloseTo(screen.width / 2, 6);
+    expect(layout.sun.size).toBeGreaterThan(0);
+  });
+
+  it('shows an iPhone SE the whole width, the sun a little to the right of centre', () => {
+    const layout = islandLayout({ width: 375, height: 667, topInset: 20 }, ISLAND_ART_PHONE);
+
+    expect(layout.picture.width).toBeCloseTo(375, 0);
+    expect(layout.sun.centreX).toBeGreaterThan(375 / 2);
   });
 });

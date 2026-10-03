@@ -1,8 +1,8 @@
 import React, { memo, useMemo } from 'react';
 import { StyleSheet } from 'react-native';
 import Svg, { Path, Rect } from 'react-native-svg';
-import { ISLAND_ART } from '@/constants/island-art';
-import { ISLAND_TRAIL, ISLAND_TRAIL_VIA, TRAIL_DASH, trailDashes, type TrailDash } from '@/constants/island-trail';
+import { TABLET_ISLAND, type IslandMap } from '@/constants/island-map';
+import { trailDashes, type TrailDash } from '@/constants/island-trail';
 import type { IslandLayout } from '@/constants/island-scene';
 
 export const TRAIL_LIT = '#FFFBE0';
@@ -28,6 +28,7 @@ const GLINT_LAYERS = [
 const GLINT_AHEAD = 0.85;
 
 export interface PlanTrailProps {
+  map?: IslandMap;
   layout: IslandLayout;
   litLegs: number;
 }
@@ -43,8 +44,10 @@ export function ribbonPath(points: readonly TrailDash[]): string {
   return `M ${first.x} ${first.y}${after.map((point) => ` L ${point.x} ${point.y}`).join('')}`;
 }
 
-export const PlanTrail = memo(function PlanTrail({ layout, litLegs }: PlanTrailProps) {
-  const dashes = useMemo(() => trailDashes(ISLAND_TRAIL, TRAIL_DASH, ISLAND_TRAIL_VIA), []);
+export const PlanTrail = memo(function PlanTrail({ map = TABLET_ISLAND, layout, litLegs }: PlanTrailProps) {
+  const dashes = useMemo(() => trailDashes(map.trail, map.dash, map.via), [map]);
+  const scale = map.trailScale;
+  const dashWidth = TRAIL_DASH_WIDTH * scale;
   const legs = useMemo(() => {
     const byLeg = new Map<number, TrailDash[]>();
     dashes.forEach((dash) => byLeg.set(dash.leg, [...(byLeg.get(dash.leg) ?? []), dash]));
@@ -58,7 +61,7 @@ export const PlanTrail = memo(function PlanTrail({ layout, litLegs }: PlanTrailP
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
       style={[styles.trail, layout.picture]}
-      viewBox={`0 0 ${ISLAND_ART.width} ${ISLAND_ART.height}`}
+      viewBox={`0 0 ${map.art.width} ${map.art.height}`}
       preserveAspectRatio="none"
     >
       {legs.flatMap(([leg, onLeg]) =>
@@ -69,7 +72,7 @@ export const PlanTrail = memo(function PlanTrail({ layout, litLegs }: PlanTrailP
             d={ribbonPath(onLeg)}
             fill="none"
             stroke={leg < litLegs ? TRAIL_RIBBON_LIT : TRAIL_RIBBON}
-            strokeWidth={layer.width}
+            strokeWidth={layer.width * scale}
             strokeLinecap="round"
             strokeLinejoin="round"
             opacity={layer.opacity}
@@ -84,7 +87,7 @@ export const PlanTrail = memo(function PlanTrail({ layout, litLegs }: PlanTrailP
           <Rect
             key={`glint-${index}-${layerIndex}`}
             testID={`plan-glint-${index}-${layerIndex}`}
-            {...capsule(dash.x, dash.y, TRAIL_DASH.length + layer.spread, TRAIL_DASH_WIDTH + layer.spread)}
+            {...capsule(dash.x, dash.y, map.dash.length + layer.spread * scale, dashWidth + layer.spread * scale)}
             fill={lit ? TRAIL_GLINT_LIT : TRAIL_GLINT_AHEAD}
             opacity={lit ? layer.opacity : layer.opacity * GLINT_AHEAD}
             transform={rotate}
@@ -95,7 +98,7 @@ export const PlanTrail = memo(function PlanTrail({ layout, litLegs }: PlanTrailP
         <Rect
           key={`dash-${index}`}
           testID={`plan-dash-${index}`}
-          {...capsule(dash.x, dash.y, TRAIL_DASH.length, TRAIL_DASH_WIDTH)}
+          {...capsule(dash.x, dash.y, map.dash.length, dashWidth)}
           fill={dash.leg < litLegs ? TRAIL_LIT : TRAIL_PALE}
           transform={`rotate(${dash.angle} ${dash.x} ${dash.y})`}
         />

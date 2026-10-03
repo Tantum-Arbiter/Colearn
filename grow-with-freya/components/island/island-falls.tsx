@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
 import { StyleSheet, View, type ImageSourcePropType } from 'react-native';
 import Animated, { useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
-import { ISLAND_ART, type IslandFallArt, type IslandPoolArt } from '@/constants/island-art';
+import { ISLAND_ART, type IslandArt, type IslandFallArt, type IslandPoolArt } from '@/constants/island-art';
 import { ISLAND_LIFE, fallShift, poolRing, sprayPose } from '@/constants/island-life';
 import { artFrame, artPoint, type IslandLayout } from '@/constants/island-scene';
 import { MoonlitImage } from './moonlit-image';
@@ -79,15 +79,17 @@ const FallStreaks = memo(function FallStreaks({ fall, layout, clock }: FallProps
 
 interface PoolProps {
   pool: IslandPoolArt;
+  ring: ImageSourcePropType;
+  ringAspect: number;
   layout: IslandLayout;
   clock: SharedValue<number>;
 }
 
-const PoolRings = memo(function PoolRings({ pool, layout, clock }: PoolProps) {
+const PoolRings = memo(function PoolRings({ pool, ring: ringSource, ringAspect, layout, clock }: PoolProps) {
   const frame = artFrame(pool.frame, layout);
   const centre = artPoint(pool.ringX, pool.ringY, layout);
   const width = pool.ringWidth * layout.scale;
-  const height = width / ISLAND_ART.ringAspect;
+  const height = width / ringAspect;
 
   return (
     <View testID={`${pool.id}-window`} pointerEvents="none" style={[styles.piece, styles.window, frame]}>
@@ -95,7 +97,7 @@ const PoolRings = memo(function PoolRings({ pool, layout, clock }: PoolProps) {
         <Ring
           key={ring}
           testID={`${pool.id}-ring-${ring}`}
-          source={ISLAND_ART.ring}
+          source={ringSource}
           index={ring}
           left={centre.x - frame.left - width / 2}
           top={centre.y - frame.top - height / 2}
@@ -109,12 +111,13 @@ const PoolRings = memo(function PoolRings({ pool, layout, clock }: PoolProps) {
 });
 
 export interface IslandWaterfallsProps {
+  art?: IslandArt;
   layout: IslandLayout;
   clock: SharedValue<number>;
 }
 
-export const IslandWaterfalls = memo(function IslandWaterfalls({ layout, clock }: IslandWaterfallsProps) {
-  const { falls, pools, spray } = ISLAND_ART;
+export const IslandWaterfalls = memo(function IslandWaterfalls({ art = ISLAND_ART, layout, clock }: IslandWaterfallsProps) {
+  const { falls, pools, spray, ring, ringAspect } = art;
 
   return (
     <>
@@ -122,7 +125,7 @@ export const IslandWaterfalls = memo(function IslandWaterfalls({ layout, clock }
         <FallStreaks key={fall.id} fall={fall} layout={layout} clock={clock} />
       ))}
       {pools.map((pool) => (
-        <PoolRings key={pool.id} pool={pool} layout={layout} clock={clock} />
+        <PoolRings key={pool.id} pool={pool} ring={ring} ringAspect={ringAspect} layout={layout} clock={clock} />
       ))}
       {falls.map((fall) => (
         <MoonlitImage key={fall.id} testID={`${fall.id}-cover`} source={fall.cover} frame={artFrame(fall.frame, layout)} night={false} />

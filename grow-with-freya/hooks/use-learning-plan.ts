@@ -35,7 +35,7 @@ function pictureOf(source: unknown): ImageSourcePropType | null {
   return typeof source === 'string' ? { uri: source } : (source as ImageSourcePropType);
 }
 
-export function useLearningPlan(isActive: boolean): LearningPlanView {
+export function useLearningPlan(isActive: boolean, trail: readonly TrailPoint[] = ISLAND_TRAIL): LearningPlanView {
   const { t, i18n } = useTranslation();
   const progress = useAppStore((state) => state.learningPlanProgress);
   const ageInMonths = useAppStore((state) => state.childAgeInMonths);
@@ -78,13 +78,13 @@ export function useLearningPlan(isActive: boolean): LearningPlanView {
       return {
         step,
         state: states[index],
-        point: ISLAND_TRAIL[index],
+        point: trail[index],
         title,
         picture: pictureOf(story?.coverImage),
         launch: launchFor(step, ageInMonths),
       };
     });
-  }, [ageInMonths, language, now, progress, t]);
+  }, [ageInMonths, language, now, progress, t, trail]);
 
   const current = useMemo(
     () => steps.find((view) => view.state === 'open' || view.state === 'tomorrow') ?? null,

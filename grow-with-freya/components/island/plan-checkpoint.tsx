@@ -15,6 +15,14 @@ import type { PlanStepKind } from '@/types/learning-plan';
 
 export const CHECKPOINT_DIAMETER_PHONE = 56;
 export const CHECKPOINT_DIAMETER_TABLET = 68;
+export const CHECKPOINT_DIAMETER_COMPACT = 48;
+export const CHECKPOINT_COMPACT_BELOW = 700;
+
+export function checkpointSize(isTablet: boolean, screenHeight: number): { diameter: number; font: number } {
+  if (isTablet) return { diameter: CHECKPOINT_DIAMETER_TABLET, font: 13 };
+  if (screenHeight < CHECKPOINT_COMPACT_BELOW) return { diameter: CHECKPOINT_DIAMETER_COMPACT, font: 10 };
+  return { diameter: CHECKPOINT_DIAMETER_PHONE, font: 11 };
+}
 
 export const CHECKPOINT_TINTS = {
   number: '#FFFFFF',
@@ -73,6 +81,7 @@ export interface PlanCheckpointProps {
   view: PlanStepView;
   layout: IslandLayout;
   screenWidth: number;
+  screenHeight?: number;
   onPress: (view: PlanStepView) => void;
   pulse?: SharedValue<number>;
   labelFloor?: number;
@@ -156,19 +165,21 @@ export const PlanCheckpoint = memo(function PlanCheckpoint({
   view,
   layout,
   screenWidth,
+  screenHeight = Number.POSITIVE_INFINITY,
   onPress,
   pulse,
   labelFloor = Number.POSITIVE_INFINITY,
 }: PlanCheckpointProps) {
   const { t } = useTranslation();
   const { isTablet, scaledFontSize } = useAccessibility();
-  const diameter = isTablet ? CHECKPOINT_DIAMETER_TABLET : CHECKPOINT_DIAMETER_PHONE;
+  const size = checkpointSize(isTablet, screenHeight);
+  const diameter = size.diameter;
   const centre = artPoint(view.point.x, view.point.y, layout);
   const open = view.state === 'open';
   const done = view.state === 'done';
   const warm = open || done;
   const place = t(view.step.placeKey);
-  const labelSize = scaledFontSize(isTablet ? 13 : 11);
+  const labelSize = scaledFontSize(size.font);
   const [labelSizeSeen, setLabelSizeSeen] = useState({
     width: guessedWidth(place, labelSize),
     height: Math.round(labelSize * 1.25 + 2 * SPACE_1),

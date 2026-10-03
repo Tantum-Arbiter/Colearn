@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
 import { StyleSheet, type ImageSourcePropType } from 'react-native';
 import Animated, { useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
-import { ISLAND_ART } from '@/constants/island-art';
+import { ISLAND_ART, type IslandArt } from '@/constants/island-art';
 import { waterGlow } from '@/constants/island-life';
 import type { IslandLayout } from '@/constants/island-scene';
 import { MoonlitImage } from './moonlit-image';
@@ -30,15 +30,16 @@ const Sheet = memo(function Sheet({ source, index, sheets, layout, ripple }: She
 });
 
 export interface IslandWaterProps {
+  art?: IslandArt;
   layout: IslandLayout;
   ripple: SharedValue<number>;
 }
 
-export const IslandWater = memo(function IslandWater({ layout, ripple }: IslandWaterProps) {
+export const IslandWater = memo(function IslandWater({ art = ISLAND_ART, layout, ripple }: IslandWaterProps) {
   return (
     <>
-      {ISLAND_ART.water.map((source, index) => (
-        <Sheet key={index} source={source} index={index} sheets={ISLAND_ART.water.length} layout={layout} ripple={ripple} />
+      {art.water.map((source, index) => (
+        <Sheet key={index} source={source} index={index} sheets={art.water.length} layout={layout} ripple={ripple} />
       ))}
     </>
   );

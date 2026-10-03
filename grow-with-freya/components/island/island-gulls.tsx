@@ -88,12 +88,13 @@ const Gull = memo(function Gull({ course, index, layout, sky, beat }: GullProps)
 });
 
 export interface IslandGullsProps {
+  courses?: readonly GullCourse[];
   layout: IslandLayout;
   sky: SharedValue<number>;
   beat: SharedValue<number>;
 }
 
-export const IslandGulls = memo(function IslandGulls({ layout, sky, beat }: IslandGullsProps) {
+export const IslandGulls = memo(function IslandGulls({ courses = GULL_COURSES, layout, sky, beat }: IslandGullsProps) {
   return (
     <View
       testID="island-gulls"
@@ -102,7 +103,7 @@ export const IslandGulls = memo(function IslandGulls({ layout, sky, beat }: Isla
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
     >
-      {GULL_COURSES.map((course, index) => (
+      {courses.map((course, index) => (
         <Gull key={index} course={course} index={index} layout={layout} sky={sky} beat={beat} />
       ))}
     </View>

@@ -6,30 +6,44 @@ import type { ReactTestInstance } from 'react-test-renderer';
 import { IslandScene } from '@/components/island/island-scene';
 import { IslandVoyageProvider, type IslandVoyage } from '@/contexts/island-voyage-context';
 import { ISLAND_NIGHT, artPoint, islandLayout } from '@/constants/island-scene';
+import { ISLAND_ART_PHONE } from '@/constants/island-art-phone';
 import { chromeOpacity, islandScale, sunRise, type VoyagePhase } from '@/constants/island-voyage';
 import { GULL_COURSES, beamReach, cloudDrift, fallShift, poolRing, treeSway, villageGlow, waterGlow } from '@/constants/island-life';
 import { CIRCLE_BUTTON_DIAMETER_PHONE, contentMargin, journeyHeaderTop } from '@/components/child-ui/tokens';
 import { ISLAND_WEEK } from '@/data/learning-plan';
 import { ISLAND_TRAIL } from '@/constants/island-trail';
 import { TRAIL_LIT } from '@/components/island/plan-trail';
+import { PHONE_ISLAND, TABLET_ISLAND } from '@/constants/island-map';
 import type { PlanStepView } from '@/hooks/use-learning-plan';
 
 const SCREEN = { width: 390, height: 844 };
 const TOP_INSET = 47;
-const LAYOUT = islandLayout({ ...SCREEN, topInset: TOP_INSET });
+const LAYOUT = islandLayout({ ...SCREEN, topInset: TOP_INSET }, ISLAND_ART_PHONE);
 
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 47, bottom: 34, left: 0, right: 0 }),
 }));
 
+let mockTablet = false;
 jest.mock('@/hooks/use-accessibility', () => ({
   useAccessibility: () => ({
     scaledFontSize: (size: number) => size,
     scaledPadding: (size: number) => size,
     scaledButtonSize: (size: number) => size,
-    isTablet: false,
+    isTablet: mockTablet,
     textSizeScale: 1,
   }),
+}));
+
+jest.mock('@/constants/island-art-phone', () => ({
+  ISLAND_ART_PHONE: {
+    ...jest.requireMock('@/constants/island-art').ISLAND_ART,
+    picture: { uri: 'test://island-phone' },
+    horizon: { uri: 'test://island-phone-horizon' },
+    width: 941,
+    height: 1672,
+    sunX: 520,
+  },
 }));
 
 let mockMuted = false;
@@ -103,14 +117,18 @@ const mockStart = jest.fn();
 let mockPlanSteps: PlanStepView[] = [];
 let mockCurrent: PlanStepView | null = null;
 let mockDoneCount = 0;
+const mockPlanTrails: unknown[] = [];
 jest.mock('@/hooks/use-learning-plan', () => ({
-  useLearningPlan: () => ({
+  useLearningPlan: (_isActive: boolean, trail: unknown) => {
+    mockPlanTrails.push(trail);
+    return {
     plan: { id: 'island-week', steps: mockPlanSteps.map((view) => view.step) },
     steps: mockPlanSteps,
     current: mockCurrent,
     doneCount: mockDoneCount,
     start: mockStart,
-  }),
+    };
+  },
 }));
 
 function planView(index: number, state: PlanStepView['state']): PlanStepView {
@@ -205,6 +223,8 @@ describe('IslandScene', () => {
     jest.useFakeTimers();
     measureTheScreen();
     mockReduceMotion = false;
+    mockTablet = false;
+    mockPlanTrails.length = 0;
     mockMuted = false;
     mockToggleMute.mockClear();
     mockAlive.length = 0;
@@ -220,6 +240,53 @@ describe('IslandScene', () => {
     jest.useRealTimers();
   });
 
+  // the wide painting cropped to a phone lost the island's sides and left the trail crowded; a
+  // phone has a painting of its own, made for a tall screen (operator, 2026-10-03)
+  describe('on a phone and on a tablet', () => {
+    const propsOf = (root: ReactTestInstance, has: string[]) =>
+      root.findAll((node) => has.every((name) => node.props[name] !== undefined))[0]?.props;
+
+    it.each([
+      [false, 'test://island-phone', 'test://island-phone-horizon'],
+      [true, 'test://island', 'test://island-horizon'],
+    ])('on a tablet: %p, shows the painting %p and its horizon %p', (tablet, painting, horizon) => {
+      mockTablet = tablet;
+      const { root } = renderScene();
+
+      expect(picture(root, 'island-picture').props.source).toEqual({ uri: painting });
+      expect(withSource(root, horizon).length).toBeGreaterThan(0);
+      expect(withSource(root, tablet ? 'test://island-phone' : 'test://island')).toHaveLength(0);
+    });
+
+    it.each([
+      [false, PHONE_ISLAND],
+      [true, TABLET_ISLAND],
+    ])('on a tablet: %p, lays the trail, the gulls, the water, the falls and the plan from that painting', (tablet, map) => {
+      mockTablet = tablet;
+      const { root } = renderScene();
+
+      expect(propsOf(root, ['map', 'litLegs']).map).toBe(map);
+      expect(mockPlanTrails[mockPlanTrails.length - 1]).toBe(map.trail);
+      expect(propsOf(root, ['courses', 'beat']).courses).toBe(map.gulls);
+      expect(propsOf(root, ['art', 'ripple']).art).toBe(map.art);
+      expect(propsOf(root, ['art', 'clock']).art).toBe(map.art);
+    });
+
+    it('lights the windows of the painting it shows, at night', () => {
+      const { root } = renderScene(voyage(), { timeOfDay: 'night' });
+
+      expect(propsOf(root, ['art', 'lamp']).art).toBe(PHONE_ISLAND.art);
+    });
+
+    it('tells each checkpoint how tall the screen is, so a short phone can have smaller ones', () => {
+      const { root } = renderScene();
+      const checkpoints = root.findAll((node) => node.props.view !== undefined && node.props.screenWidth !== undefined);
+
+      expect(checkpoints).toHaveLength(7);
+      checkpoints.forEach((checkpoint) => expect(checkpoint.props.screenHeight).toBe(SCREEN.height));
+    });
+  });
+
   describe('the picture', () => {
     it('covers the screen where the layout puts it, and is described for someone who cannot see it', () => {
       const { root } = renderScene();
@@ -227,7 +294,7 @@ describe('IslandScene', () => {
       const underTest = picture(root, 'island-picture');
       const style = StyleSheet.flatten(underTest.props.style);
 
-      expect(underTest.props.source).toEqual({ uri: 'test://island' });
+      expect(underTest.props.source).toEqual({ uri: 'test://island-phone' });
       expect(style).toEqual(expect.objectContaining({ position: 'absolute', ...LAYOUT.picture }));
       expect(underTest.props.accessibilityLabel).toBe('island.scene');
       expect(underTest.props.accessibilityRole).toBe('image');
@@ -238,7 +305,7 @@ describe('IslandScene', () => {
 
       const horizon = picture(root, 'island-horizon');
 
-      expect(horizon.props.source).toEqual({ uri: 'test://island-horizon' });
+      expect(horizon.props.source).toEqual({ uri: 'test://island-phone-horizon' });
       expect(StyleSheet.flatten(horizon.props.style)).toEqual(expect.objectContaining({ position: 'absolute', ...LAYOUT.band }));
       expect(horizon.props.pointerEvents).toBe('none');
     });
@@ -347,7 +414,7 @@ describe('IslandScene', () => {
 
       const shade = picture(root, 'island-horizon-night');
 
-      expect(shade.props.source).toEqual({ uri: 'test://island-horizon' });
+      expect(shade.props.source).toEqual({ uri: 'test://island-phone-horizon' });
       expect(shade.props.tintColor).toBe(ISLAND_NIGHT.tint);
       expect(StyleSheet.flatten(shade.props.style)).toEqual(expect.objectContaining({ ...LAYOUT.band, opacity: ISLAND_NIGHT.strength }));
       expect(shade.props.pointerEvents).toBe('none');
