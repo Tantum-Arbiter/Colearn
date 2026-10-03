@@ -26,6 +26,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
@@ -72,6 +73,7 @@ export function RealWorldBridgeOverlay({
   const bridgeData = getBridgeData(activityId);
   const { isTablet, scaledFontSize, scaledPadding, textSizeScale } = useAccessibility();
   const { width: screenWidth } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
 
   // --- Staggered entry animations ---
   const overlayOpacity = useSharedValue(0);
@@ -159,7 +161,7 @@ export function RealWorldBridgeOverlay({
     <Animated.View style={[styles.container, overlayAnimatedStyle]} testID="bridge-overlay">
       {/* Back button (top-left arrow) */}
       <Pressable
-        style={styles.backButton}
+        style={[styles.backButton, { top: insets.top + 24 }]}
         onPress={handleClose}
         testID="bridge-close-button"
         accessibilityRole="button"
@@ -235,7 +237,6 @@ const styles = StyleSheet.create({
   },
   backButton: {
     position: 'absolute',
-    top: 16,
     left: 16,
     zIndex: 110,
     width: 40,
