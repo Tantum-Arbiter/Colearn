@@ -15,15 +15,18 @@ import { HeroSunContainer } from '@/components/home/hero-sun-container';
 import { heroMotionMode } from '@/constants/home-sky';
 import type { TimeOfDay } from '@/constants/home-scene';
 import { ISLAND_ART } from '@/constants/island-art';
+import { CHECKPOINT_LABEL_CLEARANCE } from '@/constants/island-trail';
 import { ISLAND_NIGHT, ISLAND_SKY, islandLayout } from '@/constants/island-scene';
 import { chromeOpacity, islandScale, sunRise } from '@/constants/island-voyage';
 import { useGlobalSound } from '@/contexts/global-sound-context';
 import { useIslandVoyage } from '@/contexts/island-voyage-context';
 import { useIslandClocks } from '@/hooks/use-island-clocks';
+import { useLearningPlan, type PlanStepView } from '@/hooks/use-learning-plan';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { useSettledAfterTransition } from '@/hooks/use-ambient-animation';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { useTimeOfDay } from '@/hooks/use-time-of-day';
+import type { PlanLaunch } from '@/types/learning-plan';
 import { BillowingCloud, DriftingCloud } from './island-clouds';
 import { IslandWaterfalls } from './island-falls';
 import { IslandGulls } from './island-gulls';
@@ -31,16 +34,23 @@ import { IslandLights } from './island-lights';
 import { SwayingTree } from './island-trees';
 import { IslandWater } from './island-water';
 import { MoonlitImage } from './moonlit-image';
+import { PlanCheckpoint } from './plan-checkpoint';
+import { PLAN_CARD, PlanPanel, planCardTop, type PlanCardRect } from './plan-panel';
+import { PlanTrail } from './plan-trail';
 
 export interface IslandSceneProps {
   isActive?: boolean;
   timeOfDay?: TimeOfDay;
+  onStartActivity?: (launch: PlanLaunch) => void;
+  onPreviewActivity?: (launch: PlanLaunch, from: PlanCardRect) => void;
   testID?: string;
 }
 
 export const IslandScene = memo(function IslandScene({
   isActive = true,
   timeOfDay,
+  onStartActivity,
+  onPreviewActivity,
   testID = 'island-scene',
 }: IslandSceneProps) {
   const { t } = useTranslation();
@@ -54,6 +64,7 @@ export const IslandScene = memo(function IslandScene({
   const settled = useSettledAfterTransition(isActive);
   const [loaded, setLoaded] = useState(false);
   const clocks = useIslandClocks(settled && !reduceMotion);
+  const plan = useLearningPlan(isActive);
 
   const time = timeOfDay ?? clockTimeOfDay;
   const night = time === 'night';
@@ -69,6 +80,24 @@ export const IslandScene = memo(function IslandScene({
     void toggleMute();
   }, [toggleMute]);
   const margin = contentMargin(isTablet);
+  const litLegs = plan.doneCount + (plan.current?.state === 'open' ? 1 : 0);
+  const { start } = plan;
+  const handleStart = useCallback(
+    (view: PlanStepView) => {
+      const launch = start(view);
+      if (launch) onStartActivity?.(launch);
+    },
+    [onStartActivity, start]
+  );
+  const handlePreview = useCallback(
+    (view: PlanStepView, from: PlanCardRect) => {
+      const launch = start(view);
+      if (launch) onPreviewActivity?.(launch, from);
+    },
+    [onPreviewActivity, start]
+  );
+  const [cardHeight, setCardHeight] = useState<number>(isTablet ? PLAN_CARD.tabletHeight : PLAN_CARD.phoneHeight);
+  const labelFloor = planCardTop(height, insets.bottom, cardHeight) - CHECKPOINT_LABEL_CLEARANCE;
 
   const stage = useAnimatedStyle(() => ({ transform: [{ scale: islandScale(arrival.value) }] }));
   const rise = useAnimatedStyle(() => ({ transform: [{ translateY: sunRise(arrival.value, riseFrom) }] }));
@@ -143,6 +172,33 @@ export const IslandScene = memo(function IslandScene({
         ) : (
           <IslandGulls layout={layout} sky={clocks.sky} beat={clocks.beat} />
         )}
+
+        <PlanTrail layout={layout} litLegs={litLegs} />
+        {plan.steps.map((view) => (
+          <PlanCheckpoint
+            key={view.step.id}
+            view={view}
+            layout={layout}
+            screenWidth={width}
+            onPress={handleStart}
+            pulse={clocks.wind}
+            labelFloor={labelFloor}
+          />
+        ))}
+      </Animated.View>
+
+      <Animated.View testID="island-plan-panel" pointerEvents="box-none" style={[styles.fill, chrome]}>
+        <PlanPanel
+          current={plan.current}
+          total={plan.steps.length}
+          doneCount={plan.doneCount}
+          bottomInset={insets.bottom}
+          screenWidth={width}
+          screenHeight={height}
+          onStart={handleStart}
+          onPreview={onPreviewActivity ? handlePreview : undefined}
+          onHeight={setCardHeight}
+        />
       </Animated.View>
 
       <Animated.View

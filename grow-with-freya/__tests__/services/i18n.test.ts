@@ -195,6 +195,65 @@ describe('i18n Service', () => {
     });
   });
 
+  describe('The learning plan on the island', () => {
+    const PLACES = ['storyTime', 'wordGarden', 'mathsMeadow', 'feelingsCove', 'musicGrove', 'storyCorner', 'storyBridge'];
+    const DOMAINS = ['language', 'maths', 'feelings', 'music'];
+    const SKILLS = ['listening', 'vocabulary', 'letters', 'counting', 'numbers', 'feelings', 'confidence', 'rhythm', 'patience'];
+    const DAYS = [1, 2, 3, 4, 5, 6, 7];
+
+    it('names each day`s place, kind of learning and skills, and says in a sentence what it builds, in English', () => {
+      const plan = localeModules.en.plan;
+
+      PLACES.forEach((place) => expect(plan.places[place].trim().length).toBeGreaterThan(0));
+      DOMAINS.forEach((domain) => expect(plan.domains[domain].trim().length).toBeGreaterThan(0));
+      SKILLS.forEach((skill) => expect(plan.skills[skill].trim().length).toBeGreaterThan(0));
+      expect(plan.places.storyBridge).toBe('Story Bridge');
+      expect(plan.islandWeek['day-1'].aim).toBe('Build listening, vocabulary and calm through a cosy bedtime story.');
+      DAYS.forEach((day) => {
+        const aim: string = plan.islandWeek[`day-${day}`].aim;
+        expect(aim.trim().length).toBeGreaterThan(0);
+        expect(aim.length).toBeLessThanOrEqual(80);
+      });
+      expect(plan.stepOf).toBe('Step {{day}} of {{total}}');
+      expect(plan.minutes).toBe('{{from}}–{{to}} min');
+      expect(plan.start).toBe('Start activity');
+      expect(plan.preview).toBe('Preview');
+      expect(plan.a11y.checkpoint).toContain('{{day}}');
+      expect(plan.a11y.checkpoint).toContain('{{place}}');
+      expect(plan.a11y.checkpoint).toContain('{{state}}');
+      expect(plan.weekDoneBody).toContain('{{done}}');
+    });
+
+    it('keeps no words the card no longer shows', () => {
+      const plan = localeModules.en.plan;
+
+      expect(plan.step).toBeUndefined();
+      expect(plan.places.bedtimeBridge).toBeUndefined();
+      DAYS.forEach((day) => expect(plan.islandWeek[`day-${day}`].description).toBeUndefined());
+    });
+
+    it.each(ALL_LOCALE_CODES.filter((code) => code !== 'en'))('%s says it in its own words, keeping every placeholder', (code) => {
+      const plan = localeModules[code].plan;
+      const en = localeModules.en.plan;
+
+      PLACES.forEach((place) => expect(plan.places[place]).not.toBe(en.places[place]));
+      DAYS.forEach((day) => expect(plan.islandWeek[`day-${day}`].aim).not.toBe(en.islandWeek[`day-${day}`].aim));
+      expect(plan.start).not.toBe(en.start);
+      expect(plan.preview.trim().length).toBeGreaterThan(0);
+      DOMAINS.forEach((domain) => expect(plan.domains[domain].trim().length).toBeGreaterThan(0));
+      SKILLS.forEach((skill) => expect(plan.skills[skill].trim().length).toBeGreaterThan(0));
+      expect(plan.stepOf).toContain('{{day}}');
+      expect(plan.stepOf).toContain('{{total}}');
+      expect(plan.minutes).toContain('{{from}}');
+      expect(plan.minutes).toContain('{{to}}');
+      expect(plan.a11y.checkpoint).toContain('{{day}}');
+      expect(plan.a11y.checkpoint).toContain('{{place}}');
+      expect(plan.a11y.checkpoint).toContain('{{state}}');
+      expect(plan.weekDoneBody).toContain('{{done}}');
+      expect(plan.weekDoneBody).toContain('{{total}}');
+    });
+  });
+
   describe('No decorative symbols in translation strings', () => {
     // These symbols should be rendered as Ionicons in UI buttons/labels,
     // not embedded in translation strings

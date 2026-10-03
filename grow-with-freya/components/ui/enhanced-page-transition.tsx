@@ -168,7 +168,8 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
       easing: Easing.bezier(0.25, 0.1, 0.25, 1), // Smooth ease-out curve
     };
 
-    const slides = animate && !instant.includes(currentPage) && !instant.includes(prevPageRef.current);
+    const noSlide = (page: string) => page === ALWAYS_MOUNTED || instant.includes(page);
+    const slides = animate && !(noSlide(currentPage) && noSlide(prevPageRef.current));
 
     // Helper: set value with or without animation
     const set = (sv: SharedValue<number>, target: number) => {

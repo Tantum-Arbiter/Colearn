@@ -24,7 +24,11 @@ import { OnboardingFlow } from '@/components/onboarding/onboarding-flow';
 import { LoginScreen } from '@/components/auth/login-screen';
 import { AUTH_GRADIENT } from '@/components/auth/auth-theme';
 import { AccountScreen } from '@/components/account/account-screen';
-import { accountReturnPage } from '@/constants/page-slide';
+import { accountReturnPage, voyageStaysOut } from '@/constants/page-slide';
+import { ALL_STORIES } from '@/data/stories';
+import type { PlanLaunch } from '@/types/learning-plan';
+import type { PlanCardRect } from '@/components/island/plan-panel';
+import { previewActivity } from '@/constants/learning-plan';
 import { MainMenu } from '@/components/main-menu';
 import { appTreeMounted, authEntrance, authOverlayUp, landsOnMainMenu, menuRevealed, pageAfterAuth, type AppView, type AuthEntrance } from '@/constants/app-shell';
 import { AuthOverlay } from '@/components/auth/auth-overlay';
@@ -142,8 +146,10 @@ function AppContent() {
     setOnReturnToModeSelectionCallback,
     setOnCancelCallback,
     storyOpenRequest,
+    requestStoryOpen,
     clearStoryOpen,
     readerRevealStyle,
+    startTransition: openStoryCard,
   } = useStoryTransition();
 
   // Access activity transition context for learning game transitions
@@ -154,6 +160,7 @@ function AppContent() {
     setOnReturnCallback: setActivityOnReturnCallback,
     exitGame: exitActivityGame,
     isInGame: isInActivityGame,
+    startTransition: openActivityCard,
   } = useActivityTransition();
 
   const colorScheme = useColorScheme();
@@ -226,10 +233,19 @@ function AppContent() {
   const voyage = useIslandVoyageController(handleVoyagePage);
   const settleVoyageHome = voyage.settleHome;
   const comeBackFromIsland = voyage.comeBack;
+  const launchedFromIslandRef = useRef(false);
+  const storyCardReturnRef = useRef<PageKey>('stories');
+  const leavePlanStep = useAppStore((state) => state.leavePlanStep);
 
   useEffect(() => {
-    if (currentPage !== 'island') settleVoyageHome();
+    if (!voyageStaysOut(currentPage, launchedFromIslandRef.current)) settleVoyageHome();
   }, [currentPage, settleVoyageHome]);
+
+  useEffect(() => {
+    if (currentPage !== 'island' && currentPage !== 'main') return;
+    launchedFromIslandRef.current = false;
+    leavePlanStep();
+  }, [currentPage, leavePlanStep]);
   const [selectedStory, setSelectedStory] = useState<Story | null>(null);
   // Story being read - kept separate so it persists during book closing animation
   const [storyBeingRead, setStoryBeingRead] = useState<Story | null>(null);
@@ -619,7 +635,8 @@ function AppContent() {
       // This is needed because we keep currentView as 'story-reader' during mode selection
       // to maintain landscape orientation
       setCurrentView('app');
-      setCurrentPage('stories');
+      setCurrentPage(storyCardReturnRef.current);
+      storyCardReturnRef.current = 'stories';
     };
 
     setOnCancelCallback(() => () => handleCancel());
@@ -760,11 +777,19 @@ function AppContent() {
   };
 
   const handleBackToInstruments = () => {
+    if (launchedFromIslandRef.current) {
+      setCurrentPage('island');
+      return;
+    }
     setReturnToSubMenu('instruments');
     setCurrentPage('main');
   };
 
   const handleBackToLearning = () => {
+    if (launchedFromIslandRef.current) {
+      setCurrentPage('island');
+      return;
+    }
     setReturnToSubMenu('learning');
     setCurrentPage('main');
   };
@@ -776,6 +801,7 @@ function AppContent() {
     setStoryBeingRead(null);
     setSelectedStory(null);
     setCurrentView('app');
+    leavePlanStep();
     // currentPage stays 'stories' - we never change it when entering/exiting story reader
 
     // Prompt for app rating after returning from reader (not during the story):
@@ -816,6 +842,48 @@ function AppContent() {
     });
     return () => { setActivityOnReturnCallback(null); };
   }, [setActivityOnReturnCallback, spellingReturnPage]);
+
+  const handleStartActivity = useCallback((launch: PlanLaunch) => {
+    switch (launch.kind) {
+      case 'story': {
+        const story = ALL_STORIES.find((candidate) => candidate.id === launch.storyId);
+        if (story) requestStoryOpen(story, 'read', null);
+        return;
+      }
+      case 'spelling':
+        setSpellingActivityId(launch.activityId);
+        setSpellingStoryId(undefined);
+        setSpellingReturnPage('island');
+        launchedFromIslandRef.current = true;
+        setCurrentPage('spelling-game');
+        return;
+      case 'feelings':
+        launchedFromIslandRef.current = true;
+        setCurrentPage('feelings');
+        return;
+      case 'music':
+        launchedFromIslandRef.current = true;
+        setCurrentPage('practise');
+    }
+  }, [requestStoryOpen]);
+
+  const handlePreviewActivity = useCallback((launch: PlanLaunch, from: PlanCardRect) => {
+    if (launch.kind === 'story') {
+      const story = ALL_STORIES.find((candidate) => candidate.id === launch.storyId);
+      if (!story) return;
+      storyCardReturnRef.current = 'island';
+      openStoryCard(story.id, from, story);
+      return;
+    }
+    if (launch.kind !== 'spelling') return;
+    const activity = previewActivity(launch.activityId);
+    if (!activity) return;
+    setSpellingActivityId(launch.activityId);
+    setSpellingStoryId(undefined);
+    setSpellingReturnPage('island');
+    launchedFromIslandRef.current = true;
+    openActivityCard(activity, from);
+  }, [openActivityCard, openStoryCard]);
 
   // Learning screen activity selection - sets spelling state; the activity
   // transition overlay handles the visual navigation, so we do NOT
@@ -1014,7 +1082,7 @@ function AppContent() {
             ) : null,
             feelings: <EmotionsScreen onBack={handleBackToLearning} isActive={currentPage === 'feelings'} />,
             account: <AccountScreen onBack={handleAccountBack} onNavigate={handleMainMenuNavigate} isActive={currentPage === 'account' && menuRevealed(currentView)} />,
-            island: <IslandScene isActive={currentPage === 'island'} />,
+            island: <IslandScene isActive={currentPage === 'island' && menuRevealed(currentView)} onStartActivity={handleStartActivity} onPreviewActivity={handlePreviewActivity} />,
           }, currentPage)}
           duration={PAGE_TRANSITION_DURATION_MS}
           animate={animatePageTransition}

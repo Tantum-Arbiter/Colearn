@@ -4,6 +4,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Logger } from '@/utils/logger';
 import { rememberSearch } from '@/components/stories/catalogue/story-search';
 import { onSessionLapse } from '@/services/session-lapse';
+import type { LearningPlanProgress } from '@/constants/learning-plan';
+import type { PlanLaunch } from '@/types/learning-plan';
 
 const log = Logger.create('Store');
 
@@ -36,6 +38,22 @@ export function migrateAppState(persisted: Record<string, any>, fromVersion: num
     .filter(([, entry]) => (entry?.completedCount ?? 0) > 0)
     .map(([id]) => id);
   return { ...persisted, finishedStoryIds: unite(persisted.finishedStoryIds ?? [], finished) };
+}
+
+export interface PlanRun {
+  planId: string;
+  stepId: string;
+  launch: PlanLaunch;
+}
+
+function stepTickedOff(state: Pick<AppState, 'learningPlanProgress' | 'planRun'>, finished: (launch: PlanLaunch) => boolean) {
+  const run = state.planRun;
+  if (!run || !finished(run.launch)) return {};
+
+  const kept = state.learningPlanProgress?.planId === run.planId ? state.learningPlanProgress.completed : {};
+  const completed = kept[run.stepId] ? kept : { ...kept, [run.stepId]: new Date().toISOString() };
+
+  return { planRun: null, learningPlanProgress: { planId: run.planId, completed } };
 }
 
 export interface StoryProgress {
@@ -132,6 +150,9 @@ export interface AppState {
   achievementUnlockedAt: Record<string, string>;
   lastStoryCompletedAt: string | null;
 
+  learningPlanProgress: LearningPlanProgress | null;
+  planRun: PlanRun | null;
+
   // Background animation state persistence
   backgroundAnimationState: {
     cloudFloat1: number;
@@ -189,6 +210,10 @@ export interface AppState {
   recordHomeVisit: (at: string) => void;
   recordAchievementUnlocks: (badgeIds: string[], at: string) => void;
   recordChallengeCompleted: (kind: ChallengeKind) => void;
+  beginPlanStep: (run: PlanRun) => void;
+  leavePlanStep: () => void;
+  setLearningPlanProgress: (progress: LearningPlanProgress | null) => void;
+  recordActivityFinished: (activityId: string) => void;
   grantAchievements: (achievementIds: string[]) => void;
   clearStoryProgress: (storyId: string) => void;
   getContinueReadingStoryId: () => string | null;
@@ -253,6 +278,8 @@ export const useAppStore = create<AppState>()(
       lastHomeVisitAt: null,
       achievementUnlockedAt: {},
       lastStoryCompletedAt: null,
+      learningPlanProgress: null,
+      planRun: null,
 
       backgroundAnimationState: {
         cloudFloat1: -200,
@@ -405,6 +432,7 @@ export const useAppStore = create<AppState>()(
         const existing = state.storyProgress[storyId];
         const completedAt = new Date().toISOString();
         return {
+          ...stepTickedOff(state, (launch) => launch.kind === 'story' && launch.storyId === storyId),
           lastStoryCompletedAt: completedAt,
           finishedStoryIds: unite(state.finishedStoryIds, [storyId]),
           storyProgress: {
@@ -430,6 +458,16 @@ export const useAppStore = create<AppState>()(
         });
         return { achievementUnlockedAt: stamped, earnedAchievementIds: unite(state.earnedAchievementIds, unseen) };
       }),
+      beginPlanStep: (run: PlanRun) => set({ planRun: run }),
+      leavePlanStep: () => set({ planRun: null }),
+      setLearningPlanProgress: (progress) => set({ learningPlanProgress: progress }),
+      recordActivityFinished: (activityId: string) => set((state) =>
+        stepTickedOff(state, (launch) => {
+          if (launch.kind === 'story') return false;
+          if (launch.kind === 'feelings') return launch.activityIds.includes(activityId);
+          return launch.activityId === activityId;
+        })
+      ),
       recordChallengeCompleted: (kind: ChallengeKind) => set((state) => ({
         challengeCounts: { ...state.challengeCounts, [kind]: (state.challengeCounts[kind] ?? 0) + 1 },
       })),
@@ -509,6 +547,7 @@ export const useAppStore = create<AppState>()(
         lastHomeVisitAt: state.lastHomeVisitAt,
         achievementUnlockedAt: state.achievementUnlockedAt,
         lastStoryCompletedAt: state.lastStoryCompletedAt,
+        learningPlanProgress: state.learningPlanProgress,
         backgroundAnimationState: state.backgroundAnimationState,
       }),
       onRehydrateStorage: () => (state, error) => {

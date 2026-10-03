@@ -10,7 +10,7 @@
  */
 
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
+import { act, render, fireEvent } from '@testing-library/react-native';
 import { SpellingGameScreen } from '@/components/games/spelling-game-screen';
 
 // Reanimated is mocked globally in jest.setup.js
@@ -94,8 +94,24 @@ const mockGameState: Record<string, unknown> = {
   tapWordBankItem: jest.fn(),
 };
 
+let roundCompleteFromScreen: (() => void) | undefined;
 jest.mock('@/hooks/use-spelling-game', () => ({
-  useSpellingGame: () => mockGameState,
+  useSpellingGame: (_activityId: string, onRoundComplete: () => void) => {
+    roundCompleteFromScreen = onRoundComplete;
+    return mockGameState;
+  },
+}));
+
+const mockRecordActivityFinished = jest.fn();
+jest.mock('@/store/app-store', () => ({
+  useAppStore: jest.fn((selector?: (state: Record<string, unknown>) => unknown) => {
+    const state = {
+      textSizeScale: 1,
+      setTextSizeScale: jest.fn(),
+      recordActivityFinished: mockRecordActivityFinished,
+    };
+    return typeof selector === 'function' ? selector(state) : state;
+  }),
 }));
 
 // Tree helpers
@@ -173,6 +189,22 @@ describe('SpellingGameScreen', () => {
     // The first Pressable in the tree is the PageHeader back button
     fireEvent.press(pressables[0]);
     expect(onBack).toHaveBeenCalledTimes(1);
+  });
+
+  it('tells the plan which activity was finished when a round completes', () => {
+    render(<SpellingGameScreen {...defaultProps} activityId="wombat-spelling" />);
+
+    act(() => { roundCompleteFromScreen?.(); });
+
+    expect(mockRecordActivityFinished).toHaveBeenCalledTimes(1);
+    expect(mockRecordActivityFinished).toHaveBeenCalledWith('wombat-spelling');
+    expect(defaultProps.onRoundComplete).toHaveBeenCalledTimes(1);
+  });
+
+  it('tells the plan nothing until a round is finished', () => {
+    render(<SpellingGameScreen {...defaultProps} />);
+
+    expect(mockRecordActivityFinished).not.toHaveBeenCalled();
   });
 
   it('auto-starts the game on mount', () => {

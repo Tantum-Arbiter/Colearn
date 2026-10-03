@@ -5,10 +5,14 @@ import { useAnimatedStyle } from 'react-native-reanimated';
 import type { ReactTestInstance } from 'react-test-renderer';
 import { IslandScene } from '@/components/island/island-scene';
 import { IslandVoyageProvider, type IslandVoyage } from '@/contexts/island-voyage-context';
-import { ISLAND_NIGHT, islandLayout } from '@/constants/island-scene';
+import { ISLAND_NIGHT, artPoint, islandLayout } from '@/constants/island-scene';
 import { chromeOpacity, islandScale, sunRise, type VoyagePhase } from '@/constants/island-voyage';
 import { GULL_COURSES, beamReach, cloudDrift, fallShift, poolRing, treeSway, villageGlow, waterGlow } from '@/constants/island-life';
 import { CIRCLE_BUTTON_DIAMETER_PHONE, contentMargin, journeyHeaderTop } from '@/components/child-ui/tokens';
+import { ISLAND_WEEK } from '@/data/learning-plan';
+import { ISLAND_TRAIL } from '@/constants/island-trail';
+import { TRAIL_LIT } from '@/components/island/plan-trail';
+import type { PlanStepView } from '@/hooks/use-learning-plan';
 
 const SCREEN = { width: 390, height: 844 };
 const TOP_INSET = 47;
@@ -94,6 +98,39 @@ const mockClocks = {
   lamp: { value: 0.15 },
 };
 const mockAlive: boolean[] = [];
+
+const mockStart = jest.fn();
+let mockPlanSteps: PlanStepView[] = [];
+let mockCurrent: PlanStepView | null = null;
+let mockDoneCount = 0;
+jest.mock('@/hooks/use-learning-plan', () => ({
+  useLearningPlan: () => ({
+    plan: { id: 'island-week', steps: mockPlanSteps.map((view) => view.step) },
+    steps: mockPlanSteps,
+    current: mockCurrent,
+    doneCount: mockDoneCount,
+    start: mockStart,
+  }),
+}));
+
+function planView(index: number, state: PlanStepView['state']): PlanStepView {
+  const step = ISLAND_WEEK.steps[index];
+  return {
+    step,
+    state,
+    point: ISLAND_TRAIL[index],
+    title: `Title ${step.day}`,
+    picture: null,
+    launch: step.kind === 'story' ? { kind: 'story', storyId: step.storyId ?? '' } : { kind: 'spelling', activityId: 'wombat-spelling' },
+  };
+}
+
+function aWeek(states: PlanStepView['state'][]) {
+  mockPlanSteps = states.map((state, index) => planView(index, state));
+  mockCurrent = mockPlanSteps.find((view) => view.state === 'open' || view.state === 'tomorrow') ?? null;
+  mockDoneCount = states.filter((state) => state === 'done').length;
+}
+
 jest.mock('@/hooks/use-island-clocks', () => ({
   useIslandClocks: (alive: boolean) => {
     mockAlive.push(alive);
@@ -171,6 +208,9 @@ describe('IslandScene', () => {
     mockMuted = false;
     mockToggleMute.mockClear();
     mockAlive.length = 0;
+    mockStart.mockReset();
+    mockStart.mockImplementation((view: PlanStepView) => view.launch);
+    aWeek(['open', 'locked', 'locked', 'locked', 'locked', 'locked', 'locked']);
     (useAnimatedStyle as jest.Mock).mockImplementation((build: () => object) => build());
   });
 
@@ -482,6 +522,143 @@ describe('IslandScene', () => {
         expect(given.islandReady).not.toHaveBeenCalled();
       }
     );
+  });
+
+  describe('the learning plan on the map', () => {
+    const has = (root: ReactTestInstance, testID: string) => root.findAll((node) => node.props.testID === testID).length > 0;
+    const pressable = (root: ReactTestInstance, testID: string) =>
+      root.findAll((node) => node.props.testID === testID && typeof node.props.onPress === 'function')[0];
+    const marker = (root: ReactTestInstance, day: number) => pressable(root, `plan-checkpoint-${day}`);
+
+    it('lays the seven checkpoints and their trail over the island, in front of everything that moves', () => {
+      const { root } = renderScene();
+
+      [1, 2, 3, 4, 5, 6, 7].forEach((day) => expect(has(root, `plan-checkpoint-${day}`)).toBe(true));
+      const names = ['island-gulls', 'plan-trail', 'plan-checkpoint-1', 'plan-checkpoint-7'];
+      const order = root
+        .findAll((node) => names.includes(node.props.testID as string) && node.parent?.props.testID !== node.props.testID)
+        .map((node) => node.props.testID);
+      expect(order).toEqual(names);
+    });
+
+    it('keeps the checkpoints on the stage, so they settle in with the island', () => {
+      const { root } = renderScene();
+
+      expect(innermost(root, 'island-stage').findAll((node) => node.props.testID === 'plan-checkpoint-3').length).toBeGreaterThan(0);
+    });
+
+    it('lights the trail as far as the open day', () => {
+      aWeek(['done', 'done', 'open', 'locked', 'locked', 'locked', 'locked']);
+      const { root } = renderScene();
+
+      const lit = root.findAll((node) => typeof node.props.testID === 'string' && node.props.testID.startsWith('plan-dash-') && node.props.fill === TRAIL_LIT);
+      const pale = root.findAll((node) => typeof node.props.testID === 'string' && node.props.testID.startsWith('plan-dash-') && node.props.fill !== TRAIL_LIT);
+
+      expect(lit.length).toBeGreaterThan(0);
+      expect(pale.length).toBeGreaterThan(0);
+      expect(lit.length + pale.length).toBe(root.findAll((node) => typeof node.props.testID === 'string' && node.props.testID.startsWith('plan-dash-')).length);
+    });
+
+    it('lights only the legs walked when the next day is still to open', () => {
+      aWeek(['done', 'tomorrow', 'locked', 'locked', 'locked', 'locked', 'locked']);
+      const open = renderScene().root;
+      aWeek(['done', 'open', 'locked', 'locked', 'locked', 'locked', 'locked']);
+      const tomorrow = renderScene().root;
+
+      const litIn = (root: ReactTestInstance) => root.findAll((node) => typeof node.props.testID === 'string' && node.props.testID.startsWith('plan-dash-') && node.props.fill === TRAIL_LIT).length;
+
+      expect(litIn(tomorrow)).toBeGreaterThan(litIn(open));
+    });
+
+    it('sizes the card to the screen it is on', () => {
+      const { root } = renderScene();
+
+      expect(StyleSheet.flatten(innermost(root, 'plan-panel').props.style).width).toBe(SCREEN.width - 2 * contentMargin(false));
+    });
+
+    it('opens the preview from the card`s Preview link, from where the cover sits, and tells the app what to preview', () => {
+      const onPreviewActivity = jest.fn();
+      const { root } = renderScene(voyage(), { onPreviewActivity });
+
+      act(() => { pressable(root, 'plan-preview').props.onPress(); });
+
+      expect(mockStart).toHaveBeenCalledWith(expect.objectContaining({ step: ISLAND_WEEK.steps[0] }));
+      expect(onPreviewActivity).toHaveBeenCalledWith(
+        { kind: 'story', storyId: 'snuggle-little-wombat' },
+        expect.objectContaining({ x: expect.any(Number), y: expect.any(Number), width: expect.any(Number), height: expect.any(Number) })
+      );
+    });
+
+    it('previews nothing when the plan has nothing to set off on', () => {
+      mockStart.mockImplementation(() => null);
+      const onPreviewActivity = jest.fn();
+      const { root } = renderScene(voyage(), { onPreviewActivity });
+
+      act(() => { pressable(root, 'plan-preview').props.onPress(); });
+
+      expect(onPreviewActivity).not.toHaveBeenCalled();
+    });
+
+    it('keeps the checkpoints` names clear of the card, measuring it once it is laid out', () => {
+      const { root } = renderScene();
+      const card = root.findAll((node) => node.props.testID === 'plan-panel-card' && typeof node.props.onLayout === 'function')[0];
+      const floorOf = () =>
+        root.findAll((node) => node.props.testID === 'plan-checkpoint-6-label' && node.props.style !== undefined)[0];
+      const labelTop = () => StyleSheet.flatten(floorOf().props.style).top as number;
+
+      act(() => { card.props.onLayout({ nativeEvent: { layout: { x: 0, y: 0, width: 358, height: 120 } } }); });
+      const roomy = labelTop();
+      act(() => { card.props.onLayout({ nativeEvent: { layout: { x: 0, y: 0, width: 358, height: 420 } } }); });
+      const crowded = labelTop();
+
+      const centre = artPoint(ISLAND_TRAIL[5].x, ISLAND_TRAIL[5].y, LAYOUT);
+      expect(roomy).toBeGreaterThan(centre.y);
+      expect(crowded).toBeLessThan(centre.y);
+    });
+
+    it('shows the panel for the day that is next, fading in with the rest of the chrome', () => {
+      const { root } = renderScene(voyage({ arrival: { value: 0.9 } } as Partial<IslandVoyage>));
+
+      expect(has(root, 'plan-panel')).toBe(true);
+      expect(styleOf(root, 'island-plan-panel').opacity).toBe(chromeOpacity(0.9));
+    });
+
+    it('sets the child off when the open checkpoint is pressed, and tells the app what to open', () => {
+      const onStartActivity = jest.fn();
+      const { root } = renderScene(voyage(), { onStartActivity });
+
+      act(() => { marker(root, 1).props.onPress(); });
+
+      expect(mockStart).toHaveBeenCalledWith(expect.objectContaining({ step: ISLAND_WEEK.steps[0] }));
+      expect(onStartActivity).toHaveBeenCalledWith({ kind: 'story', storyId: 'snuggle-little-wombat' });
+    });
+
+    it('sets the child off from the panel`s button just the same', () => {
+      const onStartActivity = jest.fn();
+      const { root } = renderScene(voyage(), { onStartActivity });
+
+      act(() => { pressable(root, 'plan-start').props.onPress(); });
+
+      expect(onStartActivity).toHaveBeenCalledWith({ kind: 'story', storyId: 'snuggle-little-wombat' });
+    });
+
+    it('opens nothing when the plan has nothing to set off on', () => {
+      mockStart.mockImplementation(() => null);
+      const onStartActivity = jest.fn();
+      const { root } = renderScene(voyage(), { onStartActivity });
+
+      act(() => { pressable(root, 'plan-start').props.onPress(); });
+
+      expect(onStartActivity).not.toHaveBeenCalled();
+    });
+
+    it('breathes the open checkpoint by the island`s own wind', () => {
+      const { root } = renderScene();
+
+      const glow = styleOf(root, 'plan-checkpoint-1-glow');
+
+      expect((glow.transform as { scale: number }[])[0].scale).toBeGreaterThan(1);
+    });
   });
 
   describe('the header', () => {

@@ -3,6 +3,8 @@ import { GUIDE_IDS, GUIDE_STORAGE_KEY } from '@/constants/owl-guide';
 import ScreenTimeService from '@/services/screen-time-service';
 import { SecureStorage } from '@/services/secure-storage';
 import { SUPPORTED_LANGUAGES, setStoredLanguage, type SupportedLanguage } from '@/services/i18n';
+import { PLAN_STEPS_PER_WEEK, type LearningPlanProgress } from '@/constants/learning-plan';
+import { ISLAND_WEEK } from '@/data/learning-plan';
 import { useAppStore, type SubscriptionTier } from '@/store/app-store';
 
 const TIERS: SubscriptionTier[] = ['free', 'basic', 'premium'];
@@ -39,6 +41,7 @@ export interface E2eState {
   tier?: SubscriptionTier;
   childAgeMonths?: number;
   nickname?: string;
+  planDone?: number;
 }
 
 export function isE2eAllowed(isDevBuild: boolean, extra: unknown): boolean {
@@ -95,6 +98,11 @@ export function parseE2eLink(link: string): E2eState | null {
 
   const nickname = params.get('nickname');
   if (nickname) state.nickname = nickname;
+
+  const planDone = Number(params.get('planDone'));
+  if (params.get('planDone') !== null && Number.isInteger(planDone) && planDone >= 0 && planDone <= PLAN_STEPS_PER_WEEK) {
+    state.planDone = planDone;
+  }
 
   return state;
 }
@@ -175,4 +183,20 @@ export async function applyE2eState(state: E2eState, allowed: boolean): Promise<
   if (state.childAgeMonths !== undefined) {
     store.setChildAge(state.childAgeMonths);
   }
+
+  if (state.planDone !== undefined) {
+    store.setLearningPlanProgress(state.planDone === 0 ? null : daysDoneYesterday(state.planDone));
+  }
+}
+
+function daysDoneYesterday(count: number): LearningPlanProgress {
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  yesterday.setHours(10, 0, 0, 0);
+  const completed: Record<string, string> = {};
+  ISLAND_WEEK.steps.slice(0, count).forEach((step) => {
+    completed[step.id] = yesterday.toISOString();
+  });
+
+  return { planId: ISLAND_WEEK.id, completed };
 }

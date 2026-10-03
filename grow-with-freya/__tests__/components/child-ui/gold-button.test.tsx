@@ -100,6 +100,28 @@ describe('GoldButton', () => {
     expect(glyphOrder(trailing, 'lock-closed', 'T')).toEqual(['label', 'icon']);
   });
 
+  it.each([
+    ['trailing', ['label', 'icon']],
+    ['leading', ['icon', 'label']],
+  ] as const)('should leave out the unseen twin when asked not to balance, its glyph %s', (position, order) => {
+    const tree = render(
+      <GoldButton label="Start" icon="chevron-forward" iconPosition={position} balanced={false} onPress={jest.fn()} />
+    );
+
+    expect(byTestId(tree, 'gold-button-icon-twin')).toHaveLength(0);
+    expect(byTestId(tree, 'gold-button-icon').length).toBeGreaterThan(0);
+    expect(glyphOrder(tree, 'chevron-forward', 'Start')).toEqual(order);
+  });
+
+  it('should take the side room it is given, and its own by default', () => {
+    const narrow = render(<GoldButton label="x" icon="lock-closed" onPress={jest.fn()} paddingHorizontal={16} />);
+    const plain = render(<GoldButton label="x" icon="lock-closed" onPress={jest.fn()} />);
+
+    const face = (tree: ReturnType<typeof render>) => StyleSheet.flatten(byTestId(tree, 'gold-button-face')[0].props.style);
+    expect(face(narrow).paddingHorizontal).toBe(16);
+    expect(face(plain).paddingHorizontal).toBe(GOLD_BUTTON.paddingHorizontal);
+  });
+
   it('should be as tall as it is asked, and stay a pill', () => {
     const tree = render(<GoldButton label="x" icon="lock-closed" onPress={jest.fn()} height={48} />);
 

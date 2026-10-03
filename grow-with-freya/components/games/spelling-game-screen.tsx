@@ -74,6 +74,7 @@ export function SpellingGameScreen({
   const insets = useSafeAreaInsets();
   const { scaledFontSize, isTablet, scaledButtonSize, textSizeScale: accessTextSizeScale } = useAccessibility();
   const { textSizeScale, setTextSizeScale } = useAppStore();
+  const recordActivityFinished = useAppStore((state) => state.recordActivityFinished);
 
   const [showCelebration, setShowCelebration] = useState(false);
   const [showBridge, setShowBridge] = useState(false);
@@ -110,8 +111,9 @@ export function SpellingGameScreen({
   const handleRoundComplete = useCallback(() => {
     completedRoundsCounter += 1;
     setShowCelebration(true);
+    recordActivityFinished(activityId);
     onRoundComplete?.();
-  }, [onRoundComplete]);
+  }, [activityId, onRoundComplete, recordActivityFinished]);
 
   const game = useSpellingGame(activityId, handleRoundComplete, storyId);
 

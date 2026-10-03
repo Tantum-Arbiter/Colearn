@@ -29,6 +29,8 @@ export interface GoldButtonProps {
   height?: number;
   fontSize?: number;
   iconSize?: number;
+  paddingHorizontal?: number;
+  balanced?: boolean;
   hitSlop?: number;
   style?: StyleProp<ViewStyle>;
   testID?: string;
@@ -48,6 +50,8 @@ export function GoldButton({
   height = GOLD_BUTTON.height,
   fontSize = GOLD_BUTTON.fontSize,
   iconSize = GOLD_BUTTON.iconSize,
+  paddingHorizontal = GOLD_BUTTON.paddingHorizontal,
+  balanced = true,
   hitSlop,
   style,
   testID = 'gold-button',
@@ -76,16 +80,17 @@ export function GoldButton({
     >
       <View testID={`${testID}-glow`} pointerEvents="none" style={[styles.glow, { borderRadius: height / 2 }]} />
       <LinearGradient
+        testID={`${testID}-face`}
         colors={[HERO_CARD.arrowTop, HERO_CARD.arrowBottom]}
-        style={[styles.face, { minHeight: height, borderRadius: height / 2 }]}
+        style={[styles.face, { minHeight: height, borderRadius: height / 2, paddingHorizontal }]}
       >
         <LinearGradient colors={[...GOLD_BUTTON.sheen]} style={styles.sheen} pointerEvents="none" />
         <View testID={`${testID}-word`} style={styles.word}>
-          {glyph(iconPosition === 'leading')}
+          {balanced || iconPosition === 'leading' ? glyph(iconPosition === 'leading') : null}
           <Text style={[styles.label, { fontSize: scaledFontSize(fontSize) }]} numberOfLines={1}>
             {label}
           </Text>
-          {glyph(iconPosition === 'trailing')}
+          {balanced || iconPosition === 'trailing' ? glyph(iconPosition === 'trailing') : null}
         </View>
       </LinearGradient>
     </Pressable>
@@ -112,7 +117,6 @@ const styles = StyleSheet.create({
   face: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: GOLD_BUTTON.paddingHorizontal,
     overflow: 'hidden',
   },
   word: {

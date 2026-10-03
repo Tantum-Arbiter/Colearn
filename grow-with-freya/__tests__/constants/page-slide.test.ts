@@ -4,7 +4,7 @@
  * lifts away above.
  */
 
-import { accountReturnPage, crossesView, pageOffset, snapToPixel } from '@/constants/page-slide';
+import { ISLAND_ACTIVITY_PAGES, accountReturnPage, crossesView, pageOffset, snapToPixel, voyageStaysOut } from '@/constants/page-slide';
 
 const HEIGHT = 800;
 
@@ -43,6 +43,21 @@ describe('pageOffset', () => {
   it('rests every other page below', () => {
     ['sensory', 'screen_time', 'practise', 'freeplay', 'feelings', 'spelling-game'].forEach((page) => {
       expect(pageOffset(page, 'account', HEIGHT)).toBe(HEIGHT);
+    });
+  });
+
+  it('lifts the island above while an activity it set the child off on is showing', () => {
+    ISLAND_ACTIVITY_PAGES.forEach((page) => {
+      expect(pageOffset('island', page, HEIGHT)).toBe(-HEIGHT);
+    });
+    expect(ISLAND_ACTIVITY_PAGES).toEqual(expect.arrayContaining(['feelings', 'practise', 'spelling-game']));
+  });
+
+  it('rests the island below everywhere else, and every activity below the island', () => {
+    expect(pageOffset('island', 'main', HEIGHT)).toBe(HEIGHT);
+    expect(pageOffset('island', 'stories', HEIGHT)).toBe(HEIGHT);
+    ISLAND_ACTIVITY_PAGES.forEach((page) => {
+      expect(pageOffset(page, 'island', HEIGHT)).toBe(HEIGHT);
     });
   });
 });
@@ -90,5 +105,20 @@ describe('snapToPixel', () => {
     for (const shift of [0.1, 0.17, 0.5, 0.83, 123.45]) {
       expect(snapToPixel(shift, 3) - snapToPixel(shift - height, 3)).toBeCloseTo(height, 9);
     }
+  });
+});
+
+describe('voyageStaysOut', () => {
+  it('keeps the voyage out on the island and on an activity the island set the child off on', () => {
+    expect(voyageStaysOut('island', false)).toBe(true);
+    ISLAND_ACTIVITY_PAGES.forEach((page) => expect(voyageStaysOut(page, true)).toBe(true));
+  });
+
+  it('brings it home for every other page, and for an activity opened from the menu', () => {
+    ['main', 'stories', 'account', 'spelling', 'numbers', 'freeplay'].forEach((page) => {
+      expect(voyageStaysOut(page, true)).toBe(false);
+      expect(voyageStaysOut(page, false)).toBe(false);
+    });
+    ISLAND_ACTIVITY_PAGES.forEach((page) => expect(voyageStaysOut(page, false)).toBe(false));
   });
 });
