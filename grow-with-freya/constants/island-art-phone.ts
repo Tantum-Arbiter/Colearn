@@ -69,4 +69,9 @@ export const ISLAND_ART_PHONE: IslandArt = {
     pulse: require('@/assets/images/island-phone/island-lamp-pulse.webp'),
     pulseSize: 150,
   },
+  stars: [
+    { id: 'island-stars-1', source: require('@/assets/images/island-phone/island-stars-1.webp'), frame: { x: 33, y: 8, width: 780, height: 377 } },
+    { id: 'island-stars-2', source: require('@/assets/images/island-phone/island-stars-2.webp'), frame: { x: 196, y: 5, width: 511, height: 517 } },
+    { id: 'island-stars-3', source: require('@/assets/images/island-phone/island-stars-3.webp'), frame: { x: 97, y: 41, width: 748, height: 506 } },
+  ],
 };

@@ -28,6 +28,7 @@ the clouds, the trees, the water and the gulls can each move a little:
                           the houses and on the bridge, in two sheets that
                           glimmer in turn
   island-lamp-*.webp      the glow, the twin beams and the pulse of the lighthouse
+  island-stars-*.webp     the stars shown at night, in sheets that twinkle in turn
   constants/island-art.ts where each of them sits in the painting
 
 How each is told apart:
@@ -45,6 +46,20 @@ the mountain's edge is not cloud, and is left where it is.
 The painting's edges are soft, a few pixels of cloud or leaf mixed into the
 blue, so within three pixels of a cut the colour is borrowed from the solid
 pixel beside it, and no blue rim rides along over the sun.
+
+A cloud in a box in CLOUDS_LEFT_OUT is painted out of the base like the others
+but not drawn in any layer, so it is gone: on the phone painting, a small cloud
+by the mountain peak that hung in front of the sun (operator, 2026-10-03). A
+thin strand of it is too thin to be told as cloud and would be taken for land,
+left floating in front of the sun, so any loose piece of land smaller than
+LEFT_OUT_SPECK that reaches into the box goes with it, and the cloud beside it is
+carried into the gap it leaves, as under land. Where the cloud, the land
+and the trees in front of the sun leave a pinhole between them, the sun glowed
+through it as the cloud drifted away from the mountain's edge; on the phone
+painting the cloud is carried under the mountain too, inside CLOUD_UNDER_MOUNTAIN,
+where it lies against the sun, so the mountain always hides the cloud's edge, and
+into any small pocket of painted sky shut in between them there; and any small
+see-through hole inside the cloud's own body is made solid, so it moves with it.
 
 A cloud that drifts would show a hole where a tree stood in front of it, so
 each cloud is carried on a little way under the land in its own colour, but
@@ -73,6 +88,12 @@ repeats every so many rows, so it can run for ever. The pool at its foot is
 found the same way, and ripples spread in it behind a cover of its own. Every
 cover has a hole wherever any fall or pool lies, so one cover never hides what
 moves under its neighbour.
+
+The stars are drawn here too (operator, 2026-10-03), only in open sky and clear
+of every cloud as far as it drifts, so nothing that moves passes over them; the
+app shows them behind the moon. They are as big on screen as the home screen's
+stars: STAR_POINT is how many painting pixels a screen point takes where this
+painting is usually shown, and STAR_EVERY how much sky each star has.
 
 The lights are drawn here too. A window is lit by a warm patch on the window
 painted there; the places are written down below, read off the painting. The
@@ -114,7 +135,7 @@ OWN_TYPES = True
 DEBUG_FACES = (('moon-phone', 'moon', 324), ('moon-tablet', 'moon', 426), ('sun-tablet', 'sun', 426))
 DEBUG_NIGHT_FACE = 426
 DEBUG_TOP = 620
-MADE_HERE = ('island-base', 'island-land', 'island-horizon', 'island-cloud-', 'island-billow-', 'island-tree-',
+MADE_HERE = ('island-stars-', 'island-base', 'island-land', 'island-horizon', 'island-cloud-', 'island-billow-', 'island-tree-',
              'island-water-', 'island-fall-', 'island-pool-', 'island-ring', 'island-spray', 'island-lit-', 'island-lamp-')
 
 BAND_TOP = 226
@@ -147,6 +168,17 @@ CLOUDS = {
     'right': {'within': (880, 0, 1122, 300), 'red': 48, 'reach': 12, 'beats': 2, 'lag': 0.55, 'near': False},
     'horizon': {'within': (495, 300, 1122, 450), 'red': 100, 'reach': 7, 'beats': 2, 'lag': 0.0, 'near': True},
 }
+STAR_SHEETS = 3
+STAR_SEED = 20261004
+STAR_POINT = 1.16
+STAR_EVERY = 3900
+STAR_CLEAR = 12
+STAR_SIZES = ((1.1, 0.6, 0.8), (1.9, 0.95, 0.2))
+STAR_WARM = (255, 242, 200)
+STAR_WHITE = (255, 255, 255)
+CLOUDS_LEFT_OUT = []
+CLOUD_UNDER_MOUNTAIN = None
+LEFT_OUT_SPECK = 100
 CLOUD_BANK = (704, 338, 882, 394)
 CLOUD_BANK_FADE = 18
 CLOUD_FURTHER_OFF = (0.93, 0.95, 1.0)
@@ -272,6 +304,10 @@ PHONE = {
         'left': {'within': (0, 200, 370, 640), 'red': 48, 'reach': -12, 'beats': 3, 'lag': 0.15, 'near': False},
         'horizon': {'within': (370, 230, 941, 670), 'red': 100, 'reach': 7, 'beats': 2, 'lag': 0.0, 'near': True},
     },
+    'STAR_POINT': 1.9,
+    'STAR_EVERY': 10600,
+    'CLOUDS_LEFT_OUT': [(386, 550, 452, 577)],
+    'CLOUD_UNDER_MOUNTAIN': (380, 590, 540, 629),
     'CLOUD_BANK': (604, 570, 702, 630),
     'CLOUD_FILLS': [
         {'left': 412, 'foot': 626, 'scale': 0.62, 'turned': True},
@@ -466,10 +502,28 @@ def carried_under(cloud_layer, land):
     if not there.any():
         return cloud_layer
     distance, nearest = ndimage.distance_transform_edt(~there, return_indices=True)
-    under = land & ~mountains_of(land.shape) & (distance <= CLOUD_UNDER_LAND) & ~there
+    hidden_by = ~mountains_of(land.shape)
+    if CLOUD_UNDER_MOUNTAIN:
+        hidden_by |= inside(land.shape, CLOUD_UNDER_MOUNTAIN)
+    under = land & hidden_by & (distance <= CLOUD_UNDER_LAND) & ~there
     rgba[under] = rgba[nearest[0][under], nearest[1][under]]
     rgba[under, 3] = 255
 
+    return as_image(rgba)
+
+
+def closed(cloud_layer):
+    """Small see-through holes inside the cloud's own body made solid, in the colour beside them."""
+    rgba = np.asarray(cloud_layer).astype(np.float32)
+    solid = rgba[..., 3] > 247
+    holes, count = ndimage.label(ndimage.binary_fill_holes(solid) & ~solid)
+    sizes = ndimage.sum(np.ones(solid.shape), holes, range(1, count + 1))
+    small = np.isin(holes, 1 + np.where(sizes <= LEFT_OUT_SPECK)[0])
+    if not small.any():
+        return cloud_layer
+    nearest = ndimage.distance_transform_edt(~solid, return_distances=False, return_indices=True)
+    rgba[small, :3] = rgba[nearest[0][small], nearest[1][small], :3]
+    rgba[small, 3] = 255
     return as_image(rgba)
 
 
@@ -685,6 +739,53 @@ def lights_of(shape, land, moving):
     return windows, village
 
 
+def stars_of(sky, clouds, shape):
+    """Stars in open sky, clear of every cloud as far as it drifts, in sheets that twinkle in turn."""
+    height, width = shape
+    random = np.random.default_rng(STAR_SEED)
+    open_sky = sky.copy()
+    for name, found in clouds.items():
+        open_sky &= ~ndimage.binary_dilation(found, iterations=abs(CLOUDS[name]['reach']) + STAR_CLEAR)
+    open_sky[SEA_LINE - 6:] = False
+    open_sky = ndimage.binary_erosion(open_sky, iterations=max(2, round(3 * STAR_POINT)))
+    ys, xs = np.where(open_sky)
+    count = int(open_sky.sum() / STAR_EVERY)
+    apart = (STAR_EVERY ** 0.5) * 0.7
+    placed = []
+    for _ in range(count * 40):
+        if len(placed) >= count or len(xs) == 0:
+            break
+        pick = int(random.integers(0, len(xs)))
+        x, y = int(xs[pick]), int(ys[pick])
+        if all((x - px) ** 2 + (y - py) ** 2 >= apart ** 2 for px, py, *_ in placed):
+            size = 0 if random.random() < STAR_SIZES[0][2] else 1
+            warm = random.random() < 0.3
+            placed.append((x, y, size, warm, int(random.integers(0, STAR_SHEETS))))
+
+    rows, columns = np.mgrid[0:height, 0:width]
+    sheets = []
+    for sheet in range(STAR_SHEETS):
+        colour = np.zeros((height, width, 3), dtype=np.float32)
+        alpha = np.zeros((height, width), dtype=np.float32)
+        for x, y, size, warm, on in placed:
+            if on != sheet:
+                continue
+            radius_pt, strength, _ = STAR_SIZES[size]
+            core = radius_pt * STAR_POINT
+            reach = int(core * 4) + 2
+            top, bottom = max(0, y - reach), min(height, y + reach + 1)
+            left, right = max(0, x - reach), min(width, x + reach + 1)
+            away = np.hypot(rows[top:bottom, left:right] - y, columns[top:bottom, left:right] - x)
+            disc = np.clip(core + 0.5 - away, 0, 1)
+            halo = 0.35 * np.clip(1 - away / (core * 3.5), 0, 1) ** 2
+            here = strength * np.maximum(disc, halo)
+            tone = np.array(STAR_WARM if warm else STAR_WHITE, dtype=np.float32)
+            colour[top:bottom, left:right] = np.where((here > alpha[top:bottom, left:right])[..., None], tone, colour[top:bottom, left:right])
+            alpha[top:bottom, left:right] = np.maximum(alpha[top:bottom, left:right], here)
+        sheets.append(as_image(np.dstack([colour, alpha * 255])))
+    return sheets, placed
+
+
 def frame_of(box):
     return f'{{ x: {box[0]}, y: {box[1]}, width: {box[2] - box[0]}, height: {box[3] - box[1]} }}'
 
@@ -698,9 +799,32 @@ def take_apart(picture):
     cloud = np.zeros(shape, dtype=bool)
     for found in clouds.values():
         cloud |= found
+    left_out = np.zeros(shape, dtype=bool)
+    for box in CLOUDS_LEFT_OUT:
+        left_out |= inside(shape, box)
+    specks = np.zeros(shape, dtype=bool)
+    if left_out.any():
+        loose, count = ndimage.label(~(sky | cloud | water))
+        sizes = ndimage.sum(np.ones(shape), loose, range(1, count + 1))
+        small = np.isin(loose, 1 + np.where(sizes < LEFT_OUT_SPECK)[0])
+        specks = ndimage.binary_dilation(left_out & small, iterations=0, mask=small)
+        cloud |= specks
     land = ~(sky | cloud | water)
+    pockets = np.zeros(shape, dtype=bool)
+    if CLOUD_UNDER_MOUNTAIN:
+        near_sun = inside(shape, CLOUD_UNDER_MOUNTAIN)
+        solid = (land | cloud) & near_sun
+        enclosed, count = ndimage.label(ndimage.binary_fill_holes(solid) & ~solid)
+        sizes = ndimage.sum(np.ones(shape), enclosed, range(1, count + 1))
+        pockets = np.isin(enclosed, 1 + np.where(sizes <= LEFT_OUT_SPECK)[0])
 
     parts = {'clouds': [], 'billows': [], 'trees': [], 'water': [], 'falls': [], 'pools': [], 'village': []}
+
+    star_sheets, _ = stars_of(sky, clouds, shape)
+    parts['stars'] = []
+    for index, sheet in enumerate(star_sheets, 1):
+        sprite, box = cropped(sheet)
+        parts['stars'].append({'name': f'island-stars-{index}', 'image': sprite, 'box': box})
 
     base = pixels.copy()
     cloud_gone = ndimage.binary_dilation(cloud, iterations=RIM + 1) & ~land
@@ -744,10 +868,12 @@ def take_apart(picture):
     land_image = as_image(land_rgba).crop((0, BAND_TOP, picture.width, BAND_BOTTOM))
 
     for name, found in clouds.items():
-        layer = as_image(lifted(pixels, found))
+        layer = as_image(lifted(pixels, found & ~left_out))
         if CLOUDS[name]['near']:
             layer = filled_out(layer)
-        layer = carried_under(layer, land)
+        layer = carried_under(layer, land | specks | pockets)
+        if CLOUDS[name]['near'] and CLOUD_UNDER_MOUNTAIN:
+            layer = closed(layer)
         sprite, box = cropped(layer)
         parts['clouds'].append({'name': f'island-cloud-{name}', 'image': sprite, 'box': box, **CLOUDS[name]})
 
@@ -888,6 +1014,7 @@ def write_module(picture, parts):
         '  readonly litWindows: IslandSheetArt;',
         '  readonly villageLamps: readonly IslandSheetArt[];',
         '  readonly lighthouse: IslandLampArt;',
+        '  readonly stars: readonly IslandSheetArt[];',
         '}',
         '',
     ]
@@ -973,6 +1100,9 @@ def write_module(picture, parts):
         f"    pulse: {source('island-lamp-pulse')},",
         f'    pulseSize: {LAMP_RING},',
         '  },',
+        '  stars: [',
+        *[f"    {{ id: '{sheet['name']}', source: {source(sheet['name'])}, frame: {frame_of(sheet['box'])} }}," for sheet in parts['stars']],
+        '  ],',
         '};',
         '',
     ]
@@ -1043,6 +1173,13 @@ def write_debug(folder, picture, base, land, parts):
                           (LIGHTHOUSE_LAMP[0] - LAMP_BEAM[0] // 2, LIGHTHOUSE_LAMP[1] - LAMP_BEAM[1] // 2))
     night.convert('RGB').save(os.path.join(folder, 'night.png'))
 
+    starry = np.asarray(put_together(base, land, parts, 0, 0)).astype(np.float32)
+    starry = starry * (1 - NIGHT[1]) + np.array(NIGHT[0], dtype=np.float32) * NIGHT[1]
+    starry = Image.fromarray(starry.astype(np.uint8)).convert('RGBA')
+    for sheet in parts['stars']:
+        starry.alpha_composite(sheet['image'], sheet['box'][:2])
+    starry.convert('RGB').save(os.path.join(folder, 'stars.png'))
+
     falls = base.convert('RGBA')
     for fall in parts['falls']:
         left, top, right, bottom = fall['box']
@@ -1087,7 +1224,7 @@ def main():
 
     save(base, 'island-base')
     save(land, 'island-land')
-    for kind in ('clouds', 'billows', 'trees', 'water', 'village'):
+    for kind in ('clouds', 'billows', 'trees', 'water', 'village', 'stars'):
         for part in parts[kind]:
             save(part['image'], part['name'])
     for fall in parts['falls']:

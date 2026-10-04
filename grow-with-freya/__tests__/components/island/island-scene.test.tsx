@@ -5,10 +5,10 @@ import { useAnimatedStyle } from 'react-native-reanimated';
 import type { ReactTestInstance } from 'react-test-renderer';
 import { IslandScene } from '@/components/island/island-scene';
 import { IslandVoyageProvider, type IslandVoyage } from '@/contexts/island-voyage-context';
-import { ISLAND_NIGHT, artPoint, islandLayout } from '@/constants/island-scene';
+import { ISLAND_NIGHT, artFrame, artPoint, islandLayout } from '@/constants/island-scene';
 import { ISLAND_ART_PHONE } from '@/constants/island-art-phone';
 import { chromeOpacity, islandScale, sunRise, type VoyagePhase } from '@/constants/island-voyage';
-import { GULL_COURSES, beamReach, cloudDrift, fallShift, poolRing, treeSway, villageGlow, waterGlow } from '@/constants/island-life';
+import { GULL_COURSES, beamReach, cloudDrift, fallShift, poolRing, starGlow, treeSway, villageGlow, waterGlow } from '@/constants/island-life';
 import { CIRCLE_BUTTON_DIAMETER_PHONE, contentMargin, journeyHeaderTop } from '@/components/child-ui/tokens';
 import { ISLAND_WEEK } from '@/data/learning-plan';
 import { ISLAND_TRAIL } from '@/constants/island-trail';
@@ -43,6 +43,10 @@ jest.mock('@/constants/island-art-phone', () => ({
     width: 941,
     height: 1672,
     sunX: 520,
+    stars: jest.requireMock('@/constants/island-art').ISLAND_ART.stars.map((sheet: { id: string; frame: object }) => ({
+      ...sheet,
+      source: { uri: `test://phone-${sheet.id}` },
+    })),
   },
 }));
 
@@ -99,6 +103,11 @@ jest.mock('@/constants/island-art', () => ({
       { id: 'lit-village-1', source: { uri: 'test://village-1' }, frame: { x: 190, y: 400, width: 860, height: 820 } },
     ],
     lighthouse: { x: 996, y: 568, glow: { uri: 'test://lamp-glow' }, glowSize: 76, beam: { uri: 'test://lamp-beam' }, beamLength: 380, beamHeight: 44, pulse: { uri: 'test://lamp-pulse' }, pulseSize: 150 },
+    stars: [
+      { id: 'stars-1', source: { uri: 'test://stars-1' }, frame: { x: 10, y: 20, width: 1100, height: 300 } },
+      { id: 'stars-2', source: { uri: 'test://stars-2' }, frame: { x: 12, y: 18, width: 1090, height: 310 } },
+      { id: 'stars-3', source: { uri: 'test://stars-3' }, frame: { x: 8, y: 25, width: 1104, height: 290 } },
+    ],
   },
 }));
 
@@ -272,6 +281,17 @@ describe('IslandScene', () => {
       expect(propsOf(root, ['art', 'clock']).art).toBe(map.art);
     });
 
+    it.each([
+      [false, 'test://phone-stars-1', 'test://stars-1'],
+      [true, 'test://stars-1', 'test://phone-stars-1'],
+    ])('on a tablet: %p, shows the stars of its own painting at night', (tablet, shown, hidden) => {
+      mockTablet = tablet;
+      const { root } = renderScene(voyage(), { timeOfDay: 'night' });
+
+      expect(withSource(root, shown).length).toBeGreaterThan(0);
+      expect(withSource(root, hidden)).toHaveLength(0);
+    });
+
     it('lights the windows of the painting it shows, at night', () => {
       const { root } = renderScene(voyage(), { timeOfDay: 'night' });
 
@@ -398,6 +418,43 @@ describe('IslandScene', () => {
 
       expect(outermost(root, 'island-night')).toHaveLength(0);
       expect(outermost(root, 'island-horizon-night')).toHaveLength(0);
+      expect(outermost(root, 'island-stars')).toHaveLength(0);
+    });
+
+    it('shows the painting`s stars at night, each sheet where the painting puts it, undimmed', () => {
+      const { root } = renderScene(voyage(), { timeOfDay: 'night' });
+
+      ['stars-1', 'stars-2', 'stars-3'].forEach((id, index) => {
+        const sheet = innermost(root, id);
+        const frame = [
+          { x: 10, y: 20, width: 1100, height: 300 },
+          { x: 12, y: 18, width: 1090, height: 310 },
+          { x: 8, y: 25, width: 1104, height: 290 },
+        ][index];
+        expect(StyleSheet.flatten(sheet.props.style)).toEqual(expect.objectContaining(artFrame(frame, LAYOUT)));
+        expect(withSource(root, `test://phone-${id}`).length).toBeGreaterThan(0);
+      });
+      expect(outermost(root, 'island-stars')[0].props.pointerEvents).toBe('none');
+      expect(outermost(root, 'island-stars')[0].props.accessibilityElementsHidden).toBe(true);
+    });
+
+    it('twinkles the star sheets in turn with the lamp`s clock', () => {
+      const { root } = renderScene(voyage(), { timeOfDay: 'night' });
+
+      ['stars-1', 'stars-2', 'stars-3'].forEach((id, index) => {
+        expect(StyleSheet.flatten(innermost(root, id).props.style).opacity).toBeCloseTo(starGlow(mockClocks.lamp.value, index, 3), 6);
+      });
+    });
+
+    it('draws the stars over the night sky and behind the moon, so the moon, the clouds and the land hide them', () => {
+      const { root } = renderScene(voyage(), { timeOfDay: 'night' });
+
+      const names = ['island-night', 'island-stars', 'island-sun-clip', 'cloud-near', 'island-horizon'];
+      const order = root
+        .findAll((node) => names.includes(node.props.testID as string) && node.parent?.props.testID !== node.props.testID)
+        .map((node) => node.props.testID);
+
+      expect(order).toEqual(names);
     });
 
     it('is dimmed to moonlight at night, behind the moon', () => {

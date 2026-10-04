@@ -96,6 +96,7 @@ export interface IslandArt {
   readonly litWindows: IslandSheetArt;
   readonly villageLamps: readonly IslandSheetArt[];
   readonly lighthouse: IslandLampArt;
+  readonly stars: readonly IslandSheetArt[];
 }
 
 export const ISLAND_ART: IslandArt = {
@@ -184,4 +185,9 @@ export const ISLAND_ART: IslandArt = {
     pulse: require('@/assets/images/island/island-lamp-pulse.webp'),
     pulseSize: 150,
   },
+  stars: [
+    { id: 'island-stars-1', source: require('@/assets/images/island/island-stars-1.webp'), frame: { x: 210, y: 1, width: 641, height: 370 } },
+    { id: 'island-stars-2', source: require('@/assets/images/island/island-stars-2.webp'), frame: { x: 41, y: 3, width: 1000, height: 317 } },
+    { id: 'island-stars-3', source: require('@/assets/images/island/island-stars-3.webp'), frame: { x: 187, y: 7, width: 793, height: 333 } },
+  ],
 };

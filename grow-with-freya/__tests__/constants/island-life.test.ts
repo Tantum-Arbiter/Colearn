@@ -16,6 +16,7 @@ import {
   sprayPose,
   treeSway,
   villageGlow,
+  starGlow,
   waterGlow,
   wingLift,
 } from '@/constants/island-life';
@@ -571,3 +572,57 @@ describe.each([
     });
   });
 });
+
+describe('starGlow', () => {
+  const STEPS_ROUND = Array.from({ length: 41 }, (_, index) => index / 40);
+
+  it.each([0, 1, 2])('keeps sheet %i of stars between dim and full, never out', (sheet) => {
+    STEPS_ROUND.forEach((lamp) => {
+      expect(starGlow(lamp, sheet, 3)).toBeGreaterThanOrEqual(ISLAND_LIFE.starFloor - 1e-9);
+      expect(starGlow(lamp, sheet, 3)).toBeLessThanOrEqual(1 + 1e-9);
+    });
+  });
+
+  it('goes from as dim as the home screen`s stars to full brightness once a round', () => {
+    const glows = STEPS_ROUND.map((lamp) => starGlow(lamp, 0, 3));
+
+    expect(Math.min(...glows)).toBeCloseTo(ISLAND_LIFE.starFloor, 2);
+    expect(Math.max(...glows)).toBeCloseTo(1, 2);
+    expect(ISLAND_LIFE.starFloor).toBeCloseTo(0.42, 6);
+  });
+
+  it('twinkles each sheet a third of a round after the one before, so some stars are always bright', () => {
+    expect(starGlow(0.1, 1, 3)).toBeCloseTo(starGlow(0.1 - 1 / 3, 0, 3), 6);
+    expect(starGlow(0.1, 2, 3)).toBeCloseTo(starGlow(0.1 - 2 / 3, 0, 3), 6);
+    STEPS_ROUND.forEach((lamp) => {
+      expect(Math.max(starGlow(lamp, 0, 3), starGlow(lamp, 1, 3), starGlow(lamp, 2, 3))).toBeGreaterThan(0.8);
+    });
+  });
+
+  it('comes back to where it began after a round, so the clock can turn for ever', () => {
+    expect(starGlow(0, 1, 3)).toBeCloseTo(starGlow(1, 1, 3), 6);
+  });
+
+  it.each([Number.NaN, Number.POSITIVE_INFINITY])('holds still at %p', (lamp) => {
+    expect(starGlow(lamp, 1, 3)).toBeCloseTo(starGlow(0, 1, 3), 6);
+  });
+});
+
+describe.each([
+  ['the tablet painting', ISLAND_ART],
+  ['the phone painting', ISLAND_ART_PHONE],
+] as const)('the stars of %s', (_name, ART) => {
+  it('come in three sheets that twinkle in turn', () => {
+    expect(ART.stars).toHaveLength(3);
+  });
+
+  it.each([0, 1, 2])('keeps sheet %i in the sky, above the sea line and inside the painting', (index) => {
+    const { frame } = ART.stars[index];
+
+    expect(frame.x).toBeGreaterThanOrEqual(0);
+    expect(frame.y).toBeGreaterThanOrEqual(0);
+    expect(frame.x + frame.width).toBeLessThanOrEqual(ART.width);
+    expect(frame.y + frame.height).toBeLessThanOrEqual(ART.seaLine);
+  });
+});
+

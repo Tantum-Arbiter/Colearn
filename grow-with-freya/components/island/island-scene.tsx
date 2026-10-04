@@ -31,6 +31,7 @@ import { BillowingCloud, DriftingCloud } from './island-clouds';
 import { IslandWaterfalls } from './island-falls';
 import { IslandGulls } from './island-gulls';
 import { IslandLights } from './island-lights';
+import { IslandStars } from './island-stars';
 import { SwayingTree } from './island-trees';
 import { IslandWater } from './island-water';
 import { MoonlitImage } from './moonlit-image';
@@ -147,6 +148,7 @@ export const IslandScene = memo(function IslandScene({
             style={[styles.layer, layout.picture, { backgroundColor: ISLAND_NIGHT.tint, opacity: ISLAND_NIGHT.strength }]}
           />
         ) : null}
+        {night ? <IslandStars art={map.art} layout={layout} lamp={clocks.lamp} /> : null}
 
         <View
           testID="island-sun-clip"

@@ -14,6 +14,7 @@ export const ISLAND_LIFE = {
   poolRings: 3,
   rippleFrom: 0.15,
   villageBeats: 3,
+  starFloor: 0.42,
   gustShare: 0.28,
   billowSwell: 0.035,
   billowBeats: 4,
@@ -219,3 +220,13 @@ export function villageGlow(lamp: number, sheet: number): number {
 
   return 0.82 + 0.18 * Math.sin(TURN * (turn * ISLAND_LIFE.villageBeats + sheet * 0.5));
 }
+
+export function starGlow(lamp: number, sheet: number, sheets: number): number {
+  'worklet';
+  const turn = steady(lamp) ? lamp : 0;
+  const round = sheets > 0 ? sheet / sheets : 0;
+  const bright = 0.5 + 0.5 * Math.cos(TURN * (turn - round));
+
+  return ISLAND_LIFE.starFloor + (1 - ISLAND_LIFE.starFloor) * bright;
+}
+
