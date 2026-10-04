@@ -751,7 +751,11 @@ to create a row from the position it is, covering the other orbs" -- the bubble 
   ribbon with a shine and an orange star, the trophy's colours, standing where the book was (the
   book is painted out of the art). It stands for "where you left off" (operator), and stays over
   the cover once a story is under way (operator: "keep the bookmark though when there is a story
-  to continue with").
+  to continue with"). Over a cover it is clipped to the top right of the orb instead
+  (`STAT_ORB.bookmark.corner`: a third of the orb wide, up from a quarter at the operator's "increase
+  its size", its head on the rim, the body hanging over
+  the cover and ending well above "Continue"), with no shadow on the ground under it (operator: "put
+  the bookmark on the top right of the orb when there's an image").
 - **The screen-time glance** folds the pill when it opens.
 - **The owl tour's stories step** points at the middle orb (`guideTargets.stories`, handed to it).
 - **The page strip on the story card** (`story-card-sheet.tsx`, operator's choice of "Story card,
@@ -814,8 +818,8 @@ animation for attention, the text clear as day, and only the number for the badg
   under its bookmark: "Continue" while a story is part-read -- over that story's cover, which fills
   the glass (`StatOrbCover`: `STAT_ORB.cover`, 92% of the orb, its foot shaded so the word reads,
   the orb's rim, glow and clouds drawn back in front from `orb-continue-front.webp`, cut by
-  `scripts/prepare-stat-orbs.py --front-only`, and the bookmark standing over it all where it
-  stands on a book with no cover) -- else the invitation "Read to bookmark"
+  `scripts/prepare-stat-orbs.py --front-only`, and the bookmark clipped over it all at the top
+  right) -- else the invitation "Read to bookmark"
   (`home.statOrb.readToBookmark`; it replaced "Explore" at the operator's request), set like the
   streak's invitation on two lines at `STAT_ORB.invite`, with the bookmark drawn a little smaller
   and higher above it (`STAT_ORB.bookmark.inviting`); a tap opens the library to pick a book (the
