@@ -23,6 +23,7 @@ marked **⚠️ UNVERIFIED**.
 | The island picture shown on phones (a second painting of the same island, for a tall screen) | Registered below, §5a — origin and licence ⚠️ UNVERIFIED |
 | The island illustration on the home screen's Your Learning Journey card (cut from the operator's mock of the card) | Registered below, §5b — origin and licence ⚠️ UNVERIFIED |
 | The planet at the edge of every page, and the ring of cloud between pages while they slide (cut from the operator's painting of a planet in cloud) | Registered below, §5c — origin and licence ⚠️ UNVERIFIED |
+| The three stat orbs on the home screen: the streak, Continue reading and the badges unlocked (cut from the operator's picture of them) | Registered below, §5d — origin and licence ⚠️ UNVERIFIED |
 | The lock on the island's learning-plan checkpoints | Registered below, §6 — the supplied picture is not drawn since 2026-10-03 (a padlock drawn in code replaced it); the file remains, origin ⚠️ UNVERIFIED |
 | Everything else — avatars, feelings animals, story illustrations, instrument art, music, fonts, voices | **Not registered.** Origin is not recorded anywhere in the repository — ⚠️ UNVERIFIED |
 
@@ -131,7 +132,7 @@ iPhones it lost a third of its width, the lighthouse included, so it is not in t
 | File (under `grow-with-freya/assets/images/home-journey/`) | Where from | What was changed |
 |---|---|---|
 | `journey-card-mock.webp` (746×610, SHA-256 `a11cf44e37bd483c78d3375f60d14ea46140744c4a2dc7cd08b6b075eedb26a2`) | Supplied by the operator, pasted into the working session on 2026-10-03: a mock of the home screen with the redrawn card | Nothing; stored byte for byte. Not required by the app, so not bundled |
-| `journey-island.webp` (746×472) | Cut from the mock by `grow-with-freya/scripts/prepare-journey-art.py` (2026-10-03): the card's right-hand part, where its island illustration is | The mock's own lettering painted out of the cut (two small boxes of blue sky, blurred in from what lies round them), its left edge faded to nothing so it lies over the card's fill, enlarged twice and sharpened a little. Nothing from outside the mock is added |
+| `journey-island.webp` (622×472) | Cut from the mock by `grow-with-freya/scripts/prepare-journey-art.py` (2026-10-03, narrowed 2026-10-04): the card's right-hand part from a little way into the island's forest, where its island illustration is | The mock's own lettering painted out of the cut (two small boxes of blue sky, blurred in from what lies round them), its left edge faded to nothing so it lies over the card's fill, enlarged twice and sharpened a little. Nothing from outside the mock is added |
 | The step tokens, the gold button, the glows | Drawn in code (`components/home/achievement-card.tsx`), with Ionicons glyphs already in the build | Made for the app |
 
 | Question | Answer |
@@ -141,8 +142,10 @@ iPhones it lost a third of its width, the lighthouse included, so it is not in t
 | Checked by eye against well-known games and films | **Not yet done by a person**, as §5 |
 | Quality | The illustration exists only inside a small mock (the card is 608 pixels wide in it), so it is shown about 1.8 times enlarged on a phone. If the operator has the illustration itself, it should replace the cut |
 
-A second mock (434×306, same day) showed the card's step tokens. Nothing of it is in the
-repository: the tokens were drawn in code from it.
+A second mock (434×306, same day) showed the card's step tokens and a compass, and a third
+(688×302, 2026-10-04) the layout the card now has. Nothing of either is in the repository: the
+tokens, compass, step line and button are drawn in code from them, and the operator chose to keep
+the first mock's island over the third mock's.
 
 ## 5c. The planet at the edge of every page
 
@@ -173,6 +176,22 @@ slide.
 requires it. The file is still in the repository until the operator says whether to delete it.
 Its cloud banks, `night-cloud-left.webp` and `night-cloud-right.webp`, are still used by the
 sign-in sky, the owl and the badge art.
+
+## 5d. The stat orbs on the home screen
+
+| File (under `grow-with-freya/assets/images/home-stats/`) | Where from | What was changed |
+|---|---|---|
+| `stat-orbs-mock.webp` (868×302, SHA-256 `69d447947618cb4512ab77b14c1439ef74c4d3306908a3f72b3a4b0c4fecb6c5`) | Supplied by the operator, pasted into the working session on 2026-10-04 as a PNG: three glass orbs on a blue sky -- a flame, an open book and a trophy -- each with a number and words drawn into it, stars round it and clouds at its foot | Re-encoded as lossless WebP; every pixel is the same as the PNG's (checked when it was stored). Not required by the app, so not bundled |
+| `orb-streak.webp` (468×468), `orb-continue.webp` (480×480), `orb-badges.webp` (471×471) | Cut from the mock by `grow-with-freya/scripts/prepare-stat-orbs.py` (2026-10-04): one orb each, centred in a square 1.3 times as wide as the orb | The mock's sky taken out (the glow at the rim, the clouds and the stars kept); the mock's own number and words painted out of the glass (replaced by the colours round them, smoothed inwards) so the app writes the live ones; from the middle orb its open book painted out the same way; enlarged by half. Nothing from outside the mock is added. `orb-reading.webp`, the middle orb with its book, was cut and then replaced the same day; it is not in the repository |
+| `orb-continue-front.webp` (480×480) | Made from `orb-continue.webp` by the same script (`--front-only`, 2026-10-04) | The glass inside the rim cleared to transparent, keeping the rim, its glow, the sparkles outside it and the clouds and stars at its foot; drawn over a story's cover when the Continue reading orb opens into its pill. Nothing added |
+| The numbers and words in the orbs, and the bookmark in the middle one | Written and drawn by the app (`components/home/stat-orbs.tsx`): the words in the system's rounded face, the bookmark as a vector shape in the trophy's colours | Made for the app |
+
+| Question | Answer |
+|---|---|
+| Who made it, and with what | ⚠️ UNVERIFIED — the picture arrived with no record of its origin. It has the look of a generated image; the operator to say which service and account, or which artist |
+| Terms for commercial use, and who owns it | ⚠️ UNVERIFIED — depends on the answer above |
+| Checked by eye against well-known games and films | **Not yet done by a person** |
+| Quality | An orb is about 240 pixels across in the mock and is shown about 97 points across on a phone (291 pixels at 3×), so it is enlarged about 1.2 times; more on a tablet (up to 132 points). The orbs themselves, at size and without the lettering, would be sharper and would not need the lettering painted out |
 
 ## 6. The lock on the learning-plan checkpoints
 

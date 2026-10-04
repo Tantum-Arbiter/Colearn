@@ -267,6 +267,24 @@ nothing, so the bar is hidden behind them and cannot be tapped. That module must
 but React: when the hook lived in `journey-bar-slot.tsx` the overlays closed an import loop, the
 hook arrived undefined on device and the whole screen stopped taking taps. A test guards it.
 
+### The library's theme chooser
+
+Under "Choose a theme" and its Filter button, Stories, Learning and Music share one glass capsule
+(`StoryFilterBar` in `components/stories/catalogue/story-filter-bar.tsx`, numbers in `THEME_BAR`):
+each a segment with its art beside its label, the chosen one lit inside the capsule with the
+purple fill, bright rim and glow the tiles had, the others' labels a little softer. One line high
+(56 pt on a phone, 64 on a tablet). It replaced three boxed tiles, art over label, at the
+operator's picture (2026-10-04). The segments keep the tiles' test ids (`story-theme-tile-*`) and
+the tour's `tilesRef` points at the capsule.
+
+### The turn-the-screen prompt's heading
+
+The back button and "Ready for our story time?" share one row the button's height
+(`rotate-prompt-overlay.tsx`, `ROTATE_PROMPT_BACK`): the title centred in it, vertically and across
+the screen, kept clear of the button on both sides, on one line that shrinks before it would wrap.
+They had been two layers set 8 and 20 points below the safe area, so the title sat below the
+button's middle (operator, 2026-10-04).
+
 ### The library on a tablet held sideways
 
 The featured book and Today's pick sit side by side across the top (`catalogueLayout` in
@@ -600,7 +618,10 @@ unpainted frame anywhere is dark, not a flash.
   the splash while the logo is still holding, and only then (`leaving`) does the whole splash, sky included, fade out over `handoffMs + exitMs`
   and report `onGone`. The fade starts two frames after the destination mounts: mounting the
   main menu stalls the screen for a few hundred ms in a dev build, and a fade counted from the
-  mount spent most of itself inside the stall. `SplashSky` is still the home sky -- the same
+  mount spent most of itself inside the stall. `onGone` comes from the fade animation's own
+  finish callback, never a JS timer: the mount freezes the UI thread (~0.8 s on an iPhone 16 Pro
+  simulator in Expo Go) but not the JS clock, so a timer unmounted the splash a third of the way
+  through its fade and the rest vanished in one frame (fixed 2026-10-04). `SplashSky` is still the home sky -- the same
   `HOME_THEMES` gradient, `StarField` and `EarthHorizon` (the painted planet, since
   2026-10-03) -- so the main menu cross-fades from a sky that matches it. Never fade the splash before the destination has mounted: behind it
   is `RootLayout`'s white backing.
@@ -616,7 +637,15 @@ unpainted frame anywhere is dark, not a flash.
   dev build, measured 0.76 s late on device). So the app is readied `mountAllowanceMs` early
   and the fade waits for whichever is later -- the end of the hold or the page being ready;
   a page that is ready early never cuts the hold short. The allowance stays inside the hold,
-  so nothing mounts behind an unfinished logo. A test caps
+  so nothing mounts behind an unfinished logo. It is also no more than `holdMs` minus
+  `SETTLED_HANDBACK_MS` (1.6 s): Reanimated 4.5 hands a finished animation's last value back to
+  React on a 500 ms tick once it is a second old, and drops it at two seconds. React's own props
+  for every splash layer are still the *starting* values, so a value dropped before it is handed
+  back reverts on the next React commit. Mounting the main menu blocks JS for ~0.9 s; started
+  a second after the last entrance (the old 1000 ms allowance) it swallowed the hand-back and the
+  tagline blinked out just before the fade in 3 of 5 launches. In Expo Go the fade now starts
+  1-1.5 s after the hold ends, ~0.3 s later than with the old allowance (the mount is slower
+  than the 400 ms left to it); release builds mount faster. A test caps
   splash-gone at 5.9 s (outline, hold, hand-off beat and fade) so the hold is the only thing that
   made it longer.
 
@@ -630,57 +659,239 @@ data model, never hard-coded, so an API can supply it later.
 ```
 useChildHomeData()  →  ChildHomeData + WelcomeCopy + celebrateAchievement
   →  HomeScene: HomeHeroSky (halo · star and sparkle art · clouds · one shooting star · the sun) over the welcome
-     · ContinueCard in a HeroCardFrame · AchievementCard (Your Learning Journey: next badge, the week's step tokens, a gold Explore button, the island) · the stat chips · the plan pill
+     · AchievementCard (Your Learning Journey: next badge, the week's step tokens, a gold Explore button, the island)
+     · the stat orbs (streak · Continue reading bookmark · badges) · the plan pill
+     · StatPill over the page: a tapped orb opens out, like jelly, into a pill across the row
      Sized to fit an iPhone 16 Pro without scrolling; the ScrollView only kicks in on shorter phones.
 ```
+
+**The stat pills (operator, 2026-10-04).** Each of the three stat orbs, tapped, opens out from
+where it stands into a pill across the row, covering the other orbs, with what it stands for
+(`StatPill` in `components/home/stat-pill.tsx`, numbers and tints in `constants/stat-pill.ts`). The
+operator's three mocks set the content, with "our orbs" in place of the mocks' icons and each
+pill's edge in its own orb's colour:
+
+- **Streak** (gold edge, the flame orb's): "Daily streak", "2 day streak" and a **Best** tag, the
+  longest run there has been -- `longestStreak` in the app store, kept by `recordReadingSession`,
+  surfaced as `ChildHomeData.bestStreakDays` (never less than the run going now). With no run going
+  the title is the invitation "Start a streak today" and the best still shows; before any streak
+  at all there is no tag. The orb at the end shows the number alone. It goes nowhere: its arrow
+  points back at the orb and a tap anywhere on it folds it (operator: "the arrow should mean
+  closable").
+- **Continue reading** (blue edge, the bookmark orb's): the story's title and "4 of 11". Opens
+  only while a story is part-read (below). The orb at the end is the row's own Continue orb
+  (`StatOrbCover`, below): the story's cover filling the glass, the rim in front, the bookmark
+  standing over it and "Continue" under it, so nothing turns over as the pill opens or folds.
+  The cover first spiralled in and out across the open and fold, the profile avatar's sign-in
+  swap; once the row's orb showed the cover itself (operator: "the orb should be the background of
+  the book to continue") there was nothing left to swap, and the spiral went. A story with no
+  cover keeps the bookmark alone. The page shown is counted as the reader counts it, the cover not
+  among the pages ("3 of 10" where the reader shows 3/10).
+  **A tap on the cover, or anywhere on the pill, opens the story's own card** (operator: "when
+  clicking the book, it should take me to the story sub page and bring the page selection into
+  view"; first built for the cover alone, then "continue reading from main menu does not bring up
+  the selection" -- so the whole pill does it, and reading starts from the card): the card opens
+  through the same `startTransition` the library and the island use, handed a book-shaped
+  rectangle centred on the cover (measured in the window; the shelves' `COVER_ASPECT_RATIO`, 1.6:1),
+  so the book sketched, held on the turn-the-screen prompt, opened and closed back is the library's
+  own shape. Handed the round cover's square, it was a square book on the prompt (operator: "the
+  book animation looks very off compared to the books ... via story page"). It opens
+  with `focusPages`, so it opens scrolled to its page strip and ways to read
+  (`useScrollToEndOnce`). `_layout` sends a card opened from home back to `main` when it is
+  closed. The pill stays open under it.
+- **Achievements** (violet edge, the trophy orb's): "Next: <badge>" with that badge's art in a
+  violet medallion (`BadgeArtwork`, in progress); with every badge earned, "Every badge is yours".
+  The orb at the end keeps its number. A tap opens that very badge: Progress, with its detail sheet
+  up (below); with nothing left to earn, Progress itself.
+
+A tap on Continue reading opens the story's card over the pill; a tap on Achievements goes on and
+folds the pill behind it; a tap on the streak pill, on the streak or badges orb, or anywhere off
+the pill folds it back. How it got here, all operator
+decisions the same day: a glass Continue reading tab docked over the bar; thin; hung under the
+journey card; an orb over the bar that opened like jelly into a bubble; the middle stat orb with a
+bookmark opening that bubble; then "when clicking one of the orbs, i want it to bubble/expand out
+to create a row from the position it is, covering the other orbs" -- the bubble went.
+
+- **When the story can open.** `useContinueStory` (`components/home/use-continue-story.ts`)
+  picks the newest story left between its first and last page with the library's own
+  `continuingStoryId`, from the reading record it subscribes to -- unless a story has been
+  *finished* since (`lastStoryCompletedAt` newer than that story's `updatedAt`): the family finished
+  what they were doing, so there is nothing to come back to. It used to call the store's
+  `getContinueReadingStoryId`, which reads the store outside the render: after a book was read
+  from the library the home re-rendered with the new record but kept the book before it, until a
+  reload (the library said Wombat, the home Juni). With nothing part-read the middle orb invites
+  the family to the library instead (below).
+- **Where it opens from.** `HomeScene` measures the orb row and the pill's layer in the window on
+  the tap; `statPillFrame` places the pill the width of the cards, centred on the row and on the
+  orbs' middle, and starts it on the tapped orb (orb *i* is *i* × (1 + gap) orbs along the row). If
+  either cannot be measured, the row is taken as drawn at the middle of the screen.
+- **The jelly.** The bar starts as a circle under the tapped orb. Its two ends spring out to the
+  pill's (`jelly.edges`, underdamped), carrying the orb to the left end, while its height squashes
+  to 72% of the orb and then swells on a softer spring to 88% of it, so the orb stands proud of
+  the bar as its rounded end. Tests pin that the height is the softer spring, that neither rings on,
+  that folding wobbles less, and that the ends' overshoot stays on the screen even opening from the
+  far orb on the narrowest phone. The words fade in a beat after. Folding, the bar springs back
+  into the orb in the row and the pill goes. With Reduce Motion it eases instead.
+- **The row under it.** While a pill is out the row takes no touches and is hidden from a screen
+  reader; the other orbs fade away as the bar sweeps over them and back once it has folded. The
+  tapped orb stays in the row until the pill's own copy of its art is on screen (`onDisplay`, or
+  failing that the end of the opening spring), then hides at once: a freshly mounted image takes
+  a frame or two to draw, and hiding the row's orb on the tap left a blink of empty sky. Each
+  opening mounts a fresh pill (keyed), so it draws in the same frame it is asked for.
+- **Layers.** The pill and its backdrop sit at zIndex 20 in the page, above the sun and the corner
+  controls (zIndex 10). Below them, a tap meant to fold the pill could land on the sun instead,
+  leave it open, and send the next tap through the pill.
+- **The glass and its edge.** The glass is a lit blue all through (every stop's luminance at least
+  0.055 -- a near-black stop once read as a dark outline -- and the lightest dark enough for white
+  words at 4.5:1; the gold heading and the tag text clear 4.5:1 on the bar's middle). Just inside
+  the rim three faint bands in the edge's colour brighten it softly inwards; the rim is drawn over
+  the glass; the layer that casts the coloured glow is tucked 4 points inside it. The words sit on
+  a slightly darker inset panel, the title one line that shrinks to 70% before it would wrap.
+- **The bookmark** (drawn in code over the middle orb, `StatOrbBookmark` in `stat-orbs.tsx`): a gold
+  ribbon with a shine and an orange star, the trophy's colours, standing where the book was (the
+  book is painted out of the art). It stands for "where you left off" (operator), and stays over
+  the cover once a story is under way (operator: "keep the bookmark though when there is a story
+  to continue with").
+- **The screen-time glance** folds the pill when it opens.
+- **The owl tour's stories step** points at the middle orb (`guideTargets.stories`, handed to it).
+- **The page strip on the story card** (`story-card-sheet.tsx`, operator's choice of "Story card,
+  then pages"). Under the card's progress, "Start from a page" and the book's pages past its cover
+  as small pictures, the saved place (or the first page) ringed in gold and scrolled into view; only
+  the card in front draws its strip. Tapping a page picks it, and the read button reads "Read from
+  page N". The pick goes up to the transition context (`selectedStartPage`); when the book begins,
+  `_layout` hands it to the reader as `startPageIndex` if it is for that book, and every other way
+  of opening the reader clears it. `resumePageIndex` takes `startPage` before the saved place,
+  within the book's pages. Picking a page changes no saved place until the reader moves on from it.
+  The card's body makes room for the strip on top of everything else (`STORY_CARD.pages`, 116 pt,
+  measured on an iPhone 16 Pro -- 98 left the body 17 pt over), so the card simply stands taller and
+  nothing scrolls on a phone -- before that, Play Along and Record fell below the card in the
+  library. On a screen too short even for a coverless card it stops under the status bar and its
+  body scrolls; a card opened at its pages then scrolls to them (`useScrollToEndOnce`, which
+  measures the body and its content and scrolls only when the content is taller, once).
+- **Opening the next badge.** `ChildHomeNextAchievement` carries the badge's `id`. `HomeScene`'s
+  `onOpenBadge(id)` → `HomeSceneContainer` → `onNavigate('progress', { badgeId })`
+  (`DestinationFocus` in `constants/catalogue-destinations.ts`) → `MainMenu` → `_layout`'s
+  `handleMainMenuNavigate`, which puts the id on the catalogue's `CatalogueSectionRequest` →
+  `StoryCatalogueScreen` hands `ProgressScreen` a `focusBadge` (`{ id, key }`) only once the page
+  has come to rest after its slide (`useSettledAfterTransition`), so the sheet never rises while the
+  page is still moving → `ProgressScreen` opens that badge's sheet once per request key (closing it
+  keeps it closed; a later request opens it again; an id it does not know opens nothing).
+
+**The page comes down into the room at its foot (operator, 2026-10-04: "lower this stuff ... to
+make better use of space").** With the Continue card gone, a phone had a band of empty sky between
+the plan button and the orb. `HomeScene` measures its scroller (its height, and the content's
+height less whatever drop is already applied) and brings the sun -- with its halo and stars, by
+handing `HomeHeroSky` a deeper `topInset` -- and the whole page under it down by the room left
+(`heroSlackDrop`, at most `HERO_SKY.maxSlackDrop`), so nothing parts company. The cap was 64 pt;
+the same day the operator asked to "increase the height of the sun and bring up the content", and
+it is now 32. A page that
+fills the screen does not move; a tablet keeps its centring; and the drop is not re-measured while
+the owl tour has reserved extra room to scroll a step into view. It settles on the first layout,
+under the splash. The room it uses is what is left after the bar's foot clearance.
 
 Since 2026-10-02 (operator requests): the achievement card is labelled **Your Learning Journey**
 (`home.milestone.eyebrow`, and the tour names it the same), its link reads **Explore**, and
 pressing it sets off for the island (next section) instead of opening the badges, which stay on
-the Progress item in the bar. The row under the cards has a third part beside the streak and the
-week's reading: `AchievementTallyChip`, "N unlocked, M to go", counted from the badges
-(`achievementTally` in `use-child-home-data.ts`; no chip when there are no badges). On a tablet
-the three sit on one line; on a phone three will not fit, so the tally takes a second line
-tucked up under the first (`STATS_LINE_TUCK`).
+the Progress item in the bar. The row under the card holds three things: the streak, Continue reading and the badges
+unlocked (`achievementTally` in `use-child-home-data.ts`; nothing for badges when there are none).
 
-**The Your Learning Journey card, redrawn to the operator's mocks (2026-10-03).** The card is a
-deep blue panel in the shared `HeroCardFrame`, with the island on its right and, on its left
-from the top: the eyebrow, the next badge's name, how far off it is, the journey's step tokens
-and a gold **Explore** pill. The frame takes two things for it: `fill` (its own two-colour
-ground instead of the violet) and `backdrop` (drawn over the fill and under the frame's sheen),
-and `HomeCard` hands both through. The backdrop is three edge glows, a gleam in the top left
-corner and the island picture, all plain gradients and one image: no SVG filters.
+**The stat orbs (operator's picture, 2026-10-04).** The row is three glass orbs --
+`StatOrbs` in `components/home/stat-orbs.tsx`, numbers in `constants/stat-orbs.ts` -- in place of
+the three chips with small icons (`StreakChip`, `WeeklyReadingChip`, `AchievementTallyChip`; their
+files and tests are kept, no longer drawn). The operator's words: use these exact orbs, a slight
+animation for attention, the text clear as day, and only the number for the badges.
+
+- **The art is the operator's**, cut from the one picture by `scripts/prepare-stat-orbs.py`
+  (`compliance/ASSET-REGISTER.md` §5d): each orb centred in a square 1.3 times its width
+  (`STAT_ORB.artScale`), the sky taken out, the picture's own number and words painted out, and
+  from the middle orb its open book too (the week's minutes were dropped for Continue reading). The
+  app draws the art larger than the orb's box, centred on it, so the clouds and stars spill out
+  and the glows of neighbours meet as they do in the picture.
+- **The words are live, and all one size** (operator: "want the text all consistent in size").
+  The streak is a number with its unit under it -- "2 / day streak" (`home.streak.unit`, plural
+  forms) -- and the badges the number over "Achieved" (`home.statOrb.achieved`), at the same size
+  and height; with nothing achieved yet, the trophy shows only "0". The middle orb has one word
+  under its bookmark: "Continue" while a story is part-read -- over that story's cover, which fills
+  the glass (`StatOrbCover`: `STAT_ORB.cover`, 92% of the orb, its foot shaded so the word reads,
+  the orb's rim, glow and clouds drawn back in front from `orb-continue-front.webp`, cut by
+  `scripts/prepare-stat-orbs.py --front-only`, and the bookmark standing over it all where it
+  stands on a book with no cover) -- else the invitation "Read to bookmark"
+  (`home.statOrb.readToBookmark`; it replaced "Explore" at the operator's request), set like the
+  streak's invitation on two lines at `STAT_ORB.invite`, with the bookmark drawn a little smaller
+  and higher above it (`STAT_ORB.bookmark.inviting`); a tap opens the library to pick a book (the
+  app keeps no part-way place for activities, so a story is the only thing to continue). The three words stand on one line (`STAT_ORB.caption.top`, matched to where a word
+  under a number lands) and are all one size, `STAT_ORB.label`. The operator then asked to "lower
+  the text and increase the size of it all in the orbs": the numbers start halfway down the glass
+  (`STAT_ORB.words.top` 0.5, was 0.45) at 0.25 of the orb (was 0.21), the words on a line at 0.69
+  (was 0.63). Then "increase the size of the day streak text etc": the words and the invitations
+  are 0.17 of the orb (0.13 before either ask), allowed 0.9 of its width, so they spread over the
+  clouds at the orb's foot rather than shrink (the operator's choice); the invitation's bookmark is
+  a little smaller and higher (`STAT_ORB.bookmark.inviting`) to leave it two lines. Everything ends
+  inside the glass, by 0.92 of the orb. Every number is one size (it shrinks only past four
+  digits). A word under a number keeps to one line and shrinks only if it is too long even for
+  that width: set this low, a second line ("streak") hung out under the orb, so the earlier rule of
+  wrapping at the same size went. In English every word fits at full size.
+  White, heavy, with a dark shade; no fixed line height (the iOS shrink trap). They ignore the
+  system's larger-text setting, because the glass does not grow with it. A screen reader hears
+  the whole sentence each chip used to show.
+- **Nothing yet is an invitation, not a zero** (kept from the chips): no streak reads "Start a
+  streak today" over an orb banked down to 55%. No badge unlocked yet reads 0 on a banked-down
+  orb, and nothing part-read leaves the bookmark banked down, reading "Read to bookmark".
+- **Size.** `statOrbDiameter` is the content width over 4.4, between 72 and 112 points: 84 on an
+  iPhone 16 Pro (the operator asked for them smaller than the first 97). All three stand in one
+  row on every device, a quarter of an orb apart (`STAT_ORB.gap`, about 22 points on a phone;
+  the operator asked for more room than the first 9), and the row stays inside the card's width.
+- **Motion.** Each lit orb rises about three points and swells 3% over 3.6 seconds and back,
+  one setting off 0.45 s after the other; not while the page is unsettled, with Reduce Motion, or
+  for a banked-down orb.
+- **Touch.** Each orb opens its pill (the middle one only while there is a story to open); the
+  row passes every other touch through.
+
+**The Your Learning Journey card, redrawn to the operator's mocks (2026-10-03/04).** The card is
+a deep blue panel in the shared `HeroCardFrame`, laid out to the operator's third mock: on the
+left a gold-ringed compass by the card's edge, and beside it a column with a gold eyebrow, the
+next badge's name and how far off it is; under them, at the card's edge, the island week's step
+tokens and a line saying which step the child is on; the island on the right, and a blue glass
+**Explore journey** pill at the card's foot on the right, over the island. The frame takes two
+things for it: `fill` (its own two-colour ground instead of the violet) and `backdrop` (drawn
+over the fill and under the frame's sheen), and `HomeCard` hands both through. The backdrop is
+three edge glows, a gleam in the top left corner and the island picture, all plain gradients and
+one image: no SVG filters.
 
 - **Sizes come from the mock, measured.** `JOURNEY_CARD`, `JOURNEY_CARD_TYPE` and
-  `JOURNEY_CARD_TINTS` in `constants/home-journey.ts` hold every number, read off the mock at
-  1.643 px per point on a card 370 pt wide and then checked by laying a simulator screenshot
-  over it. The card is the mock's 147 pt plus 7 pt for the step tokens, which stand taller
-  than the stars they replaced.
-- **It scales as one piece.** `journeyScale(width)` is `width / 370`, never above 1 and never
-  below 0.8. On a narrower phone every part shrinks in proportion (type, tokens, button,
-  glows, the island); on a wider card nothing grows and the words simply have more room. Only
-  shrinking the width would run the tokens and the line under the title into the island.
-- **The words keep off the island.** `journeyWordsWidth` gives the title, the line under it
-  and the token row the room up to the island's trees; the eyebrow may run further, over its
-  sky. Long words shrink to fit on one line. None of them fixes a `lineHeight`: with one, iOS
-  shrank a line that was a hair too wide to a third of its size, far below `minimumFontScale`.
+  `JOURNEY_CARD_TINTS` in `constants/home-journey.ts` hold every number, read off the third
+  mock at 1.8 px per point on a card 370 pt wide (148 pt tall) and then checked by laying an
+  iPad screenshot over it at the same size: every part is within about a point.
+- **It scales as one piece, both ways.** `journeyScale(width)` is `width / 370`, held between
+  0.8 and 1.4. A narrower phone shows the card smaller; a tablet's 500-point card shows it
+  larger, so the tablet no longer has too much room around same-sized words (operator,
+  2026-10-04).
+- **The words keep off the island.** `journeyWordsWidth` gives the column beside the compass
+  the room up to the island's trees; the eyebrow may run further, over its sky. Long words
+  shrink to fit on one line. None of them fixes a `lineHeight`: with one, iOS shrank a line
+  that was a hair too wide to a third of its size, far below `minimumFontScale`.
 - **The step tokens are the island week.** `useJourneySteps(isActive)`
   (`components/home/use-journey-steps.ts`) reads `learningPlanProgress`, runs `stepStates` and
   hands the scene five steps (`journeyStepsShown`: the step in hand, the one before it and what
-  follows; the week has seven and seven tokens do not fit beside the island). The step in hand
-  is a larger gold disc with the picture of what it is (`PLAN_STEP_ICON`, shared with the
-  island's checkpoints: a book for a story, letters, a calculator, a face, notes); a finished
-  step is the island's amber disc with a tick; a locked one, or one that opens tomorrow, is a
-  blue disc with a padlock. A dash, a dot and a dash join them, gold as far as the child has
-  come. The hook returns the same array until a state changes, so its minute clock (which
-  opens tomorrow's step at midnight) does not redraw the home screen.
-- **Explore is the app's `GoldButton`**, which gained `gap` and `glow` props so the card can
-  set the arrow closer and the halo tighter than the big pills do. It sits inside a
-  `pointerEvents="none"` wrapper: the whole card is the one thing to press.
-- **The island picture** is cut from the mock by `scripts/prepare-journey-art.py` (see
-  `compliance/ASSET-REGISTER.md` §5b); there is no separate file of that illustration, so it
-  is about 1.8 times enlarged on a phone and a little soft. A glint plays once on its gold
-  star when a badge is new (where the medallion's glint used to play).
+  follows; the week has seven and seven tokens do not fit beside the island), each with how many
+  steps the week has, its area and the first skill it builds. The step in hand is a larger gold
+  disc with the picture of what it is (`PLAN_STEP_ICON`, shared with the island's checkpoints);
+  a finished step is the island's amber disc with a tick; a locked one, or one that opens
+  tomorrow, is a blue disc with a padlock. A dash, a dot and a dash join them, gold as far as the
+  child has come. The row sits at a fixed height, so the words above cannot push it. The hook
+  returns the same array until a state changes, so its minute clock (which opens tomorrow's step
+  at midnight) does not redraw the home screen.
+- **The step line** reads `plan.stepOf` and `plan.focus` -- "Step 1 of 7 • Language &
+  Listening" -- for the step in hand, or `plan.weekDone` once the week is done. The mock says
+  "of 5", the number of tokens; the line counts the week's seven steps.
+- **Explore journey** (`home.achievements.ctaJourney`) is a blue glass pill drawn by the card
+  (`JourneyButton`). It sits inside a `pointerEvents="none"` wrapper: the whole card is the one
+  thing to press.
+- **The island picture** is cut from the first mock by `scripts/prepare-journey-art.py` (see
+  `compliance/ASSET-REGISTER.md` §5b), narrower than at first so the step tokens run up to its
+  soft left edge as in the third mock; the operator chose to keep this island over the third
+  mock's. There is no separate file of the illustration, so it is enlarged on screen and a
+  little soft. A glint plays once on its gold star when a badge is new.
 - The paired `compact` tile keeps the old violet look, medallion and stars; nothing in the
   app shows it today.
 
@@ -806,11 +1017,13 @@ touchable thing, above the ScrollView). The art lives in `assets/images/home-sky
 with real alpha; placement is data in `constants/home-sky.ts`, so re-arranging the sky is a
 constants change.
 
-The continue card is a `HeroCardFrame`: a blurred bloom outside the shape (SVG Gaussian blur),
+The cards' frame is a `HeroCardFrame`: a blurred bloom outside the shape (SVG Gaussian blur),
 a gradient stroke brightest at the top, a gradient fill darker toward the bottom, a top sheen,
 four corner blooms, an inset highlight rim and a depth shadow. It measures its own height for
-the bloom, reports press state so the `CardArrowButton` can dip and glow, and holds the
-`CardProgressBar` (capsule track, mint-to-aqua fill with a sheen).
+the bloom and reports press state. `ContinueCard` (the old continue card in this frame) is no longer
+on the home page; its file and tests are kept. The `CardArrowButton` (dips and glows on press)
+and `CardProgressBar` (capsule track, mint-to-aqua fill with a sheen) live on in the cards that
+still use them.
 
 | Concern | Location |
 |---------|----------|
@@ -819,9 +1032,11 @@ the bloom, reports press state so the `CardArrowButton` can dip and glow, and ho
 | Hero sky placement, motion budget, halo and card-frame tints | `constants/home-sky.ts` |
 | Sky layers | `components/home/home-hero-sky.tsx` and the `hero-*.tsx` files beside it |
 | Storybook-glass frame, progress bar, arrow button | `components/home/hero-card-frame.tsx`, `card-progress-bar.tsx`, `card-arrow-button.tsx` |
+| Stat pills (where they open, the jelly springs, the glass, each orb's edge) | `components/home/stat-pill.tsx`, `constants/stat-pill.ts` |
 | Assembling the model from the store, badges and screen-time history | `components/home/use-child-home-data.ts` |
 | Visit memory (`lastHomeVisitAt`, `achievementUnlockedAt`, `lastStoryCompletedAt`) | `store/app-store.ts` (persisted) |
 | Glowing book / clock / shield / flame icons | `components/home/stat-icons.tsx` |
+| Stat orbs (art map, sizes, words, float) | `components/home/stat-orbs.tsx`, `stat-orb-art.ts`, `constants/stat-orbs.ts` |
 | The Your Learning Journey card: island, step tokens, Explore button | `components/home/achievement-card.tsx`, `components/home/use-journey-steps.ts`, `scripts/prepare-journey-art.py` |
 | Destinations | `stories` (catalogue) and `progress` (catalogue opened at Progress via `sectionRequest`), both from the bar; the island, from the Your Learning Journey card |
 
@@ -1323,9 +1538,68 @@ colour as the glyphs beside it, white when it is the place chosen; at the home s
 0.55 on top of the glyphs' dimmer white it read as switched off.
 
 The bottom bar is explained once, on the home page, where it is first seen: `main_menu_tour`
-walks the two cards, then the bar left to right (Learn, Progress, Screensafe, Search, Profile), and
-only then the sound button (operator decision 2026-09-18). The library's
-`catalogue_tour` stays on the shelf. Bar steps carry `revealsBar`, which makes the owl step back
+walks the Learning Journey card, then the three stat orbs left to right (streak, Continue / Read to
+bookmark, achievements), then the bar left to right (Learn, Progress, Screensafe, Search, Profile),
+then the language flag and the sound -- twelve steps, one dot each (operator decisions 2026-09-18,
+2026-10-04). The library's `catalogue_tour` stays on the shelf: the theme capsule, Filter, the
+featured book (which opens its card) and the shelves. The story card's `book_mode_tour` starts on
+the page strip ("Start from a page") and then the three ways to read, named with their buttons'
+words. `island_tour` (2026-10-04) welcomes the family to the island, then rings today's checkpoint,
+the plan card (Start activity / Preview) and the Home pill; it waits for the arrival to settle.
+The old carousel menu's steps (Stories, Instruments, Grown-ups) and its `story_modes_tour` were
+removed with their copy.
+
+**Tour revisions.** A tour that changes enough to be seen again carries a higher number in
+`GUIDE_REVISIONS` (`constants/owl-guide.ts`; `main_menu_tour`, `catalogue_tour` and
+`book_mode_tour` are on 2). `@tutorial_state` keeps `seenRevisions` beside `completedGuides`; a
+tour counts as done only when its finished revision is current, so a family who finished an older
+one sees the new one once, and tours that did not change stay done. A record from before revisions
+counts every finished tour as its first. The E2E link's `tutorials=done` writes the current
+revisions too. On a scrolling page the tour still moves the page to bring a subject out from under
+the bubble; flying the owl up instead was built and removed the same day (operator: "that made no
+sense"). Subjects on one row (`GuideStep.row`: the three stat orbs) share one view of the page:
+every bubble on the row is laid out out of sight (opacity 0, untouchable, hidden from the screen
+reader) and the page moves once, far enough for the tallest -- it used to move again for the
+Continue step's taller bubble (operator: "it scrolls up even when going through the same row of
+orbs"). The Continue step's bubble shows the orb in both its states side by side
+(`ContinueOrbLegend`: "Read to bookmark", then the family's own cover, or a sample, under
+"Continue"). A pinned subject -- the bar's buttons, the flag and the sound on the home, Home and
+Settings on Profile -- has the page put back where the child left it before it is ringed
+(`GuideScroller.away`, how far the tour has moved the page; the ring waits for the page to settle).
+Pinned steps always end a tour, so the page comes down once, as the tour reaches the bar (Learn),
+and holds still from there. Moved for the orbs, the page's own head had sat under the flag
+(operator: "scroll the main menu down during the tutorials before we highlight the buttons at the
+top"); first built for top-half furniture only, then "the scroll should happen when the navigation
+bar comes into view of the tutorial ie learn".
+
+**The tutorial review (2026-10-04).** Every tour was reviewed in code and walked on the simulator;
+the operator chose to fix the broken behaviour and the ring shapes, and to remove the tours no one
+could reach (the copy corrections and the reader's tips were left for later):
+
+- *A tour lets go when its screen goes away.* `OwlGuide` dismisses (not seen) when it unmounts while
+  its tour holds the one slot -- a book card closed, or Android's back, part-way through used to
+  leave `activeGuide` set, and every other tour and the screen-time owl waited behind it for good.
+- *The library's shared refs survive a section switch.* `SectionCrossfade` keeps the section it is
+  leaving on screen for 200 ms; both layers carry the page's `ScrollView` and its Home button, and
+  React cleared those refs when the old layer went. `useHeldRef` (`hooks/use-held-ref.ts`, a React
+  19 ref with a cleanup) only lets go of its own element, so Profile's "Back home" is ringed and the
+  page still scrolls for the catalogue, search and profile tours.
+- *Steps only for subjects that are there.* `searchTourTargets` hands in the recent searches only
+  once there are some, and the island hands in today's checkpoint only while today's step is open.
+  The Progress tour waits while a badge's sheet is up (the trophy orb opens one).
+- *Rings the shape of their subject.* `capsule` is a ring whose corners are half its height, for
+  the theme bar, the Home and Grown-ups pills, the island's Home pill and the card's three ways to
+  read. The shelves step rings the first shelf (`tour-first-shelf`) rather than the whole column,
+  which ran past both ends of the screen and lit nothing.
+- *The island's plan card rises clear of the bubble* for its step (`useGuideLift`, as the book card
+  does); the Home pill is pinned, so the card settles back before it is ringed.
+- *Removed:* `screen_time_tips`, `feelings_tips`, `spelling_tips`, `numbers_tips` and
+  `freeplay_tips` (their screens are no longer opened), their mounts, their copy in every language,
+  and the tutorial words nothing read (`tutorial.gestures`, the old welcome and library titles,
+  `buttons.skipAll` and the other unused buttons). Stored `@tutorial_state` ids for them are dropped
+  on load.
+
+Bar steps carry `revealsBar`, which makes the owl step back
 to `PERCH_STEP_BACK` for the whole step -- it stands on the bar's left end, and without the flag
 it only stepped back when the lit button happened to be under it. A step whose target key is
 handed to a tour is kept even if nothing on screen carries that ref: the home page used to list
