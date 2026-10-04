@@ -59,7 +59,7 @@ components/
 ├── account/                ← Settings, language, screen time, profile
 ├── owl-guide/              ← The owl's guided tours (spotlight + speech bubbles)
 └── ui/                     ← Shared UI components
-    └── earth-horizon.tsx        ← One globe: rises from the home page's bottom edge, hangs from the top of every page below (`constants/earth.ts` owns the geometry)
+    └── earth-horizon.tsx        ← The world at a page's edge: the painted planet standing at the foot of the home page and the splash, and hanging upside down from the top of every page below (`constants/earth.ts` owns the geometry)
 
 services/
 ├── api-client.ts           ← HTTP client: auth headers, token refresh, timeouts
@@ -601,8 +601,8 @@ unpainted frame anywhere is dark, not a flash.
   and report `onGone`. The fade starts two frames after the destination mounts: mounting the
   main menu stalls the screen for a few hundred ms in a dev build, and a fade counted from the
   mount spent most of itself inside the stall. `SplashSky` is still the home sky -- the same
-  `HOME_THEMES` gradient, `StarField` and `EarthHorizon` -- so the main menu cross-fades from
-  a sky that matches it. Never fade the splash before the destination has mounted: behind it
+  `HOME_THEMES` gradient, `StarField` and `EarthHorizon` (the painted planet, since
+  2026-10-03) -- so the main menu cross-fades from a sky that matches it. Never fade the splash before the destination has mounted: behind it
   is `RootLayout`'s white backing.
 - **Reduce motion**: the finished logo fades in; no growth, sway, drift, motes or shooting
   star.
@@ -630,7 +630,7 @@ data model, never hard-coded, so an API can supply it later.
 ```
 useChildHomeData()  →  ChildHomeData + WelcomeCopy + celebrateAchievement
   →  HomeScene: HomeHeroSky (halo · star and sparkle art · clouds · one shooting star · the sun) over the welcome
-     · ContinueCard in a HeroCardFrame · JourneyCard (4 stat tiles) · AchievementCard (next badge, View achievements beside the stars) · Find a new story pill
+     · ContinueCard in a HeroCardFrame · AchievementCard (Your Learning Journey: next badge, the week's step tokens, a gold Explore button, the island) · the stat chips · the plan pill
      Sized to fit an iPhone 16 Pro without scrolling; the ScrollView only kicks in on shorter phones.
 ```
 
@@ -642,6 +642,117 @@ week's reading: `AchievementTallyChip`, "N unlocked, M to go", counted from the 
 (`achievementTally` in `use-child-home-data.ts`; no chip when there are no badges). On a tablet
 the three sit on one line; on a phone three will not fit, so the tally takes a second line
 tucked up under the first (`STATS_LINE_TUCK`).
+
+**The Your Learning Journey card, redrawn to the operator's mocks (2026-10-03).** The card is a
+deep blue panel in the shared `HeroCardFrame`, with the island on its right and, on its left
+from the top: the eyebrow, the next badge's name, how far off it is, the journey's step tokens
+and a gold **Explore** pill. The frame takes two things for it: `fill` (its own two-colour
+ground instead of the violet) and `backdrop` (drawn over the fill and under the frame's sheen),
+and `HomeCard` hands both through. The backdrop is three edge glows, a gleam in the top left
+corner and the island picture, all plain gradients and one image: no SVG filters.
+
+- **Sizes come from the mock, measured.** `JOURNEY_CARD`, `JOURNEY_CARD_TYPE` and
+  `JOURNEY_CARD_TINTS` in `constants/home-journey.ts` hold every number, read off the mock at
+  1.643 px per point on a card 370 pt wide and then checked by laying a simulator screenshot
+  over it. The card is the mock's 147 pt plus 7 pt for the step tokens, which stand taller
+  than the stars they replaced.
+- **It scales as one piece.** `journeyScale(width)` is `width / 370`, never above 1 and never
+  below 0.8. On a narrower phone every part shrinks in proportion (type, tokens, button,
+  glows, the island); on a wider card nothing grows and the words simply have more room. Only
+  shrinking the width would run the tokens and the line under the title into the island.
+- **The words keep off the island.** `journeyWordsWidth` gives the title, the line under it
+  and the token row the room up to the island's trees; the eyebrow may run further, over its
+  sky. Long words shrink to fit on one line. None of them fixes a `lineHeight`: with one, iOS
+  shrank a line that was a hair too wide to a third of its size, far below `minimumFontScale`.
+- **The step tokens are the island week.** `useJourneySteps(isActive)`
+  (`components/home/use-journey-steps.ts`) reads `learningPlanProgress`, runs `stepStates` and
+  hands the scene five steps (`journeyStepsShown`: the step in hand, the one before it and what
+  follows; the week has seven and seven tokens do not fit beside the island). The step in hand
+  is a larger gold disc with the picture of what it is (`PLAN_STEP_ICON`, shared with the
+  island's checkpoints: a book for a story, letters, a calculator, a face, notes); a finished
+  step is the island's amber disc with a tick; a locked one, or one that opens tomorrow, is a
+  blue disc with a padlock. A dash, a dot and a dash join them, gold as far as the child has
+  come. The hook returns the same array until a state changes, so its minute clock (which
+  opens tomorrow's step at midnight) does not redraw the home screen.
+- **Explore is the app's `GoldButton`**, which gained `gap` and `glow` props so the card can
+  set the arrow closer and the halo tighter than the big pills do. It sits inside a
+  `pointerEvents="none"` wrapper: the whole card is the one thing to press.
+- **The island picture** is cut from the mock by `scripts/prepare-journey-art.py` (see
+  `compliance/ASSET-REGISTER.md` §5b); there is no separate file of that illustration, so it
+  is about 1.8 times enlarged on a phone and a little soft. A glint plays once on its gold
+  star when a badge is new (where the medallion's glint used to play).
+- The paired `compact` tile keeps the old violet look, medallion and stars; nothing in the
+  app shows it today.
+
+**The world at the edge of every page is the operator's painting (2026-10-03).** `EarthHorizon`
+draws `planet-horizon.webp`: the foot of the painting, a large planet rising out of cloud, with
+the sky taken out by `scripts/prepare-planet-art.py`. `edge="bottom"` stands it the right way up
+at the foot of the home page (`NightSky`) and the splash (`SplashSky`, so the two still match
+when the splash fades off); `edge="top"` hangs the same picture upside down from the top of the
+pages below, where the older globe and its cloud banks used to be. The sky behind it is still
+the app's own (`HOME_THEMES` colours and `StarField`), and the only cloud is the painting's own.
+
+- **The planet itself is as wide as the screen.** `planetHorizonLayout` scales the painting so
+  that the width the planet shows between its clouds (`PLANET_ART.limbWidth`) is the screen's
+  width, and centres it on the planet. Only cloud runs off the sides.
+- **How far it stands from its edge is `planetReach`.** At the foot of the home page its top
+  stands where the globe's did (`earthCap(…, 'bottom')`), so the home layout, the splash's
+  tagline clearance and the voyage's zoom are unchanged. At the top of the pages below it
+  hangs a little lower than the globe's underside did (`EARTH.planetHang`, 1.12; it was 1.3
+  for an hour and the operator had it brought up). `PlanetCover` and the stars of
+  `CelestialBackground` take `planetReach`, so page content and stars begin below its tip.
+- **One round world between the pages, with a ring of cloud round its waist** (operator,
+  2026-10-03). A page below the home page now rests a screen *and a gap* away
+  (`slideTravel`, used by every `pageOffset` in `EnhancedPageTransition`). While the pages
+  slide, the two paintings run on past their page edges into the gap (`overhang`) and meet
+  there as one planet: the lower half hangs deeper than the upper stands, so they meet off the
+  middle of the gap, where both show the same row of the painting -- a mirror line, not a
+  seam -- overlapping by a point (`EARTH.seamOverlap`).
+  - **The gap** (`cloudGap`) is what the planet would hide if the halves were one round
+    world, held between 15% and 60% of the screen, made 10% thinner (`EARTH.cloudGap.thin`),
+    and never more than the two paintings can fill. On a phone that last limit decides it.
+  - **The ring** (`CloudRing`, `components/ui/cloud-ring.tsx`; `planet-cloud-ring.webp`) is
+    the painting's own cloud bent into an ellipse round the waist, almost edge on: its front
+    passes over the planet, its back shows only beyond the planet's edge, and it is a little
+    see-through. `cloudRingLayout` sizes it against the planet's radius, centres it on the
+    meeting row and keeps it inside the gap, pressing it flatter on a phone.
+  - **Under the pages**, `GapSky` fills the gap with sky (home's lower colour to the next
+    page's upper colour) and draws the next page's upside-down run-on, because that page's
+    own background clips anything above its top edge. It reaches a point on under that page,
+    so no hairline of backdrop shows where they meet (checked on every frame of a recorded
+    slide).
+  - Both ride on the home page's own slide value, so they are only ever seen mid-slide.
+- **Headings over the planet sit in a night-sky halo** (`HeadingHalo`,
+  `components/child-ui/heading-halo.tsx`; operator, 2026-10-03: "make the titles clear as
+  day"). A soft radial glow of `NIGHT_VOID`, 72% at its middle and gone at its edge, drawn as
+  one SVG gradient (no blur filter), behind `PageTitle`, `PageTagline` and the shared
+  `PageHeader` title and subtitle -- so every page below the home page treats its heading the
+  same way. The letters keep their soft shadow and no outline: an outline was tried before and
+  read as a smudge.
+- **History of the day**, so none of it is offered again without being asked:
+  - A first painting, with a smaller planet among taller clouds, stood at the foot of the home
+    page; drawn whole it left more cloud in view than planet, so it was enlarged, and then the
+    operator supplied the second painting, which replaced it.
+  - The first painting's stars and band of galaxy were laid over the app's sky and taken out
+    again as too much. A test keeps them out.
+  - The planet at the foot of the home page was lowered, then raised back.
+  - A band of the painting's cloud was laid along the very edge in front of the planet (foot
+    of the home page, then the top of the pages below with the title in front of it), and
+    taken off both. A test keeps it off at rest.
+  - A strip of cloud over the straight join between the pages came next, then a thick bank
+    of stacked cloud filling a gap between them; the operator asked for it thinner, less
+    dense and shaped like a ring, which is what is there now.
+- The three stat lines under the cards carry a soft dark shade (`STAT_TEXT_SHADE`): on a short
+  phone the page scrolls and they pass over the planet's white ice, where plain white words
+  were lost.
+- **Open:** on the pages below, the page title and the arched tagline lie on the planet's land
+  and sea. They read, but less cleanly than on the old globe; the tagline's tests record that a
+  dark outline behind the words was tried before and read as a smudge, so it has been left for
+  the operator to decide.
+
+The bar's Progress item wears a trophy (`trophy-outline`, filled when chosen) rather than the
+rising line it had (operator, 2026-10-03): the page is the badge wall, and the home screen
+already counts badges with a trophy.
 
 On a tall phone (portrait, 840 pt or more) the sun grows by two fifths and the greeting and
 cards sit 24 pt lower, then are raised a twentieth of the screen (operator, 2026-09-21), net about
@@ -704,14 +815,14 @@ the bloom, reports press state so the `CardArrowButton` can dip and glow, and ho
 | Concern | Location |
 |---------|----------|
 | Data model (`ChildHomeData`, return-visit states) | `types/child-home.ts` |
-| Welcome choice, streak liveness, star lighting, safety score, card layout, tints, motion | `constants/home-journey.ts` |
+| Welcome choice, streak liveness, star lighting, safety score, card layout, tints, motion; the journey card's sizes, scale and the five steps it shows | `constants/home-journey.ts` |
 | Hero sky placement, motion budget, halo and card-frame tints | `constants/home-sky.ts` |
 | Sky layers | `components/home/home-hero-sky.tsx` and the `hero-*.tsx` files beside it |
 | Storybook-glass frame, progress bar, arrow button | `components/home/hero-card-frame.tsx`, `card-progress-bar.tsx`, `card-arrow-button.tsx` |
 | Assembling the model from the store, badges and screen-time history | `components/home/use-child-home-data.ts` |
 | Visit memory (`lastHomeVisitAt`, `achievementUnlockedAt`, `lastStoryCompletedAt`) | `store/app-store.ts` (persisted) |
 | Glowing book / clock / shield / flame icons | `components/home/stat-icons.tsx` |
-| Badge medallions; the newest one shines once when new | `components/home/achievement-card.tsx` |
+| The Your Learning Journey card: island, step tokens, Explore button | `components/home/achievement-card.tsx`, `components/home/use-journey-steps.ts`, `scripts/prepare-journey-art.py` |
 | Destinations | `stories` (catalogue) and `progress` (catalogue opened at Progress via `sectionRequest`), both from the bar; the island, from the Your Learning Journey card |
 
 Return-visit states, in priority order: new achievement → story completed → long absence
@@ -726,8 +837,8 @@ Motion budget: background stars twinkle, the hero stars and sparkles breathe (op
 scale to 1.04, 2.5–6 s each, never in step), clouds drift 2–6 px over 9–15 s, the shooting star
 crosses once every 16 s, the sun floats 2 px over 4.5 s, the four stat icons each move in their
 own way (a page flicks, the clock keeps time, the leaf sways, the flame flickers),
-the cover gives an occasional sparkle, milestone stars light
-in sequence on arrival, the newest medallion shines once when a badge is new. Cards compress
+the cover gives an occasional sparkle, the journey card's island star glints once when a badge
+is new. Cards compress
 about 2.5% on touch, the continue arrow dips to 90% and brightens, and arrows nudge on tap.
 Under Reduce Motion the sky keeps only faint opacity changes (`heroMotionMode` → `gentle`);
 everything stops while the page is not the one showing.
@@ -795,7 +906,8 @@ How it holds together:
   was swapping heavily throughout, so small single hitches varied from run to run; the trip home
   was measured once, before its fixes.
 - **The zoom is about the foot of the screen**, which is where the earth's centre is
-  (`constants/earth.ts`), far enough to bring the globe past the far corners (`voyageMaxZoom`).
+  (`constants/earth.ts`; the painted planet's centre lies a little below it), far enough to
+  bring the globe past the far corners (`voyageMaxZoom`).
   The sun is zoomed in a layer of its own so it stays above the scroll view and can still be
   touched.
 - **The sun stands behind the horizon.** Three layers: the picture, the sun, then the band of the
@@ -840,7 +952,19 @@ the mountains, clouds, trees, falls, windows, lamps and lighthouse) is in the sc
 table. On the phone painting the clouds on the right and the cloud bank on the horizon are one
 mass, so they drift as one near cloud, and the line between it and the far clouds on the left
 runs at x 370, where no cloud is cut (at first it ran at x 430, and a small cloud by the
-mountain peak was half in front of the sun and half behind it). As on the tablet, the bank
+mountain peak was half in front of the sun and half behind it). That small cloud then hung in
+front of the sun's face, and the operator asked for it gone: it is in `CLOUDS_LEFT_OUT`,
+painted out of the base like every moving cloud but drawn in no layer, and so is a thin strand
+of it the script had taken for land (`LEFT_OUT_SPECK`). The operator then found a single
+pixel of moon glowing through between the mountain and the cloud: a pocket of painted sky shut
+in between them, and a ring of half-clear pixels in the cloud round it. Inside
+`CLOUD_UNDER_MOUNTAIN` (the stretch where the cloud lies against the sun) the near cloud is now
+carried under the mountain and into such pockets, and small see-through holes inside the
+cloud's own body are made solid (`closed`), so the fix drifts with the cloud. A patch in the
+still band was tried first and dropped: the band and the cloud are each darkened separately at
+night, so wherever the band is part-clear over the cloud it comes out lighter, and the patch's
+edge showed as a light stroke. Checked by measuring the light let through at each of the 15
+drift positions, and on the iPhone 16 Pro at night. As on the tablet, the bank
 in front of the sun is filled out with copies of the painting's own low cloud (`CLOUD_BANK`,
 `CLOUD_FILLS`): as painted it has open sky between it and the mountain, under its low middle,
 and between two peaks, and the foot of the sun showed through there (operator, 2026-10-03). It has no swelling corner cloud, and only the waterfall
@@ -855,6 +979,7 @@ back  island-base      the painting with everything that moves painted out
       low trees        each on its own, leaning about its foot
       far clouds       high left and right, drifting; corner cloud, swelling
       (night tint)
+      stars by night   island-stars-1…3, in open sky only, twinkling in turn
       the sun or moon
       horizon cloud    drifting, in front of the sun
       island-land      the horizon band, sky and cloud and water cut out
@@ -864,11 +989,21 @@ front gulls by day     drawn in code
                        lighthouse: glow, twin beams, a pulse of light
 ```
 
+**Stars at night** (operator, 2026-10-03), on both paintings. The art script places them only in
+open sky, clear of every cloud as far as it drifts (`stars_of`), so nothing that moves passes over
+them, and draws them into three sheets. They are as big on screen as the home screen's stars
+(1.1 and 1.9 points, about one in five the larger, some warm-white), set by `STAR_POINT` (painting
+pixels per screen point where that painting is usually shown) and spaced by `STAR_EVERY`. The
+scene shows them at night only, over the night tint and behind the moon, so the moon, the clouds
+and the land hide them. Each sheet dims to `starFloor` (42%, as on the home screen) and back once
+per turn of the lamp's clock, a third of a turn after the one before (`starGlow`), so some stars
+are always bright; with Reduce Motion they hold still.
+
 | Concern | Location |
 |---------|----------|
 | Every curve (sway, drift, swell, ripple, flight, wingbeat), as pure worklets, and the gulls' courses | `constants/island-life.ts` |
 | Seven clocks, each turning 0→1 for ever; stopped and reset when the island is not showing | `hooks/use-island-clocks.ts` |
-| The pieces | `components/island/island-clouds.tsx`, `island-trees.tsx`, `island-water.tsx`, `island-falls.tsx`, `island-gulls.tsx`, `island-lights.tsx`, `moonlit-image.tsx` |
+| The pieces | `components/island/island-clouds.tsx`, `island-trees.tsx`, `island-water.tsx`, `island-falls.tsx`, `island-gulls.tsx`, `island-lights.tsx`, `island-stars.tsx`, `moonlit-image.tsx` |
 | Which pieces exist and where each sits in the painting | `constants/island-art.ts` (generated: `farClouds`, `nearClouds`, `billows`, `lowTrees`, `horizonTrees`, `water`, `falls`, `litWindows`, `villageLamps`, `lighthouse`) |
 
 - **Everything is a function of a clock**, so nothing accumulates: a tree's lean is

@@ -21,6 +21,8 @@ marked **⚠️ UNVERIFIED**.
 | Otter Raft game art and sound | Registered below, §2–§4, on 2026-09-29. **The game was undone on 2026-09-30** and its files are gone; the rows stand as the shape a row should take, and §2.1 and §2.3 still describe the sources and licence questions of the book *Hold On, Juni*, which is in the app |
 | The island picture behind the Your Learning Journey screen | Registered below, §5 — origin and licence ⚠️ UNVERIFIED |
 | The island picture shown on phones (a second painting of the same island, for a tall screen) | Registered below, §5a — origin and licence ⚠️ UNVERIFIED |
+| The island illustration on the home screen's Your Learning Journey card (cut from the operator's mock of the card) | Registered below, §5b — origin and licence ⚠️ UNVERIFIED |
+| The planet at the edge of every page, and the ring of cloud between pages while they slide (cut from the operator's painting of a planet in cloud) | Registered below, §5c — origin and licence ⚠️ UNVERIFIED |
 | The lock on the island's learning-plan checkpoints | Registered below, §6 — the supplied picture is not drawn since 2026-10-03 (a padlock drawn in code replaced it); the file remains, origin ⚠️ UNVERIFIED |
 | Everything else — avatars, feelings animals, story illustrations, instrument art, music, fonts, voices | **Not registered.** Origin is not recorded anywhere in the repository — ⚠️ UNVERIFIED |
 
@@ -94,7 +96,7 @@ the stage and a SHA-256 of the result. The hashes below were taken from the file
 | `island.webp` (1122×1402, SHA-256 `26310d7750f6bf923f57abe781b67e92eb4e6657c76c1e8288713f76b75658ef`) | Supplied by the operator, pasted into the working session on 2026-10-02 | Nothing; stored byte for byte |
 | `island-base.webp`, `island-land.webp`, `island-cloud-*.webp`, `island-billow-*.webp`, `island-tree-*.webp` (34 files) | Cut from `island.webp` by `grow-with-freya/scripts/prepare-island-art.py`, so that each can move (2026-10-02) | `island-base` is the painting with the moving clouds, the gulls and the swaying trees painted out by blurring in what lies round them. `island-land` is the band round the horizon (rows 226 to 492) with sky, cloud and water cut out, so the sun and the horizon cloud can be drawn behind it. The horizon cloud is filled out with four copies of the painting's own cloud bank, set behind the painted cloud. Nothing from outside the painting is added |
 | `island-water-1…3.webp` | Drawn by the same script: pale wave strokes, not taken from any picture | Made for the app |
-| `island-fall-*-streaks.webp`, `island-spray.webp`, `island-lit-windows.webp`, `island-lit-village-1…2.webp`, `island-lamp-glow.webp`, `island-lamp-beam.webp`, `island-lamp-pulse.webp`, `island-ring.webp` | Drawn by the same script: streaks, soft glows, beams and rings, not taken from any picture | Made for the app |
+| `island-fall-*-streaks.webp`, `island-spray.webp`, `island-lit-windows.webp`, `island-lit-village-1…2.webp`, `island-lamp-glow.webp`, `island-lamp-beam.webp`, `island-lamp-pulse.webp`, `island-ring.webp`, `island-stars-1…3.webp` | Drawn by the same script: streaks, soft glows, beams, rings and stars, not taken from any picture | Made for the app |
 | `island-fall-*-cover.webp`, `island-pool-*-cover.webp` | Cut from `island.webp` by the same script | The painting round each waterfall and each pool, with a hole the shape of the water |
 | The gulls | Drawn in code (`components/island/island-gulls.tsx`); the painted gulls are painted out of `island-base` | Made for the app |
 
@@ -112,8 +114,8 @@ Phones show a second painting of the same island, made for a tall screen; tablet
 | File (under `grow-with-freya/assets/images/island-phone/`) | Where from | What was changed |
 |---|---|---|
 | `island.webp` (941×1672, SHA-256 `518408fce8ec20557f64c6ee26206178e79d2d25224fb561931d32879aafc29e`) | Supplied by the operator, pasted into the working session on 2026-10-03 | Nothing; stored byte for byte |
-| `island-base.webp`, `island-land.webp`, `island-cloud-*.webp`, `island-tree-*.webp`, `island-fall-1-cover.webp`, `island-pool-1-cover.webp` | Cut from this `island.webp` by `grow-with-freya/scripts/prepare-island-art.py --art phone` (2026-10-03) | As in §5: the moving clouds, gulls and swaying trees painted out of `island-base` by blurring in what lies round them; `island-land` is the band round the horizon (rows 518 to 720) with sky, cloud and water cut out. The horizon cloud is filled out with four copies of the painting's own low cloud bank, set behind the painted cloud. Nothing from outside the painting is added |
-| `island-water-1…3.webp`, `island-fall-1-streaks.webp`, `island-spray.webp`, `island-lit-*.webp`, `island-lamp-*.webp`, `island-ring.webp` | Drawn by the same script | Made for the app |
+| `island-base.webp`, `island-land.webp`, `island-cloud-*.webp`, `island-tree-*.webp`, `island-fall-1-cover.webp`, `island-pool-1-cover.webp` | Cut from this `island.webp` by `grow-with-freya/scripts/prepare-island-art.py --art phone` (2026-10-03) | As in §5: the moving clouds, gulls and swaying trees painted out of `island-base` by blurring in what lies round them; `island-land` is the band round the horizon (rows 518 to 720) with sky, cloud and water cut out. The horizon cloud is filled out with four copies of the painting's own low cloud bank, set behind the painted cloud. One small cloud by the mountain peak is painted out and not drawn (operator, 2026-10-03). Nothing from outside the painting is added |
+| `island-water-1…3.webp`, `island-fall-1-streaks.webp`, `island-spray.webp`, `island-lit-*.webp`, `island-lamp-*.webp`, `island-ring.webp`, `island-stars-1…3.webp` | Drawn by the same script | Made for the app |
 
 | Question | Answer |
 |---|---|
@@ -123,6 +125,54 @@ Phones show a second painting of the same island, made for a tall screen; tablet
 
 A third picture of the island (1024×1536) was offered the same day and not used: on current
 iPhones it lost a third of its width, the lighthouse included, so it is not in the repository.
+
+## 5b. The island on the home screen's Your Learning Journey card
+
+| File (under `grow-with-freya/assets/images/home-journey/`) | Where from | What was changed |
+|---|---|---|
+| `journey-card-mock.webp` (746×610, SHA-256 `a11cf44e37bd483c78d3375f60d14ea46140744c4a2dc7cd08b6b075eedb26a2`) | Supplied by the operator, pasted into the working session on 2026-10-03: a mock of the home screen with the redrawn card | Nothing; stored byte for byte. Not required by the app, so not bundled |
+| `journey-island.webp` (746×472) | Cut from the mock by `grow-with-freya/scripts/prepare-journey-art.py` (2026-10-03): the card's right-hand part, where its island illustration is | The mock's own lettering painted out of the cut (two small boxes of blue sky, blurred in from what lies round them), its left edge faded to nothing so it lies over the card's fill, enlarged twice and sharpened a little. Nothing from outside the mock is added |
+| The step tokens, the gold button, the glows | Drawn in code (`components/home/achievement-card.tsx`), with Ionicons glyphs already in the build | Made for the app |
+
+| Question | Answer |
+|---|---|
+| Who made it, and with what | ⚠️ UNVERIFIED — the mock arrived with no record of its origin. It has the look of a generated image, and its island is a third picture of the island in §5; the operator to say which service and account, or which artist |
+| Terms for commercial use, and who owns it | ⚠️ UNVERIFIED — depends on the answer above |
+| Checked by eye against well-known games and films | **Not yet done by a person**, as §5 |
+| Quality | The illustration exists only inside a small mock (the card is 608 pixels wide in it), so it is shown about 1.8 times enlarged on a phone. If the operator has the illustration itself, it should replace the cut |
+
+A second mock (434×306, same day) showed the card's step tokens. Nothing of it is in the
+repository: the tokens were drawn in code from it.
+
+## 5c. The planet at the edge of every page
+
+| File (under `grow-with-freya/assets/images/home-planet/`) | Where from | What was changed |
+|---|---|---|
+| `planet-painting.webp` (941×1672, SHA-256 `3ff5cc8e92224e91404c74a99bb77f68cc5affd1d7456913ff937a02afad88ba`) | Supplied by the operator, pasted into the working session on 2026-10-03: a night sky with a band of galaxy, and a large planet rising out of cloud at its foot | Nothing; stored byte for byte. Not required by the app, so not bundled |
+| `planet-horizon.webp` (1882×1324) | Cut from the painting by `grow-with-freya/scripts/prepare-planet-art.py` (2026-10-03): rows 1010 to the bottom | The sky taken out, leaving the planet, the clouds round it and the glow of its air; enlarged twice and sharpened a little. The app draws it the right way up at the foot of the home page and the splash, and upside down at the top of the pages below. Nothing from outside the painting is added |
+| `planet-cloud-ring.webp` (2464×526) | Made by the same script from the painting's own two cloud banks (rows 1500 to the bottom) | The banks joined into one band (a mirrored copy of each set lower between them, the cut edges rounded into puffs, a thin wisp over the sea left out), given an underside from a turned copy, bent into the front and back of a ring seen almost edge on, and made 15% see-through. Drawn only while the pages slide, round the waist of the world the two planet halves make between them. Nothing from outside the painting is added |
+
+| Question | Answer |
+|---|---|
+| Who made it, and with what | ⚠️ UNVERIFIED — the painting arrived with no record of its origin. It has the look of a generated image; the operator to say which service and account, or which artist |
+| Terms for commercial use, and who owns it | ⚠️ UNVERIFIED — depends on the answer above |
+| Checked by eye against well-known games and films | **Not yet done by a person** |
+| Quality | The painting is 941 pixels wide, so on a phone it is shown about 1.3 times enlarged and on a tablet between 1.8 and 3 times (most on a large tablet on its side). A larger original would be sharper, most of all on tablets |
+
+An earlier painting of the same planet (941×1672, SHA-256
+`278dd1229709f1ffc4ab5ea9878acb23da38b49c074234be384e84214dc3f991`), supplied the same day, stood
+at the foot of the home page for about an hour and was replaced by this one; it is not in the
+repository. Its sky (stars and a band of galaxy) was cut as `galaxy-glow.webp` and laid over the
+app's sky; the operator found it too much, the file was deleted, and nothing of either painting's
+sky is in the app. A band of this painting's cloud, `planet-cloud-band.webp`, was laid along
+the edge of the screen for a while the same day; the operator had it taken off and that file was
+deleted. The same cloud, bent into `planet-cloud-ring.webp`, now shows only while the pages
+slide.
+
+`ui-elements/shared-earth.webp`, the older globe, is no longer drawn or preloaded: nothing
+requires it. The file is still in the repository until the operator says whether to delete it.
+Its cloud banks, `night-cloud-left.webp` and `night-cloud-right.webp`, are still used by the
+sign-in sky, the owl and the badge art.
 
 ## 6. The lock on the learning-plan checkpoints
 
