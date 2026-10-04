@@ -250,6 +250,14 @@ Feature: CMS Content Sync and Delta Sync Testing
     And page 1 should have localized text in "es"
     And page 1 should have localized text in "de"
 
+  @local @docker @emulator-only @i18n @delta-sync
+  Scenario: Delta sync carries a CMS story's age-grouped translations to the app
+    Given the story "test-story-localized" is in the catalogue
+    And I have a delta sync request with no client checksums
+    When I make a POST request to "/api/stories/delta" with the delta sync request
+    Then the response status code should be 200
+    And the delta response story "test-story-localized" page 1 reads "Dawno, dawno temu żyła sobie przyjazna mała wiewiórka o imieniu Sammy." in "pl" for age "4-6"
+
   @local @docker @emulator-only @i18n
   Scenario: Delta sync includes localized content in checksum calculation
     Given I seed localized test story "test-story-localized" to the local Firestore emulator

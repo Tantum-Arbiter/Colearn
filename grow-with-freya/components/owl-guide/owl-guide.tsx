@@ -26,11 +26,13 @@ import { OwlSpeechBubble } from '@/components/screen-time/owl-speech-bubble';
 import { GuideSpotlight } from './guide-spotlight';
 import { useGuideOnTop } from './owl-guide-layer';
 import { ScreenTimeRingLegend } from './screen-time-ring-legend';
+import { ProfileSlotLegend } from './profile-slot-legend';
 import { useGuideTargets, type GuideTargetRefs } from './use-guide-targets';
 import type { GuideScroller } from './use-guide-scroller';
 
 const ILLUSTRATIONS = {
   screenTimeRing: <ScreenTimeRingLegend />,
+  profileSlot: <ProfileSlotLegend />,
 } as const;
 
 const NO_TARGETS: GuideTargetRefs = {};
@@ -210,6 +212,23 @@ export function OwlGuide({
     const timer = setTimeout(() => setShownIndex(guide.stepIndex), GUIDE_TIMING.highlightLeadMs);
     return () => clearTimeout(timer);
   }, [shownIndex, guide.stepIndex, landedOnSubject]);
+
+  /**
+   * A tour belongs to its page. `active` only ever gated *starting* one, so a
+   * tour begun on one section carried on over whatever the child moved to
+   * next -- talking about subjects that were no longer on screen, and holding
+   * the new page's own tour shut behind it, since only one runs at a time.
+   *
+   * Leaving ends it without marking it seen: the page it belongs to still owes
+   * the child that tour the next time they open it.
+   */
+  useEffect(() => {
+    if (!isMine || active || endedRef.current) return;
+    endedRef.current = true;
+    scroller?.release();
+    guide.dismissGuide();
+    onEndRef.current?.();
+  }, [isMine, active, scroller, guide]);
 
   const finish = useCallback(
     (how: 'complete' | 'skip') => {
@@ -392,7 +411,7 @@ export function OwlGuide({
 
 const styles = StyleSheet.create({
   root: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 9999,
     elevation: 20,
   },

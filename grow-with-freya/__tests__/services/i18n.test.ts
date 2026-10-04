@@ -137,6 +137,123 @@ describe('i18n Service', () => {
     );
   });
 
+  describe('The learning journey card on the home', () => {
+    const cardName = (code: string): string => localeModules[code].home.milestone.eyebrow;
+
+    it('is called Your Learning Journey in English', () => {
+      expect(cardName('en')).toBe('Your Learning Journey');
+    });
+
+    it.each(ALL_LOCALE_CODES)('%s has the tour call the card what the card calls itself', (code) => {
+      expect(localeModules[code].tutorial.mainMenu.achievement.title).toBe(cardName(code));
+    });
+
+    it.each(ALL_LOCALE_CODES.filter((code) => code !== 'en'))('%s has its own words for it, not the English', (code) => {
+      expect(cardName(code)).not.toBe(cardName('en'));
+      expect(cardName(code).trim().length).toBeGreaterThan(0);
+    });
+
+    it.each(ALL_LOCALE_CODES)('%s says both how many badges are unlocked and how many remain', (code) => {
+      const underTest: string = localeModules[code].home.achievementTally.label;
+
+      expect(underTest).toContain('{{unlocked}}');
+      expect(underTest).toContain('{{remaining}}');
+      expect(underTest.indexOf('{{unlocked}}')).toBeLessThan(underTest.indexOf('{{remaining}}'));
+    });
+  });
+
+  describe('The way to the island', () => {
+    it('invites the child to explore, in English, now the card no longer opens the badges', () => {
+      expect(localeModules.en.home.achievements.cta).toBe('Explore');
+      expect(localeModules.en.home.achievements.hint).toBe('Fly down to your island');
+    });
+
+    it.each(ALL_LOCALE_CODES)('%s no longer promises the badges from the card or the tour', (code) => {
+      const before: Record<string, { cta: string; hint: string; tour: string }> = {
+        en: { cta: 'View achievements', hint: 'See your badges', tour: 'Tap it to see them all.' },
+      };
+      const home = localeModules[code].home.achievements;
+      const tour: string = localeModules[code].tutorial.mainMenu.achievement.description;
+
+      expect(home.cta.trim().length).toBeGreaterThan(0);
+      expect(home.hint.trim().length).toBeGreaterThan(0);
+      expect(tour.trim().length).toBeGreaterThan(0);
+      if (before[code]) {
+        expect(home.cta).not.toBe(before[code].cta);
+        expect(home.hint).not.toBe(before[code].hint);
+        expect(tour).not.toContain(before[code].tour);
+      }
+    });
+
+    it.each(ALL_LOCALE_CODES.filter((code) => code !== 'en'))('%s has its own words for exploring and for the island', (code) => {
+      expect(localeModules[code].island.scene).not.toBe(localeModules.en.island.scene);
+      expect(localeModules[code].island.scene.trim().length).toBeGreaterThan(0);
+    });
+
+    it('describes the island for someone who cannot see it', () => {
+      expect(localeModules.en.island.scene).toBe('An island seen from the sky, with snowy mountains, forests, a river and a lighthouse');
+    });
+  });
+
+  describe('The learning plan on the island', () => {
+    const PLACES = ['storyTime', 'wordGarden', 'mathsMeadow', 'feelingsCove', 'musicGrove', 'storyCorner', 'storyBridge'];
+    const DOMAINS = ['language', 'maths', 'feelings', 'music'];
+    const SKILLS = ['listening', 'vocabulary', 'letters', 'counting', 'numbers', 'feelings', 'confidence', 'rhythm', 'patience'];
+    const DAYS = [1, 2, 3, 4, 5, 6, 7];
+
+    it('names each day`s place, kind of learning and skills, and says in a sentence what it builds, in English', () => {
+      const plan = localeModules.en.plan;
+
+      PLACES.forEach((place) => expect(plan.places[place].trim().length).toBeGreaterThan(0));
+      DOMAINS.forEach((domain) => expect(plan.domains[domain].trim().length).toBeGreaterThan(0));
+      SKILLS.forEach((skill) => expect(plan.skills[skill].trim().length).toBeGreaterThan(0));
+      expect(plan.places.storyBridge).toBe('Story Bridge');
+      expect(plan.islandWeek['day-1'].aim).toBe('Build listening, vocabulary and calm through a cosy bedtime story.');
+      DAYS.forEach((day) => {
+        const aim: string = plan.islandWeek[`day-${day}`].aim;
+        expect(aim.trim().length).toBeGreaterThan(0);
+        expect(aim.length).toBeLessThanOrEqual(80);
+      });
+      expect(plan.stepOf).toBe('Step {{day}} of {{total}}');
+      expect(plan.minutes).toBe('{{from}}–{{to}} min');
+      expect(plan.start).toBe('Start activity');
+      expect(plan.preview).toBe('Preview');
+      expect(plan.a11y.checkpoint).toContain('{{day}}');
+      expect(plan.a11y.checkpoint).toContain('{{place}}');
+      expect(plan.a11y.checkpoint).toContain('{{state}}');
+      expect(plan.weekDoneBody).toContain('{{done}}');
+    });
+
+    it('keeps no words the card no longer shows', () => {
+      const plan = localeModules.en.plan;
+
+      expect(plan.step).toBeUndefined();
+      expect(plan.places.bedtimeBridge).toBeUndefined();
+      DAYS.forEach((day) => expect(plan.islandWeek[`day-${day}`].description).toBeUndefined());
+    });
+
+    it.each(ALL_LOCALE_CODES.filter((code) => code !== 'en'))('%s says it in its own words, keeping every placeholder', (code) => {
+      const plan = localeModules[code].plan;
+      const en = localeModules.en.plan;
+
+      PLACES.forEach((place) => expect(plan.places[place]).not.toBe(en.places[place]));
+      DAYS.forEach((day) => expect(plan.islandWeek[`day-${day}`].aim).not.toBe(en.islandWeek[`day-${day}`].aim));
+      expect(plan.start).not.toBe(en.start);
+      expect(plan.preview.trim().length).toBeGreaterThan(0);
+      DOMAINS.forEach((domain) => expect(plan.domains[domain].trim().length).toBeGreaterThan(0));
+      SKILLS.forEach((skill) => expect(plan.skills[skill].trim().length).toBeGreaterThan(0));
+      expect(plan.stepOf).toContain('{{day}}');
+      expect(plan.stepOf).toContain('{{total}}');
+      expect(plan.minutes).toContain('{{from}}');
+      expect(plan.minutes).toContain('{{to}}');
+      expect(plan.a11y.checkpoint).toContain('{{day}}');
+      expect(plan.a11y.checkpoint).toContain('{{place}}');
+      expect(plan.a11y.checkpoint).toContain('{{state}}');
+      expect(plan.weekDoneBody).toContain('{{done}}');
+      expect(plan.weekDoneBody).toContain('{{total}}');
+    });
+  });
+
   describe('No decorative symbols in translation strings', () => {
     // These symbols should be rendered as Ionicons in UI buttons/labels,
     // not embedded in translation strings
@@ -191,6 +308,27 @@ describe('i18n Service', () => {
         expect(violations).toEqual([]);
       }
     );
+  });
+
+  describe('No word split by a dash', () => {
+    const SPLIT_ALLOWED = new Set(['en:tutorial.profile.login.description']);
+
+    function stringValues(obj: any, prefix = ''): { key: string; value: string }[] {
+      return Object.entries(obj).flatMap(([key, value]) => {
+        const fullKey = prefix ? `${prefix}.${key}` : key;
+        if (typeof value === 'string') return [{ key: fullKey, value }];
+        return value && typeof value === 'object' ? stringValues(value, fullKey) : [];
+      });
+    }
+
+    it.each(ALL_LOCALE_CODES)('%s keeps every accented letter rather than a spaced dash in its place', (code) => {
+      const split = stringValues(localeModules[code])
+        .filter(({ key }) => !SPLIT_ALLOWED.has(`${code}:${key}`))
+        .filter(({ value }) => /['’] - /.test(value) || /(?<![\p{L}\p{N}])\p{L}{1,3} - \p{Ll}{1,5}(?!\p{L})/u.test(value))
+        .map(({ key, value }) => `${key}: ${value.substring(0, 60)}`);
+
+      expect(split).toEqual([]);
+    });
   });
 });
 

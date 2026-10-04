@@ -1017,3 +1017,70 @@ describe('the ring step', () => {
     expect(json(tree)).not.toContain('owl-guide-illustration');
   });
 });
+
+/**
+ * One tour per page. `active` used to gate only the start, so a tour begun on
+ * one section ran on over whatever the child moved to next -- and, because
+ * only one guide runs at a time, sat there holding the new page's own tour
+ * shut behind it.
+ */
+describe('a tour whose page is left', () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+    mockGuide.isLoaded = true;
+    mockGuide.activeGuide = null;
+    mockGuide.stepIndex = 0;
+    mockGuide.completed = [];
+    setWindow(402, 874);
+    Object.values(mockApi).forEach((fn) => fn.mockClear());
+  });
+
+  // Without this the suite hangs: Testing Library's cleanup runs after the
+  // describe and waits on timers that are still faked.
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  function startedTour() {
+    const tree = render(<Harness id="catalogue_tour" active targets={{}} />);
+    act(() => {
+      jest.advanceTimersByTime(GUIDE_TIMING.showDelayMs + 50);
+    });
+    expect(mockGuide.activeGuide).toBe('catalogue_tour');
+    return tree;
+  }
+
+  it('stops when its section stops being the one on show', () => {
+    const tree = startedTour();
+
+    tree.update(<Harness id="catalogue_tour" active={false} targets={{}} />);
+
+    expect(mockGuide.activeGuide).toBeNull();
+  });
+
+  it('is not marked as seen, so the page still owes it next time', () => {
+    const tree = startedTour();
+
+    tree.update(<Harness id="catalogue_tour" active={false} targets={{}} />);
+
+    // dismiss, not skip or complete: those two remember.
+    expect(mockApi.dismissGuide).toHaveBeenCalled();
+    expect(mockApi.skipGuide).not.toHaveBeenCalled();
+    expect(mockApi.completeGuide).not.toHaveBeenCalled();
+    expect(mockGuide.completed).not.toContain('catalogue_tour');
+  });
+
+  it('frees the guide slot, so the page walked onto can run its own tour', () => {
+    const tree = startedTour();
+    tree.update(<Harness id="catalogue_tour" active={false} targets={{}} />);
+
+    render(<Harness id="profile_tour" active targets={{}} />);
+    act(() => {
+      jest.advanceTimersByTime(GUIDE_TIMING.showDelayMs + 50);
+    });
+
+    // Only one guide runs at a time, so this is the whole of the bug: while
+    // the catalogue tour held the slot, the profile tour could never start.
+    expect(mockGuide.activeGuide).toBe('profile_tour');
+  });
+});

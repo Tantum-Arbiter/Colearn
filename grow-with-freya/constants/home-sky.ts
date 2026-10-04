@@ -109,12 +109,33 @@ export function sunFrame(width: number, topInset: number, height: number = width
 }
 
 export const PORTRAIT_TABLET_SUN_SCALE = 1.3;
+export const PORTRAIT_TABLET_CONTENT_LIFT = 0.05;
+export const TALL_PHONE_SUN_SCALE = 1.4;
+export const TALL_PHONE_CONTENT_DROP = 24;
+export const TALL_PHONE_CONTENT_LIFT = 0.05;
 const TABLET_MIN_SHORT_SIDE = 768;
+const TALL_PHONE_MIN_HEIGHT = 840;
+
+function isTallPhone(width: number, height: number): boolean {
+  return Math.min(width, height) < TABLET_MIN_SHORT_SIDE && height > width && height >= TALL_PHONE_MIN_HEIGHT;
+}
 
 export function heroSunScale(width: number, height: number): number {
   const portraitTablet = Math.min(width, height) >= TABLET_MIN_SHORT_SIDE && height > width;
+  if (portraitTablet) {
+    return PORTRAIT_TABLET_SUN_SCALE;
+  }
 
-  return portraitTablet ? PORTRAIT_TABLET_SUN_SCALE : 1;
+  return isTallPhone(width, height) ? TALL_PHONE_SUN_SCALE : 1;
+}
+
+export function heroContentDrop(width: number, height: number): number {
+  return isTallPhone(width, height) ? TALL_PHONE_CONTENT_DROP - Math.round(height * TALL_PHONE_CONTENT_LIFT) : 0;
+}
+
+export function heroContentLift(width: number, height: number): number {
+  const portraitTablet = Math.min(width, height) >= TABLET_MIN_SHORT_SIDE && height > width;
+  return portraitTablet ? Math.round(height * PORTRAIT_TABLET_CONTENT_LIFT) : 0;
 }
 
 export function heroSunFrame(width: number, height: number, topInset: number): SunFrame {

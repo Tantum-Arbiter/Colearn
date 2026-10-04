@@ -4,7 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path } from 'react-native-svg';
 import { ACCENT_GOLD, SKY_GRADIENT_WORLD } from '@/constants/night-palette';
 import { generateStarPositions } from '@/components/main-menu/utils';
-import { earthCap } from '@/constants/earth';
+import { planetReach } from '@/constants/earth';
 
 const STAR_SEED = 47;
 
@@ -88,7 +88,7 @@ export function CelestialBackground({
   const stars = useMemo(
     () => clearOfPlanet(
       generateStarPositions(starCount + accentStars, STAR_SEED),
-      earthCap(width, height, 'top') + PLANET_MARGIN,
+      planetReach(width, height, 'top') + PLANET_MARGIN,
       height,
     ),
     [starCount, accentStars, width, height],

@@ -492,7 +492,7 @@ export default {
   account: {
     sleepingSun: 'De slapende zon',
     sleepingMoon: 'De slapende maan',
-    title: 'Account',
+    title: 'Instellingen',
     profile: 'Profiel',
     nickname: 'Bijnaam',
     avatarType: 'Avatartype',
@@ -506,6 +506,7 @@ export default {
     termsAndConditions: 'Servicevoorwaarden',
     privacyPolicy: 'Privacybeleid',
     selectLanguage: 'Selecteer Taal',
+    chooseLanguage: 'Kies je voorkeurstaal',
     guestMode: 'Gastmodus',
     createAccount: 'Maak Account aan om Voortgang op te Slaan',
     crashReports: 'Crashrapporten',
@@ -514,6 +515,7 @@ export default {
     deleteAccountHint: 'Verwijder permanent je account en alle gegevens',
   },
   profile: {
+    signedIn: 'Ingelogd',
     enterNickname: 'Voer Bijnaam in',
     nicknameTooLong: 'Bijnaam moet 20 tekens of minder zijn',
     editTitle: 'Profiel Bewerken',
@@ -529,7 +531,6 @@ export default {
     noName: 'Kleine ontdekker',
     downloadsUsed: '{{used}} van {{limit}} boeken op dit apparaat',
     downloadsEmpty: 'Nog niets opgeslagen op dit apparaat — download een boek om het overal te lezen',
-    downloadMeta: '{{minutes}} min · {{pages}} pagina\'s',
     downloadsCount: '{{count}} boeken op dit apparaat',
     tabs: {
       saved: 'Bewaard',
@@ -617,6 +618,62 @@ export default {
       consent: 'Jouw toestemming beschermt je gezin',
     },
   },
+  island: {
+    scene: 'Een eiland vanuit de lucht gezien, met besneeuwde bergen, bossen, een rivier en een vuurtoren',
+  },
+  plan: {
+    places: {
+      storyTime: 'Verhaaltjestijd',
+      wordGarden: 'Woordentuin',
+      mathsMeadow: 'Rekenweide',
+      feelingsCove: 'Gevoelensbaai',
+      musicGrove: 'Muziekbosje',
+      storyCorner: 'Verhalenhoek',
+      storyBridge: 'Verhalenbrug',
+    },
+    domains: {
+      language: 'Taal',
+      maths: 'Rekenen',
+      feelings: 'Gevoelens',
+      music: 'Muziek',
+    },
+    skills: {
+      listening: 'Luisteren',
+      vocabulary: 'Woordenschat',
+      letters: 'Letters',
+      counting: 'Tellen',
+      numbers: 'Getallen',
+      feelings: 'Gevoelens',
+      confidence: 'Zelfvertrouwen',
+      rhythm: 'Ritme',
+      patience: 'Geduld',
+    },
+    islandWeek: {
+      'day-1': { aim: 'Oefen luisteren, woordenschat en rust met een knus verhaaltje voor het slapengaan.' },
+      'day-2': { aim: 'Leer letterklanken en bouw woorden, tegel voor tegel.' },
+      'day-3': { aim: 'Tel mee en speel met getallen in een kort spelletje.' },
+      'day-4': { aim: 'Geef gevoelens een naam en laat ze samen zien met je gezicht.' },
+      'day-5': { aim: 'Vind de maat en speel een kort liedje, noot voor noot.' },
+      'day-6': { aim: 'Luister en praat over grote gevoelens met een verhaal over groter worden.' },
+      'day-7': { aim: 'Oefen wachten en om de beurt gaan met een verhaal over een busrit.' },
+    },
+    stepOf: 'Stap {{day}} van {{total}}',
+    minutes: '{{from}}–{{to}} min',
+    start: 'Activiteit starten',
+    preview: 'Voorproefje',
+    opensTomorrow: 'Goed gedaan vandaag. De volgende stap gaat morgen open.',
+    weekDone: 'Het hele eiland verkend',
+    weekDoneBody: '{{done}} van {{total}} stappen gedaan. Rust lekker uit en kom terug voor een nieuwe week.',
+    a11y: {
+      checkpoint: 'Dag {{day}}, {{place}}, {{state}}',
+    },
+    states: {
+      done: 'gedaan',
+      open: 'klaar om te beginnen',
+      tomorrow: 'gaat morgen open',
+      locked: 'nog niet',
+    },
+  },
   tutorial: {
     welcomeTitle: 'Welkom bij\nEarlyroots!',
     welcomeDescription: 'Laten we een snelle rondleiding doen om jou en je kind te helpen het meeste uit leestijd te halen.',
@@ -641,7 +698,7 @@ export default {
         description: 'Alle verhalen, liedjes en leerspelletjes staan in de bibliotheek. Tik hier om hem te openen.',
       },
       welcome: {
-        title: 'Welkom bij Grow with Freya!',
+        title: 'Welkom bij Early Roots!',
         description: 'Laten we een snelle rondleiding doen om jou en je kind te helpen het meeste uit leestijd te halen.',
       },
       stories: {
@@ -654,7 +711,7 @@ export default {
       },
       freeplay: {
         title: 'Vrij Spelen',
-        description: 'Speel vrij op elk instrument -geen regels, alleen plezier! Experimenteer met geluiden en maak je eigen muziek.',
+        description: 'Speel vrij op elk instrument - geen regels, alleen plezier! Experimenteer met geluiden en maak je eigen muziek.',
       },
       instruments: {
         title: 'Instrumenten',
@@ -664,13 +721,17 @@ export default {
         title: 'Instellingen',
         description: 'Pas de app aan zodat deze het beste voor je gezin werkt.',
       },
+      language: {
+        title: 'Jouw taal',
+        description: 'Tik op de vlag om de taal van de app te wijzigen.',
+      },
       sound: {
         title: 'Geluidsbediening',
         description: 'Tik hier om achtergrondmuziek en geluidseffecten te beheren.',
       },
       achievement: {
-        title: 'Volgende prestatie',
-        description: 'De badge waar je kind het dichtst bij is, en hoe ver het nog is. Tik om ze allemaal te zien.',
+        title: 'Jouw leerreis',
+        description: 'De badge waar je kind het dichtst bij is, en hoe ver het nog is. Tik om omlaag te vliegen naar het eiland.',
       },
       screenTime: {
         title: 'De schermtijdring',
@@ -803,24 +864,24 @@ export default {
     },
     settings: {
       intro: {
-        title: 'Instellingen',
-        description: 'Pas de app aan zodat deze het beste voor je gezin werkt.',
+        title: 'Instellingen voor volwassenen',
+        description: 'Een paar keuzes die de app afstemmen op jullie gezin. Pas ze aan wanneer je wilt.',
       },
-      login: {
-        title: 'Account en Synchronisatie',
-        description: 'Log in om voortgang op te slaan en tussen apparaten te synchroniseren.',
-      },
-      language: {
-        title: 'Taal',
-        description: 'Kies je voorkeurstaal voor de app-interface.',
-      },
-      accessibility: {
-        title: 'Toegankelijkheid',
-        description: 'Pas tekstgrootte en andere instellingen aan voor gemakkelijker gebruik.',
+      textSize: {
+        title: 'Tekstgrootte',
+        description: 'Maak de woorden in de hele app groter of kleiner, voor wie er ook leest.',
       },
       screenTime: {
         title: 'Schermtijd',
-        description: 'Stel gezonde limieten in en monitor dagelijks gebruik.',
+        description: 'Zet dit aan voor een zachte daglimiet die past bij de leeftijd van je kind. De Screensafe-ring laat zien hoe de dag gaat. Op elk moment weer uit te zetten.',
+      },
+      reminders: {
+        title: 'Slimme herinneringen',
+        description: 'Een rustig seintje op de tijden die jij kiest, voor verhalen, gevoelens of muziek.',
+      },
+      crashReports: {
+        title: 'Crashrapporten',
+        description: 'Als er iets misgaat, helpt een anoniem rapport ons het op te lossen. Zet het hier uit als je dat liever hebt.',
       },
     },
     musicMode: {
@@ -852,7 +913,7 @@ export default {
     storyModes: {
       welcome: {
         title: 'Drie Manieren om te Ontdekken!',
-        description: 'Elk kind leert anders. Kies de verhaalervaring die de nieuwsgierigheid van je kind prikkelt -elk bouwt essentiële vaardigheden op door de magie van het spelen.',
+        description: 'Elk kind leert anders. Kies de verhaalervaring die de nieuwsgierigheid van je kind prikkelt - elk bouwt essentiële vaardigheden op door de magie van het spelen.',
       },
       interactive: {
         title: 'Interactieve Verhalen',
@@ -860,7 +921,7 @@ export default {
       },
       musical: {
         title: 'Muzikale Verhalen',
-        description: 'Lees, speel en treed op! Muzikale verhalen verweven echte instrumentuitdagingen in elk avontuur -je kind leert ritme, melodie en coördinatie terwijl het het verhaal volgt. Studies bevestigen dat vroege blootstelling aan muziek het geheugen, de taalontwikkeling en emotionele expressie verbetert.',
+        description: 'Lees, speel en treed op! Muzikale verhalen verweven echte instrumentuitdagingen in elk avontuur - je kind leert ritme, melodie en coördinatie terwijl het het verhaal volgt. Studies bevestigen dat vroege blootstelling aan muziek het geheugen, de taalontwikkeling en emotionele expressie verbetert.',
       },
       jigsaw: {
         title: 'Puzzelverhalen',
@@ -1020,7 +1081,9 @@ export default {
       },
       navProfile: {
         title: 'Profiel',
-        description: 'Bewaarde favorieten, de badgemuur en de boeken op dit apparaat.',
+        description: 'Bewaarde favorieten, de badgemuur en de boeken op dit apparaat. Af en toe verandert het in een gouden inlogsymbool: dat betekent dat er nog niemand is ingelogd, en een tik brengt je naar het inloggen.',
+        profileCaption: 'Jouw profiel',
+        loginCaption: 'Tijd om in te loggen',
       },
     },
     progress: {
@@ -1068,13 +1131,21 @@ export default {
         title: 'Profiel aanpassen',
         description: 'Tik op de afbeelding of de naam om de avatar, naam of leeftijd te veranderen. Een volwassene beantwoordt eerst een korte vraag.',
       },
+      login: {
+        title: 'Inloggen',
+        description: 'Inloggen bewaart de badges, de reeks en waar elk verhaal gebleven is, op al jullie apparaten.',
+      },
+      home: {
+        title: 'Terug naar huis',
+        description: 'Home brengt je terug naar de nachtelijke hemel als jullie klaar zijn.',
+      },
       tabs: {
         title: 'Bewaard, Badges, Beheren',
         description: 'Favorieten met een hartje, de badgemuur en de boeken op dit apparaat, met ruimte om er te verwijderen.',
       },
       settings: {
         title: 'Instellingen voor volwassenen',
-        description: 'Taal, schermtijd en je account, achter het hek voor volwassenen.',
+        description: 'Tekstgrootte, schermtijd, herinneringen en je account, achter het hek voor volwassenen.',
       },
     },
   },
@@ -3209,7 +3280,8 @@ export default {
     playAlong: 'Meespelen',
     readNow: 'Nu lezen',
     savedOffline: 'Offline opgeslagen',
-    minutes: '{{count}} min',
+    pages_one: '{{count}} pagina',
+    pages_other: '{{count}} pagina\'s',
     ages: 'Leeftijd {{range}}',
     interactive: 'Interactief',
     favourite: 'Favoriet',
@@ -3329,15 +3401,18 @@ export default {
       minutes: '{{count}} min deze week',
       none: 'Nog niet gelezen deze week',
     },
+    achievementTally: {
+      label: 'Ontgrendeld: {{unlocked}}, nog te gaan: {{remaining}}',
+    },
     achievements: {
       title: 'Kijk wat je hebt bereikt!',
-      cta: 'Bekijk prestaties',
+      cta: 'Ontdek',
       emptyTitle: 'Je eerste badge wacht',
       emptyBody: 'Lees samen een verhaal om hem te verdienen',
-      hint: 'Bekijk je badges',
+      hint: 'Vlieg omlaag naar jouw eiland',
     },
     milestone: {
-      eyebrow: 'Volgende badge',
+      eyebrow: 'Jouw leerreis',
       remaining: {
         stories: 'Nog {{count}} verhalen om te ontgrendelen',
         stories_one: 'Nog {{count}} verhaal om te ontgrendelen',
@@ -3509,7 +3584,7 @@ export default {
     badges: {
       firstStory: {
         title: 'Eerste verhaal',
-        description: 'Open je allereerste verhaal',
+        description: 'Lees je allereerste verhaal uit',
       },
       readingTogether: {
         title: 'Samen lezen',

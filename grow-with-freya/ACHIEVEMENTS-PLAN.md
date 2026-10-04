@@ -3,7 +3,7 @@ title: "Achievements — badges that grow with a shelf we cannot see yet"
 type: plan
 status: partially-built
 branch: mvp
-updated: 2026-09-07
+updated: 2026-09-24
 ---
 
 # Achievements plan
@@ -244,65 +244,63 @@ Two consequences, both real:
 
 ## 6. Architecture
 
-### 6.1 An event ledger, on the device — *not built*
+### 6.1 Facts, not a ledger — *built (Phase 8 D5, D6)*
 
-The counters today are recomputed from state that has no time in it. Everything in §4–§5
-needs *when*. The plan adds one persisted, append-only list to the Zustand store:
+The dated event ledger this section used to propose was **dropped** (PHASE-8-BACKEND-ALIGNMENT.md
+§5, D5–D6). Badges are judged from outcomes, which are small, merge cleanly across devices
+and carry no timestamps off the phone:
 
-```ts
-interface ReadingEvent {
-  at: string;               // ISO date-time, device local
-  kind: 'finished' | 'begun' | 'challenge' | 'recorded' | 'playedAlong' | 'favourited';
-  storyId: string;
-  meta?: { challenge?: PageInteractionType; recordedBy?: string; pageIndex?: number };
-}
-```
+| Fact | Store field | Written by |
+|---|---|---|
+| Books finished (not merely opened) | `finishedStoryIds` | `markStoryCompleted`, via `useAchievementEvents().storyFinished` in the reader |
+| Page challenges done, per kind | `challengeCounts` (`music`, `jigsaw`, `reading`) | `recordChallengeCompleted`, from the reader's music, jigsaw and reading completions |
+| Badges earned | `earnedAchievementIds` | `grantAchievements` (story awards) and `recordAchievementUnlocks` (evaluated badges) |
 
-Written by the reader at the points that already exist (`markStoryAsRead`,
-`markStoryCompleted`, the record and narrate flows, `setStoryProgress`), capped at a
-rolling 2,000 events (a family reading twice a day for three years). Persisted through the
-store's existing `partialize`, so it survives restarts and never leaves the device.
+All three ride on the child document (`/api/children/{id}`): union for the id lists, max
+for the counts, so a badge earned on one phone is earned on every phone and never taken
+away. `achievementUnlockedAt` stays device-only for the "new since you were last here"
+moment. The store is persisted at `version: 1`; the migration from version 0 counts as
+finished every book with `completedCount > 0` (decision 5, below).
 
-Counters become a *projection* of the ledger plus the catalogue: `deriveCounters` grows to
-take events, and the badge status functions stay pure. Existing tests keep passing because
-the sixteen current badges are re-expressed as rules with the same thresholds.
+Session-based badges (rhythm, weekly/monthly) still read the device's screen-time history
+through `deriveCounters`.
 
-`lastStoryCompletedAt` (built) is the one-event degenerate case of this ledger. It answers
-"was a story finished since the last visit" and nothing more; it is not a substitute.
+### 6.2 Badge definitions as data — *built (Phase 8 D1–D4)*
 
-### 6.2 Badge definitions as data — *not built*
-
-`BadgeDefinition.progressOf` is a function today. It becomes a serialisable rule:
+`components/progress/achievements.ts`:
 
 ```ts
-type BadgeRule =
-  | { kind: 'finishedWithTag'; tag: StoryFilterTag; target: number }
+type AchievementRule =
+  | { kind: 'counter'; counter: keyof ActivityCounters; target: number }   // the bundled sixteen
+  | { kind: 'finishedCount'; target: number }
+  | { kind: 'finishedInCategory'; category: string; target: number }
+  | { kind: 'finishedWithTag'; tags: string[]; target: number }
   | { kind: 'finishedDistinct'; by: 'tag' | 'category'; target: number }
-  | { kind: 'finishedSet'; setId: string }                       // series / character
-  | { kind: 'challenges'; interaction: PageInteractionType; target: number }
-  | { kind: 'recorded'; target: number; distinctVoices?: number }
-  | { kind: 'sessionsInWindow'; window: 'morning' | 'evening'; target: number }
-  | { kind: 'daysTogether'; target: number };
-
-interface BadgeSpec {
-  id: string;
-  family: 'theme' | 'variety' | 'set' | 'doing' | 'together' | 'rhythm' | 'seasonal';
-  rule: BadgeRule;
-  tiers?: number[];        // targets for bronze/silver/gold; single-tier if absent
-  art: string;             // asset key or CMS URL
-  copy: { title: LocalizedText; earned: LocalizedText; next: LocalizedText };
-  season?: 'spring' | 'summer' | 'autumn' | 'winter';
-}
+  | { kind: 'challenges'; interaction: 'music' | 'jigsaw' | 'reading'; target: number }
+  | { kind: 'storyAward' };                                                // granted by a book
 ```
 
-A small evaluator turns `(BadgeSpec, ReadingEvent[], Story[])` into today's `Badge` shape,
-so every existing surface renders unchanged. Story stickers and sets are **generated**
-from the catalogue, not listed.
+`evaluateAchievements(definitions, facts, catalogue, { appVersion, language })` returns the
+`Badge` shape every surface already renders. It keeps earned badges earned, hides retired
+badges nobody earned, skips rule kinds and `minAppVersion` gates this build does not
+understand, and localises CMS copy with English fallback.
 
-Specs ship in two layers: a bundled set in the app (so offline and first-run work), and a
-CMS-delivered set fetched with the catalogue (`CatalogService`), versioned so an older app
-ignores rule kinds it does not know. Copy comes as `LocalizedText`, as story titles already
-do, so the 14-language parity test extends to badge copy.
+Two layers:
+- **Bundled** — `BUNDLED_ACHIEVEMENTS`, the sixteen original badges with identical thresholds
+  and their i18n keys. The offline and first-run fallback.
+- **CMS** — JSON files in `scripts/cms-achievements/`, validated by `cms achievements`
+  (schema `scripts/achievement-schema.json`), uploaded by
+  `scripts/upload-achievements-to-firestore.js` to `achievement_definitions/{id}` with a
+  checksum index in `content_versions/current.achievementChecksums`. Delta sync sends the
+  device's checksums and receives only changed definitions and removed ids
+  (`AchievementDefinitionsService`). A CMS definition replaces the bundled one of the same
+  id when its `version` is at least the bundled version.
+
+CMS art is either an asset path, fetched once through `/api/assets/batch-urls` and shown
+from disk, or one of the art keys the app carries (`contract-fixtures/badge-bundled-art.json`).
+
+Not built from the old list: `recorded`, `sessionsInWindow`, `daysTogether`, `finishedSet`,
+tiers and `season`. They wait for §4.4, §4.6 and §4.8.
 
 ### 6.3 Earned-at, and what is new — *built*
 
@@ -337,18 +335,18 @@ What is built and what is not:
 
 ## 7. What the CMS must carry
 
-Two fields the catalogue does not have yet. Both touch the backend catalogue schema, so
-they need a gateway change alongside the CMS one:
-
-| Field | Type | Used by |
+| Field | Where | State |
 |---|---|---|
-| `series` | `{ id: string; title: LocalizedText; order: number }` | Series sets (§4.4) |
-| `characters` | `string[]` (stable ids, e.g. `wombat`) | Character sets (§4.4) |
-| `season` (tag) | existing `tags[]` | Seasonal sets (§4.8) |
+| Badge definitions | `scripts/cms-achievements/*.json` | **built** (§6.2) |
+| `awards` | story: `[{ achievementId, trigger: 'finish' \| { challengePageId } }]` | **built** — schema, `Story.java`, `types/story.ts`; covered by the story checksum |
+| `series` | `{ id: string; title: LocalizedText; order: number }` | not built — series sets (§4.4) |
+| `characters` | `string[]` (stable ids, e.g. `wombat`) | not built — character sets (§4.4) |
+| `season` (tag) | existing `tags[]` | seasonal sets (§4.8) |
 
-Everything else is already there: `category`, `tags`, page `interactionType`, `ageRange`,
-`duration`. Authoring guidance for the content team: tag generously and consistently, since
-theme badges are only as good as the tags.
+`cms achievements` fails when a story awards a badge no definition names, or names a page
+with no challenge. Everything else is already there: `category`, `tags`, page
+`interactionType`, `ageRange`, `pageCount`. Authoring guidance for the content team: tag
+generously and consistently, since theme badges are only as good as the tags.
 
 ---
 
@@ -359,8 +357,8 @@ theme badges are only as good as the tags.
 | Co-engagement | Together badges only count acts a parent takes part in; copy is always "you … together" |
 | Calm UX, no overstimulation | One reward moment per finish, house motion, no stacking, no sound beyond a chime |
 | No addictive mechanics | No variable rewards, no timers, no loss, no leaderboards, no pay-gated badges |
-| No "come back" copy | The "next" line names a possibility, never a deadline; verified by a copy lint test over the badge specs (forbidden phrases list) |
-| Privacy-first | Ledger and earned-at stay on the device; analytics receives only `badge_earned{family}` counts with parental consent, no story ids |
+| No "come back" copy | The "next" line names a possibility, never a deadline. One forbidden-phrase list (`contract-fixtures/badge-copy-forbidden.json`) is enforced on bundled copy (`badge-copy.test.ts`) and on CMS copy (`cms achievements`) |
+| Privacy-first | Earned-at stays on the device; the child document carries only outcomes (finished ids, challenge counts, earned ids), no times; analytics receives only `badge_earned{family}` counts with parental consent, no story ids |
 | Offline | Bundled specs, generated stickers, local ledger — everything works without network |
 | Accessibility | Badge status is carried by **rim, count and text together, never by colour alone** — the four states must stay distinguishable in greyscale; reduced-motion respected by the reward moment |
 | Nothing goes backwards | Enforced in the store: earned-at is write-once (`app-store.ts:378`, covered by `__tests__/store/home-visits.test.ts`); deleting a book keeps its sticker |
@@ -378,25 +376,24 @@ Built:
 - A browsable, category-filtered badge library on the Progress page.
 
 Remaining:
-- `ReadingEvent` ledger in the store; the reader writes it. Counters projected from it.
+- ~~`ReadingEvent` ledger~~ — replaced by outcome facts (§6.1).
 - Move stamping to the moment of earning, inside the reader; keep home-mount as a backstop.
 - `StoryFinishedMoment` after the last page.
 - Story stickers, auto-generated, with an album section on the Progress page.
-- "Read" means finished for every badge that says read. Opened-only stays a count for the
-  parent corner.
+- ~~"Read" means finished for every badge that says read~~ — **built**: counters use
+  `finishedStoryIds`; `readStoryIds` (opened) stays for the parent corner.
 - **Done when:** finishing a book plays its sticker moment once and never again; the
   Progress page shows the sticker with the date it was actually earned; deleting the book
   keeps the sticker; all of it works in airplane mode.
 
-### Phase 2 — rules as data (2 weeks)
+### Phase 2 — rules as data — *built (Phase 8 D)*
 
-- `BadgeSpec` + evaluator; the sixteen current badges re-expressed as specs with identical
-  thresholds (tests prove parity).
-- Theme badges for every filter tag, tiered. Doing badges from page interactions. Together
-  badges from the record and narrate flows.
-- Bundled spec set; CMS fetch with version gating.
-- **Done when:** a new tag in the CMS produces a working badge in the app without a
-  release; an unknown rule kind is ignored without error.
+- Definitions + evaluator; the sixteen current badges re-expressed with identical thresholds
+  (`achievements.test.ts` proves parity).
+- Doing badges from page challenges; story awards; theme, category and variety rules.
+- Bundled set; CMS delivery through delta sync with version and `minAppVersion` gating.
+- Still to do: theme badges authored for each filter tag, tiers, together badges from the
+  record and narrate flows, bespoke art (decision 4).
 
 ### Phase 3 — sets and the ritual (2 weeks)
 
@@ -434,9 +431,9 @@ flat or gently up — families finishing more books, not opening the app more.
 4. **Artwork.** Badges currently reuse the character and sky art (`ART.bearHappy`,
    `ART.moon`, and so on) as stand-ins. Stickers use covers; theme, doing and together
    badges need bespoke art. Commission list attached to Phase 2.
-5. **"Read" meaning finished** — changes today's numbers down for families who open more
-   than they finish. Recommend a one-time migration that grants finished-status to books
-   with `completedCount > 0` and leaves the rest as begun.
+5. **"Read" meaning finished** — *decided and built*: the one-time migration grants
+   finished-status to books with `completedCount > 0`. The First Story badge now reads
+   "Finish your very first story" in all 14 locales (2026-09-24; translations want a native check).
 6. **Weekly parent note channel** — reminder notification (exists) vs email (does not).
 7. **Whether the streak count is shown to the child at all.** This plan shows it only in
    the parent corner, and only as "nights together: 14".

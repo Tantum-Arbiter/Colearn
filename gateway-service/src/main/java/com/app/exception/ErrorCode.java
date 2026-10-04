@@ -84,6 +84,10 @@ public enum ErrorCode {
     PROFILE_NOT_FOUND("GTW-411", "User profile not found"),
     ACCOUNT_DELETION_FAILED("GTW-412", "Account deletion failed"),
     ACCOUNT_DELETION_IN_PROGRESS("GTW-413", "Account deletion already in progress"),
+    CHILD_VERSION_CONFLICT("GTW-414", "The child has changed on another device"),
+    CHILD_LIMIT_REACHED("GTW-415", "No more children can be added to this account"),
+    SUBSCRIPTION_REQUIRED("GTW-416", "This story needs a subscription"),
+    DOWNLOAD_LIMIT_REACHED("GTW-417", "The subscription's story limit is reached"),
 
     // System & Infrastructure errors (GTW-500 to GTW-599)
     INTERNAL_SERVER_ERROR("GTW-500", "Internal server error"),
@@ -147,7 +151,13 @@ public enum ErrorCode {
         } else if (code.compareTo("GTW-400") < 0) {
             return isRateLimit() ? 429 : 403;
         } else if (code.compareTo("GTW-500") < 0) {
-            return isNotFound() ? 404 : 409;
+            if (isNotFound()) {
+                return 404;
+            }
+            if (isEntitlementDenial()) {
+                return 403;
+            }
+            return isOperationFailure() ? 500 : 409;
         } else {
             return isServiceUnavailable() ? 503 : 500;
         }
@@ -165,6 +175,14 @@ public enum ErrorCode {
         return this == USER_NOT_FOUND || this == CHILD_PROFILE_NOT_FOUND || this == PROFILE_NOT_FOUND;
     }
     
+    private boolean isEntitlementDenial() {
+        return this == SUBSCRIPTION_REQUIRED || this == DOWNLOAD_LIMIT_REACHED;
+    }
+
+    private boolean isOperationFailure() {
+        return this == ACCOUNT_DELETION_FAILED || this == PROFILE_UPDATE_FAILED;
+    }
+
     private boolean isServiceUnavailable() {
         return this == SERVICE_UNAVAILABLE || this == MAINTENANCE_MODE || this == SYSTEM_OVERLOADED;
     }

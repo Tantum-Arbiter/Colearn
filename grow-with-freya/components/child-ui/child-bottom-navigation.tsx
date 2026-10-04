@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, type RefObject } from 'react';
 import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   useAnimatedStyle,
@@ -16,7 +17,6 @@ import {
   ACCENT_BLUE,
   ACCENT_PURPLE,
   BORDER_DEFAULT,
-  SURFACE_NAV,
 } from '@/constants/night-palette';
 import {
   CHILD_UI_MOTION,
@@ -29,7 +29,7 @@ import { useAccessibility } from '@/hooks/use-accessibility';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { useJourneyBarPublisher } from './journey-bar-publish';
 import { ScreenTimeRing } from '@/components/home/screen-time-ring';
-import { TEXT_SECONDARY } from '@/constants/night-palette';
+import { TEXT_PRIMARY, TEXT_SECONDARY } from '@/constants/night-palette';
 import { NavigationItem } from './navigation-item';
 import { ProfileNavAvatar } from './profile-nav-avatar';
 import {
@@ -57,7 +57,7 @@ interface ChildNavItem {
 
 export const CHILD_NAV_ITEMS: readonly ChildNavItem[] = [
   { id: 'home', icon: 'school-outline', selectedIcon: 'school', labelKey: 'childUi.nav.home' },
-  { id: 'progress', icon: 'trending-up-outline', selectedIcon: 'trending-up', labelKey: 'childUi.nav.progress' },
+  { id: 'progress', icon: 'trophy-outline', selectedIcon: 'trophy', labelKey: 'childUi.nav.progress' },
   { id: 'screensafe', icon: 'shield-outline', selectedIcon: 'shield-checkmark', labelKey: 'childUi.nav.screensafe' },
   { id: 'search', icon: 'search-outline', selectedIcon: 'search', labelKey: 'childUi.nav.search' },
   { id: 'profile', icon: 'person-circle-outline', selectedIcon: 'person-circle', labelKey: 'childUi.nav.profile' },
@@ -76,6 +76,19 @@ export const NAV_RING_SIZE = 58;
 /** Tamed from the home scene's 1.9: that halo reaches into both neighbours. */
 const NAV_RING_HALO_SCALE = 1.24;
 const SELECTED_PANEL_GRADIENT = [`${ACCENT_BLUE}73`, `${ACCENT_PURPLE}73`] as const;
+
+/** The same frost as the round buttons, so the bar reads as one of them. */
+const GLASS_BLUR = 16;
+/** A tint under the blur, so the bar still reads where blur is unavailable. */
+const GLASS_FILL = 'rgba(40, 80, 170, 0.28)';
+/** Light catching the top edge, with a faint bounce off the floor. */
+const GLASS_SHEEN = [
+  'rgba(255, 255, 255, 0.20)',
+  'rgba(255, 255, 255, 0.04)',
+  'rgba(255, 255, 255, 0.00)',
+  'rgba(150, 195, 255, 0.08)',
+] as const;
+const GLASS_SHEEN_STOPS = [0, 0.4, 0.7, 1] as const;
 
 export interface ChildBottomNavigationBarProps {
   /** Null on a page that is none of the bar's places, such as the main menu: nothing is lit. */
@@ -212,6 +225,10 @@ export function ChildBottomNavigationBar({ selected, onSelect, screenTime, colla
         pointerEvents={collapsed ? 'none' : 'auto'}
         style={[styles.container, { width: navWidth(windowWidth, isTablet) }, collapseStyle]}
       >
+      <View testID="child-nav-glass" style={StyleSheet.absoluteFill} pointerEvents="none">
+        <BlurView intensity={GLASS_BLUR} tint="dark" style={StyleSheet.absoluteFill} />
+        <LinearGradient colors={GLASS_SHEEN} locations={GLASS_SHEEN_STOPS} style={StyleSheet.absoluteFill} />
+      </View>
       <View
         style={styles.row}
         onLayout={(event) => setRowWidth(event.nativeEvent.layout.width)}
@@ -244,7 +261,8 @@ export function ChildBottomNavigationBar({ selected, onSelect, screenTime, colla
                   testID="nav-screen-time-ring"
                   usageSeconds={screenTime.usageSeconds}
                   limitSeconds={screenTime.limitSeconds}
-                  tint={TEXT_SECONDARY}
+                  tint={item.id === selected ? TEXT_PRIMARY : TEXT_SECONDARY}
+                  arcOpacity={1}
                   size={NAV_RING_SIZE}
                   haloScale={NAV_RING_HALO_SCALE}
                   showTrack={false}
@@ -273,7 +291,7 @@ const styles = StyleSheet.create({
   container: {
     height: NAV_HEIGHT,
     borderRadius: RADIUS_NAV,
-    backgroundColor: SURFACE_NAV,
+    backgroundColor: GLASS_FILL,
     borderWidth: 1,
     borderColor: BORDER_DEFAULT,
     overflow: 'hidden',

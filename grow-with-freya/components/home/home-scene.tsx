@@ -1,23 +1,30 @@
 import React, { useCallback, useMemo, useState, memo, type RefObject } from 'react';
-import { View, Text, ScrollView, StyleSheet, useWindowDimensions } from 'react-native';
+import {
+  View,
+  ScrollView,
+  StyleSheet,
+  useWindowDimensions,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Animated, { useSharedValue } from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
 import { AudioControlModal } from '@/components/ui/audio-control-modal';
 import { LanguagePicker } from '@/components/ui/language-picker';
-import { languageFlag } from '@/services/i18n';
+import { baseLanguage, languageFlag } from '@/services/i18n';
 import { CircleActionButton } from '@/components/child-ui/circle-action-button';
 import { CIRCLE_BUTTON_DIAMETER_PHONE, CIRCLE_BUTTON_DIAMETER_TABLET, contentMargin, journeyHeaderTop } from '@/components/child-ui/tokens';
 import { useGlobalSound } from '@/contexts/global-sound-context';
 import { useAccessibility } from '@/hooks/use-accessibility';
-import { Fonts } from '@/constants/theme';
 import { HOME_THEMES, type TimeOfDay } from '@/constants/home-scene';
 import { HOME_CARDS, HOME_CARD_TYPE, homeContentWidth } from '@/constants/home-journey';
-import { HERO_SKY, heroContentTop, heroSunFrame, heroSunScale } from '@/constants/home-sky';
+import { HERO_SKY, heroContentDrop, heroContentLift, heroContentTop, heroSunFrame, heroSunScale } from '@/constants/home-sky';
 import { useTimeOfDay } from '@/hooks/use-time-of-day';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { useSettledAfterTransition } from '@/hooks/use-ambient-animation';
 import type { ScreenTimeAllowance } from '@/hooks/use-screen-time-allowance';
-import type { ChildHomeData, WelcomeCopy } from '@/types/child-home';
+import type { ChildHomeData, ChildHomeJourneyStep, WelcomeCopy } from '@/types/child-home';
 import type { GuideScrollerBinding } from '@/components/owl-guide/use-guide-scroller';
 import { NightSky } from './night-sky';
 import { HomeHeroSky } from './home-hero-sky';
@@ -26,12 +33,16 @@ import { UnlockPlanButton } from './unlock-plan-button';
 import { ContinueCard } from './continue-card';
 import { StreakChip } from './streak-chip';
 import { WeeklyReadingChip } from './weekly-reading-chip';
+import { AchievementTallyChip } from './achievement-tally-chip';
+import { VoyageRow, useVoyageZoom } from './voyage-row';
 import { AchievementCard } from './achievement-card';
+import { ArchedGreeting } from './arched-greeting';
 
 /** The phone's own gaps beneath the stats row and above the plan button --
  *  the styles below use these, and the tablet's spacing is derived from them. */
 const STATS_BASE_GAP = 4;
 const PLAN_BASE_GAP = 10;
+const GREETING_CARD_GAP = 24;
 
 /**
  * How much taller the stats row's box is than the words you actually see in
@@ -44,6 +55,8 @@ const PLAN_BASE_GAP = 10;
  */
 export const STATS_CHIP_INSET = 21;
 
+export const STATS_LINE_TUCK = 6;
+
 export interface HomeGuideTargets {
   stories?: RefObject<View | null>;
   achievement?: RefObject<View | null>;
@@ -53,10 +66,11 @@ export interface HomeGuideTargets {
   search?: RefObject<View | null>;
   profile?: RefObject<View | null>;
   sound?: RefObject<View | null>;
+  language?: RefObject<View | null>;
 }
 
 
-const TABLET_FOOT_PADDING = 24;
+export const TABLET_FOOT_PADDING = 24;
 
 export type HomeSection = Exclude<ChildNavItemId, 'screensafe'>;
 
@@ -64,8 +78,9 @@ export interface HomeSceneProps {
   data: ChildHomeData;
   welcome: WelcomeCopy;
   celebrateAchievement?: boolean;
+  journeySteps?: readonly ChildHomeJourneyStep[];
   onContinue: () => void;
-  onOpenAchievements: () => void;
+  onOpenJourney: () => void;
   /** An item in the bar at the foot that is a place to go: the library opens on that section. */
   onSelectSection: (id: HomeSection) => void;
   screenTime?: ScreenTimeAllowance | null;
@@ -88,8 +103,9 @@ export const HomeScene = memo(function HomeScene({
   data,
   welcome,
   celebrateAchievement = false,
+  journeySteps,
   onContinue,
-  onOpenAchievements,
+  onOpenJourney,
   onSelectSection,
   screenTime = null,
   onOpenScreenTime,
@@ -125,6 +141,17 @@ export const HomeScene = memo(function HomeScene({
   // rather than just more empty sky above the cards.
   const portraitTablet = isTablet && height > width;
   const sun = heroSunFrame(width, height, insets.top);
+  // The sky sits behind the page rather than in it, so the sun is told how far
+  // the page has travelled and rides up with the content instead of hanging in
+  // the corner. The stars stay put, which reads as depth behind it.
+  const skyLift = useSharedValue(0);
+  const handleScroll = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      skyLift.value = event.nativeEvent.contentOffset.y;
+      scrollBinding?.onScroll(event);
+    },
+    [skyLift, scrollBinding]
+  );
   const contentWidth = homeContentWidth(
     width,
     isTablet ? HOME_CARDS.tabletContentMaxWidth : HOME_CARDS.contentMaxWidth
@@ -178,10 +205,18 @@ export const HomeScene = memo(function HomeScene({
   // stays small enough to still fit -- past that the plan button runs off the
   // bottom instead of merely sitting lower.
   const spread = gaps ? gaps.card * 2 + gaps.stats * 2 + gaps.plan - subtitleGap : 0;
+  const lift = heroContentLift(width, height);
+  const tally = data.achievementTally;
+  const zoom = useVoyageZoom(width, height);
+  const tallyChip = tally ? (
+    <AchievementTallyChip unlocked={tally.unlocked} remaining={tally.remaining} animated={animated} />
+  ) : null;
 
   return (
     <View testID={testID} style={[styles.root, { backgroundColor: theme.skyTop }]}>
-      <NightSky width={width} height={height} timeOfDay={activeTimeOfDay} active={isActive} />
+      <Animated.View testID="home-sky-zoom" style={[StyleSheet.absoluteFill, zoom]} pointerEvents="none">
+        <NightSky width={width} height={height} timeOfDay={activeTimeOfDay} active={isActive} />
+      </Animated.View>
 
       <HomeHeroSky
         width={width}
@@ -190,9 +225,12 @@ export const HomeScene = memo(function HomeScene({
         timeOfDay={activeTimeOfDay}
         active={isActive}
         sizeScale={heroSunScale(width, height)}
+        lift={skyLift}
+        zoomStyle={zoom}
       />
 
-      <View
+      <VoyageRow
+        row="chrome"
         testID="home-corner-controls"
         style={[
           styles.chrome,
@@ -204,13 +242,16 @@ export const HomeScene = memo(function HomeScene({
           },
         ]}
       >
-        <CircleActionButton
-          type="language"
-          testID="home-language-button"
-          emoji={languageFlag(i18n.language)}
-          onPress={() => setLanguageOpen(true)}
-          accessibilityLabel={t('account.language')}
-        />
+        <View ref={guideTargets?.language} collapsable={false}>
+          <CircleActionButton
+            type="language"
+            testID="home-language-button"
+            emoji={languageFlag(i18n.language)}
+            language={baseLanguage(i18n.language)}
+            onPress={() => setLanguageOpen(true)}
+            accessibilityLabel={t('account.language')}
+          />
+        </View>
         <View ref={guideTargets?.sound} collapsable={false}>
           <CircleActionButton
             type="audio"
@@ -221,7 +262,7 @@ export const HomeScene = memo(function HomeScene({
             accessibilityLabel={t('catalogue.sound')}
           />
         </View>
-      </View>
+      </VoyageRow>
       <AudioControlModal
         visible={audioSettingsOpen}
         onClose={() => setAudioSettingsOpen(false)}
@@ -235,7 +276,7 @@ export const HomeScene = memo(function HomeScene({
 
       <ScrollView
         ref={scrollBinding?.scrollRef}
-        onScroll={scrollBinding?.onScroll}
+        onScroll={handleScroll}
         onLayout={scrollBinding?.onLayout}
         onContentSizeChange={scrollBinding?.onContentSizeChange}
         scrollEventThrottle={16}
@@ -244,56 +285,68 @@ export const HomeScene = memo(function HomeScene({
           styles.content,
           isTablet && styles.contentTabletCenter,
           {
-            paddingTop: heroContentTop(insets.top, sun.size) + spread,
-            paddingBottom: (isTablet ? TABLET_FOOT_PADDING : footClearance) + (scrollBinding?.reserve ?? 0),
+            paddingTop: heroContentTop(insets.top, sun.size) + heroContentDrop(width, height) + spread - lift,
+            paddingBottom: (isTablet ? TABLET_FOOT_PADDING : footClearance) + lift + (scrollBinding?.reserve ?? 0),
           },
         ]}
         showsVerticalScrollIndicator={false}
         bounces={false}
       >
-        <Text
-          testID="home-welcome-title"
-          style={[styles.welcome, { color: theme.title }, portraitTablet && styles.welcomePortraitTablet]}
-        >
-          {t(welcome.titleKey, welcome.params)}
-        </Text>
-        <Text
-          testID="home-welcome-subtitle"
-          style={[
-            styles.subtitle,
-            { color: theme.subtitle },
-            isTablet && styles.subtitleTablet,
-            portraitTablet && styles.subtitlePortraitTablet,
-            gaps && { marginBottom: HOME_CARDS.gap + subtitleGap },
-          ]}
-        >
-          {t(welcome.subtitleKey, welcome.params)}
-        </Text>
+        <VoyageRow row="greeting" testID="home-welcome-block" style={[styles.greeting, gaps && { marginBottom: HOME_CARDS.gap + subtitleGap }]}>
+          <ArchedGreeting
+            title={t(welcome.titleKey, welcome.params)}
+            subtitle={t(welcome.subtitleKey, welcome.params)}
+            width={width}
+            titleSize={portraitTablet ? Math.round(HOME_CARD_TYPE.welcome * 1.3) : HOME_CARD_TYPE.welcome}
+            subtitleSize={portraitTablet ? Math.round(HOME_CARD_TYPE.welcomeSubtitle * 1.3) : HOME_CARD_TYPE.welcomeSubtitle}
+            titleColor={theme.title}
+            subtitleColor={theme.subtitle}
+            glowColor={HERO_SKY.welcomeGlow}
+          />
+        </VoyageRow>
 
-        <View style={[styles.cardSlot, gaps && { marginBottom: HOME_CARDS.gap + gaps.card }]} ref={guideTargets?.stories} collapsable={false}>
-          <ContinueCard story={data.currentStory} width={contentWidth} animated={animated} onPress={onContinue} />
-        </View>
+        <VoyageRow row="story">
+          <View style={[styles.cardSlot, gaps && { marginBottom: HOME_CARDS.gap + gaps.card }]} ref={guideTargets?.stories} collapsable={false}>
+            <ContinueCard story={data.currentStory} width={contentWidth} animated={animated} onPress={onContinue} />
+          </View>
+        </VoyageRow>
 
+        <VoyageRow row="journey">
         <View style={[styles.cardSlot, gaps && { marginBottom: HOME_CARDS.gap + gaps.card }]} ref={guideTargets?.achievement} collapsable={false}>
           <AchievementCard
             next={data.nextAchievement}
+            steps={journeySteps}
             width={contentWidth}
             animated={animated}
             celebrate={celebrateAchievement}
-            onPress={onOpenAchievements}
+            onPress={onOpenJourney}
           />
         </View>
+        </VoyageRow>
 
-        <View testID="home-stats-row" style={[styles.statsRow, gaps && { marginTop: gaps.stats, marginBottom: 4 + gaps.stats }]}>
-          <StreakChip days={data.readingStreakDays} animated={animated} />
-          <View style={styles.statsDivider} />
-          <WeeklyReadingChip minutes={data.weeklyReadingMinutes} animated={animated} />
-        </View>
+        <VoyageRow row="stats" testID="home-stats-row" style={[styles.statsBlock, gaps && { marginTop: gaps.stats, marginBottom: 4 + gaps.stats }]}>
+          <View testID="home-stats-first-line" style={styles.statsLine}>
+            <StreakChip days={data.readingStreakDays} animated={animated} />
+            <View testID="home-stats-divider" style={styles.statsDivider} />
+            <WeeklyReadingChip minutes={data.weeklyReadingMinutes} animated={animated} />
+            {tallyChip && isTablet ? (
+              <>
+                <View testID="home-stats-divider" style={styles.statsDivider} />
+                {tallyChip}
+              </>
+            ) : null}
+          </View>
+          {tallyChip && !isTablet ? (
+            <View testID="home-stats-second-line" style={[styles.statsLine, styles.statsSecondLine]}>
+              {tallyChip}
+            </View>
+          ) : null}
+        </VoyageRow>
 
         {onOpenPlans ? (
-          <View testID="home-plan-slot" style={[styles.planSlot, gaps && { marginTop: PLAN_BASE_GAP + gaps.plan }]}>
+          <VoyageRow row="plan" testID="home-plan-slot" style={[styles.planSlot, gaps && { marginTop: PLAN_BASE_GAP + gaps.plan }]}>
             <UnlockPlanButton onPress={onOpenPlans} />
-          </View>
+          </VoyageRow>
         ) : null}
       </ScrollView>
 
@@ -335,44 +388,10 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'center',
   },
-  welcome: {
-    fontFamily: Fonts.rounded,
-    fontSize: HOME_CARD_TYPE.welcome,
-    fontWeight: '800',
-    textAlign: 'center',
-    paddingHorizontal: 32,
-    textShadowColor: HERO_SKY.welcomeGlow,
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 14,
-  },
-  // A tablet in portrait has the height to spend on a bigger greeting
-  // instead of just more sky above the cards -- matches the sun's own
-  // `sizeScale` so the two grow together.
-  welcomePortraitTablet: {
-    fontSize: Math.round(HOME_CARD_TYPE.welcome * 1.3),
-  },
-  subtitle: {
-    fontFamily: Fonts.rounded,
-    fontSize: HOME_CARD_TYPE.welcomeSubtitle,
-    fontWeight: '500',
-    textAlign: 'center',
-    paddingHorizontal: 40,
-    marginTop: 3,
-    marginBottom: 8,
-    textShadowColor: HERO_SKY.welcomeGlow,
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 8,
-  },
-  // A tablet needs its own breathing room beneath the greeting, not the
-  // phone's: at the base 8 the subtitle sat on the first card's glow in
-  // both orientations. One card gap keeps the greeting and the cards
-  // reading as two things, in the same rhythm as the gaps between cards.
-  subtitleTablet: {
-    marginBottom: HOME_CARDS.gap,
-  },
-  // Only portrait has the spare height to spend on bigger type.
-  subtitlePortraitTablet: {
-    fontSize: Math.round(HOME_CARD_TYPE.welcomeSubtitle * 1.3),
+  // The greeting stands well clear of the first card: at the old 8 the
+  // subtitle sat on the card's glow.
+  greeting: {
+    marginBottom: GREETING_CARD_GAP,
   },
   cardSlot: {
     marginBottom: HOME_CARDS.gap,
@@ -387,11 +406,17 @@ const styles = StyleSheet.create({
   // The streak and the week's reading, together under the cards rather than
   // above them -- an answer to "how am I doing", read after the "here's what
   // to do next" the cards themselves are.
-  statsRow: {
+  statsBlock: {
+    alignItems: 'center',
+    marginBottom: STATS_BASE_GAP,
+  },
+  statsLine: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: STATS_BASE_GAP,
+  },
+  statsSecondLine: {
+    marginTop: -STATS_LINE_TUCK,
   },
   statsDivider: {
     width: 1,

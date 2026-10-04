@@ -484,7 +484,7 @@ const consentStyles = StyleSheet.create({
     marginTop: 4,
   },
   legalOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 100,
   },
   legalOverlayInner: {

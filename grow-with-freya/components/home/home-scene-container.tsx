@@ -3,6 +3,7 @@ import { useAppStore } from '@/store/app-store';
 import { SubscriptionOverlay } from '@/components/ui/subscription-overlay';
 import { TrialEndUpgradeOverlay } from '@/components/ui/trial-end-upgrade-overlay';
 import { shouldOfferPlan } from '@/constants/unlock-plan';
+import { useIslandVoyage } from '@/contexts/island-voyage-context';
 import { useStoryTransition } from '@/contexts/story-transition-context';
 import { ALL_STORIES } from '@/data/stories';
 import { useScreenTimeAllowance } from '@/hooks/use-screen-time-allowance';
@@ -13,6 +14,7 @@ import { ScreenTimeGlance } from './screen-time-glance';
 import type { HomeSceneProps } from './home-scene';
 import { HomeScene, type HomeSection, type HomeGuideTargets } from './home-scene';
 import { useChildHomeData } from './use-child-home-data';
+import { useJourneySteps } from './use-journey-steps';
 
 export const HOME_DESTINATIONS = {
   stories: 'stories',
@@ -36,7 +38,10 @@ export const HomeSceneContainer = memo(function HomeSceneContainer({
   isActive = true,
 }: HomeSceneContainerProps) {
   const { data, welcome, celebrateAchievement } = useChildHomeData();
+  const journeySteps = useJourneySteps(isActive);
   const { requestStoryOpen } = useStoryTransition();
+  const { depart, phase } = useIslandVoyage();
+  const landing = phase === 'recrossing' || phase === 'landing';
   const screenTime = useScreenTimeAllowance();
   const timeOfDay = useTimeOfDay();
   const trialEnd = useTrialEndPrompt();
@@ -57,7 +62,6 @@ export const HomeSceneContainer = memo(function HomeSceneContainer({
     onNavigate(HOME_DESTINATIONS.stories);
   }, [currentStoryId, onNavigate, requestStoryOpen]);
 
-  const handleOpenProgress = useCallback(() => onNavigate(HOME_DESTINATIONS.progress), [onNavigate]);
   const handleSelectSection = useCallback(
     (id: HomeSection) => onNavigate(id === 'home' ? HOME_DESTINATIONS.stories : HOME_DESTINATIONS[id]),
     [onNavigate]
@@ -82,15 +86,16 @@ export const HomeSceneContainer = memo(function HomeSceneContainer({
         data={data}
         welcome={welcome}
         celebrateAchievement={celebrateAchievement}
+        journeySteps={journeySteps}
         onContinue={handleContinue}
-        onOpenAchievements={handleOpenProgress}
+        onOpenJourney={depart}
         onSelectSection={handleSelectSection}
         screenTime={screenTime}
         timeOfDay={timeOfDay}
         onOpenScreenTime={openScreenTime}
         screenTimeHidden={showScreenTime}
         onOpenPlans={offerPlan ? openPlans : undefined}
-        isActive={isActive}
+        isActive={isActive && !landing}
         guideTargets={guideTargets}
         scrollBinding={scrollBinding}
       />

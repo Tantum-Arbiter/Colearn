@@ -26,6 +26,7 @@ import { VISUAL_EFFECTS } from '@/components/main-menu/constants';
 import { generateStarPositions } from '@/components/main-menu/utils';
 import { RealWorldBridgeOverlay } from '@/components/learning/real-world-bridge-overlay';
 import { useScreenTime } from '@/components/screen-time';
+import { useAppStore } from '@/store/app-store';
 
 /** Map emotion themes to the most relevant feelings bridge activity ID */
 const THEME_TO_BRIDGE_ACTIVITY: Record<EmotionTheme, string> = {
@@ -45,6 +46,7 @@ export function EmotionsGameScreen({ onBack, onGameComplete, selectedTheme = 'em
   const insets = useSafeAreaInsets();
   const { scaledFontSize, scaledButtonSize, scaledPadding, isTablet, contentMaxWidth, textSizeScale } = useAccessibility();
   const { setLastCompletedActivityId } = useScreenTime();
+  const recordActivityFinished = useAppStore((state) => state.recordActivityFinished);
 
   // Generate star positions for background (matching unified screen pattern)
   const starPositions = useMemo(() => generateStarPositions(VISUAL_EFFECTS.STAR_COUNT), []);
@@ -281,6 +283,7 @@ export function EmotionsGameScreen({ onBack, onGameComplete, selectedTheme = 'em
     // Report the completed activity to the screen time provider
     const activityId = THEME_TO_BRIDGE_ACTIVITY[selectedTheme];
     setLastCompletedActivityId(activityId);
+    recordActivityFinished(activityId);
 
     // Content is already faded out from startSpinTransition — show bridge directly
     setTimeout(() => {

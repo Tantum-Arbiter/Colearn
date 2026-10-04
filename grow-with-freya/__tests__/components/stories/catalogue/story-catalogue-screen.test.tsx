@@ -82,6 +82,9 @@ const mockAppState = {
   toggleFavoriteStory: jest.fn(),
   userAvatarType: null,
   readStoryIds: [] as string[],
+  finishedStoryIds: [] as string[],
+  challengeCounts: {},
+  earnedAchievementIds: [] as string[],
   recentSearches: [] as string[],
   recordSearch: jest.fn(),
   clearRecentSearches: jest.fn(),
@@ -219,7 +222,7 @@ jest.mock('@/components/ui/subscription-overlay', () => ({
   SubscriptionOverlay: () => null,
 }));
 
-function byTestId(tree: ReturnType<typeof render>, testID: string) {
+function byTestId(tree: ReturnType<typeof render>, testID: string): any[] {
   return tree.UNSAFE_root.findAll((n: any) => n.props.testID === testID);
 }
 
@@ -1355,6 +1358,46 @@ describe('StoryCatalogueScreen profile page', () => {
     await waitFor(() => expect(byTestId(tree, 'badge-detail-sheet').length).toBeGreaterThan(0));
   });
 
+  /** Signing in leaves the app for Google or Apple, so a grown-up says yes first. */
+  describe('signing in from the profile', () => {
+    beforeEach(() => {
+      (mockAppState as Record<string, unknown>).isGuestMode = true;
+    });
+
+    afterEach(() => {
+      delete (mockAppState as Record<string, unknown>).isGuestMode;
+    });
+
+    function pressLogin(tree: ReturnType<typeof render>) {
+      fireEvent.press(
+        inCurrentSection(tree, 'profile-session').find((n: any) => n.props.accessibilityRole === 'button'),
+      );
+    }
+
+    it('asks the parents-only question before the login page comes up', async () => {
+      const tree = await renderProfile();
+
+      pressLogin(tree);
+
+      expect(mockAppState.setShowLoginAfterOnboarding).not.toHaveBeenCalled();
+      expect(byTestId(tree, 'parents-only-modal').length).toBeGreaterThan(0);
+    });
+
+    it('brings the login page up once the question is answered', async () => {
+      const tree = await renderProfile();
+      pressLogin(tree);
+
+      await act(async () => {
+        byTestId(tree, 'parents-only-modal')[0].props.onTouchEnd();
+      });
+      await act(async () => {
+        byTestId(tree, 'parents-only-modal')[0].props.onTouchStart();
+      });
+
+      await waitFor(() => expect(mockAppState.setShowLoginAfterOnboarding).toHaveBeenCalledWith(true));
+    });
+  });
+
   /** Editing the child's details is a grown-up's job, like the settings gear. */
   it('challenges a grown-up before opening the edit page from the hero', async () => {
     const tree = await renderProfile();
@@ -1470,6 +1513,29 @@ describe('the journey tours', () => {
     );
   }
 
+  /**
+   * The catalogue is mounted off screen before the child opens it, and under the
+   * login page. A tour that ran there took the owl from the page on show, so after
+   * a reset the main menu's tour never came.
+   */
+  it('runs none of its tours while it waits off screen, whatever section it holds', async () => {
+    const tree = render(<StoryCatalogueScreen isActive={false} />);
+    await waitFor(() => expect(byTestId(tree, 'story-filter-bar').length).toBeGreaterThan(0));
+
+    for (const id of ['catalogue_tour', 'progress_tour', 'search_tour', 'profile_tour']) {
+      expect(latest(id)?.active).toBe(false);
+    }
+  });
+
+  it('runs the tour for its section once it comes on screen', async () => {
+    const tree = render(<StoryCatalogueScreen isActive={false} />);
+    await waitFor(() => expect(byTestId(tree, 'story-filter-bar').length).toBeGreaterThan(0));
+
+    tree.rerender(<StoryCatalogueScreen isActive />);
+
+    expect(latest('catalogue_tour')?.active).toBe(true);
+  });
+
   it('runs the stories tour on the shelf, pointing at the chooser and the shelf, and leaves the bar to the home tour', async () => {
     const tree = render(<StoryCatalogueScreen />);
     await waitFor(() => expect(byTestId(tree, 'story-filter-bar').length).toBeGreaterThan(0));
@@ -1565,11 +1631,11 @@ describe('the shelves and the planet', () => {
 
     const scroll = firstIndex(tree, 'catalogue-scroll');
     const veil = firstIndex(tree, 'catalogue-planet-over-shelves-veil');
-    const globe = firstIndex(tree, 'planet-header-artwork-globe');
+    const globe = firstIndex(tree, 'planet-header-artwork-planet');
     const veilStyle = StyleSheet.flatten(byTestId(tree, 'catalogue-planet-over-shelves-veil')[0].props.style);
 
     expect(veil).toBeGreaterThan(scroll);
-    expect(tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'planet-header-artwork-globe').length).toBeGreaterThan(1);
+    expect(tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'planet-header-artwork-planet').length).toBeGreaterThan(1);
     expect(globe).toBeGreaterThanOrEqual(0);
     expect(veilStyle.top).toBe(0);
     expect(veilStyle.height).toBeGreaterThanOrEqual(PLANET_HEADER_ESTIMATE.phone);

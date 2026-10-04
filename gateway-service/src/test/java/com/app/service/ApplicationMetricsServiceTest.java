@@ -1611,4 +1611,32 @@ class ApplicationMetricsServiceTest {
         assertNotNull(downloadCounter);
         assertEquals(1.0, downloadCounter.count());
     }
+
+    @org.junit.jupiter.api.Test
+    void countsEachRevenueCatLookupByOutcome_andTimesIt() {
+        metricsService.recordRevenueCatRequest("timeout", 2000);
+        metricsService.recordRevenueCatRequest(null, 5);
+
+        org.junit.jupiter.api.Assertions.assertEquals(1, meterRegistry.find("app.revenuecat.requests").tag("outcome", "timeout").counter().count());
+        org.junit.jupiter.api.Assertions.assertEquals(1, meterRegistry.find("app.revenuecat.requests").tag("outcome", "unknown").counter().count());
+        org.junit.jupiter.api.Assertions.assertEquals(2000, meterRegistry.find("app.revenuecat.request.duration").tag("outcome", "timeout").timer().totalTime(java.util.concurrent.TimeUnit.MILLISECONDS));
+    }
+
+    @org.junit.jupiter.api.Test
+    void countsEachDownloadDecisionByOutcomeSourceAndEnforcement() {
+        metricsService.recordEntitlementDecision("subscription_required", "revenuecat", true);
+        metricsService.recordEntitlementDecision(null, null, false);
+
+        org.junit.jupiter.api.Assertions.assertEquals(1, meterRegistry.find("app.entitlements.decisions")
+                .tags("decision", "subscription_required", "source", "revenuecat", "enforced", "true").counter().count());
+        org.junit.jupiter.api.Assertions.assertEquals(1, meterRegistry.find("app.entitlements.decisions")
+                .tags("decision", "unknown", "source", "unknown", "enforced", "false").counter().count());
+    }
+
+    @org.junit.jupiter.api.Test
+    void countsEachRefreshBySource() {
+        metricsService.recordEntitlementRefresh("cache");
+
+        org.junit.jupiter.api.Assertions.assertEquals(1, meterRegistry.find("app.entitlements.refresh").tag("source", "cache").counter().count());
+    }
 }

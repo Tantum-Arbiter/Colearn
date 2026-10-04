@@ -15,7 +15,7 @@ import { StoryFilterBar, SELECTED_TILE_FILL, THEME_TILE_ART } from '@/components
 import { CATALOGUE_THEMES } from '@/components/stories/catalogue/catalogue-story';
 import { StoryFilterTag } from '@/types/story';
 
-const TAGS: StoryFilterTag[] = ['bedtime', 'adventure', 'calming', 'family', 'animals'];
+const TAGS: StoryFilterTag[] = ['bedtime', 'adventure', 'calming', 'family-exercises', 'animals'];
 
 const baseProps = {
   theme: 'stories' as const,
@@ -98,11 +98,11 @@ describe('StoryFilterBar', () => {
   it('should keep the finer themes behind the Filter button until it is pressed', () => {
     const tree = render(<StoryFilterBar {...baseProps} />);
 
-    expect(pressables(tree, 'story-filter-pill-family')).toHaveLength(0);
+    expect(pressables(tree, 'story-filter-pill-family-exercises')).toHaveLength(0);
 
     fireEvent.press(pressables(tree, 'story-filter-more')[0]);
 
-    expect(pressables(tree, 'story-filter-pill-family').length).toBeGreaterThan(0);
+    expect(pressables(tree, 'story-filter-pill-family-exercises').length).toBeGreaterThan(0);
     expect(pressables(tree, 'story-filter-pill-bedtime').length).toBeGreaterThan(0);
   });
 

@@ -25,6 +25,8 @@ import {
   TEXT_SECONDARY,
 } from '@/constants/night-palette';
 import { useAppStore, type SubscriptionTier } from '@/store/app-store';
+import { useSessionActions } from '@/hooks/use-session-actions';
+import { profileTourTargets as profileTourTargetsFor } from '@/constants/owl-guide';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { useStoryTransition } from '@/contexts/story-transition-context';
 import { useGlobalSound } from '@/contexts/global-sound-context';
@@ -106,7 +108,7 @@ import { useActivityTransition } from '@/contexts/ActivityTransitionContext';
 
 // The finer themes behind Filter. Learning and Music are tiles, not pills
 const FILTER_TAG_SET: StoryFilterTag[] = [
-  'bedtime', 'adventure', 'calming', 'family', 'creativity', 'animals',
+  'bedtime', 'adventure', 'calming', 'family-exercises', 'imagination-games', 'animals',
   'friendship', 'nature', 'fantasy', 'counting', 'emotions', 'silly', 'rhymes',
 ];
 
@@ -133,12 +135,14 @@ interface StoryCatalogueScreenProps {
   onOpenSettings?: () => void;
   initialMode?: CatalogueMode | null;
   sectionRequest?: CatalogueSectionRequest;
+  isActive?: boolean;
 }
 
-export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionRequest, onNavigateToMusic, onOpenSettings }: StoryCatalogueScreenProps) {
+export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionRequest, onNavigateToMusic, onOpenSettings, isActive = true }: StoryCatalogueScreenProps) {
   const insets = useSafeAreaInsets();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const { requestReturnToMainMenu, setShowLoginAfterOnboarding, getEffectiveTier } = useAppStore();
+  const session = useSessionActions();
   const favoriteStoryIds = useAppStore((state) => state.favoriteStoryIds);
   const favoriteActivityIds = useAppStore((state) => state.favoriteActivityIds);
   const favoriteSongIds = useAppStore((state) => state.favoriteSongIds);
@@ -170,6 +174,10 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
   const profileHeroRef = useRef<View>(null);
   const profileTabsRef = useRef<View>(null);
   const profileSettingsRef = useRef<View>(null);
+  const profileLoginRef = useRef<View>(null);
+  // The header's Home pill is shared by every section; the profile tour is the
+  // only one that points at it, and it only runs while profile is on show.
+  const headerHomeRef = useRef<View>(null);
 
   // the two scrolling pages a tour runs over: this screen's own column, and
   // the progress page's, which brings its own scroll view
@@ -198,12 +206,17 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
     search_recent: searchRecentRef,
   }), []);
   const searchGuideTargets = useMemo(() => ({ field: searchFieldRef, recent: searchRecentRef }), []);
-  const profileTourTargets = useMemo(() => ({
-    profile_hero: profileHeroRef,
-    profile_tabs: profileTabsRef,
-    profile_settings: profileSettingsRef,
-  }), []);
-  const profileGuideTargets = useMemo(() => ({ hero: profileHeroRef, tabs: profileTabsRef }), []);
+  const profileTourTargets = useMemo(
+    () => profileTourTargetsFor(
+      { hero: profileHeroRef, login: profileLoginRef, tabs: profileTabsRef, home: headerHomeRef, settings: profileSettingsRef },
+      session.needsSignIn
+    ),
+    [session.needsSignIn]
+  );
+  const profileGuideTargets = useMemo(
+    () => ({ hero: profileHeroRef, tabs: profileTabsRef, login: profileLoginRef }),
+    []
+  );
 
   const margin = contentMargin(isTablet);
   const isLandscapeTablet = isTablet && windowWidth > windowHeight;
@@ -567,6 +580,10 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
     parentsOnly.showChallenge(() => onOpenSettings?.());
   }, [parentsOnly, onOpenSettings]);
 
+  const handleSignIn = useCallback(() => {
+    parentsOnly.showChallenge(session.login);
+  }, [parentsOnly, session.login]);
+
   /** So does changing the child's name and age. */
   const handleEditProfile = useCallback(() => {
     parentsOnly.showChallenge(() => setEditProfileOpen(true));
@@ -590,7 +607,7 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
   const handleShareToUnlock = useCallback(async (entry: CatalogEntry) => {
     try {
       const result = await Share.share({
-        message: `Check out "${entry.title}" on Grow with Freya! A magical story app for kids`,
+        message: `Check out "${entry.title}" on Early Roots! A magical story app for kids`,
       });
       if (result.action === Share.sharedAction) {
         await StoryAccessService.completeShareUnlock();
@@ -869,6 +886,8 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
       onDeleteDownload={handleDeleteStory}
       onSelectBadge={handleSelectBadge}
       onEditProfile={handleEditProfile}
+      needsSignIn={session.needsSignIn}
+      onLogin={handleSignIn}
       guideTargets={profileGuideTargets}
     />
   );
@@ -1006,12 +1025,14 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
               testID="catalogue-header-row"
               style={{ marginTop: journeyHeaderTop(insets.top, isTablet), marginHorizontal: margin }}
               left={
-                <CircleActionButton
-                  type="home"
-                  label={t('common.home')}
-                  onPress={handleExitJourney}
-                  accessibilityLabel={t('common.home')}
-                />
+                <View ref={headerHomeRef} collapsable={false}>
+                  <CircleActionButton
+                    type="home"
+                    label={t('common.home')}
+                    onPress={handleExitJourney}
+                    accessibilityLabel={t('common.home')}
+                  />
+                </View>
               }
               title={
                 <PageTitle
@@ -1103,25 +1124,25 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
         each starts only while its own section is the one on show */}
     <OwlGuide
       id="catalogue_tour"
-      active={navSection === 'home' && !interactionLocked}
+      active={isActive && navSection === 'home' && !interactionLocked}
       targets={catalogueTourTargets}
       scroller={pageScroller.scroller}
     />
     <OwlGuide
       id="progress_tour"
-      active={navSection === 'progress'}
+      active={isActive && navSection === 'progress'}
       targets={progressTourTargets}
       scroller={progressScroller.scroller}
     />
     <OwlGuide
       id="search_tour"
-      active={navSection === 'search'}
+      active={isActive && navSection === 'search'}
       targets={searchTourTargets}
       scroller={pageScroller.scroller}
     />
     <OwlGuide
       id="profile_tour"
-      active={navSection === 'profile' && !editProfileOpen}
+      active={isActive && navSection === 'profile' && !editProfileOpen}
       targets={profileTourTargets}
       scroller={pageScroller.scroller}
     />

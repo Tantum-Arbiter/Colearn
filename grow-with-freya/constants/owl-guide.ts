@@ -29,7 +29,7 @@ export const GUIDE_STORAGE_KEY = '@tutorial_state';
 export type SpotlightShape = 'circle' | 'rounded-rect';
 
 /** A picture the bubble shows under its words, where words alone would not do. */
-export type GuideIllustration = 'screenTimeRing';
+export type GuideIllustration = 'screenTimeRing' | 'profileSlot';
 
 export interface GuideStep {
   id: string;
@@ -76,8 +76,10 @@ export const GUIDE_STEPS: Record<GuideId, readonly GuideStep[]> = {
     { id: 'nav_progress', ...keyed('catalogue', 'nav_progress', 'navProgress'), target: 'nav_progress', shape: 'circle', pinned: true, revealsBar: true },
     { id: 'screen_time_ring', ...keyed('mainMenu', 'screen_time_ring', 'screenTime'), target: 'screen_time_ring', shape: 'circle', illustration: 'screenTimeRing', pinned: true, revealsBar: true },
     { id: 'nav_search', ...keyed('catalogue', 'nav_search', 'navSearch'), target: 'nav_search', shape: 'circle', pinned: true, revealsBar: true },
-    { id: 'nav_profile', ...keyed('catalogue', 'nav_profile', 'navProfile'), target: 'nav_profile', shape: 'circle', pinned: true, revealsBar: true },
+    { id: 'nav_profile', ...keyed('catalogue', 'nav_profile', 'navProfile'), target: 'nav_profile', shape: 'circle', illustration: 'profileSlot', pinned: true, revealsBar: true },
     { id: 'settings_button', ...keyed('mainMenu', 'settings_button', 'settings'), target: 'settings_button', shape: 'rounded-rect', radius: 24, pinned: true },
+    // the corner controls, left to right
+    { id: 'language_control', ...keyed('mainMenu', 'language_control', 'language'), target: 'language_control', shape: 'circle', pinned: true },
     { id: 'sound_control', ...keyed('mainMenu', 'sound_control', 'sound'), target: 'sound_control', shape: 'circle', pinned: true },
   ],
   catalogue_tour: [
@@ -102,7 +104,10 @@ export const GUIDE_STEPS: Record<GuideId, readonly GuideStep[]> = {
   profile_tour: [
     { id: 'profile_welcome', ...keyed('profile', 'profile_welcome', 'welcome') },
     { id: 'profile_hero', ...keyed('profile', 'profile_hero', 'hero'), target: 'profile_hero', shape: 'circle' },
+    { id: 'profile_login', ...keyed('profile', 'profile_login', 'login'), target: 'profile_login', shape: 'rounded-rect', radius: 26 },
     { id: 'profile_tabs', ...keyed('profile', 'profile_tabs', 'tabs'), target: 'profile_tabs', shape: 'rounded-rect', radius: 22 },
+    // the header's two controls, which sit above the column and so are pinned
+    { id: 'profile_home', ...keyed('profile', 'profile_home', 'home'), target: 'profile_home', shape: 'rounded-rect', radius: CIRCLE_BUTTON_DIAMETER_PHONE / 2, pinned: true },
     { id: 'profile_settings', ...keyed('profile', 'profile_settings', 'settings'), target: 'profile_settings', shape: 'rounded-rect', radius: CIRCLE_BUTTON_DIAMETER_PHONE / 2, pinned: true },
   ],
   story_modes_tour: plain('storyModes', [
@@ -152,13 +157,17 @@ export const GUIDE_STEPS: Record<GuideId, readonly GuideStep[]> = {
     ['music_begin', 'begin'],
     ['music_change', 'change'],
   ]),
-  settings_walkthrough: plain('settings', [
-    ['settings_intro', 'intro'],
-    ['login', 'login'],
-    ['language', 'language'],
-    ['accessibility', 'accessibility'],
-    ['screen_time', 'screenTime'],
-  ]),
+  // The language control left this page for the home corner, so the tour that
+  // pointed at it here went with it -- see `language_control` on the main menu.
+  // Signing in went to the profile page, which tours it; what is left here is
+  // lit top to bottom in the order the page lists it
+  settings_walkthrough: [
+    { id: 'settings_intro', ...keyed('settings', 'settings_intro', 'intro') },
+    { id: 'settings_text_size', ...keyed('settings', 'settings_text_size', 'textSize'), target: 'settings_text_size', shape: 'rounded-rect', radius: 14 },
+    { id: 'settings_screen_time', ...keyed('settings', 'settings_screen_time', 'screenTime'), target: 'settings_screen_time', shape: 'rounded-rect', radius: 16 },
+    { id: 'settings_reminders', ...keyed('settings', 'settings_reminders', 'reminders'), target: 'settings_reminders', shape: 'rounded-rect', radius: 16 },
+    { id: 'settings_crash_reports', ...keyed('settings', 'settings_crash_reports', 'crashReports'), target: 'settings_crash_reports', shape: 'rounded-rect', radius: 16 },
+  ],
   screen_time_tips: plain('screenTime', [
     ['screen_time_intro', 'intro'],
     ['age_based_limits', 'ageBased'],
@@ -209,14 +218,39 @@ export function guideSteps(id: GuideId, availableTargets: readonly string[] = []
   return GUIDE_STEPS[id].filter((step) => !step.target || availableTargets.includes(step.target));
 }
 
+export interface ProfileTourRefs<Ref> {
+  hero: Ref;
+  login: Ref;
+  tabs: Ref;
+  home: Ref;
+  settings: Ref;
+}
+
+export function profileTourTargets<Ref>(refs: ProfileTourRefs<Ref>, needsSignIn: boolean): Record<string, Ref> {
+  return {
+    profile_hero: refs.hero,
+    ...(needsSignIn ? { profile_login: refs.login } : {}),
+    profile_tabs: refs.tabs,
+    profile_home: refs.home,
+    profile_settings: refs.settings,
+  };
+}
+
 export const GUIDE_TIMING = {
   showDelayMs: 600,
   landscapeShowDelayMs: 1500,
   measureSettleMs: 100,
-  // a page scrolled to reveal a target is still gliding when the ordinary
+  // A page scrolled to reveal a target is still gliding when the ordinary
   // settle is up; measuring then lands the spotlight where the target was
-  // passing rather than where it stopped
-  scrollSettleMs: 420,
+  // passing rather than where it stopped.
+  //
+  // The reveal scrolls twice: once on the render that declares the reserve,
+  // then again 120ms later in case that padding landed late and clamped the
+  // first one. That repeat restarts the ~300ms glide, so the page can still be
+  // moving until roughly 420ms -- measuring *at* 420 was a coin toss, and the
+  // ring came to rest a card's height below its subject. This clears the
+  // repeat with room to spare.
+  scrollSettleMs: 620,
   turnSettleMs: 500,
   dimMs: 260,
   // the spotlight lands first and is left alone for a beat, so the eye is

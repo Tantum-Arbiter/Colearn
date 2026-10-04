@@ -1,5 +1,6 @@
 import type { ImageSourcePropType } from 'react-native';
 import type { Story } from '@/types/story';
+import { rgba } from '@/utils/worklet-colour';
 
 export const STORY_PAGE_PREVIEW = {
   dwellMs: 3000,
@@ -177,9 +178,9 @@ export function stripTint(theta: number, scaleX: number): string {
   const light = stripLight(theta);
   const presence = Math.min(1, Math.abs(scaleX) * STORY_PAGE_PREVIEW.curl.presenceGain);
   if (light.shade >= light.highlight) {
-    return `rgba(4, 9, 31, ${light.shade * presence})`;
+    return rgba(4, 9, 31, light.shade * presence);
   }
-  return `rgba(255, 250, 240, ${light.highlight * presence})`;
+  return rgba(255, 250, 240, light.highlight * presence);
 }
 
 export function liftShadow(phi: number, bend: number, half: number): { translateX: number; opacity: number } {

@@ -22,9 +22,15 @@ import {
   mapPlanIdToPackage,
   getOfferingPrices,
   getTrialStatus,
+  identifyAccount,
+  identifySignedInAccount,
+  forgetAccount,
   _resetForTesting,
 } from '@/services/subscription-service';
 import { useAppStore } from '@/store/app-store';
+import { refreshServerEntitlement } from '@/services/entitlement-refresh';
+
+jest.mock('@/services/entitlement-refresh', () => ({ refreshServerEntitlement: jest.fn().mockResolvedValue(null) }));
 
 // ─── Helpers ───
 
@@ -676,5 +682,218 @@ describe('getOfferingPrices', () => {
     expect(prices.monthly_basic).toBeNull(); // $rc_monthly_basic not in offerings
     expect(prices.monthly_premium?.priceString).toBe('$9.99');
     expect(prices.yearly).toBeNull(); // $rc_annual not in offerings
+  });
+});
+
+
+// ════════════════════════════════════════════════
+// Account identity: the gateway's user id is RevenueCat's app user id, so
+// the RevenueCat webhook can tell the gateway which account paid.
+// ════════════════════════════════════════════════
+
+describe('identifyAccount / forgetAccount', () => {
+  function onDevice() {
+    (global as any).__DEV__ = false;
+    (Constants as any).appOwnership = null;
+    (Platform as any).OS = 'ios';
+    (Constants as any).expoConfig = { extra: { revenueCatAppleKey: 'appl_test_key' } };
+  }
+
+  it('logs RevenueCat in as the signed-in account, and takes the tier it returns', async () => {
+    onDevice();
+    (Purchases.logIn as jest.Mock).mockResolvedValueOnce({
+      customerInfo: mockCustomerInfo({ premium_access: { isActive: true } }),
+      created: false,
+    });
+    await initialize();
+
+    await identifyAccount('user-42');
+
+    expect(Purchases.logIn).toHaveBeenCalledWith('user-42');
+    expect(mockSetSubscriptionTier).toHaveBeenLastCalledWith('premium');
+  });
+
+  it('waits for RevenueCat to be configured before logging in', async () => {
+    onDevice();
+
+    const identified = identifyAccount('user-42');
+    expect(Purchases.logIn).not.toHaveBeenCalled();
+    await initialize();
+    await identified;
+
+    expect(Purchases.logIn).toHaveBeenCalledWith('user-42');
+  });
+
+  it('does not log in again as the same account', async () => {
+    onDevice();
+    await initialize();
+
+    await identifyAccount('user-42');
+    await identifyAccount('user-42');
+
+    expect(Purchases.logIn).toHaveBeenCalledTimes(1);
+  });
+
+  it('does nothing in dev mode', async () => {
+    (global as any).__DEV__ = true;
+    await initialize();
+
+    await identifyAccount('user-42');
+    await forgetAccount();
+
+    expect(Purchases.logIn).not.toHaveBeenCalled();
+    expect(Purchases.logOut).not.toHaveBeenCalled();
+  });
+
+  it('keeps going when RevenueCat cannot be reached', async () => {
+    onDevice();
+    (Purchases.logIn as jest.Mock).mockRejectedValueOnce(new Error('offline'));
+    await initialize();
+
+    await expect(identifyAccount('user-42')).resolves.toBeUndefined();
+    await identifyAccount('user-42');
+
+    expect(Purchases.logIn).toHaveBeenCalledTimes(2);
+  });
+
+  it('logs RevenueCat out on sign-out, so the next account starts clean', async () => {
+    onDevice();
+    await initialize();
+    await identifyAccount('user-42');
+
+    await forgetAccount();
+    await identifyAccount('user-42');
+
+    expect(Purchases.logOut).toHaveBeenCalledTimes(1);
+    expect(Purchases.logIn).toHaveBeenCalledTimes(2);
+  });
+
+  it('identifies whoever is signed in on this device', async () => {
+    onDevice();
+    const { SecureStorage } = require('@/services/secure-storage');
+    jest.spyOn(SecureStorage, 'getUserData').mockResolvedValueOnce({ id: 'user-7', email: '', name: '', provider: 'google' });
+    await initialize();
+
+    await identifySignedInAccount();
+
+    expect(Purchases.logIn).toHaveBeenCalledWith('user-7');
+  });
+
+  it('identifies nobody when nobody is signed in', async () => {
+    onDevice();
+    const { SecureStorage } = require('@/services/secure-storage');
+    jest.spyOn(SecureStorage, 'getUserData').mockResolvedValueOnce(null);
+    await initialize();
+
+    await identifySignedInAccount();
+
+    expect(Purchases.logIn).not.toHaveBeenCalled();
+  });
+
+  it('does not log out when nobody was logged in', async () => {
+    onDevice();
+    await initialize();
+
+    await forgetAccount();
+
+    expect(Purchases.logOut).not.toHaveBeenCalled();
+  });
+
+  it('keeps going when logging out fails', async () => {
+    onDevice();
+    (Purchases.logOut as jest.Mock).mockRejectedValueOnce(new Error('already anonymous'));
+    await initialize();
+    await identifyAccount('user-42');
+
+    await expect(forgetAccount()).resolves.toBeUndefined();
+  });
+});
+
+
+// ════════════════════════════════════════════════
+// The gateway's copy of the subscription: every change the store reports is
+// followed by one refresh, so paid downloads open at once.
+// ════════════════════════════════════════════════
+
+describe('refreshing the gateway after a change', () => {
+  function onDevice() {
+    (global as any).__DEV__ = false;
+    (Constants as any).appOwnership = null;
+    (Platform as any).OS = 'ios';
+    (Constants as any).expoConfig = { extra: { revenueCatAppleKey: 'appl_test_key' } };
+  }
+
+  it('refreshes after a purchase', async () => {
+    onDevice();
+    (Purchases.purchasePackage as jest.Mock).mockResolvedValueOnce({ customerInfo: mockCustomerInfo({ basic_access: { isActive: true } }) });
+
+    await purchasePackage(mockPackage('$rc_monthly_basic'));
+
+    expect(refreshServerEntitlement).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not refresh when the purchase was cancelled or failed', async () => {
+    onDevice();
+    (Purchases.purchasePackage as jest.Mock).mockRejectedValueOnce({ userCancelled: true });
+    await purchasePackage(mockPackage('$rc_monthly'));
+    (Purchases.purchasePackage as jest.Mock).mockRejectedValueOnce(new Error('store down'));
+    await purchasePackage(mockPackage('$rc_monthly'));
+
+    expect(refreshServerEntitlement).not.toHaveBeenCalled();
+  });
+
+  it('refreshes after a restore', async () => {
+    onDevice();
+    (Purchases.restorePurchases as jest.Mock).mockResolvedValueOnce(mockCustomerInfo({ premium_access: { isActive: true } }));
+
+    await restorePurchases();
+
+    expect(refreshServerEntitlement).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not refresh when the restore failed', async () => {
+    onDevice();
+    (Purchases.restorePurchases as jest.Mock).mockRejectedValueOnce(new Error('store down'));
+
+    await restorePurchases();
+
+    expect(refreshServerEntitlement).not.toHaveBeenCalled();
+  });
+
+  it('does not hold up a purchase while the gateway is slow', async () => {
+    onDevice();
+    (refreshServerEntitlement as jest.Mock).mockReturnValueOnce(new Promise(() => undefined));
+    (Purchases.purchasePackage as jest.Mock).mockResolvedValueOnce({ customerInfo: mockCustomerInfo({ premium_access: { isActive: true } }) });
+
+    await expect(purchasePackage(mockPackage('$rc_monthly'))).resolves.toMatchObject({ success: true, tier: 'premium' });
+  });
+
+  it('refreshes when RevenueCat reports the tier changed (a renewal after lapsing, an upgrade)', async () => {
+    onDevice();
+    await initialize();
+    const listener = (Purchases.addCustomerInfoUpdateListener as jest.Mock).mock.calls[0][0];
+
+    listener(mockCustomerInfo({ premium_access: { isActive: true } }));
+
+    expect(refreshServerEntitlement).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not refresh when RevenueCat reports the same tier again', async () => {
+    onDevice();
+    await initialize();
+    const listener = (Purchases.addCustomerInfoUpdateListener as jest.Mock).mock.calls[0][0];
+
+    listener(mockCustomerInfo({}));
+
+    expect(refreshServerEntitlement).not.toHaveBeenCalled();
+  });
+
+  it('never refreshes in dev mode', async () => {
+    (global as any).__DEV__ = true;
+
+    await purchasePackage(mockPackage('$rc_monthly'));
+    await restorePurchases();
+
+    expect(refreshServerEntitlement).not.toHaveBeenCalled();
   });
 });

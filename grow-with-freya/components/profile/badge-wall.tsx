@@ -1,13 +1,11 @@
 import React, { useCallback } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
-import { TEXT_SECONDARY } from '@/constants/night-palette';
-import { Fonts } from '@/constants/theme';
-import { useAccessibility } from '@/hooks/use-accessibility';
 import { COVER_GRID_GAP, MIN_TOUCH_TARGET, SPACE_2, SPACE_3 } from '@/components/child-ui/tokens';
 import { Badge } from '@/components/progress/progress-model';
 import { BadgeArtwork } from '@/components/progress/badge-artwork';
+import { BadgeWallProgress } from './badge-wall-progress';
 
 export const BADGE_WALL_COLUMNS = 5;
 
@@ -57,9 +55,6 @@ interface BadgeWallProps {
 }
 
 export function BadgeWall({ badges, width, columns = BADGE_WALL_COLUMNS, onPress }: BadgeWallProps) {
-  const { t } = useTranslation();
-  const { scaledFontSize } = useAccessibility();
-
   if (badges.length === 0) return null;
 
   const size = badgeDiameter(width, columns);
@@ -67,12 +62,9 @@ export function BadgeWall({ badges, width, columns = BADGE_WALL_COLUMNS, onPress
 
   return (
     <View testID="badge-wall">
-      <Text
-        testID="badge-wall-summary"
-        style={[styles.summary, { fontSize: scaledFontSize(13) }]}
-      >
-        {t('progress.badgesSummary', { earned, total: badges.length })}
-      </Text>
+      <View style={styles.summary}>
+        <BadgeWallProgress earned={earned} total={badges.length} />
+      </View>
       <View style={styles.grid}>
         {badges.map((badge) => (
           <BadgeWallItem key={badge.id} badge={badge} size={size} onPress={onPress} />
@@ -84,9 +76,6 @@ export function BadgeWall({ badges, width, columns = BADGE_WALL_COLUMNS, onPress
 
 const styles = StyleSheet.create({
   summary: {
-    color: TEXT_SECONDARY,
-    fontFamily: Fonts.primary,
-    fontWeight: '600',
     marginBottom: SPACE_3,
   },
   grid: {

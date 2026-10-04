@@ -492,7 +492,7 @@ export default {
   account: {
     sleepingSun: 'Sol dormiens',
     sleepingMoon: 'Luna dormiens',
-    title: 'Rationes',
+    title: 'Constitutiones',
     profile: 'Professio',
     nickname: 'Cognomen',
     avatarType: 'Genus Avataris',
@@ -506,6 +506,7 @@ export default {
     termsAndConditions: 'Conditiones Servitii',
     privacyPolicy: 'Politica Privatae',
     selectLanguage: 'Elige Linguam',
+    chooseLanguage: 'Linguam tibi gratam elige',
     guestMode: 'Modus Hospitis',
     createAccount: 'Crea Rationem ut Progressum Serves',
     crashReports: 'Relationes Collapsus',
@@ -514,6 +515,7 @@ export default {
     deleteAccountHint: 'Rationem tuam et omnia data permanenter delere',
   },
   profile: {
+    signedIn: 'Ingressus es',
     enterNickname: 'Intra Cognomen',
     nicknameTooLong: 'Cognomen Debet Esse 20 Characteres vel Minus',
     editTitle: 'Mutare Professionem',
@@ -529,7 +531,6 @@ export default {
     noName: 'Parvus explorator',
     downloadsUsed: '{{used}} ex {{limit}} libris in hoc instrumento',
     downloadsEmpty: 'Nihil adhuc in hoc instrumento servatum est — librum depone ut ubique legas',
-    downloadMeta: '{{minutes}} min · {{pages}} paginae',
     downloadsCount: '{{count}} libri in hoc instrumento',
     tabs: {
       saved: 'Servata',
@@ -617,6 +618,62 @@ export default {
       consent: 'Consensus tuus familiam tuam protegit',
     },
   },
+  island: {
+    scene: 'Insula de caelo visa, cum montibus nivosis, silvis, flumine et pharo',
+  },
+  plan: {
+    places: {
+      storyTime: 'Hora fabulae',
+      wordGarden: 'Hortus verborum',
+      mathsMeadow: 'Pratum numerorum',
+      feelingsCove: 'Sinus affectuum',
+      musicGrove: 'Nemus musicum',
+      storyCorner: 'Angulus fabularum',
+      storyBridge: 'Pons fabularum',
+    },
+    domains: {
+      language: 'Lingua',
+      maths: 'Mathematica',
+      feelings: 'Affectus',
+      music: 'Musica',
+    },
+    skills: {
+      listening: 'Auscultatio',
+      vocabulary: 'Vocabula',
+      letters: 'Litterae',
+      counting: 'Numeratio',
+      numbers: 'Numeri',
+      feelings: 'Affectus',
+      confidence: 'Fiducia',
+      rhythm: 'Rhythmus',
+      patience: 'Patientia',
+    },
+    islandWeek: {
+      'day-1': { aim: 'Auscultationem, vocabula et quietem fabula placida ante somnum exerce.' },
+      'day-2': { aim: 'Sonos litterarum disce et verba tesseris compone.' },
+      'day-3': { aim: 'Numera et cum numeris in brevi ludo lude.' },
+      'day-4': { aim: 'Affectus nominate et vultu simul ostendite.' },
+      'day-5': { aim: 'Rhythmum inveni et breve carmen singulis notis cane.' },
+      'day-6': { aim: 'Ausculta et de magnis affectibus loquere, fabula de crescendo.' },
+      'day-7': { aim: 'Exspectare et vices servare exerce, fabula de itinere in raeda.' },
+    },
+    stepOf: 'Gradus {{day}} ex {{total}}',
+    minutes: '{{from}}–{{to}} min',
+    start: 'Incipe opus',
+    preview: 'Praevisio',
+    opensTomorrow: 'Bene hodie factum. Gradus proximus cras aperietur.',
+    weekDone: 'Tota insula explorata',
+    weekDoneBody: '{{done}} ex {{total}} gradibus confecti. Quiescite, et ad novam hebdomadem redite.',
+    a11y: {
+      checkpoint: 'Dies {{day}}, {{place}}, {{state}}',
+    },
+    states: {
+      done: 'confectus',
+      open: 'paratus ad incipiendum',
+      tomorrow: 'cras aperietur',
+      locked: 'nondum',
+    },
+  },
   tutorial: {
     welcomeTitle: 'Salve in\nEarlyroots!',
     welcomeDescription: 'Faciamus Celerem Circumductionem ut Te et Filium Tuum Adiuvemus Tempus Legendi Maxime Uti.',
@@ -641,7 +698,7 @@ export default {
         description: 'Omnes fabulae, carmina et ludi discendi in bibliotheca sunt. Hic tange ut eam aperias.',
       },
       welcome: {
-        title: 'Salve in Grow with Freya!',
+        title: 'Salve in Early Roots!',
         description: 'Faciamus Celerem Circumductionem ut Te et Filium Tuum Adiuvemus Tempus Legendi Maxime Uti.',
       },
       stories: {
@@ -654,7 +711,7 @@ export default {
       },
       freeplay: {
         title: 'Ludus Liber',
-        description: 'Libere lude in quovis instrumento -sine regulis, solum gaudium! Experimenta cum sonis et tuam musicam crea.',
+        description: 'Libere lude in quovis instrumento - sine regulis, solum gaudium! Experimenta cum sonis et tuam musicam crea.',
       },
       instruments: {
         title: 'Instrumenta',
@@ -664,13 +721,17 @@ export default {
         title: 'Constitutiones',
         description: 'Customiza Applicationem ut Optima pro Tua Familia Operetur.',
       },
+      language: {
+        title: 'Lingua tua',
+        description: 'Vexillum tange ut linguam applicationis mutes.',
+      },
       sound: {
         title: 'Moderatio Soni',
         description: 'Tange Hic ut Musicam Fundalem et Effectus Soni Modereres.',
       },
       achievement: {
-        title: 'Proximum praemium',
-        description: 'Insigne cui liberi proximi sunt, et quantum restat. Tange ut omnia videas.',
+        title: 'Iter tuum discendi',
+        description: 'Insigne cui liberi proximi sunt, et quantum restat. Tange ut ad insulam devoles.',
       },
       screenTime: {
         title: 'Anulus temporis',
@@ -803,24 +864,24 @@ export default {
     },
     settings: {
       intro: {
-        title: 'Constitutiones',
-        description: 'Customiza Applicationem ut Optima pro Tua Familia Operetur.',
+        title: 'Optiones parentum',
+        description: 'Pauca electiones quae applicationem familiae tuae accommodant. Muta eas quandocumque vis.',
       },
-      login: {
-        title: 'Rationes et Synchronizatio',
-        description: 'Intrare ut Progressum Serves et Inter Apparatus Synchronizes.',
-      },
-      language: {
-        title: 'Lingua',
-        description: 'Tuam Linguam Praefectam pro Interfacie Applicationis Elige.',
-      },
-      accessibility: {
-        title: 'Accessibilitas',
-        description: 'Magnitudinem Textus et Alias Constitutiones Mutare ut Facilius Utaris.',
+      textSize: {
+        title: 'Magnitudo litterarum',
+        description: 'Verba per totam applicationem maiora vel minora fac, ut legenti conveniant.',
       },
       screenTime: {
-        title: 'Tempus Ostentionis',
-        description: 'Limites Sanos Constitue et Usum Diurnum Observa.',
+        title: 'Tempus scrinii',
+        description: 'Accende pro modo diurno leni, aetati pueri tui apto. Anulus Screensafe ostendit quomodo dies procedat. Quovis tempore exstingue.',
+      },
+      reminders: {
+        title: 'Monita callida',
+        description: 'Admonitio quieta horis quas eligis, pro fabulis, affectibus vel musica.',
+      },
+      crashReports: {
+        title: 'Relationes ruinarum',
+        description: 'Si quid erraverit, relatio anonyma nos adiuvat ut id corrigamus. Hic exstingue, si mavis.',
       },
     },
     musicMode: {
@@ -852,7 +913,7 @@ export default {
     storyModes: {
       welcome: {
         title: 'Tres Viae Explorandi!',
-        description: 'Quisque puer diverso modo discit. Elige experientiam fabulae quae curiositatem pueri tui excitat -unaquaeque artes essentiales per magiam ludi aedificat.',
+        description: 'Quisque puer diverso modo discit. Elige experientiam fabulae quae curiositatem pueri tui excitat - unaquaeque artes essentiales per magiam ludi aedificat.',
       },
       interactive: {
         title: 'Fabulae Interactivae',
@@ -860,7 +921,7 @@ export default {
       },
       musical: {
         title: 'Fabulae Musicales',
-        description: 'Lege, lude et age! Fabulae musicales provocationes instrumentorum verorum in omni aventura intexunt -puer tuus rhythmum, melodiam et coordinationem discit dum fabulam sequitur. Studia confirmant expositionem musicae primam memoriam, progressum linguae et expressionem emotionalem augere.',
+        description: 'Lege, lude et age! Fabulae musicales provocationes instrumentorum verorum in omni aventura intexunt - puer tuus rhythmum, melodiam et coordinationem discit dum fabulam sequitur. Studia confirmant expositionem musicae primam memoriam, progressum linguae et expressionem emotionalem augere.',
       },
       jigsaw: {
         title: 'Fabulae Dissecturae',
@@ -1020,7 +1081,9 @@ export default {
       },
       navProfile: {
         title: 'Persona',
-        description: 'Dilecta servata, paries insignium et libri in hoc instrumento.',
+        description: 'Dilecta servata, paries insignium et libri in hoc instrumento. Interdum in signum aureum ingressus mutatur: id significat neminem adhuc ingressum esse, et tactus te ad ingressum ducit.',
+        profileCaption: 'Persona tua',
+        loginCaption: 'Tempus ingrediendi',
       },
     },
     progress: {
@@ -1068,13 +1131,21 @@ export default {
         title: 'Personam muta',
         description: 'Imaginem aut nomen tange ut imaginem, nomen aut aetatem mutes. Adultus prius quaestioni brevi respondet.',
       },
+      login: {
+        title: 'Inire',
+        description: 'Si inieris, insignia, series et locus cuiusque fabulae servantur, et ad omnia instrumenta tua feruntur.',
+      },
+      home: {
+        title: 'Ad domum',
+        description: 'Domus te ad caelum nocturnum reducit, ubi hic perfeceris.',
+      },
       tabs: {
         title: 'Servata, Insignia, Curare',
         description: 'Dilecta quae corde notasti, paries insignium, et libri huius instrumenti, quorum quemlibet tollere potes.',
       },
       settings: {
         title: 'Optiones adultorum',
-        description: 'Lingua, tempus et ratio tua, post portam adultorum.',
+        description: 'Magnitudo litterarum, tempus scrinii, monita et ratio tua, post portam parentum.',
       },
     },
   },
@@ -3209,7 +3280,8 @@ export default {
     playAlong: 'Simul ludere',
     readNow: 'Nunc lege',
     savedOffline: 'Sine conexu servatum',
-    minutes: '{{count}} min',
+    pages_one: '{{count}} pagina',
+    pages_other: '{{count}} paginae',
     ages: 'Aetates {{range}}',
     interactive: 'Interactivum',
     favourite: 'Dilectum',
@@ -3329,15 +3401,18 @@ export default {
       minutes: '{{count}} minuta hac hebdomade',
       none: 'Nulla lectio hac hebdomade',
     },
+    achievementTally: {
+      label: 'Reserata: {{unlocked}}, reliqua: {{remaining}}',
+    },
     achievements: {
       title: 'Vide quid effeceris!',
-      cta: 'Praemia vide',
+      cta: 'Explora',
       emptyTitle: 'Primum insigne tuum te exspectat',
       emptyBody: 'Fabulam una legite ut id mereamini',
-      hint: 'Insignia tua vide',
+      hint: 'Ad insulam tuam devola',
     },
     milestone: {
-      eyebrow: 'Proximum insigne',
+      eyebrow: 'Iter tuum discendi',
       remaining: {
         stories: 'Adhuc {{count}} fabulae ut reseretur',
         stories_one: 'Adhuc {{count}} fabula ut reseretur',
@@ -3509,7 +3584,7 @@ export default {
     badges: {
       firstStory: {
         title: 'Prima fabula',
-        description: 'Primam fabulam tuam aperi',
+        description: 'Primam fabulam tuam perlege',
       },
       readingTogether: {
         title: 'Una legere',

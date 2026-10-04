@@ -29,6 +29,12 @@ describe('the story detail mode buttons', () => {
     expect(en.storyDetail.playAlong).toBe('Play Along');
   });
 
+  it('should keep recording for grown-ups, behind the parents-only gate, and leave reading and playing along open', () => {
+    const underTest = MODE_OPTIONS.filter((option) => option.grownUpsOnly).map((option) => option.mode);
+
+    expect(underTest).toEqual(['record']);
+  });
+
   it('should call the recording button Record', () => {
     const underTest = optionFor('record');
 

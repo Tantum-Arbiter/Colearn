@@ -8,6 +8,8 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { GUIDE_IDS } from '@/constants/owl-guide';
+import { localDayKey } from '@/constants/learning-plan';
+import { ISLAND_WEEK } from '@/data/learning-plan';
 import { applyE2eState, isE2eAllowed, parseE2eLink } from '@/services/e2e-state';
 
 const mockStore = {
@@ -18,6 +20,7 @@ const mockStore = {
   setDevSubscriptionOverride: jest.fn(),
   setChildAge: jest.fn(),
   setUserProfile: jest.fn(),
+  setLearningPlanProgress: jest.fn(),
   clearPersistedStorage: jest.fn(),
   storyProgress: { 'wombat': { pageIndex: 3, totalPages: 9, updatedAt: '2026-09-20T10:00:00Z' } },
   clearStoryProgress: jest.fn(),
@@ -84,7 +87,7 @@ describe('isE2eAllowed', () => {
 describe('parseE2eLink', () => {
   it('reads every part of a seeded state', () => {
     const underTest = parseE2eLink(
-      'growwithfreya://?e2e=1&reset=1&onboarded=1&guest=1&signedIn=1&tutorials=done&screenTime=reset&progress=clear&language=de&tier=premium&childAgeMonths=48&nickname=Freya'
+      'growwithfreya://?e2e=1&reset=1&onboarded=1&guest=1&signedIn=1&tutorials=done&screenTime=reset&progress=clear&language=de&tier=premium&childAgeMonths=48&nickname=Freya&planDone=3'
     );
 
     expect(underTest).toEqual({
@@ -99,7 +102,17 @@ describe('parseE2eLink', () => {
       tier: 'premium',
       childAgeMonths: 48,
       nickname: 'Freya',
+      planDone: 3,
     });
+  });
+
+  it('reads how many days of the plan are done, within the week, and ignores anything else', () => {
+    expect(parseE2eLink('growwithfreya://?e2e=1&planDone=0')).toEqual({ planDone: 0 });
+    expect(parseE2eLink('growwithfreya://?e2e=1&planDone=7')).toEqual({ planDone: 7 });
+    expect(parseE2eLink('growwithfreya://?e2e=1&planDone=8')).toEqual({});
+    expect(parseE2eLink('growwithfreya://?e2e=1&planDone=-1')).toEqual({});
+    expect(parseE2eLink('growwithfreya://?e2e=1&planDone=two')).toEqual({});
+    expect(parseE2eLink('growwithfreya://?e2e=1&planDone=1.5')).toEqual({});
   });
 
   it('takes the app\'s own scheme and the development client\'s', () => {
@@ -216,6 +229,26 @@ describe('applyE2eState', () => {
 
     expect(mockStore.setUserProfile).toHaveBeenCalledWith('Freya', 'girl', 'bear');
     expect(mockStore.setChildAge).toHaveBeenCalledWith(48);
+  });
+
+  it('ticks off the first days of the plan as done yesterday, so the next opens today', async () => {
+    await applyE2eState({ planDone: 2 }, true);
+
+    expect(mockStore.setLearningPlanProgress).toHaveBeenCalledTimes(1);
+    const progress = mockStore.setLearningPlanProgress.mock.calls[0][0] as { planId: string; completed: Record<string, string> };
+    expect(progress.planId).toBe(ISLAND_WEEK.id);
+    expect(Object.keys(progress.completed)).toEqual([ISLAND_WEEK.steps[0].id, ISLAND_WEEK.steps[1].id]);
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    Object.values(progress.completed).forEach((stamp) => {
+      expect(localDayKey(new Date(stamp))).toBe(localDayKey(yesterday));
+    });
+  });
+
+  it('clears the plan when told no days are done', async () => {
+    await applyE2eState({ planDone: 0 }, true);
+
+    expect(mockStore.setLearningPlanProgress).toHaveBeenCalledWith(null);
   });
 
   it('wipes what was there first when asked to start clean', async () => {

@@ -104,6 +104,15 @@ describe('RealWorldBridgeOverlay', () => {
       expect(treeContainsText(json, 'chevron-back')).toBe(true);
     });
 
+    it('keeps the back button below the status bar, where a finger can reach it', () => {
+      const { getByLabelText } = renderOverlay();
+      const { StyleSheet } = require('react-native');
+
+      const style = StyleSheet.flatten(getByLabelText('common.back').props.style);
+
+      expect(parseFloat(String(style.top))).toBeGreaterThanOrEqual(44 + 16);
+    });
+
     it('should call onDismiss when back button is pressed', () => {
       const onDismiss = jest.fn();
       const { getByLabelText } = renderOverlay({ onDismiss });

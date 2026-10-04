@@ -77,7 +77,6 @@ export interface HomeTheme {
   chromeEdge: string;
   chromeInk: string;
   artScrim: string;
-  cloudOpacity: string;
 }
 
 export const HOME_THEMES = {
@@ -109,7 +108,6 @@ export const HOME_THEMES = {
     chromeEdge: 'rgba(255,255,255,0.30)',
     chromeInk: '#FFFFFF',
     artScrim: 'rgba(10,21,51,0.26)',
-    cloudOpacity: '0.62',
   },
   day: {
     skyTop: NIGHT_DEEP,
@@ -139,7 +137,6 @@ export const HOME_THEMES = {
     chromeEdge: 'rgba(255,255,255,0.36)',
     chromeInk: '#FFFFFF',
     artScrim: 'rgba(20,44,94,0.16)',
-    cloudOpacity: '0.78',
   },
 } as const satisfies Record<TimeOfDay, HomeTheme>;
 

@@ -12,8 +12,12 @@ import {
 } from '@/constants/night-palette';
 import { Fonts } from '@/constants/theme';
 import { useAccessibility } from '@/hooks/use-accessibility';
+import { useCoversJourneyBar } from '@/components/child-ui/journey-bar-cover';
+import { PanelClouds } from '@/components/ui/panel-clouds';
+import { PanelStarfield } from '@/components/ui/panel-starfield';
+import { StarDivider } from '@/components/ui/star-divider';
 import { RADIUS_LARGE, SPACE_2, SPACE_3, SPACE_4, SPACE_5 } from '@/components/child-ui/tokens';
-import { Badge } from './progress-model';
+import { Badge, badgeDescription, badgeTitle } from './progress-model';
 import { BadgeArtwork } from './badge-artwork';
 import { BadgeProgress } from './badge-progress';
 
@@ -28,6 +32,9 @@ interface BadgeDetailSheetProps {
 export function BadgeDetailSheet({ badge, onClose, onRecommend }: BadgeDetailSheetProps) {
   const { t } = useTranslation();
   const { scaledFontSize } = useAccessibility();
+  // Declared before the early return so the bar goes the moment a badge is
+  // chosen, rather than lingering over the sheet that just covered it.
+  useCoversJourneyBar(badge !== null);
 
   if (badge === null) return null;
 
@@ -36,6 +43,9 @@ export function BadgeDetailSheet({ badge, onClose, onRecommend }: BadgeDetailShe
       <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel={t('progress.close')} />
       {badge && (
         <View style={styles.sheet} testID="badge-detail-sheet">
+          <PanelStarfield testID="badge-detail-stars" />
+          <PanelClouds testID="badge-detail-clouds" />
+
           <Pressable
             testID="badge-detail-close"
             accessibilityRole="button"
@@ -49,10 +59,12 @@ export function BadgeDetailSheet({ badge, onClose, onRecommend }: BadgeDetailShe
 
           <BadgeArtwork artwork={badge.artwork} status={badge.status} />
 
-          <Text style={[styles.title, { fontSize: scaledFontSize(22) }]}>{t(badge.titleKey)}</Text>
+          <Text style={[styles.title, { fontSize: scaledFontSize(22) }]}>{badgeTitle(badge, t)}</Text>
           <Text style={[styles.description, { fontSize: scaledFontSize(15) }]}>
-            {t(badge.descriptionKey)}
+            {badgeDescription(badge, t)}
           </Text>
+          <StarDivider testID="badge-detail-divider" />
+
           <Text style={[styles.soFar, { fontSize: scaledFontSize(14) }]}>
             {t('progress.soFar', { count: badge.currentProgress })}
           </Text>
@@ -100,13 +112,13 @@ export function BadgeDetailSheet({ badge, onClose, onRecommend }: BadgeDetailShe
 
 const styles = StyleSheet.create({
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     justifyContent: 'flex-end',
     zIndex: 50,
     elevation: 50,
   },
   backdrop: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(4, 16, 47, 0.6)',
   },
   sheet: {
@@ -118,6 +130,8 @@ const styles = StyleSheet.create({
     padding: SPACE_5,
     paddingBottom: SPACE_5 + SPACE_4,
     alignItems: 'center',
+    // The cloud follows the sheet's rounded top corners rather than spilling.
+    overflow: 'hidden',
     gap: SPACE_3,
   },
   closeButton: {

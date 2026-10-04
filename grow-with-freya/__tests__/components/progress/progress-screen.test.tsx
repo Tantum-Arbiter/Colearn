@@ -15,8 +15,10 @@ jest.mock('@/data/stories', () => ({
 }));
 
 const mockAppState = {
-  readStoryIds: ['a', 'b'],
+  finishedStoryIds: ['a', 'b'],
   favoriteStoryIds: [] as string[],
+  challengeCounts: {},
+  earnedAchievementIds: [] as string[],
   childAgeInMonths: 36,
 };
 jest.mock('@/store/app-store', () => ({
@@ -39,7 +41,7 @@ jest.mock('@/services/screen-time-service', () => ({
   },
 }));
 
-function byTestId(tree: ReturnType<typeof render>, testID: string) {
+function byTestId(tree: ReturnType<typeof render>, testID: string): any[] {
   return tree.UNSAFE_root.findAll((n: any) => n.props.testID === testID);
 }
 

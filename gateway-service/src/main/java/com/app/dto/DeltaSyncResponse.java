@@ -1,5 +1,6 @@
 package com.app.dto;
 
+import com.app.model.AchievementDefinition;
 import com.app.model.Story;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -38,6 +39,14 @@ public class DeltaSyncResponse {
     @JsonProperty("catalog")
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private List<CatalogEntry> catalog;
+
+    @JsonProperty("achievementDefinitions")
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private List<AchievementDefinition> achievementDefinitions;
+
+    @JsonProperty("deletedAchievementIds")
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private List<String> deletedAchievementIds;
 
     public DeltaSyncResponse() {
         this.stories = new ArrayList<>();
@@ -117,5 +126,20 @@ public class DeltaSyncResponse {
     public void setCatalog(List<CatalogEntry> catalog) {
         this.catalog = catalog;
     }
-}
 
+    public List<AchievementDefinition> getAchievementDefinitions() {
+        return achievementDefinitions;
+    }
+
+    public void setAchievementDefinitions(List<AchievementDefinition> achievementDefinitions) {
+        this.achievementDefinitions = achievementDefinitions;
+    }
+
+    public List<String> getDeletedAchievementIds() {
+        return deletedAchievementIds;
+    }
+
+    public void setDeletedAchievementIds(List<String> deletedAchievementIds) {
+        this.deletedAchievementIds = deletedAchievementIds;
+    }
+}

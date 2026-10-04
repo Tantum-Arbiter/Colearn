@@ -1,4 +1,4 @@
-import { ApiClient } from '../api-client';
+import { ApiClient, ApiError } from '../api-client';
 import { SecureStorage } from '../secure-storage';
 
 // Mock SecureStorage
@@ -286,6 +286,56 @@ describe('ApiClient', () => {
       (SecureStorage.getRefreshToken as jest.Mock).mockResolvedValue(null);
 
       await expect(ApiClient.deleteAccount()).rejects.toThrow('Not authenticated');
+    });
+  });
+
+  describe('device headers', () => {
+    beforeEach(() => {
+      (SecureStorage.getAccessToken as jest.Mock).mockResolvedValue(mockAccessToken);
+      global.fetch = jest.fn(() => Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve({}) })) as jest.Mock;
+    });
+
+    it('sends the client headers the gateway requires on an ordinary call', async () => {
+      await ApiClient.request('/api/profile');
+
+      const headers = (global.fetch as jest.Mock).mock.calls[0][1].headers;
+      expect(headers['X-Client-Platform']).toBeDefined();
+      expect(headers['X-Client-Version']).toBeDefined();
+      expect(headers['X-Device-ID']).toBeDefined();
+    });
+
+    it('sends only content type and token when asked to leave the device out', async () => {
+      await ApiClient.request('/api/analytics/events', { method: 'POST', body: '{}' }, 5000, { deviceHeaders: false });
+
+      const headers = (global.fetch as jest.Mock).mock.calls[0][1].headers;
+      expect(Object.keys(headers).sort()).toEqual(['Authorization', 'Content-Type']);
+    });
+  });
+
+  describe('a refused request', () => {
+    beforeEach(() => {
+      (SecureStorage.getAccessToken as jest.Mock).mockResolvedValue(mockAccessToken);
+    });
+
+    it('carries the status and the gateway\'s body, so a caller can act on a conflict', async () => {
+      const body = { errorCode: 'GTW-414', details: { current: { version: 5 } } };
+      global.fetch = jest.fn(() => Promise.resolve({ ok: false, status: 409, json: () => Promise.resolve(body) })) as jest.Mock;
+
+      const error = (await ApiClient.request('/api/children/main', { method: 'PUT', body: '{}' }).catch(e => e)) as ApiError;
+
+      expect(error).toBeInstanceOf(ApiError);
+      expect(error.status).toBe(409);
+      expect(error.body).toEqual(body);
+      expect(error.message).toBe('API request failed: 409');
+    });
+
+    it('still carries the status when the body is not JSON', async () => {
+      global.fetch = jest.fn(() => Promise.resolve({ ok: false, status: 502, json: () => Promise.reject(new Error('html')) })) as jest.Mock;
+
+      const error = (await ApiClient.request('/api/children').catch(e => e)) as ApiError;
+
+      expect(error.status).toBe(502);
+      expect(error.body).toBeNull();
     });
   });
 });

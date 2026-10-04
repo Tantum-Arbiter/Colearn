@@ -1,11 +1,16 @@
 import { Story } from '@/types/story';
 import { CacheManager } from './cache-manager';
-import { StorySyncService } from './story-sync-service';
 import { StoryDownloadService } from './story-download-service';
 import { ALL_STORIES, getAvailableStories } from '@/data/stories';
 import { Logger } from '@/utils/logger';
 
 const log = Logger.create('StoryLoader');
+
+function hasText(value: unknown): boolean {
+  if (typeof value === 'string') return value.length > 0;
+  if (value && typeof value === 'object') return Object.values(value).some(hasText);
+  return false;
+}
 
 export class StoryLoader {
   private static cachedStories: Story[] | null = null;
@@ -104,33 +109,9 @@ export class StoryLoader {
     return stories.filter(story => story.isAvailable);
   }
 
-  static async isSynced(): Promise<boolean> {
-    const status = await StorySyncService.getSyncStatus();
-    return status.hasLocalData;
-  }
-
   static invalidateCache(): void {
     log.debug('Invalidating story cache');
     this.cachedStories = null;
-  }
-
-  static async refreshStories(): Promise<Story[]> {
-    try {
-      log.debug('Forcing story refresh...');
-      this.invalidateCache();
-      const stories = await StorySyncService.syncStories();
-      // Update cache with fresh stories
-      this.cachedStories = await this.loadStoriesInternal();
-      log.debug(`Refreshed ${this.cachedStories.length} stories`);
-      return this.cachedStories;
-    } catch (error) {
-      log.error('Refresh failed:', error);
-      throw error;
-    }
-  }
-
-  static async getSyncStatus() {
-    return await StorySyncService.getSyncStatus();
   }
 
   static isLocalStory(storyId: string): boolean {
@@ -169,11 +150,11 @@ export class StoryLoader {
   private static mergeBundledWithCms(bundled: Story, cms: Story): Story {
     const merged: Story = { ...bundled };
 
-    if (cms.localizedTitle) {
+    if (hasText(cms.localizedTitle)) {
       merged.localizedTitle = cms.localizedTitle;
     }
 
-    if (cms.localizedDescription) {
+    if (hasText(cms.localizedDescription)) {
       merged.localizedDescription = cms.localizedDescription;
     }
 
@@ -187,7 +168,7 @@ export class StoryLoader {
 
         return {
           ...bundledPage,
-          localizedText: cmsPage.localizedText || bundledPage.localizedText,
+          localizedText: hasText(cmsPage.localizedText) ? cmsPage.localizedText : bundledPage.localizedText,
         };
       });
     }

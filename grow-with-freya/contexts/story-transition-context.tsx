@@ -28,7 +28,7 @@ import { useAccessibility } from '@/hooks/use-accessibility';
 import { voiceRecordingService, VoiceOver } from '@/services/voice-recording-service';
 import { useParentsOnlyChallenge } from '@/hooks/use-parents-only-challenge';
 import { ParentsOnlyModal } from '@/components/ui/parents-only-modal';
-import { StoryCardSheet } from '@/components/stories/story-card-sheet';
+import { MODE_OPTIONS, StoryCardSheet } from '@/components/stories/story-card-sheet';
 import { STORY_OVERLAY_LAYER_Z } from '@/constants/story-overlay-layer';
 import { useGuideLift } from '@/components/owl-guide/use-guide-lift';
 import { cardCoverTransform, storyCardLayout } from '@/constants/story-card';
@@ -490,6 +490,15 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   // sketched at its seat -- its outline drawn, then its cover appearing inside
   // -- and opens from there, via the rotate prompt on a phone held upright
   const openWithMode = (mode: ReadingMode) => {
+    if (phaseRef.current !== 'detail') return;
+    if (MODE_OPTIONS.find((option) => option.mode === mode)?.grownUpsOnly) {
+      parentsOnly.showChallenge(() => startMode(mode));
+      return;
+    }
+    startMode(mode);
+  };
+
+  const startMode = (mode: ReadingMode) => {
     // Only the story card can start an opening, and only once. Without this a
     // second press -- a double tap, or the tap that stops the carousel landing
     // on the button underneath -- ran the choreography again from the top: the
@@ -2193,7 +2202,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
 const styles = StyleSheet.create({
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: STORY_OVERLAY_LAYER_Z,
     justifyContent: 'center',
     alignItems: 'center',
@@ -2221,20 +2230,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   nightGround: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 0, // Below the book and the sheet
     backgroundColor: '#0A0F2C',
   },
   detailLayer: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 60, // Above the animated book card (50)
   },
   sketch: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 55, // Over the book it outlines, beneath the card that sinks away
   },
   rotationMask: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: '#0A0F2C',
     zIndex: 900, // Above everything except system modals
   },
@@ -2258,11 +2267,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#1D2657',
   },
   pageShade: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: '#1A1230',
   },
   coverShade: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: '#000000',
   },
   coverBackSpine: {

@@ -348,6 +348,7 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
   const learningButtonRef = useRef<View>(null);
   const musicControlRef = useRef<View>(null);
   const settingsButtonRef = useRef<View>(null);
+  const languageButtonRef = useRef<View>(null);
   const achievementCardRef = useRef<View>(null);
   const screenTimeRingRef = useRef<View>(null);
   const navLearnRef = useRef<View>(null);
@@ -380,6 +381,7 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
     search: navSearchRef,
     profile: navProfileRef,
     sound: musicControlRef,
+    language: languageButtonRef,
   }), []);
 
   const homeTourTargets = useMemo(() => ({
@@ -390,6 +392,7 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
     'screen_time_ring': screenTimeRingRef,
     'nav_search': navSearchRef,
     'nav_profile': navProfileRef,
+    'language_control': languageButtonRef,
     'sound_control': musicControlRef,
   }), []);
 
@@ -788,7 +791,7 @@ const legacyStyles = StyleSheet.create({
     elevation: 6,
   },
   menuContainer: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden' as const,
@@ -833,14 +836,14 @@ const legacyStyles = StyleSheet.create({
     textShadowRadius: 2,
   },
   unlockShimmer: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(255,255,255,1)',
     borderTopLeftRadius: getResponsiveSize(18),
     borderTopRightRadius: getResponsiveSize(18),
   },
   // Story mode cards (strip-button style, same art as carousel)
   modeCardsOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     justifyContent: 'center',
     alignItems: 'center',
     gap: 10,
@@ -860,12 +863,12 @@ const legacyStyles = StyleSheet.create({
     opacity: 0.85,
   },
   modeStripImage: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     width: '100%' as const,
     height: '100%' as const,
   },
   modeStripTextOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     justifyContent: 'center' as const,
     alignItems: 'center' as const,
     backgroundColor: 'rgba(0, 0, 0, 0.35)',

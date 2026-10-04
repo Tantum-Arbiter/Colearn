@@ -211,9 +211,12 @@ export default {
       minutes: '{{count}} min this week',
       none: 'No reading yet this week',
     },
-    achievements: { title: 'Look what you achieved!', cta: 'View achievements', emptyTitle: 'Your first badge is waiting', emptyBody: 'Read a story together to earn it', hint: 'See your badges' },
+    achievementTally: {
+      label: '{{unlocked}} unlocked, {{remaining}} to go',
+    },
+    achievements: { title: 'Look what you achieved!', cta: 'Explore', emptyTitle: 'Your first badge is waiting', emptyBody: 'Read a story together to earn it', hint: 'Fly down to your island' },
     milestone: {
-      eyebrow: 'Next achievement',
+      eyebrow: 'Your Learning Journey',
       remaining: {
         stories: '{{count}} more stories to unlock',
         stories_one: '{{count}} more story to unlock',
@@ -345,7 +348,8 @@ export default {
     playAlong: 'Play Along',
     readNow: 'Read Now',
     savedOffline: 'Saved for offline',
-    minutes: '{{count}} min',
+    pages_one: '{{count}} page',
+    pages_other: '{{count}} pages',
     ages: 'Ages {{range}}',
     interactive: 'Interactive',
     favourite: 'Favourite',
@@ -619,7 +623,7 @@ export default {
   account: {
     sleepingSun: 'The sleeping sun',
     sleepingMoon: 'The sleeping moon',
-    title: 'Account',
+    title: 'Settings',
     profile: 'Profile',
     nickname: 'Nickname',
     avatarType: 'Avatar Type',
@@ -633,6 +637,7 @@ export default {
     termsAndConditions: 'Terms & Conditions',
     privacyPolicy: 'Privacy Policy',
     selectLanguage: 'Select Language',
+    chooseLanguage: 'Choose your preferred language',
     guestMode: 'Guest Mode',
     createAccount: 'Create an account to save your progress',
     crashReports: 'Crash Reports',
@@ -643,6 +648,7 @@ export default {
 
   // The child's own page in the journey, plus profile validation and editing
   profile: {
+    signedIn: 'Signed in',
     settings: 'Settings',
     noName: 'Little explorer',
     tabs: {
@@ -653,7 +659,6 @@ export default {
     downloadsUsed: '{{used}} of {{limit}} books on this device',
     downloadsCount: '{{count}} books on this device',
     downloadsEmpty: 'Nothing saved to this device yet — download a book to read it anywhere',
-    downloadMeta: '{{minutes}} min · {{pages}} pages',
     enterNickname: 'Please enter a nickname',
     nicknameTooLong: 'Nickname must be 20 characters or less',
     editTitle: 'Edit Profile',
@@ -753,6 +758,62 @@ export default {
   },
 
   // Tutorial
+  island: {
+    scene: 'An island seen from the sky, with snowy mountains, forests, a river and a lighthouse',
+  },
+  plan: {
+    places: {
+      storyTime: 'Story Time',
+      wordGarden: 'Word Garden',
+      mathsMeadow: 'Maths Meadow',
+      feelingsCove: 'Feelings Cove',
+      musicGrove: 'Music Grove',
+      storyCorner: 'Story Corner',
+      storyBridge: 'Story Bridge',
+    },
+    domains: {
+      language: 'Language',
+      maths: 'Maths',
+      feelings: 'Feelings',
+      music: 'Music',
+    },
+    skills: {
+      listening: 'Listening',
+      vocabulary: 'Vocabulary',
+      letters: 'Letters',
+      counting: 'Counting',
+      numbers: 'Numbers',
+      feelings: 'Feelings',
+      confidence: 'Confidence',
+      rhythm: 'Rhythm',
+      patience: 'Patience',
+    },
+    islandWeek: {
+      'day-1': { aim: 'Build listening, vocabulary and calm through a cosy bedtime story.' },
+      'day-2': { aim: 'Learn letter sounds and build words, one tile at a time.' },
+      'day-3': { aim: 'Count along and play with numbers in a short game.' },
+      'day-4': { aim: 'Name feelings and show them on your faces, together.' },
+      'day-5': { aim: 'Find the beat and play a short song, one note at a time.' },
+      'day-6': { aim: 'Build listening and talk about big feelings through a story of growing up.' },
+      'day-7': { aim: 'Practise waiting and taking turns through a story about a bus ride.' },
+    },
+    stepOf: 'Step {{day}} of {{total}}',
+    minutes: '{{from}}–{{to}} min',
+    start: 'Start activity',
+    preview: 'Preview',
+    opensTomorrow: 'Well done today. The next step opens tomorrow.',
+    weekDone: 'The whole island, explored',
+    weekDoneBody: '{{done}} of {{total}} steps done. Rest up, and come back for a new week.',
+    a11y: {
+      checkpoint: 'Day {{day}}, {{place}}, {{state}}',
+    },
+    states: {
+      done: 'done',
+      open: 'ready to start',
+      tomorrow: 'opens tomorrow',
+      locked: 'not yet',
+    },
+  },
   tutorial: {
     welcomeTitle: 'Welcome to\nEarlyroots!',
     welcomeDescription: "Let's take a quick tour to help you and your child get the most out of storytime together.",
@@ -779,7 +840,7 @@ export default {
         description: 'Every story, song and learning game lives in the library. Tap here to open it.',
       },
       welcome: {
-        title: 'Welcome to Grow with\nFreya!',
+        title: 'Welcome to\nEarly Roots!',
         description: "Let's take a quick tour to help you and your child get the most out of storytime together.",
       },
       stories: {
@@ -792,7 +853,7 @@ export default {
       },
       freeplay: {
         title: 'Freeplay',
-        description: 'Jam freely on any instrument -no rules, just fun! Experiment with sounds and create your own music.',
+        description: 'Jam freely on any instrument - no rules, just fun! Experiment with sounds and create your own music.',
       },
       instruments: {
         title: 'Instruments',
@@ -802,13 +863,17 @@ export default {
         title: 'Settings',
         description: 'Customise the app to work best for your family.',
       },
+      language: {
+        title: 'Your language',
+        description: 'Tap the flag to change the language the app reads and speaks in.',
+      },
       sound: {
         title: 'Sound Control',
         description: 'Tap here to control background music and sound effects.',
       },
       achievement: {
-        title: 'Next achievement',
-        description: 'The badge your child is closest to earning, and how far there is still to go. Tap it to see them all.',
+        title: 'Your Learning Journey',
+        description: 'The badge your child is closest to earning, and how far there is still to go. Tap it to fly down to their island.',
       },
       screenTime: {
         title: 'The Screensafe ring',
@@ -848,7 +913,9 @@ export default {
       },
       navProfile: {
         title: 'Profile',
-        description: 'Saved favourites, the badge wall, and the books kept on this device.',
+        description: 'Saved favourites, the badge wall, and the books kept on this device. Now and then it turns into a gold sign-in symbol: that means nobody is signed in yet, and a tap here takes you to sign in.',
+        profileCaption: 'Your profile',
+        loginCaption: 'Time to sign in',
       },
     },
     progress: {
@@ -896,13 +963,21 @@ export default {
         title: 'Change the profile',
         description: 'Tap the picture or the name to change the avatar, name or age. A grown-up answers a quick question first.',
       },
+      login: {
+        title: 'Sign in',
+        description: 'Signing in saves the badges, the streak and where each story left off - and carries them to every device you use together.',
+      },
+      home: {
+        title: 'Back home',
+        description: 'Home takes you back to the night sky whenever you are done here.',
+      },
       tabs: {
         title: 'Saved, Badges, Manage',
         description: 'Favourites you have hearted, the badge wall, and the books on this device, with room to remove any.',
       },
       settings: {
         title: 'Grown-ups\' settings',
-        description: 'Language, screen time and your account, behind the grown-ups\' gate.',
+        description: 'Text size, screen time, reminders and your account, behind the grown-ups\' gate.',
       },
     },
     // Screen Time Tips - keys match tutorial.screenTime.* in tutorial-content.ts
@@ -1035,24 +1110,24 @@ export default {
     // Settings Walkthrough - keys match tutorial.settings.* in tutorial-content.ts
     settings: {
       intro: {
-        title: 'Settings',
-        description: 'Customise the app to work best for your family.',
+        title: 'Grown-ups\' settings',
+        description: 'A few choices that shape the app for your family. Change any of them whenever you like.',
       },
-      login: {
-        title: 'Account & Sync',
-        description: 'Sign in to save your progress and sync across devices.',
-      },
-      language: {
-        title: 'Language',
-        description: 'Choose your preferred language for the app interface.',
-      },
-      accessibility: {
-        title: 'Accessibility',
-        description: 'Adjust text size and other settings for easier use.',
+      textSize: {
+        title: 'Text size',
+        description: 'Make the words bigger or smaller all through the app, to suit whoever is reading.',
       },
       screenTime: {
-        title: 'Screen Time',
-        description: 'Set healthy limits and track daily usage.',
+        title: 'Screen time',
+        description: 'Turn this on for a gentle daily limit that suits your child\'s age. The Screensafe ring shows how the day is going. Turn it off at any time.',
+      },
+      reminders: {
+        title: 'Smart reminders',
+        description: 'A quiet nudge at the times you choose, for stories, feelings or music.',
+      },
+      crashReports: {
+        title: 'Crash reports',
+        description: 'If something goes wrong, an anonymous report helps us fix it. Switch it off here if you\'d rather.',
       },
     },
     // Music Mode Tips - keys match tutorial.musicMode.* in tutorial-content.ts
@@ -1086,7 +1161,7 @@ export default {
     storyModes: {
       welcome: {
         title: 'Three Ways to Explore!',
-        description: 'Every child learns differently. Choose the story experience that sparks your child\'s curiosity -each one builds essential skills through the magic of play.',
+        description: 'Every child learns differently. Choose the story experience that sparks your child\'s curiosity - each one builds essential skills through the magic of play.',
       },
       interactive: {
         title: 'Interactive Stories',
@@ -1094,7 +1169,7 @@ export default {
       },
       musical: {
         title: 'Musical Stories',
-        description: 'Read, play and perform! Musical stories weave real instrument challenges into every adventure -your child learns rhythm, melody and coordination while following the tale. Studies confirm early music exposure boosts memory, language development and emotional expression.',
+        description: 'Read, play and perform! Musical stories weave real instrument challenges into every adventure - your child learns rhythm, melody and coordination while following the tale. Studies confirm early music exposure boosts memory, language development and emotional expression.',
       },
       jigsaw: {
         title: 'Jigsaw Stories',
@@ -3085,7 +3160,7 @@ export default {
       kindMoments: { title: 'Kind moments', description: 'You\'re learning to be kind.' },
     },
     badges: {
-      firstStory: { title: 'First Story', description: 'Open your very first story' },
+      firstStory: { title: 'First Story', description: 'Finish your very first story' },
       readingTogether: { title: 'Reading Together', description: 'Share 3 story times this week' },
       newWorlds: { title: 'New Worlds', description: 'Explore 3 different kinds of story' },
       favouriteFinder: { title: 'Favourite Finder', description: 'Choose a favourite story' },

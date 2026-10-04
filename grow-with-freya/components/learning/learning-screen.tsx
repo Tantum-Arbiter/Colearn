@@ -711,7 +711,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   cardIconContainer: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -804,7 +804,7 @@ const styles = StyleSheet.create({
 
 const previewStyles = StyleSheet.create({
   modalWrapper: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     justifyContent: 'center',
     alignItems: 'center',
   },

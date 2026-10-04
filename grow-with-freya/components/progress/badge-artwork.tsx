@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
     height: '76%',
   },
   dreamOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(4, 16, 47, 0.35)',
   },
   sparkle: {

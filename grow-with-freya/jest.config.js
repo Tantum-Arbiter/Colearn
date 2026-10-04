@@ -40,6 +40,7 @@ module.exports = {
     '^@expo/vector-icons$': '<rootDir>/__mocks__/@expo/vector-icons.js',
     '^expo-notifications$': '<rootDir>/__mocks__/expo-notifications.js',
     '^expo-device$': '<rootDir>/__mocks__/expo-device.js',
+    '^expo-application$': '<rootDir>/__mocks__/expo-application.js',
     '^@react-native-community/datetimepicker$': '<rootDir>/__mocks__/@react-native-community/datetimepicker.js',
     '^expo/virtual/env$': '<rootDir>/__mocks__/expo-env.js',
     '^expo-constants$': '<rootDir>/__mocks__/expo-constants.js',
@@ -65,13 +66,12 @@ module.exports = {
   transformIgnorePatterns: [
     'node_modules/(?!(react-native|@react-native|@react-native-community|expo|@expo|expo-av|expo-notifications|expo-device|expo-auth-session|expo-apple-authentication|expo-secure-store|expo-crypto|expo-web-browser|expo-constants|expo-modules-core|expo-image|expo-blur|react-native-reanimated|react-native-svg|@react-navigation|zustand|react-native-worklets|react-native-safe-area-context|react-native-purchases)/)',
   ],
-  // Temporarily lowered coverage thresholds for CI/CD pipeline setup
   coverageThreshold: {
     global: {
-      branches: 10,
-      functions: 10,
-      lines: 10,
-      statements: 10,
+      branches: 55,
+      functions: 55,
+      lines: 60,
+      statements: 59,
     },
   },
   testTimeout: (process.env.CI === 'true' || process.env.GITHUB_ACTIONS === 'true' || process.env.NODE_ENV === 'test') ? 60000 : 10000, // Longer timeout in CI

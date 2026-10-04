@@ -14,7 +14,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
-import { Story, getLocalizedText } from '@/types/story';
+import { Story, getLocalizedText, storyPageCount } from '@/types/story';
 import { storyThemeChips } from './story-theme-chips';
 import type { SupportedLanguage } from '@/services/i18n';
 import type { ReadingMode } from '@/contexts/story-transition-context';
@@ -50,12 +50,13 @@ interface ModeOption {
   mode: ReadingMode;
   labelKey: string;
   icon: keyof typeof Ionicons.glyphMap;
+  grownUpsOnly?: boolean;
 }
 
 export const MODE_OPTIONS: ModeOption[] = [
   { mode: 'read', labelKey: 'storyDetail.readTogether', icon: 'book-outline' },
   { mode: 'narrate', labelKey: 'storyDetail.playAlong', icon: 'volume-medium-outline' },
-  { mode: 'record', labelKey: 'storyDetail.record', icon: 'mic-outline' },
+  { mode: 'record', labelKey: 'storyDetail.record', icon: 'mic-outline', grownUpsOnly: true },
 ];
 
 /** How far a card that is not the chosen one drops back, and how much it shrinks and darkens. */
@@ -229,6 +230,7 @@ function StoryCard({
   const displayTitle = getLocalizedText(story.localizedTitle, story.title, currentLanguage);
   const displayDescription = getLocalizedText(story.localizedDescription, story.description || '', currentLanguage);
   const themeChips = storyThemeChips(story);
+  const pageCount = storyPageCount(story);
   const hasInteractiveContent = Boolean(
     story.pages?.some(
       (page) => (page.interactionType && page.interactionType !== 'none') || page.interactiveElements?.length
@@ -286,10 +288,10 @@ function StoryCard({
           <Text style={[styles.title, { fontSize: scaledFontSize(22) }]} numberOfLines={2}>{displayTitle}</Text>
 
           <View style={styles.metaRow}>
-            {typeof story.duration === 'number' && (
+            {pageCount !== undefined && (
               <View style={styles.metaPill}>
-                <Ionicons name="time-outline" size={scaledFontSize(12)} color="rgba(255,255,255,0.8)" />
-                <Text style={[styles.metaText, { fontSize: scaledFontSize(12) }]}>{t('storyDetail.minutes', { count: story.duration })}</Text>
+                <Ionicons name="book-outline" size={scaledFontSize(12)} color="rgba(255,255,255,0.8)" />
+                <Text style={[styles.metaText, { fontSize: scaledFontSize(12) }]}>{t('storyDetail.pages', { count: pageCount })}</Text>
               </View>
             )}
             {story.ageRange && (
@@ -402,7 +404,7 @@ function StoryCard({
 
 const styles = StyleSheet.create({
   container: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   carousel: {
     flex: 1,
@@ -420,7 +422,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   shade: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: '#04091F',
   },
   cover: {

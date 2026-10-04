@@ -15,7 +15,7 @@ name: A family opening the app for the first time is met by onboarding
     timeout: 8000
     optional: true
 - stopApp
-- launchApp
+- runFlow: ../../helpers/launch.yaml
 - extendedWaitUntil:
     visible:
       id: "onboarding-next"

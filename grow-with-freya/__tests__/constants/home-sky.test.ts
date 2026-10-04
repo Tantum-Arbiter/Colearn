@@ -19,6 +19,12 @@ import {
   heroSunScale,
   sunFrame,
   type HeroStarSeed,
+  TALL_PHONE_SUN_SCALE,
+  TALL_PHONE_CONTENT_DROP,
+  TALL_PHONE_CONTENT_LIFT,
+  heroContentDrop,
+  heroContentLift,
+  PORTRAIT_TABLET_CONTENT_LIFT,
 } from '@/constants/home-sky';
 
 const PHONE = 402;
@@ -99,16 +105,69 @@ describe('sunFrame', () => {
 });
 
 describe('heroSunScale', () => {
-  it('should grow the sun only on an upright tablet', () => {
-    expect(heroSunScale(PHONE, 874)).toBe(1);
+  it('should grow the sun on an upright tablet', () => {
     expect(heroSunScale(1194, TABLET)).toBe(1);
     expect(heroSunScale(TABLET, 1194)).toBe(PORTRAIT_TABLET_SUN_SCALE);
+  });
+
+  it('should grow the sun on a tall phone, which has sky to spare above its cards', () => {
+    expect(heroSunScale(PHONE, 874)).toBe(TALL_PHONE_SUN_SCALE);
+    expect(heroSunScale(430, 932)).toBe(TALL_PHONE_SUN_SCALE);
+    expect(TALL_PHONE_SUN_SCALE).toBeGreaterThan(PORTRAIT_TABLET_SUN_SCALE);
+  });
+
+  it('should leave the sun alone on a short phone, which has no room to give', () => {
+    expect(heroSunScale(375, 667)).toBe(1);
+    expect(heroSunScale(375, 812)).toBe(1);
+    expect(heroSunScale(874, PHONE)).toBe(1);
+  });
+});
+
+describe('heroContentLift', () => {
+  it('should lift the greeting-to-trial block by a twentieth of a portrait tablet', () => {
+    expect(PORTRAIT_TABLET_CONTENT_LIFT).toBe(0.05);
+    expect(heroContentLift(TABLET, 1194)).toBe(Math.round(1194 * 0.05));
+    expect(heroContentLift(1024, 1366)).toBe(Math.round(1366 * 0.05));
+  });
+
+  it('should leave a landscape tablet and every phone where they are', () => {
+    expect(heroContentLift(1194, TABLET)).toBe(0);
+    expect(heroContentLift(PHONE, 874)).toBe(0);
+  });
+});
+
+describe('heroContentDrop', () => {
+  it('should raise the greeting and the cards by a twentieth of a tall phone, net of the room the bigger sun asked for', () => {
+    expect(TALL_PHONE_CONTENT_LIFT).toBe(0.05);
+    expect(heroContentDrop(PHONE, 874)).toBe(TALL_PHONE_CONTENT_DROP - Math.round(874 * 0.05));
+    expect(heroContentDrop(430, 932)).toBe(TALL_PHONE_CONTENT_DROP - Math.round(932 * 0.05));
+  });
+
+  it('should still start the greeting below the grown sun', () => {
+    const sun = sunFrame(PHONE, 59, 874, heroSunScale(PHONE, 874));
+
+    expect(heroContentTop(59, sun.size) + heroContentDrop(PHONE, 874)).toBeGreaterThan(sun.top + sun.size - HERO_SKY.welcomeGap * 2);
+  });
+
+  it('should still fit an iPhone 16 Pro without scrolling once the sun has grown', () => {
+    const grownSun = sunFrame(PHONE, 59, 874, heroSunScale(PHONE, 874)).size;
+    const plainSun = sunFrame(PHONE, 59, 874).size;
+    const spareOnThePlainLayout = 142;
+
+    expect(grownSun - plainSun + heroContentDrop(PHONE, 874)).toBeLessThan(spareOnThePlainLayout);
+  });
+
+  it('should not move anything on a short phone or a tablet', () => {
+    expect(heroContentDrop(375, 667)).toBe(0);
+    expect(heroContentDrop(TABLET, 1194)).toBe(0);
+    expect(heroContentDrop(1194, TABLET)).toBe(0);
   });
 });
 
 describe('heroSunFrame', () => {
-  it('should be the plain sun on a phone', () => {
-    expect(heroSunFrame(PHONE, 874, 59)).toEqual(sunFrame(PHONE, 59, 874));
+  it('should be the grown sun on a tall phone and the plain sun on a short one', () => {
+    expect(heroSunFrame(PHONE, 874, 59)).toEqual(sunFrame(PHONE, 59, 874, TALL_PHONE_SUN_SCALE));
+    expect(heroSunFrame(375, 667, 20)).toEqual(sunFrame(375, 20, 667));
   });
 
   it('should be the plain sun on a tablet on its side', () => {
@@ -122,7 +181,7 @@ describe('heroSunFrame', () => {
 
   it('should count a screen as a tablet from a short side of 768', () => {
     expect(heroSunFrame(768, 1024, 20)).toEqual(sunFrame(768, 20, 1024, PORTRAIT_TABLET_SUN_SCALE));
-    expect(heroSunFrame(767, 1024, 20)).toEqual(sunFrame(767, 20, 1024));
+    expect(heroSunFrame(767, 1024, 20)).toEqual(sunFrame(767, 20, 1024, TALL_PHONE_SUN_SCALE));
   });
 });
 

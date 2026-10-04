@@ -492,7 +492,7 @@ export default {
   account: {
     sleepingSun: 'Den sovende sol',
     sleepingMoon: 'Den sovende måne',
-    title: 'Konto',
+    title: 'Indstillinger',
     profile: 'Profil',
     nickname: 'Kaldenavn',
     avatarType: 'Avatartype',
@@ -506,6 +506,7 @@ export default {
     termsAndConditions: 'Servicevilkår',
     privacyPolicy: 'Privatlivspolitik',
     selectLanguage: 'Vælg sprog',
+    chooseLanguage: 'Vælg dit foretrukne sprog',
     guestMode: 'Gæstetilstand',
     createAccount: 'Opret konto for at gemme fremskridt',
     crashReports: 'Nedbrudrapporter',
@@ -514,6 +515,7 @@ export default {
     deleteAccountHint: 'Slet permanent din konto og alle data',
   },
   profile: {
+    signedIn: 'Logget ind',
     enterNickname: 'Angiv kaldenavn',
     nicknameTooLong: 'Kaldenavn skal være 20 tegn eller mindre',
     editTitle: 'Rediger profil',
@@ -529,7 +531,6 @@ export default {
     noName: 'Lille opdager',
     downloadsUsed: '{{used}} af {{limit}} bøger på denne enhed',
     downloadsEmpty: 'Intet gemt på denne enhed endnu — hent en bog, så kan du læse den overalt',
-    downloadMeta: '{{minutes}} min · {{pages}} sider',
     downloadsCount: '{{count}} bøger på denne enhed',
     tabs: {
       saved: 'Gemte',
@@ -617,6 +618,62 @@ export default {
       consent: 'Dit samtykke beskytter din familie',
     },
   },
+  island: {
+    scene: 'En ø set fra himlen, med sneklædte bjerge, skove, en flod og et fyrtårn',
+  },
+  plan: {
+    places: {
+      storyTime: 'Historietid',
+      wordGarden: 'Ordhaven',
+      mathsMeadow: 'Talengen',
+      feelingsCove: 'Følelsesbugten',
+      musicGrove: 'Musiklunden',
+      storyCorner: 'Historiekrogen',
+      storyBridge: 'Historiebroen',
+    },
+    domains: {
+      language: 'Sprog',
+      maths: 'Matematik',
+      feelings: 'Følelser',
+      music: 'Musik',
+    },
+    skills: {
+      listening: 'Lytning',
+      vocabulary: 'Ordforråd',
+      letters: 'Bogstaver',
+      counting: 'Tælling',
+      numbers: 'Tal',
+      feelings: 'Følelser',
+      confidence: 'Selvtillid',
+      rhythm: 'Rytme',
+      patience: 'Tålmodighed',
+    },
+    islandWeek: {
+      'day-1': { aim: 'Styrk lytning, ordforråd og ro med en hyggelig godnathistorie.' },
+      'day-2': { aim: 'Lær bogstavlyde og byg ord, én brik ad gangen.' },
+      'day-3': { aim: 'Tæl med og leg med tal i et kort spil.' },
+      'day-4': { aim: 'Sæt ord på følelser og vis dem med ansigtet, sammen.' },
+      'day-5': { aim: 'Find takten og spil en kort sang, én tone ad gangen.' },
+      'day-6': { aim: 'Lyt og tal om store følelser med en historie om at blive større.' },
+      'day-7': { aim: 'Øv jer i at vente og skiftes med en historie om en bustur.' },
+    },
+    stepOf: 'Trin {{day}} af {{total}}',
+    minutes: '{{from}}–{{to}} min',
+    start: 'Start aktivitet',
+    preview: 'Smugkig',
+    opensTomorrow: 'Godt klaret i dag. Næste trin åbner i morgen.',
+    weekDone: 'Hele øen udforsket',
+    weekDoneBody: '{{done}} af {{total}} trin klaret. Hvil jer, og kom tilbage til en ny uge.',
+    a11y: {
+      checkpoint: 'Dag {{day}}, {{place}}, {{state}}',
+    },
+    states: {
+      done: 'klaret',
+      open: 'klar til start',
+      tomorrow: 'åbner i morgen',
+      locked: 'ikke endnu',
+    },
+  },
   tutorial: {
     welcomeTitle: 'Velkommen til\nEarlyroots!',
     welcomeDescription: 'Lad os tage en hurtig rundvisning for at hjælpe dig og dit barn med at få mest ud af lesetiden.',
@@ -641,7 +698,7 @@ export default {
         description: 'Alle historier, sange og læringsspil bor i biblioteket. Tryk her for at åbne det.',
       },
       welcome: {
-        title: 'Velkommen til Grow with Freya!',
+        title: 'Velkommen til Early Roots!',
         description: 'Lad os tage en hurtig rundvisning for at hjælpe dig og dit barn med at få mest ud af lesetiden.',
       },
       stories: {
@@ -654,7 +711,7 @@ export default {
       },
       freeplay: {
         title: 'Fri Leg',
-        description: 'Spil frit på ethvert instrument -ingen regler, bare sjov! Eksperimenter med lyde og skab din egen musik.',
+        description: 'Spil frit på ethvert instrument - ingen regler, bare sjov! Eksperimenter med lyde og skab din egen musik.',
       },
       instruments: {
         title: 'Instrumenter',
@@ -664,13 +721,17 @@ export default {
         title: 'Indstillinger',
         description: 'Tilpas appen så den fungerer bedst for din familie.',
       },
+      language: {
+        title: 'Dit sprog',
+        description: 'Tryk på flaget for at skifte appens sprog.',
+      },
       sound: {
         title: 'Lydkontrol',
         description: 'Tryk her for at styre baggrundsmusik og lydeffekter.',
       },
       achievement: {
-        title: 'Næste præstation',
-        description: 'Det mærke dit barn er tættest på, og hvor langt der er igen. Tryk for at se dem alle.',
+        title: 'Din læringsrejse',
+        description: 'Det mærke dit barn er tættest på, og hvor langt der er igen. Tryk for at flyve ned til barnets ø.',
       },
       screenTime: {
         title: 'Skærmsikker-ringen',
@@ -803,24 +864,24 @@ export default {
     },
     settings: {
       intro: {
-        title: 'Indstillinger',
-        description: 'Tilpas appen så den fungerer bedst for din familie.',
+        title: 'Indstillinger for voksne',
+        description: 'Nogle få valg, der tilpasser appen til jeres familie. Skift dem, når I vil.',
       },
-      login: {
-        title: 'Konto og synkronisering',
-        description: 'Log ind for at gemme fremskridt og synkronisere på tværs af enheder.',
-      },
-      language: {
-        title: 'Sprog',
-        description: 'Vælg dit foretrukne sprog til app-grænsefladen.',
-      },
-      accessibility: {
-        title: 'Tilgængelighed',
-        description: 'Juster tekststørrelse og andre indstillinger for lettere brug.',
+      textSize: {
+        title: 'Tekststørrelse',
+        description: 'Gør ordene større eller mindre i hele appen, så det passer til den, der læser.',
       },
       screenTime: {
         title: 'Skærmtid',
-        description: 'Sæt sunde grænser og overvåg daglig brug.',
+        description: 'Slå det til for en blid daglig grænse, der passer til dit barns alder. Screensafe-ringen viser, hvordan dagen går. Slå det fra når som helst.',
+      },
+      reminders: {
+        title: 'Smarte påmindelser',
+        description: 'Et stille puf på de tidspunkter, I vælger, til historier, følelser eller musik.',
+      },
+      crashReports: {
+        title: 'Nedbrudsrapporter',
+        description: 'Hvis noget går galt, hjælper en anonym rapport os med at rette det. Slå det fra her, hvis I hellere vil.',
       },
     },
     musicMode: {
@@ -852,7 +913,7 @@ export default {
     storyModes: {
       welcome: {
         title: 'Tre Måder at Udforske!',
-        description: 'Hvert barn lærer forskelligt. Vælg den historieoplevelse, der vækker dit barns nysgerrighed -hver enkelt opbygger vigtige færdigheder gennem legens magi.',
+        description: 'Hvert barn lærer forskelligt. Vælg den historieoplevelse, der vækker dit barns nysgerrighed - hver enkelt opbygger vigtige færdigheder gennem legens magi.',
       },
       interactive: {
         title: 'Interaktive Historier',
@@ -860,7 +921,7 @@ export default {
       },
       musical: {
         title: 'Musikalske Historier',
-        description: 'Læs, spil og optræd! Musikalske historier fletter rigtige instrumentudfordringer ind i hvert eventyr -dit barn lærer rytme, melodi og koordination, mens de følger fortællingen. Studier bekræfter, at tidlig musikeksponering styrker hukommelse, sprogudvikling og følelsesmæssigt udtryk.',
+        description: 'Læs, spil og optræd! Musikalske historier fletter rigtige instrumentudfordringer ind i hvert eventyr - dit barn lærer rytme, melodi og koordination, mens de følger fortællingen. Studier bekræfter, at tidlig musikeksponering styrker hukommelse, sprogudvikling og følelsesmæssigt udtryk.',
       },
       jigsaw: {
         title: 'Puslespilshistorier',
@@ -1020,7 +1081,9 @@ export default {
       },
       navProfile: {
         title: 'Profil',
-        description: 'Gemte favoritter, mærkevæggen og bøgerne gemt på denne enhed.',
+        description: 'Gemte favoritter, mærkevæggen og bøgerne gemt på denne enhed. Af og til bliver det til et gyldent login-symbol: det betyder, at ingen er logget ind endnu, og et tryk fører dig til login.',
+        profileCaption: 'Din profil',
+        loginCaption: 'Tid til at logge ind',
       },
     },
     progress: {
@@ -1068,13 +1131,21 @@ export default {
         title: 'Skift profilen',
         description: 'Tryk på billedet eller navnet for at ændre avatar, navn eller alder. En voksen svarer først på et hurtigt spørgsmål.',
       },
+      login: {
+        title: 'Log ind',
+        description: 'Når I logger ind, gemmes badges, stimen og hvor hver historie slap - på alle jeres enheder.',
+      },
+      home: {
+        title: 'Tilbage til start',
+        description: 'Hjem fører jer tilbage til nattehimlen, når I er færdige.',
+      },
       tabs: {
         title: 'Gemte, Mærker, Administrér',
         description: 'Favoritter du har givet et hjerte, mærkevæggen og bøgerne på denne enhed, med plads til at fjerne dem.',
       },
       settings: {
         title: 'Voksnes indstillinger',
-        description: 'Sprog, skærmtid og din konto, bag de voksnes port.',
+        description: 'Tekststørrelse, skærmtid, påmindelser og jeres konto, bag de voksnes låge.',
       },
     },
   },
@@ -3209,7 +3280,8 @@ export default {
     playAlong: 'Leg med',
     readNow: 'Læs nu',
     savedOffline: 'Gemt offline',
-    minutes: '{{count}} min.',
+    pages_one: '{{count}} side',
+    pages_other: '{{count}} sider',
     ages: 'Alder {{range}}',
     interactive: 'Interaktiv',
     favourite: 'Favorit',
@@ -3329,15 +3401,18 @@ export default {
       minutes: '{{count}} min. denne uge',
       none: 'Ingen læsning endnu denne uge',
     },
+    achievementTally: {
+      label: 'Låst op: {{unlocked}}, tilbage: {{remaining}}',
+    },
     achievements: {
       title: 'Se hvad du har opnået!',
-      cta: 'Se præstationer',
+      cta: 'Udforsk',
       emptyTitle: 'Dit første mærke venter',
       emptyBody: 'Læs en historie sammen for at få det',
-      hint: 'Se dine mærker',
+      hint: 'Flyv ned til din ø',
     },
     milestone: {
-      eyebrow: 'Næste mærke',
+      eyebrow: 'Din læringsrejse',
       remaining: {
         stories: '{{count}} historier mere for at låse op',
         stories_one: '{{count}} historie mere for at låse op',
@@ -3509,7 +3584,7 @@ export default {
     badges: {
       firstStory: {
         title: 'Første historie',
-        description: 'Åbn din allerførste historie',
+        description: 'Læs din allerførste historie færdig',
       },
       readingTogether: {
         title: 'Læse sammen',

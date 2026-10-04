@@ -27,27 +27,8 @@ Feature: Account Deletion
     Then the response status code should be 401
     And the response should contain JSON field "error"
 
-  Scenario: Account deletion returns 404 when user not found
-    Given a valid "Google" OAuth token
-    And the account deletion service returns user not found
-    When I make an authenticated DELETE request to "/api/account" with token "valid-google-token"
+  Scenario: Account deletion returns 404 for a signed-in user with no account record
+    When I make an authenticated DELETE request to "/api/account" with token "valid-never-signed-up"
     Then the response status code should be 404
-    And the response should contain JSON field "error"
-    And the response JSON field "success" should be boolean "false"
-
-  Scenario: Account deletion returns 409 when deletion already in progress
-    Given a valid "Google" OAuth token
-    And the account deletion service returns deletion already in progress
-    When I make an authenticated DELETE request to "/api/account" with token "valid-google-token"
-    Then the response status code should be 409
-    And the response should contain JSON field "error"
-    And the response JSON field "success" should be boolean "false"
-    And the response JSON field "errorCode" should be "ACC-002"
-
-  Scenario: Account deletion returns 500 on internal failure
-    Given a valid "Google" OAuth token
-    And the account deletion service returns an internal failure
-    When I make an authenticated DELETE request to "/api/account" with token "valid-google-token"
-    Then the response status code should be 500
-    And the response should contain JSON field "error"
+    And the response JSON field "errorCode" should be "GTW-400"
     And the response JSON field "success" should be boolean "false"

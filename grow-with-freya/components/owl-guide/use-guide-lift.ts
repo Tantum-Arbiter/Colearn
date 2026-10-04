@@ -1,6 +1,6 @@
 import { useMemo, useRef } from 'react';
 import type { ViewStyle } from 'react-native';
-import { Easing, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import { Easing, useAnimatedStyle, useSharedValue, withTiming, type AnimatedStyle } from 'react-native-reanimated';
 
 import { GUIDE_TIMING } from '@/constants/owl-guide';
 import type { GuideScroller } from './use-guide-scroller';
@@ -10,7 +10,7 @@ const GLIDE_MS = Math.round(GUIDE_TIMING.scrollSettleMs * 0.75);
 
 export interface GuideLiftBinding {
   /** Put on the surface itself, so what the owl points at moves with it. */
-  style: ViewStyle;
+  style: AnimatedStyle<ViewStyle>;
   scroller: GuideScroller;
 }
 

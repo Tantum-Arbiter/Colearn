@@ -4,7 +4,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../../store/app-store';
-import { backgroundSaveService } from '../../services/background-save-service';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { StarBackground } from '@/components/ui/star-background';
 import { useBackButtonText } from '@/hooks/use-back-button-text';
@@ -42,7 +41,6 @@ export function EditProfileContent({ paddingTop = 0, onSaveComplete }: EditProfi
     userAvatarType,
     userAvatarId,
     childAgeInMonths,
-    isGuestMode,
     setUserProfile,
     setChildAge,
   } = useAppStore();
@@ -65,13 +63,6 @@ export function EditProfileContent({ paddingTop = 0, onSaveComplete }: EditProfi
     setUserProfile(nickname.trim(), avatarType, avatarKey);
     setChildAge(ageMonths);
 
-    if (!isGuestMode) {
-      backgroundSaveService.queueProfileSave({
-        nickname: nickname.trim(),
-        avatarType,
-        avatarId: avatarKey,
-      });
-    }
 
     onSaveComplete?.();
   };

@@ -492,7 +492,7 @@ export default {
   account: {
     sleepingSun: 'El sol dormido',
     sleepingMoon: 'La luna dormida',
-    title: 'Cuenta',
+    title: 'Configuración',
     profile: 'Perfil',
     nickname: 'Apodo',
     avatarType: 'Tipo de avatar',
@@ -506,6 +506,7 @@ export default {
     termsAndConditions: 'Términos y condiciones',
     privacyPolicy: 'Política de privacidad',
     selectLanguage: 'Seleccionar idioma',
+    chooseLanguage: 'Elige tu idioma preferido',
     guestMode: 'Modo invitado',
     createAccount: 'Crea una cuenta para guardar tu progreso',
     crashReports: 'Informes de errores',
@@ -514,6 +515,7 @@ export default {
     deleteAccountHint: 'Eliminar permanentemente tu cuenta y todos los datos',
   },
   profile: {
+    signedIn: 'Sesión iniciada',
     enterNickname: 'Por favor ingresa un apodo',
     nicknameTooLong: 'El apodo debe tener 20 caracteres o menos',
     editTitle: 'Editar Perfil',
@@ -529,7 +531,6 @@ export default {
     noName: 'Pequeño explorador',
     downloadsUsed: '{{used}} de {{limit}} libros en este dispositivo',
     downloadsEmpty: 'Aún no hay nada guardado en este dispositivo: descarga un libro para leerlo donde quieras',
-    downloadMeta: '{{minutes}} min · {{pages}} páginas',
     downloadsCount: '{{count}} libros en este dispositivo',
     tabs: {
       saved: 'Guardados',
@@ -617,6 +618,62 @@ export default {
       consent: 'Tu consentimiento protege a tu familia',
     },
   },
+  island: {
+    scene: 'Una isla vista desde el cielo, con montañas nevadas, bosques, un río y un faro',
+  },
+  plan: {
+    places: {
+      storyTime: 'Hora del cuento',
+      wordGarden: 'Jardín de palabras',
+      mathsMeadow: 'Pradera de los números',
+      feelingsCove: 'Cala de los sentimientos',
+      musicGrove: 'Bosquecillo musical',
+      storyCorner: 'Rincón de los cuentos',
+      storyBridge: 'Puente de los cuentos',
+    },
+    domains: {
+      language: 'Lenguaje',
+      maths: 'Mates',
+      feelings: 'Sentimientos',
+      music: 'Música',
+    },
+    skills: {
+      listening: 'Escucha',
+      vocabulary: 'Vocabulario',
+      letters: 'Letras',
+      counting: 'Contar',
+      numbers: 'Números',
+      feelings: 'Sentimientos',
+      confidence: 'Confianza',
+      rhythm: 'Ritmo',
+      patience: 'Paciencia',
+    },
+    islandWeek: {
+      'day-1': { aim: 'Desarrolla la escucha, el vocabulario y la calma con un cuento acogedor para dormir.' },
+      'day-2': { aim: 'Aprende los sonidos de las letras y forma palabras, ficha a ficha.' },
+      'day-3': { aim: 'Cuenta y juega con los números en un juego corto.' },
+      'day-4': { aim: 'Poned nombre a los sentimientos y mostradlos con la cara, juntos.' },
+      'day-5': { aim: 'Encuentra el ritmo y toca una canción corta, nota a nota.' },
+      'day-6': { aim: 'Escucha y habla de los grandes sentimientos con un cuento sobre crecer.' },
+      'day-7': { aim: 'Practica esperar y respetar turnos con un cuento sobre un viaje en autobús.' },
+    },
+    stepOf: 'Paso {{day}} de {{total}}',
+    minutes: '{{from}}–{{to}} min',
+    start: 'Empezar la actividad',
+    preview: 'Vista previa',
+    opensTomorrow: 'Muy bien por hoy. El siguiente paso se abre mañana.',
+    weekDone: 'Toda la isla explorada',
+    weekDoneBody: '{{done}} de {{total}} pasos hechos. Descansad y volved para una semana nueva.',
+    a11y: {
+      checkpoint: 'Día {{day}}, {{place}}, {{state}}',
+    },
+    states: {
+      done: 'hecho',
+      open: 'listo para empezar',
+      tomorrow: 'se abre mañana',
+      locked: 'todavía no',
+    },
+  },
   tutorial: {
     welcomeTitle: '¡Bienvenido a\nEarlyroots!',
     welcomeDescription: 'Hagamos un recorrido rápido para ayudarte a ti y a tu hijo a aprovechar al máximo la hora del cuento.',
@@ -641,7 +698,7 @@ export default {
         description: 'Todos los cuentos, canciones y juegos para aprender están en la biblioteca. Toca aquí para abrirla.',
       },
       welcome: {
-        title: '¡Bienvenido a Grow with\nFreya!',
+        title: '¡Bienvenido a\nEarly Roots!',
         description: 'Hagamos un recorrido rápido para ayudarte a ti y a tu hijo a aprovechar al máximo la hora del cuento.',
       },
       stories: {
@@ -654,7 +711,7 @@ export default {
       },
       freeplay: {
         title: 'Juego Libre',
-        description: 'Toca libremente cualquier instrumento -¡sin reglas, solo diversión! Experimenta con sonidos y crea tu propia música.',
+        description: 'Toca libremente cualquier instrumento - ¡sin reglas, solo diversión! Experimenta con sonidos y crea tu propia música.',
       },
       instruments: {
         title: 'Instrumentos',
@@ -664,13 +721,17 @@ export default {
         title: 'Configuración',
         description: 'Personaliza la app para que funcione mejor para tu familia.',
       },
+      language: {
+        title: 'Tu idioma',
+        description: 'Toca la bandera para cambiar el idioma de la aplicación.',
+      },
       sound: {
         title: 'Control de sonido',
         description: 'Toca aquí para controlar la música de fondo y los efectos de sonido.',
       },
       achievement: {
-        title: 'Próximo logro',
-        description: 'La insignia que tu hijo está más cerca de ganar y cuánto falta. Toca para verlas todas.',
+        title: 'Tu viaje de aprendizaje',
+        description: 'La insignia que tu hijo está más cerca de ganar y cuánto falta. Toca para bajar volando a su isla.',
       },
       screenTime: {
         title: 'El anillo de tiempo de pantalla',
@@ -803,24 +864,24 @@ export default {
     },
     settings: {
       intro: {
-        title: 'Configuración',
-        description: 'Personaliza la app para tu familia.',
+        title: 'Ajustes para adultos',
+        description: 'Algunas opciones que adaptan la app a tu familia. Cámbialas cuando quieras.',
       },
-      login: {
-        title: 'Cuenta y Sincronización',
-        description: 'Inicia sesión para guardar tu progreso.',
-      },
-      language: {
-        title: 'Idioma',
-        description: 'Elige tu idioma preferido.',
-      },
-      accessibility: {
-        title: 'Accesibilidad',
-        description: 'Ajusta el tamaño del texto.',
+      textSize: {
+        title: 'Tamaño del texto',
+        description: 'Haz las palabras más grandes o más pequeñas en toda la app, según quien lea.',
       },
       screenTime: {
-        title: 'Tiempo de Pantalla',
-        description: 'Establece límites saludables.',
+        title: 'Tiempo de pantalla',
+        description: 'Actívalo para un límite diario suave adecuado a la edad de tu hijo. El anillo Screensafe muestra cómo va el día. Desactívalo cuando quieras.',
+      },
+      reminders: {
+        title: 'Recordatorios inteligentes',
+        description: 'Un aviso tranquilo a las horas que elijas, para cuentos, emociones o música.',
+      },
+      crashReports: {
+        title: 'Informes de errores',
+        description: 'Si algo falla, un informe anónimo nos ayuda a arreglarlo. Desactívalo aquí si lo prefieres.',
       },
     },
     musicMode: {
@@ -852,7 +913,7 @@ export default {
     storyModes: {
       welcome: {
         title: '¡Tres Formas de Explorar!',
-        description: 'Cada niño aprende de manera diferente. Elige la experiencia de historia que despierte la curiosidad de tu hijo -cada una desarrolla habilidades esenciales a través de la magia del juego.',
+        description: 'Cada niño aprende de manera diferente. Elige la experiencia de historia que despierte la curiosidad de tu hijo - cada una desarrolla habilidades esenciales a través de la magia del juego.',
       },
       interactive: {
         title: 'Historias Interactivas',
@@ -860,7 +921,7 @@ export default {
       },
       musical: {
         title: 'Historias Musicales',
-        description: '¡Lee, toca e interpreta! Las historias musicales entrelazan desafíos de instrumentos reales en cada aventura -tu hijo aprende ritmo, melodía y coordinación mientras sigue el relato. Los estudios confirman que la exposición temprana a la música mejora la memoria, el desarrollo del lenguaje y la expresión emocional.',
+        description: '¡Lee, toca e interpreta! Las historias musicales entrelazan desafíos de instrumentos reales en cada aventura - tu hijo aprende ritmo, melodía y coordinación mientras sigue el relato. Los estudios confirman que la exposición temprana a la música mejora la memoria, el desarrollo del lenguaje y la expresión emocional.',
       },
       jigsaw: {
         title: 'Historias de Rompecabezas',
@@ -1020,7 +1081,9 @@ export default {
       },
       navProfile: {
         title: 'Perfil',
-        description: 'Favoritos guardados, el muro de insignias y los libros de este dispositivo.',
+        description: 'Favoritos guardados, el muro de insignias y los libros de este dispositivo. De vez en cuando se convierte en un símbolo dorado de inicio de sesión: significa que nadie ha iniciado sesión aún, y al tocarlo irás a iniciar sesión.',
+        profileCaption: 'Tu perfil',
+        loginCaption: 'Hora de iniciar sesión',
       },
     },
     progress: {
@@ -1068,13 +1131,21 @@ export default {
         title: 'Cambia el perfil',
         description: 'Toca la imagen o el nombre para cambiar el avatar, el nombre o la edad. Un adulto responde antes una pregunta rápida.',
       },
+      login: {
+        title: 'Iniciar sesión',
+        description: 'Al iniciar sesión se guardan las medallas, la racha y dónde se quedó cada cuento, en todos vuestros dispositivos.',
+      },
+      home: {
+        title: 'Volver al inicio',
+        description: 'Inicio te lleva de vuelta al cielo nocturno cuando hayáis terminado.',
+      },
       tabs: {
         title: 'Guardados, Insignias, Gestionar',
         description: 'Los favoritos que has marcado, el muro de insignias y los libros de este dispositivo, con opción de quitar alguno.',
       },
       settings: {
         title: 'Ajustes de adultos',
-        description: 'Idioma, tiempo de pantalla y tu cuenta, tras la puerta de los adultos.',
+        description: 'Tamaño del texto, tiempo de pantalla, recordatorios y tu cuenta, tras la puerta de los adultos.',
       },
     },
   },
@@ -3209,7 +3280,8 @@ export default {
     playAlong: 'Jugar juntos',
     readNow: 'Leer ahora',
     savedOffline: 'Guardado sin conexión',
-    minutes: '{{count}} min',
+    pages_one: '{{count}} página',
+    pages_other: '{{count}} páginas',
     ages: 'Edades {{range}}',
     interactive: 'Interactivo',
     favourite: 'Favorito',
@@ -3329,15 +3401,18 @@ export default {
       minutes: '{{count}} min esta semana',
       none: 'Sin lectura esta semana',
     },
+    achievementTally: {
+      label: 'Conseguidas: {{unlocked}}, pendientes: {{remaining}}',
+    },
     achievements: {
       title: '¡Mira lo que has logrado!',
-      cta: 'Ver logros',
+      cta: 'Explorar',
       emptyTitle: 'Tu primera insignia te espera',
       emptyBody: 'Leed un cuento juntos para ganarla',
-      hint: 'Ver tus insignias',
+      hint: 'Baja volando a tu isla',
     },
     milestone: {
-      eyebrow: 'Próxima insignia',
+      eyebrow: 'Tu viaje de aprendizaje',
       remaining: {
         stories: '{{count}} cuentos más para desbloquearla',
         stories_one: '{{count}} cuento más para desbloquearla',
@@ -3509,7 +3584,7 @@ export default {
     badges: {
       firstStory: {
         title: 'Primer cuento',
-        description: 'Abre tu primer cuento',
+        description: 'Termina tu primer cuento',
       },
       readingTogether: {
         title: 'Leyendo juntos',

@@ -47,6 +47,7 @@ import { AudioControlModal } from '../ui/audio-control-modal';
 import { ParentsOnlyModal } from '../ui/parents-only-modal';
 import { SubscriptionOverlay } from '../ui/subscription-overlay';
 import { useAppStore } from '@/store/app-store';
+import { useAchievementEvents } from '@/components/progress/use-achievement-events';
 import { resumePageIndex } from './reading-progress';
 import { useAccessibility, TEXT_SIZE_OPTIONS } from '@/hooks/use-accessibility';
 import { useParentsOnlyChallenge } from '@/hooks/use-parents-only-challenge';
@@ -124,6 +125,7 @@ export function StoryBookReader({
 
   // Start from page 1 if skipping cover, otherwise start from cover (page 0)
   const savedPlace = useAppStore((state) => state.storyProgress[story.id]);
+  const achievementEvents = useAchievementEvents(story);
   const [currentPageIndex, setCurrentPageIndex] = useState(() => resumePageIndex({
     skipCoverPage,
     savedPlace,
@@ -318,6 +320,7 @@ export function StoryBookReader({
           musicChallenge.failedAttempts
         );
         AnalyticsService.trackMusicChallengeCompleted(story.id, currentMusicChallenge.instrumentId);
+        achievementEvents.challengeDone(currentPage.id, 'music');
       }
     },
     effectiveNoteVolume,
@@ -360,8 +363,10 @@ export function StoryBookReader({
 
   const handleJigsawContinue = useCallback(() => {
     setJigsawCompleted(prev => ({ ...prev, [currentPageIndex]: true }));
+    const page = (story.pages || [])[currentPageIndex];
+    if (page) achievementEvents.challengeDone(page.id, 'jigsaw');
     jigsawChallenge.cleanup();
-  }, [jigsawChallenge, currentPageIndex]);
+  }, [jigsawChallenge, currentPageIndex, story.pages, achievementEvents]);
 
   // ---- Reading Challenge support ----
   const currentReadingConfig = useMemo(() => {
@@ -403,8 +408,10 @@ export function StoryBookReader({
 
   const handleReadingContinue = useCallback(() => {
     setReadingCompleted(prev => ({ ...prev, [currentPageIndex]: true }));
+    const page = (story.pages || [])[currentPageIndex];
+    if (page) achievementEvents.challengeDone(page.id, 'reading');
     readingChallenge.cleanup();
-  }, [readingChallenge, currentPageIndex]);
+  }, [readingChallenge, currentPageIndex, story.pages, achievementEvents]);
 
   // Sync breath detector state to music challenge.
   // Only in blow mode -in press mode, MusicChallengeUI sets breathActive(true)
@@ -739,7 +746,6 @@ export function StoryBookReader({
   const setTextSizeScale = useAppStore((state) => state.setTextSizeScale);
   const childAgeInMonths = useAppStore((state) => state.childAgeInMonths);
   const setStoryProgress = useAppStore((state) => state.setStoryProgress);
-  const markStoryCompleted = useAppStore((state) => state.markStoryCompleted);
   const childAgeGroup = resolveAgeGroup(childAgeInMonths);
   const markStoryAsRead = useAppStore((state) => state.markStoryAsRead);
   const recordReadingSession = useAppStore((state) => state.recordReadingSession);
@@ -968,7 +974,7 @@ export function StoryBookReader({
     // Prevent double-tap on finish button
     if (isExiting) return;
 
-    markStoryCompleted(story.id);
+    achievementEvents.storyFinished();
 
     try {
       // In record mode, show completion message and return to mode selection

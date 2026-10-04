@@ -23,290 +23,132 @@ gcloud auth print-identity-token \
 
 # APIs
 
-## Common Headers
+Every path below is taken from a controller in `src/main/java/com/app/controller/`. CORS is
+configured only in `SecurityConfig`.
 
-All authenticated endpoints require:
-| Header | Required | Description |
-|--------|----------|-------------|
-| `Authorization` | Yes | Bearer token: `Bearer <access_token>` |
-| `Content-Type` | Yes (POST/PUT) | `application/json` |
-| `Accept` | Optional | `application/json` |
+## Common headers
 
----
+Every `/api/**` call that carries a token must also carry the three client headers; a call
+without them is refused with `400 GTW-101` (`RequestValidationFilter`). The one exception is
+`POST /api/analytics/events`, which sends no device id.
 
-## Private APIs (Internal/Monitoring)
-
-### `GET /private/healthcheck`
-Health check endpoint to verify the service is running.
-
-**Response:** `200 OK`
-```json
-{ "status": "UP" }
-```
-
-### `GET /private/info`
-Returns service configuration and version info.
-
-### `GET /private/prometheus`
-Prometheus metrics endpoint for scraping.
-
----
-
-## Authentication APIs
-
-### `GET /auth/status`
-Auth service status check (no auth required).
-
-**Response:** `200 OK`
-```json
-{ "status": "available", "service": "auth" }
-```
-
----
-
-### `POST /auth/google`
-Google OAuth authentication.
-
-**Headers:**
 | Header | Required | Value |
-|--------|----------|-------|
-| `Content-Type` | Yes | `application/json` |
-
-**Request Body:**
-```json
-{
-  "idToken": "string",       // Required: Google OAuth ID token
-  "clientId": "string",      // Optional: Google client ID
-  "nonce": "string",         // Optional: Nonce for replay protection
-  "deviceInfo": {            // Optional
-    "deviceId": "string",
-    "platform": "ios|android",
-    "osVersion": "string",
-    "appVersion": "string"
-  },
-  "userInfo": {              // Optional: Pre-extracted user info
-    "email": "string",
-    "name": "string",
-    "picture": "string"
-  }
-}
-```
-
-**Response:** `200 OK`
-```json
-{
-  "accessToken": "string",
-  "refreshToken": "string",
-  "expiresIn": 3600,
-  "tokenType": "Bearer",
-  "user": {
-    "id": "string",
-    "email": "string",
-    "name": "string",
-    "picture": "string"
-  }
-}
-```
+|-|-|-|
+| `Authorization` | on `/api/**` | `Bearer <access token>` |
+| `X-Client-Platform` | on `/api/**` | `ios`, `android` or `web` |
+| `X-Client-Version` | on `/api/**` | semantic version, e.g. `1.4.0` |
+| `X-Device-ID` | on `/api/**` (not analytics) | the app's device id |
+| `Content-Type` | with a body | `application/json` |
 
 ---
 
-### `POST /auth/apple`
-Apple OAuth authentication.
+## Sign-in — `/auth/**` (no token)
 
-**Request Body:** Same structure as `/auth/google`
+| Method and path | Body | Answer |
+|-|-|-|
+| `GET /auth/status` | — | `{ status: "available", service: "auth" }` |
+| `POST /auth/google` | `{ idToken, clientId?, nonce?, deviceInfo?, userInfo? }` | `AuthResponse` |
+| `POST /auth/apple` | `{ idToken, authorizationCode?, clientId?, nonce?, deviceInfo?, userInfo? }` | `AuthResponse` |
+| `POST /auth/firebase` | Firebase ID token (test and emulator builds) | `AuthResponse` |
+| `POST /auth/refresh` | `{ refreshToken }` | `{ success, tokens }` |
+| `POST /auth/revoke` | `{ refreshToken }` | `{ success, message }` |
 
-**Response:** Same structure as `/auth/google`
-
----
-
-### `POST /auth/firebase`
-Firebase authentication (test/gcp-dev only).
-
-**Request Body:**
-```json
-{
-  "idToken": "string"   // Required: Firebase ID token
-}
-```
-
-**Response:** Same structure as `/auth/google`
+`AuthResponse` is `{ success, message, user: { id, provider, providerId, createdAt, updatedAt },
+tokens: { accessToken, refreshToken, expiresAt, tokenType, scope } }`.
 
 ---
 
-### `POST /auth/refresh`
-Refresh access token.
+## The family's data — `/api/**`
 
-**Request Body:**
-```json
-{
-  "refreshToken": "string"  // Required: Valid refresh token
-}
-```
+### Child document (Phase C)
 
-**Response:** `200 OK`
-```json
-{
-  "accessToken": "string",
-  "refreshToken": "string",
-  "expiresIn": 3600,
-  "tokenType": "Bearer"
-}
-```
+| Method and path | Answer |
+|-|-|
+| `GET /api/children` | `{ children: [ChildDocument] }`. With none saved yet, one unsaved child seeded from the older profile. |
+| `GET /api/children/{childId}` | `ChildDocument`, or `404` |
+| `PUT /api/children/{childId}` | Body: `ChildDocument` with the `version` last read. `200` with the saved document (version + 1); `409 GTW-414` with `details.current` when another device wrote first; `409 GTW-415` past 10 children. |
 
----
+`ChildDocument` (`dto/ChildDocument.java`): `childId, version, nickname, avatarType, avatarId,
+ageBucket (0-2 | 2-4 | 4-6), language, textSizeScale, favorites { stories, activities, songs },
+storyProgress { storyId: { pageIndex, totalPages, finishedCount } }, finishedStoryIds,
+challengeCounts, achievements, settings { screenTimeEnabled, smartRemindersEnabled,
+customReminders[] }`. No server times are returned. The app's merge rules are in
+`grow-with-freya/services/child-document.ts`.
 
-### `POST /auth/revoke`
-Revoke refresh token (logout).
+### Consent, export and deletion
 
-**Request Body:**
-```json
-{
-  "refreshToken": "string"  // Required: Refresh token to revoke
-}
-```
+| Method and path | Answer |
+|-|-|
+| `POST /api/consents` | Body `{ policyVersion, scope: core, acceptedAt?, appVersion? }` → `201` |
+| `GET /api/account/export` | Account, older profile, children, consents, subscription, `downloadedStories` |
+| `DELETE /api/account` | Deletes profile, children, consents, downloads, sessions and the user, first copying each consent to `consent_log` (policy version, times, a SHA-256 of the sign-in identity; removed after 3 years by Firestore TTL, `CONSENT_LOG_RETENTION_DAYS`); stops before the user is deleted if any step fails (`500 GTW-412`); `409 GTW-413` while a deletion is running |
 
-**Response:** `200 OK`
-```json
-{ "success": true }
-```
+### Profile (deprecated)
+
+`GET`, `POST`, `DELETE /api/profile` (`ProfileController`) remain only until the build that uses
+the child document is on TestFlight (PHASE-8 C2); the current app no longer calls them.
 
 ---
 
-## Story/CMS APIs
+## Stories — `/api/stories/**`
 
-### `GET /api/stories`
-Get all available stories.
+| Method and path | Answer |
+|-|-|
+| `GET /api/stories` | Available stories |
+| `GET /api/stories/{storyId}` | One story |
+| `GET /api/stories/category/{category}` | Stories in a category |
+| `GET /api/stories/version` | `{ id, version, assetVersion, lastUpdated, storyChecksums, totalStories }` |
+| `POST /api/stories/delta` | See below |
+| `GET /api/stories/{storyId}/download` | The full story, and the device is recorded as holding it. The subscription comes from the saved snapshot, verified with RevenueCat only at lifecycle boundaries. With `ENTITLEMENTS_ENFORCE=true`: `403 GTW-416` for a paid story without a subscription, `403 GTW-417` past the plan's limit (free 2, basic 50, premium 125 stories). `404` unknown, `403 GTW-100` withdrawn. |
+| `DELETE /api/stories/{storyId}/download` | The device no longer holds the story → `204` |
 
-**Headers:** Authorization required
+**Delta sync.** Body: `{ clientVersion, storyChecksums: { id: checksum }, achievementChecksums: { id: checksum } }`
+(each at most 500 entries). Answer: `{ serverVersion, assetVersion, stories, deletedStoryIds,
+storyChecksums, totalStories, updatedCount, lastUpdated, catalog, achievementDefinitions,
+deletedAchievementIds }`. Stories are sent only when the client is behind; the catalogue (with
+signed thumbnails) and changed badge definitions are sent on every call. Story checksums are the
+shared canonical-JSON SHA-256 (`StoryChecksums`, `scripts/lib/story-checksum.js`).
 
-**Response:** `200 OK`
-```json
-[
-  {
-    "id": "story-id",
-    "title": "Story Title",
-    "category": "adventure",
-    "premium": false,
-    "coverImage": "https://...",
-    "pages": [
-      {
-        "pageNumber": 1,
-        "backgroundImage": "https://...",
-        "text": { "en": "Once upon a time..." }
-      }
-    ]
-  }
-]
-```
+## Assets — `/api/assets/**`
 
----
+| Method and path | Answer |
+|-|-|
+| `GET /api/assets/version` | Asset version and checksums |
+| `POST /api/assets/batch-urls` | Body `{ paths: [...] }` (at most 100) → `{ urls: [{ path, signedUrl, expiresAt }], failed }` |
 
-### `GET /api/stories/{storyId}`
-Get a specific story by ID.
+## Analytics
 
-**Path Parameters:**
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `storyId` | string | Story ID |
-
-**Response:** `200 OK` - Single story object (see above)
-
-**Response:** `404 Not Found` - Story not found
+`POST /api/analytics/events` — `{ sessionId, platform, appVersion, locale, events: [{ event,
+properties }] }`. Turned into anonymous counters; nothing is stored per user.
 
 ---
 
-### `GET /api/stories/category/{category}`
-Get stories by category.
+## Subscriptions — `POST /api/entitlements/refresh`
 
-**Path Parameters:**
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `category` | string | Category name (e.g., `adventure`, `animals`) |
+The app calls it after a purchase, restore or tier change, and before showing the paywall when a
+download is refused. The gateway asks RevenueCat itself (nothing in the request is trusted),
+saves the answer in `users/{uid}.entitlement`, and answers `{ tier: free | basic | premium,
+source }`, `source` being `revenuecat`, `cache` (checked within the last 10 s), `stale_cache` or
+`unverified` (RevenueCat could not answer). How downloads use the saved answer:
+PHASE-8-BACKEND-ALIGNMENT.md §7; what to do when it goes wrong: `RUNBOOK-ENTITLEMENTS.md`.
 
-**Response:** `200 OK` - Array of story objects
+## Configuration
 
----
-
-### `GET /api/stories/version`
-Get current content version for delta sync.
-
-**Query Parameters:**
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `clientVersion` | integer | No | Client's current version. If matches server, sync is skipped. |
-
-**Response:** `200 OK`
-```json
-{
-  "id": "current",
-  "version": 4,
-  "totalStories": 13,
-  "lastUpdated": "2026-01-18T12:30:00Z",
-  "storyChecksums": {
-    "story-1": "abc123...",
-    "story-2": "def456..."
-  }
-}
-```
+| Variable | Effect |
+|-|-|
+| `REVENUECAT_SECRET_API_KEY` | RevenueCat v1 secret key (`sk_…`); without it every lookup counts as unavailable |
+| `REVENUECAT_API_URL` | `https://api.revenuecat.com` (WireMock in the functional tests) |
+| `REVENUECAT_ACCEPT_SANDBOX` | `true` (default) while the app is TestFlight-only |
+| `ENTITLEMENTS_ENFORCE` | `false` (default): `/download` only logs what it would refuse |
+| `ENTITLEMENTS_CACHE_EPOCH` | ISO instant: saved subscription answers checked before it are ignored (recovery lever) |
 
 ---
 
-### `POST /api/stories/sync`
-Delta sync - get only stories that have changed.
+## Private and monitoring
 
-**Headers:**
-| Header | Required | Value |
-|--------|----------|-------|
-| `Authorization` | Yes | `Bearer <token>` |
-| `Content-Type` | Yes | `application/json` |
-
-**Request Body:**
-```json
-{
-  "clientVersion": 3,                    // Required: Client's current version
-  "lastSyncTimestamp": 1705582800000,    // Required: Last sync time (epoch ms)
-  "storyChecksums": {                    // Required: Client's story checksums
-    "story-1": "abc123...",
-    "story-2": "def456..."
-  }
-}
-```
-
-**Response:** `200 OK`
-```json
-{
-  "serverVersion": 4,
-  "totalStories": 13,
-  "updatedStories": 1,
-  "lastUpdated": 1705583400000,
-  "storyChecksums": {
-    "story-1": "abc123...",
-    "story-2": "xyz789..."  // Changed checksum
-  },
-  "stories": [
-    {
-      "id": "story-2",
-      "title": "Updated Story",
-      "pages": [...]
-    }
-  ]
-}
-```
-
-**Response:** `500 Internal Server Error` (missing required fields)
-```json
-{
-  "success": false,
-  "errorCode": "MISSING_REQUIRED_FIELD",
-  "error": "Missing required field",
-  "message": "Missing required fields: clientVersion, storyChecksums, or lastSyncTimestamp",
-  "path": "/api/stories/sync",
-  "timestamp": "2026-01-18T12:30:00Z",
-  "requestId": "uuid"
-}
-```
-
----
+`/private/**`, `/actuator/**` and `/health/**` are open in `test`/`dev` profiles and denied in
+production (`SecurityConfig`). `/private/**` holds the test-support endpoints used by the
+functional tests (`/private/reset`, `/private/seed/story`, `/private/rebuild-content-version`, …).
 
 ## Error Response Format
 
@@ -371,8 +213,14 @@ Error codes follow the format `GTW-XXX` where the number range indicates the cat
 | Code | HTTP | Description |
 |------|------|-------------|
 | `GTW-400` | 404 | User not found |
-| `GTW-402` | 409 | Failed to update profile |
+| `GTW-402` | 500 | Failed to update profile |
 | `GTW-411` | 404 | User profile not found |
+| `GTW-412` | 500 | Account deletion failed |
+| `GTW-413` | 409 | Account deletion already in progress |
+| `GTW-414` | 409 | The child has changed on another device |
+| `GTW-415` | 409 | No more children can be added |
+| `GTW-416` | 403 | This story needs a subscription |
+| `GTW-417` | 403 | The plan's story limit is reached |
 
 ### System Errors (GTW-500 to GTW-599)
 | Code | HTTP | Description |

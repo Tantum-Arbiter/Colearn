@@ -1,10 +1,11 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CacheManager } from './cache-manager';
-import { ApiClient } from './api-client';
+import { ApiClient, ApiError } from './api-client';
+import { refreshServerEntitlement } from './entitlement-refresh';
 import { AssetDownloadUtils } from './asset-download-utils';
-import { StoryAccessService, AccessCheckResult } from './story-access-service';
+import { StoryAccessService, AccessCheckResult, type AccessDeniedReason } from './story-access-service';
 import { CatalogService } from './catalog-service';
-import { Story, CatalogEntry } from '../types/story';
+import { Story, CatalogEntry, storyPageCount } from '../types/story';
 import { Logger } from '@/utils/logger';
 
 const log = Logger.create('StoryDownloadService');
@@ -67,6 +68,17 @@ export interface DownloadResult {
 }
 
 export type DownloadProgressCallback = (progress: DownloadProgress) => void;
+
+const GATEWAY_REFUSALS: Record<string, AccessDeniedReason> = {
+  'GTW-416': 'subscription_required',
+  'GTW-417': 'download_limit_reached',
+};
+
+function gatewayRefusal(error: unknown): AccessDeniedReason | null {
+  if (!(error instanceof ApiError) || error.status !== 403) return null;
+  const code = (error.body as { errorCode?: string } | null)?.errorCode;
+  return (code && GATEWAY_REFUSALS[code]) || null;
+}
 
 /**
  * Orchestrates on-demand single-story download.
@@ -236,12 +248,28 @@ export class StoryDownloadService {
       reportProgress({ phase: 'fetching-story', progress: 15, message: 'Fetching story data...' });
 
       let story: Story;
+      const fetchStory = () => ApiClient.request<Story>(
+        `/api/stories/${encodeURIComponent(storyId)}/download`,
+        { method: 'GET' }
+      );
       try {
-        story = await ApiClient.request<Story>(
-          `/api/stories/${encodeURIComponent(storyId)}/download`,
-          { method: 'GET' }
-        );
+        try {
+          story = await fetchStory();
+        } catch (firstError) {
+          if (!gatewayRefusal(firstError) || !(await StoryAccessService.hasActiveSubscription())) throw firstError;
+          log.info(`The gateway refused ${storyId} for a family the phone sees as subscribed; refreshing and trying once more`);
+          await refreshServerEntitlement();
+          checkAbort();
+          story = await fetchStory();
+        }
       } catch (apiError) {
+        const refusal = gatewayRefusal(apiError);
+        if (refusal) {
+          result.error = refusal;
+          result.durationMs = Date.now() - startTime;
+          onProgress?.({ phase: 'failed', progress: 0, message: refusal });
+          return result;
+        }
         // If the API call fails during token refresh or auth, surface it as an
         // auth error so the UI shows "Sign In Required" instead of "internet failed".
         const msg = apiError instanceof Error ? apiError.message : '';
@@ -389,6 +417,11 @@ export class StoryDownloadService {
 
       // Remove from local story cache (no-op if not in cache)
       await CacheManager.removeStories([storyId]);
+      Promise.resolve()
+        .then(() => ApiClient.request(`/api/stories/${encodeURIComponent(storyId)}/download`, { method: 'DELETE' }))
+        .catch((error) => {
+          log.debug(`Gateway not told that ${storyId} left the device`, error);
+        });
 
       // If this is a bundled story, mark it as hidden so StoryLoader skips it
       if (bundledStory) {
@@ -409,7 +442,7 @@ export class StoryDownloadService {
         isPremium: storyData.isPremium ?? false,
         isReferralReward: storyData.isReferralReward ?? false,
         ageRange: storyData.ageRange,
-        duration: storyData.duration,
+        pageCount: storyPageCount(storyData),
         gender: storyData.gender,
       };
 

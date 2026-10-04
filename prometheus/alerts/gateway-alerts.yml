@@ -363,3 +363,56 @@ groups:
         annotations:
           summary: "High client error rate"
           description: "{{ $value | humanizePercentage }} of requests are returning 4xx errors"
+
+  - name: gateway-entitlements
+    rules:
+      # Our RevenueCat key has stopped working: every paid decision is running on the fallback.
+      - alert: RevenueCatUnauthorized
+        expr: sum(increase(app_revenuecat_requests_total{outcome="unauthorized"}[5m])) > 0
+        for: 0m
+        labels:
+          severity: critical
+          service: gateway
+        annotations:
+          summary: "RevenueCat refuses our secret API key"
+          description: "Check REVENUECAT_SECRET_API_KEY (RUNBOOK-ENTITLEMENTS.md#revenuecat-unauthorized)"
+
+      # RevenueCat is failing a large share of lookups
+      - alert: RevenueCatErrorRate
+        expr: |
+          sum(rate(app_revenuecat_requests_total{outcome=~"server_error|timeout|rate_limited|bad_response|circuit_open"}[10m]))
+          / sum(rate(app_revenuecat_requests_total[10m])) > 0.2
+        for: 10m
+        labels:
+          severity: warning
+          service: gateway
+        annotations:
+          summary: "RevenueCat lookups are failing"
+          description: "{{ $value | humanizePercentage }} of lookups failed (RUNBOOK-ENTITLEMENTS.md#revenuecat-errors)"
+
+      # Paid downloads are being let in without a verified subscription
+      - alert: EntitlementsUnverifiedSpike
+        expr: |
+          sum(rate(app_entitlements_decisions_total{source="unverified"}[15m]))
+          / sum(rate(app_entitlements_decisions_total{source!~"free_story|referral"}[15m])) > 0.1
+        for: 15m
+        labels:
+          severity: warning
+          service: gateway
+        annotations:
+          summary: "Many downloads are unverified"
+          description: "{{ $value | humanizePercentage }} of paid decisions could not be verified (RUNBOOK-ENTITLEMENTS.md#unverified-spike)"
+
+      # Refusals jump against their own recent level: a bug may be refusing paying families
+      - alert: EntitlementsRefusalSpike
+        expr: |
+          sum(rate(app_entitlements_decisions_total{decision="subscription_required"}[15m]))
+          > 3 * sum(rate(app_entitlements_decisions_total{decision="subscription_required"}[1d] offset 1d))
+          and sum(increase(app_entitlements_decisions_total{decision="subscription_required"}[15m])) > 10
+        for: 15m
+        labels:
+          severity: warning
+          service: gateway
+        annotations:
+          summary: "Subscription refusals have jumped"
+          description: "Refusals are over three times yesterday's rate (RUNBOOK-ENTITLEMENTS.md#refusal-spike)"

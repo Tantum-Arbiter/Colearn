@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { ACCENT_GOLD, TEXT_PRIMARY } from '@/constants/night-palette';
 import { Fonts } from '@/constants/theme';
 import { useAccessibility } from '@/hooks/use-accessibility';
+import { HEADING_HALO, HeadingHalo } from './heading-halo';
 import { SPACE_1 } from './tokens';
 
 /**
@@ -112,6 +113,7 @@ export function PageTagline({ lines, width, testID = 'page-tagline' }: PageTagli
       accessibilityRole="text"
       accessibilityLabel={lines.join(' ')}
     >
+      <HeadingHalo testID={`${testID}-halo`} spread={HEADING_HALO.tagline} />
       <ArchedLine id={`${uid}-1`} text={lines[0]} width={width} fontSize={fontSize} />
       {/* The words ride the crown at the top of each box, so the arch's drop
           would otherwise sit between the lines as dead space. Pulled up, the

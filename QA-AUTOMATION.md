@@ -86,9 +86,23 @@ com.growwithfreya.app://?e2e=1&onboarded=1&guest=1&tutorials=done&screenTime=res
 It is a link to the page the app already opens on, carrying an `e2e` flag, because expo-router owns
 deep links and answers a path it does not know with its "Unmatched" screen. Parameters: `reset`
 (wipe first), `onboarded`, `guest`, `tutorials=done|fresh`, `screenTime=reset`, `language`, `tier`,
-`childAgeMonths`, `nickname`, `progress=clear` (every book back to its first page). Anything the
-link leaves out is left alone. `.maestro/helpers/start-seeded.yaml`
+`childAgeMonths`, `nickname`, `progress=clear` (every book back to its first page), `planDone=0..7`
+(the first N days of the island's learning plan done yesterday, so day N+1 is open today; 0 clears
+the plan). Anything the link leaves out is left alone. `.maestro/helpers/start-seeded.yaml`
 does this for every flow; seeding took the home flow from 63 seconds to 15.
+
+The scheme differs by platform. The iOS development build answers only `com.growwithfreya.app://`;
+the Android one answers `growwithfreya://` (the app's own scheme) and, for pointing the development
+build at the bundler, `exp+grow-with-freya://expo-development-client/?url=…`. The helpers choose by
+platform. On CI both development builds forget the bundler whenever they are stopped, so flows
+launch through `.maestro/helpers/launch.yaml`, never a bare `launchApp`.
+
+Every bundler link ends in `&disableOnboarding=1`. On a fresh simulator or emulator the development
+build otherwise opens its "This is the developer menu" sheet over the app on first load, and the
+sheet hides the page from the accessibility tree: home draws, but `home-language-button` is never
+found. On Android the flag marks that introduction as seen for as long as the app stays installed.
+The iOS launcher reads it only inside the `url` parameter, so there it does nothing, and
+`launch.yaml` taps "Continue" whenever the sheet appears.
 
 ## The gateway, stubbed
 
@@ -184,17 +198,102 @@ the stub reaches the shelf and the search — a flow finds it by name. Its cover
 | Nightly, and on demand | **Every journey, Android and iOS** | ubuntu + macOS | 30-60 min |
 | Push to `main`/`develop` | Web export, Lighthouse | ubuntu | 5 min |
 
-The journey job (`app-journeys` in `grow-with-freya-ci-cd.yml`) waits for Jest and the type check:
-there is no point booting an emulator for a branch that does not compile. It builds the app with
-`EXPO_PUBLIC_E2E=1`, so the seeding link works, serves the bundle, installs onto the emulator and
-runs the `smoke` tag. A failure keeps the recordings and Metro's log as artifacts.
+Both pipelines test **one build per source**: `app-e2e-build-android.yml` / `-ios.yml` build the
+E2E release app, or find it already built from the same source, and `app-e2e-journeys-android.yml`
+/ `-ios.yml` run flows against exactly that app. The per-push pipeline runs the `smoke` tag on
+Android, after the checks (security audit, tests and lint, type check) have passed: then
+`build-android` builds or reuses the app, and `app-journeys` runs against it (manual only while
+paused). The nightly runs every flow on both platforms. A night
+with no app changes, or a rerun after a flow change, reuses the app and goes straight to the
+device. Every run, passed or failed, keeps a JUnit report (the first pass, and the rerun if there was one) and puts a table of each journey's result on the run summary: passed, passed on retry, or failed. A failure also keeps the recordings and logs.
 
 iOS sits in `app-e2e-nightly.yml` rather than the per-push pipeline because macOS runners cost
 roughly ten times as much per minute. Run it on demand from the Actions tab, choosing a platform
 and optionally a tag.
 
-⚠️ UNVERIFIED — both journey jobs are written but have not run in GitHub Actions yet; the first run
-may need adjusting (build times, emulator image, the wait for the bundle).
+The nightly tests **release builds**: the JavaScript is inside the app, so no Metro and no
+development launcher run on CI. Every failure the nightly hit with development builds came from
+that pairing on a slow runner (the developer-menu sheet, iOS's "Open in" prompt, a first bundle or
+a manifest request outlasting the launcher's timeout). The flows are told with `-e APP_BUILD=release`,
+and `launch.yaml` then starts the app with a plain `launchApp`; without it they keep using the
+bundler link, as the per-push pipeline and local runs do. `EXPO_PUBLIC_E2E=1` switches over-the-air
+updates off in `app.config.js`, so a release build never swaps in a published bundle, and keeps
+the seeding link working (`isE2eAllowed` reads `extra.e2e` when `__DEV__` is false).
+
+**An E2E build never talks to the live API.** A release build loads `.env.production`, whose
+`EXPO_PUBLIC_GATEWAY_URL` is the production gateway, so the first release runs sent the seeded,
+unsigned session there (rejected, and the flows fell back to the sign-in screen). The nightly now
+sets `EXPO_PUBLIC_GATEWAY_URL=http://localhost:8080`, which a `.env` file cannot override, and
+`app.config.js` refuses to build an E2E app whose gateway is not `localhost`, `127.0.0.1` or
+`10.0.2.2`. Both jobs start WireMock (`wiremock-server/run-local.sh`) before the journeys; Android
+reaches it through `adb reverse tcp:8080 tcp:8080`, and an E2E build is the only one that allows
+plain HTTP on Android (`usesCleartextTraffic`). The iOS build is signed ad hoc
+(`CODE_SIGN_IDENTITY=-`): unsigned, the app has no entitlements and SecureStore fails in the
+simulator, so a seeded session is never stored.
+
+Each job keeps its built app in the Actions cache, keyed on the app's source (not on `.maestro`,
+tests or docs), and saves it as soon as it is built, so a rerun after a flow or workflow change
+skips prebuild, pods and the native build. The build workflow is part of the key too, so a change
+to how the app is built rebuilds it; the build job's summary says whether it built or reused. The Android release build skips release lint (an init script sets
+`checkReleaseBuilds = false`) and runs Gradle with a 4 GB heap and 1 GB metaspace: with Expo's
+defaults, `lintVitalAnalyzeRelease` ran out of metaspace and the build hung instead of failing. A failed Android run keeps the emulator's logcat, the runner's memory every ten
+seconds, the kernel log and the emulator's crash store; a failed iOS run keeps the runner's memory
+pressure and busiest processes every twenty seconds.
+
+Where a development build is used, both platforms wait for Metro's first bundle before a flow
+runs: iOS gives up on a first build that outlasts its request ("Failed to load app from
+http://localhost:8081 with error: The request timed out").
+
+A software-rendered emulator can be too busy to answer the system in time, and Android then puts
+"Pixel Launcher isn't responding" over whatever is on screen. It stays until someone answers it, so
+`launch.yaml` and `dismiss-interruptions.yaml` tap its "Wait" (`android:id/aerr_wait`). On the
+nightly the launcher hangs as the emulator boots and stays hung, so "Wait" alone does not keep the
+dialog away: the job disables Pixel Launcher before the journeys (the flows launch the app
+directly and never go home) and gives the emulator three of the runner's four cores and 4 GB, since
+frames on the library screen took over two seconds with the default two cores.
+
+The emulator runs **Android 12 (API 31)**. On the API 34 image it froze as the library screen drew
+(right after decoding the globe and cloud banks), five runs out of five and under every renderer
+option tried (`swiftshader_indirect`, `guest`), then exited about 45 seconds later with no crash
+report. On API 31 the same flows pass. If adb drops the emulator mid-run ("device offline"), which
+happened once on API 31 with the emulator still alive, `.maestro/run-with-device-retry.sh` waits for
+it to come back and runs the suite once more, and says so with a warning on the run. iOS gets
+the same single rerun when Maestro loses its driver ("Device became unreachable"): on a freshly
+booted simulator the driver's first call can time out waiting on the accessibility service
+(`XC_kAXXCAttributeFocusedApplications`) even after `bootstatus` reports the boot complete, and
+Maestro then fails every flow without starting any.
+
+If the first pass fails on assertions in three flows or fewer, those flows (and only those) run
+once more, and a `Flows retried` warning on the run names them. More than three failures, or a
+flow that fails twice, stays red. This is a stopgap: on iOS a story card's children drop in and
+out of the accessibility tree (the lock was drawn but missing from the tree in one run and present
+in the next), so "A story beyond the free plan wears a lock" and "A child opens a story" fail now
+and then with the app working. The fix belongs in the app, below; a flow that shows up in those
+warnings week after week is a flaky flow, and the convention below applies.
+
+iOS asks `Open in “Early Roots”?` before it hands the seeding link to the app, and on a freshly
+booted simulator it can ask late: the helper's one optional tap on "Open" had already run, the
+prompt stayed up, the seed never arrived and the flow saw onboarding instead of home.
+`start-seeded.yaml` and `seed-only.yaml` now wait up to ten seconds for the prompt, tap "Open",
+and check the prompt has gone (twice more if it has not).
+
+Two iOS steps failed once on a build that had passed them (run 36362242417). The tap on the home
+tab in "A child opens a story" reported success and left the app on home, so that tap and its wait
+for the library sit in a `retry` (two more tries, the library must still appear). In "A story
+beyond the free plan wears a lock" the lock was on screen but not in the accessibility tree, with
+the keyboard up and, in later runs, with it closed: the lock sits inside the card's `Pressable`,
+which carries its own label, and iOS folds the card's children into it more often than not. The
+flow now checks the lock badge on Android only, and on both platforms checks what the lock is
+for: tapping the story opens the offer (`trial-scroller`), not the story, and the offer closes
+again. Saying "locked" in the card's `accessibilityLabel` would let VoiceOver hear it too and put
+the badge check back on iOS (needs the word in all 14 locales).
+
+A loaded runner can also leave the development build's first request to Metro unanswered past its
+timeout (10 seconds on the CI iOS build). The build makes one attempt and stops: newer builds show
+"There was a problem loading the project." with a Reload button, older ones drop back to their
+launcher. `connect-dev-client.yaml` waits up to a minute at a time and retries up to four times,
+tapping Reload or opening the bundler link again.
+
 
 ---
 

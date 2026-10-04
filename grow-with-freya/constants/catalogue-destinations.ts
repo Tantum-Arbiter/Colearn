@@ -11,6 +11,11 @@ export function catalogueSectionFor(destination: string): ChildNavItemId | null 
   return SECTION_BY_DESTINATION[destination] ?? null;
 }
 
+export function destinationForSection(section: ChildNavItemId): string | null {
+  const found = Object.entries(SECTION_BY_DESTINATION).find(([, id]) => id === section);
+  return found ? found[0] : null;
+}
+
 export function isCatalogueDestination(destination: string): boolean {
   return catalogueSectionFor(destination) !== null;
 }
