@@ -15,7 +15,7 @@ export const STAT_ORB = {
   label: { size: 0.17, width: 0.9, tuck: 0.09 },
   invite: { size: 0.17, width: 0.9, top: 0.5 },
   caption: { top: 0.69 },
-  bookmark: { width: 0.36, aspect: 1.25, top: 0.15, inviting: { width: 0.28, top: 0.12 } },
+  bookmark: { width: 0.36, aspect: 1.25, top: 0.15, inviting: { width: 0.28, top: 0.12 }, corner: { width: 0.32, top: 0.04, right: 0.09 } },
   cover: { size: 0.92, centre: 0.5 },
   restingOpacity: 0.55,
   float: { rise: 0.028, scale: 1.03, ms: 3600, staggerMs: 450 },

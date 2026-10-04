@@ -135,6 +135,32 @@ describe('the words inside the glass', () => {
   });
 });
 
+describe('the bookmark clipped to a cover', () => {
+  const { width, top, right } = STAT_ORB.bookmark.corner;
+  const height = width * STAT_ORB.bookmark.aspect;
+  const left = 1 - right - width;
+  const fromCentre = (x: number, y: number) => Math.hypot(x - 0.5, y - 0.5);
+
+  it('should sit in the top right of the orb, its head on the rim', () => {
+    expect(left).toBeGreaterThan(0.5);
+    expect(top + height).toBeLessThan(0.5);
+    expect(fromCentre(left + width / 2, top)).toBeGreaterThan(0.49);
+    expect(fromCentre(left + width / 2, top)).toBeLessThan(0.56);
+  });
+
+  it('should hang over the cover, not off the orb', () => {
+    expect(fromCentre(left + width / 2, top + height)).toBeLessThan(0.4);
+    expect(fromCentre(1 - right, top)).toBeLessThan(0.62);
+  });
+
+  // operator, 2026-10-04: "increase its size" -- up from a quarter of the orb
+  it('should be about a third of the orb, no bigger than the bookmark standing alone, and end above Continue', () => {
+    expect(width).toBeGreaterThanOrEqual(0.3);
+    expect(width).toBeLessThanOrEqual(STAT_ORB.bookmark.width);
+    expect(top + height).toBeLessThan(STAT_ORB.caption.top);
+  });
+});
+
 describe('the bookmark in the middle orb', () => {
   it('should stand inside the glass, clear of the clouds at its foot', () => {
     const { width, aspect, top } = STAT_ORB.bookmark;

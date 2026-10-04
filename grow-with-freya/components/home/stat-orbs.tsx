@@ -28,16 +28,25 @@ import type { ChildHomeStory } from '@/types/child-home';
 import { STAT_ORB_ART, STAT_ORB_FRONT } from './stat-orb-art';
 import { starPoints } from './stat-icons';
 
-export const StatOrbBookmark = memo(function StatOrbBookmark({ diameter, inviting = false }: { diameter: number; inviting?: boolean }) {
-  const place = inviting ? STAT_ORB.bookmark.inviting : STAT_ORB.bookmark;
+export const StatOrbBookmark = memo(function StatOrbBookmark({
+  diameter,
+  inviting = false,
+  corner = false,
+}: {
+  diameter: number;
+  inviting?: boolean;
+  corner?: boolean;
+}) {
+  const place = corner ? STAT_ORB.bookmark.corner : inviting ? STAT_ORB.bookmark.inviting : STAT_ORB.bookmark;
   const width = diameter * place.width;
   const height = width * STAT_ORB.bookmark.aspect;
+  const left = corner ? diameter * (1 - STAT_ORB.bookmark.corner.right) - width : (diameter - width) / 2;
 
   return (
     <View
       testID="stat-orb-continue-bookmark"
       pointerEvents="none"
-      style={{ position: 'absolute', width, height, top: diameter * place.top, left: (diameter - width) / 2 }}
+      style={{ position: 'absolute', width, height, top: diameter * place.top, left }}
     >
       <Svg width={width} height={height} viewBox="0 0 100 125">
         <Defs>
@@ -46,7 +55,7 @@ export const StatOrbBookmark = memo(function StatOrbBookmark({ diameter, invitin
             <Stop offset="1" stopColor={STAT_ORB_TINTS.bookmark[1]} />
           </SvgLinearGradient>
         </Defs>
-        <Ellipse cx={50} cy={118} rx={34} ry={5} fill={STAT_ORB_TINTS.bookmarkShadow} />
+        {corner ? null : <Ellipse testID="stat-orb-bookmark-shadow" cx={50} cy={118} rx={34} ry={5} fill={STAT_ORB_TINTS.bookmarkShadow} />}
         <Path
           d="M14,12 Q14,5 21,5 L79,5 Q86,5 86,12 L86,108 L50,86 L14,108 Z"
           fill="url(#stat-orb-bookmark-fill)"
@@ -105,7 +114,7 @@ export const StatOrbCover = memo(function StatOrbCover({
         pointerEvents="none"
         style={{ position: 'absolute', width: art, height: art, left: (diameter - art) / 2, top: (diameter - art) / 2 }}
       />
-      <StatOrbBookmark diameter={diameter} />
+      <StatOrbBookmark diameter={diameter} corner />
     </>
   );
 });

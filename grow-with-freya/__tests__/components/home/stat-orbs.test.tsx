@@ -123,10 +123,12 @@ describe('StatOrbs', () => {
         expect(wordsIn(view, 'stat-orb-continue')).toEqual(['home.statOrb.continue']);
       });
 
-      it('should stand the bookmark where it stands on a book with no cover, drawn over the cover and its rim', () => {
+      // operator, 2026-10-04: "put the bookmark on the top right of the orb when there's an image"
+      it('should clip the bookmark to the top right of the orb, drawn over the cover and its rim', () => {
         const view = renderOrbs({ story: WITH_COVER });
         const bookmark = StyleSheet.flatten(host(view, 'stat-orb-continue-bookmark').props.style);
-        const width = DIAMETER * STAT_ORB.bookmark.width;
+        const { width: share, top, right } = STAT_ORB.bookmark.corner;
+        const width = DIAMETER * share;
         const drawn = [
           ...new Set(
             host(view, 'stat-orb-continue')
@@ -137,10 +139,20 @@ describe('StatOrbs', () => {
         const order = ['stat-orb-continue-cover-frame', 'stat-orb-continue-cover-front', 'stat-orb-continue-bookmark'].map((id) => drawn.indexOf(id));
 
         expect(bookmark).toEqual(
-          expect.objectContaining({ width, height: width * STAT_ORB.bookmark.aspect, top: DIAMETER * STAT_ORB.bookmark.top, left: (DIAMETER - width) / 2 })
+          expect.objectContaining({ width, height: width * STAT_ORB.bookmark.aspect, top: DIAMETER * top, left: DIAMETER * (1 - right) - width })
         );
         expect(order.every((at) => at >= 0)).toBe(true);
         expect([...order].sort((a, b) => a - b)).toEqual(order);
+      });
+
+      it('should hang the bookmark from the rim with no shadow on the ground under it', () => {
+        const withCover = renderOrbs({ story: WITH_COVER });
+        const standing = renderOrbs({ story: STORY });
+        const shadows = (view: ReturnType<typeof renderOrbs>) =>
+          host(view, 'stat-orb-continue').findAll((node: any) => node.props.testID === 'stat-orb-bookmark-shadow');
+
+        expect(shadows(withCover)).toHaveLength(0);
+        expect(shadows(standing).length).toBeGreaterThan(0);
       });
 
       it('should fill the glass with the cover, the rim and the clouds in front of it', () => {
