@@ -20,6 +20,12 @@ jest.mock('@/components/home/use-child-home-data', () => ({
   }),
 }));
 
+const mockJourneySteps = [{ id: 'day-1', day: 1, kind: 'story', state: 'open' }];
+const mockUseJourneySteps = jest.fn((_isActive: boolean) => mockJourneySteps);
+jest.mock('@/components/home/use-journey-steps', () => ({
+  useJourneySteps: (isActive: boolean) => mockUseJourneySteps(isActive),
+}));
+
 jest.mock('@/components/home/screen-time-glance', () => ({ ScreenTimeGlance: () => null }));
 jest.mock('@/components/ui/subscription-overlay', () => ({ SubscriptionOverlay: () => null }));
 jest.mock('@/components/ui/trial-end-upgrade-overlay', () => ({ TrialEndUpgradeOverlay: () => null }));
@@ -49,6 +55,18 @@ function voyage(): IslandVoyage {
 describe('HomeSceneContainer', () => {
   beforeEach(() => {
     mockSceneProps.length = 0;
+  });
+
+  it.each([true, false])('hands the scene the journey`s steps, read while the home screen is showing (%p)', (isActive) => {
+    mockUseJourneySteps.mockClear();
+    render(
+      <IslandVoyageProvider voyage={voyage()}>
+        <HomeSceneContainer onNavigate={jest.fn()} isActive={isActive} />
+      </IslandVoyageProvider>
+    );
+
+    expect(mockSceneProps[mockSceneProps.length - 1].journeySteps).toBe(mockJourneySteps);
+    expect(mockUseJourneySteps).toHaveBeenLastCalledWith(isActive);
   });
 
   it('sets off for the island from the learning journey card, and opens no other page for it', () => {

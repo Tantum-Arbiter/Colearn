@@ -57,7 +57,7 @@ interface ChildNavItem {
 
 export const CHILD_NAV_ITEMS: readonly ChildNavItem[] = [
   { id: 'home', icon: 'school-outline', selectedIcon: 'school', labelKey: 'childUi.nav.home' },
-  { id: 'progress', icon: 'trending-up-outline', selectedIcon: 'trending-up', labelKey: 'childUi.nav.progress' },
+  { id: 'progress', icon: 'trophy-outline', selectedIcon: 'trophy', labelKey: 'childUi.nav.progress' },
   { id: 'screensafe', icon: 'shield-outline', selectedIcon: 'shield-checkmark', labelKey: 'childUi.nav.screensafe' },
   { id: 'search', icon: 'search-outline', selectedIcon: 'search', labelKey: 'childUi.nav.search' },
   { id: 'profile', icon: 'person-circle-outline', selectedIcon: 'person-circle', labelKey: 'childUi.nav.profile' },

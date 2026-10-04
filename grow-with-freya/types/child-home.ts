@@ -1,4 +1,6 @@
 import type { ImageSourcePropType } from 'react-native';
+import type { PlanStepState } from '@/constants/learning-plan';
+import type { PlanStepKind } from '@/types/learning-plan';
 
 export interface ChildHomeStory {
   id: string;
@@ -24,6 +26,13 @@ export interface ChildHomeNextAchievement {
   required: number;
   unit?: NextAchievementUnit;
   artwork?: ImageSourcePropType;
+}
+
+export interface ChildHomeJourneyStep {
+  id: string;
+  day: number;
+  kind: PlanStepKind;
+  state: PlanStepState;
 }
 
 export interface ChildHomeAchievementTally {

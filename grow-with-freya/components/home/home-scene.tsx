@@ -24,7 +24,7 @@ import { useTimeOfDay } from '@/hooks/use-time-of-day';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { useSettledAfterTransition } from '@/hooks/use-ambient-animation';
 import type { ScreenTimeAllowance } from '@/hooks/use-screen-time-allowance';
-import type { ChildHomeData, WelcomeCopy } from '@/types/child-home';
+import type { ChildHomeData, ChildHomeJourneyStep, WelcomeCopy } from '@/types/child-home';
 import type { GuideScrollerBinding } from '@/components/owl-guide/use-guide-scroller';
 import { NightSky } from './night-sky';
 import { HomeHeroSky } from './home-hero-sky';
@@ -78,6 +78,7 @@ export interface HomeSceneProps {
   data: ChildHomeData;
   welcome: WelcomeCopy;
   celebrateAchievement?: boolean;
+  journeySteps?: readonly ChildHomeJourneyStep[];
   onContinue: () => void;
   onOpenJourney: () => void;
   /** An item in the bar at the foot that is a place to go: the library opens on that section. */
@@ -102,6 +103,7 @@ export const HomeScene = memo(function HomeScene({
   data,
   welcome,
   celebrateAchievement = false,
+  journeySteps,
   onContinue,
   onOpenJourney,
   onSelectSection,
@@ -313,6 +315,7 @@ export const HomeScene = memo(function HomeScene({
         <View style={[styles.cardSlot, gaps && { marginBottom: HOME_CARDS.gap + gaps.card }]} ref={guideTargets?.achievement} collapsable={false}>
           <AchievementCard
             next={data.nextAchievement}
+            steps={journeySteps}
             width={contentWidth}
             animated={animated}
             celebrate={celebrateAchievement}

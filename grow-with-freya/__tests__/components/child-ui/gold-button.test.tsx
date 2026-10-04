@@ -122,6 +122,24 @@ describe('GoldButton', () => {
     expect(face(plain).paddingHorizontal).toBe(GOLD_BUTTON.paddingHorizontal);
   });
 
+  it('should set its glyph as far from its word as it is asked, and at its own distance by default', () => {
+    const close = render(<GoldButton label="x" icon="lock-closed" onPress={jest.fn()} gap={3} />);
+    const plain = render(<GoldButton label="x" icon="lock-closed" onPress={jest.fn()} />);
+
+    const word = (tree: ReturnType<typeof render>) => StyleSheet.flatten(byTestId(tree, 'gold-button-word')[0].props.style);
+    expect(word(close).gap).toBe(3);
+    expect(word(plain).gap).toBe(GOLD_BUTTON.gap);
+  });
+
+  it('should glow as far and as strongly as it is asked, and at its own by default', () => {
+    const quiet = render(<GoldButton label="x" icon="lock-closed" onPress={jest.fn()} glow={{ opacity: 0.5, radius: 6 }} />);
+    const plain = render(<GoldButton label="x" icon="lock-closed" onPress={jest.fn()} />);
+
+    const glow = (tree: ReturnType<typeof render>) => StyleSheet.flatten(byTestId(tree, 'gold-button-glow')[0].props.style);
+    expect(glow(quiet)).toEqual(expect.objectContaining({ shadowOpacity: 0.5, shadowRadius: 6 }));
+    expect(glow(plain)).toEqual(expect.objectContaining({ shadowOpacity: GOLD_BUTTON.glowOpacity, shadowRadius: GOLD_BUTTON.glowRadius }));
+  });
+
   it('should be as tall as it is asked, and stay a pill', () => {
     const tree = render(<GoldButton label="x" icon="lock-closed" onPress={jest.fn()} height={48} />);
 

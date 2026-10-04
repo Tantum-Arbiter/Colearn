@@ -1,3 +1,4 @@
+import type { PlanStepState } from '@/constants/learning-plan';
 import type {
   ChildHomeData,
   ReturnVisitContext,
@@ -128,7 +129,6 @@ export const HOME_CARDS = {
   coverRadius: 12,
   arrowSize: 46,
   tileIcon: 34,
-  medallion: 56,
   /** The achievement and continue-learning cards on a tablet, side by side
    *  rather than stacked -- there is width to spare there that a phone does
    *  not have, and pairing them is what keeps the taller welcome block, the
@@ -201,6 +201,127 @@ export const HOME_CARD_TINTS = {
   divider: 'rgba(255,255,255,0.12)',
   starLit: '#FFD76B',
   starUnlit: 'rgba(255,255,255,0.30)',
+} as const;
+
+export const JOURNEY_STEPS_SHOWN = 5;
+
+export function journeyStepsShown<Step extends { state: PlanStepState }>(
+  steps: readonly Step[],
+  shown: number = JOURNEY_STEPS_SHOWN
+): readonly Step[] {
+  if (!(shown > 0)) return [];
+  if (steps.length <= shown) return steps;
+
+  const inHand = steps.findIndex((step) => step.state === 'open' || step.state === 'tomorrow');
+  const at = inHand < 0 ? steps.length - 1 : inHand;
+  const first = Math.min(Math.max(at - 1, 0), steps.length - shown);
+
+  return steps.slice(first, first + shown);
+}
+
+export const JOURNEY_CARD = {
+  designWidth: 370,
+  smallestScale: 0.8,
+  height: 154,
+  fill: ['#032C8A', '#052E8E'],
+  artAspect: 746 / 472,
+  inset: 22.5,
+  top: 13.7,
+  wordsReach: 25,
+  eyebrowReach: 65,
+  wordsNarrowest: 96,
+  edgeGlow: [
+    'rgba(48,104,238,0.95)',
+    'rgba(48,104,238,0.8)',
+    'rgba(48,104,238,0.4)',
+    'rgba(48,104,238,0.14)',
+    'rgba(48,104,238,0)',
+  ],
+  edgeGlowStops: [0, 0.15, 0.4, 0.65, 1],
+  edgeGlowReach: 18,
+  cornerGleam: ['rgba(150,200,255,0.6)', 'rgba(60,130,235,0.28)', 'rgba(60,130,235,0)'],
+  cornerGleamStops: [0, 0.35, 1],
+  cornerGleamSize: 64,
+  step: {
+    open: 25,
+    rest: 18,
+    gap: 8.3,
+    link: [2.6, 1.4, 2.6],
+    linkThick: 1.4,
+    ring: 1,
+    openIcon: 13,
+    restIcon: 10,
+    top: 2.3,
+    glow: { opacity: 0.75, radius: 5 },
+  },
+  buttonFoot: 12.8,
+  button: {
+    height: 35.5,
+    fontSize: 14.5,
+    iconSize: 17,
+    paddingHorizontal: 22.75,
+    gap: 2.3,
+    outdent: 2.5,
+    glow: { opacity: 0.6, radius: 8 },
+  },
+  glint: { size: 18, across: 0.278, down: 0.252 },
+} as const;
+
+export const JOURNEY_CARD_TYPE = {
+  eyebrow: 10,
+  eyebrowTracking: 1.48,
+  eyebrowIndent: 0.5,
+  title: 21,
+  titleTracking: -0.35,
+  titleIndent: -0.7,
+  titleTop: 1.55,
+  body: 14.5,
+  bodyTop: -0.3,
+  bodyIndent: 0.75,
+} as const;
+
+export const JOURNEY_CARD_TINTS = {
+  eyebrow: '#A8C6F5',
+  title: '#FFFFFF',
+  body: '#CFE4FF',
+  stepOpen: ['#FFE98F', '#FFC533'],
+  stepOpenRing: '#FFF3C4',
+  stepOpenInk: '#3A2400',
+  stepDone: ['#F2B04A', '#D7802C'],
+  stepDoneRing: '#FFF3D2',
+  stepDoneInk: '#FFFFFF',
+  stepLocked: ['rgba(126,170,255,0.5)', 'rgba(74,120,226,0.42)'],
+  stepLockedRing: 'rgba(176,206,255,0.8)',
+  stepLockedInk: '#E3EEFF',
+  stepGlow: '#FFC533',
+  stepLinkWarm: 'rgba(255,229,150,0.95)',
+  stepLinkCool: 'rgba(190,214,255,0.7)',
+} as const;
+
+const JOURNEY_CARD_EDGE = 3;
+
+export function journeyArtWidth(innerHeight: number): number {
+  return innerHeight * JOURNEY_CARD.artAspect;
+}
+
+export function journeyScale(cardWidth: number): number {
+  const scale = cardWidth / JOURNEY_CARD.designWidth;
+  if (!(scale > 0)) return 1;
+
+  return Math.min(1, Math.max(JOURNEY_CARD.smallestScale, scale));
+}
+
+export function journeyWordsWidth(cardWidth: number, innerHeight: number, reach: number, scale: number = 1): number {
+  const room = cardWidth - JOURNEY_CARD_EDGE - journeyArtWidth(innerHeight) + (reach - JOURNEY_CARD.inset) * scale;
+  const narrowest = JOURNEY_CARD.wordsNarrowest * scale;
+
+  return room > narrowest ? room : narrowest;
+}
+
+export const STAT_TEXT_SHADE = {
+  textShadowColor: 'rgba(4,16,47,0.95)',
+  textShadowOffset: { width: 0, height: 1 },
+  textShadowRadius: 7,
 } as const;
 
 export type StatIconKind = 'book' | 'clock' | 'shield' | 'flame' | 'trophy';

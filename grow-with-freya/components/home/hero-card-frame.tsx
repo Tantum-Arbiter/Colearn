@@ -19,6 +19,7 @@ import Svg, {
 import { HERO_CARD } from '@/constants/home-sky';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+const HERO_CARD_FILL = [HERO_CARD.fillTop, HERO_CARD.fillBottom] as const;
 
 interface CardGlowLayerProps {
   width: number;
@@ -70,6 +71,8 @@ export interface HeroCardFrameProps {
   onPressStateChange?: (pressed: boolean) => void;
   accessibilityLabel: string;
   accessibilityHint?: string;
+  fill?: readonly [string, string];
+  backdrop?: React.ReactNode;
   children: React.ReactNode;
   testID?: string;
 }
@@ -81,6 +84,8 @@ export const HeroCardFrame = memo(function HeroCardFrame({
   onPressStateChange,
   accessibilityLabel,
   accessibilityHint,
+  fill = HERO_CARD_FILL,
+  backdrop,
   children,
   testID = 'hero-card',
 }: HeroCardFrameProps) {
@@ -139,9 +144,10 @@ export const HeroCardFrame = memo(function HeroCardFrame({
           <View style={[styles.surface, { borderRadius: innerRadius }]}>
             <LinearGradient
               testID={`${testID}-surface`}
-              colors={[HERO_CARD.fillTop, HERO_CARD.fillBottom]}
+              colors={[fill[0], fill[1]]}
               style={StyleSheet.absoluteFill}
             />
+            {backdrop}
             <LinearGradient
               testID={`${testID}-sheen`}
               colors={[HERO_CARD.sheen, 'transparent']}

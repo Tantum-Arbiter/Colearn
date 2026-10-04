@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useState, type ComponentProps } from 'react';
+import React, { memo, useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -8,10 +8,10 @@ import Svg, { Circle, Defs, Path, RadialGradient, Rect, Stop } from 'react-nativ
 import { SPACE_1 } from '@/components/child-ui/tokens';
 import { artPoint, type IslandLayout } from '@/constants/island-scene';
 import { CHECKPOINT_SHAPE, checkpointLabelTop } from '@/constants/island-trail';
+import { PLAN_STEP_ICON } from '@/constants/learning-plan';
 import { Fonts } from '@/constants/theme';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import type { PlanStepView } from '@/hooks/use-learning-plan';
-import type { PlanStepKind } from '@/types/learning-plan';
 
 export const CHECKPOINT_DIAMETER_PHONE = 56;
 export const CHECKPOINT_DIAMETER_TABLET = 68;
@@ -45,13 +45,6 @@ export const CHECKPOINT_TINTS = {
   inkWarm: '#2A1C0A',
   shadow: '#0B1A4A',
 } as const;
-
-const KIND_ICON: Record<Exclude<PlanStepKind, 'story'>, ComponentProps<typeof Ionicons>['name']> = {
-  words: 'text',
-  numbers: 'calculator',
-  feelings: 'happy',
-  music: 'musical-notes',
-};
 
 const RING_OF_DIAMETER = 0.035;
 const BOOK_OF_DIAMETER = 0.52;
@@ -279,7 +272,7 @@ export const PlanCheckpoint = memo(function PlanCheckpoint({
             <View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.middle]}>
               <Ionicons
                 testID={`plan-checkpoint-${day}-icon`}
-                name={KIND_ICON[view.step.kind]}
+                name={PLAN_STEP_ICON[view.step.kind]}
                 size={Math.round(diameter * ICON_OF_DIAMETER)}
                 color={CHECKPOINT_TINTS.cover}
               />

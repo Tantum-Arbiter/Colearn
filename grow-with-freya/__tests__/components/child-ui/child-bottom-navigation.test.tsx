@@ -84,6 +84,19 @@ describe('ChildBottomNavigation', () => {
     expect(home.selectedIcon).toBe('school');
   });
 
+  /**
+   * The progress page is the badge wall, so its item wears the trophy the
+   * home screen counts badges with, drawn as every other item is: in outline
+   * until it is the page showing, then filled.
+   */
+  it('shows progress as a trophy, in outline like its neighbours and filled when chosen', () => {
+    const progress = CHILD_NAV_ITEMS.find((item) => item.id === 'progress')!;
+
+    expect(progress.icon).toBe('trophy-outline');
+    expect(progress.selectedIcon).toBe('trophy');
+    CHILD_NAV_ITEMS.forEach((item) => expect(item.icon).toMatch(/-outline$/));
+  });
+
   it('marks exactly one item as selected', () => {
     const tree = render(<ChildBottomNavigation selected="progress" onSelect={jest.fn()} />);
 

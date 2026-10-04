@@ -2,9 +2,18 @@ import { ageMonthsToRange } from '@/components/learning/age-range-carousel';
 import type { TransitionActivity } from '@/contexts/ActivityTransitionContext';
 import { ALL_LEARNING_ACTIVITIES } from '@/data/learning-activities';
 import { MUSIC_PRACTISE_ACTIVITY } from '@/data/learning-plan';
-import type { LearningPlan, LearningPlanStep, PlanAgeRange, PlanLaunch } from '@/types/learning-plan';
+import type { Ionicons } from '@expo/vector-icons';
+import type { LearningPlan, LearningPlanStep, PlanAgeRange, PlanLaunch, PlanStepKind } from '@/types/learning-plan';
 
 export const PLAN_STEPS_PER_WEEK = 7;
+
+export const PLAN_STEP_ICON = {
+  story: 'book',
+  words: 'text',
+  numbers: 'calculator',
+  feelings: 'happy',
+  music: 'musical-notes',
+} as const satisfies Record<PlanStepKind, keyof typeof Ionicons.glyphMap>;
 
 export type PlanStepState = 'done' | 'open' | 'tomorrow' | 'locked';
 

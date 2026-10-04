@@ -523,12 +523,18 @@ describe('HomeScene on a tablet', () => {
     expect(byTestId(view, 'achievement-cta').length).toBeGreaterThan(0);
   });
 
-  it('keeps every fact on the achievement card', () => {
-    const { view } = renderScene();
+  it('keeps every fact on the achievement card, with the journey`s steps it is handed', () => {
+    const journeySteps = [
+      { id: 'day-1', day: 1, kind: 'story', state: 'open' },
+      { id: 'day-2', day: 2, kind: 'words', state: 'locked' },
+    ] as const;
+    const { view } = renderScene({ journeySteps });
 
     const underTest = textContents(view);
     expect(underTest).toContain('home.milestone.eyebrow');
-    expect(byTestId(view, 'milestone-stars').length).toBeGreaterThan(0);
+    expect(byTestId(view, 'journey-step-1').length).toBeGreaterThan(0);
+    expect(byTestId(view, 'journey-step-2').length).toBeGreaterThan(0);
+    expect(byTestId(view, 'journey-step-3')).toHaveLength(0);
   });
 
   it('still sets off on the learning journey when the card is tapped', () => {

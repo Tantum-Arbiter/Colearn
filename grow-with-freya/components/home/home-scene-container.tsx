@@ -14,6 +14,7 @@ import { ScreenTimeGlance } from './screen-time-glance';
 import type { HomeSceneProps } from './home-scene';
 import { HomeScene, type HomeSection, type HomeGuideTargets } from './home-scene';
 import { useChildHomeData } from './use-child-home-data';
+import { useJourneySteps } from './use-journey-steps';
 
 export const HOME_DESTINATIONS = {
   stories: 'stories',
@@ -37,6 +38,7 @@ export const HomeSceneContainer = memo(function HomeSceneContainer({
   isActive = true,
 }: HomeSceneContainerProps) {
   const { data, welcome, celebrateAchievement } = useChildHomeData();
+  const journeySteps = useJourneySteps(isActive);
   const { requestStoryOpen } = useStoryTransition();
   const { depart, phase } = useIslandVoyage();
   const landing = phase === 'recrossing' || phase === 'landing';
@@ -84,6 +86,7 @@ export const HomeSceneContainer = memo(function HomeSceneContainer({
         data={data}
         welcome={welcome}
         celebrateAchievement={celebrateAchievement}
+        journeySteps={journeySteps}
         onContinue={handleContinue}
         onOpenJourney={depart}
         onSelectSection={handleSelectSection}
