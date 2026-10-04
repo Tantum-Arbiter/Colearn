@@ -1,8 +1,9 @@
 import React from 'react';
-import { StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { TEXT_PRIMARY } from '@/constants/night-palette';
 import { Fonts } from '@/constants/theme';
 import { useAccessibility } from '@/hooks/use-accessibility';
+import { HEADING_HALO, HeadingHalo } from './heading-halo';
 import { TYPE_ROLES, typeSize } from './tokens';
 
 const TITLE_MIN_SCALE = 0.7;
@@ -16,16 +17,19 @@ export function PageTitle({ title, testID = 'page-title' }: PageTitleProps) {
   const { isTablet, scaledFontSize } = useAccessibility();
 
   return (
-    <Text
-      testID={testID}
-      accessibilityRole="header"
-      style={[styles.title, { fontSize: scaledFontSize(typeSize('pageTitle', isTablet)) }]}
-      numberOfLines={1}
-      adjustsFontSizeToFit
-      minimumFontScale={TITLE_MIN_SCALE}
-    >
-      {title}
-    </Text>
+    <View testID={`${testID}-wrap`} style={styles.wrap}>
+      <HeadingHalo testID={`${testID}-halo`} spread={HEADING_HALO.title} />
+      <Text
+        testID={testID}
+        accessibilityRole="header"
+        style={[styles.title, { fontSize: scaledFontSize(typeSize('pageTitle', isTablet)) }]}
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={TITLE_MIN_SCALE}
+      >
+        {title}
+      </Text>
+    </View>
   );
 }
 
@@ -40,6 +44,10 @@ export const TITLE_SHADOW = {
 } as const;
 
 const styles = StyleSheet.create({
+  wrap: {
+    flexShrink: 1,
+    maxWidth: '100%',
+  },
   title: {
     color: TEXT_PRIMARY,
     fontFamily: Fonts.primary,

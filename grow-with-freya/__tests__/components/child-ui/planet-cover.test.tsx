@@ -9,7 +9,7 @@ import React from 'react';
 import { StyleSheet } from 'react-native';
 import { render } from '@testing-library/react-native';
 import { PLANET_HEADER_ESTIMATE, PlanetCover, planetCoverHeight } from '@/components/child-ui/planet-cover';
-import { earthLayout } from '@/constants/earth';
+import { planetReach } from '@/constants/earth';
 
 const PHONE = { width: 402, height: 874 };
 const TABLET = { width: 834, height: 1210 };
@@ -21,7 +21,7 @@ describe('planetCoverHeight', () => {
     ['a tablet on its side', TABLET_LANDSCAPE, 151],
     ['a phone', PHONE, 170],
   ])('should reach below the planet on %s when the planet hangs lower than the header', (_case, screen, header) => {
-    const cap = earthLayout(screen.width, screen.height, 'top').cap;
+    const cap = planetReach(screen.width, screen.height, 'top');
 
     const underTest = planetCoverHeight(header, screen.width, screen.height);
 
@@ -30,7 +30,7 @@ describe('planetCoverHeight', () => {
   });
 
   it('should follow the header when the header reaches lower than the planet', () => {
-    const cap = earthLayout(TABLET.width, TABLET.height, 'top').cap;
+    const cap = planetReach(TABLET.width, TABLET.height, 'top');
 
     const underTest = planetCoverHeight(cap + 40, TABLET.width, TABLET.height);
 
@@ -57,7 +57,7 @@ describe('PlanetCover', () => {
 
     expect(veil.top).toBe(0);
     expect(veil.height).toBe(240);
-    expect(all.indexOf('cover-veil')).toBeLessThan(all.indexOf('planet-header-artwork-globe'));
+    expect(all.indexOf('cover-veil')).toBeLessThan(all.indexOf('planet-header-artwork-planet'));
   });
 
   it('never takes a touch', () => {

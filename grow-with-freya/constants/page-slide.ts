@@ -1,3 +1,5 @@
+import { cloudGap } from '@/constants/earth';
+
 export const ISLAND_ACTIVITY_PAGES = ['feelings', 'practise', 'spelling-game'] as const;
 
 export function pageOffset(page: string, current: string, height: number): number {
@@ -20,6 +22,10 @@ export function accountReturnPage<Page extends string>(openedFrom: Page): Page |
 export function voyageStaysOut(page: string, fromIsland: boolean): boolean {
   if (page === 'island') return true;
   return fromIsland && (ISLAND_ACTIVITY_PAGES as readonly string[]).includes(page);
+}
+
+export function slideTravel(width: number, height: number): number {
+  return height + cloudGap(width, height);
 }
 
 export function snapToPixel(value: number, scale: number): number {

@@ -2,7 +2,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { StyleSheet, useWindowDimensions, type LayoutChangeEvent } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { earthLayout } from '@/constants/earth';
+import { planetReach } from '@/constants/earth';
 import { headerSkyVeil } from '@/constants/night-palette';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { PinnedInSection } from './section-crossfade';
@@ -11,7 +11,7 @@ import { PlanetHeaderArtwork } from './planet-header-artwork';
 export const PLANET_HEADER_ESTIMATE = { phone: 130, tablet: 190 } as const;
 
 export function planetCoverHeight(headerHeight: number, screenWidth: number, screenHeight: number): number {
-  return Math.max(headerHeight, earthLayout(screenWidth, screenHeight, 'top').cap);
+  return Math.max(headerHeight, planetReach(screenWidth, screenHeight, 'top'));
 }
 
 export interface PlanetCoverLayout {

@@ -7,16 +7,19 @@
  */
 
 import React from 'react';
-import { PixelRatio, StyleSheet, Text } from 'react-native';
+import { Dimensions, PixelRatio, StyleSheet, Text } from 'react-native';
 import { act, render } from '@testing-library/react-native';
 import { useSharedValue, withTiming } from 'react-native-reanimated';
 import { COLD_PAGE_FRAMES, EnhancedPageTransition } from '@/components/ui/enhanced-page-transition';
 import { NIGHT_VOID } from '@/constants/night-palette';
 import { getScreenDimensions } from '@/components/main-menu/constants';
+import { cloudGap } from '@/constants/earth';
+import { slideTravel } from '@/constants/page-slide';
 
+let mockScreen = { width: 390, height: 844 };
 jest.mock('@/components/main-menu/constants', () => ({
   ...jest.requireActual('@/components/main-menu/constants'),
-  getScreenDimensions: () => ({ width: 390, height: 844 }),
+  getScreenDimensions: () => mockScreen,
 }));
 
 const renders: Record<string, number> = {};
@@ -69,6 +72,64 @@ describe('EnhancedPageTransition', () => {
     const page = view.UNSAFE_root.findAll((n: any) => n.props.testID === 'page-transition-page-main' && typeof n.type !== 'string')[0];
 
     expect(StyleSheet.flatten(page.props.style)).toMatchObject({ top: 0, bottom: -1 / PixelRatio.get() });
+  });
+
+  /**
+   * A page below the home page rests a screen and a layer of cloud away, and
+   * the cloud lies in that gap (operator, 2026-10-03).
+   */
+  it('should lay the sky of the gap under the pages and the ring of cloud over them, under the touch guard', () => {
+    const view = render(<EnhancedPageTransition currentPage="main" pages={PAGES} duration={800} />);
+    const names = ['page-transition-gap-sky', 'page-transition-page-main', 'page-transition-clouds', 'page-transition-touch-guard'];
+
+    const order = view.UNSAFE_root
+      .findAll((node: any) => names.includes(node.props.testID))
+      .map((node: any) => node.props.testID)
+      .filter((name: string, index: number, all: string[]) => all.indexOf(name) === index);
+    const [sky, clouds] = view.UNSAFE_root
+      .findAll((node: any) => node.props.mainOffset !== undefined)
+      .filter((node: any, index: number, all: any[]) => all.findIndex((other: any) => other.props.testID === node.props.testID) === index);
+
+    expect(order).toEqual(names);
+    expect(clouds.props.mainOffset.value).toBe(0);
+    expect(clouds.props.width).toBe(390);
+    expect(clouds.props.height).toBe(844);
+    expect(clouds.props.gap).toBeCloseTo(cloudGap(390, 844), 6);
+    expect(sky.props.mainOffset).toBe(clouds.props.mainOffset);
+    expect(sky.props.gap).toBeCloseTo(cloudGap(390, 844), 6);
+    expect(sky.props.height).toBe(844);
+    expect(sky.props.width).toBe(390);
+  });
+
+  it('should size the cloud afresh when the screen is turned', () => {
+    let turned: () => void = () => undefined;
+    const listen = jest.spyOn(Dimensions, 'addEventListener').mockImplementation(((_type: string, handler: () => void) => {
+      turned = handler;
+      return { remove: jest.fn() };
+    }) as never);
+    const view = render(<EnhancedPageTransition currentPage="main" pages={PAGES} duration={800} />);
+
+    act(() => {
+      mockScreen = { width: 844, height: 390 };
+      turned();
+    });
+    const clouds = view.UNSAFE_root.findAll((node: any) => node.props.mainOffset !== undefined && node.props.width !== undefined)[0];
+    mockScreen = { width: 390, height: 844 };
+    listen.mockRestore();
+
+    expect(clouds.props.width).toBe(844);
+    expect(clouds.props.height).toBe(390);
+    expect(clouds.props.gap).toBeCloseTo(cloudGap(844, 390), 6);
+  });
+
+  it('should give the cloud the home page`s own slide, and rest the home page a screen and the cloud away', () => {
+    const view = render(<EnhancedPageTransition currentPage="stories" pages={PAGES} duration={800} />);
+
+    const clouds = view.UNSAFE_root.findAll((node: any) => node.props.mainOffset !== undefined && node.props.width !== undefined)[0];
+    const home = view.UNSAFE_root.findAll((node: any) => node.props.pageKey === 'main' && node.props.animationValue)[0];
+
+    expect(clouds.props.mainOffset).toBe(home.props.animationValue);
+    expect(clouds.props.mainOffset.value).toBeCloseTo(-slideTravel(390, 844), 6);
   });
 
   it('should let touches through while nothing is sliding', () => {
@@ -234,7 +295,7 @@ describe('EnhancedPageTransition', () => {
   });
 
   describe('a page that makes its own entrance', () => {
-    const HEIGHT = getScreenDimensions().height;
+    const HEIGHT = slideTravel(getScreenDimensions().width, getScreenDimensions().height);
     const WITH_ISLAND = { ...PAGES, island: <Page name="island" /> };
     const INSTANT = ['island'];
 
@@ -363,7 +424,7 @@ describe('EnhancedPageTransition', () => {
   });
 
   describe('Grown-ups below the library', () => {
-    const HEIGHT = getScreenDimensions().height;
+    const HEIGHT = slideTravel(getScreenDimensions().width, getScreenDimensions().height);
 
     beforeEach(() => {
       (useSharedValue as jest.Mock).mockImplementation((initial: number) => React.useRef({ value: initial }).current);

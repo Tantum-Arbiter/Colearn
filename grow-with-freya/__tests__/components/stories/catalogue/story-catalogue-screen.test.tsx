@@ -1631,11 +1631,11 @@ describe('the shelves and the planet', () => {
 
     const scroll = firstIndex(tree, 'catalogue-scroll');
     const veil = firstIndex(tree, 'catalogue-planet-over-shelves-veil');
-    const globe = firstIndex(tree, 'planet-header-artwork-globe');
+    const globe = firstIndex(tree, 'planet-header-artwork-planet');
     const veilStyle = StyleSheet.flatten(byTestId(tree, 'catalogue-planet-over-shelves-veil')[0].props.style);
 
     expect(veil).toBeGreaterThan(scroll);
-    expect(tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'planet-header-artwork-globe').length).toBeGreaterThan(1);
+    expect(tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'planet-header-artwork-planet').length).toBeGreaterThan(1);
     expect(globe).toBeGreaterThanOrEqual(0);
     expect(veilStyle.top).toBe(0);
     expect(veilStyle.height).toBeGreaterThanOrEqual(PLANET_HEADER_ESTIMATE.phone);

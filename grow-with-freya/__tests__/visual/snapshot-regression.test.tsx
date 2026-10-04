@@ -194,14 +194,19 @@ describe('Visual Regression Tests', () => {
 
       expect(structure(tree)).toEqual([
         'earth-horizon',
-        'earth-horizon-clouds',
-        'earth-horizon-globe',
+        'earth-horizon-planet',
         'icon-Ionicons-arrow-back',
         'linear-gradient',
         'music-control-button',
         'music-icon-playing',
         'page-header-row',
         'page-header-title',
+        'page-header-title-halo',
+        'svg-Defs',
+        'svg-RadialGradient',
+        'svg-Rect',
+        'svg-Stop',
+        'svg-Svg',
       ]);
     });
 

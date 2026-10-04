@@ -7,6 +7,7 @@ import React from 'react';
 import { render } from '@testing-library/react-native';
 import { PageTagline, TAGLINE_ARCH_RADIUS_RATIO } from '@/components/child-ui/page-tagline';
 import { ACCENT_GOLD, TEXT_PRIMARY } from '@/constants/night-palette';
+import { HEADING_HALO } from '@/components/child-ui/heading-halo';
 import { Fonts } from '@/constants/theme';
 
 const mockAccessibility = jest.fn(() => ({
@@ -187,5 +188,18 @@ describe('PageTagline over the globe', () => {
     const block = tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'page-tagline')[0];
 
     expect(block.props.accessibilityLabel).toBe('A brighter world in every story');
+  });
+});
+
+describe('PageTagline over the painted planet', () => {
+  it('should sit in a heading halo behind its two lines, as the title does', () => {
+    const tree = render(<PageTagline lines={['Little steps,', 'big progress']} width={300} />);
+
+    const block = tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'page-tagline' && n.props.style)[0];
+    const halo = tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'page-tagline-halo' && n.props.spread)[0];
+    const firstChild = block.findAll((n: any) => typeof n.props.testID === 'string')[1];
+
+    expect(halo.props.spread).toEqual(HEADING_HALO.tagline);
+    expect(firstChild.props.testID).toBe('page-tagline-halo');
   });
 });

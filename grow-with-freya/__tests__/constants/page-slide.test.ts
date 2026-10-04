@@ -4,7 +4,8 @@
  * lifts away above.
  */
 
-import { ISLAND_ACTIVITY_PAGES, accountReturnPage, crossesView, pageOffset, snapToPixel, voyageStaysOut } from '@/constants/page-slide';
+import { ISLAND_ACTIVITY_PAGES, accountReturnPage, crossesView, pageOffset, snapToPixel, voyageStaysOut, slideTravel } from '@/constants/page-slide';
+import { cloudGap } from '@/constants/earth';
 
 const HEIGHT = 800;
 
@@ -120,5 +121,20 @@ describe('voyageStaysOut', () => {
       expect(voyageStaysOut(page, false)).toBe(false);
     });
     ISLAND_ACTIVITY_PAGES.forEach((page) => expect(voyageStaysOut(page, false)).toBe(false));
+  });
+});
+
+/**
+ * A page below the home page rests a screen and a layer of cloud away, so
+ * the slide between them passes through the cloud (operator, 2026-10-03).
+ */
+describe('slideTravel', () => {
+  it.each([
+    [402, 874],
+    [834, 1194],
+    [1194, 834],
+  ])('should be a screen and the cloud between, on a screen %p by %p', (width, height) => {
+    expect(slideTravel(width, height)).toBeCloseTo(height + cloudGap(width, height), 6);
+    expect(slideTravel(width, height)).toBeGreaterThan(height);
   });
 });

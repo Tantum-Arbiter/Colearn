@@ -9,8 +9,10 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { getScreenDimensions } from '@/components/main-menu/constants';
-import { crossesView, pageOffset, snapToPixel } from '@/constants/page-slide';
+import { crossesView, pageOffset, slideTravel, snapToPixel } from '@/constants/page-slide';
+import { cloudGap } from '@/constants/earth';
 import { NIGHT_VOID } from '@/constants/night-palette';
+import { CloudRing, GapSky } from './cloud-ring';
 
 export const COLD_PAGE_FRAMES = 2;
 const PIXEL_SCALE = PixelRatio.get();
@@ -82,6 +84,7 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
 }) => {
   // Get initial screen height and track changes
   const [screenHeight, setScreenHeight] = React.useState(() => getScreenDimensions().height);
+  const [screenWidth, setScreenWidth] = React.useState(() => getScreenDimensions().width);
 
   // Block touch input during page transitions so buttons can't be pressed mid-slide
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -113,8 +116,9 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
   // Update screen height when dimensions change (orientation changes)
   useEffect(() => {
     const updateDimensions = () => {
-      const { height } = getScreenDimensions();
+      const { width, height } = getScreenDimensions();
       setScreenHeight(height);
+      setScreenWidth(width);
     };
 
     // Listen for dimension changes
@@ -123,7 +127,9 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
     return () => subscription?.remove();
   }, []);
 
-  const restingAt = (pageKey: string) => pageOffset(pageKey, currentPage, screenHeight);
+  const gap = cloudGap(screenWidth, screenHeight);
+  const travel = slideTravel(screenWidth, screenHeight);
+  const restingAt = (pageKey: string) => pageOffset(pageKey, currentPage, travel);
   const mainTranslateY = useSharedValue(restingAt('main'));
   const storiesTranslateY = useSharedValue(restingAt('stories'));
   const sensoryTranslateY = useSharedValue(restingAt('sensory'));
@@ -157,9 +163,9 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
   // Set values immediately without animation to prevent visual glitches
   useEffect(() => {
     Object.entries(pageAnimations).forEach(([pageKey, value]) => {
-      if (pageKey !== currentPage) value.value = pageOffset(pageKey, currentPage, screenHeight);
+      if (pageKey !== currentPage) value.value = restingAt(pageKey);
     });
-  }, [screenHeight]);
+  }, [travel]);
 
   useEffect(() => {
     // Use bezier curve for smoother animation that doesn't "snap" at the end
@@ -198,7 +204,7 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
 
     const slideAll = () => {
       Object.entries(pageAnimations).forEach(([pageKey, value]) => {
-        set(value, pageOffset(pageKey, currentPage, screenHeight));
+        set(value, restingAt(pageKey));
       });
     };
 
@@ -224,6 +230,7 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
 
   return (
     <View testID="page-transition-backdrop" style={styles.container}>
+      <GapSky testID="page-transition-gap-sky" mainOffset={mainTranslateY} width={screenWidth} height={screenHeight} gap={gap} />
       {Object.entries(pages).map(([pageKey, pageComponent]) => {
         // Only render pages that have animation values, and only the ones in play:
         // home, the page showing, the page it is sliding away from, and the last
@@ -244,6 +251,7 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
           />
         );
       })}
+      <CloudRing testID="page-transition-clouds" mainOffset={mainTranslateY} width={screenWidth} height={screenHeight} gap={gap} />
       {/* swallows touches while pages slide, without re-rendering the pages themselves */}
       <View
         testID="page-transition-touch-guard"

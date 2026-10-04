@@ -85,7 +85,8 @@ export function useImagePreloader(
 export function useCriticalImagePreloader(): PreloadResult {
   const criticalImages = [
     require('../assets/images/ui-elements/bear-bottom-screen.webp'),
-    require('../assets/images/ui-elements/shared-earth.webp'),
+    require('../assets/images/home-planet/planet-horizon.webp'),
+    require('../assets/images/home-planet/planet-cloud-ring.webp'),
     require('../assets/images/ui-elements/moon-top-screen.webp'),
     require('../assets/images/ui-elements/moon-bottom-screen.webp'),
     require('../assets/images/menu-icons/stories-strip.webp'),
@@ -103,7 +104,8 @@ export function useCriticalImagePreloader(): PreloadResult {
 export async function preloadCriticalImages(): Promise<void> {
   const criticalImages = [
     require('../assets/images/ui-elements/bear-bottom-screen.webp'),
-    require('../assets/images/ui-elements/shared-earth.webp'),
+    require('../assets/images/home-planet/planet-horizon.webp'),
+    require('../assets/images/home-planet/planet-cloud-ring.webp'),
     require('../assets/images/ui-elements/moon-top-screen.webp'),
     require('../assets/images/ui-elements/moon-bottom-screen.webp'),
     require('../assets/images/menu-icons/stories-strip.webp'),
