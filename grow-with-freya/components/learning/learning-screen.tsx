@@ -52,8 +52,6 @@ import { useAccessibility } from '@/hooks/use-accessibility';
 import { Fonts } from '@/constants/theme';
 import { SubscriptionOverlay } from '@/components/ui/subscription-overlay';
 import { StoryAccessService } from '@/services/story-access-service';
-import { OwlGuide } from '@/components/owl-guide';
-import type { GuideId } from '@/constants/owl-guide';
 import { useAppStore, type StoryViewMode } from '@/store/app-store';
 import { useActivityTransition, type TransitionActivity } from '@/contexts/ActivityTransitionContext';
 
@@ -249,13 +247,6 @@ export function LearningScreen({ mode, onBack, onActivitySelect, isActive = fals
       viewFadeOpacity.value = withTiming(1, { duration: 300, easing: Easing.out(Easing.ease) });
     });
   }, [learningViewMode, setLearningViewMode, viewFadeOpacity]);
-
-  // Map learning mode to tutorial ID
-  const tutorialId: GuideId = mode === 'spelling'
-    ? 'spelling_tips'
-    : mode === 'numbers'
-    ? 'numbers_tips'
-    : 'feelings_tips';
 
   const allActivities = ACTIVITIES_BY_MODE[mode];
 
@@ -634,9 +625,6 @@ export function LearningScreen({ mode, onBack, onActivitySelect, isActive = fals
         visible={showSubscription}
         onClose={() => setShowSubscription(false)}
       />
-
-      {/* Learning section tutorial — shown on first visit, only when page is active */}
-      <OwlGuide id={tutorialId} active={isActive} />
     </View>
   );
 }

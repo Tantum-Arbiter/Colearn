@@ -26,7 +26,7 @@ import {
 } from '@/constants/night-palette';
 import { useAppStore, type SubscriptionTier } from '@/store/app-store';
 import { useSessionActions } from '@/hooks/use-session-actions';
-import { profileTourTargets as profileTourTargetsFor } from '@/constants/owl-guide';
+import { profileTourTargets as profileTourTargetsFor, searchTourTargets as searchTourTargetsFor } from '@/constants/owl-guide';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { useStoryTransition } from '@/contexts/story-transition-context';
 import { useGlobalSound } from '@/contexts/global-sound-context';
@@ -39,6 +39,7 @@ import { SubscriptionOverlay } from '@/components/ui/subscription-overlay';
 import { CelestialBackground } from '@/components/child-ui/celestial-background';
 import { PlanetHeaderArtwork } from '@/components/child-ui/planet-header-artwork';
 import { SectionCrossfade } from '@/components/child-ui/section-crossfade';
+import { useHeldRef } from '@/hooks/use-held-ref';
 import { PlanetCover, usePlanetCover } from '@/components/child-ui/planet-cover';
 import { BalancedHeaderRow } from '@/components/child-ui/balanced-header-row';
 import { ContentSwap } from '@/components/child-ui/content-swap';
@@ -65,7 +66,8 @@ import {
   SPACE_5,
   contentMargin,
 } from '@/components/child-ui/tokens';
-import { ProgressScreen } from '@/components/progress/progress-screen';
+import { ProgressScreen, type BadgeFocus } from '@/components/progress/progress-screen';
+import { useSettledAfterTransition } from '@/hooks/use-ambient-animation';
 import { BadgeDetailSheet } from '@/components/progress/badge-detail-sheet';
 import { useProgressData } from '@/components/progress/use-progress-data';
 import type { Badge } from '@/components/progress/progress-model';
@@ -125,6 +127,11 @@ const TAGLINE_LINES: Record<'home' | 'search' | 'profile' | 'screensafe', (t: (k
 export interface CatalogueSectionRequest {
   section: ChildNavItemId;
   key: number;
+  badgeId?: string;
+}
+
+function badgeFocusOf(request: CatalogueSectionRequest | undefined): BadgeFocus | undefined {
+  return request?.badgeId ? { id: request.badgeId, key: request.key } : undefined;
 }
 
 interface StoryCatalogueScreenProps {
@@ -182,6 +189,8 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
   // the two scrolling pages a tour runs over: this screen's own column, and
   // the progress page's, which brings its own scroll view
   const pageScroller = useGuideScroller();
+  const holdPageScroll = useHeldRef(pageScroller.scrollRef);
+  const holdHeaderHome = useHeldRef(headerHomeRef);
   const progressScroller = useGuideScroller();
   const catalogueTourTargets = useMemo(() => ({
     theme_tiles: themeTilesRef,
@@ -201,10 +210,11 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
     milestones: progressMilestonesRef,
     badges: progressBadgesRef,
   }), []);
-  const searchTourTargets = useMemo(() => ({
-    search_field: searchFieldRef,
-    search_recent: searchRecentRef,
-  }), []);
+  const hasRecentSearches = recentSearches.length > 0;
+  const searchTourTargets = useMemo(
+    () => searchTourTargetsFor({ field: searchFieldRef, recent: searchRecentRef }, hasRecentSearches),
+    [hasRecentSearches]
+  );
   const searchGuideTargets = useMemo(() => ({ field: searchFieldRef, recent: searchRecentRef }), []);
   const profileTourTargets = useMemo(
     () => profileTourTargetsFor(
@@ -233,11 +243,14 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
   const [navSection, setNavSection] = useState<ChildNavItemId>(sectionRequest?.section ?? 'home');
   const [sectionInstant, setSectionInstant] = useState(false);
   const [appliedRequestKey, setAppliedRequestKey] = useState(sectionRequest?.key);
+  const [badgeFocus, setBadgeFocus] = useState(() => badgeFocusOf(sectionRequest));
   if (sectionRequest && sectionRequest.key !== appliedRequestKey) {
     setAppliedRequestKey(sectionRequest.key);
     setSectionInstant(true);
     setNavSection(sectionRequest.section);
+    setBadgeFocus(badgeFocusOf(sectionRequest));
   }
+  const settled = useSettledAfterTransition(isActive);
   const [searchQuery, setSearchQuery] = useState('');
   const [badgeDetailOpen, setBadgeDetailOpen] = useState(false);
   const [selectedBadge, setSelectedBadge] = useState<Badge | null>(null);
@@ -712,9 +725,18 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
     ? t('stories.genreStories', { genre: t(`stories.genres.${tag}`) })
     : t(STORY_FILTER_TAGS[tag].labelKey));
 
+  const firstRowShelf = shelves.findIndex((shelf) => shelf.kind !== 'pick');
+  const ringable = (index: number, key: string, row: React.ReactElement) =>
+    index === firstRowShelf ? (
+      <View key={key} ref={shelvesRef} collapsable={false} testID="tour-first-shelf">
+        {row}
+      </View>
+    ) : (
+      row
+    );
   const shelvesView = (
     <View testID="story-shelves" style={styles.shelves}>
-      {shelves.map((shelf) => {
+      {shelves.map((shelf, index) => {
         if (shelf.kind === 'pick') {
           if (layout.pickBesideFeatured) return null;
           return (
@@ -731,7 +753,9 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
           );
         }
         if (shelf.kind === 'more') {
-          return (
+          return ringable(
+            index,
+            'more',
             <StoryRow
               key="more"
               testID="story-row-more"
@@ -743,7 +767,9 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
             />
           );
         }
-        return (
+        return ringable(
+          index,
+          shelf.tag,
           <StoryRow
             key={shelf.tag}
             testID={`story-row-${shelf.tag}`}
@@ -918,6 +944,7 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
               onBack={handleExitJourney}
               onRecommend={handleRecommend}
               onDetailVisibleChange={setBadgeDetailOpen}
+              focusBadge={settled ? badgeFocus : undefined}
               guideTargets={progressGuideTargets}
               scrollBinding={progressScroller}
             />
@@ -925,7 +952,7 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
             <View style={styles.fill}>
             <ScrollView
               testID="catalogue-scroll"
-              ref={pageScroller.scrollRef}
+              ref={holdPageScroll}
               onScroll={pageScroller.onScroll}
               onLayout={pageScroller.onLayout}
               onContentSizeChange={pageScroller.onContentSizeChange}
@@ -1003,12 +1030,12 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
                           testID="todays-pick-card"
                         />
                       </View>
-                      <View ref={shelvesRef} collapsable={false}>{shelvesView}</View>
+                      {shelvesView}
                     </>
                   ) : (
                     <>
                       <View ref={featuredRef} collapsable={false}>{featuredSection}</View>
-                      <View ref={shelvesRef} collapsable={false}>{shelvesView}</View>
+                      {shelvesView}
                     </>
                   )}
                 </ContentSwap>
@@ -1025,7 +1052,7 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
               testID="catalogue-header-row"
               style={{ marginTop: journeyHeaderTop(insets.top, isTablet), marginHorizontal: margin }}
               left={
-                <View ref={headerHomeRef} collapsable={false}>
+                <View ref={holdHeaderHome} collapsable={false}>
                   <CircleActionButton
                     type="home"
                     label={t('common.home')}
@@ -1130,7 +1157,7 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
     />
     <OwlGuide
       id="progress_tour"
-      active={isActive && navSection === 'progress'}
+      active={isActive && navSection === 'progress' && !badgeDetailOpen}
       targets={progressTourTargets}
       scroller={progressScroller.scroller}
     />

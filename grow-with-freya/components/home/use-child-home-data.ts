@@ -1,11 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAppStore } from '@/store/app-store';
-import { ALL_STORIES } from '@/data/stories';
-import { getLocalizedText } from '@/types/story';
-import type { SupportedLanguage } from '@/services/i18n';
 import ScreenTimeService, { type ScreenTimeSession } from '@/services/screen-time-service';
 import { useProgressData } from '@/components/progress/use-progress-data';
+import { useContinueStory } from './use-continue-story';
 import { badgeDescription, badgeTitle, type Badge, type BadgeCategory } from '@/components/progress/progress-model';
 import {
   READING_HISTORY_DAYS,
@@ -19,7 +17,6 @@ import {
 import type {
   ChildHomeAchievementTally,
   ChildHomeData,
-  ChildHomeStory,
   NextAchievementUnit,
   ReturnVisitContext,
   WelcomeCopy,
@@ -99,12 +96,11 @@ export interface ChildHome {
 }
 
 export function useChildHomeData(): ChildHome {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const userNickname = useAppStore((state) => state.userNickname);
-  const storyProgress = useAppStore((state) => state.storyProgress);
-  const getContinueReadingStoryId = useAppStore((state) => state.getContinueReadingStoryId);
   const finishedStoryIds = useAppStore((state) => state.finishedStoryIds);
   const readingStreak = useAppStore((state) => state.readingStreak);
+  const longestStreak = useAppStore((state) => state.longestStreak);
   const lastReadDate = useAppStore((state) => state.lastReadDate);
   const achievementUnlockedAt = useAppStore((state) => state.achievementUnlockedAt);
   const lastHomeVisitAt = useAppStore((state) => state.lastHomeVisitAt);
@@ -167,36 +163,15 @@ export function useChildHomeData(): ChildHome {
     recordHomeVisit(at);
   }, [earnedKey, recordAchievementUnlocks, recordHomeVisit]);
 
-  const language = (i18n.language ?? 'en') as SupportedLanguage;
 
-  const currentStory = useMemo((): ChildHomeStory | undefined => {
-    const storyId = getContinueReadingStoryId();
-
-    if (!storyId) {
-      return undefined;
-    }
-
-    const story = ALL_STORIES.find((candidate) => candidate.id === storyId);
-    const progress = storyProgress[storyId];
-
-    if (!story || !progress) {
-      return undefined;
-    }
-
-    return {
-      id: storyId,
-      title: getLocalizedText(story.localizedTitle, story.title, language),
-      currentPage: progress.pageIndex + 1,
-      totalPages: progress.totalPages,
-      coverImage: typeof story.coverImage === 'string' ? { uri: story.coverImage } : story.coverImage,
-    };
-  }, [getContinueReadingStoryId, storyProgress, language]);
+  const currentStory = useContinueStory();
 
   return useMemo(() => {
     const now = new Date();
     const previousVisitAt = previousVisitRef.current;
     const newest = newestEarned(badges, achievementUnlockedAt);
     const next = pickNextAchievement(badges);
+    const streakDays = effectiveStreak(readingStreak, lastReadDate, now);
 
     const data: ChildHomeData = {
       firstName: userNickname?.trim() ?? '',
@@ -204,7 +179,8 @@ export function useChildHomeData(): ChildHome {
       storiesCompleted: finishedStoryIds.length,
       readingMinutes,
       weeklyReadingMinutes,
-      readingStreakDays: effectiveStreak(readingStreak, lastReadDate, now),
+      readingStreakDays: streakDays,
+      bestStreakDays: Math.max(longestStreak, streakDays),
       screenTimeSafety,
       newestAchievement: newest
         ? {
@@ -217,6 +193,7 @@ export function useChildHomeData(): ChildHome {
         : undefined,
       nextAchievement: next
         ? {
+            id: next.id,
             title: badgeTitle(next, t),
             current: next.currentProgress,
             required: next.targetProgress,
@@ -261,6 +238,7 @@ export function useChildHomeData(): ChildHome {
     weeklyReadingMinutes,
     screenTimeSafety,
     readingStreak,
+    longestStreak,
     lastReadDate,
     lastStoryCompletedAt,
     t,

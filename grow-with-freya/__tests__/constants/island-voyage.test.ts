@@ -80,6 +80,17 @@ describe('voyageTiming', () => {
   });
 });
 
+describe('VOYAGE_ROWS', () => {
+  it('should send the page away from the top down, one row after another below the greeting', () => {
+    const topDown = ['chrome', 'greeting', 'journey', 'stats', 'plan'] as const;
+
+    const underTest = topDown.map((row) => VOYAGE_ROWS[row].order);
+
+    expect(underTest[0]).toBe(underTest[1]);
+    underTest.slice(2).forEach((order, index) => expect(order).toBeGreaterThan(underTest[index + 1]));
+  });
+});
+
 describe('rowPose', () => {
   it.each(Object.entries(VOYAGE_ROWS))('leaves %s exactly where it is at rest', (_name, row) => {
     expect(rowPose(0, row.order, row.exit, WIDTH, HEIGHT)).toEqual({ translateX: 0, translateY: 0, opacity: 1 });

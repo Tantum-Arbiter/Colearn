@@ -1,5 +1,5 @@
 import React, { useEffect, useState, type RefObject } from 'react';
-import type { View } from 'react-native';
+import { StyleSheet, type View } from 'react-native';
 import { render, act } from '@testing-library/react-native';
 
 import { withTiming } from 'react-native-reanimated';
@@ -154,7 +154,7 @@ function ref(x: number, y: number, width = 80, height = 40): RefObject<View | nu
 }
 
 function renderGuide(props: Partial<React.ComponentProps<typeof OwlGuide>> = {}) {
-  return render(<Harness id="spelling_tips" {...props} />);
+  return render(<Harness id="practise_tips" {...props} />);
 }
 
 async function renderStarted(props: Partial<React.ComponentProps<typeof OwlGuide>> = {}) {
@@ -193,7 +193,7 @@ describe('OwlGuide', () => {
       expect(mockApi.startGuide).not.toHaveBeenCalled();
 
       advance(1);
-      expect(mockApi.startGuide).toHaveBeenCalledWith('spelling_tips');
+      expect(mockApi.startGuide).toHaveBeenCalledWith('practise_tips');
       expect(tree.toJSON()).not.toBeNull();
     });
 
@@ -225,7 +225,7 @@ describe('OwlGuide', () => {
     });
 
     it('does not repeat a guide that has been seen', () => {
-      mockGuide.completed = ['spelling_tips'];
+      mockGuide.completed = ['practise_tips'];
       const tree = renderGuide();
 
       advance(10000);
@@ -244,7 +244,7 @@ describe('OwlGuide', () => {
     });
 
     it('does not interrupt another guide that is already talking', () => {
-      mockGuide.activeGuide = 'numbers_tips';
+      mockGuide.activeGuide = 'emotion_cards_tips';
       renderGuide();
 
       advance(10000);
@@ -253,12 +253,12 @@ describe('OwlGuide', () => {
     });
 
     it('replays a seen guide when asked to', () => {
-      mockGuide.completed = ['spelling_tips'];
+      mockGuide.completed = ['practise_tips'];
       renderGuide({ replay: true });
 
       advance(GUIDE_TIMING.showDelayMs);
 
-      expect(mockApi.startGuide).toHaveBeenCalledWith('spelling_tips');
+      expect(mockApi.startGuide).toHaveBeenCalledWith('practise_tips');
     });
   });
 
@@ -276,7 +276,7 @@ describe('OwlGuide', () => {
     });
 
     it('gets out of the way once the guide has been seen', () => {
-      mockGuide.completed = ['spelling_tips'];
+      mockGuide.completed = ['practise_tips'];
 
       const tree = renderGuide();
 
@@ -311,8 +311,8 @@ describe('OwlGuide', () => {
 
       press(tree, 'owl-guide-next');
 
-      expect(json(tree)).toContain(GUIDE_STEPS.spelling_tips[0].titleKey);
-      expect(json(tree)).not.toContain(GUIDE_STEPS.spelling_tips[1].titleKey);
+      expect(json(tree)).toContain(GUIDE_STEPS.practise_tips[0].titleKey);
+      expect(json(tree)).not.toContain(GUIDE_STEPS.practise_tips[1].titleKey);
     });
 
     it('holds the words out of sight while it waits', async () => {
@@ -328,7 +328,7 @@ describe('OwlGuide', () => {
 
       await step(tree);
 
-      expect(json(tree)).toContain(GUIDE_STEPS.spelling_tips[1].titleKey);
+      expect(json(tree)).toContain(GUIDE_STEPS.practise_tips[1].titleKey);
       expect(findByTestId(tree, 'owl-guide-bubble')[0].props.muted).toBe(false);
     });
 
@@ -361,7 +361,7 @@ describe('OwlGuide', () => {
 
       await step(tree);
 
-      expect(json(tree)).toContain(GUIDE_STEPS.book_mode_tour[1].titleKey);
+      expect(json(tree)).toContain(GUIDE_STEPS.book_mode_tour.find((entry) => entry.target === 'narrate_button')!.titleKey);
       expect(findByTestId(tree, 'owl-guide-bubble')[0].props.muted).toBe(false);
     });
 
@@ -387,8 +387,8 @@ describe('OwlGuide', () => {
       const tree = await renderLanded();
 
       expect(owl(tree).props.phase).toBe('idle');
-      expect(json(tree)).toContain(GUIDE_STEPS.spelling_tips[0].titleKey);
-      expect(json(tree)).toContain(GUIDE_STEPS.spelling_tips[0].descriptionKey);
+      expect(json(tree)).toContain(GUIDE_STEPS.practise_tips[0].titleKey);
+      expect(json(tree)).toContain(GUIDE_STEPS.practise_tips[0].descriptionKey);
     });
 
     it('moves to the next step and gives the owl something new to say', async () => {
@@ -398,13 +398,13 @@ describe('OwlGuide', () => {
       await step(tree);
 
       expect(mockApi.nextStep).toHaveBeenCalledTimes(1);
-      expect(json(tree)).toContain(GUIDE_STEPS.spelling_tips[1].titleKey);
+      expect(json(tree)).toContain(GUIDE_STEPS.practise_tips[1].titleKey);
       expect(owl(tree).props.sayCount).toBe(before + 1);
     });
 
     it('labels the last step to send them on their way', async () => {
       const tree = await renderLanded();
-      const last = GUIDE_STEPS.spelling_tips.length - 1;
+      const last = GUIDE_STEPS.practise_tips.length - 1;
 
       for (let i = 0; i < last; i++) await step(tree);
 
@@ -416,7 +416,7 @@ describe('OwlGuide', () => {
     it('lets the owl celebrate, then remembers the guide as done', async () => {
       const onEnd = jest.fn();
       const tree = await renderLanded({ onEnd });
-      for (let i = 0; i < GUIDE_STEPS.spelling_tips.length - 1; i++) await step(tree);
+      for (let i = 0; i < GUIDE_STEPS.practise_tips.length - 1; i++) await step(tree);
 
       press(tree, 'owl-guide-okay');
 
@@ -428,6 +428,22 @@ describe('OwlGuide', () => {
       expect(mockApi.completeGuide).toHaveBeenCalledTimes(1);
       expect(onEnd).toHaveBeenCalledTimes(1);
       expect(tree.toJSON()).toBeNull();
+    });
+
+    // A screen that closes itself the moment its tour ends unmounts the guide
+    // before it has seen the slot come free; it must not let go a second time.
+    it('does not let go again when it finished its own tour and its screen goes with it', async () => {
+      let tree: ReturnType<typeof render> | undefined;
+      const onEnd = jest.fn(() => tree?.unmount());
+      tree = await renderLanded({ onEnd });
+      for (let i = 0; i < GUIDE_STEPS.practise_tips.length - 1; i++) await step(tree);
+
+      press(tree, 'owl-guide-okay');
+      advance(OWL_RHYTHM.delightMs);
+
+      expect(onEnd).toHaveBeenCalledTimes(1);
+      expect(mockApi.completeGuide).toHaveBeenCalledTimes(1);
+      expect(mockApi.dismissGuide).not.toHaveBeenCalled();
     });
 
     it('offers the word Skip, in the reader\'s language, rather than a cross', async () => {
@@ -455,7 +471,7 @@ describe('OwlGuide', () => {
     });
 
     it('forgets nothing when a replay is closed', async () => {
-      mockGuide.completed = ['spelling_tips'];
+      mockGuide.completed = ['practise_tips'];
       const tree = await renderLanded({ replay: true });
 
       press(tree, 'owl-guide-close');
@@ -568,7 +584,7 @@ describe('OwlGuide', () => {
       // bottom-left, under the perch
       const tree = await renderLanded({
         id: 'main_menu_tour',
-        targets: { stories_button: ref(30, 800, 44, 44) },
+        targets: { achievement_card: ref(30, 800, 44, 44) },
       });
       (withTiming as unknown as jest.Mock).mockClear();
 
@@ -580,7 +596,7 @@ describe('OwlGuide', () => {
     it('leaves the owl whole for a subject it is nowhere near', async () => {
       const tree = await renderLanded({
         id: 'main_menu_tour',
-        targets: { stories_button: ref(300, 120, 44, 44) },
+        targets: { achievement_card: ref(300, 120, 44, 44) },
       });
       (withTiming as unknown as jest.Mock).mockClear();
 
@@ -609,7 +625,7 @@ describe('OwlGuide', () => {
     it('brings the owl back once the tour moves off the bar', async () => {
       const tree = await renderLanded({
         id: 'main_menu_tour',
-        targets: { nav_profile: ref(330, 800, 44, 44), settings_button: ref(20, 60, 120, 38) },
+        targets: { nav_profile: ref(330, 800, 44, 44), language_control: ref(20, 60, 44, 44) },
       });
 
       await step(tree);
@@ -620,8 +636,8 @@ describe('OwlGuide', () => {
       expect(fadedTo()).not.toContain(PERCH_STEP_BACK);
     });
 
-    it('never asks a page to move for a pinned subject', async () => {
-      const scroller = { reveal: jest.fn(), restore: jest.fn(() => false), release: jest.fn() };
+    it('never asks a page at rest to move for a pinned subject', async () => {
+      const scroller = { reveal: jest.fn(), away: jest.fn(() => 0), release: jest.fn() };
       // the child nav bar sits below the scroll view: it is at the foot of the
       // screen, right where the bubble rests, and the page cannot move it
       const tree = await renderLanded({
@@ -634,6 +650,84 @@ describe('OwlGuide', () => {
 
       expect(has(tree, 'owl-guide-cutout')).toBe(true);
       expect(scroller.reveal).not.toHaveBeenCalled();
+    });
+
+    // operator, 2026-10-04: "the scroll should happen when the navigation bar
+    // comes into view of the tutorial ie learn"
+    it('brings a moved page back once, as the tour reaches the bar, and holds it there along the bar', async () => {
+      const state = { shifted: 120 };
+      const scroller = {
+        reveal: jest.fn((shift: number) => {
+          state.shifted += shift;
+        }),
+        away: jest.fn(() => state.shifted),
+        release: jest.fn(),
+      };
+      const tree = await renderLanded({
+        id: 'main_menu_tour',
+        targets: { nav_learn: ref(20, 800, 44, 44), nav_progress: ref(100, 800, 44, 44), nav_search: ref(240, 800, 44, 44) },
+        scroller,
+      });
+
+      await step(tree);
+      const atLearn = { calls: scroller.reveal.mock.calls.map((call) => call[0]), ringed: has(tree, 'owl-guide-cutout') };
+      await step(tree);
+      await step(tree);
+
+      expect(atLearn).toEqual({ calls: [-120], ringed: true });
+      expect(scroller.reveal).toHaveBeenCalledTimes(1);
+      expect(state.shifted).toBe(0);
+    });
+
+    /**
+     * Furniture over the top of the page -- the flag and the sound button --
+     * has the page's own head slid in under it once the tour has moved the
+     * page, so the page goes back where the child left it before the ring is
+     * drawn (operator, 2026-10-04: "scroll the main menu down during the
+     * tutorials before we highlight the buttons at the top").
+     */
+    describe('a control pinned over the top of the page', () => {
+      function movedPage(shifted: number) {
+        const state = { shifted };
+        const scroller = {
+          reveal: jest.fn((shift: number) => {
+            state.shifted += shift;
+          }),
+          away: jest.fn(() => state.shifted),
+          release: jest.fn(),
+        };
+        return { state, scroller };
+      }
+
+      it('brings the page back where the child left it, then rings the control', async () => {
+        const { state, scroller } = movedPage(120);
+        const tree = await renderLanded({
+          id: 'main_menu_tour',
+          targets: { language_control: ref(20, 60, 44, 44) },
+          scroller,
+        });
+
+        await step(tree);
+
+        expect(scroller.reveal).toHaveBeenCalledTimes(1);
+        expect(scroller.reveal).toHaveBeenCalledWith(-120);
+        expect(state.shifted).toBe(0);
+        expect(has(tree, 'owl-guide-cutout')).toBe(true);
+      });
+
+      it('leaves a page the tour never moved where it is', async () => {
+        const { scroller } = movedPage(0);
+        const tree = await renderLanded({
+          id: 'main_menu_tour',
+          targets: { language_control: ref(20, 60, 44, 44) },
+          scroller,
+        });
+
+        await step(tree);
+
+        expect(scroller.reveal).not.toHaveBeenCalled();
+        expect(has(tree, 'owl-guide-cutout')).toBe(true);
+      });
     });
 
     /**
@@ -674,6 +768,7 @@ describe('OwlGuide', () => {
               at[id] = home[id];
             });
           }),
+          away: jest.fn(() => home.progress_hero - at.progress_hero),
         };
         const targets = {
           progress_hero: targetAt('progress_hero'),
@@ -861,7 +956,7 @@ describe('OwlGuide', () => {
       /** ...and it stops the moment an ask stops making progress. */
       it('gives up on a page that cannot move any further', async () => {
         const { targets: moving } = movingPage();
-        const stuck = { reveal: jest.fn(), release: jest.fn() };
+        const stuck = { reveal: jest.fn(), away: jest.fn(() => 0), release: jest.fn() };
 
         const tree = await renderOnSubject({ targets: moving, scroller: stuck });
 
@@ -915,7 +1010,7 @@ describe('OwlGuide', () => {
     });
 
     it('leaves out a step whose highlight is not on this screen', async () => {
-      const tree = await renderLanded({ id: 'main_menu_tour', targets: { stories_button: ref(40, 600) } });
+      const tree = await renderLanded({ id: 'main_menu_tour', targets: { achievement_card: ref(40, 600) } });
 
       expect(findByTestId(tree, 'owl-guide-dot-1')).toHaveLength(1);
       expect(findByTestId(tree, 'owl-guide-dot-2')).toHaveLength(0);
@@ -931,7 +1026,7 @@ describe('OwlGuide', () => {
     });
 
     it('lowers the wing again on a step with nothing to point at', async () => {
-      const tree = await renderLanded({ id: 'main_menu_tour', targets: { stories_button: ref(40, 600) } });
+      const tree = await renderLanded({ id: 'main_menu_tour', targets: { achievement_card: ref(40, 600) } });
 
       expect(owl(tree).props.pointing).toBe(false);
 
@@ -940,6 +1035,121 @@ describe('OwlGuide', () => {
 
       expect(owl(tree).props.pointing).toBe(true);
     });
+  });
+
+  /**
+   * Subjects on one row -- the three orbs under the journey card -- share one
+   * view of the page. The page used to move again for each, whenever the next
+   * step's words made a taller bubble (operator, 2026-10-04: "it scrolls up
+   * even when going through the same row of orbs").
+   */
+  describe('a row of subjects', () => {
+    function rowPage() {
+      const at: Record<string, number> = { streak_orb: 560, continue_orb: 560, badges_orb: 560 };
+      const across: Record<string, number> = { streak_orb: 50, continue_orb: 160, badges_orb: 270 };
+      const targets = Object.fromEntries(
+        Object.keys(at).map((id) => [
+          id,
+          { current: { measureInWindow: (cb: (...args: number[]) => void) => cb(across[id], at[id], 92, 92) } as unknown as View },
+        ])
+      );
+      const scroller = {
+        reveal: jest.fn((shift: number) => {
+          Object.keys(at).forEach((id) => {
+            at[id] -= shift;
+          });
+        }),
+        away: jest.fn(() => 560 - at.streak_orb),
+        release: jest.fn(),
+      };
+      return { targets, scroller };
+    }
+
+    function laidOut(node: any, height: number) {
+      act(() => {
+        node.props.onLayout({ nativeEvent: { layout: { x: 0, y: 0, width: 340, height } } });
+      });
+    }
+
+    function measureRow(tree: ReturnType<typeof render>, heights: Record<string, number>) {
+      Object.entries(heights).forEach(([id, height]) => {
+        laidOut(findByTestId(tree, `owl-guide-measure-${id}`).find((node: any) => typeof node.props.onLayout === 'function'), height);
+      });
+    }
+
+    function shownBubble(tree: ReturnType<typeof render>, height: number) {
+      laidOut(findByTestId(tree, 'owl-guide-bubble').find((node: any) => typeof node.props.onLayout === 'function'), height);
+    }
+
+    async function walkRow(tree: ReturnType<typeof render>, heights: number[]) {
+      for (const height of heights) {
+        await step(tree);
+        shownBubble(tree, height);
+        await settleEverything();
+      }
+    }
+
+    it('moves the page once for the whole row, far enough for its tallest bubble', async () => {
+      const { targets, scroller } = rowPage();
+      const tree = await renderLanded({ id: 'main_menu_tour', targets, scroller });
+      measureRow(tree, { streak_orb: 160, continue_orb: 300, badges_orb: 160 });
+
+      await walkRow(tree, [160, 300, 160]);
+
+      expect(scroller.reveal).toHaveBeenCalledTimes(1);
+    });
+
+    it('measures every bubble on the row out of sight, so none of them can be tapped or read twice', async () => {
+      const { targets, scroller } = rowPage();
+      const tree = await renderLanded({ id: 'main_menu_tour', targets, scroller });
+
+      const hidden = ['streak_orb', 'continue_orb', 'badges_orb'].map(
+        (id) => findByTestId(tree, `owl-guide-measure-${id}`).find((node: any) => typeof node.props.onLayout === 'function')
+      );
+
+      hidden.forEach((node: any) => {
+        expect(StyleSheet.flatten(node.props.style).opacity).toBe(0);
+        expect(node.props.pointerEvents).toBe('none');
+        expect(node.props.importantForAccessibility).toBe('no-hide-descendants');
+      });
+    });
+
+    it('falls back to the bubble it is showing while the row has not been measured', async () => {
+      const { targets, scroller } = rowPage();
+      const tree = await renderLanded({ id: 'main_menu_tour', targets, scroller });
+
+      await walkRow(tree, [160, 300, 160]);
+
+      expect(scroller.reveal).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  /**
+   * The dots under the words are the tour: one for every step it walks, the
+   * current one lit, and one Next to each -- nothing skipped, nothing extra
+   * (operator, 2026-10-04: "double check the page count matches").
+   */
+  it('walks the whole home tour one step per dot, every title in order', async () => {
+    const steps = GUIDE_STEPS.main_menu_tour;
+    const targets = Object.fromEntries(
+      steps.filter((entry) => entry.target).map((entry, index) => [entry.target as string, ref(40 + index * 20, 120)])
+    );
+    const tree = await renderLanded({ id: 'main_menu_tour', targets });
+    const lit = () =>
+      findByTestId(tree, 'owl-guide-dots')[0]
+        .findAll((node: any) => /^owl-guide-dot-\d+$/.test(String(node.props.testID)) && node.props.accessibilityState?.selected)
+        .map((node: any) => node.props.testID);
+
+    for (let index = 0; index < steps.length; index += 1) {
+      const dots = findByTestId(tree, 'owl-guide-dots')[0].findAll((node: any) => /^owl-guide-dot-\d+$/.test(String(node.props.testID)));
+
+      expect(new Set(dots.map((node: any) => node.props.testID)).size).toBe(steps.length);
+      expect(new Set(lit())).toEqual(new Set([`owl-guide-dot-${index}`]));
+      expect(json(tree)).toContain(steps[index].titleKey);
+      if (index < steps.length - 1) await step(tree);
+    }
+
+    expect(has(tree, 'owl-guide-okay')).toBe(true);
   });
 
   describe('in landscape', () => {
@@ -1082,5 +1292,39 @@ describe('a tour whose page is left', () => {
     // Only one guide runs at a time, so this is the whole of the bug: while
     // the catalogue tour held the slot, the profile tour could never start.
     expect(mockGuide.activeGuide).toBe('profile_tour');
+  });
+
+  // The book card closed, or Android's back pressed, part-way through: the
+  // tour's screen goes away with the tour still holding the only slot, and
+  // every other tour -- and the screen-time owl -- waited behind it for good.
+  it('lets go when its screen goes away part-way through, without marking it seen', () => {
+    const tree = startedTour();
+
+    tree.unmount();
+
+    expect(mockGuide.activeGuide).toBeNull();
+    expect(mockApi.dismissGuide).toHaveBeenCalledTimes(1);
+    expect(mockApi.skipGuide).not.toHaveBeenCalled();
+    expect(mockGuide.completed).not.toContain('catalogue_tour');
+  });
+
+  it('leaves the slot alone when a screen goes away with another tour running', () => {
+    const tree = render(<Harness id="catalogue_tour" active={false} targets={{}} />);
+    mockGuide.activeGuide = 'profile_tour';
+
+    tree.unmount();
+
+    expect(mockGuide.activeGuide).toBe('profile_tour');
+    expect(mockApi.dismissGuide).not.toHaveBeenCalled();
+  });
+
+  it('lets go only once when its screen goes away after it was finished', () => {
+    const tree = startedTour();
+    tree.update(<Harness id="catalogue_tour" active={false} targets={{}} />);
+    mockApi.dismissGuide.mockClear();
+
+    tree.unmount();
+
+    expect(mockApi.dismissGuide).not.toHaveBeenCalled();
   });
 });

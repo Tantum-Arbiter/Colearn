@@ -80,7 +80,8 @@ const WORDMARK = { delayMs: 2900, durationMs: 450, risePx: 10 } as const;
 const TAGLINE = { delayMs: 2950, durationMs: 400 } as const;
 const LEAF_UNFURL_MS = 520;
 const HOLD_MS = 2000;
-const MOUNT_ALLOWANCE_MS = 1000;
+const SETTLED_HANDBACK_MS = 1600;
+const MOUNT_ALLOWANCE_MS = HOLD_MS - SETTLED_HANDBACK_MS;
 
 const LEAF_FOLD_DEG: Record<SplashLeaf, number> = { leafLeft: 38, leafRight: -38, leafTop: -16 };
 const LEAF_SWAY_DEG: Record<SplashLeaf, number> = { leafLeft: 2.4, leafRight: -1.9, leafTop: 1.4 };

@@ -1,10 +1,11 @@
-import React, { useCallback, useMemo, useState, memo, type RefObject } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState, memo, type RefObject } from 'react';
 import {
   View,
   ScrollView,
   StyleSheet,
   useWindowDimensions,
   type NativeScrollEvent,
+  type LayoutChangeEvent,
   type NativeSyntheticEvent,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -19,7 +20,7 @@ import { useGlobalSound } from '@/contexts/global-sound-context';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { HOME_THEMES, type TimeOfDay } from '@/constants/home-scene';
 import { HOME_CARDS, HOME_CARD_TYPE, homeContentWidth } from '@/constants/home-journey';
-import { HERO_SKY, heroContentDrop, heroContentLift, heroContentTop, heroSunFrame, heroSunScale } from '@/constants/home-sky';
+import { HERO_SKY, heroContentDrop, heroContentLift, heroContentTop, heroSlackDrop, heroSunFrame, heroSunScale } from '@/constants/home-sky';
 import { useTimeOfDay } from '@/hooks/use-time-of-day';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { useSettledAfterTransition } from '@/hooks/use-ambient-animation';
@@ -29,11 +30,11 @@ import type { GuideScrollerBinding } from '@/components/owl-guide/use-guide-scro
 import { NightSky } from './night-sky';
 import { HomeHeroSky } from './home-hero-sky';
 import { ChildBottomNavigation, navClearance, navItemCentre, type ChildNavItemId } from '@/components/child-ui/child-bottom-navigation';
+import { statOrbDiameter, statOrbRowHeight, statOrbRowWidth, type StatOrbKind } from '@/constants/stat-orbs';
+import type { StatPillRow } from '@/constants/stat-pill';
 import { UnlockPlanButton } from './unlock-plan-button';
-import { ContinueCard } from './continue-card';
-import { StreakChip } from './streak-chip';
-import { WeeklyReadingChip } from './weekly-reading-chip';
-import { AchievementTallyChip } from './achievement-tally-chip';
+import { StatPill, measureStatPillRow, type BookRect } from './stat-pill';
+import { StatOrbs } from './stat-orbs';
 import { VoyageRow, useVoyageZoom } from './voyage-row';
 import { AchievementCard } from './achievement-card';
 import { ArchedGreeting } from './arched-greeting';
@@ -45,20 +46,17 @@ const PLAN_BASE_GAP = 10;
 const GREETING_CARD_GAP = 24;
 
 /**
- * How much taller the stats row's box is than the words you actually see in
- * it: the streak and reading chips pad themselves, and their icons stand
- * taller than their text. The margin below them therefore *looks* bigger than
- * it is, so the greeting's gap adds this back to match it by eye rather than
- * on paper. Measured against the rendered screen, not derived -- it is a fact
- * about the chips' artwork, which is why it is written down here rather than
- * folded silently into the gap.
+ * Extra room the tablet's greeting keeps above the first card. It was
+ * measured, by eye against the rendered screen, to match the gap under the
+ * stat chips the row used to hold; the row holds the stat orbs now, and the
+ * number is kept so the tablet's greeting stays where it was approved.
  */
 export const STATS_CHIP_INSET = 21;
 
-export const STATS_LINE_TUCK = 6;
-
 export interface HomeGuideTargets {
   stories?: RefObject<View | null>;
+  streak?: RefObject<View | null>;
+  badges?: RefObject<View | null>;
   achievement?: RefObject<View | null>;
   screenTime?: RefObject<View | null>;
   learn?: RefObject<View | null>;
@@ -83,6 +81,8 @@ export interface HomeSceneProps {
   onOpenJourney: () => void;
   /** An item in the bar at the foot that is a place to go: the library opens on that section. */
   onSelectSection: (id: HomeSection) => void;
+  onOpenBadge?: (badgeId: string) => void;
+  onOpenStoryCard?: (storyId: string, from: BookRect) => void;
   screenTime?: ScreenTimeAllowance | null;
   /** Receives the ring's centre so the glance can open out of it. */
   onOpenScreenTime?: (origin: { x: number; y: number }) => void;
@@ -107,6 +107,8 @@ export const HomeScene = memo(function HomeScene({
   onContinue,
   onOpenJourney,
   onSelectSection,
+  onOpenBadge,
+  onOpenStoryCard,
   screenTime = null,
   onOpenScreenTime,
   screenTimeHidden = false,
@@ -162,6 +164,7 @@ export const HomeScene = memo(function HomeScene({
   // gets treated as extra slack to centre around and only half of it ends
   // up as a real gap. Carved out of the ScrollView's own height instead
   // (before centring runs on what's left), it stays a full, guaranteed gap.
+  const story = data.currentStory;
   const footClearance = navClearance(insets.bottom);
   const navItemRefs = useMemo(
     () => ({
@@ -206,11 +209,85 @@ export const HomeScene = memo(function HomeScene({
   // bottom instead of merely sitting lower.
   const spread = gaps ? gaps.card * 2 + gaps.stats * 2 + gaps.plan - subtitleGap : 0;
   const lift = heroContentLift(width, height);
+  const [slackDrop, setSlackDrop] = useState(0);
   const tally = data.achievementTally;
+  const orbDiameter = statOrbDiameter(contentWidth);
+  const orbCount = tally ? 3 : 2;
+  const [pill, setPill] = useState<{ kind: StatOrbKind; row: StatPillRow; opening: number } | null>(null);
+  const [pillOpen, setPillOpen] = useState(false);
+  const [pillShown, setPillShown] = useState(false);
+  const [pillCarried, setPillCarried] = useState(false);
+  const orbRow = useRef<View | null>(null);
+  const pillLayer = useRef<View | null>(null);
+  const openPill = useCallback(
+    (kind: StatOrbKind) => {
+      const show = (row: StatPillRow) => {
+        setPill((was) => ({ kind, row, opening: (was?.opening ?? 0) + 1 }));
+        setPillOpen(true);
+        setPillShown(true);
+      };
+      const rowWidth = statOrbRowWidth(orbDiameter, orbCount);
+      const drawnAt = { x: (width - rowWidth) / 2, y: (height - statOrbRowHeight(orbDiameter)) / 2, width: rowWidth };
+      measureStatPillRow(orbRow.current, pillLayer.current, drawnAt, show);
+    },
+    [orbDiameter, orbCount, width, height]
+  );
+  const foldPill = useCallback(() => setPillOpen(false), []);
+  const pillDrawn = useCallback(() => setPillCarried(true), []);
+  const pillFolded = useCallback(() => {
+    setPillShown(false);
+    setPillCarried(false);
+  }, []);
+  const pillKind = pill?.kind;
+  const nextBadge = data.nextAchievement?.id;
+  const goFromPill = useCallback(() => {
+    setPillOpen(false);
+    if (pillKind === 'continue') {
+      onContinue();
+      return;
+    }
+    if (nextBadge && onOpenBadge) {
+      onOpenBadge(nextBadge);
+      return;
+    }
+    onSelectSection('progress');
+  }, [pillKind, nextBadge, onContinue, onOpenBadge, onSelectSection]);
+
+  const explore = useCallback(() => onSelectSection('home'), [onSelectSection]);
+  const storyId = story?.id;
+  const openBook = useMemo(
+    () => (storyId && onOpenStoryCard ? (from: BookRect) => onOpenStoryCard(storyId, from) : undefined),
+    [storyId, onOpenStoryCard]
+  );
+
+  useEffect(() => {
+    if (screenTimeHidden) setPillOpen(false);
+  }, [screenTimeHidden]);
+
+  const viewportHeight = useRef(0);
+  const contentHeight = useRef(0);
+  const reserve = scrollBinding?.reserve ?? 0;
+  const settleDrop = useCallback(() => {
+    if (isTablet || reserve > 0 || !(contentHeight.current > 0)) return;
+    setSlackDrop((was) => heroSlackDrop(viewportHeight.current, contentHeight.current - was));
+  }, [isTablet, reserve]);
+  const handleLayout = useCallback(
+    (event: LayoutChangeEvent) => {
+      viewportHeight.current = event.nativeEvent.layout.height;
+      settleDrop();
+      scrollBinding?.onLayout?.(event);
+    },
+    [settleDrop, scrollBinding]
+  );
+  const handleContentSize = useCallback(
+    (contentWidth: number, measuredHeight: number) => {
+      contentHeight.current = measuredHeight;
+      settleDrop();
+      scrollBinding?.onContentSizeChange?.(contentWidth, measuredHeight);
+    },
+    [settleDrop, scrollBinding]
+  );
   const zoom = useVoyageZoom(width, height);
-  const tallyChip = tally ? (
-    <AchievementTallyChip unlocked={tally.unlocked} remaining={tally.remaining} animated={animated} />
-  ) : null;
 
   return (
     <View testID={testID} style={[styles.root, { backgroundColor: theme.skyTop }]}>
@@ -221,7 +298,7 @@ export const HomeScene = memo(function HomeScene({
       <HomeHeroSky
         width={width}
         height={height}
-        topInset={insets.top}
+        topInset={insets.top + slackDrop}
         timeOfDay={activeTimeOfDay}
         active={isActive}
         sizeScale={heroSunScale(width, height)}
@@ -277,15 +354,15 @@ export const HomeScene = memo(function HomeScene({
       <ScrollView
         ref={scrollBinding?.scrollRef}
         onScroll={handleScroll}
-        onLayout={scrollBinding?.onLayout}
-        onContentSizeChange={scrollBinding?.onContentSizeChange}
+        onLayout={handleLayout}
+        onContentSizeChange={handleContentSize}
         scrollEventThrottle={16}
         style={isTablet ? [styles.scrollTablet, { marginBottom: footClearance }] : undefined}
         contentContainerStyle={[
           styles.content,
           isTablet && styles.contentTabletCenter,
           {
-            paddingTop: heroContentTop(insets.top, sun.size) + heroContentDrop(width, height) + spread - lift,
+            paddingTop: heroContentTop(insets.top, sun.size) + heroContentDrop(width, height) + spread - lift + slackDrop,
             paddingBottom: (isTablet ? TABLET_FOOT_PADDING : footClearance) + lift + (scrollBinding?.reserve ?? 0),
           },
         ]}
@@ -305,12 +382,6 @@ export const HomeScene = memo(function HomeScene({
           />
         </VoyageRow>
 
-        <VoyageRow row="story">
-          <View style={[styles.cardSlot, gaps && { marginBottom: HOME_CARDS.gap + gaps.card }]} ref={guideTargets?.stories} collapsable={false}>
-            <ContinueCard story={data.currentStory} width={contentWidth} animated={animated} onPress={onContinue} />
-          </View>
-        </VoyageRow>
-
         <VoyageRow row="journey">
         <View style={[styles.cardSlot, gaps && { marginBottom: HOME_CARDS.gap + gaps.card }]} ref={guideTargets?.achievement} collapsable={false}>
           <AchievementCard
@@ -325,22 +396,22 @@ export const HomeScene = memo(function HomeScene({
         </VoyageRow>
 
         <VoyageRow row="stats" testID="home-stats-row" style={[styles.statsBlock, gaps && { marginTop: gaps.stats, marginBottom: 4 + gaps.stats }]}>
-          <View testID="home-stats-first-line" style={styles.statsLine}>
-            <StreakChip days={data.readingStreakDays} animated={animated} />
-            <View testID="home-stats-divider" style={styles.statsDivider} />
-            <WeeklyReadingChip minutes={data.weeklyReadingMinutes} animated={animated} />
-            {tallyChip && isTablet ? (
-              <>
-                <View testID="home-stats-divider" style={styles.statsDivider} />
-                {tallyChip}
-              </>
-            ) : null}
-          </View>
-          {tallyChip && !isTablet ? (
-            <View testID="home-stats-second-line" style={[styles.statsLine, styles.statsSecondLine]}>
-              {tallyChip}
-            </View>
-          ) : null}
+          <StatOrbs
+            streakDays={data.readingStreakDays}
+            story={story}
+            tally={tally}
+            contentWidth={contentWidth}
+            animated={animated}
+            onOpen={openPill}
+            onExplore={explore}
+            covered={pillShown}
+            coverKind={pillKind}
+            carried={pillCarried}
+            rowRef={orbRow}
+            storyRef={guideTargets?.stories}
+            streakRef={guideTargets?.streak}
+            badgesRef={guideTargets?.badges}
+          />
         </VoyageRow>
 
         {onOpenPlans ? (
@@ -349,6 +420,29 @@ export const HomeScene = memo(function HomeScene({
           </VoyageRow>
         ) : null}
       </ScrollView>
+
+      <View ref={pillLayer} testID="stat-pill-host" collapsable={false} pointerEvents="box-none" style={[StyleSheet.absoluteFill, styles.pillHost]}>
+        {pill ? (
+          <StatPill
+            key={pill.opening}
+            kind={pill.kind}
+            row={pill.row}
+            open={pillOpen}
+            diameter={orbDiameter}
+            width={contentWidth}
+            streakDays={data.readingStreakDays}
+            bestStreakDays={data.bestStreakDays}
+            story={story}
+            tally={tally}
+            next={data.nextAchievement}
+            onPress={goFromPill}
+            onClose={foldPill}
+            onFolded={pillFolded}
+            onDrawn={pillDrawn}
+            onOpenBook={openBook}
+          />
+        ) : null}
+      </View>
 
       <ChildBottomNavigation
         selected={null}
@@ -374,6 +468,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     zIndex: 10,
+  },
+  pillHost: {
+    zIndex: 20,
   },
   content: {
     alignItems: 'center',
@@ -409,20 +506,6 @@ const styles = StyleSheet.create({
   statsBlock: {
     alignItems: 'center',
     marginBottom: STATS_BASE_GAP,
-  },
-  statsLine: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  statsSecondLine: {
-    marginTop: -STATS_LINE_TUCK,
-  },
-  statsDivider: {
-    width: 1,
-    height: 18,
-    marginHorizontal: 4,
-    backgroundColor: 'rgba(255,255,255,0.16)',
   },
   // centred along the bottom edge: this is where the glance's orb rises
   // from and where its closing drop falls back to, so it has to match

@@ -658,6 +658,7 @@ export default {
       'day-7': { aim: 'Bir otobüs yolculuğu hikâyesiyle beklemeyi ve sırayla yapmayı öğren.' },
     },
     stepOf: 'Adım {{day}} / {{total}}',
+    focus: '{{domain}} ve {{skill}}',
     minutes: '{{from}}–{{to}} dk',
     start: 'Etkinliği başlat',
     preview: 'Önizleme',
@@ -675,22 +676,10 @@ export default {
     },
   },
   tutorial: {
-    welcomeTitle: 'Earlyroots\'a\nHoş Geldiniz!',
-    welcomeDescription: 'Siz ve çocuğunuzun okuma zamanından en iyi şekilde yararlanmanıza yardımcı olmak için hızlı bir tur alalım.',
-    storiesTitle: 'Hikaye Kütüphanesi',
-    storiesDescription: 'Güzel illüstrasyonlar ve eğlenceli etkileşimler içeren etkileşimli hikayeler koleksiyonunu keşfetmek için buraya dokunun.',
-    skip: 'Atla',
-    gotIt: 'Anladım!',
     buttons: {
       next: 'İleri',
       skip: 'Atla',
-      skipAll: 'Tümünü Atla',
-      skipTour: 'Turu Atla',
-      gotIt: 'Anladım!',
-      go: 'Hadi!',
       letsGo: 'Gidelim!',
-      done: 'Bitti',
-      startReading: 'Okumaya Başla',
     },
     mainMenu: {
       navLearn: {
@@ -700,26 +689,6 @@ export default {
       welcome: {
         title: 'Early Roots\'a Hoş Geldiniz!',
         description: 'Siz ve çocuğunuzun okuma zamanından en iyi şekilde yararlanmanıza yardımcı olmak için hızlı bir tur alalım.',
-      },
-      stories: {
-        title: 'Hikayeler',
-        description: 'Güzel çizimler ve eğlenceli etkileşimlerle dolu interaktif hikaye koleksiyonumuzu keşfedin.',
-      },
-      practise: {
-        title: 'Alıştırma',
-        description: 'Farklı enstrümanlarda şarkı çalmayı öğrenin. Takip edin ve müzik becerilerinizi geliştirin!',
-      },
-      freeplay: {
-        title: 'Serbest Çalma',
-        description: 'Herhangi bir enstrümanı özgürce çalın - kural yok, sadece eğlence! Seslerle deney yapın ve kendi müziğinizi yaratın.',
-      },
-      instruments: {
-        title: 'Enstrümanlar',
-        description: 'Şarkıları pratik edin veya farklı enstrümanlarda özgürce çalın. Eğlenirken müzik becerilerinizi geliştirin!',
-      },
-      settings: {
-        title: 'Ayarlar',
-        description: 'Uygulamayı aileniz için en iyi şekilde çalışacak şekilde özelleştirin.',
       },
       language: {
         title: 'Diliniz',
@@ -731,7 +700,7 @@ export default {
       },
       achievement: {
         title: 'Öğrenme yolculuğun',
-        description: 'Çocuğunun en yakın olduğu rozet ve ne kadar kaldığı. Adaya uçmak için dokun.',
+        description: 'Bu haftanın adadaki adımları ve en yakın rozet. Adaya uçmak için dokun.',
       },
       screenTime: {
         title: 'Ekran süresi halkası',
@@ -739,27 +708,17 @@ export default {
         remainingCaption: 'Kalan süre',
         spentCaption: 'Süre doldu',
       },
-    },
-    screenTime: {
-      intro: {
-        title: 'Ekran Süresi Panosu',
-        description: 'Çocuğunuzun günlük ekran süresini yaşa uygun sınırlarla izleyin, yönetin ve ayarlayın.',
+      streakOrb: {
+        title: 'Günlük seri',
+        description: 'Hikâye okunan her gün bir tane ekler. En uzun serini görmek için dokun.',
       },
-      ageBased: {
-        title: 'Yaşa Dayalı Sınırlar',
-        description: 'Çocuğunuzun yaşını ayarlayın ve WHO/AAP tarafından önerilen ekran süresi sınırlarını otomatik olarak alın.',
+      continueOrb: {
+        title: 'Devam',
+        description: 'Bir kitaba başlayana kadar “Okuyup işaretle” yazar. Sonra “Devam” yazar ve o kitabın kapağını gösterir. Kitabın kartını açıp bir sayfa seçmek için dokun.',
       },
-      heatmap: {
-        title: 'Haftalık Aktivite',
-        description: 'Sağlıklı bir rutin oluşturmanıza yardımcı olmak için hafta boyunca ekran süresi kullanım düzenlerini görün.',
-      },
-      reminders: {
-        title: 'Hatırlatıcıları Ayarlayın',
-        description: 'Aktiviteler, molalar veya uyku saati rutini için özel hatırlatıcılar oluşturun.',
-      },
-      routine: {
-        title: 'Sağlıklı Rutin Oluşturun',
-        description: 'Ailenize uygun tutarlı bir günlük rutin oluşturmaya yardımcı olmak için ekran süresi verilerini kullanın.',
+      badgesOrb: {
+        title: 'Başarılar',
+        description: 'Şimdiye kadar kazandığın rozetler. Sıradakini görmek için dokun.',
       },
     },
     storyReader: {
@@ -798,16 +757,38 @@ export default {
     },
     bookMode: {
       read: {
-        title: 'Okuma Modu',
-        description: 'Çocuğunuzla birlikte hikayeyi kendiniz okumak için buraya dokunun. Sayfaları kendi hızınızda çevirin.',
+        title: 'Birlikte oku',
+        description: 'Hikâyeyi birlikte sesli okuyun, sayfaları kendi hızınızda çevirin. Başladıysanız kaldığınız yerden devam eder.',
       },
       record: {
-        title: 'Kayıt Modu',
-        description: 'Hikayeyi okurken sesinizi kaydedin. Uzakta olduğunuzda mükemmel!',
+        title: 'Kaydet',
+        description: 'Hikâyeyi okuyan kendi sesini kaydet; sen yokken çocuğun dinleyebilsin. Önce bir yetişkin kısa bir soruyu yanıtlar.',
       },
       narrate: {
-        title: 'Dinleme Modu',
-        description: 'Hikayenin önceden kaydedilmiş bir anlatımını dinleyin. Uyku saati için mükemmel!',
+        title: 'Birlikte oyna',
+        description: 'Kaydedilmiş bir ses hikâyeyi okur, sayfalar kendiliğinden çevrilir. Uyku öncesi için harika.',
+      },
+      pages: {
+        title: 'Bir sayfadan başla',
+        description: 'Kitabın tüm sayfaları; kaldığın yer altın renkle çevrili. Oradan okumaya başlamak için birine dokun.',
+      },
+    },
+    island: {
+      welcome: {
+        title: 'Öğrenme adan',
+        description: 'Bu hafta her gün küçük bir adım: paylaşılacak bir hikâye, oyun ya da şarkı. İlerledikçe yol ışıldar.',
+      },
+      checkpoint: {
+        title: 'Bugünün adımı',
+        description: 'Parlayan nokta bugünün adımı. Başlamak için dokun. Diğerleri her gün bir tane açılır.',
+      },
+      plan: {
+        title: 'Bugünün planı',
+        description: 'Bugünkü adımın ne olduğu, ne kadar sürdüğü ve neyi geliştirdiği. Etkinliği başlat başlatır; Önizleme önce gösterir.',
+      },
+      home: {
+        title: 'Eve dönüş',
+        description: 'İşin bitince istediğin zaman gökyüzüne geri uç.',
       },
     },
     recordMode: {
@@ -910,34 +891,6 @@ export default {
         description: 'Farklı bir ses denemek ister misiniz? Menüyü () açın ve istediğiniz zaman değiştirmek için \'Enstrüman Değiştir\'e dokunun.',
       },
     },
-    storyModes: {
-      welcome: {
-        title: 'Keşfetmenin Üç Yolu!',
-        description: 'Her çocuk farklı öğrenir. Çocuğunuzun merakını uyandıran hikaye deneyimini seçin - her biri oyunun büyüsü aracılığıyla temel becerileri geliştirir.',
-      },
-      interactive: {
-        title: 'Etkileşimli Hikayeler',
-        description: 'Dokun, kaydır ve keşfet! Etkileşimli hikayeler, dokunulabilir sürprizler, neden-sonuç anları ve uygulamalı öğrenme etkinlikleriyle sayfaları canlandırır. Araştırmalar, hikaye zamanında aktif katılımın anlama, ince motor becerileri ve erken problem çözmeyi güçlendirdiğini göstermektedir.',
-      },
-      musical: {
-        title: 'Müzikli Hikayeler',
-        description: 'Oku, çal ve sahneye çık! Müzikli hikayeler her maceraya gerçek enstrüman zorlukları örer - çocuğunuz hikayeyi takip ederken ritim, melodi ve koordinasyon öğrenir. Çalışmalar, erken müzik maruziyetinin hafıza, dil gelişimi ve duygusal ifadeyi artırdığını doğrulamaktadır.',
-      },
-      jigsaw: {
-        title: 'Yapboz Hikayeleri',
-        description: 'Parçaları birleştir! Yapboz hikayeleri her sayfada güzel yapbozlar gizler, mekansal farkındalık, sabır ve mantıksal düşünme geliştirir. Yapbozları tamamlamak çocuklara gerçek bir başarı hissi verir ve okuma hazırlığını destekleyen görsel-algısal becerileri güçlendirir.',
-      },
-    },
-    gestures: {
-      speakerLongPress: {
-        title: 'Uzun Basma İpucu',
-        description: 'Ek ses seçeneklerini görmek için hoparlör düğmesine uzun basın.',
-      },
-      storySwipe: {
-        title: 'Kaydırma Navigasyonu',
-        description: 'Sayfaları hızlı bir şekilde çevirmek için sola veya sağa kaydırın.',
-      },
-    },
     emotionCards: {
       welcome: {
         title: 'Duygu Kartlarına Hoş Geldiniz!',
@@ -960,60 +913,6 @@ export default {
         description: 'Emojiler, hayvanlar ve ayı temaları arasında geçiş yaparak işleri taze ve ilgi çekici tutun!',
       },
     },
-    spelling: {
-      welcome: {
-        title: 'Yazım Etkinlikleri',
-        description: 'Yazım\'a Hoş Geldiniz! Çocuğunuzun harfleri, kelimeleri ve yazımı öğrenmesine yardımcı olacak eğlenceli interaktif etkinlikler.',
-      },
-      ages: {
-        title: 'Yaşa Uygun İçerik',
-        description: 'Etkinlikler yaş grubuna göre sıralanmıştır. Çocuğunuzun seviyesine göre filtrelemek için üstteki karuseli kullanın.',
-      },
-      together: {
-        title: 'Birlikte Öğrenin',
-        description: 'Çocuğunuzla oturun ve harfleri birlikte söyleyin. Onu teşvik edin ve her denemesini kutlayın!',
-      },
-      benefit: {
-        title: 'Okur-Yazarlık Geliştirme',
-        description: 'Erken yazım pratiği fonemik farkındalık, harf tanıma ve ömür boyu sürecek bir kelime sevgisi geliştirir.',
-      },
-    },
-    numbers: {
-      welcome: {
-        title: 'Sayı Etkinlikleri',
-        description: 'Sayılar\'a Hoş Geldiniz! Çocuğunuzun sayma, şekiller ve erken matematiği keşfetmesine yardımcı olacak ilgi çekici etkinlikler.',
-      },
-      ages: {
-        title: 'Yaşa Uygun İçerik',
-        description: 'Etkinlikler yaş grubuna göre sıralanmıştır. Çocuğunuz için doğru seviyeyi bulmak için üstteki karuseli kullanın.',
-      },
-      together: {
-        title: 'Birlikte Sayın',
-        description: 'Birlikte yüksek sesle sayın, nesneleri gösterin ve sayıları günlük oyunun bir parçası yapın!',
-      },
-      benefit: {
-        title: 'Sayısal Beceri Geliştirme',
-        description: 'Erken sayı oyunu mantıksal düşünme, örüntü tanıma ve matematik için güvenli bir temel geliştirir.',
-      },
-    },
-    feelings: {
-      welcome: {
-        title: 'Duygu Etkinlikleri',
-        description: 'Duygular\'a Hoş Geldiniz! Çocuğunuzun duyguları tanımasına, adlandırmasına ve anlamasına yardımcı olan etkinlikler.',
-      },
-      ages: {
-        title: 'Yaşa Uygun İçerik',
-        description: 'Etkinlikler yaş grubuna göre sıralanmıştır. Çocuğunuzun duygusal gelişimine uygun etkinlikler seçin.',
-      },
-      together: {
-        title: 'Birlikte Keşfedin',
-        description: 'Duygular hakkında açıkça konuşun. "Bu seni nasıl hissettiriyor?" diye sorun ve kendi duygularınızı da paylaşın.',
-      },
-      benefit: {
-        title: 'Duygusal Zeka',
-        description: 'Duyguları anlamak empati, öz düzenleme ve güçlü sosyal beceriler geliştirir — yaşam boyu iyilik hali için gereklidir.',
-      },
-    },
     practise: {
       welcome: {
         title: 'Alıştırma Modu',
@@ -1032,24 +931,6 @@ export default {
         description: 'Şarkı çalmayı öğrenmek ritim, koordinasyon, hafıza ve konsantrasyon geliştirir — hepsi müziğin keyfi sayesinde.',
       },
     },
-    freeplay: {
-      welcome: {
-        title: 'Serbest Çalma Modu',
-        description: 'Kural yok, sadece eğlence! Herhangi bir enstrümanı keşfedin ve kendi müziğinizi yaratın. Yaratıcılık ve kendini ifade için mükemmel.',
-      },
-      instrument: {
-        title: 'Enstrümanınızı Seçin',
-        description: 'Karuselden herhangi bir enstrüman seçin. Yeni sesler ve favoriler keşfetmek için hepsini deneyin!',
-      },
-      play: {
-        title: 'Özgürce Çalın',
-        description: 'Müzik yapmak için renkli düğmelere basın. Yanlış nota yok — her ses maceranın bir parçası!',
-      },
-      benefit: {
-        title: 'Yaratıcı İfade',
-        description: 'Serbest müzik oyunu yaratıcılığı, özgüveni ve çocuğunuzla birlikte büyüyen müzik sevgisini besler.',
-      },
-    },
     catalogue: {
       welcome: {
         title: 'Hikâye rafın',
@@ -1057,19 +938,19 @@ export default {
       },
       themes: {
         title: 'Bir tema seç',
-        description: 'Hikâyeler, öğrenme ya da müzik. Bir karoya dokun, raf kendini düzenlesin.',
+        description: 'Hikâyeler, Öğrenme ya da Müzik. Birine dokun, raf ona göre dizilsin.',
       },
       filter: {
         title: 'İnce filtreler',
         description: 'Uyku vakti, hayvanlar, sakinlik ve dahası. Birkaçını seç, raf yalnızca onları göstersin.',
       },
       featured: {
-        title: 'Bugünün seçimi',
-        description: 'Her gün yeniden seçilen bir kitap. Şimdi oku\'ya dokun, hemen açılsın.',
+        title: 'Sıradaki kitabın',
+        description: 'Yarım kalan kitabın ya da her gün yeni bir öneri. Kartını açmak için Şimdi oku düğmesine dokun.',
       },
       shelves: {
         title: 'Kaydırılacak raflar',
-        description: 'Herhangi bir rafı kaydır ya da tüm tema için Tümünü gör\'e dokun.',
+        description: 'Herhangi bir rafı kaydır ya da tüm tema için Tümünü gör seçeneğine dokun. Kartını açmak için bir kitaba dokun.',
       },
       navProgress: {
         title: 'İlerleme',
@@ -3275,6 +3156,8 @@ export default {
   },
   storyDetail: {
     readTogether: 'Birlikte oku',
+    pickPage: 'Bir sayfadan başla',
+    readFromPage: '{{page}}. sayfadan oku',
     continueReading: 'Okumaya devam et',
     record: 'Kaydet',
     playAlong: 'Birlikte oyna',
@@ -3322,7 +3205,7 @@ export default {
       title: 'Daha sakin ve güvenli\nbir ekran zamanı.',
       noAds: 'Reklam yok',
       noTracking: 'Davranış takibi yok',
-      noPressure: 'Seri ya da baskı yok',
+      noPressure: 'Asla baskı yok',
       gentle: 'Yumuşak sesler ve hareketler',
       body: 'Sakin etkinlikler, hoşgörülü etkileşimler ve dikkat çeken ödüller yok.',
     },
@@ -3396,6 +3279,9 @@ export default {
       days_one: '{{count}} günlük seri!',
       days_other: '{{count}} günlük seri!',
       start: 'Bugün bir seri başlat',
+      unit: 'günlük seri',
+      unit_one: 'günlük seri',
+      unit_other: 'günlük seri',
     },
     weeklyReading: {
       minutes: 'Bu hafta {{count}} dk',
@@ -3407,6 +3293,7 @@ export default {
     achievements: {
       title: 'Bak neler başardın!',
       cta: 'Keşfet',
+      ctaJourney: 'Yolculuğu keşfet',
       emptyTitle: 'İlk rozetin seni bekliyor',
       emptyBody: 'Kazanmak için birlikte bir hikâye okuyun',
       hint: 'Adana doğru uç',
@@ -3435,6 +3322,25 @@ export default {
     greeting: 'Birlikte ne yapalım?',
     grownUps: 'Yetişkinler',
     continueTogether: 'Birlikte devam et',
+    continueReading: 'Okumaya devam et',
+    continueMore: 'Daha fazla göster',
+    statOrb: {
+      continue: 'Devam',
+      readToBookmark: 'Okuyup işaretle',
+      achieved: 'Kazanıldı',
+    },
+    statPill: {
+      streak: 'Günlük seri',
+      days: '{{count}} günlük seri',
+      days_one: '{{count}} günlük seri',
+      days_other: '{{count}} günlük seri',
+      best: 'En iyi {{count}}',
+      pages: '{{page}} / {{total}}',
+      achievements: 'Başarılar',
+      next: 'Sıradaki: {{title}}',
+      toBadge: 'Sıradaki rozeti açar',
+      openBook: '{{title}} aç',
+    },
     pagePosition: 'Sayfa {{page}} / {{total}}',
     resumeStory: '{{title}} okumaya devam et',
     storybooks: 'Öykü kitapları',

@@ -60,7 +60,7 @@ describe('VoyageRow', () => {
   });
 
   it('keeps the style it was given and draws what is inside it', () => {
-    const { view, style } = rowStyle('story', 0);
+    const { view, style } = rowStyle('journey', 0);
 
     expect(style.marginBottom).toBe(12);
     expect(view.UNSAFE_queryAllByType(Text).map((node) => node.props.children)).toContain('inside');

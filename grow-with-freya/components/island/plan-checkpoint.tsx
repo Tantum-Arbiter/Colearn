@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useState } from 'react';
+import React, { memo, useCallback, useState, type Ref } from 'react';
 import { Pressable, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -78,6 +78,7 @@ export interface PlanCheckpointProps {
   onPress: (view: PlanStepView) => void;
   pulse?: SharedValue<number>;
   labelFloor?: number;
+  markerRef?: Ref<View>;
 }
 
 function guessedWidth(words: string, fontSize: number): number {
@@ -162,6 +163,7 @@ export const PlanCheckpoint = memo(function PlanCheckpoint({
   onPress,
   pulse,
   labelFloor = Number.POSITIVE_INFINITY,
+  markerRef,
 }: PlanCheckpointProps) {
   const { t } = useTranslation();
   const { isTablet, scaledFontSize } = useAccessibility();
@@ -210,6 +212,8 @@ export const PlanCheckpoint = memo(function PlanCheckpoint({
   return (
     <>
       <Pressable
+        ref={markerRef}
+        collapsable={false}
         testID={`plan-checkpoint-${day}`}
         accessibilityRole="button"
         accessibilityLabel={t('plan.a11y.checkpoint', { day, place, state: t(`plan.states.${view.state}`) })}

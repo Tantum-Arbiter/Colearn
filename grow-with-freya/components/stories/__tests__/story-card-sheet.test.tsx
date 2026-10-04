@@ -17,6 +17,7 @@
 
 import React from 'react';
 import { render, act, waitFor } from '@testing-library/react-native';
+import * as Haptics from 'expo-haptics';
 import { StyleSheet } from 'react-native';
 import { StoryCardSheet } from '@/components/stories/story-card-sheet';
 import { StoryDownloadService } from '@/services/story-download-service';
@@ -189,14 +190,17 @@ describe('StoryCardSheet', () => {
     });
   });
 
-  it('should hold everything it shows, so the card never scrolls under the child', () => {
+  it('should slide sideways only along the shelf and a book\'s pages, and keep its body still and quiet', () => {
     const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} progress={{ wombat: { pageIndex: 3, totalPages: 9 } }} />);
 
-    const underTest = UNSAFE_root
-      .findAll((node: any) => typeof node.props?.onMomentumScrollEnd === 'function' || typeof node.props?.scrollEnabled === 'boolean')
+    const sideways = UNSAFE_root
+      .findAll((node: any) => node.props?.horizontal === true)
       .map((node: any) => node.props.testID);
+    const body = UNSAFE_root.findAll((node: any) => node.props?.testID === 'story-card-body')[0];
 
-    expect(Array.from(new Set(underTest))).toEqual(['story-card-carousel']);
+    expect(Array.from(new Set(sideways))).toEqual(['story-card-carousel', 'story-card-page-strip']);
+    expect(body.props.bounces).toBe(false);
+    expect(body.props.showsVerticalScrollIndicator).toBe(false);
   });
 
   it('should sit the ways to read at the foot of the card, whatever the book above them holds', () => {
@@ -297,6 +301,125 @@ describe('StoryCardSheet', () => {
     expect(underTest.backgroundColor).toBe(playAlong.backgroundColor);
     expect(underTest.borderWidth).toBe(playAlong.borderWidth);
     expect(underTest.borderRadius).toBe(playAlong.borderRadius);
+  });
+
+  describe('the pages to start from', () => {
+    const LONG: Story = {
+      ...makeStory('long', 'The Long Night'),
+      pages: Array.from({ length: 9 }, (_, index) => ({
+        id: `long-p${index}`,
+        pageNumber: index,
+        text: index === 0 ? 'cover' : `page ${index}`,
+        ...(index === 0 ? { type: 'cover' as const } : {}),
+        backgroundImage: `file:///long-${index}.webp`,
+      })),
+    };
+
+    function unique(ids: string[]): string[] {
+      return ids.filter((id, index) => ids.indexOf(id) === index);
+    }
+
+    function pagesOf(root: any) {
+      return root.findAll(
+        (node: any) => /^story-card-page-\d+$/.test(String(node.props?.testID)) && typeof node.props?.onPress === 'function'
+      );
+    }
+
+    function picked(root: any) {
+      return unique(pagesOf(root).filter((node: any) => node.props.accessibilityState?.selected).map((node: any) => node.props.testID));
+    }
+
+    it("should lay out the book's pages past its cover, each with its picture", () => {
+      const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} stories={[LONG]} />);
+
+      const pages = pagesOf(UNSAFE_root);
+      const pictures = UNSAFE_root.findAll((node: any) => node.props?.testID === 'story-card-page-image-3');
+
+      expect(unique(pages.map((node: any) => node.props.testID))).toEqual(
+        [1, 2, 3, 4, 5, 6, 7, 8].map((index) => `story-card-page-${index}`)
+      );
+      expect(pictures[0].props.source).toEqual({ uri: 'file:///long-3.webp' });
+    });
+
+    it('should start on the page the child left off at', () => {
+      const { UNSAFE_root } = render(
+        <StoryCardSheet {...defaultProps} stories={[LONG]} progress={{ long: { pageIndex: 4, totalPages: 9 } }} />
+      );
+
+      expect(picked(UNSAFE_root)).toEqual(['story-card-page-4']);
+    });
+
+    it('should start on the first page of a book not yet begun', () => {
+      const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} stories={[LONG]} />);
+
+      expect(picked(UNSAFE_root)).toEqual(['story-card-page-1']);
+    });
+
+    it('should pick a page when it is tapped, pass it on, and offer to read from there', () => {
+      const onPickPage = jest.fn();
+      const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} stories={[LONG]} onPickPage={onPickPage} />);
+
+      pressByTestId(UNSAFE_root, 'story-card-page-6');
+
+      expect(onPickPage).toHaveBeenCalledWith('long', 6);
+      expect(Haptics.selectionAsync).toHaveBeenCalled();
+      expect(picked(UNSAFE_root)).toEqual(['story-card-page-6']);
+      expect(findByText(UNSAFE_root, 'storyDetail.readFromPage (page:6)').length).toBeGreaterThan(0);
+    });
+
+    it('should keep the usual way in while the page it started on is still the one picked', () => {
+      const { UNSAFE_root } = render(
+        <StoryCardSheet {...defaultProps} stories={[LONG]} progress={{ long: { pageIndex: 4, totalPages: 9 } }} />
+      );
+
+      expect(findByText(UNSAFE_root, 'storyDetail.continueReading').length).toBeGreaterThan(0);
+      expect(findByText(UNSAFE_root, 'storyDetail.readFromPage')).toHaveLength(0);
+    });
+
+    it('should start on the last page when the saved place runs past the book', () => {
+      const { UNSAFE_root } = render(
+        <StoryCardSheet {...defaultProps} stories={[LONG]} progress={{ long: { pageIndex: 14, totalPages: 15 } }} />
+      );
+
+      expect(picked(UNSAFE_root)).toEqual(['story-card-page-8']);
+    });
+
+    it('should lay out the pages only on the book in front, not on its neighbours along the shelf', () => {
+      const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} stories={[LONG, { ...LONG, id: 'other' }]} />);
+
+      const strips = UNSAFE_root.findAll((node: any) => node.props?.testID === 'story-card-pages');
+      const inFront = UNSAFE_root.findAll((node: any) => node.props?.testID === 'story-card-long')[0];
+
+      expect(strips.length).toBeGreaterThan(0);
+      expect(inFront.findAll((node: any) => node.props?.testID === 'story-card-pages').length).toBe(strips.length);
+    });
+
+    it('should hand the tour the strip of the book in front, in a host that can be measured', () => {
+      const pagesRef = React.createRef<any>();
+      const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} stories={[LONG, { ...LONG, id: 'other' }]} pagesRef={pagesRef} />);
+
+      const cards = UNSAFE_root.findAll((node: any) => node.props?.pagesRef !== undefined && node.props?.story !== undefined);
+      const strip = UNSAFE_root.findAll((node: any) => node.props?.testID === 'story-card-pages' && node.props?.style !== undefined)[0];
+
+      expect(cards.filter((node: any) => node.props.pagesRef === pagesRef).map((node: any) => node.props.story.id)).toEqual(['long']);
+      expect(strip.props.collapsable).toBe(false);
+    });
+
+    it('should show no pages for a book that has none to show', () => {
+      const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} stories={[{ ...LONG, pages: undefined }]} />);
+
+      expect(pagesOf(UNSAFE_root)).toHaveLength(0);
+      expect(UNSAFE_root.findAll((node: any) => node.props?.testID === 'story-card-pages')).toHaveLength(0);
+    });
+
+    it('should listen for its body to fill, so it can bring the pages into view', () => {
+      const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} stories={[LONG]} focusPages />);
+
+      const body = UNSAFE_root.findAll((node: any) => node.props?.testID === 'story-card-body')[0];
+
+      expect(typeof body.props.onContentSizeChange).toBe('function');
+      expect(typeof body.props.onLayout).toBe('function');
+    });
   });
 
   describe('the page preview on the cover', () => {

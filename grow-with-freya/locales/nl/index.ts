@@ -658,6 +658,7 @@ export default {
       'day-7': { aim: 'Oefen wachten en om de beurt gaan met een verhaal over een busrit.' },
     },
     stepOf: 'Stap {{day}} van {{total}}',
+    focus: '{{domain}} en {{skill}}',
     minutes: '{{from}}–{{to}} min',
     start: 'Activiteit starten',
     preview: 'Voorproefje',
@@ -675,22 +676,10 @@ export default {
     },
   },
   tutorial: {
-    welcomeTitle: 'Welkom bij\nEarlyroots!',
-    welcomeDescription: 'Laten we een snelle rondleiding doen om jou en je kind te helpen het meeste uit leestijd te halen.',
-    storiesTitle: 'Verhalenbibliotheek',
-    storiesDescription: 'Tik hier om een verzameling interactieve verhalen met mooie illustraties en leuke interacties te verkennen.',
-    skip: 'Overslaan',
-    gotIt: 'Begrepen!',
     buttons: {
       next: 'Volgende',
       skip: 'Overslaan',
-      skipAll: 'Alles Overslaan',
-      skipTour: 'Rondleiding Overslaan',
-      gotIt: 'Begrepen!',
-      go: 'Gaan!',
       letsGo: 'Laten we Gaan!',
-      done: 'Klaar',
-      startReading: 'Begin met Lezen',
     },
     mainMenu: {
       navLearn: {
@@ -700,26 +689,6 @@ export default {
       welcome: {
         title: 'Welkom bij Early Roots!',
         description: 'Laten we een snelle rondleiding doen om jou en je kind te helpen het meeste uit leestijd te halen.',
-      },
-      stories: {
-        title: 'Verhalen',
-        description: 'Ontdek onze collectie interactieve verhalen met prachtige illustraties en leuke interacties.',
-      },
-      practise: {
-        title: 'Oefenen',
-        description: 'Leer liedjes spelen op verschillende instrumenten. Volg mee en bouw je muzikale vaardigheden op!',
-      },
-      freeplay: {
-        title: 'Vrij Spelen',
-        description: 'Speel vrij op elk instrument - geen regels, alleen plezier! Experimenteer met geluiden en maak je eigen muziek.',
-      },
-      instruments: {
-        title: 'Instrumenten',
-        description: 'Oefen liedjes of jam vrij op verschillende instrumenten. Bouw muzikale vaardigheden op terwijl je plezier hebt!',
-      },
-      settings: {
-        title: 'Instellingen',
-        description: 'Pas de app aan zodat deze het beste voor je gezin werkt.',
       },
       language: {
         title: 'Jouw taal',
@@ -731,7 +700,7 @@ export default {
       },
       achievement: {
         title: 'Jouw leerreis',
-        description: 'De badge waar je kind het dichtst bij is, en hoe ver het nog is. Tik om omlaag te vliegen naar het eiland.',
+        description: 'De stappen van deze week op jullie eiland en de badge die het dichtstbij is. Tik erop om naar het eiland te vliegen.',
       },
       screenTime: {
         title: 'De schermtijdring',
@@ -739,27 +708,17 @@ export default {
         remainingCaption: 'Tijd over',
         spentCaption: 'Tijd is op',
       },
-    },
-    screenTime: {
-      intro: {
-        title: 'Schermtijd Dashboard',
-        description: 'Monitor, beheer en stel dagelijkse schermtijd van je kind in met leeftijdsgeschikte limieten.',
+      streakOrb: {
+        title: 'Dagelijkse reeks',
+        description: 'Elke dag met een verhaal telt er één bij. Tik erop om jullie langste reeks te zien.',
       },
-      ageBased: {
-        title: 'Leeftijdsgebaseerde Limieten',
-        description: 'Stel de leeftijd van je kind in en ontvang automatisch WHO/AAP aanbevolen schermtijdlimieten.',
+      continueOrb: {
+        title: 'Verder',
+        description: 'Er staat „Lees om te bewaren” tot je een boek begint. Daarna staat er „Verder” en zie je de voorkant van dat boek. Tik erop om de kaart te openen en een pagina te kiezen.',
       },
-      heatmap: {
-        title: 'Wekelijkse Activiteit',
-        description: 'Zie schermtijd gebruikspatronen gedurende de week om je te helpen een gezonde routine op te bouwen.',
-      },
-      reminders: {
-        title: 'Stel Herinneringen in',
-        description: 'Maak aangepaste herinneringen voor activiteiten, pauzes of slaaptijdroutine.',
-      },
-      routine: {
-        title: 'Bouw Gezonde Routine op',
-        description: 'Gebruik schermtijdgegevens om een consistente dagelijkse routine op te bouwen die voor je gezin werkt.',
+      badgesOrb: {
+        title: 'Prestaties',
+        description: 'Zoveel badges hebben jullie al verdiend. Tik erop om de volgende te zien.',
       },
     },
     storyReader: {
@@ -798,16 +757,38 @@ export default {
     },
     bookMode: {
       read: {
-        title: 'Leesmodus',
-        description: 'Tik hier om het verhaal zelf met je kind te lezen. Draai pagina\'s in je eigen tempo.',
+        title: 'Samen lezen',
+        description: 'Lees het verhaal samen hardop en sla de pagina’s om in je eigen tempo. Ben je al begonnen, dan ga je verder waar je was.',
       },
       record: {
-        title: 'Opnamemodus',
-        description: 'Neem je stem op terwijl je het verhaal leest. Perfect als je weg bent!',
+        title: 'Opnemen',
+        description: 'Neem je eigen stem op terwijl je het verhaal leest, zodat je kind het kan horen als jij er niet bent. Een volwassene beantwoordt eerst een korte vraag.',
       },
       narrate: {
-        title: 'Luistermodus',
-        description: 'Luister naar een vooraf opgenomen vertelling van het verhaal. Perfect voor slaaptijd!',
+        title: 'Meespelen',
+        description: 'Een opgenomen stem leest het verhaal voor en de pagina’s slaan vanzelf om. Heerlijk voor het slapengaan.',
+      },
+      pages: {
+        title: 'Begin bij een pagina',
+        description: 'Alle pagina’s van het boek, jullie plek omcirkeld in goud. Tik op een pagina om daar te beginnen.',
+      },
+    },
+    island: {
+      welcome: {
+        title: 'Jullie leereiland',
+        description: 'Deze week elke dag een kleine stap: een verhaal, een spel of een liedje om samen te doen. Het pad licht op terwijl jullie verder gaan.',
+      },
+      checkpoint: {
+        title: 'De stap van vandaag',
+        description: 'Het stralende punt is dat van vandaag. Tik erop om te beginnen. De rest gaat dag voor dag open.',
+      },
+      plan: {
+        title: 'Het plan voor vandaag',
+        description: 'Wat de stap van vandaag is, hoe lang hij duurt en wat hij oefent. Activiteit starten begint hem; met Voorproefje kijk je eerst.',
+      },
+      home: {
+        title: 'Terug naar huis',
+        description: 'Vlieg terug naar je eigen lucht wanneer je klaar bent.',
       },
     },
     recordMode: {
@@ -910,34 +891,6 @@ export default {
         description: 'Wil je een ander geluid proberen? Open het menu () en tik op \'Instrument Wisselen\' om op elk moment te wisselen.',
       },
     },
-    storyModes: {
-      welcome: {
-        title: 'Drie Manieren om te Ontdekken!',
-        description: 'Elk kind leert anders. Kies de verhaalervaring die de nieuwsgierigheid van je kind prikkelt - elk bouwt essentiële vaardigheden op door de magie van het spelen.',
-      },
-      interactive: {
-        title: 'Interactieve Verhalen',
-        description: 'Tik, veeg en ontdek! Interactieve verhalen brengen pagina\'s tot leven met aanraakbare verrassingen, oorzaak-en-gevolg momenten en praktische leeractiviteiten. Onderzoek toont aan dat actieve deelname tijdens voorleestijd het begrip, de fijne motoriek en vroege probleemoplossing versterkt.',
-      },
-      musical: {
-        title: 'Muzikale Verhalen',
-        description: 'Lees, speel en treed op! Muzikale verhalen verweven echte instrumentuitdagingen in elk avontuur - je kind leert ritme, melodie en coördinatie terwijl het het verhaal volgt. Studies bevestigen dat vroege blootstelling aan muziek het geheugen, de taalontwikkeling en emotionele expressie verbetert.',
-      },
-      jigsaw: {
-        title: 'Puzzelverhalen',
-        description: 'Puzzel het samen! Puzzelverhalen verbergen prachtige puzzels op elke pagina en bouwen ruimtelijk bewustzijn, geduld en logisch denken op. Het voltooien van puzzels geeft kinderen een echt gevoel van prestatie en versterkt visueel-perceptuele vaardigheden die de leesvoorbereiding ondersteunen.',
-      },
-    },
-    gestures: {
-      speakerLongPress: {
-        title: 'Lange Druk Tip',
-        description: 'Houd lang ingedrukt op de luidspreker knop om extra geluidopties te zien.',
-      },
-      storySwipe: {
-        title: 'Veegnavigatie',
-        description: 'Veeg naar links of rechts om pagina\'s snel om te draaien.',
-      },
-    },
     emotionCards: {
       welcome: {
         title: 'Welkom bij Emotikaarten!',
@@ -960,60 +913,6 @@ export default {
         description: 'Wissel tussen emoji\'s, dieren en beer thema\'s om dingen vers en interessant te houden!',
       },
     },
-    spelling: {
-      welcome: {
-        title: 'Spellingactiviteiten',
-        description: 'Welkom bij Spelling! Leuke interactieve activiteiten om je kind te helpen letters, woorden en spelling te leren.',
-      },
-      ages: {
-        title: 'Leeftijdsgeschikte Inhoud',
-        description: 'Activiteiten zijn gegroepeerd op leeftijdsgroep. Gebruik de carrousel bovenaan om te filteren op het niveau van je kind.',
-      },
-      together: {
-        title: 'Samen Leren',
-        description: 'Ga bij je kind zitten en spel de letters samen uit. Moedig aan en vier elke poging!',
-      },
-      benefit: {
-        title: 'Geletterdheid Opbouwen',
-        description: 'Vroeg oefenen met spelling ontwikkelt fonemisch bewustzijn, letterherkenning en een liefde voor woorden die een leven lang meegaat.',
-      },
-    },
-    numbers: {
-      welcome: {
-        title: 'Getallenactiviteiten',
-        description: 'Welkom bij Getallen! Boeiende activiteiten om je kind te helpen tellen, vormen en eerste wiskunde te ontdekken.',
-      },
-      ages: {
-        title: 'Leeftijdsgeschikte Inhoud',
-        description: 'Activiteiten zijn gegroepeerd op leeftijdsgroep. Gebruik de carrousel bovenaan om het juiste niveau voor je kind te vinden.',
-      },
-      together: {
-        title: 'Samen Tellen',
-        description: 'Tel samen hardop, wijs naar voorwerpen en maak getallen onderdeel van het dagelijks spel!',
-      },
-      benefit: {
-        title: 'Rekenvaardigheid Opbouwen',
-        description: 'Vroeg spelen met getallen ontwikkelt logisch denken, patroonherkenning en een stevige basis voor wiskunde.',
-      },
-    },
-    feelings: {
-      welcome: {
-        title: 'Gevoelensactiviteiten',
-        description: 'Welkom bij Gevoelens! Activiteiten die je kind helpen emoties te herkennen, benoemen en begrijpen.',
-      },
-      ages: {
-        title: 'Leeftijdsgeschikte Inhoud',
-        description: 'Activiteiten zijn gegroepeerd op leeftijdsgroep. Kies activiteiten die passen bij de emotionele ontwikkeling van je kind.',
-      },
-      together: {
-        title: 'Samen Ontdekken',
-        description: 'Praat openlijk over emoties. Vraag "Hoe voelt dat?" en deel ook je eigen gevoelens.',
-      },
-      benefit: {
-        title: 'Emotionele Intelligentie',
-        description: 'Emoties begrijpen bouwt empathie, zelfregulatie en sterke sociale vaardigheden op — essentieel voor levenslang welzijn.',
-      },
-    },
     practise: {
       welcome: {
         title: 'Oefenmodus',
@@ -1032,24 +931,6 @@ export default {
         description: 'Liedjes leren spelen ontwikkelt ritme, coördinatie, geheugen en concentratie — allemaal door de vreugde van muziek.',
       },
     },
-    freeplay: {
-      welcome: {
-        title: 'Vrij Spelen Modus',
-        description: 'Geen regels, gewoon plezier! Verken elk instrument en maak je eigen muziek. Perfect voor creativiteit en zelfexpressie.',
-      },
-      instrument: {
-        title: 'Kies Je Instrument',
-        description: 'Kies elk instrument uit de carrousel. Probeer ze allemaal om nieuwe geluiden en favorieten te ontdekken!',
-      },
-      play: {
-        title: 'Speel Vrij',
-        description: 'Druk op de gekleurde knoppen om muziek te maken. Er zijn geen verkeerde noten — elk geluid is deel van het avontuur!',
-      },
-      benefit: {
-        title: 'Creatieve Expressie',
-        description: 'Vrij muzikaal spel koestert creativiteit, zelfvertrouwen en een liefde voor muziek die meegroeit met je kind.',
-      },
-    },
     catalogue: {
       welcome: {
         title: 'Jouw verhalenplank',
@@ -1057,19 +938,19 @@ export default {
       },
       themes: {
         title: 'Kies een thema',
-        description: 'Verhalen, leren of muziek. Tik op een tegel en de plank sorteert zichzelf.',
+        description: 'Verhalen, Leren of Muziek. Tik er een aan en de plank sorteert zich mee.',
       },
       filter: {
         title: 'Fijnere filters',
         description: 'Bedtijd, dieren, rust en meer. Kies er een paar en de plank laat alleen die zien.',
       },
       featured: {
-        title: 'Keuze van vandaag',
-        description: 'Elke dag een vers gekozen boek. Tik op Nu lezen en het gaat meteen open.',
+        title: 'Jullie volgende boek',
+        description: 'Het boek waar jullie middenin zitten, of elke dag een nieuwe tip. Tik op Nu lezen om de kaart te openen.',
       },
       shelves: {
         title: 'Planken om te swipen',
-        description: 'Swipe langs een plank, of tik op Alles zien voor het hele thema.',
+        description: 'Veeg langs een plank, of tik op Alles bekijken voor het hele thema. Tik op een boek om de kaart te openen.',
       },
       navProgress: {
         title: 'Voortgang',
@@ -3275,6 +3156,8 @@ export default {
   },
   storyDetail: {
     readTogether: 'Samen lezen',
+    pickPage: 'Begin bij een pagina',
+    readFromPage: 'Lezen vanaf pagina {{page}}',
     continueReading: 'Verder lezen',
     record: 'Opnemen',
     playAlong: 'Meespelen',
@@ -3322,7 +3205,7 @@ export default {
       title: 'Een rustigere en veiligere\nvorm van schermtijd.',
       noAds: 'Geen advertenties',
       noTracking: 'Geen gedragstracking',
-      noPressure: 'Geen reeksen of druk',
+      noPressure: 'Nooit druk',
       gentle: 'Zachte geluiden en beweging',
       body: 'Rustige activiteiten, vergevingsgezinde interacties en geen aandachttrekkende beloningen.',
     },
@@ -3396,6 +3279,9 @@ export default {
       days_one: '{{count}} dag reeks!',
       days_other: '{{count}} dagen reeks!',
       start: 'Begin vandaag een reeks',
+      unit: 'dagen reeks',
+      unit_one: 'dag reeks',
+      unit_other: 'dagen reeks',
     },
     weeklyReading: {
       minutes: '{{count}} min deze week',
@@ -3407,6 +3293,7 @@ export default {
     achievements: {
       title: 'Kijk wat je hebt bereikt!',
       cta: 'Ontdek',
+      ctaJourney: 'Ontdek de reis',
       emptyTitle: 'Je eerste badge wacht',
       emptyBody: 'Lees samen een verhaal om hem te verdienen',
       hint: 'Vlieg omlaag naar jouw eiland',
@@ -3435,6 +3322,25 @@ export default {
     greeting: 'Wat gaan we samen doen?',
     grownUps: 'Volwassenen',
     continueTogether: 'Samen verder',
+    continueReading: 'Verder lezen',
+    continueMore: 'Meer tonen',
+    statOrb: {
+      continue: 'Verder',
+      readToBookmark: 'Lees om te bewaren',
+      achieved: 'Behaald',
+    },
+    statPill: {
+      streak: 'Dagelijkse reeks',
+      days: '{{count}} dagen reeks',
+      days_one: '{{count}} dag reeks',
+      days_other: '{{count}} dagen reeks',
+      best: 'Beste {{count}}',
+      pages: '{{page}} van {{total}}',
+      achievements: 'Prestaties',
+      next: 'Volgende: {{title}}',
+      toBadge: 'Opent de volgende badge',
+      openBook: '{{title}} openen',
+    },
     pagePosition: 'Pagina {{page}} van {{total}}',
     resumeStory: 'Verder lezen in {{title}}',
     storybooks: 'Prentenboeken',

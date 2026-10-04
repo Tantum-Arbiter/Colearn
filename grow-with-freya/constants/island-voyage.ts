@@ -101,10 +101,9 @@ export interface VoyageRow {
 export const VOYAGE_ROWS = {
   chrome: { order: 0, exit: 'up' },
   greeting: { order: 0, exit: 'up' },
-  story: { order: 1, exit: 'left' },
-  journey: { order: 2, exit: 'right' },
-  stats: { order: 3, exit: 'left' },
-  plan: { order: 4, exit: 'right' },
+  journey: { order: 1, exit: 'right' },
+  stats: { order: 2, exit: 'left' },
+  plan: { order: 3, exit: 'right' },
 } as const satisfies Record<string, VoyageRow>;
 
 export interface RowPose {

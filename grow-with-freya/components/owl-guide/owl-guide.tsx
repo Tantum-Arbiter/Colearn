@@ -27,12 +27,16 @@ import { GuideSpotlight } from './guide-spotlight';
 import { useGuideOnTop } from './owl-guide-layer';
 import { ScreenTimeRingLegend } from './screen-time-ring-legend';
 import { ProfileSlotLegend } from './profile-slot-legend';
+import { ContinueOrbLegend } from './continue-orb-legend';
 import { useGuideTargets, type GuideTargetRefs } from './use-guide-targets';
 import type { GuideScroller } from './use-guide-scroller';
+
+const noop = () => undefined;
 
 const ILLUSTRATIONS = {
   screenTimeRing: <ScreenTimeRingLegend />,
   profileSlot: <ProfileSlotLegend />,
+  continueOrb: <ContinueOrbLegend />,
 } as const;
 
 const NO_TARGETS: GuideTargetRefs = {};
@@ -118,18 +122,29 @@ export function OwlGuide({
   const freshlyMeasured = measurements.ready && measurements.step === guide.stepIndex;
   const rect = step?.target && freshlyMeasured ? measurements.rects[step.target] ?? null : null;
   const perch = useMemo(() => owlPerchFrame(layout.owlWidth), [layout.owlWidth]);
+  const rowSteps = useMemo(() => steps.filter((entry) => entry.row !== undefined), [steps]);
+  const [rowHeights, setRowHeights] = useState<Record<string, number>>({});
+  const recordRowHeight = useCallback((stepId: string, event: LayoutChangeEvent) => {
+    const measured = Math.round(event.nativeEvent.layout.height);
+    if (measured > 0) setRowHeights((known) => (known[stepId] === measured ? known : { ...known, [stepId]: measured }));
+  }, []);
+  const revealHeight = step?.row
+    ? Math.max(bubbleHeight, ...rowSteps.filter((entry) => entry.row === step.row).map((entry) => rowHeights[entry.id] ?? 0))
+    : bubbleHeight;
   // worked out in the render the measurement lands in, not in an effect after
   // it: an effect renders once with the old view first, and that frame is a
   // spotlight cut around where the highlight used to be
   // a pinned subject is furniture the page cannot move, so asking for room
   // only walks the page off the thing being talked about and back again
   const owed =
-    scroller && rect && !step?.pinned
+    scroller && rect && step?.pinned
+      ? -scroller.away()
+      : scroller && rect
       ? guideRevealShift(
           { width, height },
           insets,
           { width: perch.width, height: perch.height },
-          { maxWidth: layout.bubbleMaxWidth, height: bubbleHeight },
+          { maxWidth: layout.bubbleMaxWidth, height: revealHeight },
           layout.landscape,
           rect
         )
@@ -229,6 +244,21 @@ export function OwlGuide({
     guide.dismissGuide();
     onEndRef.current?.();
   }, [isMine, active, scroller, guide]);
+
+  const holdsTour = useRef(false);
+  const letGo = useRef(guide.dismissGuide);
+  useEffect(() => {
+    holdsTour.current = isMine;
+    letGo.current = guide.dismissGuide;
+  });
+  useEffect(() => {
+    const ended = endedRef;
+    return () => {
+      if (!holdsTour.current || ended.current) return;
+      ended.current = true;
+      letGo.current();
+    };
+  }, []);
 
   const finish = useCallback(
     (how: 'complete' | 'skip') => {
@@ -364,6 +394,38 @@ export function OwlGuide({
           />
         </Animated.View>
 
+        {landed
+          ? rowSteps.map((entry) => (
+              <View
+                key={entry.id}
+                testID={`owl-guide-measure-${entry.id}`}
+                pointerEvents="none"
+                accessibilityElementsHidden
+                importantForAccessibility="no-hide-descendants"
+                onLayout={(event) => recordRowHeight(entry.id, event)}
+                style={[styles.measure, { width: placement.width }]}
+              >
+                <OwlSpeechBubble
+                  idPrefix="owl-guide-measure"
+                  testID={`owl-guide-measure-bubble-${entry.id}`}
+                  title={t(entry.titleKey)}
+                  body={t(entry.descriptionKey)}
+                  illustration={entry.illustration ? ILLUSTRATIONS[entry.illustration] : undefined}
+                  page={steps.indexOf(entry)}
+                  pageCount={steps.length}
+                  nextLabel={t(GUIDE_BUTTON_KEYS.next)}
+                  closeLabel={t(GUIDE_BUTTON_KEYS.skip)}
+                  closeAsWord
+                  onNext={noop}
+                  onClose={noop}
+                  maxWidth={placement.width}
+                  tail={placement.tail}
+                  pointer={null}
+                />
+              </View>
+            ))
+          : null}
+
         {landed ? (
           <View
             testID={`owl-guide-bubble-${placement.mode}`}
@@ -422,5 +484,11 @@ const styles = StyleSheet.create({
   },
   bubbleSlot: {
     position: 'absolute',
+  },
+  measure: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    opacity: 0,
   },
 });

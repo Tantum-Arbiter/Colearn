@@ -6,10 +6,14 @@ assets/images/home-journey/journey-card-mock.webp: a screenshot of the whole
 home screen, with the card's island illustration on its right half. There is
 no separate file of that illustration, so it is cut from the mock here:
 
-  journey-island.webp   the card's right-hand part, from where the island
-                        begins to the card's inner edge, with the mock's own
-                        words painted out of it and its left edge faded to
-                        nothing, so it lies over the card's fill without a seam
+  journey-island.webp   the card's right-hand part, from a little way into the
+                        island's forest to the card's inner edge, with the
+                        mock's own words painted out of it and its left edge
+                        faded softly to nothing, so it lies over the card's
+                        fill without a seam. It was cut wider at first; the
+                        operator's third mock (2026-10-04) runs the step
+                        tokens up to the island's edge, so it now starts
+                        further right and fades over a wider band
 
 The mock is small (the card is 608 pixels wide in it), so the cut is enlarged
 twice over and sharpened a little; it is still softer than a drawing made at
@@ -39,8 +43,8 @@ CUT = os.path.join(ART_DIR, 'journey-island.webp')
 
 CARD = (68, 110, 676, 352)
 INSIDE = 3
-CUT_LEFT = 300
-FADE = (304, 336)
+CUT_LEFT = 362
+FADE = (362, 420)
 WORDS = [(296, 130, 384, 156), (296, 196, 341, 228)]
 WORD_PALER_BY = 70
 ENLARGE = 2

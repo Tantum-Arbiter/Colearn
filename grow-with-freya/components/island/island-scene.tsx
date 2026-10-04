@@ -1,10 +1,11 @@
-import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Image } from 'expo-image';
 import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { CircleActionButton } from '@/components/child-ui/circle-action-button';
+import { OwlGuide, useGuideLift } from '@/components/owl-guide';
 import {
   CIRCLE_BUTTON_DIAMETER_PHONE,
   CIRCLE_BUTTON_DIAMETER_TABLET,
@@ -110,6 +111,21 @@ export const IslandScene = memo(function IslandScene({
   const [cardHeight, setCardHeight] = useState<number>(isTablet ? PLAN_CARD.tabletHeight : PLAN_CARD.phoneHeight);
   const labelFloor = planCardTop(height, insets.bottom, cardHeight) - CHECKPOINT_LABEL_CLEARANCE;
 
+  const planLift = useGuideLift();
+  const checkpointRef = useRef<View>(null);
+  const cardRef = useRef<View>(null);
+  const homeRef = useRef<View>(null);
+  const todayId = plan.current?.state === 'open' ? plan.current.step.id : undefined;
+  const todayOpen = todayId !== undefined;
+  const tourTargets = useMemo(
+    () => ({
+      ...(todayOpen ? { island_checkpoint: checkpointRef } : {}),
+      island_plan_card: cardRef,
+      island_home: homeRef,
+    }),
+    [todayOpen]
+  );
+
   const stage = useAnimatedStyle(() => ({ transform: [{ scale: islandScale(arrival.value) }] }));
   const rise = useAnimatedStyle(() => ({ transform: [{ translateY: sunRise(arrival.value, riseFrom) }] }));
   const chrome = useAnimatedStyle(() => ({ opacity: chromeOpacity(arrival.value) }));
@@ -196,11 +212,12 @@ export const IslandScene = memo(function IslandScene({
             onPress={handleStart}
             pulse={clocks.wind}
             labelFloor={labelFloor}
+            markerRef={view.step.id === todayId ? checkpointRef : undefined}
           />
         ))}
       </Animated.View>
 
-      <Animated.View testID="island-plan-panel" pointerEvents="box-none" style={[styles.fill, chrome]}>
+      <Animated.View testID="island-plan-panel" pointerEvents="box-none" style={[styles.fill, chrome, planLift.style]}>
         <PlanPanel
           current={plan.current}
           total={plan.steps.length}
@@ -211,6 +228,7 @@ export const IslandScene = memo(function IslandScene({
           onStart={handleStart}
           onPreview={onPreviewActivity ? handlePreview : undefined}
           onHeight={setCardHeight}
+          cardRef={cardRef}
         />
       </Animated.View>
 
@@ -227,13 +245,15 @@ export const IslandScene = memo(function IslandScene({
           chrome,
         ]}
       >
-        <CircleActionButton
-          type="home"
-          testID="island-home-button"
-          label={t('common.home')}
-          onPress={comeBack}
-          accessibilityLabel={t('common.home')}
-        />
+        <View ref={homeRef} collapsable={false}>
+          <CircleActionButton
+            type="home"
+            testID="island-home-button"
+            label={t('common.home')}
+            onPress={comeBack}
+            accessibilityLabel={t('common.home')}
+          />
+        </View>
         <CircleActionButton
           type="audio"
           testID="island-sound-button"
@@ -242,6 +262,8 @@ export const IslandScene = memo(function IslandScene({
           accessibilityLabel={t('catalogue.sound')}
         />
       </Animated.View>
+
+      <OwlGuide id="island_tour" active={settled} targets={tourTargets} scroller={planLift.scroller} />
     </View>
   );
 });

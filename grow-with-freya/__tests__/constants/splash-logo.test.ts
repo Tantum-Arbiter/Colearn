@@ -55,6 +55,9 @@ const PHONE_LOGO = 280;
 const TABLET_LOGO = 380;
 const LAUNCH_BUDGET_MS = 5900;
 const HOLD_MS = 2000;
+const REANIMATED_SETTLED_AGE_MS = 1000;
+const REANIMATED_HANDBACK_TICK_MS = 500;
+const HANDBACK_SLACK_MS = 100;
 
 describe('splashLogoSize', () => {
   it.each([
@@ -775,6 +778,15 @@ describe('SPLASH_TIMELINE', () => {
     expect(SPLASH_TIMELINE.mountAllowanceMs).toBeLessThanOrEqual(SPLASH_TIMELINE.holdMs);
     expect(SPLASH_TIMELINE.exitAtMs - SPLASH_TIMELINE.mountAllowanceMs).toBeGreaterThanOrEqual(
       SPLASH_TIMELINE.logoCompleteMs
+    );
+  });
+
+  it('should not open the app until every finished entrance has been handed back to React', () => {
+    const openedAfterTheLastEntranceMs =
+      SPLASH_TIMELINE.exitAtMs - SPLASH_TIMELINE.mountAllowanceMs - SPLASH_TIMELINE.logoCompleteMs;
+
+    expect(openedAfterTheLastEntranceMs).toBeGreaterThanOrEqual(
+      REANIMATED_SETTLED_AGE_MS + REANIMATED_HANDBACK_TICK_MS + HANDBACK_SLACK_MS
     );
   });
 

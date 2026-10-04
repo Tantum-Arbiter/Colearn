@@ -24,7 +24,6 @@ import { UsageOverview } from './usage-overview';
 import { ScheduleCallout } from './schedule-callout';
 import { ScheduleWindow } from './schedule-window';
 import { AUTH_GRADIENT } from '@/components/auth/auth-theme';
-import { OwlGuide } from '../owl-guide';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -433,9 +432,6 @@ export function ScreenTimeScreen({ onBack }: ScreenTimeScreenProps) {
         onClose={() => setScheduleOpen(false)}
         onReminderChange={() => setReminderChangeCounter(prev => prev + 1)}
       />
-
-      {/* Tips overlay for first-time visitors */}
-      <OwlGuide id="screen_time_tips" />
     </View>
   );
 }

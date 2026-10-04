@@ -1,5 +1,9 @@
 import type { ChildNavItemId } from '@/components/child-ui/child-bottom-navigation';
 
+export interface DestinationFocus {
+  badgeId: string;
+}
+
 const SECTION_BY_DESTINATION: Record<string, ChildNavItemId> = {
   stories: 'home',
   progress: 'progress',

@@ -6,6 +6,7 @@ import {
   GUIDE_STEPS,
   GUIDE_OWL_WIDTH,
   profileTourTargets,
+  searchTourTargets,
   GUIDE_BUBBLE_MAX,
   SPOTLIGHT_PADDING,
   guideRevealShift,
@@ -13,10 +14,11 @@ import {
   placeGuideBubble,
   planGuideLayout,
   spotlightFrame,
+  GUIDE_REVISIONS,
+  guideRevision,
   type GuideId,
 } from '@/constants/owl-guide';
-import { MENU_CORNER_BUTTON } from '@/components/ui/music-control';
-import { CIRCLE_BUTTON_DIAMETER_PHONE } from '@/components/child-ui/tokens';
+import { PLAN_CARD } from '@/components/island/plan-panel';
 import en from '@/locales/en';
 
 function lookup(key: string): unknown {
@@ -51,44 +53,73 @@ describe('GUIDE_STEPS', () => {
     });
   });
 
-  it('points at the menu buttons on the main menu tour', () => {
-    const targets = GUIDE_STEPS.main_menu_tour.map((step) => step.target);
-
-    expect(targets).toContain('stories_button');
-    expect(targets).toContain('settings_button');
-    expect(targets).toContain('sound_control');
+  /**
+   * The home as it is now: the Learning Journey card, then the three orbs
+   * under it left to right, then the bar left to right, then the corner
+   * controls. Nothing of the old carousel menu is left on it.
+   */
+  it('walks the home: the journey card, the three orbs, the bar, then the corners', () => {
+    expect(GUIDE_STEPS.main_menu_tour.map((step) => step.target)).toEqual([
+      undefined,
+      'achievement_card',
+      'streak_orb',
+      'continue_orb',
+      'badges_orb',
+      'nav_learn',
+      'nav_progress',
+      'screen_time_ring',
+      'nav_search',
+      'nav_profile',
+      'language_control',
+      'sound_control',
+    ]);
   });
 
-  /**
-   * The home page is where the bar is first seen, so its tour is where the bar
-   * is explained: the two cards, then the bar left to right, and only then the
-   * grown-ups corner and the sound.
-   */
-  it('walks the home: the cards, then the bar left to right, then the sound', () => {
-    const onHome = guideSteps('main_menu_tour', [
-      'stories_button',
-      'achievement_card',
-      'nav_learn',
-      'nav_progress',
-      'screen_time_ring',
-      'nav_search',
-      'nav_profile',
-      'language_control',
-      'sound_control',
-    ]);
+  it('keeps nothing of the old menu: no Stories, Instruments or grown-ups buttons to point at', () => {
+    const targets = GUIDE_STEPS.main_menu_tour.map((step) => step.target);
 
-    expect(onHome.map((step) => step.target)).toEqual([
-      undefined,
-      'stories_button',
-      'achievement_card',
-      'nav_learn',
-      'nav_progress',
-      'screen_time_ring',
-      'nav_search',
-      'nav_profile',
-      'language_control',
-      'sound_control',
+    expect(targets).not.toContain('stories_button');
+    expect(targets).not.toContain('instruments_button');
+    expect(targets).not.toContain('settings_button');
+  });
+
+  it.each(['streak_orb', 'continue_orb', 'badges_orb'])('rings the %s with a circle', (target) => {
+    const step = GUIDE_STEPS.main_menu_tour.find((entry) => entry.target === target);
+
+    expect(step?.shape).toBe('circle');
+    expect(step?.pinned).toBeFalsy();
+  });
+
+  it('tells the family how the bookmark orb changes once a book is under way, and what a tap does', () => {
+    const copy = lookup('tutorial.mainMenu.continueOrb.description') as string;
+
+    expect(copy).toContain(`“${lookup('home.statOrb.readToBookmark')}”`);
+    expect(copy).toContain(`“${lookup('home.statOrb.continue')}”`);
+    expect(copy).toMatch(/cover/i);
+    expect(copy).toMatch(/page/i);
+  });
+
+  it('shows the bookmark orb in both its states under the words', () => {
+    const step = GUIDE_STEPS.main_menu_tour.find((entry) => entry.target === 'continue_orb');
+
+    expect(step?.illustration).toBe('continueOrb');
+  });
+
+  it('keeps the three orbs on one row, so the page holds still across them', () => {
+    const rows = GUIDE_STEPS.main_menu_tour.filter((entry) => entry.row !== undefined).map((entry) => [entry.target, entry.row]);
+
+    expect(rows).toEqual([
+      ['streak_orb', 'stat_orbs'],
+      ['continue_orb', 'stat_orbs'],
+      ['badges_orb', 'stat_orbs'],
     ]);
+  });
+
+  it('describes the journey card as the card it is now: the week on the island', () => {
+    const copy = lookup('tutorial.mainMenu.achievement.description') as string;
+
+    expect(copy).toMatch(/island/i);
+    expect(copy).toMatch(/week|steps/i);
   });
 
   it('names the Learn button with the word the bar itself shows', () => {
@@ -143,29 +174,112 @@ describe('GUIDE_STEPS', () => {
     ]);
   });
 
-  /** Down the sheet in the order the child reads it: read, then play along, then record. */
-  it('points at the three reading modes in the order the sheet lists them', () => {
+  it('rings the theme chooser as the capsule it is now', () => {
+    const step = GUIDE_STEPS.catalogue_tour.find((entry) => entry.target === 'theme_tiles');
+
+    expect(step?.shape).toBe('capsule');
+    expect(lookup(step!.descriptionKey)).not.toMatch(/tile/i);
+  });
+
+  // A pill ringed with a fixed corner came out a rounded box around it, the
+  // ring's corners flatter than the pill's own (review, 2026-10-04).
+  it.each([
+    ['profile_tour', 'profile_home'],
+    ['profile_tour', 'profile_settings'],
+    ['island_tour', 'island_home'],
+    ['book_mode_tour', 'read_button'],
+    ['book_mode_tour', 'narrate_button'],
+    ['book_mode_tour', 'record_button'],
+  ] as const)('rings the %s pill %s as a capsule', (tour, target) => {
+    expect(GUIDE_STEPS[tour].find((entry) => entry.target === target)?.shape).toBe('capsule');
+  });
+
+  it('says the featured book opens its card, not the book straight away', () => {
+    const copy = lookup('tutorial.catalogue.featured.description') as string;
+
+    expect(copy).not.toMatch(/straight away/i);
+    expect(copy).toMatch(/part-way|left off/i);
+  });
+
+  /** Down the card in the order it lists them: the pages, then read, play along, record. */
+  it('points at the page strip, then the three ways to read, in the order the card lists them', () => {
     expect(GUIDE_STEPS.book_mode_tour.map((step) => step.target)).toEqual([
+      'pick_page',
       'read_button',
       'narrate_button',
       'record_button',
     ]);
   });
 
-  /** The grown-ups control is a pill as tall as the speaker, so its spotlight is that pill, not a circle. */
-  it('spotlights the grown-ups pill as a pill round at both ends', () => {
-    const step = GUIDE_STEPS.main_menu_tour.find((entry) => entry.target === 'settings_button');
+  it('names the ways to read with the words their buttons show', () => {
+    const title = (target: string) => lookup(GUIDE_STEPS.book_mode_tour.find((step) => step.target === target)!.titleKey);
 
+    expect(title('read_button')).toBe(lookup('storyDetail.readTogether'));
+    expect(title('narrate_button')).toBe(lookup('storyDetail.playAlong'));
+    expect(title('record_button')).toBe(lookup('storyDetail.record'));
+  });
+
+  it('heads the page step with the words the strip itself shows', () => {
+    const step = GUIDE_STEPS.book_mode_tour.find((entry) => entry.target === 'pick_page');
+
+    expect(lookup(step!.titleKey)).toBe(lookup('storyDetail.pickPage'));
     expect(step?.shape).toBe('rounded-rect');
-    expect(step?.radius).toBe(MENU_CORNER_BUTTON.diameter / 2);
+  });
+
+  describe('the island tour', () => {
+    it('opens with a welcome, then the day on the trail, the plan card, and the way home', () => {
+      expect(GUIDE_STEPS.island_tour.map((step) => step.target)).toEqual([
+        undefined,
+        'island_checkpoint',
+        'island_plan_card',
+        'island_home',
+      ]);
+    });
+
+    it('rings the checkpoint as a circle, and the card and the home button as the shapes they are', () => {
+      const shape = (target: string) => GUIDE_STEPS.island_tour.find((step) => step.target === target);
+
+      expect(shape('island_checkpoint')?.shape).toBe('circle');
+      expect(shape('island_plan_card')).toEqual(expect.objectContaining({ shape: 'rounded-rect', radius: PLAN_CARD.radius }));
+      expect(shape('island_home')?.shape).toBe('capsule');
+      expect(shape('island_home')?.pinned).toBe(true);
+    });
+
+    it('names the two ways into the day the card offers', () => {
+      const copy = lookup('tutorial.island.plan.description') as string;
+
+      expect(copy).toContain(lookup('plan.start') as string);
+      expect(copy).toContain(lookup('plan.preview') as string);
+    });
+  });
+
+  it('has no tour left for the old menu\'s story modes', () => {
+    expect(GUIDE_IDS as readonly string[]).not.toContain('story_modes_tour');
+    expect(lookup('tutorial.storyModes')).toBeUndefined();
+    expect(lookup('tutorial.mainMenu.instruments')).toBeUndefined();
+    expect(lookup('tutorial.mainMenu.stories')).toBeUndefined();
+  });
+
+  describe('revisions', () => {
+    it('counts every tour as its first revision unless it says otherwise', () => {
+      expect(guideRevision('progress_tour')).toBe(1);
+      expect(guideRevision('search_tour')).toBe(1);
+    });
+
+    it.each(['main_menu_tour', 'catalogue_tour', 'book_mode_tour'] as const)(
+      'moves %s on a revision, so a family who finished the old one sees the new one once',
+      (id) => {
+        expect(guideRevision(id)).toBeGreaterThanOrEqual(2);
+        expect(GUIDE_REVISIONS[id]).toBe(guideRevision(id));
+      }
+    );
   });
 
   /** The grown-ups control on the Profile page is a pill with its word, so it is lit as that pill. */
   it('spotlights the Profile page\'s grown-ups control as a pill', () => {
     const step = GUIDE_STEPS.profile_tour.find((entry) => entry.target === 'profile_settings');
 
-    expect(step?.shape).toBe('rounded-rect');
-    expect(step?.radius).toBe(CIRCLE_BUTTON_DIAMETER_PHONE / 2);
+    expect(step?.shape).toBe('capsule');
   });
 
   /** The language went to the home corner; the step pointing at the gate no longer promises it behind there. */
@@ -209,6 +323,24 @@ describe('GUIDE_STEPS', () => {
     });
   });
 
+  // Before the first search the page has no recent searches to point at, and
+  // the owl talked about an empty patch of sky.
+  describe('the recent searches step', () => {
+    const refs = { field: 'field', recent: 'recent' };
+
+    it('is on the tour once there are searches to come back to', () => {
+      const steps = guideSteps('search_tour', Object.keys(searchTourTargets(refs, true)));
+
+      expect(steps.map((step) => step.id)).toEqual(['search_welcome', 'search_field', 'search_recent']);
+    });
+
+    it('is left out before the first search, since there is nothing there yet', () => {
+      const steps = guideSteps('search_tour', Object.keys(searchTourTargets(refs, false)));
+
+      expect(steps.map((step) => step.id)).toEqual(['search_welcome', 'search_field']);
+    });
+  });
+
   it('spends the sign-in step on what signing in is worth', () => {
     const step = GUIDE_STEPS.profile_tour.find((entry) => entry.id === 'profile_login');
     const copy = lookup(step!.descriptionKey) as string;
@@ -229,7 +361,7 @@ describe('GUIDE_STEPS', () => {
     GUIDE_IDS.forEach((id) => {
       GUIDE_STEPS[id]
         .filter((step) => step.target)
-        .forEach((step) => expect(['circle', 'rounded-rect']).toContain(step.shape));
+        .forEach((step) => expect(['circle', 'rounded-rect', 'capsule']).toContain(step.shape));
     });
   });
 });
@@ -314,7 +446,6 @@ describe('pinned steps', () => {
       'screen_time_ring',
       'nav_search',
       'nav_profile',
-      'settings_button',
       'language_control',
       'sound_control',
     ]);
@@ -349,20 +480,9 @@ describe('guideSteps', () => {
   });
 
   it('drops a step whose target is not on this screen, keeping the rest', () => {
-    const withoutInstruments = guideSteps('main_menu_tour', [
-      'stories_button',
-      'achievement_card',
-      'settings_button',
-      'sound_control',
-    ]);
+    const withoutOrbs = guideSteps('main_menu_tour', ['achievement_card', 'continue_orb', 'sound_control']);
 
-    expect(withoutInstruments.map((step) => step.id)).toEqual([
-      'welcome',
-      'stories_button',
-      'achievement_card',
-      'settings_button',
-      'sound_control',
-    ]);
+    expect(withoutOrbs.map((step) => step.id)).toEqual(['welcome', 'achievement_card', 'continue_orb', 'sound_control']);
   });
 
   it('never drops a step that has no target', () => {
@@ -370,7 +490,7 @@ describe('guideSteps', () => {
   });
 
   it('returns a fresh array each time', () => {
-    expect(guideSteps('spelling_tips')).not.toBe(GUIDE_STEPS.spelling_tips);
+    expect(guideSteps('practise_tips')).not.toBe(GUIDE_STEPS.practise_tips);
   });
 });
 
@@ -529,9 +649,56 @@ describe('spotlightFrame', () => {
   it('circles by default', () => {
     expect(spotlightFrame(target).radius).toBe(spotlightFrame(target, 'circle').radius);
   });
+
+  it.each([
+    ['a short pill', { x: 20, y: 300, width: 240, height: 56 }],
+    ['a taller pill', { x: 20, y: 300, width: 160, height: 64 }],
+  ])('pads %s evenly and rounds its ends right round, whatever its height', (_, pill) => {
+    const frame = spotlightFrame(pill, 'capsule', 4);
+
+    expect(frame).toEqual({
+      x: pill.x - SPOTLIGHT_PADDING,
+      y: pill.y - SPOTLIGHT_PADDING,
+      width: pill.width + SPOTLIGHT_PADDING * 2,
+      height: pill.height + SPOTLIGHT_PADDING * 2,
+      radius: (pill.height + SPOTLIGHT_PADDING * 2) / 2,
+    });
+  });
 });
 
 describe('GUIDE_IDS', () => {
+  // review, 2026-10-04: these sat on screens the app no longer opens, so no
+  // family could ever see them (operator: "Remove them")
+  it.each(['screen_time_tips', 'feelings_tips', 'spelling_tips', 'numbers_tips', 'freeplay_tips'])(
+    'carries no %s, for a screen the app no longer opens, nor its copy',
+    (id) => {
+      expect((GUIDE_IDS as readonly string[]).includes(id)).toBe(false);
+      expect(Object.keys(GUIDE_STEPS)).not.toContain(id);
+    }
+  );
+
+  it.each([
+    'tutorial.screenTime',
+    'tutorial.spelling',
+    'tutorial.numbers',
+    'tutorial.feelings',
+    'tutorial.freeplay',
+    'tutorial.gestures',
+    'tutorial.welcomeTitle',
+    'tutorial.storiesTitle',
+    'tutorial.gotIt',
+    'tutorial.buttons.skipAll',
+    'tutorial.buttons.startReading',
+  ])('keeps no copy nothing reads: %s', (key) => {
+    expect(lookup(key)).toBeUndefined();
+  });
+
+  it('keeps the words every tour and the screen-time owl still use', () => {
+    ['tutorial.buttons.next', 'tutorial.buttons.skip', 'tutorial.buttons.letsGo', 'tutorial.practise.welcome.title', 'tutorial.emotionCards.welcome.title'].forEach(
+      (key) => expect(typeof lookup(key)).toBe('string')
+    );
+  });
+
   it('no longer carries the unused gesture hints', () => {
     expect((GUIDE_IDS as readonly string[]).includes('gesture_hints')).toBe(false);
   });

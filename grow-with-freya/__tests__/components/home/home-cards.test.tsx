@@ -144,7 +144,7 @@ describe('AchievementCard', () => {
     (Ionicons as unknown as { glyphMap: Record<string, number> }).glyphMap = { rocket: 1, star: 3, 'arrow-forward': 5 };
   });
 
-  const NEXT = { title: 'Moon Explorer', current: 3, required: 5, unit: 'stories' as const };
+  const NEXT = { id: 'moon-explorer', title: 'Moon Explorer', current: 3, required: 5, unit: 'stories' as const };
   const INNER_HEIGHT = JOURNEY_CARD.height - HERO_CARD.strokeWidth * 2;
   const flat = (node: { props: Record<string, unknown> }) => StyleSheet.flatten(node.props.style as object) as Record<string, number | string>;
 
@@ -287,11 +287,11 @@ describe('AchievementCard', () => {
    */
   describe('the journey`s steps', () => {
     const STEPS = [
-      { id: 'day-1', day: 1, kind: 'story', state: 'done' },
-      { id: 'day-2', day: 2, kind: 'words', state: 'open' },
-      { id: 'day-3', day: 3, kind: 'numbers', state: 'locked' },
-      { id: 'day-4', day: 4, kind: 'feelings', state: 'locked' },
-      { id: 'day-5', day: 5, kind: 'music', state: 'locked' },
+      { id: 'day-1', day: 1, of: 7, kind: 'story', state: 'done', domainKey: 'plan.domains.language', skill: 'listening' },
+      { id: 'day-2', day: 2, of: 7, kind: 'words', state: 'open', domainKey: 'plan.domains.language', skill: 'listening' },
+      { id: 'day-3', day: 3, of: 7, kind: 'numbers', state: 'locked', domainKey: 'plan.domains.language', skill: 'listening' },
+      { id: 'day-4', day: 4, of: 7, kind: 'feelings', state: 'locked', domainKey: 'plan.domains.language', skill: 'listening' },
+      { id: 'day-5', day: 5, of: 7, kind: 'music', state: 'locked', domainKey: 'plan.domains.language', skill: 'listening' },
     ] as const;
     const iconOf = (view: RenderResult, day: number) => byTestId(view, `journey-step-${day}-icon`)[0].props;
     const faceOf = (view: RenderResult, day: number) => byTestId(view, `journey-step-${day}-face`)[0].props;
@@ -322,7 +322,7 @@ describe('AchievementCard', () => {
     });
 
     it.each(Object.entries(PLAN_STEP_ICON))('should show an open %s step with the island`s own picture for it', (kind, icon) => {
-      const view = renderCard({ steps: [{ id: 'day-1', day: 1, kind: kind as PlanStepKind, state: 'open' }] });
+      const view = renderCard({ steps: [{ id: 'day-1', day: 1, of: 7, kind: kind as PlanStepKind, state: 'open', domainKey: 'plan.domains.language', skill: 'listening' }] });
 
       expect(iconOf(view, 1).name).toBe(icon);
     });
@@ -332,7 +332,7 @@ describe('AchievementCard', () => {
     });
 
     it.each(['locked', 'tomorrow'] as const)('should show a %s step behind a padlock, in the card`s blue', (state) => {
-      const view = renderCard({ steps: [{ id: 'day-3', day: 3, kind: 'numbers', state }] });
+      const view = renderCard({ steps: [{ id: 'day-3', day: 3, of: 7, kind: 'numbers', state, domainKey: 'plan.domains.maths', skill: 'counting' }] });
 
       expect(faceOf(view, 3).colors).toEqual([...JOURNEY_CARD_TINTS.stepLocked]);
       expect(iconOf(view, 3).name).toBe('lock-closed');
@@ -389,7 +389,14 @@ describe('AchievementCard', () => {
       const view = renderCard({ steps: STEPS });
 
       expect(flat(byTestId(view, 'journey-steps')[0])).toEqual(
-        expect.objectContaining({ flexDirection: 'row', alignItems: 'center', height: JOURNEY_CARD.step.open })
+        expect.objectContaining({
+          position: 'absolute',
+          left: JOURNEY_CARD.inset,
+          top: JOURNEY_CARD.step.top,
+          flexDirection: 'row',
+          alignItems: 'center',
+          height: JOURNEY_CARD.step.open,
+        })
       );
     });
 
@@ -430,8 +437,8 @@ describe('AchievementCard', () => {
     const SCALE = WIDTH / 370;
     const INNER = JOURNEY_CARD.height * SCALE - HERO_CARD.strokeWidth * 2;
     const STEPS = [
-      { id: 'day-1', day: 1, kind: 'story', state: 'open' },
-      { id: 'day-2', day: 2, kind: 'words', state: 'locked' },
+      { id: 'day-1', day: 1, of: 7, kind: 'story', state: 'open', domainKey: 'plan.domains.language', skill: 'listening' },
+      { id: 'day-2', day: 2, of: 7, kind: 'words', state: 'locked', domainKey: 'plan.domains.language', skill: 'listening' },
     ] as const;
     const renderNarrow = (props: Partial<React.ComponentProps<typeof AchievementCard>> = {}) => renderCard({ width: WIDTH, steps: STEPS, ...props });
     const styleOfText = (view: RenderResult, words: string) =>
@@ -494,7 +501,8 @@ describe('AchievementCard', () => {
       expect(flat(byTestId(view, 'journey-step-2')[0]).width).toBeCloseTo(JOURNEY_CARD.step.rest * SCALE, 6);
       expect(flat(byTestId(view, 'journey-step-link-1')[0]).width).toBeCloseTo(JOURNEY_CARD.step.gap * SCALE, 6);
       expect(flat(byTestId(view, 'journey-steps')[0]).height).toBeCloseTo(JOURNEY_CARD.step.open * SCALE, 6);
-      expect(flat(byTestId(view, 'journey-steps')[0]).marginTop).toBeCloseTo(JOURNEY_CARD.step.top * SCALE, 6);
+      expect(flat(byTestId(view, 'journey-steps')[0]).top).toBeCloseTo(JOURNEY_CARD.step.top * SCALE, 6);
+      expect(flat(byTestId(view, 'journey-steps')[0]).left).toBeCloseTo(JOURNEY_CARD.inset * SCALE, 6);
       expect(byTestId(view, 'journey-step-1-icon')[0].props.size).toBeCloseTo(JOURNEY_CARD.step.openIcon * SCALE, 6);
       expect(byTestId(view, 'journey-step-2-icon')[0].props.size).toBeCloseTo(JOURNEY_CARD.step.restIcon * SCALE, 6);
 
@@ -509,7 +517,7 @@ describe('AchievementCard', () => {
       expect(flat(byTestId(view, 'journey-step-1-glow')[0]).shadowOpacity).toBe(JOURNEY_CARD.step.glow.opacity);
     });
 
-    it('should draw its gold button smaller, in the same place in proportion', () => {
+    it('should draw its button smaller, in the same place in proportion', () => {
       const view = renderNarrow();
 
       const button = byTestId(view, 'journey-explore')[0].props;
@@ -520,9 +528,19 @@ describe('AchievementCard', () => {
       expect(button.iconSize).toBeCloseTo(JOURNEY_CARD.button.iconSize * SCALE, 6);
       expect(button.paddingHorizontal).toBeCloseTo(JOURNEY_CARD.button.paddingHorizontal * SCALE, 6);
       expect(button.gap).toBeCloseTo(JOURNEY_CARD.button.gap * SCALE, 6);
-      expect(button.glow).toEqual({ opacity: JOURNEY_CARD.button.glow.opacity, radius: JOURNEY_CARD.button.glow.radius * SCALE });
-      expect(place.left).toBeCloseTo((JOURNEY_CARD.inset - JOURNEY_CARD.button.outdent) * SCALE, 6);
-      expect(place.bottom).toBeCloseTo(JOURNEY_CARD.buttonFoot * SCALE, 6);
+      expect(place.right).toBeCloseTo(JOURNEY_CARD.button.right * SCALE, 6);
+      expect(place.bottom).toBeCloseTo(JOURNEY_CARD.button.bottom * SCALE, 6);
+    });
+
+    it('should set the step line smaller, as far in and as far down in proportion', () => {
+      const view = renderNarrow();
+
+      const line = flat(byTestId(view, 'journey-step-line')[0]);
+
+      expect(line.fontSize).toBeCloseTo(JOURNEY_CARD_TYPE.stepLine * SCALE, 6);
+      expect(line.left).toBeCloseTo((JOURNEY_CARD.inset + JOURNEY_CARD.stepLine.indent) * SCALE, 6);
+      expect(line.top).toBeCloseTo(JOURNEY_CARD.stepLine.top * SCALE, 6);
+      expect(line.maxWidth).toBeCloseTo(JOURNEY_CARD.stepLine.width * SCALE, 6);
     });
 
     it('should keep its glint on the island`s star, and as small as the island now is', () => {
@@ -546,12 +564,150 @@ describe('AchievementCard', () => {
       expect(flat(byTestId(view, 'journey-corner-gleam')[0]).height).toBeCloseTo(JOURNEY_CARD.cornerGleamSize * SCALE, 6);
     });
 
-    it('should be no larger than the mock`s on a card wider than it', () => {
+    // a tablet's card had too much room around the same-sized words (operator, 2026-10-04)
+    it('should grow in proportion on a tablet`s wider card, every part of it with it', () => {
+      const tabletScale = 500 / 370;
+      const tabletInner = JOURNEY_CARD.height * tabletScale - HERO_CARD.strokeWidth * 2;
       const view = renderCard({ width: 500, steps: STEPS });
 
-      expect(flat(byTestId(view, 'journey-words')[0]).height).toBe(INNER_HEIGHT);
-      expect(styleOfText(view, 'Moon Explorer').fontSize).toBe(JOURNEY_CARD_TYPE.title);
-      expect(styleOfText(view, 'Moon Explorer').maxWidth).toBeCloseTo(journeyWordsWidth(500, INNER_HEIGHT, JOURNEY_CARD.wordsReach), 6);
+      expect(flat(byTestId(view, 'journey-words')[0]).height).toBeCloseTo(tabletInner, 6);
+      expect(styleOfText(view, 'Moon Explorer').fontSize).toBeCloseTo(JOURNEY_CARD_TYPE.title * tabletScale, 6);
+      expect(styleOfText(view, 'Moon Explorer').maxWidth).toBeCloseTo(
+        journeyWordsWidth(500, tabletInner, JOURNEY_CARD.wordsReach, tabletScale),
+        6
+      );
+      expect(flat(byTestId(view, 'journey-step-1')[0]).width).toBeCloseTo(JOURNEY_CARD.step.open * tabletScale, 6);
+    });
+  });
+
+  /**
+   * A compass medallion stands by the card's edge beside the eyebrow (the
+   * operator's second and third mocks, 2026-10-04), and the eyebrow, the title
+   * and the line under it stand in a column to its right. The step tokens,
+   * the step line and the button keep to the card's own edges.
+   */
+  describe('the compass', () => {
+    const STEPS = [{ id: 'day-1', day: 1, of: 7, kind: 'story', state: 'open', domainKey: 'plan.domains.language', skill: 'listening' }] as const;
+    const column = JOURNEY_CARD.compass.size + JOURNEY_CARD.compass.gap;
+
+    it.each([
+      [328, 328 / 370],
+      [370, 1],
+      [500, 500 / 370],
+    ])('should stand by the edge of a card %p wide, its words in a column beside it', (width, scale) => {
+      const view = renderCard({ width });
+
+      const compass = flat(byTestId(view, 'journey-compass')[0]);
+
+      expect(compass.left).toBeCloseTo(JOURNEY_CARD.inset * scale, 6);
+      expect(compass.top).toBeCloseTo(JOURNEY_CARD.compass.top * scale, 6);
+      expect(compass.width).toBeCloseTo(JOURNEY_CARD.compass.size * scale, 6);
+      expect(compass.height).toBeCloseTo(JOURNEY_CARD.compass.size * scale, 6);
+      expect(compass.position).toBe('absolute');
+      expect(flat(byTestId(view, 'journey-heading')[0]).marginLeft).toBeCloseTo(column * scale, 6);
+    });
+
+    it('should keep the line that says every badge is won in the column too', () => {
+      const view = renderCard({ next: undefined });
+
+      expect(byTestId(view, 'journey-heading')[0].findAll((node: RenderedNode) => node.props.testID === 'achievement-all-done').length).toBeGreaterThan(0);
+    });
+
+    it('should keep the step tokens out of the column, at the card`s edge under the compass', () => {
+      const view = renderCard({ steps: STEPS });
+
+      expect(byTestId(view, 'journey-heading')[0].findAll((node: RenderedNode) => node.props.testID === 'journey-steps')).toHaveLength(0);
+      expect(flat(byTestId(view, 'journey-words')[0]).paddingLeft).toBe(JOURNEY_CARD.inset);
+    });
+
+    it('should be a gold ring round a night-blue face, with a gold needle, as in the mock', () => {
+      const view = renderCard();
+
+      const compass = byTestId(view, 'journey-compass')[0];
+      const ring = compass.findAll((node: RenderedNode) => node.props.testID === 'journey-compass-ring')[0];
+      const face = compass.findAll((node: RenderedNode) => node.props.testID === 'journey-compass-face')[0];
+      const needle = compass.findAll((node: RenderedNode) => node.props.testID === 'journey-compass-needle');
+
+      expect(ring.props.stroke).toBe(JOURNEY_CARD_TINTS.compassRing);
+      expect(face.props.fill).toBe(JOURNEY_CARD_TINTS.compassFace);
+      expect(needle.map((half: RenderedNode) => half.props.fill)).toEqual([...JOURNEY_CARD_TINTS.compassNeedle]);
+    });
+
+    it('should be decoration a screen reader passes over', () => {
+      const view = renderCard();
+
+      const compass = byTestId(view, 'journey-compass')[0];
+
+      expect(compass.props.accessibilityElementsHidden).toBe(true);
+      expect(compass.props.importantForAccessibility).toBe('no-hide-descendants');
+    });
+  });
+
+  /**
+   * Under the step tokens, a line says which step of the week the child is
+   * on and what it is for (the operator's third mock): "Step 1 of 7 •
+   * Language & Listening". The mock says "of 5", the number of tokens; the
+   * week has seven steps, and the line counts the week.
+   */
+  describe('the step line', () => {
+    const step = (day: number, state: 'done' | 'open' | 'tomorrow' | 'locked', skill: 'listening' | 'letters' = 'listening') =>
+      ({ id: `day-${day}`, day, of: 7, kind: 'story', state, domainKey: 'plan.domains.language', skill }) as const;
+    const lineOf = (view: RenderResult) => byTestId(view, 'journey-step-line')[0];
+
+    it('should name the step in hand, how many the week has, and what it is for', () => {
+      const view = renderCard({ steps: [step(1, 'done'), step(2, 'open', 'letters'), step(3, 'locked')] });
+
+      expect(lineOf(view).props.children).toBe(
+        'plan.stepOf (day:2, total:7) • plan.focus (domain:plan.domains.language, skill:plan.skills.letters)'
+      );
+    });
+
+    it('should count the steps of the week it is given, however many it has', () => {
+      const shortWeek = { ...step(2, 'open'), of: 5 };
+      const view = renderCard({ steps: [step(1, 'done'), shortWeek] });
+
+      expect(lineOf(view).props.children).toContain('plan.stepOf (day:2, total:5)');
+    });
+
+    it('should name a step waiting for tomorrow as the one in hand', () => {
+      const view = renderCard({ steps: [step(1, 'done'), step(2, 'tomorrow'), step(3, 'locked')] });
+
+      expect(lineOf(view).props.children).toContain('plan.stepOf (day:2, total:7)');
+    });
+
+    it('should say the whole week is done when no step is left', () => {
+      const view = renderCard({ steps: [step(6, 'done'), step(7, 'done')] });
+
+      expect(lineOf(view).props.children).toBe('plan.weekDone');
+    });
+
+    it.each([
+      ['no steps at all', undefined],
+      ['an empty journey', []],
+    ])('should leave the line out with %s', (_, steps) => {
+      const view = renderCard({ steps });
+
+      expect(byTestId(view, 'journey-step-line')).toHaveLength(0);
+    });
+
+    it('should sit at the card`s edge near its foot, small and light, on one line', () => {
+      const view = renderCard({ steps: [step(1, 'open')] });
+
+      const line = lineOf(view);
+      const style = flat(line);
+
+      expect(style).toEqual(
+        expect.objectContaining({
+          position: 'absolute',
+          left: JOURNEY_CARD.inset + JOURNEY_CARD.stepLine.indent,
+          top: JOURNEY_CARD.stepLine.top,
+          fontSize: JOURNEY_CARD_TYPE.stepLine,
+          color: JOURNEY_CARD_TINTS.stepLine,
+        })
+      );
+      expect(line.props.numberOfLines).toBe(1);
+      expect(line.props.adjustsFontSizeToFit).toBe(true);
+      expect(style.maxWidth).toBeCloseTo(JOURNEY_CARD.stepLine.width, 6);
     });
   });
 
@@ -568,22 +724,29 @@ describe('AchievementCard', () => {
     expect(byTestId(view, 'journey-explore').length).toBeGreaterThan(0);
   });
 
-  it('should end in the app`s gold button, Explore with an arrow after it, as in the mock', () => {
+  it('should end in a blue glass button, Explore journey with an arrow after it, as in the third mock', () => {
     const view = renderCard();
 
     const button = byTestId(view, 'journey-explore')[0];
+    const face = byTestId(view, 'journey-explore-face')[0];
+    const label = view.UNSAFE_queryAllByType(Text).find((node) => node.props.children === 'home.achievements.ctaJourney');
+    const arrow = button.findAll((node: RenderedNode) => node.props.name === 'arrow-forward');
 
-    expect(button.props.label).toBe('home.achievements.cta');
-    expect(button.props.icon).toBe('arrow-forward');
-    expect(button.props.iconPosition).toBe('trailing');
-    expect(button.props.balanced).toBe(false);
+    expect(button.props.label).toBe('home.achievements.ctaJourney');
     expect(button.props.height).toBe(JOURNEY_CARD.button.height);
     expect(button.props.fontSize).toBe(JOURNEY_CARD.button.fontSize);
     expect(button.props.iconSize).toBe(JOURNEY_CARD.button.iconSize);
     expect(button.props.paddingHorizontal).toBe(JOURNEY_CARD.button.paddingHorizontal);
     expect(button.props.gap).toBe(JOURNEY_CARD.button.gap);
-    expect(button.props.glow).toEqual(JOURNEY_CARD.button.glow);
-    expect(byTestId(view, 'journey-explore-icon-twin')).toHaveLength(0);
+    expect(face.props.colors).toEqual([...JOURNEY_CARD_TINTS.button]);
+    expect(StyleSheet.flatten(face.props.style)).toEqual(
+      expect.objectContaining({ minHeight: JOURNEY_CARD.button.height, borderRadius: JOURNEY_CARD.button.height / 2, paddingHorizontal: JOURNEY_CARD.button.paddingHorizontal })
+    );
+    expect(StyleSheet.flatten(label?.props.style)).toEqual(
+      expect.objectContaining({ fontSize: JOURNEY_CARD.button.fontSize, color: JOURNEY_CARD_TINTS.buttonInk })
+    );
+    expect(arrow[0].props.size).toBe(JOURNEY_CARD.button.iconSize);
+    expect(arrow[0].props.color).toBe(JOURNEY_CARD_TINTS.buttonInk);
   });
 
   it('should leave the press to the card, so the button and the card are one thing to tap', () => {
@@ -620,9 +783,9 @@ describe('AchievementCard', () => {
     const allDone = renderCard({ next: undefined });
 
     expect(flat(byTestId(next, 'achievement-cta')[0])).toEqual(
-      expect.objectContaining({ position: 'absolute', left: JOURNEY_CARD.inset - JOURNEY_CARD.button.outdent, bottom: JOURNEY_CARD.buttonFoot })
+      expect.objectContaining({ position: 'absolute', right: JOURNEY_CARD.button.right, bottom: JOURNEY_CARD.button.bottom })
     );
-    expect(flat(byTestId(allDone, 'achievement-cta')[0]).bottom).toBe(JOURNEY_CARD.buttonFoot);
+    expect(flat(byTestId(allDone, 'achievement-cta')[0]).bottom).toBe(JOURNEY_CARD.button.bottom);
   });
 });
 
@@ -755,7 +918,7 @@ describe('AchievementTallyChip', () => {
 });
 
 describe('AchievementCard label', () => {
-  const NEXT = { title: 'Moon Explorer', current: 3, required: 5, unit: 'stories' as const };
+  const NEXT = { id: 'moon-explorer', title: 'Moon Explorer', current: 3, required: 5, unit: 'stories' as const };
 
   it.each([
     ['full width', false, 370],
@@ -782,7 +945,7 @@ describe('AchievementCard label', () => {
  * fact the full card shows -- it is just laid out to fit half the room.
  */
 describe('AchievementCard in compact (paired) mode', () => {
-  const NEXT = { title: 'Moon Explorer', current: 3, required: 5, unit: 'stories' as const };
+  const NEXT = { id: 'moon-explorer', title: 'Moon Explorer', current: 3, required: 5, unit: 'stories' as const };
 
   it('should still show the badge, the title and the stars, without the standalone CTA row', () => {
     const view = render(
@@ -818,7 +981,7 @@ describe('AchievementCard in compact (paired) mode', () => {
   });
 
   it('should stay the small violet tile it was: no island, no deep blue, no step tokens, and its medallion kept', () => {
-    const steps = [{ id: 'day-1', day: 1, kind: 'story', state: 'open' }] as const;
+    const steps = [{ id: 'day-1', day: 1, of: 7, kind: 'story', state: 'open', domainKey: 'plan.domains.language', skill: 'listening' }] as const;
     const view = render(
       <AchievementCard next={NEXT} steps={steps} width={170} compact animated={false} celebrate={false} onPress={jest.fn()} />
     );

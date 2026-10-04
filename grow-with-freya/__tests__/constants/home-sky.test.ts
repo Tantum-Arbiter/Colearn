@@ -24,6 +24,7 @@ import {
   TALL_PHONE_CONTENT_LIFT,
   heroContentDrop,
   heroContentLift,
+  heroSlackDrop,
   PORTRAIT_TABLET_CONTENT_LIFT,
 } from '@/constants/home-sky';
 
@@ -133,6 +134,35 @@ describe('heroContentLift', () => {
   it('should leave a landscape tablet and every phone where they are', () => {
     expect(heroContentLift(1194, TABLET)).toBe(0);
     expect(heroContentLift(PHONE, 874)).toBe(0);
+  });
+});
+
+describe('heroSlackDrop', () => {
+  it('should bring the sun and the page under it down by the room left at the foot', () => {
+    expect(heroSlackDrop(874, 850)).toBe(24);
+  });
+
+  it('should keep the sun and the page high: at most half the drop first tried', () => {
+    expect(HERO_SKY.maxSlackDrop).toBeLessThanOrEqual(32);
+    expect(heroSlackDrop(874, 700)).toBe(HERO_SKY.maxSlackDrop);
+  });
+
+  it.each([
+    ['fills the screen', 874],
+    ['runs past it and scrolls', 950],
+  ])('should not move a page that %s', (_, content) => {
+    expect(heroSlackDrop(874, content)).toBe(0);
+  });
+
+  it('should stop short of drifting the sun far from the top on a page with lots of room', () => {
+    expect(heroSlackDrop(874, 500)).toBe(HERO_SKY.maxSlackDrop);
+  });
+
+  it.each([
+    ['not yet measured', 0, 0],
+    ['measured as nonsense', Number.NaN, 700],
+  ])('should move nothing on a page %s', (_, viewport, content) => {
+    expect(heroSlackDrop(viewport, content)).toBe(0);
   });
 });
 

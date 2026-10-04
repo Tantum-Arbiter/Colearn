@@ -36,6 +36,7 @@ export function useGuideLift(): GuideLiftBinding {
         held.current += shift;
         glide(-held.current);
       },
+      away: () => held.current,
       release: () => {
         held.current = 0;
         glide(0);

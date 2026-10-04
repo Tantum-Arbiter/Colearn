@@ -41,6 +41,8 @@ jest.mock('@/services/screen-time-service', () => ({
   },
 }));
 
+const CALM_CHAMPION_TITLE = 'progress.badges.calmChampion.title';
+
 function byTestId(tree: ReturnType<typeof render>, testID: string): any[] {
   return tree.UNSAFE_root.findAll((n: any) => n.props.testID === testID);
 }
@@ -160,6 +162,73 @@ describe('ProgressScreen', () => {
     expect(home.props.accessibilityLabel).toBe('common.home');
     expect(home.findAll((n: any) => n.props.children === 'common.home').length).toBeGreaterThan(0);
     expect(onBack).toHaveBeenCalledTimes(1);
+  });
+
+  it('opens the detail sheet of the badge it is sent to', async () => {
+    const onDetailVisibleChange = jest.fn();
+    const tree = render(
+      <ProgressScreen onBack={jest.fn()} onDetailVisibleChange={onDetailVisibleChange} focusBadge={{ id: 'calm-champion', key: 1 }} />
+    );
+
+    await waitFor(() => expect(byTestId(tree, 'badge-detail-sheet').length).toBeGreaterThan(0));
+    const sheetTexts = byTestId(tree, 'badge-detail-sheet')[0]
+      .findAll((n: any) => typeof n.props.children === 'string')
+      .map((n: any) => n.props.children);
+    expect(sheetTexts).toContain(CALM_CHAMPION_TITLE);
+    expect(onDetailVisibleChange).toHaveBeenCalledWith(true);
+  });
+
+  it('opens it again when sent to the same badge a second time', async () => {
+    const tree = render(<ProgressScreen onBack={jest.fn()} focusBadge={{ id: 'calm-champion', key: 1 }} />);
+    await waitFor(() => expect(byTestId(tree, 'badge-detail-sheet').length).toBeGreaterThan(0));
+
+    fireEvent.press(byTestId(tree, 'badge-detail-close')[0]);
+    await waitFor(() => expect(byTestId(tree, 'badge-detail-sheet')).toHaveLength(0));
+    tree.rerender(<ProgressScreen onBack={jest.fn()} focusBadge={{ id: 'calm-champion', key: 2 }} />);
+
+    await waitFor(() => expect(byTestId(tree, 'badge-detail-sheet').length).toBeGreaterThan(0));
+  });
+
+  it('leaves the sheet closed once closed, while it is still the same request', async () => {
+    const onDetailVisibleChange = jest.fn();
+    const tree = render(
+      <ProgressScreen onBack={jest.fn()} onDetailVisibleChange={onDetailVisibleChange} focusBadge={{ id: 'calm-champion', key: 1 }} />
+    );
+    await waitFor(() => expect(byTestId(tree, 'badge-detail-sheet').length).toBeGreaterThan(0));
+
+    fireEvent.press(byTestId(tree, 'badge-detail-close')[0]);
+    await waitFor(() => expect(byTestId(tree, 'badge-detail-sheet')).toHaveLength(0));
+    tree.rerender(
+      <ProgressScreen onBack={jest.fn()} onDetailVisibleChange={jest.fn()} focusBadge={{ id: 'calm-champion', key: 1 }} />
+    );
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(byTestId(tree, 'badge-detail-sheet')).toHaveLength(0);
+    expect(onDetailVisibleChange).toHaveBeenLastCalledWith(false);
+  });
+
+  it('opens nothing for a badge it does not know, not even an empty overlay', async () => {
+    const onDetailVisibleChange = jest.fn();
+    const tree = render(
+      <ProgressScreen onBack={jest.fn()} onDetailVisibleChange={onDetailVisibleChange} focusBadge={{ id: 'no-such-badge', key: 1 }} />
+    );
+
+    await waitFor(() => expect(byTestId(tree, 'badge-grid').length).toBeGreaterThan(0));
+
+    expect(byTestId(tree, 'badge-detail-sheet')).toHaveLength(0);
+    expect(byTestId(tree, 'badge-detail-overlay')).toHaveLength(0);
+    expect(onDetailVisibleChange).not.toHaveBeenCalled();
+  });
+
+  it('tells its page once that a tapped badge has its sheet up', async () => {
+    const onDetailVisibleChange = jest.fn();
+    const tree = render(<ProgressScreen onBack={jest.fn()} onDetailVisibleChange={onDetailVisibleChange} />);
+    await waitFor(() => expect(byTestId(tree, 'badge-card-calm-champion').length).toBeGreaterThan(0));
+
+    fireEvent.press(byTestId(tree, 'badge-card-calm-champion')[0]);
+    await waitFor(() => expect(byTestId(tree, 'badge-detail-sheet').length).toBeGreaterThan(0));
+
+    expect(onDetailVisibleChange).toHaveBeenCalledTimes(1);
   });
 
   it('opens the detail sheet from a badge tap and routes its recommendation', async () => {

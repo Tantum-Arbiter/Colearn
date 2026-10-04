@@ -37,6 +37,16 @@ describe('useJourneySteps', () => {
     expect(result.current.map((step) => step.id)).toEqual(ISLAND_WEEK.steps.slice(0, 5).map((step) => step.id));
   });
 
+  it('says of each step how many the week has, the area it belongs to and the first skill it builds', () => {
+    const { result } = renderHook(() => useJourneySteps(true));
+
+    result.current.forEach((step, index) => {
+      expect(step.of).toBe(ISLAND_WEEK.steps.length);
+      expect(step.domainKey).toBe(ISLAND_WEEK.steps[index].domainKey);
+      expect(step.skill).toBe(ISLAND_WEEK.steps[index].skills[0]);
+    });
+  });
+
   it('holds the next step until tomorrow once today`s is done, and opens it the day after', () => {
     mockProgress = done([1], new Date(2026, 9, 3, 8, 0).toISOString());
     const today = renderHook(() => useJourneySteps(true));

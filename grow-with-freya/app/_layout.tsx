@@ -36,7 +36,7 @@ import { ApiClient } from '@/services/api-client';
 import { SecureStorage } from '@/services/secure-storage';
 import { SimpleStoryScreen } from '@/components/stories/simple-story-screen';
 import type { CatalogueSectionRequest } from '@/components/stories/catalogue/story-catalogue-screen';
-import { catalogueSectionFor } from '@/constants/catalogue-destinations';
+import { catalogueSectionFor, type DestinationFocus } from '@/constants/catalogue-destinations';
 import { StoryBookReader } from '@/components/stories/story-book-reader';
 import { PractiseScreen } from '@/components/music/practise-screen';
 import { FreeplayScreen } from '@/components/music/freeplay-screen';
@@ -142,6 +142,7 @@ function AppContent() {
     selectedStory: transitionStory,
     selectedMode: transitionMode,
     selectedVoiceOver: transitionVoiceOver,
+    selectedStartPage,
     setOnBeginCallback,
     setOnReturnToModeSelectionCallback,
     setOnCancelCallback,
@@ -249,6 +250,7 @@ function AppContent() {
   const [selectedStory, setSelectedStory] = useState<Story | null>(null);
   // Story being read - kept separate so it persists during book closing animation
   const [storyBeingRead, setStoryBeingRead] = useState<Story | null>(null);
+  const [readerStartPage, setReaderStartPage] = useState<number | undefined>(undefined);
   const [showStoryReader, setShowStoryReader] = useState(false);
   // When false, EnhancedPageTransition sets positions instantly (overlay handles visual transition)
   const [animatePageTransition, setAnimatePageTransition] = useState(true);
@@ -582,6 +584,7 @@ function AppContent() {
     const handleBegin = () => {
       // Use the transition's selected story for the story reader
       if (transitionStory) {
+        setReaderStartPage(selectedStartPage?.storyId === transitionStory.id ? selectedStartPage.pageIndex : undefined);
         setStoryBeingRead(transitionStory);
         setShowStoryReader(true);
         setCurrentView('story-reader');
@@ -594,7 +597,7 @@ function AppContent() {
     return () => {
       setOnBeginCallback(null);
     };
-  }, [transitionStory, setOnBeginCallback]);
+  }, [transitionStory, selectedStartPage, setOnBeginCallback]);
 
   // A caller that ran its own opening ritual asks for the reader directly
   useEffect(() => {
@@ -602,6 +605,7 @@ function AppContent() {
       return;
     }
 
+    setReaderStartPage(undefined);
     setStoryBeingRead(storyOpenRequest.story);
     setShowStoryReader(true);
     setCurrentView('story-reader');
@@ -710,7 +714,7 @@ function AppContent() {
   // When set, MainMenu should show the specified sub-menu instead of the main carousel
   const [returnToSubMenu, setReturnToSubMenu] = useState<'stories' | 'instruments' | 'learning' | null>(null);
 
-  const handleMainMenuNavigate = async (destination: string) => {
+  const handleMainMenuNavigate = async (destination: string, focus?: DestinationFocus) => {
     // Clear returnToSubMenu when navigating away from main menu
     setReturnToSubMenu(null);
     // Handle stories-{mode} destinations from mode card selection
@@ -742,7 +746,7 @@ function AppContent() {
       const section = catalogueSectionFor(destination);
       if (section) {
         setSelectedStoryMode(null);
-        setStoriesSection((current) => ({ section, key: current.key + 1 }));
+        setStoriesSection((current) => ({ section, key: current.key + 1, badgeId: focus?.badgeId }));
         setTimeout(() => {
           setCurrentPage(pageKey);
           setCurrentScreen(destination);
@@ -867,6 +871,13 @@ function AppContent() {
     }
   }, [requestStoryOpen]);
 
+  const handleOpenStoryCardFromHome = useCallback((storyId: string, from: PlanCardRect) => {
+    const story = ALL_STORIES.find((candidate) => candidate.id === storyId);
+    if (!story) return;
+    storyCardReturnRef.current = 'main';
+    openStoryCard(story.id, from, story, [story], { focusPages: true });
+  }, [openStoryCard]);
+
   const handlePreviewActivity = useCallback((launch: PlanLaunch, from: PlanCardRect) => {
     if (launch.kind === 'story') {
       const story = ALL_STORIES.find((candidate) => candidate.id === launch.storyId);
@@ -906,6 +917,7 @@ function AppContent() {
       const stories = await StoryLoader.getStories();
       const story = stories.find(s => s.id === storyId);
       if (story) {
+        setReaderStartPage(undefined);
         setStoryBeingRead(story);
         setShowStoryReader(true);
         setCurrentView('story-reader');
@@ -1048,6 +1060,7 @@ function AppContent() {
             main: (
               <MainMenu
                 onNavigate={handleMainMenuNavigate}
+                onOpenStoryCard={handleOpenStoryCardFromHome}
                 isActive={currentPage === 'main'}
                 disableTutorial={!menuRevealed(currentView)}
                 returnToSubMenu={returnToSubMenu}
@@ -1107,6 +1120,7 @@ function AppContent() {
               initialVoiceOver={transitionVoiceOver}
               skipCoverPage={true}
               skipInitialFadeIn={true}
+              startPageIndex={readerStartPage}
               onExit={handleBackToStories}
             />
           </Animated.View>

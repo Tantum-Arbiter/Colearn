@@ -1,6 +1,6 @@
 import type { ImageSourcePropType } from 'react-native';
 import type { PlanStepState } from '@/constants/learning-plan';
-import type { PlanStepKind } from '@/types/learning-plan';
+import type { PlanSkill, PlanStepKind } from '@/types/learning-plan';
 
 export interface ChildHomeStory {
   id: string;
@@ -21,6 +21,7 @@ export interface ChildHomeAchievement {
 export type NextAchievementUnit = 'stories' | 'storyTimes' | 'calmMoments' | 'tunes' | 'adventures';
 
 export interface ChildHomeNextAchievement {
+  id: string;
   title: string;
   current: number;
   required: number;
@@ -31,8 +32,11 @@ export interface ChildHomeNextAchievement {
 export interface ChildHomeJourneyStep {
   id: string;
   day: number;
+  of: number;
   kind: PlanStepKind;
   state: PlanStepState;
+  domainKey: string;
+  skill: PlanSkill;
 }
 
 export interface ChildHomeAchievementTally {
@@ -49,6 +53,7 @@ export interface ChildHomeData {
    *  lifetime total for a weekly glance on the home scene. */
   weeklyReadingMinutes: number;
   readingStreakDays: number;
+  bestStreakDays: number;
   screenTimeSafety?: number;
   newestAchievement?: ChildHomeAchievement;
   nextAchievement?: ChildHomeNextAchievement;

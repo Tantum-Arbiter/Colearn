@@ -39,7 +39,10 @@ jest.mock('@/services/screen-time-service', () => ({
 }));
 
 jest.mock('@/data/stories', () => ({
-  ALL_STORIES: [{ id: 'moonlight', title: 'The Moonlight Garden', coverImage: 'file:///cover.webp', category: 'bedtime', isAvailable: true }],
+  ALL_STORIES: [
+    { id: 'moonlight', title: 'The Moonlight Garden', coverImage: 'file:///cover.webp', category: 'bedtime', isAvailable: true },
+    { id: 'river', title: 'Down by the River', coverImage: 'file:///river.webp', category: 'nature', isAvailable: true },
+  ],
 }));
 
 const badge = (id: string, status: Badge['status'], current: number, target: number, category: Badge['category'] = 'stories'): Badge => ({
@@ -66,6 +69,7 @@ function applyState(next: Partial<AppState>) {
     readStoryIds: [],
     finishedStoryIds: [],
     readingStreak: 0,
+    longestStreak: 0,
     lastReadDate: null,
     achievementUnlockedAt: {},
     lastHomeVisitAt: null,
@@ -182,10 +186,86 @@ describe('useChildHomeData', () => {
     expect(underTest.currentStory).toEqual({
       id: 'moonlight',
       title: 'The Moonlight Garden',
-      currentPage: 8,
-      totalPages: 14,
+      currentPage: 7,
+      totalPages: 13,
       coverImage: { uri: 'file:///cover.webp' },
     });
+  });
+
+  it.each([
+    ['the longest run there has been, while today is shorter', 4, 9, 9],
+    ['the run going now, once it is the longest', 9, 9, 9],
+    ['the run going now, for a store from before the best was kept', 6, 0, 6],
+  ])('should give as the best streak %s', (_, readingStreak, longestStreak, best) => {
+    applyState({ readingStreak, longestStreak, lastReadDate: new Date().toISOString().slice(0, 10) });
+
+    const { result } = renderHook(() => useChildHomeData());
+
+    expect(result.current.data.bestStreakDays).toBe(best);
+  });
+
+  it('should keep the best streak once the run going now has lapsed', () => {
+    applyState({ readingStreak: 3, longestStreak: 7, lastReadDate: '2026-01-02' });
+
+    const { result } = renderHook(() => useChildHomeData());
+
+    expect(result.current.data.readingStreakDays).toBe(0);
+    expect(result.current.data.bestStreakDays).toBe(7);
+  });
+
+  it('should give the story to carry on with at the page the reader is on, its cover not among the pages', () => {
+    applyState({
+      storyProgress: { moonlight: { pageIndex: 3, totalPages: 11, updatedAt: '2026-09-06T08:00:00.000Z', completedCount: 0 } },
+      getContinueReadingStoryId: () => 'moonlight',
+    });
+
+    const { result } = renderHook(() => useChildHomeData());
+
+    expect(result.current.data.currentStory).toMatchObject({ currentPage: 3, totalPages: 10 });
+  });
+
+  it('should carry on with the book read last, by the reading record it is shown, never a choice made before it changed', () => {
+    applyState({
+      storyProgress: {
+        moonlight: { pageIndex: 3, totalPages: 11, updatedAt: '2026-09-06T08:00:00.000Z', completedCount: 0 },
+        river: { pageIndex: 5, totalPages: 9, updatedAt: '2026-09-06T08:05:00.000Z', completedCount: 0 },
+      },
+      getContinueReadingStoryId: () => 'moonlight',
+    });
+
+    const { result } = renderHook(() => useChildHomeData());
+
+    expect(result.current.data.currentStory).toMatchObject({ id: 'river', title: 'Down by the River', currentPage: 5, totalPages: 8 });
+  });
+
+  it('should have nothing to carry on with when every book is on its cover or finished', () => {
+    applyState({
+      storyProgress: {
+        moonlight: { pageIndex: 0, totalPages: 11, updatedAt: '2026-09-06T08:00:00.000Z', completedCount: 1 },
+        river: { pageIndex: 9, totalPages: 9, updatedAt: '2026-09-06T08:05:00.000Z', completedCount: 0 },
+      },
+      getContinueReadingStoryId: () => 'river',
+    });
+
+    const { result } = renderHook(() => useChildHomeData());
+
+    expect(result.current.data.currentStory).toBeUndefined();
+  });
+
+  it.each([
+    ['not once another story has been finished after it', '2026-09-06T09:00:00.000Z', false],
+    ['when the last story finished came before it', '2026-09-06T07:00:00.000Z', true],
+    ['when no story has been finished yet', null, true],
+  ])('should offer the story left part-read %s', (_, lastStoryCompletedAt, offered) => {
+    applyState({
+      storyProgress: { moonlight: { pageIndex: 3, totalPages: 11, updatedAt: '2026-09-06T08:00:00.000Z', completedCount: 0 } },
+      getContinueReadingStoryId: () => 'moonlight',
+      lastStoryCompletedAt,
+    });
+
+    const { result } = renderHook(() => useChildHomeData());
+
+    expect(result.current.data.currentStory !== undefined).toBe(offered);
   });
 
   it('should surface the newest badge and the next one, with icons the card can draw', () => {
@@ -195,7 +275,13 @@ describe('useChildHomeData', () => {
     const { result } = renderHook(() => useChildHomeData());
 
     expect(result.current.data.newestAchievement).toMatchObject({ id: 'first-story', icon: 'book', title: 'progress.badges.first-story.title' });
-    expect(result.current.data.nextAchievement).toMatchObject({ title: 'progress.badges.story-adventurer.title', current: 8, required: 10, unit: 'stories' });
+    expect(result.current.data.nextAchievement).toMatchObject({
+      id: 'story-adventurer',
+      title: 'progress.badges.story-adventurer.title',
+      current: 8,
+      required: 10,
+      unit: 'stories',
+    });
   });
 
   it('should count the badges unlocked and those still to go', () => {

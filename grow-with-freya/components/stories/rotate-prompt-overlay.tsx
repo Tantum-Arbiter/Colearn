@@ -22,6 +22,9 @@ import { useTurnToLandscape } from '@/hooks/use-turn-to-landscape';
 export const FALLBACK_DELAY_MS = 8000;
 const NO_SENSOR_FALLBACK_DELAY_MS = 1200;
 const GOLD = '#E8B84B';
+export const ROTATE_PROMPT_BACK = 38;
+const BACK_LEFT = 16;
+const BACK_GAP = 8;
 
 export interface RotatePromptOverlayProps {
   bookRect: { x: number; y: number; width: number; height: number } | null;
@@ -104,24 +107,41 @@ export function RotatePromptOverlay({ bookRect, onTurned, onOpenAnyway, onBack }
 
   return (
     <View style={styles.container} pointerEvents="box-none">
-      <Animated.View
-        entering={FadeIn.duration(300)}
-        exiting={FadeOut.duration(200)}
-        style={[styles.backButtonWrap, { top: insets.top + scaledPadding(8) }]}
-      >
-        <Pressable style={styles.backButton} onPress={onBack} hitSlop={10} accessibilityLabel={t('common.back')}>
-          <Ionicons name="chevron-back" size={scaledFontSize(20)} color="#FFFFFF" />
-        </Pressable>
-      </Animated.View>
+      <View testID="rotate-prompt-header" style={[styles.header, { top: insets.top + scaledPadding(8) }]} pointerEvents="box-none">
+        <Animated.View
+          testID="rotate-prompt-title"
+          entering={FadeIn.delay(100).duration(400)}
+          exiting={FadeOut.duration(200)}
+          style={styles.heading}
+          pointerEvents="none"
+        >
+          <Text
+            style={[styles.headingText, { fontSize: scaledFontSize(24) }]}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.7}
+          >
+            {t('rotatePrompt.ready')}
+          </Text>
+        </Animated.View>
 
-      <Animated.View
-        entering={FadeIn.delay(100).duration(400)}
-        exiting={FadeOut.duration(200)}
-        style={[styles.heading, { top: insets.top + scaledPadding(20) }]}
-        pointerEvents="none"
-      >
-        <Text style={[styles.headingText, { fontSize: scaledFontSize(24) }]}>{t('rotatePrompt.ready')}</Text>
-      </Animated.View>
+        <Animated.View
+          testID="rotate-prompt-back-wrap"
+          entering={FadeIn.duration(300)}
+          exiting={FadeOut.duration(200)}
+          style={styles.backButtonWrap}
+        >
+          <Pressable
+            testID="rotate-prompt-back"
+            style={styles.backButton}
+            onPress={onBack}
+            hitSlop={10}
+            accessibilityLabel={t('common.back')}
+          >
+            <Ionicons name="chevron-back" size={scaledFontSize(20)} color="#FFFFFF" />
+          </Pressable>
+        </Animated.View>
+      </View>
 
       {bookRect && (
         <Animated.Text
@@ -195,15 +215,22 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFill,
     zIndex: 40,
   },
-  backButtonWrap: {
+  header: {
     position: 'absolute',
-    left: 16,
+    left: 0,
+    right: 0,
+    height: ROTATE_PROMPT_BACK,
     zIndex: 45,
   },
+  backButtonWrap: {
+    position: 'absolute',
+    left: BACK_LEFT,
+    top: 0,
+  },
   backButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: ROTATE_PROMPT_BACK,
+    height: ROTATE_PROMPT_BACK,
+    borderRadius: ROTATE_PROMPT_BACK / 2,
     backgroundColor: 'rgba(10, 15, 44, 0.55)',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.18)',
@@ -212,9 +239,12 @@ const styles = StyleSheet.create({
   },
   heading: {
     position: 'absolute',
-    left: 40,
-    right: 40,
+    top: 0,
+    bottom: 0,
+    left: BACK_LEFT + ROTATE_PROMPT_BACK + BACK_GAP,
+    right: BACK_LEFT + ROTATE_PROMPT_BACK + BACK_GAP,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   headingText: {
     fontFamily: Fonts.primary,

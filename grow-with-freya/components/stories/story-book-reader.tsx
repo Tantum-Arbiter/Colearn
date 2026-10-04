@@ -74,6 +74,7 @@ interface StoryBookReaderProps {
   initialVoiceOver?: VoiceOver | null;
   skipCoverPage?: boolean;
   skipInitialFadeIn?: boolean; // Skip fade-in when transitioning from overlay (image already visible)
+  startPageIndex?: number;
   onExit: () => void;
 }
 
@@ -83,6 +84,7 @@ export function StoryBookReader({
   initialVoiceOver = null,
   skipCoverPage = false,
   skipInitialFadeIn = false,
+  startPageIndex,
   onExit,
 }: StoryBookReaderProps) {
   const insets = useSafeAreaInsets();
@@ -130,6 +132,7 @@ export function StoryBookReader({
     skipCoverPage,
     savedPlace,
     totalPages: story.pages?.length ?? 0,
+    startPage: startPageIndex,
   }));
   const [previousPageIndex, setPreviousPageIndex] = useState<number | null>(null); // For crossfade
   const [isTransitioning, setIsTransitioning] = useState(false);

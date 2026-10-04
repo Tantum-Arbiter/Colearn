@@ -34,6 +34,7 @@ const data = (overrides: Partial<ChildHomeData> = {}): ChildHomeData => ({
   readingMinutes: 84,
   weeklyReadingMinutes: 22,
   readingStreakDays: 0,
+  bestStreakDays: 0,
   ...overrides,
 });
 
@@ -226,62 +227,88 @@ describe('the card layout', () => {
 });
 
 describe('the Your Learning Journey card', () => {
+  const columnLeft = (scale: number) => (JOURNEY_CARD.inset + JOURNEY_CARD.compass.size + JOURNEY_CARD.compass.gap) * scale;
+
   /**
-   * The operator's mock is 242 pixels tall on a card 608 wide: 147 points on a
-   * card 370 wide. Its row of stars then became the journey's step tokens,
-   * which stand taller than stars, and the card grew by that much and no more.
+   * The operator's third mock (2026-10-04) is 267 pixels tall on a card 666
+   * wide: 148 points on a card 370 wide, the shape the card had before.
    */
-  it('stands as tall as the card in the operator`s mock, and seven points more for its step tokens', () => {
-    expect(JOURNEY_CARD.height).toBe(154);
-    expect((JOURNEY_CARD.height - 7) / 370).toBeCloseTo(242 / 608, 2);
+  it('stands as tall as the card in the operator`s third mock', () => {
+    expect(JOURNEY_CARD.height).toBe(148);
+    expect(JOURNEY_CARD.height / 370).toBeCloseTo(267 / 666, 2);
   });
 
   /**
-   * The mock is drawn for a card 370 points wide. A narrower phone shows the
-   * same card smaller, every part of it in the same proportion, rather than
-   * the same words squeezed against a picture that did not shrink; a wider
-   * card is no larger, and has more room for its words.
+   * The mock is drawn for a card 370 points wide, and every part of it keeps
+   * its proportion on any card: smaller on a narrow phone, larger on a tablet,
+   * where the card used to leave too much room (operator, 2026-10-04).
    */
   it.each([
     [370, 1],
     [358, 358 / 370],
-    [343, 343 / 370],
     [328, 328 / 370],
-    [398, 1],
-    [500, 1],
+    [408, 408 / 370],
+    [500, 500 / 370],
   ])('draws a card %p wide at %p of the mock`s size', (cardWidth, expected) => {
     expect(journeyScale(cardWidth)).toBeCloseTo(expected, 6);
   });
 
-  it('never draws the card smaller than its words can be read at', () => {
+  it('never draws the card smaller than its words can be read at, nor larger than a tablet needs', () => {
     expect(journeyScale(JOURNEY_CARD.designWidth * JOURNEY_CARD.smallestScale - 40)).toBe(JOURNEY_CARD.smallestScale);
-    expect(JOURNEY_CARD.smallestScale).toBeGreaterThanOrEqual(0.8);
+    expect(journeyScale(2000)).toBe(JOURNEY_CARD.largestScale);
     expect(JOURNEY_CARD.smallestScale).toBeLessThan(328 / 370);
+    expect(JOURNEY_CARD.largestScale).toBeGreaterThanOrEqual(500 / 370);
+    expect(JOURNEY_CARD.largestScale).toBeLessThan(1.5);
   });
 
   it.each([0, -20, Number.NaN, Number.POSITIVE_INFINITY])('draws the card at the mock`s size when its width is %p', (cardWidth) => {
     expect(journeyScale(cardWidth)).toBe(1);
   });
 
-  it.each([328, 343, 358, 361, 370, 398, 500])('has room for its row of step tokens beside the island on a card %p wide', (cardWidth) => {
+  it('shows its island as tall as the card inside its edge, as wide as the narrower cut is', () => {
+    expect(journeyArtWidth(145)).toBeCloseTo(145 * (622 / 472), 6);
+    expect(JOURNEY_CARD.artAspect).toBeCloseTo(622 / 472, 6);
+    expect(JOURNEY_CARD.artFade).toBeCloseTo(58 / 311, 6);
+  });
+
+  /**
+   * The step tokens run along under the words and may reach the island's
+   * soft left edge, as in the mock, but never past it onto the island itself.
+   */
+  it.each([328, 343, 358, 370, 408, 500])('keeps its row of step tokens off the island on a card %p wide', (cardWidth) => {
     const scale = journeyScale(cardWidth);
     const { open, rest, gap } = JOURNEY_CARD.step;
-    const row = (open + (JOURNEY_STEPS_SHOWN - 1) * (rest + gap)) * scale;
+    const rowEnd = (JOURNEY_CARD.inset + open + (JOURNEY_STEPS_SHOWN - 1) * (rest + gap)) * scale;
     const innerHeight = JOURNEY_CARD.height * scale - 3;
+    const artLeft = cardWidth - 3 - journeyArtWidth(innerHeight);
 
-    expect(row).toBeLessThanOrEqual(journeyWordsWidth(cardWidth, innerHeight, JOURNEY_CARD.wordsReach, scale));
+    expect(rowEnd).toBeLessThanOrEqual(artLeft + JOURNEY_CARD.artFade * journeyArtWidth(innerHeight));
     expect(open).toBeGreaterThan(rest);
   });
 
-  it('keeps the words` reach and inset in proportion on a smaller card', () => {
-    const scale = 0.9;
+  it.each([
+    [370, 1],
+    [500, 500 / 370],
+    [333, 333 / 370],
+  ])('gives the words beside the compass the room up to the island`s trees on a card %p wide', (cardWidth, scale) => {
     const innerHeight = JOURNEY_CARD.height * scale - 3;
+    const expected = cardWidth - 3 - innerHeight * (622 / 472) + JOURNEY_CARD.wordsReach * scale - columnLeft(scale);
 
-    expect(journeyWordsWidth(333, innerHeight, JOURNEY_CARD.wordsReach, scale)).toBeCloseTo(
-      333 - 3 - innerHeight * (746 / 472) + (JOURNEY_CARD.wordsReach - JOURNEY_CARD.inset) * scale,
+    expect(journeyWordsWidth(cardWidth, innerHeight, JOURNEY_CARD.wordsReach, scale)).toBeCloseTo(expected, 6);
+  });
+
+  it('lets the eyebrow run further, over the island`s open sky', () => {
+    expect(JOURNEY_CARD.eyebrowReach).toBeGreaterThan(JOURNEY_CARD.wordsReach);
+    expect(journeyWordsWidth(370, 145, JOURNEY_CARD.eyebrowReach) - journeyWordsWidth(370, 145, JOURNEY_CARD.wordsReach)).toBeCloseTo(
+      JOURNEY_CARD.eyebrowReach - JOURNEY_CARD.wordsReach,
       6
     );
-    expect(journeyWordsWidth(120, innerHeight, JOURNEY_CARD.wordsReach, scale)).toBeCloseTo(JOURNEY_CARD.wordsNarrowest * scale, 6);
+  });
+
+  it('never squeezes the words to nothing on a card too narrow for the island beside them', () => {
+    expect(journeyWordsWidth(200, 145, JOURNEY_CARD.wordsReach)).toBe(JOURNEY_CARD.wordsNarrowest);
+    expect(journeyWordsWidth(Number.NaN, 145, JOURNEY_CARD.wordsReach)).toBe(JOURNEY_CARD.wordsNarrowest);
+    expect(journeyWordsWidth(120, 145, JOURNEY_CARD.wordsReach, 0.9)).toBeCloseTo(JOURNEY_CARD.wordsNarrowest * 0.9, 6);
   });
 
   it('joins its step tokens with a dash, a dot and a dash that fit between them', () => {
@@ -293,34 +320,30 @@ describe('the Your Learning Journey card', () => {
     expect(link[0] + link[1] + link[2]).toBeLessThan(gap);
   });
 
-  it('shows its island as tall as the card inside its edge, as wide as the picture is', () => {
-    expect(journeyArtWidth(144)).toBeCloseTo(144 * (746 / 472), 6);
-    expect(JOURNEY_CARD.artAspect).toBeCloseTo(746 / 472, 6);
+  it('sets its compass by the card`s edge and its words beside it, as the mock does', () => {
+    const { size, top, gap } = JOURNEY_CARD.compass;
+
+    expect(size).toBeGreaterThanOrEqual(22);
+    expect(size).toBeLessThanOrEqual(27);
+    expect(top).toBeGreaterThanOrEqual(8);
+    expect(gap).toBeGreaterThanOrEqual(6);
+    expect(JOURNEY_CARD.inset).toBeLessThan(16);
   });
 
-  it.each([
-    [370, 367 - 144 * (746 / 472) + 25 - 22.5],
-    [500, 497 - 144 * (746 / 472) + 25 - 22.5],
-  ])('keeps the title and the line under it off the island`s trees on a card %p wide', (cardWidth, expected) => {
-    expect(journeyWordsWidth(cardWidth, 144, JOURNEY_CARD.wordsReach)).toBeCloseTo(expected, 6);
-  });
-
-  it('lets the eyebrow run further, over the island`s open sky', () => {
-    expect(JOURNEY_CARD.eyebrowReach).toBeGreaterThan(JOURNEY_CARD.wordsReach);
-    expect(journeyWordsWidth(370, 144, JOURNEY_CARD.eyebrowReach) - journeyWordsWidth(370, 144, JOURNEY_CARD.wordsReach)).toBeCloseTo(
-      JOURNEY_CARD.eyebrowReach - JOURNEY_CARD.wordsReach,
-      6
-    );
-  });
-
-  it('never squeezes the words to nothing on a card too narrow for the island beside them', () => {
-    expect(journeyWordsWidth(200, 144, JOURNEY_CARD.wordsReach)).toBe(JOURNEY_CARD.wordsNarrowest);
-    expect(journeyWordsWidth(Number.NaN, 144, JOURNEY_CARD.wordsReach)).toBe(JOURNEY_CARD.wordsNarrowest);
-  });
-
-  it('is the mock`s deep blue, with ink that reads on it', () => {
+  it('is the mock`s deep blue, with a gold eyebrow and ink that reads on it', () => {
     expect(JOURNEY_CARD.fill).toEqual(['#032C8A', '#052E8E']);
     expect(JOURNEY_CARD_TINTS.title).toBe('#FFFFFF');
+    expect(JOURNEY_CARD_TINTS.eyebrow).toBe('#F3E4A0');
+  });
+
+  it('wears a blue glass button, lighter at its top, at the card`s foot on the right', () => {
+    const { right, bottom, height } = JOURNEY_CARD.button;
+
+    expect(JOURNEY_CARD_TINTS.button[0]).toBe('#5C89F4');
+    expect(JOURNEY_CARD_TINTS.button[1]).toBe('#3F5EF1');
+    expect(right).toBeLessThan(10);
+    expect(bottom).toBeLessThan(10);
+    expect(height).toBeGreaterThan(28);
   });
 
   it('glows brightest at its edge and is gone well short of the words', () => {
@@ -330,10 +353,9 @@ describe('the Your Learning Journey card', () => {
     expect([...strengths].sort((a, b) => b - a)).toEqual(strengths);
     expect(strengths[strengths.length - 1]).toBe(0);
     expect([...JOURNEY_CARD.edgeGlowStops].sort((a, b) => a - b)).toEqual([...JOURNEY_CARD.edgeGlowStops]);
-    expect(JOURNEY_CARD.edgeGlowReach).toBeLessThan(JOURNEY_CARD.inset);
+    expect(JOURNEY_CARD.edgeGlowReach).toBeLessThan(columnLeft(1));
   });
 });
-
 
 describe('the steps of the journey the card shows', () => {
   type State = 'done' | 'open' | 'tomorrow' | 'locked';

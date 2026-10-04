@@ -222,11 +222,13 @@ export function journeyStepsShown<Step extends { state: PlanStepState }>(
 export const JOURNEY_CARD = {
   designWidth: 370,
   smallestScale: 0.8,
-  height: 154,
+  largestScale: 1.4,
+  height: 148,
   fill: ['#032C8A', '#052E8E'],
-  artAspect: 746 / 472,
-  inset: 22.5,
-  top: 13.7,
+  artAspect: 622 / 472,
+  artFade: 58 / 311,
+  inset: 11.8,
+  top: 15,
   wordsReach: 25,
   eyebrowReach: 65,
   wordsNarrowest: 96,
@@ -242,48 +244,51 @@ export const JOURNEY_CARD = {
   cornerGleam: ['rgba(150,200,255,0.6)', 'rgba(60,130,235,0.28)', 'rgba(60,130,235,0)'],
   cornerGleamStops: [0, 0.35, 1],
   cornerGleamSize: 64,
+  compass: { size: 26, top: 10, gap: 9.2 },
   step: {
-    open: 25,
-    rest: 18,
-    gap: 8.3,
-    link: [2.6, 1.4, 2.6],
-    linkThick: 1.4,
-    ring: 1,
-    openIcon: 13,
-    restIcon: 10,
-    top: 2.3,
-    glow: { opacity: 0.75, radius: 5 },
+    open: 37.5,
+    rest: 25,
+    gap: 11.6,
+    link: [3.6, 1.8, 3.6],
+    linkThick: 1.6,
+    ring: 1.2,
+    openIcon: 19.5,
+    restIcon: 11.5,
+    top: 73.75,
+    glow: { opacity: 0.75, radius: 7 },
   },
-  buttonFoot: 12.8,
+  stepLine: { indent: 2, top: 121.5, width: 170 },
   button: {
-    height: 35.5,
-    fontSize: 14.5,
-    iconSize: 17,
-    paddingHorizontal: 22.75,
-    gap: 2.3,
-    outdent: 2.5,
-    glow: { opacity: 0.6, radius: 8 },
+    height: 31.7,
+    fontSize: 10,
+    iconSize: 15,
+    paddingHorizontal: 13,
+    gap: 5,
+    right: 5.2,
+    bottom: 5.7,
   },
-  glint: { size: 18, across: 0.278, down: 0.252 },
+  glint: { size: 18, across: 0.134, down: 0.252 },
 } as const;
 
 export const JOURNEY_CARD_TYPE = {
-  eyebrow: 10,
-  eyebrowTracking: 1.48,
-  eyebrowIndent: 0.5,
-  title: 21,
-  titleTracking: -0.35,
-  titleIndent: -0.7,
-  titleTop: 1.55,
-  body: 14.5,
-  bodyTop: -0.3,
-  bodyIndent: 0.75,
+  eyebrow: 8.7,
+  eyebrowTracking: 0.95,
+  eyebrowIndent: 0,
+  title: 18.5,
+  titleTracking: -0.3,
+  titleIndent: -0.2,
+  titleTop: 4.3,
+  body: 10.1,
+  bodyTop: 3.5,
+  bodyIndent: 0.7,
+  stepLine: 10,
 } as const;
 
 export const JOURNEY_CARD_TINTS = {
-  eyebrow: '#A8C6F5',
+  eyebrow: '#F3E4A0',
   title: '#FFFFFF',
-  body: '#CFE4FF',
+  body: '#C9DBF6',
+  stepLine: '#C3D6F4',
   stepOpen: ['#FFE98F', '#FFC533'],
   stepOpenRing: '#FFF3C4',
   stepOpenInk: '#3A2400',
@@ -296,6 +301,13 @@ export const JOURNEY_CARD_TINTS = {
   stepGlow: '#FFC533',
   stepLinkWarm: 'rgba(255,229,150,0.95)',
   stepLinkCool: 'rgba(190,214,255,0.7)',
+  compassRing: '#F6D46A',
+  compassFace: '#13297E',
+  compassNeedle: ['#FFE98F', '#E3A62A'],
+  compassMark: '#F6D46A',
+  button: ['#5C89F4', '#3F5EF1'],
+  buttonEdge: 'rgba(176,204,255,0.75)',
+  buttonInk: '#FFFFFF',
 } as const;
 
 const JOURNEY_CARD_EDGE = 3;
@@ -306,13 +318,14 @@ export function journeyArtWidth(innerHeight: number): number {
 
 export function journeyScale(cardWidth: number): number {
   const scale = cardWidth / JOURNEY_CARD.designWidth;
-  if (!(scale > 0)) return 1;
+  if (!(scale > 0) || !Number.isFinite(scale)) return 1;
 
-  return Math.min(1, Math.max(JOURNEY_CARD.smallestScale, scale));
+  return Math.min(JOURNEY_CARD.largestScale, Math.max(JOURNEY_CARD.smallestScale, scale));
 }
 
 export function journeyWordsWidth(cardWidth: number, innerHeight: number, reach: number, scale: number = 1): number {
-  const room = cardWidth - JOURNEY_CARD_EDGE - journeyArtWidth(innerHeight) + (reach - JOURNEY_CARD.inset) * scale;
+  const column = (JOURNEY_CARD.inset + JOURNEY_CARD.compass.size + JOURNEY_CARD.compass.gap) * scale;
+  const room = cardWidth - JOURNEY_CARD_EDGE - journeyArtWidth(innerHeight) + reach * scale - column;
   const narrowest = JOURNEY_CARD.wordsNarrowest * scale;
 
   return room > narrowest ? room : narrowest;

@@ -506,6 +506,42 @@ describe('StoryCatalogueScreen', () => {
     expect(byTestId(tree, 'section-crossfade-leaving')).toHaveLength(0);
   });
 
+  it('hands Progress the badge it was sent to open, once the page has come to rest', async () => {
+    const progressOf = (tree: ReturnType<typeof render>) =>
+      tree.UNSAFE_root.findAll((n: any) => n.props.embedded === true && typeof n.props.onDetailVisibleChange === 'function')[0];
+    const tree = render(<StoryCatalogueScreen isActive sectionRequest={{ section: 'progress', key: 3, badgeId: 'calm-champion' }} />);
+
+    const atOnce = progressOf(tree).props.focusBadge;
+
+    await waitFor(() => expect(progressOf(tree).props.focusBadge).toEqual({ id: 'calm-champion', key: 3 }), { timeout: 3000 });
+    expect(atOnce).toBeUndefined();
+  });
+
+  it('takes up a badge sent with a later request, while it is already showing', async () => {
+    const progressOf = (tree: ReturnType<typeof render>) =>
+      tree.UNSAFE_root.findAll((n: any) => n.props.embedded === true && typeof n.props.onDetailVisibleChange === 'function')[0];
+    const tree = render(<StoryCatalogueScreen isActive sectionRequest={{ section: 'progress', key: 3 }} />);
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    });
+
+    tree.rerender(<StoryCatalogueScreen isActive sectionRequest={{ section: 'progress', key: 4, badgeId: 'calm-champion' }} />);
+
+    await waitFor(() => expect(progressOf(tree).props.focusBadge).toEqual({ id: 'calm-champion', key: 4 }));
+  });
+
+  it('hands Progress no badge when it was only sent to the page', async () => {
+    const tree = render(<StoryCatalogueScreen isActive sectionRequest={{ section: 'progress', key: 3 }} />);
+
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    });
+
+    const progress = tree.UNSAFE_root.findAll((n: any) => n.props.embedded === true && typeof n.props.onDetailVisibleChange === 'function')[0];
+
+    expect(progress.props.focusBadge).toBeUndefined();
+  });
+
   it('switches at once, with no crossfade, when it is sent to another section from outside', async () => {
     const tree = render(<StoryCatalogueScreen sectionRequest={{ section: 'home', key: 1 }} />);
     await waitFor(() => expect(byTestId(tree, 'featured-story-card').length).toBeGreaterThan(0));
@@ -1527,6 +1563,40 @@ describe('the journey tours', () => {
     }
   });
 
+  // The trophy orb opens Progress with a badge's sheet up; a first visit's tour
+  // started over it, ringing the page behind the sheet and blocking its close.
+  it('holds the Progress tour off while a badge sheet is up, and lets it run once it is closed', async () => {
+    const tree = render(<StoryCatalogueScreen isActive sectionRequest={{ section: 'progress', key: 3 }} />);
+    const progress = () =>
+      tree.UNSAFE_root.findAll((n: any) => n.props.embedded === true && typeof n.props.onDetailVisibleChange === 'function')[0];
+    await waitFor(() => expect(latest('progress_tour')?.active).toBe(true));
+
+    act(() => progress().props.onDetailVisibleChange(true));
+    const whileOpen = latest('progress_tour')?.active;
+    act(() => progress().props.onDetailVisibleChange(false));
+
+    expect(whileOpen).toBe(false);
+    expect(latest('progress_tour')?.active).toBe(true);
+  });
+
+  // The whole shelf column was the subject: taller than the screen, so the
+  // ring ran off both ends and nothing on show was lit (review, 2026-10-04).
+  it('gives the shelves step the first shelf to ring, one row the screen can hold', async () => {
+    const tree = render(<StoryCatalogueScreen />);
+    await waitFor(() => expect(byTestId(tree, 'story-shelves').length).toBeGreaterThan(0));
+
+    const shelves = byTestId(tree, 'story-shelves')[0];
+    const wrappers = shelves.findAll((n: any) => n.props.testID === 'tour-first-shelf' && n.props.collapsable === false);
+    const ringed = new Set(
+      wrappers.flatMap((wrapper: any) =>
+        wrapper.findAll((n: any) => Array.isArray(n.props.stories) && typeof n.props.heading === 'string').map((row: any) => row.props.heading)
+      )
+    );
+    const firstRow = shelves.findAll((n: any) => Array.isArray(n.props.stories) && typeof n.props.heading === 'string')[0];
+
+    expect([...ringed]).toEqual([firstRow.props.heading]);
+  });
+
   it('runs the tour for its section once it comes on screen', async () => {
     const tree = render(<StoryCatalogueScreen isActive={false} />);
     await waitFor(() => expect(byTestId(tree, 'story-filter-bar').length).toBeGreaterThan(0));
@@ -1545,6 +1615,20 @@ describe('the journey tours', () => {
     for (const other of ['progress_tour', 'search_tour', 'profile_tour']) {
       expect(byTestId(tree, `owl-guide-${other}`)).toHaveLength(0);
     }
+  });
+
+  it.each([
+    ['before the first search, with nothing yet to come back to', [], ['search_field']],
+    ['once there are searches to come back to', ['wombat'], ['search_field', 'search_recent']],
+  ])('points the search tour at the recent searches only %s', async (_, recent, targets) => {
+    mockAppState.recentSearches = recent;
+    const tree = render(<StoryCatalogueScreen />);
+    await waitFor(() => expect(byTestId(tree, 'story-filter-bar').length).toBeGreaterThan(0));
+
+    openSection(tree, 'search');
+
+    await waitFor(() => expect(latest('search_tour')?.targets).toEqual(targets));
+    mockAppState.recentSearches = [];
   });
 
   it.each([

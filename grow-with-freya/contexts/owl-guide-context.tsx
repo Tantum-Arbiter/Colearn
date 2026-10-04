@@ -1,7 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { GUIDE_IDS, GUIDE_STORAGE_KEY, type GuideId } from '@/constants/owl-guide';
+import { GUIDE_IDS, GUIDE_STORAGE_KEY, guideRevision, type GuideId } from '@/constants/owl-guide';
 import { Logger } from '@/utils/logger';
 
 export { GUIDE_STORAGE_KEY };
@@ -11,18 +11,19 @@ const log = Logger.create('OwlGuide');
 export interface GuideState {
   completedGuides: GuideId[];
   lastResetTimestamp: number;
+  seenRevisions: Partial<Record<GuideId, number>>;
 }
 
 const EMPTY_STATE: GuideState = {
   completedGuides: [],
   lastResetTimestamp: 0,
+  seenRevisions: {},
 };
 
 const LEGACY_FLAGS: Record<string, GuideId> = {
   hasSeenFirstStory: 'story_reader_tips',
   hasSeenSettings: 'settings_walkthrough',
   hasSeenEmotionCards: 'emotion_cards_tips',
-  hasSeenScreenTime: 'screen_time_tips',
 };
 
 function isGuideId(value: unknown): value is GuideId {
@@ -43,8 +44,16 @@ export function migrateGuideState(raw: unknown): GuideState {
 
   const completedGuides = [...new Set([...listed, ...flagged].filter(isGuideId))];
   const lastResetTimestamp = typeof record.lastResetTimestamp === 'number' ? record.lastResetTimestamp : 0;
+  const stored = record.seenRevisions && typeof record.seenRevisions === 'object' ? (record.seenRevisions as Record<string, unknown>) : {};
+  const seenRevisions = Object.fromEntries(
+    Object.entries(stored).filter(([id, revision]) => isGuideId(id) && typeof revision === 'number')
+  ) as Partial<Record<GuideId, number>>;
 
-  return { completedGuides, lastResetTimestamp };
+  return { completedGuides, lastResetTimestamp, seenRevisions };
+}
+
+function finishedCurrent(state: GuideState, id: GuideId): boolean {
+  return state.completedGuides.includes(id) && (state.seenRevisions[id] ?? 1) >= guideRevision(id);
 }
 
 export interface OwlGuideContextValue {
@@ -99,10 +108,7 @@ export function OwlGuideProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const shouldShowGuide = useCallback(
-    (id: GuideId) => !state.completedGuides.includes(id),
-    [state.completedGuides]
-  );
+  const shouldShowGuide = useCallback((id: GuideId) => !finishedCurrent(state, id), [state]);
 
   const startGuide = useCallback((id: GuideId) => {
     setActiveGuide(id);
@@ -113,8 +119,12 @@ export function OwlGuideProvider({ children }: { children: ReactNode }) {
 
   const finish = useCallback(
     (remember: boolean) => {
-      if (activeGuide && remember && !state.completedGuides.includes(activeGuide)) {
-        persist({ ...state, completedGuides: [...state.completedGuides, activeGuide] });
+      if (activeGuide && remember && !finishedCurrent(state, activeGuide)) {
+        persist({
+          ...state,
+          completedGuides: state.completedGuides.includes(activeGuide) ? state.completedGuides : [...state.completedGuides, activeGuide],
+          seenRevisions: { ...state.seenRevisions, [activeGuide]: guideRevision(activeGuide) },
+        });
       }
       setActiveGuide(null);
       setStepIndex(0);
@@ -129,7 +139,7 @@ export function OwlGuideProvider({ children }: { children: ReactNode }) {
   const resetGuides = useCallback(async () => {
     setActiveGuide(null);
     setStepIndex(0);
-    await persist({ completedGuides: [], lastResetTimestamp: Date.now() });
+    await persist({ completedGuides: [], lastResetTimestamp: Date.now(), seenRevisions: {} });
   }, [persist]);
 
   const value = useMemo<OwlGuideContextValue>(

@@ -28,6 +28,17 @@ describe('resumePageIndex', () => {
     expect(underTest).toBe(1);
   });
 
+  it.each([
+    ['a page picked on the story card, over the saved place', 6, 6],
+    ['the first page when picked', 1, 1],
+    ['no further than the last page', 20, 8],
+    ['no earlier than the first page past the cover', 0, 1],
+  ])('should open at %s', (_case, startPage, expected) => {
+    const underTest = resumePageIndex({ skipCoverPage: true, savedPlace: { pageIndex: 3, totalPages: 9 }, totalPages: 9, startPage });
+
+    expect(underTest).toBe(expected);
+  });
+
   it('should open at the cover when the cover is not being skipped', () => {
     const underTest = resumePageIndex({ skipCoverPage: false, savedPlace: { pageIndex: 3, totalPages: 9 }, totalPages: 9 });
 

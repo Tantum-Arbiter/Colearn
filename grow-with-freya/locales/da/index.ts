@@ -658,6 +658,7 @@ export default {
       'day-7': { aim: 'Øv jer i at vente og skiftes med en historie om en bustur.' },
     },
     stepOf: 'Trin {{day}} af {{total}}',
+    focus: '{{domain}} og {{skill}}',
     minutes: '{{from}}–{{to}} min',
     start: 'Start aktivitet',
     preview: 'Smugkig',
@@ -675,22 +676,10 @@ export default {
     },
   },
   tutorial: {
-    welcomeTitle: 'Velkommen til\nEarlyroots!',
-    welcomeDescription: 'Lad os tage en hurtig rundvisning for at hjælpe dig og dit barn med at få mest ud af lesetiden.',
-    storiesTitle: 'Historiebibliotek',
-    storiesDescription: 'Tryk her for at udforske en samling af interaktive historier med smukke illustrationer og sjove interaktioner.',
-    skip: 'Spring over',
-    gotIt: 'Forstået!',
     buttons: {
       next: 'Næste',
       skip: 'Spring over',
-      skipAll: 'Spring alt over',
-      skipTour: 'Spring rundvisning over',
-      gotIt: 'Forstået!',
-      go: 'Gå!',
       letsGo: 'Lad os gå!',
-      done: 'Færdig',
-      startReading: 'Begynd at læse',
     },
     mainMenu: {
       navLearn: {
@@ -700,26 +689,6 @@ export default {
       welcome: {
         title: 'Velkommen til Early Roots!',
         description: 'Lad os tage en hurtig rundvisning for at hjælpe dig og dit barn med at få mest ud af lesetiden.',
-      },
-      stories: {
-        title: 'Historier',
-        description: 'Udforsk vores samling af interaktive historier med smukke illustrationer og sjove interaktioner.',
-      },
-      practise: {
-        title: 'Øvelse',
-        description: 'Lær at spille sange på forskellige instrumenter. Følg med og opbyg dine musikalske færdigheder!',
-      },
-      freeplay: {
-        title: 'Fri Leg',
-        description: 'Spil frit på ethvert instrument - ingen regler, bare sjov! Eksperimenter med lyde og skab din egen musik.',
-      },
-      instruments: {
-        title: 'Instrumenter',
-        description: 'Øv sange eller jam frit på forskellige instrumenter. Opbyg musikalske færdigheder mens du har det sjovt!',
-      },
-      settings: {
-        title: 'Indstillinger',
-        description: 'Tilpas appen så den fungerer bedst for din familie.',
       },
       language: {
         title: 'Dit sprog',
@@ -731,7 +700,7 @@ export default {
       },
       achievement: {
         title: 'Din læringsrejse',
-        description: 'Det mærke dit barn er tættest på, og hvor langt der er igen. Tryk for at flyve ned til barnets ø.',
+        description: 'Ugens trin på jeres ø og det mærke, I er tættest på. Tryk for at flyve ned til øen.',
       },
       screenTime: {
         title: 'Skærmsikker-ringen',
@@ -739,27 +708,17 @@ export default {
         remainingCaption: 'Tid tilbage',
         spentCaption: 'Tiden er gået',
       },
-    },
-    screenTime: {
-      intro: {
-        title: 'Skærmtidsdashboard',
-        description: 'Overvåg, administrer og indstil dit barns daglige skærmtid med alderspassende grænser.',
+      streakOrb: {
+        title: 'Daglig stime',
+        description: 'Hver dag med en historie lægger en dag til. Tryk for at se jeres bedste stime.',
       },
-      ageBased: {
-        title: 'Aldersbaserede grænser',
-        description: 'Indstil dit barns alder og få automatisk WHO/AAP anbefalede skærmtidsgrænser.',
+      continueOrb: {
+        title: 'Fortsæt',
+        description: 'Der står “Læs for bogmærke”, indtil I begynder på en bog. Så står der “Fortsæt”, og bogens forside vises. Tryk for at åbne bogens kort og vælge en side.',
       },
-      heatmap: {
-        title: 'Ugentlig aktivitet',
-        description: 'Se skærmtid brugsmønstre gennem ugen for at hjælpe dig med at opbygge en sund rutine.',
-      },
-      reminders: {
-        title: 'Indstil påmindelser',
-        description: 'Opret brugerdefinerede påmindelser for aktiviteter, pauser eller sengetidsrutine.',
-      },
-      routine: {
-        title: 'Opbyg sund rutine',
-        description: 'Brug skærmtidsdata til at opbygge en konsistent daglig rutine der fungerer for din familie.',
+      badgesOrb: {
+        title: 'Præstationer',
+        description: 'Så mange mærker har I fået indtil nu. Tryk for at se det næste, I kan få.',
       },
     },
     storyReader: {
@@ -798,16 +757,38 @@ export default {
     },
     bookMode: {
       read: {
-        title: 'Læsetilstand',
-        description: 'Tryk her for at læse historien selv med dit barn. Vend sider i dit eget tempo.',
+        title: 'Læs sammen',
+        description: 'Læs historien højt sammen, og vend siderne i jeres eget tempo. Er I midt i den, fortsætter den, hvor I slap.',
       },
       record: {
-        title: 'Optagetilstand',
-        description: 'Optag din stemme mens du læser historien. Perfekt når du er væk!',
+        title: 'Optag',
+        description: 'Indtal din egen stemme, der læser historien, så dit barn kan høre den, når du er væk. En voksen svarer først på et hurtigt spørgsmål.',
       },
       narrate: {
-        title: 'Lyttetilstand',
-        description: 'Lyt til en forudoptaget fortælling af historien. Perfekt til sengetid!',
+        title: 'Leg med',
+        description: 'Historien læses op med en indspillet stemme, og siderne vender selv. Dejligt ved sengetid.',
+      },
+      pages: {
+        title: 'Start fra en side',
+        description: 'Alle bogens sider, med jeres sted ringet ind i guld. Tryk på en for at læse derfra.',
+      },
+    },
+    island: {
+      welcome: {
+        title: 'Jeres læringsø',
+        description: 'Et lille trin om dagen i denne uge: en historie, et spil eller en sang at dele. Stien lyser op, efterhånden som I går.',
+      },
+      checkpoint: {
+        title: 'Dagens trin',
+        description: 'Det lysende punkt er dagens. Tryk for at begynde. De næste åbner én dag ad gangen.',
+      },
+      plan: {
+        title: 'Dagens plan',
+        description: 'Hvad dagens trin er, hvor lang tid det tager, og hvad det styrker. Start aktivitet sætter det i gang; Smugkig lader jer kigge først.',
+      },
+      home: {
+        title: 'Tilbage til start',
+        description: 'Flyv tilbage op til jeres himmel, når I er færdige.',
       },
     },
     recordMode: {
@@ -910,34 +891,6 @@ export default {
         description: 'Vil du prøve en anden lyd? Åbn menuen () og tryk på \'Skift Instrument\' for at skifte når som helst.',
       },
     },
-    storyModes: {
-      welcome: {
-        title: 'Tre Måder at Udforske!',
-        description: 'Hvert barn lærer forskelligt. Vælg den historieoplevelse, der vækker dit barns nysgerrighed - hver enkelt opbygger vigtige færdigheder gennem legens magi.',
-      },
-      interactive: {
-        title: 'Interaktive Historier',
-        description: 'Tryk, swipe og opdag! Interaktive historier bringer sider til live med overraskelser, årsag-og-virkning-øjeblikke og praktiske læringsaktiviteter. Forskning viser, at aktiv deltagelse under historietid styrker forståelse, finmotorik og tidlig problemløsning.',
-      },
-      musical: {
-        title: 'Musikalske Historier',
-        description: 'Læs, spil og optræd! Musikalske historier fletter rigtige instrumentudfordringer ind i hvert eventyr - dit barn lærer rytme, melodi og koordination, mens de følger fortællingen. Studier bekræfter, at tidlig musikeksponering styrker hukommelse, sprogudvikling og følelsesmæssigt udtryk.',
-      },
-      jigsaw: {
-        title: 'Puslespilshistorier',
-        description: 'Sæt det sammen! Puslespilshistorier gemmer smukke puslespil på hver side og opbygger rumlig bevidsthed, tålmodighed og logisk tænkning. At fuldføre puslespil giver børn en ægte følelse af præstation og styrker visuelle-perceptuelle færdigheder, der understøtter læseparathed.',
-      },
-    },
-    gestures: {
-      speakerLongPress: {
-        title: 'Langt tryk tip',
-        description: 'Tryk længe på højttalerknappen for at se ekstra lydmuligheder.',
-      },
-      storySwipe: {
-        title: 'Stryg navigation',
-        description: 'Stryg til venstre eller højre for at vende sider hurtigt.',
-      },
-    },
     emotionCards: {
       welcome: {
         title: 'Velkommen til følelseskort!',
@@ -960,60 +913,6 @@ export default {
         description: 'Skift mellem emojis, dyr og bjørn temaer for at holde tingene friske og interessante!',
       },
     },
-    spelling: {
-      welcome: {
-        title: 'Staveaktiviteter',
-        description: 'Velkommen til Stavning! Sjove interaktive aktiviteter, der hjælper dit barn med at lære bogstaver, ord og stavning.',
-      },
-      ages: {
-        title: 'Alderspassende Indhold',
-        description: 'Aktiviteter er grupperet efter alder. Brug karrusellen øverst til at filtrere efter dit barns niveau.',
-      },
-      together: {
-        title: 'Lær Sammen',
-        description: 'Sid med dit barn og stav bogstaverne sammen. Opmuntr dem og fejr hvert forsøg!',
-      },
-      benefit: {
-        title: 'Opbygning af Læsefærdigheder',
-        description: 'Tidlig staveøvelse udvikler fonemisk bevidsthed, bogstavgenkendelse og en kærlighed til ord, der varer hele livet.',
-      },
-    },
-    numbers: {
-      welcome: {
-        title: 'Talaktiviteter',
-        description: 'Velkommen til Tal! Engagerende aktiviteter, der hjælper dit barn med at udforske tælling, former og tidlig matematik.',
-      },
-      ages: {
-        title: 'Alderspassende Indhold',
-        description: 'Aktiviteter er grupperet efter alder. Brug karrusellen øverst til at finde det rigtige niveau for dit barn.',
-      },
-      together: {
-        title: 'Tæl Sammen',
-        description: 'Tæl højt sammen, peg på genstande og gør tal til en del af den daglige leg!',
-      },
-      benefit: {
-        title: 'Opbygning af Regnefærdigheder',
-        description: 'Tidlig talleg udvikler logisk tænkning, mønstergenkendelse og et solidt fundament for matematik.',
-      },
-    },
-    feelings: {
-      welcome: {
-        title: 'Følelsesaktiviteter',
-        description: 'Velkommen til Følelser! Aktiviteter, der hjælper dit barn med at genkende, navngive og forstå følelser.',
-      },
-      ages: {
-        title: 'Alderspassende Indhold',
-        description: 'Aktiviteter er grupperet efter alder. Vælg aktiviteter, der passer til dit barns følelsesmæssige udvikling.',
-      },
-      together: {
-        title: 'Udforsk Sammen',
-        description: 'Tal åbent om følelser. Spørg "Hvordan føles det?" og del også dine egne følelser.',
-      },
-      benefit: {
-        title: 'Følelsesmæssig Intelligens',
-        description: 'At forstå følelser opbygger empati, selvregulering og stærke sociale færdigheder — afgørende for livslang trivsel.',
-      },
-    },
     practise: {
       welcome: {
         title: 'Øvelsestilstand',
@@ -1032,24 +931,6 @@ export default {
         description: 'At lære at spille sange udvikler rytme, koordination, hukommelse og koncentration — alt gennem glæden ved musik.',
       },
     },
-    freeplay: {
-      welcome: {
-        title: 'Fri Leg Tilstand',
-        description: 'Ingen regler, bare sjov! Udforsk ethvert instrument og skab din egen musik. Perfekt til kreativitet og selvudfoldelse.',
-      },
-      instrument: {
-        title: 'Vælg Dit Instrument',
-        description: 'Vælg et instrument fra karrusellen. Prøv dem alle for at opdage nye lyde og favoritter!',
-      },
-      play: {
-        title: 'Spil Frit',
-        description: 'Tryk på de farvede knapper for at lave musik. Der er ingen forkerte toner — hver lyd er en del af eventyret!',
-      },
-      benefit: {
-        title: 'Kreativt Udtryk',
-        description: 'Fri musikalsk leg nærer kreativitet, selvtillid og en kærlighed til musik, der vokser med dit barn.',
-      },
-    },
     catalogue: {
       welcome: {
         title: 'Din historiehylde',
@@ -1057,19 +938,19 @@ export default {
       },
       themes: {
         title: 'Vælg et tema',
-        description: 'Historier, læring eller musik. Tryk på en flise, og hylden sorterer sig selv.',
+        description: 'Historier, Læring eller Musik. Tryk på én, så sorterer hylden sig efter den.',
       },
       filter: {
         title: 'Finere filtre',
         description: 'Sengetid, dyr, ro og mere. Vælg et par, og hylden snævrer ind til netop dem.',
       },
       featured: {
-        title: 'Dagens valg',
-        description: 'En bog valgt på ny hver dag. Tryk på Læs nu, og den åbner med det samme.',
+        title: 'Jeres næste bog',
+        description: 'Bogen I er midt i, eller et nyt forslag hver dag. Tryk på Læs nu for at åbne dens kort.',
       },
       shelves: {
         title: 'Hylder at swipe på',
-        description: 'Swipe langs enhver hylde, eller tryk på Se alle for hele temaet på én gang.',
+        description: 'Stryg hen ad en hylde, eller tryk på Se alle for hele temaet. Tryk på en bog for at åbne dens kort.',
       },
       navProgress: {
         title: 'Fremskridt',
@@ -3275,6 +3156,8 @@ export default {
   },
   storyDetail: {
     readTogether: 'Læs sammen',
+    pickPage: 'Start fra en side',
+    readFromPage: 'Læs fra side {{page}}',
     continueReading: 'Læs videre',
     record: 'Optag',
     playAlong: 'Leg med',
@@ -3322,7 +3205,7 @@ export default {
       title: 'En roligere og tryggere\nform for skærmtid.',
       noAds: 'Ingen reklamer',
       noTracking: 'Ingen adfærdssporing',
-      noPressure: 'Ingen streaks eller pres',
+      noPressure: 'Aldrig noget pres',
       gentle: 'Blide lyde og bevægelser',
       body: 'Rolige aktiviteter, tilgivende interaktioner og ingen opmærksomhedskrævende belønninger.',
     },
@@ -3396,6 +3279,9 @@ export default {
       days_one: '{{count}} dags stime!',
       days_other: '{{count}} dages stime!',
       start: 'Start en stime i dag',
+      unit: 'dages stime',
+      unit_one: 'dags stime',
+      unit_other: 'dages stime',
     },
     weeklyReading: {
       minutes: '{{count}} min. denne uge',
@@ -3407,6 +3293,7 @@ export default {
     achievements: {
       title: 'Se hvad du har opnået!',
       cta: 'Udforsk',
+      ctaJourney: 'Udforsk rejsen',
       emptyTitle: 'Dit første mærke venter',
       emptyBody: 'Læs en historie sammen for at få det',
       hint: 'Flyv ned til din ø',
@@ -3435,6 +3322,25 @@ export default {
     greeting: 'Hvad skal vi lave sammen?',
     grownUps: 'Voksne',
     continueTogether: 'Fortsæt sammen',
+    continueReading: 'Læs videre',
+    continueMore: 'Vis mere',
+    statOrb: {
+      continue: 'Fortsæt',
+      readToBookmark: 'Læs for bogmærke',
+      achieved: 'Opnået',
+    },
+    statPill: {
+      streak: 'Daglig stime',
+      days: '{{count}} dages stime',
+      days_one: '{{count}} dags stime',
+      days_other: '{{count}} dages stime',
+      best: 'Bedste {{count}}',
+      pages: '{{page}} af {{total}}',
+      achievements: 'Præstationer',
+      next: 'Næste: {{title}}',
+      toBadge: 'Åbner det næste mærke at vinde',
+      openBook: 'Åbn {{title}}',
+    },
     pagePosition: 'Side {{page}} af {{total}}',
     resumeStory: 'Læs videre i {{title}}',
     storybooks: 'Billedbøger',

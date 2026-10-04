@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet } from 'react-native';
 import { act, render } from '@testing-library/react-native';
+import { PAGE_TRANSITION_DURATION_MS } from '@/constants/page-transition';
 import { useAnimatedStyle } from 'react-native-reanimated';
 import type { ReactTestInstance } from 'react-test-renderer';
 import { IslandScene } from '@/components/island/island-scene';
@@ -158,6 +159,14 @@ function aWeek(states: PlanStepView['state'][]) {
   mockDoneCount = states.filter((state) => state === 'done').length;
 }
 
+const mockLift = {
+  style: { liftedForTheTour: true },
+  scroller: { reveal: jest.fn(), away: jest.fn(() => 0), release: jest.fn() },
+};
+jest.mock('@/components/owl-guide/use-guide-lift', () => ({
+  useGuideLift: () => mockLift,
+}));
+
 jest.mock('@/hooks/use-island-clocks', () => ({
   useIslandClocks: (alive: boolean) => {
     mockAlive.push(alive);
@@ -247,6 +256,81 @@ describe('IslandScene', () => {
     (useAnimatedStyle as jest.Mock).mockImplementation(() => ({}));
     jest.clearAllTimers();
     jest.useRealTimers();
+  });
+
+  describe('the owl\'s tour of the island', () => {
+    function tourOf(root: ReactTestInstance) {
+      return root.findAll((node) => node.props.id === 'island_tour' && node.props.targets !== undefined)[0];
+    }
+
+    it('hands the tour the day\'s checkpoint, the plan card and the Home pill', () => {
+      const { root } = renderScene();
+
+      expect(Object.keys(tourOf(root).props.targets).sort()).toEqual(['island_checkpoint', 'island_home', 'island_plan_card']);
+    });
+
+    it.each([
+      ['today\'s step is done and the next opens tomorrow', ['done', 'tomorrow', 'locked', 'locked', 'locked', 'locked', 'locked']],
+      ['the whole week is done', ['done', 'done', 'done', 'done', 'done', 'done', 'done']],
+    ] as const)('leaves the checkpoint off the tour when %s, since nothing glows to point at', (_, week) => {
+      aWeek([...week]);
+      const { root } = renderScene();
+
+      expect(Object.keys(tourOf(root).props.targets).sort()).toEqual(['island_home', 'island_plan_card']);
+    });
+
+    // On a phone the bubble sat over the top of the plan card and the owl over
+    // Start activity; the card rises clear for its step, as the book card does.
+    it('lets the tour lift the plan card clear of the bubble', () => {
+      const { root } = renderScene();
+      const layer = root.findAll((node) => node.props.testID === 'island-plan-panel' && node.props.style !== undefined)[0];
+
+      expect(tourOf(root).props.scroller).toBe(mockLift.scroller);
+      expect(StyleSheet.flatten(layer.props.style)).toEqual(expect.objectContaining({ liftedForTheTour: true }));
+    });
+
+    it('points at the checkpoint for today alone, not the days still to come', () => {
+      aWeek(['done', 'open', 'locked', 'locked', 'locked', 'locked', 'locked']);
+      const { root } = renderScene();
+      const marked = root.findAll((node) => node.props.view !== undefined && node.props.markerRef !== undefined);
+
+      expect(marked).toHaveLength(1);
+      expect(marked[0].props.view.step.day).toBe(2);
+      expect(marked[0].props.markerRef).toBe(tourOf(root).props.targets.island_checkpoint);
+    });
+
+    it('points at the plan card the panel draws, in a host that can be measured', () => {
+      const { root } = renderScene();
+      const panel = root.findAll((node) => node.props.cardRef !== undefined && node.props.onStart !== undefined)[0];
+      const card = root.findAll((node) => node.props.testID === 'plan-panel-card' && node.props.style !== undefined)[0];
+
+      expect(panel.props.cardRef).toBe(tourOf(root).props.targets.island_plan_card);
+      expect(card.props.collapsable).toBe(false);
+    });
+
+    it('wraps the Home pill in a host that can be measured', () => {
+      const { root } = renderScene();
+
+      const hosts = root.findAll(
+        (node) => node.props.collapsable === false && node.findAll((child) => child.props.testID === 'island-home-button').length > 0
+      );
+
+      expect(hosts.length).toBeGreaterThan(0);
+    });
+
+    it('waits for the island to have arrived and settled before the owl speaks', () => {
+      const arriving = renderScene(voyage({ phase: 'arriving' }));
+
+      expect(tourOf(arriving.root).props.active).toBe(false);
+      arriving.unmount();
+
+      const { root } = renderScene();
+      const before = tourOf(root).props.active;
+      act(() => { jest.advanceTimersByTime(PAGE_TRANSITION_DURATION_MS); });
+
+      expect(before).toBe(false);
+      expect(tourOf(root).props.active).toBe(true);
+    });
   });
 
   // the wide painting cropped to a phone lost the island's sides and left the trail crowded; a

@@ -7,7 +7,7 @@
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { GUIDE_IDS } from '@/constants/owl-guide';
+import { GUIDE_IDS, guideRevision } from '@/constants/owl-guide';
 import { localDayKey } from '@/constants/learning-plan';
 import { ISLAND_WEEK } from '@/data/learning-plan';
 import { applyE2eState, isE2eAllowed, parseE2eLink } from '@/services/e2e-state';
@@ -181,6 +181,7 @@ describe('applyE2eState', () => {
     const [key, value] = (AsyncStorage.setItem as jest.Mock).mock.calls.find(([name]) => name === '@tutorial_state');
     expect(key).toBe('@tutorial_state');
     expect(JSON.parse(value).completedGuides.sort()).toEqual([...GUIDE_IDS].sort());
+    GUIDE_IDS.forEach((id) => expect(JSON.parse(value).seenRevisions[id]).toBe(guideRevision(id)));
   });
 
   it('gives the tours back for a flow that wants to see one', async () => {

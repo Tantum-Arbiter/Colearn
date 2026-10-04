@@ -2,6 +2,7 @@ import type { TimeOfDay } from '@/constants/home-scene';
 
 export const HERO_SKY = {
   sunTopInset: 8,
+  maxSlackDrop: 32,
   sunSizeRatio: 0.24,
   welcomeGap: 10,
   welcomeBlock: 84,
@@ -131,6 +132,13 @@ export function heroSunScale(width: number, height: number): number {
 
 export function heroContentDrop(width: number, height: number): number {
   return isTallPhone(width, height) ? TALL_PHONE_CONTENT_DROP - Math.round(height * TALL_PHONE_CONTENT_LIFT) : 0;
+}
+
+export function heroSlackDrop(viewportHeight: number, contentHeight: number): number {
+  const room = viewportHeight - contentHeight;
+  if (!(room > 0)) return 0;
+
+  return Math.min(Math.round(room), HERO_SKY.maxSlackDrop);
 }
 
 export function heroContentLift(width: number, height: number): number {

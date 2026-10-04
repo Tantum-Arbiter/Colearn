@@ -10,6 +10,7 @@ import { useScreenTimeAllowance } from '@/hooks/use-screen-time-allowance';
 import { useTrialEndPrompt } from '@/hooks/use-trial-end-prompt';
 import { useTimeOfDay } from '@/hooks/use-time-of-day';
 import { isScreenTimeExceeded } from '@/constants/screen-time-ring';
+import type { DestinationFocus } from '@/constants/catalogue-destinations';
 import { ScreenTimeGlance } from './screen-time-glance';
 import type { HomeSceneProps } from './home-scene';
 import { HomeScene, type HomeSection, type HomeGuideTargets } from './home-scene';
@@ -24,7 +25,8 @@ export const HOME_DESTINATIONS = {
 } as const;
 
 export interface HomeSceneContainerProps {
-  onNavigate: (destination: string) => void;
+  onNavigate: (destination: string, focus?: DestinationFocus) => void;
+  onOpenStoryCard?: HomeSceneProps['onOpenStoryCard'];
   guideTargets?: HomeGuideTargets;
   /** Passed to the scene's scroll view, for the tour that runs over it. */
   scrollBinding?: HomeSceneProps['scrollBinding'];
@@ -33,6 +35,7 @@ export interface HomeSceneContainerProps {
 
 export const HomeSceneContainer = memo(function HomeSceneContainer({
   onNavigate,
+  onOpenStoryCard,
   guideTargets,
   scrollBinding,
   isActive = true,
@@ -66,6 +69,10 @@ export const HomeSceneContainer = memo(function HomeSceneContainer({
     (id: HomeSection) => onNavigate(id === 'home' ? HOME_DESTINATIONS.stories : HOME_DESTINATIONS[id]),
     [onNavigate]
   );
+  const openBadge = useCallback(
+    (badgeId: string) => onNavigate(HOME_DESTINATIONS.progress, { badgeId }),
+    [onNavigate]
+  );
 
   // the ring reports its own centre, so the glance opens out of the control
   // the parent actually pressed
@@ -90,6 +97,8 @@ export const HomeSceneContainer = memo(function HomeSceneContainer({
         onContinue={handleContinue}
         onOpenJourney={depart}
         onSelectSection={handleSelectSection}
+        onOpenBadge={openBadge}
+        onOpenStoryCard={onOpenStoryCard}
         screenTime={screenTime}
         timeOfDay={timeOfDay}
         onOpenScreenTime={openScreenTime}

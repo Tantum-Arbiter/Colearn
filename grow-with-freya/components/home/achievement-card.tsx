@@ -4,6 +4,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
+import Svg, { Circle, G, Path, Polygon } from 'react-native-svg';
 import Animated, {
   cancelAnimation,
   Easing,
@@ -13,7 +14,6 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
-import { GoldButton } from '@/components/child-ui/gold-button';
 import { Fonts } from '@/constants/theme';
 import {
   HOME_CARDS,
@@ -250,7 +250,10 @@ const JourneySteps = memo(function JourneySteps({ steps, scale }: JourneyStepsPr
   return (
     <View
       testID="journey-steps"
-      style={[styles.steps, { height: JOURNEY_CARD.step.open * scale, marginTop: JOURNEY_CARD.step.top * scale }]}
+      style={[
+        styles.steps,
+        { left: JOURNEY_CARD.inset * scale, top: JOURNEY_CARD.step.top * scale, height: JOURNEY_CARD.step.open * scale },
+      ]}
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
     >
@@ -258,6 +261,85 @@ const JourneySteps = memo(function JourneySteps({ steps, scale }: JourneyStepsPr
         <JourneyStepToken key={step.id} step={step} linked={index < steps.length - 1} scale={scale} />
       ))}
     </View>
+  );
+});
+
+const COMPASS_BOX = 40;
+const COMPASS_CENTRE = COMPASS_BOX / 2;
+const COMPASS_STAR = 'M0 -2.6 Q0.5 -0.5 2.6 0 Q0.5 0.5 0 2.6 Q-0.5 0.5 -2.6 0 Q-0.5 -0.5 0 -2.6 Z';
+
+interface JourneyCompassProps {
+  size: number;
+  left: number;
+  top: number;
+}
+
+const JourneyCompass = memo(function JourneyCompass({ size, left, top }: JourneyCompassProps) {
+  return (
+    <View
+      testID="journey-compass"
+      style={[styles.compass, { left, top, width: size, height: size }]}
+      pointerEvents="none"
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+    >
+      <Svg width={size} height={size} viewBox={`0 0 ${COMPASS_BOX} ${COMPASS_BOX}`}>
+        <Circle testID="journey-compass-face" cx={COMPASS_CENTRE} cy={COMPASS_CENTRE} r={17.6} fill={JOURNEY_CARD_TINTS.compassFace} />
+        <Circle
+          testID="journey-compass-ring"
+          cx={COMPASS_CENTRE}
+          cy={COMPASS_CENTRE}
+          r={18.3}
+          fill="none"
+          stroke={JOURNEY_CARD_TINTS.compassRing}
+          strokeWidth={2.6}
+        />
+        <G opacity={0.85}>
+          <Path d={COMPASS_STAR} transform={`translate(${COMPASS_CENTRE} 6.6)`} fill={JOURNEY_CARD_TINTS.compassMark} />
+          <Path d={COMPASS_STAR} transform={`translate(${COMPASS_CENTRE} 33.4)`} fill={JOURNEY_CARD_TINTS.compassMark} />
+          <Circle cx={6.6} cy={COMPASS_CENTRE} r={0.9} fill={JOURNEY_CARD_TINTS.compassMark} />
+          <Circle cx={33.4} cy={COMPASS_CENTRE} r={0.9} fill={JOURNEY_CARD_TINTS.compassMark} />
+        </G>
+        <G transform={`rotate(45 ${COMPASS_CENTRE} ${COMPASS_CENTRE})`}>
+          <Polygon testID="journey-compass-needle" points="20,9 15.6,20 20,31" fill={JOURNEY_CARD_TINTS.compassNeedle[0]} />
+          <Polygon testID="journey-compass-needle" points="20,9 24.4,20 20,31" fill={JOURNEY_CARD_TINTS.compassNeedle[1]} />
+        </G>
+        <Circle cx={COMPASS_CENTRE} cy={COMPASS_CENTRE} r={1.5} fill={JOURNEY_CARD_TINTS.compassFace} />
+      </Svg>
+    </View>
+  );
+});
+
+interface JourneyButtonProps {
+  label: string;
+  height: number;
+  fontSize: number;
+  iconSize: number;
+  paddingHorizontal: number;
+  gap: number;
+  testID: string;
+}
+
+const JourneyButton = memo(function JourneyButton({
+  label,
+  height,
+  fontSize,
+  iconSize,
+  paddingHorizontal,
+  gap,
+  testID,
+}: JourneyButtonProps) {
+  return (
+    <LinearGradient
+      testID={`${testID}-face`}
+      colors={[...JOURNEY_CARD_TINTS.button]}
+      style={[styles.journeyButtonFace, { minHeight: height, borderRadius: height / 2, paddingHorizontal, gap }]}
+    >
+      <Text style={[styles.journeyButtonLabel, { fontSize }]} numberOfLines={1}>
+        {label}
+      </Text>
+      <Ionicons name="arrow-forward" size={iconSize} color={JOURNEY_CARD_TINTS.buttonInk} />
+    </LinearGradient>
   );
 });
 
@@ -384,8 +466,19 @@ export const AchievementCard = memo(function AchievementCard({
   const unit = next?.unit ?? 'stories';
   const scale = journeyScale(width);
   const innerHeight = JOURNEY_CARD.height * scale - HERO_CARD.strokeWidth * 2;
+  const column = (JOURNEY_CARD.compass.size + JOURNEY_CARD.compass.gap) * scale;
   const wordsWidth = journeyWordsWidth(width, innerHeight, JOURNEY_CARD.wordsReach, scale);
   const eyebrowWidth = journeyWordsWidth(width, innerHeight, JOURNEY_CARD.eyebrowReach, scale);
+  const inHand = steps?.find((step) => step.state === 'open' || step.state === 'tomorrow');
+  const stepLine =
+    steps && steps.length > 0
+      ? inHand
+        ? `${t('plan.stepOf', { day: inHand.day, total: inHand.of })} • ${t('plan.focus', {
+            domain: t(inHand.domainKey),
+            skill: t(`plan.skills.${inHand.skill}`),
+          })}`
+        : t('plan.weekDone')
+      : null;
 
   return (
     <HomeCard
@@ -449,100 +542,121 @@ export const AchievementCard = memo(function AchievementCard({
           testID="journey-words"
           style={{ height: innerHeight, paddingLeft: JOURNEY_CARD.inset * scale, paddingTop: JOURNEY_CARD.top * scale }}
         >
-          <Text
-            style={[
-              styles.journeyEyebrow,
-              {
-                maxWidth: eyebrowWidth,
-                fontSize: JOURNEY_CARD_TYPE.eyebrow * scale,
-                letterSpacing: JOURNEY_CARD_TYPE.eyebrowTracking * scale,
-                marginLeft: JOURNEY_CARD_TYPE.eyebrowIndent * scale,
-              },
-            ]}
-            numberOfLines={1}
-            adjustsFontSizeToFit
-            minimumFontScale={0.75}
-          >
-            {t('home.milestone.eyebrow')}
-          </Text>
-          {next ? (
-            <View testID="achievement-next">
+          <JourneyCompass
+            size={JOURNEY_CARD.compass.size * scale}
+            left={JOURNEY_CARD.inset * scale}
+            top={JOURNEY_CARD.compass.top * scale}
+          />
+          <View testID="journey-heading" style={{ marginLeft: column }}>
+            <Text
+              style={[
+                styles.journeyEyebrow,
+                {
+                  maxWidth: eyebrowWidth,
+                  fontSize: JOURNEY_CARD_TYPE.eyebrow * scale,
+                  letterSpacing: JOURNEY_CARD_TYPE.eyebrowTracking * scale,
+                  marginLeft: JOURNEY_CARD_TYPE.eyebrowIndent * scale,
+                },
+              ]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.75}
+            >
+              {t('home.milestone.eyebrow')}
+            </Text>
+            {next ? (
+              <View testID="achievement-next">
+                <Text
+                  style={[
+                    styles.journeyTitle,
+                    {
+                      maxWidth: wordsWidth,
+                      fontSize: JOURNEY_CARD_TYPE.title * scale,
+                      letterSpacing: JOURNEY_CARD_TYPE.titleTracking * scale,
+                      marginTop: JOURNEY_CARD_TYPE.titleTop * scale,
+                      marginLeft: JOURNEY_CARD_TYPE.titleIndent * scale,
+                    },
+                  ]}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.7}
+                >
+                  {next.title}
+                </Text>
+                <Text
+                  style={[
+                    styles.journeyBody,
+                    {
+                      maxWidth: wordsWidth,
+                      fontSize: JOURNEY_CARD_TYPE.body * scale,
+                      marginTop: JOURNEY_CARD_TYPE.bodyTop * scale,
+                      marginLeft: JOURNEY_CARD_TYPE.bodyIndent * scale,
+                    },
+                  ]}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.75}
+                >
+                  {t(`home.milestone.remaining.${unit}`, { count: remaining })}
+                </Text>
+              </View>
+            ) : (
               <Text
-                style={[
-                  styles.journeyTitle,
-                  {
-                    maxWidth: wordsWidth,
-                    fontSize: JOURNEY_CARD_TYPE.title * scale,
-                    letterSpacing: JOURNEY_CARD_TYPE.titleTracking * scale,
-                    marginTop: JOURNEY_CARD_TYPE.titleTop * scale,
-                    marginLeft: JOURNEY_CARD_TYPE.titleIndent * scale,
-                  },
-                ]}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.7}
-              >
-                {next.title}
-              </Text>
-              <Text
+                testID="achievement-all-done"
                 style={[
                   styles.journeyBody,
                   {
                     maxWidth: wordsWidth,
                     fontSize: JOURNEY_CARD_TYPE.body * scale,
-                    marginTop: JOURNEY_CARD_TYPE.bodyTop * scale,
+                    marginTop: JOURNEY_CARD_TYPE.titleTop * scale,
                     marginLeft: JOURNEY_CARD_TYPE.bodyIndent * scale,
                   },
                 ]}
-                numberOfLines={1}
+                numberOfLines={2}
                 adjustsFontSizeToFit
                 minimumFontScale={0.75}
               >
-                {t(`home.milestone.remaining.${unit}`, { count: remaining })}
+                {t('home.milestone.allDone')}
               </Text>
-            </View>
-          ) : (
+            )}
+          </View>
+          {steps && steps.length > 0 ? <JourneySteps steps={steps} scale={scale} /> : null}
+          {stepLine ? (
             <Text
-              testID="achievement-all-done"
+              testID="journey-step-line"
               style={[
-                styles.journeyBody,
+                styles.journeyStepLine,
                 {
-                  maxWidth: wordsWidth,
-                  fontSize: JOURNEY_CARD_TYPE.body * scale,
-                  marginTop: JOURNEY_CARD_TYPE.titleTop * scale,
-                  marginLeft: JOURNEY_CARD_TYPE.bodyIndent * scale,
+                  left: (JOURNEY_CARD.inset + JOURNEY_CARD.stepLine.indent) * scale,
+                  top: JOURNEY_CARD.stepLine.top * scale,
+                  maxWidth: JOURNEY_CARD.stepLine.width * scale,
+                  fontSize: JOURNEY_CARD_TYPE.stepLine * scale,
                 },
               ]}
-              numberOfLines={2}
+              numberOfLines={1}
               adjustsFontSizeToFit
               minimumFontScale={0.75}
             >
-              {t('home.milestone.allDone')}
+              {stepLine}
             </Text>
-          )}
-          {steps && steps.length > 0 ? <JourneySteps steps={steps} scale={scale} /> : null}
+          ) : null}
           <Animated.View
             testID="achievement-cta"
             pointerEvents="none"
             style={[
               styles.journeyButton,
-              { left: (JOURNEY_CARD.inset - JOURNEY_CARD.button.outdent) * scale, bottom: JOURNEY_CARD.buttonFoot * scale },
+              { right: JOURNEY_CARD.button.right * scale, bottom: JOURNEY_CARD.button.bottom * scale },
               arrow.style,
             ]}
           >
-            <GoldButton
+            <JourneyButton
               testID="journey-explore"
-              label={t('home.achievements.cta')}
-              icon="arrow-forward"
-              iconPosition="trailing"
-              balanced={false}
+              label={t('home.achievements.ctaJourney')}
               height={JOURNEY_CARD.button.height * scale}
               fontSize={JOURNEY_CARD.button.fontSize * scale}
               iconSize={JOURNEY_CARD.button.iconSize * scale}
               paddingHorizontal={JOURNEY_CARD.button.paddingHorizontal * scale}
               gap={JOURNEY_CARD.button.gap * scale}
-              glow={{ opacity: JOURNEY_CARD.button.glow.opacity, radius: JOURNEY_CARD.button.glow.radius * scale }}
-              onPress={onPress}
             />
           </Animated.View>
         </View>
@@ -569,6 +683,7 @@ const styles = StyleSheet.create({
     color: JOURNEY_CARD_TINTS.body,
   },
   steps: {
+    position: 'absolute',
     flexDirection: 'row',
     alignItems: 'center',
   },
@@ -589,6 +704,27 @@ const styles = StyleSheet.create({
     justifyContent: 'space-evenly',
   },
   journeyButton: {
+    position: 'absolute',
+  },
+  journeyButtonFace: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: JOURNEY_CARD_TINTS.buttonEdge,
+  },
+  journeyButtonLabel: {
+    fontFamily: Fonts.rounded,
+    fontWeight: '600',
+    color: JOURNEY_CARD_TINTS.buttonInk,
+  },
+  journeyStepLine: {
+    position: 'absolute',
+    fontFamily: Fonts.rounded,
+    fontWeight: '500',
+    color: JOURNEY_CARD_TINTS.stepLine,
+  },
+  compass: {
     position: 'absolute',
   },
   edgeGlow: {

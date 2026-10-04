@@ -658,6 +658,7 @@ export default {
       'day-7': { aim: 'Practica esperar y respetar turnos con un cuento sobre un viaje en autobús.' },
     },
     stepOf: 'Paso {{day}} de {{total}}',
+    focus: '{{domain}} y {{skill}}',
     minutes: '{{from}}–{{to}} min',
     start: 'Empezar la actividad',
     preview: 'Vista previa',
@@ -675,22 +676,10 @@ export default {
     },
   },
   tutorial: {
-    welcomeTitle: '¡Bienvenido a\nEarlyroots!',
-    welcomeDescription: 'Hagamos un recorrido rápido para ayudarte a ti y a tu hijo a aprovechar al máximo la hora del cuento.',
-    storiesTitle: 'Biblioteca de cuentos',
-    storiesDescription: 'Toca aquí para explorar nuestra colección de cuentos interactivos con hermosas ilustraciones.',
-    skip: 'Saltar',
-    gotIt: '¡Entendido!',
     buttons: {
       next: 'Siguiente',
       skip: 'Saltar',
-      skipAll: 'Saltar todo',
-      skipTour: 'Saltar tour',
-      gotIt: '¡Entendido!',
-      go: '¡Vamos!',
       letsGo: '¡Empecemos!',
-      done: 'Listo',
-      startReading: 'Empezar a leer',
     },
     mainMenu: {
       navLearn: {
@@ -700,26 +689,6 @@ export default {
       welcome: {
         title: '¡Bienvenido a\nEarly Roots!',
         description: 'Hagamos un recorrido rápido para ayudarte a ti y a tu hijo a aprovechar al máximo la hora del cuento.',
-      },
-      stories: {
-        title: 'Cuentos',
-        description: 'Explora nuestra colección de cuentos interactivos con ilustraciones hermosas e interacciones divertidas.',
-      },
-      practise: {
-        title: 'Practicar',
-        description: 'Aprende a tocar canciones en diferentes instrumentos. ¡Sigue el ritmo y desarrolla tus habilidades musicales!',
-      },
-      freeplay: {
-        title: 'Juego Libre',
-        description: 'Toca libremente cualquier instrumento - ¡sin reglas, solo diversión! Experimenta con sonidos y crea tu propia música.',
-      },
-      instruments: {
-        title: 'Instrumentos',
-        description: '¡Practica canciones o toca libremente en diferentes instrumentos. Desarrolla habilidades musicales mientras te diviertes!',
-      },
-      settings: {
-        title: 'Configuración',
-        description: 'Personaliza la app para que funcione mejor para tu familia.',
       },
       language: {
         title: 'Tu idioma',
@@ -731,7 +700,7 @@ export default {
       },
       achievement: {
         title: 'Tu viaje de aprendizaje',
-        description: 'La insignia que tu hijo está más cerca de ganar y cuánto falta. Toca para bajar volando a su isla.',
+        description: 'Los pasos de esta semana en tu isla y la insignia que tienes más cerca. Tócalo para volar hasta la isla.',
       },
       screenTime: {
         title: 'El anillo de tiempo de pantalla',
@@ -739,27 +708,17 @@ export default {
         remainingCaption: 'Tiempo restante',
         spentCaption: 'Se acabó el tiempo',
       },
-    },
-    screenTime: {
-      intro: {
-        title: 'Panel de Tiempo de Pantalla',
-        description: 'Rastrea y administra el tiempo de pantalla diario de tu hijo.',
+      streakOrb: {
+        title: 'Racha diaria',
+        description: 'Cada día con un cuento suma uno más. Tócalo para ver tu mejor racha.',
       },
-      ageBased: {
-        title: 'Límites por Edad',
-        description: 'Establece la edad de tu hijo para obtener límites recomendados automáticamente.',
+      continueOrb: {
+        title: 'Continuar',
+        description: 'Dice «Lee para marcar» hasta que empiezas un libro. Entonces dice «Continuar» y muestra la portada de ese libro. Tócalo para abrir su tarjeta y elegir una página.',
       },
-      heatmap: {
-        title: 'Actividad Semanal',
-        description: 'Ve patrones en el uso del tiempo de pantalla durante la semana.',
-      },
-      reminders: {
-        title: 'Configura Recordatorios',
-        description: 'Crea recordatorios personalizados para actividades y descansos.',
-      },
-      routine: {
-        title: 'Construye Rutinas Saludables',
-        description: 'Usa los datos para establecer rutinas diarias consistentes.',
+      badgesOrb: {
+        title: 'Logros',
+        description: 'Las insignias que has ganado hasta ahora. Tócalo para ver la siguiente.',
       },
     },
     storyReader: {
@@ -798,16 +757,38 @@ export default {
     },
     bookMode: {
       read: {
-        title: 'Modo Lectura',
-        description: 'Toca aquí para leer el cuento con tu hijo a tu propio ritmo.',
+        title: 'Leer juntos',
+        description: 'Lee el cuento en voz alta con tu peque y pasa las páginas a tu ritmo. Si ya está empezado, sigue donde lo dejaste.',
       },
       record: {
-        title: 'Modo Grabación',
-        description: 'Graba tu voz leyendo el cuento. ¡Perfecto cuando no estás!',
+        title: 'Grabar',
+        description: 'Graba tu propia voz leyendo el cuento para que tu peque lo escuche cuando no estés. Antes, un adulto responde una pregunta rápida.',
       },
       narrate: {
-        title: 'Modo Escucha',
-        description: 'Escucha una narración pregrabada. ¡Genial para dormir!',
+        title: 'Jugar juntos',
+        description: 'Una voz grabada lee el cuento y las páginas pasan solas. Ideal para la hora de dormir.',
+      },
+      pages: {
+        title: 'Empieza en una página',
+        description: 'Todas las páginas del libro, con tu sitio rodeado en dorado. Toca una para empezar a leer desde ahí.',
+      },
+    },
+    island: {
+      welcome: {
+        title: 'Tu isla de aprendizaje',
+        description: 'Un pasito cada día esta semana: un cuento, un juego o una canción para compartir. El camino se ilumina a medida que avanzas.',
+      },
+      checkpoint: {
+        title: 'El paso de hoy',
+        description: 'El punto que brilla es el de hoy. Tócalo para empezar. Los demás se abren día a día.',
+      },
+      plan: {
+        title: 'El plan de hoy',
+        description: 'Qué es el paso de hoy, cuánto dura y qué trabaja. Empezar la actividad lo empieza; Vista previa te deja verlo antes.',
+      },
+      home: {
+        title: 'Volver al inicio',
+        description: 'Vuela de vuelta a tu cielo cuando hayas terminado.',
       },
     },
     recordMode: {
@@ -910,34 +891,6 @@ export default {
         description: '¿Quieres probar un sonido diferente? Abre el menú () y toca \'Cambiar Instrumento\' para cambiar en cualquier momento.',
       },
     },
-    storyModes: {
-      welcome: {
-        title: '¡Tres Formas de Explorar!',
-        description: 'Cada niño aprende de manera diferente. Elige la experiencia de historia que despierte la curiosidad de tu hijo - cada una desarrolla habilidades esenciales a través de la magia del juego.',
-      },
-      interactive: {
-        title: 'Historias Interactivas',
-        description: '¡Toca, desliza y descubre! Las historias interactivas dan vida a las páginas con sorpresas táctiles, momentos de causa y efecto y actividades de aprendizaje práctico. Las investigaciones muestran que la participación activa durante la lectura fortalece la comprensión, la motricidad fina y la resolución temprana de problemas.',
-      },
-      musical: {
-        title: 'Historias Musicales',
-        description: '¡Lee, toca e interpreta! Las historias musicales entrelazan desafíos de instrumentos reales en cada aventura - tu hijo aprende ritmo, melodía y coordinación mientras sigue el relato. Los estudios confirman que la exposición temprana a la música mejora la memoria, el desarrollo del lenguaje y la expresión emocional.',
-      },
-      jigsaw: {
-        title: 'Historias de Rompecabezas',
-        description: '¡Arma el rompecabezas! Las historias de rompecabezas esconden hermosos puzzles en cada página, desarrollando la conciencia espacial, la paciencia y el pensamiento lógico. Completar rompecabezas da a los niños una verdadera sensación de logro y fortalece las habilidades visoperceptivas que apoyan la preparación para la lectura.',
-      },
-    },
-    gestures: {
-      speakerLongPress: {
-        title: 'Mantén Presionado',
-        description: 'Mantén presionado el altavoz para más opciones.',
-      },
-      storySwipe: {
-        title: 'Desliza para Navegar',
-        description: 'Desliza para pasar páginas rápidamente.',
-      },
-    },
     emotionCards: {
       welcome: {
         title: '¡Bienvenido a Tarjetas de Emociones!',
@@ -960,60 +913,6 @@ export default {
         description: '¡Cambia entre emoji, animales y oso para mantenerlo fresco!',
       },
     },
-    spelling: {
-      welcome: {
-        title: 'Actividades de Ortografía',
-        description: '¡Bienvenido a Ortografía! Actividades interactivas y divertidas para ayudar a tu hijo a aprender letras, palabras y ortografía.',
-      },
-      ages: {
-        title: 'Contenido por Edades',
-        description: 'Las actividades están agrupadas por rango de edad. Usa el carrusel de arriba para filtrar el nivel de tu hijo.',
-      },
-      together: {
-        title: 'Aprendan Juntos',
-        description: '¡Siéntate con tu hijo y pronuncien las letras juntos. Anímalo y celebra cada intento!',
-      },
-      benefit: {
-        title: 'Desarrollar la Lectoescritura',
-        description: 'La práctica temprana de la ortografía desarrolla la conciencia fonémica, el reconocimiento de letras y el amor por las palabras que dura toda la vida.',
-      },
-    },
-    numbers: {
-      welcome: {
-        title: 'Actividades de Números',
-        description: '¡Bienvenido a Números! Actividades atractivas para ayudar a tu hijo a explorar el conteo, las formas y las primeras matemáticas.',
-      },
-      ages: {
-        title: 'Contenido por Edades',
-        description: 'Las actividades están agrupadas por rango de edad. Usa el carrusel de arriba para encontrar el nivel adecuado para tu hijo.',
-      },
-      together: {
-        title: 'Cuenten Juntos',
-        description: '¡Cuenten en voz alta juntos, señalen objetos y hagan que los números sean parte del juego diario!',
-      },
-      benefit: {
-        title: 'Desarrollar la Numeración',
-        description: 'El juego temprano con números desarrolla el pensamiento lógico, el reconocimiento de patrones y una base sólida para las matemáticas.',
-      },
-    },
-    feelings: {
-      welcome: {
-        title: 'Actividades de Sentimientos',
-        description: '¡Bienvenido a Sentimientos! Actividades que ayudan a tu hijo a reconocer, nombrar y comprender las emociones.',
-      },
-      ages: {
-        title: 'Contenido por Edades',
-        description: 'Las actividades están agrupadas por rango de edad. Elige actividades adecuadas al desarrollo emocional de tu hijo.',
-      },
-      together: {
-        title: 'Exploren Juntos',
-        description: 'Habla abiertamente sobre las emociones. Pregunta "¿Cómo te hace sentir eso?" y comparte tus propios sentimientos también.',
-      },
-      benefit: {
-        title: 'Inteligencia Emocional',
-        description: 'Comprender las emociones desarrolla la empatía, la autorregulación y fuertes habilidades sociales — esenciales para el bienestar de toda la vida.',
-      },
-    },
     practise: {
       welcome: {
         title: 'Modo Práctica',
@@ -1032,24 +931,6 @@ export default {
         description: 'Aprender a tocar canciones desarrolla el ritmo, la coordinación, la memoria y la concentración — todo a través de la alegría de la música.',
       },
     },
-    freeplay: {
-      welcome: {
-        title: 'Modo Libre',
-        description: '¡Sin reglas, solo diversión! Explora cualquier instrumento y crea tu propia música. Perfecto para la creatividad y la autoexpresión.',
-      },
-      instrument: {
-        title: 'Elige tu Instrumento',
-        description: '¡Elige cualquier instrumento del carrusel. Pruébalos todos para descubrir nuevos sonidos y favoritos!',
-      },
-      play: {
-        title: 'Toca Libremente',
-        description: '¡Presiona los botones de colores para hacer música. No hay notas equivocadas — cada sonido es parte de la aventura!',
-      },
-      benefit: {
-        title: 'Expresión Creativa',
-        description: 'El juego musical libre nutre la creatividad, la confianza en sí mismo y el amor por la música que crece con tu hijo.',
-      },
-    },
     catalogue: {
       welcome: {
         title: 'Tu estantería',
@@ -1057,19 +938,19 @@ export default {
       },
       themes: {
         title: 'Elige un tema',
-        description: 'Cuentos, aprendizaje o música. Toca una casilla y la estantería se ordena sola.',
+        description: 'Cuentos, Aprendizaje o Música. Toca uno y la estantería se ordena para ese tema.',
       },
       filter: {
         title: 'Filtros más finos',
         description: 'Hora de dormir, animales, calma y más. Elige unos pocos y la estantería se reduce a esos.',
       },
       featured: {
-        title: 'La elección de hoy',
-        description: 'Un libro elegido cada día. Toca Leer ahora y se abre al instante.',
+        title: 'Tu próximo libro',
+        description: 'El libro que tienes a medias, o una propuesta nueva cada día. Toca Leer ahora para abrir su tarjeta.',
       },
       shelves: {
         title: 'Estantes para deslizar',
-        description: 'Desliza por cualquier estante, o toca Ver todo para el tema completo.',
+        description: 'Desliza por cualquier estantería o toca Ver todo para ver todo el tema. Toca un libro para abrir su tarjeta.',
       },
       navProgress: {
         title: 'Progreso',
@@ -3275,6 +3156,8 @@ export default {
   },
   storyDetail: {
     readTogether: 'Leer juntos',
+    pickPage: 'Empieza en una página',
+    readFromPage: 'Leer desde la página {{page}}',
     continueReading: 'Seguir leyendo',
     record: 'Grabar',
     playAlong: 'Jugar juntos',
@@ -3322,7 +3205,7 @@ export default {
       title: 'Un tiempo de pantalla\nmás calmado y seguro.',
       noAds: 'Sin anuncios',
       noTracking: 'Sin seguimiento del comportamiento',
-      noPressure: 'Sin rachas ni presión',
+      noPressure: 'Nunca hay presión',
       gentle: 'Sonidos y movimientos suaves',
       body: 'Actividades tranquilas, interacciones indulgentes y sin recompensas que capten la atención.',
     },
@@ -3396,6 +3279,9 @@ export default {
       days_one: '¡Racha de {{count}} día!',
       days_other: '¡Racha de {{count}} días!',
       start: 'Empieza una racha hoy',
+      unit: 'días de racha',
+      unit_one: 'día de racha',
+      unit_other: 'días de racha',
     },
     weeklyReading: {
       minutes: '{{count}} min esta semana',
@@ -3407,6 +3293,7 @@ export default {
     achievements: {
       title: '¡Mira lo que has logrado!',
       cta: 'Explorar',
+      ctaJourney: 'Explorar el viaje',
       emptyTitle: 'Tu primera insignia te espera',
       emptyBody: 'Leed un cuento juntos para ganarla',
       hint: 'Baja volando a tu isla',
@@ -3435,6 +3322,25 @@ export default {
     greeting: '¿Qué hacemos juntos?',
     grownUps: 'Adultos',
     continueTogether: 'Seguir juntos',
+    continueReading: 'Seguir leyendo',
+    continueMore: 'Ver más',
+    statOrb: {
+      continue: 'Continuar',
+      readToBookmark: 'Lee para marcar',
+      achieved: 'Logrados',
+    },
+    statPill: {
+      streak: 'Racha diaria',
+      days: 'Racha de {{count}} días',
+      days_one: 'Racha de {{count}} día',
+      days_other: 'Racha de {{count}} días',
+      best: 'Mejor {{count}}',
+      pages: '{{page}} de {{total}}',
+      achievements: 'Logros',
+      next: 'Siguiente: {{title}}',
+      toBadge: 'Abre la próxima insignia',
+      openBook: 'Abrir {{title}}',
+    },
     pagePosition: 'Página {{page}} de {{total}}',
     resumeStory: 'Seguir leyendo {{title}}',
     storybooks: 'Cuentos',

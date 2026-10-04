@@ -14,13 +14,13 @@ jest.mock('@/components/home/home-scene', () => ({
 
 jest.mock('@/components/home/use-child-home-data', () => ({
   useChildHomeData: () => ({
-    data: { firstName: 'Freya', storiesCompleted: 0, readingMinutes: 0, weeklyReadingMinutes: 0, readingStreakDays: 0 },
+    data: { firstName: 'Freya', storiesCompleted: 0, readingMinutes: 0, weeklyReadingMinutes: 0, readingStreakDays: 0, bestStreakDays: 0 },
     welcome: { state: 'normal', titleKey: 'title', subtitleKey: 'subtitle', params: { name: 'Freya', count: 0, achievement: '' } },
     celebrateAchievement: false,
   }),
 }));
 
-const mockJourneySteps = [{ id: 'day-1', day: 1, kind: 'story', state: 'open' }];
+const mockJourneySteps = [{ id: 'day-1', day: 1, of: 7, kind: 'story', state: 'open', domainKey: 'plan.domains.language', skill: 'listening' }];
 const mockUseJourneySteps = jest.fn((_isActive: boolean) => mockJourneySteps);
 jest.mock('@/components/home/use-journey-steps', () => ({
   useJourneySteps: (isActive: boolean) => mockUseJourneySteps(isActive),
@@ -109,6 +109,30 @@ describe('HomeSceneContainer', () => {
     );
 
     expect(mockSceneProps[mockSceneProps.length - 1].isActive).toBe(false);
+  });
+
+  it('hands the scene the way to open a story card', () => {
+    const onOpenStoryCard = jest.fn();
+    render(
+      <IslandVoyageProvider voyage={voyage()}>
+        <HomeSceneContainer onNavigate={jest.fn()} onOpenStoryCard={onOpenStoryCard} />
+      </IslandVoyageProvider>
+    );
+
+    expect(mockSceneProps[mockSceneProps.length - 1].onOpenStoryCard).toBe(onOpenStoryCard);
+  });
+
+  it('opens Progress on the badge being tracked next when the home asks for it', () => {
+    const onNavigate = jest.fn();
+    render(
+      <IslandVoyageProvider voyage={voyage()}>
+        <HomeSceneContainer onNavigate={onNavigate} />
+      </IslandVoyageProvider>
+    );
+
+    act(() => { mockSceneProps[mockSceneProps.length - 1].onOpenBadge?.('moon-explorer'); });
+
+    expect(onNavigate).toHaveBeenCalledWith('progress', { badgeId: 'moon-explorer' });
   });
 
   it('still opens the badges from the bar at the foot of the screen', () => {

@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useState, type ComponentProps } from 'react';
+import React, { memo, useCallback, useState, type ComponentProps, type Ref } from 'react';
 import { Pressable, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
@@ -129,6 +129,7 @@ export interface PlanPanelProps {
   onStart: (view: PlanStepView) => void;
   onPreview?: (view: PlanStepView, from: PlanCardRect) => void;
   onHeight?: (height: number) => void;
+  cardRef?: Ref<View>;
 }
 
 const CardStars = memo(function CardStars({ stars }: { stars: readonly CardStar[] }) {
@@ -168,6 +169,7 @@ export const PlanPanel = memo(function PlanPanel({
   onStart,
   onPreview,
   onHeight,
+  cardRef,
 }: PlanPanelProps) {
   const { t } = useTranslation();
   const { isTablet, scaledFontSize } = useAccessibility();
@@ -357,7 +359,13 @@ export const PlanPanel = memo(function PlanPanel({
       pointerEvents="box-none"
       style={[styles.float, { width: cardWidth, left: cardLeft, bottom: bottomInset + PLAN_CARD.bottomGap }]}
     >
-      <View testID="plan-panel-card" onLayout={handleCardLayout} style={[styles.depth, { borderRadius: PLAN_CARD.radius }]}>
+      <View
+        ref={cardRef}
+        collapsable={false}
+        testID="plan-panel-card"
+        onLayout={handleCardLayout}
+        style={[styles.depth, { borderRadius: PLAN_CARD.radius }]}
+      >
         <LinearGradient
           testID="plan-card-edge"
           colors={[...PLAN_CARD_TINTS.edge]}

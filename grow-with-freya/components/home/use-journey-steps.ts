@@ -32,7 +32,15 @@ export function useJourneySteps(isActive: boolean): readonly ChildHomeJourneySte
     const each = states.split(STATE_SEPARATOR) as PlanStepState[];
 
     return journeyStepsShown(
-      ISLAND_WEEK.steps.map((step, index) => ({ id: step.id, day: step.day, kind: step.kind, state: each[index] }))
+      ISLAND_WEEK.steps.map((step, index) => ({
+        id: step.id,
+        day: step.day,
+        of: ISLAND_WEEK.steps.length,
+        kind: step.kind,
+        state: each[index],
+        domainKey: step.domainKey,
+        skill: step.skills[0],
+      }))
     );
   }, [states]);
 }

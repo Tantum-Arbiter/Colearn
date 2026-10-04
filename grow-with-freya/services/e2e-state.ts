@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { GUIDE_IDS, GUIDE_STORAGE_KEY } from '@/constants/owl-guide';
+import { GUIDE_IDS, GUIDE_STORAGE_KEY, currentGuideRevisions } from '@/constants/owl-guide';
 import ScreenTimeService from '@/services/screen-time-service';
 import { SecureStorage } from '@/services/secure-storage';
 import { SUPPORTED_LANGUAGES, setStoredLanguage, type SupportedLanguage } from '@/services/i18n';
@@ -139,8 +139,10 @@ export async function applyE2eState(state: E2eState, allowed: boolean): Promise<
   }
 
   if (state.tutorials !== undefined) {
-    const completedGuides = state.tutorials === 'done' ? [...GUIDE_IDS] : [];
-    await AsyncStorage.setItem(GUIDE_STORAGE_KEY, JSON.stringify({ completedGuides, lastResetTimestamp: Date.now() }));
+    const done = state.tutorials === 'done';
+    const completedGuides = done ? [...GUIDE_IDS] : [];
+    const seenRevisions = done ? currentGuideRevisions() : {};
+    await AsyncStorage.setItem(GUIDE_STORAGE_KEY, JSON.stringify({ completedGuides, lastResetTimestamp: Date.now(), seenRevisions }));
   }
 
   if (state.screenTime === 'reset') {

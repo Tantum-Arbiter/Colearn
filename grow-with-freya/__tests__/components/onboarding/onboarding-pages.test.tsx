@@ -65,6 +65,34 @@ describe('TogetherBackdrop', () => {
 });
 
 describe('SafetyPage', () => {
+  // the home shows a day streak now, so the promise is about pressure alone (operator, 2026-10-04)
+  it.each([
+    ['ar', 'بلا سلاسل ولا ضغط'],
+    ['da', 'Ingen streaks eller pres'],
+    ['de', 'Keine Serien, kein Druck'],
+    ['en', 'No streaks or pressure'],
+    ['es', 'Sin rachas ni presión'],
+    ['fr', 'Sans séries ni pression'],
+    ['it', 'Nessuna serie né pressione'],
+    ['ja', '連続記録もプレッシャーもなし'],
+    ['la', 'Nullae series nec pressio'],
+    ['nl', 'Geen reeksen of druk'],
+    ['pl', 'Bez serii i presji'],
+    ['pt', 'Sem sequências nem pressão'],
+    ['tr', 'Seri ya da baskı yok'],
+    ['zh', '没有连续打卡或压力'],
+  ])('no longer promises no streaks in %s', (code, before) => {
+    const locale = jest.requireActual(`@/locales/${code}`).default as { onboardingV2: { safe: { noPressure: string } } };
+
+    expect(locale.onboardingV2.safe.noPressure.replace(/^\u200f/, '')).not.toBe(before);
+  });
+
+  it('promises no pressure, ever, in English', () => {
+    const en = jest.requireActual('@/locales/en').default as { onboardingV2: { safe: { noPressure: string } } };
+
+    expect(en.onboardingV2.safe.noPressure).toBe('No pressure, ever');
+  });
+
   it.each(['noAds', 'noTracking', 'noPressure', 'gentle'])('renders the %s promise', (key) => {
     const tree = render(<SafetyPage />);
 
