@@ -530,6 +530,23 @@ describe('StoryCatalogueScreen', () => {
     await waitFor(() => expect(progressOf(tree).props.focusBadge).toEqual({ id: 'calm-champion', key: 4 }));
   });
 
+  // A badge's suggestion, followed from its window on the home (operator, 2026-10-05), lands on
+  // the shelf the way it does from Progress
+  it.each([
+    ['a theme of its own', 'music', 'story-theme-tile-music', null],
+    ['a filter on the stories', 'bedtime', 'story-theme-tile-stories', 'story-filter-pill-bedtime'],
+  ] as const)('takes up a badge suggestion sent with a request, as %s', async (_, tag, tile, pill) => {
+    const selected = (tree: ReturnType<typeof render>, id: string) =>
+      byTestId(tree, id).find((n: any) => n.props.accessibilityRole === 'button' || n.props.accessibilityState)?.props.accessibilityState?.selected;
+    const tree = render(<StoryCatalogueScreen isActive sectionRequest={{ section: 'home', key: 1 }} />);
+    await waitFor(() => expect(byTestId(tree, 'story-theme-tile-music').length).toBeGreaterThan(0));
+
+    tree.rerender(<StoryCatalogueScreen isActive sectionRequest={{ section: 'home', key: 2, recommend: { tag } }} />);
+
+    await waitFor(() => expect(selected(tree, tile)).toBe(true));
+    if (pill) expect(selected(tree, pill)).toBe(true);
+  });
+
   it('hands Progress no badge when it was only sent to the page', async () => {
     const tree = render(<StoryCatalogueScreen isActive sectionRequest={{ section: 'progress', key: 3 }} />);
 

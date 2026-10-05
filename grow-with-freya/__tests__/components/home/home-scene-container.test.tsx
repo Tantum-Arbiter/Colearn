@@ -12,8 +12,12 @@ jest.mock('@/components/home/home-scene', () => ({
   },
 }));
 
+const mockBadges = [
+  { id: 'moon-explorer', titleKey: 't', descriptionKey: 'd', artwork: 1, category: 'stories', currentProgress: 2, targetProgress: 5, status: 'in_progress', recommendation: { labelKey: 'r', tag: 'calming' } },
+];
 jest.mock('@/components/home/use-child-home-data', () => ({
   useChildHomeData: () => ({
+    badges: mockBadges,
     data: { firstName: 'Freya', storiesCompleted: 0, readingMinutes: 0, weeklyReadingMinutes: 0, readingStreakDays: 0, bestStreakDays: 0 },
     welcome: { state: 'normal', titleKey: 'title', subtitleKey: 'subtitle', params: { name: 'Freya', count: 0, achievement: '' } },
     celebrateAchievement: false,
@@ -29,7 +33,18 @@ jest.mock('@/components/home/use-journey-steps', () => ({
 jest.mock('@/components/home/screen-time-glance', () => ({ ScreenTimeGlance: () => null }));
 jest.mock('@/components/ui/subscription-overlay', () => ({ SubscriptionOverlay: () => null }));
 jest.mock('@/components/ui/trial-end-upgrade-overlay', () => ({ TrialEndUpgradeOverlay: () => null }));
-jest.mock('@/contexts/story-transition-context', () => ({ useStoryTransition: () => ({ requestStoryOpen: jest.fn() }) }));
+let mockTransitioning = false;
+jest.mock('@/contexts/story-transition-context', () => ({
+  useStoryTransition: () => ({ requestStoryOpen: jest.fn(), isTransitioning: mockTransitioning }),
+}));
+
+const mockSheetProps: { badge: { id: string } | null; onClose: () => void; onRecommend: (badge: unknown) => void }[] = [];
+jest.mock('@/components/progress/badge-detail-sheet', () => ({
+  BadgeDetailSheet: (props: (typeof mockSheetProps)[number]) => {
+    mockSheetProps.push(props);
+    return null;
+  },
+}));
 jest.mock('@/hooks/use-screen-time-allowance', () => ({ useScreenTimeAllowance: () => null }));
 jest.mock('@/hooks/use-trial-end-prompt', () => ({ useTrialEndPrompt: () => ({ visible: false, dismiss: jest.fn(), status: null }) }));
 jest.mock('@/hooks/use-time-of-day', () => ({ useTimeOfDay: () => 'day' }));
@@ -55,6 +70,8 @@ function voyage(): IslandVoyage {
 describe('HomeSceneContainer', () => {
   beforeEach(() => {
     mockSceneProps.length = 0;
+    mockSheetProps.length = 0;
+    mockTransitioning = false;
   });
 
   it.each([true, false])('hands the scene the journey`s steps, read while the home screen is showing (%p)', (isActive) => {
@@ -122,17 +139,66 @@ describe('HomeSceneContainer', () => {
     expect(mockSceneProps[mockSceneProps.length - 1].onOpenStoryCard).toBe(onOpenStoryCard);
   });
 
-  it('opens Progress on the badge being tracked next when the home asks for it', () => {
-    const onNavigate = jest.fn();
+  // operator, 2026-10-05: "the achievement should appear in its window, not take us down the page
+  // for achievements"
+  describe('the badge being tracked', () => {
+    function renderOn(onNavigate = jest.fn()) {
+      render(
+        <IslandVoyageProvider voyage={voyage()}>
+          <HomeSceneContainer onNavigate={onNavigate} />
+        </IslandVoyageProvider>
+      );
+      return onNavigate;
+    }
+    const sheet = () => mockSheetProps[mockSheetProps.length - 1];
+
+    it('opens in its own window on the home, and goes nowhere', () => {
+      const onNavigate = renderOn();
+
+      act(() => { mockSceneProps[mockSceneProps.length - 1].onOpenBadge?.('moon-explorer'); });
+
+      expect(sheet().badge?.id).toBe('moon-explorer');
+      expect(onNavigate).not.toHaveBeenCalled();
+    });
+
+    it('closes back to the home', () => {
+      renderOn();
+      act(() => { mockSceneProps[mockSceneProps.length - 1].onOpenBadge?.('moon-explorer'); });
+
+      act(() => { sheet().onClose(); });
+
+      expect(sheet().badge).toBeNull();
+    });
+
+    it('takes its suggestion to the library, with the window closed behind it', () => {
+      const onNavigate = renderOn();
+      act(() => { mockSceneProps[mockSceneProps.length - 1].onOpenBadge?.('moon-explorer'); });
+
+      act(() => { sheet().onRecommend(sheet().badge); });
+
+      expect(sheet().badge).toBeNull();
+      expect(onNavigate).toHaveBeenCalledWith('stories', { recommend: { tag: 'calming' } });
+    });
+
+    it('falls back to Progress for a badge the home does not know', () => {
+      const onNavigate = renderOn();
+
+      act(() => { mockSceneProps[mockSceneProps.length - 1].onOpenBadge?.('not-a-badge'); });
+
+      expect(onNavigate).toHaveBeenCalledWith('progress', { badgeId: 'not-a-badge' });
+      expect(sheet().badge).toBeNull();
+    });
+  });
+
+  it.each([true, false])('tells the scene whether a story card is open over it (%p)', (open) => {
+    mockTransitioning = open;
     render(
       <IslandVoyageProvider voyage={voyage()}>
-        <HomeSceneContainer onNavigate={onNavigate} />
+        <HomeSceneContainer onNavigate={jest.fn()} />
       </IslandVoyageProvider>
     );
 
-    act(() => { mockSceneProps[mockSceneProps.length - 1].onOpenBadge?.('moon-explorer'); });
-
-    expect(onNavigate).toHaveBeenCalledWith('progress', { badgeId: 'moon-explorer' });
+    expect(mockSceneProps[mockSceneProps.length - 1].storyOpen).toBe(open);
   });
 
   it('still opens the badges from the bar at the foot of the screen', () => {

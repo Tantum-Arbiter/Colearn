@@ -119,6 +119,34 @@ export const StatOrbCover = memo(function StatOrbCover({
   );
 });
 
+export const StatOrbRecord = memo(function StatOrbRecord({ diameter, label }: { diameter: number; label: string }) {
+  const { top, height: share, padding, maxWidth, crown, text, gap } = STAT_ORB.record;
+  const height = diameter * share;
+  const crownWidth = diameter * crown;
+
+  return (
+    <View testID="stat-orb-streak-record" pointerEvents="none" style={[styles.recordSlot, { top: diameter * top, height }]}>
+      <LinearGradient
+        colors={STAT_ORB_TINTS.record}
+        style={[styles.record, { height, borderRadius: height / 2, paddingHorizontal: diameter * padding, maxWidth: diameter * maxWidth }]}
+      >
+        <Svg width={crownWidth} height={crownWidth * 0.8} viewBox="0 0 24 19">
+          <Path d="M2,14.5 L3.4,4.6 L8.4,9.4 L12,2.2 L15.6,9.4 L20.6,4.6 L22,14.5 Z" fill={STAT_ORB_TINTS.recordInk} />
+          <Rect x={2} y={15.6} width={20} height={2.8} rx={1.4} fill={STAT_ORB_TINTS.recordInk} />
+        </Svg>
+        <Text
+          style={[styles.recordText, { fontSize: diameter * text, marginLeft: diameter * gap }]}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          maxFontSizeMultiplier={1}
+        >
+          {label}
+        </Text>
+      </LinearGradient>
+    </View>
+  );
+});
+
 export interface StatOrbFaceProps {
   kind: StatOrbKind;
   diameter: number;
@@ -321,6 +349,7 @@ const StatOrb = memo(function StatOrb({
 
 export interface StatOrbsProps {
   streakDays: number;
+  bestStreakDays: number;
   story?: ChildHomeStory;
   tally?: { unlocked: number; remaining: number };
   contentWidth: number;
@@ -338,6 +367,7 @@ export interface StatOrbsProps {
 
 export const StatOrbs = memo(function StatOrbs({
   streakDays,
+  bestStreakDays,
   story,
   tally,
   contentWidth,
@@ -356,6 +386,8 @@ export const StatOrbs = memo(function StatOrbs({
   const diameter = statOrbDiameter(contentWidth);
   const count = tally ? 3 : 2;
   const burning = streakDays > 0;
+  const best = Math.max(bestStreakDays, streakDays);
+  const streakLabel = burning ? t('home.streak.days', { count: streakDays }) : t('home.streak.start');
   const hint = t('home.continueMore');
 
   return (
@@ -384,14 +416,16 @@ export const StatOrbs = memo(function StatOrbs({
         number={burning ? String(streakDays) : undefined}
         unit={burning ? t('home.streak.unit', { count: streakDays }) : undefined}
         invitation={burning ? undefined : t('home.streak.start')}
-        accessibilityLabel={burning ? t('home.streak.days', { count: streakDays }) : t('home.streak.start')}
+        accessibilityLabel={best > 0 ? `${streakLabel}, ${t('home.statOrb.personalBest', { count: best })}` : streakLabel}
         accessibilityHint={hint}
         covered={covered}
         beneath={coverKind === 'streak'}
         carried={carried}
         onPress={onOpen ? () => onOpen('streak') : undefined}
         orbRef={streakRef}
-      />
+      >
+        {best > 0 ? <StatOrbRecord diameter={diameter} label={String(best)} /> : null}
+      </StatOrb>
       <StatOrb
         kind="continue"
         diameter={diameter}
@@ -437,6 +471,27 @@ export const StatOrbs = memo(function StatOrbs({
 });
 
 const styles = StyleSheet.create({
+  recordSlot: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    shadowColor: STAT_ORB_TINTS.recordGlow,
+    shadowOpacity: 0.55,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  record: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: STAT_ORB_TINTS.recordEdge,
+  },
+  recordText: {
+    fontFamily: Fonts.rounded,
+    fontWeight: '900',
+    color: STAT_ORB_TINTS.recordInk,
+  },
   coverFrame: {
     position: 'absolute',
     overflow: 'hidden',

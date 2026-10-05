@@ -3328,6 +3328,9 @@ export default {
       continue: 'Devam',
       readToBookmark: 'Okuyup işaretle',
       achieved: 'Kazanıldı',
+      personalBest: 'Kişisel rekor: {{count}} gün',
+      personalBest_one: 'Kişisel rekor: {{count}} gün',
+      personalBest_other: 'Kişisel rekor: {{count}} gün',
     },
     statPill: {
       streak: 'Günlük seri',

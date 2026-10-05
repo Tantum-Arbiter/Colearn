@@ -3328,6 +3328,9 @@ export default {
       continue: '‏متابعة',
       readToBookmark: '‏اقرأ لتضع علامة',
       achieved: '‏مُحقَّقة',
+      personalBest: '‏أفضل رقم شخصي: {{count}} أيام',
+      personalBest_one: '‏أفضل رقم شخصي: يوم {{count}}',
+      personalBest_other: '‏أفضل رقم شخصي: {{count}} أيام',
     },
     statPill: {
       streak: '‏السلسلة اليومية',

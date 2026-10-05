@@ -17,6 +17,7 @@ export const STAT_ORB = {
   caption: { top: 0.69 },
   bookmark: { width: 0.36, aspect: 1.25, top: 0.15, inviting: { width: 0.28, top: 0.12 }, corner: { width: 0.32, top: 0.04, right: 0.09 } },
   cover: { size: 0.92, centre: 0.5 },
+  record: { top: -0.1, height: 0.23, padding: 0.1, maxWidth: 1.05, crown: 0.14, text: 0.135, gap: 0.035 },
   restingOpacity: 0.55,
   float: { rise: 0.028, scale: 1.03, ms: 3600, staggerMs: 450 },
 } as const;
@@ -30,6 +31,10 @@ export const STAT_ORB_TINTS = {
   bookmarkShadow: 'rgba(20, 10, 60, 0.35)',
   shade: 'rgba(3, 10, 40, 0.95)',
   coverShade: ['rgba(4, 14, 60, 0)', 'rgba(4, 14, 60, 0.7)'],
+  record: ['#FFF3BC', '#FFD65E', '#F3A939'],
+  recordEdge: '#B97A1A',
+  recordInk: '#1B205E',
+  recordGlow: '#FFC94A',
 } as const;
 
 export function statOrbDiameter(contentWidth: number): number {

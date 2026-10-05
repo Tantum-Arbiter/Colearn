@@ -128,6 +128,7 @@ export interface CatalogueSectionRequest {
   section: ChildNavItemId;
   key: number;
   badgeId?: string;
+  recommend?: { tag: StoryFilterTag | null };
 }
 
 function badgeFocusOf(request: CatalogueSectionRequest | undefined): BadgeFocus | undefined {
@@ -249,6 +250,12 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
     setSectionInstant(true);
     setNavSection(sectionRequest.section);
     setBadgeFocus(badgeFocusOf(sectionRequest));
+    if (sectionRequest.recommend) {
+      const target = recommendationTarget(sectionRequest.recommend.tag);
+      setStoryMode(null);
+      if (target.theme) setTheme(target.theme);
+      setSelectedTags(new Set(target.tags));
+    }
   }
   const settled = useSettledAfterTransition(isActive);
   const [searchQuery, setSearchQuery] = useState('');

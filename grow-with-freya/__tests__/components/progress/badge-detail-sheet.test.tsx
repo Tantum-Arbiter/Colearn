@@ -5,8 +5,9 @@
  */
 
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
-import { BadgeDetailSheet } from '@/components/progress/badge-detail-sheet';
+import { act, render, fireEvent } from '@testing-library/react-native';
+import { BadgeDetailSheet, BADGE_SHEET_MOTION } from '@/components/progress/badge-detail-sheet';
+import { withTiming } from 'react-native-reanimated';
 import { Badge, badgeStatus } from '@/components/progress/progress-model';
 import {
   JourneyBarCoverProvider,
@@ -121,5 +122,108 @@ describe('BadgeDetailSheet', () => {
     fireEvent.press(byTestId(tree, 'badge-detail-close')[0]);
 
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  // operator, 2026-10-05: "it should slide into view and out of view"
+  describe('sliding', () => {
+    const timing = withTiming as unknown as jest.Mock;
+    const realTiming = timing.getMockImplementation();
+    const slides = (to: (value: number) => boolean) =>
+      timing.mock.calls.filter(([value, config]) => to(value) && config?.duration !== undefined);
+    let finishes: ((finished: boolean) => void)[] = [];
+
+    function holdTheSlide() {
+      finishes = [];
+      timing.mockImplementation((value: number, _config: unknown, callback?: (finished: boolean) => void) => {
+        if (callback) finishes.push(callback);
+        return value;
+      });
+    }
+
+    beforeEach(() => {
+      Object.defineProperty(document.documentElement, 'clientWidth', { value: 402, configurable: true });
+      Object.defineProperty(document.documentElement, 'clientHeight', { value: 874, configurable: true });
+      window.dispatchEvent(new Event('resize'));
+    });
+
+    afterEach(() => {
+      timing.mockImplementation(realTiming);
+    });
+
+    it('slides up from the foot of the screen as a badge is opened', () => {
+      const tree = render(<BadgeDetailSheet badge={null} onClose={jest.fn()} onRecommend={jest.fn()} />);
+      timing.mockClear();
+
+      tree.rerender(<BadgeDetailSheet badge={badge(1, 3)} onClose={jest.fn()} onRecommend={jest.fn()} />);
+
+      expect(slides((value) => value === 0)).toEqual(
+        expect.arrayContaining([[0, expect.objectContaining({ duration: BADGE_SHEET_MOTION.inMs })]])
+      );
+      expect(byTestId(tree, 'badge-detail-sheet').length).toBeGreaterThan(0);
+    });
+
+    it('slides back down, still showing its badge, and only then goes', () => {
+      holdTheSlide();
+      const tree = render(<BadgeDetailSheet badge={badge(1, 3)} onClose={jest.fn()} onRecommend={jest.fn()} />);
+      finishes = [];
+      timing.mockClear();
+
+      tree.rerender(<BadgeDetailSheet badge={null} onClose={jest.fn()} onRecommend={jest.fn()} />);
+      const leaving = timing.mock.calls.find(([, config, callback]) => config?.duration === BADGE_SHEET_MOTION.outMs && typeof callback === 'function');
+      const stillThere = byTestId(tree, 'badge-detail-sheet').length;
+      act(() => finishes.forEach((finish) => finish(true)));
+
+      expect(leaving?.[0]).toBe(874);
+      expect(stillThere).toBeGreaterThan(0);
+      expect(byTestId(tree, 'badge-detail-sheet')).toHaveLength(0);
+      expect(byTestId(tree, 'badge-detail-overlay')).toHaveLength(0);
+    });
+
+    it('lets touches through while it slides away', () => {
+      holdTheSlide();
+      const tree = render(<BadgeDetailSheet badge={badge(1, 3)} onClose={jest.fn()} onRecommend={jest.fn()} />);
+
+      tree.rerender(<BadgeDetailSheet badge={null} onClose={jest.fn()} onRecommend={jest.fn()} />);
+
+      expect(byTestId(tree, 'badge-detail-overlay')[0].props.pointerEvents).toBe('none');
+    });
+
+    it('gives the journey bar back only once the sheet has gone', () => {
+      holdTheSlide();
+      const tree = render(
+        <JourneyBarCoverProvider>
+          <BarState />
+          <BadgeDetailSheet badge={badge(1, 3)} onClose={jest.fn()} onRecommend={jest.fn()} />
+        </JourneyBarCoverProvider>
+      );
+      finishes = [];
+
+      tree.rerender(
+        <JourneyBarCoverProvider>
+          <BarState />
+          <BadgeDetailSheet badge={null} onClose={jest.fn()} onRecommend={jest.fn()} />
+        </JourneyBarCoverProvider>
+      );
+      const whileLeaving = byTestId(tree, 'bar-covered')[0].props.children;
+      act(() => finishes.forEach((finish) => finish(true)));
+
+      expect(whileLeaving).toBe('true');
+      expect(byTestId(tree, 'bar-covered')[0].props.children).toBe('false');
+    });
+
+    it('comes straight back up if a badge is opened again while it slides away', () => {
+      holdTheSlide();
+      const tree = render(<BadgeDetailSheet badge={badge(1, 3)} onClose={jest.fn()} onRecommend={jest.fn()} />);
+      tree.rerender(<BadgeDetailSheet badge={null} onClose={jest.fn()} onRecommend={jest.fn()} />);
+      const stale = [...finishes];
+      timing.mockClear();
+
+      tree.rerender(<BadgeDetailSheet badge={badge(2, 3)} onClose={jest.fn()} onRecommend={jest.fn()} />);
+      act(() => stale.forEach((finish) => finish(false)));
+
+      expect(slides((value) => value === 0).length).toBeGreaterThan(0);
+      expect(byTestId(tree, 'badge-detail-sheet').length).toBeGreaterThan(0);
+      expect(byTestId(tree, 'badge-detail-overlay')[0].props.pointerEvents).not.toBe('none');
+    });
   });
 });

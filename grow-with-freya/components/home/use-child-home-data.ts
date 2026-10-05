@@ -91,6 +91,7 @@ export function weeklyStoryMinutes(
 
 export interface ChildHome {
   data: ChildHomeData;
+  badges: Badge[];
   welcome: WelcomeCopy;
   celebrateAchievement: boolean;
 }
@@ -225,6 +226,7 @@ export function useChildHomeData(): ChildHome {
 
     return {
       data,
+      badges,
       welcome: welcomeCopy(resolveReturnVisit(data, context), data),
       celebrateAchievement: hasNewAchievement && data.newestAchievement !== undefined,
     };

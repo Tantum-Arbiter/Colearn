@@ -135,6 +135,21 @@ describe('the words inside the glass', () => {
   });
 });
 
+describe('the personal best strip', () => {
+  const { top, height } = STAT_ORB.record;
+
+  it('should sit across the top of the orb, straddling the rim, clear of the number', () => {
+    expect(top).toBeLessThan(0);
+    expect(top + height).toBeGreaterThan(0.05);
+    expect(top + height).toBeLessThan(STAT_ORB.words.top);
+  });
+
+  it('should be a slim strip, not a second orb', () => {
+    expect(height).toBeGreaterThanOrEqual(0.18);
+    expect(height).toBeLessThanOrEqual(0.28);
+  });
+});
+
 describe('the bookmark clipped to a cover', () => {
   const { width, top, right } = STAT_ORB.bookmark.corner;
   const height = width * STAT_ORB.bookmark.aspect;

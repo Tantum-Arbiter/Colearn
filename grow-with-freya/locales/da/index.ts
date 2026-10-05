@@ -3328,6 +3328,9 @@ export default {
       continue: 'Fortsæt',
       readToBookmark: 'Læs for bogmærke',
       achieved: 'Opnået',
+      personalBest: 'Personlig rekord: {{count}} dage',
+      personalBest_one: 'Personlig rekord: {{count}} dag',
+      personalBest_other: 'Personlig rekord: {{count}} dage',
     },
     statPill: {
       streak: 'Daglig stime',

@@ -3328,6 +3328,9 @@ export default {
       continue: 'つづき',
       readToBookmark: 'よんで しおりを',
       achieved: 'たっせい',
+      personalBest: 'じこベスト：{{count}}にち',
+      personalBest_one: 'じこベスト：{{count}}にち',
+      personalBest_other: 'じこベスト：{{count}}にち',
     },
     statPill: {
       streak: 'まいにち れんぞく',

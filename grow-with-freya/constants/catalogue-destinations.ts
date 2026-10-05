@@ -1,7 +1,9 @@
 import type { ChildNavItemId } from '@/components/child-ui/child-bottom-navigation';
+import type { StoryFilterTag } from '@/types/story';
 
 export interface DestinationFocus {
-  badgeId: string;
+  badgeId?: string;
+  recommend?: { tag: StoryFilterTag | null };
 }
 
 const SECTION_BY_DESTINATION: Record<string, ChildNavItemId> = {

@@ -62,6 +62,7 @@ function renderOrbs(props: Partial<React.ComponentProps<typeof StatOrbs>> = {}) 
   const view = render(
     <StatOrbs
       streakDays={2}
+      bestStreakDays={9}
       story={STORY}
       tally={TALLY}
       contentWidth={CONTENT}
@@ -80,6 +81,54 @@ describe('StatOrbs', () => {
     jest.clearAllMocks();
   });
 
+  // operator, 2026-10-05: first "only show this each time a personal best is achieved", then
+  // "remove PB and change it to the personal best number - then it can stay forever"
+  describe('the personal best strip on the streak', () => {
+    const strip = (view: RenderResult) =>
+      view.UNSAFE_root.findAll((node: any) => node.props.testID === 'stat-orb-streak-record' && node.props.style !== undefined);
+
+    it.each([
+      ['while the run is setting it', 5, 5],
+      ['while the run is short of it', 3, 5],
+      ['after the run has lapsed', 0, 5],
+      ['on the very first day', 1, 1],
+    ])('should show the best run as a bare number %s', (_, streakDays, bestStreakDays) => {
+      const view = renderOrbs({ streakDays, bestStreakDays });
+
+      expect(strip(view)).toHaveLength(1);
+      expect(wordsIn(view, 'stat-orb-streak-record')).toEqual([String(bestStreakDays)]);
+    });
+
+    it('should count today\'s run on a day it passes the best yet to be stored', () => {
+      const view = renderOrbs({ streakDays: 6, bestStreakDays: 5 });
+
+      expect(wordsIn(view, 'stat-orb-streak-record')).toEqual(['6']);
+    });
+
+    it('should leave the orb bare for a family with no run yet', () => {
+      expect(strip(renderOrbs({ streakDays: 0, bestStreakDays: 0 }))).toHaveLength(0);
+    });
+
+    it('should stand inside the streak orb, so it floats and folds away with it', () => {
+      const view = renderOrbs({ streakDays: 5, bestStreakDays: 5 });
+      const orb = host(view, 'stat-orb-streak');
+
+      expect(orb.findAll((node: any) => node.props.testID === 'stat-orb-streak-record').length).toBeGreaterThan(0);
+      expect(StyleSheet.flatten(strip(view)[0].props.style)).toEqual(
+        expect.objectContaining({ position: 'absolute', top: DIAMETER * STAT_ORB.record.top })
+      );
+      expect(strip(view)[0].props.pointerEvents).toBe('none');
+    });
+
+    it('should tell a screen reader the best run alongside the run going now', () => {
+      const shown = orbOf(renderOrbs({ streakDays: 3, bestStreakDays: 5 }), 'stat-orb-streak');
+      const none = orbOf(renderOrbs({ streakDays: 0, bestStreakDays: 0 }), 'stat-orb-streak');
+
+      expect(shown?.props.accessibilityLabel).toBe('home.streak.days (count:3), home.statOrb.personalBest (count:5)');
+      expect(none?.props.accessibilityLabel).toBe('home.streak.start');
+    });
+  });
+
   it('should show the streak, the story to carry on with and the badges, in that order', () => {
     const view = renderOrbs();
 
@@ -91,10 +140,11 @@ describe('StatOrbs', () => {
   });
 
   it('should write the days in a row as a number over its words', () => {
-    const view = renderOrbs();
+    const view = renderOrbs({ streakDays: 2, bestStreakDays: 0 });
+    const strip = wordsIn(view, 'stat-orb-streak-record');
 
-    expect(wordsIn(view, 'stat-orb-streak')).toEqual(['2', 'home.streak.unit (count:2)']);
-    expect(orbOf(view, 'stat-orb-streak')?.props.accessibilityLabel).toBe('home.streak.days (count:2)');
+    expect(wordsIn(view, 'stat-orb-streak').slice(0, -strip.length)).toEqual(['2', 'home.streak.unit (count:2)']);
+    expect(orbOf(view, 'stat-orb-streak')?.props.accessibilityLabel).toMatch(/^home\.streak\.days \(count:2\)/);
   });
 
   it('should write the number of badges unlocked over "Achieved", and still say the rest to a screen reader', () => {
@@ -285,7 +335,7 @@ describe('StatOrbs', () => {
   });
 
   it('should invite a family with no streak yet rather than show a zero, with the orb banked down', () => {
-    const view = renderOrbs({ streakDays: 0 });
+    const view = renderOrbs({ streakDays: 0, bestStreakDays: 0 });
 
     expect(wordsIn(view, 'stat-orb-streak')).toEqual(['home.streak.start']);
     expect(orbOf(view, 'stat-orb-streak')?.props.accessibilityLabel).toBe('home.streak.start');
@@ -515,7 +565,7 @@ describe('StatOrbs', () => {
       (withTiming as jest.Mock).mockClear();
 
       view.rerender(
-        <StatOrbs streakDays={2} story={STORY} tally={TALLY} contentWidth={CONTENT} animated={false} onOpen={view.onOpen} coverKind="badges" />
+        <StatOrbs streakDays={2} bestStreakDays={9} story={STORY} tally={TALLY} contentWidth={CONTENT} animated={false} onOpen={view.onOpen} coverKind="badges" />
       );
 
       const returns = (withTiming as jest.Mock).mock.calls.filter(([value, config]) => value === 1 && config?.duration === STAT_PILL.coverMs);

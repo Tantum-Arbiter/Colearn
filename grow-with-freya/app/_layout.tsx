@@ -746,7 +746,7 @@ function AppContent() {
       const section = catalogueSectionFor(destination);
       if (section) {
         setSelectedStoryMode(null);
-        setStoriesSection((current) => ({ section, key: current.key + 1, badgeId: focus?.badgeId }));
+        setStoriesSection((current) => ({ section, key: current.key + 1, badgeId: focus?.badgeId, recommend: focus?.recommend }));
         setTimeout(() => {
           setCurrentPage(pageKey);
           setCurrentScreen(destination);

@@ -1,5 +1,6 @@
-import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import Animated, { Easing, runOnJS, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import {
@@ -23,26 +24,51 @@ import { BadgeProgress } from './badge-progress';
 
 const MAX_DOTS = 6;
 
+export const BADGE_SHEET_MOTION = { inMs: 320, outMs: 240 } as const;
+
 interface BadgeDetailSheetProps {
   badge: Badge | null;
   onClose: () => void;
   onRecommend: (badge: Badge) => void;
 }
 
-export function BadgeDetailSheet({ badge, onClose, onRecommend }: BadgeDetailSheetProps) {
+export function BadgeDetailSheet({ badge: requested, onClose, onRecommend }: BadgeDetailSheetProps) {
   const { t } = useTranslation();
   const { scaledFontSize } = useAccessibility();
+  const { height } = useWindowDimensions();
+  const [badge, setBadge] = useState<Badge | null>(requested);
+  if (requested !== null && requested !== badge) setBadge(requested);
+  const open = requested !== null;
+  const leaving = !open && badge !== null;
   // Declared before the early return so the bar goes the moment a badge is
   // chosen, rather than lingering over the sheet that just covered it.
   useCoversJourneyBar(badge !== null);
 
+  const slide = useSharedValue(height);
+  const shade = useSharedValue(0);
+  useEffect(() => {
+    if (open) {
+      slide.value = withTiming(0, { duration: BADGE_SHEET_MOTION.inMs, easing: Easing.out(Easing.cubic) });
+      shade.value = withTiming(1, { duration: BADGE_SHEET_MOTION.inMs });
+      return;
+    }
+    shade.value = withTiming(0, { duration: BADGE_SHEET_MOTION.outMs });
+    slide.value = withTiming(height, { duration: BADGE_SHEET_MOTION.outMs, easing: Easing.in(Easing.cubic) }, (finished) => {
+      if (finished) runOnJS(setBadge)(null);
+    });
+  }, [open, height, slide, shade]);
+  const sheetStyle = useAnimatedStyle(() => ({ transform: [{ translateY: slide.value }] }));
+  const shadeStyle = useAnimatedStyle(() => ({ opacity: shade.value }));
+
   if (badge === null) return null;
 
   return (
-    <View style={styles.overlay} testID="badge-detail-overlay">
-      <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel={t('progress.close')} />
+    <View style={styles.overlay} testID="badge-detail-overlay" pointerEvents={leaving ? 'none' : 'auto'}>
+      <Animated.View style={[styles.backdrop, shadeStyle]}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel={t('progress.close')} />
+      </Animated.View>
       {badge && (
-        <View style={styles.sheet} testID="badge-detail-sheet">
+        <Animated.View style={[styles.sheet, sheetStyle]} testID="badge-detail-sheet">
           <PanelStarfield testID="badge-detail-stars" />
           <PanelClouds testID="badge-detail-clouds" />
 
@@ -104,7 +130,7 @@ export function BadgeDetailSheet({ badge, onClose, onRecommend }: BadgeDetailShe
               <Ionicons name="arrow-forward" size={18} color={TEXT_PRIMARY} />
             </Pressable>
           )}
-        </View>
+        </Animated.View>
       )}
     </View>
   );

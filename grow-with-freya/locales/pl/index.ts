@@ -3328,6 +3328,9 @@ export default {
       continue: 'Dalej',
       readToBookmark: 'Czytaj, by zaznaczyć',
       achieved: 'Zdobyte',
+      personalBest: 'Rekord osobisty: {{count}} dni',
+      personalBest_one: 'Rekord osobisty: {{count}} dzień',
+      personalBest_other: 'Rekord osobisty: {{count}} dni',
     },
     statPill: {
       streak: 'Codzienna seria',

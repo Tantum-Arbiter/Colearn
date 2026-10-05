@@ -3328,6 +3328,9 @@ export default {
       continue: 'Perge',
       readToBookmark: 'Lege ut signes',
       achieved: 'Adepta',
+      personalBest: 'Summum tuum: {{count}} dies',
+      personalBest_one: 'Summum tuum: {{count}} dies',
+      personalBest_other: 'Summum tuum: {{count}} dies',
     },
     statPill: {
       streak: 'Series cotidiana',

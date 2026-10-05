@@ -3328,6 +3328,9 @@ export default {
       continue: 'Weiter',
       readToBookmark: 'Lies zum Merken',
       achieved: 'Erreicht',
+      personalBest: 'Persönlicher Rekord: {{count}} Tage',
+      personalBest_one: 'Persönlicher Rekord: {{count}} Tag',
+      personalBest_other: 'Persönlicher Rekord: {{count}} Tage',
     },
     statPill: {
       streak: 'Tägliche Serie',

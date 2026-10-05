@@ -248,6 +248,9 @@ export default {
       continue: 'Continue',
       readToBookmark: 'Read to bookmark',
       achieved: 'Achieved',
+      personalBest: 'Personal best: {{count}} days',
+      personalBest_one: 'Personal best: {{count}} day',
+      personalBest_other: 'Personal best: {{count}} days',
     },
     statPill: {
       streak: 'Daily streak',

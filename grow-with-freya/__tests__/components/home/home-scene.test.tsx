@@ -390,6 +390,36 @@ describe('HomeScene', () => {
       expect(pillOf(view).props.open).toBe(true);
     });
 
+    // operator, 2026-10-05: "when on continue and clicking close on the story, the pill expansion
+    // should reset and go back to the ordinary ui view"
+    it('should fold the story pill once the card opened from it has closed, and not before', () => {
+      const onOpenStoryCard = jest.fn();
+      const { view, ...handlers } = renderScene({ onOpenStoryCard, storyOpen: false });
+      const scene = (storyOpen: boolean) => (
+        <HomeScene data={DATA} welcome={WELCOME} timeOfDay="night" {...handlers} onOpenStoryCard={onOpenStoryCard} storyOpen={storyOpen} />
+      );
+
+      openPill(view, 'continue');
+      act(() => {
+        pillOf(view).props.onOpenBook({ x: 20, y: 560, width: 77, height: 120 });
+      });
+      view.rerender(scene(true));
+      const whileOpen = pillOf(view).props.open;
+      view.rerender(scene(false));
+
+      expect(whileOpen).toBe(true);
+      expect(pillOf(view).props.open).toBe(false);
+    });
+
+    it('should leave a pill alone when no card was opened from it', () => {
+      const { view, ...handlers } = renderScene({ storyOpen: false });
+
+      openPill(view, 'streak');
+      view.rerender(<HomeScene data={DATA} welcome={WELCOME} timeOfDay="night" {...handlers} storyOpen={false} />);
+
+      expect(pillOf(view).props.open).toBe(true);
+    });
+
     it("should bring up the story's card, with its pages, from a tap anywhere on the story pill", () => {
       const onOpenStoryCard = jest.fn();
       const { view, onContinue } = renderScene({ onOpenStoryCard });
@@ -1059,7 +1089,7 @@ describe('HomeScene stats row', () => {
     const { view } = renderScene({ data: WITH_TALLY });
 
     expect(statOrbsOf(view).props).toEqual(
-      expect.objectContaining({ streakDays: 4, story: DATA.currentStory, tally: { unlocked: 2, remaining: 19 } })
+      expect.objectContaining({ streakDays: 4, bestStreakDays: 9, story: DATA.currentStory, tally: { unlocked: 2, remaining: 19 } })
     );
   });
 

@@ -3328,6 +3328,9 @@ export default {
       continue: '继续',
       readToBookmark: '阅读加书签',
       achieved: '已获得',
+      personalBest: '个人最佳：{{count}}天',
+      personalBest_one: '个人最佳：{{count}}天',
+      personalBest_other: '个人最佳：{{count}}天',
     },
     statPill: {
       streak: '每日连续',

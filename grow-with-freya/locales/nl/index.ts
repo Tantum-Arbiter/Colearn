@@ -3328,6 +3328,9 @@ export default {
       continue: 'Verder',
       readToBookmark: 'Lees om te bewaren',
       achieved: 'Behaald',
+      personalBest: 'Persoonlijk record: {{count}} dagen',
+      personalBest_one: 'Persoonlijk record: {{count}} dag',
+      personalBest_other: 'Persoonlijk record: {{count}} dagen',
     },
     statPill: {
       streak: 'Dagelijkse reeks',

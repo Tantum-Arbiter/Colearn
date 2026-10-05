@@ -83,6 +83,7 @@ export interface HomeSceneProps {
   onSelectSection: (id: HomeSection) => void;
   onOpenBadge?: (badgeId: string) => void;
   onOpenStoryCard?: (storyId: string, from: BookRect) => void;
+  storyOpen?: boolean;
   screenTime?: ScreenTimeAllowance | null;
   /** Receives the ring's centre so the glance can open out of it. */
   onOpenScreenTime?: (origin: { x: number; y: number }) => void;
@@ -109,6 +110,7 @@ export const HomeScene = memo(function HomeScene({
   onSelectSection,
   onOpenBadge,
   onOpenStoryCard,
+  storyOpen = false,
   screenTime = null,
   onOpenScreenTime,
   screenTimeHidden = false,
@@ -233,6 +235,11 @@ export const HomeScene = memo(function HomeScene({
     [orbDiameter, orbCount, width, height]
   );
   const foldPill = useCallback(() => setPillOpen(false), []);
+  const [storyWasOpen, setStoryWasOpen] = useState(storyOpen);
+  if (storyOpen !== storyWasOpen) {
+    setStoryWasOpen(storyOpen);
+    if (!storyOpen) setPillOpen(false);
+  }
   const pillDrawn = useCallback(() => setPillCarried(true), []);
   const pillFolded = useCallback(() => {
     setPillShown(false);
@@ -398,6 +405,7 @@ export const HomeScene = memo(function HomeScene({
         <VoyageRow row="stats" testID="home-stats-row" style={[styles.statsBlock, gaps && { marginTop: gaps.stats, marginBottom: 4 + gaps.stats }]}>
           <StatOrbs
             streakDays={data.readingStreakDays}
+            bestStreakDays={data.bestStreakDays}
             story={story}
             tally={tally}
             contentWidth={contentWidth}
