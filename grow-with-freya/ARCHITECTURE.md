@@ -698,14 +698,26 @@ pill's edge in its own orb's colour:
   book animation looks very off compared to the books ... via story page"). It opens
   with `focusPages`, so it opens scrolled to its page strip and ways to read
   (`useScrollToEndOnce`). `_layout` sends a card opened from home back to `main` when it is
-  closed. The pill stays open under it.
+  closed. The pill stays open under the card, and folds back into the row once the card has gone
+  -- closed, or read and come back from (`HomeScene`'s `storyOpen`, the transition context's
+  `isTransitioning` going from true to false; operator, 2026-10-05: "the pill expansion should reset
+  and go back to the ordinary ui view").
 - **Achievements** (violet edge, the trophy orb's): "Next: <badge>" with that badge's art in a
   violet medallion (`BadgeArtwork`, in progress); with every badge earned, "Every badge is yours".
-  The orb at the end keeps its number. A tap opens that very badge: Progress, with its detail sheet
-  up (below); with nothing left to earn, Progress itself.
+  The orb at the end keeps its number. A tap opens that very badge in its own window over the home
+  -- Progress's `BadgeDetailSheet`, handed the badge by `HomeSceneContainer` -- and the page goes
+  nowhere (operator, 2026-10-05: "the achievement should appear in its window, not take us down the
+  page"; it used to open Progress with the sheet up). The sheet slides up from the foot of the
+  screen as the backdrop dims, and back down before it goes ("it should slide into view and out of
+  view"; `BADGE_SHEET_MOTION`, 320 ms in, 240 ms out) -- on the home and on Progress alike. While it
+  slides away it keeps showing its badge, lets touches through, and keeps the journey bar covered
+  until it is off the screen. The window closes back to the home; its
+  suggestion ("Discover a new story", "Find a calm story"...) goes to the library with that theme
+  or filter set, carried as `DestinationFocus.recommend` on the same request a badge's focus uses. A
+  badge the home cannot find, or nothing left to earn, still opens Progress.
 
-A tap on Continue reading opens the story's card over the pill; a tap on Achievements goes on and
-folds the pill behind it; a tap on the streak pill, on the streak or badges orb, or anywhere off
+A tap on Continue reading opens the story's card over the pill; a tap on Achievements folds the
+pill and opens the badge's window; a tap on the streak pill, on the streak or badges orb, or anywhere off
 the pill folds it back. How it got here, all operator
 decisions the same day: a glass Continue reading tab docked over the bar; thin; hung under the
 journey card; an orb over the bar that opened like jelly into a bubble; the middle stat orb with a
@@ -838,6 +850,15 @@ animation for attention, the text clear as day, and only the number for the badg
   White, heavy, with a dark shade; no fixed line height (the iOS shrink trap). They ignore the
   system's larger-text setting, because the glass does not grow with it. A screen reader hears
   the whole sentence each chip used to show.
+- **The best run wears a strip.** A gold capsule with a crown and the longest run there has
+  been -- a bare number, "👑 5" -- straddles the top of the streak orb, inside it, so it floats and
+  folds with the orb (`StatOrbRecord`, `STAT_ORB.record`). It stays for good once there is a best:
+  through a run short of it and after a run lapses; only a family with no run yet has none. The
+  number is `max(bestStreakDays, streakDays)`, so a run passing the best shows the new one at once.
+  A screen reader hears the run going now and then "Personal best: 5 days"
+  (`home.statOrb.personalBest`, plural forms). The operator's first picture read "PB 5" and was
+  shown only while a best was being set; then "remove PB and change it to the personal best number
+  - then it can stay forever".
 - **Nothing yet is an invitation, not a zero** (kept from the chips): no streak reads "Start a
   streak today" over an orb banked down to 55%. No badge unlocked yet reads 0 on a banked-down
   orb, and nothing part-read leaves the bookmark banked down, reading "Read to bookmark".
