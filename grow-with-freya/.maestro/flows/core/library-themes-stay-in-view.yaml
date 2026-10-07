@@ -1,0 +1,74 @@
+appId: com.growwithfreya.app
+tags:
+  - journey
+name: A child scrolls down the library and the themes and Filter stay to hand
+---
+- runFlow:
+    file: ../../helpers/start-seeded.yaml
+    env:
+      SEED: "onboarded=1&guest=1&tutorials=done&screenTime=reset&progress=clear&language=en&tier=free"
+- retry:
+    maxRetries: 2
+    commands:
+      - tapOn:
+          id: "navigation-item-home"
+      - extendedWaitUntil:
+          visible:
+            id: "catalogue-header-row"
+          timeout: 15000
+# The themes and Filter rest at the head of the shelves, in a gap the shelves
+# keep for them.
+- extendedWaitUntil:
+    visible:
+      id: "catalogue-chooser-room"
+    timeout: 15000
+- assertVisible:
+    id: "story-theme-tile-stories"
+# Far enough down that the gap they rested in has gone up off the screen.
+- swipe:
+    start: "50%, 80%"
+    end: "50%, 30%"
+    duration: 900
+- swipe:
+    start: "50%, 80%"
+    end: "50%, 30%"
+    duration: 900
+- swipe:
+    start: "50%, 80%"
+    end: "50%, 30%"
+    duration: 900
+- waitForAnimationToEnd:
+    timeout: 4000
+- assertNotVisible:
+    id: "catalogue-chooser-room"
+- assertVisible:
+    id: "story-theme-tile-stories"
+- assertVisible:
+    id: "story-filter-more"
+# The themes still answer a tap while they hold their place over the planet.
+- tapOn:
+    id: "story-theme-tile-learning"
+- assertVisible:
+    id: "story-theme-tile-learning"
+    selected: true
+- assertVisible:
+    id: "story-theme-tile-stories"
+    selected: false
+# And Filter still opens its finer themes there, one of which narrows the shelf.
+- tapOn:
+    id: "story-filter-more"
+- extendedWaitUntil:
+    visible:
+      id: "story-filter-pill-bedtime"
+    timeout: 10000
+- tapOn:
+    id: "story-filter-pill-bedtime"
+- extendedWaitUntil:
+    visible:
+      id: "more-section-heading"
+    timeout: 10000
+- assertVisible:
+    id: "story-filter-pill-bedtime"
+    selected: true
+- assertVisible:
+    id: "story-theme-tile-stories"

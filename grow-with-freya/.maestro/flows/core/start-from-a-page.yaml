@@ -1,0 +1,51 @@
+appId: com.growwithfreya.app
+tags:
+  - journey
+name: A child picks a page in a book's card and is offered to read from there
+---
+- runFlow:
+    file: ../../helpers/start-seeded.yaml
+    env:
+      SEED: "onboarded=1&guest=1&tutorials=done&screenTime=reset&progress=clear&language=en&tier=free"
+- retry:
+    maxRetries: 2
+    commands:
+      - tapOn:
+          id: "navigation-item-home"
+      - extendedWaitUntil:
+          visible:
+            id: "catalogue-header-row"
+          timeout: 15000
+- scrollUntilVisible:
+    element:
+      text: "Snuggle Little Wombat"
+    direction: DOWN
+    timeout: 30000
+- tapOn: "Snuggle Little Wombat"
+- extendedWaitUntil:
+    visible:
+      id: "story-card-sheet"
+    timeout: 20000
+# A book not yet begun starts at its first page, and says so.
+- extendedWaitUntil:
+    visible:
+      id: "story-card-page-1"
+      selected: true
+    timeout: 15000
+- tapOn:
+    id: "story-card-page-3"
+- assertVisible:
+    id: "story-card-page-3"
+    selected: true
+- assertVisible:
+    id: "story-card-page-1"
+    selected: false
+- assertVisible:
+    id: "story-card-mode-read"
+    text: "Read from page 3"
+- tapOn:
+    id: "story-card-close"
+- extendedWaitUntil:
+    notVisible:
+      id: "story-card-sheet"
+    timeout: 15000
