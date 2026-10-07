@@ -102,12 +102,12 @@ export function WorldInfoPanel({ worldKey, art, onClose }: WorldInfoPanelProps) 
 
 const styles = StyleSheet.create({
   container: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 200,
     justifyContent: 'flex-end',
   },
   backdrop: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(4, 7, 26, 0.72)',
   },
   sheet: {

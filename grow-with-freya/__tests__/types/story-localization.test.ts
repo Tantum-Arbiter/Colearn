@@ -1,4 +1,4 @@
-import { getLocalizedText, resolveAgeGroup, LocalizedText, StoryPage, Story, AgeGroupText } from '@/types/story';
+import { getLocalizedText, resolveAgeGroup, ageGroupFallbackChain, LocalizedText, StoryPage, Story, AgeGroupText } from '@/types/story';
 
 describe('Story Localization', () => {
   describe('getLocalizedText', () => {
@@ -194,25 +194,88 @@ describe('Story Localization', () => {
       expect(getLocalizedText(localizedText, fallback, 'de', ageGroupText, '0-2')).toBe('Baby bear sleeps.');
     });
 
-    it('falls back to localizedText when ageGroup not in ageGroupText', () => {
+    it('uses the nearest age group when the child\'s own group is missing', () => {
       const partialAgeGroupText: AgeGroupText = {
         '4-6': { en: 'Only for older kids' },
       };
-      expect(getLocalizedText(localizedText, fallback, 'en', partialAgeGroupText, '0-2')).toBe('Default localized text');
+      expect(getLocalizedText(localizedText, fallback, 'en', partialAgeGroupText, '0-2')).toBe('Only for older kids');
     });
 
     it('falls back to localizedText when ageGroupText is undefined', () => {
       expect(getLocalizedText(localizedText, fallback, 'en', undefined, '0-2')).toBe('Default localized text');
     });
 
-    it('falls back to localizedText when ageGroup is undefined', () => {
-      expect(getLocalizedText(localizedText, fallback, 'en', ageGroupText, undefined)).toBe('Default localized text');
+    it('reads the oldest group first when the child\'s age is not known', () => {
+      expect(getLocalizedText(localizedText, fallback, 'en', ageGroupText, undefined)).toBe(
+        'The bear nestles into the soft leaves and drifts off to sleep.',
+      );
+    });
+
+    it('falls back to localizedText when no age group has any text', () => {
+      expect(getLocalizedText(localizedText, fallback, 'en', {}, '0-2')).toBe('Default localized text');
     });
 
     it('works with no ageGroupText params (backward compatible)', () => {
       expect(getLocalizedText(localizedText, fallback, 'en')).toBe('Default localized text');
       expect(getLocalizedText(localizedText, fallback, 'pl')).toBe('Domyślny zlokalizowany tekst');
       expect(getLocalizedText(undefined, fallback)).toBe('Fallback text');
+    });
+  });
+
+  describe('age group fallback chain', () => {
+    it.each([
+      ['0-2', ['0-2', '2-4', '4-6']],
+      ['2-4', ['2-4', '0-2', '4-6']],
+      ['4-6', ['4-6', '2-4', '0-2']],
+      [undefined, ['4-6', '2-4', '0-2']],
+    ] as const)('orders the groups for %s as %j', (ageGroup, chain) => {
+      expect(ageGroupFallbackChain(ageGroup)).toEqual(chain);
+    });
+
+    it.each([
+      ['a toddler on a book written only for older children', { '4-6': { en: 'Big', pl: 'Duży' } }, '0-2', 'pl', 'Duży'],
+      ['a middle child on a book written only for babies', { '0-2': { en: 'Tiny', pl: 'Mały' } }, '2-4', 'pl', 'Mały'],
+      ['a middle child when both neighbours exist', { '0-2': { en: 'Tiny' }, '4-6': { en: 'Big' } }, '2-4', 'en', 'Tiny'],
+      ['an older child when only the middle group exists', { '2-4': { en: 'Middle' } }, '4-6', 'en', 'Middle'],
+    ] as const)('finds text for %s', (_label, text, ageGroup, language, expected) => {
+      expect(getLocalizedText(undefined, 'fallback', language, text as AgeGroupText, ageGroup)).toBe(expected);
+    });
+
+    it('prefers the requested language in another age group over English in the child\'s own group', () => {
+      const text: AgeGroupText = { '0-2': { en: 'Tiny' }, '4-6': { en: 'Big', pl: 'Duży' } };
+
+      expect(getLocalizedText(undefined, 'fallback', 'pl', text, '0-2')).toBe('Duży');
+    });
+
+    it('uses English from the nearest group when no group has the requested language', () => {
+      const text: AgeGroupText = { '2-4': { en: 'Middle' }, '4-6': { en: 'Big' } };
+
+      expect(getLocalizedText(undefined, 'fallback', 'de', text, '4-6')).toBe('Big');
+    });
+
+    it('skips an empty translation rather than showing a blank page', () => {
+      const text: AgeGroupText = { '4-6': { en: '', pl: '' }, '2-4': { en: 'Middle' } };
+
+      expect(getLocalizedText(undefined, 'fallback', 'pl', text, '4-6')).toBe('Middle');
+    });
+
+    it('shows the page text when no group has any text', () => {
+      expect(getLocalizedText(undefined, 'Page text', 'pl', { '4-6': {} } as AgeGroupText, '4-6')).toBe('Page text');
+    });
+  });
+
+  describe('the contract shared with the gateway', () => {
+    const fixture = require('../../../contract-fixtures/age-group-text-cases.json');
+
+    it.each(Object.entries(fixture.chains) as [string, string[]][])('orders the groups for %s as the gateway does', (ageGroup, chain) => {
+      expect(ageGroupFallbackChain(ageGroup === 'unknown' ? undefined : (ageGroup as never))).toEqual(chain);
+    });
+
+    type Case = { name: string; fallback: string; language: string | null; text: AgeGroupText; ageGroup: string | null; expected: string };
+    const cases = (fixture.cases as Case[]).map(c => [c.name, c] as [string, Case]);
+
+    it.each(cases)('%s', (_name, c) => {
+      expect(getLocalizedText(undefined, c.fallback, (c.language ?? undefined) as never, c.text, (c.ageGroup ?? undefined) as never)).toBe(c.expected);
     });
   });
 });

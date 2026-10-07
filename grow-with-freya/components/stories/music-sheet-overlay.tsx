@@ -611,7 +611,7 @@ export const MusicSheetOverlay = React.memo(function MusicSheetOverlay({
 
 const styles = StyleSheet.create({
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 150,
     justifyContent: 'center',
     alignItems: 'center',

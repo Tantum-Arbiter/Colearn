@@ -6,7 +6,6 @@ import org.junit.jupiter.api.DisplayName;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -168,178 +167,35 @@ class StoryPageTest {
         assertEquals(page1.hashCode(), page2.hashCode());
     }
 
-    // Localization tests
-
     @Test
-    @DisplayName("Should set and get localizedText")
-    void testLocalizedTextGetterSetter() {
-        LocalizedText localizedText = new LocalizedText();
-        localizedText.setEn("English text");
-        localizedText.setPl("Polish text");
+    @DisplayName("Should keep page text keyed by age group")
+    void testLocalizedTextIsKeyedByAgeGroup() {
+        LocalizedText preschool = new LocalizedText("Once upon a time...");
+        preschool.setPl("Dawno dawno temu...");
 
-        storyPage.setLocalizedText(localizedText);
+        storyPage.setLocalizedText(Map.of("4-6", preschool));
 
-        assertNotNull(storyPage.getLocalizedText());
-        assertEquals("English text", storyPage.getLocalizedText().getEn());
-        assertEquals("Polish text", storyPage.getLocalizedText().getPl());
+        assertEquals("Dawno dawno temu...", storyPage.getLocalizedText().get("4-6").getPl());
     }
 
     @Test
-    @DisplayName("Should return localized text for requested language")
-    void testGetTextForLanguage() {
-        LocalizedText localizedText = new LocalizedText();
-        localizedText.setEn("Once upon a time...");
-        localizedText.setPl("Dawno dawno temu...");
-        localizedText.setEs("Érase una vez...");
-        localizedText.setDe("Es war einmal...");
+    @DisplayName("Should read the oldest group when no age group is given")
+    void testGetTextForLanguageUsesTheDefaultChain() {
+        storyPage.setLocalizedText(Map.of(
+                "0-2", new LocalizedText("Baby text"),
+                "4-6", new LocalizedText("Preschool text")));
 
-        storyPage.setLocalizedText(localizedText);
-
-        assertEquals("Once upon a time...", storyPage.getTextForLanguage("en"));
-        assertEquals("Dawno dawno temu...", storyPage.getTextForLanguage("pl"));
-        assertEquals("Érase una vez...", storyPage.getTextForLanguage("es"));
-        assertEquals("Es war einmal...", storyPage.getTextForLanguage("de"));
+        assertEquals("Preschool text", storyPage.getTextForLanguage("en"));
     }
 
     @Test
-    @DisplayName("Should fallback to English when language not available")
-    void testTextForLanguageFallbackToEnglish() {
-        LocalizedText localizedText = new LocalizedText();
-        localizedText.setEn("English fallback");
-        // No Polish translation
-
-        storyPage.setLocalizedText(localizedText);
-
-        // Should fallback to English when Polish not available
-        assertEquals("English fallback", storyPage.getTextForLanguage("pl"));
-    }
-
-    @Test
-    @DisplayName("Should fallback to default text when no localization")
-    void testTextForLanguageFallbackToDefaultText() {
+    @DisplayName("Should fall back to the page text when there is no localized text")
+    void testTextForLanguageFallsBackToPageText() {
         storyPage.setText("Default page text");
         storyPage.setLocalizedText(null);
 
-        assertEquals("Default page text", storyPage.getTextForLanguage("en"));
         assertEquals("Default page text", storyPage.getTextForLanguage("pl"));
-    }
-
-    @Test
-    @DisplayName("Should handle null language code")
-    void testTextForLanguageNullLanguage() {
-        LocalizedText localizedText = new LocalizedText();
-        localizedText.setEn("English text");
-        storyPage.setLocalizedText(localizedText);
-
-        // Null language should return English
-        assertEquals("English text", storyPage.getTextForLanguage(null));
-    }
-
-    // =============================================
-    // Age group text tests
-    // =============================================
-
-    @Test
-    @DisplayName("Should set and get ageGroupText with multiple age groups")
-    void testAgeGroupTextMultipleAgeGroups() {
-        LocalizedText babyText = new LocalizedText("Baby bear sleeps.");
-        babyText.setPl("Miś śpi.");
-
-        LocalizedText toddlerText = new LocalizedText("The little bear curls up and sleeps.");
-        toddlerText.setPl("Mały miś zwija się i śpi.");
-
-        Map<String, LocalizedText> ageGroupText = new HashMap<>();
-        ageGroupText.put("0-2", babyText);
-        ageGroupText.put("2-4", toddlerText);
-
-        storyPage.setAgeGroupText(ageGroupText);
-
-        assertNotNull(storyPage.getAgeGroupText());
-        assertEquals(2, storyPage.getAgeGroupText().size());
-        assertEquals("Baby bear sleeps.", storyPage.getAgeGroupText().get("0-2").getEn());
-        assertEquals("Miś śpi.", storyPage.getAgeGroupText().get("0-2").getPl());
-    }
-
-    @Test
-    @DisplayName("Should return age-appropriate text for language and age group")
-    void testGetTextForLanguageAndAgeGroup() {
-        LocalizedText babyText = new LocalizedText("Baby text");
-        babyText.setPl("Tekst dla niemowlaka");
-
-        LocalizedText preschoolText = new LocalizedText("Preschool text");
-        preschoolText.setPl("Tekst przedszkolny");
-
-        Map<String, LocalizedText> ageGroupText = new HashMap<>();
-        ageGroupText.put("0-2", babyText);
-        ageGroupText.put("4-6", preschoolText);
-
-        storyPage.setText("Default text");
-        storyPage.setAgeGroupText(ageGroupText);
-
-        assertEquals("Baby text", storyPage.getTextForLanguageAndAgeGroup("en", "0-2"));
-        assertEquals("Tekst dla niemowlaka", storyPage.getTextForLanguageAndAgeGroup("pl", "0-2"));
-        assertEquals("Preschool text", storyPage.getTextForLanguageAndAgeGroup("en", "4-6"));
-        assertEquals("Tekst przedszkolny", storyPage.getTextForLanguageAndAgeGroup("pl", "4-6"));
-    }
-
-    @Test
-    @DisplayName("Should fall back through younger age groups when requested not present")
-    void testGetTextForLanguageAndAgeGroupFallback() {
-        LocalizedText babyText = new LocalizedText("Baby English");
-        babyText.setPl("Baby polski");
-
-        storyPage.setText("Default text");
-        Map<String, LocalizedText> ageGroupText = new HashMap<>();
-        ageGroupText.put("0-2", babyText);
-        storyPage.setAgeGroupText(ageGroupText);
-
-        // "2-4" not present → falls back to "0-2"
-        assertEquals("Baby English", storyPage.getTextForLanguageAndAgeGroup("en", "2-4"));
-        assertEquals("Baby polski", storyPage.getTextForLanguageAndAgeGroup("pl", "2-4"));
-    }
-
-    @Test
-    @DisplayName("Should fall back to default text when ageGroupText map is empty")
-    void testGetTextForLanguageAndAgeGroupFallbackEmpty() {
-        storyPage.setText("Default text");
-        storyPage.setAgeGroupText(new HashMap<>());
-
-        assertEquals("Default text", storyPage.getTextForLanguageAndAgeGroup("en", "0-2"));
-        assertEquals("Default text", storyPage.getTextForLanguageAndAgeGroup("pl", "4-6"));
-    }
-
-    @Test
-    @DisplayName("Should fall back to default text when no localization at all")
-    void testGetTextForLanguageAndAgeGroupFallbackToDefault() {
-        storyPage.setText("Default text");
-        storyPage.setAgeGroupText(null);
-
-        assertEquals("Default text", storyPage.getTextForLanguageAndAgeGroup("en", "0-2"));
-        assertEquals("Default text", storyPage.getTextForLanguageAndAgeGroup("pl", "4-6"));
-    }
-
-    @Test
-    @DisplayName("Should handle null ageGroup parameter")
-    void testGetTextForLanguageAndAgeGroupNullAgeGroup() {
-        LocalizedText localizedText = new LocalizedText("Localized text");
-        storyPage.setText("Default text");
-        storyPage.setLocalizedText(localizedText);
-
-        // null ageGroup → falls back to localizedText → "Localized text"
-        assertEquals("Localized text", storyPage.getTextForLanguageAndAgeGroup("en", null));
-    }
-
-    @Test
-    @DisplayName("Should fall back from ageGroupText to localizedText")
-    void testGetTextForLanguageAndAgeGroupFallbackToLocalizedText() {
-        LocalizedText defaultText = new LocalizedText("Default localized");
-        defaultText.setPl("Domyślny zlokalizowany");
-        storyPage.setLocalizedText(defaultText);
-        storyPage.setText("Fallback text");
-
-        // No ageGroupText set → should fall back to localizedText
-        assertEquals("Default localized", storyPage.getTextForLanguageAndAgeGroup("en", "0-2"));
-        assertEquals("Domyślny zlokalizowany", storyPage.getTextForLanguageAndAgeGroup("pl", "4-6"));
+        assertEquals("Default page text", storyPage.getTextForLanguageAndAgeGroup("pl", "0-2"));
     }
 
     // =============================================

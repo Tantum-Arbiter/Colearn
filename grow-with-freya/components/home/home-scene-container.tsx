@@ -3,16 +3,21 @@ import { useAppStore } from '@/store/app-store';
 import { SubscriptionOverlay } from '@/components/ui/subscription-overlay';
 import { TrialEndUpgradeOverlay } from '@/components/ui/trial-end-upgrade-overlay';
 import { shouldOfferPlan } from '@/constants/unlock-plan';
+import { useIslandVoyage } from '@/contexts/island-voyage-context';
 import { useStoryTransition } from '@/contexts/story-transition-context';
 import { ALL_STORIES } from '@/data/stories';
 import { useScreenTimeAllowance } from '@/hooks/use-screen-time-allowance';
 import { useTrialEndPrompt } from '@/hooks/use-trial-end-prompt';
 import { useTimeOfDay } from '@/hooks/use-time-of-day';
 import { isScreenTimeExceeded } from '@/constants/screen-time-ring';
+import { BadgeDetailSheet } from '@/components/progress/badge-detail-sheet';
+import type { Badge } from '@/components/progress/progress-model';
+import type { DestinationFocus } from '@/constants/catalogue-destinations';
 import { ScreenTimeGlance } from './screen-time-glance';
 import type { HomeSceneProps } from './home-scene';
 import { HomeScene, type HomeSection, type HomeGuideTargets } from './home-scene';
 import { useChildHomeData } from './use-child-home-data';
+import { useJourneySteps } from './use-journey-steps';
 
 export const HOME_DESTINATIONS = {
   stories: 'stories',
@@ -22,7 +27,8 @@ export const HOME_DESTINATIONS = {
 } as const;
 
 export interface HomeSceneContainerProps {
-  onNavigate: (destination: string) => void;
+  onNavigate: (destination: string, focus?: DestinationFocus) => void;
+  onOpenStoryCard?: HomeSceneProps['onOpenStoryCard'];
   guideTargets?: HomeGuideTargets;
   /** Passed to the scene's scroll view, for the tour that runs over it. */
   scrollBinding?: HomeSceneProps['scrollBinding'];
@@ -31,12 +37,16 @@ export interface HomeSceneContainerProps {
 
 export const HomeSceneContainer = memo(function HomeSceneContainer({
   onNavigate,
+  onOpenStoryCard,
   guideTargets,
   scrollBinding,
   isActive = true,
 }: HomeSceneContainerProps) {
-  const { data, welcome, celebrateAchievement } = useChildHomeData();
-  const { requestStoryOpen } = useStoryTransition();
+  const { data, badges, welcome, celebrateAchievement } = useChildHomeData();
+  const journeySteps = useJourneySteps(isActive);
+  const { requestStoryOpen, isTransitioning } = useStoryTransition();
+  const { depart, phase } = useIslandVoyage();
+  const landing = phase === 'recrossing' || phase === 'landing';
   const screenTime = useScreenTimeAllowance();
   const timeOfDay = useTimeOfDay();
   const trialEnd = useTrialEndPrompt();
@@ -57,9 +67,28 @@ export const HomeSceneContainer = memo(function HomeSceneContainer({
     onNavigate(HOME_DESTINATIONS.stories);
   }, [currentStoryId, onNavigate, requestStoryOpen]);
 
-  const handleOpenProgress = useCallback(() => onNavigate(HOME_DESTINATIONS.progress), [onNavigate]);
   const handleSelectSection = useCallback(
     (id: HomeSection) => onNavigate(id === 'home' ? HOME_DESTINATIONS.stories : HOME_DESTINATIONS[id]),
+    [onNavigate]
+  );
+  const [shownBadge, setShownBadge] = useState<Badge | null>(null);
+  const openBadge = useCallback(
+    (badgeId: string) => {
+      const badge = badges.find((candidate) => candidate.id === badgeId);
+      if (badge) {
+        setShownBadge(badge);
+        return;
+      }
+      onNavigate(HOME_DESTINATIONS.progress, { badgeId });
+    },
+    [badges, onNavigate]
+  );
+  const closeBadge = useCallback(() => setShownBadge(null), []);
+  const followBadge = useCallback(
+    (badge: Badge) => {
+      setShownBadge(null);
+      onNavigate(HOME_DESTINATIONS.stories, { recommend: { tag: badge.recommendation?.tag ?? null } });
+    },
     [onNavigate]
   );
 
@@ -82,15 +111,19 @@ export const HomeSceneContainer = memo(function HomeSceneContainer({
         data={data}
         welcome={welcome}
         celebrateAchievement={celebrateAchievement}
+        journeySteps={journeySteps}
         onContinue={handleContinue}
-        onOpenAchievements={handleOpenProgress}
+        onOpenJourney={depart}
         onSelectSection={handleSelectSection}
+        onOpenBadge={openBadge}
+        onOpenStoryCard={onOpenStoryCard}
+        storyOpen={isTransitioning}
         screenTime={screenTime}
         timeOfDay={timeOfDay}
         onOpenScreenTime={openScreenTime}
         screenTimeHidden={showScreenTime}
         onOpenPlans={offerPlan ? openPlans : undefined}
-        isActive={isActive}
+        isActive={isActive && !landing}
         guideTargets={guideTargets}
         scrollBinding={scrollBinding}
       />
@@ -108,6 +141,8 @@ export const HomeSceneContainer = memo(function HomeSceneContainer({
         usageSeconds={screenTime?.usageSeconds ?? 0}
         limitSeconds={screenTime?.limitSeconds ?? 0}
       />
+
+      <BadgeDetailSheet badge={shownBadge} onClose={closeBadge} onRecommend={followBadge} />
 
       <SubscriptionOverlay visible={showPlans} onClose={closePlans} />
 

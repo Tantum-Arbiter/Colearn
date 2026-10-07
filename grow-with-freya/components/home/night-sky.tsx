@@ -29,6 +29,7 @@ export const NightSky = memo(function NightSky({
   return (
     <View testID={testID} style={StyleSheet.absoluteFill} pointerEvents="none">
       <LinearGradient
+        testID={`${testID}-colour`}
         colors={[theme.skyTop, theme.skyMid, theme.skyBottom]}
         locations={[0, 0.5, 1]}
         style={StyleSheet.absoluteFill}
@@ -42,7 +43,7 @@ export const NightSky = memo(function NightSky({
         active={settled}
       />
 
-      <EarthHorizon testID="home-horizon" edge="bottom" width={width} height={height} timeOfDay={timeOfDay} />
+      <EarthHorizon testID="home-horizon" edge="bottom" width={width} height={height} />
     </View>
   );
 });

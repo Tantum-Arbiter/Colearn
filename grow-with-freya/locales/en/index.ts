@@ -206,14 +206,20 @@ export default {
       days_one: '{{count}} day streak!',
       days_other: '{{count}} day streak!',
       start: 'Start a streak today',
+      unit: 'day streak',
+      unit_one: 'day streak',
+      unit_other: 'day streak',
     },
     weeklyReading: {
       minutes: '{{count}} min this week',
       none: 'No reading yet this week',
     },
-    achievements: { title: 'Look what you achieved!', cta: 'View achievements', emptyTitle: 'Your first badge is waiting', emptyBody: 'Read a story together to earn it', hint: 'See your badges' },
+    achievementTally: {
+      label: '{{unlocked}} unlocked, {{remaining}} to go',
+    },
+    achievements: { title: 'Look what you achieved!', cta: 'Explore', ctaJourney: 'Explore journey', emptyTitle: 'Your first badge is waiting', emptyBody: 'Read a story together to earn it', hint: 'Fly down to your island' },
     milestone: {
-      eyebrow: 'Next achievement',
+      eyebrow: 'Your Learning Journey',
       remaining: {
         stories: '{{count}} more stories to unlock',
         stories_one: '{{count}} more story to unlock',
@@ -236,6 +242,28 @@ export default {
     greeting: 'What shall we do together?',
     grownUps: 'Grown-ups',
     continueTogether: 'Continue together',
+    continueReading: 'Continue reading',
+    continueMore: 'Show more',
+    statOrb: {
+      continue: 'Continue',
+      readToBookmark: 'Read to bookmark',
+      achieved: 'Achieved',
+      personalBest: 'Personal best: {{count}} days',
+      personalBest_one: 'Personal best: {{count}} day',
+      personalBest_other: 'Personal best: {{count}} days',
+    },
+    statPill: {
+      streak: 'Daily streak',
+      days: '{{count}} day streak',
+      days_one: '{{count}} day streak',
+      days_other: '{{count}} day streak',
+      best: 'Best {{count}}',
+      pages: '{{page}} of {{total}}',
+      achievements: 'Achievements',
+      next: 'Next: {{title}}',
+      toBadge: 'Opens the badge to earn next',
+      openBook: 'Open {{title}}',
+    },
     pagePosition: 'Page {{page}} of {{total}}',
     resumeStory: 'Continue reading {{title}}',
     storybooks: 'Storybooks',
@@ -340,12 +368,15 @@ export default {
   // Story detail view (shown after tapping a book)
   storyDetail: {
     readTogether: 'Read Together',
+    pickPage: 'Start from a page',
+    readFromPage: 'Read from page {{page}}',
     continueReading: 'Continue reading',
     record: 'Record',
     playAlong: 'Play Along',
     readNow: 'Read Now',
     savedOffline: 'Saved for offline',
-    minutes: '{{count}} min',
+    pages_one: '{{count}} page',
+    pages_other: '{{count}} pages',
     ages: 'Ages {{range}}',
     interactive: 'Interactive',
     favourite: 'Favourite',
@@ -619,7 +650,7 @@ export default {
   account: {
     sleepingSun: 'The sleeping sun',
     sleepingMoon: 'The sleeping moon',
-    title: 'Account',
+    title: 'Settings',
     profile: 'Profile',
     nickname: 'Nickname',
     avatarType: 'Avatar Type',
@@ -633,6 +664,7 @@ export default {
     termsAndConditions: 'Terms & Conditions',
     privacyPolicy: 'Privacy Policy',
     selectLanguage: 'Select Language',
+    chooseLanguage: 'Choose your preferred language',
     guestMode: 'Guest Mode',
     createAccount: 'Create an account to save your progress',
     crashReports: 'Crash Reports',
@@ -643,6 +675,7 @@ export default {
 
   // The child's own page in the journey, plus profile validation and editing
   profile: {
+    signedIn: 'Signed in',
     settings: 'Settings',
     noName: 'Little explorer',
     tabs: {
@@ -653,7 +686,6 @@ export default {
     downloadsUsed: '{{used}} of {{limit}} books on this device',
     downloadsCount: '{{count}} books on this device',
     downloadsEmpty: 'Nothing saved to this device yet — download a book to read it anywhere',
-    downloadMeta: '{{minutes}} min · {{pages}} pages',
     enterNickname: 'Please enter a nickname',
     nicknameTooLong: 'Nickname must be 20 characters or less',
     editTitle: 'Edit Profile',
@@ -753,24 +785,80 @@ export default {
   },
 
   // Tutorial
+  island: {
+    scene: 'An island seen from the sky, with snowy mountains, forests, a river and a lighthouse',
+  },
+  roadmap: {
+    title: 'The adventure continues',
+    playAgain: 'Play again',
+    scene: 'A little bear with a backpack sits before a glowing portal to a spring valley, with a road map of the adventures to come',
+    stop: '{{quarter}}: {{place}}',
+    stops: {
+      japanNewZealand: 'Japan and New\u00A0Zealand',
+      franceItaly: 'France and Italy',
+      lapland: 'Lapland',
+    },
+  },
+  plan: {
+    places: {
+      storyTime: 'Story Time',
+      wordGarden: 'Word Garden',
+      mathsMeadow: 'Maths Meadow',
+      feelingsCove: 'Feelings Cove',
+      musicGrove: 'Music Grove',
+      storyCorner: 'Story Corner',
+      storyBridge: 'Story Bridge',
+    },
+    domains: {
+      language: 'Language',
+      maths: 'Maths',
+      feelings: 'Feelings',
+      music: 'Music',
+    },
+    skills: {
+      listening: 'Listening',
+      vocabulary: 'Vocabulary',
+      letters: 'Letters',
+      counting: 'Counting',
+      numbers: 'Numbers',
+      feelings: 'Feelings',
+      confidence: 'Confidence',
+      rhythm: 'Rhythm',
+      patience: 'Patience',
+    },
+    islandWeek: {
+      'day-1': { aim: 'Build listening, vocabulary and calm through a cosy bedtime story.' },
+      'day-2': { aim: 'Learn letter sounds and build words, one tile at a time.' },
+      'day-3': { aim: 'Count along and play with numbers in a short game.' },
+      'day-4': { aim: 'Name feelings and show them on your faces, together.' },
+      'day-5': { aim: 'Find the beat and play a short song, one note at a time.' },
+      'day-6': { aim: 'Build listening and talk about big feelings through a story of growing up.' },
+      'day-7': { aim: 'Practise waiting and taking turns through a story about a bus ride.' },
+    },
+    stepOf: 'Step {{day}} of {{total}}',
+    focus: '{{domain}} & {{skill}}',
+    minutes: '{{from}}–{{to}} min',
+    start: 'Start activity',
+    preview: 'Preview',
+    opensTomorrow: 'Well done today. The next step opens tomorrow.',
+    weekDone: 'The whole island, explored',
+    weekDoneBody: '{{done}} of {{total}} steps done. Tap any day to play it again, or the last one to see what comes next.',
+    a11y: {
+      checkpoint: 'Day {{day}}, {{place}}, {{state}}',
+    },
+    states: {
+      done: 'done',
+      open: 'ready to start',
+      tomorrow: 'opens tomorrow',
+      locked: 'not yet',
+    },
+  },
   tutorial: {
-    welcomeTitle: 'Welcome to\nEarlyroots!',
-    welcomeDescription: "Let's take a quick tour to help you and your child get the most out of storytime together.",
-    storiesTitle: 'Story Library',
-    storiesDescription: 'Tap here to explore our collection of interactive stories with beautiful illustrations and fun interactions.',
-    skip: 'Skip',
-    gotIt: 'Got it!',
     // Button translations for tutorial overlays
     buttons: {
       next: 'Next',
       skip: 'Skip',
-      skipAll: 'Skip All',
-      skipTour: 'Skip tour',
-      gotIt: 'Got it!',
-      go: 'Go!',
       letsGo: "Let's Go!",
-      done: 'Done',
-      startReading: 'Start Reading',
     },
     // Main Menu Tour - shown on first login
     mainMenu: {
@@ -779,42 +867,38 @@ export default {
         description: 'Every story, song and learning game lives in the library. Tap here to open it.',
       },
       welcome: {
-        title: 'Welcome to Grow with\nFreya!',
+        title: 'Welcome to\nEarly Roots!',
         description: "Let's take a quick tour to help you and your child get the most out of storytime together.",
       },
-      stories: {
-        title: 'Stories',
-        description: 'Explore our collection of interactive stories with beautiful illustrations and fun interactions.',
-      },
-      practise: {
-        title: 'Practise',
-        description: 'Learn to play songs on different instruments. Follow along and build your musical skills!',
-      },
-      freeplay: {
-        title: 'Freeplay',
-        description: 'Jam freely on any instrument -no rules, just fun! Experiment with sounds and create your own music.',
-      },
-      instruments: {
-        title: 'Instruments',
-        description: 'Practise songs or jam freely on different instruments. Build musical skills while having fun!',
-      },
-      settings: {
-        title: 'Settings',
-        description: 'Customise the app to work best for your family.',
+      language: {
+        title: 'Your language',
+        description: 'Tap the flag to change the language the app reads and speaks in.',
       },
       sound: {
         title: 'Sound Control',
         description: 'Tap here to control background music and sound effects.',
       },
       achievement: {
-        title: 'Next achievement',
-        description: 'The badge your child is closest to earning, and how far there is still to go. Tap it to see them all.',
+        title: 'Your Learning Journey',
+        description: 'This week\'s steps on your island, and the badge you\'re closest to. Tap it to fly down to the island.',
       },
       screenTime: {
         title: 'The Screensafe ring',
         description: 'This ring fills as today\'s screen time is used. Tap it any time to see the day. Once the time is up it becomes a red orb.',
         remainingCaption: 'Time left',
         spentCaption: 'Time is up',
+      },
+      streakOrb: {
+        title: 'Daily streak',
+        description: 'Each day you share a story adds one more. Tap it to see your best run.',
+      },
+      continueOrb: {
+        title: 'Continue',
+        description: 'It says “Read to bookmark” until you start a book. Then it says “Continue” and shows that book\'s cover. Tap it to open the book\'s card and choose a page.',
+      },
+      badgesOrb: {
+        title: 'Achievements',
+        description: 'How many badges you\'ve earned so far. Tap it to see the next one to earn.',
       },
     },
     catalogue: {
@@ -824,19 +908,19 @@ export default {
       },
       themes: {
         title: 'Choose a theme',
-        description: 'Stories, Learning or Music. Tap a tile and the shelf sorts itself to match.',
+        description: 'Stories, Learning or Music. Tap one and the shelf sorts itself to match.',
       },
       filter: {
         title: 'Finer filters',
         description: 'Bedtime, animals, calming and more. Pick a few and the shelf narrows to just those.',
       },
       featured: {
-        title: 'Today\'s pick',
-        description: 'A book chosen fresh each day. Tap Read Now and it opens straight away.',
+        title: 'Your next book',
+        description: 'The book you\'re part-way through, or a fresh pick each day. Tap Read Now to open its card.',
       },
       shelves: {
         title: 'Shelves to swipe',
-        description: 'Swipe along any shelf, or tap See all for the whole theme at once.',
+        description: 'Swipe along any shelf, or tap See all for the whole theme. Tap a book to open its card.',
       },
       navProgress: {
         title: 'Progress',
@@ -848,7 +932,9 @@ export default {
       },
       navProfile: {
         title: 'Profile',
-        description: 'Saved favourites, the badge wall, and the books kept on this device.',
+        description: 'Saved favourites, the badge wall, and the books kept on this device. Now and then it turns into a gold sign-in symbol: that means nobody is signed in yet, and a tap here takes you to sign in.',
+        profileCaption: 'Your profile',
+        loginCaption: 'Time to sign in',
       },
     },
     progress: {
@@ -896,36 +982,21 @@ export default {
         title: 'Change the profile',
         description: 'Tap the picture or the name to change the avatar, name or age. A grown-up answers a quick question first.',
       },
+      login: {
+        title: 'Sign in',
+        description: 'Signing in saves the badges, the streak and where each story left off - and carries them to every device you use together.',
+      },
+      home: {
+        title: 'Back home',
+        description: 'Home takes you back to the night sky whenever you are done here.',
+      },
       tabs: {
         title: 'Saved, Badges, Manage',
         description: 'Favourites you have hearted, the badge wall, and the books on this device, with room to remove any.',
       },
       settings: {
         title: 'Grown-ups\' settings',
-        description: 'Language, screen time and your account, behind the grown-ups\' gate.',
-      },
-    },
-    // Screen Time Tips - keys match tutorial.screenTime.* in tutorial-content.ts
-    screenTime: {
-      intro: {
-        title: 'Screen Time Dashboard',
-        description: 'Track and manage your child\'s daily screen time with age-appropriate limits.',
-      },
-      ageBased: {
-        title: 'Age-Based Limits',
-        description: 'Set your child\'s age to get WHO/AAP recommended screen time limits automatically.',
-      },
-      heatmap: {
-        title: 'Weekly Activity',
-        description: 'See patterns in screen time usage throughout the week to help establish healthy routines.',
-      },
-      reminders: {
-        title: 'Set Reminders',
-        description: 'Create custom reminders for activities, breaks, or bedtime routines.',
-      },
-      routine: {
-        title: 'Build Healthy Routines',
-        description: 'Use screen time data to establish consistent daily routines that work for your family.',
+        description: 'Text size, screen time, reminders and your account, behind the grown-ups\' gate.',
       },
     },
     // Story Reader Tips - keys match tutorial.storyReader.* in tutorial-content.ts
@@ -966,16 +1037,38 @@ export default {
     // Book Mode Tips - keys match tutorial.bookMode.* in tutorial-content.ts
     bookMode: {
       read: {
-        title: 'Read Mode',
-        description: 'Tap here to read the story yourself with your child. Turn pages at your own pace.',
+        title: 'Read Together',
+        description: 'Read the story aloud together and turn the pages at your own pace. Part-way through, it carries on where you left off.',
       },
       record: {
-        title: 'Record Mode',
-        description: 'Record your own voice reading the story. Perfect for when you\'re away!',
+        title: 'Record',
+        description: 'Record your own voice reading the story, for your child to hear when you\'re away. A grown-up answers a quick question first.',
       },
       narrate: {
-        title: 'Listen Mode',
-        description: 'Listen to a pre-recorded narration of the story. Great for bedtime!',
+        title: 'Play Along',
+        description: 'The story is read aloud with a recorded voice and the pages turn on their own. Lovely at bedtime.',
+      },
+      pages: {
+        title: 'Start from a page',
+        description: 'Every page of the book, with your place ringed in gold. Tap one to start reading from there.',
+      },
+    },
+    island: {
+      welcome: {
+        title: 'Your learning island',
+        description: 'One small step a day this week: a story, a game or a song to share. The trail lights up as you go.',
+      },
+      checkpoint: {
+        title: 'Today\'s step',
+        description: 'The glowing checkpoint is today\'s. Tap it to begin. The rest open one day at a time.',
+      },
+      plan: {
+        title: 'Today\'s plan',
+        description: 'What today\'s step is, how long it takes and what it builds. Start activity begins it; Preview lets you look first.',
+      },
+      home: {
+        title: 'Back home',
+        description: 'Fly back up to your home sky whenever you\'re done.',
       },
     },
     // Record Mode Tips - keys match tutorial.recordMode.* in tutorial-content.ts
@@ -1035,24 +1128,24 @@ export default {
     // Settings Walkthrough - keys match tutorial.settings.* in tutorial-content.ts
     settings: {
       intro: {
-        title: 'Settings',
-        description: 'Customise the app to work best for your family.',
+        title: 'Grown-ups\' settings',
+        description: 'A few choices that shape the app for your family. Change any of them whenever you like.',
       },
-      login: {
-        title: 'Account & Sync',
-        description: 'Sign in to save your progress and sync across devices.',
-      },
-      language: {
-        title: 'Language',
-        description: 'Choose your preferred language for the app interface.',
-      },
-      accessibility: {
-        title: 'Accessibility',
-        description: 'Adjust text size and other settings for easier use.',
+      textSize: {
+        title: 'Text size',
+        description: 'Make the words bigger or smaller all through the app, to suit whoever is reading.',
       },
       screenTime: {
-        title: 'Screen Time',
-        description: 'Set healthy limits and track daily usage.',
+        title: 'Screen time',
+        description: 'Turn this on for a gentle daily limit that suits your child\'s age. The Screensafe ring shows how the day is going. Turn it off at any time.',
+      },
+      reminders: {
+        title: 'Smart reminders',
+        description: 'A quiet nudge at the times you choose, for stories, feelings or music.',
+      },
+      crashReports: {
+        title: 'Crash reports',
+        description: 'If something goes wrong, an anonymous report helps us fix it. Switch it off here if you\'d rather.',
       },
     },
     // Music Mode Tips - keys match tutorial.musicMode.* in tutorial-content.ts
@@ -1082,36 +1175,6 @@ export default {
         description: "Want to try a different sound? Open the menu and tap'Change Instrument' to switch anytime.",
       },
     },
-    // Story Modes Tour - explains Interactive, Musical and Jigsaw modes
-    storyModes: {
-      welcome: {
-        title: 'Three Ways to Explore!',
-        description: 'Every child learns differently. Choose the story experience that sparks your child\'s curiosity -each one builds essential skills through the magic of play.',
-      },
-      interactive: {
-        title: 'Interactive Stories',
-        description: 'Tap, swipe and discover! Interactive stories bring pages to life with touchable surprises, cause-and-effect moments and hands-on learning activities. Research shows active participation during storytime strengthens comprehension, fine motor skills and early problem-solving.',
-      },
-      musical: {
-        title: 'Musical Stories',
-        description: 'Read, play and perform! Musical stories weave real instrument challenges into every adventure -your child learns rhythm, melody and coordination while following the tale. Studies confirm early music exposure boosts memory, language development and emotional expression.',
-      },
-      jigsaw: {
-        title: 'Jigsaw Stories',
-        description: 'Piece it together! Jigsaw stories hide beautiful puzzles within each page, building spatial awareness, patience and logical thinking. Completing puzzles gives children a real sense of achievement and strengthens visual-perceptual skills that support reading readiness.',
-      },
-    },
-    // Gesture Hints - keys match tutorial.gestures.* in tutorial-content.ts
-    gestures: {
-      speakerLongPress: {
-        title: 'Long Press Tip',
-        description: 'Long press the speaker button for more audio options.',
-      },
-      storySwipe: {
-        title: 'Swipe Navigation',
-        description: 'Swipe left or right to turn pages quickly.',
-      },
-    },
     // Emotion Cards Tips
     emotionCards: {
       welcome: {
@@ -1135,63 +1198,6 @@ export default {
         description: 'Switch between emoji, animal, and bear themes to keep it fresh and engaging!',
       },
     },
-    // Spelling Tips
-    spelling: {
-      welcome: {
-        title: 'Spelling Activities',
-        description: 'Welcome to Spelling! Fun interactive activities to help your child learn letters, words and spelling.',
-      },
-      ages: {
-        title: 'Age-Appropriate Content',
-        description: 'Activities are grouped by age range. Use the carousel at the top to filter for your child\'s level.',
-      },
-      together: {
-        title: 'Learn Together',
-        description: 'Sit with your child and sound out the letters together. Encourage them and celebrate every attempt!',
-      },
-      benefit: {
-        title: 'Building Literacy',
-        description: 'Early spelling practice builds phonemic awareness, letter recognition and a love of words that lasts a lifetime.',
-      },
-    },
-    // Numbers Tips
-    numbers: {
-      welcome: {
-        title: 'Number Activities',
-        description: 'Welcome to Numbers! Engaging activities to help your child explore counting, shapes and early maths.',
-      },
-      ages: {
-        title: 'Age-Appropriate Content',
-        description: 'Activities are grouped by age range. Use the carousel at the top to find the right level for your child.',
-      },
-      together: {
-        title: 'Count Together',
-        description: 'Count out loud together, point to objects and make numbers part of everyday play!',
-      },
-      benefit: {
-        title: 'Building Numeracy',
-        description: 'Early number play develops logical thinking, pattern recognition and a confident foundation for maths.',
-      },
-    },
-    // Feelings Tips
-    feelings: {
-      welcome: {
-        title: 'Feelings Activities',
-        description: 'Welcome to Feelings! Activities that help your child recognise, name and understand emotions.',
-      },
-      ages: {
-        title: 'Age-Appropriate Content',
-        description: 'Activities are grouped by age range. Choose activities suited to your child\'s emotional development.',
-      },
-      together: {
-        title: 'Explore Together',
-        description: 'Talk about emotions openly. Ask "How does that make you feel?" and share your own feelings too.',
-      },
-      benefit: {
-        title: 'Emotional Intelligence',
-        description: 'Understanding emotions builds empathy, self-regulation and strong social skills — essential for lifelong wellbeing.',
-      },
-    },
     // Practise Mode Tips
     practise: {
       welcome: {
@@ -1209,25 +1215,6 @@ export default {
       benefit: {
         title: 'Musical Development',
         description: 'Learning to play songs develops rhythm, coordination, memory and concentration — all through the joy of music.',
-      },
-    },
-    // Freeplay Mode Tips
-    freeplay: {
-      welcome: {
-        title: 'Freeplay Mode',
-        description: 'No rules, just fun! Explore any instrument and create your own music. Perfect for creativity and self-expression.',
-      },
-      instrument: {
-        title: 'Choose Your Instrument',
-        description: 'Pick any instrument from the carousel. Try them all to discover new sounds and favourites!',
-      },
-      play: {
-        title: 'Play Freely',
-        description: 'Press the coloured buttons to make music. There are no wrong notes — every sound is part of the adventure!',
-      },
-      benefit: {
-        title: 'Creative Expression',
-        description: 'Free musical play nurtures creativity, self-confidence and a love of music that grows with your child.',
       },
     },
   },
@@ -2958,7 +2945,7 @@ export default {
       title: 'A calm and safer\nkind of screen time.',
       noAds: 'No adverts',
       noTracking: 'No behavioural tracking',
-      noPressure: 'No streaks or pressure',
+      noPressure: 'No pressure, ever',
       gentle: 'Gentle sounds and movement',
       body: 'Quiet activities, soft learning and forgiving interactions whilst being stimulant-safe.',
     },
@@ -3085,7 +3072,7 @@ export default {
       kindMoments: { title: 'Kind moments', description: 'You\'re learning to be kind.' },
     },
     badges: {
-      firstStory: { title: 'First Story', description: 'Open your very first story' },
+      firstStory: { title: 'First Story', description: 'Finish your very first story' },
       readingTogether: { title: 'Reading Together', description: 'Share 3 story times this week' },
       newWorlds: { title: 'New Worlds', description: 'Explore 3 different kinds of story' },
       favouriteFinder: { title: 'Favourite Finder', description: 'Choose a favourite story' },

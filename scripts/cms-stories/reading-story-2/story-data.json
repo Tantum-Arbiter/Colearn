@@ -21,7 +21,7 @@
   "coverImage": "assets/stories/reading-story-2/cover/cover.webp",
   "isAvailable": true,
   "ageRange": "3-6",
-  "duration": 4,
+  "pageCount": 4,
   "description": "A spelling challenge adventure where children spell words letter by letter.",
   "localizedDescription": {
     "en": "A spelling challenge adventure where children spell words letter by letter.",

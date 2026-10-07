@@ -111,7 +111,7 @@ export const SplashSky = memo(function SplashSky({
 
       {lively ? <ShootingStar width={width} height={height} /> : null}
 
-      <EarthHorizon testID="splash-horizon" edge="bottom" width={width} height={height} timeOfDay={timeOfDay} />
+      <EarthHorizon testID="splash-horizon" edge="bottom" width={width} height={height} />
     </View>
   );
 });

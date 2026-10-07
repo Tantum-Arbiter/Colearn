@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState, useRef } from 'react';
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { AppState, AppStateStatus, BackHandler, Dimensions, View, Platform, DevSettings, Alert, StyleSheet } from 'react-native';
 import * as ScreenOrientation from 'expo-screen-orientation';
@@ -24,15 +24,19 @@ import { OnboardingFlow } from '@/components/onboarding/onboarding-flow';
 import { LoginScreen } from '@/components/auth/login-screen';
 import { AUTH_GRADIENT } from '@/components/auth/auth-theme';
 import { AccountScreen } from '@/components/account/account-screen';
-import { accountReturnPage } from '@/constants/page-slide';
-import { MainMenu, suppressNextContainerFadeIn } from '@/components/main-menu';
-import { suppressNextCarouselAnimation } from '@/components/main-menu/menu-carousel';
+import { accountReturnPage, voyageStaysOut } from '@/constants/page-slide';
+import { ALL_STORIES } from '@/data/stories';
+import type { PlanLaunch } from '@/types/learning-plan';
+import type { PlanCardRect } from '@/components/island/plan-panel';
+import { previewActivity } from '@/constants/learning-plan';
+import { MainMenu } from '@/components/main-menu';
+import { appTreeMounted, authEntrance, authOverlayUp, landsOnMainMenu, menuRevealed, pageAfterAuth, type AppView, type AuthEntrance } from '@/constants/app-shell';
+import { AuthOverlay } from '@/components/auth/auth-overlay';
 import { ApiClient } from '@/services/api-client';
 import { SecureStorage } from '@/services/secure-storage';
-import { backgroundSaveService } from '@/services/background-save-service';
 import { SimpleStoryScreen } from '@/components/stories/simple-story-screen';
 import type { CatalogueSectionRequest } from '@/components/stories/catalogue/story-catalogue-screen';
-import { catalogueSectionFor } from '@/constants/catalogue-destinations';
+import { catalogueSectionFor, type DestinationFocus } from '@/constants/catalogue-destinations';
 import { StoryBookReader } from '@/components/stories/story-book-reader';
 import { PractiseScreen } from '@/components/music/practise-screen';
 import { FreeplayScreen } from '@/components/music/freeplay-screen';
@@ -45,9 +49,12 @@ import { preloadCriticalImages, preloadSecondaryImages } from '@/services/image-
 import { EnhancedPageTransition } from '@/components/ui/enhanced-page-transition';
 import { JourneyBarProvider, JourneyBarOutlet } from '@/components/child-ui/journey-bar-slot';
 import { OwlGuideLayer, OwlGuideLayerProvider, guidePages } from '@/components/owl-guide/owl-guide-layer';
-import { PAGE_TRANSITION_DURATION_MS, SLIDE_AFTER_SECTION_SWITCH_MS } from '@/constants/page-transition';
+import { INSTANT_PAGES, PAGE_TRANSITION_DURATION_MS, SLIDE_AFTER_SECTION_SWITCH_MS, prewarmedDuring } from '@/constants/page-transition';
+import { IslandVoyageProvider, useIslandVoyageController } from '@/contexts/island-voyage-context';
+import { IslandScene } from '@/components/island/island-scene';
+import { VoyageLayer } from '@/components/island/voyage-layer';
+import type { VoyagePage } from '@/constants/island-voyage';
 
-const PREWARMED_PAGES = ['stories'] as const;
 import { StoryTransitionProvider, useStoryTransition } from '@/contexts/story-transition-context';
 import { ActivityTransitionProvider, useActivityTransition } from '@/contexts/ActivityTransitionContext';
 import { GlobalSoundProvider } from '@/contexts/global-sound-context';
@@ -59,11 +66,11 @@ import { StartupLoadingScreen } from '@/components/startup-loading-screen';
 import { BatchSyncService } from '@/services/batch-sync-service';
 import { CacheManager } from '@/services/cache-manager';
 import { StoryLoader } from '@/services/story-loader';
-import { ProfileSyncService } from '@/services/profile-sync-service';
+import { ChildSyncService } from '@/services/child-sync-service';
 import { VersionManager } from '@/services/version-manager';
 // Import reminder service to trigger initialization and reschedule notifications on app startup
 import { reminderService } from '@/services/reminder-service';
-import { initialize as initSubscriptions } from '@/services/subscription-service';
+import { initialize as initSubscriptions, identifySignedInAccount } from '@/services/subscription-service';
 import Constants from 'expo-constants';
 import { isE2eAllowed } from '@/services/e2e-state';
 import { useE2eLinks } from '@/hooks/use-e2e-links';
@@ -97,9 +104,14 @@ void reminderService;
 
 
 
+// The root view behind every React view. iOS shows it in the corners while the
+// screen turns, so it wears the night navy the story opening's veil uses --
+// otherwise the turn flashes navy-on-black.
+const ROOT_BACKGROUND = '#0A0F2C';
+
 export default function RootLayout() {
   return (
-    <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+    <View style={{ flex: 1, backgroundColor: ROOT_BACKGROUND }}>
       <GlobalSoundProvider>
         <OwlGuideProvider>
           <ScreenTimeProvider>
@@ -116,11 +128,6 @@ export default function RootLayout() {
 }
 
 // Main app content that can access the story transition context
-// The root view behind every React view. iOS shows it in the corners while the
-// screen turns, so it wears the night navy the story opening's veil uses --
-// otherwise the turn flashes navy-on-black.
-const ROOT_BACKGROUND = '#0A0F2C';
-
 function AppContent() {
   useE2eLinks(isE2eAllowed(__DEV__, Constants.expoConfig?.extra));
 
@@ -128,17 +135,22 @@ function AppContent() {
     SystemUI.setBackgroundColorAsync(ROOT_BACKGROUND).catch(() => undefined);
   }, []);
 
+  useEffect(() => ChildSyncService.startAutoSync(), []);
+
   // Access story transition context to know when to show story reader
   const {
     selectedStory: transitionStory,
     selectedMode: transitionMode,
     selectedVoiceOver: transitionVoiceOver,
+    selectedStartPage,
     setOnBeginCallback,
     setOnReturnToModeSelectionCallback,
     setOnCancelCallback,
     storyOpenRequest,
+    requestStoryOpen,
     clearStoryOpen,
     readerRevealStyle,
+    startTransition: openStoryCard,
   } = useStoryTransition();
 
   // Access activity transition context for learning game transitions
@@ -149,6 +161,7 @@ function AppContent() {
     setOnReturnCallback: setActivityOnReturnCallback,
     exitGame: exitActivityGame,
     isInGame: isInActivityGame,
+    startTransition: openActivityCard,
   } = useActivityTransition();
 
   const colorScheme = useColorScheme();
@@ -209,8 +222,7 @@ function AppContent() {
   // Track if we've already started background music to prevent auto-restart after manual pause
   const [hasStartedBackgroundMusic, setHasStartedBackgroundMusic] = useState(false);
 
-  type AppView = 'splash' | 'onboarding' | 'login' | 'loading' | 'app' | 'main' | 'stories' | 'story-reader' | 'account';
-  type PageKey = 'main' | 'stories' | 'story-reader' | 'account' | 'practise' | 'freeplay' | 'spelling' | 'numbers' | 'feelings' | 'spelling-game';
+  type PageKey = 'main' | 'stories' | 'story-reader' | 'account' | 'practise' | 'freeplay' | 'spelling' | 'numbers' | 'feelings' | 'spelling-game' | 'island';
 
   const [currentView, setCurrentView] = useState<AppView>('splash');
   // The splash stays over whichever page the app opens on until it has faded off it
@@ -218,19 +230,50 @@ function AppContent() {
   const handleSplashGone = useCallback(() => setSplashGone(true), []);
   const [currentPage, setCurrentPage] = useState<PageKey>('main');
   const accountOpenedFromRef = useRef<PageKey>('main');
+  const handleVoyagePage = useCallback((page: VoyagePage) => setCurrentPage(page), []);
+  const voyage = useIslandVoyageController(handleVoyagePage);
+  const settleVoyageHome = voyage.settleHome;
+  const comeBackFromIsland = voyage.comeBack;
+  const launchedFromIslandRef = useRef(false);
+  const storyCardReturnRef = useRef<PageKey>('stories');
+  const leavePlanStep = useAppStore((state) => state.leavePlanStep);
+
+  useEffect(() => {
+    if (!voyageStaysOut(currentPage, launchedFromIslandRef.current)) settleVoyageHome();
+  }, [currentPage, settleVoyageHome]);
+
+  useEffect(() => {
+    if (currentPage !== 'island' && currentPage !== 'main') return;
+    launchedFromIslandRef.current = false;
+    leavePlanStep();
+  }, [currentPage, leavePlanStep]);
   const [selectedStory, setSelectedStory] = useState<Story | null>(null);
   // Story being read - kept separate so it persists during book closing animation
   const [storyBeingRead, setStoryBeingRead] = useState<Story | null>(null);
+  const [readerStartPage, setReaderStartPage] = useState<number | undefined>(undefined);
   const [showStoryReader, setShowStoryReader] = useState(false);
   // When false, EnhancedPageTransition sets positions instantly (overlay handles visual transition)
   const [animatePageTransition, setAnimatePageTransition] = useState(true);
 
   // Track if sync is in progress to prevent premature navigation
   const syncInProgressRef = useRef(false);
-  // When true, loading overlay has fully slid in -safe to mount MainMenu behind it
-  const [loadingMenuReady, setLoadingMenuReady] = useState(false);
   // True while the loading screen is still sliding in after login -keeps login visible behind overlay
   const [showLoginBehindLoading, setShowLoginBehindLoading] = useState(false);
+  const [authBaseUp, setAuthBaseUp] = useState(true);
+  useEffect(() => {
+    if (currentView === 'login') setAuthBaseUp(true);
+  }, [currentView]);
+  const handleLoginRevealStart = useCallback(() => setAuthBaseUp(false), []);
+  const [authVisit, setAuthVisit] = useState<{ from: AppView; entrance: AuthEntrance; returnPage: PageKey | null }>({
+    from: 'splash',
+    entrance: 'fade',
+    returnPage: null,
+  });
+  if (authOverlayUp(currentView) !== authOverlayUp(authVisit.from) && authOverlayUp(currentView)) {
+    setAuthVisit({ from: currentView, entrance: authEntrance(authVisit.from), returnPage: appTreeMounted(authVisit.from) ? currentPage : null });
+  } else if (!authOverlayUp(currentView) && currentView !== authVisit.from) {
+    setAuthVisit((visit) => ({ ...visit, from: currentView }));
+  }
 
 
 
@@ -311,6 +354,8 @@ function AppContent() {
 
       if (!isAppReady) {
         setCurrentView('splash');
+        setCurrentPage('main');
+        setSplashGone(false);
         return;
       }
 
@@ -329,7 +374,7 @@ function AppContent() {
       } else if (isGuestMode) {
         // User is in guest mode - allow access without authentication (no backend calls)
         setCurrentView('app');
-        setCurrentPage('main');
+        if (landsOnMainMenu(currentView)) setCurrentPage('main');
       } else {
         // If we just logged in or sync is in progress, don't interfere
         // The StartupLoadingScreen will call onComplete() when sync finishes
@@ -363,7 +408,7 @@ function AppContent() {
               // Returning user -instant main menu with cached thumbnails (via stable cacheKey).
               // Background sync refreshes signed URLs silently.
               setCurrentView('app');
-              setCurrentPage('main');
+              if (landsOnMainMenu(currentView)) setCurrentPage('main');
 
               // Background sync -no loading screen for returning users
               (async () => {
@@ -377,10 +422,9 @@ function AppContent() {
                     }
                   } catch (e) { log.warn('[Layout] Background token validation skipped:', e); }
                   // Sync profile
-                  try {
-                    const profile = await ApiClient.getProfile();
-                    await ProfileSyncService.fullSync(profile);
-                  } catch (e) { log.warn('[Layout] Background profile sync skipped:', e); }
+                  await ChildSyncService.sync();
+                  await ChildSyncService.recordConsentIfNeeded();
+                  await identifySignedInAccount();
                   // Validate cache
                   await CacheManager.validateAndCleanCache();
                   // Metadata sync
@@ -474,7 +518,7 @@ function AppContent() {
           } else if (isAuthenticated) {
             // Auth successful - retry any pending background saves
             log.info('[AppState] Authentication valid');
-            backgroundSaveService.retryPendingSaves();
+            ChildSyncService.requestSync();
           }
           // If not authenticated and no onboarding completed, do nothing
         } catch (error) {
@@ -540,6 +584,7 @@ function AppContent() {
     const handleBegin = () => {
       // Use the transition's selected story for the story reader
       if (transitionStory) {
+        setReaderStartPage(selectedStartPage?.storyId === transitionStory.id ? selectedStartPage.pageIndex : undefined);
         setStoryBeingRead(transitionStory);
         setShowStoryReader(true);
         setCurrentView('story-reader');
@@ -552,7 +597,7 @@ function AppContent() {
     return () => {
       setOnBeginCallback(null);
     };
-  }, [transitionStory, setOnBeginCallback]);
+  }, [transitionStory, selectedStartPage, setOnBeginCallback]);
 
   // A caller that ran its own opening ritual asks for the reader directly
   useEffect(() => {
@@ -560,6 +605,7 @@ function AppContent() {
       return;
     }
 
+    setReaderStartPage(undefined);
     setStoryBeingRead(storyOpenRequest.story);
     setShowStoryReader(true);
     setCurrentView('story-reader');
@@ -593,7 +639,8 @@ function AppContent() {
       // This is needed because we keep currentView as 'story-reader' during mode selection
       // to maintain landscape orientation
       setCurrentView('app');
-      setCurrentPage('stories');
+      setCurrentPage(storyCardReturnRef.current);
+      storyCardReturnRef.current = 'stories';
     };
 
     setOnCancelCallback(() => () => handleCancel());
@@ -652,18 +699,10 @@ function AppContent() {
   };
 
   const handleLoginSkip = () => {
-    // Suppress carousel re-animation and container fade when MainMenu remounts in 'app' view
-    // (the guest flow already animated the carousel behind the overlay)
-    suppressNextCarouselAnimation();
-    suppressNextContainerFadeIn();
     setGuestMode(true);
     setShowLoginAfterOnboarding(false);
-    // Keep the login screen (with its guest MainMenu) mounted briefly so the app MainMenu
-    // can render underneath -prevents a visible flicker between unmount/remount
-    setShowLoginBehindLoading(true);
     setCurrentView('app');
-    setCurrentPage('main');
-    setTimeout(() => setShowLoginBehindLoading(false), 500);
+    setCurrentPage(pageAfterAuth(authVisit.returnPage));
   };
 
 
@@ -675,7 +714,7 @@ function AppContent() {
   // When set, MainMenu should show the specified sub-menu instead of the main carousel
   const [returnToSubMenu, setReturnToSubMenu] = useState<'stories' | 'instruments' | 'learning' | null>(null);
 
-  const handleMainMenuNavigate = async (destination: string) => {
+  const handleMainMenuNavigate = async (destination: string, focus?: DestinationFocus) => {
     // Clear returnToSubMenu when navigating away from main menu
     setReturnToSubMenu(null);
     // Handle stories-{mode} destinations from mode card selection
@@ -707,7 +746,7 @@ function AppContent() {
       const section = catalogueSectionFor(destination);
       if (section) {
         setSelectedStoryMode(null);
-        setStoriesSection((current) => ({ section, key: current.key + 1 }));
+        setStoriesSection((current) => ({ section, key: current.key + 1, badgeId: focus?.badgeId, recommend: focus?.recommend }));
         setTimeout(() => {
           setCurrentPage(pageKey);
           setCurrentScreen(destination);
@@ -742,11 +781,19 @@ function AppContent() {
   };
 
   const handleBackToInstruments = () => {
+    if (launchedFromIslandRef.current) {
+      setCurrentPage('island');
+      return;
+    }
     setReturnToSubMenu('instruments');
     setCurrentPage('main');
   };
 
   const handleBackToLearning = () => {
+    if (launchedFromIslandRef.current) {
+      setCurrentPage('island');
+      return;
+    }
     setReturnToSubMenu('learning');
     setCurrentPage('main');
   };
@@ -758,6 +805,7 @@ function AppContent() {
     setStoryBeingRead(null);
     setSelectedStory(null);
     setCurrentView('app');
+    leavePlanStep();
     // currentPage stays 'stories' - we never change it when entering/exiting story reader
 
     // Prompt for app rating after returning from reader (not during the story):
@@ -799,6 +847,55 @@ function AppContent() {
     return () => { setActivityOnReturnCallback(null); };
   }, [setActivityOnReturnCallback, spellingReturnPage]);
 
+  const handleStartActivity = useCallback((launch: PlanLaunch) => {
+    switch (launch.kind) {
+      case 'story': {
+        const story = ALL_STORIES.find((candidate) => candidate.id === launch.storyId);
+        if (story) requestStoryOpen(story, 'read', null);
+        return;
+      }
+      case 'spelling':
+        setSpellingActivityId(launch.activityId);
+        setSpellingStoryId(undefined);
+        setSpellingReturnPage('island');
+        launchedFromIslandRef.current = true;
+        setCurrentPage('spelling-game');
+        return;
+      case 'feelings':
+        launchedFromIslandRef.current = true;
+        setCurrentPage('feelings');
+        return;
+      case 'music':
+        launchedFromIslandRef.current = true;
+        setCurrentPage('practise');
+    }
+  }, [requestStoryOpen]);
+
+  const handleOpenStoryCardFromHome = useCallback((storyId: string, from: PlanCardRect) => {
+    const story = ALL_STORIES.find((candidate) => candidate.id === storyId);
+    if (!story) return;
+    storyCardReturnRef.current = 'main';
+    openStoryCard(story.id, from, story, [story], { focusPages: true });
+  }, [openStoryCard]);
+
+  const handlePreviewActivity = useCallback((launch: PlanLaunch, from: PlanCardRect) => {
+    if (launch.kind === 'story') {
+      const story = ALL_STORIES.find((candidate) => candidate.id === launch.storyId);
+      if (!story) return;
+      storyCardReturnRef.current = 'island';
+      openStoryCard(story.id, from, story);
+      return;
+    }
+    if (launch.kind !== 'spelling') return;
+    const activity = previewActivity(launch.activityId);
+    if (!activity) return;
+    setSpellingActivityId(launch.activityId);
+    setSpellingStoryId(undefined);
+    setSpellingReturnPage('island');
+    launchedFromIslandRef.current = true;
+    openActivityCard(activity, from);
+  }, [openActivityCard, openStoryCard]);
+
   // Learning screen activity selection - sets spelling state; the activity
   // transition overlay handles the visual navigation, so we do NOT
   // setCurrentPage here — that happens in handleActivityBegin.
@@ -820,6 +917,7 @@ function AppContent() {
       const stories = await StoryLoader.getStories();
       const story = stories.find(s => s.id === storyId);
       if (story) {
+        setReaderStartPage(undefined);
         setStoryBeingRead(story);
         setShowStoryReader(true);
         setCurrentView('story-reader');
@@ -849,6 +947,10 @@ function AppContent() {
     if (currentPage !== 'main') {
       // Account screen handles its own internal back navigation
       if (currentPage === 'account') return false;
+      if (currentPage === 'island') {
+        comeBackFromIsland();
+        return true;
+      }
       // Practise/freeplay go back to instruments sub-menu
       if (currentPage === 'practise' || currentPage === 'freeplay') {
         handleBackToInstruments();
@@ -869,7 +971,7 @@ function AppContent() {
 
     // On main menu - let Android handle it (exit/minimize app)
     return false;
-  }, [currentPage, showStoryReader, storyBeingRead, isInActivityGame, exitActivityGame]);
+  }, [currentPage, showStoryReader, storyBeingRead, isInActivityGame, exitActivityGame, comeBackFromIsland]);
 
   useEffect(() => {
     if (Platform.OS !== 'android') return;
@@ -879,9 +981,16 @@ function AppContent() {
     return () => subscription.remove();
   }, [currentView, handleHardwareBack]);
 
+  const theme = colorScheme === 'dark' ? DarkTheme : DefaultTheme;
+  if (currentView === 'loading') {
+    syncInProgressRef.current = true;
+  }
+
   return (
-    <View style={{ flex: 1 }}>
-      {renderView()}
+    <View style={{ flex: 1, backgroundColor: ROOT_BACKGROUND }}>
+            {appTreeMounted(currentView) ? renderAppTree() : null}
+      {currentView === 'onboarding' ? <OnboardingFlow onComplete={handleOnboardingComplete} /> : null}
+      {authOverlayUp(currentView) ? renderAuthOverlay() : null}
       {!splashGone && (
         <View style={[StyleSheet.absoluteFill, { zIndex: 5000 }]}>
           <AppSplashScreen leaving={currentView !== 'splash'} onGone={handleSplashGone} />
@@ -890,152 +999,135 @@ function AppContent() {
     </View>
   );
 
-  function renderView() {
-    if (currentView === 'splash') {
-      return null;
-    }
-
-    if (currentView === 'onboarding') {
-      return <OnboardingFlow onComplete={handleOnboardingComplete} />;
-    }
-
-    // Login and loading views are combined so the LoginScreen instance stays mounted
-    // during the loading overlay's slide-in -preventing a flash when transitioning.
-    if (currentView === 'login' || currentView === 'loading') {
-      if (currentView === 'loading') {
-        syncInProgressRef.current = true;
-      }
-      return (
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+  function renderAuthOverlay() {
+    return (
+      <AuthOverlay entrance={authVisit.entrance}>
+        <ThemeProvider value={theme}>
           {/* the night base sits behind LoginScreen's fade-in -- an unstyled root
               here flashes white while the screen's opacity ramps up */}
-          <View style={{ flex: 1, backgroundColor: AUTH_GRADIENT[0] }}>
+          <View style={{ flex: 1, backgroundColor: authBaseUp ? AUTH_GRADIENT[0] : 'transparent' }} testID="auth-base">
             {/* Login screen -stays mounted during both 'login' and 'loading' views.
                 During loading, it sits behind the overlay until the slide-in covers it,
                 then gets unmounted once the overlay is fully opaque (onSlideInComplete). */}
             {(currentView === 'login' || showLoginBehindLoading) && (
               <View style={StyleSheet.absoluteFill}>
-                <LoginScreen onSuccess={handleLoginSuccess} onSkip={handleLoginSkip} />
+                <LoginScreen
+                  onSuccess={handleLoginSuccess}
+                  onSkip={handleLoginSkip}
+                  onRevealStart={handleLoginRevealStart}
+                  fadeIn={authVisit.entrance === 'fade'}
+                />
               </View>
-            )}
-
-            {/* MainMenu mounted after the overlay fully covers the screen.
-                disableTutorial prevents tips appearing before the menu is revealed.
-                entranceDelay keeps carousel buttons hidden until the slide-up reveal. */}
-            {loadingMenuReady && (
-              <MainMenu
-                onNavigate={handleMainMenuNavigate}
-                isActive={false}
-                disableTutorial={true}
-                entranceDelay={500}
-              />
             )}
 
             {/* Loading overlay (zIndex 10) -slides down over login, then up to reveal menu */}
             {currentView === 'loading' && (
               <StartupLoadingScreen
                 onSlideInComplete={() => {
-                  log.info('[Layout] Loading slide-in done -swapping login for main menu');
+                  log.info('[Layout] Loading slide-in done -login can go');
                   setShowLoginBehindLoading(false);
-                  setLoadingMenuReady(true);
+                  setAuthBaseUp(false);
                 }}
                 onComplete={() => {
                   syncInProgressRef.current = false;
                   justLoggedInRef.current = false;
-                  // Suppress carousel re-animation and container fade when MainMenu remounts in 'app' view
-                  suppressNextCarouselAnimation();
-                  suppressNextContainerFadeIn();
                   log.info('[Layout] Sync complete - transitioning to main menu');
                   setCurrentView('app');
-                  setCurrentPage('main');
-                  // Delay unmounting the loading MainMenu so the app-view MainMenu has time
-                  // to mount and render its images from cache -prevents a visible flicker
-                  // where strip images briefly disappear and re-decode between the two mounts.
-                  setTimeout(() => setLoadingMenuReady(false), 500);
+                  setCurrentPage(pageAfterAuth(authVisit.returnPage));
                 }}
               />
             )}
           </View>
           <StatusBar style="light" />
         </ThemeProvider>
-      );
-    }
+      </AuthOverlay>
+    );
+  }
 
-    // Handle main app navigation with story reader overlay
-    // Story reader is rendered on top of the app view so when it closes,
-    // the story selection page is already visible underneath - no flash
-    if (currentView === 'app' || currentView === 'story-reader') {
-      return (
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          {/* App navigation always rendered underneath */}
-          <JourneyBarProvider>
-          <OwlGuideLayerProvider>
-          <EnhancedPageTransition
-            currentPage={currentPage as string}
-            pages={guidePages({
-              main: <MainMenu onNavigate={handleMainMenuNavigate} isActive={currentPage === 'main'} returnToSubMenu={returnToSubMenu} />,
-              stories: <SimpleStoryScreen
-                onStorySelect={handleStorySelect}
-                selectedStory={selectedStory}
-                onBack={handleBackToMainMenu}
-                initialMode={selectedStoryMode}
-                sectionRequest={storiesSection}
-                onOpenSettings={handleOpenGrownUps}
-              />,
-              practise: <PractiseScreen onBack={handleBackToInstruments} isActive={currentPage === 'practise'} />,
-              freeplay: <FreeplayScreen onBack={handleBackToInstruments} isActive={currentPage === 'freeplay'} />,
-              spelling: <LearningScreen mode="spelling" onBack={handleBackToLearning} onActivitySelect={handleLearningActivitySelect} isActive={currentPage === 'spelling'} />,
-              numbers: <LearningScreen mode="numbers" onBack={handleBackToLearning} onActivitySelect={handleLearningActivitySelect} isActive={currentPage === 'numbers'} />,
-              'spelling-game': spellingActivityId ? (
-                <SpellingGameScreen
-                  activityId={spellingActivityId}
-                  storyId={spellingStoryId}
-                  onBack={() => {
-                    if (isInActivityGame) {
-                      exitActivityGame();
-                    } else {
-                      setCurrentPage(spellingReturnPage);
-                    }
-                  }}
-                  isActive={currentPage === 'spelling-game'}
-                />
-              ) : null,
-              feelings: <EmotionsScreen onBack={handleBackToLearning} isActive={currentPage === 'feelings'} />,
-              account: <AccountScreen onBack={handleAccountBack} isActive={currentPage === 'account'} />,
-            }, currentPage)}
-            duration={PAGE_TRANSITION_DURATION_MS}
-            animate={animatePageTransition}
-            prewarm={PREWARMED_PAGES}
-          />
-          <JourneyBarOutlet pageKey={currentPage as string} holdMs={animatePageTransition ? PAGE_TRANSITION_DURATION_MS : 0} />
-          {/* above the bar, so an owl pointing at the bar is not drawn behind it */}
-          <OwlGuideLayer />
-          </OwlGuideLayerProvider>
-          </JourneyBarProvider>
-
-          {/* Story reader rendered on top - only loads AFTER mode selection is complete (not during transition) */}
-          {/* zIndex 2000 ensures story reader stays above transition overlay (zIndex 1000) during exit animation */}
-          {(showStoryReader && storyBeingRead) && (
-            <Animated.View style={[{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 2000 }, readerRevealStyle]}>
-              <StoryBookReader
-                story={storyBeingRead}
-                initialMode={transitionMode}
-                initialVoiceOver={transitionVoiceOver}
-                skipCoverPage={true}
-                skipInitialFadeIn={true}
-                onExit={handleBackToStories}
+  // Handle main app navigation with story reader overlay
+  // Story reader is rendered on top of the app view so when it closes,
+  // the story selection page is already visible underneath - no flash
+  function renderAppTree() {
+    return (
+      <ThemeProvider value={theme}>
+        {/* App navigation always rendered underneath */}
+        <IslandVoyageProvider voyage={voyage}>
+        <JourneyBarProvider>
+        <OwlGuideLayerProvider>
+        <EnhancedPageTransition
+          currentPage={currentPage as string}
+          pages={guidePages({
+            main: (
+              <MainMenu
+                onNavigate={handleMainMenuNavigate}
+                onOpenStoryCard={handleOpenStoryCardFromHome}
+                isActive={currentPage === 'main'}
+                disableTutorial={!menuRevealed(currentView)}
+                returnToSubMenu={returnToSubMenu}
               />
-            </Animated.View>
-          )}
+            ),
+            stories: <SimpleStoryScreen
+              onStorySelect={handleStorySelect}
+              selectedStory={selectedStory}
+              onBack={handleBackToMainMenu}
+              initialMode={selectedStoryMode}
+              sectionRequest={storiesSection}
+              onOpenSettings={handleOpenGrownUps}
+              isActive={currentPage === 'stories' && menuRevealed(currentView)}
+            />,
+            practise: <PractiseScreen onBack={handleBackToInstruments} isActive={currentPage === 'practise'} />,
+            freeplay: <FreeplayScreen onBack={handleBackToInstruments} isActive={currentPage === 'freeplay'} />,
+            spelling: <LearningScreen mode="spelling" onBack={handleBackToLearning} onActivitySelect={handleLearningActivitySelect} isActive={currentPage === 'spelling'} />,
+            numbers: <LearningScreen mode="numbers" onBack={handleBackToLearning} onActivitySelect={handleLearningActivitySelect} isActive={currentPage === 'numbers'} />,
+            'spelling-game': spellingActivityId ? (
+              <SpellingGameScreen
+                activityId={spellingActivityId}
+                storyId={spellingStoryId}
+                onBack={() => {
+                  if (isInActivityGame) {
+                    exitActivityGame();
+                  } else {
+                    setCurrentPage(spellingReturnPage);
+                  }
+                }}
+                isActive={currentPage === 'spelling-game'}
+              />
+            ) : null,
+            feelings: <EmotionsScreen onBack={handleBackToLearning} isActive={currentPage === 'feelings'} />,
+            account: <AccountScreen onBack={handleAccountBack} onNavigate={handleMainMenuNavigate} isActive={currentPage === 'account' && menuRevealed(currentView)} />,
+            island: <IslandScene isActive={currentPage === 'island' && menuRevealed(currentView)} onStartActivity={handleStartActivity} onPreviewActivity={handlePreviewActivity} />,
+          }, currentPage)}
+          duration={PAGE_TRANSITION_DURATION_MS}
+          animate={animatePageTransition}
+          prewarm={prewarmedDuring(voyage.phase)}
+          instant={INSTANT_PAGES}
+        />
+        <JourneyBarOutlet pageKey={currentPage as string} holdMs={animatePageTransition && currentPage !== 'island' ? PAGE_TRANSITION_DURATION_MS : 0} />
+        <VoyageLayer />
+        {/* above the bar, so an owl pointing at the bar is not drawn behind it */}
+        <OwlGuideLayer />
+        </OwlGuideLayerProvider>
+        </JourneyBarProvider>
+        </IslandVoyageProvider>
 
-          <StatusBar style="auto" />
+        {/* Story reader rendered on top - only loads AFTER mode selection is complete (not during transition) */}
+        {/* zIndex 2000 ensures story reader stays above transition overlay (zIndex 1000) during exit animation */}
+        {(showStoryReader && storyBeingRead) && (
+          <Animated.View style={[{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 2000 }, readerRevealStyle]}>
+            <StoryBookReader
+              story={storyBeingRead}
+              initialMode={transitionMode}
+              initialVoiceOver={transitionVoiceOver}
+              skipCoverPage={true}
+              skipInitialFadeIn={true}
+              startPageIndex={readerStartPage}
+              onExit={handleBackToStories}
+            />
+          </Animated.View>
+        )}
 
-        </ThemeProvider>
-      );
-    }
-
-    // Fallback
-    return <MainMenu onNavigate={handleMainMenuNavigate} />;
+        <StatusBar style="auto" />
+      </ThemeProvider>
+    );
   }
 }
-

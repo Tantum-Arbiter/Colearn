@@ -43,7 +43,7 @@ function generateStoryCode(story) {
     coverImage: '', // Placeholder - add actual asset path
     isAvailable: true,
     ageRange: '${story.ageRange}',
-    duration: ${story.duration},
+    pageCount: ${story.duration},
     description: '${story.description}',
     pages: [
 ${generateStoryPages(story.id, story.duration)}

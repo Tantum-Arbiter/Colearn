@@ -1,0 +1,89 @@
+appId: com.growwithfreya.app
+tags:
+  - journey
+name: A child who has finished the week plays a day again, and finds the road map behind the last
+---
+- runFlow:
+    file: ../../helpers/start-seeded.yaml
+    env:
+      SEED: "onboarded=1&guest=1&tutorials=done&screenTime=reset&language=en&tier=free&childAgeMonths=30&planDone=7"
+- tapOn:
+    id: "achievement-card"
+# The dive down to the island takes a few seconds, longer the first time.
+- extendedWaitUntil:
+    visible:
+      id: "plan-checkpoint-7"
+    timeout: 60000
+- assertVisible:
+    id: "plan-panel-done"
+- assertNotVisible:
+    id: "roadmap-scene"
+
+# The last day, done, fades the road map in over the island, its heading after
+# it, and a screen reader can no longer reach the island while it is up.
+- tapOn:
+    id: "plan-checkpoint-7"
+- extendedWaitUntil:
+    visible:
+      id: "roadmap-scene"
+    timeout: 10000
+- extendedWaitUntil:
+    visible:
+      id: "roadmap-title"
+    timeout: 5000
+- assertVisible:
+    id: "roadmap-back-button"
+- assertVisible:
+    id: "roadmap-play-again"
+- assertVisible:
+    id: "roadmap-sound-button"
+- assertNotVisible:
+    id: "plan-checkpoint-1"
+- tapOn:
+    id: "roadmap-back-button"
+- extendedWaitUntil:
+    notVisible:
+      id: "roadmap-scene"
+    timeout: 10000
+- assertVisible:
+    id: "plan-checkpoint-1"
+
+# Any other day, done, simply plays again.
+- tapOn:
+    id: "plan-checkpoint-1"
+- runFlow: ../../helpers/close-the-reader.yaml
+# iOS can ask for a review a moment after the book closes, and the dialog hides
+# the island until it is answered.
+- retry:
+    maxRetries: 2
+    commands:
+      - runFlow: ../../helpers/dismiss-interruptions.yaml
+      - extendedWaitUntil:
+          visible:
+            id: "plan-checkpoint-7"
+          timeout: 30000
+- assertNotVisible:
+    id: "roadmap-scene"
+
+# Play again on the map plays the last day, and the map is gone on the way back.
+- tapOn:
+    id: "plan-checkpoint-7"
+- extendedWaitUntil:
+    visible:
+      id: "roadmap-play-again"
+    timeout: 10000
+- tapOn:
+    id: "roadmap-play-again"
+- runFlow: ../../helpers/close-the-reader.yaml
+# iOS can ask for a review a moment after the book closes, and the dialog hides
+# the island until it is answered.
+- retry:
+    maxRetries: 2
+    commands:
+      - runFlow: ../../helpers/dismiss-interruptions.yaml
+      - extendedWaitUntil:
+          visible:
+            id: "plan-checkpoint-7"
+          timeout: 30000
+- assertNotVisible:
+    id: "roadmap-scene"

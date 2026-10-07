@@ -250,11 +250,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   fullSize: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 10,
   },
   gameSlideContainer: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 20,
   },
 });

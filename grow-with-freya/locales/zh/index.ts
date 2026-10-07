@@ -492,7 +492,7 @@ export default {
   account: {
     sleepingSun: '睡着的太阳',
     sleepingMoon: '睡着的月亮',
-    title: '账户',
+    title: '设置',
     profile: '个人资料',
     nickname: '昵称',
     avatarType: '头像类型',
@@ -506,6 +506,7 @@ export default {
     termsAndConditions: '服务条款',
     privacyPolicy: '隐私政策',
     selectLanguage: '选择语言',
+    chooseLanguage: '选择你想用的语言',
     guestMode: '访客模式',
     createAccount: '创建账户以保存进度',
     crashReports: '崩溃报告',
@@ -514,6 +515,7 @@ export default {
     deleteAccountHint: '永久删除您的账户和所有数据',
   },
   profile: {
+    signedIn: '已登录',
     enterNickname: '输入昵称',
     nicknameTooLong: '昵称必须为20个字符或更少',
     editTitle: '编辑个人资料',
@@ -529,7 +531,6 @@ export default {
     noName: '小小探险家',
     downloadsUsed: '本设备上有 {{used}}/{{limit}} 本书',
     downloadsEmpty: '本设备上还没有内容 — 下载一本书，随时随地都能看',
-    downloadMeta: '{{minutes}} 分钟 · {{pages}} 页',
     downloadsCount: '本设备上有 {{count}} 本书',
     tabs: {
       saved: '已保存',
@@ -617,23 +618,79 @@ export default {
       consent: '您的同意保护您的家庭',
     },
   },
+  island: {
+    scene: '从空中看到的小岛，有雪山、森林、河流和灯塔',
+  },
+  roadmap: {
+    title: '冒险还在继续',
+    playAgain: '再玩一次',
+    scene: '一只背着背包的小熊坐在通往春日山谷的发光传送门前，下面是即将到来的冒险路线图',
+    stop: '{{quarter}}：{{place}}',
+    stops: {
+      japanNewZealand: '日本和新西兰',
+      franceItaly: '法国和意大利',
+      lapland: '拉普兰',
+    },
+  },
+  plan: {
+    places: {
+      storyTime: '故事时间',
+      wordGarden: '词语花园',
+      mathsMeadow: '数字草地',
+      feelingsCove: '心情小湾',
+      musicGrove: '音乐小林',
+      storyCorner: '故事角',
+      storyBridge: '故事桥',
+    },
+    domains: {
+      language: '语言',
+      maths: '数学',
+      feelings: '情绪',
+      music: '音乐',
+    },
+    skills: {
+      listening: '倾听',
+      vocabulary: '词汇',
+      letters: '字母',
+      counting: '数数',
+      numbers: '数字',
+      feelings: '情绪',
+      confidence: '自信',
+      rhythm: '节奏',
+      patience: '耐心',
+    },
+    islandWeek: {
+      'day-1': { aim: '通过温馨的睡前故事，培养倾听、词汇和平静。' },
+      'day-2': { aim: '学习字母的发音，一块块拼出单词。' },
+      'day-3': { aim: '在小游戏里数一数，和数字一起玩。' },
+      'day-4': { aim: '一起说出心情，用表情表现出来。' },
+      'day-5': { aim: '找到节奏，一个音一个音地弹奏一首短曲。' },
+      'day-6': { aim: '通过一个关于长大的故事，倾听并聊聊大大的情绪。' },
+      'day-7': { aim: '通过一个坐公交车的故事，练习等待和轮流。' },
+    },
+    stepOf: '第 {{day}} 步，共 {{total}} 步',
+    focus: '{{domain}}与{{skill}}',
+    minutes: '{{from}}–{{to}} 分钟',
+    start: '开始活动',
+    preview: '预览',
+    opensTomorrow: '今天做得很好。下一步明天开启。',
+    weekDone: '整座小岛都探索过了',
+    weekDoneBody: '已完成 {{done}}/{{total}} 步。点任意一天可以再玩一次，点最后一天看看接下来有什么。',
+    a11y: {
+      checkpoint: '第 {{day}} 天，{{place}}，{{state}}',
+    },
+    states: {
+      done: '已完成',
+      open: '可以开始',
+      tomorrow: '明天开启',
+      locked: '还没到',
+    },
+  },
   tutorial: {
-    welcomeTitle: '欢迎来到\nEarlyroots!',
-    welcomeDescription: '让我们进行快速导览，帮助您和孩子充分利用阅读时间。',
-    storiesTitle: '故事库',
-    storiesDescription: '点击此处探索包含精美插图和有趣互动的互动故事集合。',
-    skip: '跳过',
-    gotIt: '明白了！',
     buttons: {
       next: '下一个',
       skip: '跳过',
-      skipAll: '全部跳过',
-      skipTour: '跳过导览',
-      gotIt: '明白了！',
-      go: '去！',
       letsGo: '让我们去！',
-      done: '完成',
-      startReading: '开始阅读',
     },
     mainMenu: {
       navLearn: {
@@ -641,36 +698,20 @@ export default {
         description: '所有故事、歌曲和学习游戏都在图书馆里。点这里就能打开。',
       },
       welcome: {
-        title: '欢迎来到Grow with Freya!',
+        title: '欢迎来到Early Roots!',
         description: '让我们进行快速导览，帮助您和孩子充分利用阅读时间。',
       },
-      stories: {
-        title: '故事',
-        description: '探索我们的互动故事系列，拥有精美的插图和有趣的互动体验。',
-      },
-      practise: {
-        title: '练习',
-        description: '学习在不同乐器上演奏歌曲。跟着节奏，提升你的音乐技能！',
-      },
-      freeplay: {
-        title: '自由演奏',
-        description: '在任何乐器上自由演奏——没有规则，只有乐趣！尝试各种声音，创作属于你的音乐。',
-      },
-      instruments: {
-        title: '乐器',
-        description: '练习歌曲或在不同乐器上自由演奏。在享受乐趣的同时提升音乐技能！',
-      },
-      settings: {
-        title: '设置',
-        description: '自定义应用以最适合您的家庭。',
+      language: {
+        title: '你的语言',
+        description: '点击国旗即可更改应用的语言。',
       },
       sound: {
         title: '声音控制',
         description: '点击此处管理背景音乐和音效。',
       },
       achievement: {
-        title: '下一个成就',
-        description: '孩子最接近获得的徽章，以及还差多少。点击查看全部。',
+        title: '你的学习之旅',
+        description: '岛上这周的每一步，还有最接近的徽章。点一下就能飞到岛上。',
       },
       screenTime: {
         title: '屏幕时间圆环',
@@ -678,27 +719,17 @@ export default {
         remainingCaption: '还有时间',
         spentCaption: '时间到了',
       },
-    },
-    screenTime: {
-      intro: {
-        title: '屏幕时间仪表板',
-        description: '使用适合年龄的限制监控、管理和设置孩子的每日屏幕时间。',
+      streakOrb: {
+        title: '每日连续',
+        description: '每天读一个故事就加一天。点一下看看最长的连续纪录。',
       },
-      ageBased: {
-        title: '基于年龄的限制',
-        description: '设置孩子的年龄并自动获得WHO/AAP推荐的屏幕时间限制。',
+      continueOrb: {
+        title: '继续',
+        description: '开始读书之前，这里显示“阅读加书签”。开始读之后，会变成“继续”，并显示那本书的封面。点一下打开书的卡片，选一页开始。',
       },
-      heatmap: {
-        title: '周活动',
-        description: '查看整周的屏幕时间使用模式以帮助建立健康的常规。',
-      },
-      reminders: {
-        title: '设置提醒',
-        description: '为活动、休息或睡前常规创建自定义提醒。',
-      },
-      routine: {
-        title: '建立健康常规',
-        description: '使用屏幕时间数据建立适合您家庭的一致日常常规。',
+      badgesOrb: {
+        title: '成就',
+        description: '到目前为止获得的徽章数量。点一下看看下一个可以获得的。',
       },
     },
     storyReader: {
@@ -737,16 +768,38 @@ export default {
     },
     bookMode: {
       read: {
-        title: '阅读模式',
-        description: '点击此处与孩子一起自己阅读故事。按自己的节奏翻页。',
+        title: '一起阅读',
+        description: '一起大声朗读故事，按自己的节奏翻页。读过一半的话，会从上次的地方继续。',
       },
       record: {
-        title: '录制模式',
-        description: '在阅读故事时录制您的声音。当您不在时完美！',
+        title: '录音',
+        description: '录下你朗读故事的声音，你不在的时候孩子也能听。开始前由大人回答一个小问题。',
       },
       narrate: {
-        title: '聆听模式',
-        description: '聆听故事的预先录制的叙述。非常适合睡前！',
+        title: '一起玩',
+        description: '录好的声音朗读故事，书页会自动翻动。很适合睡前。',
+      },
+      pages: {
+        title: '从某一页开始',
+        description: '书的每一页都在这里，读到的地方有金色圈出。点一页就能从那里开始读。',
+      },
+    },
+    island: {
+      welcome: {
+        title: '你的学习小岛',
+        description: '这周每天一小步：一起分享一个故事、一个游戏或一首歌。走得越远，小路越亮。',
+      },
+      checkpoint: {
+        title: '今天的一步',
+        description: '发光的那个点就是今天的。点一下开始。其他的会一天一天打开。',
+      },
+      plan: {
+        title: '今天的计划',
+        description: '今天这一步是什么、要多久、能培养什么。“开始活动”开始，“预览”可以先看看。',
+      },
+      home: {
+        title: '回到首页',
+        description: '做完了随时可以飞回家里的天空。',
       },
     },
     recordMode: {
@@ -803,24 +856,24 @@ export default {
     },
     settings: {
       intro: {
-        title: '设置',
-        description: '自定义应用以最适合您的家庭。',
+        title: '家长设置',
+        description: '几个让应用更适合你们家庭的选项，随时都可以更改。',
       },
-      login: {
-        title: '账户和同步',
-        description: '登录以保存进度并在设备间同步。',
-      },
-      language: {
-        title: '语言',
-        description: '为应用界面选择您的首选语言。',
-      },
-      accessibility: {
-        title: '无障碍',
-        description: '调整文本大小和其他设置以便于使用。',
+      textSize: {
+        title: '文字大小',
+        description: '放大或缩小整个应用里的文字，让正在读的人看得舒服。',
       },
       screenTime: {
         title: '屏幕时间',
-        description: '设置健康限制并监控每日使用。',
+        description: '开启后，会按孩子的年龄设定一个温和的每日上限。Screensafe 圆环显示今天的使用情况。随时可以关闭。',
+      },
+      reminders: {
+        title: '智能提醒',
+        description: '在你选择的时间，轻轻提醒你们讲故事、聊感受或玩音乐。',
+      },
+      crashReports: {
+        title: '崩溃报告',
+        description: '出现问题时，一份匿名报告能帮我们修复。如果你不想发送，可以在这里关闭。',
       },
     },
     musicMode: {
@@ -849,34 +902,6 @@ export default {
         description: '想试试不同的声音？打开菜单（）并点击"更换乐器"随时更换。',
       },
     },
-    storyModes: {
-      welcome: {
-        title: '三种探索方式！',
-        description: '每个孩子的学习方式不同。选择能激发孩子好奇心的故事体验——每一种都通过游戏的魔力培养基本技能。',
-      },
-      interactive: {
-        title: '互动故事',
-        description: '点击、滑动和发现！互动故事通过可触摸的惊喜、因果关系时刻和动手学习活动让页面活起来。研究表明，阅读时的积极参与能增强理解力、精细运动技能和早期问题解决能力。',
-      },
-      musical: {
-        title: '音乐故事',
-        description: '阅读、演奏和表演！音乐故事将真正的乐器挑战融入每一次冒险——您的孩子在跟随故事的同时学习节奏、旋律和协调。研究证实，早期接触音乐能提高记忆力、语言发展和情感表达能力。',
-      },
-      jigsaw: {
-        title: '拼图故事',
-        description: '拼在一起！拼图故事在每一页中隐藏美丽的拼图，培养空间意识、耐心和逻辑思维。完成拼图让孩子获得真正的成就感，并增强支持阅读准备的视觉感知技能。',
-      },
-    },
-    gestures: {
-      speakerLongPress: {
-        title: '长按提示',
-        description: '长按扬声器按钮以查看额外的声音选项。',
-      },
-      storySwipe: {
-        title: '滑动导航',
-        description: '向左或向右滑动以快速翻页。',
-      },
-    },
     emotionCards: {
       welcome: {
         title: '欢迎来到情感卡!',
@@ -899,60 +924,6 @@ export default {
         description: '在表情符号、动物和熊主题之间切换以保持新鲜和有趣！',
       },
     },
-    spelling: {
-      welcome: {
-        title: '拼写活动',
-        description: '欢迎来到拼写！有趣的互动活动，帮助您的孩子学习字母、单词和拼写。',
-      },
-      ages: {
-        title: '适龄内容',
-        description: '活动按年龄段分组。使用顶部的轮播器筛选适合您孩子水平的内容。',
-      },
-      together: {
-        title: '一起学习',
-        description: '和孩子坐在一起，一起大声拼读字母。鼓励他们，为每一次尝试欢呼！',
-      },
-      benefit: {
-        title: '培养识字能力',
-        description: '早期的拼写练习培养音素意识、字母识别和终身热爱文字的能力。',
-      },
-    },
-    numbers: {
-      welcome: {
-        title: '数字活动',
-        description: '欢迎来到数字！引人入胜的活动，帮助您的孩子探索计数、形状和初级数学。',
-      },
-      ages: {
-        title: '适龄内容',
-        description: '活动按年龄段分组。使用顶部的轮播器为您的孩子找到合适的水平。',
-      },
-      together: {
-        title: '一起数数',
-        description: '一起大声数数，指向物品，让数字成为日常游戏的一部分！',
-      },
-      benefit: {
-        title: '培养数学能力',
-        description: '早期的数字游戏培养逻辑思维、模式识别和扎实的数学基础。',
-      },
-    },
-    feelings: {
-      welcome: {
-        title: '情感活动',
-        description: '欢迎来到情感！帮助您的孩子认识、命名和理解情绪的活动。',
-      },
-      ages: {
-        title: '适龄内容',
-        description: '活动按年龄段分组。选择适合孩子情感发展的活动。',
-      },
-      together: {
-        title: '一起探索',
-        description: '坦诚地谈论情绪。问"这让你感觉怎么样？"也分享你自己的感受。',
-      },
-      benefit: {
-        title: '情商',
-        description: '理解情绪培养同理心、自我调节和强大的社交技能——这对终身幸福至关重要。',
-      },
-    },
     practise: {
       welcome: {
         title: '练习模式',
@@ -971,24 +942,6 @@ export default {
         description: '学习演奏歌曲培养节奏感、协调性、记忆力和注意力——都是通过音乐的快乐。',
       },
     },
-    freeplay: {
-      welcome: {
-        title: '自由演奏模式',
-        description: '没有规则，只有乐趣！探索任何乐器，创作你自己的音乐。完美的创意和自我表达。',
-      },
-      instrument: {
-        title: '选择你的乐器',
-        description: '从轮播器中选择任何乐器。试试所有的，发现新的声音和最爱！',
-      },
-      play: {
-        title: '自由演奏',
-        description: '按下彩色按钮来创作音乐。没有错误的音符——每个声音都是冒险的一部分！',
-      },
-      benefit: {
-        title: '创意表达',
-        description: '自由的音乐游戏培养创造力、自信心和与孩子一起成长的音乐热爱。',
-      },
-    },
     catalogue: {
       welcome: {
         title: '你的故事书架',
@@ -996,19 +949,19 @@ export default {
       },
       themes: {
         title: '选择一个主题',
-        description: '故事、学习或音乐。点一下图块，书架会自动整理。',
+        description: '故事、学习或音乐。点一个，书架就会跟着排好。',
       },
       filter: {
         title: '更细的筛选',
         description: '睡前、动物、安静等等。选几个，书架就只显示那些。',
       },
       featured: {
-        title: '今日之选',
-        description: '每天新选的一本书。点“现在阅读”立刻打开。',
+        title: '下一本书',
+        description: '读到一半的书，或者每天更新的推荐。点“现在阅读”打开它的卡片。',
       },
       shelves: {
         title: '滑动书架',
-        description: '在任一书架上滑动，或点“查看全部”看整个主题。',
+        description: '左右滑动任何一个书架，或点“查看全部”查看整个主题。点一本书打开它的卡片。',
       },
       navProgress: {
         title: '进度',
@@ -1020,7 +973,9 @@ export default {
       },
       navProfile: {
         title: '个人页',
-        description: '已收藏的最爱、徽章墙，以及本设备上的书。',
+        description: '已收藏的最爱、徽章墙，以及本设备上的书。它偶尔会变成金色的登录标志：这表示还没有人登录，点一下就能去登录。',
+        profileCaption: '你的个人页',
+        loginCaption: '该登录了',
       },
     },
     progress: {
@@ -1068,13 +1023,21 @@ export default {
         title: '修改资料',
         description: '点头像或名字可更改头像、名字或年龄。需要大人先回答一个小问题。',
       },
+      login: {
+        title: '登录',
+        description: '登录后会保存徽章、连续天数和每个故事读到的位置，并同步到你们使用的所有设备。',
+      },
+      home: {
+        title: '回到首页',
+        description: '首页会带你们回到夜空，随时可以返回。',
+      },
       tabs: {
         title: '已保存、徽章、管理',
         description: '你点过心的最爱、徽章墙和本设备上的书，也可以移除任意一本。',
       },
       settings: {
         title: '家长设置',
-        description: '语言、屏幕时间和你的账户，在家长门后。',
+        description: '文字大小、屏幕时间、提醒和你的账户，都在家长门后。',
       },
     },
   },
@@ -3204,12 +3167,15 @@ export default {
   },
   storyDetail: {
     readTogether: '一起阅读',
+    pickPage: '从某一页开始',
+    readFromPage: '从第 {{page}} 页开始读',
     continueReading: '继续阅读',
     record: '录音',
     playAlong: '一起玩',
     readNow: '现在阅读',
     savedOffline: '已离线保存',
-    minutes: '{{count}} 分钟',
+    pages_one: '{{count}}页',
+    pages_other: '{{count}}页',
     ages: '适龄 {{range}}',
     interactive: '互动',
     favourite: '收藏',
@@ -3250,7 +3216,7 @@ export default {
       title: '更平静、更安心的\n屏幕时光。',
       noAds: '无广告',
       noTracking: '无行为追踪',
-      noPressure: '没有连续打卡或压力',
+      noPressure: '绝不施加压力',
       gentle: '轻柔的声音与动效',
       body: '安静的活动、宽容的互动，没有吸引注意力的奖励。',
     },
@@ -3324,20 +3290,27 @@ export default {
       days_one: '连续 {{count}} 天！',
       days_other: '连续 {{count}} 天！',
       start: '今天开始连续记录',
+      unit: '连续天数',
+      unit_one: '连续天数',
+      unit_other: '连续天数',
     },
     weeklyReading: {
       minutes: '本周阅读 {{count}} 分钟',
       none: '本周还没有阅读',
     },
+    achievementTally: {
+      label: '已解锁 {{unlocked}}，还剩 {{remaining}}',
+    },
     achievements: {
       title: '看看你的成就！',
-      cta: '查看成就',
+      cta: '去探索',
+      ctaJourney: '探索旅程',
       emptyTitle: '你的第一枚徽章在等你',
       emptyBody: '一起读一个故事来获得它',
-      hint: '查看你的徽章',
+      hint: '飞向你的小岛',
     },
     milestone: {
-      eyebrow: '下一枚徽章',
+      eyebrow: '你的学习之旅',
       remaining: {
         stories: '再读 {{count}} 个故事即可解锁',
         stories_one: '再读 {{count}} 个故事即可解锁',
@@ -3360,6 +3333,28 @@ export default {
     greeting: '我们一起做什么？',
     grownUps: '家长专区',
     continueTogether: '一起继续',
+    continueReading: '继续阅读',
+    continueMore: '显示更多',
+    statOrb: {
+      continue: '继续',
+      readToBookmark: '阅读加书签',
+      achieved: '已获得',
+      personalBest: '个人最佳：{{count}}天',
+      personalBest_one: '个人最佳：{{count}}天',
+      personalBest_other: '个人最佳：{{count}}天',
+    },
+    statPill: {
+      streak: '每日连续',
+      days: '连续 {{count}} 天',
+      days_one: '连续 {{count}} 天',
+      days_other: '连续 {{count}} 天',
+      best: '最佳 {{count}}',
+      pages: '{{page}} / {{total}}',
+      achievements: '成就',
+      next: '下一个：{{title}}',
+      toBadge: '打开下一个徽章',
+      openBook: '打开{{title}}',
+    },
     pagePosition: '第 {{page}} 页，共 {{total}} 页',
     resumeStory: '继续阅读《{{title}}》',
     storybooks: '故事书',
@@ -3509,7 +3504,7 @@ export default {
     badges: {
       firstStory: {
         title: '第一个故事',
-        description: '打开你的第一个故事',
+        description: '读完你的第一个故事',
       },
       readingTogether: {
         title: '一起阅读',

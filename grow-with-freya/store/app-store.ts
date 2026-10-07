@@ -3,6 +3,9 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Logger } from '@/utils/logger';
 import { rememberSearch } from '@/components/stories/catalogue/story-search';
+import { onSessionLapse } from '@/services/session-lapse';
+import type { LearningPlanProgress } from '@/constants/learning-plan';
+import type { PlanLaunch } from '@/types/learning-plan';
 
 const log = Logger.create('Store');
 
@@ -21,6 +24,38 @@ export const BASIC_TIER_INSTRUMENTS = ['flute', 'recorder', 'ocarina'] as const;
 
 export type StoryViewMode = 'carousel' | 'grid';
 
+export type ChallengeKind = 'music' | 'jigsaw' | 'reading';
+
+function unite(existing: string[], added: string[]): string[] {
+  const fresh = added.filter((id) => !existing.includes(id));
+  return fresh.length === 0 ? existing : [...existing, ...fresh];
+}
+
+export function migrateAppState(persisted: Record<string, any>, fromVersion: number): Record<string, any> {
+  if (fromVersion >= 1) return persisted;
+  const progress: Record<string, StoryProgress> = persisted.storyProgress ?? {};
+  const finished = Object.entries(progress)
+    .filter(([, entry]) => (entry?.completedCount ?? 0) > 0)
+    .map(([id]) => id);
+  return { ...persisted, finishedStoryIds: unite(persisted.finishedStoryIds ?? [], finished) };
+}
+
+export interface PlanRun {
+  planId: string;
+  stepId: string;
+  launch: PlanLaunch;
+}
+
+function stepTickedOff(state: Pick<AppState, 'learningPlanProgress' | 'planRun'>, finished: (launch: PlanLaunch) => boolean) {
+  const run = state.planRun;
+  if (!run || !finished(run.launch)) return {};
+
+  const kept = state.learningPlanProgress?.planId === run.planId ? state.learningPlanProgress.completed : {};
+  const completed = kept[run.stepId] ? kept : { ...kept, [run.stepId]: new Date().toISOString() };
+
+  return { planRun: null, learningPlanProgress: { planId: run.planId, completed } };
+}
+
 export interface StoryProgress {
   pageIndex: number;
   totalPages: number;
@@ -36,6 +71,7 @@ export interface AppState {
   hasCompletedLogin: boolean;
   showLoginAfterOnboarding: boolean;
   isGuestMode: boolean; // User continued without signing in
+  sessionLapsed: boolean; // Signed in once, but the app could not refresh the session
 
   // Subscription
   subscriptionTier: SubscriptionTier; // Current active subscription tier
@@ -104,11 +140,18 @@ export interface AppState {
   learningViewMode: StoryViewMode;
 
   storyProgress: Record<string, StoryProgress>;
+  finishedStoryIds: string[];
+  challengeCounts: Record<string, number>;
+  earnedAchievementIds: string[];
+  consentRecordedVersion: string | null;
   useHomeScene: boolean;
 
   lastHomeVisitAt: string | null;
   achievementUnlockedAt: Record<string, string>;
   lastStoryCompletedAt: string | null;
+
+  learningPlanProgress: LearningPlanProgress | null;
+  planRun: PlanRun | null;
 
   // Background animation state persistence
   backgroundAnimationState: {
@@ -125,6 +168,9 @@ export interface AppState {
   setLoginComplete: (complete: boolean) => void;
   setShowLoginAfterOnboarding: (show: boolean) => void;
   setGuestMode: (isGuest: boolean) => void;
+  markSessionLapsed: () => void;
+  markSignedIn: () => void;
+  resetToFreshInstall: () => void;
   resetAppForTesting: () => void; // Temporary function to reset app state
   setUserProfile: (nickname: string, avatarType: 'boy' | 'girl', avatarId: string) => void;
   clearUserProfile: () => void;
@@ -163,6 +209,12 @@ export interface AppState {
   markStoryCompleted: (storyId: string) => void;
   recordHomeVisit: (at: string) => void;
   recordAchievementUnlocks: (badgeIds: string[], at: string) => void;
+  recordChallengeCompleted: (kind: ChallengeKind) => void;
+  beginPlanStep: (run: PlanRun) => void;
+  leavePlanStep: () => void;
+  setLearningPlanProgress: (progress: LearningPlanProgress | null) => void;
+  recordActivityFinished: (activityId: string) => void;
+  grantAchievements: (achievementIds: string[]) => void;
   clearStoryProgress: (storyId: string) => void;
   getContinueReadingStoryId: () => string | null;
   setUseHomeScene: (enabled: boolean) => void;
@@ -178,7 +230,7 @@ export interface AppState {
 
 export const useAppStore = create<AppState>()(
   persist(
-    (set, get) => ({
+    (set, get, api) => ({
       // Initial state
       isAppReady: false,
       hasHydrated: false, // Will be set to true after AsyncStorage loads
@@ -186,6 +238,7 @@ export const useAppStore = create<AppState>()(
       hasCompletedLogin: false,
       showLoginAfterOnboarding: false,
       isGuestMode: false,
+      sessionLapsed: false,
       subscriptionTier: 'free' as SubscriptionTier,
       _devSubscriptionOverride: null,
       trialEndPromptSeenFor: null,
@@ -217,10 +270,16 @@ export const useAppStore = create<AppState>()(
       storyViewMode: 'carousel' as StoryViewMode,
       learningViewMode: 'carousel' as StoryViewMode,
       storyProgress: {},
+      finishedStoryIds: [],
+      challengeCounts: {},
+      earnedAchievementIds: [],
+      consentRecordedVersion: null,
       useHomeScene: true,
       lastHomeVisitAt: null,
       achievementUnlockedAt: {},
       lastStoryCompletedAt: null,
+      learningPlanProgress: null,
+      planRun: null,
 
       backgroundAnimationState: {
         cloudFloat1: -200,
@@ -233,9 +292,12 @@ export const useAppStore = create<AppState>()(
       setAppReady: (ready) => set({ isAppReady: ready }),
       setHasHydrated: (hydrated) => set({ hasHydrated: hydrated }),
       setOnboardingComplete: (complete) => set({ hasCompletedOnboarding: complete }),
-      setLoginComplete: (complete) => set({ hasCompletedLogin: complete }),
+      setLoginComplete: (complete) => set(complete ? { hasCompletedLogin: true, sessionLapsed: false } : { hasCompletedLogin: false }),
       setShowLoginAfterOnboarding: (show) => set({ showLoginAfterOnboarding: show }),
       setGuestMode: (isGuest) => set({ isGuestMode: isGuest }),
+      markSessionLapsed: () => set({ sessionLapsed: true }),
+      markSignedIn: () => set({ isGuestMode: false, sessionLapsed: false, hasCompletedLogin: true }),
+      resetToFreshInstall: () => set({ ...api.getInitialState(), hasHydrated: true, isAppReady: false }),
       resetAppForTesting: () => set({
         hasCompletedOnboarding: false,
         hasCompletedLogin: false,
@@ -370,7 +432,9 @@ export const useAppStore = create<AppState>()(
         const existing = state.storyProgress[storyId];
         const completedAt = new Date().toISOString();
         return {
+          ...stepTickedOff(state, (launch) => launch.kind === 'story' && launch.storyId === storyId),
           lastStoryCompletedAt: completedAt,
+          finishedStoryIds: unite(state.finishedStoryIds, [storyId]),
           storyProgress: {
             ...state.storyProgress,
             [storyId]: {
@@ -392,7 +456,24 @@ export const useAppStore = create<AppState>()(
         unseen.forEach((id) => {
           stamped[id] = at;
         });
-        return { achievementUnlockedAt: stamped };
+        return { achievementUnlockedAt: stamped, earnedAchievementIds: unite(state.earnedAchievementIds, unseen) };
+      }),
+      beginPlanStep: (run: PlanRun) => set({ planRun: run }),
+      leavePlanStep: () => set({ planRun: null }),
+      setLearningPlanProgress: (progress) => set({ learningPlanProgress: progress }),
+      recordActivityFinished: (activityId: string) => set((state) =>
+        stepTickedOff(state, (launch) => {
+          if (launch.kind === 'story') return false;
+          if (launch.kind === 'feelings') return launch.activityIds.includes(activityId);
+          return launch.activityId === activityId;
+        })
+      ),
+      recordChallengeCompleted: (kind: ChallengeKind) => set((state) => ({
+        challengeCounts: { ...state.challengeCounts, [kind]: (state.challengeCounts[kind] ?? 0) + 1 },
+      })),
+      grantAchievements: (achievementIds: string[]) => set((state) => {
+        const earned = unite(state.earnedAchievementIds, achievementIds);
+        return earned === state.earnedAchievementIds ? state : { earnedAchievementIds: earned };
       }),
       clearStoryProgress: (storyId: string) => set((state) => {
         if (!state.storyProgress[storyId]) {
@@ -422,6 +503,8 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: 'app-storage',
+      version: 1,
+      migrate: (persisted, fromVersion) => migrateAppState(persisted as Record<string, any>, fromVersion) as AppState,
       storage: createJSONStorage(() => safeAsyncStorage),
       // Persist important app state including background animation positions
       // Note: isAppReady and hasHydrated are NOT persisted
@@ -457,9 +540,14 @@ export const useAppStore = create<AppState>()(
         storyViewMode: state.storyViewMode,
         learningViewMode: state.learningViewMode,
         storyProgress: state.storyProgress,
+        finishedStoryIds: state.finishedStoryIds,
+        challengeCounts: state.challengeCounts,
+        earnedAchievementIds: state.earnedAchievementIds,
+        consentRecordedVersion: state.consentRecordedVersion,
         lastHomeVisitAt: state.lastHomeVisitAt,
         achievementUnlockedAt: state.achievementUnlockedAt,
         lastStoryCompletedAt: state.lastStoryCompletedAt,
+        learningPlanProgress: state.learningPlanProgress,
         backgroundAnimationState: state.backgroundAnimationState,
       }),
       onRehydrateStorage: () => (state, error) => {
@@ -475,3 +563,5 @@ export const useAppStore = create<AppState>()(
     }
   )
 );
+
+onSessionLapse(() => useAppStore.getState().markSessionLapsed());

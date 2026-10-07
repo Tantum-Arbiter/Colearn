@@ -87,7 +87,7 @@ export function OwlGuideLayer() {
 
 const styles = StyleSheet.create({
   layer: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: JOURNEY_BAR_LAYER_Z + 100,
   },
 });

@@ -1,4 +1,3 @@
-import { CIRCLE_BUTTON_DIAMETER_PHONE } from '@/components/child-ui/tokens';
 
 export const GUIDE_IDS = [
   'main_menu_tour',
@@ -6,30 +5,39 @@ export const GUIDE_IDS = [
   'progress_tour',
   'search_tour',
   'profile_tour',
-  'story_modes_tour',
+  'island_tour',
   'book_mode_tour',
   'story_reader_tips',
   'record_mode_tour',
   'narrate_mode_tour',
   'music_mode_tour',
   'settings_walkthrough',
-  'screen_time_tips',
   'emotion_cards_tips',
-  'spelling_tips',
-  'numbers_tips',
-  'feelings_tips',
   'practise_tips',
-  'freeplay_tips',
 ] as const;
 
 export type GuideId = (typeof GUIDE_IDS)[number];
 
 export const GUIDE_STORAGE_KEY = '@tutorial_state';
 
-export type SpotlightShape = 'circle' | 'rounded-rect';
+export const GUIDE_REVISIONS: Partial<Record<GuideId, number>> = {
+  main_menu_tour: 2,
+  catalogue_tour: 2,
+  book_mode_tour: 2,
+};
+
+export function guideRevision(id: GuideId): number {
+  return GUIDE_REVISIONS[id] ?? 1;
+}
+
+export function currentGuideRevisions(): Record<GuideId, number> {
+  return Object.fromEntries(GUIDE_IDS.map((id) => [id, guideRevision(id)])) as Record<GuideId, number>;
+}
+
+export type SpotlightShape = 'circle' | 'rounded-rect' | 'capsule';
 
 /** A picture the bubble shows under its words, where words alone would not do. */
-export type GuideIllustration = 'screenTimeRing';
+export type GuideIllustration = 'screenTimeRing' | 'profileSlot' | 'continueOrb';
 
 export interface GuideStep {
   id: string;
@@ -52,6 +60,7 @@ export interface GuideStep {
    * not only when the lit button happens to be under it.
    */
   revealsBar?: boolean;
+  row?: string;
 }
 
 function keyed(section: string, id: string, key: string): Pick<GuideStep, 'titleKey' | 'descriptionKey'> {
@@ -68,21 +77,30 @@ function plain(section: string, ids: readonly [string, string][]): GuideStep[] {
 export const GUIDE_STEPS: Record<GuideId, readonly GuideStep[]> = {
   main_menu_tour: [
     { id: 'welcome', ...keyed('mainMenu', 'welcome', 'welcome') },
-    { id: 'stories_button', ...keyed('mainMenu', 'stories_button', 'stories'), target: 'stories_button', shape: 'rounded-rect', radius: 24 },
     { id: 'achievement_card', ...keyed('mainMenu', 'achievement_card', 'achievement'), target: 'achievement_card', shape: 'rounded-rect', radius: 24 },
-    { id: 'instruments_button', ...keyed('mainMenu', 'instruments_button', 'instruments'), target: 'instruments_button', shape: 'rounded-rect', radius: 24 },
+    { id: 'streak_orb', ...keyed('mainMenu', 'streak_orb', 'streakOrb'), target: 'streak_orb', shape: 'circle', row: 'stat_orbs' },
+    {
+      id: 'continue_orb',
+      ...keyed('mainMenu', 'continue_orb', 'continueOrb'),
+      target: 'continue_orb',
+      shape: 'circle',
+      row: 'stat_orbs',
+      illustration: 'continueOrb',
+    },
+    { id: 'badges_orb', ...keyed('mainMenu', 'badges_orb', 'badgesOrb'), target: 'badges_orb', shape: 'circle', row: 'stat_orbs' },
     // the bar, left to right, before the corner controls
     { id: 'nav_learn', ...keyed('mainMenu', 'nav_learn', 'navLearn'), target: 'nav_learn', shape: 'circle', pinned: true, revealsBar: true },
     { id: 'nav_progress', ...keyed('catalogue', 'nav_progress', 'navProgress'), target: 'nav_progress', shape: 'circle', pinned: true, revealsBar: true },
     { id: 'screen_time_ring', ...keyed('mainMenu', 'screen_time_ring', 'screenTime'), target: 'screen_time_ring', shape: 'circle', illustration: 'screenTimeRing', pinned: true, revealsBar: true },
     { id: 'nav_search', ...keyed('catalogue', 'nav_search', 'navSearch'), target: 'nav_search', shape: 'circle', pinned: true, revealsBar: true },
-    { id: 'nav_profile', ...keyed('catalogue', 'nav_profile', 'navProfile'), target: 'nav_profile', shape: 'circle', pinned: true, revealsBar: true },
-    { id: 'settings_button', ...keyed('mainMenu', 'settings_button', 'settings'), target: 'settings_button', shape: 'rounded-rect', radius: 24, pinned: true },
+    { id: 'nav_profile', ...keyed('catalogue', 'nav_profile', 'navProfile'), target: 'nav_profile', shape: 'circle', illustration: 'profileSlot', pinned: true, revealsBar: true },
+    // the corner controls, left to right
+    { id: 'language_control', ...keyed('mainMenu', 'language_control', 'language'), target: 'language_control', shape: 'circle', pinned: true },
     { id: 'sound_control', ...keyed('mainMenu', 'sound_control', 'sound'), target: 'sound_control', shape: 'circle', pinned: true },
   ],
   catalogue_tour: [
     { id: 'catalogue_welcome', ...keyed('catalogue', 'catalogue_welcome', 'welcome') },
-    { id: 'theme_tiles', ...keyed('catalogue', 'theme_tiles', 'themes'), target: 'theme_tiles', shape: 'rounded-rect', radius: 22 },
+    { id: 'theme_tiles', ...keyed('catalogue', 'theme_tiles', 'themes'), target: 'theme_tiles', shape: 'capsule' },
     { id: 'filter_toggle', ...keyed('catalogue', 'filter_toggle', 'filter'), target: 'filter_toggle', shape: 'rounded-rect', radius: 22 },
     { id: 'featured_story', ...keyed('catalogue', 'featured_story', 'featured'), target: 'featured_story', shape: 'rounded-rect', radius: 22 },
     { id: 'story_shelves', ...keyed('catalogue', 'story_shelves', 'shelves'), target: 'story_shelves', shape: 'rounded-rect', radius: 22 },
@@ -102,21 +120,25 @@ export const GUIDE_STEPS: Record<GuideId, readonly GuideStep[]> = {
   profile_tour: [
     { id: 'profile_welcome', ...keyed('profile', 'profile_welcome', 'welcome') },
     { id: 'profile_hero', ...keyed('profile', 'profile_hero', 'hero'), target: 'profile_hero', shape: 'circle' },
+    { id: 'profile_login', ...keyed('profile', 'profile_login', 'login'), target: 'profile_login', shape: 'rounded-rect', radius: 26 },
     { id: 'profile_tabs', ...keyed('profile', 'profile_tabs', 'tabs'), target: 'profile_tabs', shape: 'rounded-rect', radius: 22 },
-    { id: 'profile_settings', ...keyed('profile', 'profile_settings', 'settings'), target: 'profile_settings', shape: 'rounded-rect', radius: CIRCLE_BUTTON_DIAMETER_PHONE / 2, pinned: true },
+    // the header's two controls, which sit above the column and so are pinned
+    { id: 'profile_home', ...keyed('profile', 'profile_home', 'home'), target: 'profile_home', shape: 'capsule', pinned: true },
+    { id: 'profile_settings', ...keyed('profile', 'profile_settings', 'settings'), target: 'profile_settings', shape: 'capsule', pinned: true },
   ],
-  story_modes_tour: plain('storyModes', [
-    ['modes_welcome', 'welcome'],
-    ['modes_interactive', 'interactive'],
-    ['modes_musical', 'musical'],
-    ['modes_jigsaw', 'jigsaw'],
-  ]),
-  // down the sheet in the order it lists them -- read, play along, record --
-  // rather than jumping to the last control and back up to the middle one
+  island_tour: [
+    { id: 'island_welcome', ...keyed('island', 'island_welcome', 'welcome') },
+    { id: 'island_checkpoint', ...keyed('island', 'island_checkpoint', 'checkpoint'), target: 'island_checkpoint', shape: 'circle' },
+    { id: 'island_plan_card', ...keyed('island', 'island_plan_card', 'plan'), target: 'island_plan_card', shape: 'rounded-rect', radius: 22 },
+    { id: 'island_home', ...keyed('island', 'island_home', 'home'), target: 'island_home', shape: 'capsule', pinned: true },
+  ],
+  // down the card in the order it lists them -- the pages, then read, play
+  // along, record -- rather than jumping to the last control and back up
   book_mode_tour: [
-    { id: 'read_button', ...keyed('bookMode', 'read_button', 'read'), target: 'read_button', shape: 'rounded-rect', radius: 16 },
-    { id: 'narrate_button', ...keyed('bookMode', 'narrate_button', 'narrate'), target: 'narrate_button', shape: 'rounded-rect', radius: 16 },
-    { id: 'record_button', ...keyed('bookMode', 'record_button', 'record'), target: 'record_button', shape: 'rounded-rect', radius: 16 },
+    { id: 'pick_page', ...keyed('bookMode', 'pick_page', 'pages'), target: 'pick_page', shape: 'rounded-rect', radius: 14 },
+    { id: 'read_button', ...keyed('bookMode', 'read_button', 'read'), target: 'read_button', shape: 'capsule' },
+    { id: 'narrate_button', ...keyed('bookMode', 'narrate_button', 'narrate'), target: 'narrate_button', shape: 'capsule' },
+    { id: 'record_button', ...keyed('bookMode', 'record_button', 'record'), target: 'record_button', shape: 'capsule' },
   ],
   story_reader_tips: plain('storyReader', [
     ['story_welcome', 'welcome'],
@@ -152,20 +174,17 @@ export const GUIDE_STEPS: Record<GuideId, readonly GuideStep[]> = {
     ['music_begin', 'begin'],
     ['music_change', 'change'],
   ]),
-  settings_walkthrough: plain('settings', [
-    ['settings_intro', 'intro'],
-    ['login', 'login'],
-    ['language', 'language'],
-    ['accessibility', 'accessibility'],
-    ['screen_time', 'screenTime'],
-  ]),
-  screen_time_tips: plain('screenTime', [
-    ['screen_time_intro', 'intro'],
-    ['age_based_limits', 'ageBased'],
-    ['weekly_heatmap', 'heatmap'],
-    ['custom_reminders', 'reminders'],
-    ['routine_building', 'routine'],
-  ]),
+  // The language control left this page for the home corner, so the tour that
+  // pointed at it here went with it -- see `language_control` on the main menu.
+  // Signing in went to the profile page, which tours it; what is left here is
+  // lit top to bottom in the order the page lists it
+  settings_walkthrough: [
+    { id: 'settings_intro', ...keyed('settings', 'settings_intro', 'intro') },
+    { id: 'settings_text_size', ...keyed('settings', 'settings_text_size', 'textSize'), target: 'settings_text_size', shape: 'rounded-rect', radius: 14 },
+    { id: 'settings_screen_time', ...keyed('settings', 'settings_screen_time', 'screenTime'), target: 'settings_screen_time', shape: 'rounded-rect', radius: 16 },
+    { id: 'settings_reminders', ...keyed('settings', 'settings_reminders', 'reminders'), target: 'settings_reminders', shape: 'rounded-rect', radius: 16 },
+    { id: 'settings_crash_reports', ...keyed('settings', 'settings_crash_reports', 'crashReports'), target: 'settings_crash_reports', shape: 'rounded-rect', radius: 16 },
+  ],
   emotion_cards_tips: plain('emotionCards', [
     ['emotion_cards_welcome', 'welcome'],
     ['emotion_cards_together', 'together'],
@@ -173,35 +192,11 @@ export const GUIDE_STEPS: Record<GuideId, readonly GuideStep[]> = {
     ['emotion_cards_scenarios', 'scenarios'],
     ['emotion_cards_themes', 'themes'],
   ]),
-  spelling_tips: plain('spelling', [
-    ['spelling_welcome', 'welcome'],
-    ['spelling_ages', 'ages'],
-    ['spelling_together', 'together'],
-    ['spelling_benefit', 'benefit'],
-  ]),
-  numbers_tips: plain('numbers', [
-    ['numbers_welcome', 'welcome'],
-    ['numbers_ages', 'ages'],
-    ['numbers_together', 'together'],
-    ['numbers_benefit', 'benefit'],
-  ]),
-  feelings_tips: plain('feelings', [
-    ['feelings_welcome', 'welcome'],
-    ['feelings_ages', 'ages'],
-    ['feelings_together', 'together'],
-    ['feelings_benefit', 'benefit'],
-  ]),
   practise_tips: plain('practise', [
     ['practise_welcome', 'welcome'],
     ['practise_instrument', 'instrument'],
     ['practise_songs', 'songs'],
     ['practise_benefit', 'benefit'],
-  ]),
-  freeplay_tips: plain('freeplay', [
-    ['freeplay_welcome', 'welcome'],
-    ['freeplay_instrument', 'instrument'],
-    ['freeplay_play', 'play'],
-    ['freeplay_benefit', 'benefit'],
   ]),
 };
 
@@ -209,14 +204,46 @@ export function guideSteps(id: GuideId, availableTargets: readonly string[] = []
   return GUIDE_STEPS[id].filter((step) => !step.target || availableTargets.includes(step.target));
 }
 
+export interface ProfileTourRefs<Ref> {
+  hero: Ref;
+  login: Ref;
+  tabs: Ref;
+  home: Ref;
+  settings: Ref;
+}
+
+export function profileTourTargets<Ref>(refs: ProfileTourRefs<Ref>, needsSignIn: boolean): Record<string, Ref> {
+  return {
+    profile_hero: refs.hero,
+    ...(needsSignIn ? { profile_login: refs.login } : {}),
+    profile_tabs: refs.tabs,
+    profile_home: refs.home,
+    profile_settings: refs.settings,
+  };
+}
+
+export function searchTourTargets<Ref>(refs: { field: Ref; recent: Ref }, hasRecent: boolean): Record<string, Ref> {
+  return {
+    search_field: refs.field,
+    ...(hasRecent ? { search_recent: refs.recent } : {}),
+  };
+}
+
 export const GUIDE_TIMING = {
   showDelayMs: 600,
   landscapeShowDelayMs: 1500,
   measureSettleMs: 100,
-  // a page scrolled to reveal a target is still gliding when the ordinary
+  // A page scrolled to reveal a target is still gliding when the ordinary
   // settle is up; measuring then lands the spotlight where the target was
-  // passing rather than where it stopped
-  scrollSettleMs: 420,
+  // passing rather than where it stopped.
+  //
+  // The reveal scrolls twice: once on the render that declares the reserve,
+  // then again 120ms later in case that padding landed late and clamped the
+  // first one. That repeat restarts the ~300ms glide, so the page can still be
+  // moving until roughly 420ms -- measuring *at* 420 was a coin toss, and the
+  // ring came to rest a card's height below its subject. This clears the
+  // repeat with room to spare.
+  scrollSettleMs: 620,
   turnSettleMs: 500,
   dimMs: 260,
   // the spotlight lands first and is left alone for a beat, so the eye is
@@ -464,11 +491,12 @@ export function spotlightFrame(target: TargetRect, shape: SpotlightShape = 'circ
     };
   }
 
+  const height = target.height + SPOTLIGHT_PADDING * 2;
   return {
     x: target.x - SPOTLIGHT_PADDING,
     y: target.y - SPOTLIGHT_PADDING,
     width: target.width + SPOTLIGHT_PADDING * 2,
-    height: target.height + SPOTLIGHT_PADDING * 2,
-    radius,
+    height,
+    radius: shape === 'capsule' ? height / 2 : radius,
   };
 }

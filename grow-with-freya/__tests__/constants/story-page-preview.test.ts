@@ -332,6 +332,22 @@ describe('the fold', () => {
     expect(stripTint(curl.crestAngle, 0)).toBe('rgba(255, 250, 240, 0)');
   });
 
+  it.each([
+    ['a strip all but edge-on', Math.PI * 0.6, 1e-9],
+    ['a strip just past the crest', curl.crestAngle, 1e-9],
+    ['a strip barely turning', 1e-9, 1],
+  ])('should tint %s with a colour Reanimated can parse, never an exponent', (_label, theta, scaleX) => {
+    expect(stripTint(theta, scaleX)).toMatch(/^rgba\(\d{1,3}, \d{1,3}, \d{1,3}, (0|1|0\.\d{1,3})\)$/);
+  });
+
+  it('should tint every strip of a whole turn with a colour Reanimated can parse', () => {
+    for (let step = 0; step <= 2000; step += 1) {
+      const theta = (Math.PI * step) / 2000;
+      const scaleX = Math.cos(theta);
+      expect(stripTint(theta, scaleX)).toMatch(/^rgba\(\d{1,3}, \d{1,3}, \d{1,3}, (0|1|0\.\d{1,3})\)$/);
+    }
+  });
+
   it('should keep every shade and shadow gentle enough that the picture stays readable', () => {
     expect(curl.shade).toBeLessThanOrEqual(0.35);
     expect(curl.castShade).toBeLessThanOrEqual(0.35);

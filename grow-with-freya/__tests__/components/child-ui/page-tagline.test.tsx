@@ -5,8 +5,11 @@
 
 import React from 'react';
 import { render } from '@testing-library/react-native';
-import { PageTagline, TAGLINE_ARCH_RADIUS_RATIO } from '@/components/child-ui/page-tagline';
+import { PageTagline, TAGLINE_ARCH_RADIUS_RATIO, taglineArchRise, taglineFontSize, taglineWordsDepth } from '@/components/child-ui/page-tagline';
+import { Animated, StyleSheet } from 'react-native';
+import { textAdvance } from '@/constants/arched-greeting';
 import { ACCENT_GOLD, TEXT_PRIMARY } from '@/constants/night-palette';
+import { HEADING_HALO } from '@/components/child-ui/heading-halo';
 import { Fonts } from '@/constants/theme';
 
 const mockAccessibility = jest.fn(() => ({
@@ -187,5 +190,110 @@ describe('PageTagline over the globe', () => {
     const block = tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'page-tagline')[0];
 
     expect(block.props.accessibilityLabel).toBe('A brighter world in every story');
+  });
+});
+
+describe('PageTagline over the painted planet', () => {
+  it('should sit in a heading halo behind its two lines, as the title does', () => {
+    const tree = render(<PageTagline lines={['Little steps,', 'big progress']} width={300} />);
+
+    const block = tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'page-tagline' && n.props.style)[0];
+    const halo = tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'page-tagline-halo' && n.props.spread)[0];
+    const firstChild = block.findAll((n: any) => typeof n.props.testID === 'string')[1];
+
+    expect(halo.props.spread).toEqual(HEADING_HALO.tagline);
+    expect(firstChild.props.testID).toBe('page-tagline-halo');
+  });
+});
+
+describe('taglineWordsDepth', () => {
+  beforeEach(() => {
+    mockAccessibility.mockReturnValue({
+      scaledFontSize: (n: number) => n,
+      scaledButtonSize: (n: number) => n,
+      scaledPadding: (n: number) => n,
+      isTablet: false,
+      contentMaxWidth: 402,
+    });
+  });
+
+  function secondBoxFoot(lines: readonly [string, string], width: number) {
+    const tree = render(<PageTagline lines={lines} width={width} />);
+    const [first, second] = arcs(tree).filter((n: any) => n.props.height);
+    const pulled = tree.UNSAFE_root.findAll(
+      (n: any) =>
+        typeof StyleSheet.flatten(n.props.style)?.marginTop === 'number' &&
+        n.findAll((m: any) => typeof m.props.testID === 'string' && m.props.testID.endsWith('-2-arc')).length > 0
+    )[0];
+
+    return first.props.height + StyleSheet.flatten(pulled.props.style).marginTop + second.props.height;
+  }
+
+  it('reaches the foot of the second line\'s box when the line runs the whole arch', () => {
+    const long = 'w'.repeat(80);
+
+    const underTest = taglineWordsDepth(long, 358, taglineFontSize(false));
+
+    expect(underTest).toBeLessThanOrEqual(secondBoxFoot(['A', long], 358));
+    expect(underTest).toBeGreaterThan(secondBoxFoot(['A', long], 358) - 1);
+  });
+
+  it('sits higher for a short line, whose ends stay near the crown of the arch', () => {
+    const short = taglineWordsDepth('in every story', 358, taglineFontSize(false));
+    const longer = taglineWordsDepth('in jeder einzelnen Geschichte', 358, taglineFontSize(false));
+
+    expect(short).toBeLessThan(longer);
+    expect(short).toBeLessThan(secondBoxFoot(['A brighter world', 'in every story'], 358) - 12);
+  });
+
+  it('drops a line half as long as the arch about a quarter of the way down it, from its ends rather than its length', () => {
+    const width = 358;
+    const fontSize = taglineFontSize(false);
+    const radius = width * TAGLINE_ARCH_RADIUS_RATIO;
+    const arch = 2 * radius * Math.asin(width / 2 / radius);
+    const half = 'w'.repeat(Math.round(arch / 2 / textAdvance('w', fontSize, 'medium')));
+    const drop = taglineWordsDepth(half, width, fontSize) - taglineWordsDepth('', width, fontSize);
+
+    expect(drop).toBeGreaterThan(taglineArchRise(width) * 0.15);
+    expect(drop).toBeLessThan(taglineArchRise(width) * 0.35);
+  });
+
+  it('leaves room under the second line for its descenders', () => {
+    const fontSize = taglineFontSize(false);
+
+    const underTest = taglineWordsDepth('in every story', 358, fontSize);
+
+    expect(underTest).toBeGreaterThan(1.25 * fontSize + fontSize + 0.3 * fontSize);
+  });
+
+  it.each([0, -44])('has no depth before the block has a width (%s)', (width) => {
+    expect(taglineWordsDepth('in every story', width, taglineFontSize(false))).toBe(0);
+  });
+
+  it('measures the tablet line at the tablet size', () => {
+    expect(taglineFontSize(true)).toBeGreaterThan(taglineFontSize(false));
+    expect(taglineWordsDepth('in every story', 700, taglineFontSize(true))).toBeGreaterThan(
+      taglineWordsDepth('in every story', 700, taglineFontSize(false))
+    );
+  });
+});
+
+describe('PageTagline star', () => {
+  it('shows its star in full unless told otherwise', () => {
+    const tree = render(<PageTagline lines={LINES} width={360} />);
+
+    const star = byTestId(tree, 'page-tagline-star').filter((n: any) => n.props.style)[0];
+
+    expect(StyleSheet.flatten(star.props.style).opacity).toBe(1);
+    expect(star.findAll((n: any) => n.props.name === 'star').length).toBeGreaterThan(0);
+  });
+
+  it('lets the page fade its star', () => {
+    const fade = new Animated.Value(0.25);
+    const tree = render(<PageTagline lines={LINES} width={360} starOpacity={fade} />);
+
+    const star = byTestId(tree, 'page-tagline-star').filter((n: any) => n.props.style)[0];
+
+    expect(StyleSheet.flatten(star.props.style).opacity).toBe(fade);
   });
 });

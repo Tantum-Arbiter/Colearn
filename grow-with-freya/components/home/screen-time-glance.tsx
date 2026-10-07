@@ -1084,12 +1084,12 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
 
 const styles = StyleSheet.create({
   root: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 100,
     elevation: 100,
   },
   scrim: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: SCREEN_TIME_GLANCE.scrim,
   },
   splash: {
@@ -1151,7 +1151,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   dropTint: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   teardrop: {
     position: 'absolute',

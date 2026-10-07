@@ -12,9 +12,11 @@ import { render, fireEvent, act, waitFor } from '@testing-library/react-native';
 import { Alert, Dimensions, ScrollView, StyleSheet } from 'react-native';
 
 import { AccountScreen } from '@/components/account/account-screen';
+import { navClearance } from '@/components/child-ui/child-bottom-navigation';
 import { SleepingSkyFace } from '@/components/account/sleeping-sky-face';
 import { heroContentTop, heroSunFrame } from '@/constants/home-sky';
 import { reminderService } from '@/services/reminder-service';
+import { GUIDE_STEPS } from '@/constants/owl-guide';
 import { ApiClient } from '@/services/api-client';
 
 const mockTimeOfDay = jest.fn(() => 'night');
@@ -39,6 +41,12 @@ jest.mock('react-native-reanimated', () => {
     useSharedValue: jest.fn((v: any) => ({ value: v })),
     useAnimatedStyle: jest.fn(() => ({})),
     withTiming: jest.fn((v: any) => v),
+    withSpring: jest.fn((v: any) => v),
+    withSequence: jest.fn((...steps: any[]) => steps[steps.length - 1]),
+    withDelay: jest.fn((_ms: number, a: any) => a),
+    interpolate: jest.fn((v: any) => v),
+    useAnimatedProps: jest.fn(() => ({})),
+    useDerivedValue: jest.fn((fn: any) => ({ value: fn() })),
     withRepeat: jest.fn((a: any) => a),
     cancelAnimation: jest.fn(),
     Easing: { out: jest.fn((e: any) => e), in: jest.fn((e: any) => e), inOut: jest.fn((e: any) => e), cubic: jest.fn(), sin: jest.fn(), linear: jest.fn() },
@@ -89,18 +97,26 @@ jest.mock('@/components/account/edit-profile-screen', () => {
   const { View } = require('react-native');
   return { EditProfileContent: () => <View testID="edit-profile-content" /> };
 });
-jest.mock('@/components/owl-guide', () => ({ OwlGuide: () => null }));
+const mockOwlGuide: { props: any } = { props: null };
+jest.mock('@/components/owl-guide', () => ({
+  OwlGuide: (props: any) => {
+    mockOwlGuide.props = props;
+    return null;
+  },
+}));
 jest.mock('@/components/main-menu/animated-components', () => ({ MoonBottomImage: () => null }));
 
 jest.mock('@/services/subscription-service', () => ({
   restorePurchases: jest.fn().mockResolvedValue({ success: true }),
   isDevMode: () => true,
+  forgetAccount: jest.fn().mockResolvedValue(undefined),
 }));
 jest.mock('@/services/screen-time-service', () => ({
   __esModule: true,
   default: {
     getInstance: () => ({
       getScreenTimeStats: jest.fn().mockResolvedValue({ todayUsage: 0, dailyLimit: 3600 }),
+      getDailyLimit: jest.fn(() => 3600),
       clearAllData: jest.fn().mockResolvedValue(undefined),
     }),
   },
@@ -122,11 +138,11 @@ jest.mock('@/services/reminder-service', () => ({
 }));
 jest.mock('@/services/story-sync-service', () => ({ StorySyncService: { getInstance: () => ({}) } }));
 jest.mock('@/services/version-manager', () => ({ VersionManager: { getInstance: () => ({}) } }));
-jest.mock('@/services/device-info-service', () => ({ DeviceInfoService: { getAppVersion: () => '1.0.0' } }));
+jest.mock('@/services/device-info-service', () => ({ DeviceInfoService: { getAppVersion: () => '1.2.0', getVersionLabel: () => '1.2.0 (42)' } }));
 jest.mock('@/services/cache-manager', () => ({ CacheManager: { getInstance: () => ({ clearAll: jest.fn() }) } }));
 jest.mock('@/services/story-loader', () => ({ StoryLoader: { getInstance: () => ({}) } }));
 jest.mock('@/contexts/owl-guide-context', () => ({
-  useOwlGuide: () => ({ resetGuides: jest.fn(), lastResetTimestamp: 0 }),
+  useOwlGuide: () => ({ resetGuides: jest.fn(() => Promise.resolve()), lastResetTimestamp: 0 }),
 }));
 jest.mock('@/services/notification-service', () => ({
   __esModule: true,
@@ -182,7 +198,15 @@ jest.mock('@/store/app-store', () => ({
   useAppStore: () => mockStore,
 }));
 
-function byTestId(tree: ReturnType<typeof render>, testID: string) {
+const mockResetApp = jest.fn(() => Promise.resolve());
+jest.mock('@/services/app-reset', () => ({ resetApp: () => mockResetApp() }));
+
+const mockSession = { needsSignIn: false, login: jest.fn(), logout: jest.fn() };
+jest.mock('@/hooks/use-session-actions', () => ({
+  useSessionActions: () => mockSession,
+}));
+
+function byTestId(tree: ReturnType<typeof render>, testID: string): any[] {
   return tree.UNSAFE_root.findAll((n: any) => n.props.testID === testID);
 }
 
@@ -365,29 +389,63 @@ describe('AccountScreen navigation', () => {
     });
   });
 
-  describe('the login button', () => {
-    it('sits above the language strip', () => {
-      mockStore.isGuestMode = true;
-      const { tree } = renderAccount();
-
-      const hits = tree.UNSAFE_root.findAll((n: any) =>
-        ['account-login', 'account-language'].includes(n.props.testID)
-      );
-      const order = hits.map((n: any) => n.props.testID);
-
-      expect(order.indexOf('account-login')).toBeGreaterThanOrEqual(0);
-      expect(order.indexOf('account-language')).toBeGreaterThan(
-        order.lastIndexOf('account-login')
-      );
+  describe('signing out', () => {
+    afterEach(() => {
+      mockSession.needsSignIn = false;
     });
 
-    it('still reaches the login flow from its new home', () => {
-      mockStore.isGuestMode = true;
+    it('offers a signed-in family Log out here, behind the question that guards the page', () => {
       const { tree } = renderAccount();
 
-      press(tree, 'account-login');
+      const logout = byTestId(tree, 'account-logout').find((n: any) => n.props.accessibilityRole === 'button');
+      expect(logout.props.accessibilityLabel).toBe('common.logout');
+      fireEvent.press(logout);
 
-      expect(mockStore.setShowLoginAfterOnboarding).toHaveBeenCalledWith(true);
+      expect(mockSession.logout).toHaveBeenCalledTimes(1);
+      expect(mockSession.login).not.toHaveBeenCalled();
+    });
+
+    it('offers whoever needs to sign in no Log out, and no Login either: that is on the Profile page', () => {
+      mockSession.needsSignIn = true;
+      const { tree } = renderAccount();
+
+      expect(byTestId(tree, 'account-logout')).toHaveLength(0);
+      expect(byTestId(tree, 'account-login')).toHaveLength(0);
+    });
+  });
+
+  it('shows the version, with the store build beside it, at the foot of the page', () => {
+    const { tree } = renderAccount();
+
+    const line = byTestId(tree, 'account-version').find((n: any) => typeof n.type === 'string' || n.props.children);
+    expect([line.props.children].flat().join('')).toBe('common.version 1.2.0 (42)');
+  });
+
+  describe('resetting the app', () => {
+    function confirmReset() {
+      const [, , buttons] = (Alert.alert as jest.Mock).mock.calls[(Alert.alert as jest.Mock).mock.calls.length - 1];
+
+      return buttons.find((button: { style?: string }) => button.style === 'destructive').onPress();
+    }
+
+    it('asks before it resets anything', () => {
+      const { tree } = renderAccount();
+
+      press(tree, 'account-reset-app');
+
+      expect(Alert.alert).toHaveBeenCalled();
+      expect(mockResetApp).not.toHaveBeenCalled();
+    });
+
+    it('resets to a fresh install once confirmed, so the journey starts again at the splash', async () => {
+      const { tree } = renderAccount();
+      press(tree, 'account-reset-app');
+
+      await act(async () => {
+        await confirmReset();
+      });
+
+      expect(mockResetApp).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -425,10 +483,11 @@ describe('AccountScreen navigation', () => {
       expect(tree.UNSAFE_root.findAll((node: any) => node.props.children === 'common.editProfile')).toHaveLength(0);
     });
 
-    it('keeps the language button', () => {
+    it('has no language button: the flag on home picks the language', () => {
       const { tree } = renderAccount();
 
-      expect(byTestId(tree, 'account-language').length).toBeGreaterThan(0);
+      expect(byTestId(tree, 'account-language')).toHaveLength(0);
+      expect(byTestId(tree, 'language-picker')).toHaveLength(0);
     });
 
     it('keeps the screen time switches on the page itself', () => {
@@ -556,5 +615,111 @@ describe('AccountScreen sleeping sky', () => {
 
     expect(header.props.useBackArrow).toBe(true);
     expect(header.props.useHomeIcon).toBeFalsy();
+  });
+});
+
+/**
+ * The walkthrough lights each control it talks about, so the page hands it a
+ * ref for every one and lets it move the page to bring a low one clear of the
+ * bubble. Refs never fill under this renderer, so the hand-over is asserted.
+ */
+describe('AccountScreen walkthrough', () => {
+  beforeEach(() => {
+    mockOwlGuide.props = null;
+    Object.assign(mockStore, MUTABLE_STORE_DEFAULTS);
+  });
+
+  it('runs the Grown-ups walkthrough', () => {
+    render(<AccountScreen onBack={jest.fn()} />);
+
+    expect(mockOwlGuide.props.id).toBe('settings_walkthrough');
+  });
+
+  it('hands over a target for every control the walkthrough points at', () => {
+    render(<AccountScreen onBack={jest.fn()} />);
+
+    const wanted = GUIDE_STEPS.settings_walkthrough.flatMap((step) => (step.target ? [step.target] : []));
+
+    expect(Object.keys(mockOwlGuide.props.targets ?? {}).sort()).toEqual([...wanted].sort());
+  });
+
+  it('lets the walkthrough move the page, so a low control is not hidden behind the owl', () => {
+    const tree = render(<AccountScreen onBack={jest.fn()} />);
+
+    expect(typeof mockOwlGuide.props.scroller?.reveal).toBe('function');
+    expect(typeof mockOwlGuide.props.scroller?.release).toBe('function');
+    expect(typeof tree.UNSAFE_getByType(ScrollView).props.onScroll).toBe('function');
+  });
+});
+
+/**
+ * The page padded a fifth of the screen under its last row and bounced: a
+ * swipe threw every row up under the header and left the lower third of the
+ * screen empty. It now scrolls only as far as its content actually runs past
+ * the screen, plus the journey bar's clearance, and stops there.
+ */
+describe('AccountScreen scrolling', () => {
+  function scrollOf(tree: ReturnType<typeof render>) {
+    return tree.UNSAFE_getByType(ScrollView);
+  }
+
+  it('leaves the journey bar its clearance under the last row, not a fifth of the screen', () => {
+    const tree = render(<AccountScreen onBack={jest.fn()} />);
+
+    const padding = StyleSheet.flatten(scrollOf(tree).props.contentContainerStyle).paddingBottom as number;
+
+    // the test window has no height, so the old fifth-of-the-screen would
+    // read as nothing here: the bound is fixed instead
+    expect(padding).toBe(navClearance(0));
+  });
+
+  it('does not bounce past its ends, so the rows stay in place', () => {
+    const tree = render(<AccountScreen onBack={jest.fn()} />);
+
+    expect(scrollOf(tree).props.bounces).toBe(false);
+    expect(scrollOf(tree).props.overScrollMode).toBe('never');
+  });
+});
+
+/**
+ * Grown-ups is a journey page like the rest, so the bar stays at its foot
+ * (operator report 2026-09-22: it hid there). The Profile lamp stays lit,
+ * since Grown-ups lies below the Profile page, and every other item is a page
+ * the main menu can send to; Screensafe is this page's own screen-time card.
+ */
+describe('AccountScreen journey bar', () => {
+  function navItem(tree: ReturnType<typeof render>, id: string) {
+    return tree.UNSAFE_root.findAll((n: any) => n.props.testID === `navigation-item-${id}` && n.props.accessibilityRole === 'tab')[0];
+  }
+
+  it('keeps the journey bar at its foot, for the account page, with Profile lit', () => {
+    const tree = render(<AccountScreen onBack={jest.fn()} />);
+
+    const bar = tree.UNSAFE_root.findAll((n: any) => n.props.slotKey === 'account')[0];
+    expect(bar).toBeDefined();
+    expect(bar.props.selected).toBe('profile');
+  });
+
+  it.each([
+    ['home', 'stories'],
+    ['progress', 'progress'],
+    ['search', 'search'],
+    ['profile', 'profile'],
+  ])('sends a tap on %s to the %s page', (id, destination) => {
+    const onNavigate = jest.fn();
+    const tree = render(<AccountScreen onBack={jest.fn()} onNavigate={onNavigate} />);
+
+    fireEvent.press(navItem(tree, id));
+
+    expect(onNavigate).toHaveBeenCalledWith(destination);
+  });
+
+  it('keeps Screensafe on this page rather than leaving it', () => {
+    const onNavigate = jest.fn();
+    const tree = render(<AccountScreen onBack={jest.fn()} onNavigate={onNavigate} />);
+
+    fireEvent.press(navItem(tree, 'screensafe'));
+
+    expect(onNavigate).not.toHaveBeenCalled();
   });
 });

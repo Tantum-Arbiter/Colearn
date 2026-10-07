@@ -17,10 +17,11 @@
 
 import React from 'react';
 import { render, act, waitFor } from '@testing-library/react-native';
+import * as Haptics from 'expo-haptics';
 import { StyleSheet } from 'react-native';
 import { StoryCardSheet } from '@/components/stories/story-card-sheet';
 import { StoryDownloadService } from '@/services/story-download-service';
-import { storyCardLayout } from '@/constants/story-card';
+import { STORY_CARD, storyCardLayout } from '@/constants/story-card';
 import { Story } from '@/types/story';
 import { PROGRESS_GRADIENT } from '@/components/onboarding/onboarding-theme';
 
@@ -71,7 +72,7 @@ const makeStory = (id: string, title: string): Story => ({
   category: 'bedtime',
   isAvailable: true,
   ageRange: '2-5',
-  duration: 8,
+  pageCount: 8,
   description: `${title} is a gentle story.`,
   tags: ['bedtime', 'emotions'],
   pages: [
@@ -104,7 +105,8 @@ describe('StoryCardSheet', () => {
     const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} />);
 
     expect(findByText(UNSAFE_root, 'Snuggle Little Wombat').length).toBeGreaterThan(0);
-    expect(findByText(UNSAFE_root, 'storyDetail.minutes').length).toBeGreaterThan(0);
+    expect(findByText(UNSAFE_root, 'storyDetail.pages').length).toBeGreaterThan(0);
+    expect(findByText(UNSAFE_root, 'storyDetail.minutes')).toHaveLength(0);
     expect(findByText(UNSAFE_root, 'storyDetail.ages').length).toBeGreaterThan(0);
     expect(findByText(UNSAFE_root, 'storyDetail.interactive').length).toBeGreaterThan(0);
     expect(findByText(UNSAFE_root, 'stories.filterTags.bedtime').length).toBeGreaterThan(0);
@@ -188,14 +190,17 @@ describe('StoryCardSheet', () => {
     });
   });
 
-  it('should hold everything it shows, so the card never scrolls under the child', () => {
+  it('should slide sideways only along the shelf and a book\'s pages, and keep its body still and quiet', () => {
     const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} progress={{ wombat: { pageIndex: 3, totalPages: 9 } }} />);
 
-    const underTest = UNSAFE_root
-      .findAll((node: any) => typeof node.props?.onMomentumScrollEnd === 'function' || typeof node.props?.scrollEnabled === 'boolean')
+    const sideways = UNSAFE_root
+      .findAll((node: any) => node.props?.horizontal === true)
       .map((node: any) => node.props.testID);
+    const body = UNSAFE_root.findAll((node: any) => node.props?.testID === 'story-card-body')[0];
 
-    expect(Array.from(new Set(underTest))).toEqual(['story-card-carousel']);
+    expect(Array.from(new Set(sideways))).toEqual(['story-card-carousel', 'story-card-page-strip']);
+    expect(body.props.bounces).toBe(false);
+    expect(body.props.showsVerticalScrollIndicator).toBe(false);
   });
 
   it('should sit the ways to read at the foot of the card, whatever the book above them holds', () => {
@@ -261,6 +266,19 @@ describe('StoryCardSheet', () => {
     expect(defaultProps.onClose).toHaveBeenCalledTimes(1);
   });
 
+  it('should name its close button for the device journeys, one per card, and close from it', () => {
+    const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} />);
+
+    const closes = UNSAFE_root.findAll(
+      (node: any) => node.props?.testID === 'story-card-close' && typeof node.props?.onPress === 'function'
+    );
+
+    expect(closes.length).toBeGreaterThan(0);
+    expect(closes.every((node: any) => node.props.accessibilityLabel === 'common.back')).toBe(true);
+    pressByTestId(UNSAFE_root, 'story-card-close');
+    expect(defaultProps.onClose).toHaveBeenCalledTimes(1);
+  });
+
   it('should call onToggleFavorite from the heart', () => {
     const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} />);
 
@@ -296,6 +314,194 @@ describe('StoryCardSheet', () => {
     expect(underTest.backgroundColor).toBe(playAlong.backgroundColor);
     expect(underTest.borderWidth).toBe(playAlong.borderWidth);
     expect(underTest.borderRadius).toBe(playAlong.borderRadius);
+  });
+
+  describe('the pages to start from', () => {
+    const LONG: Story = {
+      ...makeStory('long', 'The Long Night'),
+      pages: Array.from({ length: 9 }, (_, index) => ({
+        id: `long-p${index}`,
+        pageNumber: index,
+        text: index === 0 ? 'cover' : `page ${index}`,
+        ...(index === 0 ? { type: 'cover' as const } : {}),
+        backgroundImage: `file:///long-${index}.webp`,
+      })),
+    };
+
+    function unique(ids: string[]): string[] {
+      return ids.filter((id, index) => ids.indexOf(id) === index);
+    }
+
+    function pagesOf(root: any) {
+      return root.findAll(
+        (node: any) => /^story-card-page-\d+$/.test(String(node.props?.testID)) && typeof node.props?.onPress === 'function'
+      );
+    }
+
+    function picked(root: any) {
+      return unique(pagesOf(root).filter((node: any) => node.props.accessibilityState?.selected).map((node: any) => node.props.testID));
+    }
+
+    it("should lay out the book's pages past its cover, each with its picture", () => {
+      const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} stories={[LONG]} />);
+
+      const pages = pagesOf(UNSAFE_root);
+      const pictures = UNSAFE_root.findAll((node: any) => node.props?.testID === 'story-card-page-image-3');
+
+      expect(unique(pages.map((node: any) => node.props.testID))).toEqual(
+        [1, 2, 3, 4, 5, 6, 7, 8].map((index) => `story-card-page-${index}`)
+      );
+      expect(pictures[0].props.source).toEqual({ uri: 'file:///long-3.webp' });
+    });
+
+    it('should start on the page the child left off at', () => {
+      const { UNSAFE_root } = render(
+        <StoryCardSheet {...defaultProps} stories={[LONG]} progress={{ long: { pageIndex: 4, totalPages: 9 } }} />
+      );
+
+      expect(picked(UNSAFE_root)).toEqual(['story-card-page-4']);
+    });
+
+    it('should start on the first page of a book not yet begun', () => {
+      const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} stories={[LONG]} />);
+
+      expect(picked(UNSAFE_root)).toEqual(['story-card-page-1']);
+    });
+
+    it('should pick a page when it is tapped, pass it on, and offer to read from there', () => {
+      const onPickPage = jest.fn();
+      const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} stories={[LONG]} onPickPage={onPickPage} />);
+
+      pressByTestId(UNSAFE_root, 'story-card-page-6');
+
+      expect(onPickPage).toHaveBeenCalledWith('long', 6);
+      expect(Haptics.selectionAsync).toHaveBeenCalled();
+      expect(picked(UNSAFE_root)).toEqual(['story-card-page-6']);
+      expect(findByText(UNSAFE_root, 'storyDetail.readFromPage (page:6)').length).toBeGreaterThan(0);
+    });
+
+    it('should keep the usual way in while the page it started on is still the one picked', () => {
+      const { UNSAFE_root } = render(
+        <StoryCardSheet {...defaultProps} stories={[LONG]} progress={{ long: { pageIndex: 4, totalPages: 9 } }} />
+      );
+
+      expect(findByText(UNSAFE_root, 'storyDetail.continueReading').length).toBeGreaterThan(0);
+      expect(findByText(UNSAFE_root, 'storyDetail.readFromPage')).toHaveLength(0);
+    });
+
+    it('should start on the last page when the saved place runs past the book', () => {
+      const { UNSAFE_root } = render(
+        <StoryCardSheet {...defaultProps} stories={[LONG]} progress={{ long: { pageIndex: 14, totalPages: 15 } }} />
+      );
+
+      expect(picked(UNSAFE_root)).toEqual(['story-card-page-8']);
+    });
+
+    it('should lay out the pages only on the book in front, not on its neighbours along the shelf', () => {
+      const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} stories={[LONG, { ...LONG, id: 'other' }]} />);
+
+      const strips = UNSAFE_root.findAll((node: any) => node.props?.testID === 'story-card-pages');
+      const inFront = UNSAFE_root.findAll((node: any) => node.props?.testID === 'story-card-long')[0];
+
+      expect(strips.length).toBeGreaterThan(0);
+      expect(inFront.findAll((node: any) => node.props?.testID === 'story-card-pages').length).toBe(strips.length);
+    });
+
+    it('should hand the tour the strip of the book in front, in a host that can be measured', () => {
+      const pagesRef = React.createRef<any>();
+      const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} stories={[LONG, { ...LONG, id: 'other' }]} pagesRef={pagesRef} />);
+
+      const cards = UNSAFE_root.findAll((node: any) => node.props?.pagesRef !== undefined && node.props?.story !== undefined);
+      const strip = UNSAFE_root.findAll((node: any) => node.props?.testID === 'story-card-pages' && node.props?.style !== undefined)[0];
+
+      expect(cards.filter((node: any) => node.props.pagesRef === pagesRef).map((node: any) => node.props.story.id)).toEqual(['long']);
+      expect(strip.props.collapsable).toBe(false);
+    });
+
+    it('should ring the picked page in a thick gold with a glow, far plainer than the rest', () => {
+      const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} stories={[LONG]} progress={{ long: { pageIndex: 2, totalPages: 9 } }} />);
+
+      const thumbOf = (index: number) =>
+        StyleSheet.flatten(UNSAFE_root.findAll((node: any) => node.props?.testID === `story-card-page-thumb-${index}` && node.props.style)[0].props.style);
+      const chosen = thumbOf(2);
+      const other = thumbOf(3);
+
+      expect(chosen.borderColor).toBe(STORY_CARD.pages.picked.colour);
+      expect(chosen.borderWidth).toBeGreaterThanOrEqual(3);
+      expect(chosen.borderWidth).toBeGreaterThan(other.borderWidth);
+      expect(chosen.shadowColor).toBe(STORY_CARD.pages.picked.colour);
+      expect(chosen.shadowOpacity).toBeGreaterThan(0.5);
+      expect(chosen.shadowRadius).toBeGreaterThanOrEqual(6);
+      expect(other.shadowOpacity ?? 0).toBe(0);
+    });
+
+    it('should keep each picture inside its ring, its corners rounded within it, picked or not', () => {
+      const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} stories={[LONG]} progress={{ long: { pageIndex: 2, totalPages: 9 } }} />);
+
+      for (const index of [2, 3]) {
+        const thumb = StyleSheet.flatten(UNSAFE_root.findAll((node: any) => node.props?.testID === `story-card-page-thumb-${index}` && node.props.style)[0].props.style);
+        const clip = StyleSheet.flatten(UNSAFE_root.findAll((node: any) => node.props?.testID === `story-card-page-clip-${index}` && node.props.style)[0].props.style);
+        const image = StyleSheet.flatten(UNSAFE_root.findAll((node: any) => node.props?.testID === `story-card-page-image-${index}` && node.props.style)[0].props.style);
+
+        expect(clip.overflow).toBe('hidden');
+        expect(clip.borderRadius).toBe(thumb.borderRadius - thumb.borderWidth);
+        expect(image.width).toBe(thumb.width - 2 * thumb.borderWidth);
+        expect(image.height).toBe(thumb.height - 2 * thumb.borderWidth);
+      }
+    });
+
+    it('should set the picked page\'s number in a gold pill, the others as plain numbers', () => {
+      const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} stories={[LONG]} progress={{ long: { pageIndex: 2, totalPages: 9 } }} />);
+
+      const badgeOf = (index: number) =>
+        StyleSheet.flatten(UNSAFE_root.findAll((node: any) => node.props?.testID === `story-card-page-number-${index}` && node.props.style)[0].props.style);
+      const numberOf = (index: number) =>
+        StyleSheet.flatten(
+          UNSAFE_root.findAll((node: any) => node.props?.testID === `story-card-page-number-${index}`)[0]
+            .findAll((node: any) => node.props.children === String(index) || node.props.children === index)[0].props.style
+        );
+
+      expect(badgeOf(2).backgroundColor).toBe(STORY_CARD.pages.picked.colour);
+      expect(badgeOf(3).backgroundColor ?? 'transparent').toBe('transparent');
+      expect(numberOf(2).color).toBe(STORY_CARD.pages.picked.ink);
+      expect(numberOf(3).color).not.toBe(STORY_CARD.pages.picked.ink);
+    });
+
+    it('should dim the pages not picked, so the picked one is the one the eye finds', () => {
+      const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} stories={[LONG]} progress={{ long: { pageIndex: 2, totalPages: 9 } }} />);
+
+      const opacityOf = (index: number) =>
+        StyleSheet.flatten(UNSAFE_root.findAll((node: any) => node.props?.testID === `story-card-page-thumb-${index}` && node.props.style)[0].props.style).opacity ?? 1;
+
+      expect(opacityOf(2)).toBe(1);
+      expect(opacityOf(3)).toBe(STORY_CARD.pages.picked.dim);
+      expect(STORY_CARD.pages.picked.dim).toBeLessThan(0.8);
+      expect(STORY_CARD.pages.picked.dim).toBeGreaterThan(0.4);
+    });
+
+    it('should leave the strip room above and below for the glow, so its edges do not cut it off', () => {
+      const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} stories={[LONG]} />);
+
+      const strip = UNSAFE_root.findAll((node: any) => node.props?.testID === 'story-card-page-strip' && node.props.contentContainerStyle)[0];
+
+      expect(StyleSheet.flatten(strip.props.contentContainerStyle).paddingVertical).toBeGreaterThanOrEqual(STORY_CARD.pages.picked.glow * 1.5);
+    });
+
+    it('should show no pages for a book that has none to show', () => {
+      const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} stories={[{ ...LONG, pages: undefined }]} />);
+
+      expect(pagesOf(UNSAFE_root)).toHaveLength(0);
+      expect(UNSAFE_root.findAll((node: any) => node.props?.testID === 'story-card-pages')).toHaveLength(0);
+    });
+
+    it('should listen for its body to fill, so it can bring the pages into view', () => {
+      const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} stories={[LONG]} focusPages />);
+
+      const body = UNSAFE_root.findAll((node: any) => node.props?.testID === 'story-card-body')[0];
+
+      expect(typeof body.props.onContentSizeChange).toBe('function');
+      expect(typeof body.props.onLayout).toBe('function');
+    });
   });
 
   describe('the page preview on the cover', () => {

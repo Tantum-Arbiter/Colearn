@@ -31,7 +31,7 @@ export const MOCK_STORIES: Story[] = [
     coverImage: require('../assets/stories/snuggle-little-wombat/cover/cover-large.webp'),
     isAvailable: true,
     ageRange: '2-5',
-    duration: 9,
+    pageCount: 9,
     description: 'A gentle bedtime story about a little wombat getting ready for sleep with cozy snuggles and sweet dreams.',
     localizedDescription: {
       en: 'A gentle bedtime story about a little wombat getting ready for sleep with cozy snuggles and sweet dreams.',
@@ -307,7 +307,7 @@ export const JIGSAW_STORIES: Story[] = [
     coverImage: require('../assets/stories/snuggle-little-wombat/cover/cover-large.webp'),
     isAvailable: true,
     ageRange: '2-5',
-    duration: 5,
+    pageCount: 5,
     description: 'Help Wombat by solving jigsaw puzzles! Swap the tiles to rebuild each picture.',
     localizedDescription: {
       en: 'Help Wombat by solving jigsaw puzzles! Swap the tiles to rebuild each picture.',
@@ -467,7 +467,7 @@ export const READING_CHALLENGE_STORIES: Story[] = [
     coverImage: require('../assets/stories/snuggle-little-wombat/cover/cover-large.webp'),
     isAvailable: true,
     ageRange: '2-6',
-    duration: 5,
+    pageCount: 5,
     description: 'Help Wombat spell words on a bedtime adventure! Tap letters to spell each word.',
     localizedDescription: {
       en: 'Help Wombat spell words on a bedtime adventure! Tap letters to spell each word.',
@@ -660,7 +660,7 @@ export const READING_CHALLENGE_STORIES: Story[] = [
     coverImage: require('../assets/stories/snuggle-little-wombat/cover/cover-large.webp'),
     isAvailable: true,
     ageRange: '2-6',
-    duration: 5,
+    pageCount: 5,
     description: 'Help Wombat find the missing words! Tap the right word to fill in each blank.',
     localizedDescription: {
       en: 'Help Wombat find the missing words! Tap the right word to fill in each blank.',

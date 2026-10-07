@@ -714,7 +714,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   tileArt: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     width: undefined,
     height: undefined,
   },

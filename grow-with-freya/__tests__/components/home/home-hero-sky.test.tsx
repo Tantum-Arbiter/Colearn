@@ -10,7 +10,9 @@ import React from 'react';
 import { StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 import { Image } from 'expo-image';
 import { render, type RenderResult } from '@testing-library/react-native';
+import { useAnimatedStyle } from 'react-native-reanimated';
 import { HomeHeroSky } from '@/components/home/home-hero-sky';
+import { HeroSunContainer } from '@/components/home/hero-sun-container';
 import { HERO_HALO } from '@/constants/home-sky';
 import { buildHeroSky, sunFrame } from '@/constants/home-sky';
 
@@ -85,5 +87,96 @@ describe('HomeHeroSky', () => {
     const { view } = renderSky({ active: false });
 
     expect(artByTestIdPrefix(view, 'hero-star-').length).toBe(layout.stars.length);
+  });
+});
+
+/**
+ * The sky is painted behind the page rather than inside it, so the sun has to
+ * be told how far the page has travelled or it hangs in the corner while the
+ * content scrolls away beneath it.
+ */
+describe('HeroSunContainer', () => {
+  const SUN = sunFrame(WIDTH, TOP_INSET);
+
+  it.each([
+    [undefined, true],
+    [true, true],
+    [false, false],
+  ])('given animated %p, has the face alive: %p', (animated, alive) => {
+    const view = render(<HeroSunContainer sun={SUN} timeOfDay="day" mode="full" animated={animated} />);
+
+    const face = view.UNSAFE_root.findAll((node: { props: { testID?: string; size?: number } }) => node.props.testID === 'sky-face' || node.props.size === SUN.size)[0];
+
+    expect(face.props.animated).toBe(alive);
+  });
+});
+
+describe('HomeHeroSky diving at the earth', () => {
+  const ZOOM = { transform: [{ scale: 2 }] };
+
+  it('draws exactly what it always did for a caller with no dive to make', () => {
+    const { view } = renderSky();
+
+    expect(byTestId(view, 'hero-sky-zoom')).toHaveLength(0);
+    expect(byTestId(view, 'hero-sun-zoom')).toHaveLength(0);
+    expect(byTestId(view, 'hero-sun').length).toBeGreaterThan(0);
+  });
+
+  it('grows the halo and the stars by the zoom it is given, under the page', () => {
+    const { view } = renderSky({ zoomStyle: ZOOM as never });
+
+    const layer = byTestId(view, 'hero-sky-zoom')[0];
+    const style = StyleSheet.flatten(layer.props.style as StyleProp<ViewStyle>);
+
+    expect(style.transform).toEqual(ZOOM.transform);
+    expect(style.position).toBe('absolute');
+    expect(style.zIndex).toBeUndefined();
+    expect(layer.props.pointerEvents).toBe('none');
+    expect(layer.findAll((node: { props: { testID?: string } }) => node.props.testID === 'home-hero-sky').length).toBeGreaterThan(0);
+  });
+
+  it('grows the sun by the same zoom, kept above the page so it can still be touched', () => {
+    const { view } = renderSky({ zoomStyle: ZOOM as never });
+
+    const layer = byTestId(view, 'hero-sun-zoom')[0];
+    const style = StyleSheet.flatten(layer.props.style as StyleProp<ViewStyle>);
+
+    expect(style.transform).toEqual(ZOOM.transform);
+    expect(style.zIndex).toBe(10);
+    expect(layer.props.pointerEvents).toBe('box-none');
+    expect(layer.findAll((node: { props: { testID?: string } }) => node.props.testID === 'hero-sun').length).toBeGreaterThan(0);
+  });
+});
+
+describe('HomeHeroSky riding the page', () => {
+  // The shared stub returns {} for every pose, which would make any assertion
+  // about a transform vacuous; run the worklet for this suite only.
+  const animatedStyle = useAnimatedStyle as unknown as jest.Mock;
+
+  beforeEach(() => animatedStyle.mockImplementation((worklet: () => unknown) => worklet()));
+  afterEach(() => animatedStyle.mockImplementation(() => ({})));
+
+  function sunLift(lift?: { value: number }) {
+    const { view } = renderSky({ lift: lift as never });
+    const sun = byTestId(view, 'hero-sun')[0];
+    const style = [sun.props.style]
+      .flat(Infinity)
+      .filter(Boolean)
+      .reduce((merged: any, part: any) => ({ ...merged, ...part }), {});
+
+    return style.transform.find((part: any) => 'translateY' in part).translateY;
+  }
+
+  it('leaves the sun where it is on a page that has not moved', () => {
+    // toBeCloseTo, because the resting pose multiplies out to -0.
+    expect(sunLift({ value: 0 })).toBeCloseTo(0);
+  });
+
+  it('carries the sun up by however far the page has scrolled', () => {
+    expect(sunLift({ value: 140 })).toBe(-140);
+  });
+
+  it('still draws a sun for a caller that never passes a scroll', () => {
+    expect(sunLift(undefined)).toBeCloseTo(0);
   });
 });

@@ -2,6 +2,7 @@ import { VersionManager, VersionCheckResult } from './version-manager';
 import { CacheManager } from './cache-manager';
 import { ApiClient } from './api-client';
 import { CatalogService } from './catalog-service';
+import { AchievementDefinitionsService, type RemoteAchievementDefinition } from './achievement-definitions-service';
 import { Story, CatalogEntry } from '../types/story';
 import { ALL_STORIES } from '@/data/stories';
 import { Logger } from '@/utils/logger';
@@ -21,6 +22,8 @@ export interface DeltaSyncResponse {
   updatedCount: number;
   lastUpdated: number;
   catalog?: CatalogEntry[]; // Lightweight entries for stories the client hasn't downloaded
+  achievementDefinitions?: RemoteAchievementDefinition[];
+  deletedAchievementIds?: string[];
 }
 
 export interface BatchSyncStats {
@@ -139,6 +142,7 @@ export class BatchSyncService {
             await CatalogService.updateCatalog(deltaResult.catalog);
             log.info(`Catalog refreshed: ${deltaResult.catalog.length} entries`);
           }
+          await this.keepAchievementDefinitions(deltaResult);
         } catch (e) {
           log.warn('Catalog refresh failed (non-critical):', e);
         }
@@ -187,6 +191,7 @@ export class BatchSyncService {
         await CatalogService.updateCatalog(deltaResult.catalog);
         log.info(`Catalog: ${deltaResult.catalog.length} entries`);
       }
+      await this.keepAchievementDefinitions(deltaResult);
 
       // Update local version
       await VersionManager.updateLocalVersion({
@@ -233,10 +238,20 @@ export class BatchSyncService {
       body: JSON.stringify({
         clientVersion: localVersion,
         storyChecksums: checksums,
+        achievementChecksums: await AchievementDefinitionsService.getChecksums().catch(() => ({})),
       }),
     });
 
     return response;
+  }
+
+  private static async keepAchievementDefinitions(delta: DeltaSyncResponse): Promise<void> {
+    if (!delta.achievementDefinitions && !delta.deletedAchievementIds) return;
+    try {
+      await AchievementDefinitionsService.applyDelta(delta.achievementDefinitions ?? [], delta.deletedAchievementIds ?? []);
+    } catch (error) {
+      log.warn('Badge definitions not kept; trying again next sync', error);
+    }
   }
 
   static isSyncInProgress(): boolean {

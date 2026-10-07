@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState, memo } from 'react';
-import { View, StyleSheet, Text, Dimensions } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { View, StyleSheet, Text, Dimensions, PixelRatio } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -10,10 +9,16 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { getScreenDimensions } from '@/components/main-menu/constants';
-import { crossesView, pageOffset } from '@/constants/page-slide';
+import { crossesView, pageOffset, slideTravel, snapToPixel } from '@/constants/page-slide';
+import { cloudGap } from '@/constants/earth';
+import { NIGHT_VOID } from '@/constants/night-palette';
+import { CloudRing, GapSky } from './cloud-ring';
 
+export const COLD_PAGE_FRAMES = 2;
+const PIXEL_SCALE = PixelRatio.get();
 const ALWAYS_MOUNTED = 'main';
 const NO_PREWARM: readonly string[] = [];
+const NONE_INSTANT: readonly string[] = [];
 
 interface EnhancedPageTransitionProps {
   currentPage: string;
@@ -25,6 +30,7 @@ interface EnhancedPageTransitionProps {
    *  to one of them does not pay for mounting it mid-slide. They stay mounted thereafter. */
   prewarm?: readonly string[];
   prewarmAfterMs?: number;
+  instant?: readonly string[];
 }
 
 interface AnimatedPageProps {
@@ -40,12 +46,13 @@ const AnimatedPage: React.FC<AnimatedPageProps> = memo(function AnimatedPage({
 }) {
   // Normal slide animation
   const slideStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: animationValue.value }],
+    transform: [{ translateY: snapToPixel(animationValue.value, PIXEL_SCALE) }],
   }));
 
   return (
     <Animated.View
       key={pageKey}
+      testID={`page-transition-page-${pageKey}`}
       style={[
         styles.page,
         slideStyle,
@@ -73,9 +80,11 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
   animate = true,
   prewarm = NO_PREWARM,
   prewarmAfterMs = 1200,
+  instant = NONE_INSTANT,
 }) => {
   // Get initial screen height and track changes
   const [screenHeight, setScreenHeight] = React.useState(() => getScreenDimensions().height);
+  const [screenWidth, setScreenWidth] = React.useState(() => getScreenDimensions().width);
 
   // Block touch input during page transitions so buttons can't be pressed mid-slide
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -90,24 +99,26 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
     setSlide({ from: slide.to, to: currentPage, recent: slide.recent === currentPage ? slide.from : slide.recent });
   }
   const [warmed, setWarmed] = useState<readonly string[]>(NO_PREWARM);
-  const prewarmKey = prewarm.join('|');
-  const allWarm = prewarm.every((key) => warmed.includes(key));
+  const showing = [currentPage, slide.from, slide.recent];
+  const coldKey = prewarm.filter((key) => !warmed.includes(key) && !showing.includes(key)).join('|');
 
   useEffect(() => {
-    if (prewarmKey === '' || allWarm) return undefined;
-    const timer = setTimeout(() => setWarmed(prewarmKey.split('|')), prewarmAfterMs);
+    if (coldKey === '') return undefined;
+    const timer = setTimeout(() => setWarmed((current) => [...current, ...coldKey.split('|')]), prewarmAfterMs);
     return () => clearTimeout(timer);
-  }, [currentPage, prewarmKey, prewarmAfterMs, allWarm]);
+  }, [currentPage, coldKey, prewarmAfterMs]);
 
   const mounted = new Set(
     [ALWAYS_MOUNTED, currentPage, slide.from, slide.recent, ...warmed].filter((key): key is string => key !== null)
   );
+  const committedMounted = useRef<ReadonlySet<string>>(mounted);
 
   // Update screen height when dimensions change (orientation changes)
   useEffect(() => {
     const updateDimensions = () => {
-      const { height } = getScreenDimensions();
+      const { width, height } = getScreenDimensions();
       setScreenHeight(height);
+      setScreenWidth(width);
     };
 
     // Listen for dimension changes
@@ -116,7 +127,9 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
     return () => subscription?.remove();
   }, []);
 
-  const restingAt = (pageKey: string) => pageOffset(pageKey, currentPage, screenHeight);
+  const gap = cloudGap(screenWidth, screenHeight);
+  const travel = slideTravel(screenWidth, screenHeight);
+  const restingAt = (pageKey: string) => pageOffset(pageKey, currentPage, travel);
   const mainTranslateY = useSharedValue(restingAt('main'));
   const storiesTranslateY = useSharedValue(restingAt('stories'));
   const sensoryTranslateY = useSharedValue(restingAt('sensory'));
@@ -128,6 +141,7 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
   const feelingsTranslateY = useSharedValue(restingAt('feelings'));
   const spellingGameTranslateY = useSharedValue(restingAt('spelling-game'));
   const accountTranslateY = useSharedValue(restingAt('account'));
+  const islandTranslateY = useSharedValue(restingAt('island'));
 
   // Map page keys to their animation values
   const pageAnimations: Record<string, SharedValue<number>> = {
@@ -142,15 +156,16 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
     feelings: feelingsTranslateY,
     'spelling-game': spellingGameTranslateY,
     account: accountTranslateY,
+    island: islandTranslateY,
   };
 
   // Update animation values when screen height changes (orientation change)
   // Set values immediately without animation to prevent visual glitches
   useEffect(() => {
     Object.entries(pageAnimations).forEach(([pageKey, value]) => {
-      if (pageKey !== currentPage) value.value = pageOffset(pageKey, currentPage, screenHeight);
+      if (pageKey !== currentPage) value.value = restingAt(pageKey);
     });
-  }, [screenHeight]);
+  }, [travel]);
 
   useEffect(() => {
     // Use bezier curve for smoother animation that doesn't "snap" at the end
@@ -159,16 +174,19 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
       easing: Easing.bezier(0.25, 0.1, 0.25, 1), // Smooth ease-out curve
     };
 
+    const noSlide = (page: string) => page === ALWAYS_MOUNTED || instant.includes(page);
+    const slides = animate && !(noSlide(currentPage) && noSlide(prevPageRef.current));
+
     // Helper: set value with or without animation
     const set = (sv: SharedValue<number>, target: number) => {
-      sv.value = animate && !crossesView(sv.value, target) ? withTiming(target, animationConfig) : target;
+      sv.value = slides && !crossesView(sv.value, target) ? withTiming(target, animationConfig) : target;
     };
 
     // Block touch input while the slide animation is in progress
     if (prevPageRef.current !== currentPage) {
       const leaving = prevPageRef.current;
       if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
-      if (animate) {
+      if (slides) {
         setIsTransitioning(true);
       }
       transitionTimerRef.current = setTimeout(() => {
@@ -179,20 +197,40 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
           from: current.from === leaving ? null : current.from,
           recent: leaving === ALWAYS_MOUNTED ? current.recent : leaving,
         }));
-      }, animate ? duration : 0);
+      }, slides ? duration : 0);
     }
+    const arriving = prevPageRef.current !== currentPage;
     prevPageRef.current = currentPage;
 
-    Object.entries(pageAnimations).forEach(([pageKey, value]) => {
-      set(value, pageOffset(pageKey, currentPage, screenHeight));
+    const slideAll = () => {
+      Object.entries(pageAnimations).forEach(([pageKey, value]) => {
+        set(value, restingAt(pageKey));
+      });
+    };
+
+    if (!slides || !arriving || committedMounted.current.has(currentPage)) {
+      slideAll();
+      return undefined;
+    }
+    let frame = 0;
+    let handle = requestAnimationFrame(function wait() {
+      frame += 1;
+      if (frame >= COLD_PAGE_FRAMES) {
+        slideAll();
+        return;
+      }
+      handle = requestAnimationFrame(wait);
     });
+    return () => cancelAnimationFrame(handle);
   }, [currentPage, duration, animate]);
 
+  useEffect(() => {
+    committedMounted.current = mounted;
+  });
+
   return (
-    <LinearGradient
-      colors={['#1E3A8A', '#3B82F6', '#4ECDC4']}
-      style={styles.container}
-    >
+    <View testID="page-transition-backdrop" style={styles.container}>
+      <GapSky testID="page-transition-gap-sky" mainOffset={mainTranslateY} width={screenWidth} height={screenHeight} gap={gap} />
       {Object.entries(pages).map(([pageKey, pageComponent]) => {
         // Only render pages that have animation values, and only the ones in play:
         // home, the page showing, the page it is sliding away from, and the last
@@ -213,13 +251,14 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
           />
         );
       })}
+      <CloudRing testID="page-transition-clouds" mainOffset={mainTranslateY} width={screenWidth} height={screenHeight} gap={gap} />
       {/* swallows touches while pages slide, without re-rendering the pages themselves */}
       <View
         testID="page-transition-touch-guard"
         style={styles.touchGuard}
         pointerEvents={isTransitioning ? 'auto' : 'none'}
       />
-    </LinearGradient>
+    </View>
   );
 };
 
@@ -227,13 +266,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     overflow: 'hidden',
+    backgroundColor: NIGHT_VOID,
   },
   page: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    bottom: 0,
+    bottom: -1 / PIXEL_SCALE,
   },
   touchGuard: {
     position: 'absolute',

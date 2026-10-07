@@ -7,7 +7,7 @@ export default function TermsPage() {
           End User Licence Agreement<br />
           App: earlyroots<br />
           Provider: Tantum Arbiter, United Kingdom<br />
-          Contact: <a href="mailto:support@growwithfreya.com" className="text-primary hover:underline">support@growwithfreya.com</a><br />
+          Contact: <a href="mailto:contact@earlyroots.co.uk" className="text-primary hover:underline">contact@earlyroots.co.uk</a><br />
           Effective date: November 1, 2025 &middot; Version 1.0
         </p>
         
@@ -71,7 +71,7 @@ export default function TermsPage() {
           <section className="mb-8">
             <h2 className="font-rounded text-2xl font-semibold text-brand-text mb-4">10. Termination &amp; Account Deletion</h2>
             <p>We may suspend or terminate your access if you breach these Terms or we must do so by law. You may stop using the app at any time.</p>
-            <p className="mt-2">You can delete your account and all associated data at any time via Account → Delete Account in the app, or by emailing <a href="mailto:support@growwithfreya.com" className="text-primary hover:underline">support@growwithfreya.com</a>. Upon deletion, your profile, child profiles, reading history, and all server-side data are permanently removed (see Privacy Policy for retention details).</p>
+            <p className="mt-2">You can delete your account and all associated data at any time via Account → Delete Account in the app, or by emailing <a href="mailto:contact@earlyroots.co.uk" className="text-primary hover:underline">contact@earlyroots.co.uk</a>. Upon deletion, your profile, child profiles, reading history, and all server-side data are permanently removed (see Privacy Policy for retention details).</p>
           </section>
           <section className="mb-8">
             <h2 className="font-rounded text-2xl font-semibold text-brand-text mb-4">11. Disclaimers</h2>
@@ -92,7 +92,7 @@ export default function TermsPage() {
           <section className="mb-8">
             <h2 className="font-rounded text-2xl font-semibold text-brand-text mb-4">15. Contact</h2>
             <p>Questions?{' '}
-              <a href="mailto:support@growwithfreya.com" className="text-primary hover:underline">support@growwithfreya.com</a>.
+              <a href="mailto:contact@earlyroots.co.uk" className="text-primary hover:underline">contact@earlyroots.co.uk</a>.
               You can also write to Tantum Arbiter, United Kingdom.</p>
           </section>
         </div>

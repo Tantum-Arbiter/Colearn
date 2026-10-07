@@ -1,5 +1,5 @@
 import React, { type RefObject, useCallback, useMemo, useState } from 'react';
-import { FlatList, ImageSourcePropType, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, FlatList, ImageSourcePropType, LayoutChangeEvent, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -29,17 +29,23 @@ import { CATALOGUE_THEMES, CatalogueTheme } from './catalogue-story';
 import { StoryFilterPill } from './story-filter-pill';
 
 /**
- * Three tiles share the row, so on a phone each is a box a little wider than
- * it is tall; on a tablet they are wide enough to sit shorter still. The
- * phone's tile is kept short on purpose: the chooser is a way in to the shelf,
- * not the half of the screen the child has to scroll past to reach a book.
+ * The three themes share one glass capsule (the operator's picture,
+ * 2026-10-04): each a segment with its art beside its label, the chosen one
+ * lit inside the capsule, inset from its edge. One line high, so the chooser
+ * is a way in to the shelf rather than a block to scroll past.
  */
-const TILE_HEIGHT = { phone: 72, tablet: 84 } as const;
-const TILE_RADIUS = RADIUS_CONTROL;
-const TILE_ART = { phone: 30, tablet: 42 } as const;
-/** Tile labels run a step smaller than pill labels and shrink to the tile's width. */
-const TILE_LABEL_STEP = { phone: 2, tablet: 2 } as const;
+export const THEME_BAR = {
+  height: { phone: 56, tablet: 64 },
+  inset: 5,
+  art: { phone: 26, tablet: 32 },
+  label: { phone: 16, tablet: 19 },
+  gap: 8,
+} as const;
+export const CHOOSER_HEADING_HEIGHT = 34;
 const TILE_LABEL_MIN_SCALE = 0.75;
+const BAR_FILL = 'rgba(28, 36, 112, 0.55)';
+const BAR_RIM = 'rgba(160, 178, 255, 0.28)';
+const LABEL_RESTING = 'rgba(226, 231, 255, 0.92)';
 
 /**
  * A chosen tile is lit rather than merely brightened: a purple fill that
@@ -73,6 +79,18 @@ interface StoryFilterBarProps {
   /** So the stories tour can point the owl at the tiles and at Filter. */
   tilesRef?: RefObject<View | null>;
   toggleRef?: RefObject<View | null>;
+  onThemeBarLayout?: (event: LayoutChangeEvent) => void;
+  headingOpacity?: Animated.WithAnimatedValue<number>;
+}
+
+export function chooserGap(isTablet: boolean): number {
+  return isTablet ? SPACE_3 : SPACE_2;
+}
+
+export function chooserLayoutEstimate(isTablet: boolean): { themeBarTop: number; height: number } {
+  const themeBarTop = CHOOSER_HEADING_HEIGHT + chooserGap(isTablet);
+
+  return { themeBarTop, height: themeBarTop + (isTablet ? THEME_BAR.height.tablet : THEME_BAR.height.phone) };
 }
 
 interface ThemeTileProps {
@@ -84,8 +102,9 @@ interface ThemeTileProps {
 }
 
 function ThemeTile({ id, art, label, selected, onPress }: ThemeTileProps) {
-  const { isTablet, scaledFontSize } = useAccessibility();
-  const artSize = isTablet ? TILE_ART.tablet : TILE_ART.phone;
+  const { isTablet } = useAccessibility();
+  const artSize = isTablet ? THEME_BAR.art.tablet : THEME_BAR.art.phone;
+  const inner = (isTablet ? THEME_BAR.height.tablet : THEME_BAR.height.phone) - THEME_BAR.inset * 2;
 
   const handlePress = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -99,15 +118,15 @@ function ThemeTile({ id, art, label, selected, onPress }: ThemeTileProps) {
       accessibilityLabel={label}
       accessibilityState={{ selected }}
       onPress={handlePress}
-      style={[styles.tile, isTablet ? styles.tileTablet : styles.tileBoxed, selected && styles.tileSelected]}
+      style={[styles.tile, { borderRadius: inner / 2 }, selected && styles.tileSelected]}
     >
       {selected && (
         <LinearGradient
           testID={`story-theme-glow-${id}`}
           colors={SELECTED_TILE_FILL}
-          start={{ x: 0.5, y: 0 }}
-          end={{ x: 0.5, y: 1 }}
-          style={styles.tileFill}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[styles.tileFill, { borderRadius: inner / 2 - 1.5 }]}
           pointerEvents="none"
         />
       )}
@@ -121,7 +140,7 @@ function ThemeTile({ id, art, label, selected, onPress }: ThemeTileProps) {
       <Text
         style={[
           styles.tileLabel,
-          { fontSize: scaledFontSize(typeSize('filterLabel', isTablet) - (isTablet ? TILE_LABEL_STEP.tablet : TILE_LABEL_STEP.phone)) },
+          { fontSize: isTablet ? THEME_BAR.label.tablet : THEME_BAR.label.phone, color: selected ? TEXT_PRIMARY : LABEL_RESTING },
         ]}
         numberOfLines={1}
         adjustsFontSizeToFit
@@ -141,7 +160,17 @@ function ThemeTile({ id, art, label, selected, onPress }: ThemeTileProps) {
  * child has chosen from there stays in view while it is chosen, or the shelf
  * would be filtered by something they cannot see.
  */
-export function StoryFilterBar({ theme, onSelectTheme, tags, selectedTags, onToggleTag, tilesRef, toggleRef }: StoryFilterBarProps) {
+export function StoryFilterBar({
+  theme,
+  onSelectTheme,
+  tags,
+  selectedTags,
+  onToggleTag,
+  tilesRef,
+  toggleRef,
+  onThemeBarLayout,
+  headingOpacity = 1,
+}: StoryFilterBarProps) {
   const { t } = useTranslation();
   const { isTablet, scaledFontSize } = useAccessibility();
   const [expanded, setExpanded] = useState(false);
@@ -161,9 +190,9 @@ export function StoryFilterBar({ theme, onSelectTheme, tags, selectedTags, onTog
   }, []);
 
   return (
-    <View testID="story-filter-bar" style={[styles.chooser, { gap: isTablet ? SPACE_3 : SPACE_2 }]}>
-      <View style={styles.heading}>
-        <View style={styles.headingLabel}>
+    <View testID="story-filter-bar" pointerEvents="box-none" style={[styles.chooser, { gap: chooserGap(isTablet) }]}>
+      <View testID="story-filter-heading" pointerEvents="box-none" style={styles.heading}>
+        <Animated.View testID="story-filter-heading-label" pointerEvents="none" style={[styles.headingLabel, { opacity: headingOpacity }]}>
           <Ionicons name="star" size={isTablet ? 20 : 17} color={ACCENT_GOLD} />
           <Text
             style={[styles.headingText, { fontSize: scaledFontSize(typeSize('filterLabel', isTablet)) }]}
@@ -171,7 +200,7 @@ export function StoryFilterBar({ theme, onSelectTheme, tags, selectedTags, onTog
           >
             {t('catalogue.chooseTheme')}
           </Text>
-        </View>
+        </Animated.View>
 
         <View ref={toggleRef} collapsable={false}>
         <Pressable
@@ -193,7 +222,13 @@ export function StoryFilterBar({ theme, onSelectTheme, tags, selectedTags, onTog
         </View>
       </View>
 
-      <View style={styles.tiles} ref={tilesRef} collapsable={false}>
+      <View
+        testID="story-theme-bar"
+        style={[styles.tiles, { height: isTablet ? THEME_BAR.height.tablet : THEME_BAR.height.phone, borderRadius: (isTablet ? THEME_BAR.height.tablet : THEME_BAR.height.phone) / 2 }]}
+        ref={tilesRef}
+        collapsable={false}
+        onLayout={onThemeBarLayout}
+      >
         {CATALOGUE_THEMES.map((id) => (
           <ThemeTile
             key={id}
@@ -247,7 +282,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACE_1,
-    height: 34,
+    height: CHOOSER_HEADING_HEIGHT,
     paddingHorizontal: FILTER_PILL_PADDING_H - 6,
     borderRadius: RADIUS_CONTROL,
     borderWidth: 1,
@@ -264,23 +299,18 @@ const styles = StyleSheet.create({
   },
   tiles: {
     flexDirection: 'row',
-    gap: SPACE_2,
+    padding: THEME_BAR.inset,
+    backgroundColor: BAR_FILL,
+    borderWidth: 1,
+    borderColor: BAR_RIM,
   },
   tile: {
     flex: 1,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: SPACE_1,
-    borderRadius: TILE_RADIUS,
-    backgroundColor: SURFACE_SECONDARY,
-    borderWidth: 1,
-    borderColor: BORDER_DEFAULT,
-  },
-  tileBoxed: {
-    height: TILE_HEIGHT.phone,
-  },
-  tileTablet: {
-    height: TILE_HEIGHT.tablet,
+    gap: THEME_BAR.gap,
+    paddingHorizontal: SPACE_2,
   },
   // The fill sits inside the rim; the glow is a shadow, so the tile itself
   // must not clip, or iOS would clip the glow with it
@@ -294,16 +324,12 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   tileFill: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: TILE_RADIUS - 1.5,
+    ...StyleSheet.absoluteFill,
   },
   tileLabel: {
-    alignSelf: 'stretch',
-    textAlign: 'center',
-    paddingHorizontal: SPACE_1 / 2,
-    color: TEXT_PRIMARY,
-    fontFamily: Fonts.primary,
-    fontWeight: TYPE_ROLES.filterLabel.weight,
+    flexShrink: 1,
+    fontFamily: Fonts.rounded,
+    fontWeight: '700',
   },
   pillContent: {
     flexDirection: 'row',

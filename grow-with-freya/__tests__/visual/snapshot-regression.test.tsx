@@ -43,6 +43,8 @@ jest.mock('@/store/app-store', () => {
     childAgeInMonths: 36,
     setStoryProgress: jest.fn(),
     markStoryCompleted: jest.fn(),
+    recordChallengeCompleted: jest.fn(),
+    grantAchievements: jest.fn(),
     markStoryAsRead: jest.fn(),
     recordReadingSession: jest.fn(),
     textSizeScale: 1,
@@ -192,14 +194,19 @@ describe('Visual Regression Tests', () => {
 
       expect(structure(tree)).toEqual([
         'earth-horizon',
-        'earth-horizon-clouds',
-        'earth-horizon-globe',
+        'earth-horizon-planet',
         'icon-Ionicons-arrow-back',
         'linear-gradient',
         'music-control-button',
         'music-icon-playing',
         'page-header-row',
         'page-header-title',
+        'page-header-title-halo',
+        'svg-Defs',
+        'svg-RadialGradient',
+        'svg-Rect',
+        'svg-Stop',
+        'svg-Svg',
       ]);
     });
 

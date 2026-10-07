@@ -492,7 +492,7 @@ export default {
   account: {
     sleepingSun: 'ねむっている おひさま',
     sleepingMoon: 'ねむっている おつきさま',
-    title: 'アカウント',
+    title: '設定',
     profile: 'プロフィール',
     nickname: 'ニックネーム',
     avatarType: 'アバタータイプ',
@@ -506,6 +506,7 @@ export default {
     termsAndConditions: '利用規約',
     privacyPolicy: 'プライバシーポリシー',
     selectLanguage: '言語を選択',
+    chooseLanguage: '使う言語を選んでください',
     guestMode: 'ゲストモード',
     createAccount: 'アカウントを作成して進捗を保存',
     crashReports: 'クラッシュレポート',
@@ -514,6 +515,7 @@ export default {
     deleteAccountHint: 'アカウントとすべてのデータを完全に削除',
   },
   profile: {
+    signedIn: 'サインイン済み',
     enterNickname: 'ニックネームを入力',
     nicknameTooLong: 'ニックネームは20文字以下である必要があります',
     editTitle: 'プロフィール編集',
@@ -529,7 +531,6 @@ export default {
     noName: 'ちいさなたんけんか',
     downloadsUsed: 'このデバイスに {{limit}} さつちゅう {{used}} さつ',
     downloadsEmpty: 'このデバイスにはまだなにもないよ — ダウンロードすればどこでもよめるよ',
-    downloadMeta: '{{minutes}}ふん · {{pages}}ページ',
     downloadsCount: 'このデバイスに {{count}} さつ',
     tabs: {
       saved: 'ほぞん',
@@ -617,23 +618,79 @@ export default {
       consent: 'あなたの同意がご家族を守ります',
     },
   },
+  island: {
+    scene: 'そらから みた しま。ゆきの やま、もり、かわ、とうだいが あります',
+  },
+  roadmap: {
+    title: 'ぼうけんは つづく',
+    playAgain: 'もう一度',
+    scene: 'リュックを背負った小さなクマが、春の谷へと続く光るゲートの前に座っています。これからの冒険のロードマップも描かれています',
+    stop: '{{quarter}}：{{place}}',
+    stops: {
+      japanNewZealand: '日本と\nニュージーランド',
+      franceItaly: 'フランスとイタリア',
+      lapland: 'ラップランド',
+    },
+  },
+  plan: {
+    places: {
+      storyTime: 'おはなしの じかん',
+      wordGarden: 'ことばの にわ',
+      mathsMeadow: 'かずの のはら',
+      feelingsCove: 'きもちの いりえ',
+      musicGrove: 'おんがくの もり',
+      storyCorner: 'おはなしの コーナー',
+      storyBridge: 'おはなしの はし',
+    },
+    domains: {
+      language: 'ことば',
+      maths: 'さんすう',
+      feelings: 'きもち',
+      music: 'おんがく',
+    },
+    skills: {
+      listening: 'きく',
+      vocabulary: 'ことば',
+      letters: 'もじ',
+      counting: 'かぞえる',
+      numbers: 'かず',
+      feelings: 'きもち',
+      confidence: 'じしん',
+      rhythm: 'リズム',
+      patience: 'まつ こと',
+    },
+    islandWeek: {
+      'day-1': { aim: 'ほっこりする おやすみの おはなしで、きく ちからと ことばと おちつきを そだてる。' },
+      'day-2': { aim: 'もじの おとを おぼえて、タイルで ことばを つくる。' },
+      'day-3': { aim: 'みじかい ゲームで かぞえて、かずで あそぶ。' },
+      'day-4': { aim: 'きもちに なまえを つけて、いっしょに かおで あらわす。' },
+      'day-5': { aim: 'リズムを みつけて、ひとつずつ みじかい きょくを ひく。' },
+      'day-6': { aim: 'おおきく なる おはなしで、きいて、おおきな きもちに ついて はなす。' },
+      'day-7': { aim: 'バスの おはなしで、まつ ことと じゅんばんを れんしゅうする。' },
+    },
+    stepOf: 'ステップ {{day}} / {{total}}',
+    focus: '{{domain}}・{{skill}}',
+    minutes: '{{from}}〜{{to}} ふん',
+    start: 'あそびを はじめる',
+    preview: 'みてみる',
+    opensTomorrow: 'きょうも よく できました。つぎの ステップは あした ひらきます。',
+    weekDone: 'しま ぜんぶ たんけん できました',
+    weekDoneBody: '{{total}} ステップ中 {{done}} こ できました。すきな日を タップして もう一度 あそぼう。さいごの日を タップすると つぎが みられるよ。',
+    a11y: {
+      checkpoint: '{{day}} にちめ、{{place}}、{{state}}',
+    },
+    states: {
+      done: 'できた',
+      open: 'はじめられます',
+      tomorrow: 'あした ひらきます',
+      locked: 'まだ',
+    },
+  },
   tutorial: {
-    welcomeTitle: 'Earlyrootsへ\nようこそ！',
-    welcomeDescription: 'クイックツアーをして、あなたとお子さんが読書時間を最大限に活用できるようにしましょう。',
-    storiesTitle: 'ストーリーライブラリ',
-    storiesDescription: 'ここをタップして、美しいイラストと楽しいインタラクションを備えたインタラクティブストーリーのコレクションを探索してください。',
-    skip: 'スキップ',
-    gotIt: 'わかりました！',
     buttons: {
       next: '次へ',
       skip: 'スキップ',
-      skipAll: 'すべてスキップ',
-      skipTour: 'ツアーをスキップ',
-      gotIt: 'わかりました！',
-      go: '行く！',
       letsGo: 'いきましょう！',
-      done: '完了',
-      startReading: '読み始める',
     },
     mainMenu: {
       navLearn: {
@@ -641,36 +698,20 @@ export default {
         description: 'おはなし、うた、まなびのゲームは、ぜんぶライブラリにあります。ここをタップしてひらいてね。',
       },
       welcome: {
-        title: 'Grow with Freyaへようこそ！',
+        title: 'Early Rootsへようこそ！',
         description: 'クイックツアーをして、あなたとお子さんが読書時間を最大限に活用できるようにしましょう。',
       },
-      stories: {
-        title: 'ストーリー',
-        description: '美しいイラストと楽しいインタラクションのあるインタラクティブなストーリーコレクションを探索しましょう。',
-      },
-      practise: {
-        title: '練習',
-        description: 'さまざまな楽器で曲を演奏することを学びましょう。リズムに合わせて音楽スキルを磨きましょう！',
-      },
-      freeplay: {
-        title: 'フリープレイ',
-        description: 'どんな楽器でも自由に演奏 -ルールなし、楽しさだけ！音を試して自分だけの音楽を作りましょう。',
-      },
-      instruments: {
-        title: '楽器',
-        description: '曲を練習したり、さまざまな楽器で自由に演奏しましょう。楽しみながら音楽スキルを磨きましょう！',
-      },
-      settings: {
-        title: '設定',
-        description: 'アプリをカスタマイズして、ご家族に最適に機能するようにしてください。',
+      language: {
+        title: 'あなたの言語',
+        description: '旗をタップすると、アプリの言語を変更できます。',
       },
       sound: {
         title: 'サウンドコントロール',
         description: 'ここをタップして、背景音楽と音響効果を制御してください。',
       },
       achievement: {
-        title: 'つぎのバッジ',
-        description: 'もうすぐもらえるバッジと、あとどれくらいか。タップでぜんぶみられるよ。',
+        title: 'きみの まなびの たび',
+        description: 'こんしゅうの しまの ステップと、もうすぐ もらえる バッジ。タップすると しまへ とんでいくよ。',
       },
       screenTime: {
         title: 'スクリーンタイムのリング',
@@ -678,27 +719,17 @@ export default {
         remainingCaption: 'のこりじかん',
         spentCaption: 'じかんおしまい',
       },
-    },
-    screenTime: {
-      intro: {
-        title: 'スクリーンタイムダッシュボード',
-        description: 'お子さんの毎日の画面時間を年齢に適した制限で監視および管理します。',
+      streakOrb: {
+        title: 'まいにち れんぞく',
+        description: 'おはなしを よんだ ひが ひとつずつ ふえるよ。タップすると いちばん ながい れんぞくが みられるよ。',
       },
-      ageBased: {
-        title: '年齢ベースの制限',
-        description: 'お子さんの年齢を設定して、WHO/AAP推奨の画面時間制限を自動的に取得します。',
+      continueOrb: {
+        title: 'つづき',
+        description: 'ほんを よみはじめるまでは「よんで しおりを」と でるよ。よみはじめると「つづき」に かわって、その ほんの ひょうしが うつるよ。タップすると カードが ひらいて、ページを えらべるよ。',
       },
-      heatmap: {
-        title: '週間アクティビティ',
-        description: '週を通じた画面時間の使用パターンを確認して、健全なルーチンを確立するのに役立ちます。',
-      },
-      reminders: {
-        title: 'リマインダーを設定',
-        description: 'アクティビティ、休憩、または就寝時間のルーチンのカスタムリマインダーを作成します。',
-      },
-      routine: {
-        title: '健全なルーチンを構築',
-        description: 'スクリーンタイムデータを使用して、ご家族に適した一貫した毎日のルーチンを確立します。',
+      badgesOrb: {
+        title: 'バッジ',
+        description: 'これまでに もらった バッジの かず。タップすると つぎの バッジが みられるよ。',
       },
     },
     storyReader: {
@@ -737,16 +768,38 @@ export default {
     },
     bookMode: {
       read: {
-        title: '読み取りモード',
-        description: 'ここをタップして、お子さんと一緒にストーリーを自分で読んでください。自分のペースでページをめくります。',
+        title: 'いっしょに読む',
+        description: 'いっしょに こえに だして よもう。ページは じぶんの ペースで めくれるよ。とちゅうなら つづきから はじまるよ。',
       },
       record: {
-        title: '記録モード',
-        description: 'ストーリーを読んでいるあなたの声を記録してください。あなたが不在の時に完璧です！',
+        title: 'ろくおん',
+        description: 'おうちの ひとの こえで おはなしを ろくおんしよう。はなれている ときも きけるよ。さいしょに おとなが かんたんな しつもんに こたえるよ。',
       },
       narrate: {
-        title: 'リッスンモード',
-        description: 'ストーリーの事前に記録されたナレーションを聞いてください。就寝時間に最適です！',
+        title: 'いっしょに遊ぶ',
+        description: 'ろくおんした こえが おはなしを よんで、ページも じどうで めくれるよ。ねる まえに ぴったり。',
+      },
+      pages: {
+        title: 'すきな ページから',
+        description: 'ほんの ページが ぜんぶ ならんでいて、いまの ばしょは きんいろで かこまれているよ。タップすると そこから よめるよ。',
+      },
+    },
+    island: {
+      welcome: {
+        title: 'まなびの しま',
+        description: 'こんしゅうは まいにち ひとつずつ。おはなし、ゲーム、うたを いっしょに たのしもう。すすむと みちが ひかるよ。',
+      },
+      checkpoint: {
+        title: 'きょうの ステップ',
+        description: 'ひかっている ところが きょうの ぶん。タップして はじめよう。ほかは いちにちずつ ひらくよ。',
+      },
+      plan: {
+        title: 'きょうの よてい',
+        description: 'きょうの ステップが なにか、どのくらい かかるか、なにが のびるかが わかるよ。「あそびを はじめる」で はじまり、「みてみる」で さきに みられるよ。',
+      },
+      home: {
+        title: 'ホームへ戻る',
+        description: 'おわったら いつでも おうちの そらへ もどれるよ。',
       },
     },
     recordMode: {
@@ -803,24 +856,24 @@ export default {
     },
     settings: {
       intro: {
-        title: '設定',
-        description: 'アプリをカスタマイズして、ご家族に最適に機能するようにしてください。',
+        title: 'おとなの設定',
+        description: 'アプリをご家族に合わせるための、いくつかの選択です。いつでも変更できます。',
       },
-      login: {
-        title: 'アカウントと同期',
-        description: 'ログインして進捗を保存し、デバイス間で同期します。',
-      },
-      language: {
-        title: '言語',
-        description: 'アプリインターフェイスの優先言語を選択してください。',
-      },
-      accessibility: {
-        title: 'アクセシビリティ',
-        description: 'テキストサイズおよびその他の設定を調整して、より簡単に使用できるようにしてください。',
+      textSize: {
+        title: '文字の大きさ',
+        description: '読む人に合わせて、アプリ全体の文字を大きくしたり小さくしたりできます。',
       },
       screenTime: {
         title: 'スクリーンタイム',
-        description: '健全な制限を設定し、毎日の使用を監視します。',
+        description: 'オンにすると、お子さまの年齢に合ったやさしい1日の上限が設定されます。Screensafeのリングで1日の様子がわかります。いつでもオフにできます。',
+      },
+      reminders: {
+        title: 'スマートリマインダー',
+        description: '選んだ時間に、おはなし・きもち・音楽のためのそっとしたお知らせが届きます。',
+      },
+      crashReports: {
+        title: 'クラッシュレポート',
+        description: '問題が起きたとき、匿名のレポートが修正に役立ちます。不要ならここでオフにできます。',
       },
     },
     musicMode: {
@@ -849,34 +902,6 @@ export default {
         description: '別の音を試したいですか？メニュー（）を開いて「楽器を変更」をタップすれば、いつでも変更できます。',
       },
     },
-    storyModes: {
-      welcome: {
-        title: '3つの探検方法！',
-        description: 'お子さまはそれぞれ違う方法で学びます。お子さまの好奇心を刺激するストーリー体験を選びましょう -それぞれが遊びの魔法を通じて大切なスキルを育みます。',
-      },
-      interactive: {
-        title: 'インタラクティブストーリー',
-        description: 'タップ、スワイプ、発見！インタラクティブストーリーは、タッチできるサプライズ、因果関係の瞬間、実践的な学習活動でページに命を吹き込みます。研究によると、読み聞かせ中の積極的な参加は理解力、微細運動スキル、初期の問題解決能力を強化します。',
-      },
-      musical: {
-        title: 'ミュージカルストーリー',
-        description: '読んで、演奏して、パフォーマンス！ミュージカルストーリーは、すべての冒険に本物の楽器チャレンジを織り込みます -お子さまは物語を追いながらリズム、メロディー、コーディネーションを学びます。研究により、音楽への早期接触は記憶力、言語発達、感情表現を向上させることが確認されています。',
-      },
-      jigsaw: {
-        title: 'ジグソーストーリー',
-        description: 'パズルを組み立てよう！ジグソーストーリーは各ページに美しいパズルを隠し、空間認識、忍耐力、論理的思考を育みます。パズルを完成させることで、子どもたちは本当の達成感を得て、読書準備を支える視覚認知スキルを強化します。',
-      },
-    },
-    gestures: {
-      speakerLongPress: {
-        title: 'ロングプレスチップ',
-        description: 'スピーカーボタンを長く押して、その他のオーディオオプションを表示します。',
-      },
-      storySwipe: {
-        title: 'スワイプナビゲーション',
-        description: '左または右にスワイプしてページをすばやく回転させます。',
-      },
-    },
     emotionCards: {
       welcome: {
         title: '感情カードへようこそ！',
@@ -899,60 +924,6 @@ export default {
         description: '絵文字、動物、クマのテーマを切り替えて、新鮮で魅力的に保ってください！',
       },
     },
-    spelling: {
-      welcome: {
-        title: 'スペリング活動',
-        description: 'スペリングへようこそ！お子さまが文字、単語、スペリングを学ぶのに役立つ楽しいインタラクティブな活動です。',
-      },
-      ages: {
-        title: '年齢に合ったコンテンツ',
-        description: '活動は年齢別にグループ分けされています。上のカルーセルを使って、お子さまのレベルに合わせてフィルタリングしてください。',
-      },
-      together: {
-        title: '一緒に学ぼう',
-        description: 'お子さまと一緒に座って、文字を声に出して読みましょう。励まして、すべての挑戦を褒めてあげましょう！',
-      },
-      benefit: {
-        title: '読み書き力の構築',
-        description: '早期のスペリング練習は、音素認識、文字認識、そして一生続く言葉への愛を育みます。',
-      },
-    },
-    numbers: {
-      welcome: {
-        title: '数字の活動',
-        description: '数字へようこそ！お子さまが数え方、形、初めての算数を探求するのに役立つ魅力的な活動です。',
-      },
-      ages: {
-        title: '年齢に合ったコンテンツ',
-        description: '活動は年齢別にグループ分けされています。上のカルーセルを使って、お子さまに合ったレベルを見つけてください。',
-      },
-      together: {
-        title: '一緒に数えよう',
-        description: '一緒に声に出して数えて、物を指さして、数字を毎日の遊びの一部にしましょう！',
-      },
-      benefit: {
-        title: '計算力の構築',
-        description: '早期の数遊びは、論理的思考、パターン認識、算数への自信のある基盤を育みます。',
-      },
-    },
-    feelings: {
-      welcome: {
-        title: '気持ちの活動',
-        description: '気持ちへようこそ！お子さまが感情を認識し、名前をつけ、理解するのに役立つ活動です。',
-      },
-      ages: {
-        title: '年齢に合ったコンテンツ',
-        description: '活動は年齢別にグループ分けされています。お子さまの情緒発達に合った活動を選んでください。',
-      },
-      together: {
-        title: '一緒に探求しよう',
-        description: '感情についてオープンに話しましょう。「それはどんな気持ち？」と聞いて、自分の気持ちも共有しましょう。',
-      },
-      benefit: {
-        title: '感情知能',
-        description: '感情を理解することは、共感、自己制御、強い社会的スキルを育みます — 生涯の幸福に不可欠です。',
-      },
-    },
     practise: {
       welcome: {
         title: '練習モード',
@@ -971,24 +942,6 @@ export default {
         description: '曲を演奏することを学ぶことは、リズム、協調性、記憶力、集中力を育みます — すべて音楽の喜びを通して。',
       },
     },
-    freeplay: {
-      welcome: {
-        title: 'フリープレイモード',
-        description: 'ルールなし、楽しいだけ！好きな楽器を探求して、自分だけの音楽を作りましょう。創造性と自己表現にぴったりです。',
-      },
-      instrument: {
-        title: '楽器を選ぼう',
-        description: 'カルーセルから好きな楽器を選びましょう。全部試して、新しい音やお気に入りを発見しましょう！',
-      },
-      play: {
-        title: '自由に演奏しよう',
-        description: 'カラフルなボタンを押して音楽を作りましょう。間違った音はありません — すべての音が冒険の一部です！',
-      },
-      benefit: {
-        title: '創造的表現',
-        description: '自由な音楽遊びは、創造性、自信、そしてお子さまと共に成長する音楽への愛を育みます。',
-      },
-    },
     catalogue: {
       welcome: {
         title: 'おはなしのたな',
@@ -996,19 +949,19 @@ export default {
       },
       themes: {
         title: 'テーマをえらぼう',
-        description: 'おはなし、まなび、おんがく。タイルをタップするとたながならびかわるよ。',
+        description: 'おはなし、学習、音楽。えらぶと たなが ならびかわるよ。',
       },
       filter: {
         title: 'こまかいえらびかた',
         description: 'ねるまえ、どうぶつ、おちつき、ほかにも。いくつかえらぶと、それだけになるよ。',
       },
       featured: {
-        title: 'きょうのいっさつ',
-        description: 'まいにちえらばれるいっさつ。「いまよむ」をタップするとすぐひらくよ。',
+        title: 'つぎに よむ ほん',
+        description: 'とちゅうまで よんだ ほんか、まいにち かわる おすすめ。「いま読む」で カードが ひらくよ。',
       },
       shelves: {
         title: 'スワイプできるたな',
-        description: 'たなをよこにスワイプ、または「すべてみる」でテーマぜんぶをみられるよ。',
+        description: 'たなを よこに スワイプ するか、「すべて見る」で テーマを ぜんぶ みられるよ。ほんを タップすると カードが ひらくよ。',
       },
       navProgress: {
         title: 'せいちょう',
@@ -1020,7 +973,9 @@ export default {
       },
       navProfile: {
         title: 'プロフィール',
-        description: 'おきにいり、バッジのかべ、このデバイスにあるほん。',
+        description: 'おきにいり、バッジのかべ、このデバイスにあるほん。ときどき金色のサインイン記号に変わります。まだ誰もサインインしていない合図で、タップするとサインインできます。',
+        profileCaption: 'あなたのプロフィール',
+        loginCaption: 'サインインしましょう',
       },
     },
     progress: {
@@ -1068,13 +1023,21 @@ export default {
         title: 'プロフィールをかえる',
         description: 'えやなまえをタップすると、アバター、なまえ、ねんれいをかえられる。さきにおとなのひとがしつもんにこたえるよ。',
       },
+      login: {
+        title: 'サインイン',
+        description: 'サインインすると、バッジや連続記録、お話のつづきが保存され、使っているすべての端末に引き継がれます。',
+      },
+      home: {
+        title: 'ホームへ戻る',
+        description: 'ホームをタップすると、いつでも夜空に戻れます。',
+      },
       tabs: {
         title: 'ほぞん、バッジ、かんり',
         description: 'ハートをつけたおきにいり、バッジのかべ、このデバイスのほん。けすこともできるよ。',
       },
       settings: {
         title: 'おとなのせってい',
-        description: 'ことば、スクリーンタイム、アカウント。おとなのゲートのむこうに。',
+        description: '文字の大きさ、スクリーンタイム、リマインダー、アカウントは、おとなの扉の向こうにあります。',
       },
     },
   },
@@ -3204,12 +3167,15 @@ export default {
   },
   storyDetail: {
     readTogether: 'いっしょに読む',
+    pickPage: 'すきな ページから',
+    readFromPage: '{{page}}ページから よむ',
     continueReading: 'つづきをよむ',
     record: 'ろくおん',
     playAlong: 'いっしょに遊ぶ',
     readNow: 'いま読む',
     savedOffline: 'オフラインに保存済み',
-    minutes: '{{count}}分',
+    pages_one: '{{count}}ページ',
+    pages_other: '{{count}}ページ',
     ages: '対象年齢 {{range}}',
     interactive: 'インタラクティブ',
     favourite: 'お気に入り',
@@ -3250,7 +3216,7 @@ export default {
       title: 'おだやかで安心な\nスクリーンタイム。',
       noAds: '広告なし',
       noTracking: '行動トラッキングなし',
-      noPressure: '連続記録もプレッシャーもなし',
+      noPressure: 'プレッシャーは ぜったい なし',
       gentle: 'やさしい音と動き',
       body: '静かな遊び、やさしい反応、気を引く報酬はありません。',
     },
@@ -3324,20 +3290,27 @@ export default {
       days_one: '{{count}}日連続達成！',
       days_other: '{{count}}日連続達成！',
       start: '今日から続けてみよう',
+      unit: '日連続',
+      unit_one: '日連続',
+      unit_other: '日連続',
     },
     weeklyReading: {
       minutes: '今週{{count}}分',
       none: '今週はまだ読んでいません',
     },
+    achievementTally: {
+      label: 'かくとく {{unlocked}}、のこり {{remaining}}',
+    },
     achievements: {
       title: 'みて、こんなに できたよ！',
-      cta: 'できたことを みる',
+      cta: 'たんけんする',
+      ctaJourney: 'たびをたんけんする',
       emptyTitle: 'はじめての バッジが まっているよ',
       emptyBody: 'いっしょに おはなしを よんで もらおう',
-      hint: 'バッジを みる',
+      hint: 'きみの しまへ おりていこう',
     },
     milestone: {
-      eyebrow: 'つぎの バッジ',
+      eyebrow: 'きみの まなびの たび',
       remaining: {
         stories: 'あと {{count}}さつで もらえるよ',
         stories_one: 'あと {{count}}さつで もらえるよ',
@@ -3360,6 +3333,28 @@ export default {
     greeting: 'いっしょに なにを する？',
     grownUps: 'おとなのかた',
     continueTogether: 'つづきを いっしょに',
+    continueReading: 'つづきをよむ',
+    continueMore: 'もっとみる',
+    statOrb: {
+      continue: 'つづき',
+      readToBookmark: 'よんで しおりを',
+      achieved: 'たっせい',
+      personalBest: 'じこベスト：{{count}}にち',
+      personalBest_one: 'じこベスト：{{count}}にち',
+      personalBest_other: 'じこベスト：{{count}}にち',
+    },
+    statPill: {
+      streak: 'まいにち れんぞく',
+      days: '{{count}}日連続',
+      days_one: '{{count}}日連続',
+      days_other: '{{count}}日連続',
+      best: 'さいこう {{count}}日',
+      pages: '{{page}} / {{total}}',
+      achievements: 'バッジ',
+      next: 'つぎ：{{title}}',
+      toBadge: 'つぎの バッジを ひらく',
+      openBook: '{{title}}を ひらく',
+    },
     pagePosition: '{{total}}ページ中 {{page}}ページ',
     resumeStory: '{{title}}のつづきを よむ',
     storybooks: 'えほん',
@@ -3509,7 +3504,7 @@ export default {
     badges: {
       firstStory: {
         title: 'はじめてのおはなし',
-        description: 'さいしょのおはなしをひらこう',
+        description: 'さいしょのおはなしをさいごまでよもう',
       },
       readingTogether: {
         title: 'いっしょによむ',

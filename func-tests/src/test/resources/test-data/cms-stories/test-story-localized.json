@@ -21,7 +21,7 @@
   "coverImage": "assets/stories/cms-squirrels-snowman/cover/thumbnail.webp",
   "isAvailable": true,
   "ageRange": "2-5",
-  "duration": 5,
+  "pageCount": 5,
   "description": "A story about a friendly squirrel who loves to share.",
   "localizedDescription": {
     "en": "A story about a friendly squirrel who loves to share.",

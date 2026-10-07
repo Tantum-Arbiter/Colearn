@@ -1,6 +1,7 @@
 import React, { RefObject, useCallback, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView, NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
   Easing,
@@ -14,13 +15,14 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
-import { Story, getLocalizedText } from '@/types/story';
+import { Story, getLocalizedText, storyPageCount } from '@/types/story';
 import { storyThemeChips } from './story-theme-chips';
 import type { SupportedLanguage } from '@/services/i18n';
 import type { ReadingMode } from '@/contexts/story-transition-context';
 import { StoryDownloadService } from '@/services/story-download-service';
 import { Fonts } from '@/constants/theme';
 import { useAccessibility } from '@/hooks/use-accessibility';
+import { useScrollToEndOnce } from '@/hooks/use-scroll-to-end-once';
 import { ReadingPlace, readingFraction } from './reading-progress';
 import { STORY_DETAIL_OPENING } from '@/constants/story-opening';
 import { STORY_CARD, cardIndexAtOffset, type StoryCardLayout } from '@/constants/story-card';
@@ -44,18 +46,27 @@ export interface StoryCardSheetProps {
   readButtonRef?: RefObject<View | null>;
   recordButtonRef?: RefObject<View | null>;
   narrateButtonRef?: RefObject<View | null>;
+  pagesRef?: RefObject<View | null>;
+  focusPages?: boolean;
+  onPickPage?: (storyId: string, pageIndex: number) => void;
 }
+
+const PAGE_THUMB = { width: STORY_CARD.pages.thumbWidth, height: STORY_CARD.pages.thumbHeight, gap: STORY_CARD.pages.gap } as const;
+const PAGE_PICKED = STORY_CARD.pages.picked;
+const PAGE_THUMB_RADIUS = 8;
+const PAGE_THUMB_BORDER = 2;
 
 interface ModeOption {
   mode: ReadingMode;
   labelKey: string;
   icon: keyof typeof Ionicons.glyphMap;
+  grownUpsOnly?: boolean;
 }
 
 export const MODE_OPTIONS: ModeOption[] = [
   { mode: 'read', labelKey: 'storyDetail.readTogether', icon: 'book-outline' },
   { mode: 'narrate', labelKey: 'storyDetail.playAlong', icon: 'volume-medium-outline' },
-  { mode: 'record', labelKey: 'storyDetail.record', icon: 'mic-outline' },
+  { mode: 'record', labelKey: 'storyDetail.record', icon: 'mic-outline', grownUpsOnly: true },
 ];
 
 /** How far a card that is not the chosen one drops back, and how much it shrinks and darkens. */
@@ -78,6 +89,9 @@ export function StoryCardSheet({
   readButtonRef,
   recordButtonRef,
   narrateButtonRef,
+  pagesRef,
+  focusPages = false,
+  onPickPage,
 }: StoryCardSheetProps) {
   const { t, i18n } = useTranslation();
   const { scaledFontSize, scaledButtonSize, scaledPadding } = useAccessibility();
@@ -145,6 +159,9 @@ export function StoryCardSheet({
             onChooseMode={onChooseMode}
             onClose={onClose}
             onToggleFavorite={onToggleFavorite}
+            focusPages={focusPages && i === initialIndex}
+            onPickPage={onPickPage}
+            pagesRef={i === index ? pagesRef : undefined}
           />
         ))}
       </Animated.ScrollView>
@@ -170,6 +187,9 @@ interface StoryCardProps {
   onChooseMode: (mode: ReadingMode) => void;
   onClose: () => void;
   onToggleFavorite: () => void;
+  focusPages: boolean;
+  onPickPage?: (storyId: string, pageIndex: number) => void;
+  pagesRef?: RefObject<View | null>;
 }
 
 function StoryCard({
@@ -190,11 +210,24 @@ function StoryCard({
   onChooseMode,
   onClose,
   onToggleFavorite,
+  focusPages,
+  onPickPage,
+  pagesRef,
 }: StoryCardProps) {
   const [isSavedOffline, setIsSavedOffline] = useState(false);
   const underway = place !== undefined && place.pageIndex > 0;
   const readPercent = underway ? Math.round(readingFraction(place) * 100) : 0;
   const readLabelKey = underway ? 'storyDetail.continueReading' : 'storyDetail.readTogether';
+  const pages = (story.pages ?? []).slice(1);
+  const startPick = Math.min(underway ? place.pageIndex : 1, Math.max(pages.length, 1));
+  const [picked, setPicked] = useState(startPick);
+  const readLabel = picked !== startPick ? t('storyDetail.readFromPage', { page: picked }) : t(readLabelKey);
+  const { ref: bodyRef, onLayout: measureBody, onContentSizeChange: bringPagesIn } = useScrollToEndOnce(focusPages);
+  const pickPage = (pageIndex: number) => {
+    Haptics.selectionAsync();
+    setPicked(pageIndex);
+    onPickPage?.(story.id, pageIndex);
+  };
 
   useEffect(() => {
     let isActive = true;
@@ -229,6 +262,7 @@ function StoryCard({
   const displayTitle = getLocalizedText(story.localizedTitle, story.title, currentLanguage);
   const displayDescription = getLocalizedText(story.localizedDescription, story.description || '', currentLanguage);
   const themeChips = storyThemeChips(story);
+  const pageCount = storyPageCount(story);
   const hasInteractiveContent = Boolean(
     story.pages?.some(
       (page) => (page.interactionType && page.interactionType !== 'none') || page.interactiveElements?.length
@@ -270,26 +304,30 @@ function StoryCard({
           >
             <Ionicons name={isFavorite ? 'heart' : 'heart-outline'} size={scaledFontSize(19)} color={isFavorite ? '#FF6B8A' : '#FFFFFF'} />
           </Pressable>
-          <Pressable style={styles.circleButton} onPress={onClose} hitSlop={10} accessibilityLabel={t('common.back')}>
+          <Pressable testID="story-card-close" style={styles.circleButton} onPress={onClose} hitSlop={10} accessibilityLabel={t('common.back')}>
             <Ionicons name="close" size={scaledFontSize(20)} color="#FFFFFF" />
           </Pressable>
         </View>
       </View>
 
       <ScrollView
+        ref={bodyRef}
+        testID="story-card-body"
         style={styles.bodyScroll}
         contentContainerStyle={styles.bodyScrollContent}
         showsVerticalScrollIndicator={false}
         bounces={false}
+        onLayout={measureBody}
+        onContentSizeChange={bringPagesIn}
       >
         <Animated.View entering={FadeInDown.delay(STORY_DETAIL_OPENING.staggerMs).duration(STORY_DETAIL_OPENING.contentMs)} style={styles.body}>
           <Text style={[styles.title, { fontSize: scaledFontSize(22) }]} numberOfLines={2}>{displayTitle}</Text>
 
           <View style={styles.metaRow}>
-            {typeof story.duration === 'number' && (
+            {pageCount !== undefined && (
               <View style={styles.metaPill}>
-                <Ionicons name="time-outline" size={scaledFontSize(12)} color="rgba(255,255,255,0.8)" />
-                <Text style={[styles.metaText, { fontSize: scaledFontSize(12) }]}>{t('storyDetail.minutes', { count: story.duration })}</Text>
+                <Ionicons name="book-outline" size={scaledFontSize(12)} color="rgba(255,255,255,0.8)" />
+                <Text style={[styles.metaText, { fontSize: scaledFontSize(12) }]}>{t('storyDetail.pages', { count: pageCount })}</Text>
               </View>
             )}
             {story.ageRange && (
@@ -336,6 +374,61 @@ function StoryCard({
           </View>
         )}
 
+        {isCurrent && pages.length > 0 && (
+          <View ref={pagesRef} collapsable={false} style={styles.pages} testID="story-card-pages">
+            <Text style={[styles.pagesHeading, { fontSize: scaledFontSize(12) }]}>{t('storyDetail.pickPage')}</Text>
+            <ScrollView
+              horizontal
+              testID="story-card-page-strip"
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.pagesRow}
+              contentOffset={{ x: Math.max(0, (startPick - 2) * (PAGE_THUMB.width + PAGE_THUMB.gap)), y: 0 }}
+            >
+              {pages.map((page, i) => {
+                const pageIndex = i + 1;
+                const picture = page.backgroundImage || page.characterImage;
+                const chosen = pageIndex === picked;
+                return (
+                  <Pressable
+                    key={page.id}
+                    testID={`story-card-page-${pageIndex}`}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('reader.pageNumber', { number: pageIndex })}
+                    accessibilityState={{ selected: chosen }}
+                    onPress={() => pickPage(pageIndex)}
+                    style={styles.pageItem}
+                  >
+                    <View
+                      testID={`story-card-page-thumb-${pageIndex}`}
+                      style={[styles.pageThumb, chosen ? styles.pageThumbPicked : styles.pageThumbResting]}
+                    >
+                      <View
+                        testID={`story-card-page-clip-${pageIndex}`}
+                        style={[styles.pageClip, chosen && styles.pageClipPicked]}
+                      >
+                        {picture ? (
+                          <Image
+                            testID={`story-card-page-image-${pageIndex}`}
+                            source={typeof picture === 'string' ? { uri: picture } : picture}
+                            style={chosen ? styles.pageImagePicked : styles.pageImage}
+                            contentFit="cover"
+                            transition={0}
+                          />
+                        ) : null}
+                      </View>
+                    </View>
+                    <View testID={`story-card-page-number-${pageIndex}`} style={[styles.pageNumberBadge, chosen && styles.pageNumberBadgePicked]}>
+                      <Text style={[styles.pageNumber, chosen && styles.pageNumberPicked, { fontSize: scaledFontSize(11) }]}>
+                        {pageIndex}
+                      </Text>
+                    </View>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          </View>
+        )}
+
         <Animated.View
           entering={FadeInDown.delay(STORY_DETAIL_OPENING.staggerMs * 2).duration(STORY_DETAIL_OPENING.contentMs)}
           style={styles.actions}
@@ -348,11 +441,11 @@ function StoryCard({
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                 onChooseMode('read');
               }}
-              accessibilityLabel={t(readLabelKey)}
+              accessibilityLabel={readLabel}
               testID="story-card-mode-read"
             >
               <Ionicons name="book" size={scaledFontSize(18)} color="#FFFFFF" />
-              <Text style={[styles.primaryText, { fontSize: scaledFontSize(15) }]}>{t(readLabelKey)}</Text>
+              <Text style={[styles.primaryText, { fontSize: scaledFontSize(15) }]}>{readLabel}</Text>
             </Pressable>
           </View>
 
@@ -402,7 +495,7 @@ function StoryCard({
 
 const styles = StyleSheet.create({
   container: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   carousel: {
     flex: 1,
@@ -420,7 +513,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   shade: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: '#04091F',
   },
   cover: {
@@ -525,6 +618,79 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.85)',
     fontFamily: Fonts.primary,
     fontWeight: '700',
+  },
+  pages: {
+    marginBottom: 12,
+  },
+  pagesHeading: {
+    color: 'rgba(255, 255, 255, 0.75)',
+    fontFamily: Fonts.primary,
+    fontWeight: '700',
+    paddingHorizontal: 18,
+    marginBottom: 6,
+  },
+  pagesRow: {
+    paddingHorizontal: 18,
+    paddingVertical: PAGE_PICKED.glow * 1.5,
+    gap: PAGE_THUMB.gap,
+  },
+  pageItem: {
+    alignItems: 'center',
+  },
+  pageThumb: {
+    width: PAGE_THUMB.width,
+    height: PAGE_THUMB.height,
+    borderRadius: PAGE_THUMB_RADIUS,
+    borderWidth: PAGE_THUMB_BORDER,
+    borderColor: 'rgba(255, 255, 255, 0.16)',
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+  },
+  pageThumbResting: {
+    opacity: PAGE_PICKED.dim,
+  },
+  pageThumbPicked: {
+    borderWidth: PAGE_PICKED.ring,
+    borderColor: PAGE_PICKED.colour,
+    shadowColor: PAGE_PICKED.colour,
+    shadowOpacity: 0.85,
+    shadowRadius: PAGE_PICKED.glow,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 8,
+  },
+  pageClip: {
+    flex: 1,
+    overflow: 'hidden',
+    borderRadius: PAGE_THUMB_RADIUS - PAGE_THUMB_BORDER,
+  },
+  pageClipPicked: {
+    borderRadius: PAGE_THUMB_RADIUS - PAGE_PICKED.ring,
+  },
+  pageImage: {
+    width: PAGE_THUMB.width - 2 * PAGE_THUMB_BORDER,
+    height: PAGE_THUMB.height - 2 * PAGE_THUMB_BORDER,
+  },
+  pageImagePicked: {
+    width: PAGE_THUMB.width - 2 * PAGE_PICKED.ring,
+    height: PAGE_THUMB.height - 2 * PAGE_PICKED.ring,
+  },
+  pageNumberBadge: {
+    marginTop: 4,
+    minWidth: 22,
+    paddingHorizontal: 6,
+    borderRadius: 9,
+    alignItems: 'center',
+  },
+  pageNumberBadgePicked: {
+    backgroundColor: PAGE_PICKED.colour,
+  },
+  pageNumber: {
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontFamily: Fonts.primary,
+    fontWeight: '600',
+  },
+  pageNumberPicked: {
+    color: PAGE_PICKED.ink,
+    fontWeight: '800',
   },
   primaryButton: {
     flexDirection: 'row',

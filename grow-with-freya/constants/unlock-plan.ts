@@ -8,11 +8,6 @@ export const UNLOCK_PLAN = {
   iconSize: 17,
   marginHorizontal: 18,
   marginBottom: 14,
-  lipHeight: 5,
-  face: '#FFD54A',
-  faceLow: '#F7B416',
-  lip: '#D98C05',
-  ink: '#5A3B02',
 } as const;
 
 export function shouldOfferPlan(tier: string): boolean {

@@ -21,6 +21,7 @@ import {
   BORDER_DEFAULT,
   BORDER_ACTIVE,
   headerSkyVeil,
+  skyBand,
   skyWorldColourAt,
 } from '@/constants/night-palette';
 
@@ -165,6 +166,35 @@ describe('headerSkyVeil', () => {
     const underTest = headerSkyVeil(HEADER, 0);
 
     expect(underTest.colours).toHaveLength(underTest.locations.length);
+    underTest.colours.forEach((colour) => expect(colour).not.toContain('NaN'));
+  });
+});
+
+describe('skyBand', () => {
+  const SCREEN = 874;
+
+  it('is solid sky from the top of the screen to the foot it is given, and clear by the edge after it', () => {
+    const underTest = skyBand(243, 255, SCREEN);
+
+    expect(underTest.locations).toEqual([0, 243 / 255, 1]);
+    expect(underTest.colours.map(alphaOf)).toEqual([1, 1, 0]);
+  });
+
+  it('takes each colour from the sky at the height it sits at, so it cannot be told from the sky behind it', () => {
+    const underTest = skyBand(243, 255, SCREEN);
+    const paint = (y: number, alpha: number) => {
+      const colour = skyWorldColourAt(y / SCREEN);
+
+      return `rgba(${colour.red}, ${colour.green}, ${colour.blue}, ${alpha})`;
+    };
+
+    expect(underTest.colours).toEqual([paint(0, 1), paint(243, 1), paint(255, 0)]);
+  });
+
+  it('is still a usable gradient before the screen has been measured', () => {
+    const underTest = skyBand(243, 255, 0);
+
+    expect(underTest.locations).toEqual([0, 243 / 255, 1]);
     underTest.colours.forEach((colour) => expect(colour).not.toContain('NaN'));
   });
 });

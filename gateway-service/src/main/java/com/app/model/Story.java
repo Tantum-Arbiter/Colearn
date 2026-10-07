@@ -32,8 +32,9 @@ public class Story {
     @JsonProperty("ageRange")
     private String ageRange;
 
-    @JsonProperty("duration")
-    private Integer duration;
+    @JsonProperty("pageCount")
+    @PropertyName("pageCount")
+    private Integer pageCount;
 
     @JsonProperty("description")
     private String description;
@@ -48,6 +49,7 @@ public class Story {
     private List<StoryPage> pages;
 
     @JsonProperty("isPremium")
+    @PropertyName("isPremium")
     private boolean premium;
 
     @JsonProperty("isFree")
@@ -65,9 +67,11 @@ public class Story {
     private List<String> tags;
 
     @JsonProperty("_usageType")
+    @PropertyName("_usageType")
     private String usageType;
 
     @JsonProperty("_disclaimer")
+    @PropertyName("_disclaimer")
     private String disclaimer;
 
     @JsonProperty("createdAt")
@@ -84,6 +88,9 @@ public class Story {
 
     @JsonProperty("gender")
     private String gender; // "boy", "girl", or "unisex" (defaults to "unisex")
+
+    @JsonProperty("awards")
+    private List<StoryAward> awards;
 
     public Story() {
         this.pages = new ArrayList<>();
@@ -161,12 +168,14 @@ public class Story {
         this.ageRange = ageRange;
     }
 
-    public Integer getDuration() {
-        return duration;
+    @PropertyName("pageCount")
+    public Integer getPageCount() {
+        return pageCount;
     }
 
-    public void setDuration(Integer duration) {
-        this.duration = duration;
+    @PropertyName("pageCount")
+    public void setPageCount(Integer pageCount) {
+        this.pageCount = pageCount;
     }
 
     public String getDescription() {
@@ -217,14 +226,12 @@ public class Story {
         this.pages = pages;
     }
 
+    @PropertyName("isPremium")
     public boolean isPremium() {
         return premium;
     }
 
-    public void setIsPremium(boolean isPremium) {
-        this.premium = isPremium;
-    }
-
+    @PropertyName("isPremium")
     public void setPremium(boolean premium) {
         this.premium = premium;
     }
@@ -239,11 +246,6 @@ public class Story {
         this.free = free;
     }
 
-    @Exclude
-    public void setIsFree(boolean isFree) {
-        this.free = isFree;
-    }
-
     @PropertyName("isReferralReward")
     public boolean isReferralReward() {
         return referralReward;
@@ -252,11 +254,6 @@ public class Story {
     @PropertyName("isReferralReward")
     public void setReferralReward(boolean referralReward) {
         this.referralReward = referralReward;
-    }
-
-    @Exclude
-    public void setIsReferralReward(boolean isReferralReward) {
-        this.referralReward = isReferralReward;
     }
 
     public String getAuthor() {
@@ -307,27 +304,23 @@ public class Story {
         this.checksum = checksum;
     }
 
+    @PropertyName("_usageType")
     public String getUsageType() {
         return usageType;
     }
 
+    @PropertyName("_usageType")
     public void setUsageType(String usageType) {
         this.usageType = usageType;
     }
 
-    public void set_usageType(String usageType) {
-        this.usageType = usageType;
-    }
-
+    @PropertyName("_disclaimer")
     public String getDisclaimer() {
         return disclaimer;
     }
 
+    @PropertyName("_disclaimer")
     public void setDisclaimer(String disclaimer) {
-        this.disclaimer = disclaimer;
-    }
-
-    public void set_disclaimer(String disclaimer) {
         this.disclaimer = disclaimer;
     }
 
@@ -337,6 +330,14 @@ public class Story {
 
     public void setGender(String gender) {
         this.gender = gender;
+    }
+
+    public List<StoryAward> getAwards() {
+        return awards;
+    }
+
+    public void setAwards(List<StoryAward> awards) {
+        this.awards = awards;
     }
 
     @Override

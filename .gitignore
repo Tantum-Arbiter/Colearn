@@ -63,6 +63,8 @@ build/
 .cache/
 .tmp/
 lib/
+!scripts/lib/
+!scripts/cms-manager/src/lib/
 esm/
 
 # Audio/Video files (large binaries) - but allow assets

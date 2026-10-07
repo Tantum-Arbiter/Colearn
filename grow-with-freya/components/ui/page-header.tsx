@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
 import { MusicControl } from './music-control';
+import { HEADING_HALO, HeadingHalo } from '@/components/child-ui/heading-halo';
 import { Fonts } from '@/constants/theme';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { useBackButtonText } from '@/hooks/use-back-button-text';
@@ -145,10 +146,13 @@ export function PageHeader({
       {/* Title - aligned with header row */}
       {title || subtitle ? (
         <View testID="page-header-title" style={[styles.titleContainer, { top: titleContainerTop, minHeight: musicBackgroundSize, paddingBottom: 12 }]}>
-          {title ? <Text style={[styles.title, { fontSize: titleFontSize }]}>{title}</Text> : null}
-          {subtitle && (
-            <Text style={[styles.subtitle, { fontSize: subtitleFontSize, marginTop: subtitleMarginTop }]}>{subtitle}</Text>
-          )}
+          <View style={styles.titleBlock}>
+            <HeadingHalo testID="page-header-title-halo" spread={HEADING_HALO.header} />
+            {title ? <Text style={[styles.title, { fontSize: titleFontSize }]}>{title}</Text> : null}
+            {subtitle && (
+              <Text style={[styles.subtitle, { fontSize: subtitleFontSize, marginTop: subtitleMarginTop }]}>{subtitle}</Text>
+            )}
+          </View>
         </View>
       ) : null}
     </>
@@ -237,6 +241,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-start',
     overflow: 'visible', // Prevent text shadow clipping
+  },
+  titleBlock: {
+    alignItems: 'center',
   },
   title: {
     color: 'white',

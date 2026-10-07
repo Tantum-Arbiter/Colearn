@@ -11,7 +11,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
-import { Story, STORY_TAGS, getLocalizedText } from '@/types/story';
+import { Story, STORY_TAGS, getLocalizedText, storyPageCount } from '@/types/story';
 import type { SupportedLanguage } from '@/services/i18n';
 import { Fonts } from '@/constants/theme';
 import { Logger } from '@/utils/logger';
@@ -36,7 +36,8 @@ export const StoryThumbnail: React.FC<StoryThumbnailProps> = ({
   height = THUMBNAIL_HEIGHT,
   isVisible = true,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const pageCount = storyPageCount(story);
   const currentLanguage = i18n.language as SupportedLanguage;
   const displayTitle = getLocalizedText(story.localizedTitle, story.title, currentLanguage);
 
@@ -158,7 +159,7 @@ export const StoryThumbnail: React.FC<StoryThumbnailProps> = ({
           
           {story.isAvailable && (
             <View style={styles.metaContainer}>
-              <Text style={styles.duration}>{story.duration}min</Text>
+              {pageCount !== undefined && <Text style={styles.duration}>{t('storyDetail.pages', { count: pageCount })}</Text>}
               <Text style={styles.ageRange}>{story.ageRange}</Text>
             </View>
           )}
