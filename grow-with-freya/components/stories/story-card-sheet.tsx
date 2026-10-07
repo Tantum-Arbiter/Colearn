@@ -52,6 +52,9 @@ export interface StoryCardSheetProps {
 }
 
 const PAGE_THUMB = { width: STORY_CARD.pages.thumbWidth, height: STORY_CARD.pages.thumbHeight, gap: STORY_CARD.pages.gap } as const;
+const PAGE_PICKED = STORY_CARD.pages.picked;
+const PAGE_THUMB_RADIUS = 8;
+const PAGE_THUMB_BORDER = 2;
 
 interface ModeOption {
   mode: ReadingMode;
@@ -301,7 +304,7 @@ function StoryCard({
           >
             <Ionicons name={isFavorite ? 'heart' : 'heart-outline'} size={scaledFontSize(19)} color={isFavorite ? '#FF6B8A' : '#FFFFFF'} />
           </Pressable>
-          <Pressable style={styles.circleButton} onPress={onClose} hitSlop={10} accessibilityLabel={t('common.back')}>
+          <Pressable testID="story-card-close" style={styles.circleButton} onPress={onClose} hitSlop={10} accessibilityLabel={t('common.back')}>
             <Ionicons name="close" size={scaledFontSize(20)} color="#FFFFFF" />
           </Pressable>
         </View>
@@ -395,20 +398,30 @@ function StoryCard({
                     onPress={() => pickPage(pageIndex)}
                     style={styles.pageItem}
                   >
-                    <View style={[styles.pageThumb, chosen && styles.pageThumbPicked]}>
-                      {picture ? (
-                        <Image
-                          testID={`story-card-page-image-${pageIndex}`}
-                          source={typeof picture === 'string' ? { uri: picture } : picture}
-                          style={styles.pageImage}
-                          contentFit="cover"
-                          transition={0}
-                        />
-                      ) : null}
+                    <View
+                      testID={`story-card-page-thumb-${pageIndex}`}
+                      style={[styles.pageThumb, chosen ? styles.pageThumbPicked : styles.pageThumbResting]}
+                    >
+                      <View
+                        testID={`story-card-page-clip-${pageIndex}`}
+                        style={[styles.pageClip, chosen && styles.pageClipPicked]}
+                      >
+                        {picture ? (
+                          <Image
+                            testID={`story-card-page-image-${pageIndex}`}
+                            source={typeof picture === 'string' ? { uri: picture } : picture}
+                            style={chosen ? styles.pageImagePicked : styles.pageImage}
+                            contentFit="cover"
+                            transition={0}
+                          />
+                        ) : null}
+                      </View>
                     </View>
-                    <Text style={[styles.pageNumber, chosen && styles.pageNumberPicked, { fontSize: scaledFontSize(11) }]}>
-                      {pageIndex}
-                    </Text>
+                    <View testID={`story-card-page-number-${pageIndex}`} style={[styles.pageNumberBadge, chosen && styles.pageNumberBadgePicked]}>
+                      <Text style={[styles.pageNumber, chosen && styles.pageNumberPicked, { fontSize: scaledFontSize(11) }]}>
+                        {pageIndex}
+                      </Text>
+                    </View>
                   </Pressable>
                 );
               })}
@@ -618,6 +631,7 @@ const styles = StyleSheet.create({
   },
   pagesRow: {
     paddingHorizontal: 18,
+    paddingVertical: PAGE_PICKED.glow * 1.5,
     gap: PAGE_THUMB.gap,
   },
   pageItem: {
@@ -626,27 +640,56 @@ const styles = StyleSheet.create({
   pageThumb: {
     width: PAGE_THUMB.width,
     height: PAGE_THUMB.height,
-    borderRadius: 8,
-    overflow: 'hidden',
-    borderWidth: 2,
+    borderRadius: PAGE_THUMB_RADIUS,
+    borderWidth: PAGE_THUMB_BORDER,
     borderColor: 'rgba(255, 255, 255, 0.16)',
     backgroundColor: 'rgba(255, 255, 255, 0.06)',
   },
+  pageThumbResting: {
+    opacity: PAGE_PICKED.dim,
+  },
   pageThumbPicked: {
-    borderColor: '#F5C451',
+    borderWidth: PAGE_PICKED.ring,
+    borderColor: PAGE_PICKED.colour,
+    shadowColor: PAGE_PICKED.colour,
+    shadowOpacity: 0.85,
+    shadowRadius: PAGE_PICKED.glow,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 8,
+  },
+  pageClip: {
+    flex: 1,
+    overflow: 'hidden',
+    borderRadius: PAGE_THUMB_RADIUS - PAGE_THUMB_BORDER,
+  },
+  pageClipPicked: {
+    borderRadius: PAGE_THUMB_RADIUS - PAGE_PICKED.ring,
   },
   pageImage: {
-    width: PAGE_THUMB.width - 4,
-    height: PAGE_THUMB.height - 4,
+    width: PAGE_THUMB.width - 2 * PAGE_THUMB_BORDER,
+    height: PAGE_THUMB.height - 2 * PAGE_THUMB_BORDER,
+  },
+  pageImagePicked: {
+    width: PAGE_THUMB.width - 2 * PAGE_PICKED.ring,
+    height: PAGE_THUMB.height - 2 * PAGE_PICKED.ring,
+  },
+  pageNumberBadge: {
+    marginTop: 4,
+    minWidth: 22,
+    paddingHorizontal: 6,
+    borderRadius: 9,
+    alignItems: 'center',
+  },
+  pageNumberBadgePicked: {
+    backgroundColor: PAGE_PICKED.colour,
   },
   pageNumber: {
-    marginTop: 3,
     color: 'rgba(255, 255, 255, 0.7)',
     fontFamily: Fonts.primary,
     fontWeight: '600',
   },
   pageNumberPicked: {
-    color: '#F5C451',
+    color: PAGE_PICKED.ink,
     fontWeight: '800',
   },
   primaryButton: {

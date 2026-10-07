@@ -18,7 +18,13 @@ export const STORY_CARD = {
    *  has read, and three buttons. Nothing scrolls, and the buttons sit at the
    *  foot, so a card with less above them simply has more room between. */
   bodyHeight: { phone: 388, tablet: 384 },
-  pages: { height: 116, thumbWidth: 64, thumbHeight: 48, gap: 8 },
+  pages: {
+    height: 116,
+    thumbWidth: 64,
+    thumbHeight: 48,
+    gap: 8,
+    picked: { colour: '#F5C451', ink: '#1B205E', ring: 3, glow: 8, dim: 0.6 },
+  },
   /** Gap between the card and the bottom of the safe area. */
   bottomGap: 10,
   /** Room to keep clear beneath the status bar. */
