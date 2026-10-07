@@ -210,8 +210,15 @@ the stub reaches the shelf and the search — a flow finds it by name. Its cover
   interruptions helper taps "Not Now". It can arrive a moment after a book closes, after the helper
   has already looked, so `island-week-done.yaml` runs the helper again inside a retry until the
   island is back.
-- **Constant ambient animation slows the snapshot.** Turn Reduce Motion on for the simulator
-  (`xcrun simctl spawn <udid> defaults write com.apple.Accessibility ReduceMotionEnabled -bool true`).
+- **Constant ambient animation slows the snapshot, so Reduce Motion is on for the suite only.**
+  `run.sh` turns it on and quits the app as the suite starts. When the suite ends, it always turns
+  it off and quits the app again, whether the run passed, failed or was interrupted, and whatever
+  it was before. So run flows through `run.sh` (or `npm run e2e`), not a bare `maestro test`, and
+  never set it by hand. On 2026-10-07 a simulator left with Reduce Motion on made the island voyage
+  "just flash white": under Reduce Motion the voyage skips the cloud dive and only fades through fog.
+  If that happens, turn it off with
+  `xcrun simctl spawn <udid> defaults write com.apple.Accessibility ReduceMotionEnabled -bool false`
+  and relaunch the app, which reads the setting as it starts.
 
 ## What still needs building
 
