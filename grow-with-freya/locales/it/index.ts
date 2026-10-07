@@ -621,6 +621,17 @@ export default {
   island: {
     scene: 'Un\'isola vista dal cielo, con montagne innevate, boschi, un fiume e un faro',
   },
+  roadmap: {
+    title: 'L\'avventura continua',
+    playAgain: 'Ancora',
+    scene: 'Un orsetto con lo zaino siede davanti a un portale luminoso che si apre su una valle primaverile, con una mappa delle avventure in arrivo',
+    stop: '{{quarter}}: {{place}}',
+    stops: {
+      japanNewZealand: 'Giappone e Nuova\u00A0Zelanda',
+      franceItaly: 'Francia e Italia',
+      lapland: 'Lapponia',
+    },
+  },
   plan: {
     places: {
       storyTime: 'Ora della storia',
@@ -664,7 +675,7 @@ export default {
     preview: 'Anteprima',
     opensTomorrow: 'Bravi per oggi. Il prossimo passo si apre domani.',
     weekDone: 'Tutta l’isola esplorata',
-    weekDoneBody: '{{done}} passi su {{total}} completati. Riposatevi e tornate per una nuova settimana.',
+    weekDoneBody: '{{done}} passi su {{total}} completati. Tocca un giorno per rigiocarlo, o l\'ultimo per scoprire cosa viene dopo.',
     a11y: {
       checkpoint: 'Giorno {{day}}, {{place}}, {{state}}',
     },

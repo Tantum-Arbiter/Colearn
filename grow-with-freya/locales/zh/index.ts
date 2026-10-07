@@ -621,6 +621,17 @@ export default {
   island: {
     scene: '从空中看到的小岛，有雪山、森林、河流和灯塔',
   },
+  roadmap: {
+    title: '冒险还在继续',
+    playAgain: '再玩一次',
+    scene: '一只背着背包的小熊坐在通往春日山谷的发光传送门前，下面是即将到来的冒险路线图',
+    stop: '{{quarter}}：{{place}}',
+    stops: {
+      japanNewZealand: '日本和新西兰',
+      franceItaly: '法国和意大利',
+      lapland: '拉普兰',
+    },
+  },
   plan: {
     places: {
       storyTime: '故事时间',
@@ -664,7 +675,7 @@ export default {
     preview: '预览',
     opensTomorrow: '今天做得很好。下一步明天开启。',
     weekDone: '整座小岛都探索过了',
-    weekDoneBody: '已完成 {{done}} / {{total}} 步。休息一下，下周再来。',
+    weekDoneBody: '已完成 {{done}}/{{total}} 步。点任意一天可以再玩一次，点最后一天看看接下来有什么。',
     a11y: {
       checkpoint: '第 {{day}} 天，{{place}}，{{state}}',
     },

@@ -621,6 +621,17 @@ export default {
   island: {
     scene: 'Een eiland vanuit de lucht gezien, met besneeuwde bergen, bossen, een rivier en een vuurtoren',
   },
+  roadmap: {
+    title: 'Het avontuur gaat verder',
+    playAgain: 'Nog een keer',
+    scene: 'Een beertje met een rugzak zit voor een stralende poort naar een lentedal, met een kaart van de avonturen die nog komen',
+    stop: '{{quarter}}: {{place}}',
+    stops: {
+      japanNewZealand: 'Japan en Nieuw-Zeeland',
+      franceItaly: 'Frankrijk en Italië',
+      lapland: 'Lapland',
+    },
+  },
   plan: {
     places: {
       storyTime: 'Verhaaltjestijd',
@@ -664,7 +675,7 @@ export default {
     preview: 'Voorproefje',
     opensTomorrow: 'Goed gedaan vandaag. De volgende stap gaat morgen open.',
     weekDone: 'Het hele eiland verkend',
-    weekDoneBody: '{{done}} van {{total}} stappen gedaan. Rust lekker uit en kom terug voor een nieuwe week.',
+    weekDoneBody: '{{done}} van de {{total}} stappen gedaan. Tik op een dag om hem nog eens te spelen, of op de laatste om te zien wat er komt.',
     a11y: {
       checkpoint: 'Dag {{day}}, {{place}}, {{state}}',
     },

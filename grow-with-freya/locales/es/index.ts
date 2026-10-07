@@ -621,6 +621,17 @@ export default {
   island: {
     scene: 'Una isla vista desde el cielo, con montañas nevadas, bosques, un río y un faro',
   },
+  roadmap: {
+    title: 'La aventura continúa',
+    playAgain: 'Otra vez',
+    scene: 'Un osito con mochila está sentado ante un portal luminoso que da a un valle primaveral, con un mapa de las aventuras que están por llegar',
+    stop: '{{quarter}}: {{place}}',
+    stops: {
+      japanNewZealand: 'Japón y Nueva\u00A0Zelanda',
+      franceItaly: 'Francia e Italia',
+      lapland: 'Laponia',
+    },
+  },
   plan: {
     places: {
       storyTime: 'Hora del cuento',
@@ -664,7 +675,7 @@ export default {
     preview: 'Vista previa',
     opensTomorrow: 'Muy bien por hoy. El siguiente paso se abre mañana.',
     weekDone: 'Toda la isla explorada',
-    weekDoneBody: '{{done}} de {{total}} pasos hechos. Descansad y volved para una semana nueva.',
+    weekDoneBody: '{{done}} de {{total}} pasos hechos. Toca cualquier día para jugarlo otra vez, o el último para ver lo que viene.',
     a11y: {
       checkpoint: 'Día {{day}}, {{place}}, {{state}}',
     },

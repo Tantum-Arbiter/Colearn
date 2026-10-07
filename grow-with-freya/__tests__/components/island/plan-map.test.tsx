@@ -409,18 +409,22 @@ describe('PlanCheckpoint', () => {
     expect(icon.props.color).toBe(CHECKPOINT_TINTS.cover);
   });
 
-  it('can be pressed only while open, and says so to a screen reader', () => {
-    const open = renderOne('open');
-    const locked = renderOne('locked');
+  it.each([
+    ['open', true],
+    ['done', true],
+    ['locked', false],
+    ['tomorrow', false],
+  ] as const)('can be pressed while %s: %p, and says so to a screen reader', (state, pressable) => {
+    const given = renderOne(state);
+    const marker = one('plan-checkpoint-2', given.root);
 
-    act(() => { one('plan-checkpoint-2', open.root).props.onPress(); });
-    act(() => { one('plan-checkpoint-2', locked.root).props.onPress?.(); });
+    act(() => { marker.props.onPress?.(); });
 
-    expect(open.onPress).toHaveBeenCalledWith(expect.objectContaining({ state: 'open' }));
-    expect(locked.onPress).not.toHaveBeenCalled();
-    expect(one('plan-checkpoint-2', open.root).props.accessibilityState).toEqual({ disabled: false });
-    expect(one('plan-checkpoint-2', locked.root).props.accessibilityState).toEqual({ disabled: true });
-    expect(one('plan-checkpoint-2', locked.root).props.accessibilityLabel).toBe('plan.a11y.checkpoint|2,plan.places.wordGarden,plan.states.locked');
+    if (pressable) expect(given.onPress).toHaveBeenCalledWith(expect.objectContaining({ state }));
+    else expect(given.onPress).not.toHaveBeenCalled();
+    expect(marker.props.disabled).toBe(!pressable);
+    expect(marker.props.accessibilityState).toEqual({ disabled: !pressable });
+    expect(marker.props.accessibilityLabel).toBe(`plan.a11y.checkpoint|2,plan.places.wordGarden,plan.states.${state}`);
   });
 
   it('glows warm yellow round the open day, still strong half a disc beyond its ring', () => {

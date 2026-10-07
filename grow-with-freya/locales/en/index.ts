@@ -788,6 +788,17 @@ export default {
   island: {
     scene: 'An island seen from the sky, with snowy mountains, forests, a river and a lighthouse',
   },
+  roadmap: {
+    title: 'The adventure continues',
+    playAgain: 'Play again',
+    scene: 'A little bear with a backpack sits before a glowing portal to a spring valley, with a road map of the adventures to come',
+    stop: '{{quarter}}: {{place}}',
+    stops: {
+      japanNewZealand: 'Japan and New\u00A0Zealand',
+      franceItaly: 'France and Italy',
+      lapland: 'Lapland',
+    },
+  },
   plan: {
     places: {
       storyTime: 'Story Time',
@@ -831,7 +842,7 @@ export default {
     preview: 'Preview',
     opensTomorrow: 'Well done today. The next step opens tomorrow.',
     weekDone: 'The whole island, explored',
-    weekDoneBody: '{{done}} of {{total}} steps done. Rest up, and come back for a new week.',
+    weekDoneBody: '{{done}} of {{total}} steps done. Tap any day to play it again, or the last one to see what comes next.',
     a11y: {
       checkpoint: 'Day {{day}}, {{place}}, {{state}}',
     },

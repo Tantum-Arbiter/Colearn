@@ -148,8 +148,19 @@ describe('useLearningPlan', () => {
     expect(mockBeginPlanStep).toHaveBeenCalledWith({ planId: 'island-week', stepId: 'day-1', launch });
   });
 
-  it.each(['locked', 'tomorrow', 'done'])('sets nobody off on a day that is %s', (state) => {
-    mockProgress = state === 'locked' ? null : state === 'done' ? done([1], '2026-10-01T08:00:00.000Z') : done([1], new Date(2026, 9, 3, 8, 0).toISOString());
+  it('sets the child off again on a day already done, so every day can be played again', () => {
+    mockProgress = done([1, 2], '2026-10-01T08:00:00.000Z');
+    const { result } = renderHook(() => useLearningPlan(true));
+
+    const launch = result.current.start(result.current.steps[0]);
+
+    expect(result.current.steps[0].state).toBe('done');
+    expect(launch).toEqual({ kind: 'story', storyId: 'snuggle-little-wombat' });
+    expect(mockBeginPlanStep).toHaveBeenCalledWith({ planId: 'island-week', stepId: 'day-1', launch });
+  });
+
+  it.each(['locked', 'tomorrow'])('sets nobody off on a day that is %s', (state) => {
+    mockProgress = state === 'locked' ? null : done([1], new Date(2026, 9, 3, 8, 0).toISOString());
     const { result } = renderHook(() => useLearningPlan(true));
     const view = result.current.steps.find((candidate) => candidate.state === state);
 

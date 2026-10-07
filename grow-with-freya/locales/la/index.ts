@@ -621,6 +621,17 @@ export default {
   island: {
     scene: 'Insula de caelo visa, cum montibus nivosis, silvis, flumine et pharo',
   },
+  roadmap: {
+    title: 'Iter pergit',
+    playAgain: 'Iterum',
+    scene: 'Ursulus cum sacculo ante portam lucidam in vallem vernam sedet, cum tabula itinerum quae venient',
+    stop: '{{quarter}}: {{place}}',
+    stops: {
+      japanNewZealand: 'Iaponia et Nova\u00A0Zelandia',
+      franceItaly: 'Gallia et Italia',
+      lapland: 'Lapponia',
+    },
+  },
   plan: {
     places: {
       storyTime: 'Hora fabulae',
@@ -664,7 +675,7 @@ export default {
     preview: 'Praevisio',
     opensTomorrow: 'Bene hodie factum. Gradus proximus cras aperietur.',
     weekDone: 'Tota insula explorata',
-    weekDoneBody: '{{done}} ex {{total}} gradibus confecti. Quiescite, et ad novam hebdomadem redite.',
+    weekDoneBody: '{{done}} ex {{total}} gradibus facti. Tange diem ut iterum ludas, aut ultimum ut videas quid sequatur.',
     a11y: {
       checkpoint: 'Dies {{day}}, {{place}}, {{state}}',
     },

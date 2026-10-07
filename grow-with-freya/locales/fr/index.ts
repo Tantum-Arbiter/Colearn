@@ -621,6 +621,17 @@ export default {
   island: {
     scene: 'Une île vue du ciel, avec des montagnes enneigées, des forêts, une rivière et un phare',
   },
+  roadmap: {
+    title: 'L\'aventure continue',
+    playAgain: 'Rejouer',
+    scene: 'Un petit ours avec un sac à dos est assis devant un portail lumineux ouvert sur une vallée printanière, avec une carte des aventures à venir',
+    stop: '{{quarter}} : {{place}}',
+    stops: {
+      japanNewZealand: 'Japon et Nouvelle-Zélande',
+      franceItaly: 'France et Italie',
+      lapland: 'Laponie',
+    },
+  },
   plan: {
     places: {
       storyTime: 'Heure du conte',
@@ -664,7 +675,7 @@ export default {
     preview: 'Aperçu',
     opensTomorrow: 'Bravo pour aujourd’hui. La prochaine étape s’ouvre demain.',
     weekDone: 'Toute l’île explorée',
-    weekDoneBody: '{{done}} étapes sur {{total}} terminées. Reposez-vous, et revenez pour une nouvelle semaine.',
+    weekDoneBody: '{{done}} étapes sur {{total}} terminées. Touchez un jour pour le rejouer, ou le dernier pour découvrir la suite.',
     a11y: {
       checkpoint: 'Jour {{day}}, {{place}}, {{state}}',
     },

@@ -621,6 +621,17 @@ export default {
   island: {
     scene: 'En ø set fra himlen, med sneklædte bjerge, skove, en flod og et fyrtårn',
   },
+  roadmap: {
+    title: 'Eventyret fortsætter',
+    playAgain: 'Igen',
+    scene: 'En lille bjørn med rygsæk sidder foran en lysende portal til en forårsdal, med et kort over de eventyr, der venter',
+    stop: '{{quarter}}: {{place}}',
+    stops: {
+      japanNewZealand: 'Japan og New\u00A0Zealand',
+      franceItaly: 'Frankrig og Italien',
+      lapland: 'Lapland',
+    },
+  },
   plan: {
     places: {
       storyTime: 'Historietid',
@@ -664,7 +675,7 @@ export default {
     preview: 'Smugkig',
     opensTomorrow: 'Godt klaret i dag. Næste trin åbner i morgen.',
     weekDone: 'Hele øen udforsket',
-    weekDoneBody: '{{done}} af {{total}} trin klaret. Hvil jer, og kom tilbage til en ny uge.',
+    weekDoneBody: '{{done}} af {{total}} trin klaret. Tryk på en dag for at spille den igen, eller på den sidste for at se, hvad der kommer.',
     a11y: {
       checkpoint: 'Dag {{day}}, {{place}}, {{state}}',
     },

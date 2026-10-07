@@ -621,6 +621,17 @@ export default {
   island: {
     scene: 'そらから みた しま。ゆきの やま、もり、かわ、とうだいが あります',
   },
+  roadmap: {
+    title: 'ぼうけんは つづく',
+    playAgain: 'もう一度',
+    scene: 'リュックを背負った小さなクマが、春の谷へと続く光るゲートの前に座っています。これからの冒険のロードマップも描かれています',
+    stop: '{{quarter}}：{{place}}',
+    stops: {
+      japanNewZealand: '日本と\nニュージーランド',
+      franceItaly: 'フランスとイタリア',
+      lapland: 'ラップランド',
+    },
+  },
   plan: {
     places: {
       storyTime: 'おはなしの じかん',
@@ -664,7 +675,7 @@ export default {
     preview: 'みてみる',
     opensTomorrow: 'きょうも よく できました。つぎの ステップは あした ひらきます。',
     weekDone: 'しま ぜんぶ たんけん できました',
-    weekDoneBody: '{{total}} ステップ中 {{done}} こ できました。ゆっくり やすんで、あたらしい しゅうに また きてね。',
+    weekDoneBody: '{{total}} ステップ中 {{done}} こ できました。すきな日を タップして もう一度 あそぼう。さいごの日を タップすると つぎが みられるよ。',
     a11y: {
       checkpoint: '{{day}} にちめ、{{place}}、{{state}}',
     },

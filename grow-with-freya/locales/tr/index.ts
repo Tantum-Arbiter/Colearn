@@ -621,6 +621,17 @@ export default {
   island: {
     scene: 'Gökyüzünden görülen bir ada; karlı dağlar, ormanlar, bir nehir ve bir deniz feneri',
   },
+  roadmap: {
+    title: 'Macera devam ediyor',
+    playAgain: 'Tekrar oyna',
+    scene: 'Sırt çantalı küçük bir ayı, bahar vadisine açılan parlak bir geçidin önünde oturuyor; altında gelecek maceraların yol haritası var',
+    stop: '{{quarter}}: {{place}}',
+    stops: {
+      japanNewZealand: 'Japonya ve Yeni\u00A0Zelanda',
+      franceItaly: 'Fransa ve İtalya',
+      lapland: 'Laponya',
+    },
+  },
   plan: {
     places: {
       storyTime: 'Masal saati',
@@ -664,7 +675,7 @@ export default {
     preview: 'Önizleme',
     opensTomorrow: 'Bugün için aferin. Sonraki adım yarın açılıyor.',
     weekDone: 'Bütün ada keşfedildi',
-    weekDoneBody: '{{total}} adımdan {{done}} tanesi tamamlandı. Dinlenin ve yeni bir hafta için geri gelin.',
+    weekDoneBody: '{{total}} adımdan {{done}} tanesi tamam. Tekrar oynamak için bir güne, sırada ne olduğunu görmek için son güne dokun.',
     a11y: {
       checkpoint: 'Gün {{day}}, {{place}}, {{state}}',
     },

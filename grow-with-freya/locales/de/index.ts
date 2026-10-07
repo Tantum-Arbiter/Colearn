@@ -621,6 +621,17 @@ export default {
   island: {
     scene: 'Eine Insel von oben gesehen, mit verschneiten Bergen, Wäldern, einem Fluss und einem Leuchtturm',
   },
+  roadmap: {
+    title: 'Das Abenteuer geht weiter',
+    playAgain: 'Nochmal',
+    scene: 'Ein kleiner Bär mit Rucksack sitzt vor einem leuchtenden Portal zu einem Frühlingstal, darunter eine Karte der Abenteuer, die noch kommen',
+    stop: '{{quarter}}: {{place}}',
+    stops: {
+      japanNewZealand: 'Japan und Neuseeland',
+      franceItaly: 'Frankreich und Italien',
+      lapland: 'Lappland',
+    },
+  },
   plan: {
     places: {
       storyTime: 'Geschichtenzeit',
@@ -664,7 +675,7 @@ export default {
     preview: 'Vorschau',
     opensTomorrow: 'Gut gemacht für heute. Der nächste Schritt öffnet sich morgen.',
     weekDone: 'Die ganze Insel erkundet',
-    weekDoneBody: '{{done}} von {{total}} Schritten geschafft. Ruht euch aus und kommt für eine neue Woche wieder.',
+    weekDoneBody: '{{done}} von {{total}} Schritten geschafft. Tippt auf einen Tag, um ihn nochmal zu spielen, oder auf den letzten, um zu sehen, was als Nächstes kommt.',
     a11y: {
       checkpoint: 'Tag {{day}}, {{place}}, {{state}}',
     },

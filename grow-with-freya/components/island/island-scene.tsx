@@ -1,14 +1,16 @@
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { StyleSheet, View, useWindowDimensions } from 'react-native';
+import { BackHandler, StyleSheet, View, useWindowDimensions, type LayoutChangeEvent, type LayoutRectangle } from 'react-native';
 import { Image } from 'expo-image';
-import Animated, { useAnimatedStyle } from 'react-native-reanimated';
+import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { CircleActionButton } from '@/components/child-ui/circle-action-button';
+import { GoldButton } from '@/components/child-ui/gold-button';
 import { OwlGuide, useGuideLift } from '@/components/owl-guide';
 import {
   CIRCLE_BUTTON_DIAMETER_PHONE,
   CIRCLE_BUTTON_DIAMETER_TABLET,
+  SPACE_3,
   contentMargin,
   journeyHeaderTop,
 } from '@/components/child-ui/tokens';
@@ -39,6 +41,9 @@ import { MoonlitImage } from './moonlit-image';
 import { PlanCheckpoint } from './plan-checkpoint';
 import { PLAN_CARD, PlanPanel, planCardTop, type PlanCardRect } from './plan-panel';
 import { PlanTrail } from './plan-trail';
+import { RoadmapScene } from './roadmap-scene';
+import { ROADMAP, type ScreenRect } from '@/constants/roadmap';
+import { motionDuration } from '@/constants/child-ui-motion';
 
 export interface IslandSceneProps {
   isActive?: boolean;
@@ -92,15 +97,88 @@ export const IslandScene = memo(function IslandScene({
     void toggleMute();
   }, [toggleMute]);
   const margin = contentMargin(isTablet);
+  const buttonSize = isTablet ? CIRCLE_BUTTON_DIAMETER_TABLET : CIRCLE_BUTTON_DIAMETER_PHONE;
+  const chromeTop = journeyHeaderTop(insets.top, isTablet);
+  const [mapStep, setMapStep] = useState<PlanStepView | null>(null);
+  const [shownStep, setShownStep] = useState<PlanStepView | null>(null);
+  if (mapStep && mapStep !== shownStep) setShownStep(mapStep);
+  const mapOpen = mapStep !== null;
+  const mapLeaving = !mapOpen && shownStep !== null;
+  if (!isActive && mapOpen) setMapStep(null);
+  const mapFade = useSharedValue(0);
+  const titleFade = useSharedValue(0);
+  useEffect(() => {
+    if (mapOpen) {
+      mapFade.value = withTiming(1, { duration: motionDuration(ROADMAP.fade.mapIn, reduceMotion) });
+      titleFade.value = withDelay(
+        motionDuration(ROADMAP.fade.titleDelay, reduceMotion),
+        withTiming(1, { duration: motionDuration(ROADMAP.fade.titleIn, reduceMotion) })
+      );
+    } else if (mapLeaving) {
+      const out = motionDuration(ROADMAP.fade.out, reduceMotion);
+      titleFade.value = withTiming(0, { duration: out });
+      mapFade.value = withTiming(0, { duration: out }, (finished) => {
+        if (finished) runOnJS(setShownStep)(null);
+      });
+    }
+  }, [mapOpen, mapLeaving, reduceMotion, mapFade, titleFade]);
+  const mapFadeStyle = useAnimatedStyle(() => ({ opacity: mapFade.value }));
+  const titleFadeStyle = useAnimatedStyle(() => ({ opacity: titleFade.value }));
+  const [backRect, setBackRect] = useState<LayoutRectangle | null>(null);
+  const [againRect, setAgainRect] = useState<LayoutRectangle | null>(null);
+  const handleBackLayout = useCallback((event: LayoutChangeEvent) => setBackRect(event.nativeEvent.layout), []);
+  const handleAgainLayout = useCallback((event: LayoutChangeEvent) => setAgainRect(event.nativeEvent.layout), []);
+  const mapControls = useMemo<ScreenRect[]>(() => {
+    const placed = (rect: LayoutRectangle): ScreenRect => ({
+      left: margin + Math.round(rect.x),
+      top: chromeTop + Math.round(rect.y),
+      width: Math.round(rect.width),
+      height: Math.round(rect.height),
+    });
+    return [
+      backRect ? placed(backRect) : { left: margin, top: chromeTop, width: buttonSize * ROADMAP.homePillSpan, height: buttonSize },
+      ...(againRect ? [placed(againRect)] : []),
+      { left: width - margin - buttonSize, top: chromeTop, width: buttonSize, height: buttonSize },
+    ];
+  }, [backRect, againRect, margin, chromeTop, buttonSize, width]);
+  const againSize = isTablet ? ROADMAP.playAgain.tablet : ROADMAP.playAgain.phone;
+  const lastStep = plan.steps[plan.steps.length - 1];
   const litLegs = plan.doneCount + (plan.current?.state === 'open' ? 1 : 0);
   const { start } = plan;
-  const handleStart = useCallback(
+  const launchStep = useCallback(
     (view: PlanStepView) => {
       const launch = start(view);
       if (launch) onStartActivity?.(launch);
     },
     [onStartActivity, start]
   );
+  const handleStart = useCallback(
+    (view: PlanStepView) => {
+      if (view.state === 'done' && view.step.id === lastStep?.step.id) {
+        setMapStep(view);
+        return;
+      }
+      launchStep(view);
+    },
+    [launchStep, lastStep]
+  );
+  const handleCloseMap = useCallback(() => setMapStep(null), []);
+  const handlePlayAgain = useCallback(
+    (view: PlanStepView) => {
+      setMapStep(null);
+      launchStep(view);
+    },
+    [launchStep]
+  );
+
+  useEffect(() => {
+    if (!mapOpen) return undefined;
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      setMapStep(null);
+      return true;
+    });
+    return () => subscription.remove();
+  }, [mapOpen]);
   const handlePreview = useCallback(
     (view: PlanStepView, from: PlanCardRect) => {
       const launch = start(view);
@@ -126,13 +204,18 @@ export const IslandScene = memo(function IslandScene({
     [todayOpen]
   );
 
+  const hiddenUnderMap = {
+    importantForAccessibility: mapOpen ? ('no-hide-descendants' as const) : ('auto' as const),
+    accessibilityElementsHidden: mapOpen,
+  };
+
   const stage = useAnimatedStyle(() => ({ transform: [{ scale: islandScale(arrival.value) }] }));
   const rise = useAnimatedStyle(() => ({ transform: [{ translateY: sunRise(arrival.value, riseFrom) }] }));
   const chrome = useAnimatedStyle(() => ({ opacity: chromeOpacity(arrival.value) }));
 
   return (
     <View testID={testID} style={[styles.root, { backgroundColor: night ? ISLAND_NIGHT.tint : ISLAND_SKY }]}>
-      <Animated.View testID="island-stage" style={[styles.fill, stage]}>
+      <Animated.View testID="island-stage" style={[styles.fill, stage]} {...hiddenUnderMap}>
         <Image
           testID="island-picture"
           source={map.art.picture}
@@ -217,7 +300,12 @@ export const IslandScene = memo(function IslandScene({
         ))}
       </Animated.View>
 
-      <Animated.View testID="island-plan-panel" pointerEvents="box-none" style={[styles.fill, chrome, planLift.style]}>
+      <Animated.View
+        testID="island-plan-panel"
+        pointerEvents="box-none"
+        style={[styles.fill, chrome, planLift.style]}
+        {...hiddenUnderMap}
+      >
         <PlanPanel
           current={plan.current}
           total={plan.steps.length}
@@ -237,13 +325,14 @@ export const IslandScene = memo(function IslandScene({
         style={[
           styles.chrome,
           {
-            top: journeyHeaderTop(insets.top, isTablet),
+            top: chromeTop,
             left: margin,
             right: margin,
-            height: isTablet ? CIRCLE_BUTTON_DIAMETER_TABLET : CIRCLE_BUTTON_DIAMETER_PHONE,
+            height: buttonSize,
           },
           chrome,
         ]}
+        {...hiddenUnderMap}
       >
         <View ref={homeRef} collapsable={false}>
           <CircleActionButton
@@ -263,7 +352,51 @@ export const IslandScene = memo(function IslandScene({
         />
       </Animated.View>
 
-      <OwlGuide id="island_tour" active={settled} targets={tourTargets} scroller={planLift.scroller} />
+      {shownStep ? (
+        <Animated.View
+          testID="island-roadmap"
+          style={[styles.fill, mapFadeStyle]}
+          pointerEvents={mapOpen ? 'auto' : 'none'}
+          accessibilityViewIsModal={mapOpen}
+        >
+          <RoadmapScene controls={mapControls} titleStyle={titleFadeStyle} />
+          <View testID="roadmap-chrome" style={[styles.chrome, { top: chromeTop, left: margin, right: margin, height: buttonSize }]}>
+            <View style={styles.mapLead}>
+              <View onLayout={handleBackLayout}>
+                <CircleActionButton
+                  type="back"
+                  testID="roadmap-back-button"
+                  label={t('common.back')}
+                  onPress={handleCloseMap}
+                  accessibilityLabel={t('common.back')}
+                />
+              </View>
+              <View onLayout={handleAgainLayout}>
+                <GoldButton
+                  testID="roadmap-play-again"
+                  label={t('roadmap.playAgain')}
+                  icon="refresh"
+                  onPress={() => handlePlayAgain(shownStep)}
+                  height={buttonSize}
+                  balanced={false}
+                  fontSize={againSize.fontSize}
+                  iconSize={againSize.iconSize}
+                  paddingHorizontal={againSize.padding}
+                />
+              </View>
+            </View>
+            <CircleActionButton
+              type="audio"
+              testID="roadmap-sound-button"
+              muted={isMuted}
+              onPress={handleSound}
+              accessibilityLabel={t('catalogue.sound')}
+            />
+          </View>
+        </Animated.View>
+      ) : null}
+
+      <OwlGuide id="island_tour" active={settled && !mapOpen} targets={tourTargets} scroller={planLift.scroller} />
     </View>
   );
 });
@@ -294,5 +427,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  mapLead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACE_3,
   },
 });

@@ -621,6 +621,17 @@ export default {
   island: {
     scene: 'جزيرة تُرى من السماء، فيها جبال مكسوة بالثلج وغابات ونهر ومنارة',
   },
+  roadmap: {
+    title: 'المغامرة مستمرة',
+    playAgain: 'مرة أخرى',
+    scene: 'دب صغير يحمل حقيبة ظهر يجلس أمام بوابة متوهجة تطل على وادٍ ربيعي، ومعه خريطة للمغامرات القادمة',
+    stop: '{{quarter}}: {{place}}',
+    stops: {
+      japanNewZealand: 'اليابان ونيوزيلندا',
+      franceItaly: 'فرنسا وإيطاليا',
+      lapland: 'لابلاند',
+    },
+  },
   plan: {
     places: {
       storyTime: 'وقت الحكاية',
@@ -664,7 +675,7 @@ export default {
     preview: 'معاينة',
     opensTomorrow: 'أحسنتما اليوم. الخطوة التالية تُفتح غدًا.',
     weekDone: 'استكشفتما الجزيرة كلها',
-    weekDoneBody: 'أُنجزت {{done}} من {{total}} خطوات. استريحا، وعودا لأسبوع جديد.',
+    weekDoneBody: 'تم إنجاز {{done}} من {{total}} خطوات. المس أي يوم لتلعبه مرة أخرى، أو اليوم الأخير لترى ما سيأتي.',
     a11y: {
       checkpoint: 'اليوم {{day}}، {{place}}، {{state}}',
     },

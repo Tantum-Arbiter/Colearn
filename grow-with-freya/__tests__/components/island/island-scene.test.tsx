@@ -1,8 +1,8 @@
 import React from 'react';
-import { StyleSheet } from 'react-native';
+import { BackHandler, StyleSheet } from 'react-native';
 import { act, render } from '@testing-library/react-native';
 import { PAGE_TRANSITION_DURATION_MS } from '@/constants/page-transition';
-import { useAnimatedStyle } from 'react-native-reanimated';
+import { useAnimatedStyle, withDelay, withTiming } from 'react-native-reanimated';
 import type { ReactTestInstance } from 'react-test-renderer';
 import { IslandScene } from '@/components/island/island-scene';
 import { IslandVoyageProvider, type IslandVoyage } from '@/contexts/island-voyage-context';
@@ -10,11 +10,12 @@ import { ISLAND_NIGHT, artFrame, artPoint, islandLayout } from '@/constants/isla
 import { ISLAND_ART_PHONE } from '@/constants/island-art-phone';
 import { chromeOpacity, islandScale, sunRise, type VoyagePhase } from '@/constants/island-voyage';
 import { GULL_COURSES, beamReach, cloudDrift, fallShift, poolRing, starGlow, treeSway, villageGlow, waterGlow } from '@/constants/island-life';
-import { CIRCLE_BUTTON_DIAMETER_PHONE, contentMargin, journeyHeaderTop } from '@/components/child-ui/tokens';
+import { CIRCLE_BUTTON_DIAMETER_PHONE, CIRCLE_BUTTON_DIAMETER_TABLET, contentMargin, journeyHeaderTop } from '@/components/child-ui/tokens';
 import { ISLAND_WEEK } from '@/data/learning-plan';
 import { ISLAND_TRAIL } from '@/constants/island-trail';
 import { TRAIL_LIT } from '@/components/island/plan-trail';
 import { PHONE_ISLAND, TABLET_ISLAND } from '@/constants/island-map';
+import { ROADMAP } from '@/constants/roadmap';
 import type { PlanStepView } from '@/hooks/use-learning-plan';
 
 const SCREEN = { width: 390, height: 844 };
@@ -988,6 +989,365 @@ describe('IslandScene', () => {
       act(() => { button(root, 'island-sound-button').props.onPress(); });
 
       expect(mockToggleMute).toHaveBeenCalledTimes(1);
+    });
+  });
+  describe('the road map behind the last day', () => {
+    const DONE = ['done', 'done', 'done', 'done', 'done', 'done', 'done'] as const;
+    const has = (root: ReactTestInstance, testID: string) => root.findAll((node) => node.props.testID === testID).length > 0;
+    const roadmapIn = (root: ReactTestInstance) =>
+      root.findAll((node) => Array.isArray(node.props.controls))[0];
+    const press = (root: ReactTestInstance, testID: string) => {
+      const target = root.findAll((node) => node.props.testID === testID && typeof node.props.onPress === 'function')[0];
+      act(() => { target.props.onPress(); });
+    };
+    const openTheMap = (root: ReactTestInstance) => press(root, 'plan-checkpoint-7');
+    const layoutOf = (root: ReactTestInstance, testID: string, rect: { x: number; y: number; width: number; height: number }) => {
+      const host = root.findAll(
+        (node) => typeof node.props.onLayout === 'function' && node.findAll((child) => child.props.testID === testID).length > 0
+      )[0];
+      act(() => { host.props.onLayout({ nativeEvent: { layout: rect } }); });
+    };
+
+    beforeEach(() => aWeek([...DONE]));
+
+    it('keeps the island once the whole week is done, its checkpoints, trail and card all there', () => {
+      const { root } = renderScene();
+
+      expect(has(root, 'island-picture')).toBe(true);
+      expect(has(root, 'plan-checkpoint-1')).toBe(true);
+      expect(has(root, 'island-plan-panel')).toBe(true);
+      expect(has(root, 'roadmap-scene')).toBe(false);
+    });
+
+    it.each([1, 3, 6])('plays day %i again when it is pressed, and opens no map', (day) => {
+      const onStartActivity = jest.fn();
+      const { root } = renderScene(voyage(), { onStartActivity });
+
+      press(root, `plan-checkpoint-${day}`);
+
+      expect(mockStart).toHaveBeenCalledWith(mockPlanSteps[day - 1]);
+      expect(onStartActivity).toHaveBeenCalledWith(mockPlanSteps[day - 1].launch);
+      expect(has(root, 'roadmap-scene')).toBe(false);
+    });
+
+    it('opens the road map over the island when the last day, done, is pressed, and plays nothing', () => {
+      const onStartActivity = jest.fn();
+      const { root } = renderScene(voyage(), { onStartActivity });
+
+      openTheMap(root);
+
+      expect(has(root, 'roadmap-scene')).toBe(true);
+      expect(has(root, 'island-picture')).toBe(true);
+      expect(mockStart).not.toHaveBeenCalled();
+      expect(onStartActivity).not.toHaveBeenCalled();
+    });
+
+    it('starts the last day as any other while it is still open', () => {
+      aWeek(['done', 'done', 'done', 'done', 'done', 'done', 'open']);
+      const onStartActivity = jest.fn();
+      const { root } = renderScene(voyage(), { onStartActivity });
+
+      openTheMap(root);
+
+      expect(onStartActivity).toHaveBeenCalledWith(mockPlanSteps[6].launch);
+      expect(has(root, 'roadmap-scene')).toBe(false);
+    });
+
+    it('lays the map over everything on the island, its own buttons on top, and hides the island from a screen reader', () => {
+      const { root } = renderScene();
+      openTheMap(root);
+
+      const ids = root.findAll((node) => typeof node.props.testID === 'string').map((node) => node.props.testID);
+      const layer = root.findAll((node) => node.props.testID === 'island-roadmap' && node.props.style !== undefined)[0];
+      const island = root.findAll((node) => node.props.testID === 'island-stage' && node.props.importantForAccessibility !== undefined)[0];
+
+      expect(ids.indexOf('island-roadmap')).toBeGreaterThan(ids.indexOf('island-chrome'));
+      expect(ids.indexOf('roadmap-back-button')).toBeGreaterThan(ids.indexOf('roadmap-scene'));
+      expect(StyleSheet.flatten(layer.props.style)).toEqual(expect.objectContaining({ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 }));
+      expect(layer.props.accessibilityViewIsModal).toBe(true);
+      expect(island.props.importantForAccessibility).toBe('no-hide-descendants');
+      expect(island.props.accessibilityElementsHidden).toBe(true);
+    });
+
+    it('heads the map with a way back to the island, Play again beside it and the speaker on the right', () => {
+      const { root } = renderScene();
+      openTheMap(root);
+
+      const back = root.findAll((node) => node.props.testID === 'roadmap-back-button' && node.props.type !== undefined)[0];
+      const again = root.findAll((node) => node.props.testID === 'roadmap-play-again' && node.props.icon !== undefined)[0];
+      const sound = root.findAll((node) => node.props.testID === 'roadmap-sound-button' && node.props.type !== undefined)[0];
+      const row = root.findAll((node) => node.props.testID === 'roadmap-chrome' && node.props.style !== undefined)[0];
+
+      expect(back.props).toEqual(expect.objectContaining({ type: 'back', label: 'common.back', accessibilityLabel: 'common.back' }));
+      expect(again.props).toEqual(expect.objectContaining({ label: 'roadmap.playAgain', icon: 'refresh' }));
+      expect(sound.props).toEqual(expect.objectContaining({ type: 'audio', muted: mockMuted, accessibilityLabel: 'catalogue.sound' }));
+      expect(StyleSheet.flatten(row.props.style)).toEqual(
+        expect.objectContaining({ top: journeyHeaderTop(TOP_INSET, false), left: contentMargin(false), right: contentMargin(false), height: CIRCLE_BUTTON_DIAMETER_PHONE })
+      );
+    });
+
+    it.each([
+      ['a phone', false, ROADMAP.playAgain.phone],
+      ['a tablet', true, ROADMAP.playAgain.tablet],
+    ])('keeps Play again compact on %s, one icon and no twin, so it sits beside Back and clear of the speaker', (_name, tablet, size) => {
+      mockTablet = tablet;
+      const { root } = renderScene();
+      openTheMap(root);
+
+      const again = root.findAll((node) => node.props.testID === 'roadmap-play-again' && node.props.icon !== undefined)[0];
+
+      expect(again.props).toEqual(
+        expect.objectContaining({
+          balanced: false,
+          fontSize: size.fontSize,
+          iconSize: size.iconSize,
+          paddingHorizontal: size.padding,
+          height: tablet ? CIRCLE_BUTTON_DIAMETER_TABLET : CIRCLE_BUTTON_DIAMETER_PHONE,
+        })
+      );
+      expect(size.padding).toBeLessThan(26);
+    });
+
+    it('goes back to the island from its back button, the map gone', () => {
+      const { root } = renderScene();
+      openTheMap(root);
+
+      press(root, 'roadmap-back-button');
+
+      expect(has(root, 'roadmap-scene')).toBe(false);
+      expect(has(root, 'island-picture')).toBe(true);
+    });
+
+    it('plays the last day again from Play again, closing the map', () => {
+      const onStartActivity = jest.fn();
+      const { root } = renderScene(voyage(), { onStartActivity });
+      openTheMap(root);
+
+      press(root, 'roadmap-play-again');
+
+      expect(mockStart).toHaveBeenCalledWith(mockPlanSteps[6]);
+      expect(onStartActivity).toHaveBeenCalledWith(mockPlanSteps[6].launch);
+      expect(has(root, 'roadmap-scene')).toBe(false);
+    });
+
+    it('closes the map and opens nothing from Play again when the last day has nothing to open', () => {
+      const onStartActivity = jest.fn();
+      mockStart.mockImplementation(() => null);
+      const { root } = renderScene(voyage(), { onStartActivity });
+      openTheMap(root);
+
+      press(root, 'roadmap-play-again');
+
+      expect(mockStart).toHaveBeenCalledWith(mockPlanSteps[6]);
+      expect(onStartActivity).not.toHaveBeenCalled();
+      expect(has(root, 'roadmap-scene')).toBe(false);
+    });
+
+    it('turns the sound off and on from the map`s speaker', () => {
+      const { root } = renderScene();
+      openTheMap(root);
+
+      press(root, 'roadmap-sound-button');
+
+      expect(mockToggleMute).toHaveBeenCalledTimes(1);
+    });
+
+    it('tells the map where its buttons sit, measured once laid out, so the portal stays clear of them', () => {
+      const { root } = renderScene();
+      openTheMap(root);
+      const top = journeyHeaderTop(TOP_INSET, false);
+      const margin = contentMargin(false);
+      const size = CIRCLE_BUTTON_DIAMETER_PHONE;
+      const before = roadmapIn(root).props.controls;
+
+      layoutOf(root, 'roadmap-back-button', { x: 0, y: 0, width: 92.4, height: size });
+      layoutOf(root, 'roadmap-play-again', { x: 104, y: 0, width: 151.6, height: 52 });
+
+      expect(before).toEqual([
+        { left: margin, top, width: size * ROADMAP.homePillSpan, height: size },
+        { left: SCREEN.width - margin - size, top, width: size, height: size },
+      ]);
+      expect(roadmapIn(root).props.controls).toEqual([
+        { left: margin, top, width: 92, height: size },
+        { left: margin + 104, top, width: 152, height: 52 },
+        { left: SCREEN.width - margin - size, top, width: size, height: size },
+      ]);
+    });
+
+    it('keeps the owl quiet while the map is up', () => {
+      const { root } = renderScene();
+      act(() => { jest.advanceTimersByTime(PAGE_TRANSITION_DURATION_MS); });
+      const tourOf = () => root.findAll((node) => node.props.id === 'island_tour' && node.props.targets !== undefined)[0];
+      const before = tourOf().props.active;
+
+      openTheMap(root);
+
+      expect(before).toBe(true);
+      expect(tourOf().props.active).toBe(false);
+    });
+
+    describe('fading in and out', () => {
+      const timing = withTiming as unknown as jest.Mock;
+      const delay = withDelay as unknown as jest.Mock;
+      const realTiming = timing.getMockImplementation();
+      let finishes: ((finished: boolean) => void)[] = [];
+      const timed = (value: number, duration: number) =>
+        timing.mock.calls.filter(([to, config]) => to === value && config?.duration === duration);
+      const overlay = (root: ReactTestInstance) =>
+        root.findAll((node) => node.props.testID === 'island-roadmap' && node.props.style !== undefined)[0];
+
+      function holdTheFade() {
+        finishes = [];
+        timing.mockImplementation((value: number, _config: unknown, callback?: (finished: boolean) => void) => {
+          if (callback) finishes.push(callback);
+          return value;
+        });
+      }
+
+      afterEach(() => {
+        timing.mockImplementation(realTiming);
+        mockReduceMotion = false;
+      });
+
+      it('runs no fade at all while the map has never been opened', () => {
+        timing.mockClear();
+
+        renderScene();
+
+        expect(timed(0, ROADMAP.fade.out.duration)).toHaveLength(0);
+        expect(timed(1, ROADMAP.fade.mapIn.duration)).toHaveLength(0);
+      });
+
+      it('fades the map in over the island, then its heading after it', () => {
+        const { root } = renderScene();
+        timing.mockClear();
+        delay.mockClear();
+
+        openTheMap(root);
+
+        const fadesIn = timing.mock.calls.filter(([to]) => to === 1).map(([, config]) => config.duration);
+
+        expect(fadesIn.filter((duration) => duration === ROADMAP.fade.mapIn.duration)).toHaveLength(1);
+        expect(fadesIn.filter((duration) => duration === ROADMAP.fade.titleIn.duration)).toHaveLength(1);
+        expect(delay).toHaveBeenCalledWith(ROADMAP.fade.titleDelay.duration, expect.anything());
+        expect(overlay(root).props.pointerEvents).toBe('auto');
+        expect(typeof StyleSheet.flatten(overlay(root).props.style).opacity).toBe('number');
+      });
+
+      it('hands the map its heading`s fade', () => {
+        const { root } = renderScene();
+        openTheMap(root);
+
+        const scene = root.findAll((node) => Array.isArray(node.props.controls) && node.props.titleStyle !== undefined)[0];
+
+        expect(typeof StyleSheet.flatten(scene.props.titleStyle).opacity).toBe('number');
+      });
+
+      it('fades the map out from Back, still showing it, letting touches through to the island, and only then takes it away', () => {
+        holdTheFade();
+        const { root } = renderScene();
+        openTheMap(root);
+        finishes = [];
+        timing.mockClear();
+
+        press(root, 'roadmap-back-button');
+        const leaving = overlay(root);
+        const island = root.findAll((node) => node.props.testID === 'island-stage' && node.props.accessibilityElementsHidden !== undefined)[0];
+
+        expect(timed(0, ROADMAP.fade.out.duration).length).toBeGreaterThanOrEqual(1);
+        expect(leaving).toBeDefined();
+        expect(leaving.props.pointerEvents).toBe('none');
+        expect(leaving.props.accessibilityViewIsModal).toBe(false);
+        expect(island.props.accessibilityElementsHidden).toBe(false);
+
+        act(() => finishes.forEach((finish) => finish(true)));
+
+        expect(has(root, 'island-roadmap')).toBe(false);
+        expect(has(root, 'roadmap-scene')).toBe(false);
+      });
+
+      it('keeps the map if it is opened again before it has faded away', () => {
+        holdTheFade();
+        const { root } = renderScene();
+        openTheMap(root);
+        press(root, 'roadmap-back-button');
+        const outgoing = [...finishes];
+
+        openTheMap(root);
+        act(() => outgoing.forEach((finish) => finish(false)));
+
+        expect(has(root, 'roadmap-scene')).toBe(true);
+        expect(overlay(root).props.pointerEvents).toBe('auto');
+      });
+
+      it('fades the map out as Play again sets the last day off', () => {
+        holdTheFade();
+        const onStartActivity = jest.fn();
+        const { root } = renderScene(voyage(), { onStartActivity });
+        openTheMap(root);
+        timing.mockClear();
+
+        press(root, 'roadmap-play-again');
+
+        expect(onStartActivity).toHaveBeenCalledTimes(1);
+        expect(timed(0, ROADMAP.fade.out.duration).length).toBeGreaterThanOrEqual(1);
+        expect(overlay(root).props.pointerEvents).toBe('none');
+      });
+
+      it('keeps a short dissolve under Reduce Motion, with no wait for the heading', () => {
+        mockReduceMotion = true;
+        const { root } = renderScene();
+        timing.mockClear();
+        delay.mockClear();
+
+        openTheMap(root);
+
+        const fadesIn = timing.mock.calls.filter(([to]) => to === 1).map(([, config]) => config.duration);
+
+        expect(fadesIn.filter((duration) => duration === ROADMAP.fade.mapIn.reducedDuration)).toHaveLength(2);
+        expect(fadesIn).not.toContain(ROADMAP.fade.mapIn.duration);
+        expect(fadesIn).not.toContain(ROADMAP.fade.titleIn.duration);
+        expect(delay).toHaveBeenCalledWith(0, expect.anything());
+      });
+    });
+
+    it('closes the map when the island is left, so it is not waiting there on the next visit', () => {
+      const view = renderScene();
+      openTheMap(view.root);
+
+      view.rerender(
+        <IslandVoyageProvider voyage={view.given}>
+          <IslandScene timeOfDay="day" isActive={false} />
+        </IslandVoyageProvider>
+      );
+      view.rerender(
+        <IslandVoyageProvider voyage={view.given}>
+          <IslandScene timeOfDay="day" isActive />
+        </IslandVoyageProvider>
+      );
+
+      expect(has(view.root, 'roadmap-scene')).toBe(false);
+    });
+
+    it('closes the map, not the island, on Android`s back button', () => {
+      const listeners: (() => boolean)[] = [];
+      const spy = jest.spyOn(BackHandler, 'addEventListener').mockImplementation((_event, handler) => {
+        listeners.push(handler as () => boolean);
+        return { remove: () => { listeners.splice(listeners.indexOf(handler as () => boolean), 1); } };
+      });
+      const { root, given } = renderScene();
+      const idle = listeners.length;
+      openTheMap(root);
+
+      let handled = false;
+      act(() => { handled = listeners[listeners.length - 1](); });
+
+      expect(idle).toBe(0);
+      expect(handled).toBe(true);
+      expect(has(root, 'roadmap-scene')).toBe(false);
+      expect(listeners).toHaveLength(0);
+      expect(given.comeBack).not.toHaveBeenCalled();
+      spy.mockRestore();
     });
   });
 });

@@ -94,7 +94,7 @@ export function useLearningPlan(isActive: boolean, trail: readonly TrailPoint[] 
 
   const start = useCallback(
     (view: PlanStepView): PlanLaunch | null => {
-      if (view.state !== 'open' || !view.launch) return null;
+      if ((view.state !== 'open' && view.state !== 'done') || !view.launch) return null;
       beginPlanStep({ planId: ISLAND_WEEK.id, stepId: view.step.id, launch: view.launch });
 
       return view.launch;

@@ -621,6 +621,17 @@ export default {
   island: {
     scene: 'Wyspa widziana z nieba, z ośnieżonymi górami, lasami, rzeką i latarnią morską',
   },
+  roadmap: {
+    title: 'Przygoda trwa dalej',
+    playAgain: 'Jeszcze raz',
+    scene: 'Mały miś z plecakiem siedzi przed świetlistym portalem do wiosennej doliny, a pod nim mapa przygód, które dopiero nadejdą',
+    stop: '{{quarter}}: {{place}}',
+    stops: {
+      japanNewZealand: 'Japonia i Nowa\u00A0Zelandia',
+      franceItaly: 'Francja i Włochy',
+      lapland: 'Laponia',
+    },
+  },
   plan: {
     places: {
       storyTime: 'Pora na bajkę',
@@ -664,7 +675,7 @@ export default {
     preview: 'Podgląd',
     opensTomorrow: 'Brawo za dzisiaj. Następny krok otworzy się jutro.',
     weekDone: 'Cała wyspa odkryta',
-    weekDoneBody: '{{done}} z {{total}} kroków ukończonych. Odpocznijcie i wróćcie na nowy tydzień.',
+    weekDoneBody: 'Ukończono {{done}} z {{total}} kroków. Dotknij dowolnego dnia, aby zagrać jeszcze raz, albo ostatniego, aby zobaczyć, co dalej.',
     a11y: {
       checkpoint: 'Dzień {{day}}, {{place}}, {{state}}',
     },

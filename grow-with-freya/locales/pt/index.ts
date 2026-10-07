@@ -621,6 +621,17 @@ export default {
   island: {
     scene: 'Uma ilha vista do céu, com montanhas nevadas, florestas, um rio e um farol',
   },
+  roadmap: {
+    title: 'A aventura continua',
+    playAgain: 'Outra vez',
+    scene: 'Um ursinho com uma mochila está sentado diante de um portal luminoso para um vale primaveril, com um mapa das aventuras que estão para vir',
+    stop: '{{quarter}}: {{place}}',
+    stops: {
+      japanNewZealand: 'Japão e Nova\u00A0Zelândia',
+      franceItaly: 'França e Itália',
+      lapland: 'Lapónia',
+    },
+  },
   plan: {
     places: {
       storyTime: 'Hora da história',
@@ -664,7 +675,7 @@ export default {
     preview: 'Pré-visualizar',
     opensTomorrow: 'Muito bem por hoje. O próximo passo abre amanhã.',
     weekDone: 'A ilha inteira explorada',
-    weekDoneBody: '{{done}} de {{total}} passos feitos. Descansem e voltem para uma semana nova.',
+    weekDoneBody: '{{done}} de {{total}} passos feitos. Toca num dia para o jogar outra vez, ou no último para ver o que vem a seguir.',
     a11y: {
       checkpoint: 'Dia {{day}}, {{place}}, {{state}}',
     },

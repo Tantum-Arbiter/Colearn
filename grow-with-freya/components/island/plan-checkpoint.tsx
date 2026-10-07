@@ -173,6 +173,7 @@ export const PlanCheckpoint = memo(function PlanCheckpoint({
   const open = view.state === 'open';
   const done = view.state === 'done';
   const warm = open || done;
+  const playable = open || done;
   const place = t(view.step.placeKey);
   const labelSize = scaledFontSize(size.font);
   const [labelSizeSeen, setLabelSizeSeen] = useState({
@@ -187,10 +188,10 @@ export const PlanCheckpoint = memo(function PlanCheckpoint({
   }, []);
 
   const handlePress = useCallback(() => {
-    if (!open) return;
+    if (!playable) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onPress(view);
-  }, [onPress, open, view]);
+  }, [onPress, playable, view]);
 
   const breathe = useAnimatedStyle(() => ({
     transform: [{ scale: 1 + GLOW_BREATH * (0.5 - 0.5 * Math.cos(2 * Math.PI * (pulse?.value ?? 0))) }],
@@ -217,8 +218,8 @@ export const PlanCheckpoint = memo(function PlanCheckpoint({
         testID={`plan-checkpoint-${day}`}
         accessibilityRole="button"
         accessibilityLabel={t('plan.a11y.checkpoint', { day, place, state: t(`plan.states.${view.state}`) })}
-        accessibilityState={{ disabled: !open }}
-        disabled={!open}
+        accessibilityState={{ disabled: !playable }}
+        disabled={!playable}
         onPress={handlePress}
         style={[styles.marker, { left: centre.x - radius, top: centre.y - radius, width: diameter, height: diameter }]}
       >
