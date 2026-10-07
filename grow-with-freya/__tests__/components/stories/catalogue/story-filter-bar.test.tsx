@@ -197,4 +197,26 @@ describe('StoryFilterBar', () => {
 
     expect(pressables(tree, 'story-filter-view-toggle')).toHaveLength(0);
   });
+  it('reports where its capsule sits, so the page can stop it against the planet', () => {
+    const onThemeBarLayout = jest.fn();
+    const tree = render(<StoryFilterBar {...baseProps} onThemeBarLayout={onThemeBarLayout} />);
+    const layout = { nativeEvent: { layout: { x: 0, y: 42, width: 358, height: 56 } } };
+
+    fireEvent(tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'story-theme-bar' && n.props.onLayout)[0], 'layout', layout);
+
+    expect(onThemeBarLayout).toHaveBeenCalledWith(layout);
+  });
+
+  it('lets a drag that starts between its buttons reach the page beneath it', () => {
+    const tree = render(<StoryFilterBar {...baseProps} />);
+
+    const chooser = tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'story-filter-bar')[0];
+    const heading = tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'story-filter-heading')[0];
+    const label = tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'story-filter-heading-label')[0];
+
+    expect(chooser.props.pointerEvents).toBe('box-none');
+    expect(heading.props.pointerEvents).toBe('box-none');
+    expect(label.props.pointerEvents).toBe('none');
+    expect(label.findAll((n: any) => n.props.children === 'catalogue.chooseTheme').length).toBeGreaterThan(0);
+  });
 });

@@ -7,9 +7,10 @@
 
 import React from 'react';
 import { StyleSheet } from 'react-native';
-import { render } from '@testing-library/react-native';
-import { PLANET_HEADER_ESTIMATE, PlanetCover, planetCoverHeight } from '@/components/child-ui/planet-cover';
+import { act, render, renderHook } from '@testing-library/react-native';
+import { PLANET_HEADER_ESTIMATE, PlanetCover, planetCoverHeight, usePlanetCover } from '@/components/child-ui/planet-cover';
 import { planetReach } from '@/constants/earth';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const PHONE = { width: 402, height: 874 };
 const TABLET = { width: 834, height: 1210 };
@@ -41,6 +42,18 @@ describe('planetCoverHeight', () => {
     const underTest = planetCoverHeight(PLANET_HEADER_ESTIMATE.phone, 0, 0);
 
     expect(underTest).toBe(PLANET_HEADER_ESTIMATE.phone);
+  });
+});
+
+describe('usePlanetCover', () => {
+  it('gives the header its estimated height until it has been measured, then the height it was laid out at', () => {
+    const { result } = renderHook(() => usePlanetCover());
+    const estimated = result.current.headerHeight;
+
+    act(() => result.current.onHeaderLayout({ nativeEvent: { layout: { x: 0, y: 0, width: 402, height: 193.6 } } } as never));
+
+    expect(estimated).toBe(useSafeAreaInsets().top + PLANET_HEADER_ESTIMATE.phone);
+    expect(result.current.headerHeight).toBe(194);
   });
 });
 

@@ -16,6 +16,7 @@ export function planetCoverHeight(headerHeight: number, screenWidth: number, scr
 
 export interface PlanetCoverLayout {
   coverHeight: number;
+  headerHeight: number;
   onHeaderLayout: (event: LayoutChangeEvent) => void;
 }
 
@@ -30,7 +31,7 @@ export function usePlanetCover(): PlanetCoverLayout {
     setMeasured(Math.round(event.nativeEvent.layout.height));
   }, []);
 
-  return { coverHeight: planetCoverHeight(headerHeight, width, height), onHeaderLayout };
+  return { coverHeight: planetCoverHeight(headerHeight, width, height), headerHeight, onHeaderLayout };
 }
 
 interface PlanetCoverProps {

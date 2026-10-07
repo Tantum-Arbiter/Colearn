@@ -12,11 +12,15 @@ import { StoryDownloadService } from '@/services/story-download-service';
 import { CHILD_UI_MOTION } from '@/constants/child-ui-motion';
 import { glanceCloseTimeline } from '@/constants/screen-time-glance-timeline';
 import { StoryCatalogueScreen } from '@/components/stories/catalogue/story-catalogue-screen';
-import { PLANET_HEADER_ESTIMATE } from '@/components/child-ui/planet-cover';
+import { PLANET_HEADER_ESTIMATE, planetCoverHeight } from '@/components/child-ui/planet-cover';
+import { CATALOGUE_CHOOSER, chooserStop } from '@/constants/catalogue-chooser';
+import { skyBand } from '@/constants/night-palette';
+import { THEME_BAR } from '@/components/stories/catalogue/story-filter-bar';
+import { taglineFontSize, taglineWordsDepth } from '@/components/child-ui/page-tagline';
 import * as catalogueStoryModule from '@/components/stories/catalogue/catalogue-story';
-import { COVER_GRID_GAP } from '@/components/child-ui/tokens';
+import { COVER_GRID_GAP, SPACE_3 } from '@/components/child-ui/tokens';
 import { coverColumns, coverWidthFor } from '@/constants/catalogue-columns';
-import { StyleSheet } from 'react-native';
+import { Animated, Dimensions, StyleSheet } from 'react-native';
 import { useStoryTransition } from '@/contexts/story-transition-context';
 
 const mockStartTransition = jest.fn();
@@ -128,11 +132,13 @@ jest.mock('@/services/story-access-service', () => ({
 // them is to run the right one for the section on show, with that section's
 // controls to point at. The stub records exactly that.
 const mockGuides: { id: string; active: boolean; targets: string[] }[] = [];
+const mockScrollers: Record<string, { reveal: (shift: number) => void; away: () => number }> = {};
 jest.mock('@/components/owl-guide', () => {
   const { View } = jest.requireActual('react-native');
   return {
-    OwlGuide: ({ id, active, targets }: { id: string; active?: boolean; targets?: Record<string, unknown> }) => {
+    OwlGuide: ({ id, active, targets, scroller }: { id: string; active?: boolean; targets?: Record<string, unknown>; scroller?: { reveal: (shift: number) => void; away: () => number } }) => {
       mockGuides.push({ id, active: active !== false, targets: Object.keys(targets ?? {}) });
+      if (scroller) mockScrollers[id] = scroller;
       return active !== false ? <View testID={`owl-guide-${id}`} /> : null;
     },
   };
@@ -1748,5 +1754,261 @@ describe('the shelves and the planet', () => {
     const header = byTestId(tree, 'catalogue-header').find((n: any) => n.props.onLayout);
 
     expect(header.props.pointerEvents).toBe('box-none');
+  });
+
+  describe('the theme chooser', () => {
+    const HEADER = 194;
+    const TITLE_ROW = 118;
+    const THEME_BAR_TOP = 42;
+    const CHOOSER = 98;
+    const stubbedValue = Animated.Value;
+    let originalWidth: number;
+    let originalHeight: number;
+
+    beforeAll(() => {
+      Animated.Value = jest.requireActual('react-native-web/dist/cjs/vendor/react-native/Animated/nodes/AnimatedValue');
+    });
+
+    afterAll(() => {
+      Animated.Value = stubbedValue;
+    });
+
+    beforeEach(() => {
+      originalWidth = document.documentElement.clientWidth;
+      originalHeight = document.documentElement.clientHeight;
+      Object.defineProperty(document.documentElement, 'clientWidth', { value: 402, configurable: true });
+      Object.defineProperty(document.documentElement, 'clientHeight', { value: 874, configurable: true });
+      window.dispatchEvent(new Event('resize'));
+    });
+
+    afterEach(() => {
+      Object.defineProperty(document.documentElement, 'clientWidth', { value: originalWidth, configurable: true });
+      Object.defineProperty(document.documentElement, 'clientHeight', { value: originalHeight, configurable: true });
+      window.dispatchEvent(new Event('resize'));
+    });
+
+    function host(tree: ReturnType<typeof render>, testID: string) {
+      if (testID === 'catalogue-scroll') return byTestId(tree, testID).find((n: any) => n.props.contentContainerStyle);
+      return byTestId(tree, testID).filter((n: any) => n.props.style).pop();
+    }
+
+    function layout(tree: ReturnType<typeof render>, testID: string, y: number, height: number) {
+      const node = byTestId(tree, testID).find((n: any) => n.props.onLayout);
+      act(() => {
+        node.props.onLayout({ nativeEvent: { layout: { x: 0, y, width: 358, height } } });
+      });
+    }
+
+    function scrollTo(tree: ReturnType<typeof render>, y: number) {
+      const scroll = byTestId(tree, 'catalogue-scroll').find((n: any) => n.props.onScroll);
+      act(() => {
+        scroll.props.onScroll({
+          nativeEvent: {
+            contentOffset: { x: 0, y },
+            layoutMeasurement: { width: 402, height: 756 },
+            contentSize: { width: 402, height: 2400 },
+          },
+        });
+      });
+    }
+
+    function bound(tree: ReturnType<typeof render>, testID: string) {
+      return StyleSheet.flatten(byTestId(tree, testID).filter((n: any) => n.props.style)[0].props.style) as any;
+    }
+
+    function chooserTop(tree: ReturnType<typeof render>): number {
+      return bound(tree, 'catalogue-chooser').transform[0].translateY.__getValue();
+    }
+
+    function skyOpacity(tree: ReturnType<typeof render>): number {
+      return bound(tree, 'catalogue-chooser-sky').opacity.__getValue();
+    }
+
+    async function measuredLibrary() {
+      const tree = await renderLibrary();
+      layout(tree, 'catalogue-header', 0, HEADER);
+      layout(tree, 'catalogue-tagline', TITLE_ROW, HEADER - TITLE_ROW);
+      layout(tree, 'story-theme-bar', THEME_BAR_TOP, THEME_BAR.height.phone);
+      layout(tree, 'catalogue-chooser', 0, CHOOSER);
+      const { width, height } = Dimensions.get('window');
+      const coverHeight = planetCoverHeight(HEADER, width, height);
+      const tagline = tree.UNSAFE_root.findAll((n: any) => Array.isArray(n.props.lines) && n.props.width)[0];
+      const wordsBottom = TITLE_ROW + taglineWordsDepth(tagline.props.lines[1], tagline.props.width, taglineFontSize(false));
+      const stop = chooserStop({ rest: coverHeight + SPACE_3, rowBottom: TITLE_ROW, wordsBottom, themeBarTop: THEME_BAR_TOP });
+
+      return { tree, stop, screenHeight: height };
+    }
+
+    it('lifts the chooser out of the shelves and over the planet, clear of the halo behind the tagline', async () => {
+      const tree = await renderLibrary();
+
+      const scroll = firstIndex(tree, 'catalogue-scroll');
+      const sky = firstIndex(tree, 'catalogue-chooser-sky');
+      const planet = firstIndex(tree, 'catalogue-planet-over-shelves');
+      const chooser = firstIndex(tree, 'catalogue-chooser');
+      const title = firstIndex(tree, 'page-title');
+      const header = StyleSheet.flatten(byTestId(tree, 'catalogue-header').find((n: any) => n.props.onLayout).props.style);
+      const inScroll = host(tree, 'catalogue-scroll').findAll((n: any) => n.props.testID === 'story-filter-bar');
+      const inChooser = host(tree, 'catalogue-chooser').findAll((n: any) => n.props.testID === 'story-filter-bar');
+
+      expect(sky).toBeGreaterThan(scroll);
+      expect(planet).toBeGreaterThan(sky);
+      expect(chooser).toBeGreaterThan(title);
+      expect(title).toBeGreaterThan(planet);
+      expect(bound(tree, 'catalogue-chooser').zIndex).toBeGreaterThan(header.zIndex);
+      expect(inScroll).toHaveLength(0);
+      expect(inChooser.length).toBeGreaterThan(0);
+    });
+
+    it('keeps room for the chooser at the head of the shelves, so they rest where they did', async () => {
+      const tree = await renderLibrary();
+      const before = StyleSheet.flatten(host(tree, 'catalogue-chooser-room').props.style);
+
+      layout(tree, 'catalogue-chooser', 0, CHOOSER);
+      const after = StyleSheet.flatten(host(tree, 'catalogue-chooser-room').props.style);
+      const room = host(tree, 'catalogue-scroll').findAll((n: any) => n.props.testID === 'catalogue-chooser-room');
+
+      expect(room.length).toBeGreaterThan(0);
+      expect(before.height).toBe(34 + 8 + THEME_BAR.height.phone);
+      expect(after.height).toBe(CHOOSER);
+      expect(after.marginBottom).toBe(SPACE_3);
+    });
+
+    it('lines the chooser up with the shelves on either side', async () => {
+      const tree = await renderLibrary();
+
+      const frame = StyleSheet.flatten(host(tree, 'catalogue-chooser').props.style);
+      const content = StyleSheet.flatten(host(tree, 'catalogue-scroll').props.contentContainerStyle);
+
+      expect(frame.position).toBe('absolute');
+      expect(frame.top).toBe(0);
+      expect(frame.left).toBe(content.paddingHorizontal);
+      expect(frame.right).toBe(content.paddingHorizontal);
+    });
+
+    it.each`
+      moment                                   | offset         | expected
+      ${'at rest'}                             | ${() => 0}     | ${(s: any) => s.rest}
+      ${'part of the way up'}                  | ${() => 30}    | ${(s: any) => s.rest - 30}
+      ${'just as it reaches its stop'}         | ${(s: any) => s.travel} | ${(s: any) => s.stop}
+      ${'with the shelves far beneath it'}     | ${() => 900}   | ${(s: any) => s.stop}
+      ${'pulled down past the top'}            | ${() => -20}   | ${(s: any) => s.rest + 20}
+    `('rides with the page and stops against the planet: $moment', async ({ offset, expected }) => {
+      const { tree, stop } = await measuredLibrary();
+
+      scrollTo(tree, offset(stop));
+
+      expect(chooserTop(tree)).toBeCloseTo(expected(stop), 5);
+    });
+
+    it.each`
+      moment                                     | offset                                   | opacity
+      ${'at rest'}                               | ${() => 0}                               | ${0}
+      ${'as the chooser stops'}                  | ${(s: any) => s.travel}                  | ${0}
+      ${'half way into the gap'}                 | ${(s: any) => s.travel + CATALOGUE_CHOOSER.fade / 2} | ${0.5}
+      ${'once the shelves pass under it'}        | ${(s: any) => s.travel + CATALOGUE_CHOOSER.fade}     | ${1}
+      ${'with the shelves far beneath it'}       | ${() => 900}                             | ${1}
+    `('brings the sky in behind the stopped chooser: $moment', async ({ offset, opacity }) => {
+      const { tree, stop } = await measuredLibrary();
+
+      scrollTo(tree, offset(stop));
+
+      expect(skyOpacity(tree)).toBeCloseTo(opacity, 5);
+    });
+
+    it('paints the sky from the top of the screen down to just past the stopped chooser', async () => {
+      const { tree, stop, screenHeight } = await measuredLibrary();
+      const foot = stop.stop + CHOOSER;
+
+      const frame = StyleSheet.flatten(host(tree, 'catalogue-chooser-sky').props.style);
+      const gradient = host(tree, 'catalogue-chooser-sky').findAll((n: any) => Array.isArray(n.props.colors))[0];
+      const expected = skyBand(foot, foot + CATALOGUE_CHOOSER.fade, screenHeight);
+
+      expect(frame.top).toBe(0);
+      expect(frame.height).toBe(foot + CATALOGUE_CHOOSER.fade);
+      expect(gradient.props.colors).toEqual(expected.colours);
+      expect(gradient.props.locations).toEqual(expected.locations);
+      expect(host(tree, 'catalogue-chooser-sky').props.pointerEvents).toBe('none');
+    });
+
+    it('grows its room and the sky behind it when its finer themes open', async () => {
+      const { tree, stop } = await measuredLibrary();
+
+      layout(tree, 'catalogue-chooser', 0, CHOOSER + 52);
+
+      expect(StyleSheet.flatten(host(tree, 'catalogue-chooser-room').props.style).height).toBe(CHOOSER + 52);
+      expect(StyleSheet.flatten(host(tree, 'catalogue-chooser-sky').props.style).height).toBe(stop.stop + CHOOSER + 52 + CATALOGUE_CHOOSER.fade);
+      expect(chooserTop(tree)).toBeCloseTo(stop.rest, 5);
+    });
+
+    it.each`
+      moment                                     | offset                                                       | opacity
+      ${'at rest'}                               | ${() => 0}                                                   | ${1}
+      ${'before it nears its stop'}              | ${(s: any) => s.travel - CATALOGUE_CHOOSER.headingFade}      | ${1}
+      ${'half way through the fade'}             | ${(s: any) => s.travel - CATALOGUE_CHOOSER.headingFade / 2}  | ${0.5}
+      ${'once it has stopped'}                   | ${(s: any) => s.travel}                                      | ${0}
+      ${'with the shelves far beneath it'}       | ${() => 900}                                                 | ${0}
+    `('fades out "Choose a theme" and the tagline star as it stops: $moment', async ({ offset, opacity }) => {
+      const { tree, stop } = await measuredLibrary();
+
+      scrollTo(tree, offset(stop));
+
+      expect(bound(tree, 'story-filter-heading-label').opacity.__getValue()).toBeCloseTo(opacity, 5);
+      expect(bound(tree, 'page-tagline-star').opacity.__getValue()).toBeCloseTo(opacity, 5);
+    });
+
+    it('stops the capsule clear of the tagline\'s letters, wherever the strip\'s own heading puts it', async () => {
+      const tree = await renderLibrary();
+      layout(tree, 'catalogue-header', 0, HEADER);
+      layout(tree, 'catalogue-tagline', TITLE_ROW, HEADER - TITLE_ROW);
+      layout(tree, 'story-theme-bar', 36, THEME_BAR.height.phone);
+      layout(tree, 'catalogue-chooser', 0, CHOOSER - 6);
+      const tagline = tree.UNSAFE_root.findAll((n: any) => Array.isArray(n.props.lines) && n.props.width)[0];
+      const wordsBottom = TITLE_ROW + taglineWordsDepth(tagline.props.lines[1], tagline.props.width, taglineFontSize(false));
+
+      scrollTo(tree, 900);
+
+      expect(tagline.props.width).toBe(402 - 2 * StyleSheet.flatten(host(tree, 'catalogue-scroll').props.contentContainerStyle).paddingHorizontal);
+      expect(wordsBottom).toBeGreaterThan(TITLE_ROW + 40);
+      expect(chooserTop(tree) + 36).toBeCloseTo(wordsBottom + CATALOGUE_CHOOSER.clearance, 5);
+    });
+
+    it('stops the Filter button clear of the title row in story mode, where there is no tagline', async () => {
+      const tree = render(<StoryCatalogueScreen initialMode="interactive" />);
+      await waitFor(() => expect(byTestId(tree, 'story-filter-bar').length).toBeGreaterThan(0));
+      layout(tree, 'catalogue-header', 0, TITLE_ROW);
+      layout(tree, 'story-theme-bar', THEME_BAR_TOP, THEME_BAR.height.phone);
+      layout(tree, 'catalogue-chooser', 0, CHOOSER);
+
+      scrollTo(tree, 900);
+
+      expect(byTestId(tree, 'catalogue-tagline')).toHaveLength(0);
+      expect(chooserTop(tree)).toBeCloseTo(TITLE_ROW + CATALOGUE_CHOOSER.clearance, 5);
+    });
+
+    it('lets a drag that starts beside its buttons reach the shelves beneath it', async () => {
+      const tree = await renderLibrary();
+
+      expect(host(tree, 'catalogue-chooser').props.pointerEvents).toBe('box-none');
+    });
+
+    it('still tells the tour where the page has scrolled to', async () => {
+      const tree = await renderLibrary();
+
+      scrollTo(tree, 300);
+      act(() => mockScrollers.catalogue_tour.reveal(40));
+      scrollTo(tree, 340);
+
+      expect(mockScrollers.catalogue_tour.away()).toBe(40);
+    });
+
+    it('carries no chooser, room or sky over search', async () => {
+      const tree = render(<StoryCatalogueScreen sectionRequest={{ section: 'search', key: 1 }} />);
+      await waitFor(() => expect(byTestId(tree, 'catalogue-scroll').length).toBeGreaterThan(0));
+
+      expect(byTestId(tree, 'catalogue-chooser')).toHaveLength(0);
+      expect(byTestId(tree, 'catalogue-chooser-room')).toHaveLength(0);
+      expect(byTestId(tree, 'catalogue-chooser-sky')).toHaveLength(0);
+    });
   });
 });

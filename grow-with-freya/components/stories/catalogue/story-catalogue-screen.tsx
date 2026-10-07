@@ -1,17 +1,19 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
+  Animated,
   Dimensions,
   InteractionManager,
   Pressable,
-  ScrollView,
   Share,
   StyleSheet,
   Text,
   View,
   useWindowDimensions,
+  type LayoutChangeEvent,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
 import { ALL_STORIES } from '@/data/stories';
@@ -23,7 +25,9 @@ import {
   SURFACE_SECONDARY,
   TEXT_PRIMARY,
   TEXT_SECONDARY,
+  skyBand,
 } from '@/constants/night-palette';
+import { CATALOGUE_CHOOSER, chooserBandFade, chooserHeadingFade, chooserLift, chooserStop } from '@/constants/catalogue-chooser';
 import { useAppStore, type SubscriptionTier } from '@/store/app-store';
 import { useSessionActions } from '@/hooks/use-session-actions';
 import { profileTourTargets as profileTourTargetsFor, searchTourTargets as searchTourTargetsFor } from '@/constants/owl-guide';
@@ -45,7 +49,7 @@ import { BalancedHeaderRow } from '@/components/child-ui/balanced-header-row';
 import { ContentSwap } from '@/components/child-ui/content-swap';
 import { CircleActionButton } from '@/components/child-ui/circle-action-button';
 import { PageTitle } from '@/components/child-ui/page-title';
-import { PageTagline } from '@/components/child-ui/page-tagline';
+import { PageTagline, taglineFontSize, taglineWordsDepth } from '@/components/child-ui/page-tagline';
 import { SectionHeading } from '@/components/child-ui/section-heading';
 import { JourneyShell } from '@/components/child-ui/journey-shell';
 import { ChildNavItemId, navClearance, navItemCentre } from '@/components/child-ui/child-bottom-navigation';
@@ -95,7 +99,7 @@ import {
   selectContinuing,
   storyMatchesMode,
 } from './catalogue-story';
-import { StoryFilterBar } from './story-filter-bar';
+import { StoryFilterBar, chooserLayoutEstimate } from './story-filter-bar';
 import { FILTER_PILL_ICONS } from './story-filter-pill';
 import { FeaturedStoryCard } from './featured-story-card';
 import { catalogueLayout, coverColumns, coverWidthFor } from '@/constants/catalogue-columns';
@@ -230,6 +234,7 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
   );
 
   const margin = contentMargin(isTablet);
+  const contentWidth = windowWidth - margin * 2;
   const isLandscapeTablet = isTablet && windowWidth > windowHeight;
 
   const [stories, setStories] = useState<Story[]>(() => {
@@ -264,7 +269,57 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
   const [editProfileOpen, setEditProfileOpen] = useState(false);
   const [showScreenTime, setShowScreenTime] = useState(false);
   const [navCollapsed, setNavCollapsed] = useState(false);
-  const { coverHeight, onHeaderLayout } = usePlanetCover();
+  const { coverHeight, headerHeight, onHeaderLayout } = usePlanetCover();
+  const [chooserHeight, setChooserHeight] = useState<number | null>(null);
+  const [themeBarTop, setThemeBarTop] = useState<number | null>(null);
+  const [taglineTop, setTaglineTop] = useState<number | null>(null);
+  const [pageOffset] = useState(() => new Animated.Value(0));
+  const showsChooser = navSection !== 'search' && navSection !== 'profile';
+  const shelfTop = coverHeight + SPACE_3;
+  const chooserEstimate = chooserLayoutEstimate(isTablet);
+  const chooserFrameHeight = chooserHeight ?? chooserEstimate.height;
+  const capsuleTop = themeBarTop ?? chooserEstimate.themeBarTop;
+  const titleRowBottom = taglineTop ?? headerHeight;
+  const taglineFoot = storyMode
+    ? titleRowBottom
+    : titleRowBottom + taglineWordsDepth(TAGLINE_LINES.home(t)[1], contentWidth, taglineFontSize(isTablet));
+  const chooserTravel = useMemo(
+    () => chooserStop({ rest: shelfTop, rowBottom: titleRowBottom, wordsBottom: taglineFoot, themeBarTop: capsuleTop }),
+    [shelfTop, titleRowBottom, taglineFoot, capsuleTop]
+  );
+  const chooserHeadingOpacity = useMemo(
+    () => pageOffset.interpolate({ ...chooserHeadingFade(chooserTravel), extrapolate: 'clamp' }),
+    [pageOffset, chooserTravel]
+  );
+  const chooserTop = useMemo(
+    () => pageOffset.interpolate({ ...chooserLift(chooserTravel), extrapolateLeft: 'extend', extrapolateRight: 'clamp' }),
+    [pageOffset, chooserTravel]
+  );
+  const chooserSkyOpacity = useMemo(
+    () => pageOffset.interpolate({ ...chooserBandFade(chooserTravel), extrapolate: 'clamp' }),
+    [pageOffset, chooserTravel]
+  );
+  const chooserFoot = chooserTravel.stop + chooserFrameHeight;
+  const chooserSky = useMemo(
+    () => skyBand(chooserFoot, chooserFoot + CATALOGUE_CHOOSER.fade, windowHeight),
+    [chooserFoot, windowHeight]
+  );
+  const onPageScroll = useMemo(
+    () => Animated.event([{ nativeEvent: { contentOffset: { y: pageOffset } } }], {
+      useNativeDriver: true,
+      listener: pageScroller.onScroll,
+    }),
+    [pageOffset, pageScroller.onScroll]
+  );
+  const handleChooserLayout = useCallback((event: LayoutChangeEvent) => {
+    setChooserHeight(Math.round(event.nativeEvent.layout.height));
+  }, []);
+  const handleThemeBarLayout = useCallback((event: LayoutChangeEvent) => {
+    setThemeBarTop(Math.round(event.nativeEvent.layout.y));
+  }, []);
+  const handleTaglineLayout = useCallback((event: LayoutChangeEvent) => {
+    setTaglineTop(Math.round(event.nativeEvent.layout.y));
+  }, []);
   const { badges } = useProgressData();
   const parentsOnly = useParentsOnlyChallenge();
   const screenTime = useScreenTimeAllowance();
@@ -689,7 +744,6 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
     setTheme(next);
   }, []);
 
-  const contentWidth = windowWidth - margin * 2;
   const todaysPick = shelves.find((shelf) => shelf.kind === 'pick');
   const layout = catalogueLayout({ isTablet, landscape: isLandscapeTablet, contentWidth, hasPick: Boolean(todaysPick) });
   const gridAreaWidth = layout.shelfWidth;
@@ -957,10 +1011,10 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
             />
           ) : (
             <View style={styles.fill}>
-            <ScrollView
+            <Animated.ScrollView
               testID="catalogue-scroll"
               ref={holdPageScroll}
-              onScroll={pageScroller.onScroll}
+              onScroll={onPageScroll}
               onLayout={pageScroller.onLayout}
               onContentSizeChange={pageScroller.onContentSizeChange}
               scrollEventThrottle={16}
@@ -969,25 +1023,18 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
               contentContainerStyle={[
                 styles.scrollContent,
                 {
-                  paddingTop: coverHeight + SPACE_3,
+                  paddingTop: shelfTop,
                   paddingHorizontal: margin,
                   paddingBottom: SPACE_4 + (textSizeScale - 1) * 40 + pageScroller.reserve,
                 },
               ]}
               scrollEnabled={!interactionLocked}
             >
-              {navSection !== 'search' && navSection !== 'profile' && (
-                <View style={isTablet ? styles.filterBarSpacing : styles.filterBarSpacingPhone}>
-                  <StoryFilterBar
-                    theme={theme}
-                    onSelectTheme={handleSelectTheme}
-                    tags={FILTER_TAG_SET}
-                    selectedTags={selectedTags}
-                    onToggleTag={handleToggleTag}
-                    tilesRef={themeTilesRef}
-                    toggleRef={filterToggleRef}
-                  />
-                </View>
+              {showsChooser && (
+                <View
+                  testID="catalogue-chooser-room"
+                  style={[isTablet ? styles.filterBarSpacing : styles.filterBarSpacingPhone, { height: chooserFrameHeight }]}
+                />
               )}
 
               {navSection === 'search' ? (
@@ -1047,7 +1094,16 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
                   )}
                 </ContentSwap>
               )}
-            </ScrollView>
+            </Animated.ScrollView>
+            {showsChooser && (
+              <Animated.View
+                testID="catalogue-chooser-sky"
+                pointerEvents="none"
+                style={[styles.chooserSky, { height: chooserFoot + CATALOGUE_CHOOSER.fade, opacity: chooserSkyOpacity }]}
+              >
+                <LinearGradient colors={chooserSky.colours} locations={chooserSky.locations} style={StyleSheet.absoluteFill} />
+              </Animated.View>
+            )}
             <PlanetCover height={coverHeight} testID="catalogue-planet-over-shelves" />
             <View
               testID="catalogue-header"
@@ -1102,11 +1158,40 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
               }
             />
             {!storyMode && (
-              <View style={[styles.tagline, { marginHorizontal: margin }]} pointerEvents="none">
-                <PageTagline lines={TAGLINE_LINES[navSection](t)} width={contentWidth} />
+              <View
+                testID="catalogue-tagline"
+                style={[styles.tagline, { marginHorizontal: margin }]}
+                pointerEvents="none"
+                onLayout={handleTaglineLayout}
+              >
+                <PageTagline
+                  lines={TAGLINE_LINES[navSection](t)}
+                  width={contentWidth}
+                  starOpacity={showsChooser ? chooserHeadingOpacity : 1}
+                />
               </View>
             )}
             </View>
+            {showsChooser && (
+              <Animated.View
+                testID="catalogue-chooser"
+                pointerEvents="box-none"
+                onLayout={handleChooserLayout}
+                style={[styles.chooser, { left: margin, right: margin, transform: [{ translateY: chooserTop }] }]}
+              >
+                <StoryFilterBar
+                  theme={theme}
+                  onSelectTheme={handleSelectTheme}
+                  tags={FILTER_TAG_SET}
+                  selectedTags={selectedTags}
+                  onToggleTag={handleToggleTag}
+                  tilesRef={themeTilesRef}
+                  toggleRef={filterToggleRef}
+                  onThemeBarLayout={handleThemeBarLayout}
+                  headingOpacity={chooserHeadingOpacity}
+                />
+              </Animated.View>
+            )}
             </View>
           )}
         </SectionCrossfade>
@@ -1196,6 +1281,17 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
+  },
+  chooserSky: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+  },
+  chooser: {
+    position: 'absolute',
+    top: 0,
+    zIndex: 11,
   },
   header: {
     zIndex: 10,

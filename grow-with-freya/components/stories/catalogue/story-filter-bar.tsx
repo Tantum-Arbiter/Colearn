@@ -1,5 +1,5 @@
 import React, { type RefObject, useCallback, useMemo, useState } from 'react';
-import { FlatList, ImageSourcePropType, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, FlatList, ImageSourcePropType, LayoutChangeEvent, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -41,6 +41,7 @@ export const THEME_BAR = {
   label: { phone: 16, tablet: 19 },
   gap: 8,
 } as const;
+export const CHOOSER_HEADING_HEIGHT = 34;
 const TILE_LABEL_MIN_SCALE = 0.75;
 const BAR_FILL = 'rgba(28, 36, 112, 0.55)';
 const BAR_RIM = 'rgba(160, 178, 255, 0.28)';
@@ -78,6 +79,18 @@ interface StoryFilterBarProps {
   /** So the stories tour can point the owl at the tiles and at Filter. */
   tilesRef?: RefObject<View | null>;
   toggleRef?: RefObject<View | null>;
+  onThemeBarLayout?: (event: LayoutChangeEvent) => void;
+  headingOpacity?: Animated.WithAnimatedValue<number>;
+}
+
+export function chooserGap(isTablet: boolean): number {
+  return isTablet ? SPACE_3 : SPACE_2;
+}
+
+export function chooserLayoutEstimate(isTablet: boolean): { themeBarTop: number; height: number } {
+  const themeBarTop = CHOOSER_HEADING_HEIGHT + chooserGap(isTablet);
+
+  return { themeBarTop, height: themeBarTop + (isTablet ? THEME_BAR.height.tablet : THEME_BAR.height.phone) };
 }
 
 interface ThemeTileProps {
@@ -147,7 +160,17 @@ function ThemeTile({ id, art, label, selected, onPress }: ThemeTileProps) {
  * child has chosen from there stays in view while it is chosen, or the shelf
  * would be filtered by something they cannot see.
  */
-export function StoryFilterBar({ theme, onSelectTheme, tags, selectedTags, onToggleTag, tilesRef, toggleRef }: StoryFilterBarProps) {
+export function StoryFilterBar({
+  theme,
+  onSelectTheme,
+  tags,
+  selectedTags,
+  onToggleTag,
+  tilesRef,
+  toggleRef,
+  onThemeBarLayout,
+  headingOpacity = 1,
+}: StoryFilterBarProps) {
   const { t } = useTranslation();
   const { isTablet, scaledFontSize } = useAccessibility();
   const [expanded, setExpanded] = useState(false);
@@ -167,9 +190,9 @@ export function StoryFilterBar({ theme, onSelectTheme, tags, selectedTags, onTog
   }, []);
 
   return (
-    <View testID="story-filter-bar" style={[styles.chooser, { gap: isTablet ? SPACE_3 : SPACE_2 }]}>
-      <View style={styles.heading}>
-        <View style={styles.headingLabel}>
+    <View testID="story-filter-bar" pointerEvents="box-none" style={[styles.chooser, { gap: chooserGap(isTablet) }]}>
+      <View testID="story-filter-heading" pointerEvents="box-none" style={styles.heading}>
+        <Animated.View testID="story-filter-heading-label" pointerEvents="none" style={[styles.headingLabel, { opacity: headingOpacity }]}>
           <Ionicons name="star" size={isTablet ? 20 : 17} color={ACCENT_GOLD} />
           <Text
             style={[styles.headingText, { fontSize: scaledFontSize(typeSize('filterLabel', isTablet)) }]}
@@ -177,7 +200,7 @@ export function StoryFilterBar({ theme, onSelectTheme, tags, selectedTags, onTog
           >
             {t('catalogue.chooseTheme')}
           </Text>
-        </View>
+        </Animated.View>
 
         <View ref={toggleRef} collapsable={false}>
         <Pressable
@@ -204,6 +227,7 @@ export function StoryFilterBar({ theme, onSelectTheme, tags, selectedTags, onTog
         style={[styles.tiles, { height: isTablet ? THEME_BAR.height.tablet : THEME_BAR.height.phone, borderRadius: (isTablet ? THEME_BAR.height.tablet : THEME_BAR.height.phone) / 2 }]}
         ref={tilesRef}
         collapsable={false}
+        onLayout={onThemeBarLayout}
       >
         {CATALOGUE_THEMES.map((id) => (
           <ThemeTile
@@ -258,7 +282,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACE_1,
-    height: 34,
+    height: CHOOSER_HEADING_HEIGHT,
     paddingHorizontal: FILTER_PILL_PADDING_H - 6,
     borderRadius: RADIUS_CONTROL,
     borderWidth: 1,
