@@ -24,6 +24,7 @@ marked **⚠️ UNVERIFIED**.
 | The island illustration on the home screen's Your Learning Journey card (cut from the operator's mock of the card) | Registered below, §5b — origin and licence ⚠️ UNVERIFIED |
 | The planet at the edge of every page, and the ring of cloud between pages while they slide (cut from the operator's painting of a planet in cloud) | Registered below, §5c — origin and licence ⚠️ UNVERIFIED |
 | The three stat orbs on the home screen: the streak, Continue reading and the badges unlocked (cut from the operator's picture of them) | Registered below, §5d — origin and licence ⚠️ UNVERIFIED |
+| The road map shown once the week on the island is done: a bear before a glowing portal, with three dated panels (one painting for phones and upright tablets, one 4:3 for tablets on their side) | Registered below, §5e — origin and licence ⚠️ UNVERIFIED |
 | The lock on the island's learning-plan checkpoints | Registered below, §6 — the supplied picture is not drawn since 2026-10-03 (a padlock drawn in code replaced it); the file remains, origin ⚠️ UNVERIFIED |
 | Everything else — avatars, feelings animals, story illustrations, instrument art, music, fonts, voices | **Not registered.** Origin is not recorded anywhere in the repository — ⚠️ UNVERIFIED |
 
@@ -192,6 +193,21 @@ sign-in sky, the owl and the badge art.
 | Terms for commercial use, and who owns it | ⚠️ UNVERIFIED — depends on the answer above |
 | Checked by eye against well-known games and films | **Not yet done by a person** |
 | Quality | An orb is about 240 pixels across in the mock and is shown about 97 points across on a phone (291 pixels at 3×), so it is enlarged about 1.2 times; more on a tablet (up to 132 points). The orbs themselves, at size and without the lettering, would be sharper and would not need the lettering painted out |
+
+## 5e. The road map after the island
+
+| File (under `grow-with-freya/assets/images/roadmap/`) | Where from | What was changed |
+|---|---|---|
+| `roadmap-phone.webp` (941×1672, SHA-256 `2ad04dbb8d79a7d0dcd35482cb37f98d42e05289fd7d3f73fd0df4900f8b0811`) | Supplied by the operator, pasted into the working session on 2026-10-05 as a WebP (SHA-256 `d433609cf64ccdc652541d2a7de6af61efc3e0911ca8ba8ea6d461f08778dfe7`): a bear with a backpack on a cliff before a glowing portal to a spring valley, and three hanging panels, "Q2 2027 Japan and New Zealand", "Q3 2027 France and Italy", "Q4 2027 Lapland" | The place names painted out of the three panels by biharmonic inpainting from the panel round them, inside three rectangles below each "Q… 2027" line (operator, 2026-10-05: keep the quarters, write the places in the app in each language). The quarters, icons, frames and flowers are untouched. Re-encoded as WebP, quality 90. Nothing from outside the painting is added |
+| `roadmap-tablet.webp` (1448×1086, SHA-256 `53323eae0b9a153f12bf7e0e7f3f13d1a22fcc69b2757f73b4287ec257f52843`) | Supplied the same day (SHA-256 `29a95f1b20b70de238c069efe271587583531697054bb2c95783edd3564cb41d`): the same scene, 4:3 | The same, for its own three panels |
+| The place names on the panels | Written by the app (`components/island/roadmap-scene.tsx`) in the system's serif face, from `roadmap.stops` in the 14 locales | Made for the app |
+
+| Question | Answer |
+|---|---|
+| Who made it, and with what | ⚠️ UNVERIFIED — both pictures arrived with no record of their origin. They have the look of generated images; the operator to say which service and account, or which artist |
+| Terms for commercial use, and who owns it | ⚠️ UNVERIFIED — depends on the answer above |
+| Checked by eye against well-known games and films | **Not yet done by a person** |
+| The dates on the panels | Painted into the art. If the plan moves, the art has to be repainted or the quarters painted out and written by the app as the places are |
 
 ## 6. The lock on the learning-plan checkpoints
 

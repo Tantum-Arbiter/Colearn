@@ -277,6 +277,31 @@ purple fill, bright rim and glow the tiles had, the others' labels a little soft
 operator's picture (2026-10-04). The segments keep the tiles' test ids (`story-theme-tile-*`) and
 the tour's `tilesRef` points at the capsule.
 
+**It stops under the tagline while the shelves scroll on (2026-10-05).** The chooser is no longer
+part of the scrolling column. It is drawn above the planet and the header (`catalogue-chooser`,
+`zIndex` 11, so the tagline's halo cannot dim it), and the column keeps an empty
+`catalogue-chooser-room` of its measured height where it used to sit, so the shelves rest where
+they did. It rides up with the page from there and stops where `chooserStop` in
+`constants/catalogue-chooser.ts` says. The capsule stops `clearance` (8 pt) below the lowest
+letter of the tagline's second line, and the Filter button stops at least that far below the title
+row. The letter depth comes from `taglineWordsDepth` in `page-tagline.tsx`, which measures the
+line's ends down its arch with the greeting's advance table. On the phone in the picture it
+stops at 128 pt, the capsule's top at 170.
+
+Over the last 32 pt before it stops, "Choose a theme", its star and the tagline's gold star fade
+out (`chooserHeadingFade`), and they fade back in on the way down. The Filter button stays, and
+its pills open beneath the capsule wherever it is. A band of sky (`skyBand` in
+`night-palette.ts`, colours sampled at the height they sit) fades in behind the stopped chooser
+over the 12 pt gap that rested above the first shelf, so the shelves pass behind it and not
+through it.
+
+All of this runs on the native driver: the column's `Animated.event` feeds `pageOffset`, and it
+also hands each event to the tour's scroller. In story mode there is no tagline, so the chooser
+stops under the title row. Search and Profile carry no chooser. `chooserStop` never sends the
+chooser down the page, and it holds still while any measure is not a number. A NaN or falling
+input range is an Invariant Violation that takes the whole screen down; on the simulator that
+showed as the library jumping back to the home.
+
 ### The turn-the-screen prompt's heading
 
 The back button and "Ready for our story time?" share one row the button's height
@@ -454,7 +479,9 @@ content scroll up *behind* it rather than being cut off at an invisible line. Bo
   rim (operator request 2026-09-18).
 - Inside each section the order is the `ScrollView` (absolute, `top: 0`), then `PlanetCover`
   (a sky veil plus a second `PlanetHeaderArtwork`), then the header with
-  `pointerEvents="box-none"`/`"none"` so a drag that starts on the globe still scrolls.
+  `pointerEvents="box-none"`/`"none"` so a drag that starts on the globe still scrolls. On the
+  library's Stories section the chooser's sky band sits between the column and the cover, and
+  the chooser itself sits above the header (see "The library's theme chooser").
 - The veil is the sky itself (`headerSkyVeil`, colours sampled from `SKY_GRADIENT_WORLD`): solid
   over the upper part of the cover and clear at its lower edge. The night clouds are translucent,
   so without it text stays readable right up under the back button.
@@ -778,6 +805,12 @@ to create a row from the position it is, covering the other orbs" -- the bubble 
   `_layout` hands it to the reader as `startPageIndex` if it is for that book, and every other way
   of opening the reader clears it. `resumePageIndex` takes `startPage` before the saved place,
   within the book's pages. Picking a page changes no saved place until the reader moves on from it.
+  The picked page stands out, because a thin gold edge on one thumbnail among four was hard to find
+  (operator, 2026-10-05). It has a 3 pt gold ring with a gold glow, and its number sits in a gold pill
+  with navy ink. The other pages dim to 60% (`STORY_CARD.pages.picked`). Each picture sits in its own
+  rounded clip inside the ring, so the thicker ring cannot leave the picture's corners square. The
+  strip pads 12 pt above and below, which is the glow's reach, because iOS draws a shadow out to
+  about 1.5 times its radius and the scroll view's edge clipped it flat.
   The card's body makes room for the strip on top of everything else (`STORY_CARD.pages`, 116 pt,
   measured on an iPhone 16 Pro -- 98 left the body 17 pt over), so the card simply stands taller and
   nothing scrolls on a phone -- before that, Play Along and Record fell below the card in the
@@ -1422,9 +1455,62 @@ island        PlanTrail (glowing dashes along each leg's own curve through its g
   stays close to a straight line; `island-trail.test.ts` counts the hidden dashes (none, on
   either) and keeps every dash above the step card. To reroute a leg, move its guide point and
   run that test.
+- **Every day can be played again, and the last one, once done, opens the road map**
+  (operator, 2026-10-05). A done checkpoint can be pressed: `useLearningPlan.start` starts a done day
+  as it does an open one, and the step is ticked off again when it finishes, which keeps its first
+  date. Locked days and days that open tomorrow still take no press. Tapping the last day while
+  it is done plays nothing. It opens the road map over the island (`island-roadmap`,
+  `accessibilityViewIsModal`, with the island under it hidden from screen readers).
+  "The adventure continues" (`roadmap.title`, 14 languages) sits above the road map, in the room
+  the painting leaves between the bear's rock and the panels (`ROADMAP_ART.*.title`). It uses the
+  panels' serif at a larger size and a warmer glow, over a soft dark shadow so it reads on the lit
+  rock. The map fades in over 420 ms, and the heading fades in 260 ms behind it over 520 ms, so it
+  arrives once the map has settled. Back, Play again and Android's back fade both out over 300 ms
+  (`ROADMAP.fade`). The map stays mounted until its fade-out finishes (`shownStep`). While it fades
+  it takes no touches and is no longer modal, and opening it again mid-fade keeps it. Under Reduce
+  Motion the fades shorten to a 150 to 200 ms dissolve and the heading does not wait. A first cut
+  used Reanimated's `FadeOut` exiting animation, and on one iPad run the map stayed on screen
+  after Back had closed it. Measured from a recording on an iPad Pro 11: the map is in about
+  300 ms after the tap, the heading by about 600 ms, and the map is gone about 200 ms after Back. The map has
+  its own header: Back to the island, a compact gold "Play again" beside it that closes the map
+  and plays the last day, and the speaker. Android's back button closes the map, not the island.
+  The map closes whenever the island page is left, and the owl's island tour waits while it is
+  up. Once the week is done, the card says any day can be played again and the last one shows
+  what comes next (`plan.weekDoneBody`). A first cut swapped the island for the map as soon as
+  the week was done; the operator wanted it only from the last checkpoint, with every day still
+  playable.
+  - The art is the operator's portal painting, in two shapes (`constants/roadmap.ts`,
+    `ROADMAP_ART`). The phone painting (941×1672) is for phones and upright tablets. The 4:3 one
+    (1448×1086) is for tablets on their side. `roadmapArtFor` picks the one nearer the screen's
+    shape.
+  - The portal and the road map are always whole on screen, in any orientation: inside the safe
+    area, and with the portal under Home and the speaker wherever it lies beneath them.
+    `roadmapLayout` tries the scale that fills the screen and steps down 1% at a time until both
+    fit. The map's Back and Play again are measured, since their words change with the language. On a phone the road map is
+    nearly the painting's full width, so the painting is narrower than a phone is tall. It stands
+    on the foot of the screen with about 110 pt of sky above it.
+  - Wherever the painting leaves the screen uncovered, it carries on as its own mirror image
+    (`roadmapMirrors`, sides and corners), so every edge runs on pixel for pixel. Above the
+    painting, the mirror fades into the painting's own top-edge sky (`ROADMAP_ART.*.sky`), because
+    the portal's glow nearly touches the tablet painting's top and its reflection read as an
+    hourglass. A blurred copy was tried first and left hard edges at the sides on a tablet held
+    sideways.
+  - The supplied paintings had the places written on their panels. These are painted out (see
+    `compliance/ASSET-REGISTER.md` §5e), and the app writes them in each language
+    (`roadmap.stops`) in the system serif, with the warm glow of the painted "Q2 2027" above. The
+    quarters stay painted. A name may take two lines and shrinks before it would leave its panel.
+  - Two-word country names keep a non-breaking space so a panel breaks between the countries:
+    "Japan and / New Zealand", not "Japan and New / Zealand". Japanese has no space to break at,
+    so it carries a line break after と.
+  - A screen reader hears the scene and then each stop as "Q2 2027: Japan and New Zealand"
+    (`roadmap.scene`, `roadmap.stop`).
+  - The painting was seen on an iPhone 16 Pro in English, German and Japanese, and on an iPad Pro
+    11 upright and on its side. The day-7 flow was seen on the iPhone in English and German:
+    opening the map, Back, Play again into the reader and back to the island, and day 1 played
+    again. The week-done card is seen with its new line.
 - Seen in daylight and at night on an iPhone 17e, and on an iPad Pro 11, including Preview for a
   story (card, read, close, back on the island) and for a words day (game card, ✕, back on the
-  island). Not yet seen: Android, Reduce Motion, the week-done card, a child older than four
+  island). Not yet seen: Android, Reduce Motion, a child older than four
   (word builder, number puzzles), a phone reading a previewed book through (the simulator could
   not be turned). By day the lit dashes are yellow on sand and green, and read less strongly
   than at night; the glowing trail was seen by day on both, not yet at night.

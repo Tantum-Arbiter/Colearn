@@ -48,10 +48,39 @@ MAESTRO_DEVICE=<udid> npm run e2e   # a particular simulator
 `MAESTRO_FRESH=1 npm run e2e` boots the simulator again first, which is the cure when flows start
 failing on elements that are plainly on screen.
 
-Nine flows, on a phone and on a tablet (`MAESTRO_DEVICE=<ipad udid>`): home opens; a story opens
+Twelve flows, on a phone and on a tablet (`MAESTRO_DEVICE=<ipad udid>`): home opens; a story opens
 from the shelf and closes again; a story only the server has reaches the shelf; a signed-in parent
 comes straight back in; a first run meets onboarding; the flag switches languages and it sticks; the
-grown-ups door asks its question; the offer opens and closes; a story beyond the free plan wears a lock.
+grown-ups door asks its question; the offer opens and closes; a story beyond the free plan wears a lock;
+the library's themes and Filter stay in view as the shelves scroll, and still answer a tap
+(`core/library-themes-stay-in-view.yaml`); a page picked in a book's card is marked and offered to
+read from (`core/start-from-a-page.yaml`); and a finished week on the island plays a day again and
+opens the road map from the last day, with Back and Play again (`core/island-week-done.yaml`).
+`helpers/close-the-reader.yaml` is the way through a book that something else opened and back out.
+
+**The development build must match the bundle.** The build installed on a simulator is native code.
+One built before the Expo SDK 57 upgrade (2026-09-23) cannot run today's bundle: it stops at start
+with "Property 'MessageQueue' doesn't exist", and every flow fails on its first check. Build it again
+after a native upgrade. To build what CI builds locally (a release app with its JavaScript inside),
+in `grow-with-freya`:
+
+```bash
+export LANG=en_US.UTF-8 EXPO_PUBLIC_E2E=1 EXPO_PUBLIC_GATEWAY_URL=http://localhost:8080
+npx expo prebuild --platform ios --no-install
+(cd ios && pod install)
+(cd ios && xcodebuild -workspace EarlyRoots.xcworkspace -scheme EarlyRoots -configuration Release \
+  -sdk iphonesimulator -derivedDataPath build -destination 'generic/platform=iOS Simulator' \
+  ARCHS=arm64 CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO)
+xcrun simctl install <udid> ios/build/Build/Products/Release-iphonesimulator/EarlyRoots.app
+MAESTRO_DEVICE=<udid> ./.maestro/run.sh -e APP_BUILD=release
+```
+
+The first run of `pod install` takes about 25 minutes, and the build a few more. `ios/` is gitignored
+and reaches about 6 GB while it builds, so delete `ios/build/Build/Intermediates.noindex` and
+`ios/build/ModuleCache.noindex` afterwards. On 2026-10-06 the three journeys above, and six of
+the earlier flows, passed this way on an iPhone 16 Pro: every flow that needs no stub gateway.
+`stub-story-on-the-shelf`, `signed-in-sync` and `premium-story-locked` (its "The Locked Lantern"
+comes only from the stubs' catalogue) need `npm run e2e:stubs` running.
 
 Flows live in `.maestro/flows/<area>/*.yaml`, grouped as `core`, `parent`, `money` and `auth`.
 `.maestro/helpers/` holds steps shared between flows. Failures write logs, screenshots and a
@@ -148,11 +177,23 @@ the stub reaches the shelf and the search — a flow finds it by name. Its cover
   status bar and never reaches the app, which is easy to misread as a broken tree.
 - **A `Pressable` round a group collapses it into one element.** The language chooser read as a
   single blob of fourteen languages until its scrim and card were marked `accessible={false}`.
+- **A reader can turn the screen without asking, and taps then miss.** In Expo Go the phone's
+  reader went sideways with no "turn the screen" prompt. Maestro still took the device to be
+  upright, so "Use this instrument" was tapped where it would have been and nothing happened.
+  `close-the-reader.yaml` tells the device it is sideways (`setOrientation: LANDSCAPE_LEFT`) once
+  the reader is up, whichever way it got there.
 - **A phone reads sideways, and the tree stops keeping up there.** Turn the device with
   `- setOrientation: LANDSCAPE_LEFT` (which is what a family does, and what makes taps land), but
   do not expect to assert what a page says: the reader is plainly on screen while the tree still
   describes the shelf. The way in and the way out are reliable; the pages themselves are held by the
   reader's Jest tests.
+- **A full disk stalls the driver, and then every flow fails.** With the disk at 100% and swap
+  near its limit, iOS's test service stopped answering: "Timed out while fetching snapshot from
+  testmanagerd" in the `xctest_runner` log, a request hanging for 7 to 16 minutes, then
+  "Connection refused" and every later flow failing within milliseconds. It happened with a
+  development build and with a release build, on ordinary screens. Check `df -h` and
+  `sysctl vm.swapusage` before a run. Freeing 9 GB of build leftovers made the same run pass,
+  with every flow taking one to five minutes.
 - **When the tree goes partial, reboot the simulator.** After hours of driving, whole subtrees stop
   being reported — the bar vanished from the tree while plainly on screen and tappable by
   coordinate. It is the simulator's accessibility service, not the app: `xcrun simctl shutdown` and
@@ -166,7 +207,9 @@ the stub reaches the shelf and the search — a flow finds it by name. Its cover
 - **Signing out is not the same as carrying on without an account.** `signedIn=0` used to turn guest
   mode on, which walks straight past onboarding; guest mode is now only what `guest=` says.
 - **iOS asks for an App Store review on its own**, and the dialog hides everything beneath it. The
-  interruptions helper taps "Not Now".
+  interruptions helper taps "Not Now". It can arrive a moment after a book closes, after the helper
+  has already looked, so `island-week-done.yaml` runs the helper again inside a retry until the
+  island is back.
 - **Constant ambient animation slows the snapshot.** Turn Reduce Motion on for the simulator
   (`xcrun simctl spawn <udid> defaults write com.apple.Accessibility ReduceMotionEnabled -bool true`).
 
@@ -184,7 +227,10 @@ the stub reaches the shelf and the search — a flow finds it by name. Its cover
    Still to write: the core child journey (home → library → read a story → back), the money paths
    (trial, paywall, restore, a locked story), the rest of the parent and safety paths (grown-ups
    gate, Screensafe limits, screen-time alert), and sign-in and sync against the stubs.
-3. **Devices beyond the phone.** Tablet layouts and landscape are covered only by Jest today.
+3. **Devices beyond the phone.** Tablet landscape is covered only by Jest today. On an 11-inch
+   tablet held sideways, the island's checkpoints 3 to 7 sit below the screen, so the road map
+   cannot be reached there. That is a known gap in the island's layout, and no flow turns the
+   tablet.
 
 ---
 
