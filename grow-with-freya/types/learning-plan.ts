@@ -1,17 +1,9 @@
-import type { AgeRange } from '@/components/learning/age-range-carousel';
+import type { AgeRange } from '@/constants/age-range';
+import type { ReadingMode } from '@/contexts/story-transition-context';
 
-export type PlanStepKind = 'story' | 'words' | 'numbers' | 'feelings' | 'music';
+export type PlanStepKind = 'story' | 'music';
 
-export type PlanSkill =
-  | 'listening'
-  | 'vocabulary'
-  | 'letters'
-  | 'counting'
-  | 'numbers'
-  | 'feelings'
-  | 'confidence'
-  | 'rhythm'
-  | 'patience';
+export type PlanSkill = 'listening' | 'vocabulary' | 'feelings' | 'confidence' | 'rhythm' | 'patience';
 
 export type PlanAgeRange = Exclude<AgeRange, 'all'>;
 
@@ -25,8 +17,7 @@ export interface LearningPlanStep {
   skills: readonly [PlanSkill, PlanSkill];
   minutes: readonly [number, number];
   storyId?: string;
-  activityByAge?: Readonly<Record<PlanAgeRange, string>>;
-  activityIds?: readonly string[];
+  mode?: ReadingMode;
 }
 
 export interface LearningPlan {
@@ -35,7 +26,5 @@ export interface LearningPlan {
 }
 
 export type PlanLaunch =
-  | { kind: 'story'; storyId: string }
-  | { kind: 'spelling'; activityId: string }
-  | { kind: 'feelings'; activityIds: readonly string[] }
+  | { kind: 'story'; storyId: string; mode: ReadingMode }
   | { kind: 'music'; activityId: string };

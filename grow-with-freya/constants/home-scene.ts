@@ -1,6 +1,6 @@
 import { NIGHT_BRIGHT, NIGHT_DEEP, NIGHT_PRIMARY, NIGHT_VOID } from '@/constants/night-palette';
 
-export type HomeActivityId = 'interactive' | 'music' | 'jigsaw';
+export type HomeActivityId = 'interactive' | 'music';
 
 
 export interface HomeActivity {
@@ -28,13 +28,6 @@ export const HOME_ACTIVITIES = [
     descriptionKey: 'home.musicDescription',
     wash: { night: 'rgba(30,63,120,0.86)', day: 'rgba(54,102,176,0.86)' },
     destination: 'stories-music',
-  },
-  {
-    id: 'jigsaw',
-    titleKey: 'home.puzzles',
-    descriptionKey: 'home.puzzlesDescription',
-    wash: { night: 'rgba(39,80,47,0.86)', day: 'rgba(70,124,80,0.86)' },
-    destination: 'stories-jigsaw',
   },
 ] as const satisfies readonly HomeActivity[];
 

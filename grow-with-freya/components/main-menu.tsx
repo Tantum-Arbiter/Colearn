@@ -85,11 +85,10 @@ const MEMOIZED_STAR_POSITIONS = generateStarPositions();
 // for Image.prefetch (which only accepts URL strings, not numeric asset IDs).
 const MODE_CARD_IMAGES = {
   interactive: require('../assets/images/menu-icons/classic-button.webp'),
-  jigsaw: require('../assets/images/menu-icons/jigsaw-button.webp'),
   music: require('../assets/images/menu-icons/stories-strip.webp'),
 } as const;
 
-// Sub-menu item definitions for Instruments and Learning menus
+// Sub-menu item definitions for the Instruments menu
 interface SubMenuItem {
   id: string;
   labelKey: string;
@@ -101,13 +100,7 @@ const INSTRUMENT_ITEMS: SubMenuItem[] = [
   { id: 'freeplay', labelKey: 'menu.freeplay', image: require('../assets/images/menu-icons/instruments-button.webp') },
 ];
 
-const LEARNING_ITEMS: SubMenuItem[] = [
-  { id: 'spelling', labelKey: 'menu.spelling', image: require('../assets/images/menu-icons/spelling-button.webp') },
-  { id: 'numbers', labelKey: 'menu.numbers', image: require('../assets/images/menu-icons/numbers-button.webp') },
-  { id: 'feelings', labelKey: 'menu.feelings', image: require('../assets/images/menu-icons/feelings-button.webp') },
-];
-
-type SubMenuType = 'stories' | 'instruments' | 'learning' | null;
+type SubMenuType = 'stories' | 'instruments' | null;
 
 // Module-level flag to skip the container fade-in on the next mount.
 // Set by suppressNextContainerFadeIn() before a loading→app transition so the menu
@@ -279,7 +272,7 @@ function MainMenuComponent({ onNavigate, onOpenStoryCard, isActive, disableTutor
   const guardedOnNavigate = useCallback((destination: string) => {
     if (isTutorialPendingRef.current) return; // Block navigation until tutorial completes/skips
     // Intercept buttons that have sub-menus
-    if (destination === 'stories' || destination === 'instruments' || destination === 'learning') {
+    if (destination === 'stories' || destination === 'instruments') {
       handleShowSubMenu(destination as SubMenuType);
       return;
     }
@@ -352,7 +345,6 @@ function MainMenuComponent({ onNavigate, onOpenStoryCard, isActive, disableTutor
   // Tutorial target refs - using refs that get populated when buttons render
   const storiesButtonRef = useRef<View>(null);
   const instrumentsButtonRef = useRef<View>(null);
-  const learningButtonRef = useRef<View>(null);
   const musicControlRef = useRef<View>(null);
   const settingsButtonRef = useRef<View>(null);
   const languageButtonRef = useRef<View>(null);
@@ -369,7 +361,6 @@ function MainMenuComponent({ onNavigate, onOpenStoryCard, isActive, disableTutor
   const carouselButtonRefs = useMemo(() => ({
     stories: storiesButtonRef,
     instruments: instrumentsButtonRef,
-    learning: learningButtonRef,
   }), []);
 
   // Build tutorial target refs map - maps step IDs to refs
@@ -661,7 +652,7 @@ function MainMenuComponent({ onNavigate, onOpenStoryCard, isActive, disableTutor
               </Pressable>
             );
           })}
-          {(activeSubMenu === 'instruments' ? INSTRUMENT_ITEMS : activeSubMenu === 'learning' ? LEARNING_ITEMS : []).map((item) => (
+          {(activeSubMenu === 'instruments' ? INSTRUMENT_ITEMS : []).map((item) => (
             <Pressable
               key={item.id}
               onPress={() => handleSubMenuItemSelect(item.id)}

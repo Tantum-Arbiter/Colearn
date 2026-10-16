@@ -2,9 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ImageSourcePropType } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { ISLAND_TRAIL, type TrailPoint } from '@/constants/island-trail';
-import { activityFor, launchFor, stepStates, type PlanStepState } from '@/constants/learning-plan';
+import { launchFor, stepStates, type PlanStepState } from '@/constants/learning-plan';
 import { ISLAND_WEEK } from '@/data/learning-plan';
-import { NUMBERS_ACTIVITIES, SPELLING_ACTIVITIES } from '@/data/learning-activities';
 import { ALL_STORIES } from '@/data/stories';
 import type { SupportedLanguage } from '@/services/i18n';
 import { useAppStore } from '@/store/app-store';
@@ -38,7 +37,6 @@ function pictureOf(source: unknown): ImageSourcePropType | null {
 export function useLearningPlan(isActive: boolean, trail: readonly TrailPoint[] = ISLAND_TRAIL): LearningPlanView {
   const { t, i18n } = useTranslation();
   const progress = useAppStore((state) => state.learningPlanProgress);
-  const ageInMonths = useAppStore((state) => state.childAgeInMonths);
   const beginPlanStep = useAppStore((state) => state.beginPlanStep);
   const [now, setNow] = useState(() => new Date());
   const [wasActive, setWasActive] = useState(isActive);
@@ -62,18 +60,12 @@ export function useLearningPlan(isActive: boolean, trail: readonly TrailPoint[] 
 
     return ISLAND_WEEK.steps.map((step, index) => {
       const story = step.kind === 'story' ? ALL_STORIES.find((candidate) => candidate.id === step.storyId) : undefined;
-      const activityId = activityFor(step, ageInMonths);
-      const game = [...SPELLING_ACTIVITIES, ...NUMBERS_ACTIVITIES].find((candidate) => candidate.id === activityId);
 
       const title = story
         ? getLocalizedText(story.localizedTitle, story.title, language)
-        : game
-          ? t(game.nameKey)
-          : step.kind === 'feelings'
-            ? t('emotions.title')
-            : step.kind === 'music'
-              ? t('menu.practise')
-              : t(step.placeKey);
+        : step.kind === 'music'
+          ? t('menu.practise')
+          : t(step.placeKey);
 
       return {
         step,
@@ -81,10 +73,10 @@ export function useLearningPlan(isActive: boolean, trail: readonly TrailPoint[] 
         point: trail[index],
         title,
         picture: pictureOf(story?.coverImage),
-        launch: launchFor(step, ageInMonths),
+        launch: launchFor(step),
       };
     });
-  }, [ageInMonths, language, now, progress, t, trail]);
+  }, [language, now, progress, t, trail]);
 
   const current = useMemo(
     () => steps.find((view) => view.state === 'open' || view.state === 'tomorrow') ?? null,

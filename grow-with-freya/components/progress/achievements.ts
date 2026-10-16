@@ -9,7 +9,7 @@ export type AchievementRule =
   | { kind: 'finishedInCategory'; category: string; target: number }
   | { kind: 'finishedWithTag'; tags: string[]; target: number }
   | { kind: 'finishedDistinct'; by: 'tag' | 'category'; target: number }
-  | { kind: 'challenges'; interaction: 'music' | 'jigsaw' | 'reading'; target: number }
+  | { kind: 'challenges'; interaction: 'music'; target: number }
   | { kind: 'storyAward' };
 
 export type AchievementCopy =

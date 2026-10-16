@@ -12,7 +12,6 @@ export const GUIDE_IDS = [
   'narrate_mode_tour',
   'music_mode_tour',
   'settings_walkthrough',
-  'emotion_cards_tips',
   'practise_tips',
 ] as const;
 
@@ -185,13 +184,6 @@ export const GUIDE_STEPS: Record<GuideId, readonly GuideStep[]> = {
     { id: 'settings_reminders', ...keyed('settings', 'settings_reminders', 'reminders'), target: 'settings_reminders', shape: 'rounded-rect', radius: 16 },
     { id: 'settings_crash_reports', ...keyed('settings', 'settings_crash_reports', 'crashReports'), target: 'settings_crash_reports', shape: 'rounded-rect', radius: 16 },
   ],
-  emotion_cards_tips: plain('emotionCards', [
-    ['emotion_cards_welcome', 'welcome'],
-    ['emotion_cards_together', 'together'],
-    ['emotion_cards_connect', 'connect'],
-    ['emotion_cards_scenarios', 'scenarios'],
-    ['emotion_cards_themes', 'themes'],
-  ]),
   practise_tips: plain('practise', [
     ['practise_welcome', 'welcome'],
     ['practise_instrument', 'instrument'],

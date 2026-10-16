@@ -24,7 +24,7 @@ export const BASIC_TIER_INSTRUMENTS = ['flute', 'recorder', 'ocarina'] as const;
 
 export type StoryViewMode = 'carousel' | 'grid';
 
-export type ChallengeKind = 'music' | 'jigsaw' | 'reading';
+export type ChallengeKind = 'music';
 
 function unite(existing: string[], added: string[]): string[] {
   const fresh = added.filter((id) => !existing.includes(id));
@@ -462,11 +462,7 @@ export const useAppStore = create<AppState>()(
       leavePlanStep: () => set({ planRun: null }),
       setLearningPlanProgress: (progress) => set({ learningPlanProgress: progress }),
       recordActivityFinished: (activityId: string) => set((state) =>
-        stepTickedOff(state, (launch) => {
-          if (launch.kind === 'story') return false;
-          if (launch.kind === 'feelings') return launch.activityIds.includes(activityId);
-          return launch.activityId === activityId;
-        })
+        stepTickedOff(state, (launch) => launch.kind === 'music' && launch.activityId === activityId)
       ),
       recordChallengeCompleted: (kind: ChallengeKind) => set((state) => ({
         challengeCounts: { ...state.challengeCounts, [kind]: (state.challengeCounts[kind] ?? 0) + 1 },

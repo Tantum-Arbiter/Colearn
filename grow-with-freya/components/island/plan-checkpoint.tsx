@@ -8,7 +8,7 @@ import Svg, { Circle, Defs, Path, RadialGradient, Rect, Stop } from 'react-nativ
 import { SPACE_1 } from '@/components/child-ui/tokens';
 import { artPoint, type IslandLayout } from '@/constants/island-scene';
 import { CHECKPOINT_SHAPE, checkpointLabelTop } from '@/constants/island-trail';
-import { PLAN_STEP_ICON } from '@/constants/learning-plan';
+import { PLAN_MODE_ICON, PLAN_STEP_ICON } from '@/constants/learning-plan';
 import { Fonts } from '@/constants/theme';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import type { PlanStepView } from '@/hooks/use-learning-plan';
@@ -271,13 +271,13 @@ export const PlanCheckpoint = memo(function PlanCheckpoint({
         </View>
 
         {open ? (
-          view.step.kind === 'story' ? (
+          view.step.kind === 'story' && (view.step.mode ?? 'read') === 'read' ? (
             <OpenBook artID={`plan-checkpoint-${day}-icon`} size={diameter * BOOK_OF_DIAMETER} centre={middle} />
           ) : (
             <View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.middle]}>
               <Ionicons
                 testID={`plan-checkpoint-${day}-icon`}
-                name={PLAN_STEP_ICON[view.step.kind]}
+                name={view.step.mode && view.step.mode !== 'read' ? PLAN_MODE_ICON[view.step.mode] : PLAN_STEP_ICON[view.step.kind]}
                 size={Math.round(diameter * ICON_OF_DIAMETER)}
                 color={CHECKPOINT_TINTS.cover}
               />

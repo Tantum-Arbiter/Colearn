@@ -83,9 +83,6 @@ export const PLAN_CARD_STARS: { readonly tablet: readonly CardStar[]; readonly p
 export const SKILL_ICON: Record<PlanSkill, ComponentProps<typeof Ionicons>['name']> = {
   listening: 'headset-outline',
   vocabulary: 'book-outline',
-  letters: 'text-outline',
-  counting: 'apps-outline',
-  numbers: 'calculator-outline',
   feelings: 'happy-outline',
   confidence: 'star-outline',
   rhythm: 'musical-notes-outline',
@@ -94,17 +91,11 @@ export const SKILL_ICON: Record<PlanSkill, ComponentProps<typeof Ionicons>['name
 
 const KIND_TILE: Record<PlanStepKind, readonly [string, string]> = {
   story: ['#5E6CF6', '#4652E2'],
-  words: ['#2EC4B6', '#1B9C8F'],
-  numbers: ['#F59E0B', '#D97706'],
-  feelings: ['#F472B6', '#DB2777'],
   music: ['#A78BFA', '#7C3AED'],
 };
 
 const KIND_ICON: Record<PlanStepKind, ComponentProps<typeof Ionicons>['name']> = {
   story: 'book',
-  words: 'text',
-  numbers: 'calculator',
-  feelings: 'happy',
   music: 'musical-notes',
 };
 

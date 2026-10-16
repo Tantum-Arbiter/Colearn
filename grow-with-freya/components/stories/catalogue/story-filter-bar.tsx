@@ -58,13 +58,11 @@ const SELECTED_TILE_RIM = 'rgba(255, 255, 255, 0.82)';
 /** The rendered, glossy art each tile carries. */
 export const THEME_TILE_ART: Record<CatalogueTheme, ImageSourcePropType> = {
   stories: require('@/assets/images/theme-icons/stories.webp'),
-  learning: require('@/assets/images/theme-icons/learning.webp'),
   music: require('@/assets/images/theme-icons/music.webp'),
 };
 
 const THEME_LABEL_KEY: Record<CatalogueTheme, string> = {
   stories: 'catalogue.themes.stories',
-  learning: 'catalogue.themes.learning',
   music: 'catalogue.themes.music',
 };
 

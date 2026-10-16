@@ -23,7 +23,6 @@ const EMPTY_STATE: GuideState = {
 const LEGACY_FLAGS: Record<string, GuideId> = {
   hasSeenFirstStory: 'story_reader_tips',
   hasSeenSettings: 'settings_walkthrough',
-  hasSeenEmotionCards: 'emotion_cards_tips',
 };
 
 function isGuideId(value: unknown): value is GuideId {

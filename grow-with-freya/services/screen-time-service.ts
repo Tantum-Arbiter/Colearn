@@ -95,7 +95,7 @@ class ScreenTimeService {
     }
   }
 
-  async startSession(activity: 'story' | 'emotions' | 'music', childAgeInMonths: number = 24): Promise<void> {
+  async startSession(activity: 'story' | 'music', childAgeInMonths: number = 24): Promise<void> {
     if (this.currentSession) {
       await this.endSession();
     }
@@ -430,7 +430,7 @@ class ScreenTimeService {
       },
       {
         time: '15:00',
-        activity: 'emotions',
+        activity: 'music',
         duration: 5,
       },
       {

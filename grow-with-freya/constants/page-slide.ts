@@ -1,11 +1,10 @@
 import { cloudGap } from '@/constants/earth';
 
-export const ISLAND_ACTIVITY_PAGES = ['feelings', 'practise', 'spelling-game'] as const;
+export const ISLAND_ACTIVITY_PAGES = ['practise'] as const;
 
 export function pageOffset(page: string, current: string, height: number): number {
   if (page === current) return 0;
   if (page === 'main') return -height;
-  if ((page === 'spelling' || page === 'numbers') && current === 'spelling-game') return -height;
   if (page === 'stories' && current === 'account') return -height;
   if (page === 'island' && (ISLAND_ACTIVITY_PAGES as readonly string[]).includes(current)) return -height;
   return height;

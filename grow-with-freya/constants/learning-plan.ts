@@ -1,19 +1,20 @@
-import { ageMonthsToRange } from '@/components/learning/age-range-carousel';
-import type { TransitionActivity } from '@/contexts/ActivityTransitionContext';
-import { ALL_LEARNING_ACTIVITIES } from '@/data/learning-activities';
+import type { ReadingMode } from '@/contexts/story-transition-context';
 import { MUSIC_PRACTISE_ACTIVITY } from '@/data/learning-plan';
 import type { Ionicons } from '@expo/vector-icons';
-import type { LearningPlan, LearningPlanStep, PlanAgeRange, PlanLaunch, PlanStepKind } from '@/types/learning-plan';
+import type { LearningPlan, LearningPlanStep, PlanLaunch, PlanStepKind } from '@/types/learning-plan';
 
 export const PLAN_STEPS_PER_WEEK = 7;
 
 export const PLAN_STEP_ICON = {
   story: 'book',
-  words: 'text',
-  numbers: 'calculator',
-  feelings: 'happy',
   music: 'musical-notes',
 } as const satisfies Record<PlanStepKind, keyof typeof Ionicons.glyphMap>;
+
+export const PLAN_MODE_ICON = {
+  read: 'book',
+  narrate: 'volume-medium',
+  record: 'mic',
+} as const satisfies Record<ReadingMode, keyof typeof Ionicons.glyphMap>;
 
 export type PlanStepState = 'done' | 'open' | 'tomorrow' | 'locked';
 
@@ -64,37 +65,14 @@ export function currentStep(plan: LearningPlan, progress: LearningPlanProgress |
   return index < 0 ? null : plan.steps[index];
 }
 
-export function activityFor(step: LearningPlanStep, ageInMonths: number | null): string | null {
-  if (!step.activityByAge) return null;
-  const known = ageInMonths !== null && Number.isFinite(ageInMonths) ? ageMonthsToRange(ageInMonths) : '1-2';
-  const age: PlanAgeRange = known === 'all' ? '1-2' : known;
-
-  return step.activityByAge[age];
-}
-
 export function previewable(launch: PlanLaunch): boolean {
-  return launch.kind === 'story' || launch.kind === 'spelling';
+  return launch.kind === 'story';
 }
 
-export function previewActivity(activityId: string): TransitionActivity | null {
-  const activity = ALL_LEARNING_ACTIVITIES.find((candidate) => candidate.id === activityId);
-  if (!activity) return null;
-  const { id, nameKey, descKey, ageKey, icon, color } = activity;
-
-  return { id, nameKey, descKey, ageKey, icon, color };
-}
-
-export function launchFor(step: LearningPlanStep, ageInMonths: number | null): PlanLaunch | null {
+export function launchFor(step: LearningPlanStep): PlanLaunch | null {
   switch (step.kind) {
     case 'story':
-      return step.storyId ? { kind: 'story', storyId: step.storyId } : null;
-    case 'words':
-    case 'numbers': {
-      const activityId = activityFor(step, ageInMonths);
-      return activityId ? { kind: 'spelling', activityId } : null;
-    }
-    case 'feelings':
-      return step.activityIds && step.activityIds.length > 0 ? { kind: 'feelings', activityIds: step.activityIds } : null;
+      return step.storyId ? { kind: 'story', storyId: step.storyId, mode: step.mode ?? 'read' } : null;
     case 'music':
       return { kind: 'music', activityId: MUSIC_PRACTISE_ACTIVITY };
   }

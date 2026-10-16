@@ -136,10 +136,6 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
   const screenTimeTranslateY = useSharedValue(restingAt('screen_time'));
   const practiseTranslateY = useSharedValue(restingAt('practise'));
   const freeplayTranslateY = useSharedValue(restingAt('freeplay'));
-  const spellingTranslateY = useSharedValue(restingAt('spelling'));
-  const numbersTranslateY = useSharedValue(restingAt('numbers'));
-  const feelingsTranslateY = useSharedValue(restingAt('feelings'));
-  const spellingGameTranslateY = useSharedValue(restingAt('spelling-game'));
   const accountTranslateY = useSharedValue(restingAt('account'));
   const islandTranslateY = useSharedValue(restingAt('island'));
 
@@ -151,10 +147,6 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
     'screen_time': screenTimeTranslateY,
     practise: practiseTranslateY,
     freeplay: freeplayTranslateY,
-    spelling: spellingTranslateY,
-    numbers: numbersTranslateY,
-    feelings: feelingsTranslateY,
-    'spelling-game': spellingGameTranslateY,
     account: accountTranslateY,
     island: islandTranslateY,
   };

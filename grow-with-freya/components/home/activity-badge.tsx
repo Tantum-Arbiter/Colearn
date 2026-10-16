@@ -6,7 +6,6 @@ import type { HomeActivityId } from '@/constants/home-scene';
 const BADGE_ART = {
   interactive: require('../../assets/images/menu-icons/home-badge-storybooks.webp'),
   music: require('../../assets/images/menu-icons/home-badge-music.webp'),
-  jigsaw: require('../../assets/images/menu-icons/home-badge-puzzles.webp'),
 } as const;
 
 export interface ActivityBadgeProps {

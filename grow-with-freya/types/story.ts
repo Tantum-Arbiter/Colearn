@@ -80,36 +80,8 @@ export interface MusicChallenge {
   hintLevel: MusicHintLevel;
 }
 
-// Jigsaw puzzle grid sizes
-export type JigsawGridSize = '2x2' | '4x4';
-
-// Jigsaw puzzle configuration for a story page
-export interface JigsawPuzzle {
-  enabled: boolean;
-  gridSize: JigsawGridSize; // Grid dimensions: 2x2 (easy), 4x4 (medium/hard)
-  promptText: string; // Narrative prompt, e.g., "Put the picture back together!"
-  allowSkip: boolean;
-}
-
-// Reading challenge modes
-export type ReadingChallengeMode = 'fill_in_blank' | 'spell_word';
-
-// Reading challenge configuration for a story page
-export interface ReadingChallenge {
-  enabled: boolean;
-  mode: ReadingChallengeMode;
-  promptText: string; // Narrative prompt, e.g., "Can you fill in the missing words?"
-  allowSkip: boolean;
-  /** For fill_in_blank: zero-based indices of words in page text to blank out (user taps words in order) */
-  blankWordIndices?: number[];
-  /** For spell_word: the target word the user must spell by selecting letters */
-  targetWord?: string;
-  /** Optional distractor letters added to the letter pool (spell_word mode only) */
-  distractorLetters?: string[];
-}
-
 // Page interaction types (extends beyond simple interactive elements)
-export type PageInteractionType = 'none' | 'interactive_state_change' | 'music_challenge' | 'jigsaw_puzzle' | 'reading_challenge';
+export type PageInteractionType = 'none' | 'interactive_state_change' | 'music_challenge';
 
 export interface StoryPage {
   id: string;
@@ -124,12 +96,6 @@ export interface StoryPage {
   // Music challenge support
   interactionType?: PageInteractionType; // Defaults to 'none' if not set
   musicChallenge?: MusicChallenge; // Present when interactionType === 'music_challenge'
-
-  // Jigsaw puzzle support
-  jigsawPuzzle?: JigsawPuzzle; // Present when interactionType === 'jigsaw_puzzle'
-
-  // Reading challenge support
-  readingChallenge?: ReadingChallenge; // Present when interactionType === 'reading_challenge'
 }
 
 export interface StoryAward {

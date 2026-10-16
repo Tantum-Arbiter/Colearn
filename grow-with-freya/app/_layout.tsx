@@ -28,7 +28,6 @@ import { accountReturnPage, voyageStaysOut } from '@/constants/page-slide';
 import { ALL_STORIES } from '@/data/stories';
 import type { PlanLaunch } from '@/types/learning-plan';
 import type { PlanCardRect } from '@/components/island/plan-panel';
-import { previewActivity } from '@/constants/learning-plan';
 import { MainMenu } from '@/components/main-menu';
 import { appTreeMounted, authEntrance, authOverlayUp, landsOnMainMenu, menuRevealed, pageAfterAuth, type AppView, type AuthEntrance } from '@/constants/app-shell';
 import { AuthOverlay } from '@/components/auth/auth-overlay';
@@ -40,9 +39,6 @@ import { catalogueSectionFor, type DestinationFocus } from '@/constants/catalogu
 import { StoryBookReader } from '@/components/stories/story-book-reader';
 import { PractiseScreen } from '@/components/music/practise-screen';
 import { FreeplayScreen } from '@/components/music/freeplay-screen';
-import { LearningScreen, type GameType } from '@/components/learning/learning-screen';
-import { SpellingGameScreen } from '@/components/games/spelling-game-screen';
-import { EmotionsScreen } from '@/components/emotions';
 import { ScreenTimeProvider } from '@/components/screen-time/screen-time-provider';
 import { Story } from '@/types/story';
 import { preloadCriticalImages, preloadSecondaryImages } from '@/services/image-preloader';
@@ -56,7 +52,6 @@ import { VoyageLayer } from '@/components/island/voyage-layer';
 import type { VoyagePage } from '@/constants/island-voyage';
 
 import { StoryTransitionProvider, useStoryTransition } from '@/contexts/story-transition-context';
-import { ActivityTransitionProvider, useActivityTransition } from '@/contexts/ActivityTransitionContext';
 import { GlobalSoundProvider } from '@/contexts/global-sound-context';
 import { OwlGuideProvider } from '@/contexts/owl-guide-context';
 import { updateSentryConsent } from '@/services/sentry-service';
@@ -116,9 +111,7 @@ export default function RootLayout() {
         <OwlGuideProvider>
           <ScreenTimeProvider>
             <StoryTransitionProvider>
-              <ActivityTransitionProvider>
-                <AppContent />
-              </ActivityTransitionProvider>
+              <AppContent />
             </StoryTransitionProvider>
           </ScreenTimeProvider>
         </OwlGuideProvider>
@@ -152,17 +145,6 @@ function AppContent() {
     readerRevealStyle,
     startTransition: openStoryCard,
   } = useStoryTransition();
-
-  // Access activity transition context for learning game transitions
-  const {
-    selectedActivity: transitionActivity,
-    setOnBeginCallback: setActivityOnBeginCallback,
-    setOnCancelCallback: setActivityOnCancelCallback,
-    setOnReturnCallback: setActivityOnReturnCallback,
-    exitGame: exitActivityGame,
-    isInGame: isInActivityGame,
-    startTransition: openActivityCard,
-  } = useActivityTransition();
 
   const colorScheme = useColorScheme();
   const {
@@ -222,7 +204,7 @@ function AppContent() {
   // Track if we've already started background music to prevent auto-restart after manual pause
   const [hasStartedBackgroundMusic, setHasStartedBackgroundMusic] = useState(false);
 
-  type PageKey = 'main' | 'stories' | 'story-reader' | 'account' | 'practise' | 'freeplay' | 'spelling' | 'numbers' | 'feelings' | 'spelling-game' | 'island';
+  type PageKey = 'main' | 'stories' | 'story-reader' | 'account' | 'practise' | 'freeplay' | 'island';
 
   const [currentView, setCurrentView] = useState<AppView>('splash');
   // The splash stays over whichever page the app opens on until it has faded off it
@@ -253,7 +235,6 @@ function AppContent() {
   const [readerStartPage, setReaderStartPage] = useState<number | undefined>(undefined);
   const [showStoryReader, setShowStoryReader] = useState(false);
   // When false, EnhancedPageTransition sets positions instantly (overlay handles visual transition)
-  const [animatePageTransition, setAnimatePageTransition] = useState(true);
 
   // Track if sync is in progress to prevent premature navigation
   const syncInProgressRef = useRef(false);
@@ -650,33 +631,6 @@ function AppContent() {
     };
   }, [setOnCancelCallback]);
 
-  // Activity transition: when user taps "Play" / "Tap to Begin", navigate to story picker
-  useEffect(() => {
-    if (!transitionActivity) return;
-
-    const handleActivityBegin = () => {
-      // The activity transition has already set spellingActivityId via the learning screen callback
-      // Skip page animation — the overlay handles the visual slide-up transition
-      setAnimatePageTransition(false);
-      setCurrentPage('spelling-game');
-      // Re-enable animation for subsequent navigations
-      setTimeout(() => setAnimatePageTransition(true), 50);
-    };
-
-    setActivityOnBeginCallback(() => () => handleActivityBegin());
-    return () => { setActivityOnBeginCallback(null); };
-  }, [transitionActivity, setActivityOnBeginCallback]);
-
-  // Activity transition: when user cancels (X button), just stay on current page
-  useEffect(() => {
-    setActivityOnCancelCallback(() => () => {
-      // No-op — the cancel animation already handles cleanup
-    });
-    return () => { setActivityOnCancelCallback(null); };
-  }, [setActivityOnCancelCallback]);
-
-
-
   const handleOnboardingComplete = () => {
     setOnboardingComplete(true);
     setShowLoginAfterOnboarding(true);
@@ -712,7 +666,7 @@ function AppContent() {
   // Which catalogue section the home asked for; the key makes a repeat request re-apply
   const [storiesSection, setStoriesSection] = useState<CatalogueSectionRequest>({ section: 'home', key: 0 });
   // When set, MainMenu should show the specified sub-menu instead of the main carousel
-  const [returnToSubMenu, setReturnToSubMenu] = useState<'stories' | 'instruments' | 'learning' | null>(null);
+  const [returnToSubMenu, setReturnToSubMenu] = useState<'stories' | 'instruments' | null>(null);
 
   const handleMainMenuNavigate = async (destination: string, focus?: DestinationFocus) => {
     // Clear returnToSubMenu when navigating away from main menu
@@ -734,9 +688,6 @@ function AppContent() {
       'account': 'account',
       'practise': 'practise',
       'freeplay': 'freeplay',
-      'spelling': 'spelling',
-      'numbers': 'numbers',
-      'feelings': 'feelings',
     };
 
     const pageKey = destinationMap[destination];
@@ -789,15 +740,6 @@ function AppContent() {
     setCurrentPage('main');
   };
 
-  const handleBackToLearning = () => {
-    if (launchedFromIslandRef.current) {
-      setCurrentPage('island');
-      return;
-    }
-    setReturnToSubMenu('learning');
-    setCurrentPage('main');
-  };
-
   const handleBackToStories = () => {
     // Story reader's exit animation has already completed by the time this is called
     // Just clean up and switch views
@@ -832,39 +774,14 @@ function AppContent() {
     }
   };
 
-  // Spelling game state
-  const [spellingActivityId, setSpellingActivityId] = useState<string | null>(null);
-  const [spellingStoryId, setSpellingStoryId] = useState<string | undefined>(undefined);
-  const [spellingReturnPage, setSpellingReturnPage] = useState<PageKey>('spelling');
-
-
-  // Activity transition: when user returns from game, navigate back to learning page
-  useEffect(() => {
-    setActivityOnReturnCallback(() => () => {
-      // Let the page transition animate normally (the overlay is off-screen at this point)
-      setCurrentPage(spellingReturnPage);
-    });
-    return () => { setActivityOnReturnCallback(null); };
-  }, [setActivityOnReturnCallback, spellingReturnPage]);
 
   const handleStartActivity = useCallback((launch: PlanLaunch) => {
     switch (launch.kind) {
       case 'story': {
         const story = ALL_STORIES.find((candidate) => candidate.id === launch.storyId);
-        if (story) requestStoryOpen(story, 'read', null);
+        if (story) requestStoryOpen(story, launch.mode, null);
         return;
       }
-      case 'spelling':
-        setSpellingActivityId(launch.activityId);
-        setSpellingStoryId(undefined);
-        setSpellingReturnPage('island');
-        launchedFromIslandRef.current = true;
-        setCurrentPage('spelling-game');
-        return;
-      case 'feelings':
-        launchedFromIslandRef.current = true;
-        setCurrentPage('feelings');
-        return;
       case 'music':
         launchedFromIslandRef.current = true;
         setCurrentPage('practise');
@@ -886,48 +803,7 @@ function AppContent() {
       openStoryCard(story.id, from, story);
       return;
     }
-    if (launch.kind !== 'spelling') return;
-    const activity = previewActivity(launch.activityId);
-    if (!activity) return;
-    setSpellingActivityId(launch.activityId);
-    setSpellingStoryId(undefined);
-    setSpellingReturnPage('island');
-    launchedFromIslandRef.current = true;
-    openActivityCard(activity, from);
-  }, [openActivityCard, openStoryCard]);
-
-  // Learning screen activity selection - sets spelling state; the activity
-  // transition overlay handles the visual navigation, so we do NOT
-  // setCurrentPage here — that happens in handleActivityBegin.
-  const handleLearningActivitySelect = useCallback(async (activityId: string, gameType: GameType, storyId?: string, nameKey?: string) => {
-    if (gameType === 'spelling') {
-      setSpellingActivityId(activityId);
-      setSpellingStoryId(undefined);
-      setSpellingReturnPage(currentPage as PageKey);
-      // Navigation happens via the activity transition's onBegin callback
-      return;
-    }
-
-    // Fallback: open story reader for 'story', 'choice', 'sorting' (until those screens exist)
-    if (!storyId) {
-      log.warn(`Activity ${activityId} has no storyId for fallback`);
-      return;
-    }
-    try {
-      const stories = await StoryLoader.getStories();
-      const story = stories.find(s => s.id === storyId);
-      if (story) {
-        setReaderStartPage(undefined);
-        setStoryBeingRead(story);
-        setShowStoryReader(true);
-        setCurrentView('story-reader');
-      } else {
-        log.warn(`Learning story ${storyId} not found in loaded stories`);
-      }
-    } catch (error) {
-      log.error(`Failed to load learning story ${storyId}:`, error);
-    }
-  }, [currentPage]);
+  }, [openStoryCard]);
 
   const handleStorySelect = (story: Story) => {
     setSelectedStory(story);
@@ -954,15 +830,6 @@ function AppContent() {
       // Practise/freeplay go back to instruments sub-menu
       if (currentPage === 'practise' || currentPage === 'freeplay') {
         handleBackToInstruments();
-      } else if (currentPage === 'spelling-game') {
-        // Slide overlay back down (book preview), then dismiss to game list
-        if (isInActivityGame) {
-          exitActivityGame();
-        } else {
-          setCurrentPage(spellingReturnPage);
-        }
-      } else if (currentPage === 'spelling' || currentPage === 'numbers' || currentPage === 'feelings') {
-        handleBackToLearning();
       } else {
         handleBackToMainMenu();
       }
@@ -971,7 +838,7 @@ function AppContent() {
 
     // On main menu - let Android handle it (exit/minimize app)
     return false;
-  }, [currentPage, showStoryReader, storyBeingRead, isInActivityGame, exitActivityGame, comeBackFromIsland]);
+  }, [currentPage, showStoryReader, storyBeingRead, comeBackFromIsland]);
 
   useEffect(() => {
     if (Platform.OS !== 'android') return;
@@ -1077,32 +944,15 @@ function AppContent() {
             />,
             practise: <PractiseScreen onBack={handleBackToInstruments} isActive={currentPage === 'practise'} />,
             freeplay: <FreeplayScreen onBack={handleBackToInstruments} isActive={currentPage === 'freeplay'} />,
-            spelling: <LearningScreen mode="spelling" onBack={handleBackToLearning} onActivitySelect={handleLearningActivitySelect} isActive={currentPage === 'spelling'} />,
-            numbers: <LearningScreen mode="numbers" onBack={handleBackToLearning} onActivitySelect={handleLearningActivitySelect} isActive={currentPage === 'numbers'} />,
-            'spelling-game': spellingActivityId ? (
-              <SpellingGameScreen
-                activityId={spellingActivityId}
-                storyId={spellingStoryId}
-                onBack={() => {
-                  if (isInActivityGame) {
-                    exitActivityGame();
-                  } else {
-                    setCurrentPage(spellingReturnPage);
-                  }
-                }}
-                isActive={currentPage === 'spelling-game'}
-              />
-            ) : null,
-            feelings: <EmotionsScreen onBack={handleBackToLearning} isActive={currentPage === 'feelings'} />,
             account: <AccountScreen onBack={handleAccountBack} onNavigate={handleMainMenuNavigate} isActive={currentPage === 'account' && menuRevealed(currentView)} />,
             island: <IslandScene isActive={currentPage === 'island' && menuRevealed(currentView)} onStartActivity={handleStartActivity} onPreviewActivity={handlePreviewActivity} />,
           }, currentPage)}
           duration={PAGE_TRANSITION_DURATION_MS}
-          animate={animatePageTransition}
+          animate
           prewarm={prewarmedDuring(voyage.phase)}
           instant={INSTANT_PAGES}
         />
-        <JourneyBarOutlet pageKey={currentPage as string} holdMs={animatePageTransition && currentPage !== 'island' ? PAGE_TRANSITION_DURATION_MS : 0} />
+        <JourneyBarOutlet pageKey={currentPage as string} holdMs={currentPage !== 'island' ? PAGE_TRANSITION_DURATION_MS : 0} />
         <VoyageLayer />
         {/* above the bar, so an owl pointing at the bar is not drawn behind it */}
         <OwlGuideLayer />

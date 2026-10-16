@@ -106,11 +106,8 @@ import { catalogueLayout, coverColumns, coverWidthFor } from '@/constants/catalo
 import { SearchPanel } from './search-panel';
 import { StoryCoverCard } from './story-cover-card';
 import { StoryRow } from './story-row';
-import { SavedActivityCard } from './saved-activity-card';
 import { SavedSongCard } from './saved-song-card';
 import { getAllPracticeSongs, type PracticeSong } from '@/services/music-asset-registry';
-import { ALL_LEARNING_ACTIVITIES, type LearningActivity } from '@/data/learning-activities';
-import { useActivityTransition } from '@/contexts/ActivityTransitionContext';
 
 // The finer themes behind Filter. Learning and Music are tiles, not pills
 const FILTER_TAG_SET: StoryFilterTag[] = [
@@ -156,7 +153,6 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
   const { requestReturnToMainMenu, setShowLoginAfterOnboarding, getEffectiveTier } = useAppStore();
   const session = useSessionActions();
   const favoriteStoryIds = useAppStore((state) => state.favoriteStoryIds);
-  const favoriteActivityIds = useAppStore((state) => state.favoriteActivityIds);
   const favoriteSongIds = useAppStore((state) => state.favoriteSongIds);
   const recentSearches = useAppStore((state) => state.recentSearches);
   const recordSearch = useAppStore((state) => state.recordSearch);
@@ -165,7 +161,6 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
   const userAvatarType = useAppStore((state) => state.userAvatarType);
   const effectiveTier: SubscriptionTier = getEffectiveTier();
   const { startTransition, isTransitioning, selectedStoryId, shouldShowStoryReader, isExpandingToReader } = useStoryTransition();
-  const { startTransition: startActivityTransition } = useActivityTransition();
   const { isMuted, toggleMute } = useGlobalSound();
   const { isTablet, textSizeScale, scaledFontSize } = useAccessibility();
   const { i18n, t } = useTranslation();
@@ -456,11 +451,6 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
   const savedStories = useMemo(
     () => catalogueStories.filter((story) => favoriteStoryIds.includes(story.id)),
     [catalogueStories, favoriteStoryIds],
-  );
-
-  const savedActivities = useMemo(
-    () => ALL_LEARNING_ACTIVITIES.filter((activity) => favoriteActivityIds.includes(activity.id)),
-    [favoriteActivityIds],
   );
 
   const savedSongs = useMemo(
@@ -870,44 +860,6 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
   );
 
   /**
-   * A saved activity opens the same way it would from the learning screen --
-   * through the shared transition, which owns the preview and the game after
-   * it. The card has no measured position here, so the transition begins from
-   * the middle of the screen rather than from a card that is about to leave.
-   */
-  const handleOpenActivity = useCallback((activity: LearningActivity) => {
-    startActivityTransition(
-      {
-        id: activity.id,
-        nameKey: activity.nameKey,
-        descKey: activity.descKey,
-        ageKey: activity.ageKey,
-        icon: activity.icon,
-        color: activity.color,
-      },
-      { x: windowWidth / 2, y: windowHeight / 2, width: 0, height: 0 },
-    );
-  }, [startActivityTransition, windowWidth, windowHeight]);
-
-  const savedActivitiesRow = savedActivities.length > 0 ? (
-    <StoryRow
-      testID="saved-row-activities"
-      heading={t('catalogue.saved.activities')}
-      stories={savedActivities as unknown as CatalogueStory[]}
-      cardWidth={rowCardWidth}
-      edgeInset={margin}
-      renderCard={(entry, width) => (
-        <SavedActivityCard
-          key={(entry as unknown as LearningActivity).id}
-          activity={entry as unknown as LearningActivity}
-          width={width}
-          onOpen={handleOpenActivity}
-        />
-      )}
-    />
-  ) : null;
-
-  /**
    * A saved song opens the practice screen it belongs to. The instrument is
    * the child's to choose there -- a song is a melody, not a fixed pairing.
    */
@@ -933,7 +885,7 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
     />
   ) : null;
 
-  const favouritesView = savedRows.length === 0 && savedActivities.length === 0 && savedSongs.length === 0 ? (
+  const favouritesView = savedRows.length === 0 && savedSongs.length === 0 ? (
     <View style={styles.noResultsContainer} testID="saved-empty">
       <Text style={[styles.noResultsText, { fontSize: scaledFontSize(16) }]}>
         {t('catalogue.saved.empty')}
@@ -941,7 +893,6 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
     </View>
   ) : (
     <View testID="saved-shelves" style={styles.shelves}>
-      {savedActivitiesRow}
       {savedSongsRow}
       {savedRows.map((shelf) => {
         if (shelf.kind !== 'row' && shelf.kind !== 'more') return null;

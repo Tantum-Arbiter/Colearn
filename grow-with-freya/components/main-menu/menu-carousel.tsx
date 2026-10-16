@@ -41,7 +41,6 @@ export interface CarouselMenuItem {
 
 const MENU_ITEMS: CarouselMenuItem[] = [
   { id: 'stories', labelKey: 'menu.stories', destination: 'stories', image: require('../../assets/images/menu-icons/stories-strip.webp') },
-  { id: 'learning', labelKey: 'menu.learning', destination: 'learning', image: require('../../assets/images/menu-icons/learning-button.webp') },
   { id: 'instruments', labelKey: 'menu.instruments', destination: 'instruments', image: require('../../assets/images/menu-icons/freeplay-strip.webp') },
 ];
 
