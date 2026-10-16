@@ -17,7 +17,7 @@ Every statement about the app as it is today was checked against the code on 16 
 | G1 | A range of learning games, each reachable from a book page, from an island plan day, and from the Library | Three launch contexts work for every game, through one shell (section 6) |
 | G2 | Games are made from our own books, characters and art, and feel part of the same world | Every first-wave game is a content pack over a book we own (section 13) |
 | G3 | Adding a game costs art and data, not code | Four engines in the binary; a new game is a pack with no new JavaScript (section 5) |
-| G4 | Small install on Android and iOS | Install under 150 MB on both platforms before any pack; a pack under 3 MB (section 10) |
+| G4 | Small install on Android and iOS | Install under 160 MB on both platforms before any pack, under 150 MB if the Relax tracks move to downloads too; a pack under 3 MB (section 10) |
 | G5 | Smooth on mid-range Android | First mount under 400 ms, no frame stall over 100 ms in play, scene memory under 80 MB, on a 2021 4 GB Android phone (section 11) |
 | G6 | Works offline from first launch | The first week's games are bundled; later packs prefetch a day ahead (section 7) |
 | G7 | Calm, co-engaged, privacy-first, as the product rules require | The acceptance list in section 15 |
@@ -75,8 +75,8 @@ These are the firm rules from `CLAUDE.md` and the brief, restated as testable co
 | EAS Update is on outside E2E builds, keyed by app version | `app.config.js:36-42` |
 | Production Android builds are App Bundles; dev and preview builds are APKs | `eas.json:23,43,64,82` |
 | Gesture Handler 2.32 is installed but used only for carousels and onboarding; there is no drag-and-drop anywhere | `package.json`; `components/music/instrument-carousel.tsx`, `components/learning/age-range-carousel.tsx`, `components/stories/instrument-picker-overlay.tsx`, `components/onboarding/onboarding-screen.tsx` |
-| Audio in the binary: audiobooks 55 MB, relaxation music 23 MB, background 6.6 MB | `assets/audio/` (measured 16 Oct 2026) |
-| Release app 227 MB, JavaScript bundle 14 MB (measured on the local Release E2E build earlier in this stage) | build output; re-measure after the sleep-audio move |
+| Audio in the binary: five audiobooks 55 MB, registered as tracks but listed by no screen; `relaxing.wav` 11 MB, referenced nowhere; binaural beats 12 MB, played by the Relax screen inside Feelings; background music 6.6 MB | `assets/audio/` (measured 16 Oct 2026); `data/music.ts:30-37`; `components/music/sleep-selection-screen.tsx:52-57`; `components/emotions/emotions-screen.tsx:224` |
+| Release app 227 MB, JavaScript bundle 14 MB (measured on the local Release E2E build earlier in this stage) | build output from a simulator build, so larger than a thinned store install; re-measure on a device build after the unreachable audio is removed |
 
 What does **not** exist and must be built: a placement (drag or tap-place) primitive, a scene-state engine, a choice engine, a canvas, a narration path, per-child game saves, and a pack format.
 
@@ -391,9 +391,10 @@ The band comes from age in months as today; the grown-up can change it on the st
 
 | Item | Today | Target | How |
 |---|---|---|---|
-| Release install (iOS, measured locally) | 227 MB | under 150 MB | Move the sleep audio out of the binary |
-| Audiobooks | 55 MB in binary | 0 | Served through the signed-URL download, cached on first play |
-| Relaxation music | 23 MB in binary | 0 | Same |
+| Release install (iOS, measured locally) | 227 MB | under 160 MB; under 150 MB with the Relax tracks moved too | Remove the audio no screen can reach (66 MB), then re-measure on a device build |
+| Audiobooks | 55 MB in binary | 0 | Listed by no screen today, so removed from the binary. If they are wanted as content later they come back through the CMS and the signed-URL download, cached on first play |
+| `relaxing.wav` | 11 MB in binary | 0 | Referenced nowhere; removed |
+| Binaural beats (Relax screen) | 12 MB in binary | 12 MB, or 0 | Stay while the Relax screen is kept as it is; move to downloads if the extra 10 MB matters |
 | Background music | 6.6 MB | 6.6 MB | Stays; it plays on first launch |
 | Note samples | about 9 MB | about 9 MB | Stays; music must be local for zero latency |
 | Bundled packs (three) | 0 | under 9 MB | 3 MB each |
@@ -602,7 +603,7 @@ Validates; all keys in 14 locales; asset register entry; plays in three bands wi
 
 | Milestone | Delivers | Exit criteria |
 |---|---|---|
-| **M0 Foundations** | Sleep audio moved to downloads; sound on tap and success in the words and feelings games; the two reference devices on the desk; `validate-packs` with an empty pack set | Install under 150 MB measured on both platforms; words and feelings games play sound; CI runs the validator |
+| **M0 Foundations** | The unreachable audio (audiobooks, `relaxing.wav`) removed from the binary; sound on tap and success in the words and feelings games; the two reference devices on the desk; `validate-packs` with an empty pack set | Install under 160 MB measured on both platforms from device builds; words and feelings games play sound; CI runs the validator |
 | **M1 Personalised week** | The goals step, `childGoals`, `data/plan-units.ts` over today's units (three stories, the spelling, numbers, feelings and music activities), `buildWeek`, the plan panel's change-goals row, E2E seed | Different goals give a different week; the same goals give the same week on two simulators; no goals leaves today's island week unchanged; DPIA §7 sentence added; `onboarding-goals` green |
 | **M2 Shell + Place** | ExperienceShell, Place engine, store and type changes, `'game'` page registration, bundled pack loading, Wombat's Picnic Count on day 3 | 13.4 for the wombat game; journeys `island-game-day` and `game-screensafe-stop` green; budgets met; the wombat game appears in built weeks as a unit |
 | **M3 Scene + delivery** | Scene engine, pack download, prefetch, eviction, gateway endpoints, Juni's Rock Pool as the first downloaded pack; book-page launch | 13.4 for Juni; `story-page-game` and `library-free-play` green; a pack arrives, prefetches a day ahead, and evicts |
@@ -627,6 +628,8 @@ Each milestone ships behind the plan data: a day is switched to a game by changi
 | Paid packs | Follow the story they belong to; no separate pack entitlement | M3 |
 | Pack format freeze | After two packs are built by hand, not before | end of M3 |
 | Android reference device | A 2021 4 GB phone, bought before M2 | M0 |
+| Audiobooks | Out of the binary now; decide later whether they return as CMS content or are dropped | M0 |
+| Relax screen tracks | Keep the 12 MB bundled unless the device-build measurement needs them gone | M0 |
 
 ---
 
