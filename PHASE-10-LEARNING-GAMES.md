@@ -75,7 +75,7 @@ These are the firm rules from `CLAUDE.md` and the brief, restated as testable co
 | EAS Update is on outside E2E builds, keyed by app version | `app.config.js:36-42` |
 | Production Android builds are App Bundles; dev and preview builds are APKs | `eas.json:23,43,64,82` |
 | Gesture Handler 2.32 is installed but used only for carousels and onboarding; there is no drag-and-drop anywhere | `package.json`; `components/music/instrument-carousel.tsx`, `components/learning/age-range-carousel.tsx`, `components/stories/instrument-picker-overlay.tsx`, `components/onboarding/onboarding-screen.tsx` |
-| Audio in the binary: five audiobooks 55 MB, registered as tracks but listed by no screen; `relaxing.wav` 11 MB, referenced nowhere; binaural beats 12 MB, played by the Relax screen inside Feelings; background music 6.6 MB | `assets/audio/` (measured 16 Oct 2026); `data/music.ts:30-37`; `components/music/sleep-selection-screen.tsx:52-57`; `components/emotions/emotions-screen.tsx:224` |
+| Audio: five audiobooks 55 MB, bundled because `data/music.ts` required them, yet listed by no screen; `relaxing.wav` 11 MB in the repo, referenced nowhere so never bundled; binaural beats 12 MB, played by the Relax screen inside Feelings; background music 6.6 MB. The audiobooks and the wav were removed in M0 | `assets/audio/` (measured 16 Oct 2026); `data/music.ts:30-37`; `components/music/sleep-selection-screen.tsx:52-57`; `components/emotions/emotions-screen.tsx:224` |
 | Release app 227 MB, JavaScript bundle 14 MB (measured on the local Release E2E build earlier in this stage) | build output from a simulator build, so larger than a thinned store install; re-measure on a device build after the unreachable audio is removed |
 
 What does **not** exist and must be built: a placement (drag or tap-place) primitive, a scene-state engine, a choice engine, a canvas, a narration path, per-child game saves, and a pack format.
@@ -391,9 +391,9 @@ The band comes from age in months as today; the grown-up can change it on the st
 
 | Item | Today | Target | How |
 |---|---|---|---|
-| Release install (iOS, measured locally) | 227 MB | under 160 MB; under 150 MB with the Relax tracks moved too | Remove the audio no screen can reach (66 MB), then re-measure on a device build |
+| Release install (iOS, measured locally) | 227 MB; 172 MB after the M0 removal (simulator build, 16 Oct 2026) | under 160 MB; under 150 MB with the Relax tracks moved too | Remove the audio no screen can reach (55 MB from the binary, 66 MB from the repo), then re-measure on a device build |
 | Audiobooks | 55 MB in binary | 0 | Listed by no screen today, so removed from the binary. If they are wanted as content later they come back through the CMS and the signed-URL download, cached on first play |
-| `relaxing.wav` | 11 MB in binary | 0 | Referenced nowhere; removed |
+| `relaxing.wav` | 11 MB in the repo, never bundled | 0 | Referenced nowhere, so Metro never bundled it; removed from the repo |
 | Binaural beats (Relax screen) | 12 MB in binary | 12 MB, or 0 | Stay while the Relax screen is kept as it is; move to downloads if the extra 10 MB matters |
 | Background music | 6.6 MB | 6.6 MB | Stays; it plays on first launch |
 | Note samples | about 9 MB | about 9 MB | Stays; music must be local for zero latency |
@@ -603,7 +603,7 @@ Validates; all keys in 14 locales; asset register entry; plays in three bands wi
 
 | Milestone | Delivers | Exit criteria |
 |---|---|---|
-| **M0 Foundations** | The unreachable audio (audiobooks, `relaxing.wav`) removed from the binary; sound on tap and success in the words and feelings games; the two reference devices on the desk; `validate-packs` with an empty pack set | Install under 160 MB measured on both platforms from device builds; words and feelings games play sound; CI runs the validator |
+| **M0 Foundations** | The unreachable audio (audiobooks, `relaxing.wav`) removed, with a test that fails on bundled audio no list shows or on a file nothing plays; sound on tap and success in the words and feelings games; the two reference devices on the desk; `validate-packs` with an empty pack set | Install under 160 MB measured on both platforms from device builds; words and feelings games play sound; CI runs the validator |
 | **M1 Personalised week** | The goals step, `childGoals`, `data/plan-units.ts` over today's units (three stories, the spelling, numbers, feelings and music activities), `buildWeek`, the plan panel's change-goals row, E2E seed | Different goals give a different week; the same goals give the same week on two simulators; no goals leaves today's island week unchanged; DPIA §7 sentence added; `onboarding-goals` green |
 | **M2 Shell + Place** | ExperienceShell, Place engine, store and type changes, `'game'` page registration, bundled pack loading, Wombat's Picnic Count on day 3 | 13.4 for the wombat game; journeys `island-game-day` and `game-screensafe-stop` green; budgets met; the wombat game appears in built weeks as a unit |
 | **M3 Scene + delivery** | Scene engine, pack download, prefetch, eviction, gateway endpoints, Juni's Rock Pool as the first downloaded pack; book-page launch | 13.4 for Juni; `story-page-game` and `library-free-play` green; a pack arrives, prefetches a day ahead, and evicts |
