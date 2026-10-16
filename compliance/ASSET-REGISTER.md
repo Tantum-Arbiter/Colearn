@@ -26,7 +26,7 @@ marked **⚠️ UNVERIFIED**.
 | The three stat orbs on the home screen: the streak, Continue reading and the badges unlocked (cut from the operator's picture of them) | Registered below, §5d — origin and licence ⚠️ UNVERIFIED |
 | The road map shown once the week on the island is done: a bear before a glowing portal, with three dated panels (one painting for phones and upright tablets, one 4:3 for tablets on their side) | Registered below, §5e — origin and licence ⚠️ UNVERIFIED |
 | The lock on the island's learning-plan checkpoints | Registered below, §6 — the supplied picture is not drawn since 2026-10-03 (a padlock drawn in code replaced it); the file remains, origin ⚠️ UNVERIFIED |
-| Everything else — avatars, feelings animals, story illustrations, instrument art, music, fonts, voices | **Not registered.** Origin is not recorded anywhere in the repository — ⚠️ UNVERIFIED |
+| Everything else — avatars, story illustrations, instrument art, music, fonts, voices (the feelings game's art and the spelling game's art left with those games on 2026-10-16; the nine bear and animal faces the badges draw stay in `assets/images/emotions/`) | **Not registered.** Origin is not recorded anywhere in the repository — ⚠️ UNVERIFIED |
 
 ## 2. Otter Raft — pictures
 

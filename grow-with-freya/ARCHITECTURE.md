@@ -512,7 +512,7 @@ So, for anything drawn full-bleed:
   is what reads as a hole.
 
 This applies to `components/music/music-backdrop.tsx`, `components/ui/scene-background.tsx`,
-the subscription and trial-end overlays, and the jigsaw scramble transition. Decorative art
+and the subscription and trial-end overlays. Decorative art
 that sits on a gradient (the auth sky's clouds) does not leave a hole and is sized at module
 scope; it is wrong after a rotation rather than missing. The splash is the exception: it
 lays out from `useWindowDimensions`, so it is right whichever way a tablet is held.
@@ -1332,7 +1332,9 @@ Built 2026-10-03 at the operator's request, to the operator's mock: seven number
 on a dotted trail that starts on the islet at the top right and winds down the island to the
 bridge, with a card at the foot of the screen for the day that is next. One checkpoint is one
 day's activity; a week is a plan. The operator's decisions: the week is a **mix of what the app
-already has** (three stories and the words, numbers, feelings and music activities); **one step
+already has** (the three books, read together, listened to and recorded in a grown-up's voice, and
+the music practise; the words, numbers and feelings games were removed on 2026-10-16 to be
+built afresh, see `PHASE-10-LEARNING-GAMES.md`); **one step
 opens a day** — finishing today's opens the next tomorrow, and nothing expires. **Preview** was
 left out at first and added the same day, when the operator asked for the card to match their
 mock like for like. The older screens keep their own design; the plan only sets the child off on
@@ -1343,21 +1345,18 @@ island        PlanTrail (glowing dashes along each leg's own curve through its g
               PlanCheckpoint ×7 (on the stage, so they settle in with the island; the open one breathes with the wind)
               PlanPanel (a floating card outside the stage, fading in with the header)
   Start / open checkpoint → useLearningPlan().start(view) → store.beginPlanStep(run) → _layout.handleStartActivity(launch)
-     story    → requestStoryOpen(story) — the reader opens over the island; markStoryCompleted ticks the day
-     spelling → spelling-game page, spellingReturnPage='island'; handleRoundComplete ticks it
-     feelings → feelings page; the game's level-complete ticks it, whichever theme was played
+     story    → requestStoryOpen(story, mode) — the reader opens over the island in the day's mode (read, narrate or record); markStoryCompleted ticks the day
      music    → practise page; the music challenge's onComplete ticks it (a skipped song does not)
   back from any of them → the island, at rest, as it was
-  Preview › (story and words/numbers days only, `previewable`) → useLearningPlan().start(view) → _layout.handlePreviewActivity(launch, coverRect)
+  Preview › (story days only, `previewable`) → useLearningPlan().start(view) → _layout.handlePreviewActivity(launch, coverRect)
      story    → the story card (story-transition `startTransition`) flies out of the cover; its Cancel, and the reader's close, come back to the island (`storyCardReturnRef`)
-     spelling → the game card with "Tap to begin" (activity-transition `startTransition`, fed by `previewActivity(id)`); Begin plays, ✕ stays on the island
 ```
 
 | Concern | Location |
 |---------|----------|
 | The plan's shape: steps, kinds, skills, launches | `types/learning-plan.ts` |
-| The week itself (`ISLAND_WEEK`): which story or activity each day is, by age for words and numbers | `data/learning-plan.ts` |
-| The rules: a step is done, open, opens tomorrow or locked; local days; which activity for this child; which days can be previewed | `constants/learning-plan.ts` (`stepStates`, `localDayKey`, `activityFor`, `launchFor`, `previewable`, `previewActivity`) |
+| The week itself (`ISLAND_WEEK`): which book each day opens and in which mode (`read`, `narrate`, `record`), or the music practise | `data/learning-plan.ts` |
+| The rules: a step is done, open, opens tomorrow or locked; local days; which days can be previewed; the icon a mode wears | `constants/learning-plan.ts` (`stepStates`, `localDayKey`, `launchFor`, `previewable`, `PLAN_STEP_ICON`, `PLAN_MODE_ICON`) |
 | Where the checkpoints are in the painting, the guide points the trail bends through, the trail's geometry, and where a checkpoint's name goes | `constants/island-trail.ts` (`ISLAND_TRAIL`, `ISLAND_TRAIL_VIA`, `trailPath`, `trailDashes`, `checkpointLabelTop`) |
 | What is remembered: `learningPlanProgress` (persisted) and `planRun` (not persisted, what the child set off on) | `store/app-store.ts` (`beginPlanStep`, `leavePlanStep`, `recordActivityFinished`, `markStoryCompleted`, `stepTickedOff`) |
 | The view the island draws from, refreshed each minute so midnight opens the next step | `hooks/use-learning-plan.ts` |
@@ -1365,22 +1364,20 @@ island        PlanTrail (glowing dashes along each leg's own curve through its g
 | Setting off, previewing and coming back | `app/_layout.tsx` (`handleStartActivity`, `handlePreviewActivity`, `launchedFromIslandRef`, `storyCardReturnRef`), `constants/page-slide.ts` (`ISLAND_ACTIVITY_PAGES`, `voyageStaysOut`) |
 | Seeding a week part done, for a device check or a Maestro flow | `services/e2e-state.ts` (`planDone=N` on the seed link: the first N days done yesterday) |
 
-- **Finishing is reported by the screen that knows.** Only the reader reported anything before;
-  the spelling game (`handleRoundComplete`), the feelings game (`triggerGoodJobAnimation`, beside
-  its screen-time report) and the practise screen (`useMusicChallenge`'s `onComplete`) now call
-  `recordActivityFinished(activityId)`. The store ticks the day off only if that activity is the
-  one the child set off on from the island (`planRun`), so playing the same game from the menu
-  changes nothing. A feelings day accepts any of its three themes. The first finish of a day is
-  kept; doing it twice cannot move it to a later day.
+- **Finishing is reported by the screen that knows.** The reader reports a finished book
+  (`markStoryCompleted`, whichever mode it was read in) and the practise screen calls
+  `recordActivityFinished(activityId)` from `useMusicChallenge`'s `onComplete`. The store ticks
+  the day off only if that book or activity is the one the child set off on from the island
+  (`planRun`), so opening the same book from the Library changes nothing. The first finish of a
+  day is kept; doing it twice cannot move it to a later day.
 - **"Tomorrow" is the local calendar day** (`localDayKey`), not 24 hours: a step finished at
   23:50 opens the next at midnight. The hook keeps a clock of its own so the island need not be
   reopened to see it.
 - **The island stays out while an activity it set off is showing**: `voyageStaysOut` keeps the
-  voyage in its `island` phase through `feelings`, `practise` and `spelling-game` when they were
-  launched from the island (`launchedFromIslandRef`), so the island is still mounted, at rest,
-  when the activity slides away and it slides back. `pageOffset` lifts the island *above* while
-  one of those shows, as the learning menu is lifted above the spelling game; from anywhere else
-  the island rests below. The activity's back button goes to the island, not the menu, by the
+  voyage in its `island` phase through `practise` when it was launched from the island
+  (`launchedFromIslandRef`), so the island is still mounted, at rest, when the activity slides
+  away and it slides back. `pageOffset` lifts the island *above* while it shows; from anywhere
+  else the island rests below. The activity's back button goes to the island, not the menu, by the
   same flag; the flag and `planRun` are cleared whenever the page is the island or the home.
 - **Only main ↔ island is instant** in `EnhancedPageTransition` (both ends in
   `[main, ...instant]`); island ↔ activity slides like any other pair.
@@ -1704,6 +1701,7 @@ could reach (the copy corrections and the reader's tips were left for later):
   which ran past both ends of the screen and lit nothing.
 - *The island's plan card rises clear of the bubble* for its step (`useGuideLift`, as the book card
   does); the Home pill is pinned, so the card settles back before it is ringed.
+- *Removed 2026-10-16:* `emotion_cards_tips`, with the emotion cards game.
 - *Removed:* `screen_time_tips`, `feelings_tips`, `spelling_tips`, `numbers_tips` and
   `freeplay_tips` (their screens are no longer opened), their mounts, their copy in every language,
   and the tutorial words nothing read (`tutorial.gestures`, the old welcome and library titles,

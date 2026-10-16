@@ -54,7 +54,7 @@ These are the firm rules from `CLAUDE.md` and the brief, restated as testable co
 
 | Fact | Where |
 |---|---|
-| A story page declares its interaction: `'none' \| 'interactive_state_change' \| 'music_challenge' \| 'jigsaw_puzzle' \| 'reading_challenge'`, with the data for it on the page | `types/story.ts:112-133` |
+| A story page declares its interaction: `'none' \| 'interactive_state_change' \| 'music_challenge'`, with the data for it on the page. The jigsaw and word-placing page types, the spelling and numbers game and the emotion cards were removed on 16 Oct 2026 to be built afresh; their copy, assets, backend fields and functional tests went with them | `types/story.ts` |
 | Tap-to-reveal props on a page: `InteractiveElement` with normalised position, size and hit area | `types/story.ts:41-58` |
 | The reader renders a challenge overlay over the page when the page's type and config say so | `components/stories/story-book-reader.tsx:1914-1953` |
 | A music challenge reports completion through its hook's `onComplete` | `hooks/use-music-challenge.ts:134,604` |
@@ -63,22 +63,22 @@ These are the firm rules from `CLAUDE.md` and the brief, restated as testable co
 | Downloaded content lives under `documentDirectory/content_cache/` | `services/cache-manager.ts:15` |
 | The learning plan is data: seven `LearningPlanStep`s with `kind`, place, aim, skills, minutes and either a `storyId` or activity ids by age | `types/learning-plan.ts`, `data/learning-plan.ts` |
 | A step launches with `beginPlanStep(run)` and ticks off when the launched thing reports finishing: stories through the reader, activities through `recordActivityFinished(activityId)` | `store/app-store.ts:49-57,461-470` |
-| `PlanLaunch` is a union of `story`, `spelling`, `feelings`, `music` | `types/learning-plan.ts` |
+| `PlanLaunch` is a union of `story` (with a `mode`: `read`, `narrate` or `record`) and `music`; the island week is the three books in those modes around the music practise until the new games land | `types/learning-plan.ts`, `data/learning-plan.ts` |
 | The store has `currentChildId`, so per-child saves are possible | `store/app-store.ts:91` |
 | Badges are definitions with rules (`counter`, `finishedCount`, `challenges`, `storyAward`, ...) evaluated over facts, and remote definitions merge with bundled ones | `components/progress/achievements.ts:19-60,128-175` |
-| Challenge counts are kept by kind `'music' \| 'jigsaw' \| 'reading'` | `store/app-store.ts:27` |
-| Screensafe sessions start per activity `'story' \| 'emotions' \| 'music'` | `services/screen-time-service.ts:98` |
-| The real-world bridge overlay takes `activityId`, `gameSection` and `onDismiss` | `components/learning/real-world-bridge-overlay.tsx:60-65` |
+| Challenge counts are kept by kind, `'music'` alone today | `store/app-store.ts:27` |
+| Screensafe sessions start per activity `'story' \| 'music'` | `services/screen-time-service.ts:98` |
+| The real-world bridge overlay was removed with the old games; the owl's real-world tips on the screen-time warning keep the at-home, outdoors and creative shape (`types/real-world-bridge.ts`) and are the seed for the new bridge cards | `components/screen-time/real-world-tips.tsx` |
 | The island is one painting cut into layers, moved by shared clocks that run only once the page has settled and Reduce Motion is off | `components/island/island-scene.tsx:71-74` |
 | Reduce Motion is read through one hook | `hooks/use-reduced-motion.ts` |
 | Pages are registered in three places: the `PageKey` union, the island activity list, and the per-page animation map | `app/_layout.tsx:225`, `constants/page-slide.ts:3`, `components/ui/enhanced-page-transition.tsx:147` |
 | EAS Update is on outside E2E builds, keyed by app version | `app.config.js:36-42` |
 | Production Android builds are App Bundles; dev and preview builds are APKs | `eas.json:23,43,64,82` |
-| Gesture Handler 2.32 is installed but used only for carousels and onboarding; there is no drag-and-drop anywhere | `package.json`; `components/music/instrument-carousel.tsx`, `components/learning/age-range-carousel.tsx`, `components/stories/instrument-picker-overlay.tsx`, `components/onboarding/onboarding-screen.tsx` |
+| Gesture Handler 2.32 is installed but used only for carousels and onboarding; there is no drag-and-drop anywhere, and no placement, scene, choice or canvas code either | `package.json`; `components/music/instrument-carousel.tsx`, `components/learning/age-range-carousel.tsx`, `components/stories/instrument-picker-overlay.tsx`, `components/onboarding/onboarding-screen.tsx` |
 | Audio: five audiobooks 55 MB, bundled because `data/music.ts` required them, yet listed by no screen; `relaxing.wav` 11 MB in the repo, referenced nowhere so never bundled; binaural beats 12 MB, played by the Relax screen inside Feelings; background music 6.6 MB. The audiobooks and the wav were removed in M0 | `assets/audio/` (measured 16 Oct 2026); `data/music.ts:30-37`; `components/music/sleep-selection-screen.tsx:52-57`; `components/emotions/emotions-screen.tsx:224` |
 | Release app 227 MB, JavaScript bundle 14 MB (measured on the local Release E2E build earlier in this stage) | build output from a simulator build, so larger than a thinned store install; re-measure on a device build after the unreachable audio is removed |
 
-What does **not** exist and must be built: a placement (drag or tap-place) primitive, a scene-state engine, a choice engine, a canvas, a narration path, per-child game saves, and a pack format.
+What does **not** exist and must be built: a placement (drag or tap-place) primitive, a scene-state engine, a choice engine, a canvas, a narration path, per-child game saves, a pack format, and the games themselves: nothing of the old words, numbers, feelings or jigsaw games remains to reuse.
 
 ---
 
@@ -549,14 +549,14 @@ Weeks are data (`LearningPlan`). The default 2–4 week with no goals chosen, on
 | 1 | Story Time | story | *Snuggle Little Wombat* | Meet the wombat |
 | 2 | Wombat's Burrow | game | Wombat's Picnic Count | Count with yesterday's character |
 | 3 | Rock Pool | game | Juni's Rock Pool, "three floating things" | Discovery day |
-| 4 | Feelings Cove | game | Emotions in Context (Choose; upgrades today's cards) | Social day |
+| 4 | Feelings Cove | game | Emotions in Context (Choose) | Social day |
 | 5 | Music Grove | game | Rhythm composer in tap mode (Make) | Make something, no microphone |
 | 6 | Story Corner | story | *My Turn to Ding* | Meet the bus |
 | 7 | Bus Stop | game | Ding's Bus Stop | Play with the bus you just read |
 
 For goals `countAndSort` and `waitingAndTurns` at `'2-4'`, the builder gives: 1 *Snuggle Little Wombat* · 2 Wombat's Picnic Count · 3 Juni's Rock Pool (sorting mission) · 4 Emotions in Context · 5 Rhythm composer · 6 *My Turn to Ding* · 7 Ding's Bus Stop. Four domains, both goals twice, every host after its book.
 
-- Days 4 and 5 arrive with the Choose and Make engines (milestones M4, M5). Until then they stay as today.
+- Days 4 and 5 arrive with the Choose and Make engines (milestones M4, M5). Until then the week is the three books in their three modes around the music practise, as `data/learning-plan.ts` has it today.
 - The 1–2 week is mostly off-screen prompts with very short adult-led screen moments; the 4+ week replaces phonics with a words-only day until the phonics decision.
 - Future worlds (the road map's Japan and New Zealand, France and Italy, Lapland) are a `LearningPlan` plus packs. No code per world.
 - Every finished day stays replayable; the road map still opens only from the done day 7.
@@ -603,7 +603,7 @@ Validates; all keys in 14 locales; asset register entry; plays in three bands wi
 
 | Milestone | Delivers | Exit criteria |
 |---|---|---|
-| **M0 Foundations** | The unreachable audio (audiobooks, `relaxing.wav`) removed, with a test that fails on bundled audio no list shows or on a file nothing plays; sound on tap and success in the words and feelings games; the two reference devices on the desk; `validate-packs` with an empty pack set | Install under 160 MB measured on both platforms from device builds; words and feelings games play sound; CI runs the validator |
+| **M0 Foundations** | The unreachable audio (audiobooks, `relaxing.wav`) removed, with a test that fails on bundled audio no list shows or on a file nothing plays (done 16 Oct 2026); the old words, numbers, feelings and jigsaw games, the Learning catalogue, the bridge cards and the Relax screen removed so the new games start clean (done 16 Oct 2026, island week kept at seven days with the books in read, listen-along and record modes); the two reference devices on the desk; `validate-packs` with an empty pack set | Install under 160 MB measured on both platforms from device builds; CI runs the validator |
 | **M1 Personalised week** | The goals step, `childGoals`, `data/plan-units.ts` over today's units (three stories, the spelling, numbers, feelings and music activities), `buildWeek`, the plan panel's change-goals row, E2E seed | Different goals give a different week; the same goals give the same week on two simulators; no goals leaves today's island week unchanged; DPIA §7 sentence added; `onboarding-goals` green |
 | **M2 Shell + Place** | ExperienceShell, Place engine, store and type changes, `'game'` page registration, bundled pack loading, Wombat's Picnic Count on day 3 | 13.4 for the wombat game; journeys `island-game-day` and `game-screensafe-stop` green; budgets met; the wombat game appears in built weeks as a unit |
 | **M3 Scene + delivery** | Scene engine, pack download, prefetch, eviction, gateway endpoints, Juni's Rock Pool as the first downloaded pack; book-page launch | 13.4 for Juni; `story-page-game` and `library-free-play` green; a pack arrives, prefetches a day ahead, and evicts |

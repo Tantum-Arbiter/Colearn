@@ -226,7 +226,7 @@ the stub reaches the shelf and the search — a flow finds it by name. Its cover
    which the stub answers but no flow exercises yet.
 2. **One journey written and parked**:
    - *The day's screen time running out.* The app only watches the clock while a child is inside a
-     story, music or emotions screen (`startWarningMonitor` runs from `startSession`), so the owl
+     story or music screen (`startWarningMonitor` runs from `startSession`), so the owl
      cannot appear on the home page however spent the day is. A flow would have to sit inside the
      reader, which is landscape, where the tree is unreliable. The seeding link can spend a day
      (`screenTime=spent`) and that part is tested.
