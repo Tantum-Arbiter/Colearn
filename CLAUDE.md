@@ -49,6 +49,7 @@ colearn/
 ├── PHASE-7-MUSIC-GAME.md    # Timed music play — hold-the-note mechanic, metadata, phases
 ├── compliance/               # DPIA and privacy-policy change drafts
 ├── PHASE-8-BACKEND-ALIGNMENT.md # ⭐ API audit fixes, child data sync, achievements as data, entitlements
+├── PHASE-10-LEARNING-GAMES.md # ⭐ Learning games through stories: engines, packs, personalised paths, budgets
 └── CLAUDE.md                 # This file — root operating instructions
 ```
 
@@ -86,6 +87,7 @@ colearn/
 | Timed music play roadmap | [`PHASE-7-MUSIC-GAME.md`](PHASE-7-MUSIC-GAME.md) |
 | Backend alignment / device sync / achievements data | [`PHASE-8-BACKEND-ALIGNMENT.md`](PHASE-8-BACKEND-ALIGNMENT.md) |
 | Learning games (proposal, not yet accepted) | [`PHASE-9-LEARNING-THROUGH-PLAY.md`](PHASE-9-LEARNING-THROUGH-PLAY.md) |
+| Learning games through stories, game packs, personalised learning paths | [`PHASE-10-LEARNING-GAMES.md`](PHASE-10-LEARNING-GAMES.md) |
 
 ---
 
