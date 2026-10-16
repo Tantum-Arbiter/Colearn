@@ -43,8 +43,6 @@ const contentChanges = {
   'page text': (s) => { s.pages[1].text = 'Changed'; },
   'page translation': (s) => { s.pages[1].localizedText['4-6'].pl = 'Zmienione'; },
   'page background': (s) => { s.pages[1].backgroundImage = 'other.webp'; },
-  'reading challenge': (s) => { s.pages[1].readingChallenge = { ...s.pages[1].readingChallenge, allowSkip: !s.pages[1].readingChallenge.allowSkip }; },
-  'jigsaw puzzle': (s) => { s.pages[1].jigsawPuzzle = { rows: 3, cols: 3 }; },
   'page order': (s) => { s.pages.reverse(); },
   'a new field': (s) => { s.awards = [{ achievementId: 'theme-bedtime', trigger: 'finish' }]; },
 };

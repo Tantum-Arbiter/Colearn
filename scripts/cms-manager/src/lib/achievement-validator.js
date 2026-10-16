@@ -13,7 +13,7 @@ export const CMS_ACHIEVEMENTS_DIR = path.join(SCRIPTS, 'cms-achievements');
 export const FORBIDDEN_PHRASES = JSON.parse(readFileSync(path.join(FIXTURES, 'badge-copy-forbidden.json'), 'utf8')).en;
 export const BUNDLED_ART = new Set(JSON.parse(readFileSync(path.join(FIXTURES, 'badge-bundled-art.json'), 'utf8')).keys);
 
-const CHALLENGE_INTERACTIONS = new Set(['music_challenge', 'jigsaw_puzzle', 'reading_challenge']);
+const CHALLENGE_INTERACTIONS = new Set(['music_challenge']);
 const COPY_LINES = ['title', 'earned', 'next'];
 
 const ajv = new Ajv({ allErrors: true, strict: false });

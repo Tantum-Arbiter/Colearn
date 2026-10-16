@@ -46,19 +46,11 @@ public class StoryPage {
 
     @JsonProperty("interactionType")
     @PropertyName("interactionType")
-    private String interactionType; // "none", "interactive_state_change", "music_challenge", "jigsaw_puzzle"
+    private String interactionType; // "none", "interactive_state_change", "music_challenge"
 
     @JsonProperty("musicChallenge")
     @PropertyName("musicChallenge")
     private MusicChallenge musicChallenge;
-
-    @JsonProperty("jigsawPuzzle")
-    @PropertyName("jigsawPuzzle")
-    private JigsawPuzzle jigsawPuzzle;
-
-    @JsonProperty("readingChallenge")
-    @PropertyName("readingChallenge")
-    private ReadingChallenge readingChallenge;
 
     public StoryPage() {
         this.interactiveElements = new ArrayList<>();
@@ -187,22 +179,6 @@ public class StoryPage {
 
     public void setMusicChallenge(MusicChallenge musicChallenge) {
         this.musicChallenge = musicChallenge;
-    }
-
-    public JigsawPuzzle getJigsawPuzzle() {
-        return jigsawPuzzle;
-    }
-
-    public void setJigsawPuzzle(JigsawPuzzle jigsawPuzzle) {
-        this.jigsawPuzzle = jigsawPuzzle;
-    }
-
-    public ReadingChallenge getReadingChallenge() {
-        return readingChallenge;
-    }
-
-    public void setReadingChallenge(ReadingChallenge readingChallenge) {
-        this.readingChallenge = readingChallenge;
     }
 
     @Override

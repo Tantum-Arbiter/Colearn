@@ -204,7 +204,7 @@
           },
           "interactionType": {
             "type": "string",
-            "enum": ["none", "interactive_state_change", "music_challenge", "jigsaw_puzzle", "reading_challenge"],
+            "enum": ["none", "interactive_state_change", "music_challenge"],
             "description": "Interaction type for this page"
           },
           "interactiveElements": {
@@ -282,54 +282,9 @@
                 "enum": ["none", "minimal", "standard", "verbose"]
               }
             }
-          },
-          "jigsawPuzzle": {
-            "type": "object",
-            "description": "Jigsaw puzzle configuration for this page",
-            "required": ["enabled", "gridSize", "promptText", "allowSkip"],
-            "properties": {
-              "enabled": { "type": "boolean" },
-              "gridSize": {
-                "type": "string",
-                "enum": ["2x2", "4x4"],
-                "description": "Grid dimensions: 2x2 (easy), 4x4 (medium/hard)"
-              },
-              "promptText": { "type": "string", "description": "Narrative prompt for the jigsaw puzzle" },
-              "allowSkip": { "type": "boolean" }
-            }
-          },
-          "readingChallenge": {
-            "type": "object",
-            "description": "Reading challenge configuration for this page",
-            "required": ["enabled", "mode", "promptText", "allowSkip"],
-            "properties": {
-              "enabled": { "type": "boolean" },
-              "mode": {
-                "type": "string",
-                "enum": ["fill_in_blank", "spell_word"],
-                "description": "Challenge mode: fill_in_blank (tap missing words in order) or spell_word (select letters to spell a word)"
-              },
-              "promptText": { "type": "string", "description": "Narrative prompt for the reading challenge" },
-              "allowSkip": { "type": "boolean" },
-              "blankWordIndices": {
-                "type": "array",
-                "items": { "type": "integer", "minimum": 0 },
-                "description": "Zero-based indices of words in page text to blank out (fill_in_blank mode)"
-              },
-              "targetWord": {
-                "type": "string",
-                "description": "The word the user must spell (spell_word mode)"
-              },
-              "distractorLetters": {
-                "type": "array",
-                "items": { "type": "string", "maxLength": 1 },
-                "description": "Extra letters added to the letter pool as distractors (spell_word mode)"
-              }
-            }
           }
         }
       }
     }
   }
 }
-

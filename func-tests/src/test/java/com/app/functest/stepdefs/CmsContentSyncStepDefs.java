@@ -1041,30 +1041,6 @@ public class CmsContentSyncStepDefs extends BaseStepDefs {
         assertThat("musicChallenge." + fieldName + " should exist", challenge.get(fieldName), notNullValue());
     }
 
-    // =============================================
-    // Jigsaw puzzle step defs
-    // =============================================
-
-    @SuppressWarnings("unchecked")
-    @Then("page {int} jigsawPuzzle should have field {string} with value {string}")
-    public void pageJigsawPuzzleShouldHaveFieldWithValue(int pageNumber, String fieldName, String expectedValue) {
-        Map<String, Object> page = getPageByNumber(pageNumber);
-        Map<String, Object> puzzle = (Map<String, Object>) page.get("jigsawPuzzle");
-        assertThat("Page " + pageNumber + " should have jigsawPuzzle", puzzle, notNullValue());
-        Object value = puzzle.get(fieldName);
-        assertThat("jigsawPuzzle." + fieldName + " should exist", value, notNullValue());
-        assertThat("jigsawPuzzle." + fieldName, String.valueOf(value), is(expectedValue));
-    }
-
-    @SuppressWarnings("unchecked")
-    @Then("page {int} jigsawPuzzle should have field {string}")
-    public void pageJigsawPuzzleShouldHaveField(int pageNumber, String fieldName) {
-        Map<String, Object> page = getPageByNumber(pageNumber);
-        Map<String, Object> puzzle = (Map<String, Object>) page.get("jigsawPuzzle");
-        assertThat("Page " + pageNumber + " should have jigsawPuzzle", puzzle, notNullValue());
-        assertThat("jigsawPuzzle." + fieldName + " should exist", puzzle.get(fieldName), notNullValue());
-    }
-
     @SuppressWarnings("unchecked")
     @Then("page {int} musicChallenge requiredSequence should be an array")
     public void pageMusicChallengeRequiredSequenceShouldBeAnArray(int pageNumber) {
@@ -1086,59 +1062,5 @@ public class CmsContentSyncStepDefs extends BaseStepDefs {
                 seq.size(), greaterThanOrEqualTo(minCount));
     }
 
-    // =============================================
-    // Reading challenge step defs
-    // =============================================
-
-    @SuppressWarnings("unchecked")
-    @Then("page {int} readingChallenge should have field {string} with value {string}")
-    public void pageReadingChallengeShouldHaveFieldWithValue(int pageNumber, String fieldName, String expectedValue) {
-        Map<String, Object> page = getPageByNumber(pageNumber);
-        Map<String, Object> rc = (Map<String, Object>) page.get("readingChallenge");
-        assertThat("Page " + pageNumber + " should have readingChallenge", rc, notNullValue());
-        Object value = rc.get(fieldName);
-        assertThat("readingChallenge." + fieldName + " should exist", value, notNullValue());
-        assertThat("readingChallenge." + fieldName, String.valueOf(value), is(expectedValue));
-    }
-
-    @SuppressWarnings("unchecked")
-    @Then("page {int} readingChallenge should have field {string}")
-    public void pageReadingChallengeShouldHaveField(int pageNumber, String fieldName) {
-        Map<String, Object> page = getPageByNumber(pageNumber);
-        Map<String, Object> rc = (Map<String, Object>) page.get("readingChallenge");
-        assertThat("Page " + pageNumber + " should have readingChallenge", rc, notNullValue());
-        assertThat("readingChallenge." + fieldName + " should exist", rc.get(fieldName), notNullValue());
-    }
-
-    @SuppressWarnings("unchecked")
-    @Then("page {int} readingChallenge blankWordIndices should be an array")
-    public void pageReadingChallengeBlankWordIndicesShouldBeAnArray(int pageNumber) {
-        Map<String, Object> page = getPageByNumber(pageNumber);
-        Map<String, Object> rc = (Map<String, Object>) page.get("readingChallenge");
-        assertThat("readingChallenge should exist", rc, notNullValue());
-        Object indices = rc.get("blankWordIndices");
-        assertThat("blankWordIndices should be a list", indices, instanceOf(List.class));
-    }
-
-    @SuppressWarnings("unchecked")
-    @Then("page {int} readingChallenge blankWordIndices should have {int} elements")
-    public void pageReadingChallengeBlankWordIndicesShouldHaveNElements(int pageNumber, int expectedCount) {
-        Map<String, Object> page = getPageByNumber(pageNumber);
-        Map<String, Object> rc = (Map<String, Object>) page.get("readingChallenge");
-        assertThat("readingChallenge should exist", rc, notNullValue());
-        List<?> indices = (List<?>) rc.get("blankWordIndices");
-        assertThat("blankWordIndices should have " + expectedCount + " elements",
-                indices.size(), equalTo(expectedCount));
-    }
-
-    @SuppressWarnings("unchecked")
-    @Then("page {int} readingChallenge distractorLetters should be an array")
-    public void pageReadingChallengeDistractorLettersShouldBeAnArray(int pageNumber) {
-        Map<String, Object> page = getPageByNumber(pageNumber);
-        Map<String, Object> rc = (Map<String, Object>) page.get("readingChallenge");
-        assertThat("readingChallenge should exist", rc, notNullValue());
-        Object letters = rc.get("distractorLetters");
-        assertThat("distractorLetters should be a list", letters, instanceOf(List.class));
-    }
 }
 
