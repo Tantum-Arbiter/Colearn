@@ -80,19 +80,20 @@ describe('useLearningPlan', () => {
     expect(first.picture).toEqual({ uri: 'file:///wombat.webp' });
   });
 
-  it('names a words day by the game for the child`s age', () => {
-    mockAge = 60;
+  it('names a recording day and a listening day by their book, and sets the child off in that mode', () => {
     const { result } = renderHook(() => useLearningPlan(true));
 
-    expect(result.current.steps[1].title).toBe('learning.wordBuilder');
-    expect(result.current.steps[1].launch).toEqual({ kind: 'spelling', activityId: 'word-builder' });
+    expect(result.current.steps[1].title).toBe('Snuggle Little Wombat');
+    expect(result.current.steps[1].launch).toEqual({ kind: 'story', storyId: 'snuggle-little-wombat', mode: 'record' });
+    expect(result.current.steps[2].launch).toEqual({ kind: 'story', storyId: 'snuggle-little-wombat', mode: 'narrate' });
+    expect(result.current.steps[3].launch).toEqual({ kind: 'story', storyId: 'hold-on-juni', mode: 'record' });
   });
 
-  it('names the feelings and music days for what they are', () => {
+  it('names the music day for what it is', () => {
     const { result } = renderHook(() => useLearningPlan(true));
 
-    expect(result.current.steps[3].title).toBe('emotions.title');
     expect(result.current.steps[4].title).toBe('menu.practise');
+    expect(result.current.steps[4].launch).toEqual({ kind: 'music', activityId: 'music-practise' });
   });
 
   it('counts the days done and finds the one that is next', () => {
@@ -144,7 +145,7 @@ describe('useLearningPlan', () => {
 
     const launch = result.current.start(result.current.steps[0]);
 
-    expect(launch).toEqual({ kind: 'story', storyId: 'snuggle-little-wombat' });
+    expect(launch).toEqual({ kind: 'story', storyId: 'snuggle-little-wombat', mode: 'read' });
     expect(mockBeginPlanStep).toHaveBeenCalledWith({ planId: 'island-week', stepId: 'day-1', launch });
   });
 
@@ -155,7 +156,7 @@ describe('useLearningPlan', () => {
     const launch = result.current.start(result.current.steps[0]);
 
     expect(result.current.steps[0].state).toBe('done');
-    expect(launch).toEqual({ kind: 'story', storyId: 'snuggle-little-wombat' });
+    expect(launch).toEqual({ kind: 'story', storyId: 'snuggle-little-wombat', mode: 'read' });
     expect(mockBeginPlanStep).toHaveBeenCalledWith({ planId: 'island-week', stepId: 'day-1', launch });
   });
 

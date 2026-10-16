@@ -279,8 +279,8 @@ describe('mode and gender matching', () => {
     expect(storyMatchesMode(subject, mode)).toBe(expected);
   });
 
-  it('never matches remote entries for the jigsaw mode', () => {
-    expect(entryMatchesMode(entry({ tags: ['interactive'] }), 'jigsaw')).toBe(false);
+  it('matches remote entries by their tags', () => {
+    expect(entryMatchesMode(entry({ tags: ['interactive'] }), 'music')).toBe(false);
     expect(entryMatchesMode(entry({ tags: ['interactive'] }), 'interactive')).toBe(true);
   });
 
@@ -296,20 +296,18 @@ describe('mode and gender matching', () => {
 });
 
 describe('storyTheme', () => {
-  it('gives every book exactly one home: Music, else Learning, else Stories', () => {
+  it('gives every book exactly one home: Music, else Stories', () => {
     const plain = fromStory(story({ tags: ['bedtime', 'adventure'] }));
     const tagged = fromStory(story({ tags: ['learning', 'bedtime'] }));
-    const jigsaw = fromStory(story({ pages: [{ id: 'p', pageNumber: 1, text: '', interactionType: 'jigsaw_puzzle' } as any] }));
     const musical = fromStory(story({ tags: ['music', 'learning'] }));
-    const remoteGame = fromCatalogEntry(entry({ tags: ['jigsaw'] }), { locked: false, shareToUnlock: false });
+    const remoteTagged = fromCatalogEntry(entry({ tags: ['learning'] }), { locked: false, shareToUnlock: false });
     // The bundled bedtime book carries two music pages and is still a story
     const storyWithASong = fromStory(story({ tags: ['bedtime'], pages: [{ id: 'p', pageNumber: 1, text: '', interactionType: 'music_challenge' } as any] }));
 
     expect(storyTheme(plain)).toBe('stories');
-    expect(storyTheme(tagged)).toBe('learning');
-    expect(storyTheme(jigsaw)).toBe('learning');
+    expect(storyTheme(tagged)).toBe('stories');
     expect(storyTheme(musical)).toBe('music');
-    expect(storyTheme(remoteGame)).toBe('learning');
+    expect(storyTheme(remoteTagged)).toBe('stories');
     expect(storyTheme(storyWithASong)).toBe('stories');
   });
 
@@ -320,8 +318,7 @@ describe('storyTheme', () => {
       fromStory(story({ id: 'c', tags: ['music'] })),
     ];
 
-    expect(filterByTheme(shelf, 'stories').map((s) => s.id)).toEqual(['a']);
-    expect(filterByTheme(shelf, 'learning').map((s) => s.id)).toEqual(['b']);
+    expect(filterByTheme(shelf, 'stories').map((s) => s.id)).toEqual(['a', 'b']);
     expect(filterByTheme(shelf, 'music').map((s) => s.id)).toEqual(['c']);
   });
 });
@@ -388,7 +385,6 @@ describe('buildShelves', () => {
 
 describe('recommendationTarget', () => {
   it.each([
-    ['learning'],
     ['music'],
   ])('should send a %s recommendation to that tile, since it is no longer a pill', (tag) => {
     const underTest = recommendationTarget(tag as any);

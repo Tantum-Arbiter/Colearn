@@ -129,7 +129,7 @@ describe('evaluateAchievements', () => {
   });
 
   it('does not count challenges of another kind', () => {
-    const [badge] = evaluate([cms({ rule: { kind: 'challenges', interaction: 'jigsaw', target: 5 } })], facts({ challengeCounts: { music: 5 } }));
+    const [badge] = evaluate([cms({ rule: { kind: 'challenges', interaction: 'music', target: 5 } })], facts({ challengeCounts: { reading: 5 } }));
 
     expect(badge.status).toBe('undiscovered');
   });

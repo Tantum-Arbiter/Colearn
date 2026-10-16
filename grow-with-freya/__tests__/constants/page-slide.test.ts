@@ -32,17 +32,11 @@ describe('pageOffset', () => {
 
   it('otherwise rests the library below, as every page does', () => {
     expect(pageOffset('stories', 'main', HEIGHT)).toBe(HEIGHT);
-    expect(pageOffset('stories', 'feelings', HEIGHT)).toBe(HEIGHT);
-  });
-
-  it('lifts spelling and numbers above while the spelling game is showing', () => {
-    expect(pageOffset('spelling', 'spelling-game', HEIGHT)).toBe(-HEIGHT);
-    expect(pageOffset('numbers', 'spelling-game', HEIGHT)).toBe(-HEIGHT);
-    expect(pageOffset('spelling', 'main', HEIGHT)).toBe(HEIGHT);
+    expect(pageOffset('stories', 'practise', HEIGHT)).toBe(HEIGHT);
   });
 
   it('rests every other page below', () => {
-    ['sensory', 'screen_time', 'practise', 'freeplay', 'feelings', 'spelling-game'].forEach((page) => {
+    ['sensory', 'screen_time', 'practise', 'freeplay'].forEach((page) => {
       expect(pageOffset(page, 'account', HEIGHT)).toBe(HEIGHT);
     });
   });
@@ -51,7 +45,7 @@ describe('pageOffset', () => {
     ISLAND_ACTIVITY_PAGES.forEach((page) => {
       expect(pageOffset('island', page, HEIGHT)).toBe(-HEIGHT);
     });
-    expect(ISLAND_ACTIVITY_PAGES).toEqual(expect.arrayContaining(['feelings', 'practise', 'spelling-game']));
+    expect(ISLAND_ACTIVITY_PAGES).toEqual(['practise']);
   });
 
   it('rests the island below everywhere else, and every activity below the island', () => {

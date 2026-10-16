@@ -39,9 +39,9 @@ describe('useAchievementEvents', () => {
   it('counts a challenge on a page with no award, and grants nothing', () => {
     const { result } = renderHook(() => useAchievementEvents(snowy));
 
-    act(() => result.current.challengeDone('snowy-2', 'jigsaw'));
+    act(() => result.current.challengeDone('snowy-2', 'music'));
 
-    expect(useAppStore.getState().challengeCounts).toEqual({ jigsaw: 1 });
+    expect(useAppStore.getState().challengeCounts).toEqual({ music: 1 });
     expect(useAppStore.getState().earnedAchievementIds).toEqual([]);
   });
 

@@ -38,18 +38,11 @@ describe('achievement facts', () => {
     expect(useAppStore.getState().finishedStoryIds).toEqual([]);
   });
 
-  it.each(['music', 'jigsaw', 'reading'] as const)('counts each %s challenge completed', (kind) => {
-    useAppStore.getState().recordChallengeCompleted(kind);
-    useAppStore.getState().recordChallengeCompleted(kind);
-
-    expect(useAppStore.getState().challengeCounts[kind]).toBe(2);
-  });
-
-  it('keeps the kinds of challenge apart', () => {
+  it('counts each music challenge completed, under its own kind', () => {
     useAppStore.getState().recordChallengeCompleted('music');
-    useAppStore.getState().recordChallengeCompleted('reading');
+    useAppStore.getState().recordChallengeCompleted('music');
 
-    expect(useAppStore.getState().challengeCounts).toEqual({ music: 1, reading: 1 });
+    expect(useAppStore.getState().challengeCounts).toEqual({ music: 2 });
   });
 
   it('grants a badge once and keeps it', () => {

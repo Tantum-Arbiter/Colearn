@@ -385,29 +385,29 @@ describe('EnhancedPageTransition', () => {
     });
 
     it('slides out to an activity, and slides back, as a page would from anywhere else', () => {
-      const WITH_FEELINGS = { ...WITH_ISLAND, feelings: <Page name="feelings" /> };
-      const view = render(<EnhancedPageTransition currentPage="main" pages={WITH_FEELINGS} duration={800} instant={INSTANT} />);
-      view.rerender(<EnhancedPageTransition currentPage="island" pages={WITH_FEELINGS} duration={800} instant={INSTANT} />);
+      const WITH_PRACTISE = { ...WITH_ISLAND, practise: <Page name="practise" /> };
+      const view = render(<EnhancedPageTransition currentPage="main" pages={WITH_PRACTISE} duration={800} instant={INSTANT} />);
+      view.rerender(<EnhancedPageTransition currentPage="island" pages={WITH_PRACTISE} duration={800} instant={INSTANT} />);
 
-      view.rerender(<EnhancedPageTransition currentPage="feelings" pages={WITH_FEELINGS} duration={800} instant={INSTANT} />);
+      view.rerender(<EnhancedPageTransition currentPage="practise" pages={WITH_PRACTISE} duration={800} instant={INSTANT} />);
       act(() => {
         jest.advanceTimersByTime(100);
       });
 
-      expect(offset(view, 'feelings')).toEqual({ slidesTo: 0 });
+      expect(offset(view, 'practise')).toEqual({ slidesTo: 0 });
       expect(offset(view, 'island')).toEqual({ slidesTo: -HEIGHT });
       expect(guard(view).props.pointerEvents).toBe('auto');
 
       act(() => {
         jest.advanceTimersByTime(800);
       });
-      view.rerender(<EnhancedPageTransition currentPage="island" pages={WITH_FEELINGS} duration={800} instant={INSTANT} />);
+      view.rerender(<EnhancedPageTransition currentPage="island" pages={WITH_PRACTISE} duration={800} instant={INSTANT} />);
       act(() => {
         jest.advanceTimersByTime(100);
       });
 
       expect(offset(view, 'island')).toEqual({ slidesTo: 0 });
-      expect(offset(view, 'feelings')).toEqual({ slidesTo: HEIGHT });
+      expect(offset(view, 'practise')).toEqual({ slidesTo: HEIGHT });
     });
 
     it('leaves every other page sliding as before', () => {

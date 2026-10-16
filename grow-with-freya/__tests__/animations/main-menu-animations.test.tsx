@@ -64,7 +64,7 @@ describe('MainMenu Component', () => {
     expect(result).toBeTruthy();
   });
 
-  it('should render stories, instruments and learning buttons in carousel', () => {
+  it('should render stories and instruments buttons in carousel', () => {
     const { getByLabelText } = render(
       <ScreenTimeProvider>
         <MainMenu onNavigate={mockOnNavigate} />
@@ -73,7 +73,6 @@ describe('MainMenu Component', () => {
 
     expect(getByLabelText('menu.stories button')).toBeTruthy();
     expect(getByLabelText('menu.instruments button')).toBeTruthy();
-    expect(getByLabelText('menu.learning button')).toBeTruthy();
   });
 
   it('should intercept stories button and not navigate directly', async () => {
@@ -105,21 +104,6 @@ describe('MainMenu Component', () => {
     });
 
     expect(mockOnNavigate).not.toHaveBeenCalledWith('instruments');
-  });
-
-  it('should intercept learning button and not navigate directly', async () => {
-    const { getByLabelText } = render(
-      <ScreenTimeProvider>
-        <MainMenu onNavigate={mockOnNavigate} />
-      </ScreenTimeProvider>
-    );
-
-    const learningButton = getByLabelText('menu.learning button');
-    await act(async () => {
-      fireEvent.press(learningButton);
-    });
-
-    expect(mockOnNavigate).not.toHaveBeenCalledWith('learning');
   });
 
   it('should render background elements', () => {

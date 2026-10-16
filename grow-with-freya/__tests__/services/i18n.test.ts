@@ -281,9 +281,9 @@ describe('i18n Service', () => {
   });
 
   describe('The learning plan on the island', () => {
-    const PLACES = ['storyTime', 'wordGarden', 'mathsMeadow', 'feelingsCove', 'musicGrove', 'storyCorner', 'storyBridge'];
-    const DOMAINS = ['language', 'maths', 'feelings', 'music'];
-    const SKILLS = ['listening', 'vocabulary', 'letters', 'counting', 'numbers', 'feelings', 'confidence', 'rhythm', 'patience'];
+    const PLACES = ['storyTime', 'echoGlade', 'storyNook', 'rockPool', 'musicGrove', 'storyCorner', 'storyBridge'];
+    const DOMAINS = ['language', 'feelings', 'music'];
+    const SKILLS = ['listening', 'vocabulary', 'feelings', 'confidence', 'rhythm', 'patience'];
     const DAYS = [1, 2, 3, 4, 5, 6, 7];
 
     it('names each day`s place, kind of learning and skills, and says in a sentence what it builds, in English', () => {

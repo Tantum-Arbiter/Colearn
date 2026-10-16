@@ -288,9 +288,9 @@ describe('AchievementCard', () => {
   describe('the journey`s steps', () => {
     const STEPS = [
       { id: 'day-1', day: 1, of: 7, kind: 'story', state: 'done', domainKey: 'plan.domains.language', skill: 'listening' },
-      { id: 'day-2', day: 2, of: 7, kind: 'words', state: 'open', domainKey: 'plan.domains.language', skill: 'listening' },
-      { id: 'day-3', day: 3, of: 7, kind: 'numbers', state: 'locked', domainKey: 'plan.domains.language', skill: 'listening' },
-      { id: 'day-4', day: 4, of: 7, kind: 'feelings', state: 'locked', domainKey: 'plan.domains.language', skill: 'listening' },
+      { id: 'day-2', day: 2, of: 7, kind: 'story', state: 'open', domainKey: 'plan.domains.language', skill: 'listening' },
+      { id: 'day-3', day: 3, of: 7, kind: 'story', state: 'locked', domainKey: 'plan.domains.language', skill: 'listening' },
+      { id: 'day-4', day: 4, of: 7, kind: 'story', state: 'locked', domainKey: 'plan.domains.feelings', skill: 'feelings' },
       { id: 'day-5', day: 5, of: 7, kind: 'music', state: 'locked', domainKey: 'plan.domains.language', skill: 'listening' },
     ] as const;
     const iconOf = (view: RenderResult, day: number) => byTestId(view, `journey-step-${day}-icon`)[0].props;
@@ -314,7 +314,7 @@ describe('AchievementCard', () => {
       const view = renderCard({ steps: STEPS });
 
       expect(faceOf(view, 2).colors).toEqual([...JOURNEY_CARD_TINTS.stepOpen]);
-      expect(iconOf(view, 2).name).toBe(PLAN_STEP_ICON.words);
+      expect(iconOf(view, 2).name).toBe(PLAN_STEP_ICON.story);
       expect(iconOf(view, 2).color).toBe(JOURNEY_CARD_TINTS.stepOpenInk);
       expect(flat(byTestId(view, 'journey-step-2')[0])).toEqual(
         expect.objectContaining({ width: JOURNEY_CARD.step.open, height: JOURNEY_CARD.step.open })
@@ -332,7 +332,7 @@ describe('AchievementCard', () => {
     });
 
     it.each(['locked', 'tomorrow'] as const)('should show a %s step behind a padlock, in the card`s blue', (state) => {
-      const view = renderCard({ steps: [{ id: 'day-3', day: 3, of: 7, kind: 'numbers', state, domainKey: 'plan.domains.maths', skill: 'counting' }] });
+      const view = renderCard({ steps: [{ id: 'day-3', day: 3, of: 7, kind: 'music', state, domainKey: 'plan.domains.music', skill: 'rhythm' }] });
 
       expect(faceOf(view, 3).colors).toEqual([...JOURNEY_CARD_TINTS.stepLocked]);
       expect(iconOf(view, 3).name).toBe('lock-closed');
@@ -438,7 +438,7 @@ describe('AchievementCard', () => {
     const INNER = JOURNEY_CARD.height * SCALE - HERO_CARD.strokeWidth * 2;
     const STEPS = [
       { id: 'day-1', day: 1, of: 7, kind: 'story', state: 'open', domainKey: 'plan.domains.language', skill: 'listening' },
-      { id: 'day-2', day: 2, of: 7, kind: 'words', state: 'locked', domainKey: 'plan.domains.language', skill: 'listening' },
+      { id: 'day-2', day: 2, of: 7, kind: 'story', state: 'locked', domainKey: 'plan.domains.language', skill: 'listening' },
     ] as const;
     const renderNarrow = (props: Partial<React.ComponentProps<typeof AchievementCard>> = {}) => renderCard({ width: WIDTH, steps: STEPS, ...props });
     const styleOfText = (view: RenderResult, words: string) =>
@@ -650,15 +650,15 @@ describe('AchievementCard', () => {
    * week has seven steps, and the line counts the week.
    */
   describe('the step line', () => {
-    const step = (day: number, state: 'done' | 'open' | 'tomorrow' | 'locked', skill: 'listening' | 'letters' = 'listening') =>
+    const step = (day: number, state: 'done' | 'open' | 'tomorrow' | 'locked', skill: 'listening' | 'vocabulary' = 'listening') =>
       ({ id: `day-${day}`, day, of: 7, kind: 'story', state, domainKey: 'plan.domains.language', skill }) as const;
     const lineOf = (view: RenderResult) => byTestId(view, 'journey-step-line')[0];
 
     it('should name the step in hand, how many the week has, and what it is for', () => {
-      const view = renderCard({ steps: [step(1, 'done'), step(2, 'open', 'letters'), step(3, 'locked')] });
+      const view = renderCard({ steps: [step(1, 'done'), step(2, 'open', 'vocabulary'), step(3, 'locked')] });
 
       expect(lineOf(view).props.children).toBe(
-        'plan.stepOf (day:2, total:7) • plan.focus (domain:plan.domains.language, skill:plan.skills.letters)'
+        'plan.stepOf (day:2, total:7) • plan.focus (domain:plan.domains.language, skill:plan.skills.vocabulary)'
       );
     });
 

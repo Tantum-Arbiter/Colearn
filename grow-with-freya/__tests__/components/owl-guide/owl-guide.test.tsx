@@ -244,7 +244,7 @@ describe('OwlGuide', () => {
     });
 
     it('does not interrupt another guide that is already talking', () => {
-      mockGuide.activeGuide = 'emotion_cards_tips';
+      mockGuide.activeGuide = 'practise_tips';
       renderGuide();
 
       advance(10000);

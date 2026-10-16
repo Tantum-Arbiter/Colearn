@@ -159,7 +159,6 @@ describe('Visual Regression Tests', () => {
         'main-menu-container',
         'menu-carousel',
         'menu-icon-instruments',
-        'menu-icon-learning',
         'menu-icon-stories',
         'mode-back-arrow',
         'music-control-button',
@@ -173,7 +172,6 @@ describe('Visual Regression Tests', () => {
       expect(labels(tree)).toEqual([
         'Mute background music. Long press for audio settings.',
         'menu.instruments button',
-        'menu.learning button',
         'menu.stories button',
       ]);
     });

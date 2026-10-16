@@ -1,19 +1,16 @@
 import { ALL_STORIES } from '@/data/stories';
-import { FEELINGS_ACTIVITIES, NUMBERS_ACTIVITIES, SPELLING_ACTIVITIES } from '@/data/learning-activities';
 import { ISLAND_WEEK } from '@/data/learning-plan';
-import { FREE_PER_AGE_GROUP } from '@/data/learning-activities';
 import {
+  PLAN_MODE_ICON,
+  PLAN_STEP_ICON,
   PLAN_STEPS_PER_WEEK,
-  activityFor,
   currentStep,
   launchFor,
   localDayKey,
-  previewActivity,
   previewable,
   stepStates,
   type LearningPlanProgress,
 } from '@/constants/learning-plan';
-import type { LearningPlanStep } from '@/types/learning-plan';
 
 const NOTHING_DONE: LearningPlanProgress = { planId: ISLAND_WEEK.id, completed: {} };
 const MORNING = new Date(2026, 9, 3, 8, 30);
@@ -35,11 +32,25 @@ describe('the island week', () => {
     expect(new Set(ISLAND_WEEK.steps.map((step) => step.id)).size).toBe(7);
   });
 
-  it('mixes stories with the words, numbers, feelings and music activities the app has', () => {
+  it('is the three books the app ships, in every mode the reader has, around the music practise', () => {
     const kinds = ISLAND_WEEK.steps.map((step) => step.kind);
+    const stories = ISLAND_WEEK.steps.filter((step) => step.kind === 'story');
 
-    expect(kinds.filter((kind) => kind === 'story').length).toBeGreaterThanOrEqual(2);
-    expect(new Set(kinds)).toEqual(new Set(['story', 'words', 'numbers', 'feelings', 'music']));
+    expect(new Set(kinds)).toEqual(new Set(['story', 'music']));
+    expect(new Set(stories.map((step) => step.storyId))).toEqual(new Set(['snuggle-little-wombat', 'hold-on-juni', 'my-turn-to-ding']));
+    expect(new Set(stories.map((step) => step.mode))).toEqual(new Set(['read', 'narrate', 'record']));
+    expect(ISLAND_WEEK.steps.every((step) => step.kind === 'music' || step.mode !== undefined)).toBe(true);
+  });
+
+  it('lets a family meet a book, record it, then listen to their own recording, and have Juni recorded before reading it together', () => {
+    const days = ISLAND_WEEK.steps;
+    const firstOf = (storyId: string, mode: string) => days.findIndex((step) => step.storyId === storyId && step.mode === mode);
+
+    expect(firstOf('snuggle-little-wombat', 'read')).toBeLessThan(firstOf('snuggle-little-wombat', 'record'));
+    expect(firstOf('snuggle-little-wombat', 'record')).toBeLessThan(firstOf('snuggle-little-wombat', 'narrate'));
+    expect(firstOf('hold-on-juni', 'record')).toBeLessThan(firstOf('hold-on-juni', 'read'));
+    expect(firstOf('hold-on-juni', 'narrate')).toBe(-1);
+    expect(days[4].kind).toBe('music');
   });
 
   it.each(ISLAND_WEEK.steps.filter((step) => step.kind === 'story'))('day $day opens a book the app ships', (step) => {
@@ -56,33 +67,6 @@ describe('the island week', () => {
 
     expect(first.kind).toBe('story');
     expect(story?.isPremium).not.toBe(true);
-  });
-
-  it.each(ISLAND_WEEK.steps.filter((step) => step.kind === 'words' || step.kind === 'numbers'))(
-    'day $day names a game for every age, each among the free ones of its age group',
-    (step) => {
-      const pool = step.kind === 'words' ? SPELLING_ACTIVITIES : NUMBERS_ACTIVITIES;
-
-      (['1-2', '2-4', '4+'] as const).forEach((age) => {
-        const id = step.activityByAge?.[age];
-        const activity = pool.find((candidate) => candidate.id === id);
-        const ofAge = pool.filter((candidate) => candidate.ageRanges.includes(age));
-
-        expect(activity).toBeDefined();
-        expect(activity?.gameType).toBe('spelling');
-        expect(activity?.ageRanges).toContain(age);
-        expect(ofAge.findIndex((candidate) => candidate.id === id)).toBeLessThan(FREE_PER_AGE_GROUP);
-      });
-    }
-  );
-
-  it('counts the feelings game done in any of its three themes', () => {
-    const step = ISLAND_WEEK.steps.find((candidate) => candidate.kind === 'feelings');
-
-    expect(step?.activityIds).toEqual(['emotion-faces', 'animal-feelings', 'my-feelings']);
-    step?.activityIds?.forEach((id) => {
-      expect(FEELINGS_ACTIVITIES.some((candidate) => candidate.id === id)).toBe(true);
-    });
   });
 
   it.each(ISLAND_WEEK.steps)('day $day says where it is, its kind of learning, what it builds, two skills and how long it takes', (step) => {
@@ -200,86 +184,44 @@ describe('currentStep', () => {
   });
 });
 
-describe('activityFor', () => {
-  const words = ISLAND_WEEK.steps.find((step) => step.kind === 'words') as LearningPlanStep;
-
-  it.each([
-    [6, '1-2'],
-    [23, '1-2'],
-    [24, '2-4'],
-    [47, '2-4'],
-    [48, '4+'],
-    [80, '4+'],
-  ])('at %i months picks the game for the %s band', (months, age) => {
-    expect(activityFor(words, months)).toBe(words.activityByAge?.[age as '1-2' | '2-4' | '4+']);
-  });
-
-  it('picks for the youngest when the age is not known', () => {
-    expect(activityFor(words, null)).toBe(words.activityByAge?.['1-2']);
-    expect(activityFor(words, Number.NaN)).toBe(words.activityByAge?.['1-2']);
-  });
-
-  it('has nothing to pick for a story day', () => {
-    expect(activityFor(ISLAND_WEEK.steps[0], 30)).toBeNull();
-  });
-});
-
 describe('previewable', () => {
   it.each([
-    [{ kind: 'story', storyId: 'snuggle-little-wombat' }, true],
-    [{ kind: 'spelling', activityId: 'wombat-spelling' }, true],
-    [{ kind: 'feelings', activityIds: ['emotion-faces'] }, false],
+    [{ kind: 'story', storyId: 'snuggle-little-wombat', mode: 'read' }, true],
+    [{ kind: 'story', storyId: 'snuggle-little-wombat', mode: 'narrate' }, true],
+    [{ kind: 'story', storyId: 'snuggle-little-wombat', mode: 'record' }, true],
     [{ kind: 'music', activityId: 'music-practise' }, false],
-  ] as const)('can preview %o: %p, as only books and the spelling and numbers games have a card to show', (launch, expected) => {
+  ] as const)('can preview %o: %p, as only books have a card to show', (launch, expected) => {
     expect(previewable(launch)).toBe(expected);
   });
 });
 
-describe('previewActivity', () => {
-  it('describes a game for its preview card just as the learning screen does', () => {
-    const game = SPELLING_ACTIVITIES.find((candidate) => candidate.id === 'wombat-spelling');
-
-    expect(previewActivity('wombat-spelling')).toEqual({
-      id: game?.id,
-      nameKey: game?.nameKey,
-      descKey: game?.descKey,
-      ageKey: game?.ageKey,
-      icon: game?.icon,
-      color: game?.color,
-    });
+describe('the marks a day wears', () => {
+  it('has an open book for a story and notes for music', () => {
+    expect(PLAN_STEP_ICON).toEqual({ story: 'book', music: 'musical-notes' });
   });
 
-  it('finds every game a words or numbers day can open, at every age', () => {
-    ISLAND_WEEK.steps
-      .flatMap((step) => Object.values(step.activityByAge ?? {}))
-      .forEach((activityId) => expect(previewActivity(activityId)?.id).toBe(activityId));
-  });
-
-  it('is nothing for an activity the app does not have', () => {
-    expect(previewActivity('no-such-game')).toBeNull();
+  it('has a speaker for listening along and a microphone for recording', () => {
+    expect(PLAN_MODE_ICON).toEqual({ read: 'book', narrate: 'volume-medium', record: 'mic' });
   });
 });
 
 describe('launchFor', () => {
-  const byKind = (kind: LearningPlanStep['kind']) => ISLAND_WEEK.steps.find((step) => step.kind === kind) as LearningPlanStep;
-
-  it('launches a story day as the book it names', () => {
-    expect(launchFor(ISLAND_WEEK.steps[0], 30)).toEqual({ kind: 'story', storyId: ISLAND_WEEK.steps[0].storyId });
+  it('launches a story day as the book it names, in the mode the day asks for', () => {
+    expect(launchFor(ISLAND_WEEK.steps[0])).toEqual({ kind: 'story', storyId: 'snuggle-little-wombat', mode: 'read' });
+    expect(launchFor(ISLAND_WEEK.steps[1])).toEqual({ kind: 'story', storyId: 'snuggle-little-wombat', mode: 'record' });
+    expect(launchFor(ISLAND_WEEK.steps[2])).toEqual({ kind: 'story', storyId: 'snuggle-little-wombat', mode: 'narrate' });
+    expect(launchFor(ISLAND_WEEK.steps[3])).toEqual({ kind: 'story', storyId: 'hold-on-juni', mode: 'record' });
   });
 
-  it.each(['words', 'numbers'] as const)('launches a %s day as the spelling game for the child`s age', (kind) => {
-    const step = byKind(kind);
-
-    expect(launchFor(step, 30)).toEqual({ kind: 'spelling', activityId: step.activityByAge?.['2-4'] });
+  it('reads a story day together when no mode is named', () => {
+    expect(launchFor({ ...ISLAND_WEEK.steps[0], mode: undefined })).toEqual({ kind: 'story', storyId: 'snuggle-little-wombat', mode: 'read' });
   });
 
-  it('launches a feelings day as the feelings game, whichever theme the child picks', () => {
-    const step = byKind('feelings');
-
-    expect(launchFor(step, 50)).toEqual({ kind: 'feelings', activityIds: step.activityIds });
+  it('launches the music day as the practise', () => {
+    expect(launchFor(ISLAND_WEEK.steps[4])).toEqual({ kind: 'music', activityId: 'music-practise' });
   });
 
-  it('launches a music day as practise', () => {
-    expect(launchFor(byKind('music'), 30)).toEqual({ kind: 'music', activityId: 'music-practise' });
+  it('has nothing to launch for a story day that names no book', () => {
+    expect(launchFor({ ...ISLAND_WEEK.steps[0], storyId: undefined })).toBeNull();
   });
 });

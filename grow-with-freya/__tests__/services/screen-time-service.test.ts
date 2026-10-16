@@ -78,7 +78,7 @@ describe('ScreenTimeService', () => {
       await screenTimeService.endSession();
 
       // Start second session
-      await screenTimeService.startSession('emotions');
+      await screenTimeService.startSession('music');
       await new Promise(resolve => setTimeout(resolve, 50));
       await screenTimeService.endSession();
 

@@ -41,7 +41,7 @@ function view(index: number, state: PlanStepView['state'], extra: Partial<PlanSt
     point: ISLAND_TRAIL[index],
     title: `Title ${step.day}`,
     picture: step.kind === 'story' ? { uri: `test://cover-${step.day}` } : null,
-    launch: step.kind === 'story' ? { kind: 'story', storyId: step.storyId ?? '' } : { kind: 'spelling', activityId: 'wombat-spelling' },
+    launch: step.kind === 'story' ? { kind: 'story', storyId: step.storyId ?? '', mode: step.mode ?? 'read' } : { kind: 'music', activityId: 'music-practise' },
     ...extra,
   };
 }
@@ -291,7 +291,7 @@ describe('PlanCheckpoint', () => {
     const { root } = renderOne('locked', 1, { screenHeight: 667 });
 
     expect(StyleSheet.flatten(one('plan-checkpoint-2', root).props.style).width).toBe(CHECKPOINT_DIAMETER_COMPACT);
-    const words = one('plan-checkpoint-2-label', root).findAll((node) => node.props.children === 'plan.places.wordGarden' && node.props.style !== undefined)[0];
+    const words = one('plan-checkpoint-2-label', root).findAll((node) => node.props.children === 'plan.places.storyNook' && node.props.style !== undefined)[0];
     expect(StyleSheet.flatten(words.props.style).fontSize).toBe(10);
   });
 
@@ -396,13 +396,19 @@ describe('PlanCheckpoint', () => {
     expect(fills(icon)).toEqual(expect.arrayContaining([CHECKPOINT_TINTS.page, CHECKPOINT_TINTS.cover]));
   });
 
+  it('marks an open music day with musical notes in the book`s red', () => {
+    const index = ISLAND_WEEK.steps.findIndex((step) => step.kind === 'music');
+    const icon = one(`plan-checkpoint-${index + 1}-icon`, renderOne('open', index).root);
+
+    expect(icon.props.name).toBe('musical-notes');
+    expect(icon.props.color).toBe(CHECKPOINT_TINTS.cover);
+  });
+
   it.each([
-    ['words', 'text'],
-    ['numbers', 'calculator'],
-    ['feelings', 'happy'],
-    ['music', 'musical-notes'],
-  ] as const)('marks an open %s day with a %s in the book`s red', (kind, name) => {
-    const index = ISLAND_WEEK.steps.findIndex((step) => step.kind === kind);
+    [1, 'mic'],
+    [2, 'volume-medium'],
+    [3, 'mic'],
+  ] as const)('marks an open book in another mode, day index %s, with a %s rather than the open book', (index, name) => {
     const icon = one(`plan-checkpoint-${index + 1}-icon`, renderOne('open', index).root);
 
     expect(icon.props.name).toBe(name);
@@ -424,7 +430,7 @@ describe('PlanCheckpoint', () => {
     else expect(given.onPress).not.toHaveBeenCalled();
     expect(marker.props.disabled).toBe(!pressable);
     expect(marker.props.accessibilityState).toEqual({ disabled: !pressable });
-    expect(marker.props.accessibilityLabel).toBe(`plan.a11y.checkpoint|2,plan.places.wordGarden,plan.states.${state}`);
+    expect(marker.props.accessibilityLabel).toBe(`plan.a11y.checkpoint|2,plan.places.storyNook,plan.states.${state}`);
   });
 
   it('glows warm yellow round the open day, still strong half a disc beyond its ring', () => {
@@ -487,7 +493,7 @@ describe('PlanCheckpoint', () => {
     const { root } = renderOne(state);
 
     const label = one('plan-checkpoint-2-label', root);
-    const words = label.findAll((node) => node.props.children === 'plan.places.wordGarden' && node.props.style !== undefined)[0];
+    const words = label.findAll((node) => node.props.children === 'plan.places.storyNook' && node.props.style !== undefined)[0];
 
     expect(flat(label).backgroundColor).toBe(fill);
     expect(flat(label).borderRadius).toBeGreaterThanOrEqual(8);
@@ -666,11 +672,11 @@ describe('PlanPanel', () => {
 
   it('shows the book`s cover for a story day, and a mark of its kind otherwise', () => {
     const story = renderPanel(view(0, 'open')).root;
-    const words = renderPanel(view(1, 'open')).root;
+    const music = renderPanel(view(4, 'open')).root;
 
     expect(coverOf(story)).toEqual({ uri: 'test://cover-1' });
-    expect(all('plan-panel-cover', words)).toHaveLength(0);
-    expect(one('plan-panel-kind', words).props.name).toBe('text');
+    expect(all('plan-panel-cover', music)).toHaveLength(0);
+    expect(one('plan-panel-kind', music).props.name).toBe('musical-notes');
   });
 
   function coverOf(root: ReactTestInstance) {
@@ -716,22 +722,23 @@ describe('PlanPanel', () => {
     expect(link.props.accessibilityRole).toBe('link');
   });
 
-  it.each([2, 3, 4])('offers no Preview on a day whose activity has no preview screen (day %s, index)', (index) => {
-    const launch = ISLAND_WEEK.steps[index].kind === 'feelings'
-      ? { kind: 'feelings' as const, activityIds: ['emotion-faces'] }
-      : ISLAND_WEEK.steps[index].kind === 'music'
-        ? { kind: 'music' as const, activityId: 'music-practise' }
-        : { kind: 'spelling' as const, activityId: 'animal-counting' };
-    const { root } = renderPanel(view(index, 'open', { launch }));
+  it('offers no Preview on the music day, which has no preview screen', () => {
+    const { root } = renderPanel(view(4, 'open'));
 
-    expect(all('plan-preview', root).length > 0).toBe(launch.kind === 'spelling');
+    expect(all('plan-preview', root)).toHaveLength(0);
+  });
+
+  it.each([1, 2, 3])('offers a Preview on day index %s, a book in another mode', (index) => {
+    const { root } = renderPanel(view(index, 'open'));
+
+    expect(all('plan-preview', root).length).toBeGreaterThan(0);
   });
 
   it('says the next day opens tomorrow, under a moon, and offers nothing to start or preview', () => {
     const { root } = renderPanel(view(1, 'tomorrow'), { doneCount: 1 });
 
     expect(texts(one('plan-panel', root))).toContain('plan.opensTomorrow');
-    expect(texts(one('plan-panel-title', root))).toEqual(['plan.places.wordGarden']);
+    expect(texts(one('plan-panel-title', root))).toEqual(['plan.places.storyNook']);
     expect(all('plan-start', root)).toHaveLength(0);
     expect(all('plan-preview', root)).toHaveLength(0);
     expect(all('plan-panel-moon', root).length).toBeGreaterThan(0);

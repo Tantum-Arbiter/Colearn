@@ -694,7 +694,7 @@ describe('GUIDE_IDS', () => {
   });
 
   it('keeps the words every tour and the screen-time owl still use', () => {
-    ['tutorial.buttons.next', 'tutorial.buttons.skip', 'tutorial.buttons.letsGo', 'tutorial.practise.welcome.title', 'tutorial.emotionCards.welcome.title'].forEach(
+    ['tutorial.buttons.next', 'tutorial.buttons.skip', 'tutorial.buttons.letsGo', 'tutorial.practise.welcome.title'].forEach(
       (key) => expect(typeof lookup(key)).toBe('string')
     );
   });

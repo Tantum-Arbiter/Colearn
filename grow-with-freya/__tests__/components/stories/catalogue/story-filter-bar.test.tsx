@@ -1,7 +1,7 @@
 /**
  * The theme chooser (§6.5): a heading row -- "Choose a theme" with the Filter
- * button at its end -- above one glass bar of three segments, Stories,
- * Learning and Music, each its art beside its label (the operator's picture,
+ * button at its end -- above one glass bar of two segments, Stories and
+ * Music, each its art beside its label (the operator's picture,
  * 2026-10-04). One segment is always chosen, lit purple, and the shelf is
  * sorted under it. The finer themes wait behind the Filter button and
  * appear as pills beneath the tiles. A theme the child has chosen from there
@@ -48,28 +48,29 @@ describe('StoryFilterBar', () => {
     expect(pressables(tree, 'story-filter-more').length).toBeGreaterThan(0);
   });
 
-  it('should offer exactly Stories, Learning and Music, as tiles in one row', () => {
+  it('should offer exactly Stories and Music, as tiles in one row', () => {
     const tree = render(<StoryFilterBar {...baseProps} />);
 
     const underTest = tree.UNSAFE_root
       .findAll((n: any) => typeof n.props.testID === 'string' && n.props.testID.startsWith('story-theme-tile-') && n.props.accessibilityRole === 'button')
       .map((n: any) => n.props.testID.replace('story-theme-tile-', ''));
 
-    expect(Array.from(new Set(underTest))).toEqual(['stories', 'learning', 'music']);
-    expect(CATALOGUE_THEMES).toEqual(['stories', 'learning', 'music']);
+    expect(Array.from(new Set(underTest))).toEqual(['stories', 'music']);
+    expect(CATALOGUE_THEMES).toEqual(['stories', 'music']);
+    expect(pressables(tree, 'story-theme-tile-learning')).toHaveLength(0);
     expect(pressables(tree, 'story-theme-tile-all')).toHaveLength(0);
     expect(pressables(tree, 'story-theme-tile-bedtime')).toHaveLength(0);
   });
 
   it('should show the chosen theme as selected and hand a tap to onSelectTheme', () => {
-    const tree = render(<StoryFilterBar {...baseProps} theme="learning" />);
+    const tree = render(<StoryFilterBar {...baseProps} theme="music" />);
 
-    expect(pressables(tree, 'story-theme-tile-learning')[0].props.accessibilityState).toEqual({ selected: true });
+    expect(pressables(tree, 'story-theme-tile-music')[0].props.accessibilityState).toEqual({ selected: true });
     expect(pressables(tree, 'story-theme-tile-stories')[0].props.accessibilityState).toEqual({ selected: false });
 
-    fireEvent.press(pressables(tree, 'story-theme-tile-music')[0]);
+    fireEvent.press(pressables(tree, 'story-theme-tile-stories')[0]);
 
-    expect(baseProps.onSelectTheme).toHaveBeenCalledWith('music');
+    expect(baseProps.onSelectTheme).toHaveBeenCalledWith('stories');
   });
 
   it('should carry rendered art for each tile', () => {
@@ -129,7 +130,7 @@ describe('StoryFilterBar', () => {
     expect(underTest.alignItems).toBe('center');
   });
 
-  it('should hold all three in one glass capsule, rounded at its ends, as low as a single line', () => {
+  it('should hold both in one glass capsule, rounded at its ends, as low as a single line', () => {
     const tree = render(<StoryFilterBar {...baseProps} />);
 
     const bar = StyleSheet.flatten(tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'story-theme-bar')[0].props.style);
@@ -141,7 +142,7 @@ describe('StoryFilterBar', () => {
       expect.objectContaining({ flexDirection: 'row', height: THEME_BAR.height.phone, borderRadius: THEME_BAR.height.phone / 2, padding: THEME_BAR.inset })
     );
     expect(bar.borderWidth).toBeGreaterThan(0);
-    expect(new Set(tiles.map((n: any) => n.props.testID)).size).toBe(3);
+    expect(new Set(tiles.map((n: any) => n.props.testID)).size).toBe(2);
     expect(THEME_BAR.height.phone).toBeLessThan(72);
   });
 
@@ -159,14 +160,14 @@ describe('StoryFilterBar', () => {
   });
 
   it('should write the chosen label brightest and the others a little softer', () => {
-    const tree = render(<StoryFilterBar {...baseProps} theme="learning" />);
+    const tree = render(<StoryFilterBar {...baseProps} theme="music" />);
 
     const colourOf = (id: string) =>
       StyleSheet.flatten(
         pressables(tree, `story-theme-tile-${id}`)[0].findAll((n: any) => n.props.adjustsFontSizeToFit === true)[0].props.style
       ).color;
 
-    expect(colourOf('learning')).toBe('#FFFFFF');
+    expect(colourOf('music')).toBe('#FFFFFF');
     expect(colourOf('stories')).not.toBe('#FFFFFF');
   });
 
@@ -181,7 +182,7 @@ describe('StoryFilterBar', () => {
   it('should hold a label to its segment and let it shrink, so a long word never crosses the bar', () => {
     const tree = render(<StoryFilterBar {...baseProps} />);
 
-    const tile = pressables(tree, 'story-theme-tile-learning')[0];
+    const tile = pressables(tree, 'story-theme-tile-music')[0];
     const label = tile.findAll((n: any) => n.props.adjustsFontSizeToFit === true)[0];
     const underTest = StyleSheet.flatten(label.props.style);
 

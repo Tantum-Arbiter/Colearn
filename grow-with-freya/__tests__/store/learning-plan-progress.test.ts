@@ -6,8 +6,8 @@
 
 const { useAppStore } = jest.requireActual<typeof import('@/store/app-store')>('@/store/app-store');
 
-const STORY_RUN = { planId: 'island-week', stepId: 'day-1', launch: { kind: 'story', storyId: 'snuggle-little-wombat' } } as const;
-const GAME_RUN = { planId: 'island-week', stepId: 'day-2', launch: { kind: 'spelling', activityId: 'wombat-spelling' } } as const;
+const STORY_RUN = { planId: 'island-week', stepId: 'day-1', launch: { kind: 'story', storyId: 'snuggle-little-wombat', mode: 'read' } } as const;
+const GAME_RUN = { planId: 'island-week', stepId: 'day-5', launch: { kind: 'music', activityId: 'music-practise' } } as const;
 
 function resetStore(): void {
   useAppStore.setState({
@@ -84,7 +84,7 @@ describe('finishing a story day', () => {
   it('does not tick a story day off for a game', () => {
     useAppStore.getState().beginPlanStep(STORY_RUN);
 
-    useAppStore.getState().recordActivityFinished('wombat-spelling');
+    useAppStore.getState().recordActivityFinished('music-practise');
 
     expect(useAppStore.getState().learningPlanProgress).toBeNull();
   });
@@ -96,9 +96,9 @@ describe('finishing a game day', () => {
   it('ticks the day off when the game the child set off on reports itself finished', () => {
     useAppStore.getState().beginPlanStep(GAME_RUN);
 
-    useAppStore.getState().recordActivityFinished('wombat-spelling');
+    useAppStore.getState().recordActivityFinished('music-practise');
 
-    expect(Object.keys(useAppStore.getState().learningPlanProgress?.completed ?? {})).toEqual(['day-2']);
+    expect(Object.keys(useAppStore.getState().learningPlanProgress?.completed ?? {})).toEqual(['day-5']);
     expect(useAppStore.getState().planRun).toBeNull();
   });
 
@@ -118,24 +118,8 @@ describe('finishing a game day', () => {
     expect(useAppStore.getState().learningPlanProgress).toBeNull();
   });
 
-  it('ticks a feelings day off for whichever theme the child played', () => {
-    useAppStore.getState().beginPlanStep({ planId: 'island-week', stepId: 'day-4', launch: { kind: 'feelings', activityIds: ['emotion-faces', 'animal-feelings'] } });
-
-    useAppStore.getState().recordActivityFinished('animal-feelings');
-
-    expect(Object.keys(useAppStore.getState().learningPlanProgress?.completed ?? {})).toEqual(['day-4']);
-  });
-
-  it('does not tick a feelings day off for a theme that is not its own', () => {
-    useAppStore.getState().beginPlanStep({ planId: 'island-week', stepId: 'day-4', launch: { kind: 'feelings', activityIds: ['emotion-faces'] } });
-
-    useAppStore.getState().recordActivityFinished('my-feelings');
-
-    expect(useAppStore.getState().learningPlanProgress).toBeNull();
-  });
-
   it('is nothing when no step is under way', () => {
-    useAppStore.getState().recordActivityFinished('wombat-spelling');
+    useAppStore.getState().recordActivityFinished('music-practise');
 
     expect(useAppStore.getState().learningPlanProgress).toBeNull();
   });
@@ -149,9 +133,9 @@ describe('the record of days done', () => {
     useAppStore.getState().markStoryCompleted('snuggle-little-wombat');
     useAppStore.getState().beginPlanStep(GAME_RUN);
 
-    useAppStore.getState().recordActivityFinished('wombat-spelling');
+    useAppStore.getState().recordActivityFinished('music-practise');
 
-    expect(Object.keys(useAppStore.getState().learningPlanProgress?.completed ?? {}).sort()).toEqual(['day-1', 'day-2']);
+    expect(Object.keys(useAppStore.getState().learningPlanProgress?.completed ?? {}).sort()).toEqual(['day-1', 'day-5']);
   });
 
   it('keeps the first finish of a day, so doing it twice cannot move it to a later day', () => {

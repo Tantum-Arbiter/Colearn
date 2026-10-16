@@ -908,7 +908,7 @@ describe('HomeScene on a tablet', () => {
   it('keeps every fact on the achievement card, with the journey`s steps it is handed', () => {
     const journeySteps = [
       { id: 'day-1', day: 1, of: 7, kind: 'story', state: 'open', domainKey: 'plan.domains.language', skill: 'listening' },
-      { id: 'day-2', day: 2, of: 7, kind: 'words', state: 'locked', domainKey: 'plan.domains.language', skill: 'listening' },
+      { id: 'day-2', day: 2, of: 7, kind: 'story', state: 'locked', domainKey: 'plan.domains.language', skill: 'listening' },
     ] as const;
     const { view } = renderScene({ journeySteps });
 

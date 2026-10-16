@@ -150,7 +150,7 @@ function planView(index: number, state: PlanStepView['state']): PlanStepView {
     point: ISLAND_TRAIL[index],
     title: `Title ${step.day}`,
     picture: null,
-    launch: step.kind === 'story' ? { kind: 'story', storyId: step.storyId ?? '' } : { kind: 'spelling', activityId: 'wombat-spelling' },
+    launch: step.kind === 'story' ? { kind: 'story', storyId: step.storyId ?? '', mode: step.mode ?? 'read' } : { kind: 'music', activityId: 'music-practise' },
   };
 }
 
@@ -846,7 +846,7 @@ describe('IslandScene', () => {
 
       expect(mockStart).toHaveBeenCalledWith(expect.objectContaining({ step: ISLAND_WEEK.steps[0] }));
       expect(onPreviewActivity).toHaveBeenCalledWith(
-        { kind: 'story', storyId: 'snuggle-little-wombat' },
+        { kind: 'story', storyId: 'snuggle-little-wombat', mode: 'read' },
         expect.objectContaining({ x: expect.any(Number), y: expect.any(Number), width: expect.any(Number), height: expect.any(Number) })
       );
     });
@@ -892,7 +892,7 @@ describe('IslandScene', () => {
       act(() => { marker(root, 1).props.onPress(); });
 
       expect(mockStart).toHaveBeenCalledWith(expect.objectContaining({ step: ISLAND_WEEK.steps[0] }));
-      expect(onStartActivity).toHaveBeenCalledWith({ kind: 'story', storyId: 'snuggle-little-wombat' });
+      expect(onStartActivity).toHaveBeenCalledWith({ kind: 'story', storyId: 'snuggle-little-wombat', mode: 'read' });
     });
 
     it('sets the child off from the panel`s button just the same', () => {
@@ -901,7 +901,7 @@ describe('IslandScene', () => {
 
       act(() => { pressable(root, 'plan-start').props.onPress(); });
 
-      expect(onStartActivity).toHaveBeenCalledWith({ kind: 'story', storyId: 'snuggle-little-wombat' });
+      expect(onStartActivity).toHaveBeenCalledWith({ kind: 'story', storyId: 'snuggle-little-wombat', mode: 'read' });
     });
 
     it('opens nothing when the plan has nothing to set off on', () => {

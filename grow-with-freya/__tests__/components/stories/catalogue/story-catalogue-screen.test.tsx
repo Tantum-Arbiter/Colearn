@@ -205,11 +205,6 @@ jest.mock('@/services/screen-time-service', () => ({
 
 // the catalogue sits inside both providers in the app; the screen under test
 // here is rendered bare, so what it reads from them is stubbed
-const mockStartActivityTransition = jest.fn();
-jest.mock('@/contexts/ActivityTransitionContext', () => ({
-  useActivityTransition: () => ({ startTransition: mockStartActivityTransition }),
-}));
-
 // the catalogue sits inside the ScreenTimeProvider in the app; the screen
 // under test here is rendered bare, so the allowance it reads is stubbed
 jest.mock('@/hooks/use-screen-time-allowance', () => ({
@@ -464,10 +459,8 @@ describe('StoryCatalogueScreen', () => {
     expect(call[3].map((story: any) => story.id).sort()).toEqual(['whale', 'wombat']);
   });
 
-  it('carries every book on the shelf when one is opened from the grid', async () => {
+  it('carries every book on the shelf when one is opened from its row', async () => {
     const tree = render(<StoryCatalogueScreen />);
-    await waitFor(() => expect(byTestId(tree, 'story-theme-tile-learning').length).toBeGreaterThan(0));
-    fireEvent.press(byTestId(tree, 'story-theme-tile-learning')[0]);
     await waitFor(() => expect(byTestId(tree, 'story-cover-card-owl').length).toBeGreaterThan(0));
 
     const underTest = shelfCarriedBy('story-cover-card-owl', tree);
@@ -625,16 +618,13 @@ describe('StoryCatalogueScreen', () => {
     expect(byTestId(tree, 'story-row-continue')).toHaveLength(0);
   });
 
-  it('sorts the shelf under the chosen tile: Stories first, Learning on its tile', async () => {
+  it('keeps a learning-tagged book under Stories, since Learning has no tile until the new games exist', async () => {
     const tree = render(<StoryCatalogueScreen />);
 
     await waitFor(() => expect(byTestId(tree, 'story-row-bedtime').length).toBeGreaterThan(0));
-    expect(byTestId(tree, 'story-cover-card-owl')).toHaveLength(0);
 
-    fireEvent.press(byTestId(tree, 'story-theme-tile-learning')[0]);
-
-    await waitFor(() => expect(byTestId(tree, 'story-cover-card-owl').length).toBeGreaterThan(0));
-    expect(byTestId(tree, 'story-cover-card-wombat')).toHaveLength(0);
+    expect(byTestId(tree, 'story-theme-tile-learning')).toHaveLength(0);
+    expect(byTestId(tree, 'story-cover-card-owl').length).toBeGreaterThan(0);
   });
 
   it('marks Home as the selected journey area on entry', async () => {
@@ -982,86 +972,6 @@ describe('StoryCatalogueScreen saved shelf', () => {
   });
 });
 
-/**
- * Saved is one shelf, not one per kind of thing: a child who saved a book and
- * a counting game expects both waiting there.
- */
-describe('StoryCatalogueScreen saved activities', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    mockGetCatalog.mockResolvedValue([]);
-    mockAppState.readStoryIds = [];
-    mockAppState.favoriteStoryIds = [];
-    mockAppState.favoriteActivityIds = [];
-    mockAppState.storyProgress = {};
-    (useStoryTransition as jest.Mock).mockReturnValue({
-      isTransitioning: false,
-      selectedStoryId: null,
-      shouldShowStoryReader: false,
-      isExpandingToReader: false,
-      startTransition: mockStartTransition,
-    });
-  });
-
-  function openSaved(tree: ReturnType<typeof render>) {
-    fireEvent.press(
-      byTestId(tree, 'navigation-item-profile').find((n: any) => n.props.accessibilityRole === 'tab'),
-    );
-  }
-
-  it('shelves saved activities alongside saved books', async () => {
-    mockAppState.favoriteActivityIds = ['abc-animals'];
-    const tree = render(<StoryCatalogueScreen />);
-    await waitFor(() => expect(byTestId(tree, 'story-filter-bar').length).toBeGreaterThan(0));
-
-    openSaved(tree);
-
-    await waitFor(() => expect(byTestId(tree, 'saved-row-activities').length).toBeGreaterThan(0));
-  });
-
-  it('leaves the activities row out when none are saved', async () => {
-    mockAppState.favoriteStoryIds = ['bear'];
-    const tree = render(<StoryCatalogueScreen />);
-    await waitFor(() => expect(byTestId(tree, 'story-filter-bar').length).toBeGreaterThan(0));
-
-    openSaved(tree);
-
-    await waitFor(() => expect(byTestId(tree, 'saved-shelves').length).toBeGreaterThan(0));
-    expect(byTestId(tree, 'saved-row-activities')).toHaveLength(0);
-  });
-
-  /** A saved activity with no saved book is still a shelf worth showing. */
-  it('does not call the shelf empty when only activities are saved', async () => {
-    mockAppState.favoriteActivityIds = ['abc-animals'];
-    const tree = render(<StoryCatalogueScreen />);
-    await waitFor(() => expect(byTestId(tree, 'story-filter-bar').length).toBeGreaterThan(0));
-
-    openSaved(tree);
-
-    await waitFor(() => expect(byTestId(tree, 'saved-shelves').length).toBeGreaterThan(0));
-    expect(byTestId(tree, 'saved-empty')).toHaveLength(0);
-  });
-
-  it('opens a saved activity through the shared transition', async () => {
-    mockAppState.favoriteActivityIds = ['abc-animals'];
-    const tree = render(<StoryCatalogueScreen />);
-    await waitFor(() => expect(byTestId(tree, 'story-filter-bar').length).toBeGreaterThan(0));
-    openSaved(tree);
-    await waitFor(() => expect(byTestId(tree, 'saved-row-activities').length).toBeGreaterThan(0));
-
-    fireEvent.press(byTestId(tree, 'saved-activity-card-abc-animals')[0]);
-
-    expect(mockStartActivityTransition).toHaveBeenCalledWith(
-      expect.objectContaining({ id: 'abc-animals' }),
-      expect.anything(),
-    );
-  });
-});
-
-/**
- * The last kind of thing a child can keep. A song has no cover, so its card
- * shows the opening of the melody instead -- the notes they play first.
- */
 describe('StoryCatalogueScreen saved songs', () => {
   beforeEach(() => {
     jest.clearAllMocks();

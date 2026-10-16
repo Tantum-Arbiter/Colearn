@@ -53,9 +53,9 @@ describe('migrateGuideState', () => {
   });
 
   it('carries the old tutorial list forward', () => {
-    expect(migrateGuideState({ completedTutorials: ['main_menu_tour', 'emotion_cards_tips'] }).completedGuides).toEqual([
+    expect(migrateGuideState({ completedTutorials: ['main_menu_tour', 'story_reader_tips'] }).completedGuides).toEqual([
       'main_menu_tour',
-      'emotion_cards_tips',
+      'story_reader_tips',
     ]);
   });
 
@@ -144,21 +144,21 @@ describe('OwlGuideProvider', () => {
 
   it('treats a skip as seen, so it is not asked again', async () => {
     const { result } = await loaded();
-    act(() => result.current.startGuide('emotion_cards_tips'));
+    act(() => result.current.startGuide('story_reader_tips'));
 
     act(() => result.current.skipGuide());
 
-    expect(result.current.shouldShowGuide('emotion_cards_tips')).toBe(false);
+    expect(result.current.shouldShowGuide('story_reader_tips')).toBe(false);
   });
 
   it('can be dismissed without being remembered, for replays', async () => {
     const { result } = await loaded();
-    act(() => result.current.startGuide('emotion_cards_tips'));
+    act(() => result.current.startGuide('story_reader_tips'));
 
     act(() => result.current.dismissGuide());
 
     expect(result.current.activeGuide).toBeNull();
-    expect(result.current.shouldShowGuide('emotion_cards_tips')).toBe(true);
+    expect(result.current.shouldShowGuide('story_reader_tips')).toBe(true);
     expect(storage.setItem).not.toHaveBeenCalled();
   });
 
@@ -196,9 +196,9 @@ describe('OwlGuideProvider', () => {
   });
 
   it('does not write the same guide twice', async () => {
-    storage.getItem.mockResolvedValue(JSON.stringify({ completedGuides: ['emotion_cards_tips'] }));
+    storage.getItem.mockResolvedValue(JSON.stringify({ completedGuides: ['story_reader_tips'] }));
     const { result } = await loaded();
-    act(() => result.current.startGuide('emotion_cards_tips'));
+    act(() => result.current.startGuide('story_reader_tips'));
 
     act(() => result.current.completeGuide());
 
@@ -206,7 +206,7 @@ describe('OwlGuideProvider', () => {
   });
 
   it('forgets everything on reset and stamps when it did', async () => {
-    storage.getItem.mockResolvedValue(JSON.stringify({ completedGuides: ['emotion_cards_tips', 'practise_tips'] }));
+    storage.getItem.mockResolvedValue(JSON.stringify({ completedGuides: ['story_reader_tips', 'practise_tips'] }));
     const { result } = await loaded();
     const before = Date.now();
 
