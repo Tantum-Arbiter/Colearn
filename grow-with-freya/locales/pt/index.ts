@@ -1341,31 +1341,6 @@ export default {
         artist: 'Batidas binaurais',
         description: 'Progressão completa: Rumo ao relaxamento → Relaxamento profundo.',
       },
-      bearsBirthdayParty: {
-        title: 'Festa de aniversário do urso',
-        artist: 'História para dormir',
-        description: 'Uma história emocionante sobre um urso celebrando um aniversário especial.',
-      },
-      damselElephant: {
-        title: 'Damsel o elefante',
-        artist: 'História para dormir',
-        description: 'Junte-se a Damsel o elefante numa aventura suave.',
-      },
-      jimmyMouse: {
-        title: 'Jimmy Rato e os urbanos',
-        artist: 'História para dormir',
-        description: 'Um ratinho descobre a cidade grande.',
-      },
-      newYearJungle: {
-        title: 'Ano Novo na selva',
-        artist: 'História para dormir',
-        description: 'Os animais da selva celebram juntos o ano novo.',
-      },
-      snowWhite: {
-        title: 'Branca de Neve',
-        artist: 'História para dormir',
-        description: 'O clássico conto de fadas, perfeito para dormir.',
-      },
     },
     tags: {
       calming: 'Calmante',

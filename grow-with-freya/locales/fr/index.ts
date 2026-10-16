@@ -1341,31 +1341,6 @@ export default {
         artist: 'Battements binauraux',
         description: 'Progression complète : Vers la détente → Détente profonde.',
       },
-      bearsBirthdayParty: {
-        title: 'L\'anniversaire de l\'ours',
-        artist: 'Histoire du soir',
-        description: 'Une histoire chaleureuse sur un ours fêtant un anniversaire spécial.',
-      },
-      damselElephant: {
-        title: 'Damsel l\'éléphant',
-        artist: 'Histoire du soir',
-        description: 'Rejoignez Damsel l\'éléphant dans une douce aventure.',
-      },
-      jimmyMouse: {
-        title: 'Jimmy la souris et les citadins',
-        artist: 'Histoire du soir',
-        description: 'Une petite souris découvre la grande ville.',
-      },
-      newYearJungle: {
-        title: 'Nouvel An dans la jungle',
-        artist: 'Histoire du soir',
-        description: 'Les animaux de la jungle célèbrent la nouvelle année ensemble.',
-      },
-      snowWhite: {
-        title: 'Blanche-Neige',
-        artist: 'Histoire du soir',
-        description: 'Le conte de fées classique, parfait pour le coucher.',
-      },
     },
     tags: {
       calming: 'Apaisant',

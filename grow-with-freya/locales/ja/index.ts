@@ -1341,31 +1341,6 @@ export default {
         artist: 'バイノーラルビート',
         description: '完全な進行：リラックスへ → 深いリラックス。',
       },
-      bearsBirthdayParty: {
-        title: 'くまさんの誕生日パーティー',
-        artist: 'おやすみ前のお話',
-        description: '特別な誕生日を祝うくまさんの心温まるお話。',
-      },
-      damselElephant: {
-        title: 'ダムセルぞうさん',
-        artist: 'おやすみ前のお話',
-        description: 'ダムセルぞうさんと優しい冒険に出かけよう。',
-      },
-      jimmyMouse: {
-        title: 'ジミーねずみと街の人たち',
-        artist: 'おやすみ前のお話',
-        description: '小さなねずみが大きな街を発見する。',
-      },
-      newYearJungle: {
-        title: 'ジャングルの新年',
-        artist: 'おやすみ前のお話',
-        description: 'ジャングルの動物たちが一緒に新年を祝います。',
-      },
-      snowWhite: {
-        title: '白雪姫',
-        artist: 'おやすみ前のお話',
-        description: '白雪姫の古典的なおとぎ話、おやすみ前にぴったり。',
-      },
     },
     tags: {
       calming: '癒し',

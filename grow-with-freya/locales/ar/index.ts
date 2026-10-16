@@ -1341,31 +1341,6 @@ export default {
         artist: 'نغمات بينورال',
         description: 'تقدم كامل: استرخاء تدريجي ← استرخاء عميق.',
       },
-      bearsBirthdayParty: {
-        title: 'حفلة عيد ميلاد الدب',
-        artist: 'قصة ما قبل النوم',
-        description: 'قصة دافئة عن دب يحتفل بعيد ميلاد مميز.',
-      },
-      damselElephant: {
-        title: 'دامسل الفيل',
-        artist: 'قصة ما قبل النوم',
-        description: 'انضم إلى دامسل الفيل في مغامرة لطيفة.',
-      },
-      jimmyMouse: {
-        title: 'جيمي الفأر وأهل المدينة',
-        artist: 'قصة ما قبل النوم',
-        description: 'فأر صغير يكتشف المدينة الكبيرة.',
-      },
-      newYearJungle: {
-        title: 'رأس السنة في الغابة',
-        artist: 'قصة ما قبل النوم',
-        description: 'حيوانات الغابة تحتفل بالعام الجديد معاً.',
-      },
-      snowWhite: {
-        title: 'سنو وايت',
-        artist: 'قصة ما قبل النوم',
-        description: 'حكاية سنو وايت الكلاسيكية، مثالية لوقت النوم.',
-      },
     },
     tags: {
       calming: 'مهدئ',

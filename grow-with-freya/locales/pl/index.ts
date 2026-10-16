@@ -1341,31 +1341,6 @@ export default {
         artist: 'Bity binauralne',
         description: 'Pełna progresja: Ku relaksacji → Głęboki relaks.',
       },
-      bearsBirthdayParty: {
-        title: 'Urodziny miś',
-        artist: 'Bajka na dobranoc',
-        description: 'Ciepła historia o misiu świętującym urodziny.',
-      },
-      damselElephant: {
-        title: 'Damsel słoń',
-        artist: 'Bajka na dobranoc',
-        description: 'Dołącz do słonia Damsel w delikatnej przygodzie.',
-      },
-      jimmyMouse: {
-        title: 'Jimmy Mysz i mieszkańcy miasta',
-        artist: 'Bajka na dobranoc',
-        description: 'Mała myszka odkrywa duże miasto.',
-      },
-      newYearJungle: {
-        title: 'Nowy Rok w dżungli',
-        artist: 'Bajka na dobranoc',
-        description: 'Zwierzęta dżungli razem świętują Nowy Rok.',
-      },
-      snowWhite: {
-        title: 'Królewna Śnieżka',
-        artist: 'Bajka na dobranoc',
-        description: 'Klasyczna baśń, idealna na dobranoc.',
-      },
     },
     tags: {
       calming: 'Uspokajający',

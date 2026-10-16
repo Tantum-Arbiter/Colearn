@@ -1341,31 +1341,6 @@ export default {
         artist: 'Binaurale beats',
         description: 'Complete progressie: Naar ontspanning → Diepe ontspanning.',
       },
-      bearsBirthdayParty: {
-        title: 'Beertjes verjaardagsfeest',
-        artist: 'Bedtijdverhaal',
-        description: 'Een hartverwarmend verhaal over een beer die verjaardag viert.',
-      },
-      damselElephant: {
-        title: 'Damsel de olifant',
-        artist: 'Bedtijdverhaal',
-        description: 'Ga mee met Damsel de olifant op een zacht avontuur.',
-      },
-      jimmyMouse: {
-        title: 'Jimmy Muis en de stadsgenoten',
-        artist: 'Bedtijdverhaal',
-        description: 'Een klein muisje ontdekt de grote stad.',
-      },
-      newYearJungle: {
-        title: 'Nieuwjaar in de jungle',
-        artist: 'Bedtijdverhaal',
-        description: 'De jungledieren vieren samen het nieuwe jaar.',
-      },
-      snowWhite: {
-        title: 'Sneeuwwitje',
-        artist: 'Bedtijdverhaal',
-        description: 'Het klassieke sprookje, perfect voor bedtijd.',
-      },
     },
     tags: {
       calming: 'Kalmerend',

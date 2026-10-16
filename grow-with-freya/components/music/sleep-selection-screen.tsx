@@ -49,7 +49,7 @@ export function SleepSelectionScreen({ onTrackSelect, onBack, skipBackground }: 
   const [duration, setDuration] = useState(0);
   const { scaledFontSize, scaledButtonSize, scaledPadding, textSizeScale, isTablet, contentMaxWidth } = useAccessibility();
 
-  // Get relaxation tracks (binaural beats only, no narration books)
+  // Get relaxation tracks (binaural beats only)
   const relaxTracks = useMemo(() => {
     const binauralTracks = getTracksByCategory('binaural-beats');
     return binauralTracks.filter(track =>
@@ -276,7 +276,7 @@ export function SleepSelectionScreen({ onTrackSelect, onBack, skipBackground }: 
                 const isPlaying = isActive && !isPaused;
                 const isTrackPaused = isActive && isPaused;
                 const progress = isActive && duration > 0 ? currentTime / duration : 0;
-                const iconName = track.subcategory === 'audiobook' ? 'book' : track.isSequence ? 'moon' : 'musical-note';
+                const iconName = track.isSequence ? 'moon' : 'musical-note';
                 return (
                   <Pressable
                     key={track.id}

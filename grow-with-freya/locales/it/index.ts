@@ -1341,31 +1341,6 @@ export default {
         artist: 'Battiti binaurali',
         description: 'Progressione completa: Verso il rilassamento → Rilassamento profondo.',
       },
-      bearsBirthdayParty: {
-        title: 'La festa di compleanno dell\'orso',
-        artist: 'Storia della buonanotte',
-        description: 'Una storia commovente su un orso che festeggia un compleanno speciale.',
-      },
-      damselElephant: {
-        title: 'Damsel l\'elefante',
-        artist: 'Storia della buonanotte',
-        description: 'Unisciti a Damsel l\'elefante in una dolce avventura.',
-      },
-      jimmyMouse: {
-        title: 'Jimmy Topo e i cittadini',
-        artist: 'Storia della buonanotte',
-        description: 'Un topolino scopre la grande città.',
-      },
-      newYearJungle: {
-        title: 'Capodanno nella giungla',
-        artist: 'Storia della buonanotte',
-        description: 'Gli animali della giungla festeggiano insieme il nuovo anno.',
-      },
-      snowWhite: {
-        title: 'Biancaneve',
-        artist: 'Storia della buonanotte',
-        description: 'La classica fiaba, perfetta per la buonanotte.',
-      },
     },
     tags: {
       calming: 'Calmante',

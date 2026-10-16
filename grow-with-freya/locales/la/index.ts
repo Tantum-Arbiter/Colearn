@@ -1341,31 +1341,6 @@ export default {
         artist: 'Pulsus binaurales',
         description: 'Progressio plena: Ad relaxationem → Relaxatio profunda.',
       },
-      bearsBirthdayParty: {
-        title: 'Dies natalis ursi',
-        artist: 'Fabula vespertina',
-        description: 'Fabula de urso diem natalem celebrante.',
-      },
-      damselElephant: {
-        title: 'Damsel elephantus',
-        artist: 'Fabula vespertina',
-        description: 'Damsel elephantum in leni itinere comitare.',
-      },
-      jimmyMouse: {
-        title: 'Jacobus Mus et urbani',
-        artist: 'Fabula vespertina',
-        description: 'Parvus mus urbem magnam invenit.',
-      },
-      newYearJungle: {
-        title: 'Annus novus in silva',
-        artist: 'Fabula vespertina',
-        description: 'Animalia silvae annum novum una celebrant.',
-      },
-      snowWhite: {
-        title: 'Nivea',
-        artist: 'Fabula vespertina',
-        description: 'Fabula classica Niveae, perfecta ad somnum.',
-      },
     },
     tags: {
       calming: 'Sedans',

@@ -1341,31 +1341,6 @@ export default {
         artist: 'Binaural vuruşlar',
         description: 'Tam ilerleme: Rahatlamaya doğru → Derin rahatlama.',
       },
-      bearsBirthdayParty: {
-        title: 'Ayının doğum günü partisi',
-        artist: 'Uyku hikayesi',
-        description: 'Özel bir doğum günü kutlayan ayı hakkında sıcak bir hikaye.',
-      },
-      damselElephant: {
-        title: 'Damsel fil',
-        artist: 'Uyku hikayesi',
-        description: 'Damsel fil ile nazik bir maceraya katıl.',
-      },
-      jimmyMouse: {
-        title: 'Jimmy Fare ve şehirliler',
-        artist: 'Uyku hikayesi',
-        description: 'Küçük bir fare büyük şehri keşfeder.',
-      },
-      newYearJungle: {
-        title: 'Ormanda yeni yıl',
-        artist: 'Uyku hikayesi',
-        description: 'Orman hayvanları birlikte yeni yılı kutlar.',
-      },
-      snowWhite: {
-        title: 'Pamuk Prenses',
-        artist: 'Uyku hikayesi',
-        description: 'Klasik masal, uyku vakti için mükemmel.',
-      },
     },
     tags: {
       calming: 'Sakinleştirici',

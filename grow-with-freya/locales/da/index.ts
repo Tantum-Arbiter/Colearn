@@ -1341,31 +1341,6 @@ export default {
         artist: 'Binaurale beats',
         description: 'Komplet forløb: Ind i afslapning → Dyb afslapning.',
       },
-      bearsBirthdayParty: {
-        title: 'Bjørnens fødselsdag',
-        artist: 'Godnathistorie',
-        description: 'En varm historie om en bjørn, der fejrer en særlig fødselsdag.',
-      },
-      damselElephant: {
-        title: 'Damsel elefanten',
-        artist: 'Godnathistorie',
-        description: 'Følg med Damsel elefanten på et blødt eventyr.',
-      },
-      jimmyMouse: {
-        title: 'Jimmy Mus og storbyfolket',
-        artist: 'Godnathistorie',
-        description: 'En lille mus opdager den store by.',
-      },
-      newYearJungle: {
-        title: 'Nytår i junglen',
-        artist: 'Godnathistorie',
-        description: 'Jungledyrene fejrer nytår sammen.',
-      },
-      snowWhite: {
-        title: 'Snehvide',
-        artist: 'Godnathistorie',
-        description: 'Det klassiske eventyr om Snehvide, perfekt til sengetid.',
-      },
     },
     tags: {
       calming: 'Beroligende',

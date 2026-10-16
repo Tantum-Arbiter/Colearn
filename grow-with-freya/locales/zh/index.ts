@@ -1341,31 +1341,6 @@ export default {
         artist: '双耳节拍',
         description: '完整进程：进入放松 → 深度放松。',
       },
-      bearsBirthdayParty: {
-        title: '小熊的生日派对',
-        artist: '睡前故事',
-        description: '一个关于小熊庆祝特别生日的温馨故事。',
-      },
-      damselElephant: {
-        title: '大象丹赛尔',
-        artist: '睡前故事',
-        description: '和大象丹赛尔一起踏上温柔的冒险。',
-      },
-      jimmyMouse: {
-        title: '老鼠吉米和城里人',
-        artist: '睡前故事',
-        description: '一只小老鼠发现了大城市。',
-      },
-      newYearJungle: {
-        title: '丛林里的新年',
-        artist: '睡前故事',
-        description: '丛林动物们一起庆祝新年。',
-      },
-      snowWhite: {
-        title: '白雪公主',
-        artist: '睡前故事',
-        description: '经典童话白雪公主，适合睡前听。',
-      },
     },
     tags: {
       calming: '镇静',

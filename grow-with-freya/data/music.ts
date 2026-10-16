@@ -26,17 +26,6 @@ function requireAudioFile(filename: string): any {
         return require('../assets/audio/music/binaural-beats/sleep/transcendent/alpha-phase.mp3');
       case 'binaural-beats/sleep/transcendent/theta-phase.mp3':
         return require('../assets/audio/music/binaural-beats/sleep/transcendent/theta-phase.mp3');
-      // Audiobooks
-      case 'audiobooks/bears_birthday_party-st.mp3':
-        return require('../assets/audio/audiobooks/bears_birthday_party-st.mp3');
-      case 'audiobooks/damsel-the-elephant.mp3':
-        return require('../assets/audio/audiobooks/damsel-the-elephant.mp3');
-      case 'audiobooks/jimmy-mouse-and-the-city-slickers.mp3':
-        return require('../assets/audio/audiobooks/jimmy-mouse-and-the-city-slickers.mp3');
-      case 'audiobooks/new-year-in-the-jungle.mp3':
-        return require('../assets/audio/audiobooks/new-year-in-the-jungle.mp3');
-      case 'audiobooks/snow-white-shorter.mp3':
-        return require('../assets/audio/audiobooks/snow-white-shorter.mp3');
       default:
         console.warn(`Audio file not found: ${filename}`);
         return null;
@@ -238,98 +227,7 @@ export const BINAURAL_BEATS_TRACKS: MusicTrack[] = [
   },
 ];
 
-// Audio Books - Bedtime stories narrated for listening
-// Audio files located in: assets/audio/audiobooks/
-// Duration set to 0 - actual duration is determined at runtime when audio loads
-export const AUDIOBOOK_TRACKS: MusicTrack[] = [
-  {
-    id: 'audiobook-bears-birthday-party',
-    title: "Bear's Birthday Party",
-    titleKey: 'music.tracks.bearsBirthdayParty.title',
-    artist: 'Bedtime Story',
-    artistKey: 'music.tracks.bearsBirthdayParty.artist',
-    category: 'bedtime',
-    duration: 0, // Determined at runtime
-    audioSource: requireAudioFile('audiobooks/bears_birthday_party-st.mp3'),
-    description: 'A heartwarming tale about a bear celebrating a special birthday.',
-    descriptionKey: 'music.tracks.bearsBirthdayParty.description',
-    isAvailable: true,
-    tags: ['stories', 'bedtime'],
-    ageRange: '2-5',
-    volume: 0.6,
-    subcategory: 'audiobook',
-  },
-  {
-    id: 'audiobook-damsel-the-elephant',
-    title: 'Damsel the Elephant',
-    titleKey: 'music.tracks.damselElephant.title',
-    artist: 'Bedtime Story',
-    artistKey: 'music.tracks.damselElephant.artist',
-    category: 'bedtime',
-    duration: 0, // Determined at runtime
-    audioSource: requireAudioFile('audiobooks/damsel-the-elephant.mp3'),
-    description: 'Join Damsel the elephant on a gentle adventure.',
-    descriptionKey: 'music.tracks.damselElephant.description',
-    isAvailable: true,
-    tags: ['stories', 'bedtime'],
-    ageRange: '2-5',
-    volume: 0.6,
-    subcategory: 'audiobook',
-  },
-  {
-    id: 'audiobook-jimmy-mouse',
-    title: 'Jimmy Mouse and the City Slickers',
-    titleKey: 'music.tracks.jimmyMouse.title',
-    artist: 'Bedtime Story',
-    artistKey: 'music.tracks.jimmyMouse.artist',
-    category: 'bedtime',
-    duration: 0, // Determined at runtime
-    audioSource: requireAudioFile('audiobooks/jimmy-mouse-and-the-city-slickers.mp3'),
-    description: 'A little mouse discovers the big city.',
-    descriptionKey: 'music.tracks.jimmyMouse.description',
-    isAvailable: true,
-    tags: ['stories', 'bedtime'],
-    ageRange: '2-5',
-    volume: 0.6,
-    subcategory: 'audiobook',
-  },
-  {
-    id: 'audiobook-new-year-jungle',
-    title: 'New Year in the Jungle',
-    titleKey: 'music.tracks.newYearJungle.title',
-    artist: 'Bedtime Story',
-    artistKey: 'music.tracks.newYearJungle.artist',
-    category: 'bedtime',
-    duration: 0, // Determined at runtime
-    audioSource: requireAudioFile('audiobooks/new-year-in-the-jungle.mp3'),
-    description: 'The jungle animals celebrate a new year together.',
-    descriptionKey: 'music.tracks.newYearJungle.description',
-    isAvailable: true,
-    tags: ['stories', 'bedtime'],
-    ageRange: '2-5',
-    volume: 0.6,
-    subcategory: 'audiobook',
-  },
-  {
-    id: 'audiobook-snow-white',
-    title: 'Snow White',
-    titleKey: 'music.tracks.snowWhite.title',
-    artist: 'Bedtime Story',
-    artistKey: 'music.tracks.snowWhite.artist',
-    category: 'bedtime',
-    duration: 0, // Determined at runtime
-    audioSource: requireAudioFile('audiobooks/snow-white-shorter.mp3'),
-    description: 'The classic fairy tale of Snow White, perfect for bedtime.',
-    descriptionKey: 'music.tracks.snowWhite.description',
-    isAvailable: true,
-    tags: ['stories', 'bedtime'],
-    ageRange: '3-6',
-    volume: 0.6,
-    subcategory: 'audiobook',
-  },
-];
-
-// Combine all tracks (binaural beats + mock tracks for display — audiobooks excluded for now)
+// Combine all tracks (binaural beats + mock tracks for display)
 export const ALL_MUSIC_TRACKS: MusicTrack[] = [
   ...BINAURAL_BEATS_TRACKS,
   ...MOCK_TRACKS,

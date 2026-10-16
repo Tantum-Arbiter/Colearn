@@ -1341,31 +1341,6 @@ export default {
         artist: 'Binaurale Beats',
         description: 'Kompletter Verlauf: In die Entspannung → Tiefe Entspannung.',
       },
-      bearsBirthdayParty: {
-        title: 'Bärs Geburtstagsparty',
-        artist: 'Gutenachtgeschichte',
-        description: 'Eine herzliche Geschichte über einen Bären, der Geburtstag feiert.',
-      },
-      damselElephant: {
-        title: 'Damsel der Elefant',
-        artist: 'Gutenachtgeschichte',
-        description: 'Begleite Damsel den Elefanten auf ein sanftes Abenteuer.',
-      },
-      jimmyMouse: {
-        title: 'Jimmy Maus und die Stadtmenschen',
-        artist: 'Gutenachtgeschichte',
-        description: 'Eine kleine Maus entdeckt die große Stadt.',
-      },
-      newYearJungle: {
-        title: 'Neujahr im Dschungel',
-        artist: 'Gutenachtgeschichte',
-        description: 'Die Dschungeltiere feiern zusammen Neujahr.',
-      },
-      snowWhite: {
-        title: 'Schneewittchen',
-        artist: 'Gutenachtgeschichte',
-        description: 'Das klassische Märchen, perfekt zum Einschlafen.',
-      },
     },
     tags: {
       calming: 'Beruhigend',

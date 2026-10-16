@@ -1341,31 +1341,6 @@ export default {
         artist: 'Latidos binaurales',
         description: 'Progresión completa: Hacia la relajación → Relajación profunda.',
       },
-      bearsBirthdayParty: {
-        title: 'La fiesta de cumpleaños del oso',
-        artist: 'Cuento para dormir',
-        description: 'Una historia entrañable sobre un oso celebrando un cumpleaños especial.',
-      },
-      damselElephant: {
-        title: 'Damsel el elefante',
-        artist: 'Cuento para dormir',
-        description: 'Únete a Damsel el elefante en una aventura suave.',
-      },
-      jimmyMouse: {
-        title: 'Jimmy Ratón y los urbanitas',
-        artist: 'Cuento para dormir',
-        description: 'Un pequeño ratón descubre la gran ciudad.',
-      },
-      newYearJungle: {
-        title: 'Año Nuevo en la selva',
-        artist: 'Cuento para dormir',
-        description: 'Los animales de la selva celebran juntos el año nuevo.',
-      },
-      snowWhite: {
-        title: 'Blancanieves',
-        artist: 'Cuento para dormir',
-        description: 'El clásico cuento de hadas, perfecto para dormir.',
-      },
     },
     tags: {
       calming: 'Calmante',

@@ -1550,31 +1550,6 @@ export default {
         artist: 'Binaural Beats',
         description: 'Complete relaxation progression: Ease into Relaxation → Deep Relaxation.',
       },
-      bearsBirthdayParty: {
-        title: "Bear's Birthday Party",
-        artist: 'Bedtime Story',
-        description: 'A heartwarming tale about a bear celebrating a special birthday.',
-      },
-      damselElephant: {
-        title: 'Damsel the Elephant',
-        artist: 'Bedtime Story',
-        description: 'Join Damsel the elephant on a gentle adventure.',
-      },
-      jimmyMouse: {
-        title: 'Jimmy Mouse and the City Slickers',
-        artist: 'Bedtime Story',
-        description: 'A little mouse discovers the big city.',
-      },
-      newYearJungle: {
-        title: 'New Year in the Jungle',
-        artist: 'Bedtime Story',
-        description: 'The jungle animals celebrate a new year together.',
-      },
-      snowWhite: {
-        title: 'Snow White',
-        artist: 'Bedtime Story',
-        description: 'The classic fairy tale of Snow White, perfect for bedtime.',
-      },
     },
     tags: {
       calming: 'Calming',
