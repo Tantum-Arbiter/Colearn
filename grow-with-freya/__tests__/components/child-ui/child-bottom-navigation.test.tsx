@@ -77,11 +77,11 @@ describe('ChildBottomNavigation', () => {
     expect(underTest.bottom).toBeGreaterThan(0);
   });
 
-  it('shows the first item as learning, with a school cap rather than a house', () => {
+  it('shows the first item as learning, with an open book rather than a house or a school cap', () => {
     const home = CHILD_NAV_ITEMS.find((item) => item.id === 'home')!;
 
-    expect(home.icon).toBe('school-outline');
-    expect(home.selectedIcon).toBe('school');
+    expect(home.icon).toBe('book-outline');
+    expect(home.selectedIcon).toBe('book');
   });
 
   /**
