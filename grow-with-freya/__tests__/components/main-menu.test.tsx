@@ -74,7 +74,6 @@ describe('MainMenu', () => {
 
   const MENU_ITEMS = [
     { id: 'stories', destination: 'stories' },
-    { id: 'learning', destination: 'learning' },
     { id: 'instruments', destination: 'instruments' },
   ];
 
@@ -133,7 +132,7 @@ describe('MainMenu', () => {
     // findAll matches the composite and its host node, so compare against
     // another single-instance item rather than asserting an exact count
     expect(byTestId(result, 'menu-icon-stories').length).toBe(
-      byTestId(result, 'menu-icon-learning').length
+      byTestId(result, 'menu-icon-instruments').length
     );
   });
 

@@ -5,7 +5,7 @@
   "coverImage": "assets/stories/music-story-1/cover/thumbnail.webp",
   "isAvailable": true,
   "ageRange": "2-5",
-  "duration": 11,
+  "pageCount": 11,
   "description": "Music integration test story 1. Music challenges on pages 2, 3, 4, and 5 with interactive element coexistence on pages 2 and 4.",
   "isPremium": false,
   "author": "Test Author",

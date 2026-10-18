@@ -17,11 +17,12 @@ export interface ResumeOptions {
   skipCoverPage: boolean;
   savedPlace?: ReadingPlace;
   totalPages: number;
+  startPage?: number;
 }
 
-export function resumePageIndex({ skipCoverPage, savedPlace, totalPages }: ResumeOptions): number {
+export function resumePageIndex({ skipCoverPage, savedPlace, totalPages, startPage }: ResumeOptions): number {
   const lastIndex = readablePages(totalPages);
   if (lastIndex === 0 || !skipCoverPage) return 0;
-  const saved = savedPlace?.pageIndex ?? 0;
-  return Math.min(saved > 0 ? saved : 1, lastIndex);
+  const from = startPage ?? savedPlace?.pageIndex ?? 0;
+  return Math.min(from > 0 ? from : 1, lastIndex);
 }

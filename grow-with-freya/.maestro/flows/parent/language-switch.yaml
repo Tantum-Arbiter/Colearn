@@ -16,7 +16,7 @@ name: The flag on home switches the app's language, and it sticks
 - assertNotVisible:
     id: "language-picker"
 - stopApp
-- launchApp
+- runFlow: ../../helpers/launch.yaml
 - runFlow: ../../helpers/dismiss-interruptions.yaml
 - extendedWaitUntil:
     visible: "Fortschritt"

@@ -787,7 +787,7 @@ const styles = StyleSheet.create({
     height: RING_SIZE,
   },
   ringCentre: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     alignItems: 'center',
     justifyContent: 'center',
   },

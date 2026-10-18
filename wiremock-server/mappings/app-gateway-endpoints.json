@@ -146,7 +146,7 @@
                   "type": "story",
                   "text": "The owl closed one eye, then the other.",
                   "localizedText": {
-                    "en": "The owl closed one eye, then the other."
+                    "4-6": { "en": "The owl closed one eye, then the other." }
                   },
                   "backgroundImage": "stories/e2e-bedtime-story/page-1.webp"
                 },
@@ -156,7 +156,7 @@
                   "type": "story",
                   "text": "And the whole wood went quiet for the night.",
                   "localizedText": {
-                    "en": "And the whole wood went quiet for the night."
+                    "4-6": { "en": "And the whole wood went quiet for the night." }
                   },
                   "backgroundImage": "stories/e2e-bedtime-story/page-2.webp"
                 }

@@ -207,25 +207,21 @@ public class ProfileController {
 
         UserProfile profile = new UserProfile(userId);
 
-        profile.setNickname((String) requestBody.get("nickname"));
-        profile.setAvatarType((String) requestBody.get("avatarType"));
+        profile.setNickname(stringField(requestBody, "nickname"));
+        profile.setAvatarType(stringField(requestBody, "avatarType"));
 
         if (requestBody.containsKey("avatarId")) {
-            profile.setAvatarId((String) requestBody.get("avatarId"));
+            profile.setAvatarId(stringField(requestBody, "avatarId"));
         }
 
         if (requestBody.containsKey("notifications")) {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> notifications = (Map<String, Object>) requestBody.get("notifications");
-            profile.setNotifications(notifications);
+            profile.setNotifications(mapField(requestBody, "notifications"));
         } else {
             profile.setNotifications(UserProfile.createDefaultNotifications());
         }
 
         if (requestBody.containsKey("schedule")) {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> schedule = (Map<String, Object>) requestBody.get("schedule");
-            profile.setSchedule(schedule);
+            profile.setSchedule(mapField(requestBody, "schedule"));
         } else {
             profile.setSchedule(UserProfile.createDefaultSchedule());
         }
@@ -235,20 +231,19 @@ public class ProfileController {
 
     private void updateProfileFromRequest(UserProfile profile, Map<String, Object> requestBody) {
         if (requestBody.containsKey("nickname")) {
-            profile.setNickname((String) requestBody.get("nickname"));
+            profile.setNickname(stringField(requestBody, "nickname"));
         }
 
         if (requestBody.containsKey("avatarType")) {
-            profile.setAvatarType((String) requestBody.get("avatarType"));
+            profile.setAvatarType(stringField(requestBody, "avatarType"));
         }
 
         if (requestBody.containsKey("avatarId")) {
-            profile.setAvatarId((String) requestBody.get("avatarId"));
+            profile.setAvatarId(stringField(requestBody, "avatarId"));
         }
 
         if (requestBody.containsKey("notifications")) {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> notifications = (Map<String, Object>) requestBody.get("notifications");
+            Map<String, Object> notifications = mapField(requestBody, "notifications");
 
             Map<String, Object> currentNotifications = profile.getNotifications();
             if (currentNotifications == null) {
@@ -260,8 +255,7 @@ public class ProfileController {
         }
 
         if (requestBody.containsKey("schedule")) {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> schedule = (Map<String, Object>) requestBody.get("schedule");
+            Map<String, Object> schedule = mapField(requestBody, "schedule");
 
             Map<String, Object> currentSchedule = profile.getSchedule();
             if (currentSchedule == null) {
@@ -271,6 +265,23 @@ public class ProfileController {
             currentSchedule.putAll(schedule);
             profile.setSchedule(currentSchedule);
         }
+    }
+
+    private static String stringField(Map<String, Object> requestBody, String name) {
+        Object value = requestBody.get(name);
+        if (value == null || value instanceof String) {
+            return (String) value;
+        }
+        throw new ValidationException(ErrorCode.INVALID_PROFILE_DATA, name + " must be a string");
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> mapField(Map<String, Object> requestBody, String name) {
+        Object value = requestBody.get(name);
+        if (value instanceof Map<?, ?>) {
+            return (Map<String, Object>) value;
+        }
+        throw new ValidationException(ErrorCode.INVALID_PROFILE_DATA, name + " must be an object");
     }
 
     private void validateProfile(UserProfile profile) {

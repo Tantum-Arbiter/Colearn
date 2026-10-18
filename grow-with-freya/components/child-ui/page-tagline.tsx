@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Animated, StyleSheet, View } from 'react-native';
 import Svg, { Defs, Path, Text as SvgText, TextPath } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
 import { ACCENT_GOLD, TEXT_PRIMARY } from '@/constants/night-palette';
+import { textAdvance } from '@/constants/arched-greeting';
 import { Fonts } from '@/constants/theme';
 import { useAccessibility } from '@/hooks/use-accessibility';
+import { HEADING_HALO, HeadingHalo } from './heading-halo';
 import { SPACE_1 } from './tokens';
 
 /**
@@ -35,6 +37,10 @@ const LINE_SIZE = { phone: 16, tablet: 20 } as const;
 const CROWN_TO_CROWN = 1.25;
 const STAR_SIZE = { phone: 12, tablet: 15 } as const;
 
+export function taglineFontSize(isTablet: boolean): number {
+  return isTablet ? LINE_SIZE.tablet : LINE_SIZE.phone;
+}
+
 let taglineCount = 0;
 
 interface PageTaglineProps {
@@ -42,6 +48,7 @@ interface PageTaglineProps {
   lines: readonly [string, string];
   /** The width the block is given, which sets how far the arch bends. */
   width: number;
+  starOpacity?: Animated.WithAnimatedValue<number>;
   testID?: string;
 }
 
@@ -93,15 +100,30 @@ function crownGap(width: number, fontSize: number): number {
   return CROWN_TO_CROWN * fontSize - boxHeight;
 }
 
+export function taglineWordsDepth(secondLine: string, width: number, fontSize: number): number {
+  if (!(width > 0)) return 0;
+
+  const radius = width * TAGLINE_ARCH_RADIUS_RATIO;
+  const firstBox = Math.ceil(fontSize + taglineArchRise(width) + fontSize * DESCENDER_ROOM);
+  const secondTop = firstBox + crownGap(width, fontSize);
+  const halfArc = Math.min(
+    textAdvance(secondLine, fontSize, 'medium') / 2,
+    radius * Math.asin(Math.min(width / 2 / radius, 1))
+  );
+  const drop = radius * (1 - Math.cos(halfArc / radius));
+
+  return secondTop + fontSize + drop + fontSize * DESCENDER_ROOM;
+}
+
 /**
  * The line beneath the page title -- "A brighter world in every story" -- set
  * on two shallow arches in the app's own rounded face, with a small gold star
  * under it, the way a storybook closes a title page.
  */
-export function PageTagline({ lines, width, testID = 'page-tagline' }: PageTaglineProps) {
+export function PageTagline({ lines, width, starOpacity = 1, testID = 'page-tagline' }: PageTaglineProps) {
   const { isTablet } = useAccessibility();
   const [uid] = useState(() => `page-tagline-${(taglineCount += 1)}`);
-  const fontSize = isTablet ? LINE_SIZE.tablet : LINE_SIZE.phone;
+  const fontSize = taglineFontSize(isTablet);
 
   return (
     <View
@@ -112,6 +134,7 @@ export function PageTagline({ lines, width, testID = 'page-tagline' }: PageTagli
       accessibilityRole="text"
       accessibilityLabel={lines.join(' ')}
     >
+      <HeadingHalo testID={`${testID}-halo`} spread={HEADING_HALO.tagline} />
       <ArchedLine id={`${uid}-1`} text={lines[0]} width={width} fontSize={fontSize} />
       {/* The words ride the crown at the top of each box, so the arch's drop
           would otherwise sit between the lines as dead space. Pulled up, the
@@ -120,7 +143,9 @@ export function PageTagline({ lines, width, testID = 'page-tagline' }: PageTagli
       <View style={{ marginTop: crownGap(width, fontSize) }}>
         <ArchedLine id={`${uid}-2`} text={lines[1]} width={width} fontSize={fontSize} />
       </View>
-      <Ionicons name="star" size={isTablet ? STAR_SIZE.tablet : STAR_SIZE.phone} color={ACCENT_GOLD} style={styles.star} />
+      <Animated.View testID={`${testID}-star`} style={[styles.star, { opacity: starOpacity }]}>
+        <Ionicons name="star" size={isTablet ? STAR_SIZE.tablet : STAR_SIZE.phone} color={ACCENT_GOLD} />
+      </Animated.View>
     </View>
   );
 }

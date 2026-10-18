@@ -76,6 +76,29 @@ public class LocalizedText {
         this.zh = zh;
     }
 
+    public String getExactText(String languageCode) {
+        if (languageCode == null) {
+            return null;
+        }
+        return switch (languageCode.toLowerCase()) {
+            case "en" -> en;
+            case "pl" -> pl;
+            case "es" -> es;
+            case "de" -> de;
+            case "fr" -> fr;
+            case "it" -> it;
+            case "pt" -> pt;
+            case "ja" -> ja;
+            case "ar" -> ar;
+            case "tr" -> tr;
+            case "nl" -> nl;
+            case "da" -> da;
+            case "la" -> la;
+            case "zh" -> zh;
+            default -> null;
+        };
+    }
+
     public String getText(String languageCode) {
         if (languageCode == null) {
             return en;

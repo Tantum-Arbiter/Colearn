@@ -48,6 +48,7 @@ import {
 } from '@/services/music-asset-registry';
 import type { PracticeSong, PracticeSongDifficulty } from '@/services/music-asset-registry';
 import { useAppStore } from '@/store/app-store';
+import { MUSIC_PRACTISE_ACTIVITY } from '@/data/learning-plan';
 import type { MusicChallenge } from '@/types/story';
 import { Fonts } from '@/constants/theme';
 import { useGlobalSound } from '@/contexts/global-sound-context';
@@ -107,6 +108,7 @@ export function PractiseScreen({ onBack, isActive = false }: PractiseScreenProps
   const [selectedSong, setSelectedSong] = useState<PracticeSong | null>(null);
   const favoriteSongIds = useAppStore((state) => state.favoriteSongIds);
   const toggleFavoriteSong = useAppStore((state) => state.toggleFavoriteSong);
+  const recordActivityFinished = useAppStore((state) => state.recordActivityFinished);
   const [showMusicSheet, setShowMusicSheet] = useState(false);
   const [instrumentIsRotated, setInstrumentIsRotated] = useState(false);
   const [musicUiHidden, setMusicUiHidden] = useState(false);
@@ -176,7 +178,8 @@ export function PractiseScreen({ onBack, isActive = false }: PractiseScreenProps
   // Updates live when the user toggles mute or adjusts the master slider.
   const effectiveNoteVolume = globalSound?.isMuted ? 0 : 0.4 * (globalSound?.masterVolume ?? 1);
 
-  const musicChallenge = useMusicChallenge(musicChallengeConfig, undefined, effectiveNoteVolume, audioSessionControl);
+  const handleSongFinished = useCallback(() => recordActivityFinished(MUSIC_PRACTISE_ACTIVITY), [recordActivityFinished]);
+  const musicChallenge = useMusicChallenge(musicChallengeConfig, handleSongFinished, effectiveNoteVolume, audioSessionControl);
 
   // Stable ref so callbacks can access the latest musicChallenge without
   // adding it to useCallback deps (it's a new object every render).
@@ -808,7 +811,7 @@ const styles = StyleSheet.create({
   },
 
   songsLayer: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   songSwap: {
     flex: 1,

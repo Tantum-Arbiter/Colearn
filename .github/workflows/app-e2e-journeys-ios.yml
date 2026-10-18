@@ -1,0 +1,114 @@
+name: App E2E Journeys - iOS
+
+# Runs the Maestro journeys against the iOS app app-e2e-build-ios.yml
+# stored under app-key. It never builds: a missing app fails the job, so every
+# stage tests exactly the build it was handed.
+
+on:
+  workflow_call:
+    inputs:
+      app-key:
+        description: The cache key app-e2e-build-ios.yml returned
+        type: string
+        required: true
+      tags:
+        description: Only flows with these tags (blank runs every flow)
+        type: string
+        default: ''
+
+env:
+  WORKING_DIRECTORY: grow-with-freya
+  MAESTRO_VERSION: '2.10.0'
+  MAESTRO_DRIVER_STARTUP_TIMEOUT: '900000'
+  MAESTRO_CLI_NO_ANALYTICS: '1'
+
+jobs:
+  journeys:
+    name: Journeys
+    runs-on: macos-26
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Fetch the app this run built
+        uses: actions/cache/restore@v6
+        with:
+          path: grow-with-freya/e2e-build
+          key: ${{ inputs.app-key }}
+          fail-on-cache-miss: true
+
+      - name: Install Maestro
+        run: |
+          brew tap mobile-dev-inc/tap
+          brew install mobile-dev-inc/tap/maestro
+
+      - name: Boot a simulator
+        timeout-minutes: 15
+        run: |
+          udid=$(xcrun simctl create e2e-iphone "iPhone 16 Pro")
+          xcrun simctl boot "$udid"
+          xcrun simctl bootstatus "$udid" -b
+          xcrun simctl spawn "$udid" defaults write com.apple.Accessibility ReduceMotionEnabled -bool true
+          echo "MAESTRO_DEVICE=$udid" >> $GITHUB_ENV
+
+      - name: Install the app
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: xcrun simctl install "$MAESTRO_DEVICE" "$(find e2e-build -name '*.app' -maxdepth 1 | head -1)"
+
+      - name: Setup Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Serve the stubbed gateway
+        timeout-minutes: 5
+        run: |
+          nohup ./wiremock-server/run-local.sh > "$RUNNER_TEMP/wiremock.log" 2>&1 < /dev/null &
+          for i in $(seq 1 90); do
+            curl -sf http://localhost:8080/__admin/health > /dev/null && break
+            sleep 2
+          done
+          curl -sf http://localhost:8080/__admin/health
+
+      - name: Record host load while the journeys run
+        run: |
+          nohup sh -c 'while true; do date -u +%T; memory_pressure | tail -1; top -l 1 -n 5 -o cpu -stats pid,command,cpu,mem | tail -6; sleep 20; done' \
+            > "$RUNNER_TEMP/host-load.log" 2>&1 < /dev/null &
+
+      - name: Run the journeys
+        timeout-minutes: 50
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        env:
+          MAESTRO_REPORT: ${{ runner.temp }}/maestro-junit.xml
+        run: ./.maestro/run-with-device-retry.sh -e APP_BUILD=release ${{ inputs.tags && format('--include-tags={0}', inputs.tags) || '' }}
+
+      - name: Summarise the journeys
+        if: always()
+        run: |
+          python3 .github/scripts/junit-summary.py --title "iOS journeys" --list-cases \
+            --report "$RUNNER_TEMP/maestro-junit.xml" --retry "$RUNNER_TEMP/maestro-junit-retry.xml"
+
+      - name: Keep the journeys report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: maestro-report-ios-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/maestro-junit.xml
+            ${{ runner.temp }}/maestro-junit-retry.xml
+          if-no-files-found: ignore
+          retention-days: 30
+
+      - name: Keep what failed
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: maestro-ios-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ~/.maestro/tests
+            ${{ runner.temp }}/host-load.log
+            ${{ runner.temp }}/wiremock.log
+          retention-days: 14

@@ -5,7 +5,7 @@ phase: 4
 status: in-progress
 owner: CoLearn
 tags: [phase-4, production, infrastructure, monitoring, roadmap]
-updated: 2026-07-02
+updated: 2026-09-30
 ---
 
 
@@ -531,10 +531,10 @@ Only change the user-facing brand name, not the technical identifiers.
       A store build today would therefore ship pointing at `http://localhost:8080`. No `NSAppTransportSecurity` exception is configured, so iOS blocks the cleartext request outright: auth, catalogue sync and analytics all fail silently rather than hitting the wrong host. **Fix:** add an `env` block to the `production` profile with `EXPO_PUBLIC_GATEWAY_URL: https://api.earlyroots.co.uk` (and the Google/Apple/RevenueCat keys the same warning names), then confirm with a preview build before submission. Consider removing the `localhost:8080` fallback in favour of a build-time failure, so a missing value can never ship quietly again.
 - [ ] **Add `allowed-user-agents` to `application-prod.yml` Cloudflare config** — the prod Cloudflare section has `require-validation: true` but no `allowed-user-agents` list. Without this, the Cloudflare validation filter will reject every request. Add: `allowed-user-agents: EarlyRoots,GrowWithFreya,EarlyRoots-FuncTest` (matching Section 7.2).
 - [ ] **Verify `application-prod.yml` JWT property paths** — prod uses `jwt.secret` (line 86) while gcp-dev uses `app.jwt.secret` (line 34). Confirm the `JwtConfig` class resolves both paths correctly, otherwise auth will fail silently on the production VM. Run a local test with `SPRING_PROFILES_ACTIVE=prod` to validate.
-- [ ] **Rebrand `app.config.js` display name** — change production app name from `'Grow with Freya'` to `'Early Roots'` (line 7). Update `associatedDomains` from `applinks:colearnwithfreya.co.uk` to `applinks:earlyroots.co.uk` (line 37). Keep `bundleIdentifier` and `package` as `com.growwithfreya.app` to avoid store re-submission.
-- [ ] **Rebrand share text** — `story-selection-screen.tsx` line 767 says "Check out X on Grow with Freya!". Update to "Early Roots".
-- [ ] **Rebrand notification text** — `notification-service.ts` lines 106 and 223 say "Time for Grow with Freya! 🌟". Update to "Early Roots".
-- [ ] **Rename Sentry project references** — `app.json` lines 69–70 reference `project: "grow-with-freya"` and `organization: "grow-with-freya"`. Update to match the new Sentry project/org name (or rename in Sentry dashboard). Not user-facing but avoids dashboard confusion.
+- [ ] **Rebrand `app.config.js` display name** — done 2026-09-22: the app is `'Early Roots'` (`(Dev)` and `(Preview)` builds too). Still to do: update `associatedDomains` from `applinks:colearnwithfreya.co.uk` to `applinks:earlyroots.co.uk` (line 37). Keep `bundleIdentifier` and `package` as `com.growwithfreya.app` to avoid store re-submission.
+- [x] **Rebrand share text** (2026-09-22; also in `story-catalogue-screen.tsx`) — `story-selection-screen.tsx` line 767 says "Check out X on Grow with Freya!". Update to "Early Roots".
+- [x] **Rebrand notification text** (2026-09-22; the body no longer names Freya) — `notification-service.ts` lines 106 and 223 say "Time for Grow with Freya! 🌟". Update to "Early Roots".
+- [ ] **Rename Sentry project references** — the `@sentry/react-native/expo` plugin (with `project: "grow-with-freya"` and `organization: "grow-with-freya"`) was only ever listed in `app.json`, which Expo never read, so no build has applied it (source maps are not uploaded). `app.json` was removed on 2026-09-22; add the plugin to `app.config.js` with the right project and org. Update to match the new Sentry project/org name (or rename in Sentry dashboard). Not user-facing but avoids dashboard confusion.
 
 ### 9.5 CI/CD
 
@@ -553,18 +553,71 @@ Only change the user-facing brand name, not the technical identifiers.
 
 ### 9.7 Security & Legal (Launch Blockers)
 
-- [x] **Privacy policy rewrite** — updated to disclose voice recordings (on-device), Sentry (crash reports), RevenueCat (subscriptions), new brand name (Early Roots), and correct contact email (privacy@earlyroots.co.uk). Effective date set to May 23, 2026, version 2.0.
+- [x] **Privacy policy rewrite** — updated to disclose voice recordings (on-device), Sentry (crash reports), RevenueCat (subscriptions), new brand name (Early Roots), and correct contact email (contact@earlyroots.co.uk). Effective date set to May 23, 2026, version 2.0.
 - [x] **Sentry mobile replay disabled in production** — `mobileReplayIntegration()` only loads when `__DEV__` is true. `replaysSessionSampleRate` and `replaysOnErrorSampleRate` are both `0` in production. This prevents children's screens (names, avatars) from being captured and sent to Sentry.
 - [x] **CORS wildcard annotations removed** — `@CrossOrigin(origins = "*")` removed from `AuthController`, `AccountController`, `ProfileController`, and `FirebaseAuthController`. All CORS is now handled centrally via `SecurityConfig.corsConfigurationSource()`.
 - [ ] **Web-based account deletion page** — Google Play requires a web URL (not just in-app) for account deletion requests. Host a simple form or info page at `https://earlyroots.co.uk/delete-account` that links to the support email or submits a deletion request to the API.
 - [ ] **Sentry DSN via environment config** — move the hardcoded DSN in `sentry-service.ts` into `app.config.js` (via `extra` or env vars) so dev and prod can use different Sentry projects. Not a security issue (DSNs are client-side), but best practice for environment separation.
 - [ ] **Privacy policy processor list audit** — before each submission, verify that the processor list in the privacy policy matches the actual SDKs in the app. Any new SDK (analytics, A/B testing, push notifications) must be disclosed under Section 6.
-- [ ] **Rebrand Terms & Conditions screen** — `terms-conditions-screen.tsx` has 9 references to "Grow with Freya" and `support@growwithfreya.com` across both the full and embedded versions. Must match the privacy policy branding ("Early Roots", `support@earlyroots.co.uk`). Apple/Google reviewers will flag inconsistent branding between privacy policy and T&Cs.
+- [x] **Rebrand Terms & Conditions screen** (2026-09-22: `Early Roots`, `contact@earlyroots.co.uk`) — `terms-conditions-screen.tsx` has 9 references to "Grow with Freya" and `contact@earlyroots.co.uk` across both the full and embedded versions. Must match the privacy policy branding ("Early Roots", `contact@earlyroots.co.uk`). Apple/Google reviewers will flag inconsistent branding between privacy policy and T&Cs.
 
 ### 9.8 Data Protection & Backup
 
 - [ ] **Firestore scheduled exports** — set up automated Firestore exports to a GCS bucket (e.g. `gs://earlyroots-firestore-backups`) using `gcloud firestore export` on a daily cron. This provides point-in-time recovery if a bad deploy corrupts data or an accidental deletion occurs. GCS lifecycle policy can auto-delete exports older than 30 days to control costs.
 - [ ] **GCS asset bucket versioning** — enable object versioning on `earlyroots-assets` so story asset overwrites can be rolled back: `gsutil versioning set on gs://earlyroots-assets`.
+
+### 9.9 Must do before go-live — the customer-ready gate
+
+> **Nobody says "customer ready" until every box here is ticked, with a name and a date.**
+> This is the one list to read before the claim is made. It holds the data-protection and
+> intellectual-property checks, and points at the launch blockers above so none is missed.
+> Added 2026-09-28 (operator request). None of it is legal advice; where a box needs a
+> qualified view, it says so.
+
+#### A. Data protection (UK GDPR, ICO Children's Code)
+
+- [ ] **Registered with the ICO and the annual fee paid.** ⚠️ UNVERIFIED whether CoLearn is registered; nothing in the repository says. The fee for a micro organisation (turnover up to £632,000 or up to 10 staff) was £52 a year, £47 by direct debit, on 2026-09-28 ([ICO](https://ico.org.uk/for-organisations/data-protection-fee/data-protection-fee/)). Record the registration number here: ________
+- [ ] **DPIA finished and signed.** [`compliance/DPIA.md`](compliance/DPIA.md) is a draft. Its §8 still has three open items: processor terms (item 3), privacy policy approval (item 4), sign-off (item 5).
+- [ ] **RevenueCat and Sentry data processing terms accepted**, with the UK Addendum (DPIA §3, §8 item 3).
+- [ ] **The DPIA covers everything that ships.** It was written for Phase 8. Learning games are not in it. Add them before they reach a family.
+- [ ] **Profiling is decided, written down and built to match.** Today the DPIA says "profiling (none)" (§7) and that is true. It stops being true the day difficulty adapts to what a child has done ([`PHASE-9-LEARNING-THROUGH-PLAY.md`](PHASE-9-LEARNING-THROUGH-PLAY.md) §9). The Children's Code asks for profiling to be off by default unless there is a compelling reason ([standard 12](https://ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/childrens-information/childrens-code-guidance-and-resources/age-appropriate-design-a-code-of-practice-for-online-services/12-profiling/)). So one of these must be true at go-live:
+  - [ ] Games set difficulty from the child's age band and the parent's setting only, and the DPIA still says "profiling (none)"; **or**
+  - [ ] Adaptive difficulty ships behind a switch in the grown-ups' area, off by default, with the DPIA and privacy policy updated; **or**
+  - [ ] Adaptive difficulty ships on by default, with a written reason a qualified adviser has agreed.
+- [ ] **No synced data is used for recommendations or analytics without a separate opt-in** (standing rule L5, `PHASE-8-BACKEND-ALIGNMENT.md` §9).
+- [ ] **Privacy policy matches the build**, in the app and on the website: every kind of data, every processor, every SDK (§9.7 processor audit). Version raised, and parents asked to accept the new version through the existing consent step.
+- [ ] **Adviser review: decided either way, and recorded.** The law asks for the DPIA, not for a hired adviser. Write down who reviewed it, or that the operator chose to sign without one: ________
+- [ ] **United States.** If the app is listed on a US store, COPPA applies separately and has not been assessed. Assess it, or do not list there.
+
+#### B. Intellectual property
+
+The research behind these is in [`PHASE-9-LEARNING-THROUGH-PLAY.md`](PHASE-9-LEARNING-THROUGH-PLAY.md) §20.
+
+- [ ] **Every game and feature name cleared.** Searched on the UKIPO and USPTO registers (classes 9, 28, 41) and on both app stores. The names in Phase 9 are working titles and have had a web search only. Two came back high-risk (Story Path, Stepping Stones) and six medium; none of those eight ships under that name without a decision (Phase 9 §20.3).
+- [ ] **Asset and licence register complete** ([`compliance/ASSET-REGISTER.md`](compliance/ASSET-REGISTER.md), started 2026-09-29 for a game since undone; nothing that ships has a row yet). One row for every image, sound, voice, font and piece of music in the build: where it came from, who made it, under what licence, and proof. Nothing ships that has no row. **This includes the artwork already in the app** (avatars, feelings animals, story illustrations), whose origin is not recorded anywhere in the repository — ⚠️ UNVERIFIED.
+- [ ] **Nothing of anyone else's.** No competitor's character, name, artwork, sound, wording or screen layout. Games take the idea of a mechanic and never the look of someone's game.
+- [ ] **No borrowed brand or method names** in the app, the store listing or its keywords: Memory (a Ravensburger mark — the game is "pairs"), Montessori, Numicon, Cuisenaire, Jolly Phonics, Bee-Bot, LEGO, DUPLO, Simon, or any competitor.
+- [ ] **No vendor emoji artwork shipped as image files.** Emoji drawn by the device's own font as text are the device's; image files of Apple's or Google's emoji are theirs. The spelling game shows emoji as pictures: confirm they are drawn as text.
+- [ ] **Fonts.** The app bundles no font files today and asks each platform for its own. If one is ever bundled, it has a licence covering iOS and Android. Apple's system fonts are never bundled.
+- [ ] **Voices.** Written consent from every person recorded. No cloned voice.
+- [ ] **Generated art and audio have a licence trail.** For anything made with a model: which model, its licence terms for commercial use, the prompt, and what a person changed, kept in the register. Checked by eye against well-known characters.
+
+#### C. The launch blockers already listed above
+
+- [ ] §9.4 — `eas.json` production environment (the app would ship pointing at `localhost`)
+- [ ] §9.4 — `allowed-user-agents` and JWT property paths in `application-prod.yml`
+- [ ] §9.6 — store submissions, privacy policy URLs on `earlyroots.co.uk`
+- [ ] §9.7 — web-based account deletion page
+- [ ] §9.8 — Firestore exports and bucket versioning
+
+#### Sign-off
+
+| | Name | Date |
+|---|---|---|
+| Data protection (A) | | |
+| Intellectual property (B) | | |
+| Launch blockers (C) | | |
+| **Customer ready** | | |
 
 ---
 
@@ -1212,10 +1265,28 @@ Visual style:
 
 ## 12. Security Posture — Dependency Advisories
 
-> **TL;DR: `npm audit` reports ~30 advisories. Zero of them reach shipped app code.**
-> They are all build-time tooling. **Never run `npm audit fix --force` on this project.**
+> **TL;DR: `npm audit` reports 26 advisories. One package among them reaches shipped app code:
+> `decode-uri-component` (moderate), below.** The rest are build-time tooling.
+> **Never run `npm audit fix --force` on this project.**
 
-### Verified finding (2026-08-02, Expo SDK 54)
+### Verified finding (2026-09-28, Expo SDK 57)
+
+The same source-map method on an iOS export of the app (2,991 modules across 104 npm packages;
+controls `react-native`, `expo-audio` and `zustand` all present):
+
+| Package | Severity | In the bundle | Route |
+|---|---|---|---|
+| `decode-uri-component` 0.2.2 | moderate | **yes** | `expo-router` → `query-string` 7.1.3, which parses deep-link query strings |
+| `shell-quote`, `ws`, `js-yaml`, `svgo`, `brace-expansion`, `browserslist`, `@xmldom/xmldom`, `uuid`, `@babel/plugin-transform-modules-systemjs`, `@humanfs/node`, `baseline-browser-mapping` | critical to moderate | no | build, CLI and test tooling |
+
+`decode-uri-component` (GHSA-vcc3-ghjq-m6fr): a crafted, malformed percent-encoded link can make
+decoding take exponential time, so the worst case is a deep link that hangs the app on the device
+that opens it. It is **accepted for now**: every version up to 0.4.2 is affected, the fix (0.5.0)
+is ESM-only while `query-string` 7 loads it with `require()`, so an npm `overrides` entry would
+break link parsing, and npm's own suggestion (`expo-router` 5.1.11) is the `--force` trap below.
+It clears when `expo-router` moves off `query-string` 7; check at each SDK upgrade.
+
+### Earlier finding (2026-08-02, Expo SDK 54)
 
 All 12 root-flagged packages were checked against the **actual production iOS bundle**:
 
@@ -1270,7 +1341,9 @@ npx expo-doctor              # full project health
 ```
 
 Transitive tooling advisories clear when Expo ships fixed tooling — resolve them by moving
-SDK 54 → 55 → 56 deliberately, testing at each step. Never by letting npm rewrite the graph.
+SDK upgrades deliberately, through `npx expo install expo@^<sdk> --fix`, testing each one. Never by
+letting npm rewrite the graph. The app moved from SDK 54 to 57 this way on 2026-09-23, so that it
+opens in the current Expo Go.
 
 ### Known-accepted, and what is not
 

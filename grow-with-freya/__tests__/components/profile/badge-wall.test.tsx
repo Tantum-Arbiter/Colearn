@@ -62,9 +62,34 @@ describe('BadgeWall', () => {
   it('shows how many of the wall has been earned', () => {
     const underTest = render(<BadgeWall badges={BADGES} width={340} onPress={jest.fn()} />);
 
-    const summary = byTestId(underTest, 'badge-wall-summary')[0];
+    // The count now reads out of the progress bar above the grid.
+    const bar = byTestId(underTest, 'badge-wall-progress')[0];
+    const sentence = underTest.UNSAFE_queryAllByProps({
+      children: 'progress.badgesSummary (earned:2, total:6)',
+    });
 
-    expect(summary.props.children).toBe('progress.badgesSummary (earned:2, total:6)');
+    expect(bar).toBeTruthy();
+    expect(bar.props.accessibilityValue).toEqual({ min: 0, max: 6, now: 2 });
+    expect(sentence.length).toBeGreaterThan(0);
+  });
+
+  it('fills the bar by the share of the wall that has been earned', () => {
+    const underTest = render(<BadgeWall badges={BADGES} width={340} onPress={jest.fn()} />);
+
+    const fill = byTestId(underTest, 'badge-wall-progress-fill')[0];
+    const width = [fill.props.style].flat(Infinity).filter(Boolean)
+      .map((part: any) => part.width).filter(Boolean).at(-1);
+
+    // Two of six earned, so the track is a third full.
+    expect(width).toBe('33%');
+  });
+
+  it('spells the share out as a percentage beside the track', () => {
+    const underTest = render(<BadgeWall badges={BADGES} width={340} onPress={jest.fn()} />);
+
+    const percent = byTestId(underTest, 'badge-wall-progress-percent')[0];
+
+    expect([percent.props.children].flat(Infinity).join('')).toBe('33%');
   });
 
   it('reports the tapped badge so the shared detail sheet can open on it', () => {

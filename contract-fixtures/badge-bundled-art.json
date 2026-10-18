@@ -1,0 +1,4 @@
+{
+  "description": "Art a badge definition may name instead of a CMS asset path: the keys of ART in grow-with-freya/components/progress/badge-art.ts.",
+  "keys": ["sun", "sunLaughing", "moon", "moonLaughing", "cloudLeft", "cloudRight", "bearHappy", "bearExcited", "bearProud", "bearSurprised", "animalLoving", "animalHappy", "animalExcited", "animalProud", "animalSurprised"]
+}

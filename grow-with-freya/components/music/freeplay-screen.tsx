@@ -43,7 +43,6 @@ import {
 import type { MusicChallenge } from '@/types/story';
 import { useGlobalSound } from '@/contexts/global-sound-context';
 import { SubscriptionOverlay } from '@/components/ui/subscription-overlay';
-import { OwlGuide } from '@/components/owl-guide';
 import { SKY_GRADIENT_WORLD, NIGHT_DEEP } from '@/constants/night-palette';
 
 const SPIN_STARS = spinStars(20000);
@@ -476,9 +475,6 @@ export function FreeplayScreen({ onBack, isActive = false }: FreeplayScreenProps
         visible={showSubscription}
         onClose={() => setShowSubscription(false)}
       />
-
-      {/* Freeplay mode tutorial — shown on first visit */}
-      <OwlGuide id="freeplay_tips" active={isActive} />
     </View>
   );
 }

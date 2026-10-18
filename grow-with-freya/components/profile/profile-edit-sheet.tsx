@@ -11,6 +11,7 @@ import { useAccessibility } from '@/hooks/use-accessibility';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { RADIUS_LARGE, SPACE_2, SPACE_3, SPACE_4 } from '@/components/child-ui/tokens';
 import { EditProfileContent } from '@/components/account/edit-profile-screen';
+import { useCoversJourneyBar } from '@/components/child-ui/journey-bar-cover';
 
 const RISE_PX = 48;
 /** The slide back down, before the sheet is taken away. */
@@ -58,6 +59,8 @@ export function ProfileEditSheet({ visible, onClose }: ProfileEditSheetProps) {
     transform: [{ translateY: (1 - rise.value) * RISE_PX }],
   }));
 
+  useCoversJourneyBar(mounted);
+
   if (!mounted) return null;
 
   return (
@@ -85,12 +88,12 @@ export function ProfileEditSheet({ visible, onClose }: ProfileEditSheetProps) {
 
 const styles = StyleSheet.create({
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     justifyContent: 'flex-end',
     zIndex: 40,
   },
   backdrop: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(4, 16, 47, 0.55)',
   },
   sheet: {

@@ -22,6 +22,8 @@ import Purchases, {
   PURCHASES_ERROR_CODE,
 } from 'react-native-purchases';
 import { useAppStore, type SubscriptionTier } from '@/store/app-store';
+import { SecureStorage } from './secure-storage';
+import { refreshServerEntitlement } from './entitlement-refresh';
 import { trialDaysRemaining, type TrialStatus } from '@/constants/trial-end';
 import { Logger } from '@/utils/logger';
 
@@ -52,6 +54,11 @@ const NO_TRIAL: TrialStatus = { inTrial: false, daysRemaining: 0, endsAt: null, 
 let _initialized = false;
 let _purchaseInFlight = false;
 let _cachedOfferings: PurchasesOfferings | null = null;
+let _identifiedAs: string | null = null;
+let _settleConfigured: (configured: boolean) => void = () => undefined;
+let _configured = new Promise<boolean>((resolve) => {
+  _settleConfigured = resolve;
+});
 
 /** Single gate: true in Expo Go or local dev -RevenueCat is skipped entirely. */
 export function isDevMode(): boolean {
@@ -69,6 +76,7 @@ export async function initialize(): Promise<void> {
   if (isDevMode()) {
     log.info('Skipping RevenueCat -dev mode (use Developer Options to set tier)');
     _initialized = true;
+    _settleConfigured(false);
     return;
   }
   const appleKey = Constants.expoConfig?.extra?.revenueCatAppleKey as string | undefined;
@@ -77,18 +85,53 @@ export async function initialize(): Promise<void> {
   if (!apiKey) {
     log.error('RevenueCat API key not configured -subscriptions will not work');
     _initialized = true;
+    _settleConfigured(false);
     return;
   }
   try {
     Purchases.setLogLevel(LOG_LEVEL.DEBUG);
     await Purchases.configure({ apiKey });
     _initialized = true;
+    _settleConfigured(true);
     log.info('RevenueCat configured successfully');
     Purchases.addCustomerInfoUpdateListener(handleCustomerInfoUpdate);
     await syncEntitlements();
   } catch (err) {
     log.error('Failed to configure RevenueCat', err);
     _initialized = true;
+    _settleConfigured(false);
+  }
+}
+
+/**
+ * Make the gateway account id RevenueCat's app user id, so purchases reach the gateway's
+ * RevenueCat webhook under the account that made them. No-op in dev mode.
+ */
+export async function identifyAccount(userId: string): Promise<void> {
+  if (isDevMode() || _identifiedAs === userId) return;
+  if (!(await _configured)) return;
+  try {
+    const { customerInfo } = await Purchases.logIn(userId);
+    _identifiedAs = userId;
+    useAppStore.getState().setSubscriptionTier(mapEntitlementsToTier(customerInfo));
+  } catch (err) {
+    log.warn('RevenueCat log-in failed; will try again next launch', err);
+  }
+}
+
+export async function identifySignedInAccount(): Promise<void> {
+  const user = await SecureStorage.getUserData();
+  if (user?.id) await identifyAccount(user.id);
+}
+
+/** Return RevenueCat to an anonymous user on sign-out or account deletion. No-op in dev mode. */
+export async function forgetAccount(): Promise<void> {
+  if (isDevMode() || _identifiedAs === null) return;
+  _identifiedAs = null;
+  try {
+    await Purchases.logOut();
+  } catch (err) {
+    log.warn('RevenueCat log-out failed', err);
   }
 }
 
@@ -141,6 +184,7 @@ export async function purchasePackage(pkg: PurchasesPackage): Promise<PurchaseRe
     const tier = mapEntitlementsToTier(customerInfo);
     useAppStore.getState().setSubscriptionTier(tier);
     log.info(`Purchase successful -tier set to: ${tier}`);
+    void refreshServerEntitlement();
     return { success: true, tier };
   } catch (err: unknown) {
     const rcError = err as { code?: string; userCancelled?: boolean };
@@ -271,6 +315,7 @@ export async function restorePurchases(): Promise<PurchaseResult> {
     const tier = mapEntitlementsToTier(customerInfo);
     useAppStore.getState().setSubscriptionTier(tier);
     log.info(`Restore successful -tier: ${tier}`);
+    void refreshServerEntitlement();
     return { success: true, tier };
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown restore error';
@@ -286,7 +331,9 @@ function handleCustomerInfoUpdate(customerInfo: CustomerInfo): void {
     return;
   }
   const tier = mapEntitlementsToTier(customerInfo);
+  const changed = useAppStore.getState().subscriptionTier !== tier;
   useAppStore.getState().setSubscriptionTier(tier);
+  if (changed) void refreshServerEntitlement();
   log.info(`CustomerInfo updated -tier: ${tier}`);
 }
 
@@ -323,4 +370,8 @@ export function _resetForTesting(): void {
   _initialized = false;
   _purchaseInFlight = false;
   _cachedOfferings = null;
+  _identifiedAs = null;
+  _configured = new Promise<boolean>((resolve) => {
+    _settleConfigured = resolve;
+  });
 }

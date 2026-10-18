@@ -50,6 +50,15 @@ describe('UnlockPlanButton', () => {
     expect(button.props.accessibilityLabel).toBe('subscription.startFreeTrial');
   });
 
+  it('wears the shared gold button, the one Login wears, with the lock after its words', () => {
+    const tree = render(<UnlockPlanButton onPress={jest.fn()} />);
+
+    expect(findByTestId(tree, 'unlock-plan-button-glow').length).toBeGreaterThan(0);
+    const button = findByTestId(tree, 'unlock-plan-button')[0];
+    expect(button.props.icon).toBe('lock-closed');
+    expect(button.props.iconPosition).toBe('trailing');
+  });
+
   it('fires the press it was given', () => {
     const onPress = jest.fn();
     const tree = render(<UnlockPlanButton onPress={onPress} />);

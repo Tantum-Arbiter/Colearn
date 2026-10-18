@@ -32,6 +32,8 @@ export interface HomeCardProps {
   onPressed?: () => void;
   accessibilityLabel: string;
   accessibilityHint?: string;
+  fill?: readonly [string, string];
+  backdrop?: React.ReactNode;
   children: React.ReactNode;
   testID?: string;
 }
@@ -51,6 +53,8 @@ export const HomeCard = memo(function HomeCard({
   onPressed,
   accessibilityLabel,
   accessibilityHint,
+  fill,
+  backdrop,
   children,
   testID = 'home-card',
 }: HomeCardProps) {
@@ -62,6 +66,8 @@ export const HomeCard = memo(function HomeCard({
       onPressed={onPressed}
       accessibilityLabel={accessibilityLabel}
       accessibilityHint={accessibilityHint}
+      fill={fill}
+      backdrop={backdrop}
     >
       {children}
     </HeroCardFrame>

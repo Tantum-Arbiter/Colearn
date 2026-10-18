@@ -8,7 +8,7 @@ name: A story that exists only on the server reaches the shelf
     env:
       SEED: "onboarded=1&signedIn=1&tutorials=done&screenTime=reset&language=en&tier=free&nickname=Freya"
 - stopApp
-- launchApp
+- runFlow: ../../helpers/launch.yaml
 - extendedWaitUntil:
     visible:
       id: "home-language-button"

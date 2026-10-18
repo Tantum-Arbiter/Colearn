@@ -19,8 +19,10 @@ Communication & code-display rules: see root `../CLAUDE.md` → **Communication 
 | Story generation | `generate-story-files.js`, `generate-mock-stories.js`, `generate-bundled-stories-ts.js` | Author + emit story JSON |
 | CMS stories (data) | `cms-stories/<story-id>/` | Source-of-truth story content |
 | Translation pipeline | `translate-all-cms-stories.js`, `apply-all-translations.js`, `translation-dictionary*.js`, `scan-and-translate-all-stories.js` | Apply hand-curated translation dictionaries (see also `../grow-with-freya/scripts/i18n-manager.js`) |
-| Upload | `upload-stories-to-firestore.js`, `upload-assets-to-firestore.js` (run via `package.json` scripts) | Push to Firestore + GCS |
-| Schema | `story-schema.json`, `story-catalog.json` | Validation contracts |
+| Upload | `upload-stories-to-firestore.js`, `upload-assets-to-firestore.js`, `upload-achievements-to-firestore.js` (a dry run unless `--apply`) (run via `package.json` scripts) | Push to Firestore + GCS |
+| Badge definitions (data) | `cms-achievements/<id>.json` | Badges as data; validated by `cms-manager achievements` |
+| Schema | `story-schema.json`, `achievement-schema.json`, `story-catalog.json` | Validation contracts |
+| Shared checksums | `lib/story-checksum.js`, `lib/achievement-checksum.js` | One canonical-JSON SHA-256 for stories (shared with the gateway) and badges |
 | CMS Manager | `cms-manager/` | Local CLI (`@earlyroots/cms-manager`) for validate / format / prepare / import |
 | Python tools | `code-to-word/`, `image-trace-venv/` | Standalone Python utilities — each owns its venv |
 
@@ -66,7 +68,18 @@ CMS scripts don't ship as a library — they run once per operator action. TDD h
 3. Only after local validation, run against the dev Firestore.
 4. Promote to staging / prod only with explicit human approval and emulator parity confirmed.
 
-There is **no formal test suite for `scripts/`** today — flag this if it becomes a problem; don't silently introduce one without approval.
+Shared logic that the gateway or the app depends on is tested with Node's built-in runner (`node:test`, no dependencies), added in phase 8 (operator approval 2026-09-24):
+
+| Suite | Covers | Run |
+|-|-|-|
+| `lib/story-checksum.test.js` | The one story checksum: canonical JSON, SHA-256, metadata ignored, parity with the gateway via `../contract-fixtures/story-checksums.json` | `node --test lib/*.test.js` |
+| `cms-manager/src/lib/*.test.js` | Story loading and saving, schema and custom validation (every story in `cms-stories/` must pass), formatting | `cd cms-manager && npm test` |
+
+`backend-checks.yml` runs both on every pull request that touches `scripts/`. Follow [`../TESTING-STANDARD.md`](../TESTING-STANDARD.md).
+
+**`cms-manager` has no `prepare` script on purpose.** npm runs a script named `prepare` after every `npm install`; the CMS prepare step rewrites every `story-data.json`. It is `npm run prepare-upload`.
+
+**`cms-manager format --all` renames page ids** to `<story-id>-cover` / `<story-id>-<n>`: 1,379 pages across the current catalogue would change. The app merges bundled books with CMS text by page id (falling back to position), so review that diff before committing it.
 
 ---
 
@@ -110,7 +123,7 @@ npm run generate-bundled-ts         # emit grow-with-freya/data/stories.ts
 # CMS Manager CLI (from scripts/cms-manager/)
 npm run validate                    # JSON schema validation
 npm run format                      # canonicalise story JSON
-npm run prepare                     # build Firestore/GCS payloads
+npm run prepare-upload              # build Firestore/GCS payloads (not "prepare": npm runs that on every install)
 npm run import                      # push to target project
 npm run list                        # inventory
 

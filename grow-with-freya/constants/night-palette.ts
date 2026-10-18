@@ -62,6 +62,19 @@ export function headerSkyVeil(headerHeight: number, screenHeight: number): SkyVe
   };
 }
 
+export function skyBand(solidTo: number, clearBy: number, screenHeight: number): SkyVeil {
+  const paint = (y: number, alpha: number) => {
+    const colour = skyWorldColourAt(screenHeight > 0 ? y / screenHeight : 0);
+
+    return `rgba(${colour.red}, ${colour.green}, ${colour.blue}, ${alpha})`;
+  };
+
+  return {
+    colours: [paint(0, 1), paint(solidTo, 1), paint(clearBy, 0)],
+    locations: [0, solidTo / clearBy, 1],
+  };
+}
+
 export const SURFACE_PRIMARY = 'rgba(80, 120, 200, 0.32)';
 export const SURFACE_SECONDARY = 'rgba(63, 105, 184, 0.55)';
 export const SURFACE_NAV = 'rgba(14, 43, 113, 0.82)';

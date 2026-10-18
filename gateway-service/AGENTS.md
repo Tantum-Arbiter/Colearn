@@ -13,6 +13,9 @@ Communication & code-display rules: see root `../CLAUDE.md` → **Communication 
 
 ## 2. Test-Driven Development
 
+What a change must prove — the layers, the edge-case checklist, the done list — is in
+[`../TESTING-STANDARD.md`](../TESTING-STANDARD.md). This section covers how to do it in this project.
+
 ### Workflow (non-negotiable)
 1. Find or create a **failing test first**.
 2. Match the style of surrounding tests: same file → same package → same module.
@@ -24,7 +27,7 @@ Communication & code-display rules: see root `../CLAUDE.md` → **Communication 
 
 ### Test Quality
 - One behaviour per test. Test names describe behaviour, not implementation.
-- Deterministic — no `Thread.sleep`, no real wall-clock dependencies, no shared static state.
+- Deterministic — no `Thread.sleep`, no real wall-clock dependencies, no shared static state. Inject a `Clock` where time matters; clear `SecurityContextHolder` in `@AfterEach` if a test sets it.
 - Prefer **`@ParameterizedTest`** over copy-pasting `@Test` methods with different inputs.
 - Variable name for the unit under test: **`underTest`** (adopt going forward; don't retrofit existing tests).
 - Use AAA structure (Arrange / Act / Assert) with blank lines between sections.
@@ -33,10 +36,10 @@ Communication & code-display rules: see root `../CLAUDE.md` → **Communication 
 | Concern | Current | Notes |
 |---|---|---|
 | Runner | JUnit 5 (Jupiter) | `useJUnitPlatform()` in `build.gradle` |
-| Assertions | `org.junit.jupiter.api.Assertions.*` | AssertJ is **not** on the classpath; don't import `org.assertj.*` without adding the dep first |
+| Assertions | `org.junit.jupiter.api.Assertions.*` | The house style. AssertJ arrives with `spring-boot-starter-test` and two health tests use it, but new tests use JUnit `Assertions`; never mix the two in one file |
 | Mocks | Mockito + `@ExtendWith(MockitoExtension.class)` | Current convention is `@Mock` field injection — match it in new tests |
-| Spring slices | `@WebMvcTest`, `@DataJpaTest` style as appropriate | Avoid full `@SpringBootTest` unless integration coverage requires it |
-| Coverage | Jacoco | `jacocoTestReport` runs after `test` |
+| Controller tests | `@WebMvcTest(XController.class)` with the security config and filters loaded, collaborators `@MockBean` | New controller tests keep the filters **on**, so requests pass the real chain. The existing `@SpringBootTest` + `addFilters = false` tests stay until touched; don't copy them |
+| Coverage | Jacoco | `jacocoTestReport` runs after `test`. Report only: no floor, and CI does not run the tests yet (`Dockerfile` builds with `-x test`), so run them locally before every commit |
 | HTTP mocks (unit) | `MockMvc` / `WebTestClient` | WireMock is **not** in `gateway-service` deps — don't introduce it for unit tests |
 | HTTP mocks (functional) | **`func-tests/`** | Cucumber + WireMock + Testcontainers live there — write end-to-end HTTP scenarios in that project, not here |
 
@@ -44,7 +47,7 @@ Communication & code-display rules: see root `../CLAUDE.md` → **Communication 
 - **Never use `@CrossOrigin`** on controllers — CORS is centralised in `SecurityConfig` (root CLAUDE.md).
 - **Constructor injection only.** Fields are `private final`; wire via the constructor. `@Autowired` on the constructor is the current convention (technically optional for single-constructor classes since Spring 4.3 — match the surrounding file). **Never** `@Autowired` on fields or setters.
 - `@Transactional` belongs on the service layer, not controllers or repositories.
-- Firestore repository tests mock `Firestore` and `ApplicationMetricsService` — see `StoryRepositoryTest` for the pattern.
+- Firestore repository tests mock `Firestore` and `ApplicationMetricsService` — see `StoryRepositoryTest` for the mocking pattern. It covers only the happy path and not-found; add the failure and timeout cases it lacks.
 - For security-context-dependent code, use `spring-security-test` (`@WithMockUser`, `SecurityMockMvcRequestPostProcessors`).
 
 ---
@@ -62,7 +65,6 @@ Communication & code-display rules: see root `../CLAUDE.md` → **Communication 
 
 ### Aspirational (apply incrementally, not retroactively)
 - New tests can move toward `Mockito.mock()` + constructor wiring (over `@Mock` field injection) once a critical mass exists. **Don't mix styles within one test file.**
-- If AssertJ is added to the classpath, prefer `assertThat(...)` chains for new tests.
 
 ---
 

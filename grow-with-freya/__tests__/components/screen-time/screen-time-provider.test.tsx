@@ -213,8 +213,8 @@ describe('ScreenTimeProvider lifecycle', () => {
       expect(notifier.sendScreenTimeWarning).toHaveBeenCalledWith('Time is up', 'limit_reached');
     });
 
-    it('holds a warning back while the child is inside a story', async () => {
-      const reading = { ...STORE_STATE, currentScreen: 'story-reader', notificationsEnabled: true };
+    it.each(['story-reader', 'game'])('holds a warning back while the child is inside a story or a game: %s', async (screen) => {
+      const reading = { ...STORE_STATE, currentScreen: screen, notificationsEnabled: true };
       (useAppStore as unknown as jest.Mock).mockImplementation(() => reading);
       (useAppStore as unknown as jest.Mock & { getState: jest.Mock }).getState = jest
         .fn()

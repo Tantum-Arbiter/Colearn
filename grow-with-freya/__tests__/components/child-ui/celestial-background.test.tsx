@@ -6,8 +6,9 @@
 
 import React from 'react';
 import { render } from '@testing-library/react-native';
-import { Text } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import { CelestialBackground, clearOfPlanet } from '@/components/child-ui/celestial-background';
+import { planetReach } from '@/constants/earth';
 
 function byTestId(tree: ReturnType<typeof render>, testID: string) {
   return tree.UNSAFE_root.findAll((n: any) => n.props.testID === testID);
@@ -149,5 +150,39 @@ describe('a fuller field still clears the globe', () => {
     );
 
     expect(folded.every((star) => star.top >= 200)).toBe(true);
+  });
+});
+
+/**
+ * The painted planet hangs lower than the globe did (operator, 2026-10-03),
+ * so the stars are folded down below where it now reaches.
+ */
+describe('the field and the hanging planet', () => {
+  // under react-native-web the viewport is the document's, and jsdom reports 0 by 0 unless told
+  function setViewport(width: number, height: number) {
+    Object.defineProperty(document.documentElement, 'clientWidth', { value: width, configurable: true });
+    Object.defineProperty(document.documentElement, 'clientHeight', { value: height, configurable: true });
+    window.dispatchEvent(new Event('resize'));
+  }
+
+  afterEach(() => {
+    setViewport(0, 0);
+  });
+
+  it('keeps every star below the planet`s tip, for the window it is drawn in', () => {
+    const width = 1194;
+    const height = 834;
+    setViewport(width, height);
+    const tree = render(<CelestialBackground />);
+
+    const tops = ['celestial-star', 'celestial-star-gold', 'celestial-star-accent']
+      .flatMap((name) => byTestId(tree, name))
+      .map((node: any) => StyleSheet.flatten(node.props.style)?.top)
+      .filter((top: unknown): top is number => typeof top === 'number');
+
+    expect(tops.length).toBeGreaterThan(0);
+    expect(planetReach(width, height, 'top')).toBeGreaterThan(planetReach(width, height, 'bottom'));
+    expect(Math.min(...tops)).toBeGreaterThanOrEqual(planetReach(width, height, 'top'));
+    expect(Math.min(...tops)).toBeLessThan(planetReach(width, height, 'top') + 60);
   });
 });

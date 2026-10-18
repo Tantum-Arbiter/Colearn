@@ -30,7 +30,6 @@ colearn/
 │   ├── SONGS_README.md       # Song library, categories, instrument compatibility
 │   ├── NEXT-PHASE-3.md       # Subscription model, download caps, RevenueCat
 │   ├── ACHIEVEMENTS-PLAN.md  # ⭐ Planned: badges and rewards across a growing catalogue
-│   ├── story-requirements.md # Story content requirements
 │   └── scripts/TRANSLATIONS.md # i18n translation tooling
 ├── gateway-service/          # Spring Boot backend (Java 21, Gradle)   · see AGENTS.md
 │   └── README.md             # API reference, all endpoints
@@ -40,12 +39,16 @@ colearn/
 ├── scripts/                  # CMS pipeline, uploads, Firestore schema, i18n      · see AGENTS.md
 ├── .ai/                      # Local multi-model review orchestrator (`ai doctor`) · see .ai/README.md
 ├── security/                 # Penetration / security test suite (pytest)        · see AGENTS.md
+├── TESTING-STANDARD.md       # ⭐ What every change must prove: layers, edge-case checklist, done list
 ├── QA-AUTOMATION.md          # ⭐ Test layers, Maestro app journeys, Playwright website tests
 ├── wiremock-server/          # Standalone WireMock stubs used by func-tests
 ├── PHASE-4-PROD-READINESS.md # ⭐ Production checklist, infrastructure, DNS, costs
 ├── PHASE-5-SCALING-AND-WHITELABEL.md # White-label roadmap, multi-tenancy, scaling
 ├── PHASE-6-MATH-GAMES.md    # ⭐ Math games roadmap, age-appropriate mechanics, technical plan
 ├── PHASE-7-MUSIC-GAME.md    # Timed music play — hold-the-note mechanic, metadata, phases
+├── compliance/               # DPIA and privacy-policy change drafts
+├── PHASE-8-BACKEND-ALIGNMENT.md # ⭐ API audit fixes, child data sync, achievements as data, entitlements
+├── PHASE-10-LEARNING-GAMES.md # ⭐ Learning games through stories: engines, packs, personalised paths, budgets
 └── CLAUDE.md                 # This file — root operating instructions
 ```
 
@@ -64,7 +67,6 @@ colearn/
 | Music / instruments feature | [`grow-with-freya/MUSIC_FEATURE.md`](grow-with-freya/MUSIC_FEATURE.md) |
 | Song library | [`grow-with-freya/SONGS_README.md`](grow-with-freya/SONGS_README.md) |
 | Subscriptions / paywall / downloads | [`grow-with-freya/NEXT-PHASE-3.md`](grow-with-freya/NEXT-PHASE-3.md) |
-| Story content requirements | [`grow-with-freya/story-requirements.md`](grow-with-freya/story-requirements.md) |
 | Badges / achievements plan | [`grow-with-freya/ACHIEVEMENTS-PLAN.md`](grow-with-freya/ACHIEVEMENTS-PLAN.md) |
 | Backend API / endpoints | [`gateway-service/README.md`](gateway-service/README.md) + [`gateway-service/AGENTS.md`](gateway-service/AGENTS.md) |
 | E2E / functional tests | [`func-tests/AGENTS.md`](func-tests/AGENTS.md) |
@@ -73,11 +75,17 @@ colearn/
 | CMS pipeline / story uploads / i18n | [`scripts/AGENTS.md`](scripts/AGENTS.md) (+ [`grow-with-freya/scripts/TRANSLATIONS.md`](grow-with-freya/scripts/TRANSLATIONS.md)) |
 | AI review orchestrator / reviewer accounts | [`.ai/README.md`](.ai/README.md) |
 | Security / pen-test suite | [`security/AGENTS.md`](security/AGENTS.md) |
+| DPIA, privacy-policy changes | [`compliance/DPIA.md`](compliance/DPIA.md), [`compliance/PRIVACY-POLICY-CHANGES.md`](compliance/PRIVACY-POLICY-CHANGES.md) |
+| Asset and licence register (go-live gate) | [`compliance/ASSET-REGISTER.md`](compliance/ASSET-REGISTER.md) |
+| Writing any test — edge-case checklist | [`TESTING-STANDARD.md`](TESTING-STANDARD.md) |
 | QA automation / E2E journeys | [`QA-AUTOMATION.md`](QA-AUTOMATION.md) |
 | Production readiness / infra | [`PHASE-4-PROD-READINESS.md`](PHASE-4-PROD-READINESS.md) |
 | Scaling / white-label | [`PHASE-5-SCALING-AND-WHITELABEL.md`](PHASE-5-SCALING-AND-WHITELABEL.md) |
 | Math games roadmap | [`PHASE-6-MATH-GAMES.md`](PHASE-6-MATH-GAMES.md) |
 | Timed music play roadmap | [`PHASE-7-MUSIC-GAME.md`](PHASE-7-MUSIC-GAME.md) |
+| Backend alignment / device sync / achievements data | [`PHASE-8-BACKEND-ALIGNMENT.md`](PHASE-8-BACKEND-ALIGNMENT.md) |
+| Learning games (proposal, not yet accepted) | [`PHASE-9-LEARNING-THROUGH-PLAY.md`](PHASE-9-LEARNING-THROUGH-PLAY.md) |
+| Learning games through stories, game packs, personalised learning paths | [`PHASE-10-LEARNING-GAMES.md`](PHASE-10-LEARNING-GAMES.md) |
 
 ---
 
@@ -85,11 +93,11 @@ colearn/
 
 | Layer | Technology |
 |---|---|
-| Mobile | React Native 0.81 / Expo SDK 54 / TypeScript 5.9 |
-| Navigation | Expo Router 6.0 |
+| Mobile | React Native 0.86 / Expo SDK 57 / TypeScript 6.0 |
+| Navigation | Expo Router 57 |
 | State | Zustand 5.0 + AsyncStorage |
-| Animations | React Native Reanimated 4.1 |
-| Audio | expo-audio 1.1 |
+| Animations | React Native Reanimated 4.5 |
+| Audio | expo-audio 57 |
 | Auth | Google Sign-In + Apple Sign-In → JWT |
 | Subscriptions | RevenueCat |
 | Crash reporting | Sentry (mobile replay disabled in production) |
@@ -152,6 +160,9 @@ colearn/
 - Add advertising SDKs or behavioural tracking
 
 ### Testing
+Every change is checked against [`TESTING-STANDARD.md`](TESTING-STANDARD.md): failing test first, the
+edge-case checklist, tables for varying inputs, and a mutation sweep.
+
 ```bash
 # Frontend
 cd grow-with-freya
@@ -216,8 +227,7 @@ When generating image prompts:
 |---|---|
 | Bundle ID | `com.growwithfreya.app` — do NOT change (store re-submission) |
 | Brand name | "Early Roots" in all user-facing text |
-| Privacy email | `privacy@earlyroots.co.uk` |
-| Support email | `support@earlyroots.co.uk` |
+| Contact email | `contact@earlyroots.co.uk` — the one address for privacy, support and everything else |
 | Domain | `earlyroots.co.uk` / `api.earlyroots.co.uk` |
 | Orientation | **Phones**: portrait-locked everywhere, turned to landscape for the story reader and given the lock back on the way out. **Tablets (iOS + Android)**: never locked, anywhere, including the reader — a child turns them as they wish. |
 | i18n | 14 languages, English fallback, RTL partial (Arabic text OK, layout LTR) |

@@ -13,6 +13,9 @@ Communication & code-display rules: see root `../CLAUDE.md` → **Communication 
 
 ## 2. Test-Driven Development
 
+What a change must prove — the layers, the edge-case checklist, the done list — is in
+[`../TESTING-STANDARD.md`](../TESTING-STANDARD.md). This section covers how to do it in this project.
+
 ### Workflow (non-negotiable)
 1. Find or create a **failing test first**.
 2. Match the style of surrounding tests: same file → same `__tests__/` subdir → same module.
@@ -26,6 +29,8 @@ Communication & code-display rules: see root `../CLAUDE.md` → **Communication 
 - One behaviour per test. Test names describe behaviour, not implementation.
 - Deterministic — no real timers, no real network, no real `Date.now()` without mocking.
 - Prefer **`describe.each` / `it.each`** over duplicating tests with different inputs.
+- **Every service that talks to the gateway or to storage has its own test file.** Being `jest.mock`ed inside a component test does not count. Until 2026-09-24 `story-loader` had no test of its own, which is how an empty `{}` came to overwrite bundled translations.
+- Anything sent to the gateway: assert the exact set of fields, as `services/__tests__/analytics-service.test.ts` does, so a new field fails the test.
 - Variable name for the unit under test: **`underTest`** (adopt going forward; don't retrofit existing tests).
 - Use AAA structure (Arrange / Act / Assert) with blank lines between sections.
 
@@ -37,7 +42,8 @@ Communication & code-display rules: see root `../CLAUDE.md` → **Communication 
 | Component testing | `@testing-library/react-native` |
 | Mocks | `jest.mock()` + manual mocks in `__mocks__/` |
 | Snapshots | Only for stable, intentional output — never for whole screens |
-| Coverage | Jest built-in, `jest-junit` + `jest-html-reporters` in CI |
+| Coverage | Jest built-in, `jest-junit` + `jest-html-reporters` in CI. The global floor is 10% (`jest.config.js:70-75`), so a green run says little about coverage — the checklist does the work |
+| Mutation sweep | By hand: break the code (flip a condition, drop a guard), confirm a test fails, restore. No tool yet |
 | App journeys (E2E) | Maestro — flows in `.maestro/flows/`, `npm run e2e` |
 
 ### Journey tests (Maestro)
@@ -121,7 +127,30 @@ Commit rules: see root `../CLAUDE.md` → **Commits**.
 
 ---
 
-## 9. Commands
+## 9. Simulators and Memory
+
+Booted simulators are what run this Mac out of memory. On 2026-10-03 four of them, with Jest
+beside them, filled 20 GB of swap and then the disk, and every command, git included, failed
+until they were shut down.
+
+- **One simulator booted at a time.** Run `xcrun simctl list devices booted` first; if one is
+  booted, use it. Never boot a second beside it.
+- **Keep to the same device.** Use the iPhone already booted, or the one used last, for every
+  check in a session. Don't boot a fresh device to get a clean state; reseed with the E2E link or
+  relaunch the app on the same one.
+- **Restart it rather than add another.** If it is slow, stuck or showing stale code, shut it
+  down (`xcrun simctl shutdown <udid>`) and boot the same one again.
+- **Tablet checks** (phone and tablet are both required, root `../CLAUDE.md`): shut the phone
+  down, then boot the iPad; shut the iPad down when done.
+- **One Metro.** Reuse a running dev server rather than starting another, and stop it with the
+  simulator when the work is finished. Nothing is left running at the end of a session.
+- While a simulator is up, run Jest with `--maxWorkers=2`. Before a long run (full suite,
+  mutation sweep) check `df -h /` and `sysctl vm.swapusage`; with less than ~3 GB of disk free,
+  shut the simulator down first.
+
+---
+
+## 10. Commands
 
 ```bash
 # Type check
@@ -141,6 +170,10 @@ npm run test:ci                       # with coverage, fails on no-tests
 
 # Full local validation (run before pushing)
 npm run validate                      # type-check + lint + test:ci
+
+# Version (1.<minor>.<patch>; see ARCHITECTURE.md → Versions)
+npm run version:minor                 # a release with new features
+npm run version:patch                 # a release of fixes
 
 # Dev
 npm run start:clear                   # Expo dev server, cleared cache

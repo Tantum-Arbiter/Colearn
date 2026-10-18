@@ -19,15 +19,18 @@ Communication & code-display rules: see root `../CLAUDE.md` → **Communication 
 | Step definitions | `src/test/java/com/app/functest/stepdefs/` |
 | Base step class | `BaseStepDefs.java` — shared HTTP client, context, before/after |
 | Test data (assets, stories) | `src/test/resources/test-data/` |
-| WireMock stubs (in-project) | `src/test/resources/wiremock/` |
+| WireMock stubs (in-project) | `src/test/resources/wiremock/` — **not loaded by anything**; the Docker stack mounts only the root mappings below. Don't add stubs here |
 | WireMock stubs (standalone server) | **root** `../wiremock-server/mappings/` |
 | Docker orchestration | `Dockerfile`, `entrypoint.sh`, `../docker-compose.functional-tests.yml` |
 
-The gateway service runs under test; external providers (Firebase, Google OAuth, Apple OAuth) are mocked by WireMock with JSON-only configuration — no Java code in the WireMock server.
+The gateway runs under the `test,emulator` profiles (`../docker-compose.functional-tests.yml:101`), with request validation **on** as in prod. Keep it on: never switch a filter off to make a scenario pass. External providers (Firebase, Google OAuth, Apple OAuth) are mocked by WireMock with JSON-only configuration — no Java code in the WireMock server.
 
 ---
 
 ## 3. Writing Scenarios (Gherkin)
+
+What a change must prove — every endpoint's success **and** each 4xx it can return, the edge-case
+checklist, the done list — is in [`../TESTING-STANDARD.md`](../TESTING-STANDARD.md).
 
 ### Workflow
 1. **Write the `.feature` first** — describe the user-visible behaviour in business language.
@@ -40,20 +43,22 @@ The gateway service runs under test; external providers (Firebase, Google OAuth,
 - **Business language, not implementation.** `Given the user is signed in with Google` — not `Given a POST to /auth/google with body {…}`.
 - Reuse vocabulary across features — if one feature says "the user", every feature says "the user".
 - Use `Scenario Outline` + `Examples` for parameterised flows; don't copy-paste scenarios.
-- Tag scenarios: `@auth`, `@cms`, `@batch`, `@smoke`, `@regression` — Cucumber filters use these.
+- Tag every feature with its domain (`@authentication`, `@user-profile`, `@delta-sync`, `@story-pages`, …) and where it can run (`@local`, `@docker`, `@gcp-dev`, `@emulator-only`). Tag scenarios by kind: `@smoke`, `@error-handling`, `@validation`, `@security`. Reuse an existing tag before inventing one.
+- **CI runs only `@gcp-dev` scenarios**, against the dev deployment (`../.github/workflows/gateway-build.yml:228`). A scenario missing that tag never runs in CI.
 - One scenario = one behaviour. If you need `And` 6+ times, you're testing too much.
 
 ### Step Def Rules
 - Steps idempotent within a scenario; **never** rely on order from a previous scenario.
 - HTTP calls via `RestAssured` — match the patterns in `GatewayStepDefs`.
-- Assertions: REST-assured's `.then().statusCode(...).body(...)` is the convention. AssertJ is **available** here (via `spring-boot-starter-test`) — use it for non-HTTP assertions.
+- Assertions: REST-assured's `.then().statusCode(...).body(...)` is the convention. Non-HTTP assertions use JUnit `Assertions`, as in `gateway-service`.
 - Reset WireMock state between scenarios where stubs differ — see `BaseStepDefs` hooks.
 
 ---
 
 ## 4. WireMock Stub Rules
 
-- **JSON-only.** No Java stubs. Keep parity with the existing files in `wiremock-server/mappings/`.
+- **JSON-only.** No Java stubs. Keep parity with the existing files in `wiremock-server/mappings/`. Older step defs register stubs with `WireMock.stubFor` from Java; don't add more, and move one to JSON when you touch it.
+- A stub must sit on a route the gateway actually calls. A stub for a path the controller handles itself proves nothing (see the account-deletion 404/409/500 scenarios).
 - One mapping per scenario *family* — don't create per-test stubs that drift.
 - For dynamic responses (echoing request data), use WireMock response templating (`{{request.body}}` etc.) — match existing patterns.
 - When stubbing OAuth providers, include realistic error variants (`firebase-auth-errors.json`, `google-oauth-errors.json` patterns).
@@ -65,7 +70,7 @@ The gateway service runs under test; external providers (Firebase, Google OAuth,
 - **No comments in step defs or features.** Gherkin is the documentation.
 - Match Java 21 conventions from `../gateway-service/AGENTS.md` for step-def Java code (records for DTOs, no field `@Autowired`, etc.).
 - **Never modify gateway-service code from here** — if a test reveals a service bug, fix it in `gateway-service/` with its own unit test first.
-- Don't share state across scenarios via static fields — use Cucumber `@ScenarioScope` / Spring scope.
+- Don't share state across scenarios via static fields — use Cucumber `@ScenarioScope` / Spring scope. `BaseStepDefs` still holds its response and token in static fields; don't add more.
 
 ---
 
@@ -98,18 +103,17 @@ Commit rules: see root `../CLAUDE.md` → **Commits**.
 ## 9. Commands
 
 ```bash
-# Run all scenarios (requires gateway-service + WireMock running)
-./gradlew test
+# Run all scenarios (needs gateway-service + WireMock running).
+# Skips @ignore, @gcs-required and @emulator-only unless CUCUMBER_TAGS is set.
+./gradlew cucumberTest
 
-# Run a single feature
-./gradlew test -Dcucumber.features=src/test/resources/features/authentication.feature
+# Run by tag (use tags to run one feature)
+CUCUMBER_TAGS="@user-profile and not @ignore" ./gradlew cucumberTest
 
-# Run by tag
-./gradlew test -Dcucumber.filter.tags="@auth and not @slow"
+# What the Docker image runs (entrypoint.sh)
+./gradlew functionalTest
 
-# Reports (after run)
-# HTML:  build/reports/cucumber/index.html
-# JUnit: build/test-results/test/
+# Reports (after run): build/cucumber-reports/cucumber.html, cucumber.json, cucumber-junit.xml
 
 # Full Docker stack (gateway + WireMock + tests)
 docker compose -f ../docker-compose.functional-tests.yml up --abort-on-container-exit

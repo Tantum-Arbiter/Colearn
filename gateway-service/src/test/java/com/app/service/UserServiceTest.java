@@ -1,9 +1,6 @@
 package com.app.service;
 
-import com.app.model.ChildProfile;
 import com.app.model.User;
-import com.app.model.UserPreferences;
-import com.app.dto.UserDTOs;
 import com.app.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -50,21 +47,6 @@ class UserServiceTest {
         testUser.setUpdatedAt(Instant.now());
         testUser.setActive(true);
         testUser.setLastLoginAt(Instant.now());
-
-        // Setup preferences
-        UserPreferences preferences = new UserPreferences();
-        preferences.getNotifications().setPushEnabled(true);
-        preferences.getScreenTime().setDailyLimitMinutes(60);
-        testUser.setPreferences(preferences);
-
-        // Setup children
-        List<ChildProfile> children = new ArrayList<>();
-        ChildProfile child = new ChildProfile();
-        child.setId("child-1");
-        child.setName("Test Child");
-        child.setCreatedAt(Instant.now());
-        children.add(child);
-        testUser.setChildren(children);
     }
 
     @Test
@@ -215,84 +197,6 @@ class UserServiceTest {
         // Verify metrics
         verify(metricsService).recordUserCreated(testUser.getProvider());
         verify(metricsService).recordUserLogin(testUser.getProvider(), "new");
-    }
-
-    @Test
-    void updateUserPreferences_Success() throws Exception {
-        // Arrange
-        UserDTOs.UpdateUserPreferencesRequest request = new UserDTOs.UpdateUserPreferencesRequest();
-        request.setLanguage("es");
-        request.setTheme("dark");
-
-        when(userRepository.findById(testUser.getId()))
-                .thenReturn(CompletableFuture.completedFuture(Optional.of(testUser)));
-        when(userRepository.save(any(User.class)))
-                .thenReturn(CompletableFuture.completedFuture(testUser));
-
-        // Act
-        CompletableFuture<User> result = userService.updateUserPreferences(testUser.getId(), request);
-        User updatedUser = result.get();
-
-        // Assert
-        assertNotNull(updatedUser);
-        verify(userRepository).save(any(User.class));
-        verify(metricsService).recordUserPreferencesUpdate(testUser.getId());
-    }
-
-    @Test
-    void addChildProfile_Success() throws Exception {
-        // Arrange
-        UserDTOs.CreateChildProfileRequest request = new UserDTOs.CreateChildProfileRequest();
-        request.setName("New Child");
-        request.setAgeRange("2-3");
-        request.setAvatar("avatar1");
-
-        when(userRepository.findById(testUser.getId()))
-                .thenReturn(CompletableFuture.completedFuture(Optional.of(testUser)));
-        when(userRepository.save(any(User.class)))
-                .thenReturn(CompletableFuture.completedFuture(testUser));
-
-        // Act
-        CompletableFuture<User> result = userService.addChildProfile(testUser.getId(), request);
-        User updatedUser = result.get();
-
-        // Assert
-        assertNotNull(updatedUser);
-        verify(userRepository).save(any(User.class));
-    }
-
-    @Test
-    void removeChildProfile_Success() throws Exception {
-        // Arrange
-        String childId = "child-1";
-        when(userRepository.findById(testUser.getId()))
-                .thenReturn(CompletableFuture.completedFuture(Optional.of(testUser)));
-        when(userRepository.save(any(User.class)))
-                .thenReturn(CompletableFuture.completedFuture(testUser));
-
-        // Act
-        CompletableFuture<User> result = userService.removeChildProfile(testUser.getId(), childId);
-        User updatedUser = result.get();
-
-        // Assert
-        assertNotNull(updatedUser);
-        verify(userRepository).save(any(User.class));
-    }
-
-    @Test
-    void removeChildProfile_NotFound() {
-        // Arrange
-        String childId = "non-existent-child";
-        when(userRepository.findById(testUser.getId()))
-                .thenReturn(CompletableFuture.completedFuture(Optional.of(testUser)));
-
-        // Act & Assert
-        ExecutionException exception = assertThrows(ExecutionException.class, () -> {
-            CompletableFuture<User> result = userService.removeChildProfile(testUser.getId(), childId);
-            result.get(); // This should throw an exception
-        });
-        assertTrue(exception.getCause() instanceof IllegalArgumentException);
-        assertEquals("Child not found: non-existent-child", exception.getCause().getMessage());
     }
 
     @Test

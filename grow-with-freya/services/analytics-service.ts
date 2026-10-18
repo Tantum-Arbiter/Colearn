@@ -19,11 +19,10 @@ import { Platform, AppState, AppStateStatus } from 'react-native';
 import Constants from 'expo-constants';
 import { Logger } from '@/utils/logger';
 import { SecureStorage } from './secure-storage';
+import { ApiClient } from './api-client';
 
 const log = Logger.create('Analytics');
 
-const extra = Constants.expoConfig?.extra || {};
-const GATEWAY_URL = extra.gatewayUrl || process.env.EXPO_PUBLIC_GATEWAY_URL || 'http://localhost:8080';
 const MAX_BUFFER_SIZE = 100;
 const FLUSH_TIMEOUT_MS = 5000;
 
@@ -227,22 +226,14 @@ class AnalyticsServiceImpl {
         return;
       }
 
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), FLUSH_TIMEOUT_MS);
-
-      await fetch(`${GATEWAY_URL}/api/analytics/events`, {
+      // PRIVACY: no device headers (X-Device-ID etc.) -analytics must not transmit
+      // persistent identifiers. ApiClient adds only Content-Type and Authorization, and
+      // refreshes an expired token once before giving up.
+      await ApiClient.request('/api/analytics/events', {
         method: 'POST',
-        // PRIVACY: Only send Content-Type and auth. Do NOT send device headers
-        // (X-Device-ID etc.) -analytics must not transmit persistent identifiers.
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`,
-        },
         body: JSON.stringify(batch),
-        signal: controller.signal,
-      });
+      }, FLUSH_TIMEOUT_MS, { deviceHeaders: false });
 
-      clearTimeout(timeoutId);
       log.debug(`Flushed ${eventsToSend.length} events`);
     } catch (error) {
       // Fire-and-forget -analytics should never block UX

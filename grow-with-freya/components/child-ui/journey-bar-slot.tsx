@@ -1,6 +1,9 @@
 import React, { useEffect, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Animated, { useAnimatedStyle } from 'react-native-reanimated';
+import { barSink } from '@/constants/island-voyage';
+import { useIslandVoyage } from '@/contexts/island-voyage-context';
 import { ChildBottomNavigationBar, type ChildBottomNavigationBarProps } from './child-bottom-navigation';
 import { JourneyBarCoverProvider, useJourneyBarCovered } from './journey-bar-cover';
 import { JourneyBarPublishProvider, useJourneyBars } from './journey-bar-publish';
@@ -28,33 +31,44 @@ interface JourneyBarOutletProps {
 export function JourneyBarOutlet({ pageKey, holdMs = 0 }: JourneyBarOutletProps) {
   const bars = useJourneyBars();
   const current = bars?.[pageKey];
-  const [held, setHeld] = useState<ChildBottomNavigationBarProps | undefined>(current);
+  const [held, setHeld] = useState<{ page: string; bar: ChildBottomNavigationBarProps } | undefined>(
+    current ? { page: pageKey, bar: current } : undefined
+  );
 
   useEffect(() => {
     if (current) {
-      setHeld(current);
+      setHeld({ page: pageKey, bar: current });
       return undefined;
     }
-    if (holdMs <= 0) {
+    // only a slide is bridged: a page taking its own bar away, as the profile
+    // does under its edit sheet, loses it at once rather than having it drawn
+    // over whatever rose in its place
+    if (holdMs <= 0 || held?.page === pageKey) {
       setHeld(undefined);
       return undefined;
     }
     const timer = setTimeout(() => setHeld(undefined), holdMs);
     return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- `held` is read, not watched: it is what this effect sets
   }, [current, holdMs, pageKey]);
 
   const covered = useJourneyBarCovered();
   const insets = useSafeAreaInsets();
-  const props = current ?? held;
+  const { travel } = useIslandVoyage();
+  const clearance = navClearance(insets.bottom);
+  const sink = useAnimatedStyle(() => ({ transform: [{ translateY: barSink(travel.value) * clearance }] }));
+  const props = current ?? held?.bar;
   if (!props || covered) return null;
 
   return (
     <View
-      style={[styles.layer, { height: navClearance(insets.bottom) }]}
+      style={[styles.layer, { height: clearance }]}
       pointerEvents="box-none"
       testID="journey-bar-outlet"
     >
-      <ChildBottomNavigationBar {...props} />
+      <Animated.View testID="journey-bar-sink" style={[styles.sink, sink]} pointerEvents="box-none">
+        <ChildBottomNavigationBar {...props} />
+      </Animated.View>
     </View>
   );
 }
@@ -66,5 +80,8 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     zIndex: JOURNEY_BAR_LAYER_Z,
+  },
+  sink: {
+    flex: 1,
   },
 });

@@ -1,0 +1,130 @@
+name: App E2E Journeys - Android
+
+# Runs the Maestro journeys against the Android app app-e2e-build-android.yml
+# stored under app-key. It never builds: a missing app fails the job, so every
+# stage tests exactly the build it was handed.
+
+on:
+  workflow_call:
+    inputs:
+      app-key:
+        description: The cache key app-e2e-build-android.yml returned
+        type: string
+        required: true
+      tags:
+        description: Only flows with these tags (blank runs every flow)
+        type: string
+        default: ''
+
+env:
+  WORKING_DIRECTORY: grow-with-freya
+  MAESTRO_VERSION: '2.10.0'
+  MAESTRO_DRIVER_STARTUP_TIMEOUT: '900000'
+  MAESTRO_CLI_NO_ANALYTICS: '1'
+
+jobs:
+  journeys:
+    name: Journeys
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Fetch the app this run built
+        uses: actions/cache/restore@v6
+        with:
+          path: grow-with-freya/e2e-build
+          key: ${{ inputs.app-key }}
+          fail-on-cache-miss: true
+
+      - name: Setup Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Enable KVM, so the emulator is not unbearably slow
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Install Maestro
+        run: |
+          curl -fsSL -o maestro.zip "https://github.com/mobile-dev-inc/maestro/releases/download/cli-${MAESTRO_VERSION}/maestro.zip"
+          unzip -q maestro.zip -d "$HOME"
+          echo "$HOME/maestro/bin" >> $GITHUB_PATH
+
+      - name: Serve the stubbed gateway
+        timeout-minutes: 5
+        run: |
+          nohup ./wiremock-server/run-local.sh > "$RUNNER_TEMP/wiremock.log" 2>&1 < /dev/null &
+          for i in $(seq 1 90); do
+            curl -sf http://localhost:8080/__admin/health > /dev/null && break
+            sleep 2
+          done
+          curl -sf http://localhost:8080/__admin/health
+
+      - name: Record host memory while the journeys run
+        run: |
+          nohup sh -c 'while true; do date -u +%T; free -m | sed -n 2p; ps -eo rss,comm --sort=-rss | sed -n 2,5p; sleep 10; done' \
+            > "$RUNNER_TEMP/host-memory.log" 2>&1 < /dev/null &
+
+      - name: Run the journeys
+        timeout-minutes: 40
+        env:
+          MAESTRO_REPORT: ${{ runner.temp }}/maestro-junit.xml
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 31
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          cores: 3
+          ram-size: 4096M
+          disable-animations: true
+          script: |
+            adb install -r grow-with-freya/e2e-build/app-release.apk
+            adb reverse tcp:8080 tcp:8080
+            adb shell pm disable-user --user 0 com.google.android.apps.nexuslauncher || true
+            nohup adb logcat -v threadtime > "$RUNNER_TEMP/logcat.txt" 2>&1 < /dev/null &
+            cd grow-with-freya && ./.maestro/run-with-device-retry.sh -e APP_BUILD=release ${{ inputs.tags && format('--include-tags={0}', inputs.tags) || '' }}
+
+      - name: Collect what the host saw
+        if: failure()
+        run: |
+          sudo dmesg -T | tail -200 > "$RUNNER_TEMP/dmesg.txt" || true
+          cp -R /tmp/android-runner "$RUNNER_TEMP/emulator-crash" 2>/dev/null || true
+
+      - name: Summarise the journeys
+        if: always()
+        run: |
+          python3 .github/scripts/junit-summary.py --title "Android journeys" --list-cases \
+            --report "$RUNNER_TEMP/maestro-junit.xml" --retry "$RUNNER_TEMP/maestro-junit-retry.xml"
+
+      - name: Keep the journeys report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: maestro-report-android-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/maestro-junit.xml
+            ${{ runner.temp }}/maestro-junit-retry.xml
+          if-no-files-found: ignore
+          retention-days: 30
+
+      - name: Keep what failed
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: maestro-android-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ~/.maestro/tests
+            ${{ runner.temp }}/logcat.txt
+            ${{ runner.temp }}/wiremock.log
+            ${{ runner.temp }}/host-memory.log
+            ${{ runner.temp }}/dmesg.txt
+            ${{ runner.temp }}/emulator-crash
+          retention-days: 14
