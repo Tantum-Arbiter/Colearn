@@ -1403,7 +1403,10 @@ island        PlanTrail (glowing dashes along each leg's own curve through its g
   step card on most phones). The places were found by a search that scored overlaps on all six
   screens, kept the circles on land and off the lighthouse and the cottages, and held them near a
   hand-drawn snake; each leg's guide point was then chosen so no dash hides on any phone but the
-  SE, which loses 6 of 31 under names. An iPhone SE has about 200 points between the horizon and
+  SE, which loses 6 of 31 under names, and no leg comes within 16 points of another (operator,
+  2026-10-18: the 5 → 6 leg looped back over 4 → 5, because Story Corner sits just under that leg
+  and too close to Music Grove for a straight leg of three dashes; 4 → 5 now arcs over the river
+  bend, as the legs off the islet already cross water, and 5 → 6 leaves Music Grove heading left). An iPhone SE has about 200 points between the horizon and
   the card, too little for seven full checkpoints, so a phone under `CHECKPOINT_COMPACT_BELOW`
   (700 points) tall gets `CHECKPOINT_DIAMETER_COMPACT` (48 points, still over the 44-point touch
   target) and 10-point names (`checkpointSize`). A name is tucked over the foot of its circle
@@ -1465,8 +1468,8 @@ island        PlanTrail (glowing dashes along each leg's own curve through its g
   checkpoint through one guide point (`ISLAND_TRAIL_VIA`), chosen so that no dash falls under a
   disc, a number badge or a name on a 390×844 phone or an 834×1210 tablet, and so the curve
   stays close to a straight line; `island-trail.test.ts` counts the hidden dashes (none, on
-  either) and keeps every dash above the step card. To reroute a leg, move its guide point and
-  run that test.
+  either), keeps every dash above the step card and keeps every leg at least 16 points from the
+  others. To reroute a leg, move its guide point and run that test.
 - **Every day can be played again, and the last one, once done, opens the road map**
   (operator, 2026-10-05). A done checkpoint can be pressed: `useLearningPlan.start` starts a done day
   as it does an open one, and the step is ticked off again when it finishes, which keeps its first

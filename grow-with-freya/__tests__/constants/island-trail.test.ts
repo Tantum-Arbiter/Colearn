@@ -88,6 +88,23 @@ function mapOn(screen: Screen, map: IslandMap, isTablet: boolean) {
   return { layout, cardTop, radius, boxes, dashes, legs: [...legs.values()] };
 }
 
+const LEGS_APART = 16;
+
+function legsStayApart(name: string, screen: Screen, map: IslandMap, isTablet: boolean) {
+  it(`keeps every leg of the trail clear of the others, so no stretch runs over another, on ${name}`, () => {
+    const { layout } = mapOn(screen, map, isTablet);
+    const dashes = trailDashes(map.trail, map.dash, map.via).map((dash) => ({ ...artPoint(dash.x, dash.y, layout), leg: dash.leg }));
+
+    const closest = Math.min(
+      ...dashes.flatMap((dash, index) =>
+        dashes.slice(index + 1).filter((other) => other.leg !== dash.leg).map((other) => Math.hypot(dash.x - other.x, dash.y - other.y))
+      )
+    );
+
+    expect(closest).toBeGreaterThanOrEqual(LEGS_APART);
+  });
+}
+
 function staysClear(name: string, screen: Screen, map: IslandMap, isTablet: boolean) {
   it(`keeps every circle and name clear of each other, of the step card and of the edges on ${name}`, () => {
     const { cardTop, radius, boxes } = mapOn(screen, map, isTablet);
@@ -171,6 +188,7 @@ describe('the tablet trail', () => {
 
   Object.entries(TABLETS).forEach(([name, screen]) => {
     staysClear(name, screen, TABLET_ISLAND, true);
+    legsStayApart(name, screen, TABLET_ISLAND, true);
 
     it(`shows every leg of the trail on ${name}`, () => {
       const { legs } = mapOn(screen, TABLET_ISLAND, true);
@@ -249,6 +267,7 @@ describe('the phone trail', () => {
 
   Object.entries(PHONES).forEach(([name, screen]) => {
     staysClear(name, screen, PHONE_ISLAND, false);
+    legsStayApart(name, screen, PHONE_ISLAND, false);
 
     it(`starts each leg clear of the circles on ${name}`, () => {
       const { layout, radius } = mapOn(screen, PHONE_ISLAND, false);

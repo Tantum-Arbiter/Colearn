@@ -49,8 +49,8 @@ export const ISLAND_TRAIL_VIA_PHONE: readonly (readonly TrailPoint[])[] = [
   [{ x: 639, y: 698 }],
   [{ x: 354, y: 735 }],
   [{ x: 278, y: 868 }],
-  [{ x: 602, y: 958 }],
-  [{ x: 700, y: 974 }],
+  [{ x: 654, y: 890 }],
+  [{ x: 622, y: 1000 }],
   [{ x: 414, y: 1050 }],
 ];
 
