@@ -107,7 +107,12 @@ removed so it cannot mislead.
 ## 7. Children's Code standards touched
 
 Best interests, data minimisation, default settings (crash reports off),
-parental controls (parents-only gate), profiling (none), nudge techniques (badge copy lint forbids
+parental controls (parents-only gate), profiling (none: the learning week is built only from the
+goals a grown-up picks at onboarding or in the grown-ups area and the age band they entered,
+kept on the device and never combined with usage or results; a game records only that a mission was
+finished or left, which one and how long, as the plan already does for a day, with no per-action
+events, no accuracy and no time per item, and what a child had placed in an unfinished game is kept
+on the device only), nudge techniques (badge copy lint forbids
 pressure to return — `contract-fixtures/badge-copy-forbidden.json`), transparency (see
 `PRIVACY-POLICY-CHANGES.md`).
 

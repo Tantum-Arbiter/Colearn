@@ -1,5 +1,5 @@
 import type { ReadingMode } from '@/contexts/story-transition-context';
-import { MUSIC_PRACTISE_ACTIVITY } from '@/data/learning-plan';
+import { MUSIC_PRACTISE_ACTIVITY } from '@/data/plan-units';
 import type { Ionicons } from '@expo/vector-icons';
 import type { LearningPlan, LearningPlanStep, PlanLaunch, PlanStepKind } from '@/types/learning-plan';
 
@@ -8,6 +8,7 @@ export const PLAN_STEPS_PER_WEEK = 7;
 export const PLAN_STEP_ICON = {
   story: 'book',
   music: 'musical-notes',
+  game: 'sparkles',
 } as const satisfies Record<PlanStepKind, keyof typeof Ionicons.glyphMap>;
 
 export const PLAN_MODE_ICON = {
@@ -75,5 +76,7 @@ export function launchFor(step: LearningPlanStep): PlanLaunch | null {
       return step.storyId ? { kind: 'story', storyId: step.storyId, mode: step.mode ?? 'read' } : null;
     case 'music':
       return { kind: 'music', activityId: MUSIC_PRACTISE_ACTIVITY };
+    case 'game':
+      return step.packId && step.missionId ? { kind: 'game', packId: step.packId, missionId: step.missionId } : null;
   }
 }

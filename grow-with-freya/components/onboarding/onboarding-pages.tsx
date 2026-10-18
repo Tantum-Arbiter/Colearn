@@ -20,6 +20,7 @@ import {
 import { MIN_NICKNAME_LENGTH, MAX_NICKNAME_LENGTH } from '@/constants/profile';
 import { SUPPORTED_LANGUAGES, setStoredLanguage, type SupportedLanguage } from '@/services/i18n';
 import { GOLD, PURPLE, CARD_BG, CARD_BORDER, TEXT_MUTED, TEXT_FAINT, NIGHT_BASE } from './onboarding-theme';
+import type { PlanGoal } from '@/types/learning-plan';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 // The width every hero and grid below is sized from. It is capped, so a
@@ -81,6 +82,65 @@ export const WORLD_TILES: WorldTile[] = [
   { key: 'learning', art: require('@/assets/images/onboarding/world-learning.webp') },
   { key: 'feelings', art: require('@/assets/images/onboarding/world-feelings.webp') },
 ];
+
+export const GOAL_TILES: { key: PlanGoal; art: ImageSourcePropType }[] = [
+  { key: 'cosyStories', art: require('@/assets/images/onboarding/world-stories.webp') },
+  { key: 'bigFeelings', art: require('@/assets/images/onboarding/world-feelings.webp') },
+  { key: 'makeMusic', art: require('@/assets/images/onboarding/world-music.webp') },
+];
+
+export interface GoalsPageProps {
+  chosen: readonly PlanGoal[];
+  onToggle: (goal: PlanGoal) => void;
+}
+
+export function GoalsPage({ chosen, onToggle }: GoalsPageProps) {
+  const { t } = useTranslation();
+  const { scaledFontSize } = useAccessibility();
+
+  return (
+    <View style={styles.pageContainer}>
+      <View style={styles.tileGrid}>
+        {GOAL_TILES.map((tile) => {
+          const rank = chosen.indexOf(tile.key);
+          const checked = rank >= 0;
+          return (
+            <Pressable
+              key={tile.key}
+              testID={`goal-tile-${tile.key}`}
+              style={[styles.tile, checked && styles.tileChosen]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                onToggle(tile.key);
+              }}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked }}
+              accessibilityLabel={t(`onboardingV2.goals.${tile.key}`)}
+            >
+              <Image testID={`goal-art-${tile.key}`} source={tile.art} style={styles.tileArt} resizeMode="cover" />
+              {checked ? (
+                <View style={styles.goalRank} pointerEvents="none">
+                  <ThemedText testID={`goal-rank-${tile.key}`} style={[styles.goalRankText, { fontSize: scaledFontSize(15) }]}>
+                    {String(rank + 1)}
+                  </ThemedText>
+                </View>
+              ) : null}
+              <View style={styles.tileLabelRow} pointerEvents="none">
+                <ThemedText style={[styles.tileLabel, { fontSize: scaledFontSize(17) }]}>
+                  {t(`onboardingV2.goals.${tile.key}`)}
+                </ThemedText>
+              </View>
+            </Pressable>
+          );
+        })}
+      </View>
+
+      <ThemedText style={[styles.footerNote, { fontSize: scaledFontSize(14) }]}>
+        {t('onboardingV2.goals.helper')}
+      </ThemedText>
+    </View>
+  );
+}
 
 export interface WorldsPageProps {
   onSelectWorld?: (tile: WorldTile) => void;
@@ -717,6 +777,25 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFill,
     width: undefined,
     height: undefined,
+  },
+  tileChosen: {
+    borderWidth: 3,
+    borderColor: '#E8B84B',
+  },
+  goalRank: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#E8B84B',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  goalRankText: {
+    color: '#1B205E',
+    fontWeight: '800',
   },
   tileLabelRow: {
     alignItems: 'center',

@@ -6,7 +6,7 @@ name: A child who has finished the week plays a day again, and finds the road ma
 - runFlow:
     file: ../../helpers/start-seeded.yaml
     env:
-      SEED: "onboarded=1&guest=1&tutorials=done&screenTime=reset&language=en&tier=free&childAgeMonths=30&planDone=7"
+      SEED: "onboarded=1&guest=1&tutorials=done&screenTime=reset&language=en&goals=&tier=free&childAgeMonths=30&planDone=7"
 - tapOn:
     id: "achievement-card"
 # The dive down to the island takes a few seconds, longer the first time.

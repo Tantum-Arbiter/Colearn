@@ -2,10 +2,13 @@ import { act, renderHook } from '@testing-library/react-native';
 import { JOURNEY_CLOCK_MS, useJourneySteps } from '@/components/home/use-journey-steps';
 import { ISLAND_WEEK } from '@/data/learning-plan';
 import type { LearningPlanProgress } from '@/constants/learning-plan';
+import { buildWeek } from '@/services/plan-builder';
+import type { PlanGoal } from '@/types/learning-plan';
 
 let mockProgress: LearningPlanProgress | null = null;
+let mockGoals: PlanGoal[] = [];
 jest.mock('@/store/app-store', () => ({
-  useAppStore: (selector: (state: Record<string, unknown>) => unknown) => selector({ learningPlanProgress: mockProgress }),
+  useAppStore: (selector: (state: Record<string, unknown>) => unknown) => selector({ learningPlanProgress: mockProgress, childGoals: mockGoals }),
 }));
 
 function done(days: number[], at: string): LearningPlanProgress {
@@ -17,6 +20,7 @@ describe('useJourneySteps', () => {
     jest.useFakeTimers();
     jest.setSystemTime(new Date(2026, 9, 3, 9, 0));
     mockProgress = null;
+    mockGoals = [];
   });
 
   afterEach(() => {
@@ -35,6 +39,15 @@ describe('useJourneySteps', () => {
 
     expect(result.current.map((step) => step.kind)).toEqual(ISLAND_WEEK.steps.slice(0, 5).map((step) => step.kind));
     expect(result.current.map((step) => step.id)).toEqual(ISLAND_WEEK.steps.slice(0, 5).map((step) => step.id));
+  });
+
+  it('follows the week the family`s goals build, as the island does', () => {
+    mockGoals = ['bigFeelings'];
+    const { result } = renderHook(() => useJourneySteps(true));
+    const week = buildWeek(['bigFeelings']);
+
+    expect(result.current.map((step) => step.domainKey)).toEqual(week.steps.slice(0, 5).map((step) => step.domainKey));
+    expect(result.current.map((step) => step.skill)).toEqual(week.steps.slice(0, 5).map((step) => step.skills[0]));
   });
 
   it('says of each step how many the week has, the area it belongs to and the first skill it builds', () => {

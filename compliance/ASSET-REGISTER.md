@@ -209,6 +209,30 @@ sign-in sky, the owl and the badge art.
 | Checked by eye against well-known games and films | **Not yet done by a person** |
 | The dates on the panels | Painted into the art. If the plan moves, the art has to be repainted or the quarters painted out and written by the app as the places are |
 
+## 7. Wombat's Picnic Count (the first game pack)
+
+Made 2026-10-17 by `grow-with-freya/scripts/prepare-pack-art.py --pack wombat-picnic`, entirely
+from the book *Snuggle Little Wombat* the app already ships and from shapes drawn in code. Nothing
+from outside the app is added. Everything ships under `grow-with-freya/assets/packs/wombat-picnic/`,
+0.23 MB of art and sound in all.
+
+| File | Where from | What was changed |
+|---|---|---|
+| `art/tablet/sky.webp` (1448×1086), `art/phone/sky.webp` (1086×1448) | The book's cover, `assets/stories/snuggle-little-wombat/cover/cover-large.webp` (2732×2048), whole for the tablet and its middle 1536 columns for the phone | The sleeping wombat and the title painted out, each row of the hill and of the sky given the colour the same row has beside the gap, then softened and given the paper's grain back; the stars lifted out (below); a soft shadow painted on the hill under the leaf and under the wombat; scaled and re-encoded as WebP, quality 82 |
+| `art/*/stars-1.webp`, `stars-2.webp` | The cover's own stars, found as small bright spots in the sky and cut with their glow as their transparency | Shared out alternately between two sheets, so the app can make them twinkle in turn; nothing redrawn |
+| `art/*/wombat.webp` | The wombat walking on page 4, `assets/stories/snuggle-little-wombat/page-4/background.webp`, cut from the grass by the colour of his fur, with the rim's colour borrowed inward so no green rides along the edge | Scaled up about 1.6× for the painting; nothing redrawn |
+| `art/*/leaf.webp`, `leaf-glow.webp`, `berry.webp`, `nut.webp`, `petal.webp` | Drawn in code by the script (a pointed leaf with a midrib and veins and a shadow beneath; the same leaf in a warm halo; a round berry lit from the top left with a calyx; an acorn with a cap and stalk; a pink petal with a crease) | Made for the app |
+| `cover.webp` (724×543) | The tablet layers composed at rest | The plan card's picture |
+| `sounds/pop.m4a`, `bloop.m4a`, `hum.m4a`, `chime.m4a`, `tada.m4a` | Synthesised by the script (short sine sweeps, a hummed chord with vibrato, bell tones and a three-note bell phrase), mono AAC at 64 kb/s, none longer than 2.6 s | Made for the app |
+| The words (the wombat's prompts, the aim, the grown-up's line, the bridge tips) | Written in the 14 locale files under `packs.wombatPicnic`, `experience` and `bridges.counting` | Made for the app |
+
+| Question | Answer |
+|---|---|
+| Who made the book's pictures, and with what | As for the book itself: see the story's own entry; the cover and page 4 are the book's bundled art, used as they ship |
+| Terms for commercial use, and who owns it | As for the book |
+| Checked by eye against well-known games | **Not yet done by a person.** Berries counted onto a leaf is a common nursery mechanic; the drawn shapes are generic |
+| Source hashes | `cover-large.webp` SHA-256 `2311c38d52395524b87320ab6a51da033582971f5a4ce293341d40982dd2bce4`; `page-4/background.webp` SHA-256 `544a086de47c7453f3d4f6140749e39c8c477f87a7d9dc4cb80be34caa768878`, as bundled on 2026-10-17 |
+
 ## 6. The lock on the learning-plan checkpoints
 
 **No longer drawn, since 2026-10-03.** The checkpoints now wear the operator's later mock: a

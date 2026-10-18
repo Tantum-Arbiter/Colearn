@@ -669,6 +669,7 @@ export default {
 
   // The child's own page in the journey, plus profile validation and editing
   profile: {
+    goals: 'What we want to do together',
     signedIn: 'Signed in',
     settings: 'Settings',
     noName: 'Little explorer',
@@ -802,11 +803,16 @@ export default {
       musicGrove: 'Music Grove',
       storyCorner: 'Story Corner',
       storyBridge: 'Story Bridge',
+      tidePool: 'Tide Pool',
+      busStop: 'Bus Stop',
+      lighthouse: 'Lighthouse',
+      wombatBurrow: 'Wombat’s Burrow',
     },
     domains: {
       language: 'Language',
       feelings: 'Feelings',
       music: 'Music',
+      maths: 'Maths',
     },
     skills: {
       listening: 'Listening',
@@ -815,15 +821,21 @@ export default {
       confidence: 'Confidence',
       rhythm: 'Rhythm',
       patience: 'Patience',
+      counting: 'Counting',
+      numbers: 'Numbers',
     },
-    islandWeek: {
-      'day-1': { aim: 'Build listening, vocabulary and calm through a cosy bedtime story.' },
-      'day-2': { aim: 'Record the wombat’s story in a grown-up’s voice, then listen back together.' },
-      'day-3': { aim: 'Listen to the story in your own voice and join in with the words you know.' },
-      'day-4': { aim: 'Record Juni’s story in a grown-up’s voice, ready for a bedtime listen.' },
-      'day-5': { aim: 'Find the beat and play a short song, one note at a time.' },
-      'day-6': { aim: 'Build listening and talk about big feelings through a story of growing up.' },
-      'day-7': { aim: 'Practise waiting and taking turns through a story about a bus ride.' },
+    units: {
+      wombatRead: { aim: 'Build listening, vocabulary and calm through a cosy bedtime story.' },
+      wombatRecord: { aim: 'Record the wombat’s story in a grown-up’s voice, then listen back together.' },
+      wombatListen: { aim: 'Listen to the story in your own voice and join in with the words you know.' },
+      juniRecord: { aim: 'Record Juni’s story in a grown-up’s voice, ready for a bedtime listen.' },
+      musicPractise: { aim: 'Find the beat and play a short song, one note at a time.' },
+      juniRead: { aim: 'Build listening and talk about big feelings through a story of growing up.' },
+      dingRead: { aim: 'Practise waiting and taking turns through a story about a bus ride.' },
+      juniListen: { aim: 'Listen to Juni’s story in your own voice and talk about the big feelings in it.' },
+      dingRecord: { aim: 'Record the bus story in a grown-up’s voice, then listen back together.' },
+      dingListen: { aim: 'Listen to the bus story in your own voice and practise waiting for the ding.' },
+      wombatPicnic: { aim: 'Count berries onto the wombat’s leaf plate, one, two, three, and say the numbers together.' },
     },
     stepOf: 'Step {{day}} of {{total}}',
     focus: '{{domain}} & {{skill}}',
@@ -841,6 +853,52 @@ export default {
       open: 'ready to start',
       tomorrow: 'opens tomorrow',
       locked: 'not yet',
+    },
+  },
+  packs: {
+    wombatPicnic: {
+      objects: {
+        wombat: 'Wombat',
+        leaf: 'Leaf plate',
+        berry: 'Berry',
+        nut: 'Nut',
+        petal: 'Petal',
+      },
+      zones: {
+        leaf: 'The leaf plate',
+      },
+      missions: {
+        picnic: {
+          title: 'Wombat’s Picnic Count',
+          aim: 'Put berries on the leaf and count each one with the wombat.',
+          prompt: 'The wombat wants berries for his friends. Can you put them on the leaf?',
+          grownUp: 'Count aloud together. Can you find three things on our table at home?',
+          stages: {
+            one: 'One berry for the wombat.',
+            two: 'Now two berries altogether.',
+            three: 'Three berries for my friends.',
+            threeAndTwo: 'Three berries and two nuts, please.',
+            oneMore: 'One more berry than before.',
+          },
+        },
+      },
+    },
+  },
+  experience: {
+    back: 'Back',
+    finish: 'Finish',
+    paused: 'Paused',
+    wellDone: 'Well done!',
+    aim: 'What we are doing',
+    grownUp: 'For the grown-up',
+    bridgeTitle: 'Carry it into the day',
+    loading: 'Getting ready…',
+  },
+  bridges: {
+    counting: {
+      atHome: { title: 'Lay the table', body: 'Count out one plate, one cup and one spoon for each person. How many altogether?' },
+      outdoors: { title: 'Three stones', body: 'Find three stones on a walk, line them up and count them. Can you find one more?' },
+      creative: { title: 'A berry picture', body: 'Draw a plate with three berries on it. Count them as you colour each one.' },
     },
   },
   tutorial: {
@@ -1635,6 +1693,14 @@ export default {
       setUpLater: 'Set up later',
       continue: 'Continue',
       helper: 'This helps us suggest suitable stories and activities.',
+    },
+    goals: {
+      title: 'What would you like to do together?',
+      helper: 'Tap what matters most, in order. You can change this any time in the grown-ups area.',
+      continue: 'Start our week',
+      cosyStories: 'Stories together',
+      bigFeelings: 'Talking about feelings',
+      makeMusic: 'Making music',
     },
   },
   childUi: {

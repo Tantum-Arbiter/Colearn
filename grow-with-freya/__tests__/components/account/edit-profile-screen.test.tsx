@@ -12,6 +12,7 @@ import { MIN_NICKNAME_LENGTH } from '@/constants/profile';
 
 const mockSetUserProfile = jest.fn();
 const mockSetChildAge = jest.fn();
+const mockSetChildGoals = jest.fn();
 let mockStore: Record<string, unknown>;
 
 jest.mock('@/store/app-store', () => ({
@@ -46,6 +47,8 @@ describe('EditProfileContent', () => {
       isGuestMode: false,
       setUserProfile: mockSetUserProfile,
       setChildAge: mockSetChildAge,
+      childGoals: ['makeMusic'],
+      setChildGoals: mockSetChildGoals,
     };
   });
 
@@ -108,4 +111,31 @@ describe('EditProfileContent', () => {
 
     expect(mockSetUserProfile).toHaveBeenCalledWith('Ava', 'girl', AVATAR_OPTIONS[0].key);
   });
+
+  it('shows the goals the family chose as chosen, under the profile', () => {
+    const tree = render(<EditProfileContent />);
+
+    expect(findByTestId(tree, 'goal-tile-makeMusic').pop()!.props.accessibilityState).toEqual({ checked: true });
+    expect(findByTestId(tree, 'goal-tile-cosyStories').pop()!.props.accessibilityState).toEqual({ checked: false });
+  });
+
+  it('saves the goals with the profile, in the order chosen', () => {
+    const tree = render(<EditProfileContent />);
+
+    fireEvent.press(findByTestId(tree, 'goal-tile-bigFeelings').pop()!);
+    fireEvent.press(saveButton(tree));
+
+    expect(mockSetChildGoals).toHaveBeenCalledWith(['makeMusic', 'bigFeelings']);
+    expect(mockSetUserProfile).toHaveBeenCalled();
+  });
+
+  it('can let every goal go, so the week is the island week again', () => {
+    const tree = render(<EditProfileContent />);
+
+    fireEvent.press(findByTestId(tree, 'goal-tile-makeMusic').pop()!);
+    fireEvent.press(saveButton(tree));
+
+    expect(mockSetChildGoals).toHaveBeenCalledWith([]);
+  });
+
 });

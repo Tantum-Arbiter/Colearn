@@ -138,6 +138,7 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
   const freeplayTranslateY = useSharedValue(restingAt('freeplay'));
   const accountTranslateY = useSharedValue(restingAt('account'));
   const islandTranslateY = useSharedValue(restingAt('island'));
+  const gameTranslateY = useSharedValue(restingAt('game'));
 
   // Map page keys to their animation values
   const pageAnimations: Record<string, SharedValue<number>> = {
@@ -149,6 +150,7 @@ export const EnhancedPageTransition: React.FC<EnhancedPageTransitionProps> = ({
     freeplay: freeplayTranslateY,
     account: accountTranslateY,
     island: islandTranslateY,
+    game: gameTranslateY,
   };
 
   // Update animation values when screen height changes (orientation change)

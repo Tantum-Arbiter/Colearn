@@ -41,7 +41,12 @@ function view(index: number, state: PlanStepView['state'], extra: Partial<PlanSt
     point: ISLAND_TRAIL[index],
     title: `Title ${step.day}`,
     picture: step.kind === 'story' ? { uri: `test://cover-${step.day}` } : null,
-    launch: step.kind === 'story' ? { kind: 'story', storyId: step.storyId ?? '', mode: step.mode ?? 'read' } : { kind: 'music', activityId: 'music-practise' },
+    launch:
+      step.kind === 'story'
+        ? { kind: 'story', storyId: step.storyId ?? '', mode: step.mode ?? 'read' }
+        : step.kind === 'game'
+          ? { kind: 'game', packId: step.packId ?? '', missionId: step.missionId ?? '' }
+          : { kind: 'music', activityId: 'music-practise' },
     ...extra,
   };
 }
@@ -406,12 +411,18 @@ describe('PlanCheckpoint', () => {
 
   it.each([
     [1, 'mic'],
-    [2, 'volume-medium'],
     [3, 'mic'],
   ] as const)('marks an open book in another mode, day index %s, with a %s rather than the open book', (index, name) => {
     const icon = one(`plan-checkpoint-${index + 1}-icon`, renderOne('open', index).root);
 
     expect(icon.props.name).toBe(name);
+    expect(icon.props.color).toBe(CHECKPOINT_TINTS.cover);
+  });
+
+  it('marks an open game day, index 2, with sparkles rather than the open book', () => {
+    const icon = one('plan-checkpoint-3-icon', renderOne('open', 2).root);
+
+    expect(icon.props.name).toBe('sparkles');
     expect(icon.props.color).toBe(CHECKPOINT_TINTS.cover);
   });
 
@@ -639,7 +650,7 @@ describe('PlanPanel', () => {
 
     expect(texts(one('plan-panel-title', root))).toEqual(['plan.places.storyTime']);
     expect(texts(one('plan-panel-subtitle', root))).toEqual(['Title 1']);
-    expect(texts(one('plan-panel-aim', root))).toEqual(['plan.islandWeek.day-1.aim']);
+    expect(texts(one('plan-panel-aim', root))).toEqual(['plan.units.wombatRead.aim']);
     expect(one('plan-panel-title', root).props.accessibilityRole).toBe('header');
   });
 
@@ -728,10 +739,32 @@ describe('PlanPanel', () => {
     expect(all('plan-preview', root)).toHaveLength(0);
   });
 
-  it.each([1, 2, 3])('offers a Preview on day index %s, a book in another mode', (index) => {
+  it.each([1, 3])('offers a Preview on day index %s, a book in another mode', (index) => {
     const { root } = renderPanel(view(index, 'open'));
 
     expect(all('plan-preview', root).length).toBeGreaterThan(0);
+  });
+
+  it('offers no Preview on the game day, index 2, only a start', () => {
+    const { root } = renderPanel(view(2, 'open'));
+
+    expect(all('plan-preview', root)).toHaveLength(0);
+    expect(all('plan-start', root).length).toBeGreaterThan(0);
+  });
+
+  it('shows the game`s own picture on its day, and its mission as the subtitle', () => {
+    const { root } = renderPanel(view(2, 'open', { picture: { uri: 'test://picnic' }, title: 'packs.wombatPicnic.missions.picnic.title' }));
+
+    expect(coverOf(root)).toEqual({ uri: 'test://picnic' });
+    expect(texts(one('plan-panel-subtitle', root))).toEqual(['packs.wombatPicnic.missions.picnic.title']);
+    expect(texts(one('plan-panel-title', root))).toEqual(['plan.places.wombatBurrow']);
+  });
+
+  it('shows a sparkle tile for a game day with no picture', () => {
+    const { root } = renderPanel(view(2, 'open', { picture: null }));
+
+    expect(all('plan-panel-cover', root)).toHaveLength(0);
+    expect(one('plan-panel-kind', root).props.name).toBe('sparkles');
   });
 
   it('says the next day opens tomorrow, under a moon, and offers nothing to start or preview', () => {

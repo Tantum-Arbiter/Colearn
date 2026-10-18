@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { journeyStepsShown } from '@/constants/home-journey';
 import { stepStates, type PlanStepState } from '@/constants/learning-plan';
-import { ISLAND_WEEK } from '@/data/learning-plan';
+import { buildWeek } from '@/services/plan-builder';
 import { useAppStore } from '@/store/app-store';
 import type { ChildHomeJourneyStep } from '@/types/child-home';
 
@@ -11,6 +11,8 @@ const STATE_SEPARATOR = ',';
 
 export function useJourneySteps(isActive: boolean): readonly ChildHomeJourneyStep[] {
   const progress = useAppStore((state) => state.learningPlanProgress);
+  const goals = useAppStore((state) => state.childGoals);
+  const plan = useMemo(() => buildWeek(goals), [goals]);
   const [now, setNow] = useState(() => new Date());
   const [wasActive, setWasActive] = useState(isActive);
 
@@ -26,21 +28,21 @@ export function useJourneySteps(isActive: boolean): readonly ChildHomeJourneySte
     return () => clearInterval(clock);
   }, [isActive]);
 
-  const states = stepStates(ISLAND_WEEK, progress, now).join(STATE_SEPARATOR);
+  const states = stepStates(plan, progress, now).join(STATE_SEPARATOR);
 
   return useMemo(() => {
     const each = states.split(STATE_SEPARATOR) as PlanStepState[];
 
     return journeyStepsShown(
-      ISLAND_WEEK.steps.map((step, index) => ({
+      plan.steps.map((step, index) => ({
         id: step.id,
         day: step.day,
-        of: ISLAND_WEEK.steps.length,
+        of: plan.steps.length,
         kind: step.kind,
         state: each[index],
         domainKey: step.domainKey,
         skill: step.skills[0],
       }))
     );
-  }, [states]);
+  }, [plan, states]);
 }

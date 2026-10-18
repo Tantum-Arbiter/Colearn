@@ -48,14 +48,20 @@ MAESTRO_DEVICE=<udid> npm run e2e   # a particular simulator
 `MAESTRO_FRESH=1 npm run e2e` boots the simulator again first, which is the cure when flows start
 failing on elements that are plainly on screen.
 
-Twelve flows, on a phone and on a tablet (`MAESTRO_DEVICE=<ipad udid>`): home opens; a story opens
+Fifteen flows, on a phone and on a tablet (`MAESTRO_DEVICE=<ipad udid>`): home opens; a story opens
 from the shelf and closes again; a story only the server has reaches the shelf; a signed-in parent
 comes straight back in; a first run meets onboarding; the flag switches languages and it sticks; the
 grown-ups door asks its question; the offer opens and closes; a story beyond the free plan wears a lock;
 the library's themes and Filter stay in view as the shelves scroll, and still answer a tap
 (`core/library-themes-stay-in-view.yaml`); a page picked in a book's card is marked and offered to
 read from (`core/start-from-a-page.yaml`); and a finished week on the island plays a day again and
-opens the road map from the last day, with Back and Play again (`core/island-week-done.yaml`).
+opens the road map from the last day, with Back and Play again (`core/island-week-done.yaml`). A family who
+says at onboarding that they want to talk about feelings gets a week that starts with Juni's book
+(`core/onboarding-goals.yaml`, which walks the whole of onboarding, answering the crash-reports
+dialog with No Thanks, then carrying on as a guest through the sheet that follows). Day 3 on the island
+is the wombat's picnic: three berries tapped onto the leaf, the celebration, the bridge, and the day's
+tick (`core/island-game-day.yaml`); and a day whose screen time is already spent stops the game within
+half a minute and the owl speaks on the island (`core/game-screensafe-stop.yaml`).
 `helpers/close-the-reader.yaml` is the way through a book that something else opened and back out.
 
 **The development build must match the bundle.** The build installed on a simulator is native code.

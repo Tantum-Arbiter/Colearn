@@ -87,16 +87,20 @@ export const SKILL_ICON: Record<PlanSkill, ComponentProps<typeof Ionicons>['name
   confidence: 'star-outline',
   rhythm: 'musical-notes-outline',
   patience: 'hourglass-outline',
+  counting: 'apps-outline',
+  numbers: 'calculator-outline',
 };
 
 const KIND_TILE: Record<PlanStepKind, readonly [string, string]> = {
   story: ['#5E6CF6', '#4652E2'],
   music: ['#A78BFA', '#7C3AED'],
+  game: ['#F2B04A', '#D7802C'],
 };
 
 const KIND_ICON: Record<PlanStepKind, ComponentProps<typeof Ionicons>['name']> = {
   story: 'book',
   music: 'musical-notes',
+  game: 'sparkles',
 };
 
 export interface PlanCardRect {

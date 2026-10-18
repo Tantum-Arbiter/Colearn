@@ -5,7 +5,9 @@ import { Logger } from '@/utils/logger';
 import { rememberSearch } from '@/components/stories/catalogue/story-search';
 import { onSessionLapse } from '@/services/session-lapse';
 import type { LearningPlanProgress } from '@/constants/learning-plan';
-import type { PlanLaunch } from '@/types/learning-plan';
+import type { PlanGoal, PlanLaunch } from '@/types/learning-plan';
+import type { EngineSave } from '@/types/game-pack';
+import { normaliseGoals } from '@/services/plan-builder';
 
 const log = Logger.create('Store');
 
@@ -24,7 +26,7 @@ export const BASIC_TIER_INSTRUMENTS = ['flute', 'recorder', 'ocarina'] as const;
 
 export type StoryViewMode = 'carousel' | 'grid';
 
-export type ChallengeKind = 'music';
+export type ChallengeKind = 'music' | 'mission';
 
 function unite(existing: string[], added: string[]): string[] {
   const fresh = added.filter((id) => !existing.includes(id));
@@ -44,6 +46,10 @@ export interface PlanRun {
   planId: string;
   stepId: string;
   launch: PlanLaunch;
+}
+
+function savesKey(childId: string | null): string {
+  return childId ?? 'guest';
 }
 
 function stepTickedOff(state: Pick<AppState, 'learningPlanProgress' | 'planRun'>, finished: (launch: PlanLaunch) => boolean) {
@@ -84,6 +90,7 @@ export interface AppState {
 
   // User profile (synced from backend)
   userNickname: string | null;
+  childGoals: PlanGoal[];
   userAvatarType: 'boy' | 'girl' | null;
   userAvatarId: string | null;
 
@@ -152,6 +159,7 @@ export interface AppState {
 
   learningPlanProgress: LearningPlanProgress | null;
   planRun: PlanRun | null;
+  gameSaves: Record<string, Record<string, EngineSave>>;
 
   // Background animation state persistence
   backgroundAnimationState: {
@@ -173,6 +181,7 @@ export interface AppState {
   resetToFreshInstall: () => void;
   resetAppForTesting: () => void; // Temporary function to reset app state
   setUserProfile: (nickname: string, avatarType: 'boy' | 'girl', avatarId: string) => void;
+  setChildGoals: (goals: readonly PlanGoal[]) => void;
   clearUserProfile: () => void;
   setCurrentChild: (childId: string | null) => void;
   setChildAge: (ageInMonths: number) => void;
@@ -214,6 +223,11 @@ export interface AppState {
   leavePlanStep: () => void;
   setLearningPlanProgress: (progress: LearningPlanProgress | null) => void;
   recordActivityFinished: (activityId: string) => void;
+  recordMissionFinished: (packId: string, missionId: string) => void;
+  saveGame: (packId: string, save: EngineSave) => void;
+  clearGameSave: (packId: string) => void;
+  clearAllGameSaves: () => void;
+  gameSaveFor: (packId: string) => EngineSave | null;
   grantAchievements: (achievementIds: string[]) => void;
   clearStoryProgress: (storyId: string) => void;
   getContinueReadingStoryId: () => string | null;
@@ -243,6 +257,7 @@ export const useAppStore = create<AppState>()(
       _devSubscriptionOverride: null,
       trialEndPromptSeenFor: null,
       userNickname: null,
+      childGoals: [],
       userAvatarType: null,
       userAvatarId: null,
       currentChildId: null,
@@ -280,6 +295,7 @@ export const useAppStore = create<AppState>()(
       lastStoryCompletedAt: null,
       learningPlanProgress: null,
       planRun: null,
+      gameSaves: {},
 
       backgroundAnimationState: {
         cloudFloat1: -200,
@@ -311,8 +327,11 @@ export const useAppStore = create<AppState>()(
         userAvatarType: avatarType,
         userAvatarId: avatarId
       }),
+      setChildGoals: (goals) => set({ childGoals: normaliseGoals(goals) }),
       clearUserProfile: () => set({
         userNickname: null,
+        childGoals: [],
+        gameSaves: {},
         userAvatarType: null,
         userAvatarId: null
       }),
@@ -464,6 +483,23 @@ export const useAppStore = create<AppState>()(
       recordActivityFinished: (activityId: string) => set((state) =>
         stepTickedOff(state, (launch) => launch.kind === 'music' && launch.activityId === activityId)
       ),
+      recordMissionFinished: (packId: string, missionId: string) => set((state) => ({
+        ...stepTickedOff(state, (launch) => launch.kind === 'game' && launch.packId === packId && launch.missionId === missionId),
+        challengeCounts: { ...state.challengeCounts, mission: (state.challengeCounts.mission ?? 0) + 1 },
+      })),
+      saveGame: (packId: string, save: EngineSave) => set((state) => {
+        const child = savesKey(state.currentChildId);
+        return { gameSaves: { ...state.gameSaves, [child]: { ...(state.gameSaves[child] ?? {}), [packId]: save } } };
+      }),
+      clearGameSave: (packId: string) => set((state) => {
+        const child = savesKey(state.currentChildId);
+        const mine = state.gameSaves[child];
+        if (!mine || !(packId in mine)) return state;
+        const { [packId]: _gone, ...kept } = mine;
+        return { gameSaves: { ...state.gameSaves, [child]: kept } };
+      }),
+      gameSaveFor: (packId: string) => get().gameSaves[savesKey(get().currentChildId)]?.[packId] ?? null,
+      clearAllGameSaves: () => set({ gameSaves: {} }),
       recordChallengeCompleted: (kind: ChallengeKind) => set((state) => ({
         challengeCounts: { ...state.challengeCounts, [kind]: (state.challengeCounts[kind] ?? 0) + 1 },
       })),
@@ -512,6 +548,7 @@ export const useAppStore = create<AppState>()(
         subscriptionTier: state.subscriptionTier,
         trialEndPromptSeenFor: state.trialEndPromptSeenFor,
         userNickname: state.userNickname,
+        childGoals: state.childGoals,
         userAvatarType: state.userAvatarType,
         userAvatarId: state.userAvatarId,
         currentChildId: state.currentChildId,
@@ -544,6 +581,7 @@ export const useAppStore = create<AppState>()(
         achievementUnlockedAt: state.achievementUnlockedAt,
         lastStoryCompletedAt: state.lastStoryCompletedAt,
         learningPlanProgress: state.learningPlanProgress,
+        gameSaves: state.gameSaves,
         backgroundAnimationState: state.backgroundAnimationState,
       }),
       onRehydrateStorage: () => (state, error) => {

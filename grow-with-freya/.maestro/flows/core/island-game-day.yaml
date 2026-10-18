@@ -1,0 +1,66 @@
+appId: com.growwithfreya.app
+tags:
+  - journey
+name: Day 3 on the island is the wombat's picnic, three berries counted onto the leaf, and the day is ticked off
+---
+- runFlow:
+    file: ../../helpers/start-seeded.yaml
+    env:
+      SEED: "onboarded=1&guest=1&tutorials=done&screenTime=reset&progress=clear&language=en&goals=&tier=free&childAgeMonths=30&planDone=2"
+- tapOn:
+    id: "achievement-card"
+# The dive down to the island takes a few seconds, longer the first time.
+- extendedWaitUntil:
+    visible:
+      id: "plan-checkpoint-3"
+    timeout: 60000
+- assertVisible: "Wombat’s Burrow"
+- tapOn:
+    id: "plan-start"
+# The game slides up; the wombat shows the first berry once, slowly, then waits.
+- extendedWaitUntil:
+    visible:
+      id: "experience-phase-playing"
+    timeout: 30000
+- assertVisible:
+    id: "experience-prompt"
+# A fresh start: nothing on the leaf yet, whatever an earlier run left half-done.
+- assertVisible:
+    id: "place-count-text"
+    text: "0"
+# Tap a berry, tap the leaf: three times. Petals and nuts are not what he asked for.
+- tapOn:
+    id: "place-item-berry-1-press"
+- tapOn:
+    id: "place-zone-leaf"
+- tapOn:
+    id: "place-item-berry-2-press"
+- tapOn:
+    id: "place-zone-leaf"
+- tapOn:
+    id: "place-item-berry-3-press"
+- tapOn:
+    id: "place-zone-leaf"
+- extendedWaitUntil:
+    visible:
+      id: "experience-celebrating"
+    timeout: 10000
+- extendedWaitUntil:
+    visible:
+      id: "experience-bridge"
+    timeout: 10000
+- assertVisible:
+    id: "experience-bridge-atHome"
+- tapOn:
+    id: "experience-finish"
+# Back on the island, day 3 no longer glows as the open day, and the card says
+# day 4 opens tomorrow. (The tick inside the checkpoint is folded into its
+# pressable on iOS, so the glow and the moon stand for it.)
+- extendedWaitUntil:
+    visible:
+      id: "plan-panel-moon"
+    timeout: 30000
+- assertNotVisible:
+    id: "plan-checkpoint-3-glow"
+- assertVisible:
+    id: "plan-checkpoint-4"

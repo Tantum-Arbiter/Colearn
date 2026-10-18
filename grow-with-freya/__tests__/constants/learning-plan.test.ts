@@ -32,22 +32,24 @@ describe('the island week', () => {
     expect(new Set(ISLAND_WEEK.steps.map((step) => step.id)).size).toBe(7);
   });
 
-  it('is the three books the app ships, in every mode the reader has, around the music practise', () => {
+  it('is the three books the app ships, read and recorded, the wombat`s picnic and the music practise', () => {
     const kinds = ISLAND_WEEK.steps.map((step) => step.kind);
     const stories = ISLAND_WEEK.steps.filter((step) => step.kind === 'story');
 
-    expect(new Set(kinds)).toEqual(new Set(['story', 'music']));
+    expect(new Set(kinds)).toEqual(new Set(['story', 'music', 'game']));
     expect(new Set(stories.map((step) => step.storyId))).toEqual(new Set(['snuggle-little-wombat', 'hold-on-juni', 'my-turn-to-ding']));
-    expect(new Set(stories.map((step) => step.mode))).toEqual(new Set(['read', 'narrate', 'record']));
-    expect(ISLAND_WEEK.steps.every((step) => step.kind === 'music' || step.mode !== undefined)).toBe(true);
+    expect(new Set(stories.map((step) => step.mode))).toEqual(new Set(['read', 'record']));
+    expect(ISLAND_WEEK.steps.every((step) => step.kind !== 'story' || step.mode !== undefined)).toBe(true);
   });
 
-  it('lets a family meet a book, record it, then listen to their own recording, and have Juni recorded before reading it together', () => {
+  it('lets a family meet the wombat, record his book, then count with him, and have Juni recorded before reading her book together', () => {
     const days = ISLAND_WEEK.steps;
     const firstOf = (storyId: string, mode: string) => days.findIndex((step) => step.storyId === storyId && step.mode === mode);
+    const picnic = days.findIndex((step) => step.kind === 'game');
 
     expect(firstOf('snuggle-little-wombat', 'read')).toBeLessThan(firstOf('snuggle-little-wombat', 'record'));
-    expect(firstOf('snuggle-little-wombat', 'record')).toBeLessThan(firstOf('snuggle-little-wombat', 'narrate'));
+    expect(firstOf('snuggle-little-wombat', 'record')).toBeLessThan(picnic);
+    expect(days[picnic]).toMatchObject({ day: 3, packId: 'wombat-picnic', missionId: 'picnic', storyId: 'snuggle-little-wombat' });
     expect(firstOf('hold-on-juni', 'record')).toBeLessThan(firstOf('hold-on-juni', 'read'));
     expect(firstOf('hold-on-juni', 'narrate')).toBe(-1);
     expect(days[4].kind).toBe('music');
@@ -72,7 +74,7 @@ describe('the island week', () => {
   it.each(ISLAND_WEEK.steps)('day $day says where it is, its kind of learning, what it builds, two skills and how long it takes', (step) => {
     expect(step.placeKey.startsWith('plan.places.')).toBe(true);
     expect(step.domainKey.startsWith('plan.domains.')).toBe(true);
-    expect(step.aimKey).toBe(`plan.islandWeek.${step.id}.aim`);
+    expect(step.aimKey).toMatch(/^plan\.units\.[a-zA-Z]+\.aim$/);
     expect(step.skills).toHaveLength(2);
     expect(new Set(step.skills).size).toBe(2);
     expect(step.minutes[0]).toBeGreaterThan(0);
@@ -196,8 +198,8 @@ describe('previewable', () => {
 });
 
 describe('the marks a day wears', () => {
-  it('has an open book for a story and notes for music', () => {
-    expect(PLAN_STEP_ICON).toEqual({ story: 'book', music: 'musical-notes' });
+  it('has an open book for a story, notes for music and sparkles for a game', () => {
+    expect(PLAN_STEP_ICON).toEqual({ story: 'book', music: 'musical-notes', game: 'sparkles' });
   });
 
   it('has a speaker for listening along and a microphone for recording', () => {
@@ -209,8 +211,21 @@ describe('launchFor', () => {
   it('launches a story day as the book it names, in the mode the day asks for', () => {
     expect(launchFor(ISLAND_WEEK.steps[0])).toEqual({ kind: 'story', storyId: 'snuggle-little-wombat', mode: 'read' });
     expect(launchFor(ISLAND_WEEK.steps[1])).toEqual({ kind: 'story', storyId: 'snuggle-little-wombat', mode: 'record' });
-    expect(launchFor(ISLAND_WEEK.steps[2])).toEqual({ kind: 'story', storyId: 'snuggle-little-wombat', mode: 'narrate' });
     expect(launchFor(ISLAND_WEEK.steps[3])).toEqual({ kind: 'story', storyId: 'hold-on-juni', mode: 'record' });
+  });
+
+  it('launches a game day as the mission of the pack it names', () => {
+    expect(launchFor(ISLAND_WEEK.steps[2])).toEqual({ kind: 'game', packId: 'wombat-picnic', missionId: 'picnic' });
+  });
+
+  it('has nothing to launch for a game day missing its pack or its mission', () => {
+    expect(launchFor({ ...ISLAND_WEEK.steps[2], packId: undefined })).toBeNull();
+    expect(launchFor({ ...ISLAND_WEEK.steps[2], missionId: undefined })).toBeNull();
+  });
+
+  it('cannot preview a game day, only a story', () => {
+    expect(previewable({ kind: 'game', packId: 'wombat-picnic', missionId: 'picnic' })).toBe(false);
+    expect(previewable({ kind: 'story', storyId: 'snuggle-little-wombat', mode: 'read' })).toBe(true);
   });
 
   it('reads a story day together when no mode is named', () => {

@@ -57,7 +57,7 @@ describe('home scene navigation', () => {
 
   const applyState = (next: Partial<AppState>) => {
     mockUseAppStore.mockImplementation(((selector?: (s: AppState) => unknown) =>
-      typeof selector === 'function' ? selector(next as AppState) : next
+      typeof selector === 'function' ? selector({ childGoals: [], ...next } as AppState) : next
     ) as unknown as typeof useAppStore);
   };
 
@@ -226,7 +226,7 @@ describe('home scene navigation', () => {
 describe('the home tour and the bar', () => {
   const applyState = (next: Partial<AppState>) => {
     mockUseAppStore.mockImplementation(((selector?: (s: AppState) => unknown) =>
-      typeof selector === 'function' ? selector(next as AppState) : next
+      typeof selector === 'function' ? selector({ childGoals: [], ...next } as AppState) : next
     ) as unknown as typeof useAppStore);
   };
 

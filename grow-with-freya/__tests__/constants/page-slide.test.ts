@@ -36,7 +36,7 @@ describe('pageOffset', () => {
   });
 
   it('rests every other page below', () => {
-    ['sensory', 'screen_time', 'practise', 'freeplay'].forEach((page) => {
+    ['sensory', 'screen_time', 'practise', 'freeplay', 'game'].forEach((page) => {
       expect(pageOffset(page, 'account', HEIGHT)).toBe(HEIGHT);
     });
   });
@@ -45,7 +45,7 @@ describe('pageOffset', () => {
     ISLAND_ACTIVITY_PAGES.forEach((page) => {
       expect(pageOffset('island', page, HEIGHT)).toBe(-HEIGHT);
     });
-    expect(ISLAND_ACTIVITY_PAGES).toEqual(['practise']);
+    expect(ISLAND_ACTIVITY_PAGES).toEqual(['practise', 'game']);
   });
 
   it('rests the island below everywhere else, and every activity below the island', () => {

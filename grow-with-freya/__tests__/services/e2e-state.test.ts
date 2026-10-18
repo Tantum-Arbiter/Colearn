@@ -21,9 +21,12 @@ const mockStore = {
   setChildAge: jest.fn(),
   setUserProfile: jest.fn(),
   setLearningPlanProgress: jest.fn(),
+  setChildGoals: jest.fn(),
+  childGoals: [] as string[],
   clearPersistedStorage: jest.fn(),
   storyProgress: { 'wombat': { pageIndex: 3, totalPages: 9, updatedAt: '2026-09-20T10:00:00Z' } },
   clearStoryProgress: jest.fn(),
+  clearAllGameSaves: jest.fn(),
 };
 
 jest.mock('@/store/app-store', () => ({
@@ -87,7 +90,7 @@ describe('isE2eAllowed', () => {
 describe('parseE2eLink', () => {
   it('reads every part of a seeded state', () => {
     const underTest = parseE2eLink(
-      'growwithfreya://?e2e=1&reset=1&onboarded=1&guest=1&signedIn=1&tutorials=done&screenTime=reset&progress=clear&language=de&tier=premium&childAgeMonths=48&nickname=Freya&planDone=3'
+      'growwithfreya://?e2e=1&reset=1&onboarded=1&guest=1&signedIn=1&tutorials=done&screenTime=reset&progress=clear&language=de&tier=premium&childAgeMonths=48&nickname=Freya&planDone=3&goals=bigFeelings,cosyStories'
     );
 
     expect(underTest).toEqual({
@@ -103,7 +106,14 @@ describe('parseE2eLink', () => {
       childAgeMonths: 48,
       nickname: 'Freya',
       planDone: 3,
+      goals: ['bigFeelings', 'cosyStories'],
     });
+  });
+
+  it('reads the goals it knows, in the order given, and an empty list to clear them', () => {
+    expect(parseE2eLink('growwithfreya://?e2e=1&goals=makeMusic,nothing-of-the-sort,makeMusic')).toEqual({ goals: ['makeMusic'] });
+    expect(parseE2eLink('growwithfreya://?e2e=1&goals=')).toEqual({ goals: [] });
+    expect(parseE2eLink('growwithfreya://?e2e=1&goals=nothing-of-the-sort')).toEqual({ goals: [] });
   });
 
   it('reads how many days of the plan are done, within the week, and ignores anything else', () => {
@@ -246,6 +256,13 @@ describe('applyE2eState', () => {
     });
   });
 
+  it('sets the goals the family would have chosen, before it ticks days off', async () => {
+    await applyE2eState({ goals: ['bigFeelings'], planDone: 1 }, true);
+
+    expect(mockStore.setChildGoals).toHaveBeenCalledWith(['bigFeelings']);
+    expect(mockStore.setChildGoals.mock.invocationCallOrder[0]).toBeLessThan(mockStore.setLearningPlanProgress.mock.invocationCallOrder[0]);
+  });
+
   it('clears the plan when told no days are done', async () => {
     await applyE2eState({ planDone: 0 }, true);
 
@@ -325,6 +342,18 @@ describe('applyE2eState', () => {
     await applyE2eState({ progress: 'clear' }, true);
 
     expect(mockStore.clearStoryProgress).toHaveBeenCalledWith('wombat');
+  });
+
+  it('forgets the games left half-done as well, for every child on the device', async () => {
+    await applyE2eState({ progress: 'clear' }, true);
+
+    expect(mockStore.clearAllGameSaves).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps half-done games when the link does not mention progress', async () => {
+    await applyE2eState({ language: 'en' }, true);
+
+    expect(mockStore.clearAllGameSaves).not.toHaveBeenCalled();
   });
 
   it('leaves reading progress alone when the link does not mention it', async () => {

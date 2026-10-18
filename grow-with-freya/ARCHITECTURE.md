@@ -1362,6 +1362,7 @@ island        PlanTrail (glowing dashes along each leg's own curve through its g
   Start / open checkpoint → useLearningPlan().start(view) → store.beginPlanStep(run) → _layout.handleStartActivity(launch)
      story    → requestStoryOpen(story, mode) — the reader opens over the island in the day's mode (read, narrate or record); markStoryCompleted ticks the day
      music    → practise page; the music challenge's onComplete ticks it (a skipped song does not)
+     game     → the game page slides up as the practise does; the shell's completed mission ticks it (recordMissionFinished); Back or a spent day leaves it open
   back from any of them → the island, at rest, as it was
   Preview › (story days only, `previewable`) → useLearningPlan().start(view) → _layout.handlePreviewActivity(launch, coverRect)
      story    → the story card (story-transition `startTransition`) flies out of the cover; its Cancel, and the reader's close, come back to the island (`storyCardReturnRef`)
@@ -1370,12 +1371,51 @@ island        PlanTrail (glowing dashes along each leg's own curve through its g
 | Concern | Location |
 |---------|----------|
 | The plan's shape: steps, kinds, skills, launches | `types/learning-plan.ts` |
-| The week itself (`ISLAND_WEEK`): which book each day opens and in which mode (`read`, `narrate`, `record`), or the music practise | `data/learning-plan.ts` |
+| The units a day can be (each book read, recorded and listened to, the wombat's picnic game and the music practise, with the place, aim, skills and minutes of each, and what each must come after) and the three goals a family can pick | `data/plan-units.ts` |
+| The week itself: `buildWeek(goals)` scores the units by the family's goals, opens with a book read together, keeps every domain (language, feelings, music, maths), puts each unit after the one it must follow and pulls that one in if the goals had not chosen it (a listen after its recording, the picnic after the wombat's book), and gives the same week for the same goals on any device; no goals gives `ISLAND_WEEK`, the week as it always was | `services/plan-builder.ts`, `data/learning-plan.ts` |
+| What the family wants, picked at the end of onboarding or under Edit Profile, kept on the device only | `store/app-store.ts` (`childGoals`, `setChildGoals`), `components/onboarding/onboarding-pages.tsx` (`GoalsPage`) |
 | The rules: a step is done, open, opens tomorrow or locked; local days; which days can be previewed; the icon a mode wears | `constants/learning-plan.ts` (`stepStates`, `localDayKey`, `launchFor`, `previewable`, `PLAN_STEP_ICON`, `PLAN_MODE_ICON`) |
 | Where the checkpoints are in the painting, the guide points the trail bends through, the trail's geometry, and where a checkpoint's name goes | `constants/island-trail.ts` (`ISLAND_TRAIL`, `ISLAND_TRAIL_VIA`, `trailPath`, `trailDashes`, `checkpointLabelTop`) |
 | What is remembered: `learningPlanProgress` (persisted) and `planRun` (not persisted, what the child set off on) | `store/app-store.ts` (`beginPlanStep`, `leavePlanStep`, `recordActivityFinished`, `markStoryCompleted`, `stepTickedOff`) |
 | The view the island draws from, refreshed each minute so midnight opens the next step | `hooks/use-learning-plan.ts` |
 | The pieces | `components/island/plan-trail.tsx`, `plan-checkpoint.tsx`, `plan-panel.tsx` |
+
+### Games: the experience shell and the Place engine
+
+Built 2026-10-17 (Phase 10, M2). A game is a **pack** (data, layered art, short sounds) played by an
+**engine** inside one **shell**. The shell owns everything a game needs once: loading, the intro
+where the host shows the first action, play, pause, the celebration, the real-world bridge and the
+way back. Strings are never in a pack: the manifest carries keys into the 14 locales. The first
+pack, *Wombat's Picnic Count*, is bundled under `assets/packs/wombat-picnic/` and is day 3 of the
+island week; its art is cut from *Snuggle Little Wombat* by `scripts/prepare-pack-art.py`.
+
+```
+island day 3 → PlanLaunch { kind: 'game', packId, missionId } → _layout: page 'game' (slides up like practise; currentScreen 'game')
+   ExperiencePage (band from the child's age) → ExperienceShell(packId, missionId)
+      loading → loadPack (bundled only, for now) → intro (host shows the first action once) → playing ⇄ paused
+      → celebrating (recordMissionFinished, the save cleared, two seconds) → bridge (three tips, Finish) → done(completed)
+      Back, or the day's screen time running out, → done(left), with what was placed saved per child for next time
+   PlaceEngine: layers from the crop for this device (phone or tablet, never both), fitted whole inside the safe area;
+      tap-place in every band ('1-2': a tap sends the thing to its zone; '2-4': tap then tap the zone; '4+': drag too, snapping within 24 pt);
+      every input goes through apply(rules, state, input) → effects: place, refuse, play-sound, react-host, set-state, stage, complete
+```
+
+| Concern | Location |
+|---------|----------|
+| The pack manifest: art per crop (layers with frames and clocks, where each placeable thing starts, where each zone is), objects with states, zones, rules, missions by band in stages, sounds, keys | `types/game-pack.ts`, `assets/packs/<pack>/pack.json` |
+| The rules interpreter, pure: triggers (tap, hold, dropInto, refused, countEquals, allPlaced, stageMet, missionMet, chose) and effects, `once`, stages met in order, mission rules after pack rules | `components/experience/rules.ts` |
+| What makes a pack valid (files present, layers in both crops, keys in all 14 locales, every band, within 3 MB), checked by Jest for every bundled pack | `services/pack-validation.ts`, `__tests__/services/bundled-packs.test.ts` |
+| Loading a pack and resolving its files to what Metro bundled | `services/pack-service.ts`, `data/bundled-packs.ts`, `assets/packs/<pack>/index.ts` (written by the art script) |
+| The shell's lifecycle as a pure reducer (every phase × every event), and the shell itself | `components/experience/shell-state.ts`, `experience-shell.tsx` |
+| The Place engine: fitting the painting, snapping a drop to a zone, laying placed things along a zone, the host's reactions, the twinkling star sheets | `components/experience/engines/place/place-geometry.ts`, `place-engine.tsx` |
+| Sounds: one `expo-audio` player per pack sound, made with the scene and released with it; silent when the app is muted | `components/experience/pack-sounds.ts` |
+| What is remembered: `gameSaves[child][pack]` (persisted, never synced, cleared with the profile and by the `progress=clear` seed), `challengeCounts.mission`, the plan day ticked through `planRun` | `store/app-store.ts` (`saveGame`, `clearGameSave`, `gameSaveFor`, `recordMissionFinished`) |
+| The page's three registration points, as every page has | `app/_layout.tsx` (`PageKey`, `handleStartActivity`), `constants/page-slide.ts` (`ISLAND_ACTIVITY_PAGES`), `components/ui/enhanced-page-transition.tsx` |
+| Screensafe: the game page is immersive (warnings wait), and the shell leaves on the day's limit so the owl speaks on the island | `components/screen-time/screen-time-provider.tsx`, `experience-shell.tsx` |
+| Making a pack's art and sounds from a book | `scripts/prepare-pack-art.py` |
+
+Not yet built (M3 onwards): packs downloaded from the CMS, a game opened from a book's page, free
+play from the Library, the Scene, Choose and Make engines.
 | Setting off, previewing and coming back | `app/_layout.tsx` (`handleStartActivity`, `handlePreviewActivity`, `launchedFromIslandRef`, `storyCardReturnRef`), `constants/page-slide.ts` (`ISLAND_ACTIVITY_PAGES`, `voyageStaysOut`) |
 | Seeding a week part done, for a device check or a Maestro flow | `services/e2e-state.ts` (`planDone=N` on the seed link: the first N days done yesterday) |
 

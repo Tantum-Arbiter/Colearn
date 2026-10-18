@@ -7,7 +7,8 @@ import { useAppStore } from '../../store/app-store';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { StarBackground } from '@/components/ui/star-background';
 import { useBackButtonText } from '@/hooks/use-back-button-text';
-import { ProfilePage, AVATAR_OPTIONS } from '@/components/onboarding/onboarding-pages';
+import { ProfilePage, GoalsPage, AVATAR_OPTIONS } from '@/components/onboarding/onboarding-pages';
+import type { PlanGoal } from '@/types/learning-plan';
 import { MIN_NICKNAME_LENGTH } from '@/constants/profile';
 
 interface EditProfileScreenProps {
@@ -41,8 +42,10 @@ export function EditProfileContent({ paddingTop = 0, onSaveComplete }: EditProfi
     userAvatarType,
     userAvatarId,
     childAgeInMonths,
+    childGoals,
     setUserProfile,
     setChildAge,
+    setChildGoals,
   } = useAppStore();
   const { scaledFontSize, scaledButtonSize, scaledPadding, isTablet, contentMaxWidth } =
     useAccessibility();
@@ -50,6 +53,10 @@ export function EditProfileContent({ paddingTop = 0, onSaveComplete }: EditProfi
   const [nickname, setNickname] = useState(userNickname || '');
   const [avatarKey, setAvatarKey] = useState(() => toAvatarKey(userAvatarId));
   const [ageMonths, setAgeMonths] = useState(childAgeInMonths || DEFAULT_AGE_MONTHS);
+  const [goals, setGoals] = useState<PlanGoal[]>(() => [...(childGoals ?? [])]);
+  const toggleGoal = (goal: PlanGoal) => {
+    setGoals((current) => (current.includes(goal) ? current.filter((kept) => kept !== goal) : [...current, goal]));
+  };
 
   // same rule as onboarding: no saving a profile without a usable name
   const canSave = nickname.trim().length >= MIN_NICKNAME_LENGTH;
@@ -62,6 +69,7 @@ export function EditProfileContent({ paddingTop = 0, onSaveComplete }: EditProfi
     const avatarType = userAvatarType || 'girl';
     setUserProfile(nickname.trim(), avatarType, avatarKey);
     setChildAge(ageMonths);
+    setChildGoals(goals);
 
 
     onSaveComplete?.();
@@ -87,6 +95,8 @@ export function EditProfileContent({ paddingTop = 0, onSaveComplete }: EditProfi
             ageMonths={ageMonths}
             onAgeChange={setAgeMonths}
           />
+          <Text style={[styles.goalsLabel, { fontSize: scaledFontSize(15) }]}>{t('profile.goals')}</Text>
+          <GoalsPage chosen={goals} onToggle={toggleGoal} />
 
           <Pressable
             testID="profile-save"
@@ -142,6 +152,13 @@ export function EditProfileScreen({ onBack }: EditProfileScreenProps) {
 }
 
 const styles = StyleSheet.create({
+  goalsLabel: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    marginTop: 24,
+    marginBottom: 4,
+    paddingHorizontal: 4,
+  },
   container: {
     flex: 1,
     backgroundColor: '#0B1030',

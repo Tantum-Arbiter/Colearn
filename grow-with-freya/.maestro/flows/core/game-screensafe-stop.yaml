@@ -1,0 +1,41 @@
+appId: com.growwithfreya.app
+tags:
+  - journey
+name: When the day's screen time is spent mid-game, the game stops and the owl says so on the island
+---
+- runFlow:
+    file: ../../helpers/start-seeded.yaml
+    env:
+      SEED: "onboarded=1&guest=1&tutorials=done&screenTime=spent&progress=clear&language=en&goals=&tier=free&childAgeMonths=30&planDone=2"
+- tapOn:
+    id: "achievement-card"
+- extendedWaitUntil:
+    visible:
+      id: "plan-checkpoint-3"
+    timeout: 60000
+- tapOn:
+    id: "plan-start"
+- extendedWaitUntil:
+    visible:
+      id: "experience-phase-playing"
+    timeout: 30000
+- tapOn:
+    id: "place-item-berry-1-press"
+- tapOn:
+    id: "place-zone-leaf"
+# The app checks the day's time every half minute. When it finds it spent, the
+# game saves what was placed, leaves, and the owl speaks once the island is back.
+- extendedWaitUntil:
+    visible:
+      id: "screen-time-owl-close"
+    timeout: 90000
+- assertNotVisible:
+    id: "experience-phase-playing"
+- tapOn:
+    id: "screen-time-owl-close"
+- extendedWaitUntil:
+    visible:
+      id: "plan-checkpoint-3-glow"
+    timeout: 10000
+- assertNotVisible:
+    id: "plan-panel-moon"

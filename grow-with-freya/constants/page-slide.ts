@@ -1,6 +1,6 @@
 import { cloudGap } from '@/constants/earth';
 
-export const ISLAND_ACTIVITY_PAGES = ['practise'] as const;
+export const ISLAND_ACTIVITY_PAGES = ['practise', 'game'] as const;
 
 export function pageOffset(page: string, current: string, height: number): number {
   if (page === current) return 0;

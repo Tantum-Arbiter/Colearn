@@ -4,7 +4,8 @@ import ScreenTimeService from '@/services/screen-time-service';
 import { SecureStorage } from '@/services/secure-storage';
 import { SUPPORTED_LANGUAGES, setStoredLanguage, type SupportedLanguage } from '@/services/i18n';
 import { PLAN_STEPS_PER_WEEK, type LearningPlanProgress } from '@/constants/learning-plan';
-import { ISLAND_WEEK } from '@/data/learning-plan';
+import { buildWeek, normaliseGoals } from '@/services/plan-builder';
+import type { PlanGoal } from '@/types/learning-plan';
 import { useAppStore, type SubscriptionTier } from '@/store/app-store';
 
 const TIERS: SubscriptionTier[] = ['free', 'basic', 'premium'];
@@ -42,6 +43,7 @@ export interface E2eState {
   childAgeMonths?: number;
   nickname?: string;
   planDone?: number;
+  goals?: PlanGoal[];
 }
 
 export function isE2eAllowed(isDevBuild: boolean, extra: unknown): boolean {
@@ -103,6 +105,9 @@ export function parseE2eLink(link: string): E2eState | null {
   if (params.get('planDone') !== null && Number.isInteger(planDone) && planDone >= 0 && planDone <= PLAN_STEPS_PER_WEEK) {
     state.planDone = planDone;
   }
+
+  const goals = params.get('goals');
+  if (goals !== null) state.goals = normaliseGoals(goals.split(',').filter(Boolean) as PlanGoal[]);
 
   return state;
 }
@@ -168,6 +173,7 @@ export async function applyE2eState(state: E2eState, allowed: boolean): Promise<
 
   if (state.progress === 'clear') {
     Object.keys(store.storyProgress ?? {}).forEach((storyId) => store.clearStoryProgress(storyId));
+    store.clearAllGameSaves();
   }
 
   if (state.language) {
@@ -186,19 +192,24 @@ export async function applyE2eState(state: E2eState, allowed: boolean): Promise<
     store.setChildAge(state.childAgeMonths);
   }
 
+  if (state.goals !== undefined) {
+    store.setChildGoals(state.goals);
+  }
+
   if (state.planDone !== undefined) {
-    store.setLearningPlanProgress(state.planDone === 0 ? null : daysDoneYesterday(state.planDone));
+    store.setLearningPlanProgress(state.planDone === 0 ? null : daysDoneYesterday(state.planDone, store.childGoals ?? []));
   }
 }
 
-function daysDoneYesterday(count: number): LearningPlanProgress {
+function daysDoneYesterday(count: number, goals: readonly PlanGoal[]): LearningPlanProgress {
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
   yesterday.setHours(10, 0, 0, 0);
   const completed: Record<string, string> = {};
-  ISLAND_WEEK.steps.slice(0, count).forEach((step) => {
+  const week = buildWeek(goals);
+  week.steps.slice(0, count).forEach((step) => {
     completed[step.id] = yesterday.toISOString();
   });
 
-  return { planId: ISLAND_WEEK.id, completed };
+  return { planId: week.id, completed };
 }

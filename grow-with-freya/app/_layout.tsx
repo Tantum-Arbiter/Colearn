@@ -38,6 +38,7 @@ import type { CatalogueSectionRequest } from '@/components/stories/catalogue/sto
 import { catalogueSectionFor, type DestinationFocus } from '@/constants/catalogue-destinations';
 import { StoryBookReader } from '@/components/stories/story-book-reader';
 import { PractiseScreen } from '@/components/music/practise-screen';
+import { ExperiencePage, type GameLaunch } from '@/components/experience/experience-page';
 import { FreeplayScreen } from '@/components/music/freeplay-screen';
 import { ScreenTimeProvider } from '@/components/screen-time/screen-time-provider';
 import { Story } from '@/types/story';
@@ -204,7 +205,7 @@ function AppContent() {
   // Track if we've already started background music to prevent auto-restart after manual pause
   const [hasStartedBackgroundMusic, setHasStartedBackgroundMusic] = useState(false);
 
-  type PageKey = 'main' | 'stories' | 'story-reader' | 'account' | 'practise' | 'freeplay' | 'island';
+  type PageKey = 'main' | 'stories' | 'story-reader' | 'account' | 'practise' | 'freeplay' | 'island' | 'game';
 
   const [currentView, setCurrentView] = useState<AppView>('splash');
   // The splash stays over whichever page the app opens on until it has faded off it
@@ -219,6 +220,7 @@ function AppContent() {
   const launchedFromIslandRef = useRef(false);
   const storyCardReturnRef = useRef<PageKey>('stories');
   const leavePlanStep = useAppStore((state) => state.leavePlanStep);
+  const [gameLaunch, setGameLaunch] = useState<GameLaunch | null>(null);
 
   useEffect(() => {
     if (!voyageStaysOut(currentPage, launchedFromIslandRef.current)) settleVoyageHome();
@@ -785,8 +787,19 @@ function AppContent() {
       case 'music':
         launchedFromIslandRef.current = true;
         setCurrentPage('practise');
+        return;
+      case 'game':
+        launchedFromIslandRef.current = true;
+        setGameLaunch((current) => ({ packId: launch.packId, missionId: launch.missionId, key: (current?.key ?? 0) + 1 }));
+        setCurrentPage('game');
+        setCurrentScreen('game');
     }
-  }, [requestStoryOpen]);
+  }, [requestStoryOpen, setCurrentScreen]);
+
+  const handleGameDone = useCallback(() => {
+    setCurrentPage('island');
+    setCurrentScreen('island');
+  }, [setCurrentScreen]);
 
   const handleOpenStoryCardFromHome = useCallback((storyId: string, from: PlanCardRect) => {
     const story = ALL_STORIES.find((candidate) => candidate.id === storyId);
@@ -827,6 +840,10 @@ function AppContent() {
         comeBackFromIsland();
         return true;
       }
+      if (currentPage === 'game') {
+        handleGameDone();
+        return true;
+      }
       // Practise/freeplay go back to instruments sub-menu
       if (currentPage === 'practise' || currentPage === 'freeplay') {
         handleBackToInstruments();
@@ -838,7 +855,7 @@ function AppContent() {
 
     // On main menu - let Android handle it (exit/minimize app)
     return false;
-  }, [currentPage, showStoryReader, storyBeingRead, comeBackFromIsland]);
+  }, [currentPage, showStoryReader, storyBeingRead, comeBackFromIsland, handleGameDone]);
 
   useEffect(() => {
     if (Platform.OS !== 'android') return;
@@ -946,6 +963,7 @@ function AppContent() {
             freeplay: <FreeplayScreen onBack={handleBackToInstruments} isActive={currentPage === 'freeplay'} />,
             account: <AccountScreen onBack={handleAccountBack} onNavigate={handleMainMenuNavigate} isActive={currentPage === 'account' && menuRevealed(currentView)} />,
             island: <IslandScene isActive={currentPage === 'island' && menuRevealed(currentView)} onStartActivity={handleStartActivity} onPreviewActivity={handlePreviewActivity} />,
+            game: <ExperiencePage launch={gameLaunch} isActive={currentPage === 'game'} onDone={handleGameDone} />,
           }, currentPage)}
           duration={PAGE_TRANSITION_DURATION_MS}
           animate

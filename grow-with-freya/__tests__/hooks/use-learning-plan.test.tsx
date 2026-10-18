@@ -3,13 +3,16 @@ import { useLearningPlan } from '@/hooks/use-learning-plan';
 import { ISLAND_WEEK } from '@/data/learning-plan';
 import { ISLAND_TRAIL, ISLAND_TRAIL_PHONE } from '@/constants/island-trail';
 import type { LearningPlanProgress } from '@/constants/learning-plan';
+import { buildWeek } from '@/services/plan-builder';
+import type { PlanGoal } from '@/types/learning-plan';
 
 let mockProgress: LearningPlanProgress | null = null;
 let mockAge: number | null = 30;
+let mockGoals: PlanGoal[] = [];
 const mockBeginPlanStep = jest.fn();
 jest.mock('@/store/app-store', () => ({
   useAppStore: (selector: (state: Record<string, unknown>) => unknown) =>
-    selector({ learningPlanProgress: mockProgress, childAgeInMonths: mockAge, beginPlanStep: mockBeginPlanStep }),
+    selector({ learningPlanProgress: mockProgress, childAgeInMonths: mockAge, childGoals: mockGoals, beginPlanStep: mockBeginPlanStep }),
 }));
 
 jest.mock('react-i18next', () => ({
@@ -37,6 +40,7 @@ describe('useLearningPlan', () => {
     jest.setSystemTime(new Date(2026, 9, 3, 9, 0));
     mockProgress = null;
     mockAge = 30;
+    mockGoals = [];
     mockBeginPlanStep.mockClear();
   });
 
@@ -49,7 +53,7 @@ describe('useLearningPlan', () => {
 
     expect(result.current.steps).toHaveLength(7);
     result.current.steps.forEach((view, index) => {
-      expect(view.step).toBe(ISLAND_WEEK.steps[index]);
+      expect(view.step).toEqual(ISLAND_WEEK.steps[index]);
       expect(view.point).toEqual(ISLAND_TRAIL[index]);
     });
   });
@@ -80,13 +84,40 @@ describe('useLearningPlan', () => {
     expect(first.picture).toEqual({ uri: 'file:///wombat.webp' });
   });
 
-  it('names a recording day and a listening day by their book, and sets the child off in that mode', () => {
+  it('names a recording day by its book, and sets the child off in that mode', () => {
     const { result } = renderHook(() => useLearningPlan(true));
 
     expect(result.current.steps[1].title).toBe('Snuggle Little Wombat');
     expect(result.current.steps[1].launch).toEqual({ kind: 'story', storyId: 'snuggle-little-wombat', mode: 'record' });
-    expect(result.current.steps[2].launch).toEqual({ kind: 'story', storyId: 'snuggle-little-wombat', mode: 'narrate' });
     expect(result.current.steps[3].launch).toEqual({ kind: 'story', storyId: 'hold-on-juni', mode: 'record' });
+  });
+
+  it('names a game day by its mission, shows its own picture, and sets the child off on that mission', () => {
+    const { result } = renderHook(() => useLearningPlan(true));
+
+    expect(result.current.steps[2].title).toBe('packs.wombatPicnic.missions.picnic.title');
+    expect(result.current.steps[2].picture).toBe(ISLAND_WEEK.steps[2].picture);
+    expect(result.current.steps[2].picture).not.toBeNull();
+    expect(result.current.steps[2].launch).toEqual({ kind: 'game', packId: 'wombat-picnic', missionId: 'picnic' });
+  });
+
+  it('builds the week from the goals the family chose, and names its days by their books', () => {
+    mockGoals = ['bigFeelings'];
+    const { result } = renderHook(() => useLearningPlan(true));
+
+    expect(result.current.steps.map((view) => view.step.unitId)).toEqual(buildWeek(['bigFeelings']).steps.map((step) => step.unitId));
+    expect(result.current.steps[0].title).toBe('Hold On, Juni');
+    expect(result.current.steps[0].launch).toEqual({ kind: 'story', storyId: 'hold-on-juni', mode: 'read' });
+    expect(result.current.plan.id).toBe('island-week');
+  });
+
+  it('keeps the days done by their number whatever the goals, so changing goals never undoes a day', () => {
+    mockGoals = ['bigFeelings'];
+    mockProgress = done([1], '2026-10-01T08:00:00.000Z');
+    const { result } = renderHook(() => useLearningPlan(true));
+
+    expect(result.current.steps[0].state).toBe('done');
+    expect(result.current.current?.step.day).toBe(2);
   });
 
   it('names the music day for what it is', () => {
