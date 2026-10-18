@@ -132,12 +132,12 @@ public class StoryPage {
 
     public static List<String> ageGroupFallbackChain(String ageGroup) {
         if (ageGroup == null) {
-            return List.of("4-6", "2-4", "0-2");
+            return List.of("4-6", "2-4", "1-2");
         }
         return switch (ageGroup) {
-            case "0-2" -> List.of("0-2", "2-4", "4-6");
-            case "2-4" -> List.of("2-4", "0-2", "4-6");
-            default -> List.of("4-6", "2-4", "0-2");
+            case "1-2" -> List.of("1-2", "2-4", "4-6");
+            case "2-4" -> List.of("2-4", "1-2", "4-6");
+            default -> List.of("4-6", "2-4", "1-2");
         };
     }
 

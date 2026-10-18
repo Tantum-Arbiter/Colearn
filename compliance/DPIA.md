@@ -34,7 +34,7 @@ repository is marked **⚠️ UNVERIFIED**.
 | Subscription: tier, expiry, when it was last checked, sandbox or production — a copy of RevenueCat's answer | `users/{uid}.entitlement` | Parent | `EntitlementService` (asks RevenueCat) |
 | Sessions: hashed refresh token, device id, device type, platform, app version, times | `user_sessions/{id}` | Parent's device | `SessionService` |
 | Legacy profile: nickname, avatar | `user_profiles/{uid}` | Child | read only since Phase C; export includes it while it exists |
-| **Child document**: nickname, avatar, age bucket (0–2, 2–4, 4–6; never a birth date), language, text size, favourite stories, activities and songs, per-story page and finish count, finished-story ids, challenge counts, earned badge ids, screen-time and reminder switches, **custom reminder title and message typed by the parent** | `users/{uid}/children/{childId}` | Child (and parent-typed text) | `ChildController` / `FirebaseChildRepository` |
+| **Child document**: nickname, avatar, age bucket (1–2, 2–4, 4–6; never a birth date), language, text size, favourite stories, activities and songs, per-story page and finish count, finished-story ids, challenge counts, earned badge ids, screen-time and reminder switches, **custom reminder title and message typed by the parent** | `users/{uid}/children/{childId}` | Child (and parent-typed text) | `ChildController` / `FirebaseChildRepository` |
 | Consent records: policy version, scope (`core`), accepted and recorded times, app version | `users/{uid}/consents/{id}` | Parent | `ConsentController` |
 | Stories held on the family's devices (ids only) | `users/{uid}/downloads/{storyId}` | Parent | `DownloadAccessService` |
 

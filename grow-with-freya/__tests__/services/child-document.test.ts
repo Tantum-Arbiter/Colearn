@@ -73,8 +73,8 @@ describe('toChildDocument', () => {
   });
 
   it.each([
-    [10, '0-2'],
-    [23, '0-2'],
+    [10, '1-2'],
+    [23, '1-2'],
     [24, '2-4'],
     [47, '2-4'],
     [48, '4-6'],
@@ -183,13 +183,26 @@ describe('mergeChildDocuments', () => {
   it.each([
     ['nickname', 'Local', 'Remote'],
     ['avatarId', 'fox', 'bear'],
-    ['ageBucket', '4-6', '0-2'],
+    ['ageBucket', '4-6', '1-2'],
     ['language', 'de', 'fr'],
     ['textSizeScale', 1.4, 0.8],
   ] as const)('keeps this device\'s %s when it changed here since the last sync', (field, mine, theirs) => {
     const underTest = mergeChildDocuments(doc({ [field]: mine }), doc({ [field]: theirs }), doc());
 
     expect(underTest[field]).toBe(mine);
+  });
+
+  it('reads an age group synced before the youngest band was renamed as 1-2', () => {
+    const older = doc({ ageBucket: '0-2' as never });
+
+    expect(mergeChildDocuments(doc({ ageBucket: undefined }), older, doc()).ageBucket).toBe('1-2');
+    expect(mergeChildDocuments(doc({ ageBucket: '2-4' }), older, doc({ ageBucket: '2-4' })).ageBucket).toBe('1-2');
+  });
+
+  it('drops an age group this app does not know rather than keeping it', () => {
+    const underTest = mergeChildDocuments(doc({ ageBucket: undefined }), doc({ ageBucket: 'teen' as never }), doc());
+
+    expect(underTest.ageBucket).toBeUndefined();
   });
 
   it.each([

@@ -1,4 +1,4 @@
-import { resolveAgeGroup, type AgeGroup } from '@/types/story';
+import { normaliseAgeGroup, resolveAgeGroup, type AgeGroup } from '@/types/story';
 import type { CustomReminder } from './reminder-service';
 
 export interface ChildProgressEntry {
@@ -148,7 +148,8 @@ export function mergeChildDocuments(local: ChildDocument, remote: ChildDocument,
     version: remote.version,
   };
   for (const key of ['nickname', 'avatarType', 'avatarId', 'ageBucket', 'language', 'textSizeScale'] as const) {
-    const value = local[key] === undefined ? remote[key] : lww(key);
+    const picked = local[key] === undefined ? remote[key] : lww(key);
+    const value = key === 'ageBucket' ? normaliseAgeGroup(picked) : picked;
     if (value !== undefined) {
       (merged as unknown as Record<string, unknown>)[key] = value;
     }

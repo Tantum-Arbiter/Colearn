@@ -23,6 +23,7 @@ import {
 } from '@/components/onboarding/onboarding-pages';
 import { MIN_NICKNAME_LENGTH, MAX_NICKNAME_LENGTH } from '@/constants/profile';
 import { SUPPORTED_LANGUAGES } from '@/services/i18n';
+import { ageMonthsToRange } from '@/constants/age-range';
 
 function findByTestId(tree: ReturnType<typeof render>, testID: string) {
   return tree.UNSAFE_root.findAll((n: any) => n.props.testID === testID);
@@ -307,6 +308,23 @@ describe('ProfilePage', () => {
       expect(defaultProps.onAgeChange).toHaveBeenCalledWith(months);
     }
   );
+
+  it('names the youngest age range 1 – 2, the app`s youngest band, and never one from 0', () => {
+    const tree = render(<ProfilePage {...defaultProps} ageMonths={AGE_RANGE_OPTIONS[0].months} />);
+
+    expect(toStr(tree)).toContain('1 – 2');
+    fireEvent.press(findByTestId(tree, 'age-select')[0]);
+
+    expect(findByTestId(tree, 'age-option-1-2').length).toBeGreaterThan(0);
+    expect(findByTestId(tree, 'age-option-0-2')).toHaveLength(0);
+    expect(toStr(tree)).not.toMatch(/\b0 – 2\b/);
+    expect(AGE_RANGE_OPTIONS.map((o) => [o.key, o.label])).toEqual([
+      ['1-2', '1 – 2'],
+      ['2-4', '2 – 4'],
+      ['4-6', '4 – 6'],
+    ]);
+    expect(ageMonthsToRange(AGE_RANGE_OPTIONS[0].months)).toBe('1-2');
+  });
 
   it('marks the selected age range', () => {
     const tree = render(<ProfilePage {...defaultProps} ageMonths={60} />);

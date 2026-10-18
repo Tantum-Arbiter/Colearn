@@ -69,7 +69,7 @@ tokens: { accessToken, refreshToken, expiresAt, tokenType, scope } }`.
 | `PUT /api/children/{childId}` | Body: `ChildDocument` with the `version` last read. `200` with the saved document (version + 1); `409 GTW-414` with `details.current` when another device wrote first; `409 GTW-415` past 10 children. |
 
 `ChildDocument` (`dto/ChildDocument.java`): `childId, version, nickname, avatarType, avatarId,
-ageBucket (0-2 | 2-4 | 4-6), language, textSizeScale, favorites { stories, activities, songs },
+ageBucket (1-2 | 2-4 | 4-6; older apps still send 0-2 for 1-2, which is accepted and kept as sent), language, textSizeScale, favorites { stories, activities, songs },
 storyProgress { storyId: { pageIndex, totalPages, finishedCount } }, finishedStoryIds,
 challengeCounts, achievements, settings { screenTimeEnabled, smartRemindersEnabled,
 customReminders[] }`. No server times are returned. The app's merge rules are in

@@ -34,7 +34,7 @@ const contentChanges = {
   isPremium: (s) => { s.isPremium = !s.isPremium; },
   isAvailable: (s) => { s.isAvailable = !s.isAvailable; },
   tags: (s) => { s.tags = [...(s.tags || []), 'bedtime']; },
-  ageRange: (s) => { s.ageRange = '0-2'; },
+  ageRange: (s) => { s.ageRange = '1-2'; },
   duration: (s) => { s.duration = (s.duration || 0) + 1; },
   coverImage: (s) => { s.coverImage = 'other.webp'; },
   author: (s) => { s.author = 'someone'; },

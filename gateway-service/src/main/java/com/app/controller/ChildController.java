@@ -88,7 +88,7 @@ public class ChildController {
         Map<String, Object> notifications = profile.getNotifications() == null ? Map.of() : profile.getNotifications();
         Map<String, Object> schedule = profile.getSchedule() == null ? Map.of() : profile.getSchedule();
         child.setAgeBucket(switch (String.valueOf(schedule.get("childAgeRange"))) {
-            case "18-24m" -> "0-2";
+            case "18-24m" -> "1-2";
             case "2-6y", "6+" -> "4-6";
             default -> null;
         });

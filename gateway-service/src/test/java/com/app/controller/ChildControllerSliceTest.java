@@ -205,6 +205,15 @@ class ChildControllerSliceTest {
         mockMvc.perform(putChild(childId, FULL)).andExpect(status().isBadRequest());
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {"1-2", "2-4", "4-6", "0-2"})
+    void acceptsEveryAgeBucketAndKeepsItAsSentIncludingTheYoungestsOldNameFromOlderApps(String bucket) throws Exception {
+        mockMvc.perform(putChild("main", FULL.replace("\"ageBucket\":\"2-4\"", "\"ageBucket\":\"" + bucket + "\"")))
+                .andExpect(status().isOk());
+
+        assertEquals(bucket, savedChild().getAgeBucket());
+    }
+
     @Test
     void acceptsAMinimalChildFromAnOlderApp() throws Exception {
         mockMvc.perform(putChild("main", "{\"nickname\":\"Freya\",\"version\":0,\"futureField\":true}")).andExpect(status().isOk());
@@ -259,7 +268,7 @@ class ChildControllerSliceTest {
                 .andExpect(jsonPath("$.children[0].childId").value("default"))
                 .andExpect(jsonPath("$.children[0].version").value(0))
                 .andExpect(jsonPath("$.children[0].nickname").value("Freya"))
-                .andExpect(jsonPath("$.children[0].ageBucket").value("0-2"))
+                .andExpect(jsonPath("$.children[0].ageBucket").value("1-2"))
                 .andExpect(jsonPath("$.children[0].settings.screenTimeEnabled").value(true))
                 .andExpect(jsonPath("$.children[0].settings.customReminders[0].title").value("Bath"));
 

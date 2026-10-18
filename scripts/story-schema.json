@@ -159,9 +159,9 @@
           },
           "localizedText": {
             "type": "object",
-            "description": "Age-grouped localized page text. Keys are age groups (0-2, 2-4, 4-6). Values are localized text objects with language codes as keys.",
+            "description": "Age-grouped localized page text. Keys are age groups (1-2, 2-4, 4-6). Values are localized text objects with language codes as keys.",
             "properties": {
-              "0-2": {
+              "1-2": {
                 "type": "object",
                 "properties": {
                   "en": { "type": "string" }, "pl": { "type": "string" }, "es": { "type": "string" },

@@ -16,7 +16,7 @@ const MAX_ATTEMPTS = 3;
 const DEBOUNCE_MS = 2000;
 const CONSENT_SCOPE = 'core';
 
-const AGE_IN_MONTHS: Record<AgeGroup, number> = { '0-2': 18, '2-4': 36, '4-6': 60 };
+const AGE_IN_MONTHS: Record<AgeGroup, number> = { '1-2': 18, '2-4': 36, '4-6': 60 };
 
 export type SyncOutcome = 'synced' | 'skipped' | 'failed';
 

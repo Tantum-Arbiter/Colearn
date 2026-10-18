@@ -25,7 +25,7 @@ public record ChildDocument(
         @Size(min = 1, max = 20) @Pattern(regexp = ".*\\S.*", message = "must not be blank") String nickname,
         @Pattern(regexp = "boy|girl") String avatarType,
         @Size(min = 1, max = 40) @Pattern(regexp = "[a-z0-9-]+") String avatarId,
-        @Pattern(regexp = "0-2|2-4|4-6") String ageBucket,
+        @Pattern(regexp = "1-2|2-4|4-6|0-2") String ageBucket,
         @Pattern(regexp = "en|pl|es|de|fr|it|pt|ja|ar|tr|nl|da|la|zh") String language,
         @DecimalMin("0.5") @DecimalMax("2.0") Double textSizeScale,
         @Valid Favorites favorites,

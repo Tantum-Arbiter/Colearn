@@ -20,7 +20,15 @@ export interface LocalizedText {
 }
 
 // Age groups for age-appropriate text variations
-export type AgeGroup = '0-2' | '2-4' | '4-6';
+export type AgeGroup = '1-2' | '2-4' | '4-6';
+
+const AGE_GROUPS: readonly string[] = ['1-2', '2-4', '4-6'];
+
+export function normaliseAgeGroup(value: unknown): AgeGroup | undefined {
+  if (typeof value !== 'string') return undefined;
+  if (AGE_GROUPS.includes(value)) return value as AgeGroup;
+  return value === '0-2' ? '1-2' : undefined;
+}
 
 // Age-group-specific localized text (maps age group → localized text)
 export type AgeGroupText = Partial<Record<AgeGroup, LocalizedText>>;
@@ -30,7 +38,7 @@ export type AgeGroupText = Partial<Record<AgeGroup, LocalizedText>>;
  * Returns the matching age group key for ageGroupText lookup.
  */
 export function resolveAgeGroup(ageInMonths: number): AgeGroup {
-  if (ageInMonths < 24) return '0-2';
+  if (ageInMonths < 24) return '1-2';
   if (ageInMonths < 48) return '2-4';
   return '4-6';
 }
@@ -90,7 +98,7 @@ export interface StoryPage {
   backgroundImage?: string; // Background image for the page
   characterImage?: string; // Character/foreground image
   text: string; // Story text for this page
-  localizedText?: AgeGroupText; // Age-grouped localized text: {"4-6": {"en": "...", ...}, "0-2": {"en": "...", ...}}
+  localizedText?: AgeGroupText; // Age-grouped localized text: {"4-6": {"en": "...", ...}, "1-2": {"en": "...", ...}}
   interactiveElements?: InteractiveElement[]; // Optional interactive props for this page
 
   // Music challenge support
@@ -162,9 +170,9 @@ export function storyPageCount(story: Pick<Story, 'pages' | 'pageCount' | 'durat
 }
 
 const AGE_GROUP_FALLBACK: Record<AgeGroup, readonly AgeGroup[]> = {
-  '0-2': ['0-2', '2-4', '4-6'],
-  '2-4': ['2-4', '0-2', '4-6'],
-  '4-6': ['4-6', '2-4', '0-2'],
+  '1-2': ['1-2', '2-4', '4-6'],
+  '2-4': ['2-4', '1-2', '4-6'],
+  '4-6': ['4-6', '2-4', '1-2'],
 };
 
 export function ageGroupFallbackChain(ageGroup?: AgeGroup): readonly AgeGroup[] {

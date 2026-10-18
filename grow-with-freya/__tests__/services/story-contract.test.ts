@@ -41,6 +41,6 @@ describe.each(FIXTURES)('the CMS story %s', (name) => {
   it('shows a Polish toddler the Polish text of a book written for 4-6', () => {
     const page = load(name).pages![1];
 
-    expect(getLocalizedText(undefined, page.text, 'pl', page.localizedText, '0-2')).toBe(page.localizedText!['4-6']!.pl);
+    expect(getLocalizedText(undefined, page.text, 'pl', page.localizedText, '1-2')).toBe(page.localizedText!['4-6']!.pl);
   });
 });

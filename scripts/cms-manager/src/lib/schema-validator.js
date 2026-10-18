@@ -8,7 +8,7 @@ import { CMS_STORIES_DIR } from './story-loader.js';
 const SCHEMA_PATH = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..', 'story-schema.json');
 
 export const SUPPORTED_LANGUAGES = ['en', 'pl', 'es', 'de', 'fr', 'it', 'pt', 'ja', 'ar', 'tr', 'nl', 'da', 'la', 'zh'];
-export const AGE_GROUPS = ['0-2', '2-4', '4-6'];
+export const AGE_GROUPS = ['1-2', '2-4', '4-6'];
 
 const ajv = new Ajv({ allErrors: true, strict: false });
 addFormats(ajv);

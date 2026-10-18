@@ -182,7 +182,7 @@ class StoryPageTest {
     @DisplayName("Should read the oldest group when no age group is given")
     void testGetTextForLanguageUsesTheDefaultChain() {
         storyPage.setLocalizedText(Map.of(
-                "0-2", new LocalizedText("Baby text"),
+                "1-2", new LocalizedText("Baby text"),
                 "4-6", new LocalizedText("Preschool text")));
 
         assertEquals("Preschool text", storyPage.getTextForLanguage("en"));
@@ -195,7 +195,7 @@ class StoryPageTest {
         storyPage.setLocalizedText(null);
 
         assertEquals("Default page text", storyPage.getTextForLanguage("pl"));
-        assertEquals("Default page text", storyPage.getTextForLanguageAndAgeGroup("pl", "0-2"));
+        assertEquals("Default page text", storyPage.getTextForLanguageAndAgeGroup("pl", "1-2"));
     }
 
     // =============================================

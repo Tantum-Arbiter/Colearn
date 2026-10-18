@@ -448,7 +448,7 @@ export function ReadyPage() {
 }
 
 export const AGE_RANGE_OPTIONS: { key: string; months: number; label: string }[] = [
-  { key: '0-2', months: 18, label: '0 – 2' },
+  { key: '1-2', months: 18, label: '1 – 2' },
   { key: '2-4', months: 36, label: '2 – 4' },
   { key: '4-6', months: 60, label: '4 – 6' },
 ];

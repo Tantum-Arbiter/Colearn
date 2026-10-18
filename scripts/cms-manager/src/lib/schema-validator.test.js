@@ -26,7 +26,17 @@ const options = { storiesDir: null };
 
 test('knows the 14 languages and three age groups the app reads', () => {
   assert.equal(SUPPORTED_LANGUAGES.length, 14);
-  assert.deepEqual(AGE_GROUPS, ['0-2', '2-4', '4-6']);
+  assert.deepEqual(AGE_GROUPS, ['1-2', '2-4', '4-6']);
+});
+
+test('reports page text still keyed by the youngest group`s old name, 0-2', async () => {
+  const keyedOld = story();
+  keyedOld.pages[1].localizedText = { '0-2': ALL };
+
+  const result = await fullValidation(keyedOld, options);
+
+  assert.equal(result.valid, false);
+  assert.ok(result.customErrors.some((error) => error.includes('"0-2"') && error.includes('1-2, 2-4, 4-6')), JSON.stringify(result.customErrors));
 });
 
 test('passes a complete story with no warnings', async () => {

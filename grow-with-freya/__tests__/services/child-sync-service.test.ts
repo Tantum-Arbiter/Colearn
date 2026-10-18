@@ -166,6 +166,23 @@ describe('ChildSyncService.sync', () => {
     expect(mockSetStoredLanguage).toHaveBeenCalledWith('pl');
   });
 
+  it('restores a profile synced before the youngest band was renamed as the youngest band, and never writes the old name back', async () => {
+    serverHas([remoteChild({ ageBucket: '0-2' as never })]);
+
+    await expect(ChildSyncService.sync()).resolves.toBe('synced');
+
+    expect(useAppStore.getState().childAgeInMonths).toBe(18);
+    expect(puts().every(([, init]) => JSON.parse(String(init.body)).ageBucket !== '0-2')).toBe(true);
+  });
+
+  it('keeps the age this device has when the account names an age group the app does not know', async () => {
+    serverHas([remoteChild({ ageBucket: 'teen' as never })]);
+
+    await ChildSyncService.sync();
+
+    expect(useAppStore.getState().childAgeInMonths).toBe(24);
+  });
+
   it('writes nothing back when the device already matches the account', async () => {
     serverHas([remoteChild()]);
     await ChildSyncService.sync();
