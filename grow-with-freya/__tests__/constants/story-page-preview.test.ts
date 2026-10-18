@@ -22,7 +22,11 @@ import {
   leadProgress,
   liftShadow,
   nextFrame,
+  pageFrame,
+  pagePlaces,
   previewFrames,
+  turnsBack,
+  warmFrames,
   sheetPoint,
   stripLight,
   stripPose,
@@ -54,6 +58,96 @@ function story(extra: Partial<Story> = {}): Story {
 }
 
 const uris = (frames: ImageSourcePropType[]) => frames.map((frame) => frameKey(frame));
+
+describe('pageFrame', () => {
+  it('should give the picture of the page the child picked, by its place in the book', () => {
+    expect(frameKey(pageFrame(story(), 2)!)).toBe('test://page-2');
+    expect(frameKey(pageFrame(story(), 3)!)).toBe('test://page-3');
+  });
+
+  it('should give the cover page its own picture', () => {
+    expect(frameKey(pageFrame(story(), 0)!)).toBe('test://cover-full');
+  });
+
+  it('should fall back to the cover for a page past the end, or one with no picture', () => {
+    expect(frameKey(pageFrame(story(), 9)!)).toBe('test://cover');
+    expect(frameKey(pageFrame(story({ pages: [page(0), page(1)] }), 1)!)).toBe('test://cover');
+  });
+
+  it('should have nothing for a book with no cover and no pages', () => {
+    expect(pageFrame(story({ coverImage: undefined as unknown as string, pages: [] }), 1)).toBeUndefined();
+  });
+});
+
+describe('pagePlaces', () => {
+  it('should place the cover before every page, and each page by where it sits in the book', () => {
+    const places = pagePlaces(story());
+
+    expect(places.get('test://cover')).toBe(-1);
+    expect(places.get('test://cover-full')).toBe(0);
+    expect(places.get('test://page-1')).toBe(1);
+    expect(places.get('test://page-3')).toBe(3);
+  });
+
+  it('should keep the first place of a picture used on more than one page', () => {
+    const repeated = story({ pages: [page(0), page(1, { backgroundImage: art('same') }), page(2, { backgroundImage: art('page-2') }), page(3, { backgroundImage: art('same') })] });
+
+    expect(pagePlaces(repeated).get('test://same')).toBe(1);
+  });
+
+  it('should keep the cover first when a page shows the cover`s picture', () => {
+    const echo = story({ pages: [page(0), page(1, { backgroundImage: art('cover') })] });
+
+    expect(pagePlaces(echo).get('test://cover')).toBe(-1);
+  });
+
+  it('should place nothing for a page with no picture, and still place pages of a book with no cover', () => {
+    const bare = story({ coverImage: undefined as unknown as string, pages: [page(0), page(1, { backgroundImage: art('page-1') })] });
+
+    expect([...pagePlaces(bare).entries()]).toEqual([['test://page-1', 1]]);
+  });
+});
+
+describe('turnsBack', () => {
+  const places = pagePlaces(story());
+  const at = (name: string) => art(name) as unknown as ImageSourcePropType;
+
+  it.each([
+    ['page-3', 'page-1', true],
+    ['page-1', 'cover', true],
+    ['page-1', 'page-3', false],
+    ['cover', 'page-2', false],
+    ['page-2', 'page-2', false],
+    ['page-2', 'nowhere', false],
+    ['nowhere', 'page-1', false],
+  ])('from %s to %s turns back: %p', (from, to, back) => {
+    expect(turnsBack(places, at(from), at(to))).toBe(back);
+  });
+});
+
+describe('warmFrames', () => {
+  it('should name the pictures of the pages a child can pick, past the cover page, in order', () => {
+    expect(uris(warmFrames(story()))).toEqual(['test://page-1', 'test://page-2', 'test://page-3']);
+  });
+
+  it('should stop at the number of pages worth readying', () => {
+    const long = story({ pages: Array.from({ length: 20 }, (_, i) => page(i, { backgroundImage: art(`page-${i}`) })) });
+
+    expect(warmFrames(long)).toHaveLength(STORY_PAGE_PREVIEW.warmPages);
+    expect(uris(warmFrames(long))[0]).toBe('test://page-1');
+  });
+
+  it('should skip pages with no picture and name no picture twice', () => {
+    const patchy = story({ pages: [page(0), page(1, { backgroundImage: art('same') }), page(2), page(3, { backgroundImage: art('same') })] });
+
+    expect(uris(warmFrames(patchy))).toEqual(['test://same']);
+  });
+
+  it('should have nothing for a book with no pages', () => {
+    expect(warmFrames(story({ pages: [] }))).toEqual([]);
+    expect(warmFrames(story({ pages: undefined }))).toEqual([]);
+  });
+});
 
 describe('previewFrames', () => {
   it('should start on the cover and then show the pages of the book in order', () => {

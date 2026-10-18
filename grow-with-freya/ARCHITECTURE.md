@@ -817,6 +817,21 @@ to create a row from the position it is, covering the other orbs" -- the bubble 
   library. On a screen too short even for a coverless card it stops under the status bar and its
   body scrolls; a card opened at its pages then scrolls to them (`useScrollToEndOnce`, which
   measures the body and its content and scrolls only when the content is taller, once).
+  A pick turns the cover to that page at once (`story-page-slideshow.tsx`; operator, 2026-10-18:
+  "when clicking a page, it should do it immediately and animate"). The cover keeps a leaf of 32
+  strips standing ready under a still of the page: it is built `readyMs` (700 ms) after the card
+  opens, once the card has risen, and rebuilt as each turn lands, so a pick only sets it moving. On
+  an iPhone 16 Pro the cover moves in the same frame as the ring. A pick uses the automatic turn's
+  curl and 2.1 s, on `Easing.out(Easing.sin)`, which moves from the first frame; the automatic turns
+  keep `inOut(cubic)`. The cover then rests on the picked page and turns no more until the card is
+  opened again. A pick during an automatic turn takes that turn over without starting it again, and
+  picking the page it is leaving lets the leaf fall back. While a picked turn runs, the strip takes
+  no taps and reads as unavailable (`onPickTurning`; operator: "dont allow switching pages until the
+  animation finishes"); automatic turns never lock it. Going back to an earlier page turns from the
+  left (operator): the stage is drawn mirrored with each picture flipped back, and the direction
+  (`pagePlaces`, `turnsBack` in `constants/story-page-preview.ts`) is fixed when a turn starts. The
+  pages a child might pick are decoded out of sight (`warmFrames`), so a pick never waits on a
+  full-size picture.
 - **Opening the next badge.** `ChildHomeNextAchievement` carries the badge's `id`. `HomeScene`'s
   `onOpenBadge(id)` → `HomeSceneContainer` → `onNavigate('progress', { badgeId })`
   (`DestinationFocus` in `constants/catalogue-destinations.ts`) → `MainMenu` → `_layout`'s

@@ -221,11 +221,17 @@ function StoryCard({
   const pages = (story.pages ?? []).slice(1);
   const startPick = Math.min(underway ? place.pageIndex : 1, Math.max(pages.length, 1));
   const [picked, setPicked] = useState(startPick);
+  const [held, setHeld] = useState<number | null>(null);
+  const [turningToPick, setTurningToPick] = useState(false);
   const readLabel = picked !== startPick ? t('storyDetail.readFromPage', { page: picked }) : t(readLabelKey);
   const { ref: bodyRef, onLayout: measureBody, onContentSizeChange: bringPagesIn } = useScrollToEndOnce(focusPages);
   const pickPage = (pageIndex: number) => {
+    if (turningToPick) {
+      return;
+    }
     Haptics.selectionAsync();
     setPicked(pageIndex);
+    setHeld(pageIndex);
     onPickPage?.(story.id, pageIndex);
   };
 
@@ -284,7 +290,7 @@ function StoryCard({
       testID={`story-card-${story.id}`}
     >
       <View style={[styles.cover, { height: layout.coverHeight }]}>
-        <StoryPageSlideshow story={story} isCurrent={isCurrent} width={layout.width} height={layout.coverHeight} />
+        <StoryPageSlideshow story={story} isCurrent={isCurrent} width={layout.width} height={layout.coverHeight} heldPage={held} onPickTurning={setTurningToPick} />
         <LinearGradient
           colors={['rgba(19, 26, 63, 0)', 'rgba(19, 26, 63, 0)', 'rgba(19, 26, 63, 0.7)', '#131A3F']}
           locations={[0, 0.55, 0.85, 1]}
@@ -394,7 +400,8 @@ function StoryCard({
                     testID={`story-card-page-${pageIndex}`}
                     accessibilityRole="button"
                     accessibilityLabel={t('reader.pageNumber', { number: pageIndex })}
-                    accessibilityState={{ selected: chosen }}
+                    accessibilityState={{ selected: chosen, disabled: turningToPick }}
+                    disabled={turningToPick}
                     onPress={() => pickPage(pageIndex)}
                     style={styles.pageItem}
                   >

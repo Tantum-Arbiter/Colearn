@@ -19,6 +19,8 @@ import React from 'react';
 import { render, act, waitFor } from '@testing-library/react-native';
 import * as Haptics from 'expo-haptics';
 import { StyleSheet } from 'react-native';
+import { withTiming } from 'react-native-reanimated';
+import { STORY_PAGE_PREVIEW } from '@/constants/story-page-preview';
 import { StoryCardSheet } from '@/components/stories/story-card-sheet';
 import { StoryDownloadService } from '@/services/story-download-service';
 import { STORY_CARD, storyCardLayout } from '@/constants/story-card';
@@ -541,6 +543,125 @@ describe('StoryCardSheet', () => {
 
       expect(playingWithin(UNSAFE_root, 'wombat')).toHaveLength(0);
       expect(playingWithin(UNSAFE_root, 'owl').length).toBeGreaterThan(0);
+    });
+
+    it('should turn the cover to the page the child picked to start from, and turn no more until the card is opened again', () => {
+      const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} stories={shelf} />);
+      const card = UNSAFE_root.findAll((node: any) => node.props?.testID === 'story-card-wombat')[0];
+      const resting = () => {
+        const bases = card.findAll((node: any) => node.props?.testID === 'story-page-preview-base' && node.props?.source !== undefined && node.props?.style !== undefined);
+        return bases[bases.length - 1]?.props.source.uri;
+      };
+
+      pressByTestId(UNSAFE_root, 'story-card-page-1');
+
+      expect(resting()).toBe('test://wombat-p2');
+      expect(playingWithin(UNSAFE_root, 'wombat')).toHaveLength(0);
+      expect(card.findAll((node: any) => node.props?.testID === 'story-page-preview-held').length).toBeGreaterThan(0);
+
+      act(() => {
+        jest.advanceTimersByTime(STORY_PAGE_PREVIEW.dwellMs * 3);
+      });
+
+      expect(resting()).toBe('test://wombat-p2');
+      expect(playingWithin(UNSAFE_root, 'wombat')).toHaveLength(0);
+      expect(card.findAll((node: any) => node.props?.testID === 'story-page-preview-still').length).toBeGreaterThan(0);
+    });
+
+    describe('while the cover turns to a page the child picked', () => {
+      const book = (): Story => ({
+        ...makeStory('wombat', 'Snuggle Little Wombat'),
+        coverImage: { uri: 'test://wombat-cover' } as unknown as string,
+        pages: [1, 2, 3, 4].map((n) => ({ id: `wombat-p${n}`, pageNumber: n, text: 'page', backgroundImage: { uri: `test://wombat-p${n}` } as unknown as string })),
+      });
+      const timing = withTiming as unknown as jest.Mock;
+      const landAtOnce = timing.getMockImplementation();
+      let land: (() => void) | null = null;
+      const stallTurns = () => {
+        timing.mockImplementation((value: number, _config: unknown, callback?: (finished: boolean) => void) => {
+          land = callback ? () => callback(true) : null;
+          return value;
+        });
+      };
+      const pageButton = (root: any, pageIndex: number) =>
+        root.findAll((node: any) => node.props?.testID === `story-card-page-${pageIndex}` && typeof node.props?.onPress === 'function')[0];
+      const chosen = (root: any) =>
+        [1, 2, 3].filter((pageIndex) => pageButton(root, pageIndex).props.accessibilityState?.selected === true);
+
+      afterEach(() => {
+        timing.mockImplementation(landAtOnce);
+        land = null;
+      });
+
+      it('should ignore a tap on another page, without a buzz, until the turn has landed, then take it', () => {
+        const onPickPage = jest.fn();
+        const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} stories={[book()]} onPickPage={onPickPage} />);
+        stallTurns();
+        pressByTestId(UNSAFE_root, 'story-card-page-1');
+        const selection = Haptics.selectionAsync as jest.Mock;
+        selection.mockClear();
+
+        pressByTestId(UNSAFE_root, 'story-card-page-3');
+
+        expect(chosen(UNSAFE_root)).toEqual([1]);
+        expect(onPickPage).toHaveBeenCalledTimes(1);
+        expect(selection).not.toHaveBeenCalled();
+
+        act(() => land!());
+        pressByTestId(UNSAFE_root, 'story-card-page-3');
+
+        expect(chosen(UNSAFE_root)).toEqual([3]);
+        expect(onPickPage).toHaveBeenLastCalledWith('wombat', 3);
+        expect(selection).toHaveBeenCalledTimes(1);
+      });
+
+      it('should mark the pages unavailable to a screen reader while the turn runs, and available again once it lands', () => {
+        const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} stories={[book()]} />);
+        expect([1, 2, 3].every((pageIndex) => pageButton(UNSAFE_root, pageIndex).props.disabled !== true)).toBe(true);
+        stallTurns();
+
+        pressByTestId(UNSAFE_root, 'story-card-page-2');
+
+        expect([1, 2, 3].every((pageIndex) => pageButton(UNSAFE_root, pageIndex).props.disabled === true)).toBe(true);
+        expect([1, 2, 3].every((pageIndex) => pageButton(UNSAFE_root, pageIndex).props.accessibilityState.disabled === true)).toBe(true);
+        act(() => land!());
+        expect([1, 2, 3].every((pageIndex) => pageButton(UNSAFE_root, pageIndex).props.disabled === false)).toBe(true);
+        expect([1, 2, 3].every((pageIndex) => pageButton(UNSAFE_root, pageIndex).props.accessibilityState.disabled === false)).toBe(true);
+      });
+
+      it('should leave the pages free while the cover turns by itself', () => {
+        const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} stories={[book()]} />);
+        stallTurns();
+        act(() => {
+          jest.advanceTimersByTime(STORY_PAGE_PREVIEW.dwellMs);
+        });
+
+        pressByTestId(UNSAFE_root, 'story-card-page-3');
+
+        expect(chosen(UNSAFE_root)).toEqual([3]);
+      });
+
+      it('should not lock the pages when the picked page is already showing, since nothing turns', () => {
+        const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} stories={[book()]} />);
+        pressByTestId(UNSAFE_root, 'story-card-page-2');
+        stallTurns();
+
+        pressByTestId(UNSAFE_root, 'story-card-page-2');
+        pressByTestId(UNSAFE_root, 'story-card-page-3');
+
+        expect(chosen(UNSAFE_root)).toEqual([3]);
+      });
+    });
+
+    it('should start turning again from the cover once the card is opened afresh', () => {
+      const first = render(<StoryCardSheet {...defaultProps} stories={shelf} />);
+      pressByTestId(first.UNSAFE_root, 'story-card-page-1');
+      first.unmount();
+
+      const again = render(<StoryCardSheet {...defaultProps} stories={shelf} />);
+
+      expect(playingWithin(again.UNSAFE_root, 'wombat').length).toBeGreaterThan(0);
+      expect(again.UNSAFE_root.findAll((node: any) => node.props?.testID === 'story-page-preview-held')).toHaveLength(0);
     });
 
     it('should size the preview to the cover it sits in', () => {
