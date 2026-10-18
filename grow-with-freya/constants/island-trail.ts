@@ -28,11 +28,11 @@ export const ISLAND_TRAIL: readonly TrailPoint[] = [
 
 export const ISLAND_TRAIL_VIA: readonly (readonly TrailPoint[])[] = [
   [{ x: 752, y: 474 }],
-  [{ x: 663, y: 608 }],
+  [{ x: 741, y: 593 }, { x: 673, y: 645 }, { x: 611, y: 622 }],
   [{ x: 615, y: 657 }],
   [{ x: 779, y: 774 }],
-  [{ x: 726, y: 898 }],
-  [{ x: 496, y: 936 }],
+  [{ x: 717, y: 868 }],
+  [{ x: 473, y: 893 }],
 ];
 
 export const ISLAND_TRAIL_PHONE: readonly TrailPoint[] = [
@@ -40,18 +40,18 @@ export const ISLAND_TRAIL_PHONE: readonly TrailPoint[] = [
   { x: 482, y: 713 },
   { x: 225, y: 757 },
   { x: 412, y: 930 },
-  { x: 793, y: 1003 },
+  { x: 810, y: 1010 },
   { x: 607, y: 1056 },
   { x: 220, y: 1043 },
 ];
 
 export const ISLAND_TRAIL_VIA_PHONE: readonly (readonly TrailPoint[])[] = [
-  [{ x: 639, y: 698 }],
-  [{ x: 354, y: 735 }],
+  [{ x: 703, y: 704 }, { x: 642, y: 729 }, { x: 552, y: 719 }],
+  [{ x: 346, y: 689 }],
   [{ x: 278, y: 868 }],
   [{ x: 654, y: 890 }],
-  [{ x: 622, y: 1000 }],
-  [{ x: 414, y: 1050 }],
+  [{ x: 699, y: 992 }],
+  [{ x: 548, y: 1070 }, { x: 451, y: 1082 }, { x: 336, y: 1047 }],
 ];
 
 export const CHECKPOINT_LABEL_GAP = 4;

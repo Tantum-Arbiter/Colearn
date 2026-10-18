@@ -1406,7 +1406,16 @@ island        PlanTrail (glowing dashes along each leg's own curve through its g
   SE, which loses 6 of 31 under names, and no leg comes within 16 points of another (operator,
   2026-10-18: the 5 → 6 leg looped back over 4 → 5, because Story Corner sits just under that leg
   and too close to Music Grove for a straight leg of three dashes; 4 → 5 now arcs over the river
-  bend, as the legs off the islet already cross water, and 5 → 6 leaves Music Grove heading left). An iPhone SE has about 200 points between the horizon and
+  bend, as the legs off the islet already cross water, and 5 → 6 leaves Music Grove heading left).
+  Every leg also curves (operator, 2026-10-18: "add a curvature to all the paths"): each bows away
+  from its straight line by at least 8% of its length and turns no sharper than 50 degrees along
+  the way. Where names crowd both ends of a leg, it takes three guide points, level near its
+  circles and sagging between them (phone 1 → 2 and 6 → 7, tablet 2 → 3); 6 → 7 on a phone is the
+  tightest, an 8% sag between Echo Glade above and the names below. The dashes at each end of a
+  leg also point into the circle they join, within 25 degrees (operator, 2026-10-18, of the phone's
+  5 → 6: "needs improving"): its three dashes had run flat out of Music Grove and met Story Corner's
+  number badge, 53 degrees off. Music Grove moved 17 painting pixels right and 7 down, and 5 → 6
+  now arcs from its side down into Story Corner; tablet 2 → 3, at 21 degrees, is the loosest. An iPhone SE has about 200 points between the horizon and
   the card, too little for seven full checkpoints, so a phone under `CHECKPOINT_COMPACT_BELOW`
   (700 points) tall gets `CHECKPOINT_DIAMETER_COMPACT` (48 points, still over the 44-point touch
   target) and 10-point names (`checkpointSize`). A name is tucked over the foot of its circle
@@ -1468,8 +1477,10 @@ island        PlanTrail (glowing dashes along each leg's own curve through its g
   checkpoint through one guide point (`ISLAND_TRAIL_VIA`), chosen so that no dash falls under a
   disc, a number badge or a name on a 390×844 phone or an 834×1210 tablet, and so the curve
   stays close to a straight line; `island-trail.test.ts` counts the hidden dashes (none, on
-  either), keeps every dash above the step card and keeps every leg at least 16 points from the
-  others. To reroute a leg, move its guide point and run that test.
+  either), keeps every dash above the step card, keeps every leg at least 16 points from the
+  others, and checks that every leg curves gently (a bow of at least 8% of its length, no turn
+  sharper than 50 degrees) and that its end dashes point into the circles they join. To reroute a
+  leg, move its guide points and run that test.
 - **Every day can be played again, and the last one, once done, opens the road map**
   (operator, 2026-10-05). A done checkpoint can be pressed: `useLearningPlan.start` starts a done day
   as it does an open one, and the step is ticked off again when it finishes, which keeps its first

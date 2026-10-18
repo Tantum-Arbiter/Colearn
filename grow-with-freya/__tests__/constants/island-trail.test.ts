@@ -20,6 +20,7 @@ import {
   checkpointLabelTop,
   trailDashes,
   trailPath,
+  type DashSpacing,
   type TrailPoint,
 } from '@/constants/island-trail';
 
@@ -89,6 +90,69 @@ function mapOn(screen: Screen, map: IslandMap, isTablet: boolean) {
 }
 
 const LEGS_APART = 16;
+const LEAST_BOW = 0.08;
+const SHARPEST_TURN = 50;
+const LEAD_IN = 25;
+
+function bowOf(trail: readonly TrailPoint[], via: readonly (readonly TrailPoint[])[], leg: number) {
+  const from = trail[leg];
+  const to = trail[leg + 1];
+  const length = Math.hypot(to.x - from.x, to.y - from.y);
+  const across = { x: -(to.y - from.y) / length, y: (to.x - from.x) / length };
+
+  return Math.max(...trailPath([from, to], 40, [via[leg]]).map((point) => Math.abs((point.x - from.x) * across.x + (point.y - from.y) * across.y))) / length;
+}
+
+function sharpestTurn(trail: readonly TrailPoint[], via: readonly (readonly TrailPoint[])[], leg: number) {
+  const path = trailPath([trail[leg], trail[leg + 1]], 40, [via[leg]]);
+  const reach = 8;
+  let sharpest = 0;
+  for (let index = reach; index + reach < path.length; index += 1) {
+    const before = Math.atan2(path[index].y - path[index - reach].y, path[index].x - path[index - reach].x);
+    const after = Math.atan2(path[index + reach].y - path[index].y, path[index + reach].x - path[index].x);
+    const turn = Math.abs(before - after);
+    sharpest = Math.max(sharpest, turn > Math.PI ? 2 * Math.PI - turn : turn);
+  }
+
+  return (sharpest * 180) / Math.PI;
+}
+
+function leadIn(trail: readonly TrailPoint[], via: readonly (readonly TrailPoint[])[], dash: DashSpacing, leg: number) {
+  const dashes = trailDashes(trail, dash, via).filter((each) => each.leg === leg);
+  const off = (angle: number, toward: { x: number; y: number }, from: { x: number; y: number }) => {
+    const away = Math.abs(angle - (Math.atan2(toward.y - from.y, toward.x - from.x) * 180) / Math.PI) % 360;
+    return away > 180 ? 360 - away : away;
+  };
+  const first = dashes[0];
+  const last = dashes[dashes.length - 1];
+
+  return Math.max(off(first.angle, first, trail[leg]), off(last.angle, trail[leg + 1], last));
+}
+
+function leadsIntoEveryCircle(trail: readonly TrailPoint[], via: readonly (readonly TrailPoint[])[], dash: DashSpacing) {
+  it.each(trail.slice(0, -1).map((_, leg) => [`${leg + 1} to ${leg + 2}`, leg] as const))(
+    'points the dashes at each end of the leg from %s into the circle they join',
+    (_, leg) => {
+      expect(leadIn(trail, via, dash, leg)).toBeLessThanOrEqual(LEAD_IN);
+    }
+  );
+}
+
+function bendsEveryLeg(trail: readonly TrailPoint[], via: readonly (readonly TrailPoint[])[]) {
+  it.each(trail.slice(0, -1).map((_, leg) => [`${leg + 1} to ${leg + 2}`, leg] as const))(
+    'bends the leg from %s into a curve rather than a straight line',
+    (_, leg) => {
+      expect(bowOf(trail, via, leg)).toBeGreaterThanOrEqual(LEAST_BOW);
+    }
+  );
+
+  it.each(trail.slice(0, -1).map((_, leg) => [`${leg + 1} to ${leg + 2}`, leg] as const))(
+    'bends the leg from %s gently, with no sharp corner along it',
+    (_, leg) => {
+      expect(sharpestTurn(trail, via, leg)).toBeLessThanOrEqual(SHARPEST_TURN);
+    }
+  );
+}
 
 function legsStayApart(name: string, screen: Screen, map: IslandMap, isTablet: boolean) {
   it(`keeps every leg of the trail clear of the others, so no stretch runs over another, on ${name}`, () => {
@@ -198,6 +262,9 @@ describe('the tablet trail', () => {
     });
   });
 
+  bendsEveryLeg(ISLAND_TRAIL, ISLAND_TRAIL_VIA);
+  leadsIntoEveryCircle(ISLAND_TRAIL, ISLAND_TRAIL_VIA, TRAIL_DASH);
+
   it('shows every dash of the trail on an iPad Pro 11', () => {
     mapOn(TABLETS['an iPad Pro 11'], TABLET_ISLAND, true).legs.forEach((leg) => expect(leg.shown).toBe(leg.all));
   });
@@ -286,6 +353,9 @@ describe('the phone trail', () => {
   it.each(Object.keys(PHONES).filter((name) => name !== 'an iPhone SE'))('shows every dash of the trail on %s', (name) => {
     mapOn(PHONES[name], PHONE_ISLAND, false).legs.forEach((leg) => expect(leg.shown).toBe(leg.all));
   });
+
+  bendsEveryLeg(ISLAND_TRAIL_PHONE, ISLAND_TRAIL_VIA_PHONE);
+  leadsIntoEveryCircle(ISLAND_TRAIL_PHONE, ISLAND_TRAIL_VIA_PHONE, TRAIL_DASH_PHONE);
 
   it('keeps its circles inside what the narrowest phone shows of the painting', () => {
     const narrowest = islandLayout(PHONES['a 360-point Android phone'], ISLAND_ART_PHONE);
