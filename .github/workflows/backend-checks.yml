@@ -11,6 +11,7 @@ on:
       - 'firestore-emulator/**'
       - 'contract-fixtures/**'
       - 'scripts/**'
+      - 'security/**'
       - 'docker-compose.functional-tests.yml'
       - '.github/workflows/backend-checks.yml'
   push:
@@ -23,6 +24,7 @@ on:
       - 'firestore-emulator/**'
       - 'contract-fixtures/**'
       - 'scripts/**'
+      - 'security/**'
       - 'docker-compose.functional-tests.yml'
       - '.github/workflows/backend-checks.yml'
 
@@ -93,6 +95,40 @@ jobs:
             gateway-service/build/reports/tests/test
             gateway-service/build/reports/jacoco/test
           retention-days: 14
+
+  security-probes:
+    name: Security probes are denied by the local stack
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: security/requirements.txt
+
+      - name: Run the stack
+        run: |
+          docker compose -f docker-compose.functional-tests.yml --profile gateway up \
+            --build --detach --wait wiremock fake-gcs firestore gateway
+
+      - name: Probe
+        working-directory: security
+        env:
+          GATEWAY_BASE_URL: http://localhost:8080
+        run: |
+          pip install -r requirements.txt
+          pytest --deselect auth-tests/test_rate_limiting.py::TestRateLimiting::test_rate_limit_recovery
+
+      - name: Gateway log on failure
+        if: failure()
+        run: docker compose -f docker-compose.functional-tests.yml logs gateway --tail 300
+
+      - name: Tear down
+        if: always()
+        run: docker compose -f docker-compose.functional-tests.yml --profile gateway down -v
 
   func-tests-with-validation-on:
     name: Func tests against a prod-configured gateway

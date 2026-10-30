@@ -46,10 +46,21 @@ export interface E2eState {
   goals?: PlanGoal[];
 }
 
-export function isE2eAllowed(isDevBuild: boolean, extra: unknown): boolean {
-  if (isDevBuild) return true;
+/** The gateways a development build may talk to while it also answers seed links; the same shape app.config.js enforces for E2E builds. */
+const LOCAL_GATEWAY = /^http:\/\/(localhost|127\.0\.0\.1|10\.0\.2\.2)(:\d+)?\/?$/;
 
-  return typeof extra === 'object' && extra !== null && (extra as { e2e?: unknown }).e2e === true;
+/**
+ * A seed link can sign a device in, wipe it or reshape its child record, so it is answered only
+ * where that cannot reach a real family: a build made for testing (which app.config.js keeps on
+ * a local gateway), or a development build whose gateway is local or not configured at all,
+ * as Metro's is. A development build pointed at a deployed gateway keeps the door shut.
+ */
+export function isE2eAllowed(isDevBuild: boolean, extra: unknown): boolean {
+  const config = typeof extra === 'object' && extra !== null ? (extra as { e2e?: unknown; gatewayUrl?: unknown }) : {};
+  if (config.e2e === true) return true;
+  if (!isDevBuild) return false;
+
+  return config.gatewayUrl === undefined || (typeof config.gatewayUrl === 'string' && LOCAL_GATEWAY.test(config.gatewayUrl));
 }
 
 function flag(value: string | null): boolean | undefined {

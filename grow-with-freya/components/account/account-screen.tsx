@@ -633,7 +633,8 @@ export function AccountScreen({ onBack, onNavigate, isActive = true }: AccountSc
             </Pressable>
           )}
 
-          {/* Developer Options */}
+          {/* Developer Options: development builds only, never behind the parents gate in a shipped app */}
+          {isDevMode() && (
           <View style={[styles.section, { marginTop: 16 }]}>
             <Text style={[styles.sectionTitle, { fontSize: scaledFontSize(13) }]}>
               Developer Options
@@ -720,6 +721,7 @@ export function AccountScreen({ onBack, onNavigate, isActive = true }: AccountSc
               </Text>
             </Pressable>
           </View>
+          )}
 
           {/* Bottom: T&Cs + Privacy on one line, Version below */}
           <View style={styles.bottomTextRow}>

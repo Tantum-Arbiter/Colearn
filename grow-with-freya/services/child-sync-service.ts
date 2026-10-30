@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ApiClient, ApiError } from './api-client';
 import { reminderService } from './reminder-service';
 import { setStoredLanguage, type SupportedLanguage } from './i18n';
-import { ChildDocument, LocalChildState, mergeChildDocuments, toChildDocument } from './child-document';
+import { ChildDocument, LocalChildState, mergeChildDocuments, sanitiseChildDocument, toChildDocument } from './child-document';
 import { useAppStore, type AppState } from '@/store/app-store';
 import { resolveAgeGroup, type AgeGroup } from '@/types/story';
 import { Logger } from '@/utils/logger';
@@ -132,8 +132,13 @@ async function run(): Promise<SyncOutcome> {
   try {
     const local = await readLocal();
     const base = await loadBase();
-    const { children } = await ApiClient.request<{ children: ChildDocument[] }>('/api/children');
-    let remote: ChildDocument | undefined = children.find(c => c.childId === currentChildId) ?? children[0];
+    const { children: received } = await ApiClient.request<{ children: unknown[] }>('/api/children');
+    const children = received.map(sanitiseChildDocument);
+    if (children.some(c => c === null)) {
+      log.warn('The account holds a child document this app cannot trust; leaving it untouched until it is fixed');
+      return 'failed';
+    }
+    let remote: ChildDocument | undefined = (children as ChildDocument[]).find(c => c.childId === currentChildId) ?? (children as ChildDocument[])[0];
 
     for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
       const mine = toChildDocument(local, remote?.childId ?? currentChildId ?? FIRST_CHILD_ID, remote?.version ?? 0);
@@ -149,7 +154,7 @@ async function run(): Promise<SyncOutcome> {
       }
 
       try {
-        const saved = await ApiClient.request<ChildDocument>(`/api/children/${merged.childId}`, {
+        const saved = await ApiClient.request<ChildDocument>(`/api/children/${encodeURIComponent(merged.childId)}`, {
           method: 'PUT',
           body: JSON.stringify(merged),
         });
@@ -161,7 +166,12 @@ async function run(): Promise<SyncOutcome> {
           ? (error.body as { errorCode?: string; details?: { current?: ChildDocument } } | null)
           : null;
         if (current?.errorCode !== 'GTW-414') throw error;
-        remote = current.details?.current;
+        const other = sanitiseChildDocument(current.details?.current);
+        if (!other) {
+          log.warn('Another device wrote a child document this app cannot trust; will try again later');
+          return 'failed';
+        }
+        remote = other;
         log.debug(`Another device wrote first; merging (attempt ${attempt + 1})`);
       }
     }

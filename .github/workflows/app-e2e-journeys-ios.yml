@@ -83,7 +83,8 @@ jobs:
         working-directory: ${{ env.WORKING_DIRECTORY }}
         env:
           MAESTRO_REPORT: ${{ runner.temp }}/maestro-junit.xml
-        run: ./.maestro/run-with-device-retry.sh -e APP_BUILD=release ${{ inputs.tags && format('--include-tags={0}', inputs.tags) || '' }}
+          MAESTRO_TAGS: ${{ inputs.tags }}
+        run: ./.maestro/run-with-device-retry.sh -e APP_BUILD=release ${MAESTRO_TAGS:+--include-tags=$MAESTRO_TAGS}
 
       - name: Summarise the journeys
         if: always()

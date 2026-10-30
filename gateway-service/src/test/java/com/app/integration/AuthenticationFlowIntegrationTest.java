@@ -333,6 +333,45 @@ class AuthenticationFlowIntegrationTest {
     }
 
     @Test
+    void refresh_RejectsAStringThatIsNotOurSignedRefreshToken_BeforeAnySessionLookup() throws Exception {
+        for (String presented : new String[] {
+                "not-a-jwt-at-all",
+                "a.b.c",
+                com.auth0.jwt.JWT.create().withIssuer("grow-with-freya-gateway").withSubject("victim-1")
+                        .withClaim("type", "refresh").withExpiresAt(new java.util.Date(System.currentTimeMillis() + 3600_000))
+                        .sign(com.auth0.jwt.algorithms.Algorithm.HMAC256("someone-elses-secret-that-is-also-long-enough")),
+                com.auth0.jwt.JWT.create().withIssuer("grow-with-freya-gateway").withSubject("victim-1")
+                        .withClaim("type", "refresh").withExpiresAt(new java.util.Date(System.currentTimeMillis() + 3600_000))
+                        .sign(com.auth0.jwt.algorithms.Algorithm.none()),
+        }) {
+            mockMvc.perform(post("/api/auth/refresh")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"refreshToken\":\"" + presented + "\"}")
+                    .header("X-Client-Platform", "ios")
+                    .header("X-Client-Version", "1.0.0")
+                    .header("X-Device-ID", "test-device-123"))
+                    .andExpect(status().isUnauthorized());
+        }
+
+        verify(sessionService, never()).getSessionByRefreshToken(anyString());
+    }
+
+    @Test
+    void refresh_RejectsOurOwnAccessTokenPresentedAsARefreshToken_BeforeAnySessionLookup() throws Exception {
+        String accessToken = jwtConfig.generateAccessToken("test-user-123", "google");
+
+        mockMvc.perform(post("/api/auth/refresh")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"refreshToken\":\"" + accessToken + "\"}")
+                .header("X-Client-Platform", "ios")
+                .header("X-Client-Version", "1.0.0")
+                .header("X-Device-ID", "test-device-123"))
+                .andExpect(status().isUnauthorized());
+
+        verify(sessionService, never()).getSessionByRefreshToken(anyString());
+    }
+
+    @Test
     void tokenType_WrongTypeRefresh_ShouldBeRejected() throws Exception {
         // Build a correctly signed token with wrong type claim (PII-free - no email)
         String wrongType = com.auth0.jwt.JWT.create()

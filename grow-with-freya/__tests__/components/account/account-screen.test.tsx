@@ -106,9 +106,10 @@ jest.mock('@/components/owl-guide', () => ({
 }));
 jest.mock('@/components/main-menu/animated-components', () => ({ MoonBottomImage: () => null }));
 
+let mockIsDevMode = () => true;
 jest.mock('@/services/subscription-service', () => ({
   restorePurchases: jest.fn().mockResolvedValue({ success: true }),
-  isDevMode: () => true,
+  isDevMode: () => mockIsDevMode(),
   forgetAccount: jest.fn().mockResolvedValue(undefined),
 }));
 jest.mock('@/services/screen-time-service', () => ({
@@ -240,6 +241,40 @@ function settleSlide() {
 function renderAccount(onBack = jest.fn()) {
   return { tree: render(<AccountScreen onBack={onBack} />), onBack };
 }
+
+describe('AccountScreen developer options', () => {
+  const devControls = (tree: ReturnType<typeof render>) =>
+    tree.UNSAFE_root.findAll((node: any) => ['account-reset-app', 'account-dev-tier'].includes(node.props.testID));
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.useFakeTimers();
+    Object.assign(mockStore, MUTABLE_STORE_DEFAULTS);
+    (reminderService.hasUnsavedChanges as jest.Mock).mockReturnValue(false);
+    (ApiClient.isAuthenticated as jest.Mock).mockResolvedValue(false);
+  });
+
+  afterEach(() => {
+    mockIsDevMode = () => true;
+    jest.useRealTimers();
+  });
+
+  it('offers the tier override and the reset in a development build', () => {
+    const { tree } = renderAccount();
+
+    expect(JSON.stringify(tree.toJSON())).toContain('Developer Options');
+    expect(devControls(tree).length).toBeGreaterThan(0);
+  });
+
+  it('ships none of it in a production build, so passing the parents gate unlocks nothing', () => {
+    mockIsDevMode = () => false;
+
+    const { tree } = renderAccount();
+
+    expect(JSON.stringify(tree.toJSON())).not.toContain('Developer Options');
+    expect(devControls(tree)).toHaveLength(0);
+  });
+});
 
 describe('AccountScreen navigation', () => {
   beforeEach(() => {

@@ -76,6 +76,7 @@ jobs:
         timeout-minutes: 40
         env:
           MAESTRO_REPORT: ${{ runner.temp }}/maestro-junit.xml
+          MAESTRO_TAGS: ${{ inputs.tags }}
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 31
@@ -90,7 +91,7 @@ jobs:
             adb reverse tcp:8080 tcp:8080
             adb shell pm disable-user --user 0 com.google.android.apps.nexuslauncher || true
             nohup adb logcat -v threadtime > "$RUNNER_TEMP/logcat.txt" 2>&1 < /dev/null &
-            cd grow-with-freya && ./.maestro/run-with-device-retry.sh -e APP_BUILD=release ${{ inputs.tags && format('--include-tags={0}', inputs.tags) || '' }}
+            cd grow-with-freya && ./.maestro/run-with-device-retry.sh -e APP_BUILD=release ${MAESTRO_TAGS:+--include-tags=$MAESTRO_TAGS}
 
       - name: Collect what the host saw
         if: failure()

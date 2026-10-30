@@ -2,10 +2,19 @@ name: Security Scan
 
 on:
   workflow_dispatch:
+  schedule:
+    # Mondays 06:00 UTC: advisories are published against dependencies that have not changed
+    - cron: '0 6 * * 1'
   push:
-    branches: [ set-up-pipeline-frontend ]
+    branches: [main, mvp]
     paths:
-      - 'grow-with-freya/**'
+      - 'grow-with-freya/package.json'
+      - 'grow-with-freya/package-lock.json'
+      - '.github/workflows/security-scan.yml'
+  pull_request:
+    paths:
+      - 'grow-with-freya/package.json'
+      - 'grow-with-freya/package-lock.json'
       - '.github/workflows/security-scan.yml'
 
 # CRITICAL: Prevent multiple simultaneous runs

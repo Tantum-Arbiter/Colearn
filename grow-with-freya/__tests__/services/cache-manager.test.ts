@@ -211,6 +211,67 @@ describe('CacheManager', () => {
     });
   });
 
+  describe('asset paths from outside the app', () => {
+    const UNSAFE = [
+      ['climbs out of the cache', '../escape.webp'],
+      ['climbs out from inside a story folder', 'stories/../../escape.webp'],
+      ['climbs within a story folder', 'stories/a/../b.webp'],
+      ['climbs behind a leading slash', '/../escape.webp'],
+      ['climbs with a Windows separator', '..\\escape.webp'],
+      ['hides a separator inside a segment', 'stories/a\\..\\b.webp'],
+      ['doubles a slash', 'stories//x.webp'],
+      ['names the current folder', 'stories/./x.webp'],
+      ['is empty', ''],
+      ['is only a slash', '/'],
+      ['carries a NUL byte', 'stories/a\u0000b.webp'],
+      ['is a URL rather than a path', 'https://evil.example/x.webp'],
+      ['has a segment far too long', `stories/${'a'.repeat(600)}.webp`],
+      ['is far too long over several ordinary segments', `${Array.from({ length: 5 }, () => 'a'.repeat(120)).join('/')}.webp`],
+      ['is far too deep', `stories/${Array.from({ length: 12 }, (_, i) => `d${i}`).join('/')}/x.webp`],
+    ] as const;
+
+    it.each(UNSAFE)('refuses to download to a path that %s', async (_, assetPath) => {
+      mockFileSystem.downloadAsync.mockResolvedValue({ status: 200 } as never);
+
+      await expect(CacheManager.downloadAndCacheAsset('https://signed.example/x', assetPath)).rejects.toThrow(/unsafe asset path/i);
+
+      expect(mockFileSystem.downloadAsync).not.toHaveBeenCalled();
+      expect(mockFileSystem.makeDirectoryAsync.mock.calls.some(([dir]) => String(dir).includes('..'))).toBe(false);
+    });
+
+    it.each(UNSAFE)('deletes nothing for a path that %s', async (_, assetPath) => {
+      mockFileSystem.getInfoAsync.mockResolvedValue(createFileInfo());
+
+      await expect(CacheManager.removeAsset(assetPath)).resolves.toBeUndefined();
+
+      expect(mockFileSystem.deleteAsync).not.toHaveBeenCalled();
+    });
+
+    it.each(UNSAFE)('finds nothing cached for a path that %s', async (_, assetPath) => {
+      mockFileSystem.getInfoAsync.mockResolvedValue(createFileInfo());
+
+      await expect(CacheManager.getAssetUri(assetPath)).resolves.toBeNull();
+
+      expect(mockFileSystem.getInfoAsync.mock.calls.some(([uri]) => /\.\.|\\|\u0000/.test(String(uri)))).toBe(false);
+    });
+
+    it.each([
+      ['a story page', 'stories/wombat/page-1.webp', 'stories/wombat/page-1.webp'],
+      ['a CMS path with its assets prefix', 'assets/stories/wombat/cover.webp', 'stories/wombat/cover.webp'],
+      ['a path with a leading slash', '/stories/wombat/cover.webp', 'stories/wombat/cover.webp'],
+      ['badge art', 'achievements/first-story.webp', 'achievements/first-story.webp'],
+      ['a sound', 'stories/juni/sounds/splash.m4a', 'stories/juni/sounds/splash.m4a'],
+      ['a name with dots and dashes', 'stories/my-turn.to-ding/p.1.webp', 'stories/my-turn.to-ding/p.1.webp'],
+    ])('keeps %s inside the asset cache', async (_, assetPath, inside) => {
+      mockFileSystem.getInfoAsync.mockResolvedValue(createFileInfo());
+
+      const uri = await CacheManager.getAssetUri(assetPath);
+
+      expect(uri?.endsWith(`content_cache/assets/${inside}`)).toBe(true);
+      expect(uri).not.toMatch(/\.\.|\/\/[^/]*\/\/|\\/);
+    });
+  });
+
   describe('Asset Cache', () => {
     describe('getAssetUri', () => {
       it('should return local URI when asset is cached', async () => {

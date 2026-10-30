@@ -183,6 +183,44 @@ describe('ChildSyncService.sync', () => {
     expect(useAppStore.getState().childAgeInMonths).toBe(24);
   });
 
+  it('tames a hostile account document before applying any of it', async () => {
+    serverHas([remoteChild({ textSizeScale: 50, language: 'xx', nickname: 'x'.repeat(40), avatarId: 'Owl Big' } as never)]);
+
+    await expect(ChildSyncService.sync()).resolves.toBe('synced');
+
+    const state = useAppStore.getState();
+    expect(state.textSizeScale).toBe(1);
+    expect(state.userNickname).toBeNull();
+    expect(mockSetStoredLanguage).not.toHaveBeenCalled();
+    puts().forEach(([, init]) => {
+      const body = JSON.parse(String(init.body));
+      expect(body.textSizeScale).not.toBe(50);
+      expect(body.language).not.toBe('xx');
+    });
+  });
+
+  it('refuses an account whose child id would change the request path, and writes nothing', async () => {
+    serverHas([remoteChild({ childId: '../admin' })]);
+
+    await expect(ChildSyncService.sync()).resolves.toBe('failed');
+
+    expect(puts()).toEqual([]);
+    expect(useAppStore.getState().currentChildId).toBeNull();
+  });
+
+  it('applies at most fifty well-formed reminders from the account', async () => {
+    const reminders = Array.from({ length: 60 }, (_, i) => ({ id: `r${i}`, title: 'Bath', message: '', dayOfWeek: 1, time: '19:00', isActive: true }));
+    reminders[3] = { ...reminders[3], time: '25:00' };
+    serverHas([remoteChild({ settings: { screenTimeEnabled: true, smartRemindersEnabled: false, customReminders: reminders } })]);
+
+    await ChildSyncService.sync();
+
+    expect(mockReminders.applySyncedReminders).toHaveBeenCalledTimes(1);
+    const applied = (mockReminders.applySyncedReminders.mock.calls[0] as unknown as [{ id: string; time: string }[]])[0];
+    expect(applied).toHaveLength(50);
+    expect(applied.some((each) => each.time === '25:00')).toBe(false);
+  });
+
   it('writes nothing back when the device already matches the account', async () => {
     serverHas([remoteChild()]);
     await ChildSyncService.sync();

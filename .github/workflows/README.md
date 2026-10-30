@@ -30,9 +30,12 @@ same branch -newer runs cancel in-progress ones.
 │    (manual only)    (verifies CI green)                              │
 │                                                                     │
 │  security-scan.yml ──→ dependency-scan + license-scan + code-quality│
-│    (push to specific branch)                                        │
+│    (weekly, lockfile changes on main/mvp, pull requests)            │
 ├─────────────────────────────────────────────────────────────────────┤
 │                        BACKEND (Spring Boot / Cloud Run)            │
+│                                                                     │
+│  backend-checks.yml ──→ unit + contract tests ──→ func tests        │
+│    (PRs, push to main/mvp)  ──→ security probes vs compose stack    │
 │                                                                     │
 │  gateway-build.yml ──→ test ──→ build image ──→ push to GCR       │
 │    (push when gateway-service/** changes)  ──→ deploy Cloud Run    │
@@ -50,7 +53,7 @@ same branch -newer runs cancel in-progress ones.
 │    (push to main when cms-stories/** changes)  ──→ Firestore upload│
 │                                                                     │
 │  cms-stories-delete.yml ──→ validate ──→ delete from GCS + Firestore│
-│    (manual only, requires double-confirmation)                      │
+│    (manual only, double-confirmation, ids validated first)          │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 

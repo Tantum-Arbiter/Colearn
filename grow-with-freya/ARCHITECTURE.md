@@ -181,6 +181,14 @@ progress, finished books, challenge counts, earned badges, screen-time and remin
 
 - **When.** On launch after sign-in, and 2 s after any synced field changes
   (`startAutoSync`, debounced). Guests never sync.
+- **Checked first** (`sanitiseChildDocument`, 2026-10-29). A document from the gateway was written
+  by some device on the account and is applied here and written back, so nothing in it is trusted
+  until it meets the gateway's own bounds: a child id of `[A-Za-z0-9_-]{1,100}`, a non-negative
+  integer version, nickname 1–20 characters, avatar id `[a-z0-9-]{1,40}`, a supported language,
+  text size 0.5–2.0, lists capped at 500/1000 well-formed ids, progress entries within range,
+  the three known challenge counts, boolean settings, and at most fifty well-formed reminders.
+  A field that fails is dropped; a document with no usable id or version is refused and the sync
+  reports `failed` rather than write anything. The child id is URL-encoded in the request path.
 - **Merge** (`services/child-document.ts`), using the last document both sides agreed on (the
   *base*): lists that only grow (finished books, badges) are united; counts take the larger;
   everything else is last-writer-wins against the base. With no base (a new phone), the account
@@ -1418,6 +1426,7 @@ Not yet built (M3 onwards): packs downloaded from the CMS, a game opened from a 
 play from the Library, the Scene, Choose and Make engines.
 | Setting off, previewing and coming back | `app/_layout.tsx` (`handleStartActivity`, `handlePreviewActivity`, `launchedFromIslandRef`, `storyCardReturnRef`), `constants/page-slide.ts` (`ISLAND_ACTIVITY_PAGES`, `voyageStaysOut`) |
 | Seeding a week part done, for a device check or a Maestro flow | `services/e2e-state.ts` (`planDone=N` on the seed link: the first N days done yesterday) |
+| Where a seed link is answered at all | `services/e2e-state.ts` (`isE2eAllowed`): a build made for testing (`extra.e2e`, which `app.config.js` keeps on a local gateway), or a development build whose gateway is local or not configured, as Metro's is. A development build pointed at a deployed gateway ignores seed links, since one can sign a device in, wipe it or reshape its child record (2026-10-29) |
 
 - **Finishing is reported by the screen that knows.** The reader reports a finished book
   (`markStoryCompleted`, whichever mode it was read in) and the practise screen calls
@@ -1650,6 +1659,14 @@ without requiring an app update. This gives the best of both worlds: guaranteed 
 launch + live content updates.
 
 ### 2. Signed URLs instead of direct GCS access
+
+The asset paths that arrive with them are not trusted either (2026-10-29). `CacheManager.safeAssetPath`
+accepts a path only if it stays inside the asset cache: plain segments of letters, digits, `.`, `_`
+and `-` (so no `..`, `.`, empty segment, backslash or control character), no URL, at most ten
+segments and 512 characters. Anything else is refused rather than normalised: a download throws,
+a lookup finds nothing, a removal removes nothing. `AssetDownloadUtils.getBatchSignedUrls` keeps
+only the signed URLs whose `path` this device asked for, so the gateway cannot choose where a file
+lands. `__tests__/services/cache-manager.test.ts` holds the table of refused and accepted paths.
 Clients never access GCS directly. The gateway generates 1-hour signed URLs. This allows:
 - Fine-grained access control (authenticated users only)
 - Path validation (prevent directory traversal)

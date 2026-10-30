@@ -32,7 +32,8 @@ function credentials() {
       return JSON.parse(raw);
     }
   }
-  if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY_PATH) return require(process.env.FIREBASE_SERVICE_ACCOUNT_KEY_PATH);
+  // Read as data, never require(): a .js path in the variable would otherwise run as code
+  if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY_PATH) return JSON.parse(require('fs').readFileSync(process.env.FIREBASE_SERVICE_ACCOUNT_KEY_PATH, 'utf8'));
   console.error('❌ No credentials: set FIRESTORE_EMULATOR_HOST, FIREBASE_SERVICE_ACCOUNT_KEY_PATH or GCP_SA_KEY');
   process.exit(1);
 }

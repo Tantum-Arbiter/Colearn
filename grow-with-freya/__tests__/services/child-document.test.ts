@@ -8,6 +8,7 @@ import {
   ChildDocument,
   LocalChildState,
   mergeChildDocuments,
+  sanitiseChildDocument,
   toChildDocument,
 } from '@/services/child-document';
 
@@ -39,6 +40,152 @@ function localState(overrides: Partial<LocalChildState> = {}): LocalChildState {
 function doc(overrides: Partial<ChildDocument> = {}): ChildDocument {
   return { ...toChildDocument(localState(), 'main', 1), ...overrides };
 }
+
+describe('sanitiseChildDocument', () => {
+  const id = (n: number) => `id-${n}`;
+  const reminder = (n: number, extra: Record<string, unknown> = {}) => ({ id: `r${n}`, title: 'Bath', message: '', dayOfWeek: 1, time: '19:00', isActive: true, ...extra });
+
+  it('keeps a well-formed account document as it is', () => {
+    const well = doc({ nickname: 'Freya', avatarType: 'girl', avatarId: 'owl', language: 'pl', textSizeScale: 1.4 });
+
+    expect(sanitiseChildDocument(well)).toEqual(well);
+  });
+
+  it.each([
+    ['not an object', 'main'],
+    ['no child id', { ...doc(), childId: undefined }],
+    ['a child id that would change the request path', doc({ childId: '../admin' })],
+    ['a child id with a space', doc({ childId: 'kid one' })],
+    ['a child id over 100 characters', doc({ childId: 'k'.repeat(101) })],
+    ['a negative version', doc({ version: -1 })],
+    ['a fractional version', doc({ version: 1.5 })],
+  ])('refuses a document with %s', (_, input) => {
+    expect(sanitiseChildDocument(input)).toBeNull();
+  });
+
+  it.each([
+    ['nickname', 'x'.repeat(21)],
+    ['nickname', '   '],
+    ['nickname', 7],
+    ['avatarType', 'dragon'],
+    ['avatarId', 'Owl Big'],
+    ['avatarId', 'a'.repeat(41)],
+    ['ageBucket', 'teen'],
+    ['language', 'xx'],
+    ['language', 'EN'],
+    ['textSizeScale', 0.4],
+    ['textSizeScale', 2.1],
+    ['textSizeScale', Number.NaN],
+    ['textSizeScale', '1.2'],
+  ] as const)('drops a %s of %p rather than apply it', (field, value) => {
+    const underTest = sanitiseChildDocument(doc({ [field]: value } as never));
+
+    expect(underTest).not.toBeNull();
+    expect(underTest![field]).toBeUndefined();
+  });
+
+  it.each([
+    ['nickname', 'Freya'],
+    ['avatarType', 'boy'],
+    ['avatarId', 'fox-2'],
+    ['ageBucket', '2-4'],
+    ['language', 'ja'],
+    ['textSizeScale', 0.5],
+    ['textSizeScale', 2],
+  ] as const)('keeps a %s of %p', (field, value) => {
+    expect(sanitiseChildDocument(doc({ [field]: value } as never))![field]).toBe(value);
+  });
+
+  it('reads the youngest age group`s old name as the new one', () => {
+    expect(sanitiseChildDocument(doc({ ageBucket: '0-2' as never }))!.ageBucket).toBe('1-2');
+  });
+
+  it('caps every list at what the gateway accepts and keeps only well-formed ids', () => {
+    const many = (n: number) => Array.from({ length: n }, (_, i) => id(i));
+    const underTest = sanitiseChildDocument(doc({
+      favorites: { stories: [...many(600), '../x'], activities: ['ok_1', 'bad id', ''], songs: many(3) },
+      finishedStoryIds: [...many(1200), 'a/b'],
+      achievements: [...many(700), 'x'.repeat(101)],
+    }))!;
+
+    expect(underTest.favorites.stories).toHaveLength(500);
+    expect(underTest.favorites.activities).toEqual(['ok_1']);
+    expect(underTest.favorites.songs).toEqual(many(3));
+    expect(underTest.finishedStoryIds).toHaveLength(1000);
+    expect(underTest.achievements).toHaveLength(500);
+    expect([...underTest.favorites.stories, ...underTest.finishedStoryIds, ...underTest.achievements].every((each) => /^[A-Za-z0-9_-]{1,100}$/.test(each))).toBe(true);
+  });
+
+  it('fills missing lists in rather than leave holes the app would trip over', () => {
+    const bare = { childId: 'main', version: 0 };
+
+    expect(sanitiseChildDocument(bare)).toEqual({
+      childId: 'main',
+      version: 0,
+      favorites: { stories: [], activities: [], songs: [] },
+      storyProgress: {},
+      finishedStoryIds: [],
+      challengeCounts: {},
+      achievements: [],
+      settings: { customReminders: [] },
+    });
+  });
+
+  it.each([
+    ['a page index past 1000', { pageIndex: 1001, totalPages: 9, finishedCount: 0 }],
+    ['a negative page index', { pageIndex: -1, totalPages: 9, finishedCount: 0 }],
+    ['a fractional page', { pageIndex: 1.5, totalPages: 9, finishedCount: 0 }],
+    ['a finished count past 100000', { pageIndex: 1, totalPages: 9, finishedCount: 100001 }],
+    ['a missing field', { pageIndex: 1, totalPages: 9 }],
+    ['a string where a number belongs', { pageIndex: '1', totalPages: 9, finishedCount: 0 }],
+  ])('drops a progress entry with %s', (_, entry) => {
+    const underTest = sanitiseChildDocument(doc({ storyProgress: { ok: { pageIndex: 3, totalPages: 9, finishedCount: 1 }, bad: entry as never } }))!;
+
+    expect(Object.keys(underTest.storyProgress)).toEqual(['ok']);
+  });
+
+  it('keeps at most 1000 progress entries, only under well-formed story ids', () => {
+    const progress = Object.fromEntries(Array.from({ length: 1100 }, (_, i) => [id(i), { pageIndex: 1, totalPages: 9, finishedCount: 0 }]));
+    progress['../x'] = { pageIndex: 1, totalPages: 9, finishedCount: 0 };
+
+    const underTest = sanitiseChildDocument(doc({ storyProgress: progress }))!;
+
+    expect(Object.keys(underTest.storyProgress)).toHaveLength(1000);
+    expect(underTest.storyProgress['../x']).toBeUndefined();
+  });
+
+  it('keeps only the three challenge counts the gateway knows, within range', () => {
+    const underTest = sanitiseChildDocument(doc({ challengeCounts: { music: 4, jigsaw: 1_000_001, reading: -1, piano: 2, spelling: 1.5 } }))!;
+
+    expect(underTest.challengeCounts).toEqual({ music: 4 });
+  });
+
+  it('keeps only boolean settings and at most fifty well-formed reminders', () => {
+    const reminders = [
+      ...Array.from({ length: 55 }, (_, i) => reminder(i)),
+      reminder(90, { time: '25:00' }),
+      reminder(91, { dayOfWeek: 7 }),
+      reminder(92, { title: '' }),
+      reminder(93, { title: 't'.repeat(101) }),
+      reminder(94, { message: 'm'.repeat(501) }),
+      reminder(95, { isActive: 'yes' }),
+      reminder(96, { id: '' }),
+      { title: 'no id' },
+    ];
+    const underTest = sanitiseChildDocument(doc({ settings: { screenTimeEnabled: 'true', smartRemindersEnabled: false, customReminders: reminders } as never }))!;
+
+    expect(underTest.settings.screenTimeEnabled).toBeUndefined();
+    expect(underTest.settings.smartRemindersEnabled).toBe(false);
+    expect(underTest.settings.customReminders).toHaveLength(50);
+    expect(underTest.settings.customReminders.map((each) => each.id)).toEqual(Array.from({ length: 50 }, (_, i) => `r${i}`));
+  });
+
+  it('keeps a reminder`s optional message when it is absent, as an empty string', () => {
+    const underTest = sanitiseChildDocument(doc({ settings: { customReminders: [{ id: 'r1', title: 'Bath', dayOfWeek: 0, time: '07:05', isActive: false }] } as never }))!;
+
+    expect(underTest.settings.customReminders).toEqual([{ id: 'r1', title: 'Bath', message: '', dayOfWeek: 0, time: '07:05', isActive: false }]);
+  });
+});
 
 describe('toChildDocument', () => {
   it('carries the profile, settings, favourites and progress', () => {

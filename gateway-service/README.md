@@ -136,6 +136,7 @@ PHASE-8-BACKEND-ALIGNMENT.md §7; what to do when it goes wrong: `RUNBOOK-ENTITL
 
 | Variable | Effect |
 |-|-|
+| `JWT_SECRET` (or `APP_JWT_SECRET`) | Signs the gateway's own access and refresh tokens. Required: the gateway refuses to start with no secret, a secret under 32 characters, or the placeholder that once shipped in `JwtConfig`. Only the `test` profile carries a built-in value, for local and CI test stacks |
 | `REVENUECAT_SECRET_API_KEY` | RevenueCat v1 secret key (`sk_…`); without it every lookup counts as unavailable |
 | `REVENUECAT_API_URL` | `https://api.revenuecat.com` (WireMock in the functional tests) |
 | `REVENUECAT_ACCEPT_SANDBOX` | `true` (default) while the app is TestFlight-only |
@@ -146,9 +147,19 @@ PHASE-8-BACKEND-ALIGNMENT.md §7; what to do when it goes wrong: `RUNBOOK-ENTITL
 
 ## Private and monitoring
 
-`/private/**`, `/actuator/**` and `/health/**` are open in `test`/`dev` profiles and denied in
-production (`SecurityConfig`). `/private/**` holds the test-support endpoints used by the
-functional tests (`/private/reset`, `/private/seed/story`, `/private/rebuild-content-version`, …).
+`/private/**`, `/actuator/**` and `/health/**` are open only when one of the profiles `test`, `dev`
+or `gcp-dev` is active, matched by exact name, and never when `prod` is active or no profile is
+(`SecurityConfig.allowsPrivateEndpoints`). `/private/**` holds the test-support endpoints used by
+the functional tests (`/private/reset`, `/private/seed/story`, `/private/rebuild-content-version`,
+`/private/test/create-session`, …). `/auth/refresh` verifies that a presented refresh token is one
+the gateway signed, unexpired and of the refresh type before any session is looked up, so a planted
+session cannot be redeemed with a made-up token.
+
+With the `test` profile active (local Docker Compose, the functional-test stack, CI) the provider token
+checks are stubbed: `JwtConfig` signs in exactly the tokens the functional tests send — `valid-google-…`,
+`mock-id-token-<digits>`, `valid-apple-…`, `firebase-id-token` / `test-firebase-id-token` — and refuses
+every other string, so garbage and injection payloads get the same `401` there as anywhere else. The
+gateway refuses to start when `test` is active beside `prod` or `gcp-dev`.
 
 ## Error Response Format
 

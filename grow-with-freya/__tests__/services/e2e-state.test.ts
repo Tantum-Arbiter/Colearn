@@ -72,9 +72,24 @@ describe('the storage this leans on', () => {
 });
 
 describe('isE2eAllowed', () => {
-  it('opens the door in a development build', () => {
+  it('opens the door in a development build that talks to no configured gateway, as Metro does', () => {
     expect(isE2eAllowed(true, undefined)).toBe(true);
+    expect(isE2eAllowed(true, {})).toBe(true);
   });
+
+  it.each(['http://localhost:8080', 'http://127.0.0.1:8080', 'http://10.0.2.2:8080', 'http://localhost:8080/'])(
+    'opens it in a development build whose gateway is local: %s',
+    (gatewayUrl) => {
+      expect(isE2eAllowed(true, { gatewayUrl })).toBe(true);
+    }
+  );
+
+  it.each(['https://api.colearnwithfreya.co.uk', 'https://api.earlyroots.co.uk', 'http://localhost.evil.example:8080', 'http://192.168.1.20:8080'])(
+    'keeps it shut in a development build pointed at a real gateway, so a stray link cannot reshape a family`s account: %s',
+    (gatewayUrl) => {
+      expect(isE2eAllowed(true, { gatewayUrl })).toBe(false);
+    }
+  );
 
   it('opens it in a build made for testing, which says so', () => {
     expect(isE2eAllowed(false, { e2e: true })).toBe(true);
@@ -84,6 +99,7 @@ describe('isE2eAllowed', () => {
     expect(isE2eAllowed(false, undefined)).toBe(false);
     expect(isE2eAllowed(false, {})).toBe(false);
     expect(isE2eAllowed(false, { e2e: 'true' })).toBe(false);
+    expect(isE2eAllowed(false, { gatewayUrl: 'http://localhost:8080' })).toBe(false);
   });
 });
 

@@ -52,7 +52,8 @@ function getServiceAccountCredentials() {
       console.error(`❌ Error: Service account key file not found: ${SERVICE_ACCOUNT_PATH}`);
       process.exit(1);
     }
-    return require(SERVICE_ACCOUNT_PATH);
+    // Read as data, never require(): a .js path in the variable would otherwise run as code
+    return JSON.parse(fs.readFileSync(SERVICE_ACCOUNT_PATH, 'utf8'));
   }
 
   console.error('❌ Error: No service account credentials provided');
