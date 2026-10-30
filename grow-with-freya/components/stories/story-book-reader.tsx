@@ -16,21 +16,17 @@ import Animated, {
 import * as ScreenOrientation from 'expo-screen-orientation';
 import { applyDefaultOrientation, isTabletDevice } from '@/hooks/use-story-orientation';
 import { useTranslation } from 'react-i18next';
-import { Story, StoryPage, STORY_TAGS, InteractiveElement, getLocalizedText, resolveAgeGroup, MusicChallenge, JigsawPuzzle, ReadingChallenge } from '@/types/story';
+import { Story, StoryPage, STORY_TAGS, InteractiveElement, getLocalizedText, resolveAgeGroup, MusicChallenge } from '@/types/story';
 import type { SupportedLanguage } from '@/services/i18n';
 import { SUPPORTED_LANGUAGES, setStoredLanguage } from '@/services/i18n';
 import { InteractiveElementComponent } from './interactive-element';
 import { narrationLayout } from './narration-layout';
 import { MusicChallengeUI } from './music-challenge-ui';
-import { JigsawPuzzleUI } from './jigsaw-puzzle-ui';
-import { ReadingChallengeUI } from './reading-challenge-ui';
 import { InstrumentPickerOverlay } from './instrument-picker-overlay';
 import { MusicSheetOverlay } from './music-sheet-overlay';
 import { ARRIVAL_TOTAL_MS, type SheetRect } from '@/services/sheet-flight';
 import { MusicBackdrop } from '@/components/music/music-backdrop';
 import { useMusicChallenge } from '@/hooks/use-music-challenge';
-import { useJigsawChallenge } from '@/hooks/use-jigsaw-challenge';
-import { useReadingChallenge } from '@/hooks/use-reading-challenge';
 import { useBreathDetector } from '@/hooks/use-breath-detector';
 import { getInstrument } from '@/services/music-asset-registry';
 import {
@@ -47,6 +43,7 @@ import { AudioControlModal } from '../ui/audio-control-modal';
 import { ParentsOnlyModal } from '../ui/parents-only-modal';
 import { SubscriptionOverlay } from '../ui/subscription-overlay';
 import { useAppStore } from '@/store/app-store';
+import { useAchievementEvents } from '@/components/progress/use-achievement-events';
 import { resumePageIndex } from './reading-progress';
 import { useAccessibility, TEXT_SIZE_OPTIONS } from '@/hooks/use-accessibility';
 import { useParentsOnlyChallenge } from '@/hooks/use-parents-only-challenge';
@@ -73,6 +70,7 @@ interface StoryBookReaderProps {
   initialVoiceOver?: VoiceOver | null;
   skipCoverPage?: boolean;
   skipInitialFadeIn?: boolean; // Skip fade-in when transitioning from overlay (image already visible)
+  startPageIndex?: number;
   onExit: () => void;
 }
 
@@ -82,6 +80,7 @@ export function StoryBookReader({
   initialVoiceOver = null,
   skipCoverPage = false,
   skipInitialFadeIn = false,
+  startPageIndex,
   onExit,
 }: StoryBookReaderProps) {
   const insets = useSafeAreaInsets();
@@ -124,10 +123,12 @@ export function StoryBookReader({
 
   // Start from page 1 if skipping cover, otherwise start from cover (page 0)
   const savedPlace = useAppStore((state) => state.storyProgress[story.id]);
+  const achievementEvents = useAchievementEvents(story);
   const [currentPageIndex, setCurrentPageIndex] = useState(() => resumePageIndex({
     skipCoverPage,
     savedPlace,
     totalPages: story.pages?.length ?? 0,
+    startPage: startPageIndex,
   }));
   const [previousPageIndex, setPreviousPageIndex] = useState<number | null>(null); // For crossfade
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -318,93 +319,12 @@ export function StoryBookReader({
           musicChallenge.failedAttempts
         );
         AnalyticsService.trackMusicChallengeCompleted(story.id, currentMusicChallenge.instrumentId);
+        achievementEvents.challengeDone(currentPage.id, 'music');
       }
     },
     effectiveNoteVolume,
     audioSessionControl,
   );
-
-  // ---- Jigsaw Puzzle support ----
-  const currentJigsawConfig = useMemo(() => {
-    const page = (story.pages || [])[currentPageIndex];
-    return page?.jigsawPuzzle;
-  }, [story.pages, currentPageIndex]);
-
-  const isJigsawPuzzlePage = useMemo(() => {
-    const page = (story.pages || [])[currentPageIndex];
-    return page?.interactionType === 'jigsaw_puzzle' && currentJigsawConfig?.enabled;
-  }, [story.pages, currentPageIndex, currentJigsawConfig?.enabled]);
-
-  const [jigsawCompleted, setJigsawCompleted] = useState<Record<number, boolean>>({});
-
-  const jigsawChallenge = useJigsawChallenge(
-    isJigsawPuzzlePage ? currentJigsawConfig : undefined,
-    () => {
-      // Don't mark as completed here -let the celebration overlay show first.
-      // Completion is marked in handleJigsawContinue after user taps Continue.
-    },
-  );
-
-  /** Whether the jigsaw is actively playing (blocks navigation) */
-  const isJigsawActive = isJigsawPuzzlePage && (jigsawChallenge.state === 'playing' || jigsawChallenge.state === 'completed');
-
-  const handleBeginJigsaw = useCallback(() => {
-    if (!isJigsawPuzzlePage || !currentJigsawConfig?.enabled) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    jigsawChallenge.start();
-  }, [isJigsawPuzzlePage, currentJigsawConfig, jigsawChallenge]);
-
-  const handleJigsawReset = useCallback(() => {
-    jigsawChallenge.reset();
-  }, [jigsawChallenge]);
-
-  const handleJigsawContinue = useCallback(() => {
-    setJigsawCompleted(prev => ({ ...prev, [currentPageIndex]: true }));
-    jigsawChallenge.cleanup();
-  }, [jigsawChallenge, currentPageIndex]);
-
-  // ---- Reading Challenge support ----
-  const currentReadingConfig = useMemo(() => {
-    const page = (story.pages || [])[currentPageIndex];
-    return page?.readingChallenge;
-  }, [story.pages, currentPageIndex]);
-
-  const isReadingChallengePage = useMemo(() => {
-    const page = (story.pages || [])[currentPageIndex];
-    return page?.interactionType === 'reading_challenge' && currentReadingConfig?.enabled;
-  }, [story.pages, currentPageIndex, currentReadingConfig?.enabled]);
-
-  const currentPageText = useMemo(() => {
-    const page = (story.pages || [])[currentPageIndex];
-    return page?.text ?? '';
-  }, [story.pages, currentPageIndex]);
-
-  const [readingCompleted, setReadingCompleted] = useState<Record<number, boolean>>({});
-
-  const readingChallenge = useReadingChallenge(
-    isReadingChallengePage ? currentReadingConfig : undefined,
-    currentPageText,
-    () => {
-      // Completion is marked in handleReadingContinue after user taps Continue.
-    },
-  );
-
-  const isReadingActive = isReadingChallengePage && (readingChallenge.state === 'playing' || readingChallenge.state === 'completed');
-
-  const handleBeginReading = useCallback(() => {
-    if (!isReadingChallengePage || !currentReadingConfig?.enabled) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    readingChallenge.start();
-  }, [isReadingChallengePage, currentReadingConfig, readingChallenge]);
-
-  const handleReadingReset = useCallback(() => {
-    readingChallenge.reset();
-  }, [readingChallenge]);
-
-  const handleReadingContinue = useCallback(() => {
-    setReadingCompleted(prev => ({ ...prev, [currentPageIndex]: true }));
-    readingChallenge.cleanup();
-  }, [readingChallenge, currentPageIndex]);
 
   // Sync breath detector state to music challenge.
   // Only in blow mode -in press mode, MusicChallengeUI sets breathActive(true)
@@ -739,7 +659,6 @@ export function StoryBookReader({
   const setTextSizeScale = useAppStore((state) => state.setTextSizeScale);
   const childAgeInMonths = useAppStore((state) => state.childAgeInMonths);
   const setStoryProgress = useAppStore((state) => state.setStoryProgress);
-  const markStoryCompleted = useAppStore((state) => state.markStoryCompleted);
   const childAgeGroup = resolveAgeGroup(childAgeInMonths);
   const markStoryAsRead = useAppStore((state) => state.markStoryAsRead);
   const recordReadingSession = useAppStore((state) => state.recordReadingSession);
@@ -968,7 +887,7 @@ export function StoryBookReader({
     // Prevent double-tap on finish button
     if (isExiting) return;
 
-    markStoryCompleted(story.id);
+    achievementEvents.storyFinished();
 
     try {
       // In record mode, show completion message and return to mode selection
@@ -1940,27 +1859,6 @@ export function StoryBookReader({
               </Animated.View>
             )}
 
-            {/* Jigsaw Puzzle - keep mounted during completion so celebration overlay shows */}
-            {!isNextPage && page.interactionType === 'jigsaw_puzzle' && page.jigsawPuzzle?.enabled && (
-              <JigsawPuzzleUI
-                challenge={jigsawChallenge}
-                imageSource={typeof page.backgroundImage === 'string' ? { uri: page.backgroundImage } : page.backgroundImage}
-                onReset={handleJigsawReset}
-                onContinue={handleJigsawContinue}
-              />
-            )}
-
-            {/* Reading Challenge - keep mounted during completion so celebration overlay shows */}
-            {!isNextPage && page.interactionType === 'reading_challenge' && page.readingChallenge?.enabled && (
-              <ReadingChallengeUI
-                challenge={readingChallenge}
-                onReset={handleReadingReset}
-                onContinue={handleReadingContinue}
-                onSkip={page.readingChallenge.allowSkip ? () => readingChallenge.skip() : undefined}
-                allowSkip={page.readingChallenge.allowSkip}
-              />
-            )}
-
             {/* Page indicator overlay - Top Left, after exit button (hide on cover page and next page) */}
             {!isNextPage && page.pageNumber > 0 && (
               <View style={[styles.pageIndicatorOverlay, {
@@ -1992,11 +1890,6 @@ export function StoryBookReader({
       setMusicChallengePhase('idle');
       setShowMusicSheet(false);
       restoreMusicVolume();
-    }
-
-    // Cleanup jigsaw challenge state when leaving page
-    if (isJigsawPuzzlePage) {
-      jigsawChallenge.cleanup();
     }
 
     // In record mode, save the current recording before moving to next page
@@ -2067,11 +1960,6 @@ export function StoryBookReader({
       setMusicChallengePhase('idle');
       setShowMusicSheet(false);
       restoreMusicVolume();
-    }
-
-    // Cleanup jigsaw challenge state when leaving page
-    if (isJigsawPuzzlePage) {
-      jigsawChallenge.cleanup();
     }
 
     // In record mode, save the current recording before moving to previous page
@@ -2711,10 +2599,10 @@ export function StoryBookReader({
 
         {/* UI Controls Layer */}
         <View style={styles.uiControlsLayer}>
-        {isLandscape && currentPage && currentPageIndex > 0 && !isJigsawActive && !isReadingActive && renderNarration()}
+        {isLandscape && currentPage && currentPageIndex > 0 && renderNarration()}
 
-        {/* Bottom UI Panel - Text and Controls (hide on cover page and during jigsaw/reading) */}
-        {currentPage && currentPageIndex > 0 && !isJigsawActive && !isReadingActive && (
+        {/* Bottom UI Panel - Text and Controls (hide on cover page) */}
+        {currentPage && currentPageIndex > 0 && (
           <View style={[
             styles.bottomUIPanel,
             readingMode === 'record' && styles.bottomUIPanelRecordMode,
@@ -2741,10 +2629,10 @@ export function StoryBookReader({
                   height: scaledButtonSize(50),
                   borderRadius: scaledButtonSize(25),
                 },
-                (currentPageIndex <= 1 || isJigsawActive || isReadingActive || (readingMode === 'record' && isRecording)) && styles.navButtonDisabled,
+                (currentPageIndex <= 1 || (readingMode === 'record' && isRecording)) && styles.navButtonDisabled,
               ]}
               onPress={handlePreviousPage}
-              disabled={currentPageIndex <= 1 || isTransitioning || isJigsawActive || isReadingActive || (readingMode === 'record' && isRecording)}
+              disabled={currentPageIndex <= 1 || isTransitioning || (readingMode === 'record' && isRecording)}
               testID="left-touch-area"
             >
               <Ionicons name="chevron-back" size={scaledFontSize(20)} color={currentPageIndex <= 1 ? 'rgba(128,128,128,0.3)' : '#808080'} />
@@ -2768,10 +2656,9 @@ export function StoryBookReader({
                 currentPageIndex === pages.length - 1 && styles.completeButton,
                 (readingMode === 'record' && (isRecording || (currentPageIndex > 0 && !tempRecordingUri && !currentVoiceOver?.pageRecordings[currentPageIndex]))) && styles.navButtonDisabled,
                 isExiting && styles.navButtonDisabled,
-                (isJigsawActive || isReadingActive) && styles.navButtonDisabled,
               ]}
               onPress={handleNextPage}
-              disabled={isTransitioning || isExiting || isJigsawActive || isReadingActive || (readingMode === 'record' && (isRecording || (currentPageIndex > 0 && !tempRecordingUri && !currentVoiceOver?.pageRecordings[currentPageIndex])))}
+              disabled={isTransitioning || isExiting || (readingMode === 'record' && (isRecording || (currentPageIndex > 0 && !tempRecordingUri && !currentVoiceOver?.pageRecordings[currentPageIndex])))}
               testID="right-touch-area"
             >
               <Text style={[
@@ -3475,22 +3362,6 @@ export function StoryBookReader({
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Ionicons name="musical-note" size={16} color="#FFFFFF" style={{ marginRight: 4 }} />
               <Text style={styles.beginPlayingButtonText}>Begin Playing</Text>
-            </View>
-          </Pressable>
-        </View>
-      )}
-
-      {/* "Scramble" button for jigsaw pages - top center, like "Begin Playing" */}
-      {isJigsawPuzzlePage && jigsawChallenge.state === 'idle' && !jigsawCompleted[currentPageIndex] && (
-        <View style={[styles.beginPlayingButton, { paddingTop: Math.max(insets.top + 20, 20) }]} pointerEvents="box-none">
-          <Pressable
-            style={[styles.beginPlayingButtonInner, styles.jigsawShuffleButton]}
-            onPress={handleBeginJigsaw}
-            testID="jigsaw-scramble-button"
-          >
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Ionicons name="extension-puzzle-outline" size={16} color="#FFFFFF" style={{ marginRight: 4 }} />
-              <Text style={styles.beginPlayingButtonText}>{t('jigsaw.scramble')}</Text>
             </View>
           </Pressable>
         </View>
@@ -5018,9 +4889,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 15,
     fontWeight: '700',
-  },
-  jigsawShuffleButton: {
-    backgroundColor: 'rgba(78, 205, 196, 0.85)',
   },
   // Floating "Music Sheet" button -bottom right (during playing)
   playSongButton: {

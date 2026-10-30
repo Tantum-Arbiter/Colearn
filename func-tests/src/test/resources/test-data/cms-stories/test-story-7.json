@@ -5,7 +5,7 @@
   "coverImage": "assets/stories/cms-squirrels-snowman/cover/thumbnail.webp",
   "isAvailable": true,
   "ageRange": "2-5",
-  "duration": 12,
+  "pageCount": 12,
   "description": "Test story 7 for CMS functional testing.",
   "isPremium": false,
   "author": "Test Author",

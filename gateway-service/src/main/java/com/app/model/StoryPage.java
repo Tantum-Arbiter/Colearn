@@ -30,11 +30,7 @@ public class StoryPage {
 
     @JsonProperty("localizedText")
     @PropertyName("localizedText")
-    private LocalizedText localizedText;
-
-    @JsonProperty("ageGroupText")
-    @PropertyName("ageGroupText")
-    private Map<String, LocalizedText> ageGroupText; // "0-2", "2-4", "4-6" -> LocalizedText
+    private Map<String, LocalizedText> localizedText;
 
     @JsonProperty("backgroundImage")
     @PropertyName("backgroundImage")
@@ -50,19 +46,11 @@ public class StoryPage {
 
     @JsonProperty("interactionType")
     @PropertyName("interactionType")
-    private String interactionType; // "none", "interactive_state_change", "music_challenge", "jigsaw_puzzle"
+    private String interactionType; // "none", "interactive_state_change", "music_challenge"
 
     @JsonProperty("musicChallenge")
     @PropertyName("musicChallenge")
     private MusicChallenge musicChallenge;
-
-    @JsonProperty("jigsawPuzzle")
-    @PropertyName("jigsawPuzzle")
-    private JigsawPuzzle jigsawPuzzle;
-
-    @JsonProperty("readingChallenge")
-    @PropertyName("readingChallenge")
-    private ReadingChallenge readingChallenge;
 
     public StoryPage() {
         this.interactiveElements = new ArrayList<>();
@@ -107,65 +95,50 @@ public class StoryPage {
         this.text = text;
     }
 
-    public LocalizedText getLocalizedText() {
+    public Map<String, LocalizedText> getLocalizedText() {
         return localizedText;
     }
 
-    public void setLocalizedText(LocalizedText localizedText) {
+    public void setLocalizedText(Map<String, LocalizedText> localizedText) {
         this.localizedText = localizedText;
     }
 
-    public Map<String, LocalizedText> getAgeGroupText() {
-        return ageGroupText;
-    }
-
-    public void setAgeGroupText(Map<String, LocalizedText> ageGroupText) {
-        this.ageGroupText = ageGroupText;
+    public String getTextForLanguage(String languageCode) {
+        return getTextForLanguageAndAgeGroup(languageCode, null);
     }
 
     /**
-     * Get text for a specific language (no age group).
-     * Resolution: localizedText[lang] → localizedText.en → text
+     * The requested language in the child's age group and then the nearest ones, then English in
+     * the same order, then the page text. The app resolves in the same order (types/story.ts).
      */
-    public String getTextForLanguage(String languageCode) {
+    public String getTextForLanguageAndAgeGroup(String languageCode, String ageGroup) {
         if (localizedText != null) {
-            String result = localizedText.getText(languageCode);
-            if (result != null) return result;
+            List<String> chain = ageGroupFallbackChain(ageGroup);
+            List<String> languages = languageCode == null || "en".equalsIgnoreCase(languageCode)
+                    ? List.of("en")
+                    : List.of(languageCode, "en");
+            for (String language : languages) {
+                for (String group : chain) {
+                    LocalizedText groupText = localizedText.get(group);
+                    String result = groupText != null ? groupText.getExactText(language) : null;
+                    if (result != null && !result.isEmpty()) {
+                        return result;
+                    }
+                }
+            }
         }
         return text;
     }
 
-    /**
-     * Get text for a specific language and age group.
-     * Resolution: ageGroupText[ageGroup][lang] → ageGroupText[ageGroup].en
-     *           → localizedText[lang] → localizedText.en → text
-     */
-    public String getTextForLanguageAndAgeGroup(String languageCode, String ageGroup) {
-        // Try age-group-specific text first
-        if (ageGroupText != null && ageGroup != null) {
-            String[] fallbackChain = getAgeGroupFallbackChain(ageGroup);
-            for (String group : fallbackChain) {
-                LocalizedText groupText = ageGroupText.get(group);
-                if (groupText != null) {
-                    String result = groupText.getText(languageCode);
-                    if (result != null) return result;
-                }
-            }
+    public static List<String> ageGroupFallbackChain(String ageGroup) {
+        if (ageGroup == null) {
+            return List.of("4-6", "2-4", "1-2");
         }
-        // Fall back to default localizedText
-        return getTextForLanguage(languageCode);
-    }
-
-    /**
-     * Returns the fallback chain for age groups.
-     */
-    private static String[] getAgeGroupFallbackChain(String ageGroup) {
-        switch (ageGroup) {
-            case "0-2": return new String[]{"0-2"};
-            case "2-4": return new String[]{"2-4", "0-2"};
-            case "4-6": return new String[]{"4-6", "2-4", "0-2"};
-            default: return new String[]{"4-6", "2-4", "0-2"};
-        }
+        return switch (ageGroup) {
+            case "1-2" -> List.of("1-2", "2-4", "4-6");
+            case "2-4" -> List.of("2-4", "1-2", "4-6");
+            default -> List.of("4-6", "2-4", "1-2");
+        };
     }
 
     public String getBackgroundImage() {
@@ -206,22 +179,6 @@ public class StoryPage {
 
     public void setMusicChallenge(MusicChallenge musicChallenge) {
         this.musicChallenge = musicChallenge;
-    }
-
-    public JigsawPuzzle getJigsawPuzzle() {
-        return jigsawPuzzle;
-    }
-
-    public void setJigsawPuzzle(JigsawPuzzle jigsawPuzzle) {
-        this.jigsawPuzzle = jigsawPuzzle;
-    }
-
-    public ReadingChallenge getReadingChallenge() {
-        return readingChallenge;
-    }
-
-    public void setReadingChallenge(ReadingChallenge readingChallenge) {
-        this.readingChallenge = readingChallenge;
     }
 
     @Override

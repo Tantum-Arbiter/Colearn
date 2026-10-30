@@ -1,0 +1,47 @@
+appId: com.growwithfreya.app
+name: Turn the device if the reader asks, choose an instrument if it asks, and close the book
+# The way out of a book that something else opened. What the pages say is held
+# by the reader's Jest tests: on a phone the reader is sideways, and the iOS
+# accessibility tree stops keeping up there.
+---
+- extendedWaitUntil:
+    visible:
+      id: "rotate-prompt"
+    timeout: 15000
+    optional: true
+- runFlow:
+    when:
+      visible:
+        id: "rotate-prompt"
+    commands:
+      - setOrientation: LANDSCAPE_LEFT
+- extendedWaitUntil:
+    visible:
+      id: "story-exit-button"
+    timeout: 60000
+# A phone's reader can turn the screen by itself without asking. Until the
+# device is told it is sideways too, a tap lands where the page used to be.
+- setOrientation: LANDSCAPE_LEFT
+- waitForAnimationToEnd:
+    timeout: 3000
+- runFlow:
+    when:
+      visible:
+        id: "instrument-picker-overlay"
+    commands:
+      - waitForAnimationToEnd:
+          timeout: 5000
+      - tapOn:
+          id: "confirm-instrument-selection-button"
+      - extendedWaitUntil:
+          notVisible:
+            id: "instrument-picker-overlay"
+          timeout: 20000
+- tapOn:
+    id: "story-exit-button"
+- setOrientation: PORTRAIT
+- runFlow: dismiss-interruptions.yaml
+- extendedWaitUntil:
+    notVisible:
+      id: "story-exit-button"
+    timeout: 90000

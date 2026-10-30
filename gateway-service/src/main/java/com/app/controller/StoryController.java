@@ -8,6 +8,9 @@ import com.app.exception.ErrorResponse;
 import com.app.model.AssetVersion;
 import com.app.model.ContentVersion;
 import com.app.model.Story;
+import com.app.security.AuthenticatedUser;
+import com.app.service.AchievementService;
+import com.app.service.DownloadAccessService;
 import com.app.service.ApplicationMetricsService;
 import com.app.service.AssetService;
 import com.app.service.StoryService;
@@ -16,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -41,12 +45,30 @@ public class StoryController {
     private final StoryService storyService;
     private final AssetService assetService;
     private final ApplicationMetricsService metricsService;
+    private final AchievementService achievementService;
+    private final DownloadAccessService downloadAccessService;
+    private final boolean enforceEntitlements;
 
     @Autowired
-    public StoryController(StoryService storyService, AssetService assetService, ApplicationMetricsService metricsService) {
+    public StoryController(StoryService storyService, AssetService assetService, ApplicationMetricsService metricsService,
+                           AchievementService achievementService, DownloadAccessService downloadAccessService,
+                           @Value("${app.entitlements.enforce:false}") boolean enforceEntitlements) {
         this.storyService = storyService;
         this.assetService = assetService;
         this.metricsService = metricsService;
+        this.achievementService = achievementService;
+        this.downloadAccessService = downloadAccessService;
+        this.enforceEntitlements = enforceEntitlements;
+    }
+
+    private void addAchievementDelta(DeltaSyncResponse response, ContentVersion serverVersion, DeltaSyncRequest request, String reqId) {
+        try {
+            AchievementService.Delta delta = achievementService.delta(serverVersion, request.getAchievementChecksums()).join();
+            response.setAchievementDefinitions(delta.definitions());
+            response.setDeletedAchievementIds(delta.deletedIds());
+        } catch (RuntimeException e) {
+            logger.warn("[Delta] [reqId={}] Badge definitions left out: {}", reqId, e.getMessage());
+        }
     }
 
     private String getRequestId() {
@@ -201,6 +223,7 @@ public class StoryController {
                 response.setTotalStories(serverVersion.getTotalStories());
                 response.setLastUpdated(serverVersion.getLastUpdated().toDate().getTime());
                 response.setCatalog(catalog);
+                addAchievementDelta(response, serverVersion, request, reqId);
 
                 long durationMs = System.currentTimeMillis() - startTime;
                 logger.info("[Delta] [reqId={}] COMPLETE - No changes needed, catalogEntries={}, durationMs={}", reqId, catalog.size(), durationMs);
@@ -248,6 +271,7 @@ public class StoryController {
             response.setTotalStories(serverVersion.getTotalStories());
             response.setLastUpdated(serverVersion.getLastUpdated().toDate().getTime());
             response.setCatalog(catalog);
+            addAchievementDelta(response, serverVersion, request, reqId);
 
             long durationMs = System.currentTimeMillis() - startTime;
             metricsService.recordStorySync(clientStoriesCount, storiesToSync.size(), durationMs);
@@ -294,6 +318,25 @@ public class StoryController {
                         .body(createErrorResponse(ErrorCode.INVALID_REQUEST, "Story not available for download: " + storyId, "/api/stories/" + storyId + "/download", reqId));
             }
 
+            String userId = AuthenticatedUser.id();
+            DownloadAccessService.Check check = downloadAccessService.check(userId, story);
+            DownloadAccessService.Decision decision = check.decision();
+            metricsService.recordEntitlementDecision(decision.name().toLowerCase(java.util.Locale.ROOT), check.source(), enforceEntitlements);
+            if (decision != DownloadAccessService.Decision.ALLOWED) {
+                if (enforceEntitlements) {
+                    ErrorCode code = decision == DownloadAccessService.Decision.LIMIT_REACHED
+                            ? ErrorCode.DOWNLOAD_LIMIT_REACHED : ErrorCode.SUBSCRIPTION_REQUIRED;
+                    logger.info("[Download] [reqId={}] Refused {}: {}", reqId, storyId, decision);
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                            .body(createErrorResponse(code, code.getDefaultMessage(), "/api/stories/" + storyId + "/download", reqId));
+                }
+                logger.info("[Download] [reqId={}] Would refuse {} ({}) once entitlements are enforced", reqId, storyId, decision);
+            }
+            downloadAccessService.recordDownload(userId, storyId).exceptionally(error -> {
+                logger.warn("[Download] [reqId={}] Could not record that the device holds {}: {}", reqId, storyId, error.getMessage());
+                return null;
+            }).join();
+
             logger.info("[Download] [reqId={}] Returning story: {}, pages={}", reqId, storyId,
                     story.getPages() != null ? story.getPages().size() : 0);
             return ResponseEntity.ok(story);
@@ -305,6 +348,12 @@ public class StoryController {
                             "Failed to download story: " + cause.getMessage(),
                             "/api/stories/" + storyId + "/download", reqId));
         }
+    }
+
+    @DeleteMapping("/{storyId}/download")
+    public ResponseEntity<Void> releaseStory(@PathVariable String storyId) {
+        downloadAccessService.release(AuthenticatedUser.id(), storyId).join();
+        return ResponseEntity.noContent().build();
     }
 
     private ErrorResponse createErrorResponse(ErrorCode errorCode, String message, String path, String requestId) {

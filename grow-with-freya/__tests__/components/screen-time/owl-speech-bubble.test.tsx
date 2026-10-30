@@ -22,7 +22,7 @@ jest.mock('@/hooks/use-reduced-motion', () => ({
 
 const BODY = 'Let’s take a quick tour to help you get the most out of storytime.';
 
-function findByTestId(tree: ReturnType<typeof render>, testID: string) {
+function findByTestId(tree: ReturnType<typeof render>, testID: string): any[] {
   return tree.UNSAFE_root.findAll((node: any) => node.props.testID === testID);
 }
 

@@ -19,7 +19,7 @@ const mockAvailableStory: Story = {
   category: 'adventure',
   isAvailable: true,
   ageRange: '3-6',
-  duration: 10,
+  pageCount: 10,
   description: 'A test story'
 };
 
@@ -101,5 +101,15 @@ describe('BookCard', () => {
     // Just verify the card renders - placeholder icon is inside the component
     expect(result).toBeTruthy();
     expect(mockPlaceholderStory.isAvailable).toBe(false);
+  });
+
+  it('shows how many pages an available story has, never minutes', () => {
+    const tree = render(<BookCard story={mockAvailableStory} />);
+    const texts = tree.UNSAFE_root
+      .findAll((n: { props: Record<string, unknown> }) => typeof n.props.children === 'string' || Array.isArray(n.props.children))
+      .map((n: { props: Record<string, unknown> }) => [n.props.children].flat().join(''));
+
+    expect(texts.some(t => t.includes('storyDetail.pages'))).toBe(true);
+    expect(texts.some(t => / min\b/.test(t))).toBe(false);
   });
 });

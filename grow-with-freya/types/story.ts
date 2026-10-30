@@ -20,7 +20,15 @@ export interface LocalizedText {
 }
 
 // Age groups for age-appropriate text variations
-export type AgeGroup = '0-2' | '2-4' | '4-6';
+export type AgeGroup = '1-2' | '2-4' | '4-6';
+
+const AGE_GROUPS: readonly string[] = ['1-2', '2-4', '4-6'];
+
+export function normaliseAgeGroup(value: unknown): AgeGroup | undefined {
+  if (typeof value !== 'string') return undefined;
+  if (AGE_GROUPS.includes(value)) return value as AgeGroup;
+  return value === '0-2' ? '1-2' : undefined;
+}
 
 // Age-group-specific localized text (maps age group → localized text)
 export type AgeGroupText = Partial<Record<AgeGroup, LocalizedText>>;
@@ -30,7 +38,7 @@ export type AgeGroupText = Partial<Record<AgeGroup, LocalizedText>>;
  * Returns the matching age group key for ageGroupText lookup.
  */
 export function resolveAgeGroup(ageInMonths: number): AgeGroup {
-  if (ageInMonths < 24) return '0-2';
+  if (ageInMonths < 24) return '1-2';
   if (ageInMonths < 48) return '2-4';
   return '4-6';
 }
@@ -80,36 +88,8 @@ export interface MusicChallenge {
   hintLevel: MusicHintLevel;
 }
 
-// Jigsaw puzzle grid sizes
-export type JigsawGridSize = '2x2' | '4x4';
-
-// Jigsaw puzzle configuration for a story page
-export interface JigsawPuzzle {
-  enabled: boolean;
-  gridSize: JigsawGridSize; // Grid dimensions: 2x2 (easy), 4x4 (medium/hard)
-  promptText: string; // Narrative prompt, e.g., "Put the picture back together!"
-  allowSkip: boolean;
-}
-
-// Reading challenge modes
-export type ReadingChallengeMode = 'fill_in_blank' | 'spell_word';
-
-// Reading challenge configuration for a story page
-export interface ReadingChallenge {
-  enabled: boolean;
-  mode: ReadingChallengeMode;
-  promptText: string; // Narrative prompt, e.g., "Can you fill in the missing words?"
-  allowSkip: boolean;
-  /** For fill_in_blank: zero-based indices of words in page text to blank out (user taps words in order) */
-  blankWordIndices?: number[];
-  /** For spell_word: the target word the user must spell by selecting letters */
-  targetWord?: string;
-  /** Optional distractor letters added to the letter pool (spell_word mode only) */
-  distractorLetters?: string[];
-}
-
 // Page interaction types (extends beyond simple interactive elements)
-export type PageInteractionType = 'none' | 'interactive_state_change' | 'music_challenge' | 'jigsaw_puzzle' | 'reading_challenge';
+export type PageInteractionType = 'none' | 'interactive_state_change' | 'music_challenge';
 
 export interface StoryPage {
   id: string;
@@ -118,18 +98,17 @@ export interface StoryPage {
   backgroundImage?: string; // Background image for the page
   characterImage?: string; // Character/foreground image
   text: string; // Story text for this page
-  localizedText?: AgeGroupText; // Age-grouped localized text: {"4-6": {"en": "...", ...}, "0-2": {"en": "...", ...}}
+  localizedText?: AgeGroupText; // Age-grouped localized text: {"4-6": {"en": "...", ...}, "1-2": {"en": "...", ...}}
   interactiveElements?: InteractiveElement[]; // Optional interactive props for this page
 
   // Music challenge support
   interactionType?: PageInteractionType; // Defaults to 'none' if not set
   musicChallenge?: MusicChallenge; // Present when interactionType === 'music_challenge'
+}
 
-  // Jigsaw puzzle support
-  jigsawPuzzle?: JigsawPuzzle; // Present when interactionType === 'jigsaw_puzzle'
-
-  // Reading challenge support
-  readingChallenge?: ReadingChallenge; // Present when interactionType === 'reading_challenge'
+export interface StoryAward {
+  achievementId: string;
+  trigger: 'finish' | { challengePageId: string };
 }
 
 export interface Story {
@@ -140,7 +119,9 @@ export interface Story {
   coverImage?: ImageSourcePropType | string; // Optional - will use placeholder if not provided
   isAvailable: boolean;
   ageRange?: string;
-  duration?: number; // in minutes
+  pageCount?: number;
+  awards?: StoryAward[];
+  duration?: number; // legacy page count written by older story-factory exports; read storyPageCount()
   description?: string;
   localizedDescription?: LocalizedText; // Translated descriptions
   pages?: StoryPage[]; // 8 pages for the story book
@@ -179,20 +160,34 @@ export interface CatalogEntry {
   /** When true, this story can be unlocked by sharing the app (one-time). */
   isShareToUnlock?: boolean;
   ageRange?: string;
-  duration?: number;
+  pageCount?: number;
   gender?: 'boy' | 'girl' | 'unisex';
+}
+
+export function storyPageCount(story: Pick<Story, 'pages' | 'pageCount' | 'duration'>): number | undefined {
+  if (story.pages && story.pages.length > 0) return story.pages.length;
+  return story.pageCount ?? story.duration;
+}
+
+const AGE_GROUP_FALLBACK: Record<AgeGroup, readonly AgeGroup[]> = {
+  '1-2': ['1-2', '2-4', '4-6'],
+  '2-4': ['2-4', '1-2', '4-6'],
+  '4-6': ['4-6', '2-4', '1-2'],
+};
+
+export function ageGroupFallbackChain(ageGroup?: AgeGroup): readonly AgeGroup[] {
+  return (ageGroup && AGE_GROUP_FALLBACK[ageGroup]) || AGE_GROUP_FALLBACK['4-6'];
 }
 
 /**
  * Get localized text with fallback to English.
- * When ageGroupText and ageGroup are provided, prioritises age-appropriate text.
  *
- * Resolution order:
- *  1. ageGroupText[ageGroup][language]
- *  2. ageGroupText[ageGroup].en
- *  3. localized[language]
- *  4. localized.en
- *  5. fallback
+ * Resolution order when ageGroupText is given:
+ *  1. the requested language, in the child's age group and then the nearest ones
+ *  2. English, in the same order
+ *  3. localized[language], localized.en
+ *  4. fallback
+ * The gateway resolves in the same order (StoryPage.getTextForLanguageAndAgeGroup).
  */
 export function getLocalizedText(
   localized: LocalizedText | undefined,
@@ -201,12 +196,14 @@ export function getLocalizedText(
   ageGroupText?: AgeGroupText,
   ageGroup?: AgeGroup,
 ): string {
-  // Try age-group-specific text first
-  if (ageGroupText && ageGroup) {
-    const ageLocalized = ageGroupText[ageGroup];
-    if (ageLocalized) {
-      const ageResult = language ? (ageLocalized[language] || ageLocalized.en) : ageLocalized.en;
-      if (ageResult) return ageResult;
+  if (ageGroupText) {
+    const chain = ageGroupFallbackChain(ageGroup);
+    const languages = language && language !== 'en' ? [language, 'en' as const] : ['en' as const];
+    for (const lang of languages) {
+      for (const group of chain) {
+        const text = ageGroupText[group]?.[lang];
+        if (text) return text;
+      }
     }
 
     // If ageGroupText is actually a flat LocalizedText (keys are language codes, not age groups),
@@ -226,14 +223,14 @@ export function getLocalizedText(
   return result;
 }
 
-export type StoryCategory = 'bedtime' | 'adventure' | 'nature' | 'friendship' | 'learning' | 'fantasy' | 'music' | 'activities' | 'growing';
+export type StoryCategory = 'bedtime' | 'adventure' | 'nature' | 'friendship' | 'learning' | 'fantasy' | 'personalized' | 'music' | 'activities' | 'growing';
 
 // Filter tags for story filtering (different from category)
 // Standard children's storybook themes
 export type StoryFilterTag =
   | 'calming' | 'bedtime' | 'adventure' | 'learning' | 'music'
-  | 'family' | 'creativity' | 'animals' | 'friendship'
-  | 'nature' | 'fantasy' | 'counting' | 'emotions' | 'silly' | 'rhymes';
+  | 'family-exercises' | 'imagination-games' | 'animals' | 'friendship'
+  | 'nature' | 'fantasy' | 'counting' | 'emotions' | 'silly' | 'rhymes' | 'interactive';
 
 export interface StoryFilterTagInfo {
   id: StoryFilterTag;
@@ -248,8 +245,8 @@ export const STORY_FILTER_TAGS: Record<StoryFilterTag, StoryFilterTagInfo> = {
   adventure: { id: 'adventure', emoji: '🗺️', labelKey: 'stories.filterTags.adventure', color: '#FF6B6B' },
   learning: { id: 'learning', emoji: '📚', labelKey: 'stories.filterTags.learning', color: '#FFEAA7' },
   music: { id: 'music', emoji: '🎵', labelKey: 'stories.filterTags.music', color: '#FF9F43' },
-  family: { id: 'family', emoji: '👨‍👩‍👧', labelKey: 'stories.filterTags.family', color: '#45B7D1' },
-  creativity: { id: 'creativity', emoji: '🎨', labelKey: 'stories.filterTags.creativity', color: '#DDA0DD' },
+  'family-exercises': { id: 'family-exercises', emoji: '👨‍👩‍👧', labelKey: 'stories.filterTags.family', color: '#45B7D1' },
+  'imagination-games': { id: 'imagination-games', emoji: '🎨', labelKey: 'stories.filterTags.creativity', color: '#DDA0DD' },
   animals: { id: 'animals', emoji: '🐾', labelKey: 'stories.filterTags.animals', color: '#8B4513' },
   friendship: { id: 'friendship', emoji: '🤝', labelKey: 'stories.filterTags.friendship', color: '#FFB6C1' },
   nature: { id: 'nature', emoji: '🌳', labelKey: 'stories.filterTags.nature', color: '#228B22' },
@@ -258,6 +255,7 @@ export const STORY_FILTER_TAGS: Record<StoryFilterTag, StoryFilterTagInfo> = {
   emotions: { id: 'emotions', emoji: '💖', labelKey: 'stories.filterTags.emotions', color: '#FF69B4' },
   silly: { id: 'silly', emoji: '🤪', labelKey: 'stories.filterTags.silly', color: '#FFD700' },
   rhymes: { id: 'rhymes', emoji: '📝', labelKey: 'stories.filterTags.rhymes', color: '#87CEEB' },
+  interactive: { id: 'interactive', emoji: '👆', labelKey: 'storyDetail.interactive', color: '#F4A261' },
 };
 
 export interface StoryTag {
@@ -310,6 +308,12 @@ export const STORY_TAGS: Record<StoryCategory, StoryTag> = {
     labelKey: 'stories.genres.music',
     color: '#FF9F43'
   },
+  personalized: {
+    category: 'personalized',
+    emoji: '🧒',
+    labelKey: 'stories.genres.personalized',
+    color: '#E9A6C9'
+  },
   activities: {
     category: 'activities',
     emoji: '🎲',
@@ -324,37 +328,3 @@ export const STORY_TAGS: Record<StoryCategory, StoryTag> = {
   }
 };
 
-// Content version tracking for delta-sync
-export interface ContentVersion {
-  version: number;           // Story/content version
-  assetVersion: number;      // Asset version (tracked separately by CMS)
-  lastUpdated: number;       // Timestamp in milliseconds
-  storyChecksums: Record<string, string>; // storyId -> checksum
-  totalStories: number;
-}
-
-// Story sync request (sent to backend)
-export interface StorySyncRequest {
-  clientVersion: number;
-  storyChecksums: Record<string, string>; // storyId -> checksum
-  lastSyncTimestamp: number; // Timestamp in milliseconds
-}
-
-// Story sync response (received from backend)
-export interface StorySyncResponse {
-  serverVersion: number;
-  assetVersion: number; // Server's current asset version for unified version tracking
-  stories: Story[]; // Only changed/new stories
-  storyChecksums: Record<string, string>; // All current checksums
-  totalStories: number;
-  updatedStories: number;
-  lastUpdated: number; // Timestamp in milliseconds
-}
-
-// Local storage structure for synced stories
-export interface StorySyncMetadata {
-  version: number;
-  lastSyncTimestamp: number;
-  storyChecksums: Record<string, string>;
-  stories: Story[];
-}

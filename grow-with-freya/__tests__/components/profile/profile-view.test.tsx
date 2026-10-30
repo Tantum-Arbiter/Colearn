@@ -69,10 +69,12 @@ function defaults() {
     onDeleteDownload: jest.fn(),
     onSelectBadge: jest.fn(),
     onEditProfile: jest.fn(),
+    needsSignIn: true,
+    onLogin: jest.fn(),
   };
 }
 
-function byTestId(tree: ReturnType<typeof render>, testID: string) {
+function byTestId(tree: ReturnType<typeof render>, testID: string): any[] {
   return tree.UNSAFE_root.findAll((n: any) => n.props.testID === testID);
 }
 
@@ -285,5 +287,30 @@ describe('the profile hero', () => {
     fireEvent.press(byTestId(underTest, 'profile-hero').find((n: any) => n.props.accessibilityRole === 'button'));
 
     expect(props.onEditProfile).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('signing in from the profile', () => {
+  it('offers a guest the login page, under the name and above the tabs', () => {
+    const props = defaults();
+    const tree = render(<ProfileView {...props} needsSignIn />);
+
+    const pill = byTestId(tree, 'profile-session').filter((n: any) => n.props.accessibilityRole === 'button')[0];
+    expect(pill.props.accessibilityLabel).toBe('common.login');
+    fireEvent.press(pill);
+    expect(props.onLogin).toHaveBeenCalledTimes(1);
+    const order = tree.UNSAFE_root
+      .findAll((n: any) => ['profile-hero', 'profile-session', 'profile-tab-saved'].includes(n.props.testID))
+      .map((n: any) => n.props.testID)
+      .filter((id: string, index: number, all: string[]) => all.indexOf(id) === index);
+    expect(order).toEqual(['profile-hero', 'profile-session', 'profile-tab-saved']);
+  });
+
+  it('tells a signed-in family so, with no button to sign in or out here', () => {
+    const props = defaults();
+    const tree = render(<ProfileView {...props} needsSignIn={false} />);
+
+    expect(byTestId(tree, 'profile-session-card').length).toBeGreaterThan(0);
+    expect(byTestId(tree, 'profile-session').filter((n: any) => n.props.accessibilityRole === 'button')).toHaveLength(0);
   });
 });

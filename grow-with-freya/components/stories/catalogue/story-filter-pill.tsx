@@ -17,8 +17,8 @@ export const FILTER_PILL_ICONS: Record<StoryFilterTag, PillIconSpec> = {
   adventure: { icon: 'rocket', color: ACCENT_PURPLE },
   learning: { icon: 'book', color: '#FFD98E' },
   music: { icon: 'musical-notes', color: '#F2A65A' },
-  family: { icon: 'people', color: '#7EC8E3' },
-  creativity: { icon: 'color-palette', color: '#D8A7E8' },
+  'family-exercises': { icon: 'people', color: '#7EC8E3' },
+  'imagination-games': { icon: 'color-palette', color: '#D8A7E8' },
   animals: { icon: 'paw', color: '#D9A066' },
   friendship: { icon: 'heart', color: '#F4A6B8' },
   nature: { icon: 'flower', color: ACCENT_GREEN },
@@ -27,6 +27,7 @@ export const FILTER_PILL_ICONS: Record<StoryFilterTag, PillIconSpec> = {
   emotions: { icon: 'happy', color: '#F4A6B8' },
   silly: { icon: 'happy-outline', color: ACCENT_GOLD },
   rhymes: { icon: 'chatbubble-ellipses', color: '#7EC8E3' },
+  interactive: { icon: 'hand-left', color: '#F4A261' },
 };
 
 interface StoryFilterPillProps {

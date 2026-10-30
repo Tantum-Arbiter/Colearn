@@ -342,8 +342,11 @@ export class CacheManager {
       return url;
     }
 
-    // Build local path and check if file exists AND is valid
-    const localPath = `${ASSETS_DIR}${assetPath}`;
+    // Build local path and check if file exists AND is valid; a path that would leave the
+    // cache is never looked up, and the caller keeps the reference it was given
+    const safe = this.safeAssetPath(assetPath);
+    if (safe === null) return url;
+    const localPath = `${ASSETS_DIR}${safe}`;
 
     try {
       const info = await FileSystem.getInfoAsync(localPath);
@@ -423,6 +426,7 @@ export class CacheManager {
   static async getAssetUri(assetPath: string): Promise<string | null> {
     await this.initialize();
 
+    if (this.safeAssetPath(assetPath) === null) return null;
     const localPath = this.getLocalAssetPath(assetPath);
     const info = await FileSystem.getInfoAsync(localPath);
 
@@ -534,6 +538,10 @@ export class CacheManager {
   }
 
   static async removeAsset(assetPath: string): Promise<void> {
+    if (this.safeAssetPath(assetPath) === null) {
+      log.warn(`Refusing to remove an asset outside the cache: ${JSON.stringify(String(assetPath).slice(0, 80))}`);
+      return;
+    }
     const localPath = this.getLocalAssetPath(assetPath);
     const info = await FileSystem.getInfoAsync(localPath);
 
@@ -544,16 +552,36 @@ export class CacheManager {
   }
 
   // Strips "assets/" prefix since ASSETS_DIR already contains it
-  private static getLocalAssetPath(assetPath: string): string {
-    // Strip leading slashes
-    let normalizedPath = assetPath.replace(/^\/+/, '');
+  /**
+   * Where an asset path from a story, a badge or the gateway may land on disk. Every such path
+   * comes from outside the app, so a path is accepted only if it stays inside the asset cache:
+   * plain segments, no `..` or `.`, no second separator, no URL, bounded in length and depth.
+   * Anything else is refused rather than normalised, and the caller decides what that means.
+   */
+  static safeAssetPath(assetPath: string): string | null {
+    if (typeof assetPath !== 'string' || assetPath.includes('://') || /[\\\u0000-\u001f]/.test(assetPath)) return null;
 
-    // Strip "assets/" prefix if present (CMS paths include this)
+    // Strip leading slashes, then the "assets/" prefix CMS paths carry
+    let normalizedPath = assetPath.replace(/^\/+/, '');
     if (normalizedPath.startsWith('assets/')) {
       normalizedPath = normalizedPath.substring(7);
     }
+    if (normalizedPath.length === 0 || normalizedPath.length > 512) return null;
 
-    return `${ASSETS_DIR}${normalizedPath}`;
+    const segments = normalizedPath.split('/');
+    if (segments.length > 10) return null;
+    if (!segments.every((segment) => /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(segment))) return null;
+
+    return normalizedPath;
+  }
+
+  private static getLocalAssetPath(assetPath: string): string {
+    const safe = this.safeAssetPath(assetPath);
+    if (safe === null) {
+      throw new Error(`Unsafe asset path refused: ${JSON.stringify(String(assetPath).slice(0, 80))}`);
+    }
+
+    return `${ASSETS_DIR}${safe}`;
   }
 
   static async getCacheSize(): Promise<number> {

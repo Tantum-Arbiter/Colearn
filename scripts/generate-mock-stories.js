@@ -115,7 +115,7 @@ function generateStory(index) {
     coverImage: `assets/stories/${storyId}/cover/${storyId}-thumbnail.webp`,
     isAvailable: true,
     ageRange,
-    duration: 10 + (index % 5),
+    pageCount: 10 + (index % 5),
     description: `A charming story where ${animal.name} ${theme.verb}. Perfect for little ones!`,
     localizedDescription: {
       en: `A charming story where ${animal.name} ${theme.verb}. Perfect for little ones!`,

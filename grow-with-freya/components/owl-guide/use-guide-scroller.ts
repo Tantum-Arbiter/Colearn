@@ -19,6 +19,7 @@ export interface GuideScroller {
    * could see, and the ring was drawn over the page while it made it.
    */
   reveal: (shift: number) => void;
+  away: () => number;
   /** Back to where the child left it, and forget it: the tour is over. */
   release: () => void;
 }
@@ -100,6 +101,7 @@ export function useGuideScroller(): GuideScrollerBinding {
         setReserve((room) => Math.max(room, Math.max(0, to - reach)));
         setTick((count) => count + 1);
       },
+      away: () => (resting.current === null ? 0 : Math.round(offset.current - resting.current)),
       release: () => {
         if (resting.current === null) return;
         pending.current = resting.current;

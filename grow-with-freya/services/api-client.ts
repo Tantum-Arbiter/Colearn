@@ -2,9 +2,22 @@ import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import { SecureStorage } from './secure-storage';
 import { DeviceInfoService } from './device-info-service';
+import { reportSessionLapse } from './session-lapse';
 import { Logger } from '@/utils/logger';
 
 const log = Logger.create('API');
+
+export class ApiError extends Error {
+  constructor(readonly status: number, readonly body: unknown) {
+    super(`API request failed: ${status}`);
+    this.name = 'ApiError';
+  }
+}
+
+async function failure(response: Response): Promise<ApiError> {
+  const body = await response.json().catch(() => null);
+  return new ApiError(response.status, body);
+}
 
 const extra = Constants.expoConfig?.extra || {};
 const GATEWAY_URL = extra.gatewayUrl || process.env.EXPO_PUBLIC_GATEWAY_URL || 'http://localhost:8080';
@@ -60,11 +73,7 @@ export class ApiClient {
       return accessToken;
     }
     if (this.isRefreshing && this.refreshPromise) {
-      const profile = await this.refreshPromise;
-      if (profile) {
-        const { ProfileSyncService } = await import('./profile-sync-service');
-        await ProfileSyncService.syncProfileData(profile);
-      }
+      await this.refreshPromise;
       return await SecureStorage.getAccessToken();
     }
 
@@ -72,11 +81,7 @@ export class ApiClient {
     this.refreshPromise = this.performTokenRefresh();
 
     try {
-      const profile = await this.refreshPromise;
-      if (profile) {
-        const { ProfileSyncService } = await import('./profile-sync-service');
-        await ProfileSyncService.syncProfileData(profile);
-      }
+      await this.refreshPromise;
       return await SecureStorage.getAccessToken();
     } finally {
       this.isRefreshing = false;
@@ -89,6 +94,8 @@ export class ApiClient {
 
     if (!refreshToken) {
       log.warn('No refresh token - login required');
+      await SecureStorage.clearAuthData();
+      reportSessionLapse();
       throw new Error('No refresh token available');
     }
     const controller = new AbortController();
@@ -128,6 +135,7 @@ export class ApiClient {
       if (error.message?.includes('No refresh token') ||
           error.message?.includes('Token refresh failed')) {
         await SecureStorage.clearAuthData();
+        reportSessionLapse();
       }
       throw error;
     }
@@ -136,7 +144,8 @@ export class ApiClient {
   static async request<T>(
     endpoint: string,
     options: RequestInit = {},
-    timeoutMs: number = DEFAULT_TIMEOUT_MS
+    timeoutMs: number = DEFAULT_TIMEOUT_MS,
+    { deviceHeaders = true }: { deviceHeaders?: boolean } = {}
   ): Promise<T> {
     const accessToken = await this.ensureValidToken();
 
@@ -145,7 +154,7 @@ export class ApiClient {
     }
     const headers = {
       'Content-Type': 'application/json',
-      ...DeviceInfoService.getDeviceHeaders(),
+      ...(deviceHeaders ? DeviceInfoService.getDeviceHeaders() : {}),
       ...options.headers,
       'Authorization': `Bearer ${accessToken}`,
     };
@@ -189,10 +198,10 @@ export class ApiClient {
             clearTimeout(retryTimeoutId);
 
             if (!retryResponse.ok) {
-              throw new Error(`API request failed: ${retryResponse.status}`);
+              throw await failure(retryResponse);
             }
 
-            return await retryResponse.json();
+            return retryResponse.status === 204 ? (undefined as T) : await retryResponse.json();
           } finally {
             clearTimeout(retryTimeoutId);
           }
@@ -200,6 +209,7 @@ export class ApiClient {
           if (error.message?.includes('Token refresh failed') ||
               error.message?.includes('No refresh token')) {
             await SecureStorage.clearAuthData();
+            reportSessionLapse();
             throw new Error('Authentication failed - please login again');
           }
           throw error;
@@ -207,10 +217,10 @@ export class ApiClient {
       }
 
       if (!response.ok) {
-        throw new Error(`API request failed: ${response.status}`);
+        throw await failure(response);
       }
 
-      return await response.json();
+      return response.status === 204 ? (undefined as T) : await response.json();
     } catch (error: any) {
       clearTimeout(timeoutId);
       const durationMs = Date.now() - requestStartTime;
@@ -232,87 +242,6 @@ export class ApiClient {
     }
   }
 
-  static async getProfile(): Promise<{
-    userId: string;
-    nickname: string;
-    avatarType: 'boy' | 'girl';
-    avatarId: string;
-    notifications: any;
-    schedule: any;
-    createdAt: string;
-    updatedAt: string;
-    version: number;
-  }> {
-    return this.request('/api/profile', {
-      method: 'GET',
-    });
-  }
-
-  static async updateProfile(data: {
-    nickname: string;
-    avatarType: 'boy' | 'girl';
-    avatarId: string;
-    notifications?: any;
-    schedule?: any;
-  }): Promise<{
-    userId: string;
-    nickname: string;
-    avatarType: 'boy' | 'girl';
-    avatarId: string;
-    notifications: any;
-    schedule: any;
-    createdAt: string;
-    updatedAt: string;
-    version: number;
-  }> {
-    return this.request('/api/profile', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  }
-
-  static async syncReminders(reminders: any[]): Promise<void> {
-    let profile;
-    try {
-      profile = await this.getProfile();
-    } catch (error: any) {
-      if (error.message?.includes('404')) {
-        log.info('No profile found - creating new profile with reminders');
-        await this.updateProfile({
-          nickname: 'User',
-          avatarType: 'boy',
-          avatarId: 'default',
-          schedule: { customReminders: reminders },
-        });
-        return;
-      }
-      throw error;
-    }
-
-    const schedule = profile.schedule || {};
-    schedule.customReminders = reminders;
-    await this.updateProfile({
-      nickname: profile.nickname,
-      avatarType: profile.avatarType,
-      avatarId: profile.avatarId,
-      notifications: profile.notifications || {},
-      schedule,
-    });
-  }
-
-  static async getReminders(): Promise<any[]> {
-    try {
-      const profile = await this.getProfile();
-      return profile.schedule?.customReminders || [];
-    } catch (error: any) {
-      if (error.message?.includes('404')) {
-        log.info('No profile found - returning empty reminders');
-        return [];
-      }
-      throw error;
-    }
-  }
-
   static async isAuthenticated(): Promise<boolean> {
     const accessToken = await SecureStorage.getAccessToken();
     const refreshToken = await SecureStorage.getRefreshToken();
@@ -330,7 +259,7 @@ export class ApiClient {
       await this.ensureValidToken();
       log.debug('Token refreshed');
       return true;
-    } catch (error) {
+    } catch {
       log.warn('Token refresh failed - login required');
       return false;
     }
@@ -342,62 +271,16 @@ export class ApiClient {
 
   static async logout(): Promise<void> {
     const refreshToken = await SecureStorage.getRefreshToken();
-    if (refreshToken) {
-      try {
-        await fetch(`${GATEWAY_URL}/auth/revoke`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ refreshToken }),
-        });
-      } catch (error) {
-        log.error('Failed to revoke tokens:', error);
-      }
-    }
     await SecureStorage.clearAuthData();
+    if (refreshToken) {
+      fetch(`${GATEWAY_URL}/auth/revoke`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ refreshToken }),
+      }).catch((error) => log.error('Failed to revoke tokens:', error));
+    }
   }
 
-  static async getBatchSignedUrls(paths: string[]): Promise<{
-    urls: Array<{ path: string; signedUrl: string; expiresAt: number }>;
-    failed: string[];
-  }> {
-    return this.request('/api/assets/batch-urls', {
-      method: 'POST',
-      body: JSON.stringify({ paths }),
-    });
-  }
-
-  static async getDeltaContent(
-    clientVersion: number,
-    storyChecksums: Record<string, string>
-  ): Promise<{
-    serverVersion: number;
-    assetVersion: number;
-    stories: any[];
-    deletedStoryIds: string[];
-    storyChecksums: Record<string, string>;
-    totalStories: number;
-    updatedCount: number;
-    lastUpdated: number;
-  }> {
-    return this.request('/api/stories/delta', {
-      method: 'POST',
-      body: JSON.stringify({
-        clientVersion,
-        storyChecksums,
-      }),
-    });
-  }
-
-  static async getContentVersion(): Promise<{
-    id: string;
-    version: number;
-    assetVersion: number;
-    lastUpdated: number;
-    storyChecksums: Record<string, string>;
-    totalStories: number;
-  }> {
-    return this.request('/api/stories/version', { method: 'GET' }, 5000);
-  }
 }

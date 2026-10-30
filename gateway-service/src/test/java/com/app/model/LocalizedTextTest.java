@@ -151,5 +151,28 @@ class LocalizedTextTest {
         assertNull(result.getEs());
         assertNull(result.getDe());
     }
-}
 
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.CsvSource({"pl, Wiewiórka", "PL, Wiewiórka", "Pl, Wiewiórka", "en, Squirrel", "zh, 松鼠"})
+    @DisplayName("Should read one language exactly, whatever its case")
+    void testGetExactTextReadsOneLanguage(String code, String expected) {
+        LocalizedText text = new LocalizedText("Squirrel");
+        text.setPl("Wiewiórka");
+        text.setZh("松鼠");
+
+        assertEquals(expected, text.getExactText(code));
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = {"de", "xx", ""})
+    @DisplayName("Should not fall back to English when reading one language exactly")
+    void testGetExactTextDoesNotFallBack(String code) {
+        assertNull(new LocalizedText("Squirrel").getExactText(code));
+    }
+
+    @Test
+    @DisplayName("Should return nothing for no language")
+    void testGetExactTextNullLanguage() {
+        assertNull(new LocalizedText("Squirrel").getExactText(null));
+    }
+}

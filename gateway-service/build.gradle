@@ -121,3 +121,19 @@ jacocoTestReport {
 		html.required = true
 	}
 }
+
+jacocoTestCoverageVerification {
+	dependsOn test
+	violationRules {
+		rule {
+			limit {
+				counter = 'LINE'
+				minimum = 0.58
+			}
+			limit {
+				counter = 'BRANCH'
+				minimum = 0.44
+			}
+		}
+	}
+}

@@ -45,6 +45,8 @@ export interface ScreenTimeRingProps {
    *  its own halo, which needs no help standing off the globe, and the dark
    *  disc only muddied the glow. */
   backplate?: boolean;
+  /** How strongly the arc and guard mark are drawn while under the limit. */
+  arcOpacity?: number;
   testID?: string;
 }
 
@@ -58,6 +60,7 @@ export const ScreenTimeRing = memo(function ScreenTimeRing({
   haloScale = SCREEN_TIME_RING.haloScale,
   showTrack = true,
   backplate = false,
+  arcOpacity = SCREEN_TIME_RING.arcOpacity,
   testID = 'screen-time-ring',
 }: ScreenTimeRingProps) {
   const { t } = useTranslation();
@@ -222,6 +225,7 @@ export const ScreenTimeRing = memo(function ScreenTimeRing({
             radius={radius}
             strokeWidth={stroke}
             showTrack={showTrack}
+            arcOpacity={arcOpacity}
             testID={testID}
           />
         )}
@@ -232,7 +236,7 @@ export const ScreenTimeRing = memo(function ScreenTimeRing({
           testID="screen-time-guard"
           size={screenTimeGuardSize(size)}
           colour={exceeded ? SCREEN_TIME_RING.exceededGuard : tint}
-          opacity={exceeded ? 1 : SCREEN_TIME_RING.arcOpacity}
+          opacity={exceeded ? 1 : arcOpacity}
         />
       </Animated.View>
     </Animated.View>

@@ -235,13 +235,13 @@ export function ScreenTimeOwlAlert({ visible, warning, onDismiss, random = Math.
 
 const styles = StyleSheet.create({
   root: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     // above the journey bar (1500) and the story reader (2000), both of which
     // the owl otherwise lands behind
     zIndex: 3000,
   },
   dim: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: DIM,
   },
   bubbleSlot: {

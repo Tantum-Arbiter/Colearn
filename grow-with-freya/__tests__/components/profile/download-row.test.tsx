@@ -16,7 +16,6 @@ const story = (overrides: Partial<Story> = {}): Story => ({
   localizedTitle: { en: 'Moon Bear', fr: 'Ours de Lune' },
   category: 'bedtime',
   isAvailable: true,
-  duration: 7,
   pages: [{} as never, {} as never, {} as never],
   ...overrides,
 });
@@ -87,19 +86,35 @@ describe('DownloadRow', () => {
       .toBe('storyPreview.removeFromDevice');
   });
 
-  it('says how long the book is and how many pages it runs to', () => {
+  it('says how many pages the book runs to', () => {
     const underTest = render(
       <DownloadRow story={story()} language="en" onOpen={jest.fn()} onDelete={jest.fn()} />,
     );
 
-    expect(textsIn(underTest)).toContain('profile.downloadMeta (minutes:7, pages:3)');
+    expect(textsIn(underTest)).toContain('storyDetail.pages (count:3)');
+  });
+
+  it('uses the page count the catalogue sent when the pages are not on the device', () => {
+    const underTest = render(
+      <DownloadRow story={story({ pages: undefined, pageCount: 12 })} language="en" onOpen={jest.fn()} onDelete={jest.fn()} />,
+    );
+
+    expect(textsIn(underTest)).toContain('storyDetail.pages (count:12)');
+  });
+
+  it('never shows an old duration as minutes', () => {
+    const underTest = render(
+      <DownloadRow story={story({ duration: 7 })} language="en" onOpen={jest.fn()} onDelete={jest.fn()} />,
+    );
+
+    expect(textsIn(underTest).join(' ')).not.toMatch(/min/);
   });
 
   /** A catalogue entry can arrive with neither, and an empty dot is noise. */
-  it('draws no meta line at all when the book carries no duration or pages', () => {
+  it('draws no meta line at all when the book carries no page count or pages', () => {
     const underTest = render(
       <DownloadRow
-        story={story({ duration: undefined, pages: undefined })}
+        story={story({ pageCount: undefined, pages: undefined })}
         language="en"
         onOpen={jest.fn()}
         onDelete={jest.fn()}

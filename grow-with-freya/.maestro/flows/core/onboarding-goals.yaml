@@ -1,0 +1,94 @@
+appId: com.growwithfreya.app
+tags:
+  - journey
+name: A family who says they want to talk about feelings gets a week that starts with Juni
+---
+- runFlow:
+    file: ../../helpers/seed-only.yaml
+    env:
+      SEED: "onboarded=0&guest=0&signedIn=0&tutorials=done&screenTime=reset&language=en&goals="
+- extendedWaitUntil:
+    visible:
+      id: "nothing-waits-here"
+    timeout: 8000
+    optional: true
+- stopApp
+- runFlow: ../../helpers/launch.yaml
+- extendedWaitUntil:
+    visible:
+      id: "onboarding-next"
+    timeout: 90000
+# Three intro steps, then consent.
+- tapOn:
+    id: "onboarding-next"
+- tapOn:
+    id: "onboarding-next"
+- tapOn:
+    id: "onboarding-next"
+- tapOn:
+    id: "consent-checkbox-privacy"
+- tapOn:
+    id: "consent-checkbox-terms"
+- tapOn:
+    id: "consent-checkbox-data"
+- tapOn:
+    id: "onboarding-next"
+- extendedWaitUntil:
+    visible: "No Thanks"
+    timeout: 10000
+    optional: true
+- runFlow:
+    when:
+      visible: "No Thanks"
+    commands:
+      - tapOn: "No Thanks"
+# The profile, then the goals.
+- tapOn:
+    id: "profile-nickname-input"
+- inputText: "Freya"
+# The keyboard has no dismiss action of its own here; a tap on the heading puts it away.
+- tapOn: "Who is exploring today?"
+- tapOn:
+    id: "onboarding-next"
+- assertVisible:
+    id: "goal-tile-bigFeelings"
+- tapOn:
+    id: "goal-tile-bigFeelings"
+- assertVisible:
+    id: "goal-rank-bigFeelings"
+- tapOn:
+    id: "onboarding-next"
+# Onboarding lands on sign-in; the family carries on as guests. Then home, and
+# the island: day 1 is Juni's book, read together.
+- extendedWaitUntil:
+    visible:
+      id: "login-guest"
+    timeout: 30000
+- tapOn:
+    id: "login-guest"
+# Guests see a sheet about what signing in would add; home mounts beneath it, so
+# wait for the sign-in overlay to leave before touching anything on home.
+- extendedWaitUntil:
+    visible:
+      id: "guest-info-continue"
+    timeout: 15000
+- tapOn:
+    id: "guest-info-continue"
+- extendedWaitUntil:
+    notVisible:
+      id: "auth-overlay"
+    timeout: 30000
+- extendedWaitUntil:
+    visible:
+      id: "child-bottom-navigation"
+    timeout: 60000
+- runFlow: ../../helpers/dismiss-interruptions.yaml
+- tapOn:
+    id: "achievement-card"
+# The dive down to the island takes a few seconds, longer the first time.
+- extendedWaitUntil:
+    visible:
+      id: "plan-checkpoint-1"
+    timeout: 60000
+- assertVisible: "Story Corner"
+- assertVisible: "Hold On, Juni"

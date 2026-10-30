@@ -12,6 +12,7 @@ import com.app.model.StoryPage;
 import com.app.model.User;
 import com.app.model.UserSession;
 import com.app.security.RateLimitingFilter;
+import com.app.service.StoryChecksums;
 import com.app.service.SessionService;
 import com.app.service.UserService;
 import com.app.testing.TestSimulationFlags;
@@ -306,7 +307,7 @@ public class TestAdminController {
         Story story1 = new Story("test-story-1", "The Sleepy Bear", "bedtime");
         story1.setDescription("A cozy bedtime story about a sleepy bear");
         story1.setAgeRange("2-5");
-        story1.setDuration(5);
+        story1.setPageCount(5);
         story1.setAuthor("Test Author");
         story1.setTags(List.of("bedtime", "animals", "sleep"));
 
@@ -346,7 +347,7 @@ public class TestAdminController {
 
         // Create pages with localized text
         StoryPage page1 = new StoryPage("page-1-1", 1, "Once upon a time, there was a sleepy bear.");
-        page1.setLocalizedText(new LocalizedText(
+        page1.setLocalizedText(Map.of("4-6", new LocalizedText(
             "Once upon a time, there was a sleepy bear.",
             "Dawno, dawno temu żył sobie śpiący miś.",
             "Había una vez un oso muy dormido.",
@@ -361,11 +362,11 @@ public class TestAdminController {
             "Der var engang en meget søvnig bjørn.",
             "Olim erat ursus valde somnolentus.",
             "从前有一只非常困倦的熊。"
-        ));
+        )));
 
         StoryPage page2 = new StoryPage("page-1-2", 2, "The bear yawned and stretched.");
         page2.setBackgroundImage("assets/stories/test-story-1/page-2/background.webp");
-        page2.setLocalizedText(new LocalizedText(
+        page2.setLocalizedText(Map.of("4-6", new LocalizedText(
             "The bear yawned and stretched.",
             "Miś ziewnął i przeciągnął się.",
             "El oso bostezó y se estiró.",
@@ -380,7 +381,7 @@ public class TestAdminController {
             "Bjørnen gjalp og strakte sig.",
             "Ursus oscitavit et se extendit.",
             "熊打了个哈欠，伸了个懒腰。"
-        ));
+        )));
 
         // Add interactive element to page 2 for functional tests
         InteractiveElement doorElement = new InteractiveElement("door", "reveal", "assets/stories/test-story-1/page-2/door-open.webp");
@@ -389,7 +390,7 @@ public class TestAdminController {
         page2.setInteractiveElements(List.of(doorElement));
 
         StoryPage page3 = new StoryPage("page-1-3", 3, "Time for bed, said the bear.");
-        page3.setLocalizedText(new LocalizedText(
+        page3.setLocalizedText(Map.of("4-6", new LocalizedText(
             "Time for bed, said the bear.",
             "Pora spać, powiedział miś.",
             "Es hora de dormir, dijo el oso.",
@@ -404,7 +405,7 @@ public class TestAdminController {
             "Tid til at gå i seng, sagde bjørnen.",
             "Tempus cubile, inquit ursus.",
             "该睡觉了，熊说。"
-        ));
+        )));
 
         story1.setPages(List.of(page1, page2, page3));
         stories.add(story1);
@@ -413,7 +414,7 @@ public class TestAdminController {
         Story story2 = new Story("test-story-2", "The Brave Bunny", "adventure");
         story2.setDescription("An adventure story about a brave bunny");
         story2.setAgeRange("3-6");
-        story2.setDuration(6);
+        story2.setPageCount(6);
         story2.setAuthor("Test Author");
         story2.setTags(List.of("adventure", "animals", "courage"));
         story2.setPages(List.of(
@@ -427,7 +428,7 @@ public class TestAdminController {
         Story story3 = new Story("test-story-3", "Friends Forever", "friendship");
         story3.setDescription("A heartwarming story about friendship");
         story3.setAgeRange("2-5");
-        story3.setDuration(4);
+        story3.setPageCount(4);
         story3.setAuthor("Test Author");
         story3.setTags(List.of("friendship", "kindness"));
         story3.setPages(List.of(
@@ -440,65 +441,11 @@ public class TestAdminController {
         return stories;
     }
 
+    private static final com.fasterxml.jackson.databind.ObjectMapper CHECKSUM_MAPPER =
+            new com.fasterxml.jackson.databind.ObjectMapper().findAndRegisterModules();
+
     private String calculateStoryChecksum(Story story) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            StringBuilder content = new StringBuilder();
-            content.append(story.getId());
-            content.append(story.getTitle());
-            content.append(serializeLocalizedText(story.getLocalizedTitle()));
-            content.append(story.getCategory());
-            content.append(story.getDescription() != null ? story.getDescription() : "");
-            content.append(serializeLocalizedText(story.getLocalizedDescription()));
-            content.append(story.getVersion());
-
-            if (story.getPages() != null) {
-                story.getPages().forEach(page -> {
-                    content.append(page.getId());
-                    content.append(page.getText());
-                    content.append(serializeLocalizedText(page.getLocalizedText()));
-                    content.append(serializeAgeGroupedText(page.getAgeGroupText()));
-                    content.append(page.getPageNumber());
-                });
-            }
-
-            byte[] hash = digest.digest(content.toString().getBytes(StandardCharsets.UTF_8));
-            StringBuilder hexString = new StringBuilder();
-            for (byte b : hash) {
-                String hex = Integer.toHexString(0xff & b);
-                if (hex.length() == 1) hexString.append('0');
-                hexString.append(hex);
-            }
-            return hexString.toString();
-        } catch (Exception e) {
-            logger.error("Error calculating story checksum for: {}", story.getId(), e);
-            throw new RuntimeException("Failed to calculate checksum", e);
-        }
-    }
-
-    private String serializeLocalizedText(LocalizedText localizedText) {
-        if (localizedText == null) {
-            return "";
-        }
-        StringBuilder sb = new StringBuilder();
-        if (localizedText.getEn() != null) sb.append("en:").append(localizedText.getEn()).append("|");
-        if (localizedText.getPl() != null) sb.append("pl:").append(localizedText.getPl()).append("|");
-        if (localizedText.getEs() != null) sb.append("es:").append(localizedText.getEs()).append("|");
-        if (localizedText.getDe() != null) sb.append("de:").append(localizedText.getDe()).append("|");
-        return sb.toString();
-    }
-
-    private String serializeAgeGroupedText(Map<String, LocalizedText> ageGroupedText) {
-        if (ageGroupedText == null) {
-            return "";
-        }
-        StringBuilder sb = new StringBuilder();
-        ageGroupedText.forEach((ageGroup, lt) -> {
-            sb.append(ageGroup).append(":{");
-            sb.append(serializeLocalizedText(lt));
-            sb.append("}|");
-        });
-        return sb.toString();
+        return StoryChecksums.of(CHECKSUM_MAPPER.valueToTree(story));
     }
 
     private LocalizedText parseLocalizedText(Map<?, ?> map) {
@@ -631,8 +578,8 @@ public class TestAdminController {
             story.setAuthor((String) storyData.get("author"));
             story.setCoverImage((String) storyData.get("coverImage"));
 
-            if (storyData.get("duration") != null) {
-                story.setDuration(((Number) storyData.get("duration")).intValue());
+            if (storyData.get("pageCount") != null) {
+                story.setPageCount(((Number) storyData.get("pageCount")).intValue());
             }
             if (storyData.get("version") != null) {
                 story.setVersion(((Number) storyData.get("version")).intValue());
@@ -668,10 +615,7 @@ public class TestAdminController {
                         page.setCharacterImage((String) pageMap.get("characterImage"));
 
                         if (pageMap.get("localizedText") instanceof Map<?, ?> localizedTextMap) {
-                            page.setLocalizedText(parseLocalizedText(localizedTextMap));
-                        }
-                        if (pageMap.get("ageGroupText") instanceof Map<?, ?> ageGroupTextMap) {
-                            page.setAgeGroupText(parseAgeGroupedText(ageGroupTextMap));
+                            page.setLocalizedText(parseAgeGroupedText(localizedTextMap));
                         }
 
                         // Parse interactiveElements
@@ -723,7 +667,7 @@ public class TestAdminController {
             // Calculate checksum if not provided
             String checksum = (String) storyData.get("checksum");
             if (checksum == null || checksum.isBlank()) {
-                checksum = calculateStoryChecksum(story);
+                checksum = StoryChecksums.of(CHECKSUM_MAPPER.valueToTree(storyData));
             }
             story.setChecksum(checksum);
 

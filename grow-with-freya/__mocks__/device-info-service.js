@@ -24,6 +24,10 @@ module.exports = {
 
     getAppVersion: jest.fn().mockReturnValue(mockAppVersion),
 
+    getBuildNumber: jest.fn().mockReturnValue(null),
+
+    getVersionLabel: jest.fn().mockReturnValue(mockAppVersion),
+
     getOsVersion: jest.fn().mockReturnValue(mockOsVersion),
 
     getBrand: jest.fn().mockReturnValue(mockBrand),
