@@ -1,6 +1,6 @@
 # Agent Operating Rules — `scripts` (CMS Pipeline & Tooling)
 
-> Read this **after** the root `../CLAUDE.md`.
+> Read this **after** the root `../AGENTS.md`.
 > Heterogeneous tooling: Node.js story/CMS pipeline + Python utilities (`code-to-word`, `image-trace-venv`).
 > **None of this runs in production.** These are operator tools that mutate Firestore / GCS / local content.
 
@@ -8,7 +8,7 @@
 
 ## 1. Communication
 
-Communication & code-display rules: see root `../CLAUDE.md` → **Communication & Code Display**.
+Communication & code-display rules: see root `../AGENTS.md` → **Communication & Code Display**.
 
 ---
 
@@ -103,7 +103,7 @@ For broken uploads, also capture: exact command run, target project, response fr
 
 ## 8. Commits
 
-Commit rules: see root `../CLAUDE.md` → **Commits**. **Never run an upload as part of a commit hook.**
+Commit rules: see root `../AGENTS.md` → **Commits**. **Never run an upload as part of a commit hook.**
 
 ---
 

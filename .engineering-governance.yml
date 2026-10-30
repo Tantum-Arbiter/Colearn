@@ -1,0 +1,27 @@
+{
+  "confirmed_risks": [
+    "auth",
+    "billing",
+    "child-data",
+    "external-effects",
+    "infrastructure"
+  ],
+  "enabled": true,
+  "managed_by": "founder-vault",
+  "owner_review_required": true,
+  "profiles": [
+    "backend-api",
+    "general-tools",
+    "mobile-react-native",
+    "web"
+  ],
+  "review_snapshot": "docs/ai-governance-snapshot.md",
+  "schema_version": 1,
+  "snapshot_sha256": "0a127f94fb9ed11cd534cac1737ce6565cb07e7188093c84e5b222b7d5d2e889",
+  "source": {
+    "local_relative_path": "../founder-vault",
+    "policy_revision": "22d84f853874093fd0848a904be66ed6eed7b228",
+    "policy_root": "AI-Engineering",
+    "repository": "founder-vault"
+  }
+}

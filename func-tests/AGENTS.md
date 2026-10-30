@@ -1,13 +1,13 @@
 # Agent Operating Rules — `func-tests` (E2E / Cucumber)
 
-> Read this **after** the root `../CLAUDE.md` and `../gateway-service/AGENTS.md`.
+> Read this **after** the root `../AGENTS.md` and `../gateway-service/AGENTS.md`.
 > This project tests `gateway-service` end-to-end against a real WireMock server.
 
 ---
 
 ## 1. Communication
 
-Communication & code-display rules: see root `../CLAUDE.md` → **Communication & Code Display**.
+Communication & code-display rules: see root `../AGENTS.md` → **Communication & Code Display**.
 
 ---
 
@@ -44,7 +44,7 @@ checklist, the done list — is in [`../TESTING-STANDARD.md`](../TESTING-STANDAR
 - Reuse vocabulary across features — if one feature says "the user", every feature says "the user".
 - Use `Scenario Outline` + `Examples` for parameterised flows; don't copy-paste scenarios.
 - Tag every feature with its domain (`@authentication`, `@user-profile`, `@delta-sync`, `@story-pages`, …) and where it can run (`@local`, `@docker`, `@gcp-dev`, `@emulator-only`). Tag scenarios by kind: `@smoke`, `@error-handling`, `@validation`, `@security`. Reuse an existing tag before inventing one.
-- **CI runs only `@gcp-dev` scenarios**, against the dev deployment (`../.github/workflows/gateway-build.yml:228`). A scenario missing that tag never runs in CI.
+- **CI has two routes.** `../.github/workflows/backend-checks.yml` runs the local Docker/emulator stack with request validation on and `not @ignore and not @gcp-func-only`. `gateway-build.yml` also runs the deployed-dev selection `@gcp-dev and not @emulator-only and not @ignore`. Check the current workflow filters when classifying scenarios; this documentation does not authorize a deployment or hosted run.
 - One scenario = one behaviour. If you need `And` 6+ times, you're testing too much.
 
 ### Step Def Rules
@@ -96,7 +96,7 @@ Failure: <exact assertion message or HTTP status mismatch>
 
 ## 8. Commits
 
-Commit rules: see root `../CLAUDE.md` → **Commits**.
+Commit rules: see root `../AGENTS.md` → **Commits**.
 
 ---
 

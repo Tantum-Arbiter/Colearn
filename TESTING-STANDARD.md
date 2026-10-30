@@ -6,13 +6,25 @@
 > Where the suites fall short today, see §7 and Phase 0 of
 > [`PHASE-8-BACKEND-ALIGNMENT.md`](PHASE-8-BACKEND-ALIGNMENT.md).
 
-**Why this exists.** The written rules in each `AGENTS.md` were already sound. The code drifted
+**Historical motivation (2026-09-23; see §7 for subsequent fixes).** The written rules in each `AGENTS.md` were already sound. The code drifted
 from them anyway, and the gaps they left are where the release blockers hid: no test sends the
 app's real traffic through the security filters, the one func-test environment in CI has request
 validation off, and the app's backend-facing services are only ever mocked, never tested. A rule
 no one checks is a wish. This file is the checklist a change is reviewed against.
 
 ---
+
+## Applicability and safe evidence
+
+Behavior changes use the loop and checklist below. For documentation, instruction routing or
+metadata-only edits, validate affected links, discovery, consistency and installation integrity;
+record application tests as NOT RUN (not applicable to the change). Do not manufacture a failing
+application test for prose. Changes to executable configuration or test behavior still need
+relevant execution evidence. A missing environment means NOT RUN/BLOCKED, never a pass.
+
+Mutation sweeps target changed behavior in an isolated local copy, use synthetic data and
+restore each deliberate mutation. Never mutate unrelated owner work or a live system. Record
+the attempted mutations and outcomes; do not claim exhaustive mutation coverage from a sample.
 
 ## 1. The loop
 
@@ -31,7 +43,7 @@ no one checks is a wish. This file is the checklist a change is reviewed against
 |-|-|-|
 | **Unit** (JUnit, Jest) | One class or function, every branch | Every service, filter, mapper and model with logic has its own test file. Being mocked inside another test does not count. |
 | **Controller slice** (gateway) | The HTTP contract of one controller **through the real filter chain** | `@WebMvcTest(XController.class)` with the security config and filters loaded, collaborators `@MockBean`. Never `addFilters = false` in new tests. |
-| **Serialisation** (gateway, app) | A model survives JSON and Firestore mapping with every field intact | One round-trip test per model or DTO that crosses a boundary, fed a **real** fixture (a CMS `story-data.json`, a captured request body). |
+| **Serialisation** (gateway, app) | A model survives JSON and Firestore mapping with every field intact | One round-trip test per model or DTO that crosses a boundary, fed a **representative synthetic** fixture (schema-valid CMS JSON or a synthetic request body; never captured customer/child data). |
 | **Functional** (Cucumber) | An endpoint end to end, against a gateway configured **like prod** | Every endpoint has a scenario for success **and** for each 4xx it can return. Request validation stays on. |
 | **Journey** (Maestro) | A person gets from A to B on a device | See [`QA-AUTOMATION.md`](QA-AUTOMATION.md). Not a substitute for any layer above. |
 
@@ -57,13 +69,13 @@ to say why it cannot happen.
 - Unicode: Polish diacritics, Arabic, emoji (counts as more than one UTF-16 unit), combining marks.
 
 **Legitimate data that looks dangerous**
-- Real user and content text: `;`, `<3`, `&`, `#`, `|`, quotes, apostrophes, words containing
+- Representative synthetic user and content text: `;`, `<3`, `&`, `#`, `|`, quotes, apostrophes, words containing
   `script` (`subscription`, `description`, `transcript`). These must be **accepted**. For every
   test that proves a filter blocks something, write one that proves it lets the real thing through.
 
 **Auth**
 - No token, malformed token, expired (one second either side of expiry), wrong signature, another
-  user's resource. Use real signed tokens, not a mocked validator that throws on cue.
+  user's resource. Use synthetic tokens signed with local test keys, not production tokens or a mocked validator that throws on cue.
 - Required headers missing, and the endpoints exempt from them still working without them.
 
 **Downstream failure**
@@ -108,8 +120,9 @@ to say why it cannot happen.
 - **Deterministic.** No `Thread.sleep`, no real timers, no real network. Inject a `Clock` in Java
   and use fake timers in Jest. Anything static you set (`SecurityContextHolder`, a rate limiter,
   a singleton) is reset in teardown.
-- **Real fixtures over hand-built ones** at a boundary. A hand-built object proves what you think
-  the data looks like; a real `story-data.json` proves what it does look like.
+- **Schema-valid synthetic fixtures at boundaries.** Exercise representative serialized payloads
+  through the real parser on both sides. Avoid simplified objects that omit fields or shape errors.
+  Do not capture real parent/child requests or credentials; use reviewed synthetic contract fixtures.
 - **Gateway assertions:** JUnit `Assertions`. AssertJ is on the classpath but is not the house
   style; don't mix the two in one file.
 
@@ -138,8 +151,8 @@ to say why it cannot happen.
 - [ ] Varying inputs are a table.
 - [ ] A new or changed endpoint has a controller slice test **and** a func-test scenario, success
       and failure.
-- [ ] A new or changed boundary model has a round-trip test with a real fixture, on both sides.
-- [ ] The mutation sweep found no surviving mutant.
+- [ ] A new or changed boundary model has a round-trip test with a representative synthetic fixture, on both sides.
+- [ ] All attempted mutations of changed behavior were caught; scope and any gaps are recorded.
 - [ ] The whole suite, types and lint pass.
 
 ---

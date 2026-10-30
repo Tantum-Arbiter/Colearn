@@ -1,13 +1,13 @@
 # Agent Operating Rules — `grow-with-freya` (Mobile App)
 
-> Read this **after** the root `../CLAUDE.md` (project identity, principles, never-rules).
+> Read this **after** the root `../AGENTS.md` (project identity, principles, never-rules).
 > This file covers **how to work**, not **what the product is**.
 
 ---
 
 ## 1. Communication
 
-Communication & code-display rules: see root `../CLAUDE.md` → **Communication & Code Display**.
+Communication & code-display rules: see root `../AGENTS.md` → **Communication & Code Display**.
 
 ---
 
@@ -42,7 +42,7 @@ What a change must prove — the layers, the edge-case checklist, the done list 
 | Component testing | `@testing-library/react-native` |
 | Mocks | `jest.mock()` + manual mocks in `__mocks__/` |
 | Snapshots | Only for stable, intentional output — never for whole screens |
-| Coverage | Jest built-in, `jest-junit` + `jest-html-reporters` in CI. The global floor is 10% (`jest.config.js:70-75`), so a green run says little about coverage — the checklist does the work |
+| Coverage | Jest built-in, `jest-junit` + `jest-html-reporters` in CI. Read current thresholds from `jest.config.js` (as of 2026-10-29: branches/functions 55%, lines 60%, statements 59%). Coverage does not replace the behavioral checklist |
 | Mutation sweep | By hand: break the code (flip a condition, drop a guard), confirm a test fails, restore. No tool yet |
 | App journeys (E2E) | Maestro — flows in `.maestro/flows/`, `npm run e2e` |
 
@@ -77,7 +77,7 @@ elements. See [`../QA-AUTOMATION.md`](../QA-AUTOMATION.md).
 - Functional components only. Hooks at top level, never inside conditionals.
 - Co-locate styles with components via `StyleSheet.create` (no inline style objects in JSX unless dynamic).
 - Memoise expensive children (`React.memo`, `useMemo`, `useCallback`) — but only when there's measured benefit.
-- All async work must handle loading / error / empty states (root CLAUDE.md).
+- All async work must handle loading / error / empty states (root AGENTS.md).
 - Offline-first: every network call goes through a wrapper that gracefully degrades.
 
 ---
@@ -115,7 +115,7 @@ If you can't verify: **"⚠️ UNVERIFIED — Unable to confirm this claim in co
 
 ## 7. Commits
 
-Commit rules: see root `../CLAUDE.md` → **Commits**.
+Commit rules: see root `../AGENTS.md` → **Commits**.
 
 ---
 
@@ -140,7 +140,7 @@ until they were shut down.
   relaunch the app on the same one.
 - **Restart it rather than add another.** If it is slow, stuck or showing stale code, shut it
   down (`xcrun simctl shutdown <udid>`) and boot the same one again.
-- **Tablet checks** (phone and tablet are both required, root `../CLAUDE.md`): shut the phone
+- **Tablet checks** (phone and tablet are both required, root `../AGENTS.md`): shut the phone
   down, then boot the iPad; shut the iPad down when done.
 - **One Metro.** Reuse a running dev server rather than starting another, and stop it with the
   simulator when the work is finished. Nothing is left running at the end of a session.

@@ -1,0 +1,24 @@
+{
+  "disableAllHooks": true,
+  "permissions": {
+    "defaultMode": "plan",
+    "deny": [
+      "Bash",
+      "PowerShell",
+      "WebFetch",
+      "WebSearch",
+      "Edit",
+      "Write",
+      "Agent",
+      "Read(**/.env*)",
+      "Read(**/*.pem)",
+      "Read(**/*.key)",
+      "Read(**/.git/**)"
+    ]
+  },
+  "sandbox": {
+    "enabled": true,
+    "allowUnsandboxedCommands": false,
+    "autoAllowBashIfSandboxed": false
+  }
+}
