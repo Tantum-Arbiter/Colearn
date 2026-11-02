@@ -252,6 +252,7 @@ the stub reaches the shelf and the search — a flow finds it by name. Its cover
 | When | What runs | Where | Roughly |
 |---|---|---|---|
 | Every push and pull request touching the app | Jest, types, lint, npm audit | ubuntu | 3-5 min |
+| Mondays 06:00 UTC, and changes to the app's lockfile or `audit-allowlist.json` | npm audit gated on the allowlist, licences, lint and types (`security-scan.yml`) | ubuntu | 2-3 min |
 | Every push and pull request touching the website | Playwright, both viewports | ubuntu | 2 min |
 | Push to `main`, `mvp` or `develop` | **Smoke journeys on an Android emulator** | ubuntu | 20-30 min |
 | Nightly, and on demand | **Every journey, Android and iOS** | ubuntu + macOS | 30-60 min |

@@ -120,10 +120,10 @@ One build and one journeys workflow per platform, one principle: **the app under
 
 ### 3. security-scan.yml -Security Audit
 
-**Triggers:** Push to `set-up-pipeline-frontend` branch + manual.
+**Triggers:** Mondays 06:00 UTC; push to `main` or `mvp` and pull requests that change the app's `package.json`, `package-lock.json` or `audit-allowlist.json`, the gate script or the workflow; manual.
 
 **Jobs (3, parallel):**
-- `dependency-scan`: `npm audit` -fails on critical vulns, warns on >5 high
+- `dependency-scan`: `npm audit` from the lockfile alone (nothing is installed), twice: the whole tree, summarised on the run page by `.github/scripts/audit-summary.py`, and the production tree (`--omit=dev`). Both reports are kept as artifacts. Then `.github/scripts/audit-gate.py` fails the job on a critical advisory anywhere, or a high one in the production tree, that `grow-with-freya/audit-allowlist.json` does not accept. Expo lists its build tooling as production dependencies, so `--omit=dev` cannot say what ships; the allowlist records what the release source maps showed (`PHASE-4-PROD-READINESS.md` §12): tooling that is not bundled is accepted by package, code that ships by advisory id, so a new advisory against shipped code fails the scan until someone has judged it. Entries that match nothing are named on the run page so the list can be pruned. `grow-with-freya/__tests__/config/audit-allowlist.test.ts` checks the gate's behaviour and that every entry has a reason, a date and a package still in the lockfile.
 - `license-scan`: `license-checker` -flags GPL/AGPL licenses
 - `code-quality`: ESLint + TypeScript compiler + line count metrics
 

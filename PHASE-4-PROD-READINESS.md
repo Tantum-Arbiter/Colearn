@@ -1267,9 +1267,45 @@ Visual style:
 
 ## 12. Security Posture — Dependency Advisories
 
-> **TL;DR: `npm audit` reports 26 advisories. One package among them reaches shipped app code:
-> `decode-uri-component` (moderate), below.** The rest are build-time tooling.
-> **Never run `npm audit fix --force` on this project.**
+> **TL;DR: `npm audit` reports 66 advisories (2026-11-02; 1 critical, 14 high). One package among
+> them reaches shipped app code: `decode-uri-component` (now high), below.** The rest are build-time
+> tooling. The weekly Security Scan gates on `grow-with-freya/audit-allowlist.json`, which records
+> exactly this. **Never run `npm audit fix --force` on this project.**
+
+### Verified finding (2026-11-02, Expo SDK 57, React Native 0.86)
+
+iOS and Android exports with `--source-maps` (iOS 3,111 modules across 104 npm packages, Android
+3,214 across 108; controls `react-native`, `expo-audio`, `zustand`, `expo-router` and `query-string`
+present in both). Every critical and high advisory, and where its package actually runs:
+
+| Package | Severity | Route | In the bundle |
+|---|---|---|---|
+| `shell-quote` 1.8.3 | **critical** (+ high) | `react-native` → `react-devtools-core` | no: the DevTools bridge is left out of release bundles. A fix inside `react-devtools-core`'s range exists (1.9.0+), so a plain `npm audit fix` would take it |
+| `decode-uri-component` 0.2.2 | high (GHSA-qr28-fpjm-wq7f; the earlier moderate GHSA-vcc3-ghjq-m6fr remains) | `expo-router` → `query-string` 7.1.3, deep-link query parsing | **yes**, one module, both platforms |
+| `query-string`, `expo-router` | high | roll-ups of `decode-uri-component` | `query-string` yes (1 module); the advisory is the one above |
+| `@expo/cli` | high | roll-up of `zod`, `glob`, `@expo/config*` | one module only, `build/metro-require/require.js`, a Metro require shim; none of the flagged dependencies |
+| `zod`, `node-forge`, `js-yaml`, `@xmldom/xmldom` | high | `expo` → `@expo/cli` (and `expo-updates` for `node-forge`, `@xmldom/xmldom`) | no |
+| `brace-expansion` | high | `expo-updates` → `glob` → `minimatch` | no |
+| `browserslist` | high | `@babel/helper-compilation-targets`, `@expo/metro-config` | no |
+| `svgo`, `source-map-js` | high | `react-native-svg-transformer` → `@svgr/plugin-svgo`; `@expo/metro-config` → `postcss` | no |
+| `ws` 8.20, `@babel/plugin-transform-modules-systemjs` | high | `jest-environment-jsdom`, `@babel/preset-env` | no, and devDependencies: they are the two highs `npm audit --omit=dev` removes |
+
+`npm audit --omit=dev` keeps 1 critical and 12 high, because `expo`, `react-native`,
+`expo-updates` and `react-native-svg-transformer` are production dependencies that pull the
+tooling in. The gate therefore does not trust `--omit=dev`; it trusts this table, as the allowlist.
+
+**CI gate (`.github/workflows/security-scan.yml`, `.github/scripts/audit-gate.py`).** The scan
+audits from the lockfile alone, twice (whole tree, production tree), and fails on a critical
+advisory anywhere or a high one in the production tree unless `grow-with-freya/audit-allowlist.json`
+accepts it. Tooling that is not bundled is accepted by package; code that ships is accepted one
+advisory id at a time, so a new advisory against `decode-uri-component` fails the scan until it has
+been judged. A package npm flags only through its dependencies (`expo-router`, `query-string`,
+`@expo/cli`) is accepted once every cause above the gate is. Unused entries are named on the run page.
+`__tests__/config/audit-allowlist.test.ts` checks the gate and the list. The per-push pipeline's
+`security-audit` job stays informational (operator, 2026-09-28).
+
+Re-verify at every SDK upgrade: export both platforms with `--source-maps`, read the `sources`
+arrays, and update the `verified` dates. Remove entries that stop matching.
 
 ### Verified finding (2026-09-28, Expo SDK 57)
 
@@ -1354,4 +1390,5 @@ opens in the current Expo Go.
   package list (i.e. genuinely bundled), or any missing native peer dependency —
   `expo-doctor` flagged a missing `expo-asset` (required by `expo-audio`) that could crash
   production builds outside Expo Go. Fixed 2026-08-02.
-- If CI should gate on audit, prefer `npm audit --audit-level=critical` over failing on noise.
+- CI gates on the allowlist above (weekly Security Scan), never on raw counts: a threshold that
+  passes today is noise tomorrow, and `--audit-level=critical` would still fail on `shell-quote`.

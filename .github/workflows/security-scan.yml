@@ -10,11 +10,15 @@ on:
     paths:
       - 'grow-with-freya/package.json'
       - 'grow-with-freya/package-lock.json'
+      - 'grow-with-freya/audit-allowlist.json'
+      - '.github/scripts/audit-gate.py'
       - '.github/workflows/security-scan.yml'
   pull_request:
     paths:
       - 'grow-with-freya/package.json'
       - 'grow-with-freya/package-lock.json'
+      - 'grow-with-freya/audit-allowlist.json'
+      - '.github/scripts/audit-gate.py'
       - '.github/workflows/security-scan.yml'
 
 # CRITICAL: Prevent multiple simultaneous runs
@@ -38,46 +42,39 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # npm audit reads package-lock.json; nothing is installed in this job.
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
 
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run npm audit
+      - name: Run npm audit on the whole tree (informational)
         run: |
-          npm audit --audit-level=moderate --json > audit-results.json || true
-          npm audit --audit-level=moderate
+          npm audit --json > "$RUNNER_TEMP/npm-audit-full.json" || true
+          python3 ../.github/scripts/audit-summary.py "$RUNNER_TEMP/npm-audit-full.json"
+
+      - name: Run npm audit on the production tree
+        run: npm audit --omit=dev --json > "$RUNNER_TEMP/npm-audit-production.json" || true
 
       - name: Upload audit results
         uses: actions/upload-artifact@v4
         with:
           name: security-audit-results
-          path: ${{ env.WORKING_DIRECTORY }}/audit-results.json
+          path: |
+            ${{ runner.temp }}/npm-audit-full.json
+            ${{ runner.temp }}/npm-audit-production.json
           retention-days: 30
 
-      - name: Check for known vulnerabilities
+      # Fails on a critical advisory anywhere, or a high one in the production tree, that
+      # grow-with-freya/audit-allowlist.json does not accept. Expo lists its build tooling as
+      # production dependencies, so the allowlist, not --omit=dev, says what reaches the app:
+      # tooling by package, shipped code by advisory id (PHASE-4-PROD-READINESS.md, section 12).
+      - name: Gate on advisories the allowlist does not accept
         run: |
-          # Check if there are any high or critical vulnerabilities
-          HIGH_VULNS=$(npm audit --audit-level=high --json | jq '.metadata.vulnerabilities.high // 0')
-          CRITICAL_VULNS=$(npm audit --audit-level=critical --json | jq '.metadata.vulnerabilities.critical // 0')
-
-          echo "High vulnerabilities: $HIGH_VULNS"
-          echo "Critical vulnerabilities: $CRITICAL_VULNS"
-
-          if [ "$CRITICAL_VULNS" -gt 0 ]; then
-            echo " Critical vulnerabilities found! Please fix before proceeding."
-            exit 1
-          fi
-
-          if [ "$HIGH_VULNS" -gt 5 ]; then
-            echo " Too many high vulnerabilities found! Please review and fix."
-            exit 1
-          fi
+          python3 ../.github/scripts/audit-gate.py \
+            --full "$RUNNER_TEMP/npm-audit-full.json" \
+            --production "$RUNNER_TEMP/npm-audit-production.json" \
+            --allowlist audit-allowlist.json
 
   license-scan:
     name: License Scan
