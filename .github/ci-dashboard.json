@@ -1,33 +1,73 @@
 {
   "title": "CoLearn pipelines",
-  "about": "What the dashboard on GitHub Pages watches. Each workflow shows its latest run per branch; a workflow may name its own branches, or \"any\" for a manual one that runs from wherever it was started. staleAfterHours turns a pass amber once it is older than that, so a nightly or weekly job that stopped running shows up.",
+  "about": "What the dashboard on GitHub Pages watches. Each workflow shows its latest run per branch, with the failed jobs and steps, the failure streak and the last pass behind a red one; a workflow may name its own branches, or \"any\" for a manual one that runs from wherever it was started. staleAfterHours turns a pass amber once it is older than that and marks a workflow overdue when nothing ran within it. blocks says, in words, what a failure stops; blocking says whether something downstream actually waits on it.",
   "branches": ["mvp", "main"],
   "groups": [
     {
       "name": "Gateway to Cloud Run",
       "workflows": [
-        { "file": "gateway-build.yml", "label": "Gateway image build, Cloud Run deploy, functional tests against it" },
-        { "file": "func-tests-build.yml", "label": "Functional-test image build and push" }
+        {
+          "file": "gateway-build.yml",
+          "label": "Gateway image build, Cloud Run deploy, functional tests against it",
+          "blocks": "the dev gateway on Cloud Run: nothing new deploys until it passes",
+          "blocking": true
+        },
+        {
+          "file": "func-tests-build.yml",
+          "label": "Functional-test image build and push",
+          "blocks": "the functional-test image; the gateway pipeline keeps using the last one pushed",
+          "blocking": false
+        }
       ]
     },
     {
       "name": "Functional and backend checks",
       "workflows": [
-        { "file": "backend-checks.yml", "label": "Gateway unit, slice and contract tests, func tests, security probes, CMS tooling" }
+        {
+          "file": "backend-checks.yml",
+          "label": "Gateway unit, slice and contract tests, func tests, security probes, CMS tooling",
+          "blocks": "pull requests into main and mvp: a red check holds the merge",
+          "blocking": true
+        }
       ]
     },
     {
       "name": "App builds, iOS and Android",
       "workflows": [
-        { "file": "grow-with-freya-ci-cd.yml", "label": "App pipeline: tests, lint, types, web build" },
-        { "file": "deploy-eas.yml", "label": "EAS store build (started by hand)", "branches": "any", "staleAfterHours": 720 },
-        { "file": "app-e2e-nightly.yml", "label": "Nightly journeys on iOS and Android", "branches": ["main"], "staleAfterHours": 36 }
+        {
+          "file": "grow-with-freya-ci-cd.yml",
+          "label": "App pipeline: tests, lint, types, web build",
+          "blocks": "EAS store builds: deploy-eas.yml refuses to build without a green run on the branch",
+          "blocking": true
+        },
+        {
+          "file": "deploy-eas.yml",
+          "label": "EAS store build (started by hand)",
+          "branches": "any",
+          "staleAfterHours": 720,
+          "blocks": "the store release: no new build reaches TestFlight or Play until it passes",
+          "blocking": true
+        },
+        {
+          "file": "app-e2e-nightly.yml",
+          "label": "Nightly journeys on iOS and Android",
+          "branches": ["main"],
+          "staleAfterHours": 36,
+          "blocks": "nothing automatically; it is the release evidence the deployment summary asks for",
+          "blocking": false
+        }
       ]
     },
     {
       "name": "Security",
       "workflows": [
-        { "file": "security-scan.yml", "label": "Weekly dependency, licence and code scan", "staleAfterHours": 192 }
+        {
+          "file": "security-scan.yml",
+          "label": "Weekly dependency, licence and code scan",
+          "staleAfterHours": 192,
+          "blocks": "nothing automatically; a red scan is an advisory nobody has judged yet",
+          "blocking": false
+        }
       ]
     }
   ]
