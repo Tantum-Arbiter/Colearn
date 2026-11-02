@@ -31,6 +31,9 @@ same branch -newer runs cancel in-progress ones.
 │                                                                     │
 │  security-scan.yml ──→ dependency-scan + license-scan + code-quality│
 │    (weekly, lockfile changes on main/mvp, pull requests)            │
+│                                                                     │
+│  ci-dashboard.yml ──→ publish (GitHub Pages: red/amber/green)       │
+│    (watched workflows start or finish, hourly, manual)              │
 ├─────────────────────────────────────────────────────────────────────┤
 │                        BACKEND (Spring Boot / Cloud Run)            │
 │                                                                     │
@@ -126,6 +129,16 @@ One build and one journeys workflow per platform, one principle: **the app under
 - `dependency-scan`: `npm audit` from the lockfile alone (nothing is installed), twice: the whole tree, summarised on the run page by `.github/scripts/audit-summary.py`, and the production tree (`--omit=dev`). Both reports are kept as artifacts. Then `.github/scripts/audit-gate.py` fails the job on a critical advisory anywhere, or a high one in the production tree, that `grow-with-freya/audit-allowlist.json` does not accept. Expo lists its build tooling as production dependencies, so `--omit=dev` cannot say what ships; the allowlist records what the release source maps showed (`PHASE-4-PROD-READINESS.md` §12): tooling that is not bundled is accepted by package, code that ships by advisory id, so a new advisory against shipped code fails the scan until someone has judged it. Entries that match nothing are named on the run page so the list can be pruned. `grow-with-freya/__tests__/config/audit-allowlist.test.ts` checks the gate's behaviour and that every entry has a reason, a date and a package still in the lockfile.
 - `license-scan`: `license-checker` -flags GPL/AGPL licenses
 - `code-quality`: ESLint + TypeScript compiler + line count metrics
+
+### 3b. ci-dashboard.yml -Pipeline dashboard on GitHub Pages
+
+**Page:** https://tantum-arbiter.github.io/Colearn/ -one tile per pipeline group, green, amber, red or grey for each watched workflow on `mvp` and `main`, with the latest run's title, age, duration and a link. `status.json` beside it holds the same facts for anything else (Grafana's JSON datasource, a Slack bot).
+
+**Triggers:** whenever a watched workflow is requested or completes (`workflow_run`), hourly, by hand, and on a push of its own three files to `main` or `mvp`. `workflow_run` and `schedule` fire only from the default branch, so the dashboard stays live only while this workflow is on `main`.
+
+**How it decides:** `.github/scripts/ci-dashboard.py` reads `.github/ci-dashboard.json` (groups, workflows, branches, `staleAfterHours`), fetches each workflow's latest run per branch with the job's own `GITHUB_TOKEN` (`actions: read`), and writes the page. Green: the latest run passed, and recently enough where a threshold is set. Amber: running or queued, cancelled or skipped, or a pass older than its threshold (the nightly at 36 h, the weekly scan at 8 days, an EAS build at 30 days). Red: failed, timed out, or could not start. Grey: no run on that branch. A group is the worst of its cells. If the API returns nothing for every workflow the script exits 1 and the last published page stands. `grow-with-freya/__tests__/config/ci-dashboard.test.ts` drives the rules with synthetic runs and checks the config names real workflows and that this file lists every watched workflow by name.
+
+**To watch another pipeline:** add it to `.github/ci-dashboard.json` and to the `workflow_run.workflows` list here, by its `name:`.
 
 ### 4. gateway-build.yml -Backend CI/CD
 

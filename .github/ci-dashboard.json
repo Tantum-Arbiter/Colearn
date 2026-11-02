@@ -1,0 +1,34 @@
+{
+  "title": "CoLearn pipelines",
+  "about": "What the dashboard on GitHub Pages watches. Each workflow shows its latest run per branch; a workflow may name its own branches, or \"any\" for a manual one that runs from wherever it was started. staleAfterHours turns a pass amber once it is older than that, so a nightly or weekly job that stopped running shows up.",
+  "branches": ["mvp", "main"],
+  "groups": [
+    {
+      "name": "Gateway to Cloud Run",
+      "workflows": [
+        { "file": "gateway-build.yml", "label": "Gateway image build, Cloud Run deploy, functional tests against it" },
+        { "file": "func-tests-build.yml", "label": "Functional-test image build and push" }
+      ]
+    },
+    {
+      "name": "Functional and backend checks",
+      "workflows": [
+        { "file": "backend-checks.yml", "label": "Gateway unit, slice and contract tests, func tests, security probes, CMS tooling" }
+      ]
+    },
+    {
+      "name": "App builds, iOS and Android",
+      "workflows": [
+        { "file": "grow-with-freya-ci-cd.yml", "label": "App pipeline: tests, lint, types, web build" },
+        { "file": "deploy-eas.yml", "label": "EAS store build (started by hand)", "branches": "any", "staleAfterHours": 720 },
+        { "file": "app-e2e-nightly.yml", "label": "Nightly journeys on iOS and Android", "branches": ["main"], "staleAfterHours": 36 }
+      ]
+    },
+    {
+      "name": "Security",
+      "workflows": [
+        { "file": "security-scan.yml", "label": "Weekly dependency, licence and code scan", "staleAfterHours": 192 }
+      ]
+    }
+  ]
+}
