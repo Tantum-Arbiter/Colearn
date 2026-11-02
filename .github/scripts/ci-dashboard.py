@@ -5,9 +5,10 @@ Reads .github/ci-dashboard.json for which workflows to watch, in which groups an
 which branches; takes each workflow's recent runs per branch from the Actions API
 (--fetch, with GITHUB_TOKEN and GITHUB_REPOSITORY) or from a JSON file (--runs, a
 map of workflow file to its runs, or to {runs, jobs, annotations}, for tests and
-offline use); writes index.html, status.json and history.json to --out. The page is
-what GitHub Pages serves; status.json holds the same facts for anything else that
-wants them.
+offline use); writes index.html, monitor.html, status.json and history.json to --out.
+index.html is the detailed page GitHub Pages serves; monitor.html is the wall view,
+one solid tile per workflow and branch in the manner of a Jenkins build monitor;
+status.json holds the same facts for anything else that wants them.
 
 history.json is the dashboard's memory: one compact record per run seen in the last
 90 days, keyed by run id. Each build reads the last build's copy back (--history, a
@@ -34,6 +35,7 @@ nothing, so the last published page stands.
 import argparse
 import html
 import json
+import math
 import os
 import re
 import statistics
@@ -422,7 +424,7 @@ def failed_jobs(source, run):
 
 def build_cell(branch, runs, error, now, workflow, source, trend):
     if error is not None:
-        return {"branch": branch, "state": "grey", "summary": f"unavailable ({error})", "run": None, "streak": 0, "streakAtLeast": False,
+        return {"branch": branch, "state": "grey", "word": "unavailable", "summary": f"unavailable ({error})", "run": None, "streak": 0, "streakAtLeast": False,
                 "lastSuccess": None, "history": {"total": 0, "passed": 0}, "medianDuration": "", "overdue": False, "failedJobs": [], "trends": trend}
     candidates = [run for run in runs if branch == "any" or run.get("head_branch") == branch]
     candidates.sort(key=lambda run: run.get("run_started_at") or run.get("created_at") or "", reverse=True)
@@ -443,6 +445,7 @@ def build_cell(branch, runs, error, now, workflow, source, trend):
     cell = {
         "branch": branch,
         "state": state,
+        "word": word,
         "summary": word,
         "run": None,
         "streak": streak,
@@ -706,6 +709,7 @@ a {{ color: inherit; }}
 .top {{ display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 16px; margin-bottom: 16px; }}
 .top .headline {{ font-size: 18px; font-weight: 600; }}
 .top .when {{ color: var(--muted); }}
+.top .switch {{ margin-left: auto; font-size: 14px; }}
 .state-green {{ --state: var(--green); --tint: var(--tint-green); }}
 .state-amber {{ --state: var(--amber); --tint: var(--tint-amber); }}
 .state-red {{ --state: var(--red); --tint: var(--tint-red); }}
@@ -749,6 +753,7 @@ footer {{ margin-top: 24px; color: var(--muted); font-size: 13px; }}
 <h1>{html.escape(status["title"])}</h1>
 <span class="headline"><span class="dot" aria-hidden="true">{ICON[overall]}</span> {html.escape(headline(counts))}</span>
 <span class="when">updated {generated} · this page reloads every 5 min; it is rebuilt when a pipeline runs, and hourly</span>
+<a class="switch" href="monitor.html">Wall monitor</a>
 </div>
 <div class="kpis">
 {render_kpis(status)}
@@ -760,6 +765,110 @@ footer {{ margin-top: 24px; color: var(--muted); font-size: 13px; }}
 Failed jobs quote the failure annotations GitHub kept; open the job for the full log, and the run page to rerun it.
 The trend line and the strip of the last 14 days come from <code>history.json</code> beside this page: every run of the last {HISTORY_DAYS} days, merged on each build.
 <a href="{html.escape(actions_url)}">All workflow runs</a> · built by <code>ci-dashboard.yml</code> from <code>.github/ci-dashboard.json</code>.</footer>
+</main>
+</body>
+</html>
+"""
+
+
+def render_tile(group_name, workflow, cell):
+    state = cell["state"]
+    run = cell["run"]
+    classes = ["tile", f"state-{state}"]
+    if run is not None and run["status"] != "completed":
+        classes.append("running")
+    if cell["overdue"]:
+        classes.append("overdue")
+    branch = cell["branch"] if cell["branch"] != "any" else "latest"
+    word, _, note = cell["word"].partition(", ")
+    parts = [
+        f'<section class="{" ".join(classes)}">',
+        f'<span class="group">{html.escape(group_name)}</span>',
+        f'<h2>{html.escape(workflow["label"])}</h2>',
+        f'<span class="state"><span class="dot" aria-hidden="true">{ICON[state]}</span> {html.escape(word)}</span>',
+    ]
+    if note:
+        parts.append(f'<span class="note">{html.escape(note)}</span>')
+    if run is not None:
+        where = f" on {html.escape(run['headBranch'])}" if cell["branch"] == "any" else ""
+        parts.append(f'<span class="run"><strong>{html.escape(branch)}</strong> · <a href="{html.escape(run["url"])}">run #{run["number"]}</a> · {html.escape(run["event"])}{where} · {html.escape(run["ago"])}</span>')
+        parts.append(f'<span class="title" title="{html.escape(run["title"])}">{html.escape(run["title"])}</span>')
+    else:
+        parts.append(f'<span class="run"><strong>{html.escape(branch)}</strong></span>')
+    if cell["streak"]:
+        last = cell["lastSuccess"]
+        since = f", last passed {html.escape(last['ago'])}" if last else ""
+        parts.append(f'<span class="streak">{cell["streak"]}{"+" if cell["streakAtLeast"] else ""} in a row{since}</span>')
+    for job in cell["failedJobs"][:1]:
+        steps = html.escape(" › ".join(job["steps"])) if job["steps"] else "no step named"
+        parts.append(f'<span class="failed"><a href="{html.escape(job["url"])}">{html.escape(job["name"])}</a> › {steps}</span>')
+    if cell["trends"]["runs"]:
+        parts.append(render_strip(cell["trends"]["days"]))
+    parts.append("</section>")
+    return "".join(parts)
+
+
+def render_monitor(status):
+    counts = status["counts"]
+    overall = worst([state for state in RANK if counts[state]] or ["grey"])
+    generated = parse_time(status["generatedAt"]).strftime("%H:%M UTC")
+    tiles = [render_tile(group["name"], workflow, cell) for group in status["groups"] for workflow in group["workflows"] for cell in workflow["cells"]]
+    columns = math.isqrt(len(tiles) - 1) + 1 if tiles else 1
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="refresh" content="60">
+<title>{html.escape(status["title"])} · wall</title>
+<style>
+:root {{ --columns: {columns}; color-scheme: dark; --bg: #121212; --ink: #ffffff; --dim: #bdbdb5;
+  --green: #178a17; --amber: #a86f00; --red: #c0392b; --grey: #4a4a46; }}
+* {{ box-sizing: border-box; }}
+html, body {{ height: 100%; }}
+body {{ margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.3 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; flex-direction: column; }}
+header {{ display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 18px; padding: 10px 16px; }}
+header h1, header .headline {{ font-size: clamp(16px, 1.6vw, 24px); margin: 0; }}
+header .headline {{ font-weight: 700; }}
+header .when, header a {{ color: var(--dim); font-size: 14px; }}
+header a {{ margin-left: auto; }}
+.state-green {{ --state: var(--green); }}
+.state-amber {{ --state: var(--amber); }}
+.state-red {{ --state: var(--red); }}
+.state-grey {{ --state: var(--grey); }}
+.dot {{ color: var(--state); }}
+.tiles {{ flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(var(--columns), minmax(0, 1fr)); grid-auto-rows: minmax(0, 1fr); gap: 10px; padding: 0 10px 10px; }}
+.tile {{ background: var(--state); color: var(--ink); border-radius: 14px; padding: clamp(10px, 1.1vw, 20px); display: flex; flex-direction: column; gap: 2px; min-width: 0; min-height: 0; overflow: hidden; }}
+.tile > * {{ flex-shrink: 0; }}
+.tile .dot {{ color: inherit; }}
+.tile .group {{ font-size: clamp(11px, 0.8vw, 14px); opacity: 0.8; text-transform: uppercase; letter-spacing: 0.05em; }}
+.tile h2 {{ margin: 0; font-size: clamp(16px, 1.6vw, 28px); line-height: 1.1; }}
+.tile .state {{ font-size: clamp(16px, 1.9vw, 34px); font-weight: 800; text-transform: uppercase; letter-spacing: 0.02em; line-height: 1.15; }}
+.tile .note {{ font-size: clamp(12px, 1vw, 18px); font-weight: 700; opacity: 0.9; }}
+.tile .run, .tile .title, .tile .streak, .tile .failed {{ font-size: clamp(12px, 1vw, 18px); }}
+.tile .title {{ opacity: 0.85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }}
+.tile .streak, .tile .failed {{ font-weight: 700; }}
+.tile a {{ color: inherit; }}
+.tile .days {{ display: flex; gap: 4px; margin-top: auto; padding: 5px 7px; border-radius: 8px; background: rgba(0, 0, 0, 0.28); font-size: clamp(10px, 0.9vw, 16px); line-height: 1; width: max-content; }}
+.tile .day.state-green {{ color: #8ee08e; }}
+.tile .day.state-amber {{ color: #ffd270; }}
+.tile .day.state-red {{ color: #ff9c9c; }}
+.tile .day.state-grey {{ color: #9a9a92; }}
+.running {{ animation: breathe 2.6s ease-in-out infinite; }}
+@keyframes breathe {{ 50% {{ filter: brightness(1.2); }} }}
+@media (prefers-reduced-motion: reduce) {{ .running {{ animation: none; }} }}
+@media (max-width: 720px) {{ html, body {{ height: auto; }} .tiles {{ grid-template-columns: minmax(0, 1fr); grid-auto-rows: auto; }} .tile {{ min-height: 150px; }} header a {{ margin-left: 0; }} }}
+</style>
+</head>
+<body>
+<header class="state-{overall}">
+<h1>{html.escape(status["title"])}</h1>
+<span class="headline"><span class="dot" aria-hidden="true">{ICON[overall]}</span> {html.escape(headline(counts))}</span>
+<span class="when">updated {generated} · reloads every minute</span>
+<a href="index.html">Details</a>
+</header>
+<main class="tiles">
+{"".join(tiles)}
 </main>
 </body>
 </html>
@@ -811,10 +920,12 @@ def main():
         out.write("\n")
     with open(os.path.join(args.out, "index.html"), "w", encoding="utf-8") as out:
         out.write(render_html(status, repository))
+    with open(os.path.join(args.out, "monitor.html"), "w", encoding="utf-8") as out:
+        out.write(render_monitor(status))
     with open(os.path.join(args.out, "history.json"), "w", encoding="utf-8") as out:
         json.dump(history, out, separators=(",", ":"))
         out.write("\n")
-    print(f"{headline(status['counts'])}; wrote {args.out}/index.html, status.json and history.json ({len(history['runs'])} runs over {HISTORY_DAYS} days)")
+    print(f"{headline(status['counts'])}; wrote {args.out}/index.html, monitor.html, status.json and history.json ({len(history['runs'])} runs over {HISTORY_DAYS} days)")
     return 0
 
 

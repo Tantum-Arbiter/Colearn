@@ -210,12 +210,14 @@ function build(cfg: Config, runs: Record<string, Recorded>, previous?: Previous)
 
   const statusPath = join(paths.out, 'status.json');
   const htmlPath = join(paths.out, 'index.html');
+  const monitorPath = join(paths.out, 'monitor.html');
   const historyPath = join(paths.out, 'history.json');
   return {
     status: result.status,
     output: `${result.stdout}${result.stderr}`,
     json: existsSync(statusPath) ? (JSON.parse(readFileSync(statusPath, 'utf8')) as Status) : null,
     html: existsSync(htmlPath) ? readFileSync(htmlPath, 'utf8') : '',
+    monitor: existsSync(monitorPath) ? readFileSync(monitorPath, 'utf8') : '',
     history: existsSync(historyPath) ? (JSON.parse(readFileSync(historyPath, 'utf8')) as History) : null,
   };
 }
@@ -815,6 +817,77 @@ describe('what the dashboard remembers', () => {
     expect(little.html).not.toContain('worst streak');
     expect(none.html).not.toContain('class="day ');
     expect(none.html).not.toContain('class="trend"');
+  });
+});
+
+describe('the wall monitor', () => {
+  const wall = config([
+    { name: 'Gateway', workflows: [{ ...gateway, branches: ['mvp'] }] },
+    { name: 'App', workflows: [{ ...eas, branches: ['mvp'] }, nightly] },
+  ]);
+  const failed = run('gateway-build.yml', 'mvp', { conclusion: 'failure', display_title: 'fix: <thing>', html_url: 'https://github.com/example/repo/actions/runs/777' });
+  const deploy = job(failed.id, 'Deploy', 'failure', ['Deploy to Cloud Run']);
+  const runs = {
+    'gateway-build.yml': { runs: [failed, run('gateway-build.yml', 'mvp', { conclusion: 'failure', run_started_at: '2026-11-01T11:00:00Z' })], jobs: { [failed.id]: [deploy] } },
+    'deploy-eas.yml': [run('deploy-eas.yml', 'mvp', { status: 'in_progress' as const, conclusion: null })],
+    'app-e2e-nightly.yml': [],
+  };
+
+  it('writes monitor.html with one tile per cell: the workflow, the branch, the state as colour, shape and word', () => {
+    const result = build(wall, runs);
+
+    expect(result.monitor.match(/class="tile state-/g)).toHaveLength(3);
+    expect(result.monitor).toContain('class="tile state-red"');
+    expect(result.monitor).toContain('Gateway build and deploy');
+    expect(result.monitor).toContain('■</span> failing</span>');
+    expect(result.monitor).toContain('class="tile state-amber running"');
+    expect(result.monitor).toContain('▲</span> running');
+    expect(result.monitor).toContain('class="tile state-amber overdue"');
+    expect(result.monitor).toContain('▲</span> never run</span>');
+    expect(result.monitor).toContain('<span class="note">overdue</span>');
+  });
+
+  it('says on a red tile how many in a row, what failed where, and links the run', () => {
+    const result = build(wall, runs);
+
+    expect(result.monitor).toContain('2 in a row');
+    expect(result.monitor).toContain(`<a href="${deploy.html_url}">Deploy</a> › Deploy to Cloud Run`);
+    expect(result.monitor).toContain('href="https://github.com/example/repo/actions/runs/777"');
+    expect(result.monitor).toContain('run #');
+    expect(result.monitor).toContain('&lt;thing&gt;');
+    expect(result.monitor).not.toContain('<thing>');
+  });
+
+  it('carries the 14-day strip onto every tile with history, and nothing onto one without', () => {
+    const result = build(wall, runs);
+
+    expect(result.monitor.match(/class="day state-/g)).toHaveLength(28);
+  });
+
+  it.each([
+    [1, 1],
+    [2, 2],
+    [4, 2],
+    [5, 3],
+    [9, 3],
+    [12, 4],
+    [13, 4],
+    [16, 4],
+    [17, 5],
+  ])('lays %s tiles out in %s columns', (cells, columns) => {
+    const workflows = Array.from({ length: cells }, (_, i) => ({ file: `w${i}.yml`, label: `W${i}`, branches: ['mvp'] }));
+
+    const result = build(config([{ name: 'All', workflows }]), Object.fromEntries(workflows.map((w) => [w.file, []])));
+
+    expect(result.monitor).toContain(`--columns: ${columns};`);
+  });
+
+  it('shares the headline with the detailed page, and each page links the other', () => {
+    const result = build(wall, runs);
+
+    expect(result.monitor).toContain('1 failing, 2 need attention');
+    expect(result.monitor).toContain('href="index.html"');
+    expect(result.html).toContain('href="monitor.html"');
   });
 });
 
