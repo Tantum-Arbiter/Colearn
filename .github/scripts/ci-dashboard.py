@@ -5,8 +5,19 @@ Reads .github/ci-dashboard.json for which workflows to watch, in which groups an
 which branches; takes each workflow's recent runs per branch from the Actions API
 (--fetch, with GITHUB_TOKEN and GITHUB_REPOSITORY) or from a JSON file (--runs, a
 map of workflow file to its runs, or to {runs, jobs, annotations}, for tests and
-offline use); writes index.html and status.json to --out. The page is what GitHub
-Pages serves; status.json holds the same facts for anything else that wants them.
+offline use); writes index.html, status.json and history.json to --out. The page is
+what GitHub Pages serves; status.json holds the same facts for anything else that
+wants them.
+
+history.json is the dashboard's memory: one compact record per run seen in the last
+90 days, keyed by run id. Each build reads the last build's copy back (--history, a
+file; else {pagesUrl}/history.json from the config, else the repository's github.io
+page when fetching), merges in every run fetched this time, drops what is older than
+90 days, and publishes the result beside the page. When the previous copy is missing
+or unreadable the build says so on stderr and starts from what it fetched. From that
+history each cell gets trends: the success rate over 7, 30 and 90 days (only once
+three completed runs fall in a window), the median and 95th-percentile duration over
+30 days, the longest failure streak in 90 days with its dates, and a 14-day strip.
 
 green: the latest run passed, and recently enough where staleAfterHours is set.
 amber: running or queued, cancelled or skipped, a pass older than its threshold, or
@@ -27,10 +38,11 @@ import os
 import re
 import statistics
 import sys
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 
 RANK = {"grey": 0, "green": 1, "amber": 2, "red": 3}
 ICON = {"green": "●", "amber": "▲", "red": "■", "grey": "○"}
@@ -39,6 +51,11 @@ RUNNING = {"in_progress": "running", "queued": "queued", "waiting": "waiting", "
 FAILED = {"failure": "failing", "timed_out": "timed out", "startup_failure": "could not start"}
 PAUSED = {"cancelled": "cancelled", "skipped": "skipped", "action_required": "needs approval", "neutral": "neutral", "stale": "stale"}
 RECENT_RUNS = 30
+HISTORY_DAYS = 90
+RATE_WINDOWS = (7, 30, 90)
+MIN_RUNS_FOR_RATE = 3
+DURATION_WINDOW = 30
+STRIP_DAYS = 14
 MESSAGES_PER_JOB = 3
 MESSAGE_LENGTH = 200
 LOG_WINDOW = 60
@@ -189,6 +206,140 @@ class RecordedSource:
         return self.annotations_by_job.get(str(job_id), [])
 
 
+def fetch_json(url):
+    """A JSON document from the page (or a file:// URL in tests), retried once on a server error."""
+    web = url.startswith("http")
+    target = f"{url}?{int(time.time())}" if web else url
+    headers = {"User-Agent": "colearn-ci-dashboard", "Cache-Control": "no-cache"} if web else {}
+    failure = ""
+    for attempt in range(2):
+        if attempt:
+            time.sleep(3)
+        try:
+            with urllib.request.urlopen(urllib.request.Request(target, headers=headers), timeout=30) as response:
+                return json.load(response), None
+        except urllib.error.HTTPError as error:
+            failure = f"HTTP {error.code}"
+            if error.code < 500:
+                break
+        except TimeoutError as error:
+            failure = f"timed out ({error})"
+        except (urllib.error.URLError, ValueError, OSError) as error:
+            failure = str(error)
+            break
+    return None, failure
+
+
+def read_previous(history_path, config, repository, fetching):
+    """The history.json the last build published, or why there is none to start from."""
+    if history_path:
+        where = history_path
+        try:
+            with open(history_path, encoding="utf-8") as src:
+                body = json.load(src)
+        except (OSError, ValueError) as error:
+            return None, f"{where} could not be read ({error})"
+    else:
+        base = config.get("pagesUrl")
+        if not base and fetching and "/" in repository:
+            owner, name = repository.split("/", 1)
+            base = f"https://{owner}.github.io/{name}/"
+        if not isinstance(base, str) or not base:
+            return None, "none was named (give --history, or pagesUrl in the config)"
+        where = base.rstrip("/") + "/history.json"
+        body, failure = fetch_json(where)
+        if failure:
+            return None, f"{where} could not be read ({failure})"
+    if not isinstance(body, dict) or not isinstance(body.get("runs"), dict):
+        return None, f"{where} is not a history file"
+    return body, None
+
+
+def dated(record):
+    try:
+        return parse_time(record["startedAt"])
+    except (KeyError, TypeError, ValueError):
+        return None
+
+
+def history_record(workflow_file, run):
+    started = run.get("run_started_at") or run.get("created_at")
+    if not started or run.get("id") is None:
+        return None
+    return {
+        "workflow": workflow_file,
+        "branch": run.get("head_branch", ""),
+        "event": run.get("event", ""),
+        "conclusion": run.get("conclusion") if run.get("status") == "completed" else None,
+        "startedAt": started,
+        "duration": duration_seconds(run),
+        "number": run.get("run_number"),
+        "url": run.get("html_url", ""),
+    }
+
+
+def merge_history(previous, fetched, now):
+    """Every run seen in the last 90 days, what this build fetched winning over what the last one kept."""
+    runs = {str(run_id): record for run_id, record in (previous or {}).get("runs", {}).items() if isinstance(record, dict) and dated(record)}
+    for workflow_file, run in fetched:
+        record = history_record(workflow_file, run)
+        if record is not None:
+            runs[str(run["id"])] = record
+    cutoff = now - timedelta(days=HISTORY_DAYS)
+    kept = sorted(((run_id, record) for run_id, record in runs.items() if dated(record) >= cutoff), key=lambda item: item[1]["startedAt"])
+    return {"keptDays": HISTORY_DAYS, "updatedAt": format_time(now), "runs": dict(kept)}
+
+
+def day_state(record):
+    conclusion = record.get("conclusion")
+    if conclusion is None:
+        return "amber"
+    if conclusion == "success":
+        return "green"
+    return "red" if conclusion in FAILED else "amber"
+
+
+def trends(history, workflow_file, branch, now):
+    """What the history says about one workflow on one branch."""
+    stamped = sorted(
+        ((dated(record), record) for record in history["runs"].values() if record.get("workflow") == workflow_file and (branch == "any" or record.get("branch") == branch)),
+        key=lambda pair: pair[0],
+    )
+
+    def within(days):
+        cutoff = now - timedelta(days=days)
+        return [record for when, record in stamped if when >= cutoff]
+
+    rates = {}
+    for days in RATE_WINDOWS:
+        completed = [record for record in within(days) if record.get("conclusion") is not None]
+        passed = sum(1 for record in completed if record["conclusion"] == "success")
+        rates[str(days)] = {"passed": passed, "total": len(completed), "percent": round(100 * passed / len(completed))} if len(completed) >= MIN_RUNS_FOR_RATE else None
+
+    durations = sorted(record["duration"] for record in within(DURATION_WINDOW) if isinstance(record.get("duration"), (int, float)))
+    duration = {"runs": len(durations), "median": int(statistics.median(durations)), "p95": int(durations[(95 * len(durations) + 99) // 100 - 1])} if durations else None
+
+    longest, current = None, None
+    for when, record in stamped:
+        conclusion = record.get("conclusion")
+        if conclusion in FAILED:
+            day = when.date().isoformat()
+            current = {"runs": current["runs"] + 1, "from": current["from"], "to": day} if current else {"runs": 1, "from": day, "to": day}
+            if longest is None or current["runs"] > longest["runs"]:
+                longest = current
+        elif conclusion == "success":
+            current = None
+
+    today = now.date()
+    days = []
+    for offset in range(STRIP_DAYS - 1, -1, -1):
+        day = today - timedelta(days=offset)
+        on_day = [record for when, record in stamped if when.date() == day]
+        days.append({"date": day.isoformat(), "state": worst([day_state(record) for record in on_day]), "runs": len(on_day)})
+
+    return {"runs": len(stamped), "successRate": rates, "duration": duration, "longestStreak": longest, "days": days}
+
+
 def classify(run, now, stale_after_hours):
     if run is None:
         return ("amber", "never run, overdue") if stale_after_hours else ("grey", "never run")
@@ -269,10 +420,10 @@ def failed_jobs(source, run):
     return found
 
 
-def build_cell(branch, runs, error, now, workflow, source):
+def build_cell(branch, runs, error, now, workflow, source, trend):
     if error is not None:
         return {"branch": branch, "state": "grey", "summary": f"unavailable ({error})", "run": None, "streak": 0, "streakAtLeast": False,
-                "lastSuccess": None, "history": {"total": 0, "passed": 0}, "medianDuration": "", "overdue": False, "failedJobs": []}
+                "lastSuccess": None, "history": {"total": 0, "passed": 0}, "medianDuration": "", "overdue": False, "failedJobs": [], "trends": trend}
     candidates = [run for run in runs if branch == "any" or run.get("head_branch") == branch]
     candidates.sort(key=lambda run: run.get("run_started_at") or run.get("created_at") or "", reverse=True)
     latest = candidates[0] if candidates else None
@@ -301,6 +452,7 @@ def build_cell(branch, runs, error, now, workflow, source):
         "medianDuration": format_duration(int(statistics.median(durations))) if durations else "",
         "overdue": word.endswith("overdue"),
         "failedJobs": failed_jobs(source, latest),
+        "trends": trend,
     }
     if latest is not None:
         described = describe_run(latest, now)
@@ -314,11 +466,12 @@ def worst(states):
     return max(states, key=lambda state: RANK[state]) if states else "grey"
 
 
-def build_status(config, source, now):
+def plan(config):
+    """The groups, their workflows and the branches each is watched on, once the config is known to be sound."""
     default_branches = config.get("branches")
     if not isinstance(default_branches, list) or not default_branches:
         raise Unusable("the config names no branches")
-    groups = []
+    planned = []
     for group in config.get("groups", []):
         workflows = []
         for workflow in group.get("workflows", []):
@@ -327,11 +480,23 @@ def build_status(config, source, now):
             if not isinstance(workflow.get("blocks", ""), str) or not isinstance(workflow.get("blocking", False), bool):
                 raise Unusable(f"{workflow['file']}: 'blocks' must be text and 'blocking' true or false")
             branches = workflow.get("branches", default_branches)
-            branches = ["any"] if branches == "any" else branches
-            cells = []
-            for branch in branches:
-                runs, error = source.runs(workflow["file"], branch)
-                cells.append(build_cell(branch, runs, error, now, workflow, source))
+            workflows.append((workflow, ["any"] if branches == "any" else branches))
+        planned.append((group, workflows))
+    return planned
+
+
+def build_status(config, source, now, previous):
+    planned = plan(config)
+    fetched = {(workflow["file"], branch): source.runs(workflow["file"], branch) for _, workflows in planned for workflow, branches in workflows for branch in branches}
+    history = merge_history(previous, [(file, run) for (file, _), (runs, _) in fetched.items() for run in runs or []], now)
+    groups = []
+    for group, planned_workflows in planned:
+        workflows = []
+        for workflow, branches in planned_workflows:
+            cells = [
+                build_cell(branch, *fetched[(workflow["file"], branch)], now, workflow, source, trends(history, workflow["file"], branch, now))
+                for branch in branches
+            ]
             workflows.append(
                 {
                     "file": workflow["file"],
@@ -343,7 +508,8 @@ def build_status(config, source, now):
                 }
             )
         groups.append({"name": group.get("name", ""), "state": worst([w["state"] for w in workflows]), "workflows": workflows})
-    return {"title": config.get("title", "Pipelines"), "generatedAt": format_time(now), "counts": count_states(groups), "kpis": kpis(groups), "groups": groups}
+    status = {"title": config.get("title", "Pipelines"), "generatedAt": format_time(now), "counts": count_states(groups), "kpis": kpis(groups), "groups": groups}
+    return status, history
 
 
 def every_cell(groups):
@@ -423,6 +589,39 @@ def render_kpis(status):
     )
 
 
+def span(first, last):
+    start, end = date.fromisoformat(first), date.fromisoformat(last)
+    if start == end:
+        return f"{start:%-d %b}"
+    if (start.year, start.month) == (end.year, end.month):
+        return f"{start:%-d}–{end:%-d %b}"
+    return f"{start:%-d %b}–{end:%-d %b}"
+
+
+def trend_line(trend):
+    parts = []
+    for days in RATE_WINDOWS:
+        rate = trend["successRate"][str(days)]
+        if rate:
+            parts.append(f"{days} d: {rate['passed']} of {rate['total']}{'' if parts else ' passed'}, {rate['percent']}%")
+    if not parts:
+        parts.append(f"fewer than {MIN_RUNS_FOR_RATE} runs in {HISTORY_DAYS} d, no rate yet")
+    if trend["duration"]:
+        parts.append(f"median {format_duration(trend['duration']['median'])}, p95 {format_duration(trend['duration']['p95'])} over {DURATION_WINDOW} d")
+    streak = trend["longestStreak"]
+    if streak and streak["runs"] > 1:
+        parts.append(f"worst streak {streak['runs']}, {span(streak['from'], streak['to'])}")
+    return " · ".join(parts)
+
+
+def render_strip(days):
+    squares = []
+    for day in days:
+        runs = f", {day['runs']} run{'s' if day['runs'] != 1 else ''}" if day["runs"] else ""
+        squares.append(f'<span class="day state-{day["state"]}" title="{day["date"]}: {WORD[day["state"]]}{runs}">{ICON[day["state"]]}</span>')
+    return f'<span class="days" aria-label="the last {len(days)} days, oldest first">{"".join(squares)}</span>'
+
+
 def render_cell(cell):
     state = cell["state"]
     run = cell["run"]
@@ -456,6 +655,9 @@ def render_cell(cell):
             parts.append(f'<span class="failed">Failed: <a href="{html.escape(job["url"])}">{html.escape(job["name"])}</a> › {steps}</span>')
             if job["messages"]:
                 parts.append("<pre>" + "\n".join(html.escape(message) for message in job["messages"]) + "</pre>")
+    if cell["trends"]["runs"]:
+        parts.append(f'<span class="trend">{html.escape(trend_line(cell["trends"]))}</span>')
+        parts.append(render_strip(cell["trends"]["days"]))
     parts.append("</div>")
     return "".join(parts)
 
@@ -529,7 +731,10 @@ a {{ color: inherit; }}
 .cell {{ display: grid; grid-template-columns: auto auto 1fr; gap: 2px 8px; align-items: baseline; padding: 6px 10px; border-radius: 8px; background: var(--tint); }}
 .cell .branch {{ font-weight: 600; font-size: 13px; }}
 .cell .summary {{ font-size: 13px; }}
-.cell .run, .cell .meta, .cell .streak, .cell .failed, .cell pre {{ grid-column: 2 / span 2; font-size: 12px; }}
+.cell .run, .cell .meta, .cell .streak, .cell .failed, .cell .trend, .cell .days, .cell pre {{ grid-column: 2 / span 2; font-size: 12px; }}
+.cell .trend {{ color: var(--muted); }}
+.cell .days {{ display: flex; gap: 3px; font-size: 11px; line-height: 1; padding-top: 2px; }}
+.cell .day {{ color: var(--state); }}
 .cell .run {{ color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }}
 .cell .meta {{ color: var(--muted); }}
 .cell .streak {{ font-weight: 600; }}
@@ -553,6 +758,7 @@ footer {{ margin-top: 24px; color: var(--muted); font-size: 13px; }}
 </div>
 <footer>Green: latest run passed. Amber: running, cancelled, a pass older than its threshold, or a scheduled job that is overdue. Red: failed or could not start. Grey: never run on that branch.
 Failed jobs quote the failure annotations GitHub kept; open the job for the full log, and the run page to rerun it.
+The trend line and the strip of the last 14 days come from <code>history.json</code> beside this page: every run of the last {HISTORY_DAYS} days, merged on each build.
 <a href="{html.escape(actions_url)}">All workflow runs</a> · built by <code>ci-dashboard.yml</code> from <code>.github/ci-dashboard.json</code>.</footer>
 </main>
 </body>
@@ -566,6 +772,7 @@ def main():
     parser.add_argument("--out", required=True)
     parser.add_argument("--runs", help="JSON map of workflow file to its runs, instead of the API")
     parser.add_argument("--fetch", action="store_true", help="read runs from the Actions API")
+    parser.add_argument("--history", help="the last build's history.json, instead of reading it back from the page")
     parser.add_argument("--now", help="the current time, YYYY-MM-DDTHH:MM:SSZ")
     args = parser.parse_args()
 
@@ -582,7 +789,10 @@ def main():
             source = RecordedSource(load_json(args.runs, "runs file"))
         else:
             raise Unusable("give --fetch or --runs")
-        status = build_status(config, source, now)
+        previous, missing = read_previous(args.history, config, repository, args.fetch)
+        if missing:
+            print(f"No previous history: {missing}; history.json starts from this build's runs.", file=sys.stderr)
+        status, history = build_status(config, source, now, previous)
     except Unusable as error:
         print(f"The dashboard could not be built: {error}.", file=sys.stderr)
         return 2
@@ -601,7 +811,10 @@ def main():
         out.write("\n")
     with open(os.path.join(args.out, "index.html"), "w", encoding="utf-8") as out:
         out.write(render_html(status, repository))
-    print(f"{headline(status['counts'])}; wrote {args.out}/index.html and status.json")
+    with open(os.path.join(args.out, "history.json"), "w", encoding="utf-8") as out:
+        json.dump(history, out, separators=(",", ":"))
+        out.write("\n")
+    print(f"{headline(status['counts'])}; wrote {args.out}/index.html, status.json and history.json ({len(history['runs'])} runs over {HISTORY_DAYS} days)")
     return 0
 
 

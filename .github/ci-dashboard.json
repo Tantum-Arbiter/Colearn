@@ -1,6 +1,7 @@
 {
   "title": "CoLearn pipelines",
-  "about": "What the dashboard on GitHub Pages watches. Each workflow shows its latest run per branch, with the failed jobs and steps, the failure streak and the last pass behind a red one; a workflow may name its own branches, or \"any\" for a manual one that runs from wherever it was started. staleAfterHours turns a pass amber once it is older than that and marks a workflow overdue when nothing ran within it. blocks says, in words, what a failure stops; blocking says whether something downstream actually waits on it.",
+  "about": "What the dashboard on GitHub Pages watches. Each workflow shows its latest run per branch, with the failed jobs and steps, the failure streak and the last pass behind a red one; a workflow may name its own branches, or \"any\" for a manual one that runs from wherever it was started. staleAfterHours turns a pass amber once it is older than that and marks a workflow overdue when nothing ran within it. blocks says, in words, what a failure stops; blocking says whether something downstream actually waits on it. pagesUrl is where the page is served; each build reads history.json back from there, merges in the runs it fetched, and keeps 90 days.",
+  "pagesUrl": "https://tantum-arbiter.github.io/Colearn/",
   "branches": ["mvp", "main"],
   "groups": [
     {

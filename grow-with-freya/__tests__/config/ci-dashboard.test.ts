@@ -56,7 +56,29 @@ type Recorded =
 
 type Workflow = { file: string; label: string; staleAfterHours?: number; branches?: string[] | 'any'; blocks?: string; blocking?: boolean };
 type Group = { name: string; workflows: Workflow[] };
-type Config = { title: string; branches: string[]; groups: Group[] };
+type Config = { title: string; branches: string[]; groups: Group[]; pagesUrl?: string };
+
+type HistoryRecord = {
+  workflow: string;
+  branch: string;
+  event: string;
+  conclusion: string | null;
+  startedAt: string;
+  duration: number | null;
+  number: number;
+  url: string;
+};
+type History = { keptDays: number; updatedAt: string; runs: Record<string, HistoryRecord> };
+type Previous = History | { raw: string } | 'missing';
+
+type Rate = { passed: number; total: number; percent: number } | null;
+type Trends = {
+  runs: number;
+  successRate: { '7': Rate; '30': Rate; '90': Rate };
+  duration: { runs: number; median: number; p95: number } | null;
+  longestStreak: { runs: number; from: string; to: string } | null;
+  days: { date: string; state: 'green' | 'amber' | 'red' | 'grey'; runs: number }[];
+};
 
 type Cell = {
   branch: string;
@@ -70,6 +92,7 @@ type Cell = {
   medianDuration: string;
   overdue: boolean;
   failedJobs: { name: string; url: string; steps: string[]; messages: string[] }[];
+  trends: Trends;
 };
 type Status = {
   generatedAt: string;
@@ -143,23 +166,57 @@ function config(groups: Group[], branches = ['mvp', 'main']): Config {
   return { title: 'Pipelines', branches, groups };
 }
 
-function build(cfg: Config, runs: Record<string, Recorded>) {
+function record(
+  file: string,
+  branch: string,
+  daysAgo: number,
+  conclusion: string | null = 'success',
+  overrides: Partial<HistoryRecord> & { id?: number } = {}
+): [string, HistoryRecord] {
+  const { id = nextId++, ...fields } = overrides;
+  const startedAt = new Date(Date.parse(NOW) - Math.round(daysAgo * 86400000)).toISOString().replace('.000Z', 'Z');
+  return [
+    String(id),
+    {
+      workflow: file,
+      branch,
+      event: 'push',
+      conclusion,
+      startedAt,
+      duration: conclusion === null ? null : 240,
+      number: id,
+      url: `https://github.com/example/repo/actions/runs/${id}`,
+      ...fields,
+    },
+  ];
+}
+
+function history(records: [string, HistoryRecord][]): History {
+  return { keptDays: 90, updatedAt: '2026-11-01T12:00:00Z', runs: Object.fromEntries(records) };
+}
+
+function build(cfg: Config, runs: Record<string, Recorded>, previous?: Previous) {
   const dir = mkdtempSync(join(tmpdir(), 'ci-dashboard-'));
-  const paths = { config: join(dir, 'config.json'), runs: join(dir, 'runs.json'), out: join(dir, 'site') };
+  const paths = { config: join(dir, 'config.json'), runs: join(dir, 'runs.json'), history: join(dir, 'previous.json'), out: join(dir, 'site') };
   writeFileSync(paths.config, JSON.stringify(cfg));
   writeFileSync(paths.runs, JSON.stringify(runs));
+  const args = [SCRIPT, '--config', paths.config, '--runs', paths.runs, '--now', NOW, '--out', paths.out];
+  if (previous) {
+    if (previous !== 'missing') writeFileSync(paths.history, 'raw' in previous ? previous.raw : JSON.stringify(previous));
+    args.push('--history', paths.history);
+  }
 
-  const result = spawnSync('python3', [SCRIPT, '--config', paths.config, '--runs', paths.runs, '--now', NOW, '--out', paths.out], {
-    encoding: 'utf8',
-  });
+  const result = spawnSync('python3', args, { encoding: 'utf8' });
 
   const statusPath = join(paths.out, 'status.json');
   const htmlPath = join(paths.out, 'index.html');
+  const historyPath = join(paths.out, 'history.json');
   return {
     status: result.status,
     output: `${result.stdout}${result.stderr}`,
     json: existsSync(statusPath) ? (JSON.parse(readFileSync(statusPath, 'utf8')) as Status) : null,
     html: existsSync(htmlPath) ? readFileSync(htmlPath, 'utf8') : '',
+    history: existsSync(historyPath) ? (JSON.parse(readFileSync(historyPath, 'utf8')) as History) : null,
   };
 }
 
@@ -532,6 +589,235 @@ describe('what the dashboard says about a failure', () => {
   });
 });
 
+describe('what the dashboard remembers', () => {
+  const watched = config([{ name: 'Gateway', workflows: [{ ...gateway, branches: ['mvp'] }] }]);
+  const spec = (runs: [number, string | null][]) => history(runs.map(([daysAgo, conclusion]) => record('gateway-build.yml', 'mvp', daysAgo, conclusion)));
+  const trendsAfter = (previous: History, fetched: Recorded = []) => cell(build(watched, { 'gateway-build.yml': fetched }, previous), 'gateway-build.yml', 'mvp').trends;
+
+  it('publishes history.json with one compact record per run it fetched', () => {
+    const done = run('gateway-build.yml', 'mvp');
+    const going = run('gateway-build.yml', 'mvp', { status: 'in_progress', conclusion: null, run_started_at: '2026-11-02T11:50:00Z', event: 'schedule' });
+
+    const result = build(watched, { 'gateway-build.yml': [done, going] });
+
+    expect(result.history).toEqual({
+      keptDays: 90,
+      updatedAt: NOW,
+      runs: {
+        [done.id]: {
+          workflow: 'gateway-build.yml',
+          branch: 'mvp',
+          event: 'push',
+          conclusion: 'success',
+          startedAt: '2026-11-02T11:00:00Z',
+          duration: 240,
+          number: done.run_number,
+          url: done.html_url,
+        },
+        [going.id]: {
+          workflow: 'gateway-build.yml',
+          branch: 'mvp',
+          event: 'schedule',
+          conclusion: null,
+          startedAt: '2026-11-02T11:50:00Z',
+          duration: null,
+          number: going.run_number,
+          url: going.html_url,
+        },
+      },
+    });
+    expect(result.output).toContain('starts from this build');
+  });
+
+  it('keeps what it fetched this time for a run it had already seen, and everything else it knew', () => {
+    const finished = run('gateway-build.yml', 'mvp');
+    const older = record('gateway-build.yml', 'mvp', 40, 'failure');
+    const previous = history([record('gateway-build.yml', 'mvp', 0.1, null, { id: finished.id }), older]);
+
+    const result = build(watched, { 'gateway-build.yml': [finished] }, previous);
+
+    expect(result.history!.runs[finished.id]).toMatchObject({ conclusion: 'success', duration: 240 });
+    expect(result.history!.runs[older[0]]).toEqual(older[1]);
+    expect(Object.keys(result.history!.runs)).toHaveLength(2);
+    expect(result.output).not.toContain('starts from this build');
+  });
+
+  it.each([
+    ['inside', 89.9, true],
+    ['past', 90.1, false],
+  ])('keeps a record %s the 90-day window: %s days old', (_, daysAgo, kept) => {
+    const old = record('gateway-build.yml', 'mvp', daysAgo);
+
+    const result = build(watched, { 'gateway-build.yml': [run('gateway-build.yml', 'mvp')] }, history([old]));
+
+    expect(old[0] in result.history!.runs).toBe(kept);
+  });
+
+  it.each<[string, Previous]>([
+    ['missing', 'missing'],
+    ['not JSON', { raw: '{not json' }],
+    ['the wrong shape', { raw: '[1, 2, 3]' }],
+    ['without its runs', { raw: '{"keptDays": 90, "runs": "none"}' }],
+  ])('starts from this build when the previous history is %s, and says so', (_, previous) => {
+    const fetched = run('gateway-build.yml', 'mvp');
+
+    const result = build(watched, { 'gateway-build.yml': [fetched] }, previous);
+
+    expect(result.status).toBe(0);
+    expect(Object.keys(result.history!.runs)).toEqual([String(fetched.id)]);
+    expect(result.output).toContain('starts from this build');
+  });
+
+  it('skips a record it cannot date and keeps the rest', () => {
+    const good = record('gateway-build.yml', 'mvp', 3);
+    const previous = { ...history([good]), runs: { ...history([good]).runs, '9999': { workflow: 'gateway-build.yml' }, '9998': 'what' } };
+
+    const result = build(watched, { 'gateway-build.yml': [] }, previous as unknown as History);
+
+    expect(Object.keys(result.history!.runs)).toEqual([good[0]]);
+  });
+
+  it('reads the previous history back from the published page when no file is given', () => {
+    const pages = mkdtempSync(join(tmpdir(), 'ci-dashboard-pages-'));
+    const older = record('gateway-build.yml', 'mvp', 3, 'failure');
+    writeFileSync(join(pages, 'history.json'), JSON.stringify(history([older])));
+
+    const result = build({ ...watched, pagesUrl: `file://${pages}/` }, { 'gateway-build.yml': [run('gateway-build.yml', 'mvp')] });
+
+    expect(result.history!.runs[older[0]]).toEqual(older[1]);
+    expect(Object.keys(result.history!.runs)).toHaveLength(2);
+  });
+
+  it('carries on when the page has no history yet', () => {
+    const pages = mkdtempSync(join(tmpdir(), 'ci-dashboard-pages-'));
+
+    const result = build({ ...watched, pagesUrl: `file://${pages}/` }, { 'gateway-build.yml': [run('gateway-build.yml', 'mvp')] });
+
+    expect(result.status).toBe(0);
+    expect(result.output).toContain('starts from this build');
+    expect(Object.keys(result.history!.runs)).toHaveLength(1);
+  });
+
+  const third = { passed: 2, total: 3, percent: 67 };
+  it.each<[string, [number, string | null][], Trends['successRate']]>([
+    ['two runs are too few for a rate', [[1, 'success'], [2, 'success']], { '7': null, '30': null, '90': null }],
+    ['three runs this week', [[1, 'success'], [2, 'failure'], [3, 'success']], { '7': third, '30': third, '90': third }],
+    [
+      'a bad week after a good quarter',
+      [[1, 'failure'], [2, 'failure'], [3, 'success'], [10, 'success'], [12, 'success'], [20, 'success'], [40, 'success'], [60, 'success'], [80, 'success']],
+      { '7': { passed: 1, total: 3, percent: 33 }, '30': { passed: 4, total: 6, percent: 67 }, '90': { passed: 7, total: 9, percent: 78 } },
+    ],
+    [
+      'a run exactly seven days ago, which counts for the week',
+      [[7, 'failure'], [8, 'failure'], [1, 'success'], [2, 'success']],
+      { '7': third, '30': { passed: 2, total: 4, percent: 50 }, '90': { passed: 2, total: 4, percent: 50 } },
+    ],
+    ['a run still going, which does not count, and a cancelled one, which counts against', [[1, null], [2, 'cancelled'], [3, 'success'], [4, 'success']], { '7': third, '30': third, '90': third }],
+  ])('rates the last 7, 30 and 90 days: %s', (_, runs, expected) => {
+    expect(trendsAfter(spec(runs)).successRate).toEqual(expected);
+  });
+
+  it('reports the median and 95th-percentile duration over 30 days, unfinished and older runs left out', () => {
+    const minutes = [30, 9, 8, 7, 6, 5, 4, 3, 2, 1];
+    const month = minutes.map((n, i) => record('gateway-build.yml', 'mvp', i + 1, 'success', { duration: 60 * n }));
+    const previous = history([...month, record('gateway-build.yml', 'mvp', 31, 'success', { duration: 6000 }), record('gateway-build.yml', 'mvp', 0.5, null)]);
+
+    expect(trendsAfter(previous).duration).toEqual({ runs: 10, median: 330, p95: 1800 });
+    expect(trendsAfter(spec([[1, null]])).duration).toBeNull();
+  });
+
+  it.each<[string, [number, string | null][], Trends['longestStreak']]>([
+    ['no failures', [[1, 'success'], [2, 'cancelled']], null],
+    [
+      'three failures with a cancelled run between them, before a pass',
+      [[20, 'success'], [15, 'failure'], [14, 'cancelled'], [13, 'failure'], [12, 'timed_out'], [11, 'success'], [5, 'failure'], [4, 'failure'], [3, 'success']],
+      { runs: 3, from: '2026-10-18', to: '2026-10-21' },
+    ],
+    [
+      'the streak still running',
+      [[12, 'success'], [11, 'failure'], [10, 'failure'], [5, 'success'], [4, 'failure'], [3, 'failure'], [2, 'startup_failure'], [1, 'failure']],
+      { runs: 4, from: '2026-10-29', to: '2026-11-01' },
+    ],
+  ])('finds the longest failure streak in 90 days: %s', (_, runs, expected) => {
+    expect(trendsAfter(spec(runs)).longestStreak).toEqual(expected);
+  });
+
+  it('paints the last 14 days by the worst run each day', () => {
+    const days = trendsAfter(spec([[14, 'failure'], [13, 'success'], [5.2, 'success'], [5.1, 'failure'], [2, 'cancelled'], [0.9, null], [0.1, 'success']])).days;
+    const on = (date: string) => days.find((day) => day.date === date);
+
+    expect(days).toHaveLength(14);
+    expect(days[0]).toEqual({ date: '2026-10-20', state: 'green', runs: 1 });
+    expect(days[13].date).toBe('2026-11-02');
+    expect(on('2026-10-19')).toBeUndefined();
+    expect(on('2026-10-25')).toEqual({ date: '2026-10-25', state: 'grey', runs: 0 });
+    expect(on('2026-10-28')).toEqual({ date: '2026-10-28', state: 'red', runs: 2 });
+    expect(on('2026-10-31')).toEqual({ date: '2026-10-31', state: 'amber', runs: 1 });
+    expect(on('2026-11-01')).toEqual({ date: '2026-11-01', state: 'amber', runs: 1 });
+    expect(on('2026-11-02')).toEqual({ date: '2026-11-02', state: 'green', runs: 1 });
+  });
+
+  it('counts the runs it fetched this time alongside the history', () => {
+    const trends = trendsAfter(spec([[1, 'success'], [2, 'success']]), [run('gateway-build.yml', 'mvp', { conclusion: 'failure' })]);
+
+    expect(trends).toMatchObject({ runs: 3, successRate: { '7': { passed: 2, total: 3, percent: 67 } }, longestStreak: { runs: 1, from: '2026-11-02', to: '2026-11-02' } });
+  });
+
+  it('keeps each branch to its own runs, and counts every branch for a workflow watched on any', () => {
+    const previous = history([
+      record('gateway-build.yml', 'mvp', 1),
+      record('gateway-build.yml', 'mvp', 2),
+      record('gateway-build.yml', 'mvp', 3),
+      record('gateway-build.yml', 'main', 1, 'failure'),
+      record('deploy-eas.yml', 'release/1.2', 1),
+      record('deploy-eas.yml', 'mvp', 2, 'failure'),
+      record('deploy-eas.yml', 'main', 3),
+    ]);
+
+    const result = build(config([{ name: 'All', workflows: [gateway, eas] }]), { 'gateway-build.yml': [], 'deploy-eas.yml': [] }, previous);
+
+    expect(cell(result, 'gateway-build.yml', 'mvp').trends.successRate['7']).toEqual({ passed: 3, total: 3, percent: 100 });
+    expect(cell(result, 'gateway-build.yml', 'main').trends).toMatchObject({ runs: 1, successRate: { '7': null } });
+    expect(cell(result, 'deploy-eas.yml', 'any').trends.successRate['7']).toEqual(third);
+  });
+
+  it('still shows the trend when the API would not answer this time', () => {
+    const both = config([{ name: 'All', workflows: [{ ...gateway, branches: ['mvp'] }, { ...eas, branches: ['mvp'] }] }]);
+
+    const result = build(both, { 'gateway-build.yml': { error: 'HTTP 500' } as unknown as Run[], 'deploy-eas.yml': [run('deploy-eas.yml', 'mvp')] }, spec([[1, 'success'], [2, 'success'], [3, 'failure']]));
+
+    expect(cell(result, 'gateway-build.yml', 'mvp')).toMatchObject({ state: 'grey', trends: { runs: 3, successRate: { '7': third } } });
+    expect(Object.keys(result.history!.runs)).toHaveLength(4);
+  });
+
+  it('puts a trend line and a 14-day strip under the cell', () => {
+    const previous = spec([[1, 'failure'], [2, 'failure'], [3, 'success'], [10, 'success'], [12, 'success'], [20, 'success'], [40, 'success'], [60, 'success'], [80, 'success']]);
+    const going = run('gateway-build.yml', 'mvp', { status: 'in_progress', conclusion: null });
+
+    const result = build(watched, { 'gateway-build.yml': [going] }, previous);
+
+    expect(result.html).toContain('7 d: 1 of 3 passed, 33%');
+    expect(result.html).toContain('30 d: 4 of 6, 67%');
+    expect(result.html).toContain('90 d: 7 of 9, 78%');
+    expect(result.html).toContain('median 4 min, p95 4 min');
+    expect(result.html).toContain('worst streak 2, 31 Oct–1 Nov');
+    expect(result.html.match(/class="day state-/g)).toHaveLength(14);
+    expect(result.html).toContain('<span class="day state-red" title="2026-11-01: failing, 1 run">■</span>');
+    expect(result.html).toContain('<span class="day state-amber" title="2026-11-02: attention, 1 run">▲</span>');
+    expect(result.html).toContain('<span class="day state-grey" title="2026-10-25: no runs">○</span>');
+  });
+
+  it('says when there is too little history for a rate, keeps a lone failure off the streak line, and shows nothing for a workflow without any', () => {
+    const little = build(watched, { 'gateway-build.yml': [] }, spec([[1, 'failure']]));
+    const none = build(watched, { 'gateway-build.yml': [] });
+
+    expect(little.html).toContain('fewer than 3 runs in 90 d, no rate yet');
+    expect(little.html).not.toContain('worst streak');
+    expect(none.html).not.toContain('class="day ');
+    expect(none.html).not.toContain('class="trend"');
+  });
+});
+
 describe('the committed dashboard config', () => {
   const committed = JSON.parse(readFileSync(CONFIG_PATH, 'utf8')) as Config;
   const workflows = committed.groups.flatMap((group) => group.workflows.map((w): [string, Workflow] => [w.file, w]));
@@ -553,8 +839,12 @@ describe('the committed dashboard config', () => {
     expect(typeof workflow.blocking).toBe('boolean');
   });
 
+  it('names the page it reads its history back from', () => {
+    expect(committed.pagesUrl).toMatch(/^https:\/\/[a-z0-9-]+\.github\.io\/Colearn\/$/);
+  });
+
   it('is accepted by the generator', () => {
-    const result = build(committed, {});
+    const result = build(committed, {}, 'missing');
 
     expect(result.status).toBe(0);
     expect(result.json!.groups).toHaveLength(committed.groups.length);
