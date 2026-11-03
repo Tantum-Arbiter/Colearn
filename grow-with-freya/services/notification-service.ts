@@ -103,7 +103,7 @@ class NotificationService {
     };
 
     const content: Notifications.NotificationContentInput = {
-      title: 'Time for Grow with Freya! 🌟',
+      title: 'Time for Early Roots! 🌟',
       body: this.getNotificationMessage(recommendation),
       sound: true,
       priority: Notifications.AndroidNotificationPriority.DEFAULT,
@@ -220,8 +220,8 @@ class NotificationService {
 
   private async scheduleDelayedReminder(): Promise<void> {
     const content: Notifications.NotificationContentInput = {
-      title: 'Reminder: Time for Grow with Freya! 🌟',
-      body: 'Don\'t forget your learning time with Freya!',
+      title: 'Reminder: Time for Early Roots! 🌟',
+      body: 'Don\'t forget your learning time together!',
       sound: true,
       priority: Notifications.AndroidNotificationPriority.DEFAULT,
     };

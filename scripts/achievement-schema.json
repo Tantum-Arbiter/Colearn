@@ -1,0 +1,60 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Badge definition",
+  "description": "One badge, written as data. Read by the app's evaluator (grow-with-freya/components/progress/achievements.ts).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "version", "status", "family", "category", "rule", "art", "copy"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+    "version": { "type": "integer", "minimum": 1 },
+    "status": { "enum": ["active", "retired"] },
+    "family": { "enum": ["sticker", "theme", "variety", "set", "doing", "together", "rhythm", "seasonal"] },
+    "category": { "enum": ["stories", "music", "calm", "kindness", "exploration"] },
+    "points": { "type": "integer", "minimum": 0 },
+    "art": { "type": "string", "minLength": 1 },
+    "minAppVersion": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+    "recommendation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["labelKey", "tag"],
+      "properties": {
+        "labelKey": { "type": "string" },
+        "tag": { "type": ["string", "null"] }
+      }
+    },
+    "rule": {
+      "oneOf": [
+        { "type": "object", "additionalProperties": false, "required": ["kind", "target"],
+          "properties": { "kind": { "const": "finishedCount" }, "target": { "type": "integer", "minimum": 1 } } },
+        { "type": "object", "additionalProperties": false, "required": ["kind", "category", "target"],
+          "properties": { "kind": { "const": "finishedInCategory" }, "category": { "type": "string" }, "target": { "type": "integer", "minimum": 1 } } },
+        { "type": "object", "additionalProperties": false, "required": ["kind", "tags", "target"],
+          "properties": { "kind": { "const": "finishedWithTag" }, "tags": { "type": "array", "minItems": 1, "items": { "type": "string" } }, "target": { "type": "integer", "minimum": 1 } } },
+        { "type": "object", "additionalProperties": false, "required": ["kind", "by", "target"],
+          "properties": { "kind": { "const": "finishedDistinct" }, "by": { "enum": ["tag", "category"] }, "target": { "type": "integer", "minimum": 1 } } },
+        { "type": "object", "additionalProperties": false, "required": ["kind", "interaction", "target"],
+          "properties": { "kind": { "const": "challenges" }, "interaction": { "enum": ["music", "jigsaw", "reading"] }, "target": { "type": "integer", "minimum": 1 } } },
+        { "type": "object", "additionalProperties": false, "required": ["kind"],
+          "properties": { "kind": { "const": "storyAward" } } }
+      ]
+    },
+    "copy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "earned", "next"],
+      "properties": {
+        "title": { "$ref": "#/definitions/localizedText" },
+        "earned": { "$ref": "#/definitions/localizedText" },
+        "next": { "$ref": "#/definitions/localizedText" }
+      }
+    }
+  },
+  "definitions": {
+    "localizedText": {
+      "type": "object",
+      "required": ["en"],
+      "additionalProperties": { "type": "string", "minLength": 1 }
+    }
+  }
+}

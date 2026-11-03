@@ -158,7 +158,7 @@ class StoryRepositoryTest {
     private Story createTestStory(String id, String title, String category) {
         Story story = new Story(id, title, category);
         story.setAgeRange("2-5");
-        story.setDuration(8);
+        story.setPageCount(8);
         story.setDescription("A test story");
         story.setAvailable(true);
         

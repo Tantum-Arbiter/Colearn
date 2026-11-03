@@ -59,13 +59,13 @@ npm run format -- --all
 Full pipeline: validate → format → generate asset manifests:
 
 ```bash
-npm run prepare
+npm run prepare-upload
 
 # Preview what would happen
-npm run prepare -- --dry-run
+npm run prepare-upload -- --dry-run
 
 # Force continue even with validation errors
-npm run prepare -- --force
+npm run prepare-upload -- --force
 ```
 
 ### Import from Story Engine
@@ -100,7 +100,7 @@ npm run format new-story
 ### 3. Prepare for Upload
 
 ```bash
-npm run prepare
+npm run prepare-upload
 ```
 
 This generates `upload-manifest.json` which lists all stories and assets.

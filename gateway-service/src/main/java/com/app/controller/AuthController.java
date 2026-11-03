@@ -273,6 +273,15 @@ public class AuthController {
                 throw com.app.exception.ValidationException.missingRequiredField("refreshToken");
             }
 
+            // Only a refresh token we signed is worth a session lookup: anything else is refused here,
+            // before it can cost a BCrypt pass over the sessions or match a session planted under a victim's id
+            try {
+                jwtConfig.validateRefreshToken(request.getRefreshToken());
+            } catch (com.auth0.jwt.exceptions.JWTVerificationException invalid) {
+                throw new com.app.exception.AuthenticationException(
+                        com.app.exception.ErrorCode.INVALID_REFRESH_TOKEN, "Invalid refresh token");
+            }
+
             Optional<UserSession> sessionOpt = sessionService.getSessionByRefreshToken(request.getRefreshToken()).join();
             if (sessionOpt.isEmpty()) {
                 throw new com.app.exception.AuthenticationException(

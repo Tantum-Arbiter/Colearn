@@ -63,6 +63,8 @@ build/
 .cache/
 .tmp/
 lib/
+!scripts/lib/
+!scripts/cms-manager/src/lib/
 esm/
 
 # Audio/Video files (large binaries) - but allow assets
@@ -167,3 +169,10 @@ _to_delete/
 .ai/vendor/
 .ai/office-dist/
 .ai/test-results/
+
+# Python bytecode (tools/ai-review launcher)
+__pycache__/
+*.pyc
+
+# Firebase admin key files (operator tooling, never committed)
+**/firebase-service-account*.json

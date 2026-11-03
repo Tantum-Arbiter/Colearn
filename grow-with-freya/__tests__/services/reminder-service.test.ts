@@ -11,7 +11,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 
 import { ReminderService } from '../../services/reminder-service';
-import { ApiClient } from '../../services/api-client';
 
 jest.mock('@react-native-async-storage/async-storage', () => ({
   getItem: jest.fn(),
@@ -19,13 +18,7 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
   removeItem: jest.fn(),
 }));
 
-jest.mock('../../services/api-client', () => ({
-  ApiClient: {
-    isAuthenticated: jest.fn().mockResolvedValue(false),
-    syncReminders: jest.fn().mockResolvedValue(undefined),
-    getReminders: jest.fn().mockResolvedValue([]),
-  },
-}));
+
 
 describe('ReminderService', () => {
   let underTest: ReminderService;
@@ -37,7 +30,6 @@ describe('ReminderService', () => {
     (AsyncStorage.removeItem as jest.Mock).mockResolvedValue(undefined);
     (Notifications.scheduleNotificationAsync as jest.Mock).mockResolvedValue('notif-1');
     (Notifications.cancelScheduledNotificationAsync as jest.Mock).mockResolvedValue(undefined);
-    (ApiClient.isAuthenticated as jest.Mock).mockResolvedValue(false);
 
     // the service is a singleton, so each test starts from an empty slate
     underTest = ReminderService.getInstance();
@@ -47,7 +39,6 @@ describe('ReminderService', () => {
     (AsyncStorage.removeItem as jest.Mock).mockResolvedValue(undefined);
     (Notifications.scheduleNotificationAsync as jest.Mock).mockResolvedValue('notif-1');
     (Notifications.cancelScheduledNotificationAsync as jest.Mock).mockResolvedValue(undefined);
-    (ApiClient.isAuthenticated as jest.Mock).mockResolvedValue(false);
   });
 
   const addReminder = (overrides: { day?: number; time?: string; title?: string } = {}) =>
@@ -224,37 +215,35 @@ describe('ReminderService', () => {
     });
   });
 
-  describe('backend sync', () => {
-    it('does nothing while signed out', async () => {
-      await addReminder();
-      (ApiClient.isAuthenticated as jest.Mock).mockResolvedValue(false);
-
-      await underTest.syncToBackend();
-
-      expect(ApiClient.syncReminders).not.toHaveBeenCalled();
-      // and the edit is still pending locally
-      expect(underTest.hasUnsavedChanges()).toBe(true);
-    });
-
-    it('commits locally and pushes when signed in', async () => {
-      (ApiClient.isAuthenticated as jest.Mock).mockResolvedValue(true);
+  describe('saving from the settings page', () => {
+    it('commits the working set and tells the child sync to send it', async () => {
+      const listener = jest.fn();
+      const unsubscribe = underTest.onRemindersCommitted(listener);
       await addReminder();
 
       await underTest.syncToBackend();
 
       expect(AsyncStorage.setItem).toHaveBeenCalled();
-      expect(ApiClient.syncReminders).toHaveBeenCalledWith(
-        expect.arrayContaining([expect.objectContaining({ title: 'Story time' })])
-      );
       expect(underTest.hasUnsavedChanges()).toBe(false);
+      expect(listener).toHaveBeenCalledTimes(1);
+      unsubscribe();
     });
 
-    it('rethrows so the settings page can surface the failure', async () => {
-      (ApiClient.isAuthenticated as jest.Mock).mockResolvedValue(true);
-      (ApiClient.syncReminders as jest.Mock).mockRejectedValue(new Error('offline'));
-      await addReminder();
+    it('stops telling a listener that has unsubscribed', async () => {
+      const listener = jest.fn();
+      underTest.onRemindersCommitted(listener)();
 
-      await expect(underTest.syncToBackend()).rejects.toThrow('offline');
+      await underTest.syncToBackend();
+
+      expect(listener).not.toHaveBeenCalled();
+    });
+
+    it('hands the sync only what has been saved, not a draft', async () => {
+      await addReminder({ title: 'Saved' });
+      await underTest.commitChanges();
+      await addReminder({ title: 'Draft' });
+
+      expect(underTest.getSavedReminders().map(r => r.title)).toEqual(['Saved']);
     });
   });
 
@@ -271,56 +260,54 @@ describe('ReminderService', () => {
     });
   });
 
-  describe('pulling from the backend', () => {
-    it('does nothing while signed out', async () => {
-      (ApiClient.isAuthenticated as jest.Mock).mockResolvedValue(false);
+  describe('reminders arriving from another device', () => {
+    const incoming = [{ id: 'from-server', title: 'Server reminder', message: 'Pulled down', dayOfWeek: 3, time: '09:00', isActive: true }];
 
-      await underTest.syncFromBackend();
+    it('replaces the saved and working lists and stores them', async () => {
+      await addReminder({ title: 'Local only' });
+      await underTest.commitChanges();
 
-      expect(ApiClient.getReminders).not.toHaveBeenCalled();
+      await underTest.applySyncedReminders(incoming);
+
+      expect((await underTest.getAllReminders()).map(r => r.title)).toEqual(['Server reminder']);
+      expect(underTest.getSavedReminders().map(r => r.title)).toEqual(['Server reminder']);
+      expect(AsyncStorage.setItem).toHaveBeenCalledWith('custom_reminders', expect.stringContaining('Server reminder'));
     });
 
-    it('lets the backend list replace the local one', async () => {
-      await addReminder({ title: 'Local only' });
-      (ApiClient.isAuthenticated as jest.Mock).mockResolvedValue(true);
-      (ApiClient.getReminders as jest.Mock).mockResolvedValue([
-        {
-          id: 'from-server',
-          title: 'Server reminder',
-          message: 'Pulled down',
-          dayOfWeek: 3,
-          time: '09:00',
-          isActive: true,
-          createdAt: new Date().toISOString(),
-        },
-      ]);
+    it('schedules a notification for each active one on this device', async () => {
+      await underTest.applySyncedReminders(incoming);
 
-      await underTest.syncFromBackend();
-
-      const all = await underTest.getAllReminders();
-      expect(all.map(r => r.title)).toEqual(['Server reminder']);
-      expect(AsyncStorage.setItem).toHaveBeenCalled();
+      expect(Notifications.scheduleNotificationAsync).toHaveBeenCalled();
+      expect((await underTest.getAllReminders())[0].notificationId).toBe('notif-1');
     });
 
-    it('keeps the local list when the backend has nothing', async () => {
-      await addReminder({ title: 'Local only' });
-      (ApiClient.isAuthenticated as jest.Mock).mockResolvedValue(true);
-      (ApiClient.getReminders as jest.Mock).mockResolvedValue([]);
+    it('cancels this device\'s notifications for reminders that are gone', async () => {
+      await addReminder({ title: 'Going away' });
+      await underTest.commitChanges();
+      jest.clearAllMocks();
 
-      await underTest.syncFromBackend();
+      await underTest.applySyncedReminders([]);
 
-      const all = await underTest.getAllReminders();
-      expect(all.map(r => r.title)).toEqual(['Local only']);
+      expect(Notifications.cancelScheduledNotificationAsync).toHaveBeenCalledWith('notif-1');
+      expect(await underTest.getAllReminders()).toHaveLength(0);
     });
 
-    it('carries on with the local list when the pull fails', async () => {
-      await addReminder({ title: 'Local only' });
-      (ApiClient.isAuthenticated as jest.Mock).mockResolvedValue(true);
-      (ApiClient.getReminders as jest.Mock).mockRejectedValue(new Error('offline'));
+    it('keeps when a reminder was created here, for one it already had', async () => {
+      const created = await addReminder({ title: 'Mine' });
+      await underTest.commitChanges();
 
-      // unlike pushing, a failed pull must not throw at the caller
-      await expect(underTest.syncFromBackend()).resolves.toBeUndefined();
-      expect(await underTest.getAllReminders()).toHaveLength(1);
+      await underTest.applySyncedReminders([{ id: created.id, title: 'Renamed', message: '', dayOfWeek: 1, time: '18:30', isActive: true }]);
+
+      expect((await underTest.getAllReminders())[0]).toEqual(expect.objectContaining({ title: 'Renamed', createdAt: created.createdAt }));
+    });
+
+    it('leaves a parent\'s unsaved edit alone, so their save is what gets sent', async () => {
+      await addReminder({ title: 'Draft' });
+
+      await underTest.applySyncedReminders(incoming);
+
+      expect((await underTest.getAllReminders()).map(r => r.title)).toEqual(['Draft']);
+      expect(underTest.hasUnsavedChanges()).toBe(true);
     });
   });
 

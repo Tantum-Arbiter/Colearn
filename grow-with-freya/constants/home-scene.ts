@@ -1,6 +1,6 @@
 import { NIGHT_BRIGHT, NIGHT_DEEP, NIGHT_PRIMARY, NIGHT_VOID } from '@/constants/night-palette';
 
-export type HomeActivityId = 'interactive' | 'music' | 'jigsaw';
+export type HomeActivityId = 'interactive' | 'music';
 
 
 export interface HomeActivity {
@@ -28,13 +28,6 @@ export const HOME_ACTIVITIES = [
     descriptionKey: 'home.musicDescription',
     wash: { night: 'rgba(30,63,120,0.86)', day: 'rgba(54,102,176,0.86)' },
     destination: 'stories-music',
-  },
-  {
-    id: 'jigsaw',
-    titleKey: 'home.puzzles',
-    descriptionKey: 'home.puzzlesDescription',
-    wash: { night: 'rgba(39,80,47,0.86)', day: 'rgba(70,124,80,0.86)' },
-    destination: 'stories-jigsaw',
   },
 ] as const satisfies readonly HomeActivity[];
 
@@ -77,7 +70,6 @@ export interface HomeTheme {
   chromeEdge: string;
   chromeInk: string;
   artScrim: string;
-  cloudOpacity: string;
 }
 
 export const HOME_THEMES = {
@@ -109,7 +101,6 @@ export const HOME_THEMES = {
     chromeEdge: 'rgba(255,255,255,0.30)',
     chromeInk: '#FFFFFF',
     artScrim: 'rgba(10,21,51,0.26)',
-    cloudOpacity: '0.62',
   },
   day: {
     skyTop: NIGHT_DEEP,
@@ -139,7 +130,6 @@ export const HOME_THEMES = {
     chromeEdge: 'rgba(255,255,255,0.36)',
     chromeInk: '#FFFFFF',
     artScrim: 'rgba(20,44,94,0.16)',
-    cloudOpacity: '0.78',
   },
 } as const satisfies Record<TimeOfDay, HomeTheme>;
 

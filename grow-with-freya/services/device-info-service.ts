@@ -2,6 +2,8 @@ import * as SecureStore from 'expo-secure-store';
 import * as Device from 'expo-device';
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
+import * as Application from 'expo-application';
+import { versionLabel } from '@/constants/app-version';
 import { Logger } from '@/utils/logger';
 
 const log = Logger.create('DeviceInfo');
@@ -114,7 +116,15 @@ export class DeviceInfoService {
     if (manifest2Version) {
       return manifest2Version;
     }
-    return '1.1.0';
+    return Application.nativeApplicationVersion ?? '0.0.0';
+  }
+
+  static getBuildNumber(): string | null {
+    return Application.nativeBuildVersion;
+  }
+
+  static getVersionLabel(): string {
+    return versionLabel(this.getAppVersion(), this.getBuildNumber());
   }
 
   static getOsVersion(): string {

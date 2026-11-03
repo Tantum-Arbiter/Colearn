@@ -1,6 +1,6 @@
 # Agent Operating Rules — `nft` (Non-Functional / Load Tests)
 
-> Read this **after** the root `../CLAUDE.md`.
+> Read this **after** the root `../AGENTS.md`.
 > This project is **Gatling 3 / Scala** load and performance simulations.
 > Touch sparingly — changes have to be reviewed by a human before any run that hits a non-local target.
 
@@ -8,7 +8,7 @@
 
 ## 1. Communication
 
-Communication & code-display rules: see root `../CLAUDE.md` → **Communication & Code Display**.
+Communication & code-display rules: see root `../AGENTS.md` → **Communication & Code Display**.
 
 ---
 
@@ -78,7 +78,7 @@ Report: <path or URL to Gatling HTML>
 
 ## 8. Commits
 
-Commit rules: see root `../CLAUDE.md` → **Commits**. **Never trigger a staging/prod run from a commit hook.**
+Commit rules: see root `../AGENTS.md` → **Commits**. **Never trigger a staging/prod run from a commit hook.**
 
 ---
 

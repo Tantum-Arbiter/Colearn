@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import { Text } from 'react-native';
+import { GestureDetector } from 'react-native-gesture-handler';
 import { OnboardingScreen } from '@/components/onboarding/onboarding-screen';
 import { onboardingMetricsFor, useOnboardingMetrics } from '@/components/onboarding/onboarding-metrics';
 
@@ -32,6 +33,13 @@ describe('OnboardingScreen', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  it('hands the swipe detector a view that is never flattened away, so the swipe stays attached', () => {
+    const component = render(<OnboardingScreen {...defaultProps} />);
+
+    const detector = component.UNSAFE_root.findAll((node: any) => node.type === GestureDetector)[0];
+    expect(detector.props.children.props.collapsable).toBe(false);
   });
 
   describe('Basic Functionality', () => {

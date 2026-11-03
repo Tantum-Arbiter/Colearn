@@ -75,6 +75,24 @@ describe('HeroCardFrame', () => {
     expect(surface.props.colors).toEqual([HERO_CARD.fillTop, HERO_CARD.fillBottom]);
   });
 
+  it('should take a fill of its own, for a card that is not the others` violet', () => {
+    const { view } = renderFrame({ fill: ['#03298A', '#01247A'] });
+
+    expect(byTestId(view, 'frame-surface')[0].props.colors).toEqual(['#03298A', '#01247A']);
+  });
+
+  it('should lay a backdrop over its fill and under its sheen and rim, so a picture in the card still wears the glass', () => {
+    const { view } = renderFrame({ backdrop: <View testID="picture" /> });
+    const names = ['frame-surface', 'picture', 'frame-sheen', 'frame-inner-highlight'];
+
+    const order = view.UNSAFE_root
+      .findAll((node: RenderedNode) => names.includes(node.props.testID as string))
+      .map((node: RenderedNode) => node.props.testID)
+      .filter((name: unknown, index: number, all: unknown[]) => all.indexOf(name) === index);
+
+    expect(order).toEqual(names);
+  });
+
   /**
    * The card once lit its four corners as well. They read as a glow bleeding
    * out of the card rather than light on it, so the stroke and the bloom are

@@ -84,9 +84,6 @@ describe('Stories Data', () => {
 
       expect(availableStories.map(story => story.id)).toEqual([
         'snuggle-little-wombat',
-        'wombat-jigsaw-adventure',
-        'wombat-spelling',
-        'wombat-word-placing',
         'hold-on-juni',
         'my-turn-to-ding',
       ]);

@@ -21,6 +21,16 @@ cover then swings over the spine. The open book has no line down its spine, so t
 closed one is given one: a stroke of the art's own line weight, recorded in
 layout.json as `spine` and drawn by the app only while the book is shut.
 
+Before any of that, a pen draws the shut book: the app strokes its outline and only
+then inks the art in over the line. The outline is the centreline of the shut book's
+own stroke (the right page plus the spine), skeletonised and traced into two pen
+strokes recorded in layout.json as `outline`: `cover` starts at the left end of the
+top edge (the art leaves a gap there for the stem), runs along the top, down the far
+edge, under the pages and up the spine, ending just across that gap from where it
+began; `page`, the inner page line, forks off the cover stroke where the far edge
+turns under (`forkAt` along the cover) and runs back to the spine. Both are
+simplified to a few dozen points, every one of them on the art.
+
 Every cut is interior to solid white, so neighbouring layers are grown a few
 pixels into each other across it. White over white is white; without the overlap
 a scaled layer shows a hairline seam along the cut.
@@ -31,9 +41,8 @@ is dropped: a pixel survives only if it sits next to solid artwork.
 Outputs, under assets/images/splash-logo/:
   <layer>.png          cropped to its own bounds
   layout.json          each layer's frame and pivot as fractions of the canvas
-and assets/images/splash-icon.png, the native launch image: the closed book, centred,
-alone on the full canvas, so the first animated frame lands exactly on top of it. The
-spine stroke is the one thing in it that is not a source pixel.
+and assets/images/splash-icon.png, the native launch image: nothing at all, a clear
+canvas, since the animation opens on an empty sky and draws the book onto it.
 
 Usage:
     python3 scripts/prepare-splash-logo.py
@@ -46,6 +55,8 @@ import sys
 import numpy as np
 from PIL import Image, ImageDraw
 from scipy import ndimage
+from skimage.measure import approximate_polygon
+from skimage.morphology import skeletonize
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SOURCE = os.path.join(ROOT, 'assets/images/ui-elements/earlyroots-logo.png')
@@ -67,6 +78,9 @@ NECK_CUTS = {
 }
 EXPECTED_ISLANDS = 12
 EXPECTED_LETTERS = 10
+OUTLINE_TOLERANCE_PX = 0.6
+SPUR_STROKES = 2
+EXPECTED_OUTLINE_SEGMENTS = 4
 
 
 def fail(message):
@@ -127,6 +141,181 @@ def split_plant(plant):
         'leafTop': pieces == leaf_top + 1,
     }
     return solid, owners, pivots
+
+
+def polyline_length(points):
+    steps = np.diff(np.asarray(points, dtype=float), axis=0)
+    return float(np.hypot(steps[:, 0], steps[:, 1]).sum()) if len(points) > 1 else 0.0
+
+
+def skeleton_segments(skeleton):
+    pixels = {(int(y), int(x)) for y, x in zip(*np.where(skeleton))}
+    offsets = [(dy, dx) for dy in (-1, 0, 1) for dx in (-1, 0, 1) if dy or dx]
+
+    def neighbours(pixel):
+        return [(pixel[0] + dy, pixel[1] + dx) for dy, dx in offsets if (pixel[0] + dy, pixel[1] + dx) in pixels]
+
+    node_pixels = {pixel for pixel in pixels if len(neighbours(pixel)) != 2}
+    node_mask = np.zeros(skeleton.shape, dtype=bool)
+    for y, x in node_pixels:
+        node_mask[y, x] = True
+    labels, _ = ndimage.label(node_mask, structure=np.ones((3, 3)))
+
+    segments = []
+    seen = set()
+    for start in sorted(node_pixels):
+        for step in neighbours(start):
+            if step in node_pixels or frozenset((start, step)) in seen:
+                continue
+            path = [start, step]
+            seen.add(frozenset((start, step)))
+            while path[-1] not in node_pixels:
+                onward = [pixel for pixel in neighbours(path[-1]) if pixel != path[-2]]
+                path.append(onward[0])
+            seen.add(frozenset((path[-2], path[-1])))
+            segments.append([int(labels[start]), int(labels[path[-1]]), path])
+    return segments
+
+
+def prune_and_splice(segments, spur_px, keep=None):
+    def incident(node):
+        return [segment for segment in segments if node in segment[:2]]
+
+    changed = True
+    while changed:
+        changed = False
+        for segment in list(segments):
+            a, b, path = segment
+            is_loop = a == b
+            is_spur = not is_loop and (len(incident(a)) == 1 or len(incident(b)) == 1)
+            if keep is not None and keep in (a, b):
+                continue
+            if (is_loop or is_spur) and polyline_length(path) < spur_px:
+                segments.remove(segment)
+                changed = True
+                break
+        nodes = {node for segment in segments for node in segment[:2]}
+        for node in nodes:
+            joined = incident(node)
+            if len(joined) != 2 or joined[0] is joined[1]:
+                continue
+            first, second = joined
+            first_path = first[2] if first[1] == node else list(reversed(first[2]))
+            second_path = second[2] if second[0] == node else list(reversed(second[2]))
+            first_far = first[0] if first[1] == node else first[1]
+            second_far = second[1] if second[0] == node else second[0]
+            segments.remove(first)
+            segments.remove(second)
+            segments.append([first_far, second_far, first_path + second_path])
+            changed = True
+            break
+    return segments
+
+
+def simplify(path):
+    points = np.array([(x + 0.5, y + 0.5) for y, x in path], dtype=float)
+    return approximate_polygon(points, tolerance=OUTLINE_TOLERANCE_PX)
+
+
+def trace_roots(roots, size):
+    skeleton = skeletonize(roots)
+    ys, xs = np.where(skeleton)
+    depth = ndimage.distance_transform_edt(roots)
+    stroke = float(np.median(depth[skeleton])) * 2
+    top = (int(ys.min()), int(xs[np.argmin(ys)]))
+    raw = skeleton_segments(skeleton)
+    trunk_node = next(a if path[0] == top else b for a, b, path in raw if top in (path[0], path[-1]))
+    segments = prune_and_splice(raw, stroke * SPUR_STROKES, keep=trunk_node)
+
+    def incident(node):
+        return [segment for segment in segments if node in segment[:2]]
+
+    strands = []
+    frontier = [(trunk_node, None)]
+    seen = set()
+    while frontier:
+        node, parent = frontier.pop(0)
+        for segment in incident(node):
+            if id(segment) in seen:
+                continue
+            seen.add(id(segment))
+            a, b, path = segment
+            outward = path if a == node else list(reversed(path))
+            far = b if a == node else a
+            strands.append({'points': simplify(outward), 'parent': parent})
+            frontier.append((far, len(strands) - 1))
+
+    for strand in strands:
+        for x, y in strand['points']:
+            if not roots[int(y), int(x)]:
+                fail(f'root point ({x:.1f}, {y:.1f}) is off the roots')
+    tips = [index for index, strand in enumerate(strands) if not any(other['parent'] == index for other in strands)]
+    if len(tips) < 4:
+        fail(f'expected the roots to branch into several tips, found {len(tips)}')
+
+    return {
+        'strokeWidth': round(stroke / size, 5),
+        'strands': [
+            {
+                'parent': strand['parent'],
+                'points': [[round(float(x) / size, 5), round(float(y) / size, 5)] for x, y in strand['points']],
+            }
+            for strand in strands
+        ],
+    }
+
+
+def trace_outline(shut, stroke, size):
+    skeleton = skeletonize(shut)
+    segments = prune_and_splice(skeleton_segments(skeleton), stroke * SPUR_STROKES)
+    if len(segments) != EXPECTED_OUTLINE_SEGMENTS:
+        fail(f'expected the shut book to trace as {EXPECTED_OUTLINE_SEGMENTS} lines, found {len(segments)}')
+
+    def incident(node):
+        return [segment for segment in segments if node in segment[:2]]
+
+    nodes = {node for segment in segments for node in segment[:2]}
+    joins = [node for node in nodes if len(incident(node)) == 3]
+    ends = [node for node in nodes if len(incident(node)) == 1]
+    if len(joins) != 2 or len(ends) != 2:
+        fail('expected the shut book to trace as two loose ends and two joins')
+
+    def oriented(segment, first):
+        a, b, path = segment
+        return path if a == first else list(reversed(path))
+
+    def x_at(node):
+        return np.mean([oriented(segment, node)[0][1] for segment in incident(node)])
+
+    spine_join, far_join = sorted(joins, key=x_at)
+    between = [segment for segment in segments if set(segment[:2]) == {spine_join, far_join}]
+    if len(between) != 2:
+        fail('expected both page lines to run between the same two joins')
+    page = oriented(min(between, key=lambda segment: polyline_length(segment[2])), far_join)
+    under_the_pages = oriented(max(between, key=lambda segment: polyline_length(segment[2])), far_join)
+    spine = oriented([segment for segment in incident(spine_join) if segment not in between][0], spine_join)
+    along_the_top = oriented([segment for segment in incident(far_join) if segment not in between][0], far_join)[::-1]
+    if along_the_top[0][1] <= spine[0][1] or abs(along_the_top[0][0] - spine[-1][0]) > stroke:
+        fail('expected the top edge to start just across the stem gap from the top of the spine')
+
+    out_along_the_top = simplify(along_the_top)
+    back_under_and_up = simplify(under_the_pages + spine)
+    cover = np.concatenate([out_along_the_top, back_under_and_up[1:]])
+    page_line = simplify(page)
+
+    for x, y in np.concatenate([cover, page_line]):
+        if not shut[int(y), int(x)]:
+            fail(f'outline point ({x:.1f}, {y:.1f}) is off the shut book')
+
+    def fractions(points):
+        return [[round(float(x) / size, 5), round(float(y) / size, 5)] for x, y in points]
+
+    return {
+        'strokeWidth': round(stroke / size, 5),
+        'cover': fractions(cover),
+        'page': fractions(page_line),
+        'forkAt': round(polyline_length(out_along_the_top) / size, 5),
+    }
 
 
 def main():
@@ -238,19 +427,15 @@ def main():
         'height': round((spine_bottom - spine_top) / size, 5),
     }
 
-    shift = int(round((book_columns.max() + 1 - book_columns.min()) / 4))
-    closed = np.zeros((size, size), dtype=np.uint8)
-    closed[:, : size - shift] = layer_alphas['bookRight'][:, shift:]
     spine_image = Image.new('L', (size, size), 0)
     ImageDraw.Draw(spine_image).rounded_rectangle(
-        [spine_x - stroke / 2 - shift, spine_top, spine_x + stroke / 2 - shift, spine_bottom], radius=stroke / 2, fill=255
+        [spine_x - stroke / 2, spine_top, spine_x + stroke / 2, spine_bottom], radius=stroke / 2, fill=255
     )
-    closed = np.maximum(closed, np.array(spine_image))
+    shut = np.maximum(layer_alphas['bookRight'], np.array(spine_image)) > SOLID_ALPHA
+    layout['outline'] = trace_outline(shut, stroke, size)
+    layout['roots'] = trace_roots(layer_alphas['roots'] > SOLID_ALPHA, size)
 
-    icon = np.zeros((size, size, 4), dtype=np.uint8)
-    icon[..., :3] = 255
-    icon[..., 3] = closed
-    Image.fromarray(icon, 'RGBA').save(NATIVE_ICON, optimize=True)
+    Image.fromarray(np.zeros((size, size, 4), dtype=np.uint8), 'RGBA').save(NATIVE_ICON, optimize=True)
 
     with open(os.path.join(OUTPUT_DIR, 'layout.json'), 'w') as handle:
         json.dump(layout, handle, indent=2)
@@ -258,6 +443,10 @@ def main():
 
     for name, entry in layout['layers'].items():
         print(f'{name:10s} {entry}')
+    outline = layout['outline']
+    roots = layout['roots']
+    print(f"roots      {len(roots['strands'])} strands, stroke {roots['strokeWidth']}")
+    print(f"outline    cover {len(outline['cover'])} points, page {len(outline['page'])} points, fork at {outline['forkAt']}")
     print(f'layers recompose to the source exactly; wrote {len(names)} layers to {OUTPUT_DIR}')
 
 

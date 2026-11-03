@@ -10,8 +10,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -165,66 +163,14 @@ public class StoryService {
                         .collect(Collectors.toList()));
     }
 
+    private static final com.fasterxml.jackson.databind.ObjectMapper CHECKSUM_MAPPER =
+            new com.fasterxml.jackson.databind.ObjectMapper().findAndRegisterModules();
+
     private String calculateStoryChecksum(Story story) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            StringBuilder content = new StringBuilder();
-            content.append(story.getId());
-            content.append(story.getTitle());
-            content.append(serializeLocalizedText(story.getLocalizedTitle()));
-            content.append(story.getCategory());
-            content.append(story.getDescription() != null ? story.getDescription() : "");
-            content.append(serializeLocalizedText(story.getLocalizedDescription()));
-            content.append(story.getVersion());
-
-            if (story.getPages() != null) {
-                story.getPages().forEach(page -> {
-                    content.append(page.getId());
-                    content.append(page.getText());
-                    content.append(serializeLocalizedText(page.getLocalizedText()));
-                    content.append(serializeAgeGroupedText(page.getAgeGroupText()));
-                    content.append(page.getPageNumber());
-                });
-            }
-
-            byte[] hash = digest.digest(content.toString().getBytes(StandardCharsets.UTF_8));
-            StringBuilder hexString = new StringBuilder();
-            for (byte b : hash) {
-                String hex = Integer.toHexString(0xff & b);
-                if (hex.length() == 1) hexString.append('0');
-                hexString.append(hex);
-            }
-
-            return hexString.toString();
-        } catch (Exception e) {
-            logger.error("Error calculating story checksum for: {}", story.getId(), e);
-            throw new RuntimeException("Failed to calculate checksum", e);
+        if (story.getChecksum() != null && !story.getChecksum().isBlank()) {
+            return story.getChecksum();
         }
-    }
-
-    private String serializeLocalizedText(com.app.model.LocalizedText localizedText) {
-        if (localizedText == null) {
-            return "";
-        }
-        StringBuilder sb = new StringBuilder();
-        if (localizedText.getEn() != null) sb.append("en:").append(localizedText.getEn()).append("|");
-        if (localizedText.getPl() != null) sb.append("pl:").append(localizedText.getPl()).append("|");
-        if (localizedText.getEs() != null) sb.append("es:").append(localizedText.getEs()).append("|");
-        if (localizedText.getDe() != null) sb.append("de:").append(localizedText.getDe()).append("|");
-        return sb.toString();
-    }
-
-    private String serializeAgeGroupedText(java.util.Map<String, com.app.model.LocalizedText> ageGroupedText) {
-        if (ageGroupedText == null) {
-            return "";
-        }
-        StringBuilder sb = new StringBuilder();
-        ageGroupedText.forEach((ageGroup, lt) -> {
-            sb.append(ageGroup).append(":{");
-            sb.append(serializeLocalizedText(lt));
-            sb.append("}|");
-        });
-        return sb.toString();
+        return StoryChecksums.of(CHECKSUM_MAPPER.valueToTree(story));
     }
 }
 

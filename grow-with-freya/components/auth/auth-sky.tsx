@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   starsContainer: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 1,
   },
   star: {
@@ -84,7 +84,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   cloudContainer: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 2,
   },
   mistFloor: {

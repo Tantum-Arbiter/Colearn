@@ -398,14 +398,14 @@ export const SubscriptionOverlay = React.memo(function SubscriptionOverlay({ vis
 });
 
 const st = StyleSheet.create({
-  abs: { ...StyleSheet.absoluteFillObject, zIndex: 2500 },
-  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.5)' },
+  abs: { ...StyleSheet.absoluteFill, zIndex: 2500 },
+  backdrop: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0,0,0,0.5)' },
   modalWrap: { flex: 1 },
   content: { flex: 1 },
   // Fitted by the platform against its own bounds: sized here from the window
   // it is a render behind a rotation, and the art leaves a gap down one side.
-  bgImage: { ...StyleSheet.absoluteFillObject, opacity: 0.35 },
-  bgOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(5, 5, 20, 0.45)' },
+  bgImage: { ...StyleSheet.absoluteFill, opacity: 0.35 },
+  bgOverlay: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(5, 5, 20, 0.45)' },
   closeBtn: { position: 'absolute', right: 18, zIndex: 10, width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.25)', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 3.84, elevation: 5 },
   closeTxt: { color: '#fff', fontSize: 16, fontWeight: '600' },
   // The offer scrolls; the button below it does not. On a phone in landscape
@@ -511,7 +511,7 @@ const st = StyleSheet.create({
   benefitRow: { flexDirection: 'row', alignItems: 'flex-start' },
   benefitTick: { marginRight: 8, marginTop: 3 },
   benefitText: { fontFamily: Fonts.sans, fontSize: 15, lineHeight: 21, color: '#FFFFFF', flex: 1 },
-  legalPanel: { ...StyleSheet.absoluteFillObject, zIndex: 20 },
+  legalPanel: { ...StyleSheet.absoluteFill, zIndex: 20 },
   legalPanelInner: { flex: 1, paddingHorizontal: 20 },
 
 });

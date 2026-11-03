@@ -1,6 +1,8 @@
 import { ImageSourcePropType } from 'react-native';
 import type { Ionicons } from '@expo/vector-icons';
 import { StoryFilterTag } from '@/types/story';
+import { ART, RECOMMEND } from './badge-art';
+import { BUNDLED_ACHIEVEMENTS, evaluateAchievements } from './achievements';
 
 export type BadgeStatus = 'undiscovered' | 'started' | 'in_progress' | 'earned';
 
@@ -59,6 +61,17 @@ export interface Badge {
   targetProgress: number;
   status: BadgeStatus;
   recommendation?: BadgeRecommendation;
+  title?: string;
+  description?: string;
+  points?: number;
+}
+
+export function badgeTitle(badge: Badge, t: (key: string) => string): string {
+  return badge.title ?? t(badge.titleKey);
+}
+
+export function badgeDescription(badge: Badge, t: (key: string) => string): string {
+  return badge.description ?? t(badge.descriptionKey);
 }
 
 export type ChallengePeriod = 'weekly' | 'monthly';
@@ -84,32 +97,7 @@ export function badgeStatus(current: number, target: number): BadgeStatus {
   return 'started';
 }
 
-const ART = {
-  sun: require('@/assets/images/ui-elements/home-sun.webp'),
-  sunLaughing: require('@/assets/images/ui-elements/home-sun-laughing.webp'),
-  moon: require('@/assets/images/ui-elements/home-moon.webp'),
-  moonLaughing: require('@/assets/images/ui-elements/home-moon-laughing.webp'),
-  cloudLeft: require('@/assets/images/ui-elements/night-cloud-left.webp'),
-  cloudRight: require('@/assets/images/ui-elements/night-cloud-right.webp'),
-  bearHappy: require('@/assets/images/emotions/bear-happy.webp'),
-  bearExcited: require('@/assets/images/emotions/bear-excited.webp'),
-  bearProud: require('@/assets/images/emotions/bear-proud.webp'),
-  bearSurprised: require('@/assets/images/emotions/bear-surprised.webp'),
-  animalLoving: require('@/assets/images/emotions/animal-loving.webp'),
-  animalHappy: require('@/assets/images/emotions/animal-happy.webp'),
-  animalExcited: require('@/assets/images/emotions/animal-excited.webp'),
-  animalProud: require('@/assets/images/emotions/animal-proud.webp'),
-  animalSurprised: require('@/assets/images/emotions/animal-surprised.webp'),
-} as const;
 
-const RECOMMEND = {
-  together: { labelKey: 'progress.recommendations.together', tag: null },
-  discover: { labelKey: 'progress.recommendations.discover', tag: null },
-  calming: { labelKey: 'progress.recommendations.calming', tag: 'calming' },
-  kindness: { labelKey: 'progress.recommendations.kindness', tag: 'friendship' },
-  bedtime: { labelKey: 'progress.recommendations.bedtime', tag: 'bedtime' },
-  adventure: { labelKey: 'progress.recommendations.adventure', tag: 'adventure' },
-} as const satisfies Record<string, BadgeRecommendation>;
 
 interface BadgeDefinition {
   id: string;
@@ -121,24 +109,6 @@ interface BadgeDefinition {
   recommendation?: BadgeRecommendation;
 }
 
-const BADGE_DEFINITIONS: BadgeDefinition[] = [
-  { id: 'first-story', key: 'firstStory', artwork: ART.bearHappy, category: 'stories', targetProgress: 1, progressOf: (c) => c.storiesRead, recommendation: RECOMMEND.discover },
-  { id: 'story-adventurer', key: 'storyAdventurer', artwork: ART.bearExcited, category: 'stories', targetProgress: 10, progressOf: (c) => c.storiesRead, recommendation: RECOMMEND.discover },
-  { id: 'reading-together', key: 'readingTogether', artwork: ART.bearProud, category: 'stories', targetProgress: 3, progressOf: (c) => c.storySessions, recommendation: RECOMMEND.together },
-  { id: 'new-worlds', key: 'newWorlds', artwork: ART.bearSurprised, category: 'stories', targetProgress: 3, progressOf: (c) => c.categoriesExplored, recommendation: RECOMMEND.discover },
-  { id: 'favourite-finder', key: 'favouriteFinder', artwork: ART.animalHappy, category: 'stories', targetProgress: 1, progressOf: (c) => c.favourites, recommendation: RECOMMEND.discover },
-  { id: 'first-notes', key: 'firstNotes', artwork: ART.animalExcited, category: 'music', targetProgress: 1, progressOf: (c) => c.musicSessions, recommendation: RECOMMEND.together },
-  { id: 'music-explorer', key: 'musicExplorer', artwork: ART.sunLaughing, category: 'music', targetProgress: 5, progressOf: (c) => c.musicSessionsMonth, recommendation: RECOMMEND.together },
-  { id: 'calm-moment', key: 'calmMoment', artwork: ART.cloudRight, category: 'calm', targetProgress: 1, progressOf: (c) => c.calmMoments, recommendation: RECOMMEND.calming },
-  { id: 'calm-champion', key: 'calmChampion', artwork: ART.cloudLeft, category: 'calm', targetProgress: 5, progressOf: (c) => c.calmMomentsMonth, recommendation: RECOMMEND.calming },
-  { id: 'bedtime-listener', key: 'bedtimeListener', artwork: ART.moon, category: 'calm', targetProgress: 3, progressOf: (c) => c.bedtimeStoriesRead, recommendation: RECOMMEND.bedtime },
-  { id: 'gentle-evening', key: 'gentleEvening', artwork: ART.moonLaughing, category: 'calm', targetProgress: 3, progressOf: (c) => c.eveningSessions, recommendation: RECOMMEND.bedtime },
-  { id: 'kind-moments', key: 'kindMoments', artwork: ART.animalLoving, category: 'kindness', targetProgress: 1, progressOf: (c) => c.kindStoriesRead, recommendation: RECOMMEND.kindness },
-  { id: 'kind-heart', key: 'kindHeart', artwork: ART.animalProud, category: 'kindness', targetProgress: 5, progressOf: (c) => c.kindStoriesRead, recommendation: RECOMMEND.kindness },
-  { id: 'morning-explorer', key: 'morningExplorer', artwork: ART.sun, category: 'exploration', targetProgress: 1, progressOf: (c) => c.morningSessions, recommendation: RECOMMEND.together },
-  { id: 'curious-mind', key: 'curiousMind', artwork: ART.animalSurprised, category: 'exploration', targetProgress: 5, progressOf: (c) => c.categoriesExplored, recommendation: RECOMMEND.discover },
-  { id: 'adventure-explorer', key: 'adventureExplorer', artwork: ART.bearExcited, category: 'exploration', targetProgress: 3, progressOf: (c) => c.adventureStoriesRead, recommendation: RECOMMEND.adventure },
-];
 
 function toBadge(definition: BadgeDefinition, counters: ActivityCounters, keyPrefix: string): Badge {
   const currentProgress = Math.min(definition.progressOf(counters), definition.targetProgress);
@@ -156,7 +126,12 @@ function toBadge(definition: BadgeDefinition, counters: ActivityCounters, keyPre
 }
 
 export function buildBadges(counters: ActivityCounters): Badge[] {
-  return BADGE_DEFINITIONS.map((definition) => toBadge(definition, counters, 'progress.badges'));
+  return evaluateAchievements(
+    BUNDLED_ACHIEVEMENTS,
+    { counters, finishedStoryIds: [], challengeCounts: {}, earnedIds: [] },
+    [],
+    { appVersion: '0.0.0', language: 'en' },
+  );
 }
 
 const STATUS_ORDER: Record<BadgeStatus, number> = {

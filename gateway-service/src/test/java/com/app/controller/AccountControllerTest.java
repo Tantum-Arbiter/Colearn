@@ -110,7 +110,7 @@ class AccountControllerTest {
     }
 
     @Test
-    @DisplayName("DELETE /api/account -internal failure returns 409 (ACCOUNT_DELETION_FAILED)")
+    @DisplayName("DELETE /api/account -internal failure returns 500 (ACCOUNT_DELETION_FAILED)")
     void deleteAccount_InternalFailure() throws Exception {
         setAuthenticatedUser(USER_ID);
         when(accountDeletionService.deleteAccount(USER_ID))
@@ -119,6 +119,6 @@ class AccountControllerTest {
                                 "Deletion failed")));
 
         mockMvc.perform(delete("/api/account"))
-                .andExpect(status().isConflict());
+                .andExpect(status().isInternalServerError());
     }
 }

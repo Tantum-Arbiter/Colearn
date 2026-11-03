@@ -200,12 +200,12 @@ const styles = StyleSheet.create({
     position: 'absolute',
   },
   pagesLayer: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: '#F8F4E8', // Cream paper color
     borderRadius: 8,
   },
   coverLayer: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     transformOrigin: 'left center',
     borderRadius: 8,
     overflow: 'hidden',

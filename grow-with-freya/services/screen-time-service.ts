@@ -20,7 +20,7 @@ export interface ScreenTimeSession {
   startTime: number;
   endTime?: number;
   duration: number; // in seconds
-  activity: 'story' | 'emotions' | 'music';
+  activity: 'story' | 'emotions' | 'music' | 'game';
   date: string; // YYYY-MM-DD format
 }
 
@@ -95,7 +95,7 @@ class ScreenTimeService {
     }
   }
 
-  async startSession(activity: 'story' | 'emotions' | 'music', childAgeInMonths: number = 24): Promise<void> {
+  async startSession(activity: 'story' | 'music' | 'game', childAgeInMonths: number = 24): Promise<void> {
     if (this.currentSession) {
       await this.endSession();
     }
@@ -430,7 +430,7 @@ class ScreenTimeService {
       },
       {
         time: '15:00',
-        activity: 'emotions',
+        activity: 'music',
         duration: 5,
       },
       {

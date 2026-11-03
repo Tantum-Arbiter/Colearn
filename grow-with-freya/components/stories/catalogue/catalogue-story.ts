@@ -34,8 +34,6 @@ export interface CatalogueStory {
   locked: boolean;
   audioAvailable: boolean;
   interactive: boolean;
-  /** A book built around a learning game: a jigsaw, spelling or word challenge. */
-  learningGame: boolean;
   /** A book of music: tagged so, not merely a story with a song in it. */
   music: boolean;
   free: boolean;
@@ -64,7 +62,6 @@ export function fromStory(story: Story): CatalogueStory {
     locked: false,
     audioAvailable: Boolean(story.pages?.length),
     interactive: Boolean(story.pages?.some((page) => page.interactiveElements?.length)),
-    learningGame: storyHasJigsaw(story) || storyHasReadingChallenge(story) || Boolean(story.tags?.includes('learning')),
     music: Boolean(story.tags?.includes('music')),
     free: story.isFree ?? false,
     shareToUnlock: false,
@@ -89,7 +86,6 @@ export function fromCatalogEntry(entry: CatalogEntry, access: RemoteAccess): Cat
     locked: access.locked,
     audioAvailable: false,
     interactive: Boolean(entry.tags?.includes('interactive')),
-    learningGame: Boolean(entry.tags?.some((tag) => tag === 'learning' || tag === 'jigsaw' || tag === 'spelling')),
     music: Boolean(entry.tags?.includes('music')),
     free: entry.isFree,
     shareToUnlock: access.shareToUnlock,
@@ -97,7 +93,7 @@ export function fromCatalogEntry(entry: CatalogEntry, access: RemoteAccess): Cat
   };
 }
 
-export type CatalogueMode = 'interactive' | 'music' | 'jigsaw';
+export type CatalogueMode = 'interactive' | 'music';
 
 export function storyHasMusic(story: Story): boolean {
   return !!story.pages?.some((page) => page.interactionType === 'music_challenge');
@@ -107,28 +103,18 @@ export function storyHasInteractive(story: Story): boolean {
   return !!story.pages?.some((page) => page.interactiveElements && page.interactiveElements.length > 0);
 }
 
-export function storyHasJigsaw(story: Story): boolean {
-  return !!story.pages?.some((page) => page.interactionType === 'jigsaw_puzzle');
-}
-
-export function storyHasReadingChallenge(story: Story): boolean {
-  return !!story.pages?.some((page) => page.interactionType === 'reading_challenge');
-}
-
 /**
- * The three tiles the shelf is sorted under. A book is Music if it is tagged
- * so, else Learning if it is built around a game (a jigsaw, spelling or word
- * challenge, or the learning tag), else a Story: every book has exactly one
+ * The two tiles the shelf is sorted under. A book is Music if it is tagged
+ * so, else a Story: every book has exactly one
  * home, so the tiles between them show the whole shelf and nothing twice. A
  * story with a song on one page is still a story -- the bundled bedtime book
  * carries two music pages -- so music is read from the tag, not the pages.
  */
-export type CatalogueTheme = 'stories' | 'learning' | 'music';
-export const CATALOGUE_THEMES: readonly CatalogueTheme[] = ['stories', 'learning', 'music'];
+export type CatalogueTheme = 'stories' | 'music';
+export const CATALOGUE_THEMES: readonly CatalogueTheme[] = ['stories', 'music'];
 
 export function storyTheme(story: CatalogueStory): CatalogueTheme {
   if (story.music) return 'music';
-  if (story.learningGame) return 'learning';
   return 'stories';
 }
 
@@ -142,7 +128,7 @@ export interface RecommendationTarget {
 }
 
 export function recommendationTarget(tag: StoryFilterTag | null): RecommendationTarget {
-  if (tag === 'learning' || tag === 'music') return { theme: tag, tags: [] };
+  if (tag === 'music') return { theme: tag, tags: [] };
   return { tags: tag ? [tag] : [] };
 }
 
@@ -252,14 +238,12 @@ export function buildSavedRows(stories: CatalogueStory[]): Shelf[] {
 export function storyMatchesMode(story: Story, mode: CatalogueMode | null): boolean {
   if (mode === 'interactive') return storyHasInteractive(story);
   if (mode === 'music') return storyHasMusic(story);
-  if (mode === 'jigsaw') return storyHasJigsaw(story);
   return true;
 }
 
 export function entryMatchesMode(entry: CatalogEntry, mode: CatalogueMode | null): boolean {
   if (mode === 'interactive') return !!entry.tags?.includes('interactive');
   if (mode === 'music') return !!entry.tags?.includes('music');
-  if (mode === 'jigsaw') return false;
   return true;
 }
 

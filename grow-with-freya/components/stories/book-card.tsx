@@ -9,7 +9,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
-import { Story, STORY_TAGS, getLocalizedText } from '@/types/story';
+import { Story, STORY_TAGS, getLocalizedText, storyPageCount } from '@/types/story';
 import type { SupportedLanguage } from '@/services/i18n';
 import { Fonts } from '@/constants/theme';
 // All story images are loaded from local cache after batch sync - no authenticated fetching needed
@@ -36,6 +36,7 @@ const cardWidth = getCardWidth();
 
 export function BookCard({ story, onPress, index = 0 }: BookCardProps) {
   const { t, i18n } = useTranslation();
+  const pageCount = storyPageCount(story);
   const currentLanguage = i18n.language as SupportedLanguage;
   const isPlaceholder = !story.isAvailable;
   const storyTag = story.category ? STORY_TAGS[story.category] : null;
@@ -174,9 +175,9 @@ export function BookCard({ story, onPress, index = 0 }: BookCardProps) {
         )}
 
         {/* Duration indicator for available stories */}
-        {!isPlaceholder && story.duration && (
+        {!isPlaceholder && pageCount !== undefined && (
           <Text style={styles.duration}>
-            {story.duration} min
+            {t('storyDetail.pages', { count: pageCount })}
           </Text>
         )}
       </LinearGradient>

@@ -25,12 +25,4 @@ public interface UserRepository {
     CompletableFuture<Void> deleteUser(String userId);
 
     CompletableFuture<Long> countActiveUsers();
-
-    CompletableFuture<User> updatePreferences(String userId, Object preferences);
-
-    CompletableFuture<User> addChild(String userId, Object childProfile);
-
-    CompletableFuture<User> removeChild(String userId, String childId);
-
-    CompletableFuture<User> updateChild(String userId, String childId, Object childProfile);
 }

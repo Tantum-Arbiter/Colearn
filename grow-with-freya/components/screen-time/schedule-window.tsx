@@ -224,7 +224,7 @@ function tabletSheet(maxWidth: number) {
 
 const styles = StyleSheet.create({
   backdrop: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(4, 8, 26, 0.55)',
   },
   sheetWrap: {

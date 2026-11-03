@@ -2,7 +2,7 @@ import React, { memo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Fonts } from '@/constants/theme';
-import { HOME_CARD_TINTS, HOME_CARD_TYPE } from '@/constants/home-journey';
+import { HOME_CARD_TINTS, HOME_CARD_TYPE, STAT_TEXT_SHADE } from '@/constants/home-journey';
 import { StatIcon } from './stat-icons';
 
 /** Matches the streak chip's flame so the two read as one pair, not two
@@ -62,6 +62,7 @@ const styles = StyleSheet.create({
     fontSize: HOME_CARD_TYPE.body,
     fontWeight: '700',
     color: HOME_CARD_TINTS.title,
+    ...STAT_TEXT_SHADE,
   },
   textMuted: {
     fontWeight: '600',

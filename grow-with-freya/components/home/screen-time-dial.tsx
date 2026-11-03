@@ -16,6 +16,9 @@ export interface ScreenTimeDialProps {
   /** The unspent part of the circle. Off where the dial is large enough that
    *  a full faint ring reads as something sitting behind the glyph. */
   showTrack?: boolean;
+  /** How strongly the spent arc is drawn. Faint over the home sky; the bar
+   *  draws it at full strength so it reads like the glyphs beside it. */
+  arcOpacity?: number;
 }
 
 export const ScreenTimeDial = memo(function ScreenTimeDial({
@@ -27,6 +30,7 @@ export const ScreenTimeDial = memo(function ScreenTimeDial({
   radius = DIAL_RADIUS,
   strokeWidth = SCREEN_TIME_RING.strokeWidth,
   showTrack = true,
+  arcOpacity = SCREEN_TIME_RING.arcOpacity,
 }: ScreenTimeDialProps) {
   const circumference = 2 * Math.PI * radius;
 
@@ -51,7 +55,7 @@ export const ScreenTimeDial = memo(function ScreenTimeDial({
         cy={cy}
         r={radius}
         stroke={tint}
-        strokeOpacity={SCREEN_TIME_RING.arcOpacity}
+        strokeOpacity={arcOpacity}
         strokeWidth={strokeWidth}
         strokeLinecap="round"
         fill="none"

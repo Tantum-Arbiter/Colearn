@@ -7,6 +7,7 @@ const mockSetCrashReportingEnabled = jest.fn();
 const mockSetConsent = jest.fn();
 const mockSetUserProfile = jest.fn();
 const mockSetChildAge = jest.fn();
+const mockSetChildGoals = jest.fn();
 
 jest.mock('@/store/app-store', () => ({
   useAppStore: () => ({
@@ -15,6 +16,7 @@ jest.mock('@/store/app-store', () => ({
     setConsent: mockSetConsent,
     setUserProfile: mockSetUserProfile,
     setChildAge: mockSetChildAge,
+    setChildGoals: mockSetChildGoals,
   }),
 }));
 
@@ -68,7 +70,7 @@ jest.spyOn(require('react-native').Alert, 'alert').mockImplementation(
   }) as any
 );
 
-const TOTAL_STEPS = 5;
+const TOTAL_STEPS = 6;
 const CONSENT_STEP = 4;
 
 function toStr(tree: ReturnType<typeof render>) {
@@ -142,6 +144,16 @@ function renderAtProfileStep(onComplete: jest.Mock) {
   ['consent-checkbox-privacy', 'consent-checkbox-terms', 'consent-checkbox-data'].forEach((tid) => {
     fireEvent.press(findByTestId(utils, tid));
   });
+  fireEvent.press(findByTestId(utils, 'next-btn'));
+  advance();
+  return utils;
+}
+
+
+/** Past the profile, with a name entered, onto the goals step. */
+function renderAtGoalsStep(onComplete: jest.Mock) {
+  const utils = renderAtProfileStep(onComplete);
+  fireEvent.changeText(findByTestId(utils, 'profile-nickname-input'), 'Freya');
   fireEvent.press(findByTestId(utils, 'next-btn'));
   advance();
   return utils;
@@ -274,15 +286,17 @@ describe('OnboardingFlow', () => {
   });
 
   describe('profile screen', () => {
-    it('is the final step', () => {
+    it('is the step before the goals', () => {
       const tree = renderAtProfileStep(mockOnComplete);
-      expect(toStr(tree)).toContain(`Step ${TOTAL_STEPS} of ${TOTAL_STEPS}`);
+      expect(toStr(tree)).toContain(`Step ${TOTAL_STEPS - 1} of ${TOTAL_STEPS}`);
     });
 
-    it('saves the profile and completes onboarding when a nickname is entered', () => {
+    it('saves the profile and completes onboarding once the goals step is passed too', () => {
       const tree = renderAtProfileStep(mockOnComplete);
 
       fireEvent.changeText(findByTestId(tree, 'profile-nickname-input'), 'Freya');
+      fireEvent.press(findByTestId(tree, 'next-btn'));
+      advance();
       fireEvent.press(findByTestId(tree, 'next-btn'));
 
       expect(mockSetUserProfile).toHaveBeenCalledWith('Freya', 'girl', 'bear');
@@ -298,6 +312,8 @@ describe('OnboardingFlow', () => {
       fireEvent.press(findByTestId(tree, 'age-option-4-6'));
       fireEvent.changeText(findByTestId(tree, 'profile-nickname-input'), 'Sam');
       fireEvent.press(findByTestId(tree, 'next-btn'));
+      advance();
+      fireEvent.press(findByTestId(tree, 'next-btn'));
 
       expect(mockSetChildAge).toHaveBeenCalledWith(60);
     });
@@ -307,6 +323,8 @@ describe('OnboardingFlow', () => {
 
       fireEvent.press(findByTestId(tree, 'avatar-option-dino'));
       fireEvent.changeText(findByTestId(tree, 'profile-nickname-input'), 'Sam');
+      fireEvent.press(findByTestId(tree, 'next-btn'));
+      advance();
       fireEvent.press(findByTestId(tree, 'next-btn'));
 
       expect(mockSetUserProfile).toHaveBeenCalledWith('Sam', 'girl', 'dino');
@@ -363,4 +381,89 @@ describe('OnboardingFlow', () => {
       expect(mockOnComplete).not.toHaveBeenCalled();
     });
   });
+
+  describe('goals screen', () => {
+    it('is the final step, after the profile', () => {
+      const tree = renderAtGoalsStep(mockOnComplete);
+
+      expect(toStr(tree)).toContain(`Step ${TOTAL_STEPS} of ${TOTAL_STEPS}`);
+      expect(toStr(tree)).toContain('onboardingV2.goals.title');
+      expect(mockSetOnboardingComplete).not.toHaveBeenCalled();
+    });
+
+    it('offers the three things the island can serve, nothing it cannot', () => {
+      const tree = renderAtGoalsStep(mockOnComplete);
+
+      ['cosyStories', 'bigFeelings', 'makeMusic'].forEach((goal) => {
+        expect(findByTestId(tree, `goal-tile-${goal}`)).toBeTruthy();
+      });
+      expect(tree.UNSAFE_root.findAll((n: any) => typeof n.props.testID === 'string' && n.props.testID.startsWith('goal-tile-')).map((n: any) => n.props.testID).filter((id: string, i: number, all: string[]) => all.indexOf(id) === i)).toHaveLength(3);
+    });
+
+    it('can be skipped, which finishes onboarding with the profile saved and no goals written', () => {
+      const tree = renderAtGoalsStep(mockOnComplete);
+
+      fireEvent.press(findByTestId(tree, 'skip-btn'));
+
+      expect(mockSetUserProfile).toHaveBeenCalledWith('Freya', 'girl', 'bear');
+      expect(mockSetChildGoals).not.toHaveBeenCalled();
+      expect(mockSetOnboardingComplete).toHaveBeenCalledWith(true);
+      expect(mockOnComplete).toHaveBeenCalled();
+    });
+
+    it('leaves tapped goals unwritten when the step is skipped after all', () => {
+      const tree = renderAtGoalsStep(mockOnComplete);
+
+      fireEvent.press(findByTestId(tree, 'goal-tile-bigFeelings'));
+      fireEvent.press(findByTestId(tree, 'skip-btn'));
+
+      expect(mockSetChildGoals).not.toHaveBeenCalled();
+      expect(mockSetOnboardingComplete).toHaveBeenCalledWith(true);
+    });
+
+    it('remembers the goals in the order they were tapped, the first weighing most', () => {
+      const tree = renderAtGoalsStep(mockOnComplete);
+
+      fireEvent.press(findByTestId(tree, 'goal-tile-bigFeelings'));
+      fireEvent.press(findByTestId(tree, 'goal-tile-cosyStories'));
+      fireEvent.press(findByTestId(tree, 'next-btn'));
+
+      expect(mockSetChildGoals).toHaveBeenCalledWith(['bigFeelings', 'cosyStories']);
+      expect(mockSetOnboardingComplete).toHaveBeenCalledWith(true);
+      expect(mockOnComplete).toHaveBeenCalled();
+    });
+
+    it('lets a goal go when it is tapped again', () => {
+      const tree = renderAtGoalsStep(mockOnComplete);
+
+      fireEvent.press(findByTestId(tree, 'goal-tile-bigFeelings'));
+      fireEvent.press(findByTestId(tree, 'goal-tile-cosyStories'));
+      fireEvent.press(findByTestId(tree, 'goal-tile-bigFeelings'));
+      fireEvent.press(findByTestId(tree, 'next-btn'));
+
+      expect(mockSetChildGoals).toHaveBeenCalledWith(['cosyStories']);
+    });
+
+    it('tells a screen reader which tiles are chosen, and in what order', () => {
+      const tree = renderAtGoalsStep(mockOnComplete);
+
+      fireEvent.press(findByTestId(tree, 'goal-tile-makeMusic'));
+      fireEvent.press(findByTestId(tree, 'goal-tile-bigFeelings'));
+
+      expect(findByTestId(tree, 'goal-tile-makeMusic').props.accessibilityState).toEqual({ checked: true });
+      expect(findByTestId(tree, 'goal-tile-cosyStories').props.accessibilityState).toEqual({ checked: false });
+      expect(findByTestId(tree, 'goal-rank-makeMusic').props.children).toBe('1');
+      expect(findByTestId(tree, 'goal-rank-bigFeelings').props.children).toBe('2');
+    });
+
+    it('finishes with no goals written when nothing was tapped and Continue is pressed', () => {
+      const tree = renderAtGoalsStep(mockOnComplete);
+
+      fireEvent.press(findByTestId(tree, 'next-btn'));
+
+      expect(mockSetChildGoals).not.toHaveBeenCalled();
+      expect(mockSetOnboardingComplete).toHaveBeenCalledWith(true);
+    });
+  });
+
 });

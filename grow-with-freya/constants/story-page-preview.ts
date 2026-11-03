@@ -1,12 +1,14 @@
 import type { ImageSourcePropType } from 'react-native';
 import type { Story } from '@/types/story';
+import { rgba } from '@/utils/worklet-colour';
 
 export const STORY_PAGE_PREVIEW = {
   dwellMs: 3000,
   turnMs: 2100,
-  prepareMs: 700,
+  readyMs: 700,
   fadeMs: 1200,
   maxPages: 6,
+  warmPages: 12,
   curl: {
     strips: 32,
     overlap: 2,
@@ -45,6 +47,50 @@ export function frameKey(frame: PreviewFrame): string {
     return JSON.stringify(frame);
   }
   return frame.uri ?? JSON.stringify(frame);
+}
+
+export function pageFrame(story: Story, pageIndex: number): PreviewFrame | undefined {
+  const page = (story.pages ?? [])[pageIndex];
+  return toSource(page?.backgroundImage) ?? toSource(story.coverImage);
+}
+
+export function pagePlaces(story: Story): Map<string, number> {
+  const places = new Map<string, number>();
+  const cover = toSource(story.coverImage);
+  if (cover) {
+    places.set(frameKey(cover), -1);
+  }
+  (story.pages ?? []).forEach((page, index) => {
+    const source = toSource(page.backgroundImage);
+    if (source && !places.has(frameKey(source))) {
+      places.set(frameKey(source), index);
+    }
+  });
+  return places;
+}
+
+export function turnsBack(places: Map<string, number>, from: PreviewFrame, to: PreviewFrame): boolean {
+  const start = places.get(frameKey(from));
+  const end = places.get(frameKey(to));
+  return start !== undefined && end !== undefined && end < start;
+}
+
+export function warmFrames(story: Story): PreviewFrame[] {
+  const frames: PreviewFrame[] = [];
+  const seen = new Set<string>();
+  (story.pages ?? []).slice(1, 1 + STORY_PAGE_PREVIEW.warmPages).forEach((page) => {
+    const source = toSource(page.backgroundImage);
+    if (!source) {
+      return;
+    }
+    const key = frameKey(source);
+    if (!seen.has(key)) {
+      seen.add(key);
+      frames.push(source);
+    }
+  });
+
+  return frames;
 }
 
 export function previewFrames(story: Story): PreviewFrame[] {
@@ -177,9 +223,9 @@ export function stripTint(theta: number, scaleX: number): string {
   const light = stripLight(theta);
   const presence = Math.min(1, Math.abs(scaleX) * STORY_PAGE_PREVIEW.curl.presenceGain);
   if (light.shade >= light.highlight) {
-    return `rgba(4, 9, 31, ${light.shade * presence})`;
+    return rgba(4, 9, 31, light.shade * presence);
   }
-  return `rgba(255, 250, 240, ${light.highlight * presence})`;
+  return rgba(255, 250, 240, light.highlight * presence);
 }
 
 export function liftShadow(phi: number, bend: number, half: number): { translateX: number; opacity: number } {

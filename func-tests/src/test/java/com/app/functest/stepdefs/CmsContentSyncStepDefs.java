@@ -155,7 +155,7 @@ public class CmsContentSyncStepDefs extends BaseStepDefs {
                 "coverImage": "assets/stories/squirrels-snowman/cover/thumbnail.webp",
                 "isAvailable": true,
                 "ageRange": "2-5",
-                "duration": 5,
+                "pageCount": 5,
                 "description": "A newly added story for testing.",
                 "isPremium": false,
                 "author": "Test Author",
@@ -276,7 +276,7 @@ public class CmsContentSyncStepDefs extends BaseStepDefs {
                 "coverImage": "assets/stories/squirrels-snowman/cover/thumbnail.webp",
                 "isAvailable": true,
                 "ageRange": "2-5",
-                "duration": 10,
+                "pageCount": 10,
                 "description": "A test story seeded for GCP functional testing at %s.",
                 "isPremium": true,
                 "author": "GCP Test Suite",
@@ -807,7 +807,7 @@ public class CmsContentSyncStepDefs extends BaseStepDefs {
                 "coverImage": "assets/stories/squirrels-snowman/cover/thumbnail.webp",
                 "isAvailable": true,
                 "ageRange": "2-5",
-                "duration": 5,
+                "pageCount": 5,
                 "description": "A test story with localized content",
                 "localizedDescription": {
                     "en": "A test story with localized content",
@@ -826,10 +826,12 @@ public class CmsContentSyncStepDefs extends BaseStepDefs {
                         "type": "story",
                         "text": "Hello, world!",
                         "localizedText": {
-                            "en": "Hello, world!",
-                            "pl": "Witaj, świecie!",
-                            "es": "¡Hola, mundo!",
-                            "de": "Hallo, Welt!"
+                            "4-6": {
+                                "en": "Hello, world!",
+                                "pl": "Witaj, świecie!",
+                                "es": "¡Hola, mundo!",
+                                "de": "Hallo, Welt!"
+                            }
                         }
                     }
                 ]
@@ -865,10 +867,12 @@ public class CmsContentSyncStepDefs extends BaseStepDefs {
         }
         assertThat("Page " + pageNumber + " should exist", targetPage, notNullValue());
 
-        Map<String, Object> localizedText = (Map<String, Object>) targetPage.get("localizedText");
+        Map<String, Map<String, Object>> localizedText = (Map<String, Map<String, Object>>) targetPage.get("localizedText");
         assertThat("Page " + pageNumber + " should have localizedText", localizedText, notNullValue());
-        assertThat("Page " + pageNumber + " should have localized text in " + language,
-                localizedText.get(language), notNullValue());
+        boolean anyGroupHasLanguage = localizedText.values().stream()
+                .anyMatch(group -> group != null && group.get(language) instanceof String text && !text.isEmpty());
+        assertThat("Page " + pageNumber + " should have localized text in " + language + " in some age group",
+                anyGroupHasLanguage, is(true));
     }
 
     @When("I modify story {string} localized text for language {string} on page {int}")
@@ -897,11 +901,11 @@ public class CmsContentSyncStepDefs extends BaseStepDefs {
             boolean found = false;
             for (Map<String, Object> page : pages) {
                 if (((Number) page.get("pageNumber")).intValue() == pageNumber) {
-                    Map<String, Object> localizedText = (Map<String, Object>) page.get("localizedText");
+                    Map<String, Map<String, Object>> localizedText = (Map<String, Map<String, Object>>) page.get("localizedText");
                     if (localizedText == null) {
                         localizedText = new HashMap<>();
                     }
-                    localizedText.put(language, newText);
+                    localizedText.computeIfAbsent("4-6", group -> new HashMap<>()).put(language, newText);
                     page.put("localizedText", localizedText);
                     found = true;
                     break;
@@ -1037,30 +1041,6 @@ public class CmsContentSyncStepDefs extends BaseStepDefs {
         assertThat("musicChallenge." + fieldName + " should exist", challenge.get(fieldName), notNullValue());
     }
 
-    // =============================================
-    // Jigsaw puzzle step defs
-    // =============================================
-
-    @SuppressWarnings("unchecked")
-    @Then("page {int} jigsawPuzzle should have field {string} with value {string}")
-    public void pageJigsawPuzzleShouldHaveFieldWithValue(int pageNumber, String fieldName, String expectedValue) {
-        Map<String, Object> page = getPageByNumber(pageNumber);
-        Map<String, Object> puzzle = (Map<String, Object>) page.get("jigsawPuzzle");
-        assertThat("Page " + pageNumber + " should have jigsawPuzzle", puzzle, notNullValue());
-        Object value = puzzle.get(fieldName);
-        assertThat("jigsawPuzzle." + fieldName + " should exist", value, notNullValue());
-        assertThat("jigsawPuzzle." + fieldName, String.valueOf(value), is(expectedValue));
-    }
-
-    @SuppressWarnings("unchecked")
-    @Then("page {int} jigsawPuzzle should have field {string}")
-    public void pageJigsawPuzzleShouldHaveField(int pageNumber, String fieldName) {
-        Map<String, Object> page = getPageByNumber(pageNumber);
-        Map<String, Object> puzzle = (Map<String, Object>) page.get("jigsawPuzzle");
-        assertThat("Page " + pageNumber + " should have jigsawPuzzle", puzzle, notNullValue());
-        assertThat("jigsawPuzzle." + fieldName + " should exist", puzzle.get(fieldName), notNullValue());
-    }
-
     @SuppressWarnings("unchecked")
     @Then("page {int} musicChallenge requiredSequence should be an array")
     public void pageMusicChallengeRequiredSequenceShouldBeAnArray(int pageNumber) {
@@ -1082,59 +1062,5 @@ public class CmsContentSyncStepDefs extends BaseStepDefs {
                 seq.size(), greaterThanOrEqualTo(minCount));
     }
 
-    // =============================================
-    // Reading challenge step defs
-    // =============================================
-
-    @SuppressWarnings("unchecked")
-    @Then("page {int} readingChallenge should have field {string} with value {string}")
-    public void pageReadingChallengeShouldHaveFieldWithValue(int pageNumber, String fieldName, String expectedValue) {
-        Map<String, Object> page = getPageByNumber(pageNumber);
-        Map<String, Object> rc = (Map<String, Object>) page.get("readingChallenge");
-        assertThat("Page " + pageNumber + " should have readingChallenge", rc, notNullValue());
-        Object value = rc.get(fieldName);
-        assertThat("readingChallenge." + fieldName + " should exist", value, notNullValue());
-        assertThat("readingChallenge." + fieldName, String.valueOf(value), is(expectedValue));
-    }
-
-    @SuppressWarnings("unchecked")
-    @Then("page {int} readingChallenge should have field {string}")
-    public void pageReadingChallengeShouldHaveField(int pageNumber, String fieldName) {
-        Map<String, Object> page = getPageByNumber(pageNumber);
-        Map<String, Object> rc = (Map<String, Object>) page.get("readingChallenge");
-        assertThat("Page " + pageNumber + " should have readingChallenge", rc, notNullValue());
-        assertThat("readingChallenge." + fieldName + " should exist", rc.get(fieldName), notNullValue());
-    }
-
-    @SuppressWarnings("unchecked")
-    @Then("page {int} readingChallenge blankWordIndices should be an array")
-    public void pageReadingChallengeBlankWordIndicesShouldBeAnArray(int pageNumber) {
-        Map<String, Object> page = getPageByNumber(pageNumber);
-        Map<String, Object> rc = (Map<String, Object>) page.get("readingChallenge");
-        assertThat("readingChallenge should exist", rc, notNullValue());
-        Object indices = rc.get("blankWordIndices");
-        assertThat("blankWordIndices should be a list", indices, instanceOf(List.class));
-    }
-
-    @SuppressWarnings("unchecked")
-    @Then("page {int} readingChallenge blankWordIndices should have {int} elements")
-    public void pageReadingChallengeBlankWordIndicesShouldHaveNElements(int pageNumber, int expectedCount) {
-        Map<String, Object> page = getPageByNumber(pageNumber);
-        Map<String, Object> rc = (Map<String, Object>) page.get("readingChallenge");
-        assertThat("readingChallenge should exist", rc, notNullValue());
-        List<?> indices = (List<?>) rc.get("blankWordIndices");
-        assertThat("blankWordIndices should have " + expectedCount + " elements",
-                indices.size(), equalTo(expectedCount));
-    }
-
-    @SuppressWarnings("unchecked")
-    @Then("page {int} readingChallenge distractorLetters should be an array")
-    public void pageReadingChallengeDistractorLettersShouldBeAnArray(int pageNumber) {
-        Map<String, Object> page = getPageByNumber(pageNumber);
-        Map<String, Object> rc = (Map<String, Object>) page.get("readingChallenge");
-        assertThat("readingChallenge should exist", rc, notNullValue());
-        Object letters = rc.get("distractorLetters");
-        assertThat("distractorLetters should be a list", letters, instanceOf(List.class));
-    }
 }
 

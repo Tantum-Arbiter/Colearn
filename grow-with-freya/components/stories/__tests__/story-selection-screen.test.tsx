@@ -198,7 +198,7 @@ describe('StorySelectionScreen', () => {
   it('calls requestReturnToMainMenu when back is pressed', () => {
     const { UNSAFE_root } = render(
       <ScreenTimeProvider>
-        <StorySelectionScreen initialMode="jigsaw" />
+        <StorySelectionScreen initialMode="music" />
       </ScreenTimeProvider>
     );
 
@@ -215,7 +215,7 @@ describe('StorySelectionScreen', () => {
   });
 
   it('renders without crashing with each initialMode', () => {
-    const modes = ['interactive', 'music', 'jigsaw'] as const;
+    const modes = ['interactive', 'music'] as const;
     for (const mode of modes) {
       const { unmount } = render(
         <ScreenTimeProvider>

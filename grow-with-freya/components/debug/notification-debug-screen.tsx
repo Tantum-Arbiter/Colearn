@@ -73,7 +73,7 @@ export function NotificationDebugScreen({ onBack }: NotificationDebugScreenProps
       const notificationId = await Notifications.scheduleNotificationAsync({
         content: {
           title: 'Test Notification',
-          body: 'This is a test notification from Grow with Freya debug tool',
+          body: 'This is a test notification from Early Roots debug tool',
           sound: 'default',
         },
         trigger: null, // Send immediately

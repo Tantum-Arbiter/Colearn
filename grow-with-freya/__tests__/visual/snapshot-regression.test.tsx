@@ -43,6 +43,8 @@ jest.mock('@/store/app-store', () => {
     childAgeInMonths: 36,
     setStoryProgress: jest.fn(),
     markStoryCompleted: jest.fn(),
+    recordChallengeCompleted: jest.fn(),
+    grantAchievements: jest.fn(),
     markStoryAsRead: jest.fn(),
     recordReadingSession: jest.fn(),
     textSizeScale: 1,
@@ -157,7 +159,6 @@ describe('Visual Regression Tests', () => {
         'main-menu-container',
         'menu-carousel',
         'menu-icon-instruments',
-        'menu-icon-learning',
         'menu-icon-stories',
         'mode-back-arrow',
         'music-control-button',
@@ -171,7 +172,6 @@ describe('Visual Regression Tests', () => {
       expect(labels(tree)).toEqual([
         'Mute background music. Long press for audio settings.',
         'menu.instruments button',
-        'menu.learning button',
         'menu.stories button',
       ]);
     });
@@ -192,14 +192,19 @@ describe('Visual Regression Tests', () => {
 
       expect(structure(tree)).toEqual([
         'earth-horizon',
-        'earth-horizon-clouds',
-        'earth-horizon-globe',
+        'earth-horizon-planet',
         'icon-Ionicons-arrow-back',
         'linear-gradient',
         'music-control-button',
         'music-icon-playing',
         'page-header-row',
         'page-header-title',
+        'page-header-title-halo',
+        'svg-Defs',
+        'svg-RadialGradient',
+        'svg-Rect',
+        'svg-Stop',
+        'svg-Svg',
       ]);
     });
 

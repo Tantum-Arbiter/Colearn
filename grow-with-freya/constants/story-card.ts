@@ -18,6 +18,13 @@ export const STORY_CARD = {
    *  has read, and three buttons. Nothing scrolls, and the buttons sit at the
    *  foot, so a card with less above them simply has more room between. */
   bodyHeight: { phone: 388, tablet: 384 },
+  pages: {
+    height: 116,
+    thumbWidth: 64,
+    thumbHeight: 48,
+    gap: 8,
+    picked: { colour: '#F5C451', ink: '#1B205E', ring: 3, glow: 8, dim: 0.6 },
+  },
   /** Gap between the card and the bottom of the safe area. */
   bottomGap: 10,
   /** Room to keep clear beneath the status bar. */
@@ -46,11 +53,12 @@ export function storyCardLayout(
 ): StoryCardLayout {
   const width = Math.min(STORY_CARD.maxWidth, screen.width - STORY_CARD.sideInset * 2);
   const x = Math.round((screen.width - width) / 2);
-  const bodyHeight = isTablet ? STORY_CARD.bodyHeight.tablet : STORY_CARD.bodyHeight.phone;
+  const bodyHeight = (isTablet ? STORY_CARD.bodyHeight.tablet : STORY_CARD.bodyHeight.phone) + STORY_CARD.pages.height;
   const bottom = screen.height - insets.bottom - STORY_CARD.bottomGap;
-  const tallestCover = bottom - bodyHeight - insets.top - STORY_CARD.topGap;
+  const room = bottom - insets.top - STORY_CARD.topGap;
+  const tallestCover = room - bodyHeight;
   const coverHeight = Math.round(Math.max(0, Math.min(width * STORY_CARD.coverAspect, tallestCover)));
-  const height = coverHeight + bodyHeight;
+  const height = Math.min(coverHeight + bodyHeight, room);
 
   return {
     x,

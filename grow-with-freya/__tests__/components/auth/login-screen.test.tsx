@@ -10,7 +10,7 @@
  */
 
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
+import { act, render, fireEvent } from '@testing-library/react-native';
 import { Platform, StyleSheet } from 'react-native';
 
 import { LoginScreen, longestWord } from '@/components/auth/login-screen';
@@ -32,8 +32,19 @@ jest.mock('@/services/auth-service', () => ({
   },
 }));
 
-jest.mock('@/components/main-menu', () => ({
-  MainMenu: () => null,
+jest.mock('@/services/secure-storage', () => ({
+  SecureStorage: { storeTokens: jest.fn().mockResolvedValue(undefined), storeUserData: jest.fn().mockResolvedValue(undefined) },
+}));
+
+jest.mock('@/components/auth/login-hero', () => {
+  const { View } = require('react-native');
+  return { LoginHero: (props: any) => <View testID="login-hero" {...props} /> };
+});
+
+const mockUseReducedMotion = jest.fn(() => false);
+
+jest.mock('@/hooks/use-reduced-motion', () => ({
+  useReducedMotion: () => mockUseReducedMotion(),
 }));
 
 jest.mock('@/components/account/terms-conditions-screen', () => {
@@ -47,6 +58,7 @@ jest.mock('@/components/account/privacy-policy-screen', () => {
 });
 
 const mockSetGuestMode = jest.fn();
+const mockMarkSignedIn = jest.fn();
 const mockGetEffectiveTier = jest.fn(() => 'free');
 
 let mockUserNickname: string | null = null;
@@ -54,6 +66,7 @@ let mockUserNickname: string | null = null;
 jest.mock('@/store/app-store', () => ({
   useAppStore: () => ({
     setGuestMode: mockSetGuestMode,
+    markSignedIn: mockMarkSignedIn,
     getEffectiveTier: mockGetEffectiveTier,
     userNickname: mockUserNickname,
   }),
@@ -94,11 +107,24 @@ describe('LoginScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockGetEffectiveTier.mockReturnValue('free');
+    mockUseReducedMotion.mockReturnValue(false);
     mockUserNickname = null;
   });
 
   it('renders the hero illustration', () => {
     expect(findByTestId(renderLogin(), 'login-hero').length).toBeGreaterThan(0);
+  });
+
+  describe('the animals in the hero', () => {
+    it('sway, blink and smile unless the child has asked for less motion', () => {
+      expect(findByTestId(renderLogin(), 'login-hero')[0].props.animated).toBe(true);
+    });
+
+    it('hold their painted pose when motion is reduced', () => {
+      mockUseReducedMotion.mockReturnValue(true);
+
+      expect(findByTestId(renderLogin(), 'login-hero')[0].props.animated).toBe(false);
+    });
   });
 
   it('renders the Google and guest options', () => {
@@ -118,6 +144,24 @@ describe('LoginScreen', () => {
     expect(findByTestId(renderLogin(), 'login-apple')).toHaveLength(0);
 
     Platform.OS = original;
+  });
+
+  it('marks the family signed in, clearing guest mode and any lapsed session, when Apple sign-in succeeds', async () => {
+    const { AuthService } = jest.requireMock('@/services/auth-service');
+    AuthService.signInWithApple.mockResolvedValueOnce({ tokens: { accessToken: 'a', refreshToken: 'r' }, user: { id: 'u' } });
+    const original = Platform.OS;
+    Platform.OS = 'ios';
+    const onSuccess = jest.fn();
+    const tree = renderLogin({ onSuccess });
+
+    await act(async () => {
+      fireEvent.press(findByTestId(tree, 'login-apple')[0]);
+    });
+    Platform.OS = original;
+
+    expect(mockMarkSignedIn).toHaveBeenCalledTimes(1);
+    expect(mockSetGuestMode).not.toHaveBeenCalled();
+    expect(onSuccess).toHaveBeenCalledTimes(1);
   });
 
   it('renders the guest note beside its cloud badge', () => {
@@ -312,6 +356,78 @@ describe('LoginScreen', () => {
     fireEvent.press(findByTestId(tree, 'guest-info-continue')[0]);
 
     expect(mockSetGuestMode).toHaveBeenCalledWith(true);
+  });
+
+  // the main menu the child is about to use is mounted beneath this whole screen
+  // by the app shell; the guest card is opaque, so the sky can go the moment the
+  // card starts to leave, and the slide reveals that one menu
+  describe('handing over to the menu beneath', () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('mounts no menu of its own', () => {
+      const tree = renderLogin();
+
+      fireEvent.press(findByTestId(tree, 'login-guest')[0]);
+      fireEvent.press(findByTestId(tree, 'guest-info-continue')[0]);
+      act(() => {
+        jest.advanceTimersByTime(400);
+      });
+
+      expect(tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'sky-face').length).toBe(0);
+      expect(toStr(tree)).not.toContain('home-scene');
+    });
+
+    it('drops the sky under the guest card and hands over once the card has slid away', () => {
+      const onSkip = jest.fn();
+      const tree = renderLogin({ onSkip });
+
+      fireEvent.press(findByTestId(tree, 'login-guest')[0]);
+      fireEvent.press(findByTestId(tree, 'guest-info-continue')[0]);
+
+      expect(onSkip).not.toHaveBeenCalled();
+      act(() => {
+        jest.advanceTimersByTime(400);
+      });
+
+      expect(onSkip).toHaveBeenCalledTimes(1);
+    });
+
+    it('says the reveal has started before anything is handed over, on both paths', () => {
+      const calls: string[] = [];
+      const guest = renderLogin({ onSkip: () => calls.push('skip'), onRevealStart: () => calls.push('reveal') });
+      fireEvent.press(findByTestId(guest, 'login-guest')[0]);
+      fireEvent.press(findByTestId(guest, 'guest-info-continue')[0]);
+      act(() => {
+        jest.advanceTimersByTime(400);
+      });
+
+      expect(calls).toEqual(['reveal', 'skip']);
+
+      calls.length = 0;
+      mockGetEffectiveTier.mockReturnValue('premium');
+      const returning = renderLogin({ onSkip: () => calls.push('skip'), onRevealStart: () => calls.push('reveal') });
+      fireEvent.press(findByTestId(returning, 'login-guest')[0]);
+
+      expect(calls).toEqual(['reveal', 'skip']);
+    });
+
+    it('hands a returning subscriber over as soon as the login has faded, with no wait', () => {
+      mockGetEffectiveTier.mockReturnValue('premium');
+      const onSkip = jest.fn();
+      const tree = renderLogin({ onSkip });
+
+      fireEvent.press(findByTestId(tree, 'login-guest')[0]);
+
+      expect(findByTestId(tree, 'guest-info-overlay')).toHaveLength(0);
+      expect(mockSetGuestMode).toHaveBeenCalledWith(true);
+      expect(onSkip).toHaveBeenCalledTimes(1);
+    });
   });
 
   it('offers a way back from the guest overlay', () => {
