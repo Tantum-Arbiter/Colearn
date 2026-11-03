@@ -34,7 +34,37 @@ const SKILL_FILES = [
   ...CORE_SKILLS.flatMap((skill) => SKILL_LEAVES.flatMap((leaf) => [`.agents/skills/${skill}/${leaf}`, `.claude/skills/${skill}/${leaf}`])),
   ...RISK_GUIDES.flatMap((guide) => SKILL_LEAVES.map((leaf) => `docs/ai-skills/${guide}/${leaf}`)),
 ];
-const INSTRUCTION_FILES = [...ROOT_INSTRUCTIONS, ...SCOPED_AGENTS, ...SKILL_FILES];
+const AGENT_DEFINITIONS = fs
+  .readdirSync(path.join(ROOT, '.claude/agents'))
+  .filter((file) => file.endsWith('.md'))
+  .sort()
+  .map((file) => `.claude/agents/${file}`);
+const READ_ONLY_TOOLS = ['Bash', 'Read', 'Grep', 'Glob'];
+const AGENT_KEYS = ['name', 'description', 'tools', 'model', 'effort', 'maxTurns', 'color'];
+const INSTRUCTION_FILES = [...ROOT_INSTRUCTIONS, ...SCOPED_AGENTS, ...SKILL_FILES, ...AGENT_DEFINITIONS];
+
+const agentBody = (rel: string) => read(rel).replace(/^---\n[\s\S]*?\n---\n/, '').replace(/^\n+/, '').replace(/\n+$/, '');
+
+function codexMirror(rel: string): { name: string; description: string; effort: string; instructions: string } {
+  const text = read(`.codex/agents/${path.basename(rel, '.md')}.toml`);
+  const field = (key: string) => text.match(new RegExp(`^${key} = (["'])(.*)\\1$`, 'm'))?.[2] ?? '';
+  return {
+    name: field('name'),
+    description: field('description'),
+    effort: field('model_reasoning_effort'),
+    instructions: text.split('developer_instructions = """\n')[1]?.replace(/"""\n$/, '') ?? '',
+  };
+}
+
+function frontmatter(rel: string): Record<string, string> {
+  const block = read(rel).match(/^---\n([\s\S]*?)\n---/)?.[1] ?? '';
+  return Object.fromEntries(
+    block.split('\n').flatMap((line) => {
+      const match = line.match(/^([a-zA-Z]+):\s*(.*)$/);
+      return match ? [[match[1], match[2]]] : [];
+    }),
+  );
+}
 
 function relativeLinks(rel: string): string[] {
   const links: string[] = [];
@@ -198,6 +228,58 @@ describe('the committed Claude permissions back the written rules', () => {
 
     expect(allow.filter((rule) => /^(Bash|Read|Edit|Write)(\(\*\))?$/.test(rule))).toEqual([]);
     expect(defaultMode).not.toBe('bypassPermissions');
+  });
+});
+
+describe('the project subagents', () => {
+  const delegation = () => read('docs/agent-context-map.md').split('## Delegation inside a session')[1]?.split('\n## ')[0] ?? '';
+
+  it('are the five the context map hands work to', () => {
+    expect(AGENT_DEFINITIONS.map((rel) => path.basename(rel, '.md'))).toEqual(['diff-reviewer', 'doc-auditor', 'docs-sync', 'repo-scout', 'test-runner']);
+  });
+
+  it('sit at the top of the agents directory, where every one of them is checked', () => {
+    expect(listDirs('.claude/agents')).toEqual([]);
+  });
+
+  it.each(AGENT_DEFINITIONS)('%s is named after its file, says what it is for, and pins a model', (rel) => {
+    const meta = frontmatter(rel);
+
+    expect(Object.keys(meta)).toEqual(AGENT_KEYS);
+    expect(meta.name).toBe(path.basename(rel, '.md'));
+    expect(meta.description.length).toBeGreaterThan(80);
+    expect(meta.model).toMatch(/^(sonnet|opus)$/);
+    expect(meta.tools).toBeTruthy();
+  });
+
+  it.each(AGENT_DEFINITIONS)('%s can edit only if it is docs-sync, and then only through Edit', (rel) => {
+    const tools = frontmatter(rel).tools.split(',').map((tool) => tool.trim());
+    const writing = tools.filter((tool) => !READ_ONLY_TOOLS.includes(tool));
+
+    expect(writing).toEqual(path.basename(rel, '.md') === 'docs-sync' ? ['Edit'] : []);
+  });
+
+  it.each(AGENT_DEFINITIONS)('%s is routed by the delegation section of the context map', (rel) => {
+    expect(delegation()).toContain(`(../${rel})`);
+  });
+
+  it('keeps the main session as the only author of application code', () => {
+    const section = delegation();
+
+    expect(section).toMatch(/only author of application/);
+    expect(section).toMatch(/no unattended agent-to-agent/);
+  });
+
+  it.each(AGENT_DEFINITIONS)('%s is mirrored for Codex, word for word', (rel) => {
+    const meta = frontmatter(rel);
+
+    expect(codexMirror(rel)).toEqual({ name: meta.name, description: meta.description, effort: meta.effort, instructions: agentBody(rel) });
+  });
+
+  it('has no Codex agent that Claude lacks', () => {
+    const codex = fs.readdirSync(path.join(ROOT, '.codex/agents')).filter((file) => file.endsWith('.toml')).map((file) => file.replace(/\.toml$/, '')).sort();
+
+    expect(codex).toEqual(AGENT_DEFINITIONS.map((rel) => path.basename(rel, '.md')));
   });
 });
 

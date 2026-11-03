@@ -21,6 +21,8 @@ authority boundaries and project-specific interpretation of skill roles.
    test work. Use this project's bundles in `.agents/skills/` (Codex) and `.claude/skills/`
    (Claude); they are scoped to Colearn. Do not load the private vault wholesale.
    If a bundle is unavailable, say so and use this documented workflow explicitly.
+   Hand search, test runs, the pre-commit read and document updates to the project
+   subagents as the [context map](agent-context-map.md#delegation-inside-a-session) routes them.
 4. Inspect test commands and setup before execution. Use synthetic parent/child records,
    local stubs and bounded file/network permissions. No live child data, production services,
    paid AI APIs or billable hosted runners. Record commands, candidate revision, exit codes

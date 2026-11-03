@@ -1,7 +1,7 @@
 # Colearn agent context map
 
 Scope: this repository, development targeting `mvp`. This is a project-owned supplement
-to the pinned framework, not a global agent configuration. Last checked: 2026-10-29.
+to the pinned framework, not a global agent configuration. Last checked: 2026-11-03.
 
 ## Authority and discovery
 
@@ -50,6 +50,36 @@ unaffected or not tested; do not claim full-system assurance for a narrow change
 selection does not authorize running disruptive tests. Missing tooling or containment is
 BLOCKED/NOT RUN, not permission to bypass the restriction.
 
+## Delegation inside a session
+
+The main session plans the change and writes the code; it is the only author of application
+source. It hands bounded, verifiable work to the project subagents in `.claude/agents/` so
+its own context stays on the change rather than on search output, runner logs and document
+text. Subagents run inside the attended session and report back to it. None chains into
+another, none commits, and no unattended agent-to-agent or repair loop is permitted; the
+pinned boundaries forbid it. A subagent's report is evidence for the main session to check,
+not authorization, and the sweep, commit and push decisions stay where they are.
+
+| Hand off | To | Brief it with |
+|---|---|---|
+| Where something lives, what still references it, whether it is reachable | [repo-scout](../.claude/agents/repo-scout.md) | The question and the directory in play; it returns citations, not file contents |
+| Whether a plan or feature document still matches the code, before building from it | [doc-auditor](../.claude/agents/doc-auditor.md) | The document and the depth, STANDARD or DEEP |
+| Jest, typecheck and lint, or diagnosing one failing test | [test-runner](../.claude/agents/test-runner.md) | The commands and the baseline to compare against; it reports counts and assertions only |
+| A read of a `grow-with-freya/` change against its contract before it is committed | [diff-reviewer](../.claude/agents/diff-reviewer.md) | The diff range or working tree and the acceptance contract, never the author's conclusions; pass a model other than the author's, since the definition defaults to opus |
+| Feature docs and root PHASE docs brought back in step after a change | [docs-sync](../.claude/agents/docs-sync.md) | The changed files and the reason for the change in the author's words; it edits Markdown only |
+
+Within `fv-feature` and `fv-debug` the order is: `repo-scout` and `doc-auditor` while the
+acceptance contract is being written; `test-runner` after each red and green step;
+`docs-sync` once the code is settled in the working tree, so the commit carries its own
+document update; `diff-reviewer` last, before the commit, so its read covers the document
+edits too. `diff-reviewer` is a second read of work the `.ai` tooling cannot see yet; the
+independent `fv-review` of the committed range remains the gate and is not replaced by it.
+No agent but `docs-sync` carries an edit tool, and `docs-sync` carries `Edit` alone. Bash is
+not a read-only tool, so each definition's no-edit rule is prose the guard test below cannot
+enforce; the harness permission mode still governs every subagent. `docs-sync` may not touch
+the instruction set, which stays with the main session. Each definition is mirrored as Codex
+TOML in `.codex/agents/`, so a Codex session routes the same way.
+
 ## Keep context current and bounded
 
 - For observed behavior, read current code, configuration and test assertions. Historical
@@ -70,4 +100,7 @@ BLOCKED/NOT RUN, not permission to bypass the restriction.
   Claude Code sessions the secret files and the pipe-to-shell commands these rules name, and
   `grow-with-freya/__tests__/config/agent-instructions.test.ts` (run by the app's CI suite)
   fails on a broken link, a second import, a scoped file pointing at `CLAUDE.md`, diverging
-  skill copies, a stale pinned hash, hidden characters, or a deny list missing a named secret.
+  skill copies, a stale pinned hash, hidden characters, a deny list missing a named secret,
+  or a subagent definition the delegation table above does not route, that carries an edit
+  tool other than `docs-sync`'s `Edit`, that declares a frontmatter key beyond the seven they
+  share, or whose Codex mirror has drifted.
