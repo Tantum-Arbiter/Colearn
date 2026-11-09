@@ -237,19 +237,13 @@ from outside the app is added. Everything ships under `grow-with-freya/assets/pa
 
 **No longer drawn, since 2026-10-03.** The checkpoints now wear the operator's later mock: a
 white padlock with a navy keyhole, drawn in code in the middle of the disc
-(`components/island/plan-checkpoint.tsx`, made for the app, no outside art). Nothing
-requires `lock.webp`, so it is not bundled, and it was kept out of the commit: it sits in the
-working copy until the operator decides whether to delete it. The rows below stand for the file
-as it is.
-
-| File (under `grow-with-freya/assets/images/plan/`) | Where from | What was changed |
-|---|---|---|
-| `lock.webp` (256×256) | Cut from a 1254×1254 picture of a glossy blue padlock the operator pasted into the working session on 2026-10-03 | The padlock's own bounding box (345,349)–(908,907) cut out, scaled to 256 px, saved as WebP with its transparency; nothing redrawn |
+(`components/island/plan-checkpoint.tsx`, made for the app, no outside art). The earlier
+`lock.webp` (256×256, cut from a glossy blue padlock picture the operator pasted into the
+working session on 2026-10-03, origin never established) was never bundled or committed, and
+the operator had it deleted from the working copy on 2026-11-09. No third-party art remains
+in this feature.
 
 | Question | Answer |
 |---|---|
-| Who made it, and with what | ⚠️ UNVERIFIED — the picture arrived with no record of its origin. It has the look of a generated icon; the operator to say which service and account, or which artist |
-| Terms for commercial use, and who owns it | ⚠️ UNVERIFIED — depends on the answer above |
-| Checked by eye against well-known icon sets | **Not yet done by a person.** A glossy blue padlock is a common shape; it wants the operator's eye before go-live |
 | The dotted trail and the checkpoint discs | Drawn in code (`components/island/plan-trail.tsx`, `plan-checkpoint.tsx`) from the operator's style guide (a picture of a white dotted path over the island, not shipped). Made for the app |
 
