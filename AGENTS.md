@@ -50,6 +50,7 @@ colearn/
 ├── PHASE-8-BACKEND-ALIGNMENT.md # ⭐ API audit fixes, child data sync, achievements as data, entitlements
 ├── PHASE-9-LEARNING-THROUGH-PLAY.md # Learning games proposal (not yet accepted)
 ├── PHASE-10-LEARNING-GAMES.md # ⭐ Learning games through stories: engines, packs, personalised paths, budgets
+├── PHASE-12-LEARNING-LIBRARY.md # ⭐ The 75-book learning library: book-by-book delivery, challenge page contract, engines by family
 ├── docs/                     # Agent context map, development workflow, pinned policy snapshot, risk guides
 ├── CLAUDE.md                 # Claude entry point — imports this file
 └── AGENTS.md                 # This file — root operating instructions
@@ -89,6 +90,7 @@ colearn/
 | Asset and licence register (go-live gate) | [`compliance/ASSET-REGISTER.md`](compliance/ASSET-REGISTER.md) |
 | Learning games (proposal, not yet accepted) | [`PHASE-9-LEARNING-THROUGH-PLAY.md`](PHASE-9-LEARNING-THROUGH-PLAY.md) |
 | Learning games through stories, game packs, personalised learning paths | [`PHASE-10-LEARNING-GAMES.md`](PHASE-10-LEARNING-GAMES.md) |
+| The 75-book learning library: stages per book, `learning_challenge` page contract, engines by family, ai-tools hand-off | [`PHASE-12-LEARNING-LIBRARY.md`](PHASE-12-LEARNING-LIBRARY.md) |
 
 ---
 
