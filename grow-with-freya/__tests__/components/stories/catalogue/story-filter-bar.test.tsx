@@ -10,11 +10,23 @@
  */
 
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
+import { act, render, fireEvent } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
-import { StoryFilterBar, SELECTED_TILE_FILL, THEME_BAR, THEME_TILE_ART } from '@/components/stories/catalogue/story-filter-bar';
+import * as reanimatedModule from 'react-native-reanimated';
+import { StoryFilterBar, SELECTED_TILE_FILL, THEME_BAR, THEME_TILE_ART, filterDrawerDepth } from '@/components/stories/catalogue/story-filter-bar';
+import { CHILD_UI_MOTION } from '@/constants/child-ui-motion';
+import { FILTER_PILL_HEIGHT, SPACE_3 } from '@/components/child-ui/tokens';
+import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { CATALOGUE_THEMES } from '@/components/stories/catalogue/catalogue-story';
 import { StoryFilterTag } from '@/types/story';
+
+jest.mock('@/hooks/use-reduced-motion', () => ({ useReducedMotion: jest.fn(() => false) }));
+
+const reanimated = reanimatedModule as unknown as {
+  useSharedValue: jest.Mock;
+  useAnimatedStyle: jest.Mock;
+  withTiming: jest.Mock;
+};
 
 const TAGS: StoryFilterTag[] = ['bedtime', 'adventure', 'calming', 'family-exercises', 'animals'];
 
@@ -99,13 +111,23 @@ describe('StoryFilterBar', () => {
 
   it('should keep the finer themes behind the Filter button until it is pressed', () => {
     const tree = render(<StoryFilterBar {...baseProps} />);
+    const slot = (tag: StoryFilterTag) =>
+      tree.UNSAFE_root.findAll((n: any) => n.props.testID === `story-filter-slot-${tag}` && n.props.pointerEvents)[0];
 
-    expect(pressables(tree, 'story-filter-pill-family-exercises')).toHaveLength(0);
+    for (const tag of TAGS) {
+      expect(slot(tag).props.pointerEvents).toBe('none');
+      expect(slot(tag).props.accessibilityElementsHidden).toBe(true);
+      expect(slot(tag).props.importantForAccessibility).toBe('no-hide-descendants');
+    }
 
     fireEvent.press(pressables(tree, 'story-filter-more')[0]);
 
-    expect(pressables(tree, 'story-filter-pill-family-exercises').length).toBeGreaterThan(0);
-    expect(pressables(tree, 'story-filter-pill-bedtime').length).toBeGreaterThan(0);
+    for (const tag of TAGS) {
+      expect(slot(tag).props.pointerEvents).toBe('auto');
+      expect(slot(tag).props.accessibilityElementsHidden).toBe(false);
+      expect(slot(tag).props.importantForAccessibility).toBe('auto');
+      expect(slot(tag).findAll((n: any) => n.props.testID === `story-filter-pill-${tag}`).length).toBeGreaterThan(0);
+    }
   });
 
   it('should keep a chosen finer theme in view, and hand a tap on it to onToggleTag', () => {
@@ -174,7 +196,7 @@ describe('StoryFilterBar', () => {
   it('should keep the chooser tight on a phone: heading, tiles and nothing wasted between', () => {
     const tree = render(<StoryFilterBar {...baseProps} />);
 
-    const underTest = StyleSheet.flatten(tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'story-filter-bar')[0].props.style);
+    const underTest = StyleSheet.flatten(tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'story-filter-rest')[0].props.style);
 
     expect(underTest.gap).toBe(8);
   });
@@ -215,9 +237,301 @@ describe('StoryFilterBar', () => {
     const heading = tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'story-filter-heading')[0];
     const label = tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'story-filter-heading-label')[0];
 
+    const rest = tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'story-filter-rest')[0];
+
     expect(chooser.props.pointerEvents).toBe('box-none');
+    expect(rest.props.pointerEvents).toBe('box-none');
     expect(heading.props.pointerEvents).toBe('box-none');
     expect(label.props.pointerEvents).toBe('none');
     expect(label.findAll((n: any) => n.props.children === 'catalogue.chooseTheme').length).toBeGreaterThan(0);
+  });
+
+  describe('opening and closing the finer themes', () => {
+    const OPEN = { duration: CHILD_UI_MOTION.filterDrawer.duration };
+
+    beforeEach(() => {
+      (useReducedMotion as jest.Mock).mockReturnValue(false);
+      reanimated.useSharedValue.mockImplementation((initial: unknown = 0) => React.useRef({ value: initial }).current);
+      reanimated.useAnimatedStyle.mockImplementation((build: () => object) => build());
+    });
+
+    afterEach(() => {
+      reanimated.useSharedValue.mockImplementation((initial: unknown = 0) => ({ value: initial }));
+      reanimated.useAnimatedStyle.mockImplementation(() => ({}));
+      reanimated.withTiming.mockImplementation((value: unknown, _config: unknown, callback?: (finished: boolean) => void) => {
+        if (typeof callback === 'function') callback(true);
+        return value;
+      });
+    });
+
+    function node(tree: ReturnType<typeof render>, testID: string) {
+      return tree.UNSAFE_root.findAll((n: any) => n.props.testID === testID && n.props.style)[0];
+    }
+
+    function look(tree: ReturnType<typeof render>, testID: string) {
+      return StyleSheet.flatten(node(tree, testID).props.style) as any;
+    }
+
+    function pressFilter(tree: ReturnType<typeof render>) {
+      fireEvent.press(pressables(tree, 'story-filter-more')[0]);
+    }
+
+    function measure(tree: ReturnType<typeof render>, tag: StoryFilterTag, width: number) {
+      const size = tree.UNSAFE_root.findAll((n: any) => n.props.testID === `story-filter-slot-size-${tag}` && n.props.onLayout)[0];
+      act(() => {
+        size.props.onLayout({ nativeEvent: { layout: { x: 0, y: 0, width, height: FILTER_PILL_HEIGHT } } });
+      });
+    }
+
+    function holdAnimations() {
+      const pending: { value: number; finish: (finished: boolean) => void }[] = [];
+      reanimated.withTiming.mockImplementation((value: number, _config: unknown, callback?: (finished: boolean) => void) => {
+        if (typeof callback === 'function') pending.push({ value, finish: callback });
+        return value;
+      });
+      return pending;
+    }
+
+    it('opens one pill deep below the capsule, with the gap the chooser keeps between its rows', () => {
+      expect(filterDrawerDepth(false)).toBe(8 + FILTER_PILL_HEIGHT);
+      expect(filterDrawerDepth(true)).toBe(SPACE_3 + FILTER_PILL_HEIGHT);
+    });
+
+    it('keeps the drawer shut and out of reach until Filter is pressed, then opens it over the drawer beat', () => {
+      const drawer = { value: 0 };
+      const tree = render(<StoryFilterBar {...baseProps} drawer={drawer as any} />);
+
+      expect(look(tree, 'story-filter-drawer').height).toBe(0);
+      expect(look(tree, 'story-filter-drawer').overflow).toBe('hidden');
+      expect(node(tree, 'story-filter-drawer').props.pointerEvents).toBe('none');
+
+      reanimated.withTiming.mockClear();
+      pressFilter(tree);
+
+      expect(reanimated.withTiming).toHaveBeenCalledWith(filterDrawerDepth(false), expect.objectContaining(OPEN), expect.any(Function));
+      expect(drawer.value).toBe(filterDrawerDepth(false));
+      tree.rerender(<StoryFilterBar {...baseProps} drawer={drawer as any} />);
+      expect(look(tree, 'story-filter-drawer').height).toBe(filterDrawerDepth(false));
+      expect(node(tree, 'story-filter-drawer').props.pointerEvents).toBe('auto');
+    });
+
+    it('closes the drawer again over the same beat when Filter is pressed a second time', () => {
+      const drawer = { value: 0 };
+      const tree = render(<StoryFilterBar {...baseProps} drawer={drawer as any} />);
+      pressFilter(tree);
+      reanimated.withTiming.mockClear();
+
+      pressFilter(tree);
+
+      expect(reanimated.withTiming).toHaveBeenCalledWith(0, expect.objectContaining(OPEN), expect.any(Function));
+      expect(drawer.value).toBe(0);
+      tree.rerender(<StoryFilterBar {...baseProps} drawer={drawer as any} />);
+      expect(look(tree, 'story-filter-drawer').height).toBe(0);
+    });
+
+    it('opens and closes in a calm beat: slower than a tap, never long enough to wait for', () => {
+      expect(CHILD_UI_MOTION.filterDrawer.duration).toBeGreaterThanOrEqual(200);
+      expect(CHILD_UI_MOTION.filterDrawer.duration).toBeLessThanOrEqual(320);
+      expect(CHILD_UI_MOTION.filterDrawer.reducedDuration).toBe(0);
+    });
+
+    it('moves at once under Reduce Motion', () => {
+      (useReducedMotion as jest.Mock).mockReturnValue(true);
+      const tree = render(<StoryFilterBar {...baseProps} />);
+      reanimated.withTiming.mockClear();
+
+      pressFilter(tree);
+
+      const durations = reanimated.withTiming.mock.calls.map((call) => call[1].duration);
+      expect(durations.length).toBeGreaterThan(0);
+      expect(durations.every((duration) => duration === 0)).toBe(true);
+    });
+
+    it('holds the drawer open with no Filter press while a finer theme is chosen', () => {
+      const drawer = { value: 0 };
+      render(<StoryFilterBar {...baseProps} drawer={drawer as any} selectedTags={new Set<StoryFilterTag>(['animals'])} />);
+
+      expect(drawer.value).toBe(filterDrawerDepth(false));
+    });
+
+    it('tells the page where its drawer has come to rest, once it is there and not while it moves', () => {
+      const pending = holdAnimations();
+      const onDrawerChange = jest.fn();
+      const tree = render(<StoryFilterBar {...baseProps} onDrawerChange={onDrawerChange} />);
+      const settle = (value: number, finished: boolean) =>
+        act(() => pending.filter((animation) => animation.value === value).pop()!.finish(finished));
+
+      pressFilter(tree);
+      expect(onDrawerChange).not.toHaveBeenCalled();
+
+      settle(filterDrawerDepth(false), false);
+      expect(onDrawerChange).not.toHaveBeenCalled();
+
+      settle(filterDrawerDepth(false), true);
+      expect(onDrawerChange).toHaveBeenLastCalledWith(true);
+
+      pressFilter(tree);
+      expect(onDrawerChange).toHaveBeenCalledTimes(1);
+
+      settle(0, true);
+      expect(onDrawerChange).toHaveBeenLastCalledWith(false);
+    });
+
+    it('grows each pill out from nothing to its own width, the gap to the next pill included', () => {
+      const tree = render(<StoryFilterBar {...baseProps} />);
+      measure(tree, 'bedtime', 132);
+      measure(tree, 'adventure', 150);
+      tree.rerender(<StoryFilterBar {...baseProps} />);
+
+      expect(look(tree, 'story-filter-slot-bedtime').width).toBe(0);
+      expect(look(tree, 'story-filter-slot-bedtime').opacity).toBe(0);
+      expect(look(tree, 'story-filter-slot-bedtime').overflow).toBe('hidden');
+
+      reanimated.withTiming.mockClear();
+      pressFilter(tree);
+      tree.rerender(<StoryFilterBar {...baseProps} />);
+
+      expect(look(tree, 'story-filter-slot-bedtime').width).toBe(132);
+      expect(look(tree, 'story-filter-slot-bedtime').opacity).toBe(1);
+      expect(look(tree, 'story-filter-slot-adventure').width).toBe(150);
+      expect(StyleSheet.flatten(node(tree, 'story-filter-slot-size-bedtime').props.style).paddingRight).toBe(SPACE_3);
+      expect(reanimated.withTiming).toHaveBeenCalledWith(1, expect.objectContaining(OPEN));
+    });
+
+    it('measures a pill at its full width however narrow its slot is drawn', () => {
+      const tree = render(<StoryFilterBar {...baseProps} />);
+      pressFilter(tree);
+
+      let holder = node(tree, 'story-filter-slot-size-bedtime').parent!;
+      while (!holder.props.style || holder.props.testID === 'story-filter-slot-size-bedtime') holder = holder.parent!;
+      const row = StyleSheet.flatten(holder.props.style) as any;
+
+      expect(row.flexDirection).toBe('row');
+      expect(row.overflow).toBe('scroll');
+    });
+
+    it('keeps every pill ready behind the drawer, so opening it builds nothing while it moves', () => {
+      const tree = render(<StoryFilterBar {...baseProps} />);
+      const built = () => TAGS.map((tag) => pressables(tree, `story-filter-pill-${tag}`).length > 0);
+
+      expect(built()).toEqual(TAGS.map(() => true));
+      pressFilter(tree);
+      expect(built()).toEqual(TAGS.map(() => true));
+      pressFilter(tree);
+      expect(built()).toEqual(TAGS.map(() => true));
+    });
+
+    it('shrinks each pill back to nothing over the drawer beat as it closes, and puts it out of reach at once', () => {
+      const tree = render(<StoryFilterBar {...baseProps} />);
+      measure(tree, 'bedtime', 132);
+      pressFilter(tree);
+      reanimated.withTiming.mockClear();
+
+      pressFilter(tree);
+
+      expect(reanimated.withTiming).toHaveBeenCalledWith(0, expect.objectContaining(OPEN));
+      expect(node(tree, 'story-filter-slot-bedtime').props.pointerEvents).toBe('none');
+      expect(node(tree, 'story-filter-slot-bedtime').props.accessibilityElementsHidden).toBe(true);
+      tree.rerender(<StoryFilterBar {...baseProps} />);
+      expect(look(tree, 'story-filter-slot-bedtime').width).toBe(0);
+      expect(look(tree, 'story-filter-slot-bedtime').opacity).toBe(0);
+    });
+
+    it('closes down to the chosen pills only, and leaves the drawer open for them', () => {
+      const drawer = { value: 0 };
+      const chosen = new Set<StoryFilterTag>(['animals', 'adventure']);
+      const props = { ...baseProps, drawer: drawer as any, selectedTags: chosen };
+      const tree = render(<StoryFilterBar {...props} />);
+      measure(tree, 'animals', 120);
+      measure(tree, 'bedtime', 132);
+      pressFilter(tree);
+
+      pressFilter(tree);
+      tree.rerender(<StoryFilterBar {...props} />);
+
+      expect(drawer.value).toBe(filterDrawerDepth(false));
+      expect(node(tree, 'story-filter-drawer').props.pointerEvents).toBe('auto');
+      expect(node(tree, 'story-filter-slot-animals').props.pointerEvents).toBe('auto');
+      expect(node(tree, 'story-filter-slot-adventure').props.pointerEvents).toBe('auto');
+      expect(node(tree, 'story-filter-slot-bedtime').props.pointerEvents).toBe('none');
+      expect(look(tree, 'story-filter-slot-animals').width).toBe(120);
+      expect(look(tree, 'story-filter-slot-bedtime').width).toBe(0);
+    });
+
+    it('shows a chosen pill at its full size from the start, with no Filter press', () => {
+      const tree = render(<StoryFilterBar {...baseProps} selectedTags={new Set<StoryFilterTag>(['animals'])} />);
+      measure(tree, 'animals', 120);
+      tree.rerender(<StoryFilterBar {...baseProps} selectedTags={new Set<StoryFilterTag>(['animals'])} />);
+
+      expect(look(tree, 'story-filter-slot-animals').width).toBe(120);
+      expect(look(tree, 'story-filter-slot-animals').opacity).toBe(1);
+      expect(node(tree, 'story-filter-slot-animals').props.pointerEvents).toBe('auto');
+    });
+
+    it('starts a chosen pill open and every other pill shut, so nothing has to move as the page arrives', () => {
+      reanimated.useSharedValue.mockClear();
+
+      render(<StoryFilterBar {...baseProps} selectedTags={new Set<StoryFilterTag>(['animals', 'bedtime'])} />);
+
+      const starts = reanimated.useSharedValue.mock.calls.map((call) => call[0]);
+      expect(starts.filter((start) => start === 1)).toHaveLength(2);
+      expect(starts.filter((start) => start !== 0 && start !== 1)).toHaveLength(0);
+    });
+
+    it('shrinks a chosen pill away and shuts the drawer when it is unchosen with the drawer closed', () => {
+      const drawer = { value: 0 };
+      const tree = render(<StoryFilterBar {...baseProps} drawer={drawer as any} selectedTags={new Set<StoryFilterTag>(['animals'])} />);
+      measure(tree, 'animals', 120);
+
+      tree.rerender(<StoryFilterBar {...baseProps} drawer={drawer as any} selectedTags={new Set<StoryFilterTag>()} />);
+      tree.rerender(<StoryFilterBar {...baseProps} drawer={drawer as any} selectedTags={new Set<StoryFilterTag>()} />);
+
+      expect(drawer.value).toBe(0);
+      expect(look(tree, 'story-filter-slot-animals').width).toBe(0);
+      expect(node(tree, 'story-filter-slot-animals').props.pointerEvents).toBe('none');
+      expect(node(tree, 'story-filter-drawer').props.pointerEvents).toBe('none');
+    });
+
+    it('brings the row back to its start as it closes, so the chosen pills are not left off the edge', () => {
+      const scrollTo = jest.fn();
+      const createNodeMock = (element: any) =>
+        element.props['data-testid'] === 'story-filter-pill-row'
+          ? Object.defineProperty({}, 'scrollTo', { get: () => scrollTo, set: () => {} })
+          : null;
+      const tree = render(<StoryFilterBar {...baseProps} />, { createNodeMock });
+
+      pressFilter(tree);
+      expect(scrollTo).not.toHaveBeenCalled();
+
+      pressFilter(tree);
+      expect(scrollTo).toHaveBeenCalledWith({ x: 0, animated: true });
+
+      (useReducedMotion as jest.Mock).mockReturnValue(true);
+      pressFilter(tree);
+      pressFilter(tree);
+      expect(scrollTo).toHaveBeenLastCalledWith({ x: 0, animated: false });
+    });
+
+    it('keeps the pill row one pill high whatever the drawer shows of it', () => {
+      const tree = render(<StoryFilterBar {...baseProps} />);
+
+      const row = look(tree, 'story-filter-pill-row');
+
+      expect(row.height).toBe(FILTER_PILL_HEIGHT);
+      expect(row.marginTop).toBe(8);
+      expect(row.flexGrow).toBe(0);
+      expect(row.flexShrink).toBe(0);
+    });
+
+    it('reports the height of its resting rows, not of the drawer beneath them', () => {
+      const onRestLayout = jest.fn();
+      const tree = render(<StoryFilterBar {...baseProps} onRestLayout={onRestLayout} />);
+      const layout = { nativeEvent: { layout: { x: 0, y: 0, width: 358, height: 98 } } };
+
+      fireEvent(tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'story-filter-rest' && n.props.onLayout)[0], 'layout', layout);
+
+      expect(onRestLayout).toHaveBeenCalledWith(layout);
+      expect(tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'story-filter-rest')[0].findAll((n: any) => n.props.testID === 'story-filter-drawer')).toHaveLength(0);
+    });
   });
 });

@@ -6,7 +6,7 @@
 
 import React from 'react';
 import { Alert } from 'react-native';
-import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
+import { render, fireEvent, waitFor, act, cleanup } from '@testing-library/react-native';
 import { StoryAccessService } from '@/services/story-access-service';
 import { StoryDownloadService } from '@/services/story-download-service';
 import { CHILD_UI_MOTION } from '@/constants/child-ui-motion';
@@ -15,12 +15,13 @@ import { StoryCatalogueScreen } from '@/components/stories/catalogue/story-catal
 import { PLANET_HEADER_ESTIMATE, planetCoverHeight } from '@/components/child-ui/planet-cover';
 import { CATALOGUE_CHOOSER, chooserStop } from '@/constants/catalogue-chooser';
 import { skyBand } from '@/constants/night-palette';
-import { THEME_BAR } from '@/components/stories/catalogue/story-filter-bar';
+import { THEME_BAR, filterDrawerDepth } from '@/components/stories/catalogue/story-filter-bar';
 import { taglineFontSize, taglineWordsDepth } from '@/components/child-ui/page-tagline';
 import * as catalogueStoryModule from '@/components/stories/catalogue/catalogue-story';
 import { COVER_GRID_GAP, SPACE_3 } from '@/components/child-ui/tokens';
 import { coverColumns, coverWidthFor } from '@/constants/catalogue-columns';
 import { Animated, Dimensions, StyleSheet } from 'react-native';
+import * as reanimatedModule from 'react-native-reanimated';
 import { useStoryTransition } from '@/contexts/story-transition-context';
 
 const mockStartTransition = jest.fn();
@@ -1739,7 +1740,7 @@ describe('the shelves and the planet', () => {
       layout(tree, 'catalogue-header', 0, HEADER);
       layout(tree, 'catalogue-tagline', TITLE_ROW, HEADER - TITLE_ROW);
       layout(tree, 'story-theme-bar', THEME_BAR_TOP, THEME_BAR.height.phone);
-      layout(tree, 'catalogue-chooser', 0, CHOOSER);
+      layout(tree, 'story-filter-rest', 0, CHOOSER);
       const { width, height } = Dimensions.get('window');
       const coverHeight = planetCoverHeight(HEADER, width, height);
       const tagline = tree.UNSAFE_root.findAll((n: any) => Array.isArray(n.props.lines) && n.props.width)[0];
@@ -1774,7 +1775,7 @@ describe('the shelves and the planet', () => {
       const tree = await renderLibrary();
       const before = StyleSheet.flatten(host(tree, 'catalogue-chooser-room').props.style);
 
-      layout(tree, 'catalogue-chooser', 0, CHOOSER);
+      layout(tree, 'story-filter-rest', 0, CHOOSER);
       const after = StyleSheet.flatten(host(tree, 'catalogue-chooser-room').props.style);
       const room = host(tree, 'catalogue-scroll').findAll((n: any) => n.props.testID === 'catalogue-chooser-room');
 
@@ -1835,20 +1836,101 @@ describe('the shelves and the planet', () => {
       const expected = skyBand(foot, foot + CATALOGUE_CHOOSER.fade, screenHeight);
 
       expect(frame.top).toBe(0);
-      expect(frame.height).toBe(foot + CATALOGUE_CHOOSER.fade);
+      expect(frame.height).toBeUndefined();
       expect(gradient.props.colors).toEqual(expected.colours);
       expect(gradient.props.locations).toEqual(expected.locations);
       expect(host(tree, 'catalogue-chooser-sky').props.pointerEvents).toBe('none');
     });
 
-    it('grows its room and the sky behind it when its finer themes open', async () => {
-      const { tree, stop } = await measuredLibrary();
+    describe('its finer themes drawer', () => {
+      const reanimated = reanimatedModule as unknown as { useSharedValue: jest.Mock; useAnimatedStyle: jest.Mock };
+      const DRAWER = filterDrawerDepth(false);
 
-      layout(tree, 'catalogue-chooser', 0, CHOOSER + 52);
+      beforeEach(() => {
+        reanimated.useSharedValue.mockImplementation((initial: unknown = 0) => React.useRef({ value: initial }).current);
+        reanimated.useAnimatedStyle.mockImplementation((build: () => object) => build());
+      });
 
-      expect(StyleSheet.flatten(host(tree, 'catalogue-chooser-room').props.style).height).toBe(CHOOSER + 52);
-      expect(StyleSheet.flatten(host(tree, 'catalogue-chooser-sky').props.style).height).toBe(stop.stop + CHOOSER + 52 + CATALOGUE_CHOOSER.fade);
-      expect(chooserTop(tree)).toBeCloseTo(stop.rest, 5);
+      afterEach(() => {
+        cleanup();
+        reanimated.useSharedValue.mockImplementation((initial: unknown = 0) => ({ value: initial }));
+        reanimated.useAnimatedStyle.mockImplementation(() => ({}));
+      });
+
+      function pressFilter(tree: ReturnType<typeof render>) {
+        fireEvent.press(byTestId(tree, 'story-filter-more').find((n: any) => n.props.accessibilityRole === 'button'));
+      }
+
+      function drawerRoom(tree: ReturnType<typeof render>) {
+        return StyleSheet.flatten(host(tree, 'catalogue-chooser-drawer-room').props.style) as any;
+      }
+
+      function skyBandFrame(tree: ReturnType<typeof render>) {
+        return StyleSheet.flatten(host(tree, 'catalogue-chooser-sky-band').props.style) as any;
+      }
+
+      it('keeps a second room for the drawer in the shelves, shut until the drawer opens', async () => {
+        const { tree } = await measuredLibrary();
+        const inColumn = host(tree, 'catalogue-scroll').findAll((n: any) => n.props.testID === 'catalogue-chooser-drawer-room');
+
+        expect(inColumn.length).toBeGreaterThan(0);
+        expect(firstIndex(tree, 'catalogue-chooser-drawer-room')).toBeLessThan(firstIndex(tree, 'catalogue-chooser-room'));
+        expect(drawerRoom(tree).height).toBe(0);
+      });
+
+      it('moves the shelves down with the drawer, off the same moving height the drawer is drawn at', async () => {
+        const { tree } = await measuredLibrary();
+
+        pressFilter(tree);
+
+        expect(drawerRoom(tree).height).toBe(DRAWER);
+        expect(StyleSheet.flatten(host(tree, 'story-filter-drawer').props.style).height).toBe(DRAWER);
+        expect(StyleSheet.flatten(host(tree, 'catalogue-chooser-room').props.style).height).toBe(CHOOSER);
+
+        pressFilter(tree);
+
+        expect(drawerRoom(tree).height).toBe(0);
+      });
+
+      it('paints the sky down past the resting chooser, and past the drawer too while it is open', async () => {
+        const { tree, stop, screenHeight } = await measuredLibrary();
+        const foot = stop.stop + CHOOSER;
+        const gradient = () => host(tree, 'catalogue-chooser-sky').findAll((n: any) => Array.isArray(n.props.colors))[0];
+
+        expect(skyBandFrame(tree).height).toBe(foot + CATALOGUE_CHOOSER.fade);
+
+        pressFilter(tree);
+        const open = skyBand(foot + DRAWER, foot + DRAWER + CATALOGUE_CHOOSER.fade, screenHeight);
+
+        expect(skyBandFrame(tree).height).toBe(foot + DRAWER + CATALOGUE_CHOOSER.fade);
+        expect(gradient().props.colors).toEqual(open.colours);
+        expect(gradient().props.locations).toEqual(open.locations);
+        expect(host(tree, 'catalogue-chooser-sky-band').findAll((n: any) => Array.isArray(n.props.colors)).length).toBeGreaterThan(0);
+
+        pressFilter(tree);
+        const shut = skyBand(foot, foot + CATALOGUE_CHOOSER.fade, screenHeight);
+
+        expect(skyBandFrame(tree).height).toBe(foot + CATALOGUE_CHOOSER.fade);
+        expect(gradient().props.colors).toEqual(shut.colours);
+      });
+
+      it('leaves the chooser where it rests while the drawer moves', async () => {
+        const { tree, stop } = await measuredLibrary();
+
+        pressFilter(tree);
+
+        expect(chooserTop(tree)).toBeCloseTo(stop.rest, 5);
+      });
+
+      it('takes its measure from the resting rows alone, so a moving drawer never re-measures the page', async () => {
+        const { tree } = await measuredLibrary();
+
+        expect(byTestId(tree, 'catalogue-chooser').filter((n: any) => n.props.onLayout)).toHaveLength(0);
+
+        layout(tree, 'story-filter-rest', 0, CHOOSER + 6);
+
+        expect(StyleSheet.flatten(host(tree, 'catalogue-chooser-room').props.style).height).toBe(CHOOSER + 6);
+      });
     });
 
     it.each`
@@ -1872,7 +1954,7 @@ describe('the shelves and the planet', () => {
       layout(tree, 'catalogue-header', 0, HEADER);
       layout(tree, 'catalogue-tagline', TITLE_ROW, HEADER - TITLE_ROW);
       layout(tree, 'story-theme-bar', 36, THEME_BAR.height.phone);
-      layout(tree, 'catalogue-chooser', 0, CHOOSER - 6);
+      layout(tree, 'story-filter-rest', 0, CHOOSER - 6);
       const tagline = tree.UNSAFE_root.findAll((n: any) => Array.isArray(n.props.lines) && n.props.width)[0];
       const wordsBottom = TITLE_ROW + taglineWordsDepth(tagline.props.lines[1], tagline.props.width, taglineFontSize(false));
 
@@ -1888,7 +1970,7 @@ describe('the shelves and the planet', () => {
       await waitFor(() => expect(byTestId(tree, 'story-filter-bar').length).toBeGreaterThan(0));
       layout(tree, 'catalogue-header', 0, TITLE_ROW);
       layout(tree, 'story-theme-bar', THEME_BAR_TOP, THEME_BAR.height.phone);
-      layout(tree, 'catalogue-chooser', 0, CHOOSER);
+      layout(tree, 'story-filter-rest', 0, CHOOSER);
 
       scrollTo(tree, 900);
 

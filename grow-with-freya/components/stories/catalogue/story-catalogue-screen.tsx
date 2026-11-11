@@ -13,6 +13,7 @@ import {
   type LayoutChangeEvent,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Reanimated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
@@ -99,7 +100,7 @@ import {
   selectContinuing,
   storyMatchesMode,
 } from './catalogue-story';
-import { StoryFilterBar, chooserLayoutEstimate } from './story-filter-bar';
+import { StoryFilterBar, chooserLayoutEstimate, filterDrawerDepth } from './story-filter-bar';
 import { FILTER_PILL_ICONS } from './story-filter-pill';
 import { FeaturedStoryCard } from './featured-story-card';
 import { catalogueLayout, coverColumns, coverWidthFor } from '@/constants/catalogue-columns';
@@ -269,6 +270,8 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
   const [themeBarTop, setThemeBarTop] = useState<number | null>(null);
   const [taglineTop, setTaglineTop] = useState<number | null>(null);
   const [pageOffset] = useState(() => new Animated.Value(0));
+  const filterDrawer = useSharedValue(0);
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
   const showsChooser = navSection !== 'search' && navSection !== 'profile';
   const shelfTop = coverHeight + SPACE_3;
   const chooserEstimate = chooserLayoutEstimate(isTablet);
@@ -294,7 +297,12 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
     () => pageOffset.interpolate({ ...chooserBandFade(chooserTravel), extrapolate: 'clamp' }),
     [pageOffset, chooserTravel]
   );
-  const chooserFoot = chooserTravel.stop + chooserFrameHeight;
+  const chooserRestFoot = chooserTravel.stop + chooserFrameHeight;
+  const chooserFoot = chooserRestFoot + (filterDrawerOpen ? filterDrawerDepth(isTablet) : 0);
+  const drawerRoomStyle = useAnimatedStyle(() => ({ height: filterDrawer.value }));
+  const chooserSkyBandStyle = useAnimatedStyle(() => ({
+    height: chooserRestFoot + CATALOGUE_CHOOSER.fade + filterDrawer.value,
+  }));
   const chooserSky = useMemo(
     () => skyBand(chooserFoot, chooserFoot + CATALOGUE_CHOOSER.fade, windowHeight),
     [chooserFoot, windowHeight]
@@ -982,10 +990,13 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
               scrollEnabled={!interactionLocked}
             >
               {showsChooser && (
-                <View
-                  testID="catalogue-chooser-room"
-                  style={[isTablet ? styles.filterBarSpacing : styles.filterBarSpacingPhone, { height: chooserFrameHeight }]}
-                />
+                <>
+                  <Reanimated.View testID="catalogue-chooser-drawer-room" style={drawerRoomStyle} />
+                  <View
+                    testID="catalogue-chooser-room"
+                    style={[isTablet ? styles.filterBarSpacing : styles.filterBarSpacingPhone, { height: chooserFrameHeight }]}
+                  />
+                </>
               )}
 
               {navSection === 'search' ? (
@@ -1050,9 +1061,11 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
               <Animated.View
                 testID="catalogue-chooser-sky"
                 pointerEvents="none"
-                style={[styles.chooserSky, { height: chooserFoot + CATALOGUE_CHOOSER.fade, opacity: chooserSkyOpacity }]}
+                style={[styles.chooserSky, { opacity: chooserSkyOpacity }]}
               >
-                <LinearGradient colors={chooserSky.colours} locations={chooserSky.locations} style={StyleSheet.absoluteFill} />
+                <Reanimated.View testID="catalogue-chooser-sky-band" style={chooserSkyBandStyle}>
+                  <LinearGradient colors={chooserSky.colours} locations={chooserSky.locations} style={StyleSheet.absoluteFill} />
+                </Reanimated.View>
               </Animated.View>
             )}
             <PlanetCover height={coverHeight} testID="catalogue-planet-over-shelves" />
@@ -1127,7 +1140,6 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
               <Animated.View
                 testID="catalogue-chooser"
                 pointerEvents="box-none"
-                onLayout={handleChooserLayout}
                 style={[styles.chooser, { left: margin, right: margin, transform: [{ translateY: chooserTop }] }]}
               >
                 <StoryFilterBar
@@ -1139,7 +1151,10 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
                   tilesRef={themeTilesRef}
                   toggleRef={filterToggleRef}
                   onThemeBarLayout={handleThemeBarLayout}
+                  onRestLayout={handleChooserLayout}
                   headingOpacity={chooserHeadingOpacity}
+                  drawer={filterDrawer}
+                  onDrawerChange={setFilterDrawerOpen}
                 />
               </Animated.View>
             )}

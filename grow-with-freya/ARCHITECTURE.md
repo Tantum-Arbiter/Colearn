@@ -310,6 +310,35 @@ chooser down the page, and it holds still while any measure is not a number. A N
 input range is an Invariant Violation that takes the whole screen down; on the simulator that
 showed as the library jumping back to the home.
 
+**The finer themes open as a drawer (2026-11-11).** The pills behind Filter no longer pop in.
+They sit in a `story-filter-drawer` under the capsule that opens to `filterDrawerDepth` (one pill
+and the chooser's gap) and shuts again over `CHILD_UI_MOTION.filterDrawer` (300 ms, ease in and
+out, 0 under Reduce Motion). Each pill has its own slot that grows from no width to the pill's
+own width and fades in with it, so the row unfurls from the left; closing shrinks them back.
+A chosen pill keeps its slot open with the drawer shut, so closing with a theme chosen draws the
+others in around it, and unchoosing it there shuts the drawer.
+
+How it stays smooth, and what not to undo:
+
+- **Every pill is mounted from the start**, hidden at no width, out of reach
+  (`pointerEvents="none"`) and unread (`accessibilityElementsHidden`, `no-hide-descendants`).
+  Mounting sixteen pills on the tap cost the first frames of the animation on device.
+- **A slot measures its pill at full width however narrow it is drawn.** The slot clips; the row
+  inside it is `overflow: 'scroll'`, which is the one case where Yoga does not hold a child to its
+  parent's width. Without it the label is measured at no width and the pill never grows.
+- **The page follows the same moving number.** The page owns one Reanimated shared value
+  (`filterDrawer`) and hands it to the bar as `drawer`. The bar animates it, the drawer is drawn
+  at it, a second `catalogue-chooser-drawer-room` above the chooser's room in the column takes
+  its height from it, and the sky band (`catalogue-chooser-sky-band`) adds it to its own height.
+  Nothing is measured while it moves: the page now takes the chooser's height from the bar's
+  resting rows (`onRestLayout` on `story-filter-rest`), not from the whole chooser, or every
+  frame of the drawer would re-render the page.
+- **The page hears about the drawer once it has settled** (`onDrawerChange`, from the
+  animation's end), and only then repaints the sky band's colours for the new foot. A page
+  render on the tap itself stalled the animation.
+- The row scrolls back to its start as the drawer closes, so a chosen pill from the far end is
+  not left off the edge.
+
 ### The turn-the-screen prompt's heading
 
 The back button and "Ready for our story time?" share one row the button's height

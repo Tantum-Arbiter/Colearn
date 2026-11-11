@@ -1,5 +1,6 @@
-import React, { type RefObject, useCallback, useMemo, useState } from 'react';
-import { Animated, FlatList, ImageSourcePropType, LayoutChangeEvent, Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { type RefObject, useCallback, useEffect, useRef, useState } from 'react';
+import { Animated, ImageSourcePropType, LayoutChangeEvent, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import Reanimated, { Easing, runOnJS, useAnimatedStyle, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -15,8 +16,11 @@ import {
   TEXT_PRIMARY,
 } from '@/constants/night-palette';
 import { Fonts } from '@/constants/theme';
+import { CHILD_UI_MOTION, motionDuration } from '@/constants/child-ui-motion';
 import { useAccessibility } from '@/hooks/use-accessibility';
+import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import {
+  FILTER_PILL_HEIGHT,
   FILTER_PILL_PADDING_H,
   RADIUS_CONTROL,
   SPACE_1,
@@ -46,6 +50,7 @@ const TILE_LABEL_MIN_SCALE = 0.75;
 const BAR_FILL = 'rgba(28, 36, 112, 0.55)';
 const BAR_RIM = 'rgba(160, 178, 255, 0.28)';
 const LABEL_RESTING = 'rgba(226, 231, 255, 0.92)';
+const DRAWER_EASING = Easing.inOut(Easing.cubic);
 
 /**
  * A chosen tile is lit rather than merely brightened: a purple fill that
@@ -78,11 +83,18 @@ interface StoryFilterBarProps {
   tilesRef?: RefObject<View | null>;
   toggleRef?: RefObject<View | null>;
   onThemeBarLayout?: (event: LayoutChangeEvent) => void;
+  onRestLayout?: (event: LayoutChangeEvent) => void;
   headingOpacity?: Animated.WithAnimatedValue<number>;
+  drawer?: SharedValue<number>;
+  onDrawerChange?: (open: boolean) => void;
 }
 
 export function chooserGap(isTablet: boolean): number {
   return isTablet ? SPACE_3 : SPACE_2;
+}
+
+export function filterDrawerDepth(isTablet: boolean): number {
+  return chooserGap(isTablet) + FILTER_PILL_HEIGHT;
 }
 
 export function chooserLayoutEstimate(isTablet: boolean): { themeBarTop: number; height: number } {
@@ -150,6 +162,48 @@ function ThemeTile({ id, art, label, selected, onPress }: ThemeTileProps) {
   );
 }
 
+interface PillSlotProps {
+  tag: StoryFilterTag;
+  shown: boolean;
+  selected: boolean;
+  duration: number;
+  onToggle: (tag: StoryFilterTag) => void;
+}
+
+function PillSlot({ tag, shown, selected, duration, onToggle }: PillSlotProps) {
+  const natural = useSharedValue(0);
+  const reveal = useSharedValue(shown ? 1 : 0);
+
+  useEffect(() => {
+    reveal.value = withTiming(shown ? 1 : 0, { duration, easing: DRAWER_EASING });
+  }, [shown, duration, reveal]);
+
+  const slotStyle = useAnimatedStyle(() => ({
+    width: natural.value * reveal.value,
+    opacity: reveal.value,
+  }));
+
+  const handleLayout = (event: LayoutChangeEvent) => {
+    natural.value = event.nativeEvent.layout.width;
+  };
+
+  return (
+    <Reanimated.View
+      testID={`story-filter-slot-${tag}`}
+      pointerEvents={shown ? 'auto' : 'none'}
+      accessibilityElementsHidden={!shown}
+      importantForAccessibility={shown ? 'auto' : 'no-hide-descendants'}
+      style={[styles.slot, slotStyle]}
+    >
+      <View style={styles.slotRow}>
+        <View testID={`story-filter-slot-size-${tag}`} onLayout={handleLayout} style={styles.slotSize}>
+          <StoryFilterPill tag={tag} selected={selected} onToggle={onToggle} />
+        </View>
+      </View>
+    </Reanimated.View>
+  );
+}
+
 /**
  * The theme chooser: "Choose a theme" with the Filter button beside it, above
  * one row of three tiles -- Stories, Learning, Music -- each a piece of glossy
@@ -167,89 +221,126 @@ export function StoryFilterBar({
   tilesRef,
   toggleRef,
   onThemeBarLayout,
+  onRestLayout,
   headingOpacity = 1,
+  drawer,
+  onDrawerChange,
 }: StoryFilterBarProps) {
   const { t } = useTranslation();
   const { isTablet, scaledFontSize } = useAccessibility();
+  const reduceMotion = useReducedMotion();
+  const duration = motionDuration(CHILD_UI_MOTION.filterDrawer, reduceMotion);
   const [expanded, setExpanded] = useState(false);
+  const rowRef = useRef<ScrollView>(null);
+  const ownDrawer = useSharedValue(0);
+  const depth = drawer ?? ownDrawer;
 
-  const pills = useMemo(
-    () => (expanded ? tags : tags.filter((tag) => selectedTags.has(tag))),
-    [expanded, tags, selectedTags]
-  );
+  const open = expanded || tags.some((tag) => selectedTags.has(tag));
 
-  const renderPill = useCallback(({ item }: { item: StoryFilterTag }) => (
-    <StoryFilterPill tag={item} selected={selectedTags.has(item)} onToggle={onToggleTag} />
-  ), [selectedTags, onToggleTag]);
+  const reportDrawer = useCallback((settled: boolean) => {
+    onDrawerChange?.(settled);
+  }, [onDrawerChange]);
+
+  useEffect(() => {
+    depth.value = withTiming(open ? filterDrawerDepth(isTablet) : 0, { duration, easing: DRAWER_EASING }, (finished) => {
+      if (finished) runOnJS(reportDrawer)(open);
+    });
+  }, [open, isTablet, duration, depth, reportDrawer]);
+
+  const drawerStyle = useAnimatedStyle(() => ({ height: depth.value }));
 
   const handleToggleExpanded = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setExpanded((open) => !open);
-  }, []);
+    if (expanded) rowRef.current?.scrollTo({ x: 0, animated: !reduceMotion });
+    setExpanded(!expanded);
+  }, [expanded, reduceMotion]);
 
   return (
-    <View testID="story-filter-bar" pointerEvents="box-none" style={[styles.chooser, { gap: chooserGap(isTablet) }]}>
-      <View testID="story-filter-heading" pointerEvents="box-none" style={styles.heading}>
-        <Animated.View testID="story-filter-heading-label" pointerEvents="none" style={[styles.headingLabel, { opacity: headingOpacity }]}>
-          <Ionicons name="star" size={isTablet ? 20 : 17} color={ACCENT_GOLD} />
-          <Text
-            style={[styles.headingText, { fontSize: scaledFontSize(typeSize('filterLabel', isTablet)) }]}
-            numberOfLines={1}
-          >
-            {t('catalogue.chooseTheme')}
-          </Text>
-        </Animated.View>
-
-        <View ref={toggleRef} collapsable={false}>
-        <Pressable
-          testID="story-filter-more"
-          accessibilityRole="button"
-          accessibilityLabel={t('catalogue.filter')}
-          accessibilityState={{ expanded }}
-          onPress={handleToggleExpanded}
-          style={[styles.more, expanded && styles.moreOpen]}
-        >
-          <Ionicons name="options-outline" size={scaledFontSize(15)} color={TEXT_PRIMARY} />
-          <Text
-            style={[styles.moreLabel, { fontSize: scaledFontSize(typeSize('filterLabel', isTablet) - 1) }]}
-            numberOfLines={1}
-          >
-            {t('catalogue.filter')}
-          </Text>
-        </Pressable>
-        </View>
-      </View>
-
+    <View testID="story-filter-bar" pointerEvents="box-none">
       <View
-        testID="story-theme-bar"
-        style={[styles.tiles, { height: isTablet ? THEME_BAR.height.tablet : THEME_BAR.height.phone, borderRadius: (isTablet ? THEME_BAR.height.tablet : THEME_BAR.height.phone) / 2 }]}
-        ref={tilesRef}
-        collapsable={false}
-        onLayout={onThemeBarLayout}
+        testID="story-filter-rest"
+        pointerEvents="box-none"
+        onLayout={onRestLayout}
+        style={[styles.chooser, { gap: chooserGap(isTablet) }]}
       >
-        {CATALOGUE_THEMES.map((id) => (
-          <ThemeTile
-            key={id}
-            id={id}
-            art={THEME_TILE_ART[id]}
-            label={t(THEME_LABEL_KEY[id])}
-            selected={theme === id}
-            onPress={() => onSelectTheme(id)}
-          />
-        ))}
+        <View testID="story-filter-heading" pointerEvents="box-none" style={styles.heading}>
+          <Animated.View testID="story-filter-heading-label" pointerEvents="none" style={[styles.headingLabel, { opacity: headingOpacity }]}>
+            <Ionicons name="star" size={isTablet ? 20 : 17} color={ACCENT_GOLD} />
+            <Text
+              style={[styles.headingText, { fontSize: scaledFontSize(typeSize('filterLabel', isTablet)) }]}
+              numberOfLines={1}
+            >
+              {t('catalogue.chooseTheme')}
+            </Text>
+          </Animated.View>
+
+          <View ref={toggleRef} collapsable={false}>
+          <Pressable
+            testID="story-filter-more"
+            accessibilityRole="button"
+            accessibilityLabel={t('catalogue.filter')}
+            accessibilityState={{ expanded }}
+            onPress={handleToggleExpanded}
+            style={[styles.more, expanded && styles.moreOpen]}
+          >
+            <Ionicons name="options-outline" size={scaledFontSize(15)} color={TEXT_PRIMARY} />
+            <Text
+              style={[styles.moreLabel, { fontSize: scaledFontSize(typeSize('filterLabel', isTablet) - 1) }]}
+              numberOfLines={1}
+            >
+              {t('catalogue.filter')}
+            </Text>
+          </Pressable>
+          </View>
+        </View>
+
+        <View
+          testID="story-theme-bar"
+          style={[styles.tiles, { height: isTablet ? THEME_BAR.height.tablet : THEME_BAR.height.phone, borderRadius: (isTablet ? THEME_BAR.height.tablet : THEME_BAR.height.phone) / 2 }]}
+          ref={tilesRef}
+          collapsable={false}
+          onLayout={onThemeBarLayout}
+        >
+          {CATALOGUE_THEMES.map((id) => (
+            <ThemeTile
+              key={id}
+              id={id}
+              art={THEME_TILE_ART[id]}
+              label={t(THEME_LABEL_KEY[id])}
+              selected={theme === id}
+              onPress={() => onSelectTheme(id)}
+            />
+          ))}
+        </View>
+
       </View>
 
-      {pills.length > 0 && (
-        <FlatList
+      <Reanimated.View
+        testID="story-filter-drawer"
+        pointerEvents={open ? 'auto' : 'none'}
+        style={[styles.drawer, drawerStyle]}
+      >
+        <ScrollView
+          ref={rowRef}
+          testID="story-filter-pill-row"
           horizontal
           showsHorizontalScrollIndicator={false}
           decelerationRate="fast"
+          style={[styles.pillRow, { marginTop: chooserGap(isTablet) }]}
           contentContainerStyle={styles.pillContent}
-          data={pills}
-          keyExtractor={(tag) => tag}
-          renderItem={renderPill}
-        />
-      )}
+        >
+          {tags.map((tag) => (
+            <PillSlot
+              key={tag}
+              tag={tag}
+              shown={expanded || selectedTags.has(tag)}
+              selected={selectedTags.has(tag)}
+              duration={duration}
+              onToggle={onToggleTag}
+            />
+          ))}
+        </ScrollView>
+      </Reanimated.View>
     </View>
   );
 }
@@ -329,9 +420,26 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.rounded,
     fontWeight: '700',
   },
+  drawer: {
+    overflow: 'hidden',
+  },
+  pillRow: {
+    height: FILTER_PILL_HEIGHT,
+    flexGrow: 0,
+    flexShrink: 0,
+  },
   pillContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACE_3,
+  },
+  slot: {
+    overflow: 'hidden',
+  },
+  slotRow: {
+    flexDirection: 'row',
+    overflow: 'scroll',
+  },
+  slotSize: {
+    paddingRight: SPACE_3,
   },
 });
