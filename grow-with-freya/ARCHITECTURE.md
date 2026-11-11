@@ -339,6 +339,29 @@ How it stays smooth, and what not to undo:
 - The row scrolls back to its start as the drawer closes, so a chosen pill from the far end is
   not left off the edge.
 
+**Choosing a theme or a filter changes the page in one smooth movement (2026-11-11).** Three
+things used to cut:
+
+- **The lit pill glides.** The purple fill, rim and glow are no longer part of the chosen tile.
+  One `story-theme-lamp` sits behind the tiles in a `story-theme-track` and slides across by one
+  tile width over `CHILD_UI_MOTION.themeGlide` (300 ms, ease in and out, at once under Reduce
+  Motion). It is placed by a percentage `left` for the theme the page opened on, so it is right
+  from the first frame before anything is measured, and moved from there by `translateX`. It
+  carries no `elevation`: on Android that would draw it over the tiles' art and words, so
+  Android has the fill and rim but not the soft glow.
+- **The shelves fade out, change, and fade in** through `ContentSwap`
+  (`components/child-ui/content-swap.tsx`, keyed on the theme and the chosen filters). The fade
+  in now starts from an effect after the new shelves have been committed. It used to start in
+  the same timer that asked for them, so on a device the animation ran while the shelves were
+  still being built and they snapped into view part-way through it.
+- **"No stories found" is inside that fade.** It used to be a separate branch beside the
+  shelves, so Stories to Music with no music installed was a hard cut in both directions.
+
+`ContentSwap` also brings the same collection back if the key returns to what is showing before
+the fade out has finished. A filter tapped on and straight off again used to leave the shelves
+faded out for good. The practise screen, the badge page and the instrument picker use the same
+component and get both fixes.
+
 ### The turn-the-screen prompt's heading
 
 The back button and "Ready for our story time?" share one row the button's height

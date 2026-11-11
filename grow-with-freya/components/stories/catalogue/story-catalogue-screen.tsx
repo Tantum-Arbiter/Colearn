@@ -1013,25 +1013,25 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
                 />
               ) : navSection === 'profile' ? (
                 profileView
-              ) : catalogueStories.length === 0 ? (
-                <View style={styles.noResultsContainer}>
-                  <Text style={[styles.noResultsText, { fontSize: scaledFontSize(16) }]}>
-                    {t('catalogue.noResults')}
-                  </Text>
-                  {selectedTags.size > 0 && (
-                    <Pressable style={styles.clearFilterButton} onPress={handleClearFilters}>
-                      <Text style={[styles.clearFilterText, { fontSize: scaledFontSize(15) }]}>
-                        {t('catalogue.clearFilters')}
-                      </Text>
-                    </Pressable>
-                  )}
-                </View>
               ) : (
                 // the shelves change wholesale when a theme or a filter is
                 // tapped; without this they were replaced between one frame
                 // and the next, which read as the page glitching
                 <ContentSwap contentKey={collectionKey} testID="catalogue-collection">
-                  {browsing ? (
+                  {catalogueStories.length === 0 ? (
+                    <View style={styles.noResultsContainer}>
+                      <Text style={[styles.noResultsText, { fontSize: scaledFontSize(16) }]}>
+                        {t('catalogue.noResults')}
+                      </Text>
+                      {selectedTags.size > 0 && (
+                        <Pressable style={styles.clearFilterButton} onPress={handleClearFilters}>
+                          <Text style={[styles.clearFilterText, { fontSize: scaledFontSize(15) }]}>
+                            {t('catalogue.clearFilters')}
+                          </Text>
+                        </Pressable>
+                      )}
+                    </View>
+                  ) : browsing ? (
                     moreSection
                   ) : layout.pickBesideFeatured && featured && todaysPick?.kind === 'pick' ? (
                     <>

@@ -96,17 +96,53 @@ describe('StoryFilterBar', () => {
     }
   });
 
-  it('should light the chosen tile with a deepening purple fill, a bright rim and a glow', () => {
+  it('should light the chosen tile with one lamp behind it: a deepening purple fill, a bright rim and a glow', () => {
     const tree = render(<StoryFilterBar {...baseProps} theme="music" />);
 
-    const glow = tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'story-theme-glow-music');
-    const underTest = StyleSheet.flatten(pressables(tree, 'story-theme-tile-music')[0].props.style);
+    const lamps = tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'story-theme-lamp' && n.props.pointerEvents);
+    const underTest = StyleSheet.flatten(lamps[0].props.style);
+    const glow = lamps[0].findAll((n: any) => Array.isArray(n.props.colors));
+    const inner = THEME_BAR.height.phone - THEME_BAR.inset * 2;
 
+    expect(lamps).toHaveLength(1);
+    expect(lamps[0].props.pointerEvents).toBe('none');
     expect(glow.length).toBeGreaterThan(0);
     expect(glow[0].props.colors).toEqual(SELECTED_TILE_FILL);
     expect(underTest.shadowOpacity).toBeGreaterThan(0);
     expect(underTest.borderWidth).toBeGreaterThan(1);
-    expect(tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'story-theme-glow-stories')).toHaveLength(0);
+    expect(underTest.borderRadius).toBe(inner / 2);
+    expect(underTest.position).toBe('absolute');
+    expect(underTest.top).toBe(0);
+    expect(underTest.bottom).toBe(0);
+    expect(underTest.elevation).toBeUndefined();
+    CATALOGUE_THEMES.forEach((id) => {
+      const tile = pressables(tree, `story-theme-tile-${id}`)[0];
+      expect(tile.findAll((n: any) => Array.isArray(n.props.colors))).toHaveLength(0);
+      expect(StyleSheet.flatten(tile.props.style).borderWidth).toBeUndefined();
+    });
+  });
+
+  it('should draw the lamp before the tiles, so their art and words sit on top of it', () => {
+    const tree = render(<StoryFilterBar {...baseProps} />);
+    const ids = tree.UNSAFE_root
+      .findAll((n: any) => n.props.testID === 'story-theme-track')[0]
+      .findAll((n: any) => typeof n.props.testID === 'string' && /^story-theme-(lamp|tile-)/.test(n.props.testID))
+      .map((n: any) => n.props.testID as string);
+
+    expect(ids[0]).toBe('story-theme-lamp');
+    expect(ids.indexOf('story-theme-tile-stories')).toBeGreaterThan(ids.lastIndexOf('story-theme-lamp'));
+  });
+
+  it('should lay the tiles out side by side in a track that fills the capsule, the lamp measured against it', () => {
+    const tree = render(<StoryFilterBar {...baseProps} />);
+
+    const track = StyleSheet.flatten(
+      tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'story-theme-track' && n.props.style)[0].props.style
+    );
+
+    expect(track.flexDirection).toBe('row');
+    expect(track.flex).toBe(1);
+    expect(track.overflow).toBeUndefined();
   });
 
   it('should keep the finer themes behind the Filter button until it is pressed', () => {
@@ -291,6 +327,77 @@ describe('StoryFilterBar', () => {
       });
       return pending;
     }
+
+    describe('the lamp behind the chosen theme', () => {
+      const GLIDE = { duration: CHILD_UI_MOTION.themeGlide.duration };
+
+      function lamp(tree: ReturnType<typeof render>) {
+        return look(tree, 'story-theme-lamp');
+      }
+
+      function layTrack(tree: ReturnType<typeof render>, width: number) {
+        const track = tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'story-theme-track' && n.props.onLayout)[0];
+        act(() => {
+          track.props.onLayout({ nativeEvent: { layout: { x: 0, y: 0, width, height: 46 } } });
+        });
+      }
+
+      it.each([
+        ['stories', '0%'],
+        ['music', '50%'],
+      ] as const)('rests under %s from the first frame, one tile wide, before anything is measured', (theme, left) => {
+        const tree = render(<StoryFilterBar {...baseProps} theme={theme} />);
+
+        expect(lamp(tree).left).toBe(left);
+        expect(lamp(tree).width).toBe('50%');
+        expect(lamp(tree).transform).toEqual([{ translateX: 0 }]);
+      });
+
+      it('glides across to the newly chosen theme by one tile width, over the glide beat', () => {
+        const tree = render(<StoryFilterBar {...baseProps} theme="stories" />);
+        layTrack(tree, 340);
+        reanimated.withTiming.mockClear();
+
+        tree.rerender(<StoryFilterBar {...baseProps} theme="music" />);
+        tree.rerender(<StoryFilterBar {...baseProps} theme="music" />);
+
+        expect(reanimated.withTiming).toHaveBeenCalledWith(1, expect.objectContaining(GLIDE));
+        expect(lamp(tree).left).toBe('0%');
+        expect(lamp(tree).transform).toEqual([{ translateX: 170 }]);
+
+        tree.rerender(<StoryFilterBar {...baseProps} theme="stories" />);
+        tree.rerender(<StoryFilterBar {...baseProps} theme="stories" />);
+
+        expect(lamp(tree).transform).toEqual([{ translateX: 0 }]);
+      });
+
+      it('glides back the other way from a page that opened on Music', () => {
+        const tree = render(<StoryFilterBar {...baseProps} theme="music" />);
+        layTrack(tree, 340);
+
+        tree.rerender(<StoryFilterBar {...baseProps} theme="stories" />);
+        tree.rerender(<StoryFilterBar {...baseProps} theme="stories" />);
+
+        expect(lamp(tree).left).toBe('50%');
+        expect(lamp(tree).transform).toEqual([{ translateX: -170 }]);
+      });
+
+      it('moves across at once under Reduce Motion', () => {
+        (useReducedMotion as jest.Mock).mockReturnValue(true);
+        const tree = render(<StoryFilterBar {...baseProps} theme="stories" />);
+        reanimated.withTiming.mockClear();
+
+        tree.rerender(<StoryFilterBar {...baseProps} theme="music" />);
+
+        expect(reanimated.withTiming).toHaveBeenCalledWith(1, expect.objectContaining({ duration: 0 }));
+      });
+
+      it('glides in a calm beat, in step with the shelves changing beneath it', () => {
+        expect(CHILD_UI_MOTION.themeGlide.duration).toBeGreaterThanOrEqual(200);
+        expect(CHILD_UI_MOTION.themeGlide.duration).toBeLessThanOrEqual(360);
+        expect(CHILD_UI_MOTION.themeGlide.reducedDuration).toBe(0);
+      });
+    });
 
     it('opens one pill deep below the capsule, with the gap the chooser keeps between its rows', () => {
       expect(filterDrawerDepth(false)).toBe(8 + FILTER_PILL_HEIGHT);

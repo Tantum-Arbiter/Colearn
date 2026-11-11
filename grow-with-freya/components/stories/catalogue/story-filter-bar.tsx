@@ -128,18 +128,8 @@ function ThemeTile({ id, art, label, selected, onPress }: ThemeTileProps) {
       accessibilityLabel={label}
       accessibilityState={{ selected }}
       onPress={handlePress}
-      style={[styles.tile, { borderRadius: inner / 2 }, selected && styles.tileSelected]}
+      style={[styles.tile, { borderRadius: inner / 2 }]}
     >
-      {selected && (
-        <LinearGradient
-          testID={`story-theme-glow-${id}`}
-          colors={SELECTED_TILE_FILL}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[styles.tileFill, { borderRadius: inner / 2 - 1.5 }]}
-          pointerEvents="none"
-        />
-      )}
       <Image
         testID={`story-theme-art-${id}`}
         source={art}
@@ -234,6 +224,24 @@ export function StoryFilterBar({
   const rowRef = useRef<ScrollView>(null);
   const ownDrawer = useSharedValue(0);
   const depth = drawer ?? ownDrawer;
+  const themeIndex = CATALOGUE_THEMES.indexOf(theme);
+  const [lampHome] = useState(themeIndex);
+  const lampAt = useSharedValue(themeIndex);
+  const tileWidth = useSharedValue(0);
+  const glide = motionDuration(CHILD_UI_MOTION.themeGlide, reduceMotion);
+  const lampInner = (isTablet ? THEME_BAR.height.tablet : THEME_BAR.height.phone) - THEME_BAR.inset * 2;
+
+  useEffect(() => {
+    lampAt.value = withTiming(themeIndex, { duration: glide, easing: DRAWER_EASING });
+  }, [themeIndex, glide, lampAt]);
+
+  const lampStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: (lampAt.value - lampHome) * tileWidth.value }],
+  }));
+
+  const handleTrackLayout = (event: LayoutChangeEvent) => {
+    tileWidth.value = event.nativeEvent.layout.width / CATALOGUE_THEMES.length;
+  };
 
   const open = expanded || tags.some((tag) => selectedTags.has(tag));
 
@@ -301,16 +309,38 @@ export function StoryFilterBar({
           collapsable={false}
           onLayout={onThemeBarLayout}
         >
-          {CATALOGUE_THEMES.map((id) => (
-            <ThemeTile
-              key={id}
-              id={id}
-              art={THEME_TILE_ART[id]}
-              label={t(THEME_LABEL_KEY[id])}
-              selected={theme === id}
-              onPress={() => onSelectTheme(id)}
-            />
-          ))}
+          <View testID="story-theme-track" onLayout={handleTrackLayout} style={styles.track}>
+            <Reanimated.View
+              testID="story-theme-lamp"
+              pointerEvents="none"
+              style={[
+                styles.lamp,
+                {
+                  left: `${(lampHome * 100) / CATALOGUE_THEMES.length}%`,
+                  width: `${100 / CATALOGUE_THEMES.length}%`,
+                  borderRadius: lampInner / 2,
+                },
+                lampStyle,
+              ]}
+            >
+              <LinearGradient
+                colors={SELECTED_TILE_FILL}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={[styles.tileFill, { borderRadius: lampInner / 2 - 1.5 }]}
+              />
+            </Reanimated.View>
+            {CATALOGUE_THEMES.map((id) => (
+              <ThemeTile
+                key={id}
+                id={id}
+                art={THEME_TILE_ART[id]}
+                label={t(THEME_LABEL_KEY[id])}
+                selected={theme === id}
+                onPress={() => onSelectTheme(id)}
+              />
+            ))}
+          </View>
         </View>
 
       </View>
@@ -401,16 +431,22 @@ const styles = StyleSheet.create({
     gap: THEME_BAR.gap,
     paddingHorizontal: SPACE_2,
   },
-  // The fill sits inside the rim; the glow is a shadow, so the tile itself
+  track: {
+    flex: 1,
+    flexDirection: 'row',
+  },
+  // The fill sits inside the rim; the glow is a shadow, so the lamp itself
   // must not clip, or iOS would clip the glow with it
-  tileSelected: {
+  lamp: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
     borderWidth: 1.5,
     borderColor: SELECTED_TILE_RIM,
     shadowColor: ACCENT_PURPLE,
     shadowOpacity: 0.7,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 3 },
-    elevation: 8,
   },
   tileFill: {
     ...StyleSheet.absoluteFill,

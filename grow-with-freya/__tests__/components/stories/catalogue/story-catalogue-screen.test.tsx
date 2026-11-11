@@ -22,6 +22,7 @@ import { COVER_GRID_GAP, SPACE_3 } from '@/components/child-ui/tokens';
 import { coverColumns, coverWidthFor } from '@/constants/catalogue-columns';
 import { Animated, Dimensions, StyleSheet } from 'react-native';
 import * as reanimatedModule from 'react-native-reanimated';
+import * as reducedMotionModule from '@/hooks/use-reduced-motion';
 import { useStoryTransition } from '@/contexts/story-transition-context';
 
 const mockStartTransition = jest.fn();
@@ -782,6 +783,37 @@ describe('StoryCatalogueScreen', () => {
       const texts = tree.UNSAFE_root.findAll((n: any) => n.props.children === 'catalogue.noResults');
       expect(texts.length).toBeGreaterThan(0);
     });
+  });
+
+  /**
+   * Stories to Music used to cut straight to "nothing found": the empty state
+   * sat outside the shelves' fade, so the one change the child makes most was
+   * the one that was not animated.
+   */
+  it('fades the shelves away before saying nothing was found, and says it inside the same fade', async () => {
+    const motion = jest.spyOn(reducedMotionModule, 'useReducedMotion').mockReturnValue(false);
+    const tree = render(<StoryCatalogueScreen />);
+    await waitFor(() => expect(byTestId(tree, 'catalogue-collection').length).toBeGreaterThan(0));
+    const noResults = () => tree.UNSAFE_root.findAll((n: any) => n.props.children === 'catalogue.noResults');
+
+    fireEvent.press(byTestId(tree, 'story-theme-tile-music')[0]);
+
+    expect(noResults()).toHaveLength(0);
+    expect(byTestId(tree, 'catalogue-collection').length).toBeGreaterThan(0);
+
+    await waitFor(() => expect(noResults().length).toBeGreaterThan(0));
+
+    const collection = byTestId(tree, 'catalogue-collection')[0];
+    expect(collection.findAll((n: any) => n.props.children === 'catalogue.noResults').length).toBeGreaterThan(0);
+
+    fireEvent.press(byTestId(tree, 'story-theme-tile-stories')[0]);
+
+    expect(noResults().length).toBeGreaterThan(0);
+    await waitFor(() => expect(noResults()).toHaveLength(0));
+    expect(byTestId(tree, 'catalogue-collection').length).toBeGreaterThan(0);
+
+    cleanup();
+    motion.mockRestore();
   });
 });
 
