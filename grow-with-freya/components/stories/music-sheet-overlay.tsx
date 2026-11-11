@@ -572,7 +572,6 @@ export const MusicSheetOverlay = React.memo(function MusicSheetOverlay({
                   end={{ x: 0, y: 1 }}
                   style={styles.readyGradient}
                 >
-                  <Ionicons name="musical-notes" size={16} color={COLORS.ctaLabel} />
                   <Text style={styles.readyButtonText}>{t('music.readyToPlay')}</Text>
                 </LinearGradient>
               </Pressable>

@@ -86,6 +86,8 @@ describe('Stories Data', () => {
         'snuggle-little-wombat',
         'hold-on-juni',
         'my-turn-to-ding',
+        'little-fox-meets-a-friend',
+        'the-lantern-bridge',
       ]);
       availableStories.forEach(story => {
         expect(story.isAvailable).toBe(true);

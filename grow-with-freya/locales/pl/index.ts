@@ -178,6 +178,7 @@ export default {
     recordingComplete: 'Nagranie zakończone',
     recordingCompleteMessage: 'Twoje nagranie głosowe dla "{{name}}" zostało zapisane.',
     page: 'Strona {{current}} z {{total}}',
+    play: 'Graj',
     readMode: 'Tryb czytania',
     recordMode: 'Tryb nagrywania',
     listenMode: 'Tryb słuchania',
@@ -728,6 +729,8 @@ export default {
     grownUp: 'Dla dorosłego',
     bridgeTitle: 'Zabierz to w dzień',
     loading: 'Przygotowuję…',
+    skip: 'Pomiń',
+    tips: 'Wskazówki',
   },
   bridges: {
     counting: {
@@ -1158,7 +1161,7 @@ export default {
     tapAndHoldNotes: 'Dotknij i przytrzymaj nuty, aby je usłyszeć',
     playingPreview: 'Odtwarzanie podglądu… dotknij Pauza, aby zatrzymać',
     successSong: ' Piosenka sukcesu',
-    readyToPlay: ' Gotowy do gry',
+    readyToPlay: 'Gotowy do gry',
     chooseInstrument: 'Wybierz swój instrument',
     swipeToExplore: 'Przesuń, aby przeglądać, dotknij, aby wybrać',
     useThisInstrument: 'Użyj tego instrumentu',

@@ -41,7 +41,10 @@
   },
   "isPremium": false,
   "author": "Freya Stories",
-  "tags": ["learning", "adventure"],
+  "tags": [
+    "learning",
+    "adventure"
+  ],
   "version": 1,
   "checksum": "reading-story-1-checksum-v1",
   "pages": [
@@ -77,14 +80,7 @@
       "type": "story",
       "backgroundImage": "assets/stories/reading-story-1/page-1/background.webp",
       "text": "The little squirrel loved to play in the garden every morning.",
-      "interactionType": "reading_challenge",
-      "readingChallenge": {
-        "enabled": true,
-        "mode": "fill_in_blank",
-        "promptText": "Can you fill in the missing words?",
-        "allowSkip": true,
-        "blankWordIndices": [2, 5, 9]
-      },
+      "interactionType": "none",
       "localizedText": {
         "4-6": {
           "en": "The little squirrel loved to play in the garden every morning.\n",
@@ -110,14 +106,7 @@
       "type": "story",
       "backgroundImage": "assets/stories/reading-story-1/page-2/background.webp",
       "text": "The birds sang a happy song in the tall trees.",
-      "interactionType": "reading_challenge",
-      "readingChallenge": {
-        "enabled": true,
-        "mode": "fill_in_blank",
-        "promptText": "Which words are missing?",
-        "allowSkip": true,
-        "blankWordIndices": [1, 4, 8]
-      },
+      "interactionType": "none",
       "localizedText": {
         "4-6": {
           "en": "The birds sang a happy song in the tall trees.\n",

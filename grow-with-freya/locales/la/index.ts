@@ -178,6 +178,7 @@ export default {
     recordingComplete: 'Recordatio Perfecta',
     recordingCompleteMessage: 'Recordatio Vocis pro "{{name}}" servata est.',
     page: 'Pagina {{current}}/{{total}}',
+    play: 'Cane',
     readMode: 'Modus Legendi',
     recordMode: 'Modus Recordationis',
     listenMode: 'Modus Audiendi',
@@ -728,6 +729,8 @@ export default {
     grownUp: 'Adulto',
     bridgeTitle: 'In diem porta',
     loading: 'Paratur…',
+    skip: 'Praeteri',
+    tips: 'Consilia',
   },
   bridges: {
     counting: {
@@ -1158,7 +1161,7 @@ export default {
     tapAndHoldNotes: 'Notas tange et tene ut audias',
     playingPreview: 'Praevisio canens… Pausam tange ut sistas',
     successSong: ' Carmen Victoriae',
-    readyToPlay: ' Paratus ad Canendum',
+    readyToPlay: 'Paratus ad Canendum',
     chooseInstrument: 'Instrumentum tuum elige',
     swipeToExplore: 'Trae ut explores, tange ut eligas',
     useThisInstrument: 'Hoc instrumentum utere',

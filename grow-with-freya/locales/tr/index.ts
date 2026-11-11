@@ -178,6 +178,7 @@ export default {
     recordingComplete: 'Kayıt Tamamlandı',
     recordingCompleteMessage: '"{{name}}" için ses kaydı kaydedildi.',
     page: 'Sayfa {{current}}/{{total}}',
+    play: 'Çal',
     readMode: 'Okuma Modu',
     recordMode: 'Kayıt Modu',
     listenMode: 'Dinleme Modu',
@@ -728,6 +729,8 @@ export default {
     grownUp: 'Yetişkin için',
     bridgeTitle: 'Günün içine taşı',
     loading: 'Hazırlanıyor…',
+    skip: 'Atla',
+    tips: 'İpuçları',
   },
   bridges: {
     counting: {
@@ -1158,7 +1161,7 @@ export default {
     tapAndHoldNotes: 'Notaları duymak için dokunup basılı tutun',
     playingPreview: 'Önizleme çalınıyor… durdurmak için Duraklat\'a dokunun',
     successSong: ' Başarı Şarkısı',
-    readyToPlay: ' Çalmaya hazır',
+    readyToPlay: 'Çalmaya hazır',
     chooseInstrument: 'Enstrümanınızı seçin',
     swipeToExplore: 'Keşfetmek için kaydırın, seçmek için dokunun',
     useThisInstrument: 'Bu enstrümanı kullan',

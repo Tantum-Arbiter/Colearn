@@ -178,6 +178,7 @@ export default {
     recordingComplete: 'Optagelse fuldført',
     recordingCompleteMessage: 'Stemoptagelse for "{{name}}" er gemt.',
     page: 'Side {{current}}/{{total}}',
+    play: 'Spil',
     readMode: 'Læsetilstand',
     recordMode: 'Optagetilstand',
     listenMode: 'Lyttetilstand',
@@ -728,6 +729,8 @@ export default {
     grownUp: 'Til den voksne',
     bridgeTitle: 'Tag det med ud i dagen',
     loading: 'Gør klar…',
+    skip: 'Spring over',
+    tips: 'Tips',
   },
   bridges: {
     counting: {
@@ -1158,7 +1161,7 @@ export default {
     tapAndHoldNotes: 'Tryk og hold på noder for at høre dem',
     playingPreview: 'Afspiller forhåndsvisning… tryk Pause for at stoppe',
     successSong: ' Successang',
-    readyToPlay: ' Klar til at spille',
+    readyToPlay: 'Klar til at spille',
     chooseInstrument: 'Vælg dit instrument',
     swipeToExplore: 'Stryg for at udforske, tryk for at vælge',
     useThisInstrument: 'Brug dette instrument',

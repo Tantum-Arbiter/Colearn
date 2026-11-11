@@ -178,6 +178,7 @@ export default {
     recordingComplete: 'Grabación completa',
     recordingCompleteMessage: 'Tu grabación de voz para "{{name}}" ha sido guardada.',
     page: 'Página {{current}} de {{total}}',
+    play: 'Tocar',
     readMode: 'Modo lectura',
     recordMode: 'Modo grabación',
     listenMode: 'Modo escuchar',
@@ -728,6 +729,8 @@ export default {
     grownUp: 'Para el adulto',
     bridgeTitle: 'Llévalo al resto del día',
     loading: 'Preparando…',
+    skip: 'Saltar',
+    tips: 'Consejos',
   },
   bridges: {
     counting: {
@@ -1158,7 +1161,7 @@ export default {
     tapAndHoldNotes: 'Toca y mantén las notas para escucharlas',
     playingPreview: 'Reproduciendo vista previa… toca Pausa para detener',
     successSong: ' Canción de éxito',
-    readyToPlay: ' Listo para tocar',
+    readyToPlay: 'Listo para tocar',
     chooseInstrument: 'Elige tu instrumento',
     swipeToExplore: 'Desliza para explorar, toca para seleccionar',
     useThisInstrument: 'Usar este instrumento',

@@ -1422,8 +1422,65 @@ island day 3 → PlanLaunch { kind: 'game', packId, missionId } → _layout: pag
 | Screensafe: the game page is immersive (warnings wait), and the shell leaves on the day's limit so the owl speaks on the island | `components/screen-time/screen-time-provider.tsx`, `experience-shell.tsx` |
 | Making a pack's art and sounds from a book | `scripts/prepare-pack-art.py` |
 
-Not yet built (M3 onwards): packs downloaded from the CMS, a game opened from a book's page, free
-play from the Library, the Scene, Choose and Make engines.
+Not yet built (M3 onwards): packs downloaded from the CMS, free play from the Library and the Make
+engine. A game opened from a book's page and the Choose engine arrived with Phase 12 stage 0, and
+the Scene engine (for `tap_scene`) with the second book, below.
+
+### Learning challenges on a page (Phase 12, stage 0)
+
+Built 2026-11-09 against [`PHASE-12-LEARNING-LIBRARY.md`](../PHASE-12-LEARNING-LIBRARY.md). A
+story page may carry one **learning challenge**: a short game played *over* the page,
+with the page art as its backdrop, whose copy, pictures and bands all travel **inline in the story
+data** (`page.learningChallenge`, `interactionType: 'learning_challenge'`), not in a pack. The
+engine is chosen from the challenge's **family**; `mechanicId` and `adapter` only parameterise it.
+Nothing in a book names an engine, so book 76 is a folder and an upload.
+
+```
+reader, a learning_challenge page → the next-page button (right-touch-area) opens the challenge until it has been played on this visit to the page; the story text box slides down and fades away while the game is up (and pointer/screen-reader hidden), then slides back when it ends (leaving the page forgets it, so back still goes back and coming forward again replays the game); there is no separate "Have a go" button (removed 2026-11-10); record mode turns as before
+   LearningChallengeHost over the page (same slot and z-order as the music challenge)
+      shellReducer: loading → intro (the cards arrive) → playing; one steady prompt, the instruction, from the first frame (no setup line, no hint swaps, nothing for the grown-up underneath)
+         → celebrating (the choice's successLine, the stateAfter patch if any)
+              a choice with tips: the cards fade out and the band goes with them; once they have gone (at once under Reduce Motion) the host hands { tips: { picture, label, heading, tips } | null, storyText } to the reader in onDone. There is no Skip (removed 2026-11-11, operator decision) and no Next in the game
+            → done → onDone({ tips, storyText }) → challengeDone(pageId, 'learning') → the text box slides back on the same page, telling the chosen item's own outcome.storyText (per band and language, through getLocalizedText) in place of the page's text when it has one; leaving the page forgets it, so coming back shows the page's own text; the reader's next arrow carries on with the story. A choice's story text has no narration audio yet
+   the tips (components/stories/learning-tips.tsx), kept by the reader for this page only: a small golden star-dotted "i" (TipsBadge, 34 pt scaled, breathing gold halo, sparkle and a small wiggle while closed) sits on the text box's top-right corner; pressing it slides the text box away again and fades in TipsPanel (picture in a circle, named, the successLine as heading, up to three tips for the child) in tipsPanelFrame, clear of the corner buttons, the tips centred in their own block and Close at the panel's foot; Close fades the tips away and brings the text back. While open, the panel sits in a clear full-screen shield (`learning-tips-shield`, zIndex 30, above the corner coins' 20 and the controls layer's 10, modal to VoiceOver), so nothing but Close can be pressed, the badge included (operator, 2026-11-11). Closed, the panel and shield are out of reach and out of the screen reader. Turning the page forgets the tips
+   engineFor(family): choose → ChooseEngine (a tray of 2–3 pictured cards inside the page's safe zone, 28–72 % across, 23–60 % down; tap only in every band)
+      open mechanic (target ''): any card completes; guided: a non-target card wobbles ('repair') and stays live, the target completes; never a wrong sound or word
+      each card names its picture underneath (the item's label); the chosen card stays in view, ringed, while the others dim; its own outcome (items[].outcome.successLine / stateAfter / tips) is shown when it has one, else the challenge's shared line and patch
+   engineFor(family): tap_scene → SceneEngine (no cards: each item is a hotspot on the page art, items[].hotspot in master fractions, placed by spotFrame(hotspot, art) and grown to 56 pt around its centre; a soft breathing ring until found)
+      sceneMode(adapter): multi_tap_count → count (each spot once, numbered 1, 2, 3 in the order tapped; the last one completes), difference_find → every (the same, ticked), anything else → find (the target completes, another spot wobbles; an open scene takes any spot)
+      a spot tapped again keeps its number; no wrong sound; a found spot's own successLine is shown when it has one
+```
+
+| Concern | Location |
+|---------|----------|
+| The challenge as data (families, domains, copy per level and language, items with spoken labels and either a picture (choose) or a `hotspot` on the page art (tap_scene), an optional `outcome` of their own, `byAge` per band, `stateAfter`), mirrored in the gateway and the CMS schema; Little Fox and The Lantern Bridge are the shared fixtures | `types/story.ts` (`LearningChallenge`), `gateway-service/.../model/LearningChallenge.java`, `scripts/story-schema.json` (`definitions`), `contract-fixtures/stories/little-fox-meets-a-friend.json`, `the-lantern-bridge.json` |
+| Which engine a family plays on, and which families a page may offer today (`isFamilyPlayable` reads `PAGE_FAMILIES_BUILT`: `choose` and `tap_scene`; `authored_sim` and `navigate` share the Scene engine but wait for their own modes); a page whose family is not built reads as a plain page | `components/experience/engines/index.ts` |
+| The Choose engine and its geometry (tray in the safe zone, square cards in a row, `chooseOutcome`) | `components/experience/engines/choose/choose-engine.tsx`, `choose-layout.ts` |
+| The Scene engine and its rules (`sceneMode`, `spotFrame`, `sceneTap`, `MIN_SPOT`) | `components/experience/engines/scene/scene-engine.tsx`, `scene-layout.ts` |
+| The host: the shell's reducer with the `skip` event and `skipped` phase, the steady prompt, the after patch, one `onDone({ tips, storyText })` that hands a teaching choice's tips and any choice's own story text to the reader once the cards have gone; no Skip and no tips UI of its own. The catalogue's `copy.hints`, `setupLine` and `parentPrompt` stay in the data but are not shown (the operator found the changing prompt and the grown-up band confusing on device, 2026-11-09) | `components/stories/learning-challenge-host.tsx`, `components/experience/shell-state.ts` |
+| Copy and choices resolved for a band, language and reading level (English fallback, nearest level) | `components/stories/learning-challenge-view.ts` |
+| The reader: `isLearningChallengePage`, the next-page button as the way into the challenge (`learningChallengePlayedOn`, cleared on every page change), the text box sliding away while a challenge or its tips are open, the reader's chrome passed to the host so the prompt sits clear of it, no auto-advance in narrate mode, `challengeDone(pageId, 'learning')` when a challenge ends, which returns to the same page, the tips badge on the text box and the tips panel | `components/stories/story-book-reader.tsx` |
+| **Cover fit.** A book with `displayFit: 'cover'` (the Phase 12 books: full-screen 4:3 masters, narration at the bottom) is drawn at an explicit cover frame with none of the older books' 1.35/1.8 zoom: `focusFrame(screen, challengeFocus(page.learningChallenge))` is the centred `coverFrame(screen)` unless the page's challenge has hotspots that the centred crop would cut off, in which case the art moves just far enough to keep every spot shown in any age band `FOCUS_MARGIN` (24 pt) inside the screen (it never opens a gap at an edge, and centres on spots taller than the screen). The reading view and the challenge use that one frame, so the picture does not jump when the game opens, and it goes to the host as `art`, so the tray's safe zone and `patchFrame(stateAfter, art)` are placed in the master's own coordinates, as the ai-tools display contract asks. Every book, cover-fit or not, puts the narration along the bottom edge between the page-turn arrows (`narrationLayout(width, height, insets)`, in both orientations; since 2026-11-11 for older books too). Older books keep contain-and-zoom and the screen as their frame | `components/stories/page-frame.ts`, `narration-layout.ts`, `story-book-reader.tsx` (`renderPageImage`), `learning-challenge-host.tsx`, `choose-layout.ts` (`trayFrame(art, bounds)`) |
+| A challenge's pictures travel with the book: counted for download, resolved to the cache, checked for integrity | `services/page-assets.ts`, `asset-download-utils.ts`, `cache-manager.ts` |
+| Content checks a book must pass (cadence by band, each mechanic once and as the catalogue says, bands and targets (a counting mechanic, which asks for every item, names none), copy and labels, a picture for every choice and a hotspot on the picture for every scene item, art present), run by `cms-manager validate` | `scripts/lib/learning-challenges.js`, `scripts/learning/mechanics.json` (the ai-tools catalogue, version 2), `scripts/cms-manager/src/lib/schema-validator.js` |
+| App chrome strings (`experience.tips`, `common.close`) in all 14 locales; the story's own lines come from the book | `locales/*/index.ts` |
+
+Dev bundle (2026-11-09): `data/generated-stories/little-fox-meets-a-friend.ts` is built from the contract
+fixture; under `assets/stories/little-fox-meets-a-friend/` the pages, covers and after-states are the
+ai-tools render of the same day, and the choice cards are cut from the rendered pose sheets until
+ai-tools renders cut-outs and per-choice patches. It is replaced by the export once that lands. Page 4 (E06, a calming choice; operator,
+2026-11-11, replacing the E01 feelings faces) asks "What should Finn do to help Bramble?" after his
+loud hello, with three pictured ways to help (Say sorry, Talk softly, Stay still), each with its own
+line and three tips for the child, two of them for the `1-2` band; page 8 (E02, choosing a kind way to help) likewise offers three
+ways Finn could help, each with its own line and after picture; page 11 (L11, choosing what to say)
+offers three gentle things Finn could say, pictured with their words, each answered by Bramble. All
+three shapes still have to flow back into ai-tools' `book.json`.
+
+Rules the tests hold: **skip never records completion**, for music too (`useMusicChallenge.skip`
+no longer fires `onComplete`, 2026-11-09); the celebration shows the story's own result and no
+stars or scores; the `1-2` band sees the same two cards (Choose items sit at the catalogue minimum,
+so the derived rungs coincide). Not yet: the reader's cover fit for 4:3 full-screen pages, the page's
+pulsing `interactive_object` as a second way in, the Maestro flow, rendered art for any of the 75.
 | Setting off, previewing and coming back | `app/_layout.tsx` (`handleStartActivity`, `handlePreviewActivity`, `launchedFromIslandRef`, `storyCardReturnRef`), `constants/page-slide.ts` (`ISLAND_ACTIVITY_PAGES`, `voyageStaysOut`) |
 | Seeding a week part done, for a device check or a Maestro flow | `services/e2e-state.ts` (`planDone=N` on the seed link: the first N days done yesterday) |
 | Where a seed link is answered at all | `services/e2e-state.ts` (`isE2eAllowed`): a build made for testing (`extra.e2e`, which `app.config.js` keeps on a local gateway), or a development build whose gateway is local or not configured, as Metro's is. A development build pointed at a deployed gateway ignores seed links, since one can sign a device in, wipe it or reshape its child record (2026-10-29) |
@@ -1851,11 +1908,115 @@ extensive mocks for React Native modules (`__mocks__/`).
 | `func-tests/README.md` | Functional test suite |
 ## Production storybook presentation
 
-Landscape stories place narration in a bounded panel on the right, over the quiet
-scenery reserved by the authoring specification. `components/stories/narration-layout.ts`
-keeps this panel clear of the left action area and bottom navigation. Portrait tablets
-retain the existing bottom narration layout. Narration and language comparison remain
-scrollable, including at larger accessibility text sizes.
+Every book places its narration along the bottom edge, centred between the page-turn arrows
+(`components/stories/narration-layout.ts`), in both orientations (operator, 2026-11-11: the
+older books' right-hand panel is gone, so every book reads the same way). The box hugs its
+verse, four lines at most and never more than a third of the screen. The back and next arrows
+sit level with the middle of that box: their row (`story-nav-panel`) takes the box's bottom edge and
+its measured height, so they follow it in every mode and orientation (operator, 2026-11-11). Language
+comparison remains scrollable, including at larger accessibility text sizes.
+
+**Sound words.** Story text marks a sound word, the sound itself (an exclamation such as
+"Plonk!", or what something goes or went), by wrapping it in single asterisks:
+`*Whoosh!* went the wind`. The reader never prints the marks. `storyWords` in
+`components/stories/sound-words.ts` splits each line into the reader's tappable words and picks
+out the marked pieces, and `renderTextWithHighlight` draws them the way a picture book does: the
+heavy rounded face at `SOUND_WORD_SCALE` (1.2×) the story size, in a warm ink
+(`SOUND_WORD_COLOR`, 6:1 contrast on the white text box), on the same line height, still tappable
+and highlighted like any other word. Punctuation left outside the marks keeps the story style. A
+lone asterisk, two together, or a pair with a space just inside it is printed as written. Sound
+words used as ordinary nouns or verbs ("gave a squeak", "tapped") are not marked.
+
+**Two lines at a time (2026-11-11).** In Read and Narrate modes the story text box is two lines tall
+with no scrolling (`components/stories/text-pages.ts`). The page's text is split into its own lines,
+wrapped lines are found by a hidden, full-width measuring copy (`text-measure.tsx`), and the rows go
+two to a part; a line of sound words (`*Splosh!* *Splash!*`) pairs like any other line, at its usual
+`SOUND_WORD_SCALE` (operator, 2026-11-11: no part of its own). Next fades the shown lines out (`FADE_OUT_MS`, 300 ms) and the next part
+in (`FADE_IN_MS`, 400 ms; slowed on 2026-11-11 so the change is seen), and only turns the page from the last part; Back steps back through the parts first. In Narrate
+mode the parts follow the voice forward, each taking its share of the page by letter count, and never
+pull the reader back. A ring round the Next button (`page-progress-ring.tsx`) starts empty and only moves
+when Next is pressed: a step per part, and the press that leaves the last part (turning the page, or
+opening its game) completes it. A page whose words fit in one part has no ring, and its first press turns the page (or opens its game) at once (operator, 2026-11-11: the ring spinning in and out before the turn read as a glitch). That leaving press turns
+the page (or opens the game) at once, and the ring resets alongside (operator, 2026-11-11, replacing
+the earlier ring-first wait): it closes over at most `RING_CLOSE_MS` and collapses clockwise over
+`RING_COLLAPSE_MS` with no hold (its tail runs round after its head and vanishes at the top), the two
+together inside the old words' fade-out (`FADE_OUT_MS`). A new page of two or more parts starts the ring
+empty. A turn not made by Next (a page pick) closes and collapses the ring the same way as the new page
+arrives. Back undoes a completed ring, and turning back never collapses it. Under Reduce Motion the ring is gone at once. A page turn (Next or Back, one `crossFadeTo`) holds the old page's words in the
+box (`textHold`) while they fade out (`PAGE_TEXT_FADE_MS`, the same as `FADE_OUT_MS`), then swaps in the new
+page's words and fades them in over `FADE_IN_MS`, so the next page's text never shows early; the picture's
+cross-fade starts in the same frame as the words' fade-out and lasts `PAGE_IMAGE_FADE_MS` (out plus in,
+700 ms), so the new picture and the new words settle together (operator, 2026-11-11); the page number and the Next button follow the
+words, not the page index. The new page's lines are measured during that fade, so they arrive
+already split. The green finish tick shows only on the book's final lines (`onFinalLines`); before
+that, the last page's Next is the usual arrow. Record mode and compare-language keep
+the whole text, scrollable, with no ring. Reduce Motion swaps parts without fading.
+
+**The reader's coins (2026-11-11).** Every book page's buttons are the operator's painted coins
+(`components/child-ui/reader-coin.tsx`, art in `assets/images/reader-coins/`, cut by
+`scripts/prepare-reader-coins.py` and registered in `compliance/ASSET-REGISTER.md` §5f): exit, menu,
+sound (`MusicControl variant="coin"`), back and next, with the tick coin on the book's final lines.
+Each coin's picture is `COIN_CANVAS` (1.25) times the button so the disc fills the button and its
+painted shadow spills round it; the Pressable keeps the old 50-point size. A coin that cannot be
+pressed (back on the first lines, next in record mode before a recording, exit while closing) is
+dimmed to `COIN_DIM_OPACITY`; muted sound is dimmed with a brown slash drawn over it. The page
+number sits in `PagePill` (`components/stories/page-pill.tsx`): a cream-and-gold pill drawn in code
+with an SVG open book and the app's own `page / length`, read aloud as `reader.page`. The music
+screens keep the `story` look of `MusicControl`. The corner coins sit `readerEdge(inset)` in from the
+screen's side (`narration-layout.ts`: 45% of the safe-area inset, never under 20 points), so on a
+phone on its side they use the room beside the camera rather than the whole inset plus 20; the
+learning-challenge chrome, the menu and the tips panel use the same edge, and the cloud keeps its own
+width (`narrationLayout`). The cloud is `NARRATION_WIDTH_SHARE` (85%) of the room between the arrows, centred (operator, 2026-11-11: narrowed by 15%). Closing the book (the exit coin or the final tick) first closes the menu and
+tips, slides the top coins, page pill, Play pill and narrate controls up and the cloud and bottom coins down over `CHROME_EXIT_MS`
+(320 ms), and only then starts the book-closing animation; under Reduce Motion it closes at once.
+
+**Page Preview (2026-11-11).** The menu's Page Preview sheet (`pages-preview-modal.tsx`) wears the
+menu panel's colours: a cream face (`PREVIEW_FACE`) inside a 4-point gold rim (`PREVIEW_RIM`), its
+title and page numbers in `MENU_INK`, the current page framed and labelled in the rim's gold. It has
+no close button; a tap outside it closes it (that backdrop is announced as `common.close`).
+
+**The cloud behind the words (2026-11-11).** The story text box is one of the operator's clouds
+(`components/stories/story-cloud.tsx`, art in `assets/images/story-cloud/`, cut by
+`scripts/prepare-story-cloud.py`, registered in `compliance/ASSET-REGISTER.md` §5g) in place of the
+white rounded box, at the box's own width and height: the cloud with smiling faces for every book,
+and the cloud with a flute and a trumpet for a music book (tagged `music`, or with a
+`music_challenge` page). `cloudFrame(width, height, theme)` scales the art so the cloud's body fills
+the box's height, keeps the two ends and the sun (the crown) at their drawn shape, and widens only the
+two plain strips between them to fill the width; the sun rises above the box. A box too narrow for the
+ends and the sun shrinks the whole cloud instead and centres it. `cloudInset` pads the words in from
+both sides past the end pictures, worked out from the box's tallest height in that mode, so the
+measurer, the two-line parts and the cloud agree. The compare-language box keeps its blue panel.
+
+**The reading ring on the next coin.** `PageProgressRing` is drawn the coin's own size with a stroke
+of `COIN_RIM` (6%) of it, so it lies exactly on the coin's painted gold rim; it has no grey track (the
+rim is the track) and fills in the arrows' purple (`RING_FILL`).
+
+**Play, on music pages (2026-11-11).** "Begin Playing" became the operator's Play pill
+(`components/stories/play-pill.tsx`, art in `assets/images/play-pill/`, §5h): a purple play triangle
+and `reader.play`, at the coins' 50-point height and the picture's own shape. It keeps the same
+testIDs and press (`handleBeginMusicChallenge`) in both places, top centre and under the narration
+controls. Appearing, it glides down over `PLAY_SLIDE_MS` from just above its place (its height plus
+the top margin) while fading in, and leaving it glides back up; under Reduce Motion it just appears.
+Ready to Play on the music sheet shows its words with no note drawn in front of them.
+
+**The reader's menu (2026-11-11).** The menu coin opens `ReaderMenu`
+(`components/stories/reader-menu.tsx`, art in `assets/images/reader-menu/`, cut by
+`scripts/prepare-reader-menu.py`, §5i): a panel composed from the operator's leaf and mushroom
+corners, the rest of its rim swept from their own band, in three slices (top with the pointer and
+leaves, a straight middle stretched to the rows, bottom with the mushrooms), so it is
+as tall as its rows and takes rows added or taken away without change. Each row is the operator's
+icon tile, its words (shrinking to fit one line) and the gold arrow; the rows are built per mode
+(Auto-Play in Narrate, Change Instrument on music pages, the tips row's words by mode). The panel is
+`MENU_WIDTH` (276) times the button scale. The painted pointer is a short horn out of the panel's top-right
+corner, pointing up and right at 45° (`MENU_PANEL.tipX`/`tipY` 918/31 of 920; operator, 2026-11-11:
+a pointer along the top sat under the sound coin once the panel moved off the camera island).
+`menuPlacement` puts its tip `TIP_GAP` below and left of the menu coin so the 45° line runs through the
+coin's middle, and never lets the panel's right edge past the screen edge or the right safe-area
+inset, so on a phone on its side the panel stops short of the island.
+Past the room below the coin the rows scroll inside it. The Font / Button Size submenu sits in the
+same panel (`ReaderMenuPanel`). Both are built with the book and kept mounted, measured and with
+their pictures decoded; opening or closing fades the whole panel as one (`MENU_FADE_MS`, at once
+under Reduce Motion), and while closed it takes no touches and is hidden from the screen reader.
 
 Reveal elements (`type: reveal`), including cropped patches and legacy full-canvas
 overlays, use fixed scene geometry. Their opacity animates, but their geometry does not scale;

@@ -178,6 +178,7 @@ export default {
     recordingComplete: '記録完了',
     recordingCompleteMessage: '「{{name}}」の音声記録が保存されました。',
     page: 'ページ{{current}}/{{total}}',
+    play: 'えんそう',
     readMode: '読み取りモード',
     recordMode: '記録モード',
     listenMode: 'リッスンモード',
@@ -728,6 +729,8 @@ export default {
     grownUp: 'おとなのかたへ',
     bridgeTitle: '一日のなかへ',
     loading: 'じゅんびちゅう…',
+    skip: 'スキップ',
+    tips: 'ヒント',
   },
   bridges: {
     counting: {
@@ -1158,7 +1161,7 @@ export default {
     tapAndHoldNotes: 'ノートをタップ＆ホールドして聴く',
     playingPreview: 'プレビュー再生中… 一時停止をタップして停止',
     successSong: ' 成功の歌',
-    readyToPlay: ' 演奏準備完了',
+    readyToPlay: '演奏準備完了',
     chooseInstrument: '楽器を選んでください',
     swipeToExplore: 'スワイプで探索、タップで選択',
     useThisInstrument: 'この楽器を使う',

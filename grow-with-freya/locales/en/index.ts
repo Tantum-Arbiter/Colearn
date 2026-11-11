@@ -294,6 +294,7 @@ export default {
     recordingComplete: 'Recording Complete',
     recordingCompleteMessage: 'Your voice recording for "{{name}}" has been saved.',
     page: 'Page {{current}} of {{total}}',
+    play: 'Play',
     // Reading modes
     readMode: 'Read Mode',
     recordMode: 'Record Mode',
@@ -893,6 +894,8 @@ export default {
     grownUp: 'For the grown-up',
     bridgeTitle: 'Carry it into the day',
     loading: 'Getting ready…',
+    skip: 'Skip',
+    tips: 'Tips',
   },
   bridges: {
     counting: {

@@ -324,6 +324,123 @@ stage.
 
 Both repos. Exit: GWF-006 *Little Fox Meets a Friend* plays end to end on device from a CMS folder.
 
+> **Progress (2026-11-09, this repo).** Built: the `learning_challenge` page type across the three
+> models with Little Fox as the contract fixture; the shell's `skip` event and `skipped` outcome
+> (music skip no longer records completion); engine selection by family; the Choose engine; the
+> host over the page; the reader's "Have a go"; challenge art in the download, cache and integrity
+> paths; `scripts/lib/learning-challenges.js` with the vendored catalogue, run by `cms-manager
+> validate`. See `grow-with-freya/ARCHITECTURE.md` → *Learning challenges on a page*. Later the
+> same day: **cover fit** (`Story.displayFit: 'cover'` in the three models; the reader draws such a
+> book's pages full-screen from the centre with no zoom, and hands the host the art's on-screen
+> frame so the tray and the `stateAfter` patch are placed in the master's coordinates, as the
+> display contract asks; the narration sits along the bottom edge for these books, per
+> `narration_layout: bottom`). Still open here: `generate-plan-units.js`, the Maestro flow, the iPad
+> check. ai-tools items untouched.
+>
+> **Page 4 review (2026-11-09, late).** The operator asked for a steadier, more useful E01. Done:
+> the prompt is one line from the first frame (no setup line, no hint swaps), the grown-up line
+> under the cards is gone, each card is a hedgehog face (worried, shy, surprised, cut from the
+> rendered pose sheet) with its feeling written under it, the whole-scene after picture is gone
+> (it read as the page zooming out), and a choice now fades the cards and shows its face beside
+> three things to do (`items[].outcome.tips`, up to three, in the three models and the
+> validator) until the grown-up taps Next, which returns to the story on the same page. Second
+> pass the same evening: the tips are advice for the child about real friends ("When a friend
+> feels shy, you can help:" then three short actions), not instructions for Finn; the faces are
+> cut out onto transparency and centred in a cream well; the panel shows the face in a circle
+> with its feeling written under it and hides the band at the top. Pages 8 (E02) and 11 (L11)
+> followed the same night: short labels (Step back / Sit nearby / Share; Say hello / Ask to play /
+> Wait kindly), Finn cut-outs from the rendered pose sheet, a "When a friend …, you can …:" heading
+> and three real-life tips per choice, no whole-scene after pictures. Page 11's background is now
+> the render's after-state, the same scene without the painted pinecone and paw cards, until
+> ai-tools re-renders it. The question band no longer flashes back while a finished challenge closes.
+> The challenge is no longer optional: on a challenge page the next-page button opens it until it
+> has been played or skipped (Skip stays the way past it), and the separate Have a go button and
+> its `experience.haveAGo` string are gone; record mode is unchanged. Back always turns back; a
+> challenge page reached again offers its game again. Page 4's third feeling is now Scared.
+> **2026-11-11 (operator decision): no Skip on learning challenges.** The story text box slides away
+> while a game is up and slides back when it ends; a choice with tips ends the game as its cards
+> leave and leaves a small golden "i" on the text box's top-right corner, which opens the tips panel
+> (with Close) over the page. This supersedes "Skip always offered" (L3) and the `skipped` row above
+> for learning challenges; `allowSkip` and `onSkip` stay in the data, unused by the app.
+> **A choice can tell its own story (2026-11-11).** `items[].outcome.storyText` (AgeGroupText, per band
+> and language, validated like the other copy) replaces the page's text in the text box after that
+> choice, so the book reads on from what the child decided; Little Fox page 4 carries it for all three
+> choices in every band that offers them. It lives in the app's story data and the gateway model
+> (`LearningChallenge.Outcome.storyText`); the ai-tools brief does not model per-choice outcomes yet
+> (tips included), and there is no narration audio for these lines yet.
+> Little Fox carries no song any more (operator decision, 2026-11-10): the instrument chooser at the
+> start of the book confused a feelings book, so page 6 is a plain story page, and the ai-tools
+> brief's `music_gate` is null (`BookSpec` allows a book without one). The plan's one-song-per-book
+> rule is therefore not universal; decide per book.
+>
+> **Second book: GWF-002 The Lantern Bridge (2026-11-11, stage 2.2).** The second book in the app
+> teaches maths where Little Fox teaches feelings, and it plays a second kind of game: the **Scene
+> engine**, where the child taps the painting itself. Page 4 (M08, `small_set_choice`): match two
+> lanterns to the card with two dots; a wrong card wobbles and play goes on. Page 8 (M01,
+> `multi_tap_count`): tap each of three empty hooks, each tap leaves a numbered gold mark in the
+> order tapped, a repeat keeps the count, and the last hook completes it. Page 11 stays a Choose
+> page (E02, help Toby walk in the dark) with tips for the child. Items of a `tap_scene` challenge
+> carry a `hotspot` (position and size in master fractions) instead of a picture; the schema, the
+> CMS validator, the gateway model and the TypeScript type all carry it, and an every-item adapter
+> (`multi_tap_count`, `difference_find`) must have an empty target. `authored_sim` and `navigate`
+> share the engine but stay unplayable until their own modes exist. On a phone the centred cover
+> crop hid the page 4 cards, so a page whose game has hotspots moves its art just enough to keep
+> every spot on screen (`focusFrame`), on the reading view and the game alike. Rendered through
+> ai-tools against the signed-in Chrome (29 assets, no halt); ai-tools flagged page 4's after-state
+> as unchanged, page 8's change as outside the safe zone and page 11's as a whole-scene redraw, so
+> the book uses no `stateAfter`: the marks on the art are the feedback. The page 11 cards are cut
+> from Nori's pose sheet. Hotspots were measured by hand on the rendered masters; ai-tools does not
+> emit them yet. Like Little Fox it carries no song (operator decision, 2026-11-11): page 6 is a
+> plain story page and the brief's `music_gate` is null, so no instrument chooser opens with it.
+>
+> **Sound words (2026-11-11).** The reader draws a sound word wrapped in single asterisks
+> (`*Whoosh!*`) as a picture book would: heavy, rounded, a little larger, in warm ink, with no
+> asterisks shown (`grow-with-freya/ARCHITECTURE.md`, Production storybook presentation). Only
+> The Lantern Bridge's 2-4 text came from ai-tools with marks; the other reading levels of both
+> books were marked by hand in their `book.json` briefs (the sound itself only: exclamations and
+> what something goes or went, not "gave a squeak" or "tapped"), and `story-contract.test.ts`
+> checks every mark closes. ai-tools now asks for the marks: writers through
+> `story_guidance.SOUND_WORD_GUIDANCE`, translators in the translation prompt, and a translation is
+> sent back if it leaves a stray asterisk or drops every mark from a marked page
+> (`image_gen_browser/sound_words.py`, same pattern as the app; uncommitted in ai-tools).
+>
+> **Little Fox page 4 is a helping game (2026-11-11).** At the operator's request the feelings
+> faces (E01) are gone: page 4 now asks "What should Finn do to help Bramble?" right after his loud
+> hello, with Say sorry, Talk softly and Stay still (Finn cut from his rendered pose sheet), each
+> with a line and three tips for the child, Talk softly and Stay still for the `1-2` band. Page 8
+> already uses E02 ("What could help?") and the CMS validator allows a mechanic once per book, so
+> page 4 is filed as E06 (`comfort_choice`, a calming choice); the operator chose to keep page 8 as
+> it is. The ai-tools brief's page 4 challenge was updated to match, and the Bramble face cut-outs
+> were deleted.
+>
+> **Render (2026-11-09).** Little Fox rendered through ai-tools' own `render-images.sh gpt`
+> against the signed-in Chrome: 15 masters (1448×1086), three after-states, both covers, character
+> and location sheets, 29 assets with provenance, no quota or auth halt, 74 minutes. The pages,
+> covers and after-states now back the dev bundle. Findings for ai-tools: the three after-states
+> are whole-scene redraws (the renderer's own check flagged 100 / 57 / 29 % of the page changed),
+> so the dev bundle uses them as **whole-master** `stateAfter` patches and the per-choice patches
+> wait for the item/patch render step; page 11's master has the exported two-choice pictograms
+> (pinecone, paw) painted into the scene because `book.json` still carries the old shape; the
+> portrait cover crops both characters off at the bottom. The choice cards in the dev bundle are
+> cut from the rendered pose sheets (real art, dev-time cut; page 8's "leave a berry" shows Finn
+> holding a pinecone until the cut-outs are rendered).
+>
+> **Device review (2026-11-09, iPhone 16 Pro, stand-in art, then the render).** All three challenges play and skip
+> from a dev bundle of the book. Changes it produced: `items[].outcome` (a choice's own
+> `successLine` and `stateAfter`, §5.1 addendum) because the open mechanics' feel is one response
+> per choice; the chosen card stays ringed through the resolution; the narration hides while a
+> challenge is open and the host lays out around the reader's chrome. Content: page 4 (E01) now
+> offers three pictured feelings for Bramble (scared, shy, surprised), each with its own line, two
+> for `1-2`, instead of the two observations the brief exported. Page 8 (E02) now offers three
+> pictured ways Finn could help (step back, sit and wait nearby, leave a berry), each with its own
+> line and its own after picture, two for `1-2`, following the catalogue's space / company / gift
+> variation. Page 11 (L11) now offers three gentle things Finn could say, pictured with their
+> words (“Hello, I’m Finn.” / “Would you like to play?” / “I’ll wait right here.”), each answered
+> by Bramble in its own line and after picture, two for `1-2`; the exported megaphone-versus-wave
+> pair was dropped because it made shouting the one wrong answer, against the mechanic's rule.
+> `ai-tools` `book.json`, `LearningChallenge` and the exporter need the per-item outcome (line and
+> after state) before the book is rendered.
+
 **ai-tools**
 
 - `export-for-cms` refuses `display_fit: cover` books (`cms_story.py:535-536`) and `production`
@@ -372,7 +489,7 @@ challenges, biggest audience), then 4-6, then 6-8. The row is the stage; its ele
 
 | Stage | Book | Brief band → app | Domain | Mechanics | Needs |
 |---|---|---|---|---|---|
-| 1.1 | GWF-006 Little Fox Meets a Friend | 2-4 → 2-4 | Social | E01, E02, L11 | choose |
+| 1.1 | GWF-006 Little Fox Meets a Friend | 2-4 → 2-4 | Social | E06, E02, L11 (E01 replaced 2026-11-11) | choose |
 | 1.2 | GWF-010 A Coat for Little Cloud | 2-4 → 2-4 | Science | S05, S01, L08 | choose |
 | 1.3 | GWF-011 The Kind Garden Gate | 2-4 → 2-4 | Social | E03, E02, C08 | choose |
 | 1.4 | GWF-016 The Whispering House | 2-4 → 2-4 | Language | L01, L06, U06 | choose |

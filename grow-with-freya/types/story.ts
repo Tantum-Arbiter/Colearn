@@ -1,5 +1,7 @@
 import { ImageSourcePropType } from 'react-native';
 import type { SupportedLanguage } from '@/services/i18n';
+import type { MissionGesture } from '@/types/game-pack';
+import type { PlanAgeRange } from '@/types/learning-plan';
 
 // Localized text for story content
 export interface LocalizedText {
@@ -88,8 +90,80 @@ export interface MusicChallenge {
   hintLevel: MusicHintLevel;
 }
 
+export const CHALLENGE_FAMILIES = ['choose', 'tap_scene', 'sequence', 'music_audio', 'quantities', 'assign_sort', 'authored_sim', 'snap_build', 'navigate', 'trace_draw'] as const;
+
+export type ChallengeFamily = (typeof CHALLENGE_FAMILIES)[number];
+
+export const LEARNING_DOMAINS = ['maths', 'language', 'music', 'science', 'social', 'creative'] as const;
+
+export type LearningDomain = (typeof LEARNING_DOMAINS)[number];
+
+export type AssessmentMode = 'guided_observable' | 'exploratory_multiple_valid';
+
+export interface ChallengeCopy {
+  title: AgeGroupText;
+  setupLine: AgeGroupText;
+  instruction: AgeGroupText;
+  successLine: AgeGroupText;
+  onSkip: AgeGroupText;
+  parentPrompt: AgeGroupText;
+  hints: AgeGroupText[];
+}
+
+export interface ChallengeStateAfter {
+  image: string | number;
+  position: InteractiveElementPosition;
+  size: InteractiveElementSize;
+}
+
+export interface ChallengeOutcome {
+  successLine?: AgeGroupText;
+  stateAfter?: ChallengeStateAfter;
+  /** Up to three things to do, shown beside the chosen picture until the grown-up taps Next. */
+  tips?: AgeGroupText[];
+  storyText?: AgeGroupText;
+}
+
+export interface ChallengeHotspot {
+  position: InteractiveElementPosition;
+  size: InteractiveElementSize;
+}
+
+export interface ChallengeItem {
+  id: string;
+  image?: string | number;
+  label: LocalizedText;
+  hotspot?: ChallengeHotspot;
+  outcome?: ChallengeOutcome;
+}
+
+export interface ChallengeBand {
+  gesture: MissionGesture;
+  items: string[];
+}
+
+export interface LearningChallenge {
+  challengeId: string;
+  briefInteractionId: string;
+  mechanicId: string;
+  family: ChallengeFamily;
+  adapter: string;
+  assessmentMode: AssessmentMode;
+  audioDependent: boolean;
+  domain: LearningDomain;
+  skillId: string;
+  copy: ChallengeCopy;
+  items: ChallengeItem[];
+  target: string;
+  byAge: Record<PlanAgeRange, ChallengeBand>;
+  stateAfter?: ChallengeStateAfter;
+  fallbackElementId?: string;
+  allowSkip: boolean;
+  isMusicGate: boolean;
+}
+
 // Page interaction types (extends beyond simple interactive elements)
-export type PageInteractionType = 'none' | 'interactive_state_change' | 'music_challenge';
+export type PageInteractionType = 'none' | 'interactive_state_change' | 'music_challenge' | 'learning_challenge';
 
 export interface StoryPage {
   id: string;
@@ -104,6 +178,7 @@ export interface StoryPage {
   // Music challenge support
   interactionType?: PageInteractionType; // Defaults to 'none' if not set
   musicChallenge?: MusicChallenge; // Present when interactionType === 'music_challenge'
+  learningChallenge?: LearningChallenge;
 }
 
 export interface StoryAward {
@@ -125,6 +200,8 @@ export interface Story {
   description?: string;
   localizedDescription?: LocalizedText; // Translated descriptions
   pages?: StoryPage[]; // 8 pages for the story book
+  /** How the reader fits page art: 'cover' for full-screen 4:3 masters (Phase 12 books); older books contain and zoom. */
+  displayFit?: 'contain' | 'cover';
 
   // Gender-based filtering (not shown in UI)
   gender?: 'boy' | 'girl' | 'unisex'; // Defaults to 'unisex' if not set

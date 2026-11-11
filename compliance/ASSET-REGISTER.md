@@ -25,6 +25,10 @@ marked **⚠️ UNVERIFIED**.
 | The planet at the edge of every page, and the ring of cloud between pages while they slide (cut from the operator's painting of a planet in cloud) | Registered below, §5c — origin and licence ⚠️ UNVERIFIED |
 | The three stat orbs on the home screen: the streak, Continue reading and the badges unlocked (cut from the operator's picture of them) | Registered below, §5d — origin and licence ⚠️ UNVERIFIED |
 | The road map shown once the week on the island is done: a bear before a glowing portal, with three dated panels (one painting for phones and upright tablets, one 4:3 for tablets on their side) | Registered below, §5e — origin and licence ⚠️ UNVERIFIED |
+| The story reader's buttons: exit, menu, sound, back, next and the finishing tick, as painted coins (the operator's pictures, 2026-11-11) | Registered below, §5f — origin and licence ⚠️ UNVERIFIED |
+| The clouds behind every book's words, one with faces and one with instruments for music books (the operator's pictures, 2026-11-11) | Registered below, §5g — origin and licence ⚠️ UNVERIFIED |
+| The Play button on a book's music pages (the operator's picture, 2026-11-11) | Registered below, §5h — origin and licence ⚠️ UNVERIFIED |
+| The reader's menu: its painted panel, row icons and row arrow (the operator's pictures, 2026-11-11) | Registered below, §5i — origin and licence ⚠️ UNVERIFIED |
 | The lock on the island's learning-plan checkpoints | Registered below, §6 — the supplied picture is not drawn since 2026-10-03 (a padlock drawn in code replaced it); the file remains, origin ⚠️ UNVERIFIED |
 | Everything else — avatars, story illustrations, instrument art, music, fonts, voices (the feelings game's art and the spelling game's art left with those games on 2026-10-16; the nine bear and animal faces the badges draw stay in `assets/images/emotions/`) | **Not registered.** Origin is not recorded anywhere in the repository — ⚠️ UNVERIFIED |
 
@@ -208,6 +212,70 @@ sign-in sky, the owl and the badge art.
 | Terms for commercial use, and who owns it | ⚠️ UNVERIFIED — depends on the answer above |
 | Checked by eye against well-known games and films | **Not yet done by a person** |
 | The dates on the panels | Painted into the art. If the plan moves, the art has to be repainted or the quarters painted out and written by the app as the places are |
+
+## 5f. The story reader's coins
+
+| File (under `grow-with-freya/assets/images/reader-coins/`) | Where from | What was changed |
+|---|---|---|
+| `source/menu.webp`, `source/sound.png`, `source/next.webp`, `source/back.webp` (each 1254×1254, with a clear ground; SHA-256 `3866e80cc48c8f30c0f4c3578bf385d8447f4e1bf8b370ef1b639b0a9c037f74`, `60c41dccdd6bf6044cc3fbfc7ec0bc587d7881fa20bc7fe687565e9457532f23`, `1aa6d19bb225a1ff1484921085d64d45d3e9f561485161dc612da6c2e7c46e9c`, `267e1d555890ef5ee243e8f9d561b1d6c7ccaaf956f31054508baa0d6758110d`) | Supplied by the operator, pasted into the working session on 2026-11-11: four cream coins with gold rims, three brown bars, a brown speaker, a purple > and a purple < | Stored as sent. Not required by the app, so not bundled |
+| `coin-menu.webp`, `coin-sound.webp`, `coin-next.webp`, `coin-back.webp` (300×300) | Cut from the four sources by `grow-with-freya/scripts/prepare-reader-coins.py` | Each squared on its disc with a quarter of the disc's width round it for the painted shadow, and made smaller. Nothing else changed |
+| `coin-done.webp`, `coin-exit.webp` (300×300) | Made by the same script from `source/next.webp` | The purple > painted out of the face (filled from the face round it, with paper grain taken from a clean patch of the same face), then a tick in the >'s purple, or an arrow in the bars' brown, drawn on. The arrow follows a 74×68 picture of an exit coin the operator pasted the same day, too small to ship; it is not stored |
+| The page pill beside the exit coin (book, page and length) and the slash across the muted sound coin | Drawn by the app (`components/stories/page-pill.tsx`, `components/child-ui/reader-coin.tsx`) after a 133×56 picture of the pill the operator pasted the same day, which is not stored | Made for the app |
+
+| Question | Answer |
+|---|---|
+| Who made it, and with what | ⚠️ UNVERIFIED — the pictures arrived with no record of their origin. They have the look of generated images; the operator to say which service and account, or which artist |
+| Terms for commercial use, and who owns it | ⚠️ UNVERIFIED — depends on the answer above |
+| Checked by eye against well-known games and films | **Not yet done by a person.** Cream-and-gold round buttons with simple glyphs are a common game-interface look |
+| Quality | A coin is drawn 50 points across on a phone (150 pixels at 3×) and up to about 75 on a tablet with large buttons (225 pixels); the 300-pixel files hold the disc at 240 pixels, so they are never enlarged |
+
+## 5g. The story text clouds
+
+| File (under `grow-with-freya/assets/images/story-cloud/`) | Where from | What was changed |
+|---|---|---|
+| `source/stories.webp` (2000×667, clear ground, SHA-256 `49c267c555a976f639a9de5dbbad2ccf41d74674f3ad326926a91e30ec044804`) | Supplied by the operator, pasted into the working session on 2026-11-11: a cream cloud with a gold rim, a small gold sun on top and a smiling face at each end | Stored as sent. Not required by the app, so not bundled |
+| `source/music.webp` (2000×667, clear ground, SHA-256 `063852a503554c1068a40a2d1c998ca69f1a440d0553517225745fa6308e3e66`) | Supplied by the operator the same day: the same cloud with a flute and notes at the left end and a trumpet and notes at the right, for music books | Stored as sent. Not required by the app, so not bundled |
+| `stories-*.webp` and `music-*.webp` (`left`, `stretch-left`, `crown`, `stretch-right`, `right`; each 667 tall) | Cut from the sources by `grow-with-freya/scripts/prepare-story-cloud.py`: at x = 430, 880, 1120 and 1570 for the stories cloud, and at 1550 instead of 1570 for the music cloud, so the trumpet lies wholly in its end | Cut into five upright strips and saved as WebP at quality 92. Nothing else changed; the app widens the two plain strips to fit the box (`components/stories/story-cloud.tsx`), so the ends and the sun keep their drawn shape |
+
+| Question | Answer |
+|---|---|
+| Who made them, and with what | ⚠️ UNVERIFIED — the pictures arrived with no record of their origin. They have the look of generated images; the operator to say which service and account, or which artist |
+| Terms for commercial use, and who owns them | ⚠️ UNVERIFIED — depends on the answer above |
+| Checked by eye against well-known games and films | **Not yet done by a person.** A scalloped cloud panel is a common storybook frame |
+| Quality | A cloud's body is 521 pixels tall; the phone's two-line box is about 78 points (234 pixels at 3×), a tablet's about 108 (324), so it is drawn smaller, never enlarged, except for the two plain strips, which are widened about two to three times on a phone |
+
+## 5h. The Play button on music pages
+
+| File (under `grow-with-freya/assets/images/play-pill/`) | Where from | What was changed |
+|---|---|---|
+| `source/play-pill.webp` (2000×667, clear ground, SHA-256 `4cb82a928d89800f2daa6cc6216e6a688a6d7c050dba99ace1ce43c56eec4556`) | Supplied by the operator, pasted into the working session on 2026-11-11: a cream pill with a gold rim, a flute and leaves at the left, a trumpet and leaves at the right, and three gold drops below its middle | Stored as sent. Not required by the app, so not bundled |
+| `play-pill.webp` (1000×334) | Made from the source by `grow-with-freya/scripts/prepare-play-pill.py` | Halved in size and saved as WebP at quality 92. Nothing else changed |
+| The purple play triangle and the word on the button | Drawn by the app (`components/stories/play-pill.tsx`) after a 75×82 picture of the triangle the operator pasted the same day, which is not stored; the word is `reader.play` in each language | Made for the app |
+
+| Question | Answer |
+|---|---|
+| Who made it, and with what | ⚠️ UNVERIFIED — the picture arrived with no record of its origin; the operator to say which service and account, or which artist |
+| Terms for commercial use, and who owns it | ⚠️ UNVERIFIED — depends on the answer above |
+| Checked by eye against well-known games and films | **Not yet done by a person** |
+| Quality | The pill's body is 206 pixels tall in the stored file and is drawn 50 points tall on a phone (150 pixels at 3×), about 58 on a tablet (173), so it is never enlarged |
+
+## 5i. The reader's menu
+
+| File (under `grow-with-freya/assets/images/reader-menu/`) | Where from | What was changed |
+|---|---|---|
+| `source/leaves.webp`, `source/mushrooms.webp` (each 1448×1086, clear ground; SHA-256 `f6bd0580efd48158a8fdf1a9dd043d79ee3263a88afb2ce991e5783deebd7811`, `c56790333a3979c0f4d6e6eec8aec96d0c520bcb3e020669f37e2fd36e327977`) | Supplied by the operator, pasted into the working session on 2026-11-11: a corner of gold band with a leafy sprig across it, and a corner of gold band with two red mushrooms and grass | Stored as sent. Not required by the app, so not bundled |
+| `source/menu-mock.webp` (1116×1410, SHA-256 `1d7f8f073a04e61164cf93a87d660be8e1144d493dcbed1520bfbba0776bcc90`) | Supplied by the operator the same day: a mock-up of the reader with the menu open | Stored as sent; only a small patch of its plain panel face is used, as paper grain. Not bundled |
+| `panel-top.webp` (920×174), `panel-middle.webp` (920×30), `panel-bottom.webp` (920×186) | Composed by `grow-with-freya/scripts/prepare-reader-menu.py` | The leaf corner (at 70%) is the panel's top-left and the mushroom corner (at 62%, so the two bands match) its bottom-left, both used as sent, cut where their bands run straight. The rest of the rim (the top, the right side, the rounded right corners, the bottom and the pointer, a short horn out of the top-right corner) is the band's own cross-section, read from the two pieces where they are cut and swept along the panel's outline, the left side easing into the mushroom corner's lean; the face is a plain cream with paper grain from the mock-up. Made smaller to 920 wide and cut into a top (pointer and leaves), a straight middle the app stretches to the rows' height, and a bottom (mushrooms). Nothing from outside the operator's pictures is added |
+| `source/page-preview.webp`, `font-size.webp`, `language.webp`, `compare.webp`, `tips.webp`, `arrow.webp` (each 1254×1254, clear ground; SHA-256 `ac7dcce45eedd2de3017732c1fed67468b86a1a8b3dbf49c908bfd9b8597ec93`, `79de48276fbfef065ba8b35902e6afd16f46e3a5823844728de4db9ef82d7d4f`, `542590b960f9503e8bcf0fd7064fc6fa7dd82101fb98b85c9dfd29e7d54f298f`, `de76df520e27ff4847057a92aeabf151afb3b3cbb2d7a5b6bf46b41fa425574e`, `163301d72a56f8530ec5feadaf8ae3717be1d93f1226a192e1572738d733258b`, `af30f70db3393fc0ca00ee795a7a5d7dfda20667d36303b5cfb9dcfa12a14c0f`) | Supplied by the operator the same day: five icon tiles (an open book, "Aa", a globe, "A" and "文", a lightbulb) and a gold row arrow | Stored as sent. Not required by the app, so not bundled |
+| `icon-*.webp` (192×192), `arrow.webp` (120×120) | Made from those by the same script | Squared on each picture's own tile and made smaller. Nothing else changed |
+| The tiles for Auto-Play and Change Instrument | Drawn by the app (`components/stories/reader-menu.tsx`): a cream rounded square with a play triangle or musical notes in the icons' orange | Made for the app, until the operator sends pictures for them |
+
+| Question | Answer |
+|---|---|
+| Who made it, and with what | ⚠️ UNVERIFIED — the pictures arrived with no record of their origin. They have the look of generated images; the operator to say which service and account, or which artist |
+| Terms for commercial use, and who owns it | ⚠️ UNVERIFIED — depends on the answer above |
+| Checked by eye against well-known games and films | **Not yet done by a person** |
+| Quality | The panel is composed at 3700 pixels wide from the full-size corner pieces and stored at 920; it is drawn 276 points wide on a phone (828 pixels at 3×) and about 317 on a tablet with larger buttons (951), so it is enlarged slightly there; the icons are drawn 32 points (96 pixels) from 192 |
 
 ## 7. Wombat's Picnic Count (the first game pack)
 

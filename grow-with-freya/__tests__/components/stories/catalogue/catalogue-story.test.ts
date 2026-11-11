@@ -12,6 +12,7 @@ import {
   recommendationTarget,
   filterByTheme,
   storyTheme,
+  bookTheme,
   entryMatchesMode,
   fromCatalogEntry,
   fromStory,
@@ -477,3 +478,23 @@ describe('buildSavedRows', () => {
     expect(buildSavedRows(saved).some((s) => s.kind === 'pick')).toBe(false);
   });
 });
+
+describe('bookTheme', () => {
+  it.each([
+    [['music'], 'music'],
+    [['bedtime', 'music'], 'music'],
+    [['bedtime', 'animals'], 'stories'],
+    [[], 'stories'],
+    [undefined, 'stories'],
+  ])('a book tagged %p is under %p', (tags, theme) => {
+    expect(bookTheme(tags)).toBe(theme);
+  });
+
+  it('agrees with the shelf: a book tagged music sits under the Music tile', () => {
+    const tagged = fromStory(story({ tags: ['music'] }));
+
+    expect(storyTheme(tagged)).toBe(bookTheme(['music']));
+    expect(storyTheme(fromStory(story({ tags: ['bedtime'] })))).toBe(bookTheme(['bedtime']));
+  });
+});
+

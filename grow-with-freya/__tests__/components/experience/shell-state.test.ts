@@ -1,7 +1,7 @@
 import { SHELL_EVENTS, SHELL_PHASES, shellReducer, type ShellEvent, type ShellPhase, type ShellState } from '@/components/experience/shell-state';
 
 function at(phase: ShellPhase, extra: Partial<ShellState> = {}): ShellState {
-  return { phase, startedAt: 1000, left: false, completedAt: null, ...extra };
+  return { phase, startedAt: 1000, left: false, skipped: false, completedAt: null, ...extra };
 }
 
 const STEP: [ShellPhase, ShellEvent, ShellPhase][] = [
@@ -12,6 +12,8 @@ const STEP: [ShellPhase, ShellEvent, ShellPhase][] = [
   ['playing', 'complete', 'celebrating'],
   ['celebrating', 'celebrated', 'bridge'],
   ['bridge', 'finish', 'done'],
+  ['playing', 'skip', 'skipped'],
+  ['skipped', 'celebrated', 'done'],
 ];
 
 describe('shellReducer: the way through', () => {
@@ -36,12 +38,44 @@ describe('shellReducer: the way through', () => {
   });
 });
 
+describe('shellReducer: skipping', () => {
+  it.each(['intro', 'playing', 'paused'] as const)('skip while %s shows the skipped resolution and records no completion', (phase) => {
+    const state = shellReducer(at(phase), { type: 'skip', at: 2000 });
+
+    expect(state.phase).toBe('skipped');
+    expect(state.skipped).toBe(true);
+    expect(state.completedAt).toBeNull();
+  });
+
+  it('the skipped resolution ends the challenge without a bridge', () => {
+    const state = shellReducer(at('skipped', { skipped: true }), { type: 'celebrated', at: 2000 });
+
+    expect(state.phase).toBe('done');
+    expect(state.left).toBe(false);
+    expect(state.skipped).toBe(true);
+  });
+
+  it('completing cannot overturn a skip', () => {
+    const skipped = at('skipped', { skipped: true });
+
+    expect(shellReducer(skipped, { type: 'complete', at: 2000 })).toBe(skipped);
+  });
+});
+
 describe('shellReducer: leaving', () => {
   it.each(['loading', 'intro', 'playing', 'paused'] as const)('back while %s is done, having left', (phase) => {
     const state = shellReducer(at(phase), { type: 'back', at: 2000 });
 
     expect(state.phase).toBe('done');
     expect(state.left).toBe(true);
+  });
+
+  it('back while skipped is done, and still counts as skipped', () => {
+    const state = shellReducer(at('skipped', { skipped: true }), { type: 'back', at: 2000 });
+
+    expect(state.phase).toBe('done');
+    expect(state.left).toBe(false);
+    expect(state.skipped).toBe(true);
   });
 
   it.each(['celebrating', 'bridge'] as const)('back while %s is done, and still counts as completed', (phase) => {
@@ -59,7 +93,7 @@ describe('shellReducer: leaving', () => {
     expect(state.left).toBe(true);
   });
 
-  it.each(['celebrating', 'bridge'] as const)('the day`s screen time running out while %s lets the celebration and bridge finish', (phase) => {
+  it.each(['celebrating', 'bridge', 'skipped'] as const)('the day`s screen time running out while %s lets the celebration and bridge finish', (phase) => {
     const state = shellReducer(at(phase, { completedAt: 1500 }), { type: 'limitReached', at: 2000 });
 
     expect(state.phase).toBe(phase);
@@ -76,12 +110,14 @@ describe('shellReducer: leaving', () => {
 describe('shellReducer: every other pairing changes nothing', () => {
   const allowed = new Set([
     ...STEP.map(([from, event]) => `${from}:${event}`),
-    ...['loading', 'intro', 'playing', 'paused', 'celebrating', 'bridge'].map((phase) => `${phase}:back`),
+    ...['loading', 'intro', 'playing', 'paused', 'celebrating', 'bridge', 'skipped'].map((phase) => `${phase}:back`),
     ...['loading', 'intro', 'playing', 'paused'].map((phase) => `${phase}:limitReached`),
     'loading:failed',
     'intro:pause',
     'intro:complete',
     'paused:complete',
+    'intro:skip',
+    'paused:skip',
   ]);
   const others = SHELL_PHASES.flatMap((phase) => SHELL_EVENTS.map((event) => [phase, event] as const)).filter(([phase, event]) => !allowed.has(`${phase}:${event}`));
 

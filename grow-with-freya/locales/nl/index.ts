@@ -178,6 +178,7 @@ export default {
     recordingComplete: 'Opname Voltooid',
     recordingCompleteMessage: 'Stemopname voor "{{name}}" is opgeslagen.',
     page: 'Pagina {{current}}/{{total}}',
+    play: 'Spelen',
     readMode: 'Leesmodus',
     recordMode: 'Opnamemodus',
     listenMode: 'Luistermodus',
@@ -728,6 +729,8 @@ export default {
     grownUp: 'Voor de volwassene',
     bridgeTitle: 'Neem het mee in de dag',
     loading: 'Even geduld…',
+    skip: 'Overslaan',
+    tips: 'Tips',
   },
   bridges: {
     counting: {
@@ -1158,7 +1161,7 @@ export default {
     tapAndHoldNotes: 'Tik en houd noten vast om ze te horen',
     playingPreview: 'Voorbeeld afspelen… tik op Pauze om te stoppen',
     successSong: ' Succeslied',
-    readyToPlay: ' Klaar om te spelen',
+    readyToPlay: 'Klaar om te spelen',
     chooseInstrument: 'Kies je instrument',
     swipeToExplore: 'Veeg om te verkennen, tik om te selecteren',
     useThisInstrument: 'Dit instrument gebruiken',

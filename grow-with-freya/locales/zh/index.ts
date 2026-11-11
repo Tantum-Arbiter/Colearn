@@ -178,6 +178,7 @@ export default {
     recordingComplete: '录制完成',
     recordingCompleteMessage: '"{{name}}"的语音录制已保存。',
     page: '第{{current}}/{{total}}页',
+    play: '演奏',
     readMode: '阅读模式',
     recordMode: '录制模式',
     listenMode: '聆听模式',
@@ -728,6 +729,8 @@ export default {
     grownUp: '给大人的话',
     bridgeTitle: '带进一天的生活',
     loading: '准备中…',
+    skip: '跳过',
+    tips: '提示',
   },
   bridges: {
     counting: {
@@ -1158,7 +1161,7 @@ export default {
     tapAndHoldNotes: '点击并按住音符来聆听',
     playingPreview: '正在播放预览… 点击暂停以停止',
     successSong: ' 成功之歌',
-    readyToPlay: ' 准备演奏',
+    readyToPlay: '准备演奏',
     chooseInstrument: '选择你的乐器',
     swipeToExplore: '滑动浏览，点击选择',
     useThisInstrument: '使用此乐器',

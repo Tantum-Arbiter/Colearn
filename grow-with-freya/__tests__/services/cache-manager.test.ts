@@ -556,6 +556,20 @@ describe('CacheManager', () => {
         expect(result[0].coverImage).toContain('content_cache/assets/stories/story-1/cover.webp');
       });
 
+      it('resolves a challenge`s choice pictures to local files, as it does the page art', async () => {
+        const fox = JSON.parse(JSON.stringify(require('../../../contract-fixtures/stories/little-fox-meets-a-friend.json')));
+        mockAsyncStorage.getItem.mockResolvedValue(JSON.stringify([fox]));
+        mockFileSystem.getInfoAsync.mockResolvedValue(createFileInfo());
+
+        const result = await CacheManager.getStoriesWithResolvedUrls();
+
+        const challenge = result[0].pages![3].learningChallenge!;
+        expect(challenge.items[0].image).toContain('content_cache/assets/stories/little-fox-meets-a-friend/page-4/challenge/finn-says-sorry.webp');
+        expect(result[0].pages![10].learningChallenge!.items[0].image).toContain('content_cache/assets/stories/little-fox-meets-a-friend/page-11/challenge/say-hello.webp');
+        expect(challenge.copy).toEqual(fox.pages[3].learningChallenge.copy);
+        expect(result[0].pages![0].learningChallenge).toBeUndefined();
+      });
+
       it('should keep original URL when file does not exist locally', async () => {
         const story = {
           ...createMockStory('1', 'Story 1'),

@@ -5,6 +5,7 @@ import { useGlobalSound } from '@/contexts/global-sound-context';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { AudioControlModal } from './audio-control-modal';
 import * as Haptics from 'expo-haptics';
+import { ReaderCoin } from '@/components/child-ui/reader-coin';
 
 export const MENU_CORNER_BUTTON = {
   diameter: 48,
@@ -33,7 +34,7 @@ interface MusicControlProps {
   style?: any;
   showBackground?: boolean;
   /** Use story page styling (white bg, dark icon) vs menu styling (grey bg, white icon) */
-  variant?: 'story' | 'menu';
+  variant?: 'story' | 'menu' | 'coin';
   /**
    * If provided, the AudioControlModal will NOT be rendered inside MusicControl.
    * Instead, the parent is responsible for rendering it (useful inside complex
@@ -111,6 +112,11 @@ export const MusicControl: React.FC<MusicControlProps> = ({
           accessibilityHint="Long press to open audio volume controls"
           testID="music-control-button"
         >
+          {variant === 'coin' ? (
+            <View testID={`music-icon-${isMuted ? 'muted' : 'playing'}`}>
+              <ReaderCoin coin="sound" size={scaledButtonSize(size)} dimmed={isMuted} slashed={isMuted} />
+            </View>
+          ) : (
           <View style={[
             cornerButtonStyles.disc,
             {
@@ -133,6 +139,7 @@ export const MusicControl: React.FC<MusicControlProps> = ({
               testID={`music-icon-${isMuted ? 'muted' : 'playing'}`}
             />
           </View>
+          )}
         </Pressable>
       </View>
 

@@ -38,7 +38,7 @@ const BRIDGE_ROWS = [
   { key: 'creative', icon: 'color-palette-outline' },
 ] as const;
 
-const SHOWS_ENGINE: readonly ShellPhase[] = ['intro', 'playing', 'paused', 'celebrating', 'bridge'];
+const SHOWS_ENGINE: readonly ShellPhase[] = ['intro', 'playing', 'paused', 'celebrating', 'skipped', 'bridge'];
 
 export const ExperienceShell = memo(function ExperienceShell({ packId, missionId, band, isActive, onDone, testID = 'experience-shell' }: ExperienceShellProps) {
   const { t } = useTranslation();
@@ -107,10 +107,12 @@ export const ExperienceShell = memo(function ExperienceShell({ packId, missionId
   }, [done]);
 
   useEffect(() => {
-    if (phase !== 'celebrating') return undefined;
-    if (missionId !== null) recordMissionFinished(packId, missionId);
-    clearGameSave(packId);
-    latestSave.current = null;
+    if (phase !== 'celebrating' && phase !== 'skipped') return undefined;
+    if (phase === 'celebrating') {
+      if (missionId !== null) recordMissionFinished(packId, missionId);
+      clearGameSave(packId);
+      latestSave.current = null;
+    }
     const timer = setTimeout(() => dispatch({ type: 'celebrated', at: Date.now() }), motionDuration(CELEBRATION, reduceMotion));
     return () => clearTimeout(timer);
   }, [phase, packId, missionId, recordMissionFinished, clearGameSave, reduceMotion]);
@@ -120,12 +122,10 @@ export const ExperienceShell = memo(function ExperienceShell({ packId, missionId
     reported.current = true;
     if (shell.left && latestSave.current) saveGame(packId, latestSave.current);
     const durationMs = Math.max(0, Date.now() - shell.startedAt);
-    onDone(
-      shell.left || missionId === null
-        ? { outcome: 'left', packId, missionId, durationMs }
-        : { outcome: 'completed', packId, missionId, durationMs }
-    );
-  }, [done, shell.left, shell.startedAt, missionId, packId, onDone, saveGame]);
+    if (shell.left || missionId === null) onDone({ outcome: 'left', packId, missionId, durationMs });
+    else if (shell.skipped) onDone({ outcome: 'skipped', packId, missionId, durationMs });
+    else onDone({ outcome: 'completed', packId, missionId, durationMs });
+  }, [done, shell.left, shell.skipped, shell.startedAt, missionId, packId, onDone, saveGame]);
 
   const handleEngineEvent = useCallback((event: EngineEvent) => {
     if (event.type === 'first-action-shown') dispatch({ type: 'introDone', at: Date.now() });

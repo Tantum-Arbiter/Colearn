@@ -264,7 +264,7 @@ describe('StoryBookReader', () => {
 
     const settingsButton = UNSAFE_root.findAll((node: any) => (
       typeof node.props?.onPress === 'function'
-      && extractNodeText(node).includes('menu')
+      && node.props?.testID === 'story-menu-button'
     ))[0];
 
     fireEvent.press(settingsButton);
@@ -557,6 +557,59 @@ describe('StoryBookReader music challenge backdrop', () => {
   const count = (view: any, testID: string) =>
     view.UNSAFE_queryAllByProps({ testID }).length;
 
+
+  it('a music page offers the Play pill in place of Begin Playing, and it still starts the song', async () => {
+    const view = render(
+      <StoryBookReader story={mockStoryWithMusicChallenge} onExit={jest.fn()} skipCoverPage />
+    );
+    const press = (testID: string) => {
+      const nodes = view.UNSAFE_queryAllByProps({ testID });
+      if (nodes.length === 0) throw new Error(`nothing to press for ${testID}`);
+      act(() => { fireEvent.press(nodes[0]); });
+    };
+    press('confirm-instrument-selection-button');
+    press('right-touch-area');
+    await waitFor(() => expect(count(view, 'begin-music-challenge-button')).toBeGreaterThan(0));
+
+    const button = view.UNSAFE_root.findAll((node: any) => node.props.testID === 'begin-music-challenge-button' && typeof node.props.onPress === 'function')[0];
+    expect(extractNodeText(button)).toContain('reader.play');
+    expect(extractNodeText(view.UNSAFE_root)).not.toContain('Begin Playing');
+    expect(button.findAll((node: any) => node.props.testID === 'play-pill-icon').length).toBeGreaterThan(0);
+    const pill = view.UNSAFE_root.findAll((node: any) => node.props.testID === 'begin-music-challenge-button' && typeof node.props.slideFrom === 'number')[0];
+    expect(pill.props.slideFrom).toBeGreaterThanOrEqual(pill.props.height);
+
+    press('begin-music-challenge-button');
+    await waitFor(() => expect(count(view, 'ready-to-play-button')).toBeGreaterThan(0));
+    view.unmount();
+  });
+
+  it('closing the book slides the Play pill away with the other top controls', async () => {
+    const view = render(
+      <StoryBookReader story={mockStoryWithMusicChallenge} onExit={jest.fn()} skipCoverPage />
+    );
+    const press = (testID: string) => {
+      const nodes = view.UNSAFE_queryAllByProps({ testID });
+      if (nodes.length === 0) throw new Error(`nothing to press for ${testID}`);
+      act(() => { fireEvent.press(nodes[0]); });
+    };
+    press('confirm-instrument-selection-button');
+    press('right-touch-area');
+    await waitFor(() => expect(count(view, 'begin-music-challenge-button')).toBeGreaterThan(0));
+    const styleChain = (node: any): unknown[] => {
+      const found: unknown[] = [];
+      for (let at = node; at; at = at.parent) if (Array.isArray(at.props?.style)) found.push(...at.props.style);
+      return found;
+    };
+    const exitCorner = (() => {
+      let at: any = view.UNSAFE_root.findAll((node: any) => node.props.testID === 'story-exit-button')[0];
+      while (at && !(Array.isArray(at.props?.style) && at.props.style.length >= 3)) at = at.parent;
+      return at.props.style[at.props.style.length - 1];
+    })();
+    const pill = view.UNSAFE_root.findAll((node: any) => node.props.testID === 'begin-music-challenge-button' && typeof node.props.slideFrom === 'number')[0];
+
+    expect(styleChain(pill)).toContain(exitCorner);
+    view.unmount();
+  });
 
   it('stands the sheet and the instrument on one night meadow, put there once', async () => {
     const view = render(

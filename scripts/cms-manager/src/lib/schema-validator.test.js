@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'fs/promises';
+import fsSync from 'fs';
 import os from 'os';
 import path from 'path';
 import { fullValidation, SUPPORTED_LANGUAGES, AGE_GROUPS } from './schema-validator.js';
@@ -162,4 +163,48 @@ test('rejects an award with a trigger the app does not know', async () => {
   const result = await fullValidation(story({ awards: [{ achievementId: 'snowman-friend', trigger: 'open' }] }), options);
 
   assert.equal(result.valid, false);
+});
+
+const fox = () => JSON.parse(fsSync.readFileSync(path.join(import.meta.dirname, '..', '..', '..', '..', 'contract-fixtures', 'stories', 'little-fox-meets-a-friend.json'), 'utf8'));
+
+test('learning challenges ride along: Little Fox passes the schema and catalogue checks', async () => {
+  const result = await fullValidation(fox(), { storiesDir: null });
+
+  assert.equal(result.valid, true, result.customErrors.join('\n'));
+  assert.deepEqual(result.customErrors, []);
+});
+
+test('learning challenges ride along: a mechanic that disagrees with the catalogue is refused', async () => {
+  const story = fox();
+  story.pages[3].learningChallenge.family = 'tap_scene';
+
+  const result = await fullValidation(story, { storiesDir: null });
+
+  assert.equal(result.valid, false);
+  assert.ok(result.customErrors.some((error) => /is a choose mechanic, not tap_scene/.test(error)));
+});
+
+const counting = () => {
+  const story = fox();
+  const challenge = story.pages[3].learningChallenge;
+  Object.assign(challenge, { mechanicId: 'M01', family: 'tap_scene', adapter: 'multi_tap_count', assessmentMode: 'guided_observable', domain: 'maths', target: '' });
+  challenge.items = challenge.items.map(({ image: _image, outcome: _outcome, ...item }, index) => ({ ...item, hotspot: { position: { x: 0.3 + index * 0.15, y: 0.3 }, size: { width: 0.1, height: 0.12 } } }));
+  return story;
+};
+
+test('learning challenges ride along: a scene whose items are hotspots on the page passes', async () => {
+  const result = await fullValidation(counting(), { storiesDir: null });
+
+  assert.deepEqual(result.schemaErrors, []);
+  assert.equal(result.valid, true, result.customErrors.join('\n'));
+});
+
+test('learning challenges ride along: a hotspot carries only a position and a size', async () => {
+  const story = counting();
+  story.pages[3].learningChallenge.items[0].hotspot.colour = 'gold';
+
+  const result = await fullValidation(story, { storiesDir: null });
+
+  assert.equal(result.valid, false);
+  assert.ok(result.schemaErrors.length > 0);
 });

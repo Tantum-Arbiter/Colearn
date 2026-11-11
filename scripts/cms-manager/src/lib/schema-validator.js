@@ -4,6 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { CMS_STORIES_DIR } from './story-loader.js';
+import learning from '../../../lib/learning-challenges.js';
 
 const SCHEMA_PATH = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..', 'story-schema.json');
 
@@ -13,6 +14,7 @@ export const AGE_GROUPS = ['1-2', '2-4', '4-6'];
 const ajv = new Ajv({ allErrors: true, strict: false });
 addFormats(ajv);
 const validateSchema = ajv.compile(JSON.parse(fs.readFileSync(SCHEMA_PATH, 'utf8')));
+const catalogue = learning.loadCatalogue();
 
 function schemaErrors(data) {
   if (validateSchema(data)) return [];
@@ -83,6 +85,9 @@ export async function fullValidation(data, { storiesDir = CMS_STORIES_DIR } = {}
     checkLanguages('localizedDescription', data.localizedDescription, errors, warnings, false);
     checkPages(data, errors, warnings);
     checkAssets(data, storiesDir, warnings);
+    const challenges = learning.validateLearningChallenges(data, catalogue, { storiesDir });
+    errors.push(...challenges.errors);
+    warnings.push(...challenges.warnings);
   }
 
   return {

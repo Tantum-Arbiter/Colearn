@@ -178,6 +178,7 @@ export default {
     recordingComplete: 'اكتمل التسجيل',
     recordingCompleteMessage: 'تم حفظ التسجيل الصوتي لـ "{{name}}".',
     page: 'الصفحة {{current}}/{{total}}',
+    play: 'اعزف',
     readMode: 'وضع القراءة',
     recordMode: 'وضع التسجيل',
     listenMode: 'وضع الاستماع',
@@ -728,6 +729,8 @@ export default {
     grownUp: 'للكبار',
     bridgeTitle: 'خذها معك في يومك',
     loading: 'جارٍ التحضير…',
+    skip: 'تخطّي',
+    tips: 'نصائح',
   },
   bridges: {
     counting: {
@@ -1158,7 +1161,7 @@ export default {
     tapAndHoldNotes: 'انقر مع الاستمرار على النوتات لسماعها',
     playingPreview: 'جاري تشغيل المعاينة… انقر على إيقاف للتوقف',
     successSong: ' أغنية النجاح',
-    readyToPlay: ' جاهز للعزف',
+    readyToPlay: 'جاهز للعزف',
     chooseInstrument: 'اختر آلتك الموسيقية',
     swipeToExplore: 'اسحب للاستكشاف، انقر للاختيار',
     useThisInstrument: 'استخدم هذه الآلة',

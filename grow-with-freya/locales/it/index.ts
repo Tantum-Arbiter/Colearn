@@ -178,6 +178,7 @@ export default {
     recordingComplete: 'Registrazione completata',
     recordingCompleteMessage: 'La tua registrazione vocale per "{{name}}" è stata salvata.',
     page: 'Pagina {{current}} di {{total}}',
+    play: 'Suona',
     readMode: 'Modalità lettura',
     recordMode: 'Modalità registrazione',
     listenMode: 'Modalità ascolto',
@@ -728,6 +729,8 @@ export default {
     grownUp: 'Per l’adulto',
     bridgeTitle: 'Portalo nella giornata',
     loading: 'Preparazione…',
+    skip: 'Salta',
+    tips: 'Consigli',
   },
   bridges: {
     counting: {
@@ -1158,7 +1161,7 @@ export default {
     tapAndHoldNotes: 'Tocca e tieni premute le note per ascoltarle',
     playingPreview: 'Anteprima in corso… tocca Pausa per fermare',
     successSong: ' Canzone di successo',
-    readyToPlay: ' Pronto a suonare',
+    readyToPlay: 'Pronto a suonare',
     chooseInstrument: 'Scegli il tuo strumento',
     swipeToExplore: 'Scorri per esplorare, tocca per selezionare',
     useThisInstrument: 'Usa questo strumento',

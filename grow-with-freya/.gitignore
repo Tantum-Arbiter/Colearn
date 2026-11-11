@@ -326,3 +326,4 @@ app-example
 
 # Maestro
 .maestro/debug/
+.device-checks/

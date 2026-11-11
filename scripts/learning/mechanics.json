@@ -1,0 +1,2303 @@
+{
+  "version": 2,
+  "source": "story-briefs/gwf-75/mechanics_60.json (expert review, 2026-11-03), enriched with this module's game descriptions",
+  "story_page_count": 15,
+  "window_size": 3,
+  "interactions_by_band": {
+    "2-4": 3,
+    "4-6": 4,
+    "6-8": 5
+  },
+  "primary_domain_minimum_by_band": {
+    "2-4": 2,
+    "4-6": 3,
+    "6-8": 3
+  },
+  "domains": {
+    "maths": {
+      "code": "M",
+      "strand": "MATH",
+      "label": "quantities, patterns, shape and measure"
+    },
+    "language": {
+      "code": "L",
+      "strand": "LANG",
+      "label": "story meaning, vocabulary, sound play and early reading"
+    },
+    "music": {
+      "code": "U",
+      "strand": "CREATE",
+      "label": "beat, rhythm, pitch, dynamics and making music"
+    },
+    "science": {
+      "code": "S",
+      "strand": "WORLD",
+      "label": "prediction, evidence, materials and living things"
+    },
+    "social": {
+      "code": "E",
+      "strand": "EMO/SOC",
+      "label": "feelings, help, perspective and turn-taking"
+    },
+    "creative": {
+      "code": "C",
+      "strand": "CREATE/FLEX",
+      "label": "building, routes, planning and invention"
+    }
+  },
+  "families": {
+    "tap_scene": {
+      "primary": "Tap one large, highlighted in-scene object or tap each item once when counting.",
+      "alternative": "Use a labelled bottom choice row or Next object control; preserve one-to-one counting state.",
+      "presentation": "Base art stays fixed; valid hotspots get a gentle outline on request; state overlay only in the configured interaction region.",
+      "feedback": "Immediately show a small local change or a counted mark and narrate what changed.",
+      "repair": "If tapped twice or outside a target, keep progress; briefly indicate the active item without error sounds."
+    },
+    "choose": {
+      "primary": "Tap one of two or three large illustrated choices; older children may see additional options.",
+      "alternative": "VoiceOver focusable choice list; switch-control access; one-choice-at-a-time display.",
+      "presentation": "Place choices in a readable tray anchored away from text and faces; selected option receives a ring and description.",
+      "feedback": "Show the consequence of the choice in the scene and explain the relevant property or perspective.",
+      "repair": "For factually checkable items explain the clue and allow retry; for open questions accept plausible options without marking emotions wrong."
+    },
+    "assign_sort": {
+      "primary": "Tap an item then tap its recipient or category; drag-and-drop is optional, never required.",
+      "alternative": "Two-step selection with large recipient buttons; automatic snap to the correct slot after deliberate choice.",
+      "presentation": "Selected item floats slightly; recipient states reveal used/unused slots and completed groups.",
+      "feedback": "Snap the item into a meaningful destination and describe who/what received it.",
+      "repair": "Undo or reassign items freely; an occupied recipient shows a gentle “already has one” cue."
+    },
+    "sequence": {
+      "primary": "Tap a card then tap a position, or use accessible move-left / move-right controls.",
+      "alternative": "Numbered slots and move earlier/later buttons with VoiceOver ordering labels.",
+      "presentation": "Show no more than a developmentally appropriate number of cards, each clearly distinguishable.",
+      "feedback": "Re-enact the ordered story, pattern or word after placement.",
+      "repair": "Allow rearrangement at any time; offer first-step model after repeated uncertainty."
+    },
+    "snap_build": {
+      "primary": "Tap a piece and tap a broad snap zone; optional drag or rotate for older children.",
+      "alternative": "Cycle piece orientation with a large rotate button and place automatically on selected target.",
+      "presentation": "Protect scenery; draw minimal outlines, shadows and clear piece-state overlays.",
+      "feedback": "Snap with a subtle visual cue; play the resulting useful object animation.",
+      "repair": "Keep attempts reversible; do not penalise slightly imprecise placement."
+    },
+    "quantities": {
+      "primary": "Use plus/minus buttons, tap-to-combine containers, unit tiles or stepwise pouring control.",
+      "alternative": "Explicit increment/decrement and transfer buttons instead of freehand dragging.",
+      "presentation": "Keep quantities and units visible; animate concrete changes rather than abstract score numbers.",
+      "feedback": "Update both actual objects and any numerical or measurement representation together.",
+      "repair": "Allow undo and reset-to-initial without losing story position; provide side-by-side comparisons."
+    },
+    "music_audio": {
+      "primary": "Tap large pads, note choices, start/stop controls or sound layers to explore music.",
+      "alternative": "Show visual beat/pitch/volume cues and allow non-audio participation; do not claim this measures hearing.",
+      "presentation": "Use restrained animation synchronised to local audio; show a clear mute state and replay action.",
+      "feedback": "Echo, play back or layer the child’s contribution without success sounds or timing penalties.",
+      "repair": "Repeat sample on demand, allow slower playback and generous tempo tolerance."
+    },
+    "navigate": {
+      "primary": "Tap connected map nodes or step arrows to move a character safely.",
+      "alternative": "Previous/next destination list with descriptive landmarks; no precision drag.",
+      "presentation": "Show one small readable route at a time, blocked paths distinguishable in more than colour.",
+      "feedback": "Animate one short character move along the selected path and describe the landmark.",
+      "repair": "Allow route reversal and safe exploration; never require timed navigation."
+    },
+    "trace_draw": {
+      "primary": "Draw a short broad stroke or choose pre-authored marks; drawing is expressive, not handwriting assessment.",
+      "alternative": "Select a ready-made mark or trace with an enlarged guided path.",
+      "presentation": "Place a separate drawing layer above protected illustration with clear erase/undo controls.",
+      "feedback": "A character uses or responds to the mark in the story.",
+      "repair": "Support erase and redo; no exact-stroke grading for early years."
+    },
+    "authored_sim": {
+      "primary": "Tap or choose one test setting and play the resulting pre-authored scientific animation.",
+      "alternative": "Accessible step-forward controls and narrated still frames for each state.",
+      "presentation": "Only show scientifically checked, content-authored states; label fantasy when appropriate.",
+      "feedback": "Contrast the initial prediction with the observed test result, without judging curiosity.",
+      "repair": "Offer reset and replay; test one change at a time wherever the learning objective requires it."
+    }
+  },
+  "skills": {
+    "math.count-to-3": {
+      "domain": "maths",
+      "label": "count a small set to three, one touch per thing",
+      "bands": [
+        "2-4"
+      ],
+      "progression": "point and say -> touch each one once -> say how many"
+    },
+    "math.count-to-5": {
+      "domain": "maths",
+      "label": "count to five, one-to-one, in story order",
+      "bands": [
+        "2-4",
+        "4-6"
+      ],
+      "progression": "touch each once -> stop at the last one -> say the total"
+    },
+    "math.count-to-10": {
+      "domain": "maths",
+      "label": "count to ten and notice one more",
+      "bands": [
+        "4-6",
+        "6-8"
+      ],
+      "progression": "count on -> one more makes -> compare totals"
+    },
+    "math.one-to-one": {
+      "domain": "maths",
+      "label": "one for each: match one thing to each character",
+      "bands": [
+        "2-4",
+        "4-6"
+      ],
+      "progression": "give one each -> notice who has none -> say if there are enough"
+    },
+    "math.compare-more-fewer": {
+      "domain": "maths",
+      "label": "which set has more, fewer or the same",
+      "bands": [
+        "2-4",
+        "4-6"
+      ],
+      "progression": "see the bigger pile -> say more/fewer -> explain how you know"
+    },
+    "math.pattern-ab": {
+      "domain": "maths",
+      "label": "continue a two-colour or two-shape repeat",
+      "bands": [
+        "2-4",
+        "4-6"
+      ],
+      "progression": "say the pattern aloud -> choose what comes next -> make your own"
+    },
+    "math.pattern-abc": {
+      "domain": "maths",
+      "label": "continue a three-part repeat",
+      "bands": [
+        "4-6",
+        "6-8"
+      ],
+      "progression": "find the unit that repeats -> choose next -> spot a mistake"
+    },
+    "math.shape-match": {
+      "domain": "maths",
+      "label": "match a shape to the space it fits",
+      "bands": [
+        "2-4",
+        "4-6"
+      ],
+      "progression": "name the shape -> fit it -> turn it to fit"
+    },
+    "math.size-order": {
+      "domain": "maths",
+      "label": "order three things by size or height",
+      "bands": [
+        "2-4",
+        "4-6"
+      ],
+      "progression": "big and small -> biggest/smallest -> order three"
+    },
+    "math.number-recognise": {
+      "domain": "maths",
+      "label": "recognise a numeral in the scene",
+      "bands": [
+        "4-6",
+        "6-8"
+      ],
+      "progression": "find the numeral -> match it to a set -> say one more"
+    },
+    "math.position-words": {
+      "domain": "maths",
+      "label": "in, on, under, next to, behind",
+      "bands": [
+        "2-4",
+        "4-6"
+      ],
+      "progression": "point where -> say the word -> put it there"
+    },
+    "lang.refrain-join": {
+      "domain": "language",
+      "label": "complete the book's refrain with the missing word",
+      "bands": [
+        "2-4",
+        "4-6"
+      ],
+      "progression": "listen -> join the last word -> say the whole line"
+    },
+    "lang.rhyme-match": {
+      "domain": "language",
+      "label": "choose the picture whose name rhymes",
+      "bands": [
+        "2-4",
+        "4-6"
+      ],
+      "progression": "hear the rhyme -> pick the rhyming picture -> offer another rhyme"
+    },
+    "lang.vocabulary-picture": {
+      "domain": "language",
+      "label": "connect a story word to the picture it names",
+      "bands": [
+        "2-4",
+        "4-6"
+      ],
+      "progression": "point to it -> name it -> use it in the refrain"
+    },
+    "lang.opposites": {
+      "domain": "language",
+      "label": "opposite pairs met in the story",
+      "bands": [
+        "2-4",
+        "4-6"
+      ],
+      "progression": "show big/small -> say the pair -> find another pair"
+    },
+    "lang.sound-words": {
+      "domain": "language",
+      "label": "sound words that belong to the scene",
+      "bands": [
+        "2-4",
+        "4-6"
+      ],
+      "progression": "make the sound -> match it to its source -> invent one"
+    },
+    "lang.initial-sound": {
+      "domain": "language",
+      "label": "hear the first sound of a word and find it in the scene",
+      "bands": [
+        "4-6",
+        "6-8"
+      ],
+      "progression": "hear /s/ -> find the snake -> think of another /s/ word"
+    },
+    "lang.word-complete": {
+      "domain": "language",
+      "label": "build a short story word from its letters",
+      "bands": [
+        "4-6",
+        "6-8"
+      ],
+      "progression": "say the sounds -> tap the letters in order -> read it back"
+    },
+    "lang.retell-order": {
+      "domain": "language",
+      "label": "put three story moments back in order",
+      "bands": [
+        "4-6",
+        "6-8"
+      ],
+      "progression": "what happened first -> order three -> tell it in your words"
+    },
+    "music.steady-beat": {
+      "domain": "music",
+      "label": "keep a steady beat with the story",
+      "bands": [
+        "2-4",
+        "4-6"
+      ],
+      "progression": "tap along -> keep going -> count the beats"
+    },
+    "music.echo-rhythm": {
+      "domain": "music",
+      "label": "copy a short rhythm the character plays",
+      "bands": [
+        "2-4",
+        "4-6",
+        "6-8"
+      ],
+      "progression": "copy two taps -> copy a pattern -> make one for a friend"
+    },
+    "music.loud-quiet": {
+      "domain": "music",
+      "label": "choose loud or quiet to suit the scene",
+      "bands": [
+        "2-4",
+        "4-6"
+      ],
+      "progression": "hear the difference -> choose for the scene -> explain why"
+    },
+    "music.high-low": {
+      "domain": "music",
+      "label": "tell a high sound from a low sound",
+      "bands": [
+        "2-4",
+        "4-6"
+      ],
+      "progression": "hear high/low -> find who made it -> sing one back"
+    },
+    "music.fast-slow": {
+      "domain": "music",
+      "label": "choose a fast or slow tempo to suit the scene",
+      "bands": [
+        "2-4",
+        "4-6"
+      ],
+      "progression": "feel fast/slow -> choose for the scene -> change it mid-song"
+    },
+    "music.long-short": {
+      "domain": "music",
+      "label": "long and short sounds",
+      "bands": [
+        "4-6",
+        "6-8"
+      ],
+      "progression": "hear long/short -> copy the pattern -> name it"
+    },
+    "music.instrument-sound": {
+      "domain": "music",
+      "label": "match a sound to the instrument or object that made it",
+      "bands": [
+        "2-4",
+        "4-6"
+      ],
+      "progression": "hear it -> find it -> play it"
+    },
+    "music.play-refrain": {
+      "domain": "music",
+      "label": "play the book's refrain on an app instrument",
+      "bands": [
+        "2-4",
+        "4-6",
+        "6-8"
+      ],
+      "progression": "tap the guided notes -> play it through -> play it softly or faster"
+    }
+  },
+  "mechanics": {
+    "M01": {
+      "domain": "maths",
+      "name": "Count and tap",
+      "family": "tap_scene",
+      "adapter": "multi_tap_count",
+      "assessment_mode": "guided_observable",
+      "audio_dependent": false,
+      "availability": "staged",
+      "slug": "count-and-tap",
+      "bands": [
+        "2-4",
+        "4-6"
+      ],
+      "skills": [
+        "math.count-to-3",
+        "math.count-to-5",
+        "math.count-to-10"
+      ],
+      "feel": "The character needs to know how many. The child touches each story object once; it lights, nods or hops as the count is said aloud, and the last one lands the total.",
+      "fallback_pattern": "reveal-hidden",
+      "items": {
+        "min": 3,
+        "max": 10,
+        "role": "one countable story object each, all fully visible in the safe zone"
+      },
+      "target": "the total as a word, e.g. 'five'",
+      "variation": [
+        "what is counted (cones, lanterns, raindrops)",
+        "why the character needs the number",
+        "what the last tap unlocks in the scene"
+      ],
+      "never": [
+        "counting things the character does not need",
+        "a timer or a wrong-answer sound",
+        "more than ten"
+      ]
+    },
+    "M02": {
+      "domain": "maths",
+      "name": "One for each",
+      "family": "assign_sort",
+      "adapter": "assign",
+      "assessment_mode": "guided_observable",
+      "audio_dependent": false,
+      "availability": "staged",
+      "slug": "one-for-each",
+      "bands": [
+        "2-4",
+        "4-6"
+      ],
+      "skills": [
+        "math.one-to-one"
+      ],
+      "feel": "Every character or place needs exactly one thing. The child gives one to each; the one left without is the story's small problem until it is matched.",
+      "fallback_pattern": "place-object",
+      "items": {
+        "min": 2,
+        "max": 6,
+        "role": "pairs: the receivers and the things given, both in the scene"
+      },
+      "target": "who or what still needs one",
+      "variation": [
+        "what is given (bowls, hats, cones)",
+        "who receives it",
+        "whether there is one spare or one missing"
+      ],
+      "never": [
+        "inventory or off-scene objects",
+        "scoring who matched fastest"
+      ]
+    },
+    "M03": {
+      "domain": "maths",
+      "name": "More, fewer or same",
+      "family": "choose",
+      "adapter": "compare",
+      "assessment_mode": "guided_observable",
+      "audio_dependent": false,
+      "availability": "staged",
+      "slug": "which-has-more",
+      "bands": [
+        "2-4",
+        "4-6",
+        "6-8"
+      ],
+      "skills": [
+        "math.compare-more-fewer"
+      ],
+      "feel": "Two visible sets; the story needs the bigger (or smaller, or equal) one. The child chooses, and the choice is used on the next beat.",
+      "fallback_pattern": "reveal-hidden",
+      "items": {
+        "min": 2,
+        "max": 2,
+        "role": "two sets side by side, each countable at a glance (up to five each for 2-4)"
+      },
+      "target": "'more', 'fewer' or 'the same', as the story needs",
+      "variation": [
+        "what is compared",
+        "whether the story wants more or fewer",
+        "how close the two sets are"
+      ],
+      "never": [
+        "sets too large to see at a glance",
+        "calling the other choice wrong"
+      ]
+    },
+    "M04": {
+      "domain": "maths",
+      "name": "Pattern next",
+      "family": "sequence",
+      "adapter": "order_slots",
+      "assessment_mode": "guided_observable",
+      "audio_dependent": false,
+      "availability": "staged",
+      "slug": "pattern-next",
+      "bands": [
+        "2-4",
+        "4-6",
+        "6-8"
+      ],
+      "skills": [
+        "math.pattern-ab",
+        "math.pattern-abc"
+      ],
+      "feel": "Something in the world repeats (red, blue, red, blue) and has a gap. The child picks what comes next, and the path, song or row is complete.",
+      "fallback_pattern": "complete-pattern",
+      "items": {
+        "min": 2,
+        "max": 3,
+        "role": "the candidate pieces offered for the gap"
+      },
+      "target": "the piece that continues the repeat",
+      "variation": [
+        "what repeats (colours, shapes, sounds)",
+        "AB for 2-4, ABC for 4-6",
+        "what the completed pattern lets happen"
+      ],
+      "never": [
+        "more than one gap",
+        "a pattern the child cannot say aloud"
+      ]
+    },
+    "M05": {
+      "domain": "maths",
+      "name": "Shape fit",
+      "family": "snap_build",
+      "adapter": "shape_snap",
+      "assessment_mode": "guided_observable",
+      "audio_dependent": false,
+      "availability": "staged",
+      "slug": "shape-fit",
+      "bands": [
+        "2-4",
+        "4-6",
+        "6-8"
+      ],
+      "skills": [
+        "math.shape-match"
+      ],
+      "feel": "A space in the scene wants a shape (a round stone for a round gap, a triangle sail). The child puts the right one in and the thing works.",
+      "fallback_pattern": "combine-objects",
+      "items": {
+        "min": 2,
+        "max": 4,
+        "role": "candidate shapes, one of which fits"
+      },
+      "target": "the shape that fits",
+      "variation": [
+        "the object that needs mending or completing",
+        "which shape family",
+        "whether a rotation is needed (4-6)"
+      ],
+      "never": [
+        "abstract shape sorters with no story reason"
+      ]
+    },
+    "M06": {
+      "domain": "maths",
+      "name": "Size order",
+      "family": "sequence",
+      "adapter": "order_slots",
+      "assessment_mode": "guided_observable",
+      "audio_dependent": false,
+      "availability": "staged",
+      "slug": "size-order",
+      "bands": [
+        "2-4",
+        "4-6",
+        "6-8"
+      ],
+      "skills": [
+        "math.size-order"
+      ],
+      "feel": "Three things must go in order of size or height for the story to work (smallest in front, tallest at the back). The child orders them.",
+      "fallback_pattern": "gentle-sequence",
+      "items": {
+        "min": 3,
+        "max": 3,
+        "role": "three clearly different sizes of one kind of thing"
+      },
+      "target": "the order the story needs, e.g. 'small, medium, big'",
+      "variation": [
+        "what is ordered",
+        "which direction (small to big, tall to short)",
+        "why the order matters here"
+      ],
+      "never": [
+        "sizes too close to tell apart on a phone"
+      ]
+    },
+    "M07": {
+      "domain": "maths",
+      "name": "Number spot",
+      "family": "tap_scene",
+      "adapter": "find_target",
+      "assessment_mode": "guided_observable",
+      "audio_dependent": false,
+      "availability": "staged",
+      "slug": "number-spot",
+      "bands": [
+        "4-6",
+        "6-8"
+      ],
+      "skills": [
+        "math.number-recognise"
+      ],
+      "feel": "A numeral is somewhere in the scene (a gate, a door, a bus) and the story needs it. The child finds it and the number comes to life.",
+      "fallback_pattern": "reveal-hidden",
+      "items": {
+        "min": 1,
+        "max": 1,
+        "role": "the numeral, drawn as part of the world"
+      },
+      "target": "the numeral, e.g. '7'",
+      "variation": [
+        "where the numeral lives",
+        "what it unlocks",
+        "a matching set nearby to count"
+      ],
+      "never": [
+        "a numeral floating over the picture"
+      ]
+    },
+    "M08": {
+      "domain": "maths",
+      "name": "Quick-look quantities",
+      "family": "tap_scene",
+      "adapter": "small_set_choice",
+      "assessment_mode": "guided_observable",
+      "audio_dependent": false,
+      "availability": "staged",
+      "slug": "quick-look-quantities",
+      "bands": [
+        "2-4",
+        "6-8"
+      ],
+      "skills": [],
+      "feel": "Glance at a small set and choose the matching tiny group without counting one by one.",
+      "fallback_pattern": "reveal-hidden",
+      "items": {
+        "min": 2,
+        "max": 3,
+        "role": "two or three small groups of up to four, each visible at a glance"
+      },
+      "target": "the group that matches",
+      "variation": [
+        "what is grouped (lanterns, berries, stars)",
+        "dots, fingers or pictures as the match",
+        "why the character needs a quick answer"
+      ],
+      "never": [
+        "sets larger than four for 2-4",
+        "a timer that forces speed"
+      ]
+    },
+    "M09": {
+      "domain": "maths",
+      "name": "One more, one less",
+      "family": "quantities",
+      "adapter": "manipulate_one",
+      "assessment_mode": "guided_observable",
+      "audio_dependent": false,
+      "availability": "staged",
+      "slug": "one-more-one-less",
+      "bands": [
+        "4-6",
+        "6-8"
+      ],
+      "skills": [],
+      "feel": "The story needs one more or one less. The child adds or takes away a single object and sees the new amount straight away.",
+      "fallback_pattern": "place-object",
+      "items": {
+        "min": 1,
+        "max": 10,
+        "role": "the set being changed, units clearly separate"
+      },
+      "target": "the new amount",
+      "variation": [
+        "one more versus one less",
+        "what is added or taken",
+        "whether the count is said before and after"
+      ],
+      "never": [
+        "several changes at once",
+        "abstract numerals with no objects"
+      ]
+    },
+    "M10": {
+      "domain": "maths",
+      "name": "Make the total",
+      "family": "quantities",
+      "adapter": "combine_quantities",
+      "assessment_mode": "guided_observable",
+      "audio_dependent": false,
+      "availability": "staged",
+      "slug": "make-the-total",
+      "bands": [
+        "4-6",
+        "6-8"
+      ],
+      "skills": [],
+      "feel": "Two small amounts are combined to reach the total the character needs; the result is visible as one group.",
+      "fallback_pattern": "place-object",
+      "items": {
+        "min": 2,
+        "max": 4,
+        "role": "the containers or groups being combined"
+      },
+      "target": "the total named in the story",
+      "variation": [
+        "what is combined",
+        "how far the parts are from the target",
+        "a near-miss total to compare"
+      ],
+      "never": [
+        "totals beyond ten for 4-6",
+        "symbols without the objects"
+      ]
+    },
+    "M11": {
+      "domain": "maths",
+      "name": "Share fairly",
+      "family": "assign_sort",
+      "adapter": "distribute",
+      "assessment_mode": "guided_observable",
+      "audio_dependent": false,
+      "availability": "staged",
+      "slug": "share-fairly",
+      "bands": [
+        "4-6",
+        "6-8"
+      ],
+      "skills": [],
+      "feel": "A set is shared fairly between characters, one at a time, until everyone has the same.",
+      "fallback_pattern": "place-object",
+      "items": {
+        "min": 2,
+        "max": 4,
+        "role": "the receivers; the shared items appear in a pile"
+      },
+      "target": "an equal share each",
+      "variation": [
+        "what is shared",
+        "how many receivers",
+        "a remainder the characters decide about together"
+      ],
+      "never": [
+        "a winner of the share",
+        "shaming an unequal first try"
+      ]
+    },
+    "M12": {
+      "domain": "maths",
+      "name": "Measure and compare",
+      "family": "quantities",
+      "adapter": "measure",
+      "assessment_mode": "guided_observable",
+      "audio_dependent": false,
+      "availability": "staged",
+      "slug": "measure-and-compare",
+      "bands": [
+        "4-6",
+        "6-8"
+      ],
+      "skills": [],
+      "feel": "Two or three things are measured with the same unit (paws, sticks, ribbons) and compared to see which fits the story's need.",
+      "fallback_pattern": "place-object",
+      "items": {
+        "min": 2,
+        "max": 3,
+        "role": "the things measured and the unit used"
+      },
+      "target": "longest, shortest or the one that fits",
+      "variation": [
+        "the unit",
+        "what must fit or reach",
+        "informal for 4-6, standard for 6-8"
+      ],
+      "never": [
+        "mixing units in one comparison"
+      ]
+    },
+    "M13": {
+      "domain": "maths",
+      "name": "Fill and compare",
+      "family": "quantities",
+      "adapter": "pour_sim",
+      "assessment_mode": "guided_observable",
+      "audio_dependent": false,
+      "availability": "staged",
+      "slug": "fill-and-compare",
+      "bands": [
+        "4-6",
+        "6-8"
+      ],
+      "skills": [],
+      "feel": "Containers are filled step by step and compared: which holds more, which is full, which is half.",
+      "fallback_pattern": "place-object",
+      "items": {
+        "min": 2,
+        "max": 3,
+        "role": "the containers, filled in visible steps"
+      },
+      "target": "which holds more or which is full",
+      "variation": [
+        "what is poured",
+        "container shapes that mislead the eye",
+        "the story reason for the right amount"
+      ],
+      "never": [
+        "real liquids to imitate unsupervised"
+      ]
+    },
+    "L01": {
+      "domain": "language",
+      "name": "Join the refrain",
+      "family": "choose",
+      "adapter": "picture_choice",
+      "assessment_mode": "guided_observable",
+      "audio_dependent": false,
+      "availability": "staged",
+      "slug": "join-the-refrain",
+      "bands": [
+        "2-4",
+        "4-6"
+      ],
+      "skills": [
+        "lang.refrain-join",
+        "lang.vocabulary-picture",
+        "lang.opposites"
+      ],
+      "feel": "The book's refrain is said with its last word missing; the child taps the picture that finishes it and the line is said whole.",
+      "fallback_pattern": "reveal-hidden",
+      "items": {
+        "min": 2,
+        "max": 3,
+        "role": "pictures of candidate words, one of which completes the refrain"
+      },
+      "target": "the missing word",
+      "variation": [
+        "which word is missing",
+        "how the refrain's meaning has shifted on this page",
+        "whether the candidates rhyme"
+      ],
+      "never": [
+        "a refrain the child has not yet heard twice",
+        "spelling demands for 2-4"
+      ]
+    },
+    "L02": {
+      "domain": "language",
+      "name": "Rhyme pick",
+      "family": "choose",
+      "adapter": "picture_choice",
+      "assessment_mode": "guided_observable",
+      "audio_dependent": true,
+      "availability": "staged",
+      "slug": "rhyme-pick",
+      "bands": [
+        "2-4",
+        "4-6",
+        "6-8"
+      ],
+      "skills": [
+        "lang.rhyme-match",
+        "lang.sound-words"
+      ],
+      "feel": "A story word is said; the child picks the scene picture whose name rhymes with it, and the characters say the pair together.",
+      "fallback_pattern": "match-in-world",
+      "items": {
+        "min": 2,
+        "max": 3,
+        "role": "pictures in the scene, one of which rhymes with the cue word"
+      },
+      "target": "the rhyming word",
+      "variation": [
+        "the cue word",
+        "how the rhyme helps the character",
+        "a silly near-miss among the candidates"
+      ],
+      "never": [
+        "invented words to force a rhyme",
+        "more than three candidates"
+      ]
+    },
+    "L03": {
+      "domain": "language",
+      "name": "Sound hunt",
+      "family": "choose",
+      "adapter": "picture_choice",
+      "assessment_mode": "guided_observable",
+      "audio_dependent": true,
+      "availability": "staged",
+      "slug": "sound-hunt",
+      "bands": [
+        "4-6",
+        "6-8"
+      ],
+      "skills": [
+        "lang.initial-sound"
+      ],
+      "feel": "The character hears a first sound (/b/) and needs the thing that starts with it. The child finds it in the scene.",
+      "fallback_pattern": "reveal-hidden",
+      "items": {
+        "min": 1,
+        "max": 3,
+        "role": "the target object and up to two visible near-misses"
+      },
+      "target": "the object beginning with the sound",
+      "variation": [
+        "the sound",
+        "the object and why the story needs it",
+        "a near-miss that starts differently"
+      ],
+      "never": [
+        "letters as the only clue",
+        "claims of phonics instruction"
+      ]
+    },
+    "L04": {
+      "domain": "language",
+      "name": "Story order",
+      "family": "sequence",
+      "adapter": "order_slots",
+      "assessment_mode": "guided_observable",
+      "audio_dependent": false,
+      "availability": "staged",
+      "slug": "story-order",
+      "bands": [
+        "4-6",
+        "6-8"
+      ],
+      "skills": [
+        "lang.retell-order"
+      ],
+      "feel": "Three small pictures from earlier pages are mixed up; the child puts them back in order and the character retells what happened.",
+      "fallback_pattern": "gentle-sequence",
+      "items": {
+        "min": 3,
+        "max": 3,
+        "role": "three moments already shown in this book"
+      },
+      "target": "first, next, last",
+      "variation": [
+        "which three beats",
+        "what the retelling unlocks",
+        "who tells it"
+      ],
+      "never": [
+        "moments the child has not seen yet"
+      ]
+    },
+    "L05": {
+      "domain": "language",
+      "name": "Word build",
+      "family": "sequence",
+      "adapter": "grapheme_tiles",
+      "assessment_mode": "guided_observable",
+      "audio_dependent": false,
+      "availability": "staged",
+      "slug": "word-build",
+      "bands": [
+        "4-6",
+        "6-8"
+      ],
+      "skills": [
+        "lang.word-complete"
+      ],
+      "feel": "A short story word (two or three sounds) is built from its letters in order; the word then appears on the thing it names.",
+      "fallback_pattern": "reveal-hidden",
+      "items": {
+        "min": 2,
+        "max": 4,
+        "role": "the letters, in the scene (on blocks, stones, sails)"
+      },
+      "target": "the word",
+      "variation": [
+        "the word and the object it labels",
+        "which letters are already in place"
+      ],
+      "never": [
+        "words longer than four letters",
+        "a wrong-order sound"
+      ]
+    },
+    "L06": {
+      "domain": "language",
+      "name": "Word to picture",
+      "family": "choose",
+      "adapter": "picture_choice",
+      "assessment_mode": "guided_observable",
+      "audio_dependent": false,
+      "availability": "staged",
+      "slug": "word-to-picture",
+      "bands": [
+        "2-4",
+        "4-6"
+      ],
+      "skills": [
+        "lang.vocabulary-picture",
+        "lang.opposites",
+        "lang.sound-words"
+      ],
+      "feel": "A word from the story is said aloud and the child points to the thing it names in the scene; the character uses it straight away.",
+      "fallback_pattern": "match-in-world",
+      "items": {
+        "min": 2,
+        "max": 3,
+        "role": "candidate scene objects, one of which the word names"
+      },
+      "target": "the named object",
+      "variation": [
+        "an everyday word or a new rich word",
+        "opposites as a pair",
+        "what the character does with it"
+      ],
+      "never": [
+        "a spoken answer required to continue"
+      ]
+    },
+    "L07": {
+      "domain": "language",
+      "name": "Listen to the clue",
+      "family": "choose",
+      "adapter": "clue_choice",
+      "assessment_mode": "guided_observable",
+      "audio_dependent": false,
+      "availability": "staged",
+      "slug": "listen-to-the-clue",
+      "bands": [
+        "2-4",
+        "4-6",
+        "6-8"
+      ],
+      "skills": [],
+      "feel": "A character gives a spoken or captioned clue and the child picks the picture it describes.",
+      "fallback_pattern": "match-in-world",
+      "items": {
+        "min": 2,
+        "max": 3,
+        "role": "pictured candidates, one of which fits every part of the clue"
+      },
+      "target": "the object the clue describes",
+      "variation": [
+        "one-part clue for 2-4, two-part for older",
+        "what the clue is for",
+        "a near-miss that fits half the clue"
+      ],
+      "never": [
+        "sound-only clues with no caption"
+      ]
+    },
+    "L08": {
+      "domain": "language",
+      "name": "What happens next?",
+      "family": "choose",
+      "adapter": "narrative_choice",
+      "assessment_mode": "exploratory_multiple_valid",
+      "audio_dependent": false,
+      "availability": "staged",
+      "slug": "what-happens-next",
+      "bands": [
+        "2-4",
+        "4-6",
+        "6-8"
+      ],
+      "skills": [],
+      "feel": "The child predicts what could happen next from the picture; the story honours the choice before continuing on its path.",
+      "fallback_pattern": "match-in-world",
+      "items": {
+        "min": 2,
+        "max": 3,
+        "role": "plausible next moments, pictured"
+      },
+      "target": "",
+      "variation": [
+        "what is predicted",
+        "how the actual next page relates to the guess"
+      ],
+      "never": [
+        "marking a reasonable prediction wrong"
+      ]
+    },
+    "L09": {
+      "domain": "language",
+      "name": "Clap the word",
+      "family": "music_audio",
+      "adapter": "beat_tap",
+      "assessment_mode": "guided_observable",
+      "audio_dependent": true,
+      "availability": "staged",
+      "slug": "clap-the-word",
+      "bands": [
+        "4-6"
+      ],
+      "skills": [],
+      "feel": "Clap or tap the beats in a story word (lan-tern, but-ter-fly) and hear it said in parts.",
+      "fallback_pattern": "wake-environment",
+      "items": {
+        "min": 1,
+        "max": 1,
+        "role": "the word, shown with its picture"
+      },
+      "target": "the beats in the word",
+      "variation": [
+        "one, two or three beats",
+        "story names as words"
+      ],
+      "never": [
+        "timing accuracy as a gate",
+        "claiming phonics instruction"
+      ]
+    },
+    "L10": {
+      "domain": "language",
+      "name": "Blend the sounds",
+      "family": "choose",
+      "adapter": "phoneme_choice",
+      "assessment_mode": "guided_observable",
+      "audio_dependent": true,
+      "availability": "staged",
+      "slug": "blend-the-sounds",
+      "bands": [
+        "4-6",
+        "6-8"
+      ],
+      "skills": [],
+      "feel": "Hear sounds said separately (/c/ /a/ /t/) and choose the picture they blend into.",
+      "fallback_pattern": "match-in-world",
+      "items": {
+        "min": 2,
+        "max": 3,
+        "role": "pictures, one of which the blended sounds name"
+      },
+      "target": "the blended word",
+      "variation": [
+        "two or three sounds",
+        "which word the story needs"
+      ],
+      "never": [
+        "unreviewed speech-sound correspondences",
+        "letter names in place of sounds"
+      ]
+    },
+    "L11": {
+      "domain": "language",
+      "name": "Choose what to say",
+      "family": "choose",
+      "adapter": "dialogue_choice",
+      "assessment_mode": "exploratory_multiple_valid",
+      "audio_dependent": false,
+      "availability": "staged",
+      "slug": "choose-what-to-say",
+      "bands": [
+        "2-4",
+        "4-6",
+        "6-8"
+      ],
+      "skills": [],
+      "feel": "Choose what a character could say in a social moment; each kind option leads to its own reply.",
+      "fallback_pattern": "match-in-world",
+      "items": {
+        "min": 2,
+        "max": 3,
+        "role": "short pictured lines a character could say"
+      },
+      "target": "",
+      "variation": [
+        "greeting, asking, thanking or comforting",
+        "who it is said to"
+      ],
+      "never": [
+        "one correct way to speak",
+        "unkind options offered as jokes"
+      ]
+    },
+    "L12": {
+      "domain": "language",
+      "name": "Finish the description",
+      "family": "choose",
+      "adapter": "description_choice",
+      "assessment_mode": "exploratory_multiple_valid",
+      "audio_dependent": false,
+      "availability": "staged",
+      "slug": "finish-the-description",
+      "bands": [
+        "4-6",
+        "6-8"
+      ],
+      "skills": [],
+      "feel": "Complete a description of something in the scene by choosing a describing word; the picture shows the chosen detail.",
+      "fallback_pattern": "match-in-world",
+      "items": {
+        "min": 2,
+        "max": 3,
+        "role": "describing words, each true of something visible"
+      },
+      "target": "",
+      "variation": [
+        "colour, size, texture or feeling words",
+        "what the description is for"
+      ],
+      "never": [
+        "words that are not visible in the picture"
+      ]
+    },
+    "U01": {
+      "domain": "music",
+      "name": "Echo the beat",
+      "family": "music_audio",
+      "adapter": "beat_tap",
+      "assessment_mode": "guided_observable",
+      "audio_dependent": true,
+      "availability": "staged",
+      "slug": "echo-beat",
+      "bands": [
+        "2-4",
+        "4-6",
+        "6-8"
+      ],
+      "skills": [
+        "music.steady-beat",
+        "music.echo-rhythm",
+        "music.long-short"
+      ],
+      "feel": "A character plays a short pattern on a scene object (spoon, drum, hoot); the child taps it back and the world answers in time.",
+      "fallback_pattern": "wake-environment",
+      "items": {
+        "min": 1,
+        "max": 1,
+        "role": "the one scene object that is played"
+      },
+      "target": "the pattern, e.g. 'tap tap, tap'",
+      "variation": [
+        "the played object",
+        "two beats for 2-4, a pattern for 4-6",
+        "what answers the echo (rain, a bird, a door)"
+      ],
+      "never": [
+        "timing accuracy as a gate",
+        "a pattern longer than four beats for 2-4"
+      ]
+    },
+    "U02": {
+      "domain": "music",
+      "name": "Play the refrain",
+      "family": "music_audio",
+      "adapter": "instrument",
+      "assessment_mode": "guided_observable",
+      "audio_dependent": true,
+      "availability": "live",
+      "slug": "play-the-refrain",
+      "bands": [
+        "2-4",
+        "4-6",
+        "6-8"
+      ],
+      "skills": [
+        "music.play-refrain"
+      ],
+      "feel": "The book's own music moment: the character needs the refrain played, and the app's instrument screen opens over the page. Skippable, no microphone.",
+      "fallback_pattern": "wake-environment",
+      "items": {
+        "min": 0,
+        "max": 0,
+        "role": "none: the instrument interface owns the screen"
+      },
+      "target": "the refrain's note sequence or song id",
+      "variation": [
+        "instrument",
+        "tempo and dynamics asked for by the scene",
+        "what the finished song changes"
+      ],
+      "never": [
+        "a scene interaction or choice on the same page",
+        "microphone required"
+      ]
+    },
+    "U03": {
+      "domain": "music",
+      "name": "Loud or quiet",
+      "family": "choose",
+      "adapter": "dynamics_choice",
+      "assessment_mode": "guided_observable",
+      "audio_dependent": true,
+      "availability": "staged",
+      "slug": "loud-or-quiet",
+      "bands": [
+        "2-4",
+        "4-6",
+        "6-8"
+      ],
+      "skills": [
+        "music.loud-quiet"
+      ],
+      "feel": "The scene needs a dynamic (a sleeping baby, a far-off boat). The child chooses loud or quiet and the characters play it that way.",
+      "fallback_pattern": "change-environment",
+      "items": {
+        "min": 2,
+        "max": 2,
+        "role": "the loud and quiet options, shown in the scene"
+      },
+      "target": "'loud' or 'quiet'",
+      "variation": [
+        "why the scene needs it",
+        "who is asleep or far away",
+        "what happens if played the other way (funny, never punished)"
+      ],
+      "never": [
+        "a wrong answer that upsets a character"
+      ]
+    },
+    "U04": {
+      "domain": "music",
+      "name": "High or low",
+      "family": "choose",
+      "adapter": "pitch_choice",
+      "assessment_mode": "guided_observable",
+      "audio_dependent": true,
+      "availability": "staged",
+      "slug": "high-or-low",
+      "bands": [
+        "2-4",
+        "4-6",
+        "6-8"
+      ],
+      "skills": [
+        "music.high-low"
+      ],
+      "feel": "Two sounds, one high and one low; the story needs to know who made which. The child finds the maker in the scene.",
+      "fallback_pattern": "respond-to-sound",
+      "items": {
+        "min": 2,
+        "max": 2,
+        "role": "the two sound makers, both visible"
+      },
+      "target": "which maker the story needs (high or low)",
+      "variation": [
+        "the two makers",
+        "which the story needs and why",
+        "a captioned visual cue when sound is off"
+      ],
+      "never": [
+        "a sound-only cue with no visual twin"
+      ]
+    },
+    "U05": {
+      "domain": "music",
+      "name": "Fast or slow",
+      "family": "music_audio",
+      "adapter": "tempo_choice",
+      "assessment_mode": "guided_observable",
+      "audio_dependent": true,
+      "availability": "staged",
+      "slug": "fast-or-slow",
+      "bands": [
+        "2-4",
+        "4-6",
+        "6-8"
+      ],
+      "skills": [
+        "music.fast-slow"
+      ],
+      "feel": "The scene needs a tempo (tiptoe past the cot, hurry before the rain). The child sets fast or slow and the scene moves to it.",
+      "fallback_pattern": "change-environment",
+      "items": {
+        "min": 1,
+        "max": 1,
+        "role": "the thing whose speed changes"
+      },
+      "target": "'fast' or 'slow'",
+      "variation": [
+        "what moves",
+        "why the tempo matters",
+        "switching mid-page"
+      ],
+      "never": [
+        "speed as a score"
+      ]
+    },
+    "U06": {
+      "domain": "music",
+      "name": "Find the instrument",
+      "family": "choose",
+      "adapter": "sound_source_choice",
+      "assessment_mode": "guided_observable",
+      "audio_dependent": true,
+      "availability": "staged",
+      "slug": "find-the-instrument",
+      "bands": [
+        "2-4",
+        "4-6"
+      ],
+      "skills": [
+        "music.instrument-sound"
+      ],
+      "feel": "A sound rings out (ting, boom, rattle) and the child finds the object in the scene that made it; the character then plays it.",
+      "fallback_pattern": "match-in-world",
+      "items": {
+        "min": 2,
+        "max": 3,
+        "role": "candidate sound makers in the scene"
+      },
+      "target": "the object that made the sound",
+      "variation": [
+        "everyday objects as instruments",
+        "the sound word",
+        "what is played once it is found"
+      ],
+      "never": [
+        "a sound-only cue with no visual twin"
+      ]
+    },
+    "U07": {
+      "domain": "music",
+      "name": "Stop and go music",
+      "family": "music_audio",
+      "adapter": "toggle_music",
+      "assessment_mode": "guided_observable",
+      "audio_dependent": true,
+      "availability": "staged",
+      "slug": "stop-and-go-music",
+      "bands": [
+        "2-4",
+        "4-6",
+        "6-8"
+      ],
+      "skills": [],
+      "feel": "Music plays and stops; the characters move when it plays and freeze when it stops, and the child controls when.",
+      "fallback_pattern": "wake-environment",
+      "items": {
+        "min": 1,
+        "max": 1,
+        "role": "the music control in the scene"
+      },
+      "target": "",
+      "variation": [
+        "what moves to the music",
+        "who freezes in a funny pose"
+      ],
+      "never": [
+        "reaction-speed scoring"
+      ]
+    },
+    "U08": {
+      "domain": "music",
+      "name": "Create the soundscape",
+      "family": "music_audio",
+      "adapter": "sound_layers",
+      "assessment_mode": "exploratory_multiple_valid",
+      "audio_dependent": true,
+      "availability": "staged",
+      "slug": "create-the-soundscape",
+      "bands": [
+        "4-6",
+        "6-8"
+      ],
+      "skills": [],
+      "feel": "Layer gentle sounds (rain, wind, birds) to build the soundscape the scene needs; any mix is welcome.",
+      "fallback_pattern": "wake-environment",
+      "items": {
+        "min": 2,
+        "max": 4,
+        "role": "sound makers visible in the scene"
+      },
+      "target": "",
+      "variation": [
+        "which layers",
+        "the mood the scene asks for"
+      ],
+      "never": [
+        "sound-only participation with no visual twin"
+      ]
+    },
+    "U09": {
+      "domain": "music",
+      "name": "Make your own rhythm",
+      "family": "sequence",
+      "adapter": "beat_composer",
+      "assessment_mode": "exploratory_multiple_valid",
+      "audio_dependent": true,
+      "availability": "staged",
+      "slug": "make-your-own-rhythm",
+      "bands": [
+        "2-4",
+        "4-6",
+        "6-8"
+      ],
+      "skills": [],
+      "feel": "Compose a short rhythm by placing beat cards in slots; the characters play it back.",
+      "fallback_pattern": "gentle-sequence",
+      "items": {
+        "min": 2,
+        "max": 4,
+        "role": "beat cards and the slots they go in"
+      },
+      "target": "",
+      "variation": [
+        "number of slots",
+        "long and short cards for older bands",
+        "who plays it back"
+      ],
+      "never": [
+        "a single correct rhythm"
+      ]
+    },
+    "U10": {
+      "domain": "music",
+      "name": "Match the musical feeling",
+      "family": "choose",
+      "adapter": "interpret_music",
+      "assessment_mode": "exploratory_multiple_valid",
+      "audio_dependent": true,
+      "availability": "staged",
+      "slug": "match-the-musical-feeling",
+      "bands": [
+        "4-6",
+        "6-8"
+      ],
+      "skills": [],
+      "feel": "Listen to a short piece and choose the feeling or scene it fits; several answers can be fair.",
+      "fallback_pattern": "match-in-world",
+      "items": {
+        "min": 2,
+        "max": 3,
+        "role": "pictured feelings or scenes"
+      },
+      "target": "",
+      "variation": [
+        "calm, busy, sleepy or bright music",
+        "what the choice changes in the scene"
+      ],
+      "never": [
+        "a correct feeling"
+      ]
+    },
+    "U11": {
+      "domain": "music",
+      "name": "Build the band",
+      "family": "music_audio",
+      "adapter": "sound_layers",
+      "assessment_mode": "exploratory_multiple_valid",
+      "audio_dependent": true,
+      "availability": "staged",
+      "slug": "build-the-band",
+      "bands": [
+        "4-6",
+        "6-8"
+      ],
+      "skills": [],
+      "feel": "Add instruments one at a time to build a band for the story's moment; the band plays what was chosen.",
+      "fallback_pattern": "wake-environment",
+      "items": {
+        "min": 2,
+        "max": 4,
+        "role": "the instruments available, each visible"
+      },
+      "target": "",
+      "variation": [
+        "which instruments",
+        "the occasion the band plays for"
+      ],
+      "never": [
+        "requiring a particular line-up"
+      ]
+    },
+    "S01": {
+      "domain": "science",
+      "name": "Predict and discover",
+      "family": "choose",
+      "adapter": "prediction_reveal",
+      "assessment_mode": "exploratory_multiple_valid",
+      "audio_dependent": false,
+      "availability": "staged",
+      "slug": "predict-and-discover",
+      "bands": [
+        "2-4",
+        "4-6",
+        "6-8"
+      ],
+      "skills": [],
+      "feel": "Predict what will happen, then watch the reviewed result; the story compares guess and result without judging.",
+      "fallback_pattern": "match-in-world",
+      "items": {
+        "min": 2,
+        "max": 3,
+        "role": "pictured predictions"
+      },
+      "target": "",
+      "variation": [
+        "what is tested",
+        "one variable at a time",
+        "a surprising result"
+      ],
+      "never": [
+        "arbitrary animation presented as science",
+        "calling a prediction wrong"
+      ]
+    },
+    "S02": {
+      "domain": "science",
+      "name": "Sort by property",
+      "family": "assign_sort",
+      "adapter": "sort_groups",
+      "assessment_mode": "guided_observable",
+      "audio_dependent": false,
+      "availability": "staged",
+      "slug": "sort-by-property",
+      "bands": [
+        "2-4",
+        "4-6",
+        "6-8"
+      ],
+      "skills": [],
+      "feel": "Sort objects into groups by one property (floats, soft, made of wood) because the story needs them sorted.",
+      "fallback_pattern": "place-object",
+      "items": {
+        "min": 3,
+        "max": 6,
+        "role": "the objects and two labelled destinations"
+      },
+      "target": "each object in the group its property fits",
+      "variation": [
+        "the property",
+        "the objects",
+        "what the sorted groups are used for"
+      ],
+      "never": [
+        "two properties at once for 2-4"
+      ]
+    },
+    "S03": {
+      "domain": "science",
+      "name": "Sink or float?",
+      "family": "authored_sim",
+      "adapter": "physics_authored",
+      "assessment_mode": "guided_observable",
+      "audio_dependent": false,
+      "availability": "staged",
+      "slug": "sink-or-float",
+      "bands": [
+        "2-4",
+        "4-6",
+        "6-8"
+      ],
+      "skills": [],
+      "feel": "Choose an object to try in water and watch a reviewed sink-or-float result.",
+      "fallback_pattern": "reveal-hidden",
+      "items": {
+        "min": 2,
+        "max": 3,
+        "role": "the objects that can be tested"
+      },
+      "target": "whether it sinks or floats",
+      "variation": [
+        "materials",
+        "what the result means for the plan"
+      ],
+      "never": [
+        "unreviewed physics",
+        "encouraging water play without an adult"
+      ]
+    },
+    "S04": {
+      "domain": "science",
+      "name": "Shadow match",
+      "family": "choose",
+      "adapter": "shadow_choice",
+      "assessment_mode": "guided_observable",
+      "audio_dependent": false,
+      "availability": "staged",
+      "slug": "shadow-match",
+      "bands": [
+        "2-4",
+        "4-6",
+        "6-8"
+      ],
+      "skills": [],
+      "feel": "Match an object to the shadow it would cast from where the light is.",
+      "fallback_pattern": "match-in-world",
+      "items": {
+        "min": 2,
+        "max": 3,
+        "role": "shadows, one made by the object"
+      },
+      "target": "the matching shadow",
+      "variation": [
+        "light position",
+        "shape and size of the shadow"
+      ],
+      "never": [
+        "impossible shadows presented as real"
+      ]
+    },
+    "S05": {
+      "domain": "science",
+      "name": "Dress for the weather",
+      "family": "choose",
+      "adapter": "context_choice",
+      "assessment_mode": "guided_observable",
+      "audio_dependent": false,
+      "availability": "staged",
+      "slug": "dress-for-the-weather",
+      "bands": [
+        "2-4",
+        "4-6"
+      ],
+      "skills": [],
+      "feel": "Choose what a character should wear or bring for the weather shown; the character is comfortable outside.",
+      "fallback_pattern": "match-in-world",
+      "items": {
+        "min": 2,
+        "max": 3,
+        "role": "clothing or items, pictured"
+      },
+      "target": "what suits the weather",
+      "variation": [
+        "the weather",
+        "the activity"
+      ],
+      "never": [
+        "shaming a choice"
+      ]
+    },
+    "S06": {
+      "domain": "science",
+      "name": "Help the garden grow",
+      "family": "authored_sim",
+      "adapter": "growth_sim",
+      "assessment_mode": "guided_observable",
+      "audio_dependent": false,
+      "availability": "staged",
+      "slug": "help-the-garden-grow",
+      "bands": [
+        "2-4",
+        "4-6",
+        "6-8"
+      ],
+      "skills": [],
+      "feel": "Give a plant what it needs one step at a time (water, light, time) and see reviewed stages of growth.",
+      "fallback_pattern": "reveal-hidden",
+      "items": {
+        "min": 2,
+        "max": 4,
+        "role": "the care actions and the plant's stages"
+      },
+      "target": "the need the plant has now",
+      "variation": [
+        "the plant",
+        "which need is missing",
+        "time passing between pages"
+      ],
+      "never": [
+        "instant tap-to-grow as fact"
+      ]
+    },
+    "S07": {
+      "domain": "science",
+      "name": "Follow the clues",
+      "family": "tap_scene",
+      "adapter": "evidence_inspect",
+      "assessment_mode": "exploratory_multiple_valid",
+      "audio_dependent": false,
+      "availability": "staged",
+      "slug": "follow-the-clues",
+      "bands": [
+        "4-6",
+        "6-8"
+      ],
+      "skills": [],
+      "feel": "Look closely at clues in the scene (tracks, crumbs, feathers) to work out what happened; more than one clue can be useful.",
+      "fallback_pattern": "reveal-hidden",
+      "items": {
+        "min": 2,
+        "max": 4,
+        "role": "visible clues"
+      },
+      "target": "",
+      "variation": [
+        "what left the clues",
+        "which clue matters most"
+      ],
+      "never": [
+        "one hidden pixel to find"
+      ]
+    },
+    "S08": {
+      "domain": "science",
+      "name": "Test a material",
+      "family": "authored_sim",
+      "adapter": "experiment_authored",
+      "assessment_mode": "guided_observable",
+      "audio_dependent": false,
+      "availability": "staged",
+      "slug": "test-a-material",
+      "bands": [
+        "4-6",
+        "6-8"
+      ],
+      "skills": [],
+      "feel": "Test two materials for a job (strong, waterproof, bendy) and watch a reviewed result before the characters choose.",
+      "fallback_pattern": "reveal-hidden",
+      "items": {
+        "min": 2,
+        "max": 3,
+        "role": "materials to test"
+      },
+      "target": "the material that suits the job",
+      "variation": [
+        "the job",
+        "the property tested",
+        "a fair test with one change"
+      ],
+      "never": [
+        "unreviewed results"
+      ]
+    },
+    "S09": {
+      "domain": "science",
+      "name": "Find a suitable home",
+      "family": "assign_sort",
+      "adapter": "habitat_match",
+      "assessment_mode": "guided_observable",
+      "audio_dependent": false,
+      "availability": "staged",
+      "slug": "find-a-suitable-home",
+      "bands": [
+        "4-6",
+        "6-8"
+      ],
+      "skills": [],
+      "feel": "Help a creature find a home that meets its needs; the child matches animal to habitat.",
+      "fallback_pattern": "place-object",
+      "items": {
+        "min": 2,
+        "max": 4,
+        "role": "creatures and habitats, all visible"
+      },
+      "target": "the habitat each needs",
+      "variation": [
+        "the creature",
+        "which need decides the home"
+      ],
+      "never": [
+        "handling wild animals as an off-screen idea"
+      ]
+    },
+    "S10": {
+      "domain": "science",
+      "name": "What makes it move?",
+      "family": "tap_scene",
+      "adapter": "cause_effect",
+      "assessment_mode": "guided_observable",
+      "audio_dependent": false,
+      "availability": "staged",
+      "slug": "what-makes-it-move",
+      "bands": [
+        "2-4",
+        "4-6",
+        "6-8"
+      ],
+      "skills": [],
+      "feel": "Tap a push, pull, wind or slope and watch what makes the object move.",
+      "fallback_pattern": "reveal-hidden",
+      "items": {
+        "min": 1,
+        "max": 3,
+        "role": "the object and the cause the child can apply"
+      },
+      "target": "what makes it move",
+      "variation": [
+        "push, pull, wind, slope",
+        "how far it goes"
+      ],
+      "never": [
+        "false physical causes"
+      ]
+    },
+    "E01": {
+      "domain": "social",
+      "name": "How might they feel?",
+      "family": "choose",
+      "adapter": "emotion_explore",
+      "assessment_mode": "exploratory_multiple_valid",
+      "audio_dependent": false,
+      "availability": "staged",
+      "slug": "how-might-they-feel",
+      "bands": [
+        "2-4",
+        "4-6",
+        "6-8"
+      ],
+      "skills": [],
+      "feel": "Notice how a character might feel from their face and body; any reasonable feeling is welcome and the story responds.",
+      "fallback_pattern": "emotional-support",
+      "items": {
+        "min": 2,
+        "max": 3,
+        "role": "pictured feelings"
+      },
+      "target": "",
+      "variation": [
+        "the moment",
+        "the character"
+      ],
+      "never": [
+        "a correct feeling",
+        "emotion-recognition scores"
+      ]
+    },
+    "E02": {
+      "domain": "social",
+      "name": "What could help?",
+      "family": "choose",
+      "adapter": "support_choice",
+      "assessment_mode": "exploratory_multiple_valid",
+      "audio_dependent": false,
+      "availability": "staged",
+      "slug": "what-could-help",
+      "bands": [
+        "2-4",
+        "4-6",
+        "6-8"
+      ],
+      "skills": [],
+      "feel": "Choose what could help a character; each kind choice leads to its own response.",
+      "fallback_pattern": "emotional-support",
+      "items": {
+        "min": 2,
+        "max": 3,
+        "role": "pictured ways to help"
+      },
+      "target": "",
+      "variation": [
+        "who needs help",
+        "what kind of help (space, company, a tool)"
+      ],
+      "never": [
+        "forcing a hug or reconciliation"
+      ]
+    },
+    "E03": {
+      "domain": "social",
+      "name": "Ask for help",
+      "family": "choose",
+      "adapter": "dialogue_choice",
+      "assessment_mode": "exploratory_multiple_valid",
+      "audio_dependent": false,
+      "availability": "staged",
+      "slug": "ask-for-help",
+      "bands": [
+        "2-4",
+        "4-6",
+        "6-8"
+      ],
+      "skills": [],
+      "feel": "Help a character ask for help in a way that works for them (words, a card, a gesture).",
+      "fallback_pattern": "emotional-support",
+      "items": {
+        "min": 2,
+        "max": 3,
+        "role": "pictured ways to ask"
+      },
+      "target": "",
+      "variation": [
+        "who is asked",
+        "how the request is shown"
+      ],
+      "never": [
+        "requiring speech"
+      ]
+    },
+    "E04": {
+      "domain": "social",
+      "name": "Different perspectives",
+      "family": "choose",
+      "adapter": "perspective_choice",
+      "assessment_mode": "exploratory_multiple_valid",
+      "audio_dependent": false,
+      "availability": "staged",
+      "slug": "different-perspectives",
+      "bands": [
+        "4-6",
+        "6-8"
+      ],
+      "skills": [],
+      "feel": "See the same moment from two characters' views; the child chooses whose view to explore and the story shows it.",
+      "fallback_pattern": "emotional-support",
+      "items": {
+        "min": 2,
+        "max": 2,
+        "role": "the two characters' views"
+      },
+      "target": "",
+      "variation": [
+        "the disagreement",
+        "what each character wanted"
+      ],
+      "never": [
+        "one view declared right"
+      ]
+    },
+    "E05": {
+      "domain": "social",
+      "name": "Take turns together",
+      "family": "tap_scene",
+      "adapter": "turn_taking",
+      "assessment_mode": "guided_observable",
+      "audio_dependent": false,
+      "availability": "staged",
+      "slug": "take-turns-together",
+      "bands": [
+        "2-4",
+        "4-6",
+        "6-8"
+      ],
+      "skills": [],
+      "feel": "The child and a character take turns placing or doing something together until the job is done.",
+      "fallback_pattern": "emotional-support",
+      "items": {
+        "min": 2,
+        "max": 6,
+        "role": "the shared task's pieces"
+      },
+      "target": "",
+      "variation": [
+        "what is shared",
+        "who goes first"
+      ],
+      "never": [
+        "racing the character"
+      ]
+    },
+    "E06": {
+      "domain": "social",
+      "name": "Find a calming choice",
+      "family": "choose",
+      "adapter": "comfort_choice",
+      "assessment_mode": "exploratory_multiple_valid",
+      "audio_dependent": false,
+      "availability": "staged",
+      "slug": "find-a-calming-choice",
+      "bands": [
+        "2-4",
+        "6-8"
+      ],
+      "skills": [],
+      "feel": "Choose a calming thing the character can do (a breath, a blanket, a quiet corner); each is respected.",
+      "fallback_pattern": "emotional-support",
+      "items": {
+        "min": 2,
+        "max": 3,
+        "role": "pictured calming options"
+      },
+      "target": "",
+      "variation": [
+        "what upset the character",
+        "which calm suits them"
+      ],
+      "never": [
+        "forced calming techniques",
+        "implying the feeling must stop"
+      ]
+    },
+    "C01": {
+      "domain": "creative",
+      "name": "Build a solution",
+      "family": "snap_build",
+      "adapter": "construct",
+      "assessment_mode": "exploratory_multiple_valid",
+      "audio_dependent": false,
+      "availability": "staged",
+      "slug": "build-a-solution",
+      "bands": [
+        "2-4",
+        "4-6",
+        "6-8"
+      ],
+      "skills": [],
+      "feel": "Build a solution from a few pieces (a bridge, a raft, a nest); different builds can work.",
+      "fallback_pattern": "combine-objects",
+      "items": {
+        "min": 2,
+        "max": 5,
+        "role": "the pieces available"
+      },
+      "target": "",
+      "variation": [
+        "what is built",
+        "which pieces",
+        "what the build must do"
+      ],
+      "never": [
+        "one correct build for open designs"
+      ]
+    },
+    "C02": {
+      "domain": "creative",
+      "name": "Find the way",
+      "family": "navigate",
+      "adapter": "route_map",
+      "assessment_mode": "guided_observable",
+      "audio_dependent": false,
+      "availability": "staged",
+      "slug": "find-the-way",
+      "bands": [
+        "2-4",
+        "4-6",
+        "6-8"
+      ],
+      "skills": [],
+      "feel": "Choose the route on a small map to get a character where they need to go.",
+      "fallback_pattern": "follow-trail",
+      "items": {
+        "min": 3,
+        "max": 6,
+        "role": "route nodes and landmarks"
+      },
+      "target": "the route that reaches the destination",
+      "variation": [
+        "landmarks",
+        "a blocked path",
+        "the map's scale"
+      ],
+      "never": [
+        "timed navigation",
+        "colour-only paths"
+      ]
+    },
+    "C03": {
+      "domain": "creative",
+      "name": "Turn and assemble",
+      "family": "snap_build",
+      "adapter": "rotate_snap",
+      "assessment_mode": "guided_observable",
+      "audio_dependent": false,
+      "availability": "staged",
+      "slug": "turn-and-assemble",
+      "bands": [
+        "2-4",
+        "4-6",
+        "6-8"
+      ],
+      "skills": [],
+      "feel": "Turn a piece until it fits and snap it into place; the object works once assembled.",
+      "fallback_pattern": "combine-objects",
+      "items": {
+        "min": 2,
+        "max": 4,
+        "role": "pieces with a clear orientation"
+      },
+      "target": "the turned piece in place",
+      "variation": [
+        "how many turns",
+        "what is assembled"
+      ],
+      "never": [
+        "precision dragging as the only route"
+      ]
+    },
+    "C04": {
+      "domain": "creative",
+      "name": "Spot what changed",
+      "family": "tap_scene",
+      "adapter": "difference_find",
+      "assessment_mode": "guided_observable",
+      "audio_dependent": false,
+      "availability": "staged",
+      "slug": "spot-what-changed",
+      "bands": [
+        "2-4",
+        "4-6",
+        "6-8"
+      ],
+      "skills": [],
+      "feel": "Spot what changed between two moments in the scene; the change matters to the story.",
+      "fallback_pattern": "reveal-hidden",
+      "items": {
+        "min": 1,
+        "max": 3,
+        "role": "the changed details"
+      },
+      "target": "the changed detail",
+      "variation": [
+        "what changed",
+        "how many changes"
+      ],
+      "never": [
+        "tiny pixel differences"
+      ]
+    },
+    "C05": {
+      "domain": "creative",
+      "name": "Invent a pattern",
+      "family": "sequence",
+      "adapter": "pattern_create",
+      "assessment_mode": "exploratory_multiple_valid",
+      "audio_dependent": false,
+      "availability": "staged",
+      "slug": "invent-a-pattern",
+      "bands": [
+        "2-4",
+        "4-6",
+        "6-8"
+      ],
+      "skills": [],
+      "feel": "Invent a pattern with pieces from the scene; the characters use it (bunting, a dance, a path).",
+      "fallback_pattern": "gentle-sequence",
+      "items": {
+        "min": 2,
+        "max": 4,
+        "role": "the pieces to pattern"
+      },
+      "target": "",
+      "variation": [
+        "what is patterned",
+        "how long the pattern is"
+      ],
+      "never": [
+        "a single correct pattern"
+      ]
+    },
+    "C06": {
+      "domain": "creative",
+      "name": "Plan the steps",
+      "family": "sequence",
+      "adapter": "order_slots",
+      "assessment_mode": "guided_observable",
+      "audio_dependent": false,
+      "availability": "staged",
+      "slug": "plan-the-steps",
+      "bands": [
+        "4-6",
+        "6-8"
+      ],
+      "skills": [],
+      "feel": "Put the steps of a plan in order so the characters can do it.",
+      "fallback_pattern": "gentle-sequence",
+      "items": {
+        "min": 3,
+        "max": 4,
+        "role": "the plan steps, pictured"
+      },
+      "target": "the order that works",
+      "variation": [
+        "what is planned",
+        "how many steps"
+      ],
+      "never": [
+        "more than four steps for 4-6"
+      ]
+    },
+    "C07": {
+      "domain": "creative",
+      "name": "Draw a helping mark",
+      "family": "trace_draw",
+      "adapter": "draw",
+      "assessment_mode": "exploratory_multiple_valid",
+      "audio_dependent": false,
+      "availability": "staged",
+      "slug": "draw-a-helping-mark",
+      "bands": [
+        "2-4",
+        "4-6",
+        "6-8"
+      ],
+      "skills": [],
+      "feel": "Draw a broad helping mark (a path, a ribbon of light) or choose a ready-made one; a character uses it.",
+      "fallback_pattern": "change-environment",
+      "items": {
+        "min": 0,
+        "max": 0,
+        "role": "none: a drawing layer above the protected picture"
+      },
+      "target": "",
+      "variation": [
+        "what the mark is for",
+        "freehand or chosen mark"
+      ],
+      "never": [
+        "handwriting assessment",
+        "precise tracing"
+      ]
+    },
+    "C08": {
+      "domain": "creative",
+      "name": "Choose and discover",
+      "family": "choose",
+      "adapter": "narrative_choice",
+      "assessment_mode": "exploratory_multiple_valid",
+      "audio_dependent": false,
+      "availability": "staged",
+      "slug": "choose-and-discover",
+      "bands": [
+        "2-4",
+        "4-6",
+        "6-8"
+      ],
+      "skills": [],
+      "feel": "Choose what the characters try or discover; the choice is honoured with its own consequence before the story continues.",
+      "fallback_pattern": "match-in-world",
+      "items": {
+        "min": 2,
+        "max": 3,
+        "role": "pictured choices"
+      },
+      "target": "",
+      "variation": [
+        "what is chosen",
+        "how it changes the next page"
+      ],
+      "never": [
+        "better or worse choices"
+      ]
+    }
+  }
+}

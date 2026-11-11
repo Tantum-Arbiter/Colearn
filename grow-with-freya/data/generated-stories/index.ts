@@ -2,9 +2,13 @@
 import { Story } from '@/types/story';
 import { holdOnJuni } from './hold-on-juni';
 import { myTurnToDing } from './my-turn-to-ding';
+import { littleFoxMeetsAFriend } from './little-fox-meets-a-friend';
+import { theLanternBridge } from './the-lantern-bridge';
 
 /** Books built by the story factory and bundled into the app. */
 export const GENERATED_STORIES: Story[] = [
   holdOnJuni,
   myTurnToDing,
+  littleFoxMeetsAFriend,
+  theLanternBridge,
 ];

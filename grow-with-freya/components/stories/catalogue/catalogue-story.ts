@@ -62,7 +62,7 @@ export function fromStory(story: Story): CatalogueStory {
     locked: false,
     audioAvailable: Boolean(story.pages?.length),
     interactive: Boolean(story.pages?.some((page) => page.interactiveElements?.length)),
-    music: Boolean(story.tags?.includes('music')),
+    music: bookTheme(story.tags) === 'music',
     free: story.isFree ?? false,
     shareToUnlock: false,
     source: { kind: 'downloaded', story },
@@ -86,7 +86,7 @@ export function fromCatalogEntry(entry: CatalogEntry, access: RemoteAccess): Cat
     locked: access.locked,
     audioAvailable: false,
     interactive: Boolean(entry.tags?.includes('interactive')),
-    music: Boolean(entry.tags?.includes('music')),
+    music: bookTheme(entry.tags) === 'music',
     free: entry.isFree,
     shareToUnlock: access.shareToUnlock,
     source: { kind: 'remote', entry },
@@ -112,6 +112,10 @@ export function storyHasInteractive(story: Story): boolean {
  */
 export type CatalogueTheme = 'stories' | 'music';
 export const CATALOGUE_THEMES: readonly CatalogueTheme[] = ['stories', 'music'];
+
+export function bookTheme(tags?: readonly string[]): CatalogueTheme {
+  return tags?.includes('music') ? 'music' : 'stories';
+}
 
 export function storyTheme(story: CatalogueStory): CatalogueTheme {
   if (story.music) return 'music';

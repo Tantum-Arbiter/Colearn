@@ -2,6 +2,7 @@ import { CacheManager } from './cache-manager';
 import { ApiClient } from './api-client';
 import { Story } from '../types/story';
 import { Logger } from '@/utils/logger';
+import { challengeAssetPaths } from './page-assets';
 
 const log = Logger.create('AssetDownloadUtils');
 
@@ -57,6 +58,9 @@ export class AssetDownloadUtils {
                 assets.add(this.normalizePath(element.image));
               }
             }
+          }
+          for (const path of challengeAssetPaths(page.learningChallenge)) {
+            if (!path.startsWith('local:')) assets.add(this.normalizePath(path));
           }
         }
       }

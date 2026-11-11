@@ -178,6 +178,7 @@ export default {
     recordingComplete: 'Aufnahme abgeschlossen',
     recordingCompleteMessage: 'Deine Sprachaufnahme für "{{name}}" wurde gespeichert.',
     page: 'Seite {{current}} von {{total}}',
+    play: 'Spielen',
     readMode: 'Lesemodus',
     recordMode: 'Aufnahmemodus',
     listenMode: 'Hörmodus',
@@ -728,6 +729,8 @@ export default {
     grownUp: 'Für die Erwachsenen',
     bridgeTitle: 'Mit in den Tag nehmen',
     loading: 'Wird vorbereitet…',
+    skip: 'Überspringen',
+    tips: 'Tipps',
   },
   bridges: {
     counting: {
@@ -1158,7 +1161,7 @@ export default {
     tapAndHoldNotes: 'Tippen und halten Sie Noten, um sie zu hören',
     playingPreview: 'Vorschau läuft… tippen Sie auf Pause zum Stoppen',
     successSong: ' Erfolgslied',
-    readyToPlay: ' Bereit zu spielen',
+    readyToPlay: 'Bereit zu spielen',
     chooseInstrument: 'Wähle dein Instrument',
     swipeToExplore: 'Wischen zum Erkunden, tippen zum Auswählen',
     useThisInstrument: 'Dieses Instrument verwenden',

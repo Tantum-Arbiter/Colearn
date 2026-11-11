@@ -45,6 +45,9 @@ public class Story {
     @JsonProperty("localizedDescription")
     private LocalizedText localizedDescription;
 
+    @JsonProperty("displayFit")
+    private String displayFit;
+
     @JsonProperty("pages")
     private List<StoryPage> pages;
 
@@ -166,6 +169,14 @@ public class Story {
 
     public void setAgeRange(String ageRange) {
         this.ageRange = ageRange;
+    }
+
+    public String getDisplayFit() {
+        return displayFit;
+    }
+
+    public void setDisplayFit(String displayFit) {
+        this.displayFit = displayFit;
     }
 
     @PropertyName("pageCount")

@@ -55,3 +55,19 @@ describe('AssetDownloadUtils.getBatchSignedUrls', () => {
     expect(result.apiCalls).toBe(1);
   });
 });
+
+describe('AssetDownloadUtils.extractAssetPaths', () => {
+  const fox = JSON.parse(JSON.stringify(require('../../../contract-fixtures/stories/little-fox-meets-a-friend.json')));
+
+  it('asks for every challenge cut-out, so a book`s games work offline', () => {
+    const paths = AssetDownloadUtils.extractAssetPaths([fox]);
+
+    expect(paths).toEqual(expect.arrayContaining([
+      'stories/little-fox-meets-a-friend/page-4/challenge/finn-says-sorry.webp',
+      'stories/little-fox-meets-a-friend/page-4/challenge/finn-talks-softly.webp',
+      'stories/little-fox-meets-a-friend/page-8/challenge/finn-waits-nearby.webp',
+      'stories/little-fox-meets-a-friend/page-11/challenge/ask-to-play.webp',
+    ]));
+    expect(paths.filter((path) => path.includes('/challenge/'))).toHaveLength(9);
+  });
+});

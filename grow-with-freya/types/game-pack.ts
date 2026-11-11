@@ -138,6 +138,9 @@ export interface EngineSave {
   savedAt: string;
 }
 
+export type ShellOutcome = 'completed' | 'skipped' | 'left';
+
 export type ShellResult =
   | { outcome: 'completed'; packId: string; missionId: string; durationMs: number }
+  | { outcome: 'skipped'; packId: string; missionId: string | null; durationMs: number }
   | { outcome: 'left'; packId: string; missionId: string | null; durationMs: number };

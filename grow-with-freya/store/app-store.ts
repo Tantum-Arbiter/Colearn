@@ -26,7 +26,7 @@ export const BASIC_TIER_INSTRUMENTS = ['flute', 'recorder', 'ocarina'] as const;
 
 export type StoryViewMode = 'carousel' | 'grid';
 
-export type ChallengeKind = 'music' | 'mission';
+export type ChallengeKind = 'music' | 'mission' | 'learning';
 
 function unite(existing: string[], added: string[]): string[] {
   const fresh = added.filter((id) => !existing.includes(id));

@@ -2,6 +2,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Story } from '../types/story';
 import { Logger } from '@/utils/logger';
+import { challengeAssetPaths, withResolvedChallengeAssets } from './page-assets';
 
 const log = Logger.create('CacheManager');
 
@@ -300,6 +301,10 @@ export class CacheManager {
                 return element;
               })
             );
+          }
+
+          if (resolvedPage.learningChallenge) {
+            resolvedPage.learningChallenge = await withResolvedChallengeAssets(resolvedPage.learningChallenge, (path) => this.resolveAssetUrl(path));
           }
 
           return resolvedPage;
@@ -793,6 +798,7 @@ export class CacheManager {
                 }
               }
             }
+            assetPaths.push(...challengeAssetPaths(page.learningChallenge));
           }
         }
       }

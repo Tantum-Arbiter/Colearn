@@ -110,4 +110,41 @@ describe('MusicControl', () => {
     );
     expect(toJSON()).toBeTruthy();
   });
+  describe('the story reader`s coin', () => {
+    const find = (root: any, testID: string) => root.findAll((node: any) => node.props.testID === testID);
+
+    it.each([
+      [false, 'music-icon-playing', 0],
+      [true, 'music-icon-muted', 1],
+    ])('muted %p shows the sound coin as %p, with %p slash', (muted, icon, slashes) => {
+      mockUseGlobalSound.isMuted = muted;
+      const { UNSAFE_root } = render(<MusicControl size={50} variant="coin" />);
+      const holder = find(UNSAFE_root, icon)[0];
+
+      expect(holder.findAll((node: any) => node.props.testID === 'reader-coin-sound')).toHaveLength(1);
+      expect(find(UNSAFE_root, 'reader-coin-slash')).toHaveLength(slashes);
+      const picture = holder.findAll((node: any) => node.props.source !== undefined && typeof node.type !== 'string')[0];
+      const { StyleSheet } = require('react-native');
+      const { COIN_DIM_OPACITY } = require('@/components/child-ui/reader-coin');
+      expect(StyleSheet.flatten(picture.props.style).opacity ?? 1).toBe(muted ? COIN_DIM_OPACITY : 1);
+      expect(UNSAFE_root.findAll((node: any) => node.props.name === 'volume-high' || node.props.name === 'volume-mute')).toHaveLength(0);
+      mockUseGlobalSound.isMuted = false;
+    });
+
+    it('is the size of the reader`s other coins, with no disc behind it', () => {
+      const { UNSAFE_root } = render(<MusicControl size={50} variant="coin" />);
+      const { StyleSheet } = require('react-native');
+
+      expect(StyleSheet.flatten(find(UNSAFE_root, 'reader-coin-sound')[0].props.style)).toEqual(expect.objectContaining({ width: 50, height: 50 }));
+      expect(UNSAFE_root.findAll((node: any) => StyleSheet.flatten(node.props.style)?.borderWidth === 1)).toHaveLength(0);
+    });
+
+    it('still mutes on a press and keeps its spoken label', () => {
+      const { getByLabelText } = render(<MusicControl size={50} variant="coin" />);
+
+      fireEvent.press(getByLabelText(/Mute background music/i));
+
+      expect(mockToggleMute).toHaveBeenCalledTimes(1);
+    });
+  });
 });
