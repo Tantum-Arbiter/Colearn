@@ -62,3 +62,16 @@ export function focusFrame(screen: { width: number; height: number }, focus: Art
     top: settle(frame.top, frame.height, screen.height, focus.top, focus.bottom),
   };
 }
+
+export function containFrame(screen: { width: number; height: number }, aspect: number = MASTER_ASPECT): ScreenFrame {
+  if (!(screen.width > 0) || !(screen.height > 0) || !(aspect > 0)) return EMPTY;
+  const width = Math.min(screen.width, screen.height * aspect);
+  const height = width / aspect;
+  return { left: (screen.width - width) / 2, top: (screen.height - height) / 2, width, height };
+}
+
+export function readerArtFrame(screen: { width: number; height: number }, focus: ArtFocus | null, isTablet: boolean): ScreenFrame {
+  if (isTablet && screen.height > screen.width) return containFrame(screen);
+  return focusFrame(screen, focus);
+}
+

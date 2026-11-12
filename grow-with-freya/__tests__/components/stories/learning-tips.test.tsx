@@ -2,8 +2,8 @@ import React from 'react';
 import { fireEvent, render } from '@testing-library/react-native';
 import type { ReactTestInstance } from 'react-test-renderer';
 import { SPACE_3, SPACE_4 } from '@/components/child-ui/tokens';
-import { TipsBadge, TipsPanel, tipsPanelFrame } from '@/components/stories/learning-tips';
-import { readerEdge } from '@/components/stories/narration-layout';
+import { TipsBadge, TipsPanel, tipsPanelFrame, tipsPanelLayout } from '@/components/stories/learning-tips';
+import { PHONE_READER, readerEdge, readerScale } from '@/components/stories/narration-layout';
 
 jest.mock('@/hooks/use-steady-shared-value', () => ({
   useSteadySharedValue: (initial: number) => require('react').useState({ value: initial })[0],
@@ -47,13 +47,55 @@ describe('tipsPanelFrame', () => {
   });
 });
 
+describe('tipsPanelLayout: on a tablet the panel is the phone`s panel, scaled', () => {
+  const phone = tipsPanelFrame(PHONE_READER, PHONE_READER.insets, 50);
+  const TABLET_INSETS = { top: 24, bottom: 20, left: 0, right: 0 };
+
+  it('is the phone`s own panel on a phone', () => {
+    const underTest = tipsPanelLayout(PHONE_READER, PHONE_READER.insets, 50, false);
+
+    expect(underTest).toEqual({ frame: phone, scale: 1 });
+  });
+
+  it('on a tablet on its side, it is the phone`s panel at the tablet`s scale, centred', () => {
+    const screen = { width: 1210, height: 834 };
+
+    const underTest = tipsPanelLayout(screen, TABLET_INSETS, 50, true);
+
+    expect(underTest.scale).toBeCloseTo(readerScale(1210, 834, true));
+    expect(underTest.frame.width).toBeCloseTo(phone.width * underTest.scale);
+    expect(underTest.frame.height).toBeCloseTo(phone.height * underTest.scale);
+    expect(underTest.frame.left + underTest.frame.width / 2).toBeCloseTo(screen.width / 2);
+  });
+
+  it('upright, it takes the width the side arrows leave free, and scales to it', () => {
+    const screen = { width: 834, height: 1210 };
+
+    const underTest = tipsPanelLayout(screen, TABLET_INSETS, 50, true);
+
+    expect(underTest.frame.width).toBeCloseTo(screen.width - 2 * readerEdge(0));
+    expect(underTest.scale).toBeCloseTo(underTest.frame.width / phone.width);
+    expect(underTest.frame.height).toBeCloseTo(phone.height * underTest.scale);
+    expect(underTest.frame.top + underTest.frame.height / 2).toBeCloseTo(screen.height / 2);
+  });
+
+  it.each([
+    ['an 11-inch tablet', { width: 834, height: 1210 }, 50],
+    ['a short one with the largest buttons', { width: 834, height: 860 }, 250],
+  ])('sits clear of the arrows at the foot of %s held upright', (_name, screen, button) => {
+    const underTest = tipsPanelLayout(screen, TABLET_INSETS, button, true);
+
+    expect(underTest.frame.top + underTest.frame.height).toBeLessThanOrEqual(screen.height - 20 - button - 12 + 0.01);
+  });
+});
+
 describe('TipsPanel', () => {
   const FRAME = { left: 140, top: 82, width: 594, height: 290 };
 
   function renderPanel(overrides: Partial<React.ComponentProps<typeof TipsPanel>> = {}) {
     const onClose = jest.fn();
     const view = render(
-      <TipsPanel picture="file:///talk-softly.webp" label="Talk softly" heading="When a friend gets a fright, you can talk softly:" tips={TIPS} frame={FRAME} isTablet={false} reduceMotion={false} open closeLabel="Close" onClose={onClose} {...overrides} />
+      <TipsPanel picture="file:///talk-softly.webp" label="Talk softly" heading="When a friend gets a fright, you can talk softly:" tips={TIPS} frame={FRAME} scale={1} reduceMotion={false} open closeLabel="Close" onClose={onClose} {...overrides} />
     );
     const root = view.UNSAFE_root;
     const find = (testID: string) => root.findAll((node: ReactTestInstance) => node.props.testID === testID)[0];
@@ -75,6 +117,15 @@ describe('TipsPanel', () => {
     expect(order[0]).toBe('learning-challenge-tips-text');
     expect(order[order.length - 1]).toBe('learning-tips-close');
     expect(StyleSheet.flatten(close.props.style).alignSelf).toBe('flex-end');
+  });
+
+  it.each([1, 1.38])('draws its words at the phone`s sizes times its scale (%p)', (scale) => {
+    const { StyleSheet } = require('react-native');
+    const { find } = renderPanel({ scale });
+
+    expect(StyleSheet.flatten(find('learning-challenge-tip-0').props.style).fontSize).toBeCloseTo(16 * scale);
+    expect(StyleSheet.flatten(find('learning-challenge-tips-label').props.style).fontSize).toBeCloseTo(16 * scale);
+    expect(StyleSheet.flatten(find('learning-challenge-tips-heading').props.style).fontSize).toBeCloseTo(17 * scale);
   });
 
   it('shows the picture, named, beside the heading and every thing to do', () => {

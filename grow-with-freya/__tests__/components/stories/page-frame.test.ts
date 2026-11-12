@@ -1,4 +1,4 @@
-import { FOCUS_MARGIN, MASTER_ASPECT, challengeFocus, coverFrame, focusFrame, patchFrame } from '@/components/stories/page-frame';
+import { FOCUS_MARGIN, MASTER_ASPECT, challengeFocus, containFrame, coverFrame, focusFrame, patchFrame, readerArtFrame } from '@/components/stories/page-frame';
 import type { LearningChallenge } from '@/types/story';
 
 describe('coverFrame: where a 4:3 master lands when it fills the screen from the centre', () => {
@@ -163,3 +163,40 @@ describe('focusFrame: a cover fit moved just enough to keep a challenge`s spots 
     expect(focusFrame({ width: 0, height: 0 }, { left: 0, top: 0.8, right: 1, bottom: 0.9 })).toEqual({ left: 0, top: 0, width: 0, height: 0 });
   });
 });
+
+describe('containFrame: the whole master, as large as fits, centred', () => {
+  it.each([
+    ['a portrait tablet', { width: 834, height: 1210 }, { left: 0, top: (1210 - 834 * 0.75) / 2, width: 834, height: 834 * 0.75 }],
+    ['a landscape tablet', { width: 1210, height: 834 }, { left: (1210 - 834 / 0.75) / 2, top: 0, width: 834 / 0.75, height: 834 }],
+  ])('%s', (_name, screen, expected) => {
+    const underTest = containFrame(screen);
+
+    expect(underTest.left).toBeCloseTo(expected.left);
+    expect(underTest.top).toBeCloseTo(expected.top);
+    expect(underTest.width).toBeCloseTo(expected.width);
+    expect(underTest.height).toBeCloseTo(expected.height);
+  });
+
+  it('is empty before the screen has been measured', () => {
+    expect(containFrame({ width: 0, height: 0 })).toEqual({ left: 0, top: 0, width: 0, height: 0 });
+  });
+});
+
+describe('readerArtFrame: where the reader puts a page`s picture', () => {
+  const focus = { left: 0.6, top: 0.5, right: 0.9, bottom: 0.8 };
+
+  it('shows a portrait tablet the whole scene rather than a cover fit that cuts half of it away', () => {
+    const screen = { width: 834, height: 1210 };
+
+    expect(readerArtFrame(screen, focus, true)).toEqual(containFrame(screen));
+  });
+
+  it.each([
+    ['a landscape tablet', { width: 1210, height: 834 }, true],
+    ['a phone on its side', { width: 874, height: 402 }, false],
+    ['a phone held upright', { width: 402, height: 874 }, false],
+  ])('keeps the cover fit, moved for the challenge, on %s', (_name, screen, isTablet) => {
+    expect(readerArtFrame(screen, focus, isTablet)).toEqual(focusFrame(screen, focus));
+  });
+});
+

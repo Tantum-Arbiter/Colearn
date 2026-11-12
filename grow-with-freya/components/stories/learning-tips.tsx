@@ -8,7 +8,7 @@ import { pictureSource } from '@/components/experience/engines/choose/choose-eng
 import type { ScreenFrame } from '@/components/experience/engines/place/place-geometry';
 import { Fonts } from '@/constants/theme';
 import { useSteadySharedValue } from '@/hooks/use-steady-shared-value';
-import { readerEdge } from './narration-layout';
+import { NAV_BUTTON, PHONE_READER, readerEdge, readerScale } from './narration-layout';
 
 export interface ChallengeTips {
   picture: string | number;
@@ -44,6 +44,30 @@ export function tipsPanelFrame(screen: { width: number; height: number }, insets
   return { left, top, width: Math.max(0, screen.width - left - right), height: Math.max(0, bottom - top) };
 }
 
+export interface TipsPanelLayout {
+  frame: ScreenFrame;
+  scale: number;
+}
+
+const PHONE_PANEL = tipsPanelFrame(PHONE_READER, PHONE_READER.insets, NAV_BUTTON);
+
+export function tipsPanelLayout(screen: { width: number; height: number }, insets: TipsInsets, button: number, isTablet: boolean): TipsPanelLayout {
+  if (!isTablet) return { frame: tipsPanelFrame(screen, insets, button), scale: 1 };
+  const room = screen.height > screen.width
+    ? {
+      left: readerEdge(insets.left),
+      top: Math.max(insets.top + 20, 20) + button + SPACE_3,
+      width: Math.max(0, screen.width - readerEdge(insets.left) - readerEdge(insets.right)),
+      height: Math.max(0, screen.height - Math.max(insets.bottom, 12) - button - SPACE_3 - (Math.max(insets.top + 20, 20) + button + SPACE_3)),
+    }
+    : tipsPanelFrame(screen, insets, button);
+  const scale = Math.min(readerScale(screen.width, screen.height, isTablet), room.width / PHONE_PANEL.width, room.height / PHONE_PANEL.height);
+  const width = PHONE_PANEL.width * scale;
+  const height = PHONE_PANEL.height * scale;
+  const top = Math.min(Math.max((screen.height - height) / 2, room.top), room.top + room.height - height);
+  return { frame: { left: (screen.width - width) / 2, top, width, height }, scale };
+}
+
 function useFade(reduceMotion: boolean, open: boolean) {
   const shown = useSteadySharedValue(open ? 1 : 0);
   useEffect(() => {
@@ -55,18 +79,20 @@ function useFade(reduceMotion: boolean, open: boolean) {
 
 interface TipsPanelProps extends ChallengeTips {
   frame: ScreenFrame;
-  isTablet: boolean;
+  scale: number;
   reduceMotion: boolean;
   open: boolean;
   closeLabel: string;
   onClose: () => void;
 }
 
-export const TipsPanel = memo(function TipsPanel({ picture, label, heading, tips, frame, isTablet, reduceMotion, open, closeLabel, onClose }: TipsPanelProps) {
+export const TipsPanel = memo(function TipsPanel({ picture, label, heading, tips, frame, scale, reduceMotion, open, closeLabel, onClose }: TipsPanelProps) {
   const style = useFade(reduceMotion, open);
-  const tipSize = isTablet ? 20 : 16;
-  const labelSize = isTablet ? 20 : 16;
-  const side = Math.max(0, Math.min(frame.height - PANEL_PAD * 2 - labelSize * 1.6, frame.width * 0.3));
+  const tipSize = 16 * scale;
+  const headingSize = 17 * scale;
+  const labelSize = 16 * scale;
+  const pad = PANEL_PAD * scale;
+  const side = Math.max(0, Math.min(frame.height - pad * 2 - labelSize * 1.6, frame.width * 0.3));
 
   return (
     <Animated.View
@@ -74,7 +100,7 @@ export const TipsPanel = memo(function TipsPanel({ picture, label, heading, tips
       pointerEvents={open ? 'auto' : 'none'}
       accessibilityElementsHidden={!open}
       importantForAccessibility={open ? 'auto' : 'no-hide-descendants'}
-      style={[styles.panel, { left: frame.left, top: frame.top, width: frame.width, height: frame.height, padding: PANEL_PAD }, style]}
+      style={[styles.panel, { left: frame.left, top: frame.top, width: frame.width, height: frame.height, padding: pad, gap: SPACE_5 * scale }, style]}
     >
       <View style={[styles.face, { width: side }]}>
         <View style={[styles.circle, { width: side, height: side, borderRadius: side / 2 }]}>
@@ -86,7 +112,7 @@ export const TipsPanel = memo(function TipsPanel({ picture, label, heading, tips
       </View>
       <View testID="learning-challenge-tips-column" style={styles.column}>
         <View testID="learning-challenge-tips-text" style={styles.text}>
-        <Text testID="learning-challenge-tips-heading" style={[styles.heading, { fontSize: tipSize + 1, lineHeight: (tipSize + 1) * 1.3 }]}>
+        <Text testID="learning-challenge-tips-heading" style={[styles.heading, { fontSize: headingSize, lineHeight: headingSize * 1.3 }]}>
           {heading}
         </Text>
         <View style={styles.list}>
@@ -100,8 +126,8 @@ export const TipsPanel = memo(function TipsPanel({ picture, label, heading, tips
           ))}
         </View>
         </View>
-        <Pressable testID="learning-tips-close" onPress={onClose} accessibilityRole="button" accessibilityLabel={closeLabel} style={[styles.close, { height: CLOSE_HEIGHT }]}>
-          <Text style={[styles.closeText, { fontSize: isTablet ? 18 : 16 }]}>{closeLabel}</Text>
+        <Pressable testID="learning-tips-close" onPress={onClose} accessibilityRole="button" accessibilityLabel={closeLabel} style={[styles.close, { height: CLOSE_HEIGHT * scale, paddingHorizontal: SPACE_5 * scale }]}>
+          <Text style={[styles.closeText, { fontSize: 16 * scale }]}>{closeLabel}</Text>
         </Pressable>
       </View>
     </Animated.View>

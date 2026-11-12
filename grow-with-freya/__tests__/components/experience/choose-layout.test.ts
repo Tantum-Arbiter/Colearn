@@ -1,4 +1,4 @@
-import { SAFE_ZONE, cardFrames, chooseOutcome, trayFrame } from '@/components/experience/engines/choose/choose-layout';
+import { SAFE_ZONE, cardFrames, centredTray, chooseOutcome, trayFrame } from '@/components/experience/engines/choose/choose-layout';
 
 const PHONE = { width: 844, height: 390 };
 const TABLET = { width: 1180, height: 820 };
@@ -117,3 +117,28 @@ describe('trayFrame: the safe zone follows the page art when the art is larger t
     expect(tray.left).toBeCloseTo(-379 + 1592 * SAFE_ZONE.left);
   });
 });
+
+describe('centredTray: a tablet on its side has room for big cards in the middle of the screen', () => {
+  const SCREEN = { width: 1210, height: 834 };
+
+  it('is centred on the screen', () => {
+    const underTest = centredTray(SCREEN, 0);
+
+    expect(underTest.left + underTest.width / 2).toBeCloseTo(SCREEN.width / 2);
+    expect(underTest.top + underTest.height / 2).toBeCloseTo(SCREEN.height / 2);
+  });
+
+  it('gives three cards far more room than the art`s safe zone does', () => {
+    const [big] = cardFrames(3, centredTray(SCREEN, 0));
+    const [old] = cardFrames(3, trayFrame({ left: 0, top: (834 - 1210 * 0.75) / 2, width: 1210, height: 1210 * 0.75 }));
+
+    expect(big.width).toBeGreaterThan(old.width * 1.35);
+  });
+
+  it('keeps clear of whatever sits above it, such as the prompt', () => {
+    const underTest = centredTray(SCREEN, 400);
+
+    expect(underTest.top).toBeGreaterThanOrEqual(400);
+  });
+});
+

@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import { RADIUS_CARD, SPACE_2, SPACE_3, SPACE_4 } from '@/components/child-ui/tokens';
 import { ChooseEngine, LEAVE_MS, pictureSource, type ChooseEvent } from '@/components/experience/engines/choose/choose-engine';
-import { SAFE_ZONE, trayFrame } from '@/components/experience/engines/choose/choose-layout';
+import { SAFE_ZONE, centredTray, trayFrame } from '@/components/experience/engines/choose/choose-layout';
 import { engineFor } from '@/components/experience/engines';
 import { SceneEngine, type SceneEvent } from '@/components/experience/engines/scene/scene-engine';
 import { spotFrame } from '@/components/experience/engines/scene/scene-layout';
@@ -43,6 +43,7 @@ export interface LearningChallengeHostProps {
   screen: { width: number; height: number };
   /** Where the page art sits on screen; the screen itself when the book is not cover-fit. */
   art?: ScreenFrame;
+  trayArt?: ScreenFrame;
   chrome?: PageChrome;
   isTablet: boolean;
   reduceMotion: boolean;
@@ -57,6 +58,7 @@ export const LearningChallengeHost = memo(function LearningChallengeHost({
   ageGroup,
   screen,
   art,
+  trayArt,
   chrome = NO_CHROME,
   isTablet,
   reduceMotion,
@@ -70,10 +72,12 @@ export const LearningChallengeHost = memo(function LearningChallengeHost({
   const promptTop = chrome.top + SPACE_2;
   const stageBottom = screen.height - chrome.bottom - SPACE_3;
   const frame = useMemo<ScreenFrame>(() => art ?? { left: 0, top: 0, width: screen.width, height: screen.height }, [art, screen]);
-  const tray = useMemo(
-    () => trayFrame(frame, { top: promptTop + PROMPT_HEIGHT + SPACE_3, bottom: Math.min(stageBottom, frame.top + frame.height * SAFE_ZONE.bottom) }),
-    [frame, promptTop, stageBottom]
-  );
+  const tray = useMemo(() => {
+    const below = promptTop + PROMPT_HEIGHT + SPACE_3;
+    if (isTablet && screen.width > screen.height) return centredTray(screen, below);
+    const basis = trayArt ?? frame;
+    return trayFrame(basis, { top: below, bottom: Math.min(stageBottom, basis.top + basis.height * SAFE_ZONE.bottom) });
+  }, [frame, trayArt, isTablet, screen, promptTop, stageBottom]);
   const { phase } = shell;
   const resolving = phase === 'celebrating';
   const inPlay = phase === 'intro' || phase === 'playing' || phase === 'paused';

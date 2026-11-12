@@ -32,6 +32,19 @@ export function trayFrame(art: ArtFrame, bounds: TrayBounds = {}): ScreenFrame {
   };
 }
 
+export const CENTRED_TRAY = { width: 0.62, height: 0.36 } as const;
+
+export function centredTray(screen: { width: number; height: number }, top: number): ScreenFrame {
+  const width = screen.width * CENTRED_TRAY.width;
+  const height = screen.height * CENTRED_TRAY.height;
+  return {
+    left: (screen.width - width) / 2,
+    top: Math.max(top, (screen.height - height) / 2),
+    width,
+    height,
+  };
+}
+
 export function cardFrames(count: number, tray: ScreenFrame, gap: number = CARD_GAP): ScreenFrame[] {
   if (count <= 0) return [];
   const side = Math.min(tray.height, (tray.width - gap * (count - 1)) / count);

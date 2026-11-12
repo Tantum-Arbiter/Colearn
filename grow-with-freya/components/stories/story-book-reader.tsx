@@ -20,11 +20,11 @@ import { Story, StoryPage, STORY_TAGS, InteractiveElement, getLocalizedText, res
 import type { SupportedLanguage } from '@/services/i18n';
 import { SUPPORTED_LANGUAGES, setStoredLanguage } from '@/services/i18n';
 import { InteractiveElementComponent } from './interactive-element';
-import { narrationLayout, readerEdge } from './narration-layout';
+import { captionScale, narrationLayout, readerEdge } from './narration-layout';
 import { MusicChallengeUI } from './music-challenge-ui';
 import { LearningChallengeHost, type ChallengeResult } from './learning-challenge-host';
-import { TipsBadge, TipsPanel, tipsPanelFrame, type ChallengeTips } from './learning-tips';
-import { challengeFocus, focusFrame } from './page-frame';
+import { TipsBadge, TipsPanel, tipsPanelLayout, type ChallengeTips } from './learning-tips';
+import { challengeFocus, focusFrame, readerArtFrame } from './page-frame';
 import { SOUND_WORD_COLOR, SOUND_WORD_SCALE, wordText, type StoryWord } from './sound-words';
 import { FADE_IN_MS, FADE_OUT_MS, paginate, ROWS_PER_PAGE, textLines, useTextPaging, type LineBreaks, type PageWord } from './text-pages';
 import { TextMeasure } from './text-measure';
@@ -82,6 +82,7 @@ const READER_LANGUAGES: readonly LanguageChoice[] = SUPPORTED_LANGUAGES.map(({ c
 export const NARRATION_SLIDE_MS = 360;
 const NARRATION_SLIDE_SHARE = 0.5;
 const TIPS_BADGE = 34;
+const SCENE_BAND_BLUR = 24;
 export const PAGE_TEXT_FADE_MS = FADE_OUT_MS;
 export const PAGE_IMAGE_FADE_MS = PAGE_TEXT_FADE_MS + FADE_IN_MS;
 const PAGE_PILL_HEIGHT = 34;
@@ -1761,7 +1762,10 @@ export function StoryBookReader({
   });
   const ringShown = pagedText && textPagesList.length > 1;
   const onFinalLines = textPageIndex === pages.length - 1 && (!pagedText || paging.shown >= textPagesList.length - 1);
-  const narrationBox = narrationLayout(screenWidth, screenHeight, insets);
+  const narrationBox = narrationLayout(screenWidth, screenHeight, insets, isTablet);
+  const captionSize = captionScale(screenWidth, screenHeight, insets, isTablet);
+  const wholeScene = isTablet && screenHeight > screenWidth;
+  const tipsLayout = tipsPanelLayout({ width: screenWidth, height: screenHeight }, insets, scaledButtonSize(50), isTablet);
   const menuScale = scaledButtonSize(100) / 100;
   const menuWidth = MENU_WIDTH * menuScale;
   const menuPlace = menuPlacement(screenWidth, readerEdge(insets.right), scaledButtonSize(50), menuWidth, Math.max(insets.top + 20, 20) + scaledButtonSize(50), insets.right);
@@ -1787,13 +1791,29 @@ export function StoryBookReader({
     const imageScale = isCoverPage ? baseScale * 0.99 : baseScale;
     // Phase 12 books are full-screen 4:3 masters drawn for a centred cover fit, no extra zoom.
     const coverFit = story.displayFit === 'cover';
-    const art = coverFit ? focusFrame({ width: screenWidth, height: screenHeight }, challengeFocus(page.learningChallenge)) : null;
+    const art = coverFit ? readerArtFrame({ width: screenWidth, height: screenHeight }, challengeFocus(page.learningChallenge), isTablet) : null;
+    const pageSource = typeof page.backgroundImage === 'string' ? { uri: page.backgroundImage } : page.backgroundImage;
 
     // All images are loaded from local cache after batch sync - no authenticated fetching needed
     const imageContent = (
       <>
+        {coverFit && wholeScene ? (
+          <>
+            <Image
+              testID="story-page-scene-bands"
+              source={pageSource}
+              style={StyleSheet.absoluteFill}
+              contentFit="cover"
+              blurRadius={SCENE_BAND_BLUR}
+              transition={0}
+              cachePolicy="memory-disk"
+              accessible={false}
+            />
+            <View style={[StyleSheet.absoluteFill, styles.sceneBandShade]} pointerEvents="none" />
+          </>
+        ) : null}
         <Image
-          source={typeof page.backgroundImage === 'string' ? { uri: page.backgroundImage } : page.backgroundImage}
+          source={pageSource}
           style={[
             styles.backgroundImageStyle,
             art ? { position: 'absolute', left: art.left, top: art.top, width: art.width, height: art.height } : { width: '100%', height: '100%', transform: [{ scale: imageScale }] }
@@ -2002,7 +2022,8 @@ export function StoryBookReader({
                   language={currentLanguage}
                   ageGroup={childAgeGroup}
                   screen={{ width: screenWidth, height: screenHeight }}
-                  art={story.displayFit === 'cover' ? focusFrame({ width: screenWidth, height: screenHeight }, challengeFocus(page.learningChallenge)) : undefined}
+                  art={story.displayFit === 'cover' ? readerArtFrame({ width: screenWidth, height: screenHeight }, challengeFocus(page.learningChallenge), isTablet) : undefined}
+                  trayArt={story.displayFit === 'cover' && wholeScene ? focusFrame({ width: screenWidth, height: screenHeight }, challengeFocus(page.learningChallenge)) : undefined}
                   chrome={{
                     top: Math.max(insets.top + 20, 20) + scaledButtonSize(50) + 8,
                     bottom: Math.max(insets.bottom, 12),
@@ -2207,11 +2228,7 @@ export function StoryBookReader({
             testID="story-narration"
           >
             {(() => {
-              // Tablet gets larger base font for better readability
-              // iPad base sizes are significantly larger to compensate for 2-line limit
-              const baseFontSize = currentPage?.pageNumber === 0
-                ? (isTablet ? 28 : 18)
-                : (isTablet ? 26 : 16);
+              const baseFontSize = (currentPage?.pageNumber === 0 ? 18 : 16) * captionSize;
               const fontSize = scaledFontSize(baseFontSize);
               const lineHeight = fontSize * 1.5;
               // In compare mode, show all text; otherwise the box hugs its verse, four lines at most
@@ -2898,8 +2915,8 @@ export function StoryBookReader({
           >
             <TipsPanel
               {...learningTips}
-              frame={tipsPanelFrame({ width: screenWidth, height: screenHeight }, insets, scaledButtonSize(50))}
-              isTablet={isTablet}
+              frame={tipsLayout.frame}
+              scale={tipsLayout.scale}
               reduceMotion={reduceMotion}
               open={learningTipsOpen}
               closeLabel={t('common.close')}
@@ -3769,6 +3786,9 @@ const styles = StyleSheet.create({
     height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  sceneBandShade: {
+    backgroundColor: 'rgba(10, 15, 44, 0.35)',
   },
   backgroundImageStyle: {
     // Base style for background images

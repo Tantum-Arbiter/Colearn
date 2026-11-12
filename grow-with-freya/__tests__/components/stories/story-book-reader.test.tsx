@@ -1246,6 +1246,25 @@ describe('StoryBookReader: a learning challenge page', () => {
     view.unmount();
   });
 
+  it('on a tablet, the tips are the phone`s panel at the tablet`s scale', async () => {
+    const { Dimensions, StyleSheet } = require('react-native');
+    const { tipsPanelLayout } = require('@/components/stories/learning-tips');
+    const { useSafeAreaInsets } = require('react-native-safe-area-context');
+    const dimensions = jest.spyOn(Dimensions, 'get').mockReturnValue({ width: 1210, height: 834, scale: 2, fontScale: 1 });
+    const view = render(<StoryBookReader story={storyWithChallenge} onExit={jest.fn()} skipCoverPage skipInitialFadeIn />);
+    choose(view, 'choose-card-finn-talks-softly');
+    await act(async () => { jest.advanceTimersByTime(3000); });
+
+    act(() => press(view, 'learning-tips-badge'));
+
+    const expected = tipsPanelLayout({ width: 1210, height: 834 }, useSafeAreaInsets(), 50, true);
+    const tip = panel(view).findAll((node) => node.props.testID === 'learning-challenge-tip-0')[0];
+    expect(panel(view).props.style).toEqual(expect.arrayContaining([expect.objectContaining(expected.frame)]));
+    expect(StyleSheet.flatten(tip.props.style).fontSize).toBeCloseTo(16 * expected.scale);
+    view.unmount();
+    dimensions.mockRestore();
+  });
+
   it('the i on the text box opens the tips and slides the text away; Close brings the text back', async () => {
     const view = render(<StoryBookReader story={storyWithChallenge} onExit={jest.fn()} skipCoverPage skipInitialFadeIn />);
     choose(view, 'choose-card-finn-talks-softly');
@@ -1438,6 +1457,79 @@ describe('StoryBookReader: a book drawn for cover fit', () => {
   beforeEach(() => jest.useFakeTimers());
   afterEach(() => jest.useRealTimers());
 
+  describe('on a tablet', () => {
+    const { Dimensions, StyleSheet, Text } = require('react-native');
+    const { captionScale } = require('@/components/stories/narration-layout');
+    const bands = (view: ReturnType<typeof render>) => view.UNSAFE_root.findAll((node) => node.props.testID === 'story-page-scene-bands');
+    const picture = (view: ReturnType<typeof render>) => view.UNSAFE_root.findAll((node) => node.props.contentFit === 'cover' && node.props.blurRadius === undefined && node.props.source?.uri === 'test-page1.jpg')[0];
+    const wordSize = (view: ReturnType<typeof render>) => StyleSheet.flatten(view.UNSAFE_root.findAll((node) => node.props.testID === 'story-narration-box')[0].findAllByType(Text).find((node: ReactTestInstance) => StyleSheet.flatten(node.props.style)?.fontSize)!.props.style).fontSize;
+
+    function onScreen(width: number, height: number, story: Story = { ...mockStory, displayFit: 'cover' }) {
+      const dimensions = jest.spyOn(Dimensions, 'get').mockReturnValue({ width, height, scale: 2, fontScale: 1 });
+      const view = render(<StoryBookReader story={story} onExit={jest.fn()} skipCoverPage skipInitialFadeIn />);
+      return { view, done: () => { view.unmount(); dimensions.mockRestore(); } };
+    }
+
+    it('upright, shows the whole scene across the middle of the screen', () => {
+      const { view, done } = onScreen(834, 1210);
+
+      const frame = flat(picture(view));
+      expect(frame.left).toBeCloseTo(0);
+      expect(frame.width).toBeCloseTo(834);
+      expect(frame.height).toBeCloseTo(834 * 0.75);
+      expect(frame.top).toBeCloseTo((1210 - 834 * 0.75) / 2);
+      done();
+    });
+
+    it('upright, fills the space above and below the scene with the same picture, softened', () => {
+      const { view, done } = onScreen(834, 1210);
+
+      const [band] = bands(view);
+      expect(band.props.source).toEqual({ uri: 'test-page1.jpg' });
+      expect(band.props.blurRadius).toBeGreaterThan(0);
+      expect(band.props.contentFit).toBe('cover');
+      done();
+    });
+
+    it('on its side, still fills the screen, with nothing behind the picture', () => {
+      const { view, done } = onScreen(1210, 834);
+
+      expect(bands(view)).toHaveLength(0);
+      expect(flat(picture(view)).width).toBeCloseTo(1210);
+      done();
+    });
+
+    it.each([
+      ['on its side', 1210, 834],
+      ['upright', 834, 1210],
+    ])('%s, the words` box is the phone`s box scaled for the tablet', (_name, width, height) => {
+      const { narrationLayout } = require('@/components/stories/narration-layout');
+      const { useSafeAreaInsets } = require('react-native-safe-area-context');
+      const { view, done } = onScreen(width, height);
+
+      const box = StyleSheet.flatten(view.UNSAFE_root.findAll((node) => node.props.testID === 'story-narration' && typeof node.props.onLayout === 'function')[0].props.style);
+      expect(box.width).toBeCloseTo(narrationLayout(width, height, useSafeAreaInsets(), true).width);
+      done();
+    });
+
+    it('leaves an older, contained book as it was, upright too', () => {
+      const { view, done } = onScreen(834, 1210, mockStory);
+
+      expect(bands(view)).toHaveLength(0);
+      done();
+    });
+
+    it.each([
+      ['on its side', 1210, 834],
+      ['upright', 834, 1210],
+    ])('%s, draws the words at the phone`s size scaled with the box', (_name, width, height) => {
+      const { view, done } = onScreen(width, height);
+
+      expect(wordSize(view)).toBeCloseTo(16 * captionScale(width, height, { left: 0, right: 0, bottom: 0 }, true), 1);
+      done();
+    });
+  });
+
   it('fills the screen from the centre with no extra zoom, where an older book is zoomed and contained', () => {
     const covered = render(<StoryBookReader story={{ ...mockStory, displayFit: 'cover' }} onExit={jest.fn()} skipCoverPage skipInitialFadeIn />);
     const older = render(<StoryBookReader story={mockStory} onExit={jest.fn()} skipCoverPage skipInitialFadeIn />);
@@ -1488,6 +1580,35 @@ describe('StoryBookReader: a book drawn for cover fit', () => {
     const host = openChallenge(view);
     expect(host.props.art).toEqual(coverFrame(host.props.screen));
     view.unmount();
+  });
+
+  it('on an upright tablet, shows the challenge on the whole scene but sizes its cards from the cover fit, as before', () => {
+    const { Dimensions } = require('react-native');
+    const { containFrame, focusFrame, challengeFocus } = require('@/components/stories/page-frame');
+    const dimensions = jest.spyOn(Dimensions, 'get').mockReturnValue({ width: 834, height: 1210, scale: 2, fontScale: 1 });
+    const page = { ...fox.pages[3], id: 'fox-4', pageNumber: 1, backgroundImage: 'test-page1.jpg' };
+    const story: Story = { ...mockStory, displayFit: 'cover', pages: [mockStory.pages![0], page, mockStory.pages![2]] };
+    const view = render(<StoryBookReader story={story} onExit={jest.fn()} skipCoverPage skipInitialFadeIn />);
+
+    const host = openChallenge(view);
+
+    expect(host.props.art).toEqual(containFrame(host.props.screen));
+    expect(host.props.trayArt).toEqual(focusFrame(host.props.screen, challengeFocus(page.learningChallenge)));
+    view.unmount();
+    dimensions.mockRestore();
+  });
+
+  it('on a tablet on its side, the challenge needs no separate frame for its cards', () => {
+    const { Dimensions } = require('react-native');
+    const dimensions = jest.spyOn(Dimensions, 'get').mockReturnValue({ width: 1210, height: 834, scale: 2, fontScale: 1 });
+    const story: Story = { ...mockStory, displayFit: 'cover', pages: [mockStory.pages![0], { ...fox.pages[3], id: 'fox-4', pageNumber: 1, backgroundImage: 'test-page1.jpg' }, mockStory.pages![2]] };
+    const view = render(<StoryBookReader story={story} onExit={jest.fn()} skipCoverPage skipInitialFadeIn />);
+
+    const host = openChallenge(view);
+
+    expect(host.props.trayArt).toBeUndefined();
+    view.unmount();
+    dimensions.mockRestore();
   });
 
   it('a scene challenge near the bottom of the art moves the page and the host together, so its spots stay on screen', () => {

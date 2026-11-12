@@ -361,3 +361,45 @@ describe('LearningChallengeHost: a scene played on the page itself', () => {
     expect(prompt()).toBe('Two lights!');
   });
 });
+
+describe('LearningChallengeHost: cards on a tablet', () => {
+  beforeEach(() => jest.useFakeTimers());
+  afterEach(() => jest.useRealTimers());
+
+  function card(find: (testID: string) => ReactTestInstance[]) {
+    const frame = find('choose-card-say-hello-frame')[0];
+    return Object.assign({}, ...[frame.props.style].flat(Infinity).filter(Boolean));
+  }
+
+  it('on its side, the cards are big and sit in the middle of the screen', () => {
+    const screen = { width: 1210, height: 834 };
+    const art = { left: 0, top: (834 - 1210 * 0.75) / 2, width: 1210, height: 1210 * 0.75 };
+    const phoneSized = renderHost({ screen, art, isTablet: false });
+    act(() => jest.advanceTimersByTime(ENTRANCE_MS));
+    const before = card(phoneSized.find);
+    phoneSized.unmount();
+
+    const { find } = renderHost({ screen, art, isTablet: true });
+    act(() => jest.advanceTimersByTime(ENTRANCE_MS));
+
+    const after = card(find);
+    expect(after.width).toBeGreaterThan(before.width * 1.35);
+    expect(after.top + after.height / 2).toBeCloseTo(screen.height / 2);
+  });
+
+  it('upright, the cards keep the size they had from the cover-fit art, whatever frame the picture is shown in', () => {
+    const screen = { width: 834, height: 1210 };
+    const cover = { left: (834 - 1210 / 0.75) / 2, top: 0, width: 1210 / 0.75, height: 1210 };
+    const whole = { left: 0, top: (1210 - 834 * 0.75) / 2, width: 834, height: 834 * 0.75 };
+    const asBefore = renderHost({ screen, art: cover, isTablet: false });
+    act(() => jest.advanceTimersByTime(ENTRANCE_MS));
+    const before = card(asBefore.find);
+    asBefore.unmount();
+
+    const { find } = renderHost({ screen, art: whole, trayArt: cover, isTablet: true });
+    act(() => jest.advanceTimersByTime(ENTRANCE_MS));
+
+    expect(card(find)).toEqual(before);
+  });
+});
+
