@@ -5,14 +5,6 @@ import { GestureDetector } from 'react-native-gesture-handler';
 import { OnboardingScreen } from '@/components/onboarding/onboarding-screen';
 import { onboardingMetricsFor, useOnboardingMetrics } from '@/components/onboarding/onboarding-metrics';
 
-// Mock the PngIllustration component
-jest.mock('@/components/ui/png-illustration', () => ({
-  PngIllustration: ({ name }: { name: string }) => {
-    const { Text } = require('react-native');
-    return <Text>{`PngIllustration-${name}`}</Text>;
-  },
-}));
-
 // testID lands as data-testid under react-native-web, so query the tree directly
 function byTestId(tree: ReturnType<typeof render>, testID: string) {
   return tree.UNSAFE_root.findAll(
