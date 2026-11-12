@@ -8,8 +8,37 @@ name: Start the app in the state the calling flow asked for
 - setOrientation: PORTRAIT
 # A flow starts from a stopped app, not from wherever the last one left it.
 - stopApp
-- launchApp
-- openLink: "com.growwithfreya.app://?e2e=1&${SEED}"
+- runFlow: launch.yaml
+# Each platform's development build answers a different scheme.
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - openLink: "com.growwithfreya.app://?e2e=1&${SEED}"
+      - extendedWaitUntil:
+          visible: "Open in .*"
+          timeout: 10000
+          optional: true
+      - retry:
+          maxRetries: 2
+          commands:
+            - runFlow:
+                when:
+                  visible: "Open in .*"
+                commands:
+                  - tapOn: "Open"
+            - extendedWaitUntil:
+                notVisible: "Open in .*"
+                timeout: 5000
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - openLink: "growwithfreya://?e2e=1&${SEED}"
+# iOS may ask "Open in <app>?" first; on CI nobody is there to answer it.
+- tapOn:
+    text: "Open"
+    optional: true
 # Where the app opens is decided as it starts, so it starts again with the
 # seeded state in hand: a flow that ran before this one may have left it in
 # onboarding, in a story, or signed in as somebody else. The wait gives the
@@ -20,7 +49,7 @@ name: Start the app in the state the calling flow asked for
     timeout: 8000
     optional: true
 - stopApp
-- launchApp
+- runFlow: launch.yaml
 - extendedWaitUntil:
     visible:
       id: "home-language-button"

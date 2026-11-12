@@ -19,14 +19,20 @@ fi
 
 export MAESTRO_DRIVER_STARTUP_TIMEOUT="${MAESTRO_DRIVER_STARTUP_TIMEOUT:-120000}"
 
+read -ra flows <<< "${MAESTRO_FLOWS:-.maestro}"
+
 # The app's ambient animation (twinkling stars, a breathing sun) keeps the
 # accessibility snapshot moving, which makes a flow miss elements that are
-# plainly on screen. Reduce Motion settles it -- and it is put back afterwards,
-# because with it on the story card fades its pages instead of turning them.
-restore_motion() {
-  if [ -n "${motion_was:-}" ] && [ "$motion_was" != "1" ]; then
-    xcrun simctl spawn "$device" defaults write com.apple.Accessibility ReduceMotionEnabled -bool false 2>/dev/null || true
-  fi
+# plainly on screen. Reduce Motion settles it, but only while the suite runs:
+# afterwards it is always turned off, whatever it was before, because with it
+# on the island voyage is a white flash and the story card fades its pages.
+motion_for_the_suite() {
+  xcrun simctl spawn "$device" defaults write com.apple.Accessibility ReduceMotionEnabled -bool "$1" 2>/dev/null || true
+  xcrun simctl terminate "$device" com.growwithfreya.app >/dev/null 2>&1 || true
+}
+
+motion_back_on() {
+  motion_for_the_suite false
 }
 
 # A simulator driven for a long stretch starts leaving whole subtrees out of
@@ -42,24 +48,20 @@ if [ -n "$device" ] && [ "${MAESTRO_FRESH:-0}" = "1" ]; then
 fi
 
 if [ -n "$device" ]; then
-  motion_was=$(xcrun simctl spawn "$device" defaults read com.apple.Accessibility ReduceMotionEnabled 2>/dev/null || echo 0)
-  if [ "$motion_was" != "1" ]; then
-    xcrun simctl spawn "$device" defaults write com.apple.Accessibility ReduceMotionEnabled -bool true 2>/dev/null || true
-    # the app reads the setting as it starts, and the accessibility snapshot
-    # needs a moment to settle after the write
-    xcrun simctl terminate "$device" com.growwithfreya.app >/dev/null 2>&1 || true
-    sleep 3
-  fi
-  trap restore_motion EXIT INT TERM
-  maestro --device "$device" test "$@" .maestro
-  status=$?
-  restore_motion
+  trap motion_back_on EXIT INT TERM
+  motion_for_the_suite true
+  # the app reads the setting as it starts, and the accessibility snapshot
+  # needs a moment to settle after the write
+  sleep 3
+  status=0
+  maestro --device "$device" test "$@" "${flows[@]}" || status=$?
+  motion_back_on
   trap - EXIT INT TERM
   exit $status
 fi
 
 if command -v adb >/dev/null 2>&1 && [ -n "$(adb devices | sed -n '2p')" ]; then
-  exec maestro test "$@" .maestro
+  exec maestro test "$@" "${flows[@]}"
 fi
 
 echo "No device to test on. Boot a simulator or an emulator, or set MAESTRO_DEVICE=<id>." >&2

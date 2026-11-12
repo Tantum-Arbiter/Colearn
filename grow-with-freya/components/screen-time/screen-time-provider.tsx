@@ -55,7 +55,7 @@ const EXEMPT_SCREENS = ['sleep'];
 
 // Immersive screens where warning modals should NOT interrupt the user.
 // Warnings are queued and shown when the user returns to a non-immersive screen.
-const IMMERSIVE_SCREENS = ['story-reader', 'practise', 'freeplay'];
+const IMMERSIVE_SCREENS = ['story-reader', 'practise', 'freeplay', 'game'];
 
 export function ScreenTimeProvider({ children }: ScreenTimeProviderProps) {
   const { activeGuide } = useOwlGuide();

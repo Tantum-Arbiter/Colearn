@@ -12,6 +12,7 @@ import { SPACE_3, TYPE_ROLES, typeSize } from '@/components/child-ui/tokens';
  * tapped is the book they see waiting. A wash of night carries in from the
  * left so the words read over any artwork.
  */
+export const COVER_TITLE = { lines: 3, smallest: 0.6 } as const;
 export const TITLE_WASH_GRADIENT = ['rgba(4, 16, 47, 0.62)', 'rgba(4, 16, 47, 0.0)'] as const;
 
 interface CoverTitleProps {
@@ -34,7 +35,9 @@ export function CoverTitle({ title, testID = 'story-cover-title' }: CoverTitlePr
       <Text
         testID={testID}
         style={[styles.title, { fontSize: scaledFontSize(typeSize('cardTitle', isTablet)) }]}
-        numberOfLines={2}
+        numberOfLines={COVER_TITLE.lines}
+        adjustsFontSizeToFit
+        minimumFontScale={COVER_TITLE.smallest}
       >
         {title}
       </Text>
@@ -58,5 +61,8 @@ const styles = StyleSheet.create({
     color: TEXT_PRIMARY,
     fontFamily: Fonts.primary,
     fontWeight: TYPE_ROLES.cardTitle.weight,
+    textShadowColor: 'rgba(4, 16, 47, 0.8)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
 });

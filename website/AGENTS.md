@@ -1,6 +1,6 @@
 # Agent Operating Rules — `website` (Marketing / Legal Site)
 
-> Read this **after** the root `../CLAUDE.md`.
+> Read this **after** the root `../AGENTS.md`.
 > This is the **Next.js 15** marketing + legal site at `earlyroots.co.uk`.
 > Separate from the mobile app — different stack, different locales, different release cadence.
 
@@ -8,7 +8,7 @@
 
 ## 1. Communication
 
-Communication & code-display rules: see root `../CLAUDE.md` → **Communication & Code Display**.
+Communication & code-display rules: see root `../AGENTS.md` → **Communication & Code Display**.
 
 ---
 
@@ -32,7 +32,7 @@ Communication & code-display rules: see root `../CLAUDE.md` → **Communication 
 - **`next-intl`** for translations, **not** `react-i18next`. Different API.
 - **React 18** (not 19 like the mobile app).
 - **No subscription / auth flows here** — sign-in, payments, RevenueCat all live in the mobile app.
-- This site is the **canonical home for privacy policy, terms, and contact endpoints** — `privacy@earlyroots.co.uk`, `support@earlyroots.co.uk` (root CLAUDE.md).
+- This site is the **canonical home for privacy policy, terms, and contact endpoints** — `contact@earlyroots.co.uk` (root AGENTS.md).
 
 ---
 
@@ -63,7 +63,7 @@ When adding meaningful logic (anything beyond static page content):
 - Tailwind classes via `className` — no inline `style` props unless dynamic. Keep class lists readable: break long ones across lines with `clsx`/`cn` helpers if a helper already exists.
 - All user-facing strings go through `next-intl` — never hardcode English in JSX. Add to **all 8** `messages/*.json` files; fall back to English in code but keep parity in JSON.
 - Images: use `next/image` for everything in `public/` and `src/images/`. Provide explicit `width` and `height` or `fill` with a sized parent.
-- **Brand name** in user-facing text is always **"Early Roots"** (root CLAUDE.md).
+- **Brand name** in user-facing text is always **"Early Roots"** (root AGENTS.md).
 
 ---
 
@@ -96,7 +96,7 @@ Unverified claims must be marked: **"⚠️ UNVERIFIED — Unable to confirm thi
 
 ## 9. Commits
 
-Commit rules: see root `../CLAUDE.md` → **Commits**.
+Commit rules: see root `../AGENTS.md` → **Commits**.
 
 ---
 
@@ -124,5 +124,5 @@ npm run start
 ## 11. Out of Scope
 
 - **Do not add mobile-app features here** (auth, paywall, etc.) — this is a marketing site.
-- **Do not add analytics / advertising SDKs** without approval (root CLAUDE.md: no behavioural tracking).
+- **Do not add analytics / advertising SDKs** without approval (root AGENTS.md: no behavioural tracking).
 - **Do not add Sentry to this site** without a separate consent + privacy review.

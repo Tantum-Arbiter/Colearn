@@ -16,7 +16,7 @@ export const BUNDLED_STORIES: Story[] = [
     coverImage: '', // Placeholder - add actual asset path
     isAvailable: true,
     ageRange: '2-5',
-    duration: 8,
+    pageCount: 8,
     description: 'A gentle bedtime story about a little wombat getting ready for sleep with cozy snuggles and sweet dreams.',
     tags: ['adventure', 'bedtime', 'calming', 'animals'], // Wombat is an adventure book
     pages: [

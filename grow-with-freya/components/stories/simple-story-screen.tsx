@@ -14,6 +14,7 @@ interface SimpleStoryScreenProps {
   sectionRequest?: CatalogueSectionRequest;
   /** Opens the grown-ups' area from the profile page's settings control. */
   onOpenSettings?: () => void;
+  isActive?: boolean;
 }
 
 export function SimpleStoryScreen({
@@ -22,6 +23,7 @@ export function SimpleStoryScreen({
   initialMode,
   sectionRequest,
   onOpenSettings,
+  isActive,
 }: SimpleStoryScreenProps) {
   return (
     <StoryCatalogueScreen
@@ -29,6 +31,7 @@ export function SimpleStoryScreen({
       initialMode={(initialMode as CatalogueMode | null) ?? null}
       sectionRequest={sectionRequest}
       onOpenSettings={onOpenSettings}
+      isActive={isActive}
     />
   );
 }

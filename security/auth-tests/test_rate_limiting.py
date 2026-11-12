@@ -30,7 +30,7 @@ class TestRateLimiting:
         responses = []
         for i in range(15):
             response = attempt_google_auth(f"invalid_token_{i}")
-            if response:
+            if response is not None:
                 responses.append(response.status_code)
                 print(f"Request {i+1}: Status {response.status_code}")
 
@@ -56,7 +56,7 @@ class TestRateLimiting:
         # Send 70 requests rapidly
         for i in range(70):
             response = attempt_protected_endpoint("/api/stories", access_token=fake_token)
-            if response:
+            if response is not None:
                 responses.append(response.status_code)
 
         # Check if rate limiting is active
@@ -104,7 +104,7 @@ class TestBruteForceProtection:
         for i in range(20):
             response = attempt_google_auth(f"brute_force_attempt_{i}")
 
-            if response:
+            if response is not None:
                 if response.status_code == 429:
                     rate_limited = True
                     print(f"Rate limited after {i+1} attempts")
@@ -155,7 +155,7 @@ class TestTokenRefreshAbuse:
         
         for i in range(15):
             response = attempt_token_refresh(f"invalid_refresh_token_{i}")
-            if response:
+            if response is not None:
                 responses.append(response.status_code)
 
         if 429 not in responses:

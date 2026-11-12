@@ -28,6 +28,14 @@ public class HttpClientConfig {
                 .build();
     }
 
+    @Bean(name = "revenueCatRestTemplate")
+    public RestTemplate revenueCatRestTemplate(RestTemplateBuilder builder) {
+        return builder
+                .setConnectTimeout(Duration.ofSeconds(1))
+                .setReadTimeout(Duration.ofSeconds(2))
+                .build();
+    }
+
     private ClientHttpRequestInterceptor requestIdInterceptor() {
         return (request, body, execution) -> {
             String rid = currentRequestId();

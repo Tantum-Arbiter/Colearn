@@ -1,4 +1,4 @@
-import { createAudioPlayer, setAudioModeAsync, AudioPlayer } from 'expo-audio';
+import { createAudioPlayer, setAudioModeAsync, AudioPlayer, type AudioStatus } from 'expo-audio';
 import { Logger } from '@/utils/logger';
 
 const log = Logger.create('BGMusic');
@@ -428,24 +428,13 @@ class BackgroundMusicService {
     }
   }
 
-  private onPlaybackStatusUpdate = (status: { playing: boolean; error?: string }) => {
+  private onPlaybackStatusUpdate = (status: AudioStatus) => {
     try {
       // Only update isPlaying if it's different from current state
       // This prevents race conditions where manual pause/play calls get overridden
       if (this.isPlaying !== status.playing) {
         log.debug(`Status: ${this.isPlaying} → ${status.playing}`);
         this.isPlaying = status.playing;
-      }
-
-      if (status.error) {
-        log.warn('Playback error:', status.error);
-        this.isPlaying = false;
-
-        // Clear any fade operations on error
-        if (this.fadeTimer) {
-          clearTimeout(this.fadeTimer);
-          this.fadeTimer = null;
-        }
       }
     } catch (error) {
       log.warn('Error in playback status update:', error);

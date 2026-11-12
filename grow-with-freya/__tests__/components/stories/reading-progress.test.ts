@@ -4,7 +4,7 @@
  * the first page of the story, past the cover.
  */
 
-import { readingFraction, resumePageIndex } from '@/components/stories/reading-progress';
+import { readingCount, readingFraction, resumePageIndex } from '@/components/stories/reading-progress';
 
 describe('resumePageIndex', () => {
   it('should open where the child left off', () => {
@@ -26,6 +26,17 @@ describe('resumePageIndex', () => {
     const underTest = resumePageIndex({ skipCoverPage: true, savedPlace: { pageIndex, totalPages: 9 }, totalPages: 9 });
 
     expect(underTest).toBe(1);
+  });
+
+  it.each([
+    ['a page picked on the story card, over the saved place', 6, 6],
+    ['the first page when picked', 1, 1],
+    ['no further than the last page', 20, 8],
+    ['no earlier than the first page past the cover', 0, 1],
+  ])('should open at %s', (_case, startPage, expected) => {
+    const underTest = resumePageIndex({ skipCoverPage: true, savedPlace: { pageIndex: 3, totalPages: 9 }, totalPages: 9, startPage });
+
+    expect(underTest).toBe(expected);
   });
 
   it('should open at the cover when the cover is not being skipped', () => {
@@ -73,3 +84,16 @@ describe('readingFraction', () => {
     expect(underTest).toBe(0);
   });
 });
+
+describe('readingCount', () => {
+  it.each([
+    [{ pageIndex: 1, totalPages: 16 }, { page: 1, of: 15 }],
+    [{ pageIndex: 3, totalPages: 9 }, { page: 3, of: 8 }],
+    [{ pageIndex: 20, totalPages: 9 }, { page: 8, of: 8 }],
+    [{ pageIndex: -2, totalPages: 9 }, { page: 0, of: 8 }],
+    [{ pageIndex: 0, totalPages: 0 }, { page: 0, of: 0 }],
+  ])('counts pages as the reader does, the cover not among them: %o', (place, count) => {
+    expect(readingCount(place)).toEqual(count);
+  });
+});
+

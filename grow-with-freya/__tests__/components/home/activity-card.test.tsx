@@ -132,11 +132,11 @@ describe('ActivityCard', () => {
 
   describe('choosing', () => {
     it('should hand back the whole activity, not just its id', () => {
-      const { onPress, view } = renderCard({ activity: HOME_ACTIVITIES[2] });
+      const { onPress, view } = renderCard({ activity: HOME_ACTIVITIES[1] });
 
       fireEvent.press(byTestId(view, 'activity-card')[0]);
 
-      expect(onPress).toHaveBeenCalledWith(HOME_ACTIVITIES[2]);
+      expect(onPress).toHaveBeenCalledWith(HOME_ACTIVITIES[1]);
     });
 
     it('should expose exactly one target so nothing inside can be missed', () => {

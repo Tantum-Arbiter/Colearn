@@ -179,6 +179,10 @@ export function seatTransform(
   };
 }
 
+export const STORY_STRAIGHT_IN = {
+  glideMs: 520,
+} as const;
+
 /**
  * Tile to card: the shelf falls into shadow while the story card rises from
  * the bottom of the screen with the tapped book on its cover, and the card's

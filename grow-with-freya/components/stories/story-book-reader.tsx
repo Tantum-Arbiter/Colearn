@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, Pressable, Dimensions, StatusBar, ImageBackground, ScrollView, TextInput, Alert, KeyboardAvoidingView, Platform, BackHandler, useWindowDimensions, Image as RNImage, AppState } from 'react-native';
+import React, { useState, useEffect, useLayoutEffect, useMemo, useCallback, useRef } from 'react';
+import { View, Text, StyleSheet, Pressable, Dimensions, StatusBar, ImageBackground, ScrollView, TextInput, Alert, KeyboardAvoidingView, Platform, BackHandler, useWindowDimensions, Image as RNImage, AppState, type LayoutChangeEvent } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,21 +16,35 @@ import Animated, {
 import * as ScreenOrientation from 'expo-screen-orientation';
 import { applyDefaultOrientation, isTabletDevice } from '@/hooks/use-story-orientation';
 import { useTranslation } from 'react-i18next';
-import { Story, StoryPage, STORY_TAGS, InteractiveElement, getLocalizedText, resolveAgeGroup, MusicChallenge, JigsawPuzzle, ReadingChallenge } from '@/types/story';
+import { Story, StoryPage, STORY_TAGS, InteractiveElement, getLocalizedText, resolveAgeGroup, MusicChallenge, type AgeGroupText, type ChallengeStateAfter } from '@/types/story';
 import type { SupportedLanguage } from '@/services/i18n';
 import { SUPPORTED_LANGUAGES, setStoredLanguage } from '@/services/i18n';
 import { InteractiveElementComponent } from './interactive-element';
-import { narrationLayout } from './narration-layout';
+import { captionScale, narrationLayout, readerEdge } from './narration-layout';
 import { MusicChallengeUI } from './music-challenge-ui';
-import { JigsawPuzzleUI } from './jigsaw-puzzle-ui';
-import { ReadingChallengeUI } from './reading-challenge-ui';
+import { LearningChallengeHost, type ChallengeResult } from './learning-challenge-host';
+import { TipsBadge, TipsPanel, tipsPanelLayout, type ChallengeTips } from './learning-tips';
+import { challengeFocus, coversMaster, focusFrame, patchFrame, readerArtFrame } from './page-frame';
+import { SOUND_WORD_COLOR, SOUND_WORD_SCALE, wordText, type StoryWord } from './sound-words';
+import { FADE_IN_MS, FADE_OUT_MS, paginate, ROWS_PER_PAGE, textLines, useTextPaging, type LineBreaks, type PageWord } from './text-pages';
+import { TextMeasure } from './text-measure';
+import { PageProgressRing } from './page-progress-ring';
+import { PagePill } from './page-pill';
+import { PlayPill } from './play-pill';
+import { MENU_INK, MENU_WIDTH, ReaderMenu, ReaderMenuPanel, menuPlacement } from './reader-menu';
+import { LanguagePanel, type LanguageChoice } from './language-panel';
+import { AudioSettings } from '@/components/ui/audio-settings-panel';
+import { StoryCloud, cloudInset } from './story-cloud';
+import { bookTheme, storyHasMusic } from './catalogue/catalogue-story';
+import { COIN_RIM, ReaderCoin } from '@/components/child-ui/reader-coin';
+import { isFamilyPlayable } from '@/components/experience/engines';
+import { bandFor } from '@/components/experience/experience-page';
+import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { InstrumentPickerOverlay } from './instrument-picker-overlay';
 import { MusicSheetOverlay } from './music-sheet-overlay';
 import { ARRIVAL_TOTAL_MS, type SheetRect } from '@/services/sheet-flight';
 import { MusicBackdrop } from '@/components/music/music-backdrop';
 import { useMusicChallenge } from '@/hooks/use-music-challenge';
-import { useJigsawChallenge } from '@/hooks/use-jigsaw-challenge';
-import { useReadingChallenge } from '@/hooks/use-reading-challenge';
 import { useBreathDetector } from '@/hooks/use-breath-detector';
 import { getInstrument } from '@/services/music-asset-registry';
 import {
@@ -43,10 +57,10 @@ import {
 import { Fonts } from '@/constants/theme';
 import { useStoryTransition } from '@/contexts/story-transition-context';
 import { MusicControl } from '../ui/music-control';
-import { AudioControlModal } from '../ui/audio-control-modal';
 import { ParentsOnlyModal } from '../ui/parents-only-modal';
 import { SubscriptionOverlay } from '../ui/subscription-overlay';
 import { useAppStore } from '@/store/app-store';
+import { useAchievementEvents } from '@/components/progress/use-achievement-events';
 import { resumePageIndex } from './reading-progress';
 import { useAccessibility, TEXT_SIZE_OPTIONS } from '@/hooks/use-accessibility';
 import { useParentsOnlyChallenge } from '@/hooks/use-parents-only-challenge';
@@ -64,6 +78,15 @@ const log = Logger.create('StoryBookReader');
 
 /** How long the instrument overlay takes to rise into place, and to leave. */
 const MUSIC_PRACTICE_ANIM_MS = 300;
+const READER_LANGUAGES: readonly LanguageChoice[] = SUPPORTED_LANGUAGES.map(({ code, nativeName, flag }) => ({ code, name: nativeName, flag }));
+export const NARRATION_SLIDE_MS = 360;
+const NARRATION_SLIDE_SHARE = 0.5;
+const TIPS_BADGE = 34;
+const SCENE_BAND_BLUR = 24;
+export const PAGE_TEXT_FADE_MS = FADE_OUT_MS;
+export const PAGE_IMAGE_FADE_MS = PAGE_TEXT_FADE_MS + FADE_IN_MS;
+const PAGE_PILL_HEIGHT = 34;
+export const CHROME_EXIT_MS = 320;
 
 
 
@@ -73,6 +96,7 @@ interface StoryBookReaderProps {
   initialVoiceOver?: VoiceOver | null;
   skipCoverPage?: boolean;
   skipInitialFadeIn?: boolean; // Skip fade-in when transitioning from overlay (image already visible)
+  startPageIndex?: number;
   onExit: () => void;
 }
 
@@ -82,6 +106,7 @@ export function StoryBookReader({
   initialVoiceOver = null,
   skipCoverPage = false,
   skipInitialFadeIn = false,
+  startPageIndex,
   onExit,
 }: StoryBookReaderProps) {
   const insets = useSafeAreaInsets();
@@ -124,12 +149,15 @@ export function StoryBookReader({
 
   // Start from page 1 if skipping cover, otherwise start from cover (page 0)
   const savedPlace = useAppStore((state) => state.storyProgress[story.id]);
+  const achievementEvents = useAchievementEvents(story);
   const [currentPageIndex, setCurrentPageIndex] = useState(() => resumePageIndex({
     skipCoverPage,
     savedPlace,
     totalPages: story.pages?.length ?? 0,
+    startPage: startPageIndex,
   }));
   const [previousPageIndex, setPreviousPageIndex] = useState<number | null>(null); // For crossfade
+  const [previousOutcome, setPreviousOutcome] = useState<ChallengeStateAfter | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
   // Analytics: track time spent in story reader
@@ -182,7 +210,7 @@ export function StoryBookReader({
   const textScrollViewRef = useRef<ScrollView>(null);
 
   // Audio control modal - rendered at root level to avoid iOS crash with absolute positioning
-  const [showAudioControlModal, setShowAudioControlModal] = useState(false);
+  const [showAudioSettings, setShowAudioSettings] = useState(false);
 
   // Parents Only modal - using shared hook
   const parentsOnly = useParentsOnlyChallenge();
@@ -200,6 +228,15 @@ export function StoryBookReader({
   const [musicChallengeCompleted, setMusicChallengeCompleted] = useState<Record<number, boolean>>({});
   // Music challenge phase: idle → preview (music sheet) → playing (instrument UI)
   const [musicChallengePhase, setMusicChallengePhase] = useState<'idle' | 'preview' | 'playing'>('idle');
+  const [learningChallengeOpenOn, setLearningChallengeOpenOn] = useState<number | null>(null);
+  // The page whose challenge was just played or skipped; forgotten as soon as the page changes,
+  // so coming back to a challenge page offers the game again
+  const [learningChallengePlayedOn, setLearningChallengePlayedOn] = useState<number | null>(null);
+  const [learningTips, setLearningTips] = useState<ChallengeTips | null>(null);
+  const [learningTipsOpen, setLearningTipsOpen] = useState(false);
+  const [learningStoryText, setLearningStoryText] = useState<AgeGroupText | null>(null);
+  const [learningOutcome, setLearningOutcome] = useState<ChallengeStateAfter | null>(null);
+  const reduceMotion = useReducedMotion();
   // Track the background music volume while preview/playing overlays are active.
   const preMusicChallengeVolumeRef = useRef<number | null>(null);
   const musicVolumeFadeTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -274,6 +311,37 @@ export function StoryBookReader({
     return page?.interactionType === 'music_challenge' && currentMusicChallenge?.enabled;
   }, [story.pages, currentPageIndex, currentMusicChallenge?.enabled]);
 
+  const isLearningChallengePage = useMemo(() => {
+    const page = (story.pages || [])[currentPageIndex];
+    return page?.interactionType === 'learning_challenge' && isFamilyPlayable(page.learningChallenge?.family);
+  }, [story.pages, currentPageIndex]);
+
+  const learningChallengeOpen = learningChallengeOpenOn === currentPageIndex;
+  const [learningChallengeVisitedPage, setLearningChallengeVisitedPage] = useState(currentPageIndex);
+  if (learningChallengeVisitedPage !== currentPageIndex) {
+    setLearningOutcome(null);
+    setLearningChallengeVisitedPage(currentPageIndex);
+    setLearningChallengePlayedOn(null);
+    setLearningTips(null);
+    setLearningTipsOpen(false);
+    setLearningStoryText(null);
+  }
+  const narrationAway = learningChallengeOpen || (learningTips !== null && learningTipsOpen);
+
+  const handleOpenLearningChallenge = useCallback(() => {
+    if (playbackPlayer) {
+      try {
+        playbackPlayer.pause();
+        playbackPlayer.release();
+      } catch {
+        setPlaybackPlayer(null);
+      }
+      setPlaybackPlayer(null);
+      setIsPlaying(false);
+    }
+    setLearningChallengeOpenOn(currentPageIndex);
+  }, [playbackPlayer, currentPageIndex]);
+
   // Resolve the current instrument's display name for the music sheet
   const currentInstrumentDef = useMemo(() => {
     const instrumentId = selectedInstrumentId || currentMusicChallenge?.instrumentId;
@@ -318,93 +386,12 @@ export function StoryBookReader({
           musicChallenge.failedAttempts
         );
         AnalyticsService.trackMusicChallengeCompleted(story.id, currentMusicChallenge.instrumentId);
+        achievementEvents.challengeDone(currentPage.id, 'music');
       }
     },
     effectiveNoteVolume,
     audioSessionControl,
   );
-
-  // ---- Jigsaw Puzzle support ----
-  const currentJigsawConfig = useMemo(() => {
-    const page = (story.pages || [])[currentPageIndex];
-    return page?.jigsawPuzzle;
-  }, [story.pages, currentPageIndex]);
-
-  const isJigsawPuzzlePage = useMemo(() => {
-    const page = (story.pages || [])[currentPageIndex];
-    return page?.interactionType === 'jigsaw_puzzle' && currentJigsawConfig?.enabled;
-  }, [story.pages, currentPageIndex, currentJigsawConfig?.enabled]);
-
-  const [jigsawCompleted, setJigsawCompleted] = useState<Record<number, boolean>>({});
-
-  const jigsawChallenge = useJigsawChallenge(
-    isJigsawPuzzlePage ? currentJigsawConfig : undefined,
-    () => {
-      // Don't mark as completed here -let the celebration overlay show first.
-      // Completion is marked in handleJigsawContinue after user taps Continue.
-    },
-  );
-
-  /** Whether the jigsaw is actively playing (blocks navigation) */
-  const isJigsawActive = isJigsawPuzzlePage && (jigsawChallenge.state === 'playing' || jigsawChallenge.state === 'completed');
-
-  const handleBeginJigsaw = useCallback(() => {
-    if (!isJigsawPuzzlePage || !currentJigsawConfig?.enabled) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    jigsawChallenge.start();
-  }, [isJigsawPuzzlePage, currentJigsawConfig, jigsawChallenge]);
-
-  const handleJigsawReset = useCallback(() => {
-    jigsawChallenge.reset();
-  }, [jigsawChallenge]);
-
-  const handleJigsawContinue = useCallback(() => {
-    setJigsawCompleted(prev => ({ ...prev, [currentPageIndex]: true }));
-    jigsawChallenge.cleanup();
-  }, [jigsawChallenge, currentPageIndex]);
-
-  // ---- Reading Challenge support ----
-  const currentReadingConfig = useMemo(() => {
-    const page = (story.pages || [])[currentPageIndex];
-    return page?.readingChallenge;
-  }, [story.pages, currentPageIndex]);
-
-  const isReadingChallengePage = useMemo(() => {
-    const page = (story.pages || [])[currentPageIndex];
-    return page?.interactionType === 'reading_challenge' && currentReadingConfig?.enabled;
-  }, [story.pages, currentPageIndex, currentReadingConfig?.enabled]);
-
-  const currentPageText = useMemo(() => {
-    const page = (story.pages || [])[currentPageIndex];
-    return page?.text ?? '';
-  }, [story.pages, currentPageIndex]);
-
-  const [readingCompleted, setReadingCompleted] = useState<Record<number, boolean>>({});
-
-  const readingChallenge = useReadingChallenge(
-    isReadingChallengePage ? currentReadingConfig : undefined,
-    currentPageText,
-    () => {
-      // Completion is marked in handleReadingContinue after user taps Continue.
-    },
-  );
-
-  const isReadingActive = isReadingChallengePage && (readingChallenge.state === 'playing' || readingChallenge.state === 'completed');
-
-  const handleBeginReading = useCallback(() => {
-    if (!isReadingChallengePage || !currentReadingConfig?.enabled) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    readingChallenge.start();
-  }, [isReadingChallengePage, currentReadingConfig, readingChallenge]);
-
-  const handleReadingReset = useCallback(() => {
-    readingChallenge.reset();
-  }, [readingChallenge]);
-
-  const handleReadingContinue = useCallback(() => {
-    setReadingCompleted(prev => ({ ...prev, [currentPageIndex]: true }));
-    readingChallenge.cleanup();
-  }, [readingChallenge, currentPageIndex]);
 
   // Sync breath detector state to music challenge.
   // Only in blow mode -in press mode, MusicChallengeUI sets breathActive(true)
@@ -647,6 +634,14 @@ export function StoryBookReader({
 
     const onBackPress = () => {
       // 1. Close any open overlay first
+      if (showCompareLanguageModal) {
+        setShowCompareLanguageModal(false);
+        return true;
+      }
+      if (showChangeLanguageModal) {
+        setShowChangeLanguageModal(false);
+        return true;
+      }
       if (showSettingsMenu) {
         setShowSettingsMenu(false);
         setActiveSubmenu(null);
@@ -693,6 +688,7 @@ export function StoryBookReader({
   }, [
     showSettingsMenu, showPagePreview, showTipsOverlay, showMusicSheet,
     showInstrumentPicker, musicChallengePhase, currentPageIndex, isExiting,
+    showCompareLanguageModal, showChangeLanguageModal,
   ]);
 
   // Animate the music practice overlay down off screen, then reset state.
@@ -739,7 +735,6 @@ export function StoryBookReader({
   const setTextSizeScale = useAppStore((state) => state.setTextSizeScale);
   const childAgeInMonths = useAppStore((state) => state.childAgeInMonths);
   const setStoryProgress = useAppStore((state) => state.setStoryProgress);
-  const markStoryCompleted = useAppStore((state) => state.markStoryCompleted);
   const childAgeGroup = resolveAgeGroup(childAgeInMonths);
   const markStoryAsRead = useAppStore((state) => state.markStoryAsRead);
   const recordReadingSession = useAppStore((state) => state.recordReadingSession);
@@ -968,7 +963,7 @@ export function StoryBookReader({
     // Prevent double-tap on finish button
     if (isExiting) return;
 
-    markStoryCompleted(story.id);
+    achievementEvents.storyFinished();
 
     try {
       // In record mode, show completion message and return to mode selection
@@ -1062,6 +1057,13 @@ export function StoryBookReader({
       // Restore background music volume if reduced for music challenge
       restoreMusicVolume();
 
+      setShowSettingsMenu(false);
+      setLearningTipsOpen(false);
+      if (!reduceMotion) {
+        chromeAway.value = withTiming(1, { duration: CHROME_EXIT_MS, easing: Easing.in(Easing.cubic) });
+        await new Promise(resolve => setTimeout(resolve, CHROME_EXIT_MS));
+      }
+
       // Start the exit animation FIRST while still in landscape
       // The shrink animation will happen, then we rotate, then cover closes and returns to tile
       // This prevents the weird visual effect of rotating before shrinking
@@ -1110,7 +1112,9 @@ export function StoryBookReader({
   const leftButtonSlide = useSharedValue(0);
   const rightButtonSlide = useSharedValue(0);
   const textBoxSlide = useSharedValue(0);
+  const narrationAwayProgress = useSharedValue(0);
   const uiOpacity = useSharedValue(1);
+  const chromeAway = useSharedValue(0);
 
 
 
@@ -1677,7 +1681,7 @@ export function StoryBookReader({
   // Auto-advance to next page after narration finishes (2 second delay) - only if auto-play is enabled
   // Don't auto-advance on music challenge pages -wait for user to interact with Begin Playing
   useEffect(() => {
-    if (shouldAutoAdvance && readingMode === 'narrate' && currentPageIndex < pages.length - 1 && narrationAutoPlay && !isMusicChallengePage) {
+    if (shouldAutoAdvance && readingMode === 'narrate' && currentPageIndex < pages.length - 1 && narrationAutoPlay && !isMusicChallengePage && !isLearningChallengePage) {
       const advanceTimer = setTimeout(() => {
         setShouldAutoAdvance(false);
         handleNextPage();
@@ -1688,7 +1692,7 @@ export function StoryBookReader({
       setShouldAutoAdvance(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [shouldAutoAdvance, narrationAutoPlay, isMusicChallengePage]);
+  }, [shouldAutoAdvance, narrationAutoPlay, isMusicChallengePage, isLearningChallengePage]);
 
   // Animate UI elements when page preview opens/closes
   useEffect(() => {
@@ -1726,35 +1730,116 @@ export function StoryBookReader({
     opacity: uiOpacity.value,
   }));
 
+  useEffect(() => {
+    const target = narrationAway ? 1 : 0;
+    narrationAwayProgress.value = reduceMotion ? target : withTiming(target, { duration: NARRATION_SLIDE_MS, easing: Easing.inOut(Easing.cubic) });
+  }, [narrationAway, reduceMotion, narrationAwayProgress]);
+
   const textBoxAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: textBoxSlide.value }],
-    opacity: uiOpacity.value,
+    transform: [{ translateY: textBoxSlide.value + narrationAwayProgress.value * screenHeight * NARRATION_SLIDE_SHARE + chromeAway.value * screenHeight * NARRATION_SLIDE_SHARE }],
+    opacity: uiOpacity.value * (1 - narrationAwayProgress.value),
   }));
 
+  const chromeLift = readerEdge(insets.top) + scaledButtonSize(50) * 2;
+  const chromeUpStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: -chromeAway.value * chromeLift }],
+  }));
+  const chromeDownStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: chromeAway.value * screenHeight * NARRATION_SLIDE_SHARE }],
+  }));
+
+  const liveText = getLocalizedText(undefined, learningStoryText ? '' : currentPage?.text || '', isCompareLanguageEnabled ? sessionLanguage : currentLanguage, learningStoryText ?? currentPage?.localizedText, childAgeGroup) || '';
+  const [textHold, setTextHold] = useState<{ index: number; text: string } | null>(null);
+  const mainText = textHold?.text ?? liveText;
+  const textPageIndex = textHold?.index ?? currentPageIndex;
+  const pagedText = textPageIndex > 0 && readingMode !== 'record' && !isCompareLanguageEnabled;
+  const mainLines = useMemo(() => textLines(mainText), [mainText]);
+  const liveLines = useMemo(() => textLines(liveText), [liveText]);
+  const [measuredBreaks, setMeasuredBreaks] = useState<Record<string, LineBreaks>>({});
+  const textPagesList = useMemo(() => paginate(mainLines, measuredBreaks[mainText] ?? null), [mainLines, measuredBreaks, mainText]);
+  const paging = useTextPaging({
+    pages: pagedText ? textPagesList : [],
+    resetKey: `${textPageIndex}|${mainText}`,
+    reduceMotion,
+    voiceFraction: pagedText && readingMode === 'narrate' && isPlaying && narrationDuration > 0 ? narrationProgress / narrationDuration : null,
+  });
+  const ringShown = pagedText && textPagesList.length > 1;
+  const onFinalLines = textPageIndex === pages.length - 1 && (!pagedText || paging.shown >= textPagesList.length - 1);
+  const narrationBox = narrationLayout(screenWidth, screenHeight, insets, isTablet);
+  const captionSize = captionScale(screenWidth, screenHeight, insets, isTablet);
+  const wholeScene = isTablet && screenHeight > screenWidth;
+  const tipsLayout = tipsPanelLayout({ width: screenWidth, height: screenHeight }, insets, scaledButtonSize(50), isTablet);
+  const menuScale = scaledButtonSize(100) / 100;
+  const menuWidth = MENU_WIDTH * menuScale;
+  const menuPlace = menuPlacement(screenWidth, readerEdge(insets.right), scaledButtonSize(50), menuWidth, Math.max(insets.top + 20, 20) + scaledButtonSize(50), insets.right);
+  const menuTop = menuPlace.top;
+  const menuRight = menuPlace.right;
+  const menuMaxHeight = screenHeight > 0 ? screenHeight - menuTop - Math.max(insets.bottom, 12) : undefined;
+  const cloudTheme = bookTheme(story.tags) === 'music' || storyHasMusic(story) ? 'music' : 'stories';
+  const [narrationHeight, setNarrationHeight] = useState(0);
+  const handleNarrationLayout = useCallback((event: LayoutChangeEvent) => {
+    const { height } = event.nativeEvent.layout;
+    setNarrationHeight((previous) => (previous === height ? previous : height));
+  }, []);
+  const backUnavailable = (currentPageIndex <= 1 && paging.shown === 0) || (readingMode === 'record' && isRecording);
+  const nextUnavailable = isExiting || (readingMode === 'record' && (isRecording || (currentPageIndex > 0 && !tempRecordingUri && !currentVoiceOver?.pageRecordings[currentPageIndex])));
+  const handleMeasuredBreaks = useCallback((breaks: LineBreaks) => setMeasuredBreaks((known) => ({ ...known, [liveText]: breaks })), [liveText]);
+
   // Function to render just the image layer (for background/previous page - no animation)
-  const renderPageImage = (page: any, withAnimation = true) => {
+  const renderPageImage = (page: any, withAnimation: boolean, outcome: ChallengeStateAfter | null) => {
     if (!page || !page.backgroundImage) return null;
 
     const isCoverPage = page.pageNumber === 0;
     const baseScale = isTablet ? 1.35 : 1.8;
     const imageScale = isCoverPage ? baseScale * 0.99 : baseScale;
+    // Phase 12 books are full-screen 4:3 masters drawn for a centred cover fit, no extra zoom.
+    const coverFit = story.displayFit === 'cover';
+    const art = coverFit ? readerArtFrame({ width: screenWidth, height: screenHeight }, challengeFocus(page.learningChallenge), isTablet) : null;
+    const pageSource = typeof page.backgroundImage === 'string' ? { uri: page.backgroundImage } : page.backgroundImage;
+    const outcomeSource = outcome ? (typeof outcome.image === 'string' ? { uri: outcome.image } : outcome.image) : null;
 
     // All images are loaded from local cache after batch sync - no authenticated fetching needed
     const imageContent = (
       <>
+        {wholeScene ? (
+          <>
+            <Image
+              testID="story-page-scene-bands"
+              source={outcome && outcomeSource && coversMaster(outcome) ? outcomeSource : pageSource}
+              style={StyleSheet.absoluteFill}
+              contentFit="cover"
+              blurRadius={SCENE_BAND_BLUR}
+              transition={0}
+              cachePolicy="memory-disk"
+              accessible={false}
+            />
+            <View style={[StyleSheet.absoluteFill, styles.sceneBandShade]} pointerEvents="none" />
+          </>
+        ) : null}
         <Image
-          source={typeof page.backgroundImage === 'string' ? { uri: page.backgroundImage } : page.backgroundImage}
+          source={pageSource}
           style={[
             styles.backgroundImageStyle,
-            { width: '100%', height: '100%', transform: [{ scale: imageScale }] }
+            art ? { position: 'absolute', left: art.left, top: art.top, width: art.width, height: art.height } : { width: '100%', height: '100%', transform: [{ scale: imageScale }] }
           ]}
-          contentFit="contain"
+          contentFit={coverFit ? 'cover' : 'contain'}
           transition={0}
           cachePolicy="memory-disk"
           onError={(error) => {
             log.error(`Page ${page.pageNumber}: Background image error:`, JSON.stringify(error));
           }}
         />
+        {outcome && outcomeSource ? (
+          <Image
+            testID="learning-outcome-picture"
+            source={outcomeSource}
+            style={{ position: 'absolute', ...patchFrame(outcome, art ?? { left: 0, top: 0, width: screenWidth, height: screenHeight }) }}
+            contentFit="contain"
+            transition={0}
+            cachePolicy="memory-disk"
+            accessible={false}
+          />
+        ) : null}
         {/* Character overlay */}
         {page.characterImage && (
           <Image
@@ -1787,8 +1872,32 @@ export function StoryBookReader({
   };
 
   // Function to render text with word highlighting
-  const renderTextWithHighlight = (
-    text: string,
+  const renderWordText = (pieces: StoryWord, fontSize: number, lineHeight: number, baseStyle: any, isHighlighted: boolean) => (
+    <Text
+      style={[
+        baseStyle,
+        {
+          fontSize: fontSize,
+          lineHeight: lineHeight,
+          backgroundColor: isHighlighted ? '#1e3a8a' : 'transparent',
+          color: isHighlighted ? '#ffffff' : undefined,
+          paddingHorizontal: isHighlighted ? 4 : 0,
+          borderRadius: isHighlighted ? 4 : 0,
+        }
+      ]}
+    >
+      {pieces.some((piece) => piece.sound)
+        ? pieces.map((piece, pieceIndex) => (piece.sound ? (
+          <Text key={pieceIndex} style={[styles.soundWord, { fontSize: fontSize * SOUND_WORD_SCALE }, isHighlighted && { color: '#ffffff' }]}>
+            {piece.text}
+          </Text>
+        ) : piece.text))
+        : wordText(pieces)}
+    </Text>
+  );
+
+  const renderWordRows = (
+    rows: PageWord[][],
     fontSize: number,
     lineHeight: number,
     baseStyle: any,
@@ -1798,70 +1907,50 @@ export function StoryBookReader({
     const highlightedWord = boxType === 'blue' ? highlightedWordBlue : highlightedWordWhite;
     const setHighlightedWord = boxType === 'blue' ? setHighlightedWordBlue : setHighlightedWordWhite;
 
-    // Split by newlines first to preserve line breaks
-    const lines = text.split('\n');
-    let wordIndex = 0; // Global word index across all lines
-
     return (
       <Animated.View style={[animatedStyle]}>
         <View style={{ flexDirection: 'column', alignItems: 'center' }}>
-          {lines.map((line, lineIdx) => {
-            // Split each line by whitespace but keep the whitespace
-            const words = line.split(/(\s+)/);
+          {rows.map((row, rowIdx) => (
+            <View key={`line-${rowIdx}`} style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center' }}>
+              {row.map((item, position) => {
+                const word = wordText(item.pieces);
+                const isWhitespace = item.index < 0;
+                const isHighlighted = !isWhitespace && highlightedWord?.index === item.index && highlightedWord?.word === word;
 
-            return (
-              <View key={`line-${lineIdx}`} style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center' }}>
-                {words.map((word) => {
-                  const isWhitespace = /^\s+$/.test(word);
-                  // Check if this specific word at this index is highlighted
-                  const isHighlighted = !isWhitespace && highlightedWord?.index === wordIndex && highlightedWord?.word === word;
-
-                  const currentWordIndex = wordIndex;
-                  if (!isWhitespace) {
-                    wordIndex++;
-                  }
-
-                  return (
-                    <Pressable
-                      key={`${boxType}-${currentWordIndex}-${word}`}
-                      onPress={() => {
-                        if (!isWhitespace) {
-                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                          // Toggle highlight - only in this box, using index as unique identifier
-                          if (highlightedWord?.index === currentWordIndex && highlightedWord?.word === word) {
-                            setHighlightedWord(null);
-                          } else {
-                            setHighlightedWord({ word, index: currentWordIndex });
-                          }
+                return (
+                  <Pressable
+                    key={`${boxType}-${rowIdx}-${position}-${word}`}
+                    onPress={() => {
+                      if (!isWhitespace) {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        if (highlightedWord?.index === item.index && highlightedWord?.word === word) {
+                          setHighlightedWord(null);
+                        } else {
+                          setHighlightedWord({ word, index: item.index });
                         }
-                      }}
-                      disabled={isWhitespace}
-                    >
-                      <Text
-                        style={[
-                          baseStyle,
-                          {
-                            fontSize: fontSize,
-                            lineHeight: lineHeight,
-                            backgroundColor: isHighlighted ? '#1e3a8a' : 'transparent',
-                            color: isHighlighted ? '#ffffff' : undefined,
-                            paddingHorizontal: isHighlighted ? 4 : 0,
-                            borderRadius: isHighlighted ? 4 : 0,
-                          }
-                        ]}
-                      >
-                        {word}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            );
-          })}
+                      }
+                    }}
+                    disabled={isWhitespace}
+                  >
+                    {renderWordText(item.pieces, fontSize, lineHeight, baseStyle, isHighlighted)}
+                  </Pressable>
+                );
+              })}
+            </View>
+          ))}
         </View>
       </Animated.View>
     );
   };
+
+  const renderTextWithHighlight = (
+    text: string,
+    fontSize: number,
+    lineHeight: number,
+    baseStyle: any,
+    animatedStyle: any,
+    boxType: 'blue' | 'white'
+  ) => renderWordRows(textLines(text).map((line) => line.words), fontSize, lineHeight, baseStyle, animatedStyle, boxType);
 
   // Function to render page content
   const renderPageContent = (page: any, isNextPage = false) => {
@@ -1877,10 +1966,10 @@ export function StoryBookReader({
           ]}>
             {/* Previous page image - stays at full opacity during crossfade */}
             {previousPage && previousPage.backgroundImage && (
-              renderPageImage(previousPage, false)
+              renderPageImage(previousPage, false, previousOutcome)
             )}
             {/* Current page image - fades in on top */}
-            {renderPageImage(page, true)}
+            {renderPageImage(page, true, learningOutcome)}
 
             {/* Interactive Elements - Props that can be tapped to reveal */}
             {page.interactiveElements && page.interactiveElements.length > 0 && (
@@ -1940,41 +2029,47 @@ export function StoryBookReader({
               </Animated.View>
             )}
 
-            {/* Jigsaw Puzzle - keep mounted during completion so celebration overlay shows */}
-            {!isNextPage && page.interactionType === 'jigsaw_puzzle' && page.jigsawPuzzle?.enabled && (
-              <JigsawPuzzleUI
-                challenge={jigsawChallenge}
-                imageSource={typeof page.backgroundImage === 'string' ? { uri: page.backgroundImage } : page.backgroundImage}
-                onReset={handleJigsawReset}
-                onContinue={handleJigsawContinue}
-              />
-            )}
-
-            {/* Reading Challenge - keep mounted during completion so celebration overlay shows */}
-            {!isNextPage && page.interactionType === 'reading_challenge' && page.readingChallenge?.enabled && (
-              <ReadingChallengeUI
-                challenge={readingChallenge}
-                onReset={handleReadingReset}
-                onContinue={handleReadingContinue}
-                onSkip={page.readingChallenge.allowSkip ? () => readingChallenge.skip() : undefined}
-                allowSkip={page.readingChallenge.allowSkip}
-              />
+            {!isNextPage && isLearningChallengePage && learningChallengeOpen && page.learningChallenge && (
+              <View style={styles.learningChallengeOverlay} testID="learning-challenge-overlay">
+                <LearningChallengeHost
+                  challenge={page.learningChallenge}
+                  band={bandFor(childAgeInMonths)}
+                  language={currentLanguage}
+                  ageGroup={childAgeGroup}
+                  screen={{ width: screenWidth, height: screenHeight }}
+                  art={story.displayFit === 'cover' ? readerArtFrame({ width: screenWidth, height: screenHeight }, challengeFocus(page.learningChallenge), isTablet) : undefined}
+                  trayArt={story.displayFit === 'cover' && wholeScene ? focusFrame({ width: screenWidth, height: screenHeight }, challengeFocus(page.learningChallenge)) : undefined}
+                  chrome={{
+                    top: Math.max(insets.top + 20, 20) + scaledButtonSize(50) + 8,
+                    bottom: Math.max(insets.bottom, 12),
+                    left: readerEdge(insets.left) + scaledButtonSize(50) + 12,
+                    right: readerEdge(insets.right) + scaledButtonSize(50) + 12,
+                  }}
+                  isTablet={isTablet}
+                  reduceMotion={reduceMotion}
+                  onDone={handleLearningChallengeDone}
+                />
+              </View>
             )}
 
             {/* Page indicator overlay - Top Left, after exit button (hide on cover page and next page) */}
             {!isNextPage && page.pageNumber > 0 && (
-              <View style={[styles.pageIndicatorOverlay, {
-                top: Math.max(insets.top + 20, 20) + scaledButtonSize(50) / 2 - scaledButtonSize(16),
-                left: Math.max(insets.left + 20, 20) + scaledButtonSize(50) + 12,
-                height: scaledButtonSize(32),
-                minWidth: scaledButtonSize(50),
-                paddingHorizontal: scaledButtonSize(12),
-                borderRadius: scaledButtonSize(16),
-              }]}>
-                <Text style={[styles.pageIndicatorText, { fontSize: scaledFontSize(14) }]}>
-                  {page.pageNumber}/{pages.length - 1}
-                </Text>
-              </View>
+              <Animated.View
+                pointerEvents="box-none"
+                style={[{
+                  position: 'absolute',
+                  top: Math.max(insets.top + 20, 20) + scaledButtonSize(50) / 2 - scaledButtonSize(PAGE_PILL_HEIGHT) / 2,
+                  left: readerEdge(insets.left) + scaledButtonSize(50) + 12,
+                }, chromeUpStyle]}
+              >
+                <PagePill
+                  page={pages[textPageIndex]?.pageNumber ?? page.pageNumber}
+                  total={pages.length - 1}
+                  height={scaledButtonSize(PAGE_PILL_HEIGHT)}
+                  fontSize={scaledFontSize(15)}
+                  label={t('reader.page', { current: pages[textPageIndex]?.pageNumber ?? page.pageNumber, total: pages.length - 1 })}
+                />
+              </Animated.View>
             )}
           </View>
         ) : null}
@@ -1982,7 +2077,45 @@ export function StoryBookReader({
     );
   };
   
+  // On a challenge page the next-page button opens the challenge until it has been played or skipped
+  const leavePage = async () => {
+    if (isLearningChallengePage && readingMode !== 'record' && learningChallengePlayedOn !== currentPageIndex) {
+      handleOpenLearningChallenge();
+      return;
+    }
+    await turnToNextPage();
+  };
   const handleNextPage = async () => {
+    if (paging.next()) return;
+    await leavePage();
+  };
+
+  const crossFade = (turn: () => void) => {
+    setTextHold({ index: currentPageIndex, text: mainText });
+    setPreviousPageIndex(currentPageIndex);
+    setPreviousOutcome(learningOutcome);
+    requestAnimationFrame(() => {
+      imageOpacity.value = 0;
+      turn();
+      textOpacity.value = withTiming(0, { duration: PAGE_TEXT_FADE_MS, easing: Easing.out(Easing.quad) });
+      imageOpacity.value = withTiming(1, { duration: PAGE_IMAGE_FADE_MS, easing: Easing.inOut(Easing.quad) });
+      setTimeout(() => {
+        setTextHold(null);
+        textOpacity.value = withTiming(1, { duration: FADE_IN_MS, easing: Easing.in(Easing.quad) });
+      }, PAGE_TEXT_FADE_MS);
+      setTimeout(() => {
+        setPreviousPageIndex(null);
+        setIsTransitioning(false);
+      }, PAGE_IMAGE_FADE_MS);
+    });
+  };
+  const crossFadeTo = (targetPageIndex: number) => crossFade(() => setCurrentPageIndex(targetPageIndex));
+  const crossFadeRef = useRef(crossFade);
+  useLayoutEffect(() => {
+    crossFadeRef.current = crossFade;
+  });
+
+  const turnToNextPage = async () => {
     if (isTransitioning) return;
 
     // Cleanup music challenge state when leaving page (always allow navigation)
@@ -1992,11 +2125,6 @@ export function StoryBookReader({
       setMusicChallengePhase('idle');
       setShowMusicSheet(false);
       restoreMusicVolume();
-    }
-
-    // Cleanup jigsaw challenge state when leaving page
-    if (isJigsawPuzzlePage) {
-      jigsawChallenge.cleanup();
     }
 
     // In record mode, save the current recording before moving to next page
@@ -2017,46 +2145,29 @@ export function StoryBookReader({
     setIsTransitioning(true);
     const targetPageIndex = currentPageIndex + 1;
 
-    // Text: Fade out first
-    textOpacity.value = withTiming(0, {
-      duration: 300,
-      easing: Easing.out(Easing.quad)
-    });
-
-    // Set previous page FIRST so it's visible before we hide the current image
-    setPreviousPageIndex(currentPageIndex);
-
-    // Use requestAnimationFrame to ensure previous page is rendered
-    requestAnimationFrame(() => {
-      // Now set new image to invisible - previous page is already visible underneath
-      imageOpacity.value = 0;
-
-      // Change to the new page
-      setCurrentPageIndex(targetPageIndex);
-
-      // Small delay to ensure React has rendered the new content
-      setTimeout(() => {
-        // Image: Fade in the new image (old image stays visible underneath)
-        imageOpacity.value = withTiming(1, {
-          duration: 400,
-          easing: Easing.inOut(Easing.quad)
-        });
-        // Text: Fade in the new text
-        textOpacity.value = withTiming(1, {
-          duration: 300,
-          easing: Easing.in(Easing.quad)
-        });
-
-        // Clear previous page after crossfade completes
-        setTimeout(() => {
-          setPreviousPageIndex(null);
-          setIsTransitioning(false);
-        }, 400);
-      }, 50);
-    });
+    crossFadeTo(targetPageIndex);
   };
 
+  const handleLearningChallengeDone = useCallback(({ tips, storyText, after }: ChallengeResult) => {
+    setLearningChallengeOpenOn(null);
+    setLearningChallengePlayedOn(currentPageIndex);
+    setLearningTips(tips);
+    setLearningTipsOpen(false);
+    if (after || storyText) {
+      setIsTransitioning(true);
+      crossFadeRef.current(() => {
+        setLearningOutcome(after);
+        setLearningStoryText(storyText);
+      });
+    }
+    if (currentPage) achievementEvents.challengeDone(currentPage.id, 'learning');
+  }, [currentPage, currentPageIndex, achievementEvents]);
+
+  const handleToggleLearningTips = useCallback(() => setLearningTipsOpen((open) => !open), []);
+  const handleCloseLearningTips = useCallback(() => setLearningTipsOpen(false), []);
+
   const handlePreviousPage = async () => {
+    if (paging.previous()) return;
     // Disable going back to cover page (page 0) - stop at page 1
     if (isTransitioning || currentPageIndex <= 1) return;
 
@@ -2067,11 +2178,6 @@ export function StoryBookReader({
       setMusicChallengePhase('idle');
       setShowMusicSheet(false);
       restoreMusicVolume();
-    }
-
-    // Cleanup jigsaw challenge state when leaving page
-    if (isJigsawPuzzlePage) {
-      jigsawChallenge.cleanup();
     }
 
     // In record mode, save the current recording before moving to previous page
@@ -2086,43 +2192,7 @@ export function StoryBookReader({
     setIsTransitioning(true);
     const targetPageIndex = currentPageIndex - 1;
 
-    // Text: Fade out first
-    textOpacity.value = withTiming(0, {
-      duration: 300,
-      easing: Easing.out(Easing.quad)
-    });
-
-    // Set previous page FIRST so it's visible before we hide the current image
-    setPreviousPageIndex(currentPageIndex);
-
-    // Use requestAnimationFrame to ensure previous page is rendered
-    requestAnimationFrame(() => {
-      // Now set new image to invisible - previous page is already visible underneath
-      imageOpacity.value = 0;
-
-      // Change to the new page
-      setCurrentPageIndex(targetPageIndex);
-
-      // Small delay to ensure React has rendered the new content
-      setTimeout(() => {
-        // Image: Fade in the new image (old image stays visible underneath)
-        imageOpacity.value = withTiming(1, {
-          duration: 400,
-          easing: Easing.inOut(Easing.quad)
-        });
-        // Text: Fade in the new text
-        textOpacity.value = withTiming(1, {
-          duration: 300,
-          easing: Easing.in(Easing.quad)
-        });
-
-        // Clear previous page after crossfade completes
-        setTimeout(() => {
-          setPreviousPageIndex(null);
-          setIsTransitioning(false);
-        }, 400);
-      }, 50);
-    });
+    crossFadeTo(targetPageIndex);
   };
   
   // Keep Android back button refs in sync with the latest function references
@@ -2176,21 +2246,24 @@ export function StoryBookReader({
 
 
   const renderNarration = () => (
-          <Animated.View style={[styles.centerTextContainer, textBoxAnimatedStyle, isCompareLanguageEnabled && styles.centerTextContainerCompare, !isTablet && { maxWidth: '68%' }, narrationLayout(screenWidth, screenHeight, insets.right)]} testID="story-narration">
+          <Animated.View
+            pointerEvents={narrationAway ? 'none' : 'auto'}
+            accessibilityElementsHidden={narrationAway}
+            importantForAccessibility={narrationAway ? 'no-hide-descendants' : 'auto'}
+            style={[styles.centerTextContainer, textBoxAnimatedStyle, isCompareLanguageEnabled && styles.centerTextContainerCompare, !isTablet && { maxWidth: '68%' }, narrationBox]}
+            onLayout={handleNarrationLayout}
+            testID="story-narration"
+          >
             {(() => {
-              // Tablet gets larger base font for better readability
-              // iPad base sizes are significantly larger to compensate for 2-line limit
-              const baseFontSize = currentPage?.pageNumber === 0
-                ? (isTablet ? 28 : 18)
-                : (isTablet ? 26 : 16);
+              const baseFontSize = (currentPage?.pageNumber === 0 ? 18 : 16) * captionSize;
               const fontSize = scaledFontSize(baseFontSize);
               const lineHeight = fontSize * 1.5;
-              // In compare mode, show all text; otherwise limit to 2 lines
-              const maxLines = isCompareLanguageEnabled ? 999 : isLandscape ? 6 : 2;
+              // In compare mode, show all text; otherwise the box hugs its verse, four lines at most
+              const maxLines = isCompareLanguageEnabled ? 999 : 4;
               const verticalPadding = 30;
-              const fixedTextBoxHeight = isCompareLanguageEnabled
-                ? undefined // Let content determine height in compare mode
-                : Math.min((lineHeight * maxLines) + verticalPadding, isLandscape ? screenHeight * 0.55 : Number.POSITIVE_INFINITY);
+              const bottomBoxCap = Math.min((lineHeight * maxLines) + verticalPadding, screenHeight > 0 ? screenHeight * 0.34 : Number.POSITIVE_INFINITY);
+              const pagedHeight = lineHeight * ROWS_PER_PAGE + verticalPadding;
+              const cloudHeight = isCompareLanguageEnabled ? (isLandscape ? screenHeight * 0.25 : bottomBoxCap) : pagedText ? pagedHeight : bottomBoxCap;
 
               return (
                 <View style={[
@@ -2219,7 +2292,7 @@ export function StoryBookReader({
                       >
                         <View style={{ paddingRight: 15, alignItems: 'center' }}>
                           {renderTextWithHighlight(
-                            getLocalizedText(undefined, currentPage?.text || '', compareLanguage, currentPage?.localizedText, childAgeGroup) || '',
+                            getLocalizedText(undefined, learningStoryText ? '' : currentPage?.text || '', compareLanguage, learningStoryText ?? currentPage?.localizedText, childAgeGroup) || '',
                             fontSize,
                             lineHeight,
                             currentPage?.pageNumber === 0 ? styles.coverText : styles.storyText,
@@ -2235,22 +2308,45 @@ export function StoryBookReader({
                   )}
 
                   {/* Original Language Text Box - Below */}
-                  <View style={[
+                  <View testID="story-narration-box" style={[
                     styles.centerTextBox,
-                    isCompareLanguageEnabled && styles.originalLanguageTextBox,
+                    styles.cloudTextBox,
+                    { paddingHorizontal: cloudInset(cloudHeight, cloudTheme) },
                     isCompareLanguageEnabled ? {
                       height: isLandscape ? screenHeight * 0.25 : 'auto',
                       minHeight: undefined,
                       maxHeight: isLandscape ? screenHeight * 0.25 : undefined,
-                    } : fixedTextBoxHeight ? {
-                      height: fixedTextBoxHeight,
-                      minHeight: fixedTextBoxHeight,
-                      maxHeight: fixedTextBoxHeight,
+                    } : pagedText ? {
+                      height: pagedHeight,
+                      minHeight: pagedHeight,
+                      maxHeight: pagedHeight,
                     } : {
-                      minHeight: 80,
+                      maxHeight: bottomBoxCap,
                     }
                   ]}>
+                    <StoryCloud theme={cloudTheme} />
+                    {pagedText ? (
+                      <View style={styles.pagedText}>
+                        <Animated.View style={paging.style}>
+                          {textPagesList[paging.shown] ? renderWordRows(
+                            textPagesList[paging.shown].rows,
+                            fontSize,
+                            lineHeight,
+                            styles.storyText,
+                            textAnimatedStyle,
+                            'white'
+                          ) : null}
+                        </Animated.View>
+                        <TextMeasure
+                          key={liveText}
+                          lines={liveLines}
+                          renderWord={(pieces) => renderWordText(pieces, fontSize, lineHeight, styles.storyText, false)}
+                          onBreaks={handleMeasuredBreaks}
+                        />
+                      </View>
+                    ) : (
                     <ScrollView
+                      testID="story-text-scroll"
                       key={`text-scroll-${story.id}-${currentPageIndex}-${textSizeScale}`}
                       ref={textScrollViewRef}
                       showsVerticalScrollIndicator={true}
@@ -2262,7 +2358,7 @@ export function StoryBookReader({
                     >
                       <View style={{ paddingRight: 15, alignItems: 'center' }}>
                         {renderTextWithHighlight(
-                          getLocalizedText(undefined, currentPage?.text || '', isCompareLanguageEnabled ? sessionLanguage : currentLanguage, currentPage?.localizedText, childAgeGroup) || '',
+                          mainText,
                           fontSize,
                           lineHeight,
                           currentPage?.pageNumber === 0 ? styles.coverText : styles.storyText,
@@ -2271,6 +2367,7 @@ export function StoryBookReader({
                         )}
                       </View>
                     </ScrollView>
+                    )}
                     {isCompareLanguageEnabled && (
                       <Text style={[styles.compareLanguageLabel, { fontSize: scaledFontSize(10) }]}>
                         {SUPPORTED_LANGUAGES.find(l => l.code === sessionLanguage)?.nativeName}
@@ -2280,6 +2377,11 @@ export function StoryBookReader({
                 </View>
               );
             })()}
+            {learningTips ? (
+              <View style={[styles.learningTipsBadge, { top: -scaledButtonSize(TIPS_BADGE) / 3, right: -scaledButtonSize(TIPS_BADGE) / 3 }]}>
+                <TipsBadge size={scaledButtonSize(TIPS_BADGE)} open={learningTipsOpen} reduceMotion={reduceMotion} label={t('experience.tips')} onPress={handleToggleLearningTips} />
+              </View>
+            ) : null}
           </Animated.View>
   );
 
@@ -2338,29 +2440,21 @@ export function StoryBookReader({
             with its own full-screen scene; on the blurred page it does not, so
             they stand down while it is up rather than doubling up with it. */}
         {!musicUiHidden && !sheetOnScreen && (
-        <View style={[styles.topLeftControls, {
+        <Animated.View style={[styles.topLeftControls, {
           paddingTop: Math.max(insets.top + 20, 20),
-          paddingLeft: Math.max(insets.left + 20, 20)
-        }]}>
+          paddingLeft: readerEdge(insets.left)
+        }, chromeUpStyle]}>
           <Pressable
-            style={[
-              styles.exitButton,
-              {
-                width: scaledButtonSize(50),
-                height: scaledButtonSize(50),
-                borderRadius: scaledButtonSize(25),
-                opacity: isExiting ? 0.5 : 1,
-              }
-            ]}
+            style={[styles.coinButton, { width: scaledButtonSize(50), height: scaledButtonSize(50) }]}
             onPress={musicChallengePhase === 'playing' ? () => {
               closeMusicPractice({ cleanup: true, stopBreath: true, resetUiHidden: true });
             } : handleExit}
             disabled={musicChallengePhase !== 'playing' && isExiting}
             testID="story-exit-button"
           >
-            <Ionicons name="arrow-back" size={scaledFontSize(20)} color="#333333" />
+            <ReaderCoin coin="exit" size={scaledButtonSize(50)} dimmed={isExiting} />
           </Pressable>
-        </View>
+        </Animated.View>
         )}
 
         {/* Recording Controls - Top Center (only visible in record mode on story pages) */}
@@ -2432,9 +2526,9 @@ export function StoryBookReader({
 
         {/* Narration Playback Controls - Top Center (only visible in narrate mode on story pages) */}
         {readingMode === 'narrate' && currentPageIndex > 0 && selectedVoiceOver && (
-          <View style={[styles.narrationControlsContainer, {
+          <Animated.View style={[styles.narrationControlsContainer, {
             paddingTop: Math.max(insets.top + 20, 20),
-          }]}>
+          }, chromeUpStyle]}>
             <View style={[styles.narrationPlaybackContainer, {
               paddingVertical: scaledButtonSize(6),
               paddingHorizontal: scaledButtonSize(8),
@@ -2490,37 +2584,31 @@ export function StoryBookReader({
 
             {/* "Begin Playing" button below narration controls on music challenge pages */}
             {isMusicChallengePage && !showMusicSheet && !showInstrumentPicker && musicChallengePhase === 'idle' && (
-              <Pressable
-                style={[styles.beginPlayingButtonInner, { marginTop: 10 }]}
-                onPress={handleBeginMusicChallenge}
+              <PlayPill
                 testID="begin-music-challenge-button-narrate"
-              >
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Ionicons name="musical-note" size={16} color="#FFFFFF" style={{ marginRight: 4 }} />
-                  <Text style={styles.beginPlayingButtonText}>Begin Playing</Text>
-                </View>
-              </Pressable>
+                label={t('reader.play')}
+                height={scaledButtonSize(50)}
+                slideFrom={scaledButtonSize(50) + 12}
+                reduceMotion={reduceMotion}
+                onPress={handleBeginMusicChallenge}
+                style={{ marginTop: 10 }}
+              />
             )}
-          </View>
+
+          </Animated.View>
         )}
 
         {/* Top Right Controls - Sound and Settings (aligned with bottom next button) */}
         {!musicUiHidden && !sheetOnScreen && (
-        <View style={[styles.topRightControls, {
+        <Animated.View style={[styles.topRightControls, {
           paddingTop: Math.max(insets.top + 20, 20),
-          paddingRight: Math.max(insets.right + 20, 20)
-        }]}>
-          <MusicControl size={28} variant="story" onAudioModalChange={setShowAudioControlModal} />
+          paddingRight: readerEdge(insets.right)
+        }, chromeUpStyle]}>
+          <MusicControl size={50} variant="coin" onAudioModalChange={setShowAudioSettings} />
           {/* Settings/Burger Menu Button */}
           <Pressable
-            style={[
-              styles.settingsButton,
-              {
-                width: scaledButtonSize(50),
-                height: scaledButtonSize(50),
-                borderRadius: scaledButtonSize(25),
-              }
-            ]}
+            testID="story-menu-button"
+            style={[styles.coinButton, { width: scaledButtonSize(50), height: scaledButtonSize(50) }]}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               if (showSettingsMenu) {
@@ -2532,9 +2620,9 @@ export function StoryBookReader({
               }
             }}
           >
-            <Ionicons name="menu" size={scaledFontSize(24)} color="#333333" />
+            <ReaderCoin coin="menu" size={scaledButtonSize(50)} />
           </Pressable>
-        </View>
+        </Animated.View>
         )}
 
         {/* Settings Menu Overlay - closes menu when tapping outside */}
@@ -2549,133 +2637,117 @@ export function StoryBookReader({
         )}
 
         {/* Settings Menu Dropdown - Main Menu */}
-        {showSettingsMenu && activeSubmenu === 'main' && (
-          <View style={[styles.settingsMenu, {
-            top: Math.max(insets.top + 20, 20) + scaledButtonSize(50) + 10,
-            right: Math.max(insets.right + 20, 20),
-          }]}>
-            <Pressable
-              style={styles.menuItem}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setShowSettingsMenu(false);
-                setActiveSubmenu(null);
-                setShowPagePreview(true);
-              }}
-            >
-              <Text style={[styles.menuItemText, { fontSize: scaledFontSize(14) }]}>{t('reader.pagePreview')}</Text>
-            </Pressable>
-            <View style={styles.menuDivider} />
-            <Pressable
-              style={styles.menuItem}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setActiveSubmenu('fontSize');
-              }}
-            >
-              <Text style={[styles.menuItemText, { fontSize: scaledFontSize(14) }]}>{t('reader.fontButtonSize')}</Text>
-              <Text style={[styles.menuItemArrow, { fontSize: scaledFontSize(14) }]}>›</Text>
-            </Pressable>
-            <View style={styles.menuDivider} />
-            <Pressable
-              style={styles.menuItem}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setShowSettingsMenu(false);
-                setActiveSubmenu(null);
-                setShowChangeLanguageModal(true);
-              }}
-            >
-              <Text style={[styles.menuItemText, { fontSize: scaledFontSize(14) }]}>{t('reader.changeLanguage')}</Text>
-              <Text style={[styles.menuItemArrow, { fontSize: scaledFontSize(14) }]}>›</Text>
-            </Pressable>
-            <View style={styles.menuDivider} />
-            <Pressable
-              style={styles.menuItem}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setShowSettingsMenu(false);
-                setActiveSubmenu(null);
-                setShowCompareLanguageModal(true);
-              }}
-            >
-              <Text style={[styles.menuItemText, { fontSize: scaledFontSize(14) }]}>{t('reader.compareLanguage')}</Text>
-              <Text style={[styles.menuItemArrow, { fontSize: scaledFontSize(14) }]}>›</Text>
-            </Pressable>
-            {/* Auto-play toggle - only in narrate mode */}
-            {readingMode === 'narrate' && (
-              <>
-                <View style={styles.menuDivider} />
-                <Pressable
-                  style={styles.menuItem}
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    setNarrationAutoPlay(prev => !prev);
-                  }}
-                >
-                  <Text style={[styles.menuItemText, { fontSize: scaledFontSize(14) }]}>
-                    {narrationAutoPlay ? t('reader.autoPlayOn') : t('reader.autoPlayOff')}
-                  </Text>
-                </Pressable>
-              </>
-            )}
-            {/* Change Instrument -only show on music challenge page in landscape (not rotated to portrait) */}
-            {isMusicChallengePage && !instrumentIsRotated && (
-              <>
-                <View style={styles.menuDivider} />
-                <Pressable
-                  style={styles.menuItem}
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    setShowSettingsMenu(false);
-                    setActiveSubmenu(null);
-                    setShowInstrumentPicker(true);
-                  }}
-                  testID="menu-change-instrument"
-                >
-                  <Text style={[styles.menuItemText, { fontSize: scaledFontSize(14) }]}>{t('music.changeInstrument')}</Text>
-                </Pressable>
-              </>
-            )}
-            <View style={styles.menuDivider} />
-            <Pressable
-              style={styles.menuItem}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setShowSettingsMenu(false);
-                setActiveSubmenu(null);
-                setShowTipsOverlay(true);
-              }}
-            >
-              <Text style={[styles.menuItemText, { fontSize: scaledFontSize(14) }]}>
-                {isMusicChallengePage && musicChallengePhase === 'playing'
+        {(
+          <ReaderMenu
+            visible={showSettingsMenu && activeSubmenu === 'main'}
+            reduceMotion={reduceMotion}
+            top={menuTop}
+            right={menuRight}
+            width={menuWidth}
+            maxHeight={menuMaxHeight}
+            fontSize={scaledFontSize(16)}
+            scale={menuScale}
+            rows={[
+              {
+                key: 'page-preview',
+                icon: 'page-preview',
+                label: t('reader.pagePreview'),
+                onPress: () => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setShowSettingsMenu(false);
+                  setActiveSubmenu(null);
+                  setShowPagePreview(true);
+                },
+              },
+              {
+                key: 'font-size',
+                icon: 'font-size',
+                label: t('reader.fontButtonSize'),
+                onPress: () => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setActiveSubmenu('fontSize');
+                },
+              },
+              {
+                key: 'language',
+                icon: 'language',
+                label: t('reader.changeLanguage'),
+                onPress: () => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setShowSettingsMenu(false);
+                  setActiveSubmenu(null);
+                  setShowChangeLanguageModal(true);
+                },
+              },
+              {
+                key: 'compare',
+                icon: 'compare',
+                label: t('reader.compareLanguage'),
+                onPress: () => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setShowSettingsMenu(false);
+                  setActiveSubmenu(null);
+                  setShowCompareLanguageModal(true);
+                },
+              },
+              ...(readingMode === 'narrate' ? [{
+                key: 'auto-play',
+                icon: 'auto-play' as const,
+                label: narrationAutoPlay ? t('reader.autoPlayOn') : t('reader.autoPlayOff'),
+                onPress: () => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setNarrationAutoPlay(prev => !prev);
+                },
+              }] : []),
+              ...(isMusicChallengePage && !instrumentIsRotated ? [{
+                key: 'instrument',
+                icon: 'instrument' as const,
+                label: t('music.changeInstrument'),
+                testID: 'menu-change-instrument',
+                onPress: () => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setShowSettingsMenu(false);
+                  setActiveSubmenu(null);
+                  setShowInstrumentPicker(true);
+                },
+              }] : []),
+              {
+                key: 'tips',
+                icon: 'tips',
+                label: isMusicChallengePage && musicChallengePhase === 'playing'
                   ? t('reader.musicTips')
-                  : readingMode === 'read' ? t('reader.readingTips') : readingMode === 'record' ? t('reader.recordingTips') : t('reader.narrationTips')}
-              </Text>
-            </Pressable>
-          </View>
+                  : readingMode === 'read' ? t('reader.readingTips') : readingMode === 'record' ? t('reader.recordingTips') : t('reader.narrationTips'),
+                onPress: () => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setShowSettingsMenu(false);
+                  setActiveSubmenu(null);
+                  setShowTipsOverlay(true);
+                },
+              },
+            ]}
+          />
         )}
 
         {/* Settings Menu Dropdown - Font Size Options */}
-        {showSettingsMenu && activeSubmenu === 'fontSize' && (
-          <View style={[styles.settingsMenu, {
-            top: Math.max(insets.top + 20, 20) + scaledButtonSize(50) + 10,
-            right: Math.max(insets.right + 20, 20),
-          }]}>
+        {(
+          <ReaderMenuPanel testID="reader-menu-font-size" visible={showSettingsMenu && activeSubmenu === 'fontSize'} reduceMotion={reduceMotion} top={menuTop} right={menuRight} width={menuWidth}>
+            <View>
             <Pressable
               style={styles.submenuHeader}
+              accessibilityRole="button"
+              accessibilityLabel={t('reader.fontButtonSize')}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 setActiveSubmenu('main');
               }}
             >
-              <Text style={[styles.settingsMenuTitle, { fontSize: scaledFontSize(14) }]}>{t('reader.fontButtonSize')}</Text>
-              <Text style={[styles.menuItemArrow, { fontSize: scaledFontSize(14) }]}>›</Text>
+              <Text style={[styles.settingsMenuTitle, { fontSize: scaledFontSize(16) }]}>{t('reader.fontButtonSize')}</Text>
             </Pressable>
-            <View style={styles.textSizeOptionsRow}>
+            <View testID="reader-menu-size-options" style={styles.textSizeOptionsRow}>
               {TEXT_SIZE_OPTIONS.map((option) => (
                 <Pressable
                   key={option.value}
+                  testID={`reader-menu-size-${option.value}`}
                   style={[
                     styles.textSizeOption,
                     textSizeScale === option.value && styles.textSizeOptionSelected,
@@ -2693,13 +2765,16 @@ export function StoryBookReader({
                       textSizeScale === option.value && styles.textSizeOptionTextSelected,
                     ]}
                     numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.75}
                   >
                     {t(option.labelKey)}
                   </Text>
                 </Pressable>
               ))}
             </View>
-          </View>
+            </View>
+          </ReaderMenuPanel>
         )}
 
         {/* Settings Menu Dropdown - Compare Language Options - REMOVED (using modal instead) */}
@@ -2711,18 +2786,21 @@ export function StoryBookReader({
 
         {/* UI Controls Layer */}
         <View style={styles.uiControlsLayer}>
-        {isLandscape && currentPage && currentPageIndex > 0 && !isJigsawActive && !isReadingActive && renderNarration()}
+        {currentPage && currentPageIndex > 0 && renderNarration()}
 
-        {/* Bottom UI Panel - Text and Controls (hide on cover page and during jigsaw/reading) */}
-        {currentPage && currentPageIndex > 0 && !isJigsawActive && !isReadingActive && (
-          <View style={[
+
+        {/* Bottom UI Panel - Text and Controls (hide on cover page) */}
+        {currentPage && currentPageIndex > 0 && (
+          <Animated.View testID="story-nav-panel" pointerEvents="box-none" style={[
             styles.bottomUIPanel,
             readingMode === 'record' && styles.bottomUIPanelRecordMode,
             {
-              paddingLeft: Math.max(insets.left + 20, 20),
-              paddingRight: Math.max(insets.right + 20, 20),
-              paddingBottom: Math.max(insets.bottom + 20, 20),
-            }
+              paddingLeft: readerEdge(insets.left),
+              paddingRight: readerEdge(insets.right),
+              bottom: narrationBox.bottom,
+              height: narrationHeight > 0 ? narrationHeight : scaledButtonSize(50),
+            },
+            chromeDownStyle,
           ]}>
 
           {/* Navigation Row - includes text box in center for all modes */}
@@ -2733,58 +2811,38 @@ export function StoryBookReader({
           {/* Previous Button - Left Side */}
           <Animated.View style={[leftButtonAnimatedStyle]}>
             <Pressable
-              style={[
-                styles.navButton,
-                styles.nextButton,
-                {
-                  width: scaledButtonSize(50),
-                  height: scaledButtonSize(50),
-                  borderRadius: scaledButtonSize(25),
-                },
-                (currentPageIndex <= 1 || isJigsawActive || isReadingActive || (readingMode === 'record' && isRecording)) && styles.navButtonDisabled,
-              ]}
+              style={[styles.coinButton, { width: scaledButtonSize(50), height: scaledButtonSize(50) }]}
               onPress={handlePreviousPage}
-              disabled={currentPageIndex <= 1 || isTransitioning || isJigsawActive || isReadingActive || (readingMode === 'record' && isRecording)}
+              disabled={backUnavailable || isTransitioning}
               testID="left-touch-area"
             >
-              <Ionicons name="chevron-back" size={scaledFontSize(20)} color={currentPageIndex <= 1 ? 'rgba(128,128,128,0.3)' : '#808080'} />
+              <ReaderCoin coin="back" size={scaledButtonSize(50)} dimmed={backUnavailable} />
             </Pressable>
           </Animated.View>
 
-          {/* Story Text Box - Center - Scrollable for accessibility */}
-          {!isLandscape && renderNarration()}
 
           {/* Next Button - Right Side */}
           <Animated.View style={[rightButtonAnimatedStyle]}>
             <Pressable
-              style={[
-                styles.navButton,
-                styles.nextButton,
-                {
-                  width: scaledButtonSize(50),
-                  height: scaledButtonSize(50),
-                  borderRadius: scaledButtonSize(25),
-                },
-                currentPageIndex === pages.length - 1 && styles.completeButton,
-                (readingMode === 'record' && (isRecording || (currentPageIndex > 0 && !tempRecordingUri && !currentVoiceOver?.pageRecordings[currentPageIndex]))) && styles.navButtonDisabled,
-                isExiting && styles.navButtonDisabled,
-                (isJigsawActive || isReadingActive) && styles.navButtonDisabled,
-              ]}
+              style={[styles.coinButton, { width: scaledButtonSize(50), height: scaledButtonSize(50) }]}
               onPress={handleNextPage}
-              disabled={isTransitioning || isExiting || isJigsawActive || isReadingActive || (readingMode === 'record' && (isRecording || (currentPageIndex > 0 && !tempRecordingUri && !currentVoiceOver?.pageRecordings[currentPageIndex])))}
+              disabled={isTransitioning || nextUnavailable}
               testID="right-touch-area"
             >
-              <Text style={[
-                styles.navButtonText,
-                { fontSize: scaledFontSize(20) },
-                currentPageIndex === pages.length - 1 && styles.completeButtonText
-              ]}>
-                {currentPageIndex === pages.length - 1 ? <Ionicons name="checkmark" size={scaledFontSize(20)} color="#FFFFFF" /> : <Ionicons name="chevron-forward" size={scaledFontSize(20)} color="#808080" />}
-              </Text>
+              <ReaderCoin coin={onFinalLines ? 'done' : 'next'} size={scaledButtonSize(50)} dimmed={nextUnavailable} />
             </Pressable>
+            {ringShown ? (
+              <PageProgressRing
+                size={scaledButtonSize(50)}
+                stroke={scaledButtonSize(50) * COIN_RIM}
+                page={textPageIndex}
+                progress={paging.progress}
+                reduceMotion={reduceMotion}
+              />
+            ) : null}
           </Animated.View>
           </View>
-          </View>
+          </Animated.View>
         )}
 
         {/* Cover page tap-to-continue overlay - Excludes top UI area */}
@@ -2874,6 +2932,25 @@ export function StoryBookReader({
         )}
 
         </View>
+
+        {learningTips ? (
+          <View
+            testID="learning-tips-shield"
+            pointerEvents={learningTipsOpen ? 'auto' : 'none'}
+            accessibilityViewIsModal={learningTipsOpen}
+            style={styles.learningTipsShield}
+          >
+            <TipsPanel
+              {...learningTips}
+              frame={tipsLayout.frame}
+              scale={tipsLayout.scale}
+              reduceMotion={reduceMotion}
+              open={learningTipsOpen}
+              closeLabel={t('common.close')}
+              onClose={handleCloseLearningTips}
+            />
+          </View>
+        ) : null}
       </View>
 
       {/* Voice Over Name Modal - Using absolute View instead of Modal to prevent iOS crash */}
@@ -3223,19 +3300,7 @@ export function StoryBookReader({
         scaledFontSize={scaledFontSize}
       />
 
-      {/* Audio Control Modal - rendered at root level with absolute positioning
-           to prevent iOS crash from native Modal inside complex view hierarchy */}
-      <AudioControlModal
-        visible={showAudioControlModal}
-        onClose={() => setShowAudioControlModal(false)}
-        masterVolume={globalSound.masterVolume}
-        musicVolume={globalSound.musicVolume}
-        voiceOverVolume={globalSound.voiceOverVolume}
-        onMasterVolumeChange={globalSound.setMasterVolume}
-        onMusicVolumeChange={globalSound.setMusicVolume}
-        onVoiceOverVolumeChange={globalSound.setVoiceOverVolume}
-        useAbsolutePositioning
-      />
+      <AudioSettings visible={showAudioSettings} onClose={() => setShowAudioSettings(false)} presentation="overlay" />
 
       {/* Page Preview Modal */}
       <PagePreviewModal
@@ -3278,223 +3343,84 @@ export function StoryBookReader({
         onEnd={() => setShowTipsOverlay(false)}
       />
 
-      {/* Compare Languages Modal - Using absolute View instead of Modal to prevent iOS crash */}
-      {showCompareLanguageModal && (
-        <View style={styles.absoluteModalContainer}>
-          <Pressable
-            style={styles.absoluteModalBackdrop}
-            onPress={() => setShowCompareLanguageModal(false)}
-          />
-          <View style={[styles.compareLanguageModalOverlay, (isTablet || (screenWidth > screenHeight)) && { justifyContent: 'center', alignItems: 'center' }]} pointerEvents="box-none">
-          <View style={[styles.compareLanguageModalContent, isTablet && styles.compareLanguageModalContentTablet]}>
-            {/* Header with toggle */}
-            <View style={styles.compareLanguageModalHeader}>
-              <Text style={[styles.compareLanguageModalTitle, { fontSize: scaledFontSize(16) }]}>
-                {t('reader.compareLanguage')}
-              </Text>
-              <Pressable
-                style={[styles.compareLanguageModalHeaderToggle, isCompareLanguageEnabled && styles.compareLanguageModalHeaderToggleOn]}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  setIsCompareLanguageEnabled(prev => !prev);
-                }}
-              >
-                <Text style={[styles.compareLanguageModalHeaderToggleText, { fontSize: scaledFontSize(12) }]}>
-                  {isCompareLanguageEnabled ? t('common.on') : t('common.off')}
-                </Text>
-              </Pressable>
-              <Pressable
-                style={styles.compareLanguageModalCloseButton}
-                onPress={() => setShowCompareLanguageModal(false)}
-              >
-                <Ionicons name="close" size={18} color="#666" />
-              </Pressable>
-            </View>
+      <LanguagePanel
+        visible={showCompareLanguageModal}
+        screen={{ width: screenWidth, height: screenHeight }}
+        insets={insets}
+        textScale={textSizeScale}
+        reduceMotion={reduceMotion}
+        title={t('reader.compareLanguage')}
+        hint={t('reader.selectCompareLanguage')}
+        doneLabel={t('reader.done')}
+        closeLabel={t('common.close')}
+        toggle={{
+          on: isCompareLanguageEnabled,
+          label: isCompareLanguageEnabled ? t('common.on') : t('common.off'),
+          onPress: () => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            setIsCompareLanguageEnabled(prev => !prev);
+          },
+        }}
+        languages={READER_LANGUAGES}
+        marks={{ [sessionLanguage]: 'reading', [compareLanguage]: 'comparing' }}
+        onPick={(code) => {
+          const lang = code as SupportedLanguage;
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          if (sessionLanguage === lang) {
+            setSessionLanguage(currentLanguage);
+            setCompareLanguage(lang);
+          } else if (compareLanguage === lang) {
+            setCompareLanguage(currentLanguage);
+            setSessionLanguage(lang);
+          } else {
+            setSessionLanguage(lang);
+          }
+        }}
+        onDone={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          setShowCompareLanguageModal(false);
+        }}
+        onClose={() => setShowCompareLanguageModal(false)}
+      />
 
-            {/* Scrollable Content */}
-            <ScrollView
-              style={styles.compareLanguageModalScroll}
-              showsVerticalScrollIndicator={true}
-              bounces={false}
-            >
-              <Text style={[styles.compareLanguageModalLabel, { fontSize: scaledFontSize(12) }]}>
-                {t('reader.selectCompareLanguage')}
-              </Text>
-
-              {/* Shared Language Pool - Grid Layout */}
-              <View style={styles.compareLanguageModalLanguageList}>
-              {SUPPORTED_LANGUAGES.map((langObj) => {
-                const lang = langObj.code;
-                const langName = langObj.nativeName;
-                const langFlag = langObj.flag;
-                const isSessionSelected = sessionLanguage === lang;
-                const isCompareSelected = compareLanguage === lang;
-
-                return (
-                  <Pressable
-                    key={`lang-${lang}`}
-                    style={[
-                      styles.compareLanguageModalLanguageItem,
-                      isSessionSelected && styles.compareLanguageModalLanguageItemSelectedWhite,
-                      isCompareSelected && styles.compareLanguageModalLanguageItemSelectedBlue,
-                    ]}
-                    onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      // If already selected in white box, move to blue box
-                      if (isSessionSelected) {
-                        setSessionLanguage(currentLanguage);
-                        setCompareLanguage(lang as SupportedLanguage);
-                      }
-                      // If already selected in blue box, move to white box
-                      else if (isCompareSelected) {
-                        setCompareLanguage(currentLanguage);
-                        setSessionLanguage(lang as SupportedLanguage);
-                      }
-                      // If not selected, add to white box first
-                      else {
-                        setSessionLanguage(lang as SupportedLanguage);
-                      }
-                    }}
-                  >
-                    <Text style={[styles.compareLanguageModalLanguageFlag, { fontSize: scaledFontSize((isSessionSelected || isCompareSelected) ? (isTablet ? 20 : 16) : (isTablet ? 18 : 14)) }]}>
-                      {langFlag}
-                    </Text>
-                    <Text style={[styles.compareLanguageModalLanguageName, { fontSize: scaledFontSize(isTablet ? 11 : 9) }, (isSessionSelected || isCompareSelected) && styles.compareLanguageModalLanguageNameSelected]} numberOfLines={1}>
-                      {langName}
-                    </Text>
-
-                  </Pressable>
-                );
-              })}
-              </View>
-            </ScrollView>
-
-            {/* Confirm Button */}
-            <Pressable
-              style={styles.compareLanguageModalConfirmButton}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                setShowCompareLanguageModal(false);
-              }}
-            >
-              <Text style={[styles.compareLanguageModalConfirmButtonText, { fontSize: scaledFontSize(14) }]}>
-                {t('reader.done')}
-              </Text>
-            </Pressable>
-          </View>
-        </View>
-      </View>
-      )}
-
-      {/* Change Language Modal - same UI as Compare Languages but for changing app language */}
-      {showChangeLanguageModal && (
-        <View style={styles.absoluteModalContainer}>
-          <Pressable
-            style={styles.absoluteModalBackdrop}
-            onPress={() => setShowChangeLanguageModal(false)}
-          />
-          <View style={[styles.compareLanguageModalOverlay, (isTablet || (screenWidth > screenHeight)) && { justifyContent: 'center', alignItems: 'center' }]} pointerEvents="box-none">
-          <View style={[styles.compareLanguageModalContent, isTablet && styles.compareLanguageModalContentTablet]}>
-            {/* Header */}
-            <View style={styles.compareLanguageModalHeader}>
-              <Text style={[styles.compareLanguageModalTitle, { fontSize: scaledFontSize(16) }]}>
-                {t('reader.changeLanguage')}
-              </Text>
-              <Pressable
-                style={styles.compareLanguageModalCloseButton}
-                onPress={() => setShowChangeLanguageModal(false)}
-              >
-                <Ionicons name="close" size={18} color="#666" />
-              </Pressable>
-            </View>
-
-            {/* Language Grid */}
-            <ScrollView
-              style={styles.compareLanguageModalScroll}
-              showsVerticalScrollIndicator={true}
-              bounces={false}
-            >
-              <View style={styles.compareLanguageModalLanguageList}>
-              {SUPPORTED_LANGUAGES.map((langObj) => {
-                const lang = langObj.code;
-                const langName = langObj.nativeName;
-                const langFlag = langObj.flag;
-                const isSelected = currentLanguage === lang;
-
-                return (
-                  <Pressable
-                    key={`change-lang-${lang}`}
-                    style={[
-                      styles.compareLanguageModalLanguageItem,
-                      isSelected && styles.compareLanguageModalLanguageItemSelectedWhite,
-                    ]}
-                    onPress={async () => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                      await setStoredLanguage(lang as SupportedLanguage);
-                      setShowChangeLanguageModal(false);
-                    }}
-                  >
-                    <Text style={[styles.compareLanguageModalLanguageFlag, { fontSize: scaledFontSize(isSelected ? (isTablet ? 20 : 16) : (isTablet ? 18 : 14)) }]}>
-                      {langFlag}
-                    </Text>
-                    <Text style={[styles.compareLanguageModalLanguageName, { fontSize: scaledFontSize(isTablet ? 11 : 9) }, isSelected && styles.compareLanguageModalLanguageNameSelected]} numberOfLines={1}>
-                      {langName}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-              </View>
-            </ScrollView>
-
-            {/* Done Button */}
-            <Pressable
-              style={styles.compareLanguageModalConfirmButton}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                setShowChangeLanguageModal(false);
-              }}
-            >
-              <Text style={[styles.compareLanguageModalConfirmButtonText, { fontSize: scaledFontSize(14) }]}>
-                {t('reader.done')}
-              </Text>
-            </Pressable>
-          </View>
-        </View>
-      </View>
-      )}
+      <LanguagePanel
+        visible={showChangeLanguageModal}
+        screen={{ width: screenWidth, height: screenHeight }}
+        insets={insets}
+        textScale={textSizeScale}
+        reduceMotion={reduceMotion}
+        title={t('reader.changeLanguage')}
+        doneLabel={t('reader.done')}
+        closeLabel={t('common.close')}
+        languages={READER_LANGUAGES}
+        marks={{ [currentLanguage]: 'reading' }}
+        onPick={async (code) => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          await setStoredLanguage(code as SupportedLanguage);
+          setShowChangeLanguageModal(false);
+        }}
+        onDone={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          setShowChangeLanguageModal(false);
+        }}
+        onClose={() => setShowChangeLanguageModal(false)}
+      />
 
       {/* "Begin Playing" -top center, aligned with nav buttons */}
       {/* Hidden in record mode (no music) and narrate mode (shown below narration controls instead) */}
       {isMusicChallengePage && !showMusicSheet && !showInstrumentPicker && musicChallengePhase === 'idle' && readingMode !== 'record' && readingMode !== 'narrate' && (
-        <View style={[styles.beginPlayingButton, { paddingTop: Math.max(insets.top + 20, 20) }]} pointerEvents="box-none">
-          <Pressable
-            style={styles.beginPlayingButtonInner}
-            onPress={handleBeginMusicChallenge}
+        <Animated.View style={[styles.beginPlayingButton, { paddingTop: Math.max(insets.top + 20, 20) }, chromeUpStyle]} pointerEvents="box-none">
+          <PlayPill
             testID="begin-music-challenge-button"
-          >
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Ionicons name="musical-note" size={16} color="#FFFFFF" style={{ marginRight: 4 }} />
-              <Text style={styles.beginPlayingButtonText}>Begin Playing</Text>
-            </View>
-          </Pressable>
-        </View>
+            label={t('reader.play')}
+            height={scaledButtonSize(50)}
+            slideFrom={Math.max(insets.top + 20, 20) + scaledButtonSize(50) + 12}
+            reduceMotion={reduceMotion}
+            onPress={handleBeginMusicChallenge}
+          />
+        </Animated.View>
       )}
 
-      {/* "Scramble" button for jigsaw pages - top center, like "Begin Playing" */}
-      {isJigsawPuzzlePage && jigsawChallenge.state === 'idle' && !jigsawCompleted[currentPageIndex] && (
-        <View style={[styles.beginPlayingButton, { paddingTop: Math.max(insets.top + 20, 20) }]} pointerEvents="box-none">
-          <Pressable
-            style={[styles.beginPlayingButtonInner, styles.jigsawShuffleButton]}
-            onPress={handleBeginJigsaw}
-            testID="jigsaw-scramble-button"
-          >
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Ionicons name="extension-puzzle-outline" size={16} color="#FFFFFF" style={{ marginRight: 4 }} />
-              <Text style={styles.beginPlayingButtonText}>{t('jigsaw.scramble')}</Text>
-            </View>
-          </Pressable>
-        </View>
-      )}
 
       {/* Music Sheet button is now inside MusicChallengeUI bottom section */}
 
@@ -3540,6 +3466,19 @@ export function StoryBookReader({
 }
 
 const styles = StyleSheet.create({
+  learningTipsBadge: {
+    position: 'absolute',
+    zIndex: 2,
+  },
+  learningTipsShield: {
+    ...StyleSheet.absoluteFill,
+    zIndex: 30,
+  },
+  pagedText: {
+    flex: 1,
+    alignSelf: 'stretch',
+    justifyContent: 'center',
+  },
   container: {
     flex: 1,
   },
@@ -3581,6 +3520,14 @@ const styles = StyleSheet.create({
     zIndex: 15,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  learningChallengeOverlay: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    zIndex: 15,
   },
 
   musicModeCloseText: {
@@ -3653,22 +3600,6 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 1,
   },
-  settingsButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: 20,
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.1)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-    overflow: 'hidden',
-  },
   settingsButtonText: {
     fontSize: 18,
     fontWeight: 'bold',
@@ -3685,46 +3616,11 @@ const styles = StyleSheet.create({
     bottom: 0,
     zIndex: 50,
   },
-  settingsMenu: {
-    position: 'absolute',
-    backgroundColor: 'rgba(130, 130, 130, 0.75)',
-    borderRadius: 16,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(100, 100, 100, 0.2)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 4,
-    zIndex: 100,
-    overflow: 'hidden',
-  },
   settingsMenuTitle: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
-  menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 8,
-    paddingHorizontal: 4,
-  },
-  menuDivider: {
-    height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    marginVertical: 4,
-  },
-  menuItemText: {
-    color: '#FFFFFF',
-    fontWeight: '500',
-  },
-  menuItemArrow: {
-    color: '#FFFFFF',
-    fontWeight: '600',
-    marginLeft: 12,
+    fontFamily: Fonts.rounded,
+    fontWeight: '700',
+    color: MENU_INK,
   },
   submenuHeader: {
     flexDirection: 'row',
@@ -3734,30 +3630,33 @@ const styles = StyleSheet.create({
   },
   textSizeOptionsRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 8,
   },
   textSizeOption: {
+    flexBasis: '46%',
+    flexGrow: 1,
     paddingVertical: 8,
     paddingHorizontal: 10,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    backgroundColor: '#FCE6CC',
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: '#F6D2A6',
     alignItems: 'center',
     justifyContent: 'center',
   },
   textSizeOptionSelected: {
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
-    borderColor: 'rgba(255, 255, 255, 0.6)',
+    backgroundColor: '#F7C24A',
+    borderColor: '#E9A21C',
   },
   textSizeOptionText: {
-    color: '#FFFFFF',
-    fontWeight: '500',
-    fontSize: 12,
+    color: MENU_INK,
+    fontWeight: '600',
+    fontSize: 13,
   },
   textSizeOptionTextSelected: {
-    color: '#FFFFFF',
-    fontWeight: '700',
+    color: MENU_INK,
+    fontWeight: '800',
   },
   languageSelectionLabel: {
     color: 'rgba(255, 255, 255, 0.9)',
@@ -3879,8 +3778,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    minHeight: 100,
-    paddingTop: 5,
     zIndex: 5,
   },
   bottomUIPanelRecordMode: {
@@ -3905,6 +3802,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  sceneBandShade: {
+    backgroundColor: 'rgba(10, 15, 44, 0.35)',
+  },
   backgroundImageStyle: {
     // Base style for background images
     // Positioning is handled by getBackgroundImageStyle() utility
@@ -3916,22 +3816,6 @@ const styles = StyleSheet.create({
     bottom: '22%', // Closer to bottom for tighter layout
     right: '1%', // Extremely close to right edge
     zIndex: 2,
-  },
-  pageIndicatorOverlay: {
-    position: 'absolute',
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.1)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 4,
-    overflow: 'hidden',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 3,
   },
   imagePlaceholder: {
     width: '100%',
@@ -4016,8 +3900,12 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(200, 220, 255, 0.85)',
     borderColor: 'rgba(100, 150, 200, 0.3)',
   },
-  originalLanguageTextBox: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+  cloudTextBox: {
+    backgroundColor: 'transparent',
+    borderWidth: 0,
+    borderRadius: 0,
+    shadowOpacity: 0,
+    elevation: 0,
   },
   compareLanguageLabel: {
     fontSize: 10,
@@ -4067,6 +3955,12 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 1,
   },
+  soundWord: {
+    fontFamily: Fonts.rounded,
+    fontWeight: '800',
+    color: SOUND_WORD_COLOR,
+    letterSpacing: 0.5,
+  },
   coverText: {
     fontSize: 18, // Larger for cover page
     fontFamily: Fonts.sans,
@@ -4094,55 +3988,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 10,
   },
-  navButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)', // White with 90% opacity to match text box
-    borderRadius: 25,
-    width: 50,
-    height: 50,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.1)', // Subtle dark border
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-    // Note: removed overflow: 'hidden' to prevent Android text background issues
-  },
 
-  navButtonDisabled: {
-    backgroundColor: 'rgba(255, 255, 255, 0.4)', // Lighter for disabled state
-    borderColor: 'rgba(0, 0, 0, 0.05)',
-  },
-  navButtonText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333333', // Dark text with black stroke
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 1,
-    textAlign: 'center',
-    textAlignVertical: 'center', // Android: ensure vertical centering
-    includeFontPadding: false, // Android: remove extra font padding for consistent centering
-    backgroundColor: 'transparent', // Ensure no background on the icon
-  },
   navButtonTextDisabled: {
     color: '#999',
   },
-  completeButton: {
-    backgroundColor: 'rgba(76, 175, 80, 0.9)', // Green background for completion
-    borderColor: 'rgba(76, 175, 80, 1)',
-  },
-  completeButtonText: {
-    color: '#FFFFFF',
-    fontSize: 22,
-  },
-  prevButton: {
-    // Additional styles for previous button if needed
-  },
-  nextButton: {
-    // Additional styles for next button if needed
+  coinButton: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   errorContainer: {
     flex: 1,
@@ -4224,16 +4076,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: Fonts.sans,
     fontWeight: '700',
-    color: '#333333',
-    textAlign: 'center',
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 1,
-  },
-  pageIndicatorText: {
-    fontSize: 14,
-    fontFamily: Fonts.sans,
-    fontWeight: '600',
     color: '#333333',
     textAlign: 'center',
     textShadowColor: 'rgba(0, 0, 0, 0.3)',
@@ -4772,227 +4614,6 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
 
-  // Compare Languages Modal Styles (Phone and Tablet)
-  compareLanguageModalOverlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  compareLanguageModalBackdrop: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  compareLanguageModalContent: {
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingTop: 16,
-    paddingHorizontal: 16,
-    paddingBottom: 20,
-    maxHeight: '85%',
-    height: 500,
-    maxWidth: 600,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 5,
-    flexDirection: 'column',
-  },
-  compareLanguageModalContentTablet: {
-    borderRadius: 24,
-    maxHeight: '80%',
-    width: '80%',
-    maxWidth: 600,
-    alignSelf: 'center',
-  },
-  compareLanguageModalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0, 0, 0, 0.1)',
-  },
-  compareLanguageModalTitle: {
-    fontFamily: Fonts.sans,
-    fontWeight: '600',
-    color: '#333333',
-    flex: 1,
-  },
-  compareLanguageModalHeaderToggle: {
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 14,
-    backgroundColor: 'rgba(0, 0, 0, 0.08)',
-    marginRight: 8,
-  },
-  compareLanguageModalHeaderToggleOn: {
-    backgroundColor: 'rgba(78, 205, 196, 0.2)',
-  },
-  compareLanguageModalHeaderToggleText: {
-    fontFamily: Fonts.sans,
-    fontWeight: '700',
-    color: '#333333',
-  },
-  compareLanguageModalCloseButton: {
-    width: 32,
-    height: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 16,
-    backgroundColor: 'rgba(0, 0, 0, 0.05)',
-  },
-  compareLanguageModalCloseButtonText: {
-    fontSize: 18,
-    color: '#333333',
-    fontWeight: '600',
-  },
-  compareLanguageModalScroll: {
-    flex: 1,
-    marginBottom: 12,
-  },
-  compareLanguageModalToggleSection: {
-    marginBottom: 12,
-  },
-  compareLanguageModalToggle: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    backgroundColor: 'rgba(78, 205, 196, 0.1)',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(78, 205, 196, 0.3)',
-  },
-  compareLanguageModalToggleText: {
-    fontFamily: Fonts.sans,
-    fontWeight: '500',
-    color: '#333333',
-  },
-  compareLanguageModalToggleCheckmark: {
-    color: '#4ECDC4',
-    fontWeight: 'bold',
-  },
-  compareLanguageModalDivider: {
-    height: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.1)',
-    marginVertical: 12,
-  },
-  compareLanguageModalLabel: {
-    fontFamily: Fonts.sans,
-    fontWeight: '500',
-    color: '#666666',
-    marginBottom: 12,
-    marginTop: 4,
-  },
-  compareLanguageModalSubLabel: {
-    fontFamily: Fonts.sans,
-    fontWeight: '500',
-    color: '#333333',
-    marginBottom: 8,
-  },
-  compareLanguageModalLanguageList: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 12,
-    width: '100%',
-    justifyContent: 'flex-start',
-  },
-  compareLanguageModalLanguageItem: {
-    width: '31%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 6,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: 'rgba(0, 0, 0, 0.1)',
-    gap: 6,
-  },
-  compareLanguageModalLanguageItemSelectedWhite: {
-    backgroundColor: '#D4AF37',
-    borderColor: '#B8860B',
-    borderWidth: 3,
-  },
-  compareLanguageModalLanguageItemSelectedBlue: {
-    backgroundColor: 'rgba(200, 220, 255, 0.9)',
-    borderColor: '#4ECDC4',
-    borderWidth: 3,
-  },
-  compareLanguageModalLanguageFlag: {
-    fontWeight: '600',
-  },
-  compareLanguageModalLanguageName: {
-    fontFamily: Fonts.sans,
-    fontWeight: '500',
-    color: '#333333',
-    textAlign: 'center',
-  },
-  compareLanguageModalLanguageNameSelected: {
-    color: '#000000',
-    fontWeight: '700',
-  },
-  compareLanguageModalLanguageCheckmark: {
-    color: '#4ECDC4',
-    fontWeight: 'bold',
-  },
-  compareLanguageModalLanguageSelectionIndicators: {
-    flexDirection: 'row',
-    gap: 4,
-    marginTop: 4,
-  },
-  compareLanguageModalSelectionBadgeWhite: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#D4AF37',
-    borderWidth: 2,
-    borderRadius: 8,
-    paddingVertical: 3,
-    paddingHorizontal: 6,
-  },
-  compareLanguageModalSelectionBadgeBlue: {
-    backgroundColor: '#4ECDC4',
-    borderColor: '#4ECDC4',
-    borderWidth: 2,
-    borderRadius: 8,
-    paddingVertical: 3,
-    paddingHorizontal: 6,
-  },
-  compareLanguageModalSelectionBadgeText: {
-    fontFamily: Fonts.sans,
-    fontWeight: '600',
-    color: '#333333',
-    textAlign: 'center',
-  },
-  compareLanguageModalConfirmButton: {
-    backgroundColor: '#4ECDC4',
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  compareLanguageModalConfirmButtonText: {
-    fontFamily: Fonts.sans,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
   // "Begin Playing" -top center, aligned with exit/settings buttons
   beginPlayingButton: {
     position: 'absolute',
@@ -5002,25 +4623,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: 16,
     zIndex: 100,
-  },
-  beginPlayingButtonInner: {
-    backgroundColor: 'rgba(80, 60, 140, 0.85)',
-    borderRadius: 24,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 6,
-  },
-  beginPlayingButtonText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  jigsawShuffleButton: {
-    backgroundColor: 'rgba(78, 205, 196, 0.85)',
   },
   // Floating "Music Sheet" button -bottom right (during playing)
   playSongButton: {

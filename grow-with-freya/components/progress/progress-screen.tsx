@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState, type RefObject } from 'react';
+import React, { useCallback, useEffect, useMemo, useState, type RefObject } from 'react';
 import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -11,6 +11,7 @@ import { CelestialBackground } from '@/components/child-ui/celestial-background'
 import { ContentSwap } from '@/components/child-ui/content-swap';
 import { PlanetHeaderArtwork } from '@/components/child-ui/planet-header-artwork';
 import { PlanetCover, usePlanetCover } from '@/components/child-ui/planet-cover';
+import { SHELF_FOOT_FADE, ShelfFoot } from '@/components/child-ui/shelf-foot';
 import { BalancedHeaderRow } from '@/components/child-ui/balanced-header-row';
 import { CircleActionButton } from '@/components/child-ui/circle-action-button';
 import { PageTitle } from '@/components/child-ui/page-title';
@@ -48,8 +49,14 @@ export interface ProgressGuideTargets {
   badges?: RefObject<View | null>;
 }
 
+export interface BadgeFocus {
+  id: string;
+  key: number;
+}
+
 interface ProgressScreenProps {
   onBack: () => void;
+  focusBadge?: BadgeFocus;
   onRecommend?: (tag: StoryFilterTag | null) => void;
   onDetailVisibleChange?: (visible: boolean) => void;
   embedded?: boolean;
@@ -62,6 +69,7 @@ interface ProgressScreenProps {
 
 export function ProgressScreen({
   onBack,
+  focusBadge,
   onRecommend,
   onDetailVisibleChange,
   embedded = false,
@@ -99,6 +107,18 @@ export function ProgressScreen({
     onDetailVisibleChange?.(true);
   }, [onDetailVisibleChange]);
 
+  const [focusedKey, setFocusedKey] = useState<number | undefined>(undefined);
+  if (focusBadge && focusBadge.key !== focusedKey) {
+    const badge = badges.find((candidate) => candidate.id === focusBadge.id);
+    if (badge) {
+      setFocusedKey(focusBadge.key);
+      setSelectedBadge(badge);
+    }
+  }
+  useEffect(() => {
+    if (focusedKey !== undefined && selectedBadge !== null) onDetailVisibleChange?.(true);
+  }, [focusedKey, selectedBadge, onDetailVisibleChange]);
+
   const handleCloseSheet = useCallback(() => {
     setSelectedBadge(null);
     onDetailVisibleChange?.(false);
@@ -124,7 +144,7 @@ export function ProgressScreen({
         scrollIndicatorInsets={{ top: coverHeight }}
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingTop: coverHeight + SPACE_3, paddingHorizontal: margin, paddingBottom: scrollBinding?.reserve ?? 0 },
+          { paddingTop: coverHeight + SPACE_3, paddingHorizontal: margin, paddingBottom: SHELF_FOOT_FADE + (scrollBinding?.reserve ?? 0) },
         ]}
       >
         <View style={[styles.column, { maxWidth: CONTENT_MAX_WIDTH }]}>
@@ -175,6 +195,8 @@ export function ProgressScreen({
           </ContentSwap>
         </View>
       </ScrollView>
+
+      <ShelfFoot />
 
       <PlanetCover height={coverHeight} testID="progress-planet-over-cards" />
 

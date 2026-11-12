@@ -28,7 +28,7 @@ import { useAccessibility } from '@/hooks/use-accessibility';
 import { voiceRecordingService, VoiceOver } from '@/services/voice-recording-service';
 import { useParentsOnlyChallenge } from '@/hooks/use-parents-only-challenge';
 import { ParentsOnlyModal } from '@/components/ui/parents-only-modal';
-import { StoryCardSheet } from '@/components/stories/story-card-sheet';
+import { MODE_OPTIONS, StoryCardSheet } from '@/components/stories/story-card-sheet';
 import { STORY_OVERLAY_LAYER_Z } from '@/constants/story-overlay-layer';
 import { useGuideLift } from '@/components/owl-guide/use-guide-lift';
 import { cardCoverTransform, storyCardLayout } from '@/constants/story-card';
@@ -42,11 +42,12 @@ import { useOwlGuide } from '@/contexts/owl-guide-context';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppStore } from '@/store/app-store';
-import { STORY_DETAIL_OPENING, STORY_OPENING, STORY_SKETCH, bookOutlinePath, coverFaceOpacity, needsGuidedTurn, openBookGrowScale, openingSeat, seatTransform, sketchDashOffset, storySketchTimeline } from '@/constants/story-opening';
+import { STORY_DETAIL_OPENING, STORY_OPENING, STORY_SKETCH, STORY_STRAIGHT_IN, bookOutlinePath, coverFaceOpacity, needsGuidedTurn, openBookGrowScale, openingSeat, seatTransform, sketchDashOffset, storySketchTimeline } from '@/constants/story-opening';
 import { allowTurnForPrompt, applyDefaultOrientation } from '@/hooks/use-story-orientation';
 import { waitForWindowToSettle } from '@/hooks/use-turn-to-landscape';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { choreograph } from '@/utils/choreograph';
+import { resumePageIndex } from '@/components/stories/reading-progress';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
@@ -62,7 +63,16 @@ export interface StoryOpenRequest {
   voiceOver: VoiceOver | null;
 }
 
-export type TransitionPhase = 'flying' | 'detail' | 'sketch' | 'returning' | 'prompt' | 'opening' | null;
+export type TransitionPhase = 'flying' | 'detail' | 'gliding' | 'sketch' | 'returning' | 'prompt' | 'opening' | null;
+
+export interface StoryCardOptions {
+  focusPages?: boolean;
+}
+
+export interface StartPage {
+  storyId: string;
+  pageIndex: number;
+}
 
 interface StoryTransitionContextType {
   // Direct open request, bypassing the detail/prompt overlay: the caller has
@@ -78,6 +88,7 @@ interface StoryTransitionContextType {
   selectedStory: Story | null;
   selectedMode: ReadingMode;
   selectedVoiceOver: VoiceOver | null;
+  selectedStartPage: StartPage | null;
   isExpandingToReader: boolean;
 
   // Flag to indicate story reader should start loading
@@ -102,7 +113,14 @@ interface StoryTransitionContextType {
   cardPosition: { x: number; y: number; width: number; height: number } | null;
 
   // Animation functions
-  startTransition: (storyId: string, cardLayout: { x: number; y: number; width: number; height: number }, story?: Story, shelf?: Story[]) => void;
+  startTransition: (
+    storyId: string,
+    cardLayout: { x: number; y: number; width: number; height: number },
+    story?: Story,
+    shelf?: Story[],
+    options?: StoryCardOptions
+  ) => void;
+  openStoryStraight: (story: Story, from: { x: number; y: number; width: number; height: number }) => void;
   cancelTransition: () => void;
   completeTransition: () => void;
   startExitAnimation: (onComplete: () => void, currentPageIndex?: number) => Promise<void>;
@@ -152,6 +170,8 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   // the flying book still matches the tile it would fly back to.
   const [shelf, setShelf] = useState<Story[]>([]);
   const [shelfIndex, setShelfIndex] = useState(0);
+  const [focusPages, setFocusPages] = useState(false);
+  const [startPage, setStartPage] = useState<StartPage | null>(null);
   const tappedStoryIdRef = useRef<string | null>(null);
   const [originalCardPosition, setOriginalCardPosition] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
   const [targetBookPosition, setTargetBookPosition] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
@@ -186,6 +206,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   const heroTransformRef = useRef<{ moveX: number; moveY: number; scale: number } | null>(null);
   // Guards against double-triggering the opening sequence (sensor + fallback button)
   const isOpeningRef = useRef(false);
+  const straightInRef = useRef(false);
 
   // Voice over state for record/narrate mode selection
   const [availableVoiceOvers, setAvailableVoiceOvers] = useState<VoiceOver[]>([]);
@@ -200,6 +221,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   const readButtonRef = useRef<View>(null);
   const recordButtonRef = useRef<View>(null);
   const narrateButtonRef = useRef<View>(null);
+  const pagesRef = useRef<View>(null);
 
   // Tutorial hook
   const { shouldShowGuide, activeGuide } = useOwlGuide();
@@ -207,6 +229,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   // low on it would otherwise sit behind the bubble resting on the perch
   const sheetLift = useGuideLift();
   const bookModeTargets = useMemo(() => ({
+    'pick_page': pagesRef,
     'read_button': readButtonRef,
     'record_button': recordButtonRef,
     'narrate_button': narrateButtonRef,
@@ -437,7 +460,13 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     setPhase('detail');
   };
 
-  const startTransition = async (storyId: string, cardLayout: { x: number; y: number; width: number; height: number }, story?: Story, shelfStories?: Story[]) => {
+  const startTransition = async (
+    storyId: string,
+    cardLayout: { x: number; y: number; width: number; height: number },
+    story?: Story,
+    shelfStories?: Story[],
+    options?: StoryCardOptions
+  ) => {
     // Reset ALL animation values from any previous transition FIRST
     pageFlipProgress.value = 0;
     bookExpansion.value = 0;
@@ -461,8 +490,11 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     isOpeningRef.current = false;
     rotationMaskOpacity.value = 0;
 
+    straightInRef.current = false;
     setSelectedStoryId(storyId);
     setSelectedStory(story || null);
+    setFocusPages(options?.focusPages ?? false);
+    setStartPage(null);
     tappedStoryIdRef.current = storyId;
     const onShelf = story && shelfStories?.some((candidate) => candidate.id === storyId) ? shelfStories : story ? [story] : [];
     setShelf(onShelf);
@@ -490,6 +522,15 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   // sketched at its seat -- its outline drawn, then its cover appearing inside
   // -- and opens from there, via the rotate prompt on a phone held upright
   const openWithMode = (mode: ReadingMode) => {
+    if (phaseRef.current !== 'detail') return;
+    if (MODE_OPTIONS.find((option) => option.mode === mode)?.grownUpsOnly) {
+      parentsOnly.showChallenge(() => startMode(mode));
+      return;
+    }
+    startMode(mode);
+  };
+
+  const startMode = (mode: ReadingMode) => {
     // Only the story card can start an opening, and only once. Without this a
     // second press -- a double tap, or the tap that stops the carousel landing
     // on the button underneath -- ran the choreography again from the top: the
@@ -531,39 +572,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     // The shelf behind goes dark as the card sinks
     overlayOpacity.value = withTiming(1, { duration: 300, easing: Easing.out(Easing.quad) });
 
-    const carryOn = async () => {
-      // Read the screen again: the child may have turned the phone while the
-      // book was being drawn. Tablets are never asked to turn -- they are
-      // unlocked, so the book just opens -- and neither is a phone that is
-      // already sideways. A phone that turned during the draw, though, is
-      // still turning: the size is reported as the system starts animating
-      // the interface round, and opening on that report put the book-opening
-      // on top of the rotation. So it waits for the window to hold still.
-      const now = Dimensions.get('window');
-      if (!needsGuidedTurn({ isTablet, width: now.width, height: now.height })) {
-        if (needsGuidedTurn({ isTablet, width: dims.width, height: dims.height })) {
-          await waitForWindowToSettle();
-        }
-        beginStory();
-        return;
-      }
-
-      setPhase('prompt');
-
-      // Let the phone follow the child now that we are asking them to turn it.
-      // Until this, iOS held the interface in portrait and the prompt could only
-      // be answered by the accelerometer -- which a simulator never provides.
-      allowTurnForPrompt().catch((error) => log.warn('Failed to allow turning:', error));
-
-      levitationY.value = withRepeat(
-        withSequence(
-          withTiming(-6, { duration: 900, easing: Easing.inOut(Easing.quad) }),
-          withTiming(6, { duration: 900, easing: Easing.inOut(Easing.quad) }),
-        ),
-        -1,
-        true,
-      );
-    };
+    const carryOn = () => seatThenOpen(dims);
 
     if (reduceMotion) {
       // no sketch: the book is simply there
@@ -614,6 +623,103 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     }, sketch.total);
   };
 
+  const seatThenOpen = async (dims: ScaledSize) => {
+    // Read the screen again: the child may have turned the phone while the
+    // book was being drawn. Tablets are never asked to turn -- they are
+    // unlocked, so the book just opens -- and neither is a phone that is
+    // already sideways. A phone that turned during the draw, though, is
+    // still turning: the size is reported as the system starts animating
+    // the interface round, and opening on that report put the book-opening
+    // on top of the rotation. So it waits for the window to hold still.
+    const now = Dimensions.get('window');
+    if (!needsGuidedTurn({ isTablet, width: now.width, height: now.height })) {
+      if (needsGuidedTurn({ isTablet, width: dims.width, height: dims.height })) {
+        await waitForWindowToSettle();
+      }
+      beginStory();
+      return;
+    }
+
+    setPhase('prompt');
+
+    // Let the phone follow the child now that we are asking them to turn it.
+    // Until this, iOS held the interface in portrait and the prompt could only
+    // be answered by the accelerometer -- which a simulator never provides.
+    allowTurnForPrompt().catch((error) => log.warn('Failed to allow turning:', error));
+
+    levitationY.value = withRepeat(
+      withSequence(
+        withTiming(-6, { duration: 900, easing: Easing.inOut(Easing.quad) }),
+        withTiming(6, { duration: 900, easing: Easing.inOut(Easing.quad) }),
+      ),
+      -1,
+      true,
+    );
+  };
+
+
+
+  const openStoryStraight = (story: Story, from: { x: number; y: number; width: number; height: number }) => {
+    pageFlipProgress.value = 0;
+    bookExpansion.value = 0;
+    cancelAnimation(levitationY);
+    levitationY.value = 0;
+    sketchProgress.value = 0;
+    sketchOpacity.value = 0;
+    setSketchOutline(null);
+    rotationMaskOpacity.value = 0;
+    setBookLeaving(false);
+    setIsExitAnimating(false);
+    setIsExpandingToReader(false);
+    isOpeningRef.current = false;
+    straightInRef.current = true;
+
+    const pageIndex = resumePageIndex({
+      skipCoverPage: true,
+      savedPlace: storyProgress[story.id],
+      totalPages: story.pages?.length ?? 0,
+    });
+    setSelectedStoryId(story.id);
+    setSelectedStory(story);
+    setFocusPages(false);
+    setStartPage({ storyId: story.id, pageIndex });
+    tappedStoryIdRef.current = story.id;
+    setShelf([story]);
+    setShelfIndex(0);
+    setCardPosition(from);
+    setOriginalCardPosition(from);
+    setSelectedMode('read');
+    setCurrentVoiceOver(null);
+    setIsTransitioning(true);
+    setPhase('gliding');
+
+    const dims = Dimensions.get('window');
+    const seat = computePromptTransform(from, dims.width, dims.height);
+    heroTransformRef.current = null;
+    openingTransformRef.current = { moveX: seat.moveX, moveY: seat.moveY, scale: seat.scale };
+    noteTransformScreen();
+    setTargetBookPosition(seat.rect);
+
+    transitionX.value = 0;
+    transitionY.value = 0;
+    transitionScale.value = 1;
+    transitionOpacity.value = 1;
+    bookShown.value = 1;
+    const glide = { duration: reduceMotion ? 0 : STORY_STRAIGHT_IN.glideMs, easing: Easing.inOut(Easing.cubic) };
+    transitionX.value = withTiming(seat.moveX, glide);
+    transitionY.value = withTiming(seat.moveY, glide);
+    transitionScale.value = withTiming(seat.scale, glide);
+    overlayOpacity.value = withTiming(1, glide);
+
+    InteractionManager.runAfterInteractions(() => preloadStoryImages(story));
+
+    setTimeout(() => {
+      if (phaseRef.current !== 'gliding') return;
+      if (needsGuidedTurn({ isTablet, width: dims.width, height: dims.height })) bookShown.value = 0;
+      seatThenOpen(dims);
+    }, glide.duration);
+  };
+
   // Back tapped on the rotate prompt: the book scrolls out of view, and the
   // card the child chose from comes back in over it
   const returnToDetailFromPrompt = () => {
@@ -622,6 +728,23 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
     // The child changed their mind, so take the freedom to turn back away
     applyDefaultOrientation().catch((error) => log.warn('Failed to restore orientation:', error));
+
+    if (straightInRef.current) {
+      setBookLeaving(true);
+      setPhase('returning');
+      overlayOpacity.value = withTiming(0, { duration: STORY_DETAIL_OPENING.sheetSinkMs, easing: Easing.out(Easing.quad) });
+      cancelAnimation(levitationY);
+      levitationY.value = withTiming(screenHeight, {
+        duration: STORY_DETAIL_OPENING.sheetSinkMs,
+        easing: Easing.in(Easing.cubic),
+      });
+      setTimeout(() => {
+        setBookLeaving(false);
+        straightInRef.current = false;
+        resetTransition();
+      }, STORY_DETAIL_OPENING.sheetSinkMs + 40);
+      return;
+    }
 
     setBookLeaving(true);
     setPhase('returning');
@@ -1712,6 +1835,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     setSelectedStory(story);
     setSelectedMode(mode);
     setCurrentVoiceOver(voiceOver);
+    setStartPage(null);
     setStoryOpenRequest({ story, mode, voiceOver });
   }, []);
 
@@ -1723,12 +1847,14 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     storyOpenRequest,
     requestStoryOpen,
     clearStoryOpen,
+    openStoryStraight,
     isTransitioning,
     showModeSelection,
     selectedStoryId,
     selectedStory,
     selectedMode,
     selectedVoiceOver: currentVoiceOver,
+    selectedStartPage: startPage,
     isExpandingToReader,
     shouldShowStoryReader,
     readerRevealStyle,
@@ -1786,7 +1912,8 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
     // Use provided pageIndex, or exitPageIndexRef (synchronous) during exit, or default to first content page
     // exitPageIndexRef.current is set synchronously so it's available on first render
-    const targetPageIndex = pageIndex ?? (exitPageIndexRef.current !== null ? exitPageIndexRef.current : 1);
+    const startsAt = startPage?.storyId === selectedStory.id ? startPage.pageIndex : 1;
+    const targetPageIndex = pageIndex ?? (exitPageIndexRef.current !== null ? exitPageIndexRef.current : startsAt);
     const page = selectedStory.pages[targetPageIndex];
     const imageSource = page?.backgroundImage || page?.characterImage;
 
@@ -1983,6 +2110,9 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
                 readButtonRef={readButtonRef}
                 recordButtonRef={recordButtonRef}
                 narrateButtonRef={narrateButtonRef}
+                pagesRef={pagesRef}
+                focusPages={focusPages}
+                onPickPage={(storyId, pageIndex) => setStartPage({ storyId, pageIndex })}
               />
             </Animated.View>
           )}
@@ -2193,7 +2323,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
 const styles = StyleSheet.create({
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: STORY_OVERLAY_LAYER_Z,
     justifyContent: 'center',
     alignItems: 'center',
@@ -2221,20 +2351,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   nightGround: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 0, // Below the book and the sheet
     backgroundColor: '#0A0F2C',
   },
   detailLayer: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 60, // Above the animated book card (50)
   },
   sketch: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 55, // Over the book it outlines, beneath the card that sinks away
   },
   rotationMask: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: '#0A0F2C',
     zIndex: 900, // Above everything except system modals
   },
@@ -2258,11 +2388,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#1D2657',
   },
   pageShade: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: '#1A1230',
   },
   coverShade: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: '#000000',
   },
   coverBackSpine: {

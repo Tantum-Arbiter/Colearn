@@ -1,0 +1,1048 @@
+// Phase 12 stage 0 dev bundle of the ai-tools book GWF-006, built from
+// contract-fixtures/stories/little-fox-meets-a-friend.json. Pages, covers and
+// after-states are the ai-tools render of 2026-11-09, each choice's own page its
+// render of 2026-11-12; the choice cards are cut from the rendered pose sheets
+// until ai-tools renders cut-outs. Replace with the export-for-app output when that lands.
+import { Story } from '@/types/story';
+
+export const littleFoxMeetsAFriend: Story = {
+      "id": "little-fox-meets-a-friend",
+      "title": "Little Fox Meets a Friend",
+      "localizedTitle": {
+        "en": "Little Fox Meets a Friend",
+      },
+      "category": "friendship",
+      "coverImage": require('../../assets/stories/little-fox-meets-a-friend/cover/thumbnail.webp'),
+      "isAvailable": true,
+      "ageRange": "2-4",
+      "pageCount": 15,
+      "displayFit": "cover",
+      "description": "Finn the fox really wants to play with a shy new friend! But when running up fast doesn't work, Finn learns how to give space and wait. A sweet, interactive story about gentle greetings and making friends at their own pace.",
+      "localizedDescription": {
+        "en": "Finn the fox really wants to play with a shy new friend! But when running up fast doesn't work, Finn learns how to give space and wait. A sweet, interactive story about gentle greetings and making friends at their own pace.",
+      },
+      "isPremium": true,
+      "isFree": false,
+      "author": "Early Roots",
+      "tags": [
+        "emotions",
+        "interactive",
+      ],
+      "pages": [
+        {
+          "id": "little-fox-meets-a-friend-cover",
+          "pageNumber": 0,
+          "type": "cover",
+          "text": "Little Fox Meets a Friend",
+          "backgroundImage": require('../../assets/stories/little-fox-meets-a-friend/cover/cover.webp'),
+        },
+        {
+          "id": "little-fox-meets-a-friend-1",
+          "pageNumber": 1,
+          "type": "story",
+          "backgroundImage": require('../../assets/stories/little-fox-meets-a-friend/page-1/background.webp'),
+          "text": "Finn the fox wore bright green boots.\nHe loved to stomp on muddy roots!\n*Splosh!* *Splash!* *Squelch* and slide!\nHe made a puddle very wide.",
+          "interactionType": "none",
+          "localizedText": {
+            "1-2": {
+              "en": "Green boots, muddy roots! *Splish, splash!* Finn's puddle grows!",
+            },
+            "2-4": {
+              "en": "Finn the fox wore bright green boots.\nHe loved to stomp on muddy roots!\n*Splosh!* *Splash!* *Squelch* and slide!\nHe made a puddle very wide.",
+            },
+            "4-6": {
+              "en": "Finn the fox wore his bright green boots, and loved to stomp on muddy roots. Beneath the great oak tree, he jumped with all his might. *SPLISH!* *SPLASH!* Mud flew left and right! His puddle spread out wide.",
+            },
+          },
+        },
+        {
+          "id": "little-fox-meets-a-friend-2",
+          "pageNumber": 2,
+          "type": "story",
+          "backgroundImage": require('../../assets/stories/little-fox-meets-a-friend/page-2/background.webp'),
+          "text": "By the toadstools, round and red,\nA little hedgehog poked her head.\n\"A friend!\" said Finn. \"A friend for me!\nI wonder what her name can be?\"",
+          "interactionType": "none",
+          "localizedText": {
+            "1-2": {
+              "en": "Red toadstools, one little head. Finn sees a friend ahead!",
+            },
+            "2-4": {
+              "en": "By the toadstools, round and red,\nA little hedgehog poked her head.\n\"A friend!\" said Finn. \"A friend for me!\nI wonder what her name can be?\"",
+            },
+            "4-6": {
+              "en": "Beside the round red toadstools, something small appeared. A little hedgehog poked her head out, then peered. Finn pointed with a grin as wide as could be. \"A friend!\" he cried. \"A friend for me! I wonder who she might be?\"",
+            },
+          },
+        },
+        {
+          "id": "little-fox-meets-a-friend-3",
+          "pageNumber": 3,
+          "type": "story",
+          "backgroundImage": require('../../assets/stories/little-fox-meets-a-friend/page-3/background.webp'),
+          "text": "He bounded up the giant stone.\n\"HELLO!\" he shouted through a cone.\nThe little hedgehog gave a squeak.\nHer wobbly legs grew very weak!",
+          "interactionType": "none",
+          "localizedText": {
+            "1-2": {
+              "en": "Finn shouts, \"HELLO!\" Oh no, oh no! Bramble wobbles below!",
+            },
+            "2-4": {
+              "en": "He bounded up the giant stone.\n\"HELLO!\" he shouted through a cone.\nThe little hedgehog gave a squeak.\nHer wobbly legs grew very weak!",
+            },
+            "4-6": {
+              "en": "Finn bounded onto a great flat stone, where he could stand up high. He lifted a pinecone to his mouth and gave a mighty cry. \"HELLO!\" The sound came booming through. Bramble squeaked and stumbled back. She hadn't expected quite that sort of welcome, too!",
+            },
+          },
+        },
+        {
+          "id": "little-fox-meets-a-friend-4",
+          "pageNumber": 4,
+          "type": "story",
+          "backgroundImage": require('../../assets/stories/little-fox-meets-a-friend/page-4/background.webp'),
+          "text": "She curled into a prickly ball,\nBeneath the bramble bushes tall.\nFinn stood still. His ears went flat.\nHe did not want a game like that.",
+          "interactionType": "learning_challenge",
+          "localizedText": {
+            "1-2": {
+              "en": "Bramble curls up tight. Finn's ears droop out of sight.",
+            },
+            "2-4": {
+              "en": "She curled into a prickly ball,\nBeneath the bramble bushes tall.\nFinn stood still. His ears went flat.\nHe did not want a game like that.",
+            },
+            "4-6": {
+              "en": "Beneath the tall bramble bushes, Bramble curled up small. Her prickles made a tight round ball. Finn stopped and stared, his great fox ears hanging low. He'd wanted her to play with him, but now she didn't want to show.",
+            },
+          },
+          "learningChallenge": {
+            "challengeId": "little-fox-meets-a-friend-4-challenge",
+            "briefInteractionId": "GWF-006-I01",
+            "mechanicId": "E06",
+            "family": "choose",
+            "adapter": "comfort_choice",
+            "assessmentMode": "exploratory_multiple_valid",
+            "audioDependent": false,
+            "domain": "social",
+            "skillId": "",
+            "copy": {
+              "title": {
+                "2-4": {
+                  "en": "What should Finn do?",
+                },
+              },
+              "setupLine": {
+                "2-4": {
+                  "en": "Finn’s loud HELLO made Bramble curl up tight.",
+                },
+              },
+              "instruction": {
+                "2-4": {
+                  "en": "What should Finn do to help Bramble?",
+                },
+              },
+              "successLine": {
+                "2-4": {
+                  "en": "Any of those could help Bramble feel safe again.",
+                },
+              },
+              "onSkip": {
+                "2-4": {
+                  "en": "Finn stood quietly and gave Bramble time.",
+                },
+              },
+              "parentPrompt": {
+                "2-4": {
+                  "en": "What could you do if you gave someone a fright by mistake?",
+                },
+              },
+              "hints": [
+                {
+                  "2-4": {
+                    "en": "Bramble curled up when Finn shouted.",
+                  },
+                },
+                {
+                  "2-4": {
+                    "en": "Tap something Finn could do to help.",
+                  },
+                },
+              ],
+            },
+            "items": [
+              {
+                "id": "finn-says-sorry",
+                "image": require('../../assets/stories/little-fox-meets-a-friend/page-4/challenge/finn-says-sorry.webp'),
+                "label": {
+                  "en": "Say sorry",
+                },
+                "outcome": {
+                  "successLine": {
+                    "2-4": {
+                      "en": "When you give a friend a fright by mistake, you can say sorry:",
+                    },
+                  },
+                  "tips": [
+                    {
+                      "2-4": {
+                        "en": "Say, “Sorry, I was too loud.”",
+                      },
+                    },
+                    {
+                      "2-4": {
+                        "en": "Ask, “Are you okay?”",
+                      },
+                    },
+                    {
+                      "2-4": {
+                        "en": "Use a gentle voice next time.",
+                      },
+                    },
+                  ],
+                  "storyText": {
+                    "2-4": {
+                      "en": "\"Sorry, Bramble, I was loud,\"\nSaid Finn, his fox head gently bowed.\nA tiny nose peeped out to see,\nAnd Finn kept still as still could be.",
+                    },
+                    "4-6": {
+                      "en": "Finn's ears drooped. \"Sorry, Bramble,\" he said in his gentlest voice. \"I was too loud.\" Beneath the brambles, the prickly ball wiggled, and a small black nose peeped out to see if he meant it.",
+                    },
+                  },
+                  "stateAfter": {
+                    "image": require('../../assets/stories/little-fox-meets-a-friend/page-4/outcomes/finn-says-sorry.webp'),
+                    "position": {
+                      "x": 0,
+                      "y": 0,
+                    },
+                    "size": {
+                      "width": 1,
+                      "height": 1,
+                    },
+                  },
+                },
+              },
+              {
+                "id": "finn-talks-softly",
+                "image": require('../../assets/stories/little-fox-meets-a-friend/page-4/challenge/finn-talks-softly.webp'),
+                "label": {
+                  "en": "Talk softly",
+                },
+                "outcome": {
+                  "successLine": {
+                    "2-4": {
+                      "en": "When a friend gets a fright, you can talk softly:",
+                    },
+                  },
+                  "tips": [
+                    {
+                      "2-4": {
+                        "en": "Use your quiet voice.",
+                      },
+                    },
+                    {
+                      "2-4": {
+                        "en": "Say their name gently.",
+                      },
+                    },
+                    {
+                      "2-4": {
+                        "en": "Tell them, “You’re safe.”",
+                      },
+                    },
+                  ],
+                  "storyText": {
+                    "1-2": {
+                      "en": "Finn whispers, \"It's only me.\" Bramble peeks out.",
+                    },
+                    "2-4": {
+                      "en": "\"It's only me,\" Finn whispered low,\nIn his quietest voice, so soft and slow.\nA tiny nose peeped out to see\nA gentle fox, calm as could be.",
+                    },
+                    "4-6": {
+                      "en": "Finn crouched low and spoke in his quietest voice. \"It's only me, Bramble. You're safe.\" Beneath the brambles, the prickly ball loosened just a little, and a small black nose peeped out.",
+                    },
+                  },
+                  "stateAfter": {
+                    "image": require('../../assets/stories/little-fox-meets-a-friend/page-4/outcomes/finn-talks-softly.webp'),
+                    "position": {
+                      "x": 0,
+                      "y": 0,
+                    },
+                    "size": {
+                      "width": 1,
+                      "height": 1,
+                    },
+                  },
+                },
+              },
+              {
+                "id": "finn-stays-still",
+                "image": require('../../assets/stories/little-fox-meets-a-friend/page-4/challenge/finn-stays-still.webp'),
+                "label": {
+                  "en": "Stay still",
+                },
+                "outcome": {
+                  "successLine": {
+                    "2-4": {
+                      "en": "When a friend gets a fright, you can stay still and calm:",
+                    },
+                  },
+                  "tips": [
+                    {
+                      "2-4": {
+                        "en": "Keep your body calm and still.",
+                      },
+                    },
+                    {
+                      "2-4": {
+                        "en": "Don’t move in too close.",
+                      },
+                    },
+                    {
+                      "2-4": {
+                        "en": "Give them time to feel calm again.",
+                      },
+                    },
+                  ],
+                  "storyText": {
+                    "1-2": {
+                      "en": "Finn stays very still. Bramble peeks out.",
+                    },
+                    "2-4": {
+                      "en": "Finn stayed so still, he did not shout.\nHe gave her time to peek about.\nA tiny nose came poking through.\nShe wasn't ready yet. He knew.",
+                    },
+                    "4-6": {
+                      "en": "Finn stayed as still as a tree stump and didn't say a word. He gave Bramble all the time she needed. After a while, a small black nose peeped out from the prickly ball, sniffing the quiet air.",
+                    },
+                  },
+                  "stateAfter": {
+                    "image": require('../../assets/stories/little-fox-meets-a-friend/page-4/outcomes/finn-stays-still.webp'),
+                    "position": {
+                      "x": 0,
+                      "y": 0,
+                    },
+                    "size": {
+                      "width": 1,
+                      "height": 1,
+                    },
+                  },
+                },
+              },
+            ],
+            "target": "",
+            "byAge": {
+              "1-2": {
+                "gesture": "tap",
+                "items": [
+                  "finn-talks-softly",
+                  "finn-stays-still",
+                ],
+              },
+              "2-4": {
+                "gesture": "tap",
+                "items": [
+                  "finn-says-sorry",
+                  "finn-talks-softly",
+                  "finn-stays-still",
+                ],
+              },
+              "4+": {
+                "gesture": "tap",
+                "items": [
+                  "finn-says-sorry",
+                  "finn-talks-softly",
+                  "finn-stays-still",
+                ],
+              },
+            },
+            "allowSkip": true,
+            "isMusicGate": false,
+          },
+        },
+        {
+          "id": "little-fox-meets-a-friend-5",
+          "pageNumber": 5,
+          "type": "story",
+          "backgroundImage": require('../../assets/stories/little-fox-meets-a-friend/page-5/background.webp'),
+          "text": "He walked away to crunchy sand.\nHe did not grab the hedgehog's hand.\n\"A little wave, a little smile.\nI can wait a little while.\"",
+          "interactionType": "none",
+          "localizedText": {
+            "1-2": {
+              "en": "Finn says, \"A little wave, a little smile. I can wait a little while.\"",
+            },
+            "2-4": {
+              "en": "He walked away to crunchy sand.\nHe did not grab the hedgehog's hand.\n\"A little wave, a little smile.\nI can wait a little while.\"",
+            },
+            "4-6": {
+              "en": "Finn walked to the crunchy yellow sand and sat upon his hands. He would not grab or hurry Bramble; perhaps she'd understand. He lifted one paw for the tiniest wave and said, \"A little wave, a little smile. I can wait a little while.\"",
+            },
+          },
+        },
+        {
+          "id": "little-fox-meets-a-friend-6",
+          "pageNumber": 6,
+          "type": "story",
+          "backgroundImage": require('../../assets/stories/little-fox-meets-a-friend/page-6/background.webp'),
+          "text": "Finn found a line of stepping stones.\nHe tapped his boots on mossy cones.\n*Tap!* *Tippy-tap!* *Plonk!*\nHe did a quiet, happy honk.",
+          "interactionType": "none",
+          "localizedText": {
+            "1-2": {
+              "en": "Green boots go *tap, tap, tap*. *Plonk!* What a funny clap!",
+            },
+            "2-4": {
+              "en": "Finn found a line of stepping stones.\nHe tapped his boots on mossy cones.\n*Tap!* *Tippy-tap!* *Plonk!*\nHe did a quiet, happy honk.",
+            },
+            "4-6": {
+              "en": "A line of flat stepping stones lay beside the stream. Finn balanced on them carefully, his green boots bright and clean. He tapped the moss. *Tap!* *Tippy-tap!* Then came a gentle *PLONK!* He gave a funny little honk, not a great big booming *HONK!*",
+            },
+          },
+        },
+        {
+          "id": "little-fox-meets-a-friend-7",
+          "pageNumber": 7,
+          "type": "story",
+          "backgroundImage": require('../../assets/stories/little-fox-meets-a-friend/page-7/background.webp'),
+          "text": "Behind a giant, floppy leaf,\nThe little hedgehog found relief.\nShe gave a tiny, twitchy peek,\nTo watch him playing hide-and-seek.",
+          "interactionType": "none",
+          "localizedText": {
+            "1-2": {
+              "en": "Bramble takes a peek. Finn's green boots go *squeak, squeak!*",
+            },
+            "2-4": {
+              "en": "Behind a giant, floppy leaf,\nThe little hedgehog found relief.\nShe gave a tiny, twitchy peek,\nTo watch him playing hide-and-seek.",
+            },
+            "4-6": {
+              "en": "Behind a giant floppy dock leaf, Bramble slowly uncurled. She poked her tiny nose around its edge to watch the world. There stood Finn, tapping softly in his boots of green. She stayed behind the leaf, but now she wanted to see the scene.",
+            },
+          },
+        },
+        {
+          "id": "little-fox-meets-a-friend-8",
+          "pageNumber": 8,
+          "type": "story",
+          "backgroundImage": require('../../assets/stories/little-fox-meets-a-friend/page-8/background.webp'),
+          "text": "Finn stood upon the narrow track.\nShould he wave, or turn his back?\nHe did not want to make her hide.\nHe needed space to step aside.",
+          "interactionType": "learning_challenge",
+          "localizedText": {
+            "1-2": {
+              "en": "Finn sees Bramble peek. He waits beside the little creek.",
+            },
+            "2-4": {
+              "en": "Finn stood upon the narrow track.\nShould he wave, or turn his back?\nHe did not want to make her hide.\nHe needed space to step aside.",
+            },
+            "4-6": {
+              "en": "Finn noticed Bramble watching from her leafy hiding place. He stood upon the narrow track and thought about giving space. Should he wave again, or look away instead? He didn't want another frightened squeak. Perhaps he should step back, he thought, and leave the path ahead.",
+            },
+          },
+          "learningChallenge": {
+            "challengeId": "little-fox-meets-a-friend-8-challenge",
+            "briefInteractionId": "GWF-006-I02",
+            "mechanicId": "E02",
+            "family": "choose",
+            "adapter": "support_choice",
+            "assessmentMode": "exploratory_multiple_valid",
+            "audioDependent": false,
+            "domain": "social",
+            "skillId": "",
+            "copy": {
+              "title": {
+                "2-4": {
+                  "en": "What could help?",
+                },
+              },
+              "setupLine": {
+                "2-4": {
+                  "en": "Finn isn't sure what to do next.",
+                },
+              },
+              "instruction": {
+                "2-4": {
+                  "en": "How could Finn help Bramble?",
+                },
+              },
+              "successLine": {
+                "2-4": {
+                  "en": "Each of those gives Bramble room to feel safe.",
+                },
+              },
+              "onSkip": {
+                "2-4": {
+                  "en": "Finn decided to take a small step back.",
+                },
+              },
+              "parentPrompt": {
+                "2-4": {
+                  "en": "What helps you when you feel shy?",
+                },
+              },
+              "hints": [
+                {
+                  "2-4": {
+                    "en": "Bramble is peeking out from behind the leaf.",
+                  },
+                },
+                {
+                  "2-4": {
+                    "en": "Tap a way Finn could help her feel safe.",
+                  },
+                },
+              ],
+            },
+            "items": [
+              {
+                "id": "finn-steps-back",
+                "image": require('../../assets/stories/little-fox-meets-a-friend/page-8/challenge/finn-steps-back.webp'),
+                "label": {
+                  "en": "Step back",
+                },
+                "outcome": {
+                  "successLine": {
+                    "2-4": {
+                      "en": "When a friend wants to hide, you can give them space:",
+                    },
+                  },
+                  "tips": [
+                    {
+                      "2-4": {
+                        "en": "Take one big step back.",
+                      },
+                    },
+                    {
+                      "2-4": {
+                        "en": "Wait quietly for a little while.",
+                      },
+                    },
+                    {
+                      "2-4": {
+                        "en": "Let them come out when they’re ready.",
+                      },
+                    },
+                  ],
+                  "storyText": {
+                    "1-2": {
+                      "en": "Finn steps back, off the track. Bramble peeks out.",
+                    },
+                    "2-4": {
+                      "en": "Finn took one big step to the side,\nTo leave a path both clear and wide.\nHe did not call. He did not creep.\nAnd Bramble took another peep.",
+                    },
+                    "4-6": {
+                      "en": "Finn took one big, careful step off the narrow track and onto the soft ground beside it. Now there was room on the path for Bramble, if she wanted it. He didn't call out or creep closer. Behind the dock leaf, Bramble peeked out a little further.",
+                    },
+                  },
+                  "stateAfter": {
+                    "image": require('../../assets/stories/little-fox-meets-a-friend/page-8/outcomes/finn-steps-back.webp'),
+                    "position": {
+                      "x": 0,
+                      "y": 0,
+                    },
+                    "size": {
+                      "width": 1,
+                      "height": 1,
+                    },
+                  },
+                },
+              },
+              {
+                "id": "finn-waits-nearby",
+                "image": require('../../assets/stories/little-fox-meets-a-friend/page-8/challenge/finn-waits-nearby.webp'),
+                "label": {
+                  "en": "Sit nearby",
+                },
+                "outcome": {
+                  "successLine": {
+                    "2-4": {
+                      "en": "When a friend wants to hide, you can stay close and calm:",
+                    },
+                  },
+                  "tips": [
+                    {
+                      "2-4": {
+                        "en": "Sit down near them.",
+                      },
+                    },
+                    {
+                      "2-4": {
+                        "en": "Play quietly on your own.",
+                      },
+                    },
+                    {
+                      "2-4": {
+                        "en": "Smile if they look at you.",
+                      },
+                    },
+                  ],
+                  "storyText": {
+                    "1-2": {
+                      "en": "Finn sits and plays. Bramble peeks out.",
+                    },
+                    "2-4": {
+                      "en": "Finn sat down beside the way,\nAnd found some daisies there to play.\nHe did not stare. He did not shout.\nAnd Bramble's nose came peeping out.",
+                    },
+                    "4-6": {
+                      "en": "Finn sat down on the soft ground beside the track and began to play quietly with a daisy, as if he had all the time in the world. He didn't stare at the dock leaf or call Bramble's name. Little by little, her nose came peeping out to see what he was doing.",
+                    },
+                  },
+                  "stateAfter": {
+                    "image": require('../../assets/stories/little-fox-meets-a-friend/page-8/outcomes/finn-waits-nearby.webp'),
+                    "position": {
+                      "x": 0,
+                      "y": 0,
+                    },
+                    "size": {
+                      "width": 1,
+                      "height": 1,
+                    },
+                  },
+                },
+              },
+              {
+                "id": "finn-leaves-a-berry",
+                "image": require('../../assets/stories/little-fox-meets-a-friend/page-8/challenge/finn-leaves-a-berry.webp'),
+                "label": {
+                  "en": "Share",
+                },
+                "outcome": {
+                  "successLine": {
+                    "2-4": {
+                      "en": "When a friend wants to hide, you can share something kind:",
+                    },
+                  },
+                  "tips": [
+                    {
+                      "2-4": {
+                        "en": "Offer a toy or a snack.",
+                      },
+                    },
+                    {
+                      "2-4": {
+                        "en": "Put it down near them.",
+                      },
+                    },
+                    {
+                      "2-4": {
+                        "en": "Let them choose to take it.",
+                      },
+                    },
+                  ],
+                  "storyText": {
+                    "2-4": {
+                      "en": "Finn placed a pinecone on the track,\nA gift for her, then he stepped back.\nHe smiled and let the present be.\nWould Bramble come out now to see?",
+                    },
+                    "4-6": {
+                      "en": "Finn set a pinecone down in the middle of the track, a little present for Bramble. Then he stepped back to the side and let it be. A gift was a kind way to say hello without saying anything at all. Behind the dock leaf, a small nose sniffed the air.",
+                    },
+                  },
+                  "stateAfter": {
+                    "image": require('../../assets/stories/little-fox-meets-a-friend/page-8/outcomes/finn-leaves-a-berry.webp'),
+                    "position": {
+                      "x": 0,
+                      "y": 0,
+                    },
+                    "size": {
+                      "width": 1,
+                      "height": 1,
+                    },
+                  },
+                },
+              },
+            ],
+            "target": "",
+            "byAge": {
+              "1-2": {
+                "gesture": "tap",
+                "items": [
+                  "finn-steps-back",
+                  "finn-waits-nearby",
+                ],
+              },
+              "2-4": {
+                "gesture": "tap",
+                "items": [
+                  "finn-steps-back",
+                  "finn-waits-nearby",
+                  "finn-leaves-a-berry",
+                ],
+              },
+              "4+": {
+                "gesture": "tap",
+                "items": [
+                  "finn-steps-back",
+                  "finn-waits-nearby",
+                  "finn-leaves-a-berry",
+                ],
+              },
+            },
+            "allowSkip": true,
+            "isMusicGate": false,
+          },
+        },
+        {
+          "id": "little-fox-meets-a-friend-9",
+          "pageNumber": 9,
+          "type": "story",
+          "backgroundImage": require('../../assets/stories/little-fox-meets-a-friend/page-9/background.webp'),
+          "text": "He stepped into the daisies wild.\nHe looked at her, and gently smiled.\n\"A little wave, a little smile.\nI can wait a little while.\"",
+          "interactionType": "none",
+          "localizedText": {
+            "1-2": {
+              "en": "Finn says, \"A little wave, a little smile. I can wait a little while.\"",
+            },
+            "2-4": {
+              "en": "He stepped into the daisies wild.\nHe looked at her, and gently smiled.\n\"A little wave, a little smile.\nI can wait a little while.\"",
+            },
+            "4-6": {
+              "en": "Finn stepped backwards into the tall daisies, leaving room along the track. He gave Bramble a gentle smile and did not hurry back. \"A little wave, a little smile. I can wait a little while.\" Bramble slowly unrolled, and her nose appeared again.",
+            },
+          },
+        },
+        {
+          "id": "little-fox-meets-a-friend-10",
+          "pageNumber": 10,
+          "type": "story",
+          "backgroundImage": require('../../assets/stories/little-fox-meets-a-friend/page-10/background.webp'),
+          "text": "A juicy blackberry fell down,\nAnd hit a pebble, hard and brown.\nSMACK! SPLAT! Oh dear.\nThe hedgehog froze again in fear!",
+          "interactionType": "none",
+          "localizedText": {
+            "1-2": {
+              "en": "Blackberry drops. SPLAT! Oh, that! Bramble jumps back, just like that!",
+            },
+            "2-4": {
+              "en": "A juicy blackberry fell down,\nAnd hit a pebble, hard and brown.\nSMACK! SPLAT! Oh dear.\nThe hedgehog froze again in fear!",
+            },
+            "4-6": {
+              "en": "A fat, juicy blackberry dropped from the bush above. It struck a brown pebble beside the water with a tremendous SPLAT! Bramble jumped, her prickles springing up again. She had only just come out of hiding. Now that sudden noise had frightened her right back.",
+            },
+          },
+        },
+        {
+          "id": "little-fox-meets-a-friend-11",
+          "pageNumber": 11,
+          "type": "story",
+          "backgroundImage": require('../../assets/stories/little-fox-meets-a-friend/page-11/background.webp'),
+          "text": "Finn stood beside the hollow tree.\nWhat could a gentle greeting be?\nHe did not shout. He did not run.\nHe wanted her to join the fun.",
+          "interactionType": "learning_challenge",
+          "localizedText": {
+            "1-2": {
+              "en": "Finn stands still by the tree. Soft and quiet as can be.",
+            },
+            "2-4": {
+              "en": "Finn stood beside the hollow tree.\nWhat could a gentle greeting be?\nHe did not shout. He did not run.\nHe wanted her to join the fun.",
+            },
+            "4-6": {
+              "en": "Beside the hollow willow tree, Finn stood quietly and still. He looked towards Bramble, trying not to give another shrill shout. He wanted her to join the fun, but not if she was scared. His pinecone greeting had been much too loud; this time, he would show her that he cared.",
+            },
+          },
+          "learningChallenge": {
+            "challengeId": "little-fox-meets-a-friend-11-challenge",
+            "briefInteractionId": "GWF-006-I03",
+            "mechanicId": "L11",
+            "family": "choose",
+            "adapter": "dialogue_choice",
+            "assessmentMode": "exploratory_multiple_valid",
+            "audioDependent": false,
+            "domain": "language",
+            "skillId": "",
+            "copy": {
+              "title": {
+                "2-4": {
+                  "en": "Choose what to say",
+                },
+              },
+              "setupLine": {
+                "2-4": {
+                  "en": "Finn wants to say something gentle.",
+                },
+              },
+              "instruction": {
+                "2-4": {
+                  "en": "What could Finn say softly?",
+                },
+              },
+              "successLine": {
+                "2-4": {
+                  "en": "Gentle words helped Bramble feel safe.",
+                },
+              },
+              "onSkip": {
+                "2-4": {
+                  "en": "Finn whispered a very quiet hello.",
+                },
+              },
+              "parentPrompt": {
+                "2-4": {
+                  "en": "How do you say hello to someone new?",
+                },
+              },
+              "hints": [
+                {
+                  "2-4": {
+                    "en": "Finn wants Bramble to feel safe.",
+                  },
+                },
+                {
+                  "2-4": {
+                    "en": "Tap something kind Finn could say.",
+                  },
+                },
+              ],
+            },
+            "items": [
+              {
+                "id": "say-hello",
+                "image": require('../../assets/stories/little-fox-meets-a-friend/page-11/challenge/say-hello.webp'),
+                "label": {
+                  "en": "Say hello",
+                },
+                "outcome": {
+                  "successLine": {
+                    "2-4": {
+                      "en": "When you meet someone new, you can say hello:",
+                    },
+                  },
+                  "tips": [
+                    {
+                      "2-4": {
+                        "en": "Smile and wave.",
+                      },
+                    },
+                    {
+                      "2-4": {
+                        "en": "Say hello in a soft voice.",
+                      },
+                    },
+                    {
+                      "2-4": {
+                        "en": "Tell them your name.",
+                      },
+                    },
+                  ],
+                  "storyText": {
+                    "1-2": {
+                      "en": "Finn gives a little wave. \"Hello,\" he says softly.",
+                    },
+                    "2-4": {
+                      "en": "\"Hello, Bramble,\" Finn said low,\nWith one small wave, so soft and slow.\nNo pinecone shout, no booming cheer,\nJust one kind fox, still standing here.",
+                    },
+                    "4-6": {
+                      "en": "Finn lifted one paw and gave the smallest wave. \"Hello, Bramble,\" he said, soft and low. There was no pinecone and no booming shout this time, just a gentle fox standing still by the willow tree. Bramble's prickles settled, just a little.",
+                    },
+                  },
+                  "stateAfter": {
+                    "image": require('../../assets/stories/little-fox-meets-a-friend/page-11/outcomes/say-hello.webp'),
+                    "position": {
+                      "x": 0,
+                      "y": 0,
+                    },
+                    "size": {
+                      "width": 1,
+                      "height": 1,
+                    },
+                  },
+                },
+              },
+              {
+                "id": "ask-to-play",
+                "image": require('../../assets/stories/little-fox-meets-a-friend/page-11/challenge/ask-to-play.webp'),
+                "label": {
+                  "en": "Ask to play",
+                },
+                "outcome": {
+                  "successLine": {
+                    "2-4": {
+                      "en": "When you want to play with someone, you can ask:",
+                    },
+                  },
+                  "tips": [
+                    {
+                      "2-4": {
+                        "en": "Ask, “Would you like to play?”",
+                      },
+                    },
+                    {
+                      "2-4": {
+                        "en": "Listen to their answer.",
+                      },
+                    },
+                    {
+                      "2-4": {
+                        "en": "If they say no, that’s okay.",
+                      },
+                    },
+                  ],
+                  "storyText": {
+                    "1-2": {
+                      "en": "Finn asks softly, \"Will you play with me?\"",
+                    },
+                    "2-4": {
+                      "en": "\"Would you like to play with me?\"\nFinn asked so softly by the tree.\n\"If not, that's fine. It's still okay.\nWe can play another day.\"",
+                    },
+                    "4-6": {
+                      "en": "Finn crouched a little lower so he didn't look so big. \"Would you like to play with me, Bramble?\" he asked softly. \"It's all right if you're not ready. We can play another day.\" Then he waited, and let her decide.",
+                    },
+                  },
+                  "stateAfter": {
+                    "image": require('../../assets/stories/little-fox-meets-a-friend/page-11/outcomes/ask-to-play.webp'),
+                    "position": {
+                      "x": 0,
+                      "y": 0,
+                    },
+                    "size": {
+                      "width": 1,
+                      "height": 1,
+                    },
+                  },
+                },
+              },
+              {
+                "id": "say-ill-wait",
+                "image": require('../../assets/stories/little-fox-meets-a-friend/page-11/challenge/say-ill-wait.webp'),
+                "label": {
+                  "en": "Wait kindly",
+                },
+                "outcome": {
+                  "successLine": {
+                    "2-4": {
+                      "en": "When a friend isn’t ready yet, you can wait:",
+                    },
+                  },
+                  "tips": [
+                    {
+                      "2-4": {
+                        "en": "Say, “I’ll wait right here.”",
+                      },
+                    },
+                    {
+                      "2-4": {
+                        "en": "Stay nearby and be patient.",
+                      },
+                    },
+                    {
+                      "2-4": {
+                        "en": "Be ready to play when they are.",
+                      },
+                    },
+                  ],
+                  "storyText": {
+                    "2-4": {
+                      "en": "\"I'll wait for you,\" Finn said with care,\n\"I'll be right here, just over there.\"\nHe sat down with a little smile.\nHe could wait a little while.",
+                    },
+                    "4-6": {
+                      "en": "Finn sat down beside the hollow willow tree and gave Bramble a little smile. \"I'll wait for you,\" he said gently. \"Come over when you're ready.\" He didn't hurry her or creep closer. He could wait a little while.",
+                    },
+                  },
+                  "stateAfter": {
+                    "image": require('../../assets/stories/little-fox-meets-a-friend/page-11/outcomes/say-ill-wait.webp'),
+                    "position": {
+                      "x": 0,
+                      "y": 0,
+                    },
+                    "size": {
+                      "width": 1,
+                      "height": 1,
+                    },
+                  },
+                },
+              },
+            ],
+            "target": "",
+            "byAge": {
+              "1-2": {
+                "gesture": "tap",
+                "items": [
+                  "say-hello",
+                  "ask-to-play",
+                ],
+              },
+              "2-4": {
+                "gesture": "tap",
+                "items": [
+                  "say-hello",
+                  "ask-to-play",
+                  "say-ill-wait",
+                ],
+              },
+              "4+": {
+                "gesture": "tap",
+                "items": [
+                  "say-hello",
+                  "ask-to-play",
+                  "say-ill-wait",
+                ],
+              },
+            },
+            "allowSkip": true,
+            "isMusicGate": false,
+          },
+        },
+        {
+          "id": "little-fox-meets-a-friend-12",
+          "pageNumber": 12,
+          "type": "story",
+          "backgroundImage": require('../../assets/stories/little-fox-meets-a-friend/page-12/background.webp'),
+          "text": "He knelt upon the clover green.\nThe quietest fox you've ever seen!\n\"A little wave, a little smile.\nI can wait a little while.\"",
+          "interactionType": "none",
+          "localizedText": {
+            "1-2": {
+              "en": "Finn says, \"A little wave, a little smile. I can wait a little while.\"",
+            },
+            "2-4": {
+              "en": "He knelt upon the clover green.\nThe quietest fox you've ever seen!\n\"A little wave, a little smile.\nI can wait a little while.\"",
+            },
+            "4-6": {
+              "en": "Finn knelt down in the soft green clover, as quiet as could be. He held out one gentle paw and pointed where the squashed blackberry lay. \"A little wave, a little smile. I can wait a little while.\" He gave Bramble room to choose her own way.",
+            },
+          },
+        },
+        {
+          "id": "little-fox-meets-a-friend-13",
+          "pageNumber": 13,
+          "type": "story",
+          "backgroundImage": require('../../assets/stories/little-fox-meets-a-friend/page-13/background.webp'),
+          "text": "The hedgehog gave a tiny sigh.\nShe rubbed a prickle from her eye.\n\"I'm Bramble,\" came a little squeak.\nShe felt too brave to hide and peek!",
+          "interactionType": "none",
+          "localizedText": {
+            "1-2": {
+              "en": "Bramble's prickles lie low. \"I'm Bramble,\" she says, soft and slow.",
+            },
+            "2-4": {
+              "en": "The hedgehog gave a tiny sigh.\nShe rubbed a prickle from her eye.\n\"I'm Bramble,\" came a little squeak.\nShe felt too brave to hide and peek!",
+            },
+            "4-6": {
+              "en": "At the grassy edge of the brook, Bramble let her prickles settle down. She rubbed one eye, gave a little sigh, then looked at Finn without a frown. \"I'm Bramble,\" she squeaked, her voice as soft as could be. At last, she was ready to let him see.",
+            },
+          },
+        },
+        {
+          "id": "little-fox-meets-a-friend-14",
+          "pageNumber": 14,
+          "type": "story",
+          "backgroundImage": require('../../assets/stories/little-fox-meets-a-friend/page-14/background.webp'),
+          "text": "Finn pointed to the woodland treat,\nUpon a slate where they could meet.\n\"I'm Finn!\" he whispered. \"Have a bite!\"\nHer shiny eyes grew very bright.",
+          "interactionType": "none",
+          "localizedText": {
+            "1-2": {
+              "en": "Finn shares a berry bite. Bramble's eyes shine bright!",
+            },
+            "2-4": {
+              "en": "Finn pointed to the woodland treat,\nUpon a slate where they could meet.\n\"I'm Finn!\" he whispered. \"Have a bite!\"\nHer shiny eyes grew very bright.",
+            },
+            "4-6": {
+              "en": "Finn pointed to the flat piece of slate between them, where the blackberry could rest. He gently pushed its clean half towards Bramble, offering her the best. \"I'm Finn,\" he whispered. \"Would you like a bite?\" Bramble looked at the purple berry, and her dark eyes shone bright.",
+            },
+          },
+        },
+        {
+          "id": "little-fox-meets-a-friend-15",
+          "pageNumber": 15,
+          "type": "story",
+          "backgroundImage": require('../../assets/stories/little-fox-meets-a-friend/page-15/background.webp'),
+          "text": "Inside the roots, they munched the snack.\nA purple berry, sweet and black.\n*Smush!* *Crunch!* Yum!\nWith purple juice on Finn's fuzzy tum!",
+          "interactionType": "none",
+          "localizedText": {
+            "1-2": {
+              "en": "Berry on Finn's tum! Purple, purple! Yum, yum, yum!",
+            },
+            "2-4": {
+              "en": "Inside the roots, they munched the snack.\nA purple berry, sweet and black.\n*Smush!* *Crunch!* Yum!\nWith purple juice on Finn's fuzzy tum!",
+            },
+            "4-6": {
+              "en": "Inside the cosy hollow among the roots, Finn and Bramble sat side by side. They munched their sweet purple blackberry in their little place to hide. *SMUSH!* A piece slipped down and left a purple splat on Finn's fuzzy tummy. Bramble giggled. Finn looked down and grinned. What a wonderfully messy snack!",
+            },
+          },
+        },
+      ],
+    };

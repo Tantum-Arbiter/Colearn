@@ -8,9 +8,6 @@ import {
   StoryFilterTag,
 } from '@/types/story';
 
-/** The page the featured panel opens the book to, one-based. */
-export const FEATURED_INSIGHT_PAGE = 3;
-
 /**
  * Fixed for one run of the app: the featured book changes when the child
  * opens the app, not while they move around inside it.
@@ -34,8 +31,6 @@ export interface CatalogueStory {
   locked: boolean;
   audioAvailable: boolean;
   interactive: boolean;
-  /** A book built around a learning game: a jigsaw, spelling or word challenge. */
-  learningGame: boolean;
   /** A book of music: tagged so, not merely a story with a song in it. */
   music: boolean;
   free: boolean;
@@ -64,8 +59,7 @@ export function fromStory(story: Story): CatalogueStory {
     locked: false,
     audioAvailable: Boolean(story.pages?.length),
     interactive: Boolean(story.pages?.some((page) => page.interactiveElements?.length)),
-    learningGame: storyHasJigsaw(story) || storyHasReadingChallenge(story) || Boolean(story.tags?.includes('learning')),
-    music: Boolean(story.tags?.includes('music')),
+    music: bookTheme(story.tags) === 'music',
     free: story.isFree ?? false,
     shareToUnlock: false,
     source: { kind: 'downloaded', story },
@@ -89,15 +83,14 @@ export function fromCatalogEntry(entry: CatalogEntry, access: RemoteAccess): Cat
     locked: access.locked,
     audioAvailable: false,
     interactive: Boolean(entry.tags?.includes('interactive')),
-    learningGame: Boolean(entry.tags?.some((tag) => tag === 'learning' || tag === 'jigsaw' || tag === 'spelling')),
-    music: Boolean(entry.tags?.includes('music')),
+    music: bookTheme(entry.tags) === 'music',
     free: entry.isFree,
     shareToUnlock: access.shareToUnlock,
     source: { kind: 'remote', entry },
   };
 }
 
-export type CatalogueMode = 'interactive' | 'music' | 'jigsaw';
+export type CatalogueMode = 'interactive' | 'music';
 
 export function storyHasMusic(story: Story): boolean {
   return !!story.pages?.some((page) => page.interactionType === 'music_challenge');
@@ -107,28 +100,22 @@ export function storyHasInteractive(story: Story): boolean {
   return !!story.pages?.some((page) => page.interactiveElements && page.interactiveElements.length > 0);
 }
 
-export function storyHasJigsaw(story: Story): boolean {
-  return !!story.pages?.some((page) => page.interactionType === 'jigsaw_puzzle');
-}
-
-export function storyHasReadingChallenge(story: Story): boolean {
-  return !!story.pages?.some((page) => page.interactionType === 'reading_challenge');
-}
-
 /**
- * The three tiles the shelf is sorted under. A book is Music if it is tagged
- * so, else Learning if it is built around a game (a jigsaw, spelling or word
- * challenge, or the learning tag), else a Story: every book has exactly one
+ * The two tiles the shelf is sorted under. A book is Music if it is tagged
+ * so, else a Story: every book has exactly one
  * home, so the tiles between them show the whole shelf and nothing twice. A
  * story with a song on one page is still a story -- the bundled bedtime book
  * carries two music pages -- so music is read from the tag, not the pages.
  */
-export type CatalogueTheme = 'stories' | 'learning' | 'music';
-export const CATALOGUE_THEMES: readonly CatalogueTheme[] = ['stories', 'learning', 'music'];
+export type CatalogueTheme = 'stories' | 'music';
+export const CATALOGUE_THEMES: readonly CatalogueTheme[] = ['stories', 'music'];
+
+export function bookTheme(tags?: readonly string[]): CatalogueTheme {
+  return tags?.includes('music') ? 'music' : 'stories';
+}
 
 export function storyTheme(story: CatalogueStory): CatalogueTheme {
   if (story.music) return 'music';
-  if (story.learningGame) return 'learning';
   return 'stories';
 }
 
@@ -142,7 +129,7 @@ export interface RecommendationTarget {
 }
 
 export function recommendationTarget(tag: StoryFilterTag | null): RecommendationTarget {
-  if (tag === 'learning' || tag === 'music') return { theme: tag, tags: [] };
+  if (tag === 'music') return { theme: tag, tags: [] };
   return { tags: tag ? [tag] : [] };
 }
 
@@ -185,38 +172,44 @@ function shuffled<T>(items: T[], seed: number): T[] {
 const PICK_AFTER_ROW = 2;
 
 /**
- * The shelves under the featured panel: a row for every theme tag with a book
- * to its name, in an order drawn afresh each time the app opens, with the
- * day's pick -- a second big panel -- standing among them. The same few books turn up in more than one row, as on any
- * shelf sorted by theme; what changes is which rows lead -- though a
- * row that would repeat exactly the books of one above it is left out. A book
- * with no theme to its name would appear in no row, so those close the shelf
+ * The shelves under the featured panel. Each book stands on one shelf only,
+ * though it may carry several themes: the fullest shelf is filled first --
+ * the theme that gathers the most books not yet shelved -- then the next, so
+ * the rows are as full as the catalogue allows and none repeats a title
+ * (operator, 2026-11-12). Equally full shelves come in an order drawn afresh
+ * each time the app opens. Every theme still finds a book through the
+ * filters and See all, which match any of its themes.
+ *
+ * The books on the big cards -- the featured panel and the day's pick, which
+ * stands after the second row -- are left out of the rows, unless that would
+ * leave the rows with nothing at all. A book with no theme closes the shelf
  * as More Stories.
  */
 export function buildShelves(stories: CatalogueStory[], plan: ShelfPlan): Shelf[] {
-  // A row that would show exactly the books of a row above it says nothing new;
-  // with a small shelf every theme would otherwise repeat the same one book
-  const shown = new Set<string>();
-  const rows: Shelf[] = shuffled(
-    (Object.keys(STORY_FILTER_TAGS) as StoryFilterTag[])
-      .map((tag) => ({ kind: 'row' as const, tag, stories: stories.filter((story) => story.theme.includes(tag)) }))
-      .filter((row) => row.stories.length > 0),
-    plan.seed,
-  ).filter((row) => {
-    const key = row.stories.map((story) => story.id).sort().join('|');
-    if (shown.has(key)) return false;
-    shown.add(key);
-    return true;
-  });
-
   const pickable = stories.filter((story) => story.source.kind === 'downloaded' && story.id !== plan.featuredId);
-  if (pickable.length > 0) {
-    const pick = pickable[Math.min(pickable.length - 1, Math.floor(plan.seed * pickable.length))];
-    rows.splice(Math.min(PICK_AFTER_ROW, rows.length), 0, { kind: 'pick', story: pick });
+  const pick = pickable.length > 0
+    ? pickable[Math.min(pickable.length - 1, Math.floor(plan.seed * pickable.length))]
+    : null;
+
+  const onBigCards = new Set([plan.featuredId, pick?.id].filter((id): id is string => !!id));
+  const besideBigCards = stories.filter((story) => !onBigCards.has(story.id));
+  const shelved = besideBigCards.length > 0 ? besideBigCards : stories;
+
+  const themes = shuffled(Object.keys(STORY_FILTER_TAGS) as StoryFilterTag[], plan.seed);
+  const claimed = new Set<string>();
+  const rows: Shelf[] = [];
+  for (;;) {
+    const fullest = themes
+      .map((tag) => ({ tag, stories: shelved.filter((story) => !claimed.has(story.id) && story.theme.includes(tag)) }))
+      .reduce((best, row) => (row.stories.length > best.stories.length ? row : best), { tag: themes[0], stories: [] as CatalogueStory[] });
+    if (fullest.stories.length === 0) break;
+    fullest.stories.forEach((story) => claimed.add(story.id));
+    rows.push({ kind: 'row', tag: fullest.tag, stories: fullest.stories });
   }
 
-  const inARow = new Set(rows.flatMap((row) => (row.kind === 'row' ? row.stories.map((story) => story.id) : [])));
-  const unclaimed = stories.filter((story) => !inARow.has(story.id));
+  if (pick) rows.splice(Math.min(PICK_AFTER_ROW, rows.length), 0, { kind: 'pick', story: pick });
+
+  const unclaimed = shelved.filter((story) => !claimed.has(story.id));
   if (unclaimed.length > 0) rows.push({ kind: 'more', stories: unclaimed });
 
   return rows;
@@ -225,12 +218,9 @@ export function buildShelves(stories: CatalogueStory[], plan: ShelfPlan): Shelf[
 /**
  * The saved shelf: favourites grouped under the themes they belong to.
  *
- * Two deliberate differences from the catalogue's own shelves. Nothing is
- * shuffled -- a shelf the child built themselves should be where they left it,
- * not rearranged on every launch. And each story is claimed by the first theme
- * that matches rather than appearing under every one of them: across a whole
- * catalogue the repetition reads as variety, but across a handful of saved
- * books it reads as the same three titles over and over.
+ * Nothing is shuffled -- a shelf the child built themselves should be where
+ * they left it, not rearranged on every launch -- and each story is claimed
+ * by the first theme that matches, so no title appears twice.
  */
 export function buildSavedRows(stories: CatalogueStory[]): Shelf[] {
   const claimed = new Set<string>();
@@ -252,14 +242,12 @@ export function buildSavedRows(stories: CatalogueStory[]): Shelf[] {
 export function storyMatchesMode(story: Story, mode: CatalogueMode | null): boolean {
   if (mode === 'interactive') return storyHasInteractive(story);
   if (mode === 'music') return storyHasMusic(story);
-  if (mode === 'jigsaw') return storyHasJigsaw(story);
   return true;
 }
 
 export function entryMatchesMode(entry: CatalogEntry, mode: CatalogueMode | null): boolean {
   if (mode === 'interactive') return !!entry.tags?.includes('interactive');
   if (mode === 'music') return !!entry.tags?.includes('music');
-  if (mode === 'jigsaw') return false;
   return true;
 }
 
@@ -318,20 +306,19 @@ export function selectContinuing(stories: CatalogueStory[], storyId: string | nu
 }
 
 /**
- * The picture the featured panel shows to give a glimpse inside: the third
- * page, rather than the cover the child has already seen on the shelf.
- *
- * Counted by the book rather than by the array. A story leads with its cover
- * as page zero, so the third page is the fourth entry; indexing blind lands on
- * page two. Books too short to have a third page, or whose third page carries
- * no picture, fall back to the cover.
+ * The picture on the featured panel: for a book the child is part-way
+ * through, the page they are on (`pageIndex`, as the reader counts it);
+ * otherwise the book's cover, at full size where its cover page carries one,
+ * else the shelf's thumbnail. A page without a picture falls back to the
+ * cover (operator, 2026-11-12).
  */
-export function featuredInsightImage(story: CatalogueStory): ImageSourcePropType | string | undefined {
+export function featuredInsightImage(story: CatalogueStory, pageIndex?: number): ImageSourcePropType | string | undefined {
   if (story.source.kind !== 'downloaded') return story.coverArtwork;
 
   const pages = story.source.story.pages;
-  const third = pages?.find((page) => page.pageNumber === FEATURED_INSIGHT_PAGE)
-    ?? pages?.[FEATURED_INSIGHT_PAGE - 1];
+  const onPage = pageIndex === undefined ? undefined : pages?.[pageIndex]?.backgroundImage;
+  if (onPage) return onPage;
+  const cover = pages?.find((page) => page.type === 'cover' || page.pageNumber === 0);
 
-  return third?.backgroundImage ?? story.coverArtwork;
+  return cover?.backgroundImage ?? story.coverArtwork;
 }

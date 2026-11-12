@@ -6,17 +6,25 @@
 
 import React from 'react';
 import { Alert } from 'react-native';
-import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
+import { render, fireEvent, waitFor, act, cleanup } from '@testing-library/react-native';
 import { StoryAccessService } from '@/services/story-access-service';
 import { StoryDownloadService } from '@/services/story-download-service';
 import { CHILD_UI_MOTION } from '@/constants/child-ui-motion';
 import { glanceCloseTimeline } from '@/constants/screen-time-glance-timeline';
 import { StoryCatalogueScreen } from '@/components/stories/catalogue/story-catalogue-screen';
-import { PLANET_HEADER_ESTIMATE } from '@/components/child-ui/planet-cover';
+import { PLANET_HEADER_ESTIMATE, planetCoverHeight } from '@/components/child-ui/planet-cover';
+import { CATALOGUE_CHOOSER, chooserStop } from '@/constants/catalogue-chooser';
+import { skyBand } from '@/constants/night-palette';
+import { THEME_BAR, filterDrawerDepth } from '@/components/stories/catalogue/story-filter-bar';
+import { taglineFontSize, taglineWordsDepth } from '@/components/child-ui/page-tagline';
 import * as catalogueStoryModule from '@/components/stories/catalogue/catalogue-story';
-import { COVER_GRID_GAP } from '@/components/child-ui/tokens';
+import { COVER_GRID_GAP, SPACE_3, SPACE_4 } from '@/components/child-ui/tokens';
+import { SHELF_FOOT_FADE } from '@/components/child-ui/shelf-foot';
 import { coverColumns, coverWidthFor } from '@/constants/catalogue-columns';
-import { StyleSheet } from 'react-native';
+import { Animated, Dimensions, StyleSheet } from 'react-native';
+import * as reanimatedModule from 'react-native-reanimated';
+import * as reducedMotionModule from '@/hooks/use-reduced-motion';
+import * as swapHoldModule from '@/components/stories/catalogue/use-swap-hold';
 import { useStoryTransition } from '@/contexts/story-transition-context';
 
 const mockStartTransition = jest.fn();
@@ -82,6 +90,9 @@ const mockAppState = {
   toggleFavoriteStory: jest.fn(),
   userAvatarType: null,
   readStoryIds: [] as string[],
+  finishedStoryIds: [] as string[],
+  challengeCounts: {},
+  earnedAchievementIds: [] as string[],
   recentSearches: [] as string[],
   recordSearch: jest.fn(),
   clearRecentSearches: jest.fn(),
@@ -91,6 +102,11 @@ const mockAppState = {
 jest.mock('@/store/app-store', () => ({
   useAppStore: (selector?: (state: any) => any) =>
     selector ? selector(mockAppState) : mockAppState,
+}));
+
+jest.mock('@/components/stories/catalogue/catalogue-story', () => ({
+  ...jest.requireActual('@/components/stories/catalogue/catalogue-story'),
+  APP_LAUNCH_SEED: 0.5,
 }));
 
 jest.mock('@/services/story-loader', () => ({
@@ -125,11 +141,13 @@ jest.mock('@/services/story-access-service', () => ({
 // them is to run the right one for the section on show, with that section's
 // controls to point at. The stub records exactly that.
 const mockGuides: { id: string; active: boolean; targets: string[] }[] = [];
+const mockScrollers: Record<string, { reveal: (shift: number) => void; away: () => number }> = {};
 jest.mock('@/components/owl-guide', () => {
   const { View } = jest.requireActual('react-native');
   return {
-    OwlGuide: ({ id, active, targets }: { id: string; active?: boolean; targets?: Record<string, unknown> }) => {
+    OwlGuide: ({ id, active, targets, scroller }: { id: string; active?: boolean; targets?: Record<string, unknown>; scroller?: { reveal: (shift: number) => void; away: () => number } }) => {
       mockGuides.push({ id, active: active !== false, targets: Object.keys(targets ?? {}) });
+      if (scroller) mockScrollers[id] = scroller;
       return active !== false ? <View testID={`owl-guide-${id}`} /> : null;
     },
   };
@@ -196,11 +214,6 @@ jest.mock('@/services/screen-time-service', () => ({
 
 // the catalogue sits inside both providers in the app; the screen under test
 // here is rendered bare, so what it reads from them is stubbed
-const mockStartActivityTransition = jest.fn();
-jest.mock('@/contexts/ActivityTransitionContext', () => ({
-  useActivityTransition: () => ({ startTransition: mockStartActivityTransition }),
-}));
-
 // the catalogue sits inside the ScreenTimeProvider in the app; the screen
 // under test here is rendered bare, so the allowance it reads is stubbed
 jest.mock('@/hooks/use-screen-time-allowance', () => ({
@@ -219,7 +232,7 @@ jest.mock('@/components/ui/subscription-overlay', () => ({
   SubscriptionOverlay: () => null,
 }));
 
-function byTestId(tree: ReturnType<typeof render>, testID: string) {
+function byTestId(tree: ReturnType<typeof render>, testID: string): any[] {
   return tree.UNSAFE_root.findAll((n: any) => n.props.testID === testID);
 }
 
@@ -333,7 +346,8 @@ describe('StoryCatalogueScreen', () => {
     expect(byTestId(tree, 'featured-section-heading')).toHaveLength(0);
   });
 
-  it('lays out a row for each theme with books, headed by its genre, with See all leading to that theme', async () => {
+  it('lays each book on one shelf, headed by its genre, with See all leading to that theme', async () => {
+    mockAppState.storyProgress = { owl: { pageIndex: 1, totalPages: 5, updatedAt: '2026-11-12T09:00:00Z', completedCount: 0 } };
     const tree = render(<StoryCatalogueScreen />);
 
     await waitFor(() => expect(byTestId(tree, 'story-row-bedtime').length).toBeGreaterThan(0));
@@ -343,8 +357,9 @@ describe('StoryCatalogueScreen', () => {
     const label = heading.findAll((n: any) => typeof n.props.children === 'string').map((n: any) => n.props.children).join(' ');
     expect(label).toContain('stories.genreStories');
     expect(bedtime.findAll((n: any) => n.props.testID === 'story-cover-card-wombat').length).toBeGreaterThan(0);
+    expect(bedtime.findAll((n: any) => n.props.testID === 'story-cover-card-whale').length).toBeGreaterThan(0);
     expect(bedtime.findAll((n: any) => n.props.testID === 'story-cover-card-bear')).toHaveLength(0);
-    expect(byTestId(tree, 'story-row-adventure').length).toBeGreaterThan(0);
+    expect(byTestId(tree, 'story-row-calming')).toHaveLength(0);
     expect(byTestId(tree, 'story-row-family')).toHaveLength(0);
 
     fireEvent.press(
@@ -366,6 +381,7 @@ describe('StoryCatalogueScreen', () => {
   });
 
   it('sizes shelf books so two of them, and the gap between, span exactly the featured card', async () => {
+    mockAppState.storyProgress = { owl: { pageIndex: 1, totalPages: 5, updatedAt: '2026-11-12T09:00:00Z', completedCount: 0 } };
     Object.defineProperty(document.documentElement, 'clientWidth', { value: 402, configurable: true });
     Object.defineProperty(document.documentElement, 'clientHeight', { value: 874, configurable: true });
     window.dispatchEvent(new Event('resize'));
@@ -411,6 +427,7 @@ describe('StoryCatalogueScreen', () => {
     });
 
     it('fits four books across an 11-inch tablet held upright', async () => {
+      mockAppState.storyProgress = { owl: { pageIndex: 1, totalPages: 5, updatedAt: '2026-11-12T09:00:00Z', completedCount: 0 } };
       viewport(834, 1194);
       const gridWidth = 834 - 32 * 2;
 
@@ -420,6 +437,7 @@ describe('StoryCatalogueScreen', () => {
     });
 
     it('runs the shelves the full width when the same tablet is turned sideways', async () => {
+      mockAppState.storyProgress = { owl: { pageIndex: 1, totalPages: 5, updatedAt: '2026-11-12T09:00:00Z', completedCount: 0 } };
       viewport(1194, 834);
       const gridWidth = 1194 - 32 * 2;
 
@@ -444,6 +462,7 @@ describe('StoryCatalogueScreen', () => {
   });
 
   it('carries the row a book was opened from, not the whole shelf', async () => {
+    mockAppState.storyProgress = { owl: { pageIndex: 1, totalPages: 5, updatedAt: '2026-11-12T09:00:00Z', completedCount: 0 } };
     const tree = render(<StoryCatalogueScreen />);
     await waitFor(() => expect(byTestId(tree, 'story-row-bedtime').length).toBeGreaterThan(0));
     const bedtime = byTestId(tree, 'story-row-bedtime')[0];
@@ -455,10 +474,8 @@ describe('StoryCatalogueScreen', () => {
     expect(call[3].map((story: any) => story.id).sort()).toEqual(['whale', 'wombat']);
   });
 
-  it('carries every book on the shelf when one is opened from the grid', async () => {
+  it('carries every book on the shelf when one is opened from its row', async () => {
     const tree = render(<StoryCatalogueScreen />);
-    await waitFor(() => expect(byTestId(tree, 'story-theme-tile-learning').length).toBeGreaterThan(0));
-    fireEvent.press(byTestId(tree, 'story-theme-tile-learning')[0]);
     await waitFor(() => expect(byTestId(tree, 'story-cover-card-owl').length).toBeGreaterThan(0));
 
     const underTest = shelfCarriedBy('story-cover-card-owl', tree);
@@ -467,6 +484,7 @@ describe('StoryCatalogueScreen', () => {
   });
 
   it('carries only the books it can open when a row holds one that is not downloaded yet', async () => {
+    mockAppState.storyProgress = { owl: { pageIndex: 1, totalPages: 5, updatedAt: '2026-11-12T09:00:00Z', completedCount: 0 } };
     mockGetCatalog.mockResolvedValue([
       {
         storyId: 'remote-1',
@@ -503,6 +521,59 @@ describe('StoryCatalogueScreen', () => {
     expect(byTestId(tree, 'section-crossfade-leaving')).toHaveLength(0);
   });
 
+  it('hands Progress the badge it was sent to open, once the page has come to rest', async () => {
+    const progressOf = (tree: ReturnType<typeof render>) =>
+      tree.UNSAFE_root.findAll((n: any) => n.props.embedded === true && typeof n.props.onDetailVisibleChange === 'function')[0];
+    const tree = render(<StoryCatalogueScreen isActive sectionRequest={{ section: 'progress', key: 3, badgeId: 'calm-champion' }} />);
+
+    const atOnce = progressOf(tree).props.focusBadge;
+
+    await waitFor(() => expect(progressOf(tree).props.focusBadge).toEqual({ id: 'calm-champion', key: 3 }), { timeout: 3000 });
+    expect(atOnce).toBeUndefined();
+  });
+
+  it('takes up a badge sent with a later request, while it is already showing', async () => {
+    const progressOf = (tree: ReturnType<typeof render>) =>
+      tree.UNSAFE_root.findAll((n: any) => n.props.embedded === true && typeof n.props.onDetailVisibleChange === 'function')[0];
+    const tree = render(<StoryCatalogueScreen isActive sectionRequest={{ section: 'progress', key: 3 }} />);
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    });
+
+    tree.rerender(<StoryCatalogueScreen isActive sectionRequest={{ section: 'progress', key: 4, badgeId: 'calm-champion' }} />);
+
+    await waitFor(() => expect(progressOf(tree).props.focusBadge).toEqual({ id: 'calm-champion', key: 4 }));
+  });
+
+  // A badge's suggestion, followed from its window on the home (operator, 2026-10-05), lands on
+  // the shelf the way it does from Progress
+  it.each([
+    ['a theme of its own', 'music', 'story-theme-tile-music', null],
+    ['a filter on the stories', 'bedtime', 'story-theme-tile-stories', 'story-filter-pill-bedtime'],
+  ] as const)('takes up a badge suggestion sent with a request, as %s', async (_, tag, tile, pill) => {
+    const selected = (tree: ReturnType<typeof render>, id: string) =>
+      byTestId(tree, id).find((n: any) => n.props.accessibilityRole === 'button' || n.props.accessibilityState)?.props.accessibilityState?.selected;
+    const tree = render(<StoryCatalogueScreen isActive sectionRequest={{ section: 'home', key: 1 }} />);
+    await waitFor(() => expect(byTestId(tree, 'story-theme-tile-music').length).toBeGreaterThan(0));
+
+    tree.rerender(<StoryCatalogueScreen isActive sectionRequest={{ section: 'home', key: 2, recommend: { tag } }} />);
+
+    await waitFor(() => expect(selected(tree, tile)).toBe(true));
+    if (pill) expect(selected(tree, pill)).toBe(true);
+  });
+
+  it('hands Progress no badge when it was only sent to the page', async () => {
+    const tree = render(<StoryCatalogueScreen isActive sectionRequest={{ section: 'progress', key: 3 }} />);
+
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    });
+
+    const progress = tree.UNSAFE_root.findAll((n: any) => n.props.embedded === true && typeof n.props.onDetailVisibleChange === 'function')[0];
+
+    expect(progress.props.focusBadge).toBeUndefined();
+  });
+
   it('switches at once, with no crossfade, when it is sent to another section from outside', async () => {
     const tree = render(<StoryCatalogueScreen sectionRequest={{ section: 'home', key: 1 }} />);
     await waitFor(() => expect(byTestId(tree, 'featured-story-card').length).toBeGreaterThan(0));
@@ -536,7 +607,8 @@ describe('StoryCatalogueScreen', () => {
     expect(byTestId(tree, 'featured-story-card-label').some((n: any) => n.props.children === 'catalogue.featuredStory')).toBe(false);
     expect(card.findAll((n: any) => n.props.accessibilityLabel === 'storyDetail.readNow').length).toBeGreaterThan(0);
     expect(card.findAll((n: any) => n.props.testID === 'featured-story-progress-track').length).toBeGreaterThan(0);
-    expect(card.findAll((n: any) => n.props.children === 'home.pagePosition (page:3, total:6)').length).toBeGreaterThan(0);
+    expect(card.findAll((n: any) => n.props.accessibilityLabel === 'home.pagePosition (page:2, total:5)').length).toBeGreaterThan(0);
+    expect(card.findAll((n: any) => n.props.children === 'home.pagePosition (page:2, total:5)').length).toBeGreaterThan(0);
   });
 
   it('keeps the day\'s pick a different book from the one being continued', async () => {
@@ -563,16 +635,13 @@ describe('StoryCatalogueScreen', () => {
     expect(byTestId(tree, 'story-row-continue')).toHaveLength(0);
   });
 
-  it('sorts the shelf under the chosen tile: Stories first, Learning on its tile', async () => {
+  it('keeps a learning-tagged book under Stories, since Learning has no tile until the new games exist', async () => {
     const tree = render(<StoryCatalogueScreen />);
 
-    await waitFor(() => expect(byTestId(tree, 'story-row-bedtime').length).toBeGreaterThan(0));
-    expect(byTestId(tree, 'story-cover-card-owl')).toHaveLength(0);
+    await waitFor(() => expect(byTestId(tree, 'story-shelves').length).toBeGreaterThan(0));
 
-    fireEvent.press(byTestId(tree, 'story-theme-tile-learning')[0]);
-
-    await waitFor(() => expect(byTestId(tree, 'story-cover-card-owl').length).toBeGreaterThan(0));
-    expect(byTestId(tree, 'story-cover-card-wombat')).toHaveLength(0);
+    expect(byTestId(tree, 'story-theme-tile-learning')).toHaveLength(0);
+    expect(byTestId(tree, 'story-cover-card-owl').length).toBeGreaterThan(0);
   });
 
   it('marks Home as the selected journey area on entry', async () => {
@@ -730,6 +799,37 @@ describe('StoryCatalogueScreen', () => {
       expect(texts.length).toBeGreaterThan(0);
     });
   });
+
+  /**
+   * Stories to Music used to cut straight to "nothing found": the empty state
+   * sat outside the shelves' fade, so the one change the child makes most was
+   * the one that was not animated.
+   */
+  it('fades the shelves away before saying nothing was found, and says it inside the same fade', async () => {
+    const motion = jest.spyOn(reducedMotionModule, 'useReducedMotion').mockReturnValue(false);
+    const tree = render(<StoryCatalogueScreen />);
+    await waitFor(() => expect(byTestId(tree, 'catalogue-collection').length).toBeGreaterThan(0));
+    const noResults = () => tree.UNSAFE_root.findAll((n: any) => n.props.children === 'catalogue.noResults');
+
+    fireEvent.press(byTestId(tree, 'story-theme-tile-music')[0]);
+
+    expect(noResults()).toHaveLength(0);
+    expect(byTestId(tree, 'catalogue-collection').length).toBeGreaterThan(0);
+
+    await waitFor(() => expect(noResults().length).toBeGreaterThan(0));
+
+    const collection = byTestId(tree, 'catalogue-collection')[0];
+    expect(collection.findAll((n: any) => n.props.children === 'catalogue.noResults').length).toBeGreaterThan(0);
+
+    fireEvent.press(byTestId(tree, 'story-theme-tile-stories')[0]);
+
+    expect(noResults().length).toBeGreaterThan(0);
+    await waitFor(() => expect(noResults()).toHaveLength(0));
+    expect(byTestId(tree, 'catalogue-collection').length).toBeGreaterThan(0);
+
+    cleanup();
+    motion.mockRestore();
+  });
 });
 
 /**
@@ -840,6 +940,273 @@ describe('StoryCatalogueScreen screensafe choreography', () => {
   }
 });
 
+describe('StoryCatalogueScreen while the screen-time window moves', () => {
+  let backHandlers: Array<() => boolean>;
+  let listen: jest.SpyInstance;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockGetCatalog.mockResolvedValue([]);
+    (useStoryTransition as jest.Mock).mockReturnValue({
+      isTransitioning: false,
+      selectedStoryId: null,
+      shouldShowStoryReader: false,
+      isExpandingToReader: false,
+      startTransition: mockStartTransition,
+    });
+    glanceProps.length = 0;
+    backHandlers = [];
+    const { BackHandler } = require('react-native');
+    listen = jest.spyOn(BackHandler, 'addEventListener').mockImplementation((...args: unknown[]) => {
+      const [event, handler] = args as [string, () => boolean];
+      if (event === 'hardwareBackPress') backHandlers.push(handler);
+      return {
+        remove: () => {
+          backHandlers = backHandlers.filter((candidate) => candidate !== handler);
+        },
+      };
+    });
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.runOnlyPendingTimers();
+    jest.useRealTimers();
+    listen.mockRestore();
+  });
+
+  const latestGlance = () => glanceProps[glanceProps.length - 1];
+  const inputLock = (tree: ReturnType<typeof render>) => byTestId(tree, 'screen-time-input-lock');
+
+  function press(tree: ReturnType<typeof render>, id: string) {
+    const item = byTestId(tree, `navigation-item-${id}`)[0];
+    act(() => {
+      item.props.onPress();
+    });
+  }
+
+  function selectedItem(tree: ReturnType<typeof render>) {
+    return byTestId(tree, 'navigation-item-home')[0].props.accessibilityState.selected ? 'home' : 'other';
+  }
+
+  function openFully(tree: ReturnType<typeof render>) {
+    press(tree, 'screensafe');
+    act(() => {
+      jest.advanceTimersByTime(CHILD_UI_MOTION.navCollapse.duration);
+    });
+    act(() => {
+      latestGlance().onOpenSettled();
+    });
+  }
+
+  it('lays a layer over the whole screen the moment the button is tapped', () => {
+    const underTest = render(<StoryCatalogueScreen />);
+
+    press(underTest, 'screensafe');
+
+    const [lock] = inputLock(underTest);
+    expect(lock.props.pointerEvents).toBe('auto');
+    expect(StyleSheet.flatten(lock.props.style)).toEqual(
+      expect.objectContaining({ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 }),
+    );
+  });
+
+  it('keeps that layer while the window is still opening', () => {
+    const underTest = render(<StoryCatalogueScreen />);
+
+    press(underTest, 'screensafe');
+    act(() => {
+      jest.advanceTimersByTime(CHILD_UI_MOTION.navCollapse.duration);
+    });
+
+    expect(latestGlance().visible).toBe(true);
+    expect(inputLock(underTest)).toHaveLength(1);
+  });
+
+  it('lifts the layer once the window says it has come to rest', () => {
+    const underTest = render(<StoryCatalogueScreen />);
+
+    openFully(underTest);
+
+    expect(inputLock(underTest)).toHaveLength(0);
+  });
+
+  it('ignores the rest of the bar while the window opens', () => {
+    const underTest = render(<StoryCatalogueScreen />);
+
+    press(underTest, 'screensafe');
+    press(underTest, 'search');
+
+    expect(selectedItem(underTest)).toBe('home');
+  });
+
+  it('does nothing on a second tap of the button while the window opens', () => {
+    const underTest = render(<StoryCatalogueScreen />);
+    press(underTest, 'screensafe');
+    act(() => {
+      jest.advanceTimersByTime(10);
+    });
+
+    press(underTest, 'screensafe');
+    act(() => {
+      jest.advanceTimersByTime(CHILD_UI_MOTION.navCollapse.duration - 10);
+    });
+    act(() => {
+      latestGlance().onOpenSettled();
+      latestGlance().onCloseStart();
+      latestGlance().onClose();
+    });
+    act(() => {
+      jest.advanceTimersByTime(CHILD_UI_MOTION.navCollapse.duration);
+    });
+
+    expect(latestGlance().visible).toBe(false);
+  });
+
+  it('holds the screen from the start of the close until the window is gone', () => {
+    const underTest = render(<StoryCatalogueScreen />);
+    openFully(underTest);
+
+    act(() => {
+      latestGlance().onCloseStart();
+    });
+    const whileClosing = inputLock(underTest).length;
+    act(() => {
+      latestGlance().onClose();
+    });
+
+    expect(whileClosing).toBe(1);
+    expect(inputLock(underTest)).toHaveLength(0);
+  });
+
+  it('does not reopen from a tap on the bar after it has come back but before the close ends', () => {
+    const underTest = render(<StoryCatalogueScreen />);
+    openFully(underTest);
+    act(() => {
+      latestGlance().onCloseStart();
+    });
+    act(() => {
+      jest.advanceTimersByTime(glanceCloseTimeline().splash.at);
+    });
+
+    press(underTest, 'screensafe');
+    act(() => {
+      latestGlance().onClose();
+    });
+    act(() => {
+      jest.advanceTimersByTime(CHILD_UI_MOTION.navCollapse.duration);
+    });
+
+    expect(latestGlance().visible).toBe(false);
+  });
+
+  it('opens again from a fresh tap once the close has ended', () => {
+    const underTest = render(<StoryCatalogueScreen />);
+    openFully(underTest);
+    act(() => {
+      latestGlance().onCloseStart();
+      latestGlance().onClose();
+    });
+
+    press(underTest, 'screensafe');
+    act(() => {
+      jest.advanceTimersByTime(CHILD_UI_MOTION.navCollapse.duration);
+    });
+
+    expect(latestGlance().visible).toBe(true);
+  });
+
+  describe('Android back before the window has appeared', () => {
+    function backBeforeTheWindow(tree: ReturnType<typeof render>) {
+      press(tree, 'screensafe');
+      let handled = false;
+      act(() => {
+        handled = backHandlers[backHandlers.length - 1]();
+      });
+      return handled;
+    }
+
+    it('is taken by the screen rather than passed on', () => {
+      const underTest = render(<StoryCatalogueScreen />);
+
+      expect(backBeforeTheWindow(underTest)).toBe(true);
+    });
+
+    it('lifts the layer', () => {
+      const underTest = render(<StoryCatalogueScreen />);
+
+      backBeforeTheWindow(underTest);
+
+      expect(inputLock(underTest)).toHaveLength(0);
+    });
+
+    it('never opens the window', () => {
+      const underTest = render(<StoryCatalogueScreen />);
+
+      backBeforeTheWindow(underTest);
+      act(() => {
+        jest.advanceTimersByTime(CHILD_UI_MOTION.navCollapse.duration);
+      });
+
+      expect(latestGlance().visible).toBe(false);
+    });
+
+    it('brings the bar back out', () => {
+      const underTest = render(<StoryCatalogueScreen />);
+
+      backBeforeTheWindow(underTest);
+
+      expect(byTestId(underTest, 'child-bottom-navigation')[0].props.pointerEvents).toBe('auto');
+    });
+
+    it('leaves back alone once the window is up, for the window to take', () => {
+      const underTest = render(<StoryCatalogueScreen />);
+      const before = backHandlers.length;
+
+      press(underTest, 'screensafe');
+      act(() => {
+        jest.advanceTimersByTime(CHILD_UI_MOTION.navCollapse.duration);
+      });
+
+      expect(backHandlers).toHaveLength(before);
+    });
+  });
+
+  describe('under Reduce Motion', () => {
+    let motion: jest.SpyInstance;
+
+    beforeEach(() => {
+      motion = jest.spyOn(reducedMotionModule, 'useReducedMotion').mockReturnValue(true);
+    });
+
+    afterEach(() => {
+      cleanup();
+      motion.mockRestore();
+    });
+
+    it('opens the window at once', () => {
+      const underTest = render(<StoryCatalogueScreen />);
+
+      press(underTest, 'screensafe');
+
+      expect(latestGlance().visible).toBe(true);
+    });
+
+    it('still holds the screen until the window says it is at rest', () => {
+      const underTest = render(<StoryCatalogueScreen />);
+      press(underTest, 'screensafe');
+      const beforeRest = inputLock(underTest).length;
+
+      act(() => {
+        latestGlance().onOpenSettled();
+      });
+
+      expect(beforeRest).toBe(1);
+      expect(inputLock(underTest)).toHaveLength(0);
+    });
+  });
+});
+
 /**
  * The saved shelf holds what the child chose to keep, laid out under the
  * themes those books belong to -- the library's own grouping, but of their
@@ -920,18 +1287,11 @@ describe('StoryCatalogueScreen saved shelf', () => {
   });
 });
 
-/**
- * Saved is one shelf, not one per kind of thing: a child who saved a book and
- * a counting game expects both waiting there.
- */
-describe('StoryCatalogueScreen saved activities', () => {
+describe('StoryCatalogueScreen profile page layers', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockGetCatalog.mockResolvedValue([]);
-    mockAppState.readStoryIds = [];
     mockAppState.favoriteStoryIds = [];
-    mockAppState.favoriteActivityIds = [];
-    mockAppState.storyProgress = {};
     (useStoryTransition as jest.Mock).mockReturnValue({
       isTransitioning: false,
       selectedStoryId: null,
@@ -941,65 +1301,121 @@ describe('StoryCatalogueScreen saved activities', () => {
     });
   });
 
-  function openSaved(tree: ReturnType<typeof render>) {
-    fireEvent.press(
-      byTestId(tree, 'navigation-item-profile').find((n: any) => n.props.accessibilityRole === 'tab'),
-    );
+  async function openProfile() {
+    const tree = render(<StoryCatalogueScreen />);
+    await waitFor(() => expect(byTestId(tree, 'story-filter-bar').length).toBeGreaterThan(0));
+    fireEvent.press(byTestId(tree, 'navigation-item-profile').find((n: any) => n.props.accessibilityRole === 'tab'));
+    await waitFor(() => expect(byTestId(tree, 'profile-top').length).toBeGreaterThan(0));
+    return tree;
   }
+  const order = (tree: ReturnType<typeof render>) =>
+    byTestId(tree, 'section-crossfade-current')[0]
+      .findAll((n: any) => typeof n.props.testID === 'string')
+      .map((n: any) => n.props.testID as string);
+  const host = (tree: ReturnType<typeof render>, id: string) =>
+    byTestId(tree, id).filter((n: any) => n.props.style !== undefined).slice(-1)[0];
+  const page = (tree: ReturnType<typeof render>) =>
+    byTestId(tree, 'catalogue-scroll').find((n: any) => n.props.contentContainerStyle);
+  const measureTop = (tree: ReturnType<typeof render>, height: number) => {
+    const top = byTestId(tree, 'profile-top').find((n: any) => typeof n.props.onLayout === 'function');
+    act(() => {
+      top.props.onLayout({ nativeEvent: { layout: { x: 0, y: 0, width: 400, height } } });
+    });
+  };
 
-  it('shelves saved activities alongside saved books', async () => {
-    mockAppState.favoriteActivityIds = ['abc-animals'];
-    const tree = render(<StoryCatalogueScreen />);
-    await waitFor(() => expect(byTestId(tree, 'story-filter-bar').length).toBeGreaterThan(0));
+  it('pins the face, the name, Login and the tabs outside the page that scrolls', async () => {
+    const tree = await openProfile();
 
-    openSaved(tree);
-
-    await waitFor(() => expect(byTestId(tree, 'saved-row-activities').length).toBeGreaterThan(0));
+    expect(page(tree).findAll((n: any) => n.props.testID === 'profile-hero')).toHaveLength(0);
+    expect(page(tree).findAll((n: any) => n.props.testID === 'profile-tabs')).toHaveLength(0);
+    expect(byTestId(tree, 'profile-top')[0].findAll((n: any) => n.props.testID === 'profile-hero').length).toBeGreaterThan(0);
+    expect(byTestId(tree, 'profile-top')[0].findAll((n: any) => n.props.testID === 'profile-tabs').length).toBeGreaterThan(0);
   });
 
-  it('leaves the activities row out when none are saved', async () => {
-    mockAppState.favoriteStoryIds = ['bear'];
+  it('pins them where the library content starts, inside its side margins', async () => {
     const tree = render(<StoryCatalogueScreen />);
     await waitFor(() => expect(byTestId(tree, 'story-filter-bar').length).toBeGreaterThan(0));
+    const library = StyleSheet.flatten(page(tree).props.contentContainerStyle);
+    fireEvent.press(byTestId(tree, 'navigation-item-profile').find((n: any) => n.props.accessibilityRole === 'tab'));
+    await waitFor(() => expect(byTestId(tree, 'profile-top').length).toBeGreaterThan(0));
 
-    openSaved(tree);
-
-    await waitFor(() => expect(byTestId(tree, 'saved-shelves').length).toBeGreaterThan(0));
-    expect(byTestId(tree, 'saved-row-activities')).toHaveLength(0);
+    const style = StyleSheet.flatten(host(tree, 'profile-top').props.style);
+    expect(style.position).toBe('absolute');
+    expect(style.top).toBe(library.paddingTop);
+    expect(style.left).toBe(library.paddingHorizontal);
+    expect(style.right).toBe(library.paddingHorizontal);
   });
 
-  /** A saved activity with no saved book is still a shelf worth showing. */
-  it('does not call the shelf empty when only activities are saved', async () => {
-    mockAppState.favoriteActivityIds = ['abc-animals'];
-    const tree = render(<StoryCatalogueScreen />);
-    await waitFor(() => expect(byTestId(tree, 'story-filter-bar').length).toBeGreaterThan(0));
+  it('scrolls only the open tab list, in a window that starts at the foot of the pinned top', async () => {
+    const tree = await openProfile();
 
-    openSaved(tree);
+    measureTop(tree, 312);
 
-    await waitFor(() => expect(byTestId(tree, 'saved-shelves').length).toBeGreaterThan(0));
-    expect(byTestId(tree, 'saved-empty')).toHaveLength(0);
+    const pinnedAt = StyleSheet.flatten(host(tree, 'profile-top').props.style).top;
+    expect(page(tree).findAll((n: any) => n.props.testID === 'profile-body').length).toBeGreaterThan(0);
+    expect(StyleSheet.flatten(page(tree).props.style).top).toBe(pinnedAt + 312);
+    expect(StyleSheet.flatten(page(tree).props.contentContainerStyle).paddingTop).toBe(SPACE_4);
+    expect(page(tree).props.scrollIndicatorInsets).toEqual({ top: 0 });
   });
 
-  it('opens a saved activity through the shared transition', async () => {
-    mockAppState.favoriteActivityIds = ['abc-animals'];
+  it('paints nothing behind the pinned top, so the stars and the earth show through', async () => {
+    const tree = await openProfile();
+    measureTop(tree, 312);
+    const ids = order(tree);
+
+    expect(ids).not.toContain('catalogue-planet-over-shelves');
+    expect(ids).not.toContain('profile-top-sky');
+    expect(ids).not.toContain('profile-top-room');
+    expect(ids.indexOf('catalogue-scroll')).toBeGreaterThanOrEqual(0);
+    expect(ids.indexOf('catalogue-scroll')).toBeLessThan(ids.indexOf('profile-top'));
+    expect(ids.indexOf('profile-top')).toBeLessThan(ids.indexOf('catalogue-header'));
+  });
+
+  it('keeps the earth over the shelves on the library, which scrolls from the top of the screen', async () => {
     const tree = render(<StoryCatalogueScreen />);
     await waitFor(() => expect(byTestId(tree, 'story-filter-bar').length).toBeGreaterThan(0));
-    openSaved(tree);
-    await waitFor(() => expect(byTestId(tree, 'saved-row-activities').length).toBeGreaterThan(0));
 
-    fireEvent.press(byTestId(tree, 'saved-activity-card-abc-animals')[0]);
+    expect(order(tree)).toContain('catalogue-planet-over-shelves');
+    expect(byTestId(tree, 'profile-top')).toHaveLength(0);
+    expect(StyleSheet.flatten(page(tree).props.style).top).toBe(0);
+    expect(page(tree).props.scrollIndicatorInsets.top).toBeGreaterThan(0);
+  });
 
-    expect(mockStartActivityTransition).toHaveBeenCalledWith(
-      expect.objectContaining({ id: 'abc-animals' }),
-      expect.anything(),
-    );
+  it('opens on the saved list again after the child has been elsewhere', async () => {
+    const tree = await openProfile();
+    fireEvent.press(byTestId(tree, 'profile-tab-badges').find((n: any) => n.props.accessibilityRole === 'button'));
+    expect(page(tree).findAll((n: any) => n.props.testID === 'badge-wall').length).toBeGreaterThan(0);
+
+    fireEvent.press(byTestId(tree, 'navigation-item-home').find((n: any) => n.props.accessibilityRole === 'tab'));
+    await waitFor(() => expect(byTestId(tree, 'story-filter-bar').length).toBeGreaterThan(0));
+    fireEvent.press(byTestId(tree, 'navigation-item-profile').find((n: any) => n.props.accessibilityRole === 'tab'));
+
+    await waitFor(() => expect(page(tree).findAll((n: any) => n.props.testID === 'profile-body').length).toBeGreaterThan(0));
+    expect(page(tree).findAll((n: any) => n.props.testID === 'badge-wall')).toHaveLength(0);
+  });
+
+  it('opens on the saved list again when the app sends the child elsewhere and back', async () => {
+    const tree = render(<StoryCatalogueScreen isActive sectionRequest={{ section: 'profile', key: 1 }} />);
+    await waitFor(() => expect(byTestId(tree, 'profile-top').length).toBeGreaterThan(0));
+    fireEvent.press(byTestId(tree, 'profile-tab-badges').find((n: any) => n.props.accessibilityRole === 'button'));
+
+    tree.rerender(<StoryCatalogueScreen isActive sectionRequest={{ section: 'search', key: 2 }} />);
+    tree.rerender(<StoryCatalogueScreen isActive sectionRequest={{ section: 'profile', key: 3 }} />);
+
+    await waitFor(() => expect(page(tree).findAll((n: any) => n.props.testID === 'profile-body').length).toBeGreaterThan(0));
+    expect(page(tree).findAll((n: any) => n.props.testID === 'badge-wall')).toHaveLength(0);
+  });
+
+  it('still opens the other tabs in the page that scrolls', async () => {
+    const tree = await openProfile();
+
+    fireEvent.press(byTestId(tree, 'profile-tab-badges').find((n: any) => n.props.accessibilityRole === 'button'));
+
+    expect(page(tree).findAll((n: any) => n.props.testID === 'badge-wall').length).toBeGreaterThan(0);
+    expect(page(tree).findAll((n: any) => n.props.testID === 'saved-shelves')).toHaveLength(0);
   });
 });
 
-/**
- * The last kind of thing a child can keep. A song has no cover, so its card
- * shows the opening of the melody instead -- the notes they play first.
- */
 describe('StoryCatalogueScreen saved songs', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -1218,7 +1634,7 @@ describe('StoryCatalogueScreen profile page', () => {
     const tree = render(<StoryCatalogueScreen {...props} />);
     await waitFor(() => expect(byTestId(tree, 'story-filter-bar').length).toBeGreaterThan(0));
     openProfile(tree);
-    await waitFor(() => expect(byTestId(tree, 'profile-view').length).toBeGreaterThan(0));
+    await waitFor(() => expect(byTestId(tree, 'profile-top').length).toBeGreaterThan(0));
     return tree;
   }
 
@@ -1355,6 +1771,46 @@ describe('StoryCatalogueScreen profile page', () => {
     await waitFor(() => expect(byTestId(tree, 'badge-detail-sheet').length).toBeGreaterThan(0));
   });
 
+  /** Signing in leaves the app for Google or Apple, so a grown-up says yes first. */
+  describe('signing in from the profile', () => {
+    beforeEach(() => {
+      (mockAppState as Record<string, unknown>).isGuestMode = true;
+    });
+
+    afterEach(() => {
+      delete (mockAppState as Record<string, unknown>).isGuestMode;
+    });
+
+    function pressLogin(tree: ReturnType<typeof render>) {
+      fireEvent.press(
+        inCurrentSection(tree, 'profile-session').find((n: any) => n.props.accessibilityRole === 'button'),
+      );
+    }
+
+    it('asks the parents-only question before the login page comes up', async () => {
+      const tree = await renderProfile();
+
+      pressLogin(tree);
+
+      expect(mockAppState.setShowLoginAfterOnboarding).not.toHaveBeenCalled();
+      expect(byTestId(tree, 'parents-only-modal').length).toBeGreaterThan(0);
+    });
+
+    it('brings the login page up once the question is answered', async () => {
+      const tree = await renderProfile();
+      pressLogin(tree);
+
+      await act(async () => {
+        byTestId(tree, 'parents-only-modal')[0].props.onTouchEnd();
+      });
+      await act(async () => {
+        byTestId(tree, 'parents-only-modal')[0].props.onTouchStart();
+      });
+
+      await waitFor(() => expect(mockAppState.setShowLoginAfterOnboarding).toHaveBeenCalledWith(true));
+    });
+  });
+
   /** Editing the child's details is a grown-up's job, like the settings gear. */
   it('challenges a grown-up before opening the edit page from the hero', async () => {
     const tree = await renderProfile();
@@ -1470,6 +1926,63 @@ describe('the journey tours', () => {
     );
   }
 
+  /**
+   * The catalogue is mounted off screen before the child opens it, and under the
+   * login page. A tour that ran there took the owl from the page on show, so after
+   * a reset the main menu's tour never came.
+   */
+  it('runs none of its tours while it waits off screen, whatever section it holds', async () => {
+    const tree = render(<StoryCatalogueScreen isActive={false} />);
+    await waitFor(() => expect(byTestId(tree, 'story-filter-bar').length).toBeGreaterThan(0));
+
+    for (const id of ['catalogue_tour', 'progress_tour', 'search_tour', 'profile_tour']) {
+      expect(latest(id)?.active).toBe(false);
+    }
+  });
+
+  // The trophy orb opens Progress with a badge's sheet up; a first visit's tour
+  // started over it, ringing the page behind the sheet and blocking its close.
+  it('holds the Progress tour off while a badge sheet is up, and lets it run once it is closed', async () => {
+    const tree = render(<StoryCatalogueScreen isActive sectionRequest={{ section: 'progress', key: 3 }} />);
+    const progress = () =>
+      tree.UNSAFE_root.findAll((n: any) => n.props.embedded === true && typeof n.props.onDetailVisibleChange === 'function')[0];
+    await waitFor(() => expect(latest('progress_tour')?.active).toBe(true));
+
+    act(() => progress().props.onDetailVisibleChange(true));
+    const whileOpen = latest('progress_tour')?.active;
+    act(() => progress().props.onDetailVisibleChange(false));
+
+    expect(whileOpen).toBe(false);
+    expect(latest('progress_tour')?.active).toBe(true);
+  });
+
+  // The whole shelf column was the subject: taller than the screen, so the
+  // ring ran off both ends and nothing on show was lit (review, 2026-10-04).
+  it('gives the shelves step the first shelf to ring, one row the screen can hold', async () => {
+    const tree = render(<StoryCatalogueScreen />);
+    await waitFor(() => expect(byTestId(tree, 'story-shelves').length).toBeGreaterThan(0));
+
+    const shelves = byTestId(tree, 'story-shelves')[0];
+    const wrappers = shelves.findAll((n: any) => n.props.testID === 'tour-first-shelf' && n.props.collapsable === false);
+    const ringed = new Set(
+      wrappers.flatMap((wrapper: any) =>
+        wrapper.findAll((n: any) => Array.isArray(n.props.stories) && typeof n.props.heading === 'string').map((row: any) => row.props.heading)
+      )
+    );
+    const firstRow = shelves.findAll((n: any) => Array.isArray(n.props.stories) && typeof n.props.heading === 'string')[0];
+
+    expect([...ringed]).toEqual([firstRow.props.heading]);
+  });
+
+  it('runs the tour for its section once it comes on screen', async () => {
+    const tree = render(<StoryCatalogueScreen isActive={false} />);
+    await waitFor(() => expect(byTestId(tree, 'story-filter-bar').length).toBeGreaterThan(0));
+
+    tree.rerender(<StoryCatalogueScreen isActive />);
+
+    expect(latest('catalogue_tour')?.active).toBe(true);
+  });
+
   it('runs the stories tour on the shelf, pointing at the chooser and the shelf, and leaves the bar to the home tour', async () => {
     const tree = render(<StoryCatalogueScreen />);
     await waitFor(() => expect(byTestId(tree, 'story-filter-bar').length).toBeGreaterThan(0));
@@ -1479,6 +1992,20 @@ describe('the journey tours', () => {
     for (const other of ['progress_tour', 'search_tour', 'profile_tour']) {
       expect(byTestId(tree, `owl-guide-${other}`)).toHaveLength(0);
     }
+  });
+
+  it.each([
+    ['before the first search, with nothing yet to come back to', [], ['search_field']],
+    ['once there are searches to come back to', ['wombat'], ['search_field', 'search_recent']],
+  ])('points the search tour at the recent searches only %s', async (_, recent, targets) => {
+    mockAppState.recentSearches = recent;
+    const tree = render(<StoryCatalogueScreen />);
+    await waitFor(() => expect(byTestId(tree, 'story-filter-bar').length).toBeGreaterThan(0));
+
+    openSection(tree, 'search');
+
+    await waitFor(() => expect(latest('search_tour')?.targets).toEqual(targets));
+    mockAppState.recentSearches = [];
   });
 
   it.each([
@@ -1539,6 +2066,43 @@ describe('the shelves and the planet', () => {
     expect(frame.top).toBe(0);
   });
 
+  it('sends the page home with the theme when the theme it changes to has nothing in it', async () => {
+    const hold = jest.spyOn(swapHoldModule, 'useSwapHold');
+    const tree = await renderLibrary();
+    const before = hold.mock.calls[hold.mock.calls.length - 1][0].startAt;
+
+    fireEvent.press(byTestId(tree, 'story-theme-tile-music')[0]);
+
+    expect(before).toBeUndefined();
+    expect(hold.mock.calls[hold.mock.calls.length - 1][0].startAt).toBe(0);
+    hold.mockRestore();
+  });
+
+  it('measures the set of shelves on show, so a change of set can hold the page while it glides', async () => {
+    const tree = await renderLibrary();
+
+    const content = byTestId(tree, 'catalogue-collection-content').find((n: any) => typeof n.props.onLayout === 'function');
+
+    expect(content).toBeDefined();
+  });
+
+  it('fades the shelves into the sky where they meet the bar, rather than cutting them off', async () => {
+    const tree = await renderLibrary();
+
+    const order = tree.UNSAFE_root.findAll((n: any) => typeof n.props.testID === 'string').map((n: any) => n.props.testID);
+
+    expect(order.lastIndexOf('shelf-foot')).toBeGreaterThan(order.lastIndexOf('catalogue-scroll'));
+  });
+
+  it('leaves room under the last shelf for it to scroll clear of the fade', async () => {
+    const tree = await renderLibrary();
+
+    const scroll = byTestId(tree, 'catalogue-scroll').find((n: any) => n.props.contentContainerStyle);
+    const content = StyleSheet.flatten(scroll.props.contentContainerStyle);
+
+    expect(content.paddingBottom).toBeGreaterThanOrEqual(SPACE_4 + SHELF_FOOT_FADE);
+  });
+
   it('starts the shelves below the planet and the header, so nothing is hidden at rest', async () => {
     const tree = await renderLibrary();
 
@@ -1565,11 +2129,11 @@ describe('the shelves and the planet', () => {
 
     const scroll = firstIndex(tree, 'catalogue-scroll');
     const veil = firstIndex(tree, 'catalogue-planet-over-shelves-veil');
-    const globe = firstIndex(tree, 'planet-header-artwork-globe');
+    const globe = firstIndex(tree, 'planet-header-artwork-planet');
     const veilStyle = StyleSheet.flatten(byTestId(tree, 'catalogue-planet-over-shelves-veil')[0].props.style);
 
     expect(veil).toBeGreaterThan(scroll);
-    expect(tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'planet-header-artwork-globe').length).toBeGreaterThan(1);
+    expect(tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'planet-header-artwork-planet').length).toBeGreaterThan(1);
     expect(globe).toBeGreaterThanOrEqual(0);
     expect(veilStyle.top).toBe(0);
     expect(veilStyle.height).toBeGreaterThanOrEqual(PLANET_HEADER_ESTIMATE.phone);
@@ -1581,5 +2145,342 @@ describe('the shelves and the planet', () => {
     const header = byTestId(tree, 'catalogue-header').find((n: any) => n.props.onLayout);
 
     expect(header.props.pointerEvents).toBe('box-none');
+  });
+
+  describe('the theme chooser', () => {
+    const HEADER = 194;
+    const TITLE_ROW = 118;
+    const THEME_BAR_TOP = 42;
+    const CHOOSER = 98;
+    const stubbedValue = Animated.Value;
+    let originalWidth: number;
+    let originalHeight: number;
+
+    beforeAll(() => {
+      Animated.Value = jest.requireActual('react-native-web/dist/cjs/vendor/react-native/Animated/nodes/AnimatedValue');
+    });
+
+    afterAll(() => {
+      Animated.Value = stubbedValue;
+    });
+
+    beforeEach(() => {
+      originalWidth = document.documentElement.clientWidth;
+      originalHeight = document.documentElement.clientHeight;
+      Object.defineProperty(document.documentElement, 'clientWidth', { value: 402, configurable: true });
+      Object.defineProperty(document.documentElement, 'clientHeight', { value: 874, configurable: true });
+      window.dispatchEvent(new Event('resize'));
+    });
+
+    afterEach(() => {
+      Object.defineProperty(document.documentElement, 'clientWidth', { value: originalWidth, configurable: true });
+      Object.defineProperty(document.documentElement, 'clientHeight', { value: originalHeight, configurable: true });
+      window.dispatchEvent(new Event('resize'));
+    });
+
+    function host(tree: ReturnType<typeof render>, testID: string) {
+      if (testID === 'catalogue-scroll') return byTestId(tree, testID).find((n: any) => n.props.contentContainerStyle);
+      return byTestId(tree, testID).filter((n: any) => n.props.style).pop();
+    }
+
+    function layout(tree: ReturnType<typeof render>, testID: string, y: number, height: number) {
+      const node = byTestId(tree, testID).find((n: any) => n.props.onLayout);
+      act(() => {
+        node.props.onLayout({ nativeEvent: { layout: { x: 0, y, width: 358, height } } });
+      });
+    }
+
+    function scrollTo(tree: ReturnType<typeof render>, y: number) {
+      const scroll = byTestId(tree, 'catalogue-scroll').find((n: any) => n.props.onScroll);
+      act(() => {
+        scroll.props.onScroll({
+          nativeEvent: {
+            contentOffset: { x: 0, y },
+            layoutMeasurement: { width: 402, height: 756 },
+            contentSize: { width: 402, height: 2400 },
+          },
+        });
+      });
+    }
+
+    function bound(tree: ReturnType<typeof render>, testID: string) {
+      return StyleSheet.flatten(byTestId(tree, testID).filter((n: any) => n.props.style)[0].props.style) as any;
+    }
+
+    function chooserTop(tree: ReturnType<typeof render>): number {
+      return bound(tree, 'catalogue-chooser').transform[0].translateY.__getValue();
+    }
+
+    function skyOpacity(tree: ReturnType<typeof render>): number {
+      return bound(tree, 'catalogue-chooser-sky').opacity.__getValue();
+    }
+
+    async function measuredLibrary() {
+      const tree = await renderLibrary();
+      layout(tree, 'catalogue-header', 0, HEADER);
+      layout(tree, 'catalogue-tagline', TITLE_ROW, HEADER - TITLE_ROW);
+      layout(tree, 'story-theme-bar', THEME_BAR_TOP, THEME_BAR.height.phone);
+      layout(tree, 'story-filter-rest', 0, CHOOSER);
+      const { width, height } = Dimensions.get('window');
+      const coverHeight = planetCoverHeight(HEADER, width, height);
+      const tagline = tree.UNSAFE_root.findAll((n: any) => Array.isArray(n.props.lines) && n.props.width)[0];
+      const wordsBottom = TITLE_ROW + taglineWordsDepth(tagline.props.lines[1], tagline.props.width, taglineFontSize(false));
+      const stop = chooserStop({ rest: coverHeight + SPACE_3, rowBottom: TITLE_ROW, wordsBottom, themeBarTop: THEME_BAR_TOP });
+
+      return { tree, stop, screenHeight: height };
+    }
+
+    it('lifts the chooser out of the shelves and over the planet, clear of the halo behind the tagline', async () => {
+      const tree = await renderLibrary();
+
+      const scroll = firstIndex(tree, 'catalogue-scroll');
+      const sky = firstIndex(tree, 'catalogue-chooser-sky');
+      const planet = firstIndex(tree, 'catalogue-planet-over-shelves');
+      const chooser = firstIndex(tree, 'catalogue-chooser');
+      const title = firstIndex(tree, 'page-title');
+      const header = StyleSheet.flatten(byTestId(tree, 'catalogue-header').find((n: any) => n.props.onLayout).props.style);
+      const inScroll = host(tree, 'catalogue-scroll').findAll((n: any) => n.props.testID === 'story-filter-bar');
+      const inChooser = host(tree, 'catalogue-chooser').findAll((n: any) => n.props.testID === 'story-filter-bar');
+
+      expect(sky).toBeGreaterThan(scroll);
+      expect(planet).toBeGreaterThan(sky);
+      expect(chooser).toBeGreaterThan(title);
+      expect(title).toBeGreaterThan(planet);
+      expect(bound(tree, 'catalogue-chooser').zIndex).toBeGreaterThan(header.zIndex);
+      expect(inScroll).toHaveLength(0);
+      expect(inChooser.length).toBeGreaterThan(0);
+    });
+
+    it('keeps room for the chooser at the head of the shelves, so they rest where they did', async () => {
+      const tree = await renderLibrary();
+      const before = StyleSheet.flatten(host(tree, 'catalogue-chooser-room').props.style);
+
+      layout(tree, 'story-filter-rest', 0, CHOOSER);
+      const after = StyleSheet.flatten(host(tree, 'catalogue-chooser-room').props.style);
+      const room = host(tree, 'catalogue-scroll').findAll((n: any) => n.props.testID === 'catalogue-chooser-room');
+
+      expect(room.length).toBeGreaterThan(0);
+      expect(before.height).toBe(34 + 8 + THEME_BAR.height.phone);
+      expect(after.height).toBe(CHOOSER);
+      expect(after.marginBottom).toBe(SPACE_3);
+    });
+
+    it('lines the chooser up with the shelves on either side', async () => {
+      const tree = await renderLibrary();
+
+      const frame = StyleSheet.flatten(host(tree, 'catalogue-chooser').props.style);
+      const content = StyleSheet.flatten(host(tree, 'catalogue-scroll').props.contentContainerStyle);
+
+      expect(frame.position).toBe('absolute');
+      expect(frame.top).toBe(0);
+      expect(frame.left).toBe(content.paddingHorizontal);
+      expect(frame.right).toBe(content.paddingHorizontal);
+    });
+
+    it.each`
+      moment                                   | offset         | expected
+      ${'at rest'}                             | ${() => 0}     | ${(s: any) => s.rest}
+      ${'part of the way up'}                  | ${() => 30}    | ${(s: any) => s.rest - 30}
+      ${'just as it reaches its stop'}         | ${(s: any) => s.travel} | ${(s: any) => s.stop}
+      ${'with the shelves far beneath it'}     | ${() => 900}   | ${(s: any) => s.stop}
+      ${'pulled down past the top'}            | ${() => -20}   | ${(s: any) => s.rest + 20}
+    `('rides with the page and stops against the planet: $moment', async ({ offset, expected }) => {
+      const { tree, stop } = await measuredLibrary();
+
+      scrollTo(tree, offset(stop));
+
+      expect(chooserTop(tree)).toBeCloseTo(expected(stop), 5);
+    });
+
+    it.each`
+      moment                                     | offset                                   | opacity
+      ${'at rest'}                               | ${() => 0}                               | ${0}
+      ${'as the chooser stops'}                  | ${(s: any) => s.travel}                  | ${0}
+      ${'half way into the gap'}                 | ${(s: any) => s.travel + CATALOGUE_CHOOSER.fade / 2} | ${0.5}
+      ${'once the shelves pass under it'}        | ${(s: any) => s.travel + CATALOGUE_CHOOSER.fade}     | ${1}
+      ${'with the shelves far beneath it'}       | ${() => 900}                             | ${1}
+    `('brings the sky in behind the stopped chooser: $moment', async ({ offset, opacity }) => {
+      const { tree, stop } = await measuredLibrary();
+
+      scrollTo(tree, offset(stop));
+
+      expect(skyOpacity(tree)).toBeCloseTo(opacity, 5);
+    });
+
+    it('paints the sky from the top of the screen down to just past the stopped chooser', async () => {
+      const { tree, stop, screenHeight } = await measuredLibrary();
+      const foot = stop.stop + CHOOSER;
+
+      const frame = StyleSheet.flatten(host(tree, 'catalogue-chooser-sky').props.style);
+      const gradient = host(tree, 'catalogue-chooser-sky').findAll((n: any) => Array.isArray(n.props.colors))[0];
+      const expected = skyBand(foot, foot + CATALOGUE_CHOOSER.fade, screenHeight);
+
+      expect(frame.top).toBe(0);
+      expect(frame.height).toBeUndefined();
+      expect(gradient.props.colors).toEqual(expected.colours);
+      expect(gradient.props.locations).toEqual(expected.locations);
+      expect(host(tree, 'catalogue-chooser-sky').props.pointerEvents).toBe('none');
+    });
+
+    describe('its finer themes drawer', () => {
+      const reanimated = reanimatedModule as unknown as { useSharedValue: jest.Mock; useAnimatedStyle: jest.Mock };
+      const DRAWER = filterDrawerDepth(false);
+
+      beforeEach(() => {
+        reanimated.useSharedValue.mockImplementation((initial: unknown = 0) => React.useRef({ value: initial }).current);
+        reanimated.useAnimatedStyle.mockImplementation((build: () => object) => build());
+      });
+
+      afterEach(() => {
+        cleanup();
+        reanimated.useSharedValue.mockImplementation((initial: unknown = 0) => ({ value: initial }));
+        reanimated.useAnimatedStyle.mockImplementation(() => ({}));
+      });
+
+      function pressFilter(tree: ReturnType<typeof render>) {
+        fireEvent.press(byTestId(tree, 'story-filter-more').find((n: any) => n.props.accessibilityRole === 'button'));
+      }
+
+      function drawerRoom(tree: ReturnType<typeof render>) {
+        return StyleSheet.flatten(host(tree, 'catalogue-chooser-drawer-room').props.style) as any;
+      }
+
+      function skyBandFrame(tree: ReturnType<typeof render>) {
+        return StyleSheet.flatten(host(tree, 'catalogue-chooser-sky-band').props.style) as any;
+      }
+
+      it('keeps a second room for the drawer in the shelves, shut until the drawer opens', async () => {
+        const { tree } = await measuredLibrary();
+        const inColumn = host(tree, 'catalogue-scroll').findAll((n: any) => n.props.testID === 'catalogue-chooser-drawer-room');
+
+        expect(inColumn.length).toBeGreaterThan(0);
+        expect(firstIndex(tree, 'catalogue-chooser-drawer-room')).toBeLessThan(firstIndex(tree, 'catalogue-chooser-room'));
+        expect(drawerRoom(tree).height).toBe(0);
+      });
+
+      it('moves the shelves down with the drawer, off the same moving height the drawer is drawn at', async () => {
+        const { tree } = await measuredLibrary();
+
+        pressFilter(tree);
+
+        expect(drawerRoom(tree).height).toBe(DRAWER);
+        expect(StyleSheet.flatten(host(tree, 'story-filter-drawer').props.style).height).toBe(DRAWER);
+        expect(StyleSheet.flatten(host(tree, 'catalogue-chooser-room').props.style).height).toBe(CHOOSER);
+
+        pressFilter(tree);
+
+        expect(drawerRoom(tree).height).toBe(0);
+      });
+
+      it('paints the sky down past the resting chooser, and past the drawer too while it is open', async () => {
+        const { tree, stop, screenHeight } = await measuredLibrary();
+        const foot = stop.stop + CHOOSER;
+        const gradient = () => host(tree, 'catalogue-chooser-sky').findAll((n: any) => Array.isArray(n.props.colors))[0];
+
+        expect(skyBandFrame(tree).height).toBe(foot + CATALOGUE_CHOOSER.fade);
+
+        pressFilter(tree);
+        const open = skyBand(foot + DRAWER, foot + DRAWER + CATALOGUE_CHOOSER.fade, screenHeight);
+
+        expect(skyBandFrame(tree).height).toBe(foot + DRAWER + CATALOGUE_CHOOSER.fade);
+        expect(gradient().props.colors).toEqual(open.colours);
+        expect(gradient().props.locations).toEqual(open.locations);
+        expect(host(tree, 'catalogue-chooser-sky-band').findAll((n: any) => Array.isArray(n.props.colors)).length).toBeGreaterThan(0);
+
+        pressFilter(tree);
+        const shut = skyBand(foot, foot + CATALOGUE_CHOOSER.fade, screenHeight);
+
+        expect(skyBandFrame(tree).height).toBe(foot + CATALOGUE_CHOOSER.fade);
+        expect(gradient().props.colors).toEqual(shut.colours);
+      });
+
+      it('leaves the chooser where it rests while the drawer moves', async () => {
+        const { tree, stop } = await measuredLibrary();
+
+        pressFilter(tree);
+
+        expect(chooserTop(tree)).toBeCloseTo(stop.rest, 5);
+      });
+
+      it('takes its measure from the resting rows alone, so a moving drawer never re-measures the page', async () => {
+        const { tree } = await measuredLibrary();
+
+        expect(byTestId(tree, 'catalogue-chooser').filter((n: any) => n.props.onLayout)).toHaveLength(0);
+
+        layout(tree, 'story-filter-rest', 0, CHOOSER + 6);
+
+        expect(StyleSheet.flatten(host(tree, 'catalogue-chooser-room').props.style).height).toBe(CHOOSER + 6);
+      });
+    });
+
+    it.each`
+      moment                                     | offset                                                       | opacity
+      ${'at rest'}                               | ${() => 0}                                                   | ${1}
+      ${'before it nears its stop'}              | ${(s: any) => s.travel - CATALOGUE_CHOOSER.headingFade}      | ${1}
+      ${'half way through the fade'}             | ${(s: any) => s.travel - CATALOGUE_CHOOSER.headingFade / 2}  | ${0.5}
+      ${'once it has stopped'}                   | ${(s: any) => s.travel}                                      | ${0}
+      ${'with the shelves far beneath it'}       | ${() => 900}                                                 | ${0}
+    `('fades out "Choose a theme" and the tagline star as it stops: $moment', async ({ offset, opacity }) => {
+      const { tree, stop } = await measuredLibrary();
+
+      scrollTo(tree, offset(stop));
+
+      expect(bound(tree, 'story-filter-heading-label').opacity.__getValue()).toBeCloseTo(opacity, 5);
+      expect(bound(tree, 'page-tagline-star').opacity.__getValue()).toBeCloseTo(opacity, 5);
+    });
+
+    it('stops the capsule clear of the tagline\'s letters, wherever the strip\'s own heading puts it', async () => {
+      const tree = await renderLibrary();
+      layout(tree, 'catalogue-header', 0, HEADER);
+      layout(tree, 'catalogue-tagline', TITLE_ROW, HEADER - TITLE_ROW);
+      layout(tree, 'story-theme-bar', 36, THEME_BAR.height.phone);
+      layout(tree, 'story-filter-rest', 0, CHOOSER - 6);
+      const tagline = tree.UNSAFE_root.findAll((n: any) => Array.isArray(n.props.lines) && n.props.width)[0];
+      const wordsBottom = TITLE_ROW + taglineWordsDepth(tagline.props.lines[1], tagline.props.width, taglineFontSize(false));
+
+      scrollTo(tree, 900);
+
+      expect(tagline.props.width).toBe(402 - 2 * StyleSheet.flatten(host(tree, 'catalogue-scroll').props.contentContainerStyle).paddingHorizontal);
+      expect(wordsBottom).toBeGreaterThan(TITLE_ROW + 40);
+      expect(chooserTop(tree) + 36).toBeCloseTo(wordsBottom + CATALOGUE_CHOOSER.clearance, 5);
+    });
+
+    it('stops the Filter button clear of the title row in story mode, where there is no tagline', async () => {
+      const tree = render(<StoryCatalogueScreen initialMode="interactive" />);
+      await waitFor(() => expect(byTestId(tree, 'story-filter-bar').length).toBeGreaterThan(0));
+      layout(tree, 'catalogue-header', 0, TITLE_ROW);
+      layout(tree, 'story-theme-bar', THEME_BAR_TOP, THEME_BAR.height.phone);
+      layout(tree, 'story-filter-rest', 0, CHOOSER);
+
+      scrollTo(tree, 900);
+
+      expect(byTestId(tree, 'catalogue-tagline')).toHaveLength(0);
+      expect(chooserTop(tree)).toBeCloseTo(TITLE_ROW + CATALOGUE_CHOOSER.clearance, 5);
+    });
+
+    it('lets a drag that starts beside its buttons reach the shelves beneath it', async () => {
+      const tree = await renderLibrary();
+
+      expect(host(tree, 'catalogue-chooser').props.pointerEvents).toBe('box-none');
+    });
+
+    it('still tells the tour where the page has scrolled to', async () => {
+      const tree = await renderLibrary();
+
+      scrollTo(tree, 300);
+      act(() => mockScrollers.catalogue_tour.reveal(40));
+      scrollTo(tree, 340);
+
+      expect(mockScrollers.catalogue_tour.away()).toBe(40);
+    });
+
+    it('carries no chooser, room or sky over search', async () => {
+      const tree = render(<StoryCatalogueScreen sectionRequest={{ section: 'search', key: 1 }} />);
+      await waitFor(() => expect(byTestId(tree, 'catalogue-scroll').length).toBeGreaterThan(0));
+
+      expect(byTestId(tree, 'catalogue-chooser')).toHaveLength(0);
+      expect(byTestId(tree, 'catalogue-chooser-room')).toHaveLength(0);
+      expect(byTestId(tree, 'catalogue-chooser-sky')).toHaveLength(0);
+    });
   });
 });

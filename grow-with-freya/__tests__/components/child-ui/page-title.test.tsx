@@ -3,8 +3,10 @@
  */
 
 import React from 'react';
+import { StyleSheet } from 'react-native';
 import { render } from '@testing-library/react-native';
 import { PageTitle } from '@/components/child-ui/page-title';
+import { HEADING_HALO } from '@/components/child-ui/heading-halo';
 
 const mockAccessibility = jest.fn(() => ({
   scaledFontSize: (n: number) => n,
@@ -67,5 +69,34 @@ describe('PageTitle over the globe', () => {
     const style = [titleNode(tree).props.style].flat(Infinity).reduce((acc: any, s: any) => ({ ...acc, ...s }), {});
 
     expect(style.fontSize).toBe(size);
+  });
+});
+
+/**
+ * Over the painted planet a shadow under the letters was not enough: the
+ * title sits in a soft night-sky halo (operator, 2026-10-03).
+ */
+describe('PageTitle over the painted planet', () => {
+  it('should sit in a heading halo, drawn behind its words', () => {
+    const tree = render(<PageTitle title="Progress" />);
+    const names = ['page-title-halo', 'page-title'];
+
+    const order = tree.UNSAFE_root
+      .findAll((n: any) => names.includes(n.props.testID))
+      .map((n: any) => n.props.testID)
+      .filter((name: string, index: number, all: string[]) => all.indexOf(name) === index);
+    const halo = tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'page-title-halo' && n.props.spread)[0];
+
+    expect(order).toEqual(names);
+    expect(halo.props.spread).toEqual(HEADING_HALO.title);
+  });
+
+  it('should still let the words shrink to fit the room between the header`s buttons', () => {
+    const tree = render(<PageTitle title="Progress" />);
+
+    const wrap = tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'page-title-wrap' && n.props.style)[0];
+
+    expect(StyleSheet.flatten(wrap.props.style)).toEqual(expect.objectContaining({ flexShrink: 1, maxWidth: '100%' }));
+    expect(titleNode(tree).props.adjustsFontSizeToFit).toBe(true);
   });
 });

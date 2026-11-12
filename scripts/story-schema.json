@@ -5,6 +5,101 @@
   "description": "Schema for story-data.json files",
   "type": "object",
   "required": ["id", "title", "category", "pages"],
+  "definitions": {
+    "localizedText": {
+      "type": "object",
+      "required": ["en"],
+      "properties": {
+        "en": { "type": "string" },
+        "pl": { "type": "string" },
+        "es": { "type": "string" },
+        "de": { "type": "string" },
+        "fr": { "type": "string" },
+        "it": { "type": "string" },
+        "pt": { "type": "string" },
+        "ja": { "type": "string" },
+        "ar": { "type": "string" },
+        "tr": { "type": "string" },
+        "nl": { "type": "string" },
+        "da": { "type": "string" },
+        "la": { "type": "string" },
+        "zh": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "ageGroupText": {
+      "type": "object",
+      "description": "Text keyed by age group (1-2, 2-4, 4-6), then by language",
+      "properties": {
+        "1-2": { "$ref": "#/definitions/localizedText" },
+        "2-4": { "$ref": "#/definitions/localizedText" },
+        "4-6": { "$ref": "#/definitions/localizedText" }
+      },
+      "minProperties": 1,
+      "additionalProperties": false
+    },
+    "stateAfter": {
+      "type": "object",
+      "required": ["image", "position", "size"],
+      "properties": {
+        "image": { "type": "string", "description": "The protected reveal patch shown as the challenge resolves" },
+        "position": {
+          "type": "object",
+          "required": ["x", "y"],
+          "properties": {
+            "x": { "type": "number", "minimum": 0, "maximum": 1 },
+            "y": { "type": "number", "minimum": 0, "maximum": 1 }
+          }
+        },
+        "size": {
+          "type": "object",
+          "required": ["width", "height"],
+          "properties": {
+            "width": { "type": "number", "minimum": 0, "maximum": 1 },
+            "height": { "type": "number", "minimum": 0, "maximum": 1 }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "hotspot": {
+      "type": "object",
+      "description": "Where a scene item sits in the page art, in fractions of the whole master picture",
+      "required": ["position", "size"],
+      "properties": {
+        "position": {
+          "type": "object",
+          "required": ["x", "y"],
+          "properties": {
+            "x": { "type": "number", "minimum": 0, "maximum": 1 },
+            "y": { "type": "number", "minimum": 0, "maximum": 1 }
+          }
+        },
+        "size": {
+          "type": "object",
+          "required": ["width", "height"],
+          "properties": {
+            "width": { "type": "number", "minimum": 0, "maximum": 1 },
+            "height": { "type": "number", "minimum": 0, "maximum": 1 }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "challengeBand": {
+      "type": "object",
+      "required": ["gesture", "items"],
+      "properties": {
+        "gesture": { "type": "string", "enum": ["tap", "tap-place", "drag"] },
+        "items": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
   "properties": {
     "id": {
       "type": "string",
@@ -33,10 +128,15 @@
       "pattern": "^[0-9]+-[0-9]+$",
       "description": "Age range like 2-5"
     },
-    "duration": {
+    "pageCount": {
       "type": "integer",
       "minimum": 1,
-      "description": "Number of pages"
+      "description": "Number of pages in the story"
+    },
+    "displayFit": {
+      "type": "string",
+      "enum": ["contain", "cover"],
+      "description": "How the reader fits page art: cover for full-screen 4:3 masters (Phase 12 books), contain (the default) for older books that are zoomed from the centre"
     },
     "description": {
       "type": "string",
@@ -112,6 +212,29 @@
       "minimum": 1,
       "default": 1
     },
+    "awards": {
+      "type": "array",
+      "description": "Badges this book awards: for finishing it, or for completing the challenge on one page. Each achievementId must be defined in cms-achievements/.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["achievementId", "trigger"],
+        "properties": {
+          "achievementId": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+          "trigger": {
+            "oneOf": [
+              { "const": "finish" },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["challengePageId"],
+                "properties": { "challengePageId": { "type": "string" } }
+              }
+            ]
+          }
+        }
+      }
+    },
     "pages": {
       "type": "array",
       "minItems": 1,
@@ -136,9 +259,9 @@
           },
           "localizedText": {
             "type": "object",
-            "description": "Age-grouped localized page text. Keys are age groups (0-2, 2-4, 4-6). Values are localized text objects with language codes as keys.",
+            "description": "Age-grouped localized page text. Keys are age groups (1-2, 2-4, 4-6). Values are localized text objects with language codes as keys.",
             "properties": {
-              "0-2": {
+              "1-2": {
                 "type": "object",
                 "properties": {
                   "en": { "type": "string" }, "pl": { "type": "string" }, "es": { "type": "string" },
@@ -181,7 +304,7 @@
           },
           "interactionType": {
             "type": "string",
-            "enum": ["none", "interactive_state_change", "music_challenge", "jigsaw_puzzle", "reading_challenge"],
+            "enum": ["none", "interactive_state_change", "music_challenge", "learning_challenge"],
             "description": "Interaction type for this page"
           },
           "interactiveElements": {
@@ -230,6 +353,99 @@
               }
             }
           },
+          "learningChallenge": {
+            "type": "object",
+            "description": "A learning challenge played over this page; present when interactionType is learning_challenge. The engine is chosen from family.",
+            "required": ["challengeId", "briefInteractionId", "mechanicId", "family", "adapter", "assessmentMode", "audioDependent", "domain", "skillId", "copy", "items", "target", "byAge", "allowSkip", "isMusicGate"],
+            "properties": {
+              "challengeId": { "type": "string", "minLength": 1 },
+              "briefInteractionId": { "type": "string", "minLength": 1 },
+              "mechanicId": { "type": "string", "pattern": "^[A-Z][0-9]{2}$" },
+              "family": {
+                "type": "string",
+                "enum": ["choose", "tap_scene", "sequence", "music_audio", "quantities", "assign_sort", "authored_sim", "snap_build", "navigate", "trace_draw"]
+              },
+              "adapter": { "type": "string", "minLength": 1 },
+              "assessmentMode": { "type": "string", "enum": ["guided_observable", "exploratory_multiple_valid"] },
+              "audioDependent": { "type": "boolean" },
+              "domain": { "type": "string", "enum": ["maths", "language", "music", "science", "social", "creative"] },
+              "skillId": { "type": "string" },
+              "copy": {
+                "type": "object",
+                "required": ["title", "setupLine", "instruction", "successLine", "onSkip", "parentPrompt", "hints"],
+                "properties": {
+                  "title": { "$ref": "#/definitions/ageGroupText" },
+                  "setupLine": { "$ref": "#/definitions/ageGroupText" },
+                  "instruction": { "$ref": "#/definitions/ageGroupText" },
+                  "successLine": { "$ref": "#/definitions/ageGroupText" },
+                  "onSkip": { "$ref": "#/definitions/ageGroupText" },
+                  "parentPrompt": { "$ref": "#/definitions/ageGroupText" },
+                  "hints": {
+                    "type": "array",
+                    "items": { "$ref": "#/definitions/ageGroupText" }
+                  }
+                },
+                "additionalProperties": false
+              },
+              "items": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "required": ["id", "label"],
+                  "properties": {
+                    "id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+                    "image": {
+                      "type": "string",
+                      "description": "Asset path for the item cut-out, rendered with the book; every choose item has one"
+                    },
+                    "label": { "$ref": "#/definitions/localizedText" },
+                    "hotspot": { "$ref": "#/definitions/hotspot" },
+                    "outcome": {
+                      "type": "object",
+                      "description": "What this choice leads to, when it differs from the challenge's shared successLine and stateAfter; tips are up to three things to do, shown beside the chosen picture until the grown-up taps Next; storyText replaces the page's words with this choice's own telling",
+                      "properties": {
+                        "successLine": { "$ref": "#/definitions/ageGroupText" },
+                        "stateAfter": { "$ref": "#/definitions/stateAfter" },
+                        "tips": {
+                          "type": "array",
+                          "minItems": 1,
+                          "maxItems": 3,
+                          "items": { "$ref": "#/definitions/ageGroupText" }
+                        },
+                        "storyText": {
+                          "$ref": "#/definitions/ageGroupText",
+                          "description": "The page's own story text when this choice is made, in place of the page text; it is the story told the chosen way"
+                        }
+                      },
+                      "minProperties": 1,
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "target": {
+                "type": "string",
+                "description": "The item id a guided mechanic looks for; empty for an open mechanic"
+              },
+              "byAge": {
+                "type": "object",
+                "required": ["1-2", "2-4", "4+"],
+                "properties": {
+                  "1-2": { "$ref": "#/definitions/challengeBand" },
+                  "2-4": { "$ref": "#/definitions/challengeBand" },
+                  "4+": { "$ref": "#/definitions/challengeBand" }
+                },
+                "additionalProperties": false
+              },
+              "stateAfter": { "$ref": "#/definitions/stateAfter" },
+              "fallbackElementId": { "type": "string" },
+              "allowSkip": { "type": "boolean", "const": true },
+              "isMusicGate": { "type": "boolean" }
+            },
+            "additionalProperties": false
+          },
           "musicChallenge": {
             "type": "object",
             "description": "Music challenge configuration for this page",
@@ -259,54 +475,9 @@
                 "enum": ["none", "minimal", "standard", "verbose"]
               }
             }
-          },
-          "jigsawPuzzle": {
-            "type": "object",
-            "description": "Jigsaw puzzle configuration for this page",
-            "required": ["enabled", "gridSize", "promptText", "allowSkip"],
-            "properties": {
-              "enabled": { "type": "boolean" },
-              "gridSize": {
-                "type": "string",
-                "enum": ["2x2", "4x4"],
-                "description": "Grid dimensions: 2x2 (easy), 4x4 (medium/hard)"
-              },
-              "promptText": { "type": "string", "description": "Narrative prompt for the jigsaw puzzle" },
-              "allowSkip": { "type": "boolean" }
-            }
-          },
-          "readingChallenge": {
-            "type": "object",
-            "description": "Reading challenge configuration for this page",
-            "required": ["enabled", "mode", "promptText", "allowSkip"],
-            "properties": {
-              "enabled": { "type": "boolean" },
-              "mode": {
-                "type": "string",
-                "enum": ["fill_in_blank", "spell_word"],
-                "description": "Challenge mode: fill_in_blank (tap missing words in order) or spell_word (select letters to spell a word)"
-              },
-              "promptText": { "type": "string", "description": "Narrative prompt for the reading challenge" },
-              "allowSkip": { "type": "boolean" },
-              "blankWordIndices": {
-                "type": "array",
-                "items": { "type": "integer", "minimum": 0 },
-                "description": "Zero-based indices of words in page text to blank out (fill_in_blank mode)"
-              },
-              "targetWord": {
-                "type": "string",
-                "description": "The word the user must spell (spell_word mode)"
-              },
-              "distractorLetters": {
-                "type": "array",
-                "items": { "type": "string", "maxLength": 1 },
-                "description": "Extra letters added to the letter pool as distractors (spell_word mode)"
-              }
-            }
           }
         }
       }
     }
   }
 }
-

@@ -58,6 +58,18 @@ public class InteractiveElement {
         public double getY() { return y; }
         @PropertyName("y")
         public void setY(double y) { this.y = y; }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof Position that)) return false;
+            return Double.compare(x, that.x) == 0 && Double.compare(y, that.y) == 0;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(x, y);
+        }
     }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -85,6 +97,18 @@ public class InteractiveElement {
         public double getHeight() { return height; }
         @PropertyName("height")
         public void setHeight(double height) { this.height = height; }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof Size that)) return false;
+            return Double.compare(width, that.width) == 0 && Double.compare(height, that.height) == 0;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(width, height);
+        }
     }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)

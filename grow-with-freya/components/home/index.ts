@@ -13,6 +13,7 @@ export { AchievementCard } from './achievement-card';
 export { ContinueLearningCard } from './continue-learning-card';
 export { StreakChip } from './streak-chip';
 export { WeeklyReadingChip } from './weekly-reading-chip';
+export { AchievementTallyChip } from './achievement-tally-chip';
 export { StatIcon } from './stat-icons';
 export { ActivityCard } from './activity-card';
 export { NightSky } from './night-sky';

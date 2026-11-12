@@ -1,9 +1,11 @@
 import { useState, useRef, useCallback, useMemo } from 'react';
+import { Keyboard } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 export interface ParentChallenge {
   type: 'emoji' | 'math';
-  emoji?: string;
+  /** Painted portrait of the animal, shown inside the starry orb. */
+  art?: number;
   word?: string; // The key used for translation lookup (e.g., 'cat', 'duck')
   // Math challenge properties
   num1?: number;
@@ -12,12 +14,12 @@ export interface ParentChallenge {
   answer?: number;
 }
 
-// Emoji challenges with English word keys
+// Animal challenges with English word keys
 export const EMOJI_CHALLENGES: ParentChallenge[] = [
-  { type: 'emoji', emoji: '🐱', word: 'cat' },
-  { type: 'emoji', emoji: '🦆', word: 'duck' },
-  { type: 'emoji', emoji: '🐕', word: 'dog' },
-  { type: 'emoji', emoji: '🐫', word: 'camel' },
+  { type: 'emoji', art: require('@/assets/images/parents-only/cat.webp'), word: 'cat' },
+  { type: 'emoji', art: require('@/assets/images/parents-only/duck.webp'), word: 'duck' },
+  { type: 'emoji', art: require('@/assets/images/parents-only/dog.webp'), word: 'dog' },
+  { type: 'emoji', art: require('@/assets/images/parents-only/camel.webp'), word: 'camel' },
 ];
 
 // Math challenges - randomly generated (simple addition & subtraction only)
@@ -51,10 +53,37 @@ export interface UseParentsOnlyChallengeReturn {
   isInputValid: boolean;
 }
 
+export const KEYBOARD_GONE_WAIT_MS = 450;
+
+export function afterKeyboardGone(open: () => void): void {
+  if (!Keyboard.isVisible()) {
+    open();
+    return;
+  }
+  let opened = false;
+  let settle: ReturnType<typeof setTimeout> | null = null;
+  const finish = () => {
+    if (opened) return;
+    opened = true;
+    willHide.remove();
+    didHide.remove();
+    clearTimeout(fallback);
+    if (settle) clearTimeout(settle);
+    open();
+  };
+  const willHide = Keyboard.addListener('keyboardWillHide', (event) => {
+    if (settle) clearTimeout(settle);
+    settle = setTimeout(finish, event?.duration ?? 0);
+  });
+  const didHide = Keyboard.addListener('keyboardDidHide', finish);
+  const fallback = setTimeout(finish, KEYBOARD_GONE_WAIT_MS);
+  Keyboard.dismiss();
+}
+
 export function useParentsOnlyChallenge(): UseParentsOnlyChallengeReturn {
   const { t } = useTranslation();
   const [isVisible, setIsVisible] = useState(false);
-  const [challenge, setChallenge] = useState<ParentChallenge>({ type: 'emoji', emoji: '🐱', word: 'cat' });
+  const [challenge, setChallenge] = useState<ParentChallenge>(EMOJI_CHALLENGES[0]);
   const [inputValue, setInputValue] = useState('');
   const [lastChallengeType, setLastChallengeType] = useState<'emoji' | 'math'>('emoji');
   const callbackRef = useRef<(() => void) | null>(null);
@@ -95,10 +124,9 @@ export function useParentsOnlyChallenge(): UseParentsOnlyChallengeReturn {
     if (isInputValid) {
       setIsVisible(false);
       setInputValue('');
-      if (callbackRef.current) {
-        callbackRef.current();
-        callbackRef.current = null;
-      }
+      const open = callbackRef.current;
+      callbackRef.current = null;
+      if (open) afterKeyboardGone(open);
     }
   }, [isInputValid]);
 

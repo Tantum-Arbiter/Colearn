@@ -43,7 +43,7 @@ describe('storyCardLayout', () => {
   it('should stand exactly as tall as its cover and body together', () => {
     const underTest = storyCardLayout(PHONE, false, PHONE_INSETS);
 
-    expect(underTest.height).toBe(underTest.coverHeight + STORY_CARD.bodyHeight.phone);
+    expect(underTest.height).toBe(underTest.coverHeight + STORY_CARD.bodyHeight.phone + STORY_CARD.pages.height);
   });
 
   it('should advance the carousel by one card and its gap', () => {
@@ -101,6 +101,56 @@ describe('cardIndexAtOffset', () => {
     expect(cardIndexAtOffset(-500, 372, 5)).toBe(0);
     expect(cardIndexAtOffset(372 * 40, 372, 5)).toBe(4);
     expect(cardIndexAtOffset(300, 372, 0)).toBe(0);
+  });
+});
+
+describe('the page strip', () => {
+  it('should hold its heading, a row of pages and their numbers', () => {
+    const { pages } = STORY_CARD;
+
+    expect(pages.height).toBeGreaterThanOrEqual(pages.thumbHeight + 40);
+    // measured on an iPhone 16 Pro: at 98 the body ran 17 points past its box,
+    // and a card opened at its pages scrolled the title up under the cover
+    expect(pages.height).toBeGreaterThanOrEqual(115);
+    expect(pages.thumbWidth / pages.thumbHeight).toBeCloseTo(4 / 3, 2);
+  });
+
+  it('should show much bigger pages on a tablet, still four by three', () => {
+    const { pages } = STORY_CARD;
+
+    expect(pages.tablet.thumbWidth).toBeGreaterThanOrEqual(pages.thumbWidth * 2);
+    expect(pages.tablet.thumbWidth / pages.tablet.thumbHeight).toBeCloseTo(4 / 3, 2);
+  });
+
+  it('should fit those pages in the strip plus the room the progress bar left above the buttons', () => {
+    const { pages } = STORY_CARD;
+    const aroundThePicture = pages.height - pages.thumbHeight;
+
+    expect(pages.tablet.barRoom).toBeLessThanOrEqual(36);
+    expect(pages.tablet.thumbHeight + aroundThePicture).toBeLessThanOrEqual(pages.tablet.height + pages.tablet.barRoom);
+  });
+
+  it('should make room for that taller strip on a tablet, and still leave a cover to see', () => {
+    const underTest = storyCardLayout(TABLET, true);
+
+    expect(underTest.height - underTest.coverHeight).toBe(STORY_CARD.bodyHeight.tablet + STORY_CARD.pages.tablet.height);
+    expect(underTest.coverHeight).toBeGreaterThanOrEqual(200);
+  });
+
+  it('should be room the card makes on top of everything else, so the ways to read stay in view', () => {
+    const underTest = storyCardLayout(PHONE, false, PHONE_INSETS);
+
+    expect(underTest.height - underTest.coverHeight).toBe(STORY_CARD.bodyHeight.phone + STORY_CARD.pages.height);
+  });
+
+  it.each([
+    ['an iPhone 16 Pro', PHONE, PHONE_INSETS],
+    ['an iPhone SE', { width: 375, height: 667 }, { top: 20, bottom: 0 }],
+  ])('should still fit on %s under its status bar, with a cover to see', (_, screen, insets) => {
+    const underTest = storyCardLayout(screen, false, insets);
+
+    expect(underTest.y).toBeGreaterThanOrEqual(insets.top + STORY_CARD.topGap);
+    expect(underTest.coverHeight).toBeGreaterThanOrEqual(120);
   });
 });
 

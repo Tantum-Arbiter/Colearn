@@ -8,7 +8,7 @@ import { StyleSheet } from 'react-native';
 import { act, fireEvent, render } from '@testing-library/react-native';
 import * as Haptics from 'expo-haptics';
 import { SleepingSkyFace } from '@/components/account/sleeping-sky-face';
-import { PEEK_TOTAL_MS, SLEEPING_EYES, SLEEP_RHYTHM } from '@/constants/sleeping-sky-face';
+import { SLEEPING_EYES, SLEEPING_MOUTH, SLEEP_RHYTHM, WAKE_TOTAL_MS } from '@/constants/sleeping-sky-face';
 
 const SIZE = 200;
 
@@ -39,14 +39,14 @@ describe('SleepingSkyFace', () => {
     it('shows the moon asleep while the sun has the day', () => {
       const view = render(<SleepingSkyFace size={SIZE} timeOfDay="day" />);
 
-      expect(sourceOf(view)).toBe(require('../../../assets/images/ui-elements/home-moon-sleeping.webp'));
+      expect(sourceOf(view)).toBe(require('../../../assets/images/ui-elements/home-moon-sleeping-mouthless.webp'));
       expect(byTestId(view, 'sleeping-sky-face')[0].props.accessibilityLabel).toBe('account.sleepingMoon');
     });
 
     it('shows the sun asleep while the moon has the night', () => {
       const view = render(<SleepingSkyFace size={SIZE} timeOfDay="night" />);
 
-      expect(sourceOf(view)).toBe(require('../../../assets/images/ui-elements/home-sun-sleeping.webp'));
+      expect(sourceOf(view)).toBe(require('../../../assets/images/ui-elements/home-sun-sleeping-mouthless.webp'));
       expect(byTestId(view, 'sleeping-sky-face')[0].props.accessibilityLabel).toBe('account.sleepingSun');
     });
 
@@ -86,6 +86,24 @@ describe('SleepingSkyFace', () => {
       expect(right.width).toBeCloseTo(eyes.right.width * SIZE, 5);
     });
 
+    it('draws its smile over the art, where the painted one was, hinged at its corners', () => {
+      const view = render(<SleepingSkyFace size={SIZE} timeOfDay="night" />);
+
+      const mouth = StyleSheet.flatten(byTestId(view, 'sleeping-sky-face-mouth')[0].props.style);
+      const spot = SLEEPING_MOUTH.sun;
+
+      expect(mouth.left + mouth.width / 2).toBeCloseTo(spot.x * SIZE, 5);
+      expect(mouth.top + (spot.stroke * SIZE) / 2).toBeCloseTo(spot.y * SIZE, 5);
+      expect(mouth.width).toBeCloseTo(spot.width * SIZE, 5);
+      expect(mouth.transformOrigin).toBe('top');
+    });
+
+    it('glows, so the halo can breathe with it', () => {
+      const view = render(<SleepingSkyFace size={SIZE} timeOfDay="day" />);
+
+      expect(byTestId(view, 'sleeping-sky-face-glow').length).toBeGreaterThan(0);
+    });
+
     it('snores', () => {
       const view = render(<SleepingSkyFace size={SIZE} timeOfDay="day" />);
 
@@ -100,22 +118,47 @@ describe('SleepingSkyFace', () => {
   });
 
   describe('a tap', () => {
-    it('peeks one eye open, leaving the other shut', () => {
+    it('peeks one eye open, with an iris that can look about, leaving the other shut', () => {
       const view = render(<SleepingSkyFace size={SIZE} timeOfDay="day" />);
 
       act(() => tap(view));
 
       expect(byTestId(view, 'sleeping-sky-face-eye-open')).toHaveLength(1);
+      expect(byTestId(view, 'sleeping-sky-face-iris')).toHaveLength(1);
       expect(byTestId(view, 'sleeping-sky-face-eye-shut')).toHaveLength(2);
     });
 
-    it('opens the eye over the art\'s right eye', () => {
+    it('opens a round eye over the art\'s right eye, its lower lid just under the shut line', () => {
       const view = render(<SleepingSkyFace size={SIZE} timeOfDay="day" />);
 
       act(() => tap(view));
       const open = StyleSheet.flatten(byTestId(view, 'sleeping-sky-face-eye-open')[0].props.style);
+      const eyeLine = SLEEPING_EYES.moon.right.y * SIZE;
 
       expect(open.left + open.width / 2).toBeCloseTo(SLEEPING_EYES.moon.right.x * SIZE, 5);
+      expect(open.width).toBe(open.height);
+      expect(open.top + open.height).toBeGreaterThan(eyeLine);
+      expect(open.top + open.height - eyeLine).toBeLessThan(open.height / 4);
+      expect(open.top).toBeLessThan(eyeLine);
+    });
+
+    it('closes the eye with a lid that comes down from the top, over an iris kept inside the white', () => {
+      const view = render(<SleepingSkyFace size={SIZE} timeOfDay="day" />);
+
+      act(() => tap(view));
+      const lid = StyleSheet.flatten(byTestId(view, 'sleeping-sky-face-lid')[0].props.style);
+      const eyeball = byTestId(view, 'sleeping-sky-face-lid')[0].findAll((node: any) => {
+        const style = StyleSheet.flatten(node.props.style);
+
+        return style && style.borderRadius !== undefined && style.overflow === 'hidden';
+      })[0];
+      const eyeballStyle = StyleSheet.flatten(eyeball.props.style);
+
+      expect(lid.overflow).toBe('hidden');
+      expect(lid.left).toBe(0);
+      expect(lid.right).toBe(0);
+      expect(eyeballStyle.borderRadius).toBe(eyeballStyle.width / 2);
+      expect(byTestId(view, 'sleeping-sky-face-iris')).toHaveLength(1);
     });
 
     it('stops snoring while it has a look', () => {
@@ -126,12 +169,12 @@ describe('SleepingSkyFace', () => {
       expect(byTestId(view, 'sleeping-sky-face-zzz')).toHaveLength(0);
     });
 
-    it('drifts back off to sleep once the peek is over', () => {
+    it('drifts back off to sleep once the look about is over', () => {
       const view = render(<SleepingSkyFace size={SIZE} timeOfDay="day" />);
 
       act(() => tap(view));
       act(() => {
-        jest.advanceTimersByTime(PEEK_TOTAL_MS - 1);
+        jest.advanceTimersByTime(WAKE_TOTAL_MS - 1);
       });
       expect(byTestId(view, 'sleeping-sky-face-eye-open')).toHaveLength(1);
 
@@ -151,28 +194,28 @@ describe('SleepingSkyFace', () => {
       expect(Haptics.impactAsync).toHaveBeenCalledWith(Haptics.ImpactFeedbackStyle.Light);
     });
 
-    it('ignores taps while already peeking, so the look is not cut short', () => {
+    it('ignores taps while already awake, so the look about is not cut short', () => {
       const view = render(<SleepingSkyFace size={SIZE} timeOfDay="day" />);
 
       act(() => tap(view));
       act(() => {
-        jest.advanceTimersByTime(PEEK_TOTAL_MS / 2);
+        jest.advanceTimersByTime(WAKE_TOTAL_MS / 2);
       });
       act(() => tap(view));
       act(() => {
-        jest.advanceTimersByTime(PEEK_TOTAL_MS / 2);
+        jest.advanceTimersByTime(WAKE_TOTAL_MS / 2);
       });
 
       expect(byTestId(view, 'sleeping-sky-face-eye-open')).toHaveLength(0);
       expect(Haptics.impactAsync).toHaveBeenCalledTimes(1);
     });
 
-    it('can be woken for a peek again once asleep', () => {
+    it('can be woken for another look once asleep', () => {
       const view = render(<SleepingSkyFace size={SIZE} timeOfDay="day" />);
 
       act(() => tap(view));
       act(() => {
-        jest.advanceTimersByTime(PEEK_TOTAL_MS);
+        jest.advanceTimersByTime(WAKE_TOTAL_MS);
       });
       act(() => tap(view));
 

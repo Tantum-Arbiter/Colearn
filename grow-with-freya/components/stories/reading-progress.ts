@@ -13,15 +13,21 @@ export function readingFraction(place: ReadingPlace): number {
   return Math.min(Math.max(place.pageIndex / readable, 0), 1);
 }
 
+export function readingCount(place: ReadingPlace): { page: number; of: number } {
+  const of = readablePages(place.totalPages);
+  return { page: Math.min(Math.max(place.pageIndex, 0), of), of };
+}
+
 export interface ResumeOptions {
   skipCoverPage: boolean;
   savedPlace?: ReadingPlace;
   totalPages: number;
+  startPage?: number;
 }
 
-export function resumePageIndex({ skipCoverPage, savedPlace, totalPages }: ResumeOptions): number {
+export function resumePageIndex({ skipCoverPage, savedPlace, totalPages, startPage }: ResumeOptions): number {
   const lastIndex = readablePages(totalPages);
   if (lastIndex === 0 || !skipCoverPage) return 0;
-  const saved = savedPlace?.pageIndex ?? 0;
-  return Math.min(saved > 0 ? saved : 1, lastIndex);
+  const from = startPage ?? savedPlace?.pageIndex ?? 0;
+  return Math.min(from > 0 ? from : 1, lastIndex);
 }

@@ -9,6 +9,7 @@
  *   prepare              - Prepare all stories for upload (validate + format + manifest)
  *   import <source>      - Import from story-engine output
  *   list                 - List all stories with validation status
+ *   achievements         - Validate badge definitions and the awards stories name
  */
 
 import { Command } from 'commander';
@@ -18,6 +19,7 @@ import { formatCommand } from './commands/format.js';
 import { prepareCommand } from './commands/prepare.js';
 import { importCommand } from './commands/import.js';
 import { listCommand } from './commands/list.js';
+import { achievementsCommand } from './commands/achievements.js';
 
 const program = new Command();
 
@@ -58,6 +60,12 @@ program
   .description('List all stories with their validation status')
   .option('--json', 'Output as JSON')
   .action(listCommand);
+
+program
+  .command('achievements')
+  .description('Validate badge definitions and the awards stories name')
+  .option('-v, --verbose', 'Show translation warnings')
+  .action(achievementsCommand);
 
 // Show help if no command provided
 if (process.argv.length <= 2) {

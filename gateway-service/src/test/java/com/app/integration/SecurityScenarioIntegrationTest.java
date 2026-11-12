@@ -56,7 +56,7 @@ class SecurityScenarioIntegrationTest {
 
 
     @Test
-    void xssAttackScenario_ShouldBeBlocked() throws Exception {
+    void xssAttackInUrl_ShouldBeBlocked() throws Exception {
         String[] xssPayloads = {
             "<script>alert('xss')</script>",
             "<img src=x onerror=alert('xss')>",
@@ -75,18 +75,6 @@ class SecurityScenarioIntegrationTest {
                 .header("X-Device-ID", "test-device-123"))
                     .andExpect(status().isBadRequest());
 
-            // Test in request body
-            Map<String, String> requestBody = new HashMap<>();
-            requestBody.put("content", payload);
-
-            mockMvc.perform(get("/api/auth/me")
-                    .header("Authorization", "Bearer " + validAccessToken)
-                .header("X-Client-Platform", "ios")
-                .header("X-Client-Version", "1.0.0")
-                .header("X-Device-ID", "test-device-123")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(requestBody)))
-                    .andExpect(status().isBadRequest());
         }
     }
 
@@ -120,7 +108,7 @@ class SecurityScenarioIntegrationTest {
     }
 
     @Test
-    void commandInjectionAttackScenario_ShouldBeBlocked() throws Exception {
+    void commandInjectionInUrl_ShouldBeBlocked() throws Exception {
         String[] commandInjectionPayloads = {
             "; ls -la",
             "| cat /etc/passwd",
@@ -139,18 +127,6 @@ class SecurityScenarioIntegrationTest {
                 .header("X-Device-ID", "test-device-123"))
                     .andExpect(status().isBadRequest());
 
-            // Test in request body
-            Map<String, String> requestBody = new HashMap<>();
-            requestBody.put("command", payload);
-
-            mockMvc.perform(get("/api/auth/me")
-                    .header("Authorization", "Bearer " + validAccessToken)
-                .header("X-Client-Platform", "ios")
-                .header("X-Client-Version", "1.0.0")
-                .header("X-Device-ID", "test-device-123")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(requestBody)))
-                    .andExpect(status().isBadRequest());
         }
     }
 

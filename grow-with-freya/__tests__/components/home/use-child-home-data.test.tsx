@@ -7,6 +7,7 @@
 import { renderHook, waitFor } from '@testing-library/react-native';
 import {
   useChildHomeData,
+  achievementTally,
   newestEarned,
   pickNextAchievement,
   storyMinutes,
@@ -38,7 +39,10 @@ jest.mock('@/services/screen-time-service', () => ({
 }));
 
 jest.mock('@/data/stories', () => ({
-  ALL_STORIES: [{ id: 'moonlight', title: 'The Moonlight Garden', coverImage: 'file:///cover.webp', category: 'bedtime', isAvailable: true }],
+  ALL_STORIES: [
+    { id: 'moonlight', title: 'The Moonlight Garden', coverImage: 'file:///cover.webp', category: 'bedtime', isAvailable: true },
+    { id: 'river', title: 'Down by the River', coverImage: 'file:///river.webp', category: 'nature', isAvailable: true },
+  ],
 }));
 
 const badge = (id: string, status: Badge['status'], current: number, target: number, category: Badge['category'] = 'stories'): Badge => ({
@@ -63,7 +67,9 @@ function applyState(next: Partial<AppState>) {
     storyProgress: {},
     getContinueReadingStoryId: () => null,
     readStoryIds: [],
+    finishedStoryIds: [],
     readingStreak: 0,
+    longestStreak: 0,
     lastReadDate: null,
     achievementUnlockedAt: {},
     lastHomeVisitAt: null,
@@ -159,7 +165,8 @@ describe('useChildHomeData', () => {
     mockSessions.push({ activity: 'story', duration: 84 * 60, date: new Date().toISOString().slice(0, 10) });
     mockTotals.push({ date: '2026-09-05', seconds: 1200 }, { date: '2026-09-06', seconds: 5000 });
     applyState({
-      readStoryIds: ['a', 'b', 'c'],
+      readStoryIds: ['a', 'b', 'c', 'opened-only'],
+      finishedStoryIds: ['a', 'b', 'c'],
       readingStreak: 4,
       lastReadDate: new Date().toISOString().slice(0, 10),
       storyProgress: { moonlight: { pageIndex: 7, totalPages: 14, updatedAt: '2026-09-06T08:00:00.000Z', completedCount: 0 } },
@@ -179,10 +186,86 @@ describe('useChildHomeData', () => {
     expect(underTest.currentStory).toEqual({
       id: 'moonlight',
       title: 'The Moonlight Garden',
-      currentPage: 8,
-      totalPages: 14,
+      currentPage: 7,
+      totalPages: 13,
       coverImage: { uri: 'file:///cover.webp' },
     });
+  });
+
+  it.each([
+    ['the longest run there has been, while today is shorter', 4, 9, 9],
+    ['the run going now, once it is the longest', 9, 9, 9],
+    ['the run going now, for a store from before the best was kept', 6, 0, 6],
+  ])('should give as the best streak %s', (_, readingStreak, longestStreak, best) => {
+    applyState({ readingStreak, longestStreak, lastReadDate: new Date().toISOString().slice(0, 10) });
+
+    const { result } = renderHook(() => useChildHomeData());
+
+    expect(result.current.data.bestStreakDays).toBe(best);
+  });
+
+  it('should keep the best streak once the run going now has lapsed', () => {
+    applyState({ readingStreak: 3, longestStreak: 7, lastReadDate: '2026-01-02' });
+
+    const { result } = renderHook(() => useChildHomeData());
+
+    expect(result.current.data.readingStreakDays).toBe(0);
+    expect(result.current.data.bestStreakDays).toBe(7);
+  });
+
+  it('should give the story to carry on with at the page the reader is on, its cover not among the pages', () => {
+    applyState({
+      storyProgress: { moonlight: { pageIndex: 3, totalPages: 11, updatedAt: '2026-09-06T08:00:00.000Z', completedCount: 0 } },
+      getContinueReadingStoryId: () => 'moonlight',
+    });
+
+    const { result } = renderHook(() => useChildHomeData());
+
+    expect(result.current.data.currentStory).toMatchObject({ currentPage: 3, totalPages: 10 });
+  });
+
+  it('should carry on with the book read last, by the reading record it is shown, never a choice made before it changed', () => {
+    applyState({
+      storyProgress: {
+        moonlight: { pageIndex: 3, totalPages: 11, updatedAt: '2026-09-06T08:00:00.000Z', completedCount: 0 },
+        river: { pageIndex: 5, totalPages: 9, updatedAt: '2026-09-06T08:05:00.000Z', completedCount: 0 },
+      },
+      getContinueReadingStoryId: () => 'moonlight',
+    });
+
+    const { result } = renderHook(() => useChildHomeData());
+
+    expect(result.current.data.currentStory).toMatchObject({ id: 'river', title: 'Down by the River', currentPage: 5, totalPages: 8 });
+  });
+
+  it('should have nothing to carry on with when every book is on its cover or finished', () => {
+    applyState({
+      storyProgress: {
+        moonlight: { pageIndex: 0, totalPages: 11, updatedAt: '2026-09-06T08:00:00.000Z', completedCount: 1 },
+        river: { pageIndex: 9, totalPages: 9, updatedAt: '2026-09-06T08:05:00.000Z', completedCount: 0 },
+      },
+      getContinueReadingStoryId: () => 'river',
+    });
+
+    const { result } = renderHook(() => useChildHomeData());
+
+    expect(result.current.data.currentStory).toBeUndefined();
+  });
+
+  it.each([
+    ['not once another story has been finished after it', '2026-09-06T09:00:00.000Z', false],
+    ['when the last story finished came before it', '2026-09-06T07:00:00.000Z', true],
+    ['when no story has been finished yet', null, true],
+  ])('should offer the story left part-read %s', (_, lastStoryCompletedAt, offered) => {
+    applyState({
+      storyProgress: { moonlight: { pageIndex: 3, totalPages: 11, updatedAt: '2026-09-06T08:00:00.000Z', completedCount: 0 } },
+      getContinueReadingStoryId: () => 'moonlight',
+      lastStoryCompletedAt,
+    });
+
+    const { result } = renderHook(() => useChildHomeData());
+
+    expect(result.current.data.currentStory !== undefined).toBe(offered);
   });
 
   it('should surface the newest badge and the next one, with icons the card can draw', () => {
@@ -192,7 +275,40 @@ describe('useChildHomeData', () => {
     const { result } = renderHook(() => useChildHomeData());
 
     expect(result.current.data.newestAchievement).toMatchObject({ id: 'first-story', icon: 'book', title: 'progress.badges.first-story.title' });
-    expect(result.current.data.nextAchievement).toMatchObject({ title: 'progress.badges.story-adventurer.title', current: 8, required: 10, unit: 'stories' });
+    expect(result.current.data.nextAchievement).toMatchObject({
+      id: 'story-adventurer',
+      title: 'progress.badges.story-adventurer.title',
+      current: 8,
+      required: 10,
+      unit: 'stories',
+    });
+  });
+
+  it('should count the badges unlocked and those still to go', () => {
+    mockBadges.push(badge('first-story', 'earned', 1, 1), badge('story-adventurer', 'in_progress', 8, 10), badge('first-notes', 'undiscovered', 0, 1, 'music'));
+
+    const { result } = renderHook(() => useChildHomeData());
+
+    expect(result.current.data.achievementTally).toEqual({ unlocked: 1, remaining: 2 });
+  });
+
+  it('should have no tally to show when there are no badges at all', () => {
+    const { result } = renderHook(() => useChildHomeData());
+
+    expect(result.current.data.achievementTally).toBeUndefined();
+  });
+
+  it('should show CMS badges by their own copy', () => {
+    mockBadges.push(
+      { ...badge('theme-calming', 'earned', 2, 2), titleKey: '', descriptionKey: '', title: 'Calm Collector', description: 'You finished two calming books' },
+      { ...badge('theme-animals', 'in_progress', 1, 2), titleKey: '', descriptionKey: '', title: 'Animal Friend', description: 'Finish two animal books' },
+    );
+    applyState({ achievementUnlockedAt: { 'theme-calming': '2026-09-01T00:00:00.000Z' } });
+
+    const { result } = renderHook(() => useChildHomeData());
+
+    expect(result.current.data.newestAchievement).toMatchObject({ title: 'Calm Collector', description: 'You finished two calming books' });
+    expect(result.current.data.nextAchievement).toMatchObject({ title: 'Animal Friend' });
   });
 
   it('should remember the visit and stamp any badge seen earned for the first time', () => {
@@ -246,5 +362,24 @@ describe('useChildHomeData', () => {
     const { result } = renderHook(() => useChildHomeData());
 
     expect(result.current.welcome.titleKey).toBe('home.welcome.firstToday.titleAnonymous');
+  });
+});
+
+describe('achievementTally', () => {
+  it.each([
+    ['nothing unlocked', ['undiscovered', 'started', 'in_progress'], { unlocked: 0, remaining: 3 }],
+    ['some unlocked', ['earned', 'started', 'undiscovered'], { unlocked: 1, remaining: 2 }],
+    ['everything unlocked', ['earned', 'earned'], { unlocked: 2, remaining: 0 }],
+    ['a single badge, not yet unlocked', ['in_progress'], { unlocked: 0, remaining: 1 }],
+  ] as [string, Badge['status'][], { unlocked: number; remaining: number }][])('counts %s', (_name, statuses, expected) => {
+    const badges = statuses.map((status, index) => badge(`badge-${index}`, status, 0, 1));
+
+    const underTest = achievementTally(badges);
+
+    expect(underTest).toEqual(expected);
+  });
+
+  it('has nothing to count when there are no badges', () => {
+    expect(achievementTally([])).toBeUndefined();
   });
 });

@@ -1,9 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
+import Constants from 'expo-constants';
+import { useTranslation } from 'react-i18next';
 import { ALL_STORIES } from '@/data/stories';
 import { Story } from '@/types/story';
 import { useAppStore } from '@/store/app-store';
 import { StoryLoader } from '@/services/story-loader';
 import ScreenTimeService, { ScreenTimeSession } from '@/services/screen-time-service';
+import { AchievementDefinitionsService } from '@/services/achievement-definitions-service';
+import { AchievementDefinition, BUNDLED_ACHIEVEMENTS, evaluateAchievements, mergeDefinitions } from './achievements';
 import {
   ActivityCounters,
   Badge,
@@ -11,13 +15,12 @@ import {
   Challenge,
   EMPTY_COUNTERS,
   Milestone,
-  buildBadges,
   buildChallenges,
   buildMilestones,
   summariseBadges,
 } from './progress-model';
 
-const KIND_TAGS = ['friendship', 'family', 'emotions'];
+const KIND_TAGS = ['friendship', 'family-exercises', 'emotions'];
 const MORNING_END_HOUR = 12;
 const EVENING_START_HOUR = 18;
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
@@ -26,13 +29,13 @@ export const HISTORY_DAYS = 30;
 const hourOf = (session: ScreenTimeSession) => new Date(session.startTime).getHours();
 
 export function deriveCounters(
-  readStoryIds: string[],
+  finishedStoryIds: string[],
   favouriteStoryIds: string[],
   stories: Story[],
   recentUsage: ScreenTimeSession[],
   now: number = Date.now(),
 ): ActivityCounters {
-  const readStories = stories.filter((story) => readStoryIds.includes(story.id));
+  const readStories = stories.filter((story) => finishedStoryIds.includes(story.id));
   const weeklyUsage = recentUsage.filter((session) => session.startTime >= now - WEEK_MS);
   const secondsThisWeek = weeklyUsage.reduce((total, session) => total + session.duration, 0);
   const count = (sessions: ScreenTimeSession[], predicate: (session: ScreenTimeSession) => boolean) =>
@@ -40,7 +43,7 @@ export function deriveCounters(
 
   return {
     minutesThisWeek: Math.round(secondsThisWeek / 60),
-    storiesRead: readStoryIds.length,
+    storiesRead: finishedStoryIds.length,
     bedtimeStoriesRead: readStories.filter((story) => story.category === 'bedtime').length,
     adventureStoriesRead: readStories.filter((story) => story.category === 'adventure').length,
     kindStoriesRead: readStories.filter((story) => story.tags?.some((tag) => KIND_TAGS.includes(tag))).length,
@@ -67,9 +70,13 @@ export interface ProgressData {
 }
 
 export function useProgressData(): ProgressData {
-  const readStoryIds = useAppStore((state) => state.readStoryIds);
+  const { i18n } = useTranslation();
+  const finishedStoryIds = useAppStore((state) => state.finishedStoryIds);
   const favouriteStoryIds = useAppStore((state) => state.favoriteStoryIds);
+  const challengeCounts = useAppStore((state) => state.challengeCounts);
+  const earnedAchievementIds = useAppStore((state) => state.earnedAchievementIds);
   const [recentUsage, setRecentUsage] = useState<ScreenTimeSession[]>([]);
+  const [remoteDefinitions, setRemoteDefinitions] = useState<AchievementDefinition[]>([]);
 
   useEffect(() => {
     let mounted = true;
@@ -84,16 +91,41 @@ export function useProgressData(): ProgressData {
     };
   }, []);
 
+  useEffect(() => {
+    let mounted = true;
+    const load = () => {
+      AchievementDefinitionsService.getDefinitions()
+        .then((definitions) => {
+          if (mounted) setRemoteDefinitions(definitions);
+        })
+        .catch(() => undefined);
+    };
+    load();
+    const unsubscribe = AchievementDefinitionsService.onDefinitionsUpdated(load);
+    return () => {
+      mounted = false;
+      unsubscribe();
+    };
+  }, []);
+
+  const stories = StoryLoader.getCachedStories() ?? ALL_STORIES;
+
   const counters = useMemo(() => {
-    const stories = StoryLoader.getCachedStories() ?? ALL_STORIES;
-    if (readStoryIds.length === 0 && favouriteStoryIds.length === 0 && recentUsage.length === 0) {
+    if (finishedStoryIds.length === 0 && favouriteStoryIds.length === 0 && recentUsage.length === 0) {
       return EMPTY_COUNTERS;
     }
-    return deriveCounters(readStoryIds, favouriteStoryIds, stories, recentUsage);
-  }, [readStoryIds, favouriteStoryIds, recentUsage]);
+    return deriveCounters(finishedStoryIds, favouriteStoryIds, stories, recentUsage);
+  }, [finishedStoryIds, favouriteStoryIds, stories, recentUsage]);
+
+  const language = i18n.language ?? 'en';
 
   return useMemo(() => {
-    const badges = buildBadges(counters);
+    const badges = evaluateAchievements(
+      mergeDefinitions(BUNDLED_ACHIEVEMENTS, remoteDefinitions),
+      { counters, finishedStoryIds, challengeCounts, earnedIds: earnedAchievementIds },
+      stories,
+      { appVersion: Constants.expoConfig?.version ?? '0.0.0', language },
+    );
     return {
       counters,
       badges,
@@ -101,5 +133,5 @@ export function useProgressData(): ProgressData {
       challenges: buildChallenges(counters),
       milestones: buildMilestones(counters),
     };
-  }, [counters]);
+  }, [counters, remoteDefinitions, finishedStoryIds, challengeCounts, earnedAchievementIds, stories, language]);
 }

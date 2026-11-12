@@ -31,6 +31,16 @@ describe('the guard mark', () => {
     expect(underTest.length).toBeGreaterThan(0);
   });
 
+  it('should be the shield-and-clock artwork, tinted to the state it is given', () => {
+    const view = renderRing({ tint: '#C6DBFA' });
+
+    const underTest = byTestId(view, 'screen-time-guard-glyph')[0];
+
+    expect(underTest.props.source).toBe(require('../../../assets/images/ui-elements/screensafe-shield.png'));
+    expect(underTest.props.style.tintColor).toBe('#C6DBFA');
+    expect(underTest.props.style.opacity).toBe(SCREEN_TIME_RING.arcOpacity);
+  });
+
   it('should fit inside the track without touching it', () => {
     const inner = SCREEN_TIME_RING.size - SCREEN_TIME_RING.strokeWidth * 2;
 

@@ -127,31 +127,8 @@ jest.mock('expo-font', () => ({
   loadAsync: jest.fn(),
 }));
 
-// Mock expo-file-system
-jest.mock('expo-file-system', () => ({
-  documentDirectory: 'file:///mock-document-directory/',
-  cacheDirectory: 'file:///mock-cache-directory/',
-  makeDirectoryAsync: jest.fn(() => Promise.resolve()),
-  getInfoAsync: jest.fn(() => Promise.resolve({ exists: false, isDirectory: false })),
-  readAsStringAsync: jest.fn(() => Promise.resolve('')),
-  writeAsStringAsync: jest.fn(() => Promise.resolve()),
-  deleteAsync: jest.fn(() => Promise.resolve()),
-  moveAsync: jest.fn(() => Promise.resolve()),
-  copyAsync: jest.fn(() => Promise.resolve()),
-  readDirectoryAsync: jest.fn(() => Promise.resolve([])),
-  downloadAsync: jest.fn(() => Promise.resolve({ uri: '' })),
-  EncodingType: {
-    UTF8: 'utf8',
-    Base64: 'base64',
-  },
-  FileSystemUploadType: {
-    BINARY_CONTENT: 0,
-    MULTIPART: 1,
-  },
-}));
-
-// Mock expo-file-system/next (new API with Paths, Directory, File classes)
-jest.mock('expo-file-system/next', () => {
+// Mock expo-file-system (Paths, Directory, File classes, and the legacy calls)
+jest.mock('expo-file-system', () => {
   const mockFile = {
     exists: false,
     uri: 'file:///mock-file-uri',
@@ -168,6 +145,25 @@ jest.mock('expo-file-system/next', () => {
   };
 
   return {
+    documentDirectory: 'file:///mock-document-directory/',
+    cacheDirectory: 'file:///mock-cache-directory/',
+    makeDirectoryAsync: jest.fn(() => Promise.resolve()),
+    getInfoAsync: jest.fn(() => Promise.resolve({ exists: false, isDirectory: false })),
+    readAsStringAsync: jest.fn(() => Promise.resolve('')),
+    writeAsStringAsync: jest.fn(() => Promise.resolve()),
+    deleteAsync: jest.fn(() => Promise.resolve()),
+    moveAsync: jest.fn(() => Promise.resolve()),
+    copyAsync: jest.fn(() => Promise.resolve()),
+    readDirectoryAsync: jest.fn(() => Promise.resolve([])),
+    downloadAsync: jest.fn(() => Promise.resolve({ uri: '' })),
+    EncodingType: {
+      UTF8: 'utf8',
+      Base64: 'base64',
+    },
+    FileSystemUploadType: {
+      BINARY_CONTENT: 0,
+      MULTIPART: 1,
+    },
     Paths: {
       document: 'file:///mock-document-directory/',
       cache: 'file:///mock-cache-directory/',
@@ -380,6 +376,9 @@ jest.mock('@/store/app-store', () => ({
     _devSubscriptionOverride: null,
     getEffectiveTier: () => 'free',
     readStoryIds: [],
+    finishedStoryIds: [],
+    challengeCounts: {},
+    earnedAchievementIds: [],
     userAvatarType: null,
     backgroundAnimationState: {
       cloudFloat1: 0,
@@ -543,6 +542,8 @@ jest.mock('react-native-purchases', () => ({
     restorePurchases: jest.fn().mockResolvedValue({ entitlements: { active: {} } }),
     addCustomerInfoUpdateListener: jest.fn(),
     checkTrialOrIntroductoryPriceEligibility: jest.fn().mockResolvedValue({}),
+    logIn: jest.fn().mockResolvedValue({ customerInfo: { entitlements: { active: {} } }, created: false }),
+    logOut: jest.fn().mockResolvedValue({ entitlements: { active: {} } }),
   },
   LOG_LEVEL: { DEBUG: 4, INFO: 3, WARN: 2, ERROR: 1 },
   PURCHASES_ERROR_CODE: { PURCHASE_CANCELLED_ERROR: 1 },

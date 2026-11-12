@@ -1,0 +1,51 @@
+{
+  "mappings": [
+    {
+      "name": "RevenueCat - the gateway's key is refused",
+      "priority": 1,
+      "request": {
+        "method": "GET",
+        "urlPathPattern": "/v1/subscribers/.+",
+        "headers": {
+          "Authorization": { "doesNotMatch": "Bearer func-test-revenuecat-key" }
+        }
+      },
+      "response": {
+        "status": 401,
+        "headers": { "Content-Type": "application/json" },
+        "jsonBody": { "code": 7225, "message": "Invalid API key." }
+      }
+    },
+    {
+      "name": "RevenueCat - every signed-in test family holds an active sandbox premium subscription",
+      "priority": 5,
+      "request": {
+        "method": "GET",
+        "urlPathPattern": "/v1/subscribers/.+",
+        "headers": {
+          "Authorization": { "equalTo": "Bearer func-test-revenuecat-key" }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": { "Content-Type": "application/json" },
+        "jsonBody": {
+          "request_date": "2026-09-25T12:00:00Z",
+          "subscriber": {
+            "entitlements": {
+              "premium_access": {
+                "expires_date": "2099-01-01T00:00:00Z",
+                "product_identifier": "monthly_premium",
+                "purchase_date": "2026-09-01T00:00:00Z"
+              }
+            },
+            "subscriptions": {
+              "monthly_premium": { "is_sandbox": true, "expires_date": "2099-01-01T00:00:00Z" }
+            },
+            "non_subscriptions": {}
+          }
+        }
+      }
+    }
+  ]
+}
