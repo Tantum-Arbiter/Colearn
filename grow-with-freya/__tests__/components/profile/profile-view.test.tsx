@@ -6,10 +6,11 @@
  * framing and the switching, not the content.
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Text, View } from 'react-native';
 import { render, fireEvent } from '@testing-library/react-native';
-import { ProfileView } from '@/components/profile/profile-view';
+import { ProfileBody, ProfileTop } from '@/components/profile/profile-view';
+import type { ProfileTab } from '@/components/profile/profile-tabs';
 import { AVATAR_OPTIONS } from '@/components/onboarding/onboarding-pages';
 import { badgeStatus, type Badge } from '@/components/progress/progress-model';
 import type { Story } from '@/types/story';
@@ -72,6 +73,38 @@ function defaults() {
     needsSignIn: true,
     onLogin: jest.fn(),
   };
+}
+
+type HarnessProps = ReturnType<typeof defaults> & { guideTargets?: React.ComponentProps<typeof ProfileTop>['guideTargets'] };
+
+function ProfileView({ favourites, downloads, downloadLimit, badges, language, width, onOpenDownload, onDeleteDownload, onSelectBadge, onEditProfile, needsSignIn, onLogin, guideTargets }: HarnessProps) {
+  const [tab, setTab] = useState<ProfileTab>('saved');
+
+  return (
+    <View>
+      <ProfileTop
+        tab={tab}
+        onSelectTab={setTab}
+        width={width}
+        onEditProfile={onEditProfile}
+        needsSignIn={needsSignIn}
+        onLogin={onLogin}
+        guideTargets={guideTargets}
+      />
+      <ProfileBody
+        tab={tab}
+        favourites={favourites}
+        downloads={downloads}
+        downloadLimit={downloadLimit}
+        badges={badges}
+        language={language}
+        width={width}
+        onOpenDownload={onOpenDownload}
+        onDeleteDownload={onDeleteDownload}
+        onSelectBadge={onSelectBadge}
+      />
+    </View>
+  );
 }
 
 function byTestId(tree: ReturnType<typeof render>, testID: string): any[] {
@@ -314,3 +347,58 @@ describe('signing in from the profile', () => {
     expect(byTestId(tree, 'profile-session').filter((n: any) => n.props.accessibilityRole === 'button')).toHaveLength(0);
   });
 });
+
+describe('ProfileTop and ProfileBody', () => {
+  const top = (tab: ProfileTab, onSelectTab = jest.fn()) => {
+    const { width, onEditProfile, needsSignIn, onLogin } = defaults();
+    return render(
+      <ProfileTop tab={tab} onSelectTab={onSelectTab} width={width} onEditProfile={onEditProfile} needsSignIn={needsSignIn} onLogin={onLogin} />,
+    );
+  };
+  const body = (tab: ProfileTab) => {
+    const { onEditProfile: _edit, needsSignIn: _needs, onLogin: _login, ...rest } = defaults();
+    return render(<ProfileBody tab={tab} {...rest} />);
+  };
+
+  it('keeps the face, the name, Login and the tabs together in the top, with no list', () => {
+    const underTest = top('saved');
+
+    expect(byTestId(underTest, 'profile-hero').length).toBeGreaterThan(0);
+    expect(byTestId(underTest, 'profile-session-card').length).toBeGreaterThan(0);
+    expect(byTestId(underTest, 'profile-tabs').length).toBeGreaterThan(0);
+    expect(textsIn(underTest)).not.toContain('the favourites shelf');
+  });
+
+  it('asks its owner to change tab, rather than changing it itself', () => {
+    const onSelectTab = jest.fn();
+    const underTest = top('saved', onSelectTab);
+
+    openTab(underTest, 'badges');
+
+    expect(onSelectTab).toHaveBeenCalledWith('badges');
+    expect(byTestId(underTest, 'profile-tab-saved').find((n: any) => n.props.accessibilityState)?.props.accessibilityState).toEqual(
+      expect.objectContaining({ selected: true }),
+    );
+  });
+
+  it('shows the tab it is given', () => {
+    const underTest = top('manage');
+
+    expect(byTestId(underTest, 'profile-tab-manage').find((n: any) => n.props.accessibilityState)?.props.accessibilityState).toEqual(
+      expect.objectContaining({ selected: true }),
+    );
+  });
+
+  it('draws only the open tab list in the body, with no face or tabs', () => {
+    const saved = body('saved');
+    expect(textsIn(saved)).toContain('the favourites shelf');
+    expect(byTestId(saved, 'profile-hero')).toHaveLength(0);
+    expect(byTestId(saved, 'profile-tabs')).toHaveLength(0);
+
+    expect(byTestId(body('badges'), 'badge-wall').length).toBeGreaterThan(0);
+    expect(textsIn(body('badges'))).not.toContain('the favourites shelf');
+    expect(byTestId(body('manage'), 'profile-downloads-list').length).toBeGreaterThan(0);
+    expect(textsIn(body('manage'))).not.toContain('the favourites shelf');
+  });
+});
+

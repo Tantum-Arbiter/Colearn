@@ -25,7 +25,6 @@ import { StoryCardSheet } from '@/components/stories/story-card-sheet';
 import { StoryDownloadService } from '@/services/story-download-service';
 import { STORY_CARD, storyCardLayout } from '@/constants/story-card';
 import { Story } from '@/types/story';
-import { PROGRESS_GRADIENT } from '@/components/onboarding/onboarding-theme';
 
 jest.mock('@/services/story-download-service', () => ({
   StoryDownloadService: {
@@ -117,44 +116,12 @@ describe('StoryCardSheet', () => {
   describe('a book the child is part-way through', () => {
     const underway = { wombat: { pageIndex: 3, totalPages: 9 } };
 
-    it('should show how far they have read', () => {
+    it('should carry no progress bar: the ringed page in the strip already says where they are', () => {
       const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} progress={underway} />);
 
-      const underTest = UNSAFE_root.findAll((node: any) => node.props?.testID === 'story-card-progress');
-
-      expect(underTest.length).toBeGreaterThan(0);
-      expect(findByText(UNSAFE_root, '38%').length).toBeGreaterThan(0);
-    });
-
-    it('should draw that progress with the onboarding bar: the same gradient, growing over the pages read', () => {
-      const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} progress={underway} />);
-
-      const bar = UNSAFE_root.findAll((node: any) => node.props?.testID === 'story-card-progress-bar' && node.props?.accessibilityRole === 'progressbar');
-      const gradient = UNSAFE_root.findAll((node: any) => node.props?.testID === 'story-card-progress-gradient');
-
-      expect(bar.length).toBeGreaterThan(0);
-      expect(bar[0].props.accessibilityValue).toEqual({ min: 0, max: 8, now: 3 });
-      expect(gradient.length).toBeGreaterThan(0);
-      expect(gradient[0].props.colors).toEqual(PROGRESS_GRADIENT);
-    });
-
-    it('should keep the bar inside the same gutter as the title, chips and buttons, not out to the card edge', () => {
-      const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} progress={underway} />);
-
-      const row = UNSAFE_root.findAll((node: any) => node.props?.testID === 'story-card-progress')[0];
-      const actions = UNSAFE_root.findAll((node: any) => node.props?.testID === 'story-card-actions')[0];
-      const underTest = StyleSheet.flatten(row.props.style).paddingHorizontal;
-
-      expect(underTest).toBeGreaterThan(0);
-      expect(underTest).toBe(StyleSheet.flatten(actions.props.style).paddingHorizontal);
-    });
-
-    it('should let the bar run the width of the card rather than stopping at the footer cap', () => {
-      const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} progress={underway} />);
-
-      const bar = UNSAFE_root.findAll((node: any) => node.props?.testID === 'story-card-progress-bar' && node.props?.accessibilityRole === 'progressbar')[0];
-
-      expect(StyleSheet.flatten(bar.props.style).maxWidth).toBe(layout.width);
+      expect(UNSAFE_root.findAll((node: any) => node.props?.testID === 'story-card-progress')).toHaveLength(0);
+      expect(UNSAFE_root.findAll((node: any) => node.props?.accessibilityRole === 'progressbar')).toHaveLength(0);
+      expect(findByText(UNSAFE_root, 'home.pagePosition')).toHaveLength(0);
     });
 
     it('should offer to carry on where they left off, rather than start again', () => {
@@ -174,21 +141,10 @@ describe('StoryCardSheet', () => {
       expect(defaultProps.onChooseMode).toHaveBeenCalledWith('read');
     });
 
-    it('should show nothing of the sort for a book not yet started', () => {
+    it('should offer to read together for a book not yet started', () => {
       const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} />);
 
-      const underTest = UNSAFE_root.findAll((node: any) => node.props?.testID === 'story-card-progress');
-
-      expect(underTest).toHaveLength(0);
       expect(findByText(UNSAFE_root, 'storyDetail.readTogether').length).toBeGreaterThan(0);
-    });
-
-    it('should measure only the book it belongs to, not its neighbours on the shelf', () => {
-      const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} progress={underway} />);
-
-      const owl = UNSAFE_root.findAll((node: any) => node.props?.testID === 'story-card-owl')[0];
-
-      expect(owl.findAll((node: any) => node.props?.testID === 'story-card-progress')).toHaveLength(0);
     });
   });
 
@@ -450,6 +406,34 @@ describe('StoryCardSheet', () => {
         expect(image.width).toBe(thumb.width - 2 * thumb.borderWidth);
         expect(image.height).toBe(thumb.height - 2 * thumb.borderWidth);
       }
+    });
+
+    it('should draw bigger pages on a tablet, each picture still inside its ring, the strip opening at the picked page', () => {
+      const accessibility = require('@/hooks/use-accessibility');
+      const phone = accessibility.useAccessibility();
+      jest.spyOn(accessibility, 'useAccessibility').mockReturnValue({ ...phone, isTablet: true });
+      const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} stories={[LONG]} progress={{ long: { pageIndex: 5, totalPages: 9 } }} />);
+      const { tablet } = STORY_CARD.pages;
+
+      for (const index of [4, 5]) {
+        const thumb = StyleSheet.flatten(UNSAFE_root.findAll((node: any) => node.props?.testID === `story-card-page-thumb-${index}` && node.props.style)[0].props.style);
+        const image = StyleSheet.flatten(UNSAFE_root.findAll((node: any) => node.props?.testID === `story-card-page-image-${index}` && node.props.style)[0].props.style);
+        expect(thumb.width).toBe(tablet.thumbWidth);
+        expect(thumb.height).toBe(tablet.thumbHeight);
+        expect(image.width).toBe(thumb.width - 2 * thumb.borderWidth);
+        expect(image.height).toBe(thumb.height - 2 * thumb.borderWidth);
+      }
+      const strip = UNSAFE_root.findAll((node: any) => node.props?.testID === 'story-card-page-strip' && node.props.contentOffset)[0];
+      expect(strip.props.contentOffset.x).toBe(3 * (tablet.thumbWidth + STORY_CARD.pages.gap));
+      jest.restoreAllMocks();
+    });
+
+    it('should keep the phone\'s pages on a phone', () => {
+      const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} stories={[LONG]} progress={{ long: { pageIndex: 2, totalPages: 9 } }} />);
+
+      const thumb = StyleSheet.flatten(UNSAFE_root.findAll((node: any) => node.props?.testID === 'story-card-page-thumb-3' && node.props.style)[0].props.style);
+      expect(thumb.width).toBe(STORY_CARD.pages.thumbWidth);
+      expect(thumb.height).toBe(STORY_CARD.pages.thumbHeight);
     });
 
     it('should set the picked page\'s number in a gold pill, the others as plain numbers', () => {

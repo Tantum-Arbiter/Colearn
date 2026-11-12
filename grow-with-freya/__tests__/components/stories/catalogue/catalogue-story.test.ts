@@ -209,61 +209,68 @@ describe('selectFeatured', () => {
 });
 
 describe('featuredInsightImage', () => {
-  const withPages = (count: number) => fromStory(story({
-    coverImage: 'file://cover.webp',
-    pages: Array.from({ length: count }, (_, i) => ({
-      id: `p${i + 1}`,
-      pageNumber: i + 1,
-      text: '',
-      backgroundImage: `file://page-${i + 1}.webp`,
-    })),
-  }));
+  const page = (n: number, image?: string, type?: 'cover' | 'story') => ({
+    id: `p${n}`,
+    pageNumber: n,
+    text: '',
+    ...(type ? { type } : {}),
+    ...(image ? { backgroundImage: image } : {}),
+  });
 
-  it('should count from the story, not the array: page one of a book is the one after the cover', () => {
-    // The real data leads with the cover as pageNumber 0, so the third page of
-    // the book is the fourth entry. Indexing blind lands on page two.
-    const withCover = fromStory(story({
-      coverImage: 'file://cover.webp',
-      pages: [0, 1, 2, 3, 4].map((n) => ({
-        id: `p${n}`,
-        pageNumber: n,
-        text: '',
-        backgroundImage: n === 0 ? 'file://cover-large.webp' : `file://page-${n}.webp`,
-      })),
+  it('shows the book\'s cover, drawn around its hero, never a page that may cut them off', () => {
+    const book = fromStory(story({
+      coverImage: 'file://thumbnail.webp',
+      pages: [page(0, 'file://cover.webp', 'cover'), page(1, 'file://page-1.webp'), page(2, 'file://page-2.webp'), page(3, 'file://page-3.webp')],
     }));
 
-    const underTest = featuredInsightImage(withCover);
-
-    expect(underTest).toBe('file://page-3.webp');
+    expect(featuredInsightImage(book)).toBe('file://cover.webp');
   });
 
-  it('should show the third page, for a glimpse inside rather than the cover again', () => {
-    const underTest = featuredInsightImage(withPages(8));
+  it('finds the cover page by its type as well as by being page nought', () => {
+    const typed = fromStory(story({ coverImage: 'file://thumbnail.webp', pages: [page(1, 'file://page-1.webp'), page(9, 'file://cover.webp', 'cover')] }));
+    const numbered = fromStory(story({ coverImage: 'file://thumbnail.webp', pages: [page(1, 'file://page-1.webp'), page(0, 'file://cover.webp')] }));
 
-    expect(underTest).toBe('file://page-3.webp');
+    expect(featuredInsightImage(typed)).toBe('file://cover.webp');
+    expect(featuredInsightImage(numbered)).toBe('file://cover.webp');
   });
 
-  it('should fall back to the cover when the book is shorter than three pages', () => {
-    const underTest = featuredInsightImage(withPages(2));
+  it.each([
+    ['has no cover page', [page(1, 'file://page-1.webp'), page(2, 'file://page-2.webp'), page(3, 'file://page-3.webp')]],
+    ['has a cover page with no picture', [page(0, undefined, 'cover'), page(3, 'file://page-3.webp')]],
+    ['has no pages', undefined],
+  ])('falls back to the shelf cover when the book %s', (_, pages) => {
+    const book = fromStory(story({ coverImage: 'file://thumbnail.webp', pages }));
 
-    expect(underTest).toBe('file://cover.webp');
+    expect(featuredInsightImage(book)).toBe('file://thumbnail.webp');
   });
 
-  it('should fall back to the cover when the third page carries no picture', () => {
-    const short = fromStory(story({
-      coverImage: 'file://cover.webp',
-      pages: [1, 2, 3].map((n) => ({ id: `p${n}`, pageNumber: n, text: '' })),
+  it.each([
+    [3, 'file://page-3.webp'],
+    [1, 'file://page-1.webp'],
+  ])('shows the page a child is part-way through: page %s', (pageIndex, image) => {
+    const book = fromStory(story({
+      coverImage: 'file://thumbnail.webp',
+      pages: [page(0, 'file://cover.webp', 'cover'), page(1, 'file://page-1.webp'), page(2, 'file://page-2.webp'), page(3, 'file://page-3.webp')],
     }));
 
-    const underTest = featuredInsightImage(short);
-
-    expect(underTest).toBe('file://cover.webp');
+    expect(featuredInsightImage(book, pageIndex)).toBe(image);
   });
 
-  it('should have nothing to show for a book that is not installed', () => {
-    const underTest = featuredInsightImage(fromCatalogEntry(entry({ thumbnailUrl: undefined }), { locked: true, shareToUnlock: false }));
+  it.each([
+    ['carries no picture', 2],
+    ['is past the end of the book', 9],
+  ])('falls back to the cover when the page they are on %s', (_, pageIndex) => {
+    const book = fromStory(story({
+      coverImage: 'file://thumbnail.webp',
+      pages: [page(0, 'file://cover.webp', 'cover'), page(1, 'file://page-1.webp'), page(2), page(3, 'file://page-3.webp')],
+    }));
 
-    expect(underTest).toBeUndefined();
+    expect(featuredInsightImage(book, pageIndex)).toBe('file://cover.webp');
+  });
+
+  it('shows a remote book\'s cover, and nothing when it has none', () => {
+    expect(featuredInsightImage(fromCatalogEntry(entry({ thumbnailUrl: 'https://cdn/c.webp' }), { locked: true, shareToUnlock: false }))).toBe('https://cdn/c.webp');
+    expect(featuredInsightImage(fromCatalogEntry(entry({ thumbnailUrl: undefined }), { locked: true, shareToUnlock: false }))).toBeUndefined();
   });
 });
 
@@ -330,43 +337,101 @@ describe('buildShelves', () => {
     fromStory(story({ id: 'bear', tags: ['adventure'] })),
     fromStory(story({ id: 'whale', tags: ['bedtime'] })),
   ];
+  const library = [
+    fromStory(story({ id: 'ding', tags: ['emotions', 'learning', 'interactive'] })),
+    fromStory(story({ id: 'fox', tags: ['emotions', 'interactive'] })),
+    fromStory(story({ id: 'juni', tags: ['emotions', 'interactive', 'animals'] })),
+    fromStory(story({ id: 'lantern', tags: ['friendship', 'interactive'] })),
+    fromStory(story({ id: 'wombat', tags: ['calming', 'bedtime', 'animals'] })),
+    fromStory(story({ id: 'otter', tags: ['animals'] })),
+  ];
+  const remoteBook = (id: string, tags: string[]) =>
+    fromCatalogEntry(entry({ storyId: id, tags }), { locked: false, shareToUnlock: false });
 
   function rows(shelves: ReturnType<typeof buildShelves>) {
     return shelves.filter((s): s is Extract<typeof s, { kind: 'row' }> => s.kind === 'row');
   }
+  function onBigCards(shelves: ReturnType<typeof buildShelves>, featuredId: string | null) {
+    const pick = shelves.find((s) => s.kind === 'pick');
+    return [featuredId, pick?.kind === 'pick' ? pick.story.id : null].filter((id): id is string => id !== null);
+  }
+  function inRows(shelves: ReturnType<typeof buildShelves>) {
+    return shelves.flatMap((s) => (s.kind === 'row' || s.kind === 'more' ? s.stories.map((story) => story.id) : []));
+  }
 
-  it('gives a row to every theme with a book to its name, and none to the rest', () => {
-    const underTest = rows(buildShelves(shelf, { seed: 0.3, featuredId: null }));
+  it.each([0.01, 0.3, 0.5, 0.77, 0.99])('puts each book on one shelf only, however many themes it has (seed %s)', (seed) => {
+    const underTest = inRows(buildShelves(library, { seed, featuredId: 'fox' }));
 
-    expect(underTest.map((r) => r.tag).sort()).toEqual(['adventure', 'bedtime', 'calming']);
-    expect(underTest.find((r) => r.tag === 'bedtime')?.stories.map((s) => s.id).sort()).toEqual(['whale', 'wombat']);
+    expect(new Set(underTest).size).toBe(underTest.length);
   });
 
-  it("stands the day's pick among the rows, never the featured book, after the second row", () => {
-    const underTest = buildShelves(shelf, { seed: 0.99, featuredId: 'whale' });
+  it.each([0.01, 0.3, 0.5, 0.77, 0.99])('still finds a place for every book: on a shelf or on a big card (seed %s)', (seed) => {
+    const shelves = buildShelves(library, { seed, featuredId: 'fox' });
 
-    const pickAt = underTest.findIndex((s) => s.kind === 'pick');
-    const pick = underTest[pickAt];
-    expect(pickAt).toBe(2);
-    expect(pick.kind === 'pick' && pick.story.id).not.toBe('whale');
+    expect([...inRows(shelves), ...onBigCards(shelves, 'fox')].sort()).toEqual(library.map((s) => s.id).sort());
+  });
+
+  it('fills the fullest shelf first: the theme that gathers the most books not yet shelved', () => {
+    const many = [
+      remoteBook('a', ['interactive', 'animals']),
+      remoteBook('b', ['interactive']),
+      remoteBook('c', ['interactive']),
+      remoteBook('d', ['emotions']),
+      remoteBook('e', ['animals', 'emotions']),
+    ];
+
+    const underTest = rows(buildShelves(many, { seed: 0.3, featuredId: null }));
+
+    expect(underTest.map((r) => [r.tag, r.stories.map((s) => s.id)])).toEqual([
+      ['interactive', ['a', 'b', 'c']],
+      ['emotions', ['d', 'e']],
+    ]);
+  });
+
+  it('draws the order of equally full shelves from the seed, so the shelf changes between runs', () => {
+    const even = [remoteBook('a', ['bedtime']), remoteBook('b', ['adventure']), remoteBook('c', ['calming'])];
+
+    const leaders = new Set([0.05, 0.2, 0.35, 0.5, 0.65, 0.8, 0.95].map((seed) => rows(buildShelves(even, { seed, featuredId: null }))[0].tag));
+
+    expect(leaders.size).toBeGreaterThan(1);
   });
 
   it('lays the rows out the same way for the same seed, so the shelf holds still within a run', () => {
-    const once = rows(buildShelves(shelf, { seed: 0.42, featuredId: null })).map((r) => r.tag);
-    const again = rows(buildShelves(shelf, { seed: 0.42, featuredId: null })).map((r) => r.tag);
+    const once = rows(buildShelves(library, { seed: 0.42, featuredId: null })).map((r) => [r.tag, r.stories.map((s) => s.id)]);
+    const again = rows(buildShelves(library, { seed: 0.42, featuredId: null })).map((r) => [r.tag, r.stories.map((s) => s.id)]);
 
     expect(again).toEqual(once);
   });
 
-  it('leaves out a row that would repeat exactly the books of one above it', () => {
-    const one = [fromStory(story({ id: 'wombat', tags: ['bedtime', 'calming', 'animals'] }))];
+  it('keeps the featured book and the day\'s pick out of the rows below them', () => {
+    const shelves = buildShelves(library, { seed: 0.6, featuredId: 'fox' });
+    const big = onBigCards(shelves, 'fox');
 
-    const underTest = rows(buildShelves(one, { seed: 0.3, featuredId: null }));
-
-    expect(underTest).toHaveLength(1);
+    expect(big).toHaveLength(2);
+    big.forEach((id) => expect(inRows(shelves)).not.toContain(id));
   });
 
-  it('closes the shelf with More Stories for any book no theme row claims', () => {
+  it('shows the big-card books in the rows after all when nothing else would be left to show', () => {
+    const two = [shelf[0], shelf[2]];
+
+    const underTest = buildShelves(two, { seed: 0.5, featuredId: 'wombat' });
+
+    expect(underTest.some((s) => s.kind === 'pick')).toBe(true);
+    expect(inRows(underTest).sort()).toEqual(['whale', 'wombat']);
+  });
+
+  it("stands the day's pick among the rows, never the featured book, after the second row", () => {
+    const apart = ['bedtime', 'adventure', 'calming', 'animals', 'emotions'].map((tag) => fromStory(story({ id: tag, tags: [tag] })));
+
+    const underTest = buildShelves(apart, { seed: 0.99, featuredId: 'bedtime' });
+
+    const pickAt = underTest.findIndex((s) => s.kind === 'pick');
+    const pick = underTest[pickAt];
+    expect(pickAt).toBe(2);
+    expect(pick.kind === 'pick' && pick.story.id).not.toBe('bedtime');
+  });
+
+  it('closes the shelf with More Stories for any book no theme claims', () => {
     const untagged = fromCatalogEntry(entry({ storyId: 'stray' }), { locked: false, shareToUnlock: false });
 
     const underTest = buildShelves([...shelf, untagged], { seed: 0.3, featuredId: null });
@@ -381,6 +446,7 @@ describe('buildShelves', () => {
     const underTest = buildShelves([shelf[0]], { seed: 0.5, featuredId: 'wombat' });
 
     expect(underTest.some((s) => s.kind === 'pick')).toBe(false);
+    expect(inRows(underTest)).toEqual(['wombat']);
   });
 });
 

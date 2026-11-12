@@ -23,11 +23,10 @@ import { StoryDownloadService } from '@/services/story-download-service';
 import { Fonts } from '@/constants/theme';
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { useScrollToEndOnce } from '@/hooks/use-scroll-to-end-once';
-import { ReadingPlace, readingFraction } from './reading-progress';
+import { ReadingPlace } from './reading-progress';
 import { STORY_DETAIL_OPENING } from '@/constants/story-opening';
 import { STORY_CARD, cardIndexAtOffset, type StoryCardLayout } from '@/constants/story-card';
 import { StoryPageSlideshow } from './story-page-slideshow';
-import { OnboardingProgressBar } from '@/components/onboarding/onboarding-progress-bar';
 
 export interface StoryCardSheetProps {
   /** The books the child can swipe between, in shelf order. */
@@ -51,7 +50,11 @@ export interface StoryCardSheetProps {
   onPickPage?: (storyId: string, pageIndex: number) => void;
 }
 
-const PAGE_THUMB = { width: STORY_CARD.pages.thumbWidth, height: STORY_CARD.pages.thumbHeight, gap: STORY_CARD.pages.gap } as const;
+const PAGE_THUMB = {
+  phone: { width: STORY_CARD.pages.thumbWidth, height: STORY_CARD.pages.thumbHeight },
+  tablet: { width: STORY_CARD.pages.tablet.thumbWidth, height: STORY_CARD.pages.tablet.thumbHeight },
+  gap: STORY_CARD.pages.gap,
+} as const;
 const PAGE_PICKED = STORY_CARD.pages.picked;
 const PAGE_THUMB_RADIUS = 8;
 const PAGE_THUMB_BORDER = 2;
@@ -215,8 +218,10 @@ function StoryCard({
   pagesRef,
 }: StoryCardProps) {
   const [isSavedOffline, setIsSavedOffline] = useState(false);
+  const { isTablet } = useAccessibility();
+  const thumb = isTablet ? PAGE_THUMB.tablet : PAGE_THUMB.phone;
+  const ring = (inset: number) => ({ width: thumb.width - 2 * inset, height: thumb.height - 2 * inset });
   const underway = place !== undefined && place.pageIndex > 0;
-  const readPercent = underway ? Math.round(readingFraction(place) * 100) : 0;
   const readLabelKey = underway ? 'storyDetail.continueReading' : 'storyDetail.readTogether';
   const pages = (story.pages ?? []).slice(1);
   const startPick = Math.min(underway ? place.pageIndex : 1, Math.max(pages.length, 1));
@@ -368,18 +373,6 @@ function StoryCard({
           </View>
         </Animated.View>
 
-        {underway && (
-          <View style={styles.progressRow} testID="story-card-progress">
-            <OnboardingProgressBar
-              currentStep={place.pageIndex}
-              totalSteps={place.totalPages - 1}
-              maxWidth={layout.width}
-              testIDPrefix="story-card-progress"
-            />
-            <Text style={[styles.progressText, { fontSize: scaledFontSize(12) }]}>{`${readPercent}%`}</Text>
-          </View>
-        )}
-
         {isCurrent && pages.length > 0 && (
           <View ref={pagesRef} collapsable={false} style={styles.pages} testID="story-card-pages">
             <Text style={[styles.pagesHeading, { fontSize: scaledFontSize(12) }]}>{t('storyDetail.pickPage')}</Text>
@@ -388,7 +381,7 @@ function StoryCard({
               testID="story-card-page-strip"
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.pagesRow}
-              contentOffset={{ x: Math.max(0, (startPick - 2) * (PAGE_THUMB.width + PAGE_THUMB.gap)), y: 0 }}
+              contentOffset={{ x: Math.max(0, (startPick - 2) * (thumb.width + PAGE_THUMB.gap)), y: 0 }}
             >
               {pages.map((page, i) => {
                 const pageIndex = i + 1;
@@ -407,7 +400,7 @@ function StoryCard({
                   >
                     <View
                       testID={`story-card-page-thumb-${pageIndex}`}
-                      style={[styles.pageThumb, chosen ? styles.pageThumbPicked : styles.pageThumbResting]}
+                      style={[styles.pageThumb, thumb, chosen ? styles.pageThumbPicked : styles.pageThumbResting]}
                     >
                       <View
                         testID={`story-card-page-clip-${pageIndex}`}
@@ -417,7 +410,7 @@ function StoryCard({
                           <Image
                             testID={`story-card-page-image-${pageIndex}`}
                             source={typeof picture === 'string' ? { uri: picture } : picture}
-                            style={chosen ? styles.pageImagePicked : styles.pageImage}
+                            style={ring(chosen ? PAGE_PICKED.ring : PAGE_THUMB_BORDER)}
                             contentFit="cover"
                             transition={0}
                           />
@@ -614,18 +607,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     gap: 8,
   },
-  progressRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 18,
-    marginBottom: 10,
-  },
-  progressText: {
-    color: 'rgba(255, 255, 255, 0.85)',
-    fontFamily: Fonts.primary,
-    fontWeight: '700',
-  },
   pages: {
     marginBottom: 12,
   },
@@ -645,8 +626,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   pageThumb: {
-    width: PAGE_THUMB.width,
-    height: PAGE_THUMB.height,
     borderRadius: PAGE_THUMB_RADIUS,
     borderWidth: PAGE_THUMB_BORDER,
     borderColor: 'rgba(255, 255, 255, 0.16)',
@@ -671,14 +650,6 @@ const styles = StyleSheet.create({
   },
   pageClipPicked: {
     borderRadius: PAGE_THUMB_RADIUS - PAGE_PICKED.ring,
-  },
-  pageImage: {
-    width: PAGE_THUMB.width - 2 * PAGE_THUMB_BORDER,
-    height: PAGE_THUMB.height - 2 * PAGE_THUMB_BORDER,
-  },
-  pageImagePicked: {
-    width: PAGE_THUMB.width - 2 * PAGE_PICKED.ring,
-    height: PAGE_THUMB.height - 2 * PAGE_PICKED.ring,
   },
   pageNumberBadge: {
     marginTop: 4,

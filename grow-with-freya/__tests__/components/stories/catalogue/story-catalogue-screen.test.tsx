@@ -104,6 +104,11 @@ jest.mock('@/store/app-store', () => ({
     selector ? selector(mockAppState) : mockAppState,
 }));
 
+jest.mock('@/components/stories/catalogue/catalogue-story', () => ({
+  ...jest.requireActual('@/components/stories/catalogue/catalogue-story'),
+  APP_LAUNCH_SEED: 0.5,
+}));
+
 jest.mock('@/services/story-loader', () => ({
   StoryLoader: {
     getCachedStories: jest.fn(() => null),
@@ -341,7 +346,8 @@ describe('StoryCatalogueScreen', () => {
     expect(byTestId(tree, 'featured-section-heading')).toHaveLength(0);
   });
 
-  it('lays out a row for each theme with books, headed by its genre, with See all leading to that theme', async () => {
+  it('lays each book on one shelf, headed by its genre, with See all leading to that theme', async () => {
+    mockAppState.storyProgress = { owl: { pageIndex: 1, totalPages: 5, updatedAt: '2026-11-12T09:00:00Z', completedCount: 0 } };
     const tree = render(<StoryCatalogueScreen />);
 
     await waitFor(() => expect(byTestId(tree, 'story-row-bedtime').length).toBeGreaterThan(0));
@@ -351,8 +357,9 @@ describe('StoryCatalogueScreen', () => {
     const label = heading.findAll((n: any) => typeof n.props.children === 'string').map((n: any) => n.props.children).join(' ');
     expect(label).toContain('stories.genreStories');
     expect(bedtime.findAll((n: any) => n.props.testID === 'story-cover-card-wombat').length).toBeGreaterThan(0);
+    expect(bedtime.findAll((n: any) => n.props.testID === 'story-cover-card-whale').length).toBeGreaterThan(0);
     expect(bedtime.findAll((n: any) => n.props.testID === 'story-cover-card-bear')).toHaveLength(0);
-    expect(byTestId(tree, 'story-row-adventure').length).toBeGreaterThan(0);
+    expect(byTestId(tree, 'story-row-calming')).toHaveLength(0);
     expect(byTestId(tree, 'story-row-family')).toHaveLength(0);
 
     fireEvent.press(
@@ -374,6 +381,7 @@ describe('StoryCatalogueScreen', () => {
   });
 
   it('sizes shelf books so two of them, and the gap between, span exactly the featured card', async () => {
+    mockAppState.storyProgress = { owl: { pageIndex: 1, totalPages: 5, updatedAt: '2026-11-12T09:00:00Z', completedCount: 0 } };
     Object.defineProperty(document.documentElement, 'clientWidth', { value: 402, configurable: true });
     Object.defineProperty(document.documentElement, 'clientHeight', { value: 874, configurable: true });
     window.dispatchEvent(new Event('resize'));
@@ -419,6 +427,7 @@ describe('StoryCatalogueScreen', () => {
     });
 
     it('fits four books across an 11-inch tablet held upright', async () => {
+      mockAppState.storyProgress = { owl: { pageIndex: 1, totalPages: 5, updatedAt: '2026-11-12T09:00:00Z', completedCount: 0 } };
       viewport(834, 1194);
       const gridWidth = 834 - 32 * 2;
 
@@ -428,6 +437,7 @@ describe('StoryCatalogueScreen', () => {
     });
 
     it('runs the shelves the full width when the same tablet is turned sideways', async () => {
+      mockAppState.storyProgress = { owl: { pageIndex: 1, totalPages: 5, updatedAt: '2026-11-12T09:00:00Z', completedCount: 0 } };
       viewport(1194, 834);
       const gridWidth = 1194 - 32 * 2;
 
@@ -452,6 +462,7 @@ describe('StoryCatalogueScreen', () => {
   });
 
   it('carries the row a book was opened from, not the whole shelf', async () => {
+    mockAppState.storyProgress = { owl: { pageIndex: 1, totalPages: 5, updatedAt: '2026-11-12T09:00:00Z', completedCount: 0 } };
     const tree = render(<StoryCatalogueScreen />);
     await waitFor(() => expect(byTestId(tree, 'story-row-bedtime').length).toBeGreaterThan(0));
     const bedtime = byTestId(tree, 'story-row-bedtime')[0];
@@ -473,6 +484,7 @@ describe('StoryCatalogueScreen', () => {
   });
 
   it('carries only the books it can open when a row holds one that is not downloaded yet', async () => {
+    mockAppState.storyProgress = { owl: { pageIndex: 1, totalPages: 5, updatedAt: '2026-11-12T09:00:00Z', completedCount: 0 } };
     mockGetCatalog.mockResolvedValue([
       {
         storyId: 'remote-1',
@@ -595,7 +607,8 @@ describe('StoryCatalogueScreen', () => {
     expect(byTestId(tree, 'featured-story-card-label').some((n: any) => n.props.children === 'catalogue.featuredStory')).toBe(false);
     expect(card.findAll((n: any) => n.props.accessibilityLabel === 'storyDetail.readNow').length).toBeGreaterThan(0);
     expect(card.findAll((n: any) => n.props.testID === 'featured-story-progress-track').length).toBeGreaterThan(0);
-    expect(card.findAll((n: any) => n.props.children === 'home.pagePosition (page:3, total:6)').length).toBeGreaterThan(0);
+    expect(card.findAll((n: any) => n.props.accessibilityLabel === 'home.pagePosition (page:2, total:5)').length).toBeGreaterThan(0);
+    expect(card.findAll((n: any) => n.props.children === 'home.pagePosition (page:2, total:5)').length).toBeGreaterThan(0);
   });
 
   it('keeps the day\'s pick a different book from the one being continued', async () => {
@@ -625,7 +638,7 @@ describe('StoryCatalogueScreen', () => {
   it('keeps a learning-tagged book under Stories, since Learning has no tile until the new games exist', async () => {
     const tree = render(<StoryCatalogueScreen />);
 
-    await waitFor(() => expect(byTestId(tree, 'story-row-bedtime').length).toBeGreaterThan(0));
+    await waitFor(() => expect(byTestId(tree, 'story-shelves').length).toBeGreaterThan(0));
 
     expect(byTestId(tree, 'story-theme-tile-learning')).toHaveLength(0);
     expect(byTestId(tree, 'story-cover-card-owl').length).toBeGreaterThan(0);
@@ -1274,6 +1287,135 @@ describe('StoryCatalogueScreen saved shelf', () => {
   });
 });
 
+describe('StoryCatalogueScreen profile page layers', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockGetCatalog.mockResolvedValue([]);
+    mockAppState.favoriteStoryIds = [];
+    (useStoryTransition as jest.Mock).mockReturnValue({
+      isTransitioning: false,
+      selectedStoryId: null,
+      shouldShowStoryReader: false,
+      isExpandingToReader: false,
+      startTransition: mockStartTransition,
+    });
+  });
+
+  async function openProfile() {
+    const tree = render(<StoryCatalogueScreen />);
+    await waitFor(() => expect(byTestId(tree, 'story-filter-bar').length).toBeGreaterThan(0));
+    fireEvent.press(byTestId(tree, 'navigation-item-profile').find((n: any) => n.props.accessibilityRole === 'tab'));
+    await waitFor(() => expect(byTestId(tree, 'profile-top').length).toBeGreaterThan(0));
+    return tree;
+  }
+  const order = (tree: ReturnType<typeof render>) =>
+    byTestId(tree, 'section-crossfade-current')[0]
+      .findAll((n: any) => typeof n.props.testID === 'string')
+      .map((n: any) => n.props.testID as string);
+  const host = (tree: ReturnType<typeof render>, id: string) =>
+    byTestId(tree, id).filter((n: any) => n.props.style !== undefined).slice(-1)[0];
+  const page = (tree: ReturnType<typeof render>) =>
+    byTestId(tree, 'catalogue-scroll').find((n: any) => n.props.contentContainerStyle);
+  const measureTop = (tree: ReturnType<typeof render>, height: number) => {
+    const top = byTestId(tree, 'profile-top').find((n: any) => typeof n.props.onLayout === 'function');
+    act(() => {
+      top.props.onLayout({ nativeEvent: { layout: { x: 0, y: 0, width: 400, height } } });
+    });
+  };
+
+  it('pins the face, the name, Login and the tabs outside the page that scrolls', async () => {
+    const tree = await openProfile();
+
+    expect(page(tree).findAll((n: any) => n.props.testID === 'profile-hero')).toHaveLength(0);
+    expect(page(tree).findAll((n: any) => n.props.testID === 'profile-tabs')).toHaveLength(0);
+    expect(byTestId(tree, 'profile-top')[0].findAll((n: any) => n.props.testID === 'profile-hero').length).toBeGreaterThan(0);
+    expect(byTestId(tree, 'profile-top')[0].findAll((n: any) => n.props.testID === 'profile-tabs').length).toBeGreaterThan(0);
+  });
+
+  it('pins them where the library content starts, inside its side margins', async () => {
+    const tree = render(<StoryCatalogueScreen />);
+    await waitFor(() => expect(byTestId(tree, 'story-filter-bar').length).toBeGreaterThan(0));
+    const library = StyleSheet.flatten(page(tree).props.contentContainerStyle);
+    fireEvent.press(byTestId(tree, 'navigation-item-profile').find((n: any) => n.props.accessibilityRole === 'tab'));
+    await waitFor(() => expect(byTestId(tree, 'profile-top').length).toBeGreaterThan(0));
+
+    const style = StyleSheet.flatten(host(tree, 'profile-top').props.style);
+    expect(style.position).toBe('absolute');
+    expect(style.top).toBe(library.paddingTop);
+    expect(style.left).toBe(library.paddingHorizontal);
+    expect(style.right).toBe(library.paddingHorizontal);
+  });
+
+  it('scrolls only the open tab list, in a window that starts at the foot of the pinned top', async () => {
+    const tree = await openProfile();
+
+    measureTop(tree, 312);
+
+    const pinnedAt = StyleSheet.flatten(host(tree, 'profile-top').props.style).top;
+    expect(page(tree).findAll((n: any) => n.props.testID === 'profile-body').length).toBeGreaterThan(0);
+    expect(StyleSheet.flatten(page(tree).props.style).top).toBe(pinnedAt + 312);
+    expect(StyleSheet.flatten(page(tree).props.contentContainerStyle).paddingTop).toBe(SPACE_4);
+    expect(page(tree).props.scrollIndicatorInsets).toEqual({ top: 0 });
+  });
+
+  it('paints nothing behind the pinned top, so the stars and the earth show through', async () => {
+    const tree = await openProfile();
+    measureTop(tree, 312);
+    const ids = order(tree);
+
+    expect(ids).not.toContain('catalogue-planet-over-shelves');
+    expect(ids).not.toContain('profile-top-sky');
+    expect(ids).not.toContain('profile-top-room');
+    expect(ids.indexOf('catalogue-scroll')).toBeGreaterThanOrEqual(0);
+    expect(ids.indexOf('catalogue-scroll')).toBeLessThan(ids.indexOf('profile-top'));
+    expect(ids.indexOf('profile-top')).toBeLessThan(ids.indexOf('catalogue-header'));
+  });
+
+  it('keeps the earth over the shelves on the library, which scrolls from the top of the screen', async () => {
+    const tree = render(<StoryCatalogueScreen />);
+    await waitFor(() => expect(byTestId(tree, 'story-filter-bar').length).toBeGreaterThan(0));
+
+    expect(order(tree)).toContain('catalogue-planet-over-shelves');
+    expect(byTestId(tree, 'profile-top')).toHaveLength(0);
+    expect(StyleSheet.flatten(page(tree).props.style).top).toBe(0);
+    expect(page(tree).props.scrollIndicatorInsets.top).toBeGreaterThan(0);
+  });
+
+  it('opens on the saved list again after the child has been elsewhere', async () => {
+    const tree = await openProfile();
+    fireEvent.press(byTestId(tree, 'profile-tab-badges').find((n: any) => n.props.accessibilityRole === 'button'));
+    expect(page(tree).findAll((n: any) => n.props.testID === 'badge-wall').length).toBeGreaterThan(0);
+
+    fireEvent.press(byTestId(tree, 'navigation-item-home').find((n: any) => n.props.accessibilityRole === 'tab'));
+    await waitFor(() => expect(byTestId(tree, 'story-filter-bar').length).toBeGreaterThan(0));
+    fireEvent.press(byTestId(tree, 'navigation-item-profile').find((n: any) => n.props.accessibilityRole === 'tab'));
+
+    await waitFor(() => expect(page(tree).findAll((n: any) => n.props.testID === 'profile-body').length).toBeGreaterThan(0));
+    expect(page(tree).findAll((n: any) => n.props.testID === 'badge-wall')).toHaveLength(0);
+  });
+
+  it('opens on the saved list again when the app sends the child elsewhere and back', async () => {
+    const tree = render(<StoryCatalogueScreen isActive sectionRequest={{ section: 'profile', key: 1 }} />);
+    await waitFor(() => expect(byTestId(tree, 'profile-top').length).toBeGreaterThan(0));
+    fireEvent.press(byTestId(tree, 'profile-tab-badges').find((n: any) => n.props.accessibilityRole === 'button'));
+
+    tree.rerender(<StoryCatalogueScreen isActive sectionRequest={{ section: 'search', key: 2 }} />);
+    tree.rerender(<StoryCatalogueScreen isActive sectionRequest={{ section: 'profile', key: 3 }} />);
+
+    await waitFor(() => expect(page(tree).findAll((n: any) => n.props.testID === 'profile-body').length).toBeGreaterThan(0));
+    expect(page(tree).findAll((n: any) => n.props.testID === 'badge-wall')).toHaveLength(0);
+  });
+
+  it('still opens the other tabs in the page that scrolls', async () => {
+    const tree = await openProfile();
+
+    fireEvent.press(byTestId(tree, 'profile-tab-badges').find((n: any) => n.props.accessibilityRole === 'button'));
+
+    expect(page(tree).findAll((n: any) => n.props.testID === 'badge-wall').length).toBeGreaterThan(0);
+    expect(page(tree).findAll((n: any) => n.props.testID === 'saved-shelves')).toHaveLength(0);
+  });
+});
+
 describe('StoryCatalogueScreen saved songs', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -1492,7 +1634,7 @@ describe('StoryCatalogueScreen profile page', () => {
     const tree = render(<StoryCatalogueScreen {...props} />);
     await waitFor(() => expect(byTestId(tree, 'story-filter-bar').length).toBeGreaterThan(0));
     openProfile(tree);
-    await waitFor(() => expect(byTestId(tree, 'profile-view').length).toBeGreaterThan(0));
+    await waitFor(() => expect(byTestId(tree, 'profile-top').length).toBeGreaterThan(0));
     return tree;
   }
 

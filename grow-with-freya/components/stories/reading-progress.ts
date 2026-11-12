@@ -13,6 +13,11 @@ export function readingFraction(place: ReadingPlace): number {
   return Math.min(Math.max(place.pageIndex / readable, 0), 1);
 }
 
+export function readingCount(place: ReadingPlace): { page: number; of: number } {
+  const of = readablePages(place.totalPages);
+  return { page: Math.min(Math.max(place.pageIndex, 0), of), of };
+}
+
 export interface ResumeOptions {
   skipCoverPage: boolean;
   savedPlace?: ReadingPlace;

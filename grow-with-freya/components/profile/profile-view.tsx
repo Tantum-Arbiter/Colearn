@@ -1,4 +1,4 @@
-import React, { ReactNode, useState, type RefObject } from 'react';
+import React, { ReactNode, type RefObject } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
@@ -19,19 +19,10 @@ import { ProfileSessionCard } from './profile-session-card';
 
 const HERO_AVATAR_SIZE = 96;
 
-interface ProfileViewProps {
-  /** The saved shelves, built by the catalogue that owns them. */
-  favourites: ReactNode;
-  downloads: readonly Story[];
-  /** How many books the current plan allows. Infinite plans say nothing. */
-  downloadLimit: number;
-  badges: readonly Badge[];
-  language: SupportedLanguage;
-  /** The content width the badge wall lays itself out across. */
+interface ProfileTopProps {
+  tab: ProfileTab;
+  onSelectTab: (tab: ProfileTab) => void;
   width: number;
-  onOpenDownload: DownloadOpenHandler;
-  onDeleteDownload: (story: Story) => void;
-  onSelectBadge: (badge: Badge) => void;
   /** The face and name are the way to change them. */
   onEditProfile: () => void;
   /** Whoever needs to sign in is offered the login page here; a signed-in family, the way out. */
@@ -45,34 +36,22 @@ interface ProfileViewProps {
   };
 }
 
-export function ProfileView({
-  favourites,
-  downloads,
-  downloadLimit,
-  badges,
-  language,
+export function ProfileTop({
+  tab,
+  onSelectTab,
   width,
-  onOpenDownload,
-  onDeleteDownload,
-  onSelectBadge,
   onEditProfile,
   needsSignIn,
   onLogin,
   guideTargets,
-}: ProfileViewProps) {
+}: ProfileTopProps) {
   const { t } = useTranslation();
   const { scaledFontSize } = useAccessibility();
   const userAvatarId = useAppStore((state) => state.userAvatarId);
   const userNickname = useAppStore((state) => state.userNickname);
-  const [tab, setTab] = useState<ProfileTab>('saved');
 
   const avatar = AVATAR_OPTIONS.find((option) => option.key === userAvatarId) ?? AVATAR_OPTIONS[0];
   const name = userNickname?.trim() || t('profile.noName');
-  // Bundled books ship with the app and count toward the plan's allowance, so
-  // a device can legitimately hold more than the plan nominally allows. "4 of
-  // 2" reads as a bug; past the limit the plain count says the same thing.
-  const showsAllowance = Number.isFinite(downloadLimit) && downloads.length <= downloadLimit;
-  const showsCount = Number.isFinite(downloadLimit) && !showsAllowance;
 
   return (
     <View testID="profile-view" style={styles.page}>
@@ -116,9 +95,50 @@ export function ProfileView({
       />
 
       <View ref={guideTargets?.tabs} collapsable={false}>
-        <ProfileTabs selected={tab} onSelect={setTab} />
+        <ProfileTabs selected={tab} onSelect={onSelectTab} />
       </View>
+    </View>
+  );
+}
 
+interface ProfileBodyProps {
+  tab: ProfileTab;
+  /** The saved shelves, built by the catalogue that owns them. */
+  favourites: ReactNode;
+  downloads: readonly Story[];
+  /** How many books the current plan allows. Infinite plans say nothing. */
+  downloadLimit: number;
+  badges: readonly Badge[];
+  language: SupportedLanguage;
+  /** The content width the badge wall lays itself out across. */
+  width: number;
+  onOpenDownload: DownloadOpenHandler;
+  onDeleteDownload: (story: Story) => void;
+  onSelectBadge: (badge: Badge) => void;
+}
+
+export function ProfileBody({
+  tab,
+  favourites,
+  downloads,
+  downloadLimit,
+  badges,
+  language,
+  width,
+  onOpenDownload,
+  onDeleteDownload,
+  onSelectBadge,
+}: ProfileBodyProps) {
+  const { t } = useTranslation();
+  const { scaledFontSize } = useAccessibility();
+  // Bundled books ship with the app and count toward the plan's allowance, so
+  // a device can legitimately hold more than the plan nominally allows. "4 of
+  // 2" reads as a bug; past the limit the plain count says the same thing.
+  const showsAllowance = Number.isFinite(downloadLimit) && downloads.length <= downloadLimit;
+  const showsCount = Number.isFinite(downloadLimit) && !showsAllowance;
+
+  return (
+    <View testID="profile-body">
       {tab === 'saved' && <View style={styles.section}>{favourites}</View>}
 
       {tab === 'manage' && (

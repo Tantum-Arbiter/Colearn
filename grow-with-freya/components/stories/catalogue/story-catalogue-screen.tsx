@@ -81,7 +81,8 @@ import { useSettledAfterTransition } from '@/hooks/use-ambient-animation';
 import { BadgeDetailSheet } from '@/components/progress/badge-detail-sheet';
 import { useProgressData } from '@/components/progress/use-progress-data';
 import type { Badge } from '@/components/progress/progress-model';
-import { ProfileView } from '@/components/profile/profile-view';
+import { ProfileBody, ProfileTop } from '@/components/profile/profile-view';
+import type { ProfileTab } from '@/components/profile/profile-tabs';
 import { ProfileEditSheet } from '@/components/profile/profile-edit-sheet';
 import { OwlGuide } from '@/components/owl-guide';
 import { useGuideScroller } from '@/components/owl-guide/use-guide-scroller';
@@ -249,6 +250,7 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
   const [storyMode, setStoryMode] = useState<CatalogueMode | null>(initialMode ?? null);
   const [shareUnlockedIds, setShareUnlockedIds] = useState<Set<string>>(new Set());
   const [navSection, setNavSection] = useState<ChildNavItemId>(sectionRequest?.section ?? 'home');
+  const [profileTab, setProfileTab] = useState<ProfileTab>('saved');
   const [sectionInstant, setSectionInstant] = useState(false);
   const [appliedRequestKey, setAppliedRequestKey] = useState(sectionRequest?.key);
   const [badgeFocus, setBadgeFocus] = useState(() => badgeFocusOf(sectionRequest));
@@ -256,6 +258,7 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
     setAppliedRequestKey(sectionRequest.key);
     setSectionInstant(true);
     setNavSection(sectionRequest.section);
+    if (sectionRequest.section !== 'profile') setProfileTab('saved');
     setBadgeFocus(badgeFocusOf(sectionRequest));
     if (sectionRequest.recommend) {
       const target = recommendationTarget(sectionRequest.recommend.tag);
@@ -269,6 +272,7 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
   const [badgeDetailOpen, setBadgeDetailOpen] = useState(false);
   const [selectedBadge, setSelectedBadge] = useState<Badge | null>(null);
   const [editProfileOpen, setEditProfileOpen] = useState(false);
+  const [profileTopHeight, setProfileTopHeight] = useState(0);
   const [showScreenTime, setShowScreenTime] = useState(false);
   const [navCollapsed, setNavCollapsed] = useState(false);
   const { coverHeight, headerHeight, onHeaderLayout } = usePlanetCover();
@@ -309,6 +313,11 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
   const chooserSkyBandStyle = useAnimatedStyle(() => ({
     height: chooserRestFoot + CATALOGUE_CHOOSER.fade + filterDrawer.value,
   }));
+  const onProfile = navSection === 'profile';
+  const onProfileTopLayout = useCallback((event: LayoutChangeEvent) => {
+    setProfileTopHeight(Math.round(event.nativeEvent.layout.height));
+  }, []);
+
   const chooserSky = useMemo(
     () => skyBand(chooserFoot, chooserFoot + CATALOGUE_CHOOSER.fade, windowHeight),
     [chooserFoot, windowHeight]
@@ -565,6 +574,7 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
     if (id !== 'profile') {
       setSelectedBadge(null);
       setEditProfileOpen(false);
+      setProfileTab('saved');
     }
     setSectionInstant(false);
     setNavSection(id);
@@ -827,9 +837,7 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
       language={currentLanguage}
       onOpen={handleOpenStory}
       label={continuing ? t('storyDetail.continueReading') : undefined}
-      place={continuing && storyProgress[continuing.id]
-        ? { currentPage: storyProgress[continuing.id].pageIndex + 1, totalPages: storyProgress[continuing.id].totalPages }
-        : undefined}
+      place={continuing ? storyProgress[continuing.id] : undefined}
     />
   );
 
@@ -974,8 +982,9 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
     </View>
   );
 
-  const profileView = (
-    <ProfileView
+  const profileBody = (
+    <ProfileBody
+      tab={profileTab}
       favourites={favouritesView}
       downloads={stories}
       downloadLimit={StoryAccessService.getDownloadLimit()}
@@ -985,10 +994,6 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
       onOpenDownload={handleOpenDownload}
       onDeleteDownload={handleDeleteStory}
       onSelectBadge={handleSelectBadge}
-      onEditProfile={handleEditProfile}
-      needsSignIn={session.needsSignIn}
-      onLogin={handleSignIn}
-      guideTargets={profileGuideTargets}
     />
   );
 
@@ -1031,12 +1036,12 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
               onLayout={onPageLayout}
               onContentSizeChange={onPageContentSize}
               scrollEventThrottle={16}
-              style={[styles.scroll, { bottom: navClearance(insets.bottom) }]}
-              scrollIndicatorInsets={{ top: coverHeight }}
+              style={[styles.scroll, { top: onProfile ? shelfTop + profileTopHeight : 0, bottom: navClearance(insets.bottom) }]}
+              scrollIndicatorInsets={{ top: onProfile ? 0 : coverHeight }}
               contentContainerStyle={[
                 styles.scrollContent,
                 {
-                  paddingTop: shelfTop,
+                  paddingTop: onProfile ? SPACE_4 : shelfTop,
                   paddingHorizontal: margin,
                   paddingBottom: SPACE_4 + SHELF_FOOT_FADE + (textSizeScale - 1) * 40 + pageScroller.reserve,
                 },
@@ -1066,7 +1071,7 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
                   guideTargets={searchGuideTargets}
                 />
               ) : navSection === 'profile' ? (
-                profileView
+                profileBody
               ) : (
                 // the shelves change wholesale when a theme or a filter is
                 // tapped; without this they were replaced between one frame
@@ -1129,7 +1134,26 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
                 </Reanimated.View>
               </Animated.View>
             )}
-            <PlanetCover height={coverHeight} testID="catalogue-planet-over-shelves" />
+            {onProfile ? (
+              <View
+                testID="profile-top"
+                pointerEvents="box-none"
+                onLayout={onProfileTopLayout}
+                style={[styles.profileTop, { top: shelfTop, left: margin, right: margin }]}
+              >
+                <ProfileTop
+                  tab={profileTab}
+                  onSelectTab={setProfileTab}
+                  width={contentWidth}
+                  onEditProfile={handleEditProfile}
+                  needsSignIn={session.needsSignIn}
+                  onLogin={handleSignIn}
+                  guideTargets={profileGuideTargets}
+                />
+              </View>
+            ) : (
+              <PlanetCover height={coverHeight} testID="catalogue-planet-over-shelves" />
+            )}
             <View
               testID="catalogue-header"
               style={styles.header}
@@ -1321,6 +1345,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     zIndex: 11,
+  },
+  profileTop: {
+    position: 'absolute',
   },
   header: {
     zIndex: 10,

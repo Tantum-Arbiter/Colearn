@@ -24,6 +24,7 @@ export const STORY_CARD = {
     thumbHeight: 48,
     gap: 8,
     picked: { colour: '#F5C451', ink: '#1B205E', ring: 3, glow: 8, dim: 0.6 },
+    tablet: { height: 140, thumbWidth: 136, thumbHeight: 102, barRoom: 30 },
   },
   /** Gap between the card and the bottom of the safe area. */
   bottomGap: 10,
@@ -53,7 +54,9 @@ export function storyCardLayout(
 ): StoryCardLayout {
   const width = Math.min(STORY_CARD.maxWidth, screen.width - STORY_CARD.sideInset * 2);
   const x = Math.round((screen.width - width) / 2);
-  const bodyHeight = (isTablet ? STORY_CARD.bodyHeight.tablet : STORY_CARD.bodyHeight.phone) + STORY_CARD.pages.height;
+  const bodyHeight = isTablet
+    ? STORY_CARD.bodyHeight.tablet + STORY_CARD.pages.tablet.height
+    : STORY_CARD.bodyHeight.phone + STORY_CARD.pages.height;
   const bottom = screen.height - insets.bottom - STORY_CARD.bottomGap;
   const room = bottom - insets.top - STORY_CARD.topGap;
   const tallestCover = room - bodyHeight;

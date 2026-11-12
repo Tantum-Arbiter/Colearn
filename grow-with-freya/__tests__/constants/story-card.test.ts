@@ -115,6 +115,28 @@ describe('the page strip', () => {
     expect(pages.thumbWidth / pages.thumbHeight).toBeCloseTo(4 / 3, 2);
   });
 
+  it('should show much bigger pages on a tablet, still four by three', () => {
+    const { pages } = STORY_CARD;
+
+    expect(pages.tablet.thumbWidth).toBeGreaterThanOrEqual(pages.thumbWidth * 2);
+    expect(pages.tablet.thumbWidth / pages.tablet.thumbHeight).toBeCloseTo(4 / 3, 2);
+  });
+
+  it('should fit those pages in the strip plus the room the progress bar left above the buttons', () => {
+    const { pages } = STORY_CARD;
+    const aroundThePicture = pages.height - pages.thumbHeight;
+
+    expect(pages.tablet.barRoom).toBeLessThanOrEqual(36);
+    expect(pages.tablet.thumbHeight + aroundThePicture).toBeLessThanOrEqual(pages.tablet.height + pages.tablet.barRoom);
+  });
+
+  it('should make room for that taller strip on a tablet, and still leave a cover to see', () => {
+    const underTest = storyCardLayout(TABLET, true);
+
+    expect(underTest.height - underTest.coverHeight).toBe(STORY_CARD.bodyHeight.tablet + STORY_CARD.pages.tablet.height);
+    expect(underTest.coverHeight).toBeGreaterThanOrEqual(200);
+  });
+
   it('should be room the card makes on top of everything else, so the ways to read stay in view', () => {
     const underTest = storyCardLayout(PHONE, false, PHONE_INSETS);
 

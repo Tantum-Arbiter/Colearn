@@ -4,7 +4,7 @@
  * the first page of the story, past the cover.
  */
 
-import { readingFraction, resumePageIndex } from '@/components/stories/reading-progress';
+import { readingCount, readingFraction, resumePageIndex } from '@/components/stories/reading-progress';
 
 describe('resumePageIndex', () => {
   it('should open where the child left off', () => {
@@ -84,3 +84,16 @@ describe('readingFraction', () => {
     expect(underTest).toBe(0);
   });
 });
+
+describe('readingCount', () => {
+  it.each([
+    [{ pageIndex: 1, totalPages: 16 }, { page: 1, of: 15 }],
+    [{ pageIndex: 3, totalPages: 9 }, { page: 3, of: 8 }],
+    [{ pageIndex: 20, totalPages: 9 }, { page: 8, of: 8 }],
+    [{ pageIndex: -2, totalPages: 9 }, { page: 0, of: 8 }],
+    [{ pageIndex: 0, totalPages: 0 }, { page: 0, of: 0 }],
+  ])('counts pages as the reader does, the cover not among them: %o', (place, count) => {
+    expect(readingCount(place)).toEqual(count);
+  });
+});
+

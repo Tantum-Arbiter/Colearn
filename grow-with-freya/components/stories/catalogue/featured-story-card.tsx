@@ -7,7 +7,7 @@ import Animated, { useAnimatedStyle, useSharedValue, withTiming, Easing } from '
 import { useTranslation } from 'react-i18next';
 import { getLocalizedText } from '@/types/story';
 import type { SupportedLanguage } from '@/services/i18n';
-import { ACCENT_GOLD, ACCENT_PURPLE, NIGHT_DEEP, NIGHT_VOID, TEXT_PRIMARY, TEXT_SECONDARY } from '@/constants/night-palette';
+import { ACCENT_GOLD, ACCENT_PURPLE, NIGHT_DEEP, NIGHT_VOID, TEXT_PRIMARY } from '@/constants/night-palette';
 import { Fonts } from '@/constants/theme';
 import { CHILD_UI_MOTION, CHILD_UI_SCALE, motionDuration } from '@/constants/child-ui-motion';
 import { useAccessibility } from '@/hooks/use-accessibility';
@@ -25,8 +25,8 @@ import {
   typeSize,
 } from '@/components/child-ui/tokens';
 import { CatalogueStory, featuredInsightImage } from './catalogue-story';
-import { CardProgressBar } from '@/components/home/card-progress-bar';
-import { progressFraction } from '@/constants/home-scene';
+import { BookProgress } from '@/components/child-ui/book-progress';
+import { ReadingPlace, readingCount, readingFraction } from '@/components/stories/reading-progress';
 
 /**
  * The title runs smaller than the featured-title role so two words a line fit
@@ -35,42 +35,35 @@ import { progressFraction } from '@/constants/home-scene';
 const TITLE_SCALE = 0.8;
 
 /**
- * The panel's geometry, as fractions of its width so it holds at any size --
- * the panel keeps one aspect ratio, so a fraction of its width is the same
- * fraction of the picture on a phone and on a tablet.
- *
- * The glimpse inside the book starts a tenth of the way in and runs to the
- * right edge, anchored to the right so what it shows is the picture's right
- * side rather than a centred crop. The words take the left three fifths; the
- * panel's own colour lies solid over the strip the picture leaves bare, holds
- * nearly solid behind the start of the words, and clears just past where they
- * end, so the picture is plain from there to the edge.
+ * The panel's geometry, as fractions of its width so it holds at any size.
+ * The sharp cover takes the panel's right part, centred in it and never
+ * zoomed: on a tablet that part is a cover's own shape, so the cover shows
+ * whole, and on a phone only a sliver of either side goes. A blurred copy of
+ * the cover fills the whole panel beneath it, so the shadow alone sets how
+ * dark the panel is (operator, 2026-11-12). The sharp cover's left edge fades
+ * into the blur in thin slices of rising opacity, each lined up with the
+ * cover, since there is no mask to fade one image. The words take the left
+ * three fifths.
  */
-export const INSIGHT_INSET = 0;
-export const INSIGHT_SHIFT = 0.3;
+export const INSIGHT_INSET = 0.3;
+export const INSIGHT_FEATHER = 0.1;
+export const INSIGHT_FEATHER_STEPS = 8;
+export const INSIGHT_BLUR = 24;
 export const TEXT_WIDTH = 0.6;
-export const READABILITY_WASH_LOCATIONS = [0, 0.2, 0.5, 0.8] as const;
-const READABILITY_WASH = [
-  'rgba(9, 20, 56, 1)',
-  'rgba(9, 20, 56, 0.96)',
-  'rgba(9, 20, 56, 0.72)',
-  'rgba(9, 20, 56, 0)',
-] as const;
+export const PROGRESS_SPAN = 0.72;
+export const DESCRIPTION_SPAN = 0.75;
+export const READABILITY_WASH_LOCATIONS = [0, 0.1, 0.5] as const;
+const READABILITY_WASH = ['rgba(9, 20, 56, 1)', 'rgba(9, 20, 56, 1)', 'rgba(9, 20, 56, 0)'] as const;
 /**
  * A night tint over the glimpse, so a page lit differently from the panel
  * still sits in the night palette.
  */
 const INSIGHT_TINT = 'rgba(9, 20, 56, 0.18)';
-
-/**
- * How much of a page asset is the paper it is printed on rather than the
- * picture. Story pages are illustrations centred on near-white paper -- across
- * every bundled page the margin measures 22% at the sides and 26% top and
- * bottom -- so the panel zooms past it to show the picture rather than a pale
- * slab. Covers are edge-to-edge artwork and are left alone.
- */
-const PAGE_PAPER_MARGIN = 0.26;
-const PAGE_CROP = 1 / (1 - 2 * PAGE_PAPER_MARGIN);
+const WORDS_SHADOW = {
+  textShadowColor: 'rgba(9, 20, 56, 0.85)',
+  textShadowOffset: { width: 0, height: 1 },
+  textShadowRadius: 4,
+} as const;
 
 export interface StoryOpenHandler {
   (story: CatalogueStory, ref: React.RefObject<View | null>): void;
@@ -85,7 +78,7 @@ interface FeaturedStoryCardProps {
   /** What the panel is offering: "Featured Story" unless told otherwise, as for the day's pick. */
   label?: string;
   /** Where the child is in the book, for one they are part-way through. */
-  place?: { currentPage: number; totalPages: number };
+  place?: ReadingPlace;
   hidden?: boolean;
   testID?: string;
 }
@@ -94,8 +87,7 @@ interface FeaturedStoryCardProps {
  * The featured panel: what the story is, and a way straight into it.
  *
  * It leads with the title, a line or two about the story and a Read Now
- * button, beside a glimpse of what is inside -- the book's third page rather
- * than the cover, which the child has already seen on the shelf behind.
+ * button, beside the book's cover.
  */
 export function FeaturedStoryCard({ story, width, language, onOpen, label, place, hidden = false, testID = 'featured-story-card' }: FeaturedStoryCardProps) {
   const { isTablet, scaledFontSize } = useAccessibility();
@@ -107,9 +99,13 @@ export function FeaturedStoryCard({ story, width, language, onOpen, label, place
   const description = story.description
     ? getLocalizedText(story.description, story.description.en ?? '', language)
     : '';
-  const insight = featuredInsightImage(story);
-  // Only a page carries the paper margin; a cover fills its own frame
-  const insightIsPage = insight !== undefined && insight !== story.coverArtwork;
+  const insight = featuredInsightImage(story, place?.pageIndex);
+  const count = place ? readingCount(place) : undefined;
+  const descriptionSize = scaledFontSize(isTablet ? 15 : 13);
+  const insightSource = insight === undefined ? undefined : typeof insight === 'string' ? { uri: insight } : insight;
+  const sharpWidth = width * (1 - INSIGHT_INSET);
+  const featherWidth = width * INSIGHT_FEATHER;
+  const featherStep = featherWidth / INSIGHT_FEATHER_STEPS;
   const height = Math.round(width / (isTablet ? FEATURED_ASPECT_RATIO_TABLET : FEATURED_ASPECT_RATIO));
 
   const duration = motionDuration(CHILD_UI_MOTION.cardTap, reduceMotion);
@@ -141,30 +137,59 @@ export function FeaturedStoryCard({ story, width, language, onOpen, label, place
         onPressOut={handlePressOut}
         style={[styles.card, { width, minHeight: height, borderRadius: RADIUS_LARGE }]}
       >
-        {insight ? (
-          <Image
-            testID="featured-story-insight"
-            source={typeof insight === 'string' ? { uri: insight } : insight}
-            style={[
-              styles.insight,
-              { transform: [{ translateX: Math.round(width * INSIGHT_SHIFT) }, { scale: insightIsPage ? PAGE_CROP : 1 }] },
-            ]}
-            contentFit="cover"
-            contentPosition="right"
-            transition={0}
-            cachePolicy="memory-disk"
-          />
+        {insightSource ? (
+          <>
+            <Image
+              testID="featured-story-insight-backdrop"
+              source={insightSource}
+              style={StyleSheet.absoluteFill}
+              contentFit="cover"
+              blurRadius={INSIGHT_BLUR}
+              transition={0}
+              cachePolicy="memory-disk"
+            />
+            <View testID="featured-story-insight-frame" style={styles.insight} pointerEvents="none">
+              {Array.from({ length: INSIGHT_FEATHER_STEPS }, (_, step) => (
+                <View
+                  key={step}
+                  testID={`featured-story-insight-feather-${step}`}
+                  style={[styles.slice, { left: step * featherStep, width: featherStep, opacity: (step + 1) / (INSIGHT_FEATHER_STEPS + 1) }]}
+                >
+                  <Image
+                    source={insightSource}
+                    style={[styles.sharp, { left: -step * featherStep, width: sharpWidth }]}
+                    contentFit="cover"
+                    contentPosition="center"
+                    transition={0}
+                    cachePolicy="memory-disk"
+                  />
+                </View>
+              ))}
+              <View testID="featured-story-insight-clip" style={[styles.slice, { left: featherWidth, right: 0 }]}>
+                <Image
+                  testID="featured-story-insight"
+                  source={insightSource}
+                  style={[styles.sharp, { left: -featherWidth, width: sharpWidth }]}
+                  contentFit="cover"
+                  contentPosition="center"
+                  transition={0}
+                  cachePolicy="memory-disk"
+                />
+              </View>
+            </View>
+          </>
         ) : (
           <View style={[styles.insight, styles.placeholder]} />
         )}
 
-        <View style={[styles.insight, styles.tint]} pointerEvents="none" />
+        <View testID="featured-story-tint" style={[StyleSheet.absoluteFill, styles.tint]} pointerEvents="none" />
 
         <LinearGradient
+          testID="featured-story-shadow"
           colors={READABILITY_WASH}
           locations={READABILITY_WASH_LOCATIONS}
-          start={{ x: 0, y: 0.5 }}
-          end={{ x: 1, y: 0.5 }}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
           style={StyleSheet.absoluteFill}
           pointerEvents="none"
         />
@@ -179,7 +204,6 @@ export function FeaturedStoryCard({ story, width, language, onOpen, label, place
           <Text
             testID="featured-story-title"
             style={[styles.title, { fontSize: scaledFontSize(Math.round(typeSize('featuredTitle', isTablet) * TITLE_SCALE)) }]}
-            numberOfLines={2}
           >
             {title}
           </Text>
@@ -187,21 +211,24 @@ export function FeaturedStoryCard({ story, width, language, onOpen, label, place
           {description.length > 0 && (
             <Text
               testID="featured-story-description"
-              style={[styles.description, { fontSize: scaledFontSize(isTablet ? 15 : 13) }]}
-              numberOfLines={3}
+              style={[styles.description, { fontSize: descriptionSize, lineHeight: Math.round(descriptionSize * 1.35) }]}
             >
               {description}
             </Text>
           )}
 
-          {place && (
-            <View testID="featured-story-progress" style={styles.progress}>
-              <CardProgressBar fraction={progressFraction(place.currentPage - 1, place.totalPages)} height={6} testID="featured-story-progress" />
-              <Text style={[styles.progressMeta, { fontSize: scaledFontSize(isTablet ? 13 : 12) }]}>
-                {t('home.pagePosition', { page: place.currentPage, total: place.totalPages })}
-              </Text>
+          {place && count && (
+            <View testID="featured-story-progress-block" style={styles.progress}>
+              <BookProgress
+                size="small"
+                fraction={readingFraction(place)}
+                label={t('home.pagePosition', { page: count.page, total: count.of })}
+                testID="featured-story-progress"
+              />
             </View>
           )}
+
+          <View testID="featured-story-spring" style={styles.spring} />
 
           <Pressable
             testID="featured-story-read-now"
@@ -225,9 +252,6 @@ const styles = StyleSheet.create({
   hidden: {
     opacity: 0,
   },
-  // No border: the artwork is scaled up to crop its paper margin, so it runs
-  // under the panel's own edge, and a translucent border laid over it lit up
-  // as a white line down the left side where the page's paper showed through
   card: {
     backgroundColor: NIGHT_DEEP,
     overflow: 'hidden',
@@ -238,6 +262,17 @@ const styles = StyleSheet.create({
     bottom: 0,
     right: 0,
     left: `${INSIGHT_INSET * 100}%`,
+  },
+  slice: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    overflow: 'hidden',
+  },
+  sharp: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
   },
   placeholder: {
     backgroundColor: NIGHT_VOID,
@@ -272,27 +307,28 @@ const styles = StyleSheet.create({
     color: TEXT_PRIMARY,
     fontFamily: Fonts.primary,
     fontWeight: TYPE_ROLES.featuredTitle.weight,
+    ...WORDS_SHADOW,
   },
   description: {
-    color: TEXT_SECONDARY,
-    fontFamily: Fonts.sans,
-    lineHeight: 18,
-  },
-  progress: {
-    alignSelf: 'stretch',
-    marginTop: SPACE_2,
-    gap: 4,
-  },
-  progressMeta: {
-    color: TEXT_SECONDARY,
+    width: `${DESCRIPTION_SPAN * 100}%`,
+    color: TEXT_PRIMARY,
     fontFamily: Fonts.sans,
     fontWeight: '600',
+    ...WORDS_SHADOW,
+  },
+  progress: {
+    alignSelf: 'flex-start',
+    width: `${PROGRESS_SPAN * 100}%`,
+    marginTop: SPACE_2,
+  },
+  spring: {
+    flexGrow: 1,
+    minHeight: SPACE_2,
   },
   readNow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACE_2,
-    marginTop: SPACE_3,
     paddingVertical: SPACE_3 - 2,
     paddingHorizontal: SPACE_4 + 2,
     borderRadius: RADIUS_CONTROL,

@@ -1,8 +1,8 @@
 /**
  * The featured card is the most important element on the screen (§6.7): the
- * book's title, a line or two about it and a Read Now button beside a glimpse
- * inside the book -- its third page rather than the cover the child has
- * already seen on the shelf. The whole card is tappable as well as the button.
+ * book's title, a line or two about it and a Read Now button beside its
+ * cover, shown whole so its hero is never cut away. The whole card is
+ * tappable as well as the button.
  */
 
 import React from 'react';
@@ -10,12 +10,17 @@ import { render, fireEvent } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
 import {
   FeaturedStoryCard,
+  INSIGHT_BLUR,
+  INSIGHT_FEATHER,
+  INSIGHT_FEATHER_STEPS,
+  DESCRIPTION_SPAN,
   INSIGHT_INSET,
-  INSIGHT_SHIFT,
+  PROGRESS_SPAN,
   TEXT_WIDTH,
   READABILITY_WASH_LOCATIONS,
 } from '@/components/stories/catalogue/featured-story-card';
 import { FEATURED_ASPECT_RATIO, FEATURED_ASPECT_RATIO_TABLET } from '@/components/child-ui/tokens';
+import { BOOK_PROGRESS } from '@/components/child-ui/book-progress';
 import { fromStory } from '@/components/stories/catalogue/catalogue-story';
 import { Story } from '@/types/story';
 
@@ -47,17 +52,26 @@ describe('FeaturedStoryCard', () => {
 
 
   describe('a book part-way through', () => {
-    const place = { currentPage: 4, totalPages: 11 };
+    const place = { pageIndex: 4, totalPages: 11 };
 
-    it('should show how far the child has read, as the home card does: the bar and the page they are on', () => {
+    it('should show how far the child has read on the book bar, the page they are on inside it, counted as the reader counts', () => {
       const tree = render(<FeaturedStoryCard story={fromStory(story())} width={340} language="en" onOpen={jest.fn()} place={place} />);
 
-      const fill = byTestId(tree, 'featured-story-progress-fill');
-      const meta = tree.UNSAFE_root.findAll((n: any) => n.props.children === 'home.pagePosition (page:4, total:11)');
+      const bar = byTestId(tree, 'featured-story-progress').find((n: any) => n.props.accessibilityRole === 'progressbar')!;
+      const fill = byTestId(tree, 'featured-story-progress-fill').filter((n: any) => n.props.style)[0];
 
-      expect(fill.length).toBeGreaterThan(0);
-      expect(StyleSheet.flatten(fill[0].props.style).width).toBe(`${Math.round((4 / 11) * 100)}%`);
-      expect(meta.length).toBeGreaterThan(0);
+      expect(StyleSheet.flatten(fill.props.style).width).toBe(`${Math.round((4 / 10) * 100)}%`);
+      expect(byTestId(tree, 'featured-story-progress-label')[0].props.children).toBe('home.pagePosition (page:4, total:10)');
+      expect(bar.props.accessibilityLabel).toBe('home.pagePosition (page:4, total:10)');
+      expect(byTestId(tree, 'featured-story-progress-medal').filter((n: any) => n.props.style).length).toBeGreaterThan(0);
+    });
+
+    it('should use the small book bar, so the words keep their room', () => {
+      const tree = render(<FeaturedStoryCard story={fromStory(story())} width={340} language="en" onOpen={jest.fn()} place={place} />);
+
+      const capsule = StyleSheet.flatten(byTestId(tree, 'featured-story-progress').filter((n: any) => n.props.style)[0].props.style);
+
+      expect(capsule.height).toBe(BOOK_PROGRESS.small.height);
     });
 
     it('should sit that progress between the description and the Read Now button', () => {
@@ -72,12 +86,14 @@ describe('FeaturedStoryCard', () => {
       expect(order.indexOf('featured-story-progress-track')).toBeLessThan(order.lastIndexOf('featured-story-read-now'));
     });
 
-    it('should stretch the bar across the text column, since the column hugs its children and a hugged track has no width', () => {
+    it('should give the pill a little under three quarters of the text column, a set width since the column hugs its children', () => {
       const tree = render(<FeaturedStoryCard story={fromStory(story())} width={340} language="en" onOpen={jest.fn()} place={place} />);
 
-      const block = byTestId(tree, 'featured-story-progress').find((n: any) => n.props.style !== undefined);
+      const block = StyleSheet.flatten(byTestId(tree, 'featured-story-progress-block').find((n: any) => n.props.style !== undefined)!.props.style);
 
-      expect(StyleSheet.flatten(block!.props.style).alignSelf).toBe('stretch');
+      expect(PROGRESS_SPAN).toBe(0.72);
+      expect(block.width).toBe(`${PROGRESS_SPAN * 100}%`);
+      expect(block.alignSelf).toBe('flex-start');
     });
 
     it('should show no progress for a book that is only being featured', () => {
@@ -87,10 +103,14 @@ describe('FeaturedStoryCard', () => {
     });
   });
 
-  it('caps the title at two lines', () => {
-    const tree = render(<FeaturedStoryCard story={fromStory(story())} width={340} language="en" onOpen={jest.fn()} />);
+  it('shows the whole title, never cut short with dots', () => {
+    const tree = render(<FeaturedStoryCard story={fromStory(story({ title: 'The Very Long Tale of the Little Wombat Who Would Not Sleep' }))} width={340} language="en" onOpen={jest.fn()} />);
 
-    expect(byTestId(tree, 'featured-story-title')[0].props.numberOfLines).toBe(2);
+    const title = byTestId(tree, 'featured-story-title')[0];
+
+    expect(title.props.children).toBe('The Very Long Tale of the Little Wombat Who Would Not Sleep');
+    expect(title.props.numberOfLines).toBeUndefined();
+    expect(title.props.ellipsizeMode).toBeUndefined();
   });
 
   it('shows the localised title for the active language', () => {
@@ -100,14 +120,46 @@ describe('FeaturedStoryCard', () => {
     expect(byTestId(tree, 'featured-story-title')[0].props.children).toBe('Petit wombat câlin');
   });
 
-  it('should show a line or two about the story, so the panel says what it is', () => {
-    const model = fromStory(story({ description: 'A gentle story about finding the perfect place to rest.' }));
+  it('should say what the story is about in full, never cut short with dots', () => {
+    const words = 'Finn the fox really wants to play with a shy new friend! But when running up fast does not work, Finn learns how to give space and wait. A sweet, interactive story about gentle greetings and making friends at their own pace.';
+    const model = fromStory(story({ description: words }));
 
     const tree = render(<FeaturedStoryCard story={model} width={340} language="en" onOpen={jest.fn()} />);
 
     const underTest = byTestId(tree, 'featured-story-description')[0];
-    expect(underTest.props.children).toBe('A gentle story about finding the perfect place to rest.');
-    expect(underTest.props.numberOfLines).toBe(3);
+    expect(underTest.props.children).toBe(words);
+    expect(underTest.props.numberOfLines).toBeUndefined();
+    expect(underTest.props.ellipsizeMode).toBeUndefined();
+  });
+
+  it('should set those words bold, bright and shadowed, so they read over the picture behind them', () => {
+    const model = fromStory(story({ description: 'A gentle story about finding the perfect place to rest.' }));
+
+    const tree = render(<FeaturedStoryCard story={model} width={340} language="en" onOpen={jest.fn()} />);
+
+    const style = StyleSheet.flatten(byTestId(tree, 'featured-story-description')[0].props.style);
+    expect(Number(style.fontWeight)).toBeGreaterThanOrEqual(600);
+    expect(style.color).toBe('#FFFFFF');
+    expect(style.textShadowColor).toBe('rgba(9, 20, 56, 0.85)');
+    expect(style.textShadowRadius).toBeGreaterThanOrEqual(3);
+    expect(style.lineHeight).toBeGreaterThanOrEqual(Math.round(style.fontSize * 1.3));
+  });
+
+  it('should wrap those words at about where a title ends, short of the picture, not out to the column edge', () => {
+    const model = fromStory(story({ description: 'A gentle story about finding the perfect place to rest.' }));
+
+    const tree = render(<FeaturedStoryCard story={model} width={340} language="en" onOpen={jest.fn()} />);
+
+    const style = StyleSheet.flatten(byTestId(tree, 'featured-story-description')[0].props.style);
+    expect(DESCRIPTION_SPAN).toBe(0.75);
+    expect(style.width).toBe(`${DESCRIPTION_SPAN * 100}%`);
+  });
+
+  it('should shadow the title the same way', () => {
+    const tree = render(<FeaturedStoryCard story={fromStory(story())} width={340} language="en" onOpen={jest.fn()} />);
+
+    const style = StyleSheet.flatten(byTestId(tree, 'featured-story-title')[0].props.style);
+    expect(style.textShadowColor).toBe('rgba(9, 20, 56, 0.85)');
   });
 
   it('should offer Read Now as a button of its own, not only the whole card', () => {
@@ -120,41 +172,107 @@ describe('FeaturedStoryCard', () => {
     expect(onOpen).toHaveBeenCalledWith(model, expect.anything());
   });
 
-  it('should open the book to its third page, for a glimpse of what is inside', () => {
-    // The cover is already on the shelf behind; showing it again says nothing
-    // new about the story.
+  it('should show the page a child is part-way through, as Continue reading', () => {
     const model = fromStory(story({
-      pages: [1, 2, 3].map((n) => ({ id: `p${n}`, pageNumber: n, text: '', backgroundImage: `file://page-${n}.webp` })),
+      pages: [0, 1, 2, 3].map((n) => ({ id: `p${n}`, pageNumber: n, text: '', backgroundImage: n === 0 ? 'file://cover.webp' : `file://page-${n}.webp` })),
+    }));
+
+    const tree = render(<FeaturedStoryCard story={model} width={340} language="en" onOpen={jest.fn()} place={{ pageIndex: 2, totalPages: 4 }} />);
+
+    expect(byTestId(tree, 'featured-story-insight')[0].props.source).toEqual({ uri: 'file://page-2.webp' });
+    expect(byTestId(tree, 'featured-story-insight-backdrop')[0].props.source).toEqual({ uri: 'file://page-2.webp' });
+  });
+
+  it('should show the book\'s full-size cover, not one of its pages', () => {
+    const model = fromStory(story({
+      pages: [0, 1, 2, 3].map((n) => ({ id: `p${n}`, pageNumber: n, text: '', backgroundImage: n === 0 ? 'file://cover.webp' : `file://page-${n}.webp` })),
     }));
 
     const tree = render(<FeaturedStoryCard story={model} width={340} language="en" onOpen={jest.fn()} />);
 
-    const underTest = byTestId(tree, 'featured-story-insight')[0];
-    expect(underTest.props.source).toEqual({ uri: 'file://page-3.webp' });
+    expect(byTestId(tree, 'featured-story-insight')[0].props.source).toEqual({ uri: 'file://cover.webp' });
   });
 
-  it('should scale a page crop about its centre, so the paper margin is carried off both edges rather than shown as a pale strip', () => {
+  it('should never zoom or slide the picture, so nothing in it is carried off the panel', () => {
     const pages = Array.from({ length: 4 }, (_, i) => ({ id: `p${i}`, pageNumber: i, text: 'words', backgroundImage: `file://page-${i}.webp` }));
     const tree = render(<FeaturedStoryCard story={fromStory(story({ pages }))} width={340} language="en" onOpen={jest.fn()} />);
 
     const underTest = StyleSheet.flatten(byTestId(tree, 'featured-story-insight')[0].props.style);
 
-    expect(underTest.transform).toEqual([{ translateX: expect.any(Number) }, { scale: expect.any(Number) }]);
-    expect(underTest.transformOrigin).toBeUndefined();
-    expect(underTest.left).toBe('0%');
+    expect(underTest.transform).toBeUndefined();
   });
 
-  it('should slide the picture to the right by a share of the panel, so its subject sits in the clear rather than under the words', () => {
+  const flat = (node: any) => StyleSheet.flatten(node.props.style);
+  const imageIn = (node: any) => node.findAll((n: any) => n.props.contentFit !== undefined)[0];
+
+  it('should give the sharp cover the panel\'s right part, centred in it, so a cover stands nearly whole beside the words', () => {
     const tree = render(<FeaturedStoryCard story={fromStory(story())} width={340} language="en" onOpen={jest.fn()} />);
 
-    const underTest = StyleSheet.flatten(byTestId(tree, 'featured-story-insight')[0].props.style);
+    const frame = flat(byTestId(tree, 'featured-story-insight-frame')[0]);
+    const insight = byTestId(tree, 'featured-story-insight')[0];
 
-    expect(INSIGHT_SHIFT).toBeGreaterThan(0.1);
-    expect(INSIGHT_SHIFT).toBeLessThanOrEqual(0.3);
-    expect(underTest.transform).toEqual(expect.arrayContaining([{ translateX: Math.round(340 * INSIGHT_SHIFT) }]));
+    expect(INSIGHT_INSET).toBeGreaterThanOrEqual(0.25);
+    expect(INSIGHT_INSET).toBeLessThanOrEqual(0.4);
+    expect(frame).toEqual(expect.objectContaining({ position: 'absolute', top: 0, bottom: 0, left: `${INSIGHT_INSET * 100}%`, right: 0 }));
+    expect(flat(insight)).toEqual(expect.objectContaining({ left: -340 * INSIGHT_FEATHER, width: 340 * (1 - INSIGHT_INSET) }));
+    expect(insight.props.contentFit).toBe('cover');
+    expect(insight.props.contentPosition).toBe('center');
   });
 
-  it('should fall back to the cover for a book with no third page', () => {
+  it('should fill the whole panel with a blurred copy of the cover, so the shadow, not a bare strip, sets how dark it is', () => {
+    const tree = render(<FeaturedStoryCard story={fromStory(story())} width={340} language="en" onOpen={jest.fn()} />);
+
+    const backdrop = byTestId(tree, 'featured-story-insight-backdrop')[0];
+
+    expect(backdrop.props.source).toEqual(byTestId(tree, 'featured-story-insight')[0].props.source);
+    expect(flat(backdrop)).toEqual(expect.objectContaining({ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }));
+    expect(backdrop.props.contentFit).toBe('cover');
+    expect(INSIGHT_BLUR).toBeGreaterThanOrEqual(12);
+    expect(backdrop.props.blurRadius).toBe(INSIGHT_BLUR);
+  });
+
+  it('should fade the sharp cover\'s left edge into the blur in steps, each slice lined up with the cover beside it', () => {
+    const tree = render(<FeaturedStoryCard story={fromStory(story())} width={340} language="en" onOpen={jest.fn()} />);
+    const edge = 340 * INSIGHT_FEATHER;
+    const step = edge / INSIGHT_FEATHER_STEPS;
+    const clip = flat(byTestId(tree, 'featured-story-insight-clip')[0]);
+
+    const slices = Array.from({ length: INSIGHT_FEATHER_STEPS }, (_, i) => byTestId(tree, `featured-story-insight-feather-${i}`)[0]);
+
+    expect(INSIGHT_FEATHER).toBeGreaterThanOrEqual(0.05);
+    expect(INSIGHT_FEATHER).toBeLessThanOrEqual(0.15);
+    expect(INSIGHT_FEATHER_STEPS).toBeGreaterThanOrEqual(6);
+    expect(clip).toEqual(expect.objectContaining({ position: 'absolute', top: 0, bottom: 0, left: edge, right: 0, overflow: 'hidden' }));
+    slices.forEach((slice, i) => {
+      const style = flat(slice);
+      const image = imageIn(slice);
+      expect(style).toEqual(expect.objectContaining({ position: 'absolute', top: 0, bottom: 0, left: i * step, width: step, overflow: 'hidden' }));
+      expect(style.opacity).toBeCloseTo((i + 1) / (INSIGHT_FEATHER_STEPS + 1));
+      expect(style.left + flat(image).left).toBeCloseTo(0);
+      expect(flat(image).width).toBe(340 * (1 - INSIGHT_INSET));
+      expect(image.props.source).toEqual(byTestId(tree, 'featured-story-insight')[0].props.source);
+      expect(image.props.contentPosition).toBe('center');
+    });
+    expect(flat(slices[INSIGHT_FEATHER_STEPS - 1]).left + step).toBeCloseTo(clip.left);
+    expect(byTestId(tree, `featured-story-insight-feather-${INSIGHT_FEATHER_STEPS}`)).toHaveLength(0);
+  });
+
+  it('should tint the whole panel, so the blur and the cover sit in one night light', () => {
+    const tree = render(<FeaturedStoryCard story={fromStory(story())} width={340} language="en" onOpen={jest.fn()} />);
+
+    expect(flat(byTestId(tree, 'featured-story-tint')[0])).toEqual(
+      expect.objectContaining({ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(9, 20, 56, 0.18)' }),
+    );
+  });
+
+  it('should draw no blur and no edge when there is no picture', () => {
+    const tree = render(<FeaturedStoryCard story={fromStory(story({ coverImage: undefined }))} width={340} language="en" onOpen={jest.fn()} />);
+
+    expect(byTestId(tree, 'featured-story-insight-backdrop')).toHaveLength(0);
+    expect(byTestId(tree, 'featured-story-insight-feather-0')).toHaveLength(0);
+  });
+
+  it('should fall back to the shelf cover for a book with no cover page', () => {
     const tree = render(<FeaturedStoryCard story={fromStory(story())} width={340} language="en" onOpen={jest.fn()} />);
 
     const underTest = byTestId(tree, 'featured-story-insight')[0];
@@ -168,6 +286,24 @@ describe('FeaturedStoryCard', () => {
     expect(byTestId(tree, 'featured-story-description')).toHaveLength(0);
   });
 
+  it('should rest Read Now at the bottom left of the panel, however much is written above it', () => {
+    const tree = render(<FeaturedStoryCard story={fromStory(story({ description: 'A short line.' }))} width={340} language="en" onOpen={jest.fn()} />);
+    const body = byTestId(tree, 'featured-story-body')[0];
+    const order = body
+      .findAll((n: any) => ['featured-story-description', 'featured-story-spring', 'featured-story-read-now'].includes(n.props.testID))
+      .map((n: any) => n.props.testID);
+    const spring = StyleSheet.flatten(byTestId(tree, 'featured-story-spring')[0].props.style);
+    const bodyStyle = StyleSheet.flatten(body.props.style);
+
+    expect(order.indexOf('featured-story-spring')).toBeGreaterThan(order.indexOf('featured-story-description'));
+    expect(order.indexOf('featured-story-spring')).toBeLessThan(order.indexOf('featured-story-read-now'));
+    expect(spring.flexGrow).toBe(1);
+    expect(spring.minHeight).toBeGreaterThanOrEqual(8);
+    expect(bodyStyle.flex).toBe(1);
+    expect(bodyStyle.alignItems).toBe('flex-start');
+    expect(StyleSheet.flatten(byTestId(tree, 'featured-story-read-now').filter((n: any) => n.props.style)[0].props.style).marginTop).toBeUndefined();
+  });
+
   it('should sit the words at the top of the box, the way the design does', () => {
     const tree = render(<FeaturedStoryCard story={fromStory(story())} width={340} language="en" onOpen={jest.fn()} />);
 
@@ -176,10 +312,7 @@ describe('FeaturedStoryCard', () => {
     expect(body.justifyContent).toBe('flex-start');
   });
 
-  it('should carry no border, so the cropped artwork cannot light one up from behind', () => {
-    // The defect this pins: the picture is scaled to crop its paper margin, so
-    // it runs under the panel's edge; a translucent border over it read as a
-    // white spine down the left side, where the page's paper showed through.
+  it('should carry no border and clip the picture to its rounded corners', () => {
     const tree = render(<FeaturedStoryCard story={fromStory(story())} width={340} language="en" onOpen={jest.fn()} />);
 
     const underTest = StyleSheet.flatten(byTestId(tree, 'featured-story-card')[0].props.style);
@@ -188,37 +321,23 @@ describe('FeaturedStoryCard', () => {
     expect(underTest.overflow).toBe('hidden');
   });
 
-  it('should run the picture from the panel\'s left edge, under the wash, to the right edge, anchored right', () => {
+  it('should cast the shadow from the top-left corner: solid for the first tenth, clearing by halfway, then the picture plain', () => {
     const tree = render(<FeaturedStoryCard story={fromStory(story())} width={340} language="en" onOpen={jest.fn()} />);
 
-    const insight = byTestId(tree, 'featured-story-insight')[0];
-    const underTest = StyleSheet.flatten(insight.props.style);
+    const wash = byTestId(tree, 'featured-story-shadow')[0];
 
-    expect(INSIGHT_INSET).toBe(0);
-    expect(underTest.left).toBe('0%');
-    expect(underTest.right).toBe(0);
-    expect(underTest.width).toBeUndefined();
-    expect(insight.props.contentPosition).toBe('right');
+    expect(wash.props.start).toEqual({ x: 0, y: 0 });
+    expect(wash.props.end).toEqual({ x: 1, y: 1 });
+    expect(READABILITY_WASH_LOCATIONS).toEqual([0, 0.1, 0.5]);
+    expect(wash.props.locations).toEqual(READABILITY_WASH_LOCATIONS);
+    expect(wash.props.colors).toEqual(['rgba(9, 20, 56, 1)', 'rgba(9, 20, 56, 1)', 'rgba(9, 20, 56, 0)']);
+    expect(wash.props.pointerEvents).toBe('none');
   });
 
-  it('should lay the wash solid over the bare strip and let it spread well past the words before it clears', () => {
+  it('should keep the words in the left three fifths', () => {
     const tree = render(<FeaturedStoryCard story={fromStory(story())} width={340} language="en" onOpen={jest.fn()} />);
 
-    const wash = byTestId(tree, 'linear-gradient')[0];
-    const body = StyleSheet.flatten(byTestId(tree, 'featured-story-body')[0].props.style);
-    const stops = wash.props.locations as readonly number[];
-    const colours = wash.props.colors as readonly string[];
-
-    expect(stops).toEqual(READABILITY_WASH_LOCATIONS);
-    expect(stops[0]).toBe(0);
-    expect(stops[1]).toBeGreaterThanOrEqual(INSIGHT_INSET);
-    expect(stops[1]).toBeLessThanOrEqual(0.25);
-    expect(stops[stops.length - 1]).toBeGreaterThanOrEqual(TEXT_WIDTH + 0.15);
-    expect(stops[stops.length - 1]).toBeLessThanOrEqual(0.85);
-    expect(Number(colours[2].match(/[\d.]+\)$/)![0].slice(0, -1))).toBeGreaterThanOrEqual(0.7);
-    expect(body.width).toBe(`${TEXT_WIDTH * 100}%`);
-    expect(colours[0]).toBe('rgba(9, 20, 56, 1)');
-    expect(colours[colours.length - 1]).toBe('rgba(9, 20, 56, 0)');
+    expect(StyleSheet.flatten(byTestId(tree, 'featured-story-body')[0].props.style).width).toBe(`${TEXT_WIDTH * 100}%`);
   });
 
   it('should stand at least at the phone aspect ratio for its width, and run wider on a tablet', () => {
@@ -232,7 +351,7 @@ describe('FeaturedStoryCard', () => {
   });
 
   it('should grow with what it holds rather than clip Read Now when a progress block joins the words', () => {
-    const tree = render(<FeaturedStoryCard story={fromStory(story())} width={340} language="en" onOpen={jest.fn()} place={{ currentPage: 4, totalPages: 11 }} />);
+    const tree = render(<FeaturedStoryCard story={fromStory(story())} width={340} language="en" onOpen={jest.fn()} place={{ pageIndex: 4, totalPages: 11 }} />);
 
     const card = StyleSheet.flatten(byTestId(tree, 'featured-story-card')[0].props.style);
     const body = StyleSheet.flatten(byTestId(tree, 'featured-story-body')[0].props.style);
