@@ -33,7 +33,7 @@ import { PagePill } from './page-pill';
 import { PlayPill } from './play-pill';
 import { MENU_INK, MENU_WIDTH, ReaderMenu, ReaderMenuPanel, menuPlacement } from './reader-menu';
 import { LanguagePanel, type LanguageChoice } from './language-panel';
-import { ReaderAudioPanel } from './reader-audio-panel';
+import { AudioSettings } from '@/components/ui/audio-settings-panel';
 import { StoryCloud, cloudInset } from './story-cloud';
 import { bookTheme, storyHasMusic } from './catalogue/catalogue-story';
 import { COIN_RIM, ReaderCoin } from '@/components/child-ui/reader-coin';
@@ -209,7 +209,7 @@ export function StoryBookReader({
   const textScrollViewRef = useRef<ScrollView>(null);
 
   // Audio control modal - rendered at root level to avoid iOS crash with absolute positioning
-  const [showAudioControlModal, setShowAudioControlModal] = useState(false);
+  const [showAudioSettings, setShowAudioSettings] = useState(false);
 
   // Parents Only modal - using shared hook
   const parentsOnly = useParentsOnlyChallenge();
@@ -1797,7 +1797,7 @@ export function StoryBookReader({
     // All images are loaded from local cache after batch sync - no authenticated fetching needed
     const imageContent = (
       <>
-        {coverFit && wholeScene ? (
+        {wholeScene ? (
           <>
             <Image
               testID="story-page-scene-bands"
@@ -2577,7 +2577,7 @@ export function StoryBookReader({
           paddingTop: Math.max(insets.top + 20, 20),
           paddingRight: readerEdge(insets.right)
         }, chromeUpStyle]}>
-          <MusicControl size={50} variant="coin" onAudioModalChange={setShowAudioControlModal} />
+          <MusicControl size={50} variant="coin" onAudioModalChange={setShowAudioSettings} />
           {/* Settings/Burger Menu Button */}
           <Pressable
             testID="story-menu-button"
@@ -3273,27 +3273,7 @@ export function StoryBookReader({
         scaledFontSize={scaledFontSize}
       />
 
-      <ReaderAudioPanel
-        visible={showAudioControlModal}
-        screen={{ width: screenWidth, height: screenHeight }}
-        insets={insets}
-        textScale={textSizeScale}
-        reduceMotion={reduceMotion}
-        title={t('audioSettings.title')}
-        doneLabel={t('reader.done')}
-        closeLabel={t('common.close')}
-        muteLabel={t('audioSettings.mute')}
-        unmuteLabel={t('audioSettings.unmute')}
-        channels={[
-          { id: 'master', label: t('audioSettings.masterVolume'), value: globalSound.masterVolume, onChange: globalSound.setMasterVolume },
-          { id: 'music', label: t('audioSettings.music'), value: globalSound.musicVolume, onChange: globalSound.setMusicVolume },
-          { id: 'voice', label: t('audioSettings.voiceOver'), value: globalSound.voiceOverVolume, onChange: globalSound.setVoiceOverVolume },
-        ]}
-        onClose={() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          setShowAudioControlModal(false);
-        }}
-      />
+      <AudioSettings visible={showAudioSettings} onClose={() => setShowAudioSettings(false)} presentation="overlay" />
 
       {/* Page Preview Modal */}
       <PagePreviewModal

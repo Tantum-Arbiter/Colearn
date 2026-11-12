@@ -12,6 +12,9 @@ EDGE = (55, 115)
 ICON_FACE = (250, 232, 204)
 ICON_GROW = 3
 ICON_NAMES = ('master', 'music', 'voice')
+CARDS = {'left': 50, 'right': 1225, 'height': 178, 'tops': (230, 433, 632), 'radius': 56, 'margin': 8, 'feather': 5}
+TITLE_FOOT = 184
+DONE_TOP = 852
 
 
 def save(pixels: np.ndarray, path: Path) -> None:
@@ -35,6 +38,47 @@ def cut_frame(source: Path) -> np.ndarray:
     frame = np.dstack([rgb, alpha * 255])
     ys, xs = np.nonzero(alpha > 0)
     return frame[ys.min():ys.max() + 1, xs.min():xs.max() + 1]
+
+
+def rounded(width: int, height: int, radius: float, feather: float) -> np.ndarray:
+    ys, xs = np.mgrid[0:height, 0:width].astype(float)
+    dx = np.maximum(np.maximum(radius - xs, xs - (width - 1 - radius)), 0)
+    dy = np.maximum(np.maximum(radius - ys, ys - (height - 1 - radius)), 0)
+    outside = np.hypot(dx, dy) - radius
+    return (0.5 - outside / feather).clip(0, 1)
+
+
+def face_around(art: np.ndarray, box: tuple[int, int, int, int], reach: int = 10) -> np.ndarray:
+    left, top, right, bottom = box
+    ring = np.concatenate([
+        art[top - reach:top - 2, left + 80:right - 80, :3].reshape(-1, 3),
+        art[bottom + 2:bottom + reach, left + 80:right - 80, :3].reshape(-1, 3),
+    ])
+    return np.median(ring, axis=0)
+
+
+def lift_cards(old: np.ndarray, new: np.ndarray, scale: float) -> tuple[np.ndarray, list[int], int, int]:
+    margin = CARDS['margin']
+    width = round((CARDS['right'] - CARDS['left'] + 2 * margin) * scale)
+    width += (new.shape[1] - width) % 2
+    height = round((CARDS['height'] + 2 * margin) * scale)
+    gap_room = DONE_TOP - TITLE_FOOT - 3 * height
+    step = round(height + gap_room / 3)
+    left = (new.shape[1] - width) // 2
+    first = round(TITLE_FOOT + gap_room / 6)
+    tops = [first + index * step for index in range(3)]
+    mask = rounded(width, height, (CARDS['radius'] + margin) * scale, CARDS['feather'] * scale)
+    out = new.copy()
+    for top_old, top_new in zip(CARDS['tops'], tops):
+        box = (CARDS['left'] - margin, top_old - margin, CARDS['right'] + margin, top_old + CARDS['height'] + margin)
+        piece = old[box[1]:box[3], box[0]:box[2]]
+        tint = face_around(new, (left, top_new, left + width, top_new + height)) / face_around(old, box)
+        grown = np.array(Image.fromarray(piece.clip(0, 255).astype(np.uint8), 'RGBA').resize((width, height), Image.LANCZOS)).astype(float)
+        grown[..., :3] *= tint
+        under = out[top_new:top_new + height, left:left + width]
+        mix = mask[..., None]
+        under[..., :3] = grown[..., :3] * mix + under[..., :3] * (1 - mix)
+    return out, tops, left, width
 
 
 def cut_icons(source: Path) -> list[np.ndarray]:
@@ -68,7 +112,12 @@ def main() -> None:
     parser.add_argument('--out', type=Path, default=ROOT)
     args = parser.parse_args()
     frame = cut_frame(ROOT / 'source' / 'frame.webp')
-    save(frame, args.out / 'panel.webp')
+    old = cut_frame(ROOT / 'source' / 'cards.webp')
+    scale = frame.shape[1] / old.shape[1]
+    panel, tops, left, width = lift_cards(old, frame, scale)
+    save(panel, args.out / 'panel.webp')
+    margin = CARDS['margin'] * scale
+    print('cards', [round(top + margin, 1) for top in tops], 'height', round(CARDS['height'] * scale, 1), 'left', round(left + margin, 1), 'right', round(left + width - margin, 1), 'scale', round(scale, 4))
     for name, icon in zip(ICON_NAMES, cut_icons(ROOT / 'source' / 'icons.png')):
         save(icon, args.out / f'icon-{name}.webp')
         print('icon', name, icon.shape[1], 'x', icon.shape[0])

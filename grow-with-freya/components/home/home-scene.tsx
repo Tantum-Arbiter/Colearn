@@ -11,7 +11,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { useSharedValue } from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
-import { AudioControlModal } from '@/components/ui/audio-control-modal';
+import { AudioSettings } from '@/components/ui/audio-settings-panel';
 import { LanguagePicker } from '@/components/ui/language-picker';
 import { baseLanguage, languageFlag } from '@/services/i18n';
 import { CircleActionButton } from '@/components/child-ui/circle-action-button';
@@ -347,16 +347,7 @@ export const HomeScene = memo(function HomeScene({
           />
         </View>
       </VoyageRow>
-      <AudioControlModal
-        visible={audioSettingsOpen}
-        onClose={() => setAudioSettingsOpen(false)}
-        masterVolume={sound.masterVolume}
-        musicVolume={sound.musicVolume}
-        voiceOverVolume={sound.voiceOverVolume}
-        onMasterVolumeChange={sound.setMasterVolume}
-        onMusicVolumeChange={sound.setMusicVolume}
-        onVoiceOverVolumeChange={sound.setVoiceOverVolume}
-      />
+      <AudioSettings visible={audioSettingsOpen} onClose={() => setAudioSettingsOpen(false)} />
 
       <ScrollView
         ref={scrollBinding?.scrollRef}

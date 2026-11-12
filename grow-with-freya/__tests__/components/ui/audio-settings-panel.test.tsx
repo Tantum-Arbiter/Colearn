@@ -3,8 +3,12 @@ import { StyleSheet } from 'react-native';
 import { act, fireEvent, render } from '@testing-library/react-native';
 import type { ReactTestInstance } from 'react-test-renderer';
 import { LANGUAGE_PANEL } from '@/components/stories/language-panel';
-import { AUDIO_PANEL, ReaderAudioPanel, audioPanelLayout, type AudioChannel } from '@/components/stories/reader-audio-panel';
+import { AUDIO_PANEL, AudioSettings, AudioSettingsPanel, audioPanelLayout, type AudioChannel } from '@/components/ui/audio-settings-panel';
 import { MENU_INK } from '@/components/stories/reader-menu';
+const mockSound = jest.fn();
+jest.mock('@/contexts/global-sound-context', () => ({
+  useGlobalSound: () => mockSound(),
+}));
 
 const A = AUDIO_PANEL;
 const PHONE = { screen: { width: 874, height: 402 }, insets: { top: 0, bottom: 21, left: 59, right: 59 } };
@@ -18,7 +22,7 @@ function channels(levels: [number, number, number] = [0.8, 0.5, 1]): AudioChanne
   ];
 }
 
-function props(overrides: Partial<React.ComponentProps<typeof ReaderAudioPanel>> = {}): React.ComponentProps<typeof ReaderAudioPanel> {
+function props(overrides: Partial<React.ComponentProps<typeof AudioSettingsPanel>> = {}): React.ComponentProps<typeof AudioSettingsPanel> {
   return {
     visible: true,
     screen: TABLET.screen,
@@ -26,7 +30,6 @@ function props(overrides: Partial<React.ComponentProps<typeof ReaderAudioPanel>>
     reduceMotion: true,
     title: 'Audio Settings',
     doneLabel: 'Done',
-    closeLabel: 'Close',
     muteLabel: 'Mute',
     unmuteLabel: 'Unmute',
     channels: channels(),
@@ -79,18 +82,18 @@ describe('audioPanelLayout', () => {
   });
 });
 
-describe('ReaderAudioPanel', () => {
+describe('AudioSettingsPanel', () => {
   const place = audioPanelLayout(TABLET.screen, TABLET.insets);
   const u = (units: number) => units * place.scale;
 
   it('paints its own frame across the whole panel', () => {
-    const { UNSAFE_root } = render(<ReaderAudioPanel {...props()} />);
+    const { UNSAFE_root } = render(<AudioSettingsPanel {...props()} />);
 
     expect(styled(UNSAFE_root, 'audio-panel-art')).toEqual(expect.objectContaining({ width: place.width, height: place.height }));
   });
 
-  it('heads itself in the language panel`s title style, centred on the panel', () => {
-    const { UNSAFE_root } = render(<ReaderAudioPanel {...props()} />);
+  it('heads itself in the language panel`s title style, centred under the crest', () => {
+    const { UNSAFE_root } = render(<AudioSettingsPanel {...props()} />);
     const box = styled(UNSAFE_root, 'audio-panel-heading');
 
     const title = styled(UNSAFE_root, 'audio-panel-title');
@@ -98,11 +101,11 @@ describe('ReaderAudioPanel', () => {
     expect(title.color).toBe(MENU_INK);
     expect(title.fontWeight).toBe('800');
     expect(title.fontSize).toBeCloseTo(u(A.title.size) * place.text, 5);
-    expect(box.left + box.width / 2).toBeCloseTo(place.width / 2, 5);
+    expect(box.left + box.width / 2).toBeCloseTo(u(A.crest), 5);
   });
 
   it('sits the title in the band between the crest and the first card, clear of both', () => {
-    const { UNSAFE_root } = render(<ReaderAudioPanel {...props()} />);
+    const { UNSAFE_root } = render(<AudioSettingsPanel {...props()} />);
     const box = styled(UNSAFE_root, 'audio-panel-heading');
     const centre = (box.top + box.height / 2) / place.scale;
 
@@ -110,12 +113,19 @@ describe('ReaderAudioPanel', () => {
     expect(centre - (A.title.size * 0.72) / 2).toBeGreaterThan(A.crestFoot);
   });
 
-  it('sets the close coin level with the title', () => {
-    const { UNSAFE_root } = render(<ReaderAudioPanel {...props()} />);
-    const coin = styled(UNSAFE_root, 'audio-panel-close');
-    const box = styled(UNSAFE_root, 'audio-panel-heading');
+  it('has no close coin; Done and the page around it close it', () => {
+    const { UNSAFE_root } = render(<AudioSettingsPanel {...props()} />);
 
-    expect(coin.top + coin.height / 2).toBeCloseTo(box.top + box.height / 2, 5);
+    expect(find(UNSAFE_root, 'audio-panel-close')).toHaveLength(0);
+  });
+
+  it('centres the cards and Done on the frame`s own middle', () => {
+    expect((A.card.left + A.card.right) / 2).toBeCloseTo(A.width / 2, 0);
+    expect(A.done.left + A.done.width / 2).toBeCloseTo(A.width / 2, 0);
+  });
+
+  it('spaces the three cards evenly', () => {
+    expect(A.cards[1] - A.cards[0]).toBeCloseTo(A.cards[2] - A.cards[1], 5);
   });
 
   it('ends the level and the slider before the leaf on each card', () => {
@@ -124,26 +134,52 @@ describe('ReaderAudioPanel', () => {
   });
 
   it.each([
-    ['its round close coin', 'audio-panel-close'],
     ['Done', 'audio-panel-done'],
     ['the page around it', 'audio-panel-backdrop'],
   ])('closes from %s', (_name, id) => {
     const onClose = jest.fn();
-    const { UNSAFE_root } = render(<ReaderAudioPanel {...props({ onClose })} />);
+    const { UNSAFE_root } = render(<AudioSettingsPanel {...props({ onClose })} />);
 
     fireEvent.press(pressable(UNSAFE_root, id));
 
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
+  it('draws Done narrower than the cards, centred under them', () => {
+    const { UNSAFE_root } = render(<AudioSettingsPanel {...props()} />);
+
+    const done = styled(UNSAFE_root, 'audio-panel-done');
+    expect(done.width).toBeCloseTo(u(A.done.width), 5);
+    expect(A.done.width).toBeLessThanOrEqual((A.card.right - A.card.left) * 0.4);
+    expect(done.left + done.width / 2).toBeCloseTo(u(A.width / 2), 5);
+  });
+
+  it('sinks Done into its lip and shrinks it a touch while it is held, and lets it back up after', () => {
+    const { UNSAFE_root } = render(<AudioSettingsPanel {...props()} />);
+    const done = pressable(UNSAFE_root, 'audio-panel-done');
+    const face = () => StyleSheet.flatten(UNSAFE_root.findAll((node) => node.props.testID === 'audio-panel-done-face')[0].props.style);
+    const rest = { button: styled(UNSAFE_root, 'audio-panel-done'), face: face() };
+
+    act(() => { fireEvent(done, 'pressIn'); });
+    const held = { button: styled(UNSAFE_root, 'audio-panel-done'), face: face() };
+    act(() => { fireEvent(done, 'pressOut'); });
+
+    expect(rest.button.transform).toBeUndefined();
+    expect(held.button.transform).toEqual([{ scale: expect.any(Number) }]);
+    expect(held.button.transform[0].scale).toBeLessThan(1);
+    expect(held.face.transform).toEqual([{ translateY: expect.any(Number) }]);
+    expect(held.face.transform[0].translateY).toBeGreaterThan(0);
+    expect(styled(UNSAFE_root, 'audio-panel-done').transform).toBeUndefined();
+  });
+
   it('says Done in the words it is given', () => {
-    const { UNSAFE_root } = render(<ReaderAudioPanel {...props()} />);
+    const { UNSAFE_root } = render(<AudioSettingsPanel {...props()} />);
 
     expect(said(UNSAFE_root, 'audio-panel-done-label')).toBe('Done');
   });
 
   it('draws nothing while it is shut', () => {
-    const { UNSAFE_root } = render(<ReaderAudioPanel {...props({ visible: false })} />);
+    const { UNSAFE_root } = render(<AudioSettingsPanel {...props({ visible: false })} />);
 
     expect(find(UNSAFE_root, 'audio-panel')).toHaveLength(0);
   });
@@ -153,7 +189,7 @@ describe('ReaderAudioPanel', () => {
     ['music', 'Music', '50%'],
     ['voice', 'Voice Over', '100%'],
   ])('names the %s row in the panel`s ink and shows its level', (id, label, level) => {
-    const { UNSAFE_root } = render(<ReaderAudioPanel {...props()} />);
+    const { UNSAFE_root } = render(<AudioSettingsPanel {...props()} />);
 
     expect(said(UNSAFE_root, `audio-panel-label-${id}`)).toBe(label);
     expect(said(UNSAFE_root, `audio-panel-level-${id}`)).toBe(level);
@@ -162,7 +198,7 @@ describe('ReaderAudioPanel', () => {
   });
 
   it.each([0, 1, 2])('puts row %i`s icon in the middle of its painted slot', (row) => {
-    const { UNSAFE_root } = render(<ReaderAudioPanel {...props()} />);
+    const { UNSAFE_root } = render(<AudioSettingsPanel {...props()} />);
     const id = channels()[row].id;
 
     const icon = styled(UNSAFE_root, `audio-panel-button-${id}`);
@@ -171,7 +207,7 @@ describe('ReaderAudioPanel', () => {
   });
 
   it('lays each slider along its card, past the button', () => {
-    const { UNSAFE_root } = render(<ReaderAudioPanel {...props()} />);
+    const { UNSAFE_root } = render(<AudioSettingsPanel {...props()} />);
 
     const slider = UNSAFE_root.findAll((node) => node.props.testID === 'audio-panel-slider-music' && typeof node.props.onValueChange === 'function')[0];
     expect(slider.props.value).toBe(0.5);
@@ -180,7 +216,7 @@ describe('ReaderAudioPanel', () => {
 
   it('hands a slider`s change back to its own channel', () => {
     const given = channels();
-    const { UNSAFE_root } = render(<ReaderAudioPanel {...props({ channels: given })} />);
+    const { UNSAFE_root } = render(<AudioSettingsPanel {...props({ channels: given })} />);
     const slider = UNSAFE_root.findAll((node) => node.props.testID === 'audio-panel-slider-music' && typeof node.props.onValueChange === 'function')[0];
 
     slider.props.onValueChange(0.25);
@@ -192,7 +228,7 @@ describe('ReaderAudioPanel', () => {
   describe('the round buttons', () => {
     it('mute their channel when it is playing', () => {
       const given = channels();
-      const { UNSAFE_root } = render(<ReaderAudioPanel {...props({ channels: given })} />);
+      const { UNSAFE_root } = render(<AudioSettingsPanel {...props({ channels: given })} />);
 
       fireEvent.press(pressable(UNSAFE_root, 'audio-panel-button-music'));
 
@@ -202,11 +238,11 @@ describe('ReaderAudioPanel', () => {
 
     it('bring a muted channel back to the level it had', () => {
       const given = channels();
-      const view = render(<ReaderAudioPanel {...props({ channels: given })} />);
+      const view = render(<AudioSettingsPanel {...props({ channels: given })} />);
       fireEvent.press(pressable(view.UNSAFE_root, 'audio-panel-button-music'));
       const muted = channels([0.8, 0, 1]);
       muted[1].onChange = given[1].onChange;
-      view.rerender(<ReaderAudioPanel {...props({ channels: muted })} />);
+      view.rerender(<AudioSettingsPanel {...props({ channels: muted })} />);
 
       fireEvent.press(pressable(view.UNSAFE_root, 'audio-panel-button-music'));
 
@@ -215,7 +251,7 @@ describe('ReaderAudioPanel', () => {
 
     it('bring a channel that was already silent back at full', () => {
       const given = channels([0.8, 0, 1]);
-      const { UNSAFE_root } = render(<ReaderAudioPanel {...props({ channels: given })} />);
+      const { UNSAFE_root } = render(<AudioSettingsPanel {...props({ channels: given })} />);
 
       fireEvent.press(pressable(UNSAFE_root, 'audio-panel-button-music'));
 
@@ -224,14 +260,14 @@ describe('ReaderAudioPanel', () => {
 
     it('remember a level the slider set before muting', () => {
       const given = channels();
-      const view = render(<ReaderAudioPanel {...props({ channels: given })} />);
+      const view = render(<AudioSettingsPanel {...props({ channels: given })} />);
       const moved = channels([0.8, 0.3, 1]);
       moved[1].onChange = given[1].onChange;
-      view.rerender(<ReaderAudioPanel {...props({ channels: moved })} />);
+      view.rerender(<AudioSettingsPanel {...props({ channels: moved })} />);
       fireEvent.press(pressable(view.UNSAFE_root, 'audio-panel-button-music'));
       const muted = channels([0.8, 0, 1]);
       muted[1].onChange = given[1].onChange;
-      view.rerender(<ReaderAudioPanel {...props({ channels: muted })} />);
+      view.rerender(<AudioSettingsPanel {...props({ channels: muted })} />);
 
       act(() => {
         fireEvent.press(pressable(view.UNSAFE_root, 'audio-panel-button-music'));
@@ -242,13 +278,13 @@ describe('ReaderAudioPanel', () => {
 
     it('bring back the level from before the slider was dragged down to nothing', () => {
       const given = channels();
-      const view = render(<ReaderAudioPanel {...props({ channels: given })} />);
+      const view = render(<AudioSettingsPanel {...props({ channels: given })} />);
       const moved = channels([0.8, 0.3, 1]);
       moved[1].onChange = given[1].onChange;
-      view.rerender(<ReaderAudioPanel {...props({ channels: moved })} />);
+      view.rerender(<AudioSettingsPanel {...props({ channels: moved })} />);
       const dragged = channels([0.8, 0, 1]);
       dragged[1].onChange = given[1].onChange;
-      view.rerender(<ReaderAudioPanel {...props({ channels: dragged })} />);
+      view.rerender(<AudioSettingsPanel {...props({ channels: dragged })} />);
 
       fireEvent.press(pressable(view.UNSAFE_root, 'audio-panel-button-music'));
 
@@ -256,7 +292,7 @@ describe('ReaderAudioPanel', () => {
     });
 
     it('show a muted channel as off', () => {
-      const { UNSAFE_root } = render(<ReaderAudioPanel {...props({ channels: channels([0.8, 0, 1]) })} />);
+      const { UNSAFE_root } = render(<AudioSettingsPanel {...props({ channels: channels([0.8, 0, 1]) })} />);
 
       expect(find(UNSAFE_root, 'audio-panel-off-music')).not.toHaveLength(0);
       expect(find(UNSAFE_root, 'audio-panel-off-master')).toHaveLength(0);
@@ -265,10 +301,114 @@ describe('ReaderAudioPanel', () => {
     });
 
     it('say what they will do, for VoiceOver', () => {
-      const { UNSAFE_root } = render(<ReaderAudioPanel {...props({ channels: channels([0.8, 0, 1]) })} />);
+      const { UNSAFE_root } = render(<AudioSettingsPanel {...props({ channels: channels([0.8, 0, 1]) })} />);
 
       expect(pressable(UNSAFE_root, 'audio-panel-button-master').props.accessibilityLabel).toBe('Mute Master Volume');
       expect(pressable(UNSAFE_root, 'audio-panel-button-music').props.accessibilityLabel).toBe('Unmute Music');
     });
+  });
+});
+
+describe('AudioSettings', () => {
+  const RN = require('react-native');
+  const RealModal = RN.Modal;
+  const MockModal = ({ visible, children, onRequestClose }: { visible: boolean; children: React.ReactNode; onRequestClose: () => void }) =>
+    React.createElement(RN.View, { testID: 'audio-settings-window', visible, onRequestCloseForTest: onRequestClose }, visible ? children : null);
+  let dimensions: jest.SpyInstance;
+  const sound = {
+    masterVolume: 0.8,
+    musicVolume: 0.5,
+    voiceOverVolume: 1,
+    setMasterVolume: jest.fn(),
+    setMusicVolume: jest.fn(),
+    setVoiceOverVolume: jest.fn(),
+  };
+
+  beforeAll(() => {
+    RN.Modal = MockModal;
+  });
+
+  afterAll(() => {
+    RN.Modal = RealModal;
+  });
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockSound.mockReturnValue(sound);
+    dimensions = jest.spyOn(RN.Dimensions, 'get').mockReturnValue({ width: 1180, height: 820, scale: 2, fontScale: 1 });
+  });
+
+  afterEach(() => {
+    dimensions.mockRestore();
+  });
+
+  it('shows the volumes the app holds, under their names', () => {
+    const { UNSAFE_root } = render(<AudioSettings visible onClose={jest.fn()} presentation="overlay" />);
+
+    expect(said(UNSAFE_root, 'audio-panel-title')).toBe('audioSettings.title');
+    expect(said(UNSAFE_root, 'audio-panel-label-master')).toBe('audioSettings.masterVolume');
+    expect(said(UNSAFE_root, 'audio-panel-level-master')).toBe('80%');
+    expect(said(UNSAFE_root, 'audio-panel-level-music')).toBe('50%');
+    expect(said(UNSAFE_root, 'audio-panel-level-voice')).toBe('100%');
+  });
+
+  it.each([
+    ['master', 'setMasterVolume'],
+    ['music', 'setMusicVolume'],
+    ['voice', 'setVoiceOverVolume'],
+  ] as const)('hands the %s slider`s change to the app`s sound settings', (id, setter) => {
+    const { UNSAFE_root } = render(<AudioSettings visible onClose={jest.fn()} presentation="overlay" />);
+    const slider = UNSAFE_root.findAll((node) => node.props.testID === `audio-panel-slider-${id}` && typeof node.props.onValueChange === 'function')[0];
+
+    slider.props.onValueChange(0.25);
+
+    expect(sound[setter]).toHaveBeenCalledWith(0.25);
+  });
+
+  it('mutes a channel with its round button through the app`s sound settings', () => {
+    const { UNSAFE_root } = render(<AudioSettings visible onClose={jest.fn()} presentation="overlay" />);
+
+    fireEvent.press(pressable(UNSAFE_root, 'audio-panel-button-music'));
+
+    expect(sound.setMusicVolume).toHaveBeenCalledWith(0);
+  });
+
+  it('closes with Done', () => {
+    const onClose = jest.fn();
+    const { UNSAFE_root } = render(<AudioSettings visible onClose={onClose} presentation="overlay" />);
+
+    fireEvent.press(pressable(UNSAFE_root, 'audio-panel-done'));
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('opens in a window over the whole screen unless the page holds it itself', () => {
+    const { UNSAFE_root } = render(<AudioSettings visible onClose={jest.fn()} />);
+
+    const window = find(UNSAFE_root, 'audio-settings-window')[0];
+    expect(window.props.visible).toBe(true);
+    expect(window.findAll((node) => node.props.testID === 'audio-panel')).not.toHaveLength(0);
+  });
+
+  it('closes its window from Android back', () => {
+    const onClose = jest.fn();
+    const { UNSAFE_root } = render(<AudioSettings visible onClose={onClose} />);
+
+    find(UNSAFE_root, 'audio-settings-window')[0].props.onRequestCloseForTest();
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows no window while shut', () => {
+    const { UNSAFE_root } = render(<AudioSettings visible={false} onClose={jest.fn()} />);
+
+    expect(find(UNSAFE_root, 'audio-settings-window')[0].props.visible).toBe(false);
+  });
+
+  it('inside a page that holds it, opens in place, with no window of its own', () => {
+    const { UNSAFE_root } = render(<AudioSettings visible onClose={jest.fn()} presentation="overlay" />);
+
+    expect(find(UNSAFE_root, 'audio-settings-window')).toHaveLength(0);
+    expect(find(UNSAFE_root, 'audio-panel')).not.toHaveLength(0);
   });
 });

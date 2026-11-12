@@ -1,27 +1,33 @@
 import React, { useEffect, useRef } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
+import * as Haptics from 'expo-haptics';
+import { useGlobalSound } from '@/contexts/global-sound-context';
+import { useAccessibility } from '@/hooks/use-accessibility';
+import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { Image, type ImageSource } from 'expo-image';
 import { Fonts } from '@/constants/theme';
-import { MENU_INK } from './reader-menu';
-import { LANGUAGE_PANEL, PanelClose, PanelDone, PanelFrame, PanelTitle, usePanelPresence, type PanelPlace } from './language-panel';
+import { MENU_INK } from '@/components/stories/reader-menu';
+import { LANGUAGE_PANEL, PanelDone, PanelFrame, PanelTitle, usePanelPresence, type PanelPlace } from '@/components/stories/language-panel';
 import { PaintedSlider } from './painted-slider';
 
 export const AUDIO_PANEL = {
-  width: 1277,
-  height: 992,
-  title: { x: 638.5, y: 169, reach: 330, height: 96, size: 60 },
-  close: { left: 1103, top: 122 },
-  crestFoot: 108,
-  leaf: 1155,
-  cards: [230, 433, 632],
-  card: { height: 177 },
-  slot: { x: 151, size: 140 },
-  icon: 82,
-  off: { length: 104, thickness: 9 },
-  label: { left: 250, y: 0.32, height: 56, size: 40 },
-  level: { right: 1140, size: 36 },
-  slider: { left: 250, right: 1140, y: 0.68, height: 64, track: 12, knob: { width: 66, height: 40 } },
-  done: { left: 346, width: 585, top: 844 },
+  width: 1387,
+  height: 1028,
+  title: { x: 708, y: 159, reach: 330, height: 96, size: 60 },
+  crest: 708,
+  crestFoot: 120,
+  leaf: 1262,
+  cards: [198.7, 421.7, 644.7],
+  card: { left: 54.7, right: 1332.3, height: 193.3 },
+  slot: { x: 164.4, size: 152 },
+  icon: 89,
+  off: { length: 113, thickness: 10 },
+  label: { left: 272, y: 0.32, height: 61, size: 43 },
+  level: { right: 1240, size: 39 },
+  slider: { left: 272, right: 1240, y: 0.68, height: 70, track: 13, knob: { width: 72, height: 43 } },
+  done: { left: 458.5, width: 470, top: 852 },
 } as const;
 
 const A = AUDIO_PANEL;
@@ -78,7 +84,7 @@ export interface AudioChannel {
   onChange: (value: number) => void;
 }
 
-interface ReaderAudioPanelProps {
+interface AudioSettingsPanelProps {
   visible: boolean;
   screen: Box;
   insets: Insets;
@@ -86,14 +92,13 @@ interface ReaderAudioPanelProps {
   reduceMotion: boolean;
   title: string;
   doneLabel: string;
-  closeLabel: string;
   muteLabel: string;
   unmuteLabel: string;
   channels: readonly AudioChannel[];
   onClose: () => void;
 }
 
-export function ReaderAudioPanel({ visible, screen, insets, textScale, reduceMotion, title, doneLabel, closeLabel, muteLabel, unmuteLabel, channels, onClose }: ReaderAudioPanelProps) {
+export function AudioSettingsPanel({ visible, screen, insets, textScale, reduceMotion, title, doneLabel, muteLabel, unmuteLabel, channels, onClose }: AudioSettingsPanelProps) {
   const { mounted, dimStyle, panelStyle } = usePanelPresence(visible, reduceMotion);
   const heard = useRef<Record<string, number>>({});
   useEffect(() => {
@@ -119,7 +124,6 @@ export function ReaderAudioPanel({ visible, screen, insets, textScale, reduceMot
     <PanelFrame id="audio-panel" visible={visible} place={place} dimStyle={dimStyle} panelStyle={panelStyle} onBackdrop={onClose}>
       <Image testID="audio-panel-art" accessible={false} source={ART} contentFit="fill" transition={0} style={[styles.spot, { left: 0, top: 0, width: place.width, height: place.height }]} />
       <PanelTitle id="audio-panel" title={title} scale={place.scale} text={place.text} spot={A.title} />
-      <PanelClose id="audio-panel" label={closeLabel} scale={place.scale} left={u(A.close.left)} top={u(A.close.top)} onPress={onClose} />
 
       {channels.map((channel, row) => {
         const cardTop = A.cards[row];
@@ -178,6 +182,53 @@ export function ReaderAudioPanel({ visible, screen, insets, textScale, reduceMot
 
       <PanelDone id="audio-panel" label={doneLabel} scale={place.scale} text={place.text} left={u(A.done.left)} top={u(A.done.top)} width={u(A.done.width)} onPress={onClose} />
     </PanelFrame>
+  );
+}
+
+interface AudioSettingsProps {
+  visible: boolean;
+  onClose: () => void;
+  presentation?: 'window' | 'overlay';
+}
+
+export function AudioSettings({ visible, onClose, presentation = 'window' }: AudioSettingsProps) {
+  const { t } = useTranslation();
+  const sound = useGlobalSound();
+  const insets = useSafeAreaInsets();
+  const { width, height } = useWindowDimensions();
+  const { textSizeScale } = useAccessibility();
+  const reduceMotion = useReducedMotion();
+  const inWindow = presentation === 'window';
+  const close = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    onClose();
+  };
+
+  const panel = (
+    <AudioSettingsPanel
+      visible={visible}
+      screen={{ width, height }}
+      insets={insets}
+      textScale={textSizeScale}
+      reduceMotion={reduceMotion || inWindow}
+      title={t('audioSettings.title')}
+      doneLabel={t('reader.done')}
+      muteLabel={t('audioSettings.mute')}
+      unmuteLabel={t('audioSettings.unmute')}
+      channels={[
+        { id: 'master', label: t('audioSettings.masterVolume'), value: sound.masterVolume, onChange: sound.setMasterVolume },
+        { id: 'music', label: t('audioSettings.music'), value: sound.musicVolume, onChange: sound.setMusicVolume },
+        { id: 'voice', label: t('audioSettings.voiceOver'), value: sound.voiceOverVolume, onChange: sound.setVoiceOverVolume },
+      ]}
+      onClose={close}
+    />
+  );
+
+  if (!inWindow) return panel;
+  return (
+    <Modal visible={visible} transparent animationType={reduceMotion ? 'none' : 'fade'} statusBarTranslucent supportedOrientations={['portrait', 'landscape']} onRequestClose={close}>
+      {panel}
+    </Modal>
   );
 }
 

@@ -51,22 +51,46 @@ jest.mock('expo-haptics', () => ({
 }));
 
 // Mock expo-blur
-jest.mock('expo-blur', () => ({
-  BlurView: ({ children, ...props }: any) => {
-    const { View } = require('react-native');
-    return <View {...props}>{children}</View>;
+const mockSettings: { visible: boolean; onClose: () => void }[] = [];
+jest.mock('@/components/ui/audio-settings-panel', () => ({
+  AudioSettings: (props: { visible: boolean; onClose: () => void }) => {
+    mockSettings.push(props);
+    return null;
   },
 }));
-
-// Mock @react-native-community/slider
-jest.mock('@react-native-community/slider', () => {
-  const { View } = require('react-native');
-  return (props: any) => <View testID="slider" {...props} />;
-});
 
 describe('MusicControl', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  it('opens the painted audio settings on a long press', () => {
+    const { getByLabelText } = render(<MusicControl />);
+
+    fireEvent(getByLabelText(/Mute background music/i), 'longPress');
+
+    expect(mockSettings[mockSettings.length - 1].visible).toBe(true);
+  });
+
+  it('puts the audio settings away when they close', () => {
+    const { getByLabelText } = render(<MusicControl />);
+    fireEvent(getByLabelText(/Mute background music/i), 'longPress');
+
+    const { act } = require('@testing-library/react-native');
+    act(() => { mockSettings[mockSettings.length - 1].onClose(); });
+
+    expect(mockSettings[mockSettings.length - 1].visible).toBe(false);
+  });
+
+  it('leaves the audio settings to a page that draws its own', () => {
+    mockSettings.length = 0;
+    const onAudioModalChange = jest.fn();
+    const { getByLabelText } = render(<MusicControl onAudioModalChange={onAudioModalChange} />);
+
+    fireEvent(getByLabelText(/Mute background music/i), 'longPress');
+
+    expect(onAudioModalChange).toHaveBeenCalledWith(true);
+    expect(mockSettings).toHaveLength(0);
   });
 
   it('should render when music is loaded', () => {

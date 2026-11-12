@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { StyleSheet, View, type AccessibilityActionEvent, type GestureResponderEvent } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { PANEL_COLOURS } from './language-panel';
+import { PANEL_COLOURS } from '@/components/stories/language-panel';
 
 export const PAINTED_SLIDER = {
   fill: PANEL_COLOURS.done.fill[0],

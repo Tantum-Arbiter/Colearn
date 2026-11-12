@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet } from 'react-native';
 import { render } from '@testing-library/react-native';
 import type { ReactTestInstance } from 'react-test-renderer';
-import { PaintedSlider } from '@/components/stories/painted-slider';
+import { PaintedSlider } from '@/components/ui/painted-slider';
 import { PANEL_COLOURS } from '@/components/stories/language-panel';
 
 const WIDTH = 300;

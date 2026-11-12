@@ -11,7 +11,7 @@ import { Dimensions, StyleSheet, Text, View, type StyleProp, type ViewStyle } fr
 import { render, fireEvent, act, type RenderResult } from '@testing-library/react-native';
 import { withTiming } from 'react-native-reanimated';
 import { HomeScene, STATS_CHIP_INSET, TABLET_FOOT_PADDING } from '@/components/home/home-scene';
-import { AudioControlModal } from '@/components/ui/audio-control-modal';
+import { AudioSettings } from '@/components/ui/audio-settings-panel';
 import { LanguagePicker } from '@/components/ui/language-picker';
 import { useGlobalSound } from '@/contexts/global-sound-context';
 import { CIRCLE_BUTTON_DIAMETER_PHONE, contentMargin, journeyHeaderTop } from '@/components/child-ui/tokens';
@@ -22,8 +22,8 @@ import { navClearance, navItemCentre } from '@/components/child-ui/child-bottom-
 import { STAT_ORB, statOrbDiameter, statOrbRowHeight, statOrbRowWidth } from '@/constants/stat-orbs';
 import type { ChildHomeData, WelcomeCopy } from '@/types/child-home';
 
-jest.mock('@/components/ui/audio-control-modal', () => ({
-  AudioControlModal: function AudioControlModal() {
+jest.mock('@/components/ui/audio-settings-panel', () => ({
+  AudioSettings: function AudioSettings() {
     return null;
   },
 }));
@@ -655,7 +655,7 @@ describe('HomeScene', () => {
       const button = byTestId(view, 'home-sound-button').filter((node) => typeof node.props.onLongPress === 'function')[0];
       act(() => { button.props.onLongPress(); });
 
-      expect(view.UNSAFE_getByType(AudioControlModal).props.visible).toBe(true);
+      expect(view.UNSAFE_getByType(AudioSettings).props.visible).toBe(true);
     });
   });
 });

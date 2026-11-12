@@ -120,8 +120,8 @@ jest.mock('@/components/ui/music-control', () => ({
   MusicControl: () => null,
 }));
 
-jest.mock('@/components/ui/audio-control-modal', () => ({
-  AudioControlModal: () => null,
+jest.mock('@/components/ui/audio-settings-panel', () => ({
+  AudioSettings: () => null,
 }));
 
 jest.mock('@/components/ui/parents-only-modal', () => ({

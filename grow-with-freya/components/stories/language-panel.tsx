@@ -70,6 +70,7 @@ const CLOSE = { rim: '#F3AA11', fill: '#FCE5B5', glyph: '#A84202' } as const;
 const DONE = { rim: '#EDBFFA', fill: ['#7E3AA5', '#65328E'], lip: '#340F4B', ink: '#FFFFFF' } as const;
 
 export const PANEL_COLOURS = { hint: HINT_INK, close: CLOSE, done: DONE } as const;
+const DONE_HELD = { scale: 0.97, sink: 0.8 } as const;
 
 const ART: Record<'top' | 'middle' | 'bottom' | 'fade' | 'fadeTop', ImageSource> = {
   top: require('@/assets/images/reader-languages/panel-top.webp'),
@@ -303,15 +304,18 @@ interface PanelDoneProps {
 
 export function PanelDone({ id, label, scale, text, left, top, width, onPress }: PanelDoneProps) {
   const u = (units: number) => units * scale;
+  const [held, setHeld] = useState(false);
   return (
     <Pressable
       testID={`${id}-done`}
       accessibilityRole="button"
       accessibilityLabel={label}
       onPress={onPress}
-      style={[styles.spot, styles.doneLip, { left, top, width, height: u(P.done.height), borderRadius: u(P.done.radius), paddingBottom: u(P.done.lip) }]}
+      onPressIn={() => setHeld(true)}
+      onPressOut={() => setHeld(false)}
+      style={[styles.spot, styles.doneLip, { left, top, width, height: u(P.done.height), borderRadius: u(P.done.radius), paddingBottom: u(P.done.lip) }, held && { transform: [{ scale: DONE_HELD.scale }] }]}
     >
-      <LinearGradient colors={DONE.fill} style={[styles.doneFace, { borderRadius: u(P.done.radius), borderWidth: Math.max(1, u(P.done.rim)), gap: u(18), paddingHorizontal: u(40) }]}>
+      <LinearGradient testID={`${id}-done-face`} colors={DONE.fill} style={[styles.doneFace, { borderRadius: u(P.done.radius), borderWidth: Math.max(1, u(P.done.rim)), gap: u(18), paddingHorizontal: u(40) }, held && { transform: [{ translateY: u(P.done.lip) * DONE_HELD.sink }] }]}>
         <Ionicons name="checkmark-circle" size={u(P.done.icon)} color={DONE.ink} />
         <Text testID={`${id}-done-label`} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7} allowFontScaling={false} style={[styles.doneLabel, { fontSize: u(P.done.size) * text }]}>
           {label}

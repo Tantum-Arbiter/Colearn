@@ -1541,8 +1541,25 @@ describe('StoryBookReader: a book drawn for cover fit', () => {
       done();
     });
 
-    it('leaves an older, contained book as it was, upright too', () => {
+    it('upright, gives an older book the same softened bands, behind its own picture', () => {
       const { view, done } = onScreen(834, 1210, mockStory);
+
+      const [band] = bands(view);
+      expect(band.props.source).toEqual({ uri: 'test-page1.jpg' });
+      expect(band.props.blurRadius).toBeGreaterThan(0);
+      done();
+    });
+
+    it('upright, leaves an older book`s own picture contained and zoomed as before', () => {
+      const { view, done } = onScreen(834, 1210, mockStory);
+
+      const own = view.UNSAFE_root.findAll((node) => node.props.contentFit === 'contain' && node.props.source?.uri === 'test-page1.jpg')[0];
+      expect(flat(own).transform).toEqual([{ scale: 1.35 }]);
+      done();
+    });
+
+    it('on its side, gives an older book no bands', () => {
+      const { view, done } = onScreen(1210, 834, mockStory);
 
       expect(bands(view)).toHaveLength(0);
       done();
