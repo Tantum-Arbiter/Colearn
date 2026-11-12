@@ -1,6 +1,8 @@
 import React from 'react';
 import { Image } from 'expo-image';
 import type { ReactTestInstance } from 'react-test-renderer';
+import { LANGUAGE_PILL } from '@/components/stories/language-panel';
+import { SUPPORTED_LANGUAGES } from '@/services/i18n';
 
 beforeAll(() => {
   Object.defineProperty(globalThis, '__DEV__', { value: false, configurable: true });
@@ -780,6 +782,364 @@ describe('StoryBookReader: two lines at a time', () => {
       expect(pill.props.accessibilityLabel).toBe('reader.page (current:1, total:2)');
       expect(all(view, (node) => node.props.testID === 'page-pill-book')).not.toHaveLength(0);
       view.unmount();
+    });
+
+    describe('its Compare Languages panel', () => {
+      type View = ReturnType<typeof render>;
+      const { Dimensions } = require('react-native');
+      let dimensions: jest.SpyInstance;
+      beforeEach(() => {
+        dimensions = jest.spyOn(Dimensions, 'get').mockReturnValue({ width: 874, height: 402, scale: 1, fontScale: 1 });
+      });
+      afterEach(() => {
+        dimensions.mockRestore();
+      });
+      const open = (view: View) => {
+        act(() => {
+          press(view, 'story-menu-button');
+        });
+        const row = all(view, (node) => node.props.accessibilityLabel === 'reader.compareLanguage' && typeof node.props.onPress === 'function')[0];
+        act(() => {
+          fireEvent.press(row);
+        });
+      };
+      const there = (view: View, id: string) => all(view, (node) => node.props.testID === id).length > 0;
+      const tap = (view: View, id: string) =>
+        act(() => {
+          all(view, (node) => node.props.testID === id && typeof node.props.onPress === 'function')[0].props.onPress();
+        });
+      const rim = (view: View, code: string) => {
+        const found = all(view, (node) => node.props.testID === `language-pill-face-${code}` && node.props.style !== undefined);
+        return StyleSheet.flatten(found[found.length - 1].props.style).borderColor;
+      };
+      const said = (view: View, id: string) => shown(all(view, (node) => node.props.testID === id)[0]).join('');
+      const toggle = (view: View) => all(view, (node) => node.props.testID === 'language-panel-toggle' && typeof node.props.onPress === 'function')[0];
+      const reader = () => render(<StoryBookReader story={stones} onExit={jest.fn()} skipCoverPage skipInitialFadeIn />);
+
+      it('is not on the page until it is asked for', () => {
+        const view = reader();
+
+        expect(there(view, 'language-panel')).toBe(false);
+        view.unmount();
+      });
+
+      it('opens from the menu`s Compare row as the painted panel, with every language the app has', () => {
+        const view = reader();
+
+        open(view);
+
+        expect(there(view, 'language-panel')).toBe(true);
+        expect(said(view, 'language-panel-title')).toBe('reader.compareLanguage');
+        expect(said(view, 'language-panel-hint')).toBe('reader.selectCompareLanguage');
+        expect(said(view, 'language-panel-done-label')).toBe('reader.done');
+        for (const language of SUPPORTED_LANGUAGES) {
+          expect(said(view, `language-pill-flag-${language.code}`)).toBe(language.flag);
+          expect(said(view, `language-pill-name-${language.code}`)).toBe(language.nativeName);
+        }
+        view.unmount();
+      });
+
+      it('starts with the app`s own language ticked and every other one plain', () => {
+        const view = reader();
+
+        open(view);
+
+        expect(rim(view, 'en')).toBe(LANGUAGE_PILL.comparing.rim);
+        for (const language of SUPPORTED_LANGUAGES.filter((each) => each.code !== 'en')) {
+          expect(rim(view, language.code)).toBe(LANGUAGE_PILL.plain.rim);
+        }
+        view.unmount();
+      });
+
+      it('a first press on a language reads the book in it, a second puts it beside the app`s language, a third reads in it again', () => {
+        const view = reader();
+        open(view);
+
+        tap(view, 'language-pill-tr');
+        const first = [rim(view, 'tr'), rim(view, 'en')];
+        tap(view, 'language-pill-tr');
+        const second = [rim(view, 'tr'), rim(view, 'en')];
+        tap(view, 'language-pill-tr');
+        const third = [rim(view, 'tr'), rim(view, 'en')];
+
+        expect(first).toEqual([LANGUAGE_PILL.reading.rim, LANGUAGE_PILL.comparing.rim]);
+        expect(second).toEqual([LANGUAGE_PILL.comparing.rim, LANGUAGE_PILL.reading.rim]);
+        expect(third).toEqual([LANGUAGE_PILL.reading.rim, LANGUAGE_PILL.comparing.rim]);
+        view.unmount();
+      });
+
+      it('a press on another language moves the reading tick to it and leaves the compared one alone', () => {
+        const view = reader();
+        open(view);
+        tap(view, 'language-pill-tr');
+
+        tap(view, 'language-pill-fr');
+
+        expect([rim(view, 'fr'), rim(view, 'tr'), rim(view, 'en')]).toEqual([LANGUAGE_PILL.reading.rim, LANGUAGE_PILL.plain.rim, LANGUAGE_PILL.comparing.rim]);
+        view.unmount();
+      });
+
+      it('its switch starts off and turns comparing on and off again', () => {
+        const view = reader();
+        open(view);
+        const before = [said(view, 'language-panel-toggle-label'), toggle(view).props.accessibilityState.checked];
+
+        tap(view, 'language-panel-toggle');
+        const on = [said(view, 'language-panel-toggle-label'), toggle(view).props.accessibilityState.checked];
+        tap(view, 'language-panel-toggle');
+        const off = [said(view, 'language-panel-toggle-label'), toggle(view).props.accessibilityState.checked];
+
+        expect(before).toEqual(['common.off', false]);
+        expect(on).toEqual(['common.on', true]);
+        expect(off).toEqual(['common.off', false]);
+        view.unmount();
+      });
+
+      it.each([['language-panel-done'], ['language-panel-close'], ['language-panel-backdrop']])('a press on %s puts it away', (id) => {
+        const view = reader();
+        open(view);
+
+        tap(view, id);
+
+        expect(there(view, 'language-panel')).toBe(false);
+        view.unmount();
+      });
+
+      it('remembers what was chosen when it is opened again', () => {
+        const view = reader();
+        open(view);
+        tap(view, 'language-pill-tr');
+        tap(view, 'language-panel-toggle');
+        tap(view, 'language-panel-done');
+
+        open(view);
+
+        expect(rim(view, 'tr')).toBe(LANGUAGE_PILL.reading.rim);
+        expect(toggle(view).props.accessibilityState.checked).toBe(true);
+        view.unmount();
+      });
+
+      it('answers a pick and the switch with a light tap of the phone, and Done with a firmer one', () => {
+        const Haptics = require('expo-haptics');
+        const view = reader();
+        open(view);
+        Haptics.impactAsync.mockClear();
+
+        tap(view, 'language-pill-tr');
+        tap(view, 'language-panel-toggle');
+        tap(view, 'language-panel-done');
+
+        expect(Haptics.impactAsync.mock.calls.map((call: unknown[]) => call[0])).toEqual([
+          Haptics.ImpactFeedbackStyle.Light,
+          Haptics.ImpactFeedbackStyle.Light,
+          Haptics.ImpactFeedbackStyle.Medium,
+        ]);
+        view.unmount();
+      });
+
+      it('names its close coin in the app`s words', () => {
+        const view = reader();
+
+        open(view);
+
+        expect(all(view, (node) => node.props.testID === 'language-panel-close' && typeof node.props.onPress === 'function')[0].props.accessibilityLabel).toBe('common.close');
+        view.unmount();
+      });
+    });
+
+    describe('the Android back button with a language panel open', () => {
+      type View = ReturnType<typeof render>;
+      const { BackHandler, Dimensions, Platform } = require('react-native');
+      const realOS = Platform.OS;
+      let dimensions: jest.SpyInstance;
+      let listen: jest.SpyInstance;
+      beforeEach(() => {
+        Platform.OS = 'android';
+        dimensions = jest.spyOn(Dimensions, 'get').mockReturnValue({ width: 874, height: 402, scale: 1, fontScale: 1 });
+        listen = jest.spyOn(BackHandler, 'addEventListener').mockImplementation(() => ({ remove: jest.fn() }));
+      });
+      afterEach(() => {
+        Platform.OS = realOS;
+        dimensions.mockRestore();
+        listen.mockRestore();
+      });
+      const back = () => {
+        let handled = false;
+        act(() => {
+          const calls = listen.mock.calls.filter((call) => call[0] === 'hardwareBackPress');
+          handled = calls[calls.length - 1][1]();
+        });
+        return handled;
+      };
+      const open = (view: View, row: string) => {
+        act(() => {
+          press(view, 'story-menu-button');
+        });
+        const found = all(view, (node) => node.props.accessibilityLabel === row && typeof node.props.onPress === 'function')[0];
+        act(() => {
+          fireEvent.press(found);
+        });
+      };
+      const there = (view: View, id: string) => all(view, (node) => node.props.testID === id).length > 0;
+
+      it.each([['reader.compareLanguage'], ['reader.changeLanguage']])('puts the %s panel away and leaves the book open on its page', (row) => {
+        const onExit = jest.fn();
+        const view = render(<StoryBookReader story={stones} onExit={onExit} skipCoverPage skipInitialFadeIn />);
+        const page = () => shown(all(view, (node) => node.props.testID === 'page-indicator')[0]).join('');
+        const before = page();
+        open(view, row);
+
+        const handled = back();
+
+        expect(handled).toBe(true);
+        expect(there(view, 'language-panel')).toBe(false);
+        expect(page()).toBe(before);
+        expect(onExit).not.toHaveBeenCalled();
+        view.unmount();
+      });
+
+      it.each([['reader.compareLanguage'], ['reader.changeLanguage']])('once the %s panel has been put away, goes back to its own work and starts closing the book', async (row) => {
+        const view = render(<StoryBookReader story={stones} onExit={jest.fn()} skipCoverPage skipInitialFadeIn />);
+        const closing = () => all(view, (node) => node.props.testID === 'story-exit-button' && typeof node.props.onPress === 'function')[0].props.disabled === true;
+        open(view, row);
+        act(() => {
+          all(view, (node) => node.props.testID === 'language-panel-close' && typeof node.props.onPress === 'function')[0].props.onPress();
+        });
+        const before = closing();
+
+        await act(async () => {
+          const calls = listen.mock.calls.filter((call) => call[0] === 'hardwareBackPress');
+          calls[calls.length - 1][1]();
+        });
+
+        expect(before).toBe(false);
+        expect(closing()).toBe(true);
+        view.unmount();
+      });
+    });
+
+    describe('its Change Language panel', () => {
+      type View = ReturnType<typeof render>;
+      const { Dimensions } = require('react-native');
+      const i18nService = require('@/services/i18n');
+      let dimensions: jest.SpyInstance;
+      let store: jest.SpyInstance;
+      beforeEach(() => {
+        dimensions = jest.spyOn(Dimensions, 'get').mockReturnValue({ width: 874, height: 402, scale: 1, fontScale: 1 });
+        store = jest.spyOn(i18nService, 'setStoredLanguage').mockResolvedValue(undefined);
+      });
+      afterEach(() => {
+        dimensions.mockRestore();
+        store.mockRestore();
+      });
+      const open = (view: View, row = 'reader.changeLanguage') => {
+        act(() => {
+          press(view, 'story-menu-button');
+        });
+        const found = all(view, (node) => node.props.accessibilityLabel === row && typeof node.props.onPress === 'function')[0];
+        act(() => {
+          fireEvent.press(found);
+        });
+      };
+      const there = (view: View, id: string) => all(view, (node) => node.props.testID === id).length > 0;
+      const tap = (view: View, id: string) =>
+        act(async () => {
+          await all(view, (node) => node.props.testID === id && typeof node.props.onPress === 'function')[0].props.onPress();
+        });
+      const rim = (view: View, code: string) => {
+        const found = all(view, (node) => node.props.testID === `language-pill-face-${code}` && node.props.style !== undefined);
+        return StyleSheet.flatten(found[found.length - 1].props.style).borderColor;
+      };
+      const said = (view: View, id: string) => shown(all(view, (node) => node.props.testID === id)[0]).join('');
+      const reader = () => render(<StoryBookReader story={stones} onExit={jest.fn()} skipCoverPage skipInitialFadeIn />);
+
+      it('opens from the menu`s Change Language row as the same painted panel, under its own title', () => {
+        const view = reader();
+
+        open(view);
+
+        expect(there(view, 'language-panel')).toBe(true);
+        expect(said(view, 'language-panel-title')).toBe('reader.changeLanguage');
+        expect(said(view, 'language-panel-done-label')).toBe('reader.done');
+        for (const language of SUPPORTED_LANGUAGES) {
+          expect(said(view, `language-pill-name-${language.code}`)).toBe(language.nativeName);
+        }
+        view.unmount();
+      });
+
+      it('has no on-off switch and no hint about comparing', () => {
+        const view = reader();
+
+        open(view);
+
+        expect(there(view, 'language-panel-toggle')).toBe(false);
+        expect(there(view, 'language-panel-hint')).toBe(false);
+        view.unmount();
+      });
+
+      it('ticks only the language the app is in', () => {
+        const view = reader();
+
+        open(view);
+
+        expect(rim(view, 'en')).toBe(LANGUAGE_PILL.reading.rim);
+        for (const language of SUPPORTED_LANGUAGES.filter((each) => each.code !== 'en')) {
+          expect(rim(view, language.code)).toBe(LANGUAGE_PILL.plain.rim);
+        }
+        view.unmount();
+      });
+
+      it.each([['tr'], ['ja'], ['en']])('a press on %s puts the app into that language and puts the panel away', async (code) => {
+        const view = reader();
+        open(view);
+
+        await tap(view, `language-pill-${code}`);
+
+        expect(store).toHaveBeenCalledTimes(1);
+        expect(store).toHaveBeenCalledWith(code);
+        expect(there(view, 'language-panel')).toBe(false);
+        view.unmount();
+      });
+
+      it.each([['language-panel-done'], ['language-panel-close'], ['language-panel-backdrop']])('a press on %s puts it away and leaves the language alone', async (id) => {
+        const view = reader();
+        open(view);
+
+        await tap(view, id);
+
+        expect(there(view, 'language-panel')).toBe(false);
+        expect(store).not.toHaveBeenCalled();
+        view.unmount();
+      });
+
+      it('answers a pick and Done with a firm tap of the phone', async () => {
+        const Haptics = require('expo-haptics');
+        const view = reader();
+        open(view);
+        Haptics.impactAsync.mockClear();
+
+        await tap(view, 'language-pill-tr');
+        const afterPick = Haptics.impactAsync.mock.calls.map((call: unknown[]) => call[0]);
+        open(view);
+        Haptics.impactAsync.mockClear();
+        await tap(view, 'language-panel-done');
+        const afterDone = Haptics.impactAsync.mock.calls.map((call: unknown[]) => call[0]);
+
+        expect(afterPick).toEqual([Haptics.ImpactFeedbackStyle.Medium]);
+        expect(afterDone).toEqual([Haptics.ImpactFeedbackStyle.Medium]);
+        view.unmount();
+      });
+
+      it('is a different panel from Compare Languages: that one still has its switch and hint', () => {
+        const view = reader();
+
+        open(view, 'reader.compareLanguage');
+
+        expect(said(view, 'language-panel-title')).toBe('reader.compareLanguage');
+        expect(there(view, 'language-panel-toggle')).toBe(true);
+        expect(there(view, 'language-panel-hint')).toBe(true);
+        view.unmount();
+      });
     });
   });
 });

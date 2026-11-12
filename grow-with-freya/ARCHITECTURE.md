@@ -2070,6 +2070,33 @@ same panel (`ReaderMenuPanel`). Both are built with the book and kept mounted, m
 their pictures decoded; opening or closing fades the whole panel as one (`MENU_FADE_MS`, at once
 under Reduce Motion), and while closed it takes no touches and is hidden from the screen reader.
 
+**The reader's language panels (2026-11-12).** Compare Languages and Change Language both open
+`LanguagePanel` (`components/stories/language-panel.tsx`, art in `assets/images/reader-languages/`,
+cut by `scripts/prepare-language-panel.py`, §5j), drawn to the operator's mock-up: a cream panel in
+a gold rim with a leaf sprig, an orange crest and mushrooms, over the dimmed page. The frame is
+three pictures (top, a middle stretched to the list, bottom); everything on it is drawn by the app
+from `LANGUAGE_PANEL`, in the mock-up's own units times one scale: the heading, the close coin, the
+languages three to a line (flag emoji, own name, a tick when chosen) and Done. Compare Languages
+adds its ON/OFF switch and a hint; the language being read is gold (`reading`), the one beside it
+teal (`comparing`), and the rules for a press are unchanged and stay in the reader. Change
+Language passes no switch and no hint (the heading then sits `title.alone` lower) and ticks the
+app's language gold; a press stores it and closes.
+`languagePanelLayout` sizes it: as wide as the safe area allows up to `maxScale` (times the text
+size, to 1.3), all the lines showing where they fit (tablets). Where the height is what limits
+it (a phone on its side), it is made smaller to fit until a language would be under
+`smallestPill` (40) points tall, and past that it shows three whole lines and `peek` of the
+fourth, the list scrolling under a soft edge at its head and foot (the fades are strips of the
+panel's own paper, so they match it across its shading). Where the width limits it (a narrow
+window, such as a tablet sharing its screen) the whole panel simply shrinks with every line
+showing, so in a window a third of a tablet wide the languages are about 21 points tall: the
+frame is one picture and is not relaid for narrow windows. The words are drawn at the mock-up's
+sizes times `text`, which makes up whatever the app's text size asks that the panel itself could
+not grow by (all of it on a phone); the phone's own text setting is not applied
+(`allowFontScaling={false}`), because the boxes are fixed. It fades and grows in
+(`LANGUAGE_PANEL_MOTION`), stays mounted while it fades out and unmounts when the fade ends, and
+does both at once under Reduce Motion. It is an overlay view, not a native `Modal`; while open it
+is the screen reader's modal view, and the Android back button puts it away first.
+
 Reveal elements (`type: reveal`), including cropped patches and legacy full-canvas
 overlays, use fixed scene geometry. Their opacity animates, but their geometry does not scale;
 this keeps delivered before/after patches aligned to the background throughout the

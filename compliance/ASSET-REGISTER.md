@@ -29,6 +29,7 @@ marked **⚠️ UNVERIFIED**.
 | The clouds behind every book's words, one with faces and one with instruments for music books (the operator's pictures, 2026-11-11) | Registered below, §5g — origin and licence ⚠️ UNVERIFIED |
 | The Play button on a book's music pages (the operator's picture, 2026-11-11) | Registered below, §5h — origin and licence ⚠️ UNVERIFIED |
 | The reader's menu: its painted panel, row icons and row arrow (the operator's pictures, 2026-11-11) | Registered below, §5i — origin and licence ⚠️ UNVERIFIED |
+| The reader's Compare Languages and Change Language panels: the painted frame (cut from the operator's mock-up, 2026-11-12) | Registered below, §5j — origin and licence ⚠️ UNVERIFIED |
 | The lock on the island's learning-plan checkpoints | Registered below, §6 — the supplied picture is not drawn since 2026-10-03 (a padlock drawn in code replaced it); the file remains, origin ⚠️ UNVERIFIED |
 | Everything else — avatars, story illustrations, instrument art, music, fonts, voices (the feelings game's art and the spelling game's art left with those games on 2026-10-16; the nine bear and animal faces the badges draw stay in `assets/images/emotions/`) | **Not registered.** Origin is not recorded anywhere in the repository — ⚠️ UNVERIFIED |
 
@@ -276,6 +277,22 @@ sign-in sky, the owl and the badge art.
 | Terms for commercial use, and who owns it | ⚠️ UNVERIFIED — depends on the answer above |
 | Checked by eye against well-known games and films | **Not yet done by a person** |
 | Quality | The panel is composed at 3700 pixels wide from the full-size corner pieces and stored at 920; it is drawn 276 points wide on a phone (828 pixels at 3×) and about 317 on a tablet with larger buttons (951), so it is enlarged slightly there; the icons are drawn 32 points (96 pixels) from 192 |
+
+## 5j. The reader's language panels
+
+| File (under `grow-with-freya/assets/images/reader-languages/`) | Where from | What was changed |
+|---|---|---|
+| `source/compare-mock.webp` (1353×769, SHA-256 `d192c9ed11347dd4db98c32b6a892a1d3b3d89cb904aacd2d871914bf10abf50`) | Supplied by the operator, pasted into the working session on 2026-11-12: a mock-up of the Compare Languages panel over a dimmed reader page, with the instruction to take the assets from it | Stored as sent. Not required by the app, so not bundled |
+| `panel-top.webp` (1872×387), `panel-middle.webp` (1872×474), `panel-bottom.webp` (1872×282) | Cut from the mock-up by `grow-with-freya/scripts/prepare-language-panel.py` | The panel (gold rim, leaf sprig, orange crest, mushrooms and grass) lifted off the dark page behind it by brightness and colour, its edge trimmed just over a pixel so no dark fringe rides along. The words, the language buttons, the switch, the close coin and Done are wiped from the cream face: those areas are filled from the paper around them and given the paper's own grain, taken from a clean patch of the same picture. The crest's middle petal is cut off by the top edge of the mock-up; its cream surround is finished as a plain arc in the surround's colour, about ten pixels of it, and the petal's tip with two pixels of its highlight colour. Enlarged 1.5× and cut into a top, a middle the app stretches to the list, and a bottom. Nothing else from outside the operator's picture is added |
+| `panel-fade.webp` (1694×39), `panel-fade-top.webp` (1694×16) | Strips of the same cleaned panel face, from the foot and the head of the list area, by the same script | Made see-through along a ramp, so the list fades under them |
+| The heading, hint, switch, close coin, language buttons, ticks and Done | Drawn by the app (`components/stories/language-panel.tsx`) in colours sampled from the mock-up; the flags are the system's emoji, not the mock-up's painted flags (it shows nine languages, the app has fourteen) | Made for the app |
+
+| Question | Answer |
+|---|---|
+| Who made it, and with what | ⚠️ UNVERIFIED — the picture arrived with no record of its origin. It has the look of a generated image; the operator to say which service and account, or which artist |
+| Terms for commercial use, and who owns it | ⚠️ UNVERIFIED — depends on the answer above |
+| Checked by eye against well-known games and films | **Not yet done by a person** |
+| Quality | The panel is 1248 pixels wide in the mock-up and stored at 1872. It is drawn about 580 points wide on a phone on its side (1740 pixels at 3×) and up to 780 points on a tablet (1560 at 2×, more with larger text), so the painted rim, leaves and mushrooms are enlarged about 1.4× from the mock-up and are a little soft close up; a full-size picture of the frame from the operator would cure it |
 
 ## 7. Wombat's Picnic Count (the first game pack)
 

@@ -32,6 +32,7 @@ import { PageProgressRing } from './page-progress-ring';
 import { PagePill } from './page-pill';
 import { PlayPill } from './play-pill';
 import { MENU_INK, MENU_WIDTH, ReaderMenu, ReaderMenuPanel, menuPlacement } from './reader-menu';
+import { LanguagePanel, type LanguageChoice } from './language-panel';
 import { StoryCloud, cloudInset } from './story-cloud';
 import { bookTheme, storyHasMusic } from './catalogue/catalogue-story';
 import { COIN_RIM, ReaderCoin } from '@/components/child-ui/reader-coin';
@@ -77,6 +78,7 @@ const log = Logger.create('StoryBookReader');
 
 /** How long the instrument overlay takes to rise into place, and to leave. */
 const MUSIC_PRACTICE_ANIM_MS = 300;
+const READER_LANGUAGES: readonly LanguageChoice[] = SUPPORTED_LANGUAGES.map(({ code, nativeName, flag }) => ({ code, name: nativeName, flag }));
 export const NARRATION_SLIDE_MS = 360;
 const NARRATION_SLIDE_SHARE = 0.5;
 const TIPS_BADGE = 34;
@@ -628,6 +630,14 @@ export function StoryBookReader({
 
     const onBackPress = () => {
       // 1. Close any open overlay first
+      if (showCompareLanguageModal) {
+        setShowCompareLanguageModal(false);
+        return true;
+      }
+      if (showChangeLanguageModal) {
+        setShowChangeLanguageModal(false);
+        return true;
+      }
       if (showSettingsMenu) {
         setShowSettingsMenu(false);
         setActiveSubmenu(null);
@@ -674,6 +684,7 @@ export function StoryBookReader({
   }, [
     showSettingsMenu, showPagePreview, showTipsOverlay, showMusicSheet,
     showInstrumentPicker, musicChallengePhase, currentPageIndex, isExiting,
+    showCompareLanguageModal, showChangeLanguageModal,
   ]);
 
   // Animate the music practice overlay down off screen, then reset state.
@@ -3300,190 +3311,68 @@ export function StoryBookReader({
         onEnd={() => setShowTipsOverlay(false)}
       />
 
-      {/* Compare Languages Modal - Using absolute View instead of Modal to prevent iOS crash */}
-      {showCompareLanguageModal && (
-        <View style={styles.absoluteModalContainer}>
-          <Pressable
-            style={styles.absoluteModalBackdrop}
-            onPress={() => setShowCompareLanguageModal(false)}
-          />
-          <View style={[styles.compareLanguageModalOverlay, (isTablet || (screenWidth > screenHeight)) && { justifyContent: 'center', alignItems: 'center' }]} pointerEvents="box-none">
-          <View style={[styles.compareLanguageModalContent, isTablet && styles.compareLanguageModalContentTablet]}>
-            {/* Header with toggle */}
-            <View style={styles.compareLanguageModalHeader}>
-              <Text style={[styles.compareLanguageModalTitle, { fontSize: scaledFontSize(16) }]}>
-                {t('reader.compareLanguage')}
-              </Text>
-              <Pressable
-                style={[styles.compareLanguageModalHeaderToggle, isCompareLanguageEnabled && styles.compareLanguageModalHeaderToggleOn]}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  setIsCompareLanguageEnabled(prev => !prev);
-                }}
-              >
-                <Text style={[styles.compareLanguageModalHeaderToggleText, { fontSize: scaledFontSize(12) }]}>
-                  {isCompareLanguageEnabled ? t('common.on') : t('common.off')}
-                </Text>
-              </Pressable>
-              <Pressable
-                style={styles.compareLanguageModalCloseButton}
-                onPress={() => setShowCompareLanguageModal(false)}
-              >
-                <Ionicons name="close" size={18} color="#666" />
-              </Pressable>
-            </View>
+      <LanguagePanel
+        visible={showCompareLanguageModal}
+        screen={{ width: screenWidth, height: screenHeight }}
+        insets={insets}
+        textScale={textSizeScale}
+        reduceMotion={reduceMotion}
+        title={t('reader.compareLanguage')}
+        hint={t('reader.selectCompareLanguage')}
+        doneLabel={t('reader.done')}
+        closeLabel={t('common.close')}
+        toggle={{
+          on: isCompareLanguageEnabled,
+          label: isCompareLanguageEnabled ? t('common.on') : t('common.off'),
+          onPress: () => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            setIsCompareLanguageEnabled(prev => !prev);
+          },
+        }}
+        languages={READER_LANGUAGES}
+        marks={{ [sessionLanguage]: 'reading', [compareLanguage]: 'comparing' }}
+        onPick={(code) => {
+          const lang = code as SupportedLanguage;
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          if (sessionLanguage === lang) {
+            setSessionLanguage(currentLanguage);
+            setCompareLanguage(lang);
+          } else if (compareLanguage === lang) {
+            setCompareLanguage(currentLanguage);
+            setSessionLanguage(lang);
+          } else {
+            setSessionLanguage(lang);
+          }
+        }}
+        onDone={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          setShowCompareLanguageModal(false);
+        }}
+        onClose={() => setShowCompareLanguageModal(false)}
+      />
 
-            {/* Scrollable Content */}
-            <ScrollView
-              style={styles.compareLanguageModalScroll}
-              showsVerticalScrollIndicator={true}
-              bounces={false}
-            >
-              <Text style={[styles.compareLanguageModalLabel, { fontSize: scaledFontSize(12) }]}>
-                {t('reader.selectCompareLanguage')}
-              </Text>
-
-              {/* Shared Language Pool - Grid Layout */}
-              <View style={styles.compareLanguageModalLanguageList}>
-              {SUPPORTED_LANGUAGES.map((langObj) => {
-                const lang = langObj.code;
-                const langName = langObj.nativeName;
-                const langFlag = langObj.flag;
-                const isSessionSelected = sessionLanguage === lang;
-                const isCompareSelected = compareLanguage === lang;
-
-                return (
-                  <Pressable
-                    key={`lang-${lang}`}
-                    style={[
-                      styles.compareLanguageModalLanguageItem,
-                      isSessionSelected && styles.compareLanguageModalLanguageItemSelectedWhite,
-                      isCompareSelected && styles.compareLanguageModalLanguageItemSelectedBlue,
-                    ]}
-                    onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      // If already selected in white box, move to blue box
-                      if (isSessionSelected) {
-                        setSessionLanguage(currentLanguage);
-                        setCompareLanguage(lang as SupportedLanguage);
-                      }
-                      // If already selected in blue box, move to white box
-                      else if (isCompareSelected) {
-                        setCompareLanguage(currentLanguage);
-                        setSessionLanguage(lang as SupportedLanguage);
-                      }
-                      // If not selected, add to white box first
-                      else {
-                        setSessionLanguage(lang as SupportedLanguage);
-                      }
-                    }}
-                  >
-                    <Text style={[styles.compareLanguageModalLanguageFlag, { fontSize: scaledFontSize((isSessionSelected || isCompareSelected) ? (isTablet ? 20 : 16) : (isTablet ? 18 : 14)) }]}>
-                      {langFlag}
-                    </Text>
-                    <Text style={[styles.compareLanguageModalLanguageName, { fontSize: scaledFontSize(isTablet ? 11 : 9) }, (isSessionSelected || isCompareSelected) && styles.compareLanguageModalLanguageNameSelected]} numberOfLines={1}>
-                      {langName}
-                    </Text>
-
-                  </Pressable>
-                );
-              })}
-              </View>
-            </ScrollView>
-
-            {/* Confirm Button */}
-            <Pressable
-              style={styles.compareLanguageModalConfirmButton}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                setShowCompareLanguageModal(false);
-              }}
-            >
-              <Text style={[styles.compareLanguageModalConfirmButtonText, { fontSize: scaledFontSize(14) }]}>
-                {t('reader.done')}
-              </Text>
-            </Pressable>
-          </View>
-        </View>
-      </View>
-      )}
-
-      {/* Change Language Modal - same UI as Compare Languages but for changing app language */}
-      {showChangeLanguageModal && (
-        <View style={styles.absoluteModalContainer}>
-          <Pressable
-            style={styles.absoluteModalBackdrop}
-            onPress={() => setShowChangeLanguageModal(false)}
-          />
-          <View style={[styles.compareLanguageModalOverlay, (isTablet || (screenWidth > screenHeight)) && { justifyContent: 'center', alignItems: 'center' }]} pointerEvents="box-none">
-          <View style={[styles.compareLanguageModalContent, isTablet && styles.compareLanguageModalContentTablet]}>
-            {/* Header */}
-            <View style={styles.compareLanguageModalHeader}>
-              <Text style={[styles.compareLanguageModalTitle, { fontSize: scaledFontSize(16) }]}>
-                {t('reader.changeLanguage')}
-              </Text>
-              <Pressable
-                style={styles.compareLanguageModalCloseButton}
-                onPress={() => setShowChangeLanguageModal(false)}
-              >
-                <Ionicons name="close" size={18} color="#666" />
-              </Pressable>
-            </View>
-
-            {/* Language Grid */}
-            <ScrollView
-              style={styles.compareLanguageModalScroll}
-              showsVerticalScrollIndicator={true}
-              bounces={false}
-            >
-              <View style={styles.compareLanguageModalLanguageList}>
-              {SUPPORTED_LANGUAGES.map((langObj) => {
-                const lang = langObj.code;
-                const langName = langObj.nativeName;
-                const langFlag = langObj.flag;
-                const isSelected = currentLanguage === lang;
-
-                return (
-                  <Pressable
-                    key={`change-lang-${lang}`}
-                    style={[
-                      styles.compareLanguageModalLanguageItem,
-                      isSelected && styles.compareLanguageModalLanguageItemSelectedWhite,
-                    ]}
-                    onPress={async () => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                      await setStoredLanguage(lang as SupportedLanguage);
-                      setShowChangeLanguageModal(false);
-                    }}
-                  >
-                    <Text style={[styles.compareLanguageModalLanguageFlag, { fontSize: scaledFontSize(isSelected ? (isTablet ? 20 : 16) : (isTablet ? 18 : 14)) }]}>
-                      {langFlag}
-                    </Text>
-                    <Text style={[styles.compareLanguageModalLanguageName, { fontSize: scaledFontSize(isTablet ? 11 : 9) }, isSelected && styles.compareLanguageModalLanguageNameSelected]} numberOfLines={1}>
-                      {langName}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-              </View>
-            </ScrollView>
-
-            {/* Done Button */}
-            <Pressable
-              style={styles.compareLanguageModalConfirmButton}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                setShowChangeLanguageModal(false);
-              }}
-            >
-              <Text style={[styles.compareLanguageModalConfirmButtonText, { fontSize: scaledFontSize(14) }]}>
-                {t('reader.done')}
-              </Text>
-            </Pressable>
-          </View>
-        </View>
-      </View>
-      )}
+      <LanguagePanel
+        visible={showChangeLanguageModal}
+        screen={{ width: screenWidth, height: screenHeight }}
+        insets={insets}
+        textScale={textSizeScale}
+        reduceMotion={reduceMotion}
+        title={t('reader.changeLanguage')}
+        doneLabel={t('reader.done')}
+        closeLabel={t('common.close')}
+        languages={READER_LANGUAGES}
+        marks={{ [currentLanguage]: 'reading' }}
+        onPick={async (code) => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          await setStoredLanguage(code as SupportedLanguage);
+          setShowChangeLanguageModal(false);
+        }}
+        onDone={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          setShowChangeLanguageModal(false);
+        }}
+        onClose={() => setShowChangeLanguageModal(false)}
+      />
 
       {/* "Begin Playing" -top center, aligned with nav buttons */}
       {/* Hidden in record mode (no music) and narrate mode (shown below narration controls instead) */}
@@ -4690,227 +4579,6 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
 
-  // Compare Languages Modal Styles (Phone and Tablet)
-  compareLanguageModalOverlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  compareLanguageModalBackdrop: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  compareLanguageModalContent: {
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingTop: 16,
-    paddingHorizontal: 16,
-    paddingBottom: 20,
-    maxHeight: '85%',
-    height: 500,
-    maxWidth: 600,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 5,
-    flexDirection: 'column',
-  },
-  compareLanguageModalContentTablet: {
-    borderRadius: 24,
-    maxHeight: '80%',
-    width: '80%',
-    maxWidth: 600,
-    alignSelf: 'center',
-  },
-  compareLanguageModalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0, 0, 0, 0.1)',
-  },
-  compareLanguageModalTitle: {
-    fontFamily: Fonts.sans,
-    fontWeight: '600',
-    color: '#333333',
-    flex: 1,
-  },
-  compareLanguageModalHeaderToggle: {
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 14,
-    backgroundColor: 'rgba(0, 0, 0, 0.08)',
-    marginRight: 8,
-  },
-  compareLanguageModalHeaderToggleOn: {
-    backgroundColor: 'rgba(78, 205, 196, 0.2)',
-  },
-  compareLanguageModalHeaderToggleText: {
-    fontFamily: Fonts.sans,
-    fontWeight: '700',
-    color: '#333333',
-  },
-  compareLanguageModalCloseButton: {
-    width: 32,
-    height: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 16,
-    backgroundColor: 'rgba(0, 0, 0, 0.05)',
-  },
-  compareLanguageModalCloseButtonText: {
-    fontSize: 18,
-    color: '#333333',
-    fontWeight: '600',
-  },
-  compareLanguageModalScroll: {
-    flex: 1,
-    marginBottom: 12,
-  },
-  compareLanguageModalToggleSection: {
-    marginBottom: 12,
-  },
-  compareLanguageModalToggle: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    backgroundColor: 'rgba(78, 205, 196, 0.1)',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(78, 205, 196, 0.3)',
-  },
-  compareLanguageModalToggleText: {
-    fontFamily: Fonts.sans,
-    fontWeight: '500',
-    color: '#333333',
-  },
-  compareLanguageModalToggleCheckmark: {
-    color: '#4ECDC4',
-    fontWeight: 'bold',
-  },
-  compareLanguageModalDivider: {
-    height: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.1)',
-    marginVertical: 12,
-  },
-  compareLanguageModalLabel: {
-    fontFamily: Fonts.sans,
-    fontWeight: '500',
-    color: '#666666',
-    marginBottom: 12,
-    marginTop: 4,
-  },
-  compareLanguageModalSubLabel: {
-    fontFamily: Fonts.sans,
-    fontWeight: '500',
-    color: '#333333',
-    marginBottom: 8,
-  },
-  compareLanguageModalLanguageList: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 12,
-    width: '100%',
-    justifyContent: 'flex-start',
-  },
-  compareLanguageModalLanguageItem: {
-    width: '31%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 6,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: 'rgba(0, 0, 0, 0.1)',
-    gap: 6,
-  },
-  compareLanguageModalLanguageItemSelectedWhite: {
-    backgroundColor: '#D4AF37',
-    borderColor: '#B8860B',
-    borderWidth: 3,
-  },
-  compareLanguageModalLanguageItemSelectedBlue: {
-    backgroundColor: 'rgba(200, 220, 255, 0.9)',
-    borderColor: '#4ECDC4',
-    borderWidth: 3,
-  },
-  compareLanguageModalLanguageFlag: {
-    fontWeight: '600',
-  },
-  compareLanguageModalLanguageName: {
-    fontFamily: Fonts.sans,
-    fontWeight: '500',
-    color: '#333333',
-    textAlign: 'center',
-  },
-  compareLanguageModalLanguageNameSelected: {
-    color: '#000000',
-    fontWeight: '700',
-  },
-  compareLanguageModalLanguageCheckmark: {
-    color: '#4ECDC4',
-    fontWeight: 'bold',
-  },
-  compareLanguageModalLanguageSelectionIndicators: {
-    flexDirection: 'row',
-    gap: 4,
-    marginTop: 4,
-  },
-  compareLanguageModalSelectionBadgeWhite: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#D4AF37',
-    borderWidth: 2,
-    borderRadius: 8,
-    paddingVertical: 3,
-    paddingHorizontal: 6,
-  },
-  compareLanguageModalSelectionBadgeBlue: {
-    backgroundColor: '#4ECDC4',
-    borderColor: '#4ECDC4',
-    borderWidth: 2,
-    borderRadius: 8,
-    paddingVertical: 3,
-    paddingHorizontal: 6,
-  },
-  compareLanguageModalSelectionBadgeText: {
-    fontFamily: Fonts.sans,
-    fontWeight: '600',
-    color: '#333333',
-    textAlign: 'center',
-  },
-  compareLanguageModalConfirmButton: {
-    backgroundColor: '#4ECDC4',
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  compareLanguageModalConfirmButtonText: {
-    fontFamily: Fonts.sans,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
   // "Begin Playing" -top center, aligned with exit/settings buttons
   beginPlayingButton: {
     position: 'absolute',
