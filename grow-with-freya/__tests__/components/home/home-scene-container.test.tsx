@@ -30,7 +30,19 @@ jest.mock('@/components/home/use-journey-steps', () => ({
   useJourneySteps: (isActive: boolean) => mockUseJourneySteps(isActive),
 }));
 
-jest.mock('@/components/home/screen-time-glance', () => ({ ScreenTimeGlance: () => null }));
+const mockGlanceProps: {
+  visible: boolean;
+  origin?: { x: number; y: number };
+  onOpenSettled: () => void;
+  onCloseStart: () => void;
+  onClose: () => void;
+}[] = [];
+jest.mock('@/components/home/screen-time-glance', () => ({
+  ScreenTimeGlance: (props: (typeof mockGlanceProps)[number]) => {
+    mockGlanceProps.push(props);
+    return null;
+  },
+}));
 jest.mock('@/components/ui/subscription-overlay', () => ({ SubscriptionOverlay: () => null }));
 jest.mock('@/components/ui/trial-end-upgrade-overlay', () => ({ TrialEndUpgradeOverlay: () => null }));
 let mockTransitioning = false;
@@ -212,6 +224,88 @@ describe('HomeSceneContainer', () => {
     act(() => { mockSceneProps[mockSceneProps.length - 1].onSelectSection('progress'); });
 
     expect(onNavigate).toHaveBeenCalledWith('progress');
+  });
+
+  describe('while the screen-time window moves', () => {
+    const scene = () => mockSceneProps[mockSceneProps.length - 1];
+    const glance = () => mockGlanceProps[mockGlanceProps.length - 1];
+    const RING = { x: 200, y: 780 };
+
+    function renderHome(onNavigate = jest.fn()) {
+      const tree = render(
+        <IslandVoyageProvider voyage={voyage()}>
+          <HomeSceneContainer onNavigate={onNavigate} />
+        </IslandVoyageProvider>
+      );
+      return { tree, onNavigate };
+    }
+    const inputLock = (tree: ReturnType<typeof render>) =>
+      tree.UNSAFE_root.findAll((node: { props: { testID?: string } }) => node.props.testID === 'screen-time-input-lock');
+
+    beforeEach(() => {
+      mockGlanceProps.length = 0;
+    });
+
+    it('lays a layer over the screen the moment the ring is tapped', () => {
+      const { tree } = renderHome();
+
+      act(() => { scene().onOpenScreenTime?.(RING); });
+
+      expect(inputLock(tree)).toHaveLength(1);
+    });
+
+    it('lifts the layer once the window says it has come to rest', () => {
+      const { tree } = renderHome();
+      act(() => { scene().onOpenScreenTime?.(RING); });
+
+      act(() => { glance().onOpenSettled(); });
+
+      expect(inputLock(tree)).toHaveLength(0);
+    });
+
+    it('ignores the rest of the bar while the window opens', () => {
+      const { onNavigate } = renderHome();
+      act(() => { scene().onOpenScreenTime?.(RING); });
+
+      act(() => { scene().onSelectSection('progress'); });
+
+      expect(onNavigate).not.toHaveBeenCalled();
+    });
+
+    it('does nothing on a second tap of the ring while the window opens', () => {
+      renderHome();
+      act(() => { scene().onOpenScreenTime?.(RING); });
+
+      act(() => { scene().onOpenScreenTime?.({ x: 10, y: 10 }); });
+
+      expect(glance().origin).toEqual(RING);
+    });
+
+    it('holds the screen from the start of the close until the window is gone', () => {
+      const { tree } = renderHome();
+      act(() => { scene().onOpenScreenTime?.(RING); });
+      act(() => { glance().onOpenSettled(); });
+
+      act(() => { glance().onCloseStart(); });
+      const whileClosing = inputLock(tree).length;
+      act(() => { glance().onClose(); });
+
+      expect(whileClosing).toBe(1);
+      expect(inputLock(tree)).toHaveLength(0);
+      expect(glance().visible).toBe(false);
+    });
+
+    it('takes the bar again once the window has closed', () => {
+      const { onNavigate } = renderHome();
+      act(() => { scene().onOpenScreenTime?.(RING); });
+      act(() => { glance().onOpenSettled(); });
+      act(() => { glance().onCloseStart(); });
+      act(() => { glance().onClose(); });
+
+      act(() => { scene().onSelectSection('progress'); });
+
+      expect(onNavigate).toHaveBeenCalledWith('progress');
+    });
   });
 
   it('does nothing from the card, rather than fail, with no voyage above it', () => {

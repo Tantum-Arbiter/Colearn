@@ -1181,6 +1181,17 @@ The Screensafe mark inside the ring (`ScreenTimeGuard`) is the shield-and-clock 
 `screensafe-shield.png`, cut white-on-alpha from the operator's icon (2026-09-21) and tinted by the
 ring to its state; it replaced a hand-drawn SVG of the same idea.
 
+Tapping the Screensafe ring holds the whole screen until the window's move has finished
+(`useScreenTimeLock` and `ScreenTimeInputLock` in `components/home/screen-time-input-lock.tsx`;
+operator request 2026-11-12). The home and the library each hold it from the tap until the
+window's open has landed (`onOpenSettled`, fired by the open's last `withTiming`, or at once
+under Reduce Motion), and again from `onCloseStart` until `onClose`. While it is held, a
+full-screen layer above the window takes every touch, and the bar's own presses (the ring
+included) are ignored. A tap during the move used to cut the open short, or reopen the window
+over a bar that had already come back. An open that is cut short never reports that it has
+landed; the close that cut it releases the hold. On the library, Android back pressed before
+the window appears cancels the open and puts the bar back.
+
 Motion budget: background stars twinkle, the hero stars and sparkles breathe (opacity 0.75–1,
 scale to 1.04, 2.5–6 s each, never in step), clouds drift 2–6 px over 9–15 s, the shooting star
 crosses once every 16 s, the sun floats 2 px over 4.5 s, the four stat icons each move in their

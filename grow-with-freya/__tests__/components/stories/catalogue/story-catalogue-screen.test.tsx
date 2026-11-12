@@ -925,6 +925,273 @@ describe('StoryCatalogueScreen screensafe choreography', () => {
   }
 });
 
+describe('StoryCatalogueScreen while the screen-time window moves', () => {
+  let backHandlers: Array<() => boolean>;
+  let listen: jest.SpyInstance;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockGetCatalog.mockResolvedValue([]);
+    (useStoryTransition as jest.Mock).mockReturnValue({
+      isTransitioning: false,
+      selectedStoryId: null,
+      shouldShowStoryReader: false,
+      isExpandingToReader: false,
+      startTransition: mockStartTransition,
+    });
+    glanceProps.length = 0;
+    backHandlers = [];
+    const { BackHandler } = require('react-native');
+    listen = jest.spyOn(BackHandler, 'addEventListener').mockImplementation((...args: unknown[]) => {
+      const [event, handler] = args as [string, () => boolean];
+      if (event === 'hardwareBackPress') backHandlers.push(handler);
+      return {
+        remove: () => {
+          backHandlers = backHandlers.filter((candidate) => candidate !== handler);
+        },
+      };
+    });
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.runOnlyPendingTimers();
+    jest.useRealTimers();
+    listen.mockRestore();
+  });
+
+  const latestGlance = () => glanceProps[glanceProps.length - 1];
+  const inputLock = (tree: ReturnType<typeof render>) => byTestId(tree, 'screen-time-input-lock');
+
+  function press(tree: ReturnType<typeof render>, id: string) {
+    const item = byTestId(tree, `navigation-item-${id}`)[0];
+    act(() => {
+      item.props.onPress();
+    });
+  }
+
+  function selectedItem(tree: ReturnType<typeof render>) {
+    return byTestId(tree, 'navigation-item-home')[0].props.accessibilityState.selected ? 'home' : 'other';
+  }
+
+  function openFully(tree: ReturnType<typeof render>) {
+    press(tree, 'screensafe');
+    act(() => {
+      jest.advanceTimersByTime(CHILD_UI_MOTION.navCollapse.duration);
+    });
+    act(() => {
+      latestGlance().onOpenSettled();
+    });
+  }
+
+  it('lays a layer over the whole screen the moment the button is tapped', () => {
+    const underTest = render(<StoryCatalogueScreen />);
+
+    press(underTest, 'screensafe');
+
+    const [lock] = inputLock(underTest);
+    expect(lock.props.pointerEvents).toBe('auto');
+    expect(StyleSheet.flatten(lock.props.style)).toEqual(
+      expect.objectContaining({ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 }),
+    );
+  });
+
+  it('keeps that layer while the window is still opening', () => {
+    const underTest = render(<StoryCatalogueScreen />);
+
+    press(underTest, 'screensafe');
+    act(() => {
+      jest.advanceTimersByTime(CHILD_UI_MOTION.navCollapse.duration);
+    });
+
+    expect(latestGlance().visible).toBe(true);
+    expect(inputLock(underTest)).toHaveLength(1);
+  });
+
+  it('lifts the layer once the window says it has come to rest', () => {
+    const underTest = render(<StoryCatalogueScreen />);
+
+    openFully(underTest);
+
+    expect(inputLock(underTest)).toHaveLength(0);
+  });
+
+  it('ignores the rest of the bar while the window opens', () => {
+    const underTest = render(<StoryCatalogueScreen />);
+
+    press(underTest, 'screensafe');
+    press(underTest, 'search');
+
+    expect(selectedItem(underTest)).toBe('home');
+  });
+
+  it('does nothing on a second tap of the button while the window opens', () => {
+    const underTest = render(<StoryCatalogueScreen />);
+    press(underTest, 'screensafe');
+    act(() => {
+      jest.advanceTimersByTime(10);
+    });
+
+    press(underTest, 'screensafe');
+    act(() => {
+      jest.advanceTimersByTime(CHILD_UI_MOTION.navCollapse.duration - 10);
+    });
+    act(() => {
+      latestGlance().onOpenSettled();
+      latestGlance().onCloseStart();
+      latestGlance().onClose();
+    });
+    act(() => {
+      jest.advanceTimersByTime(CHILD_UI_MOTION.navCollapse.duration);
+    });
+
+    expect(latestGlance().visible).toBe(false);
+  });
+
+  it('holds the screen from the start of the close until the window is gone', () => {
+    const underTest = render(<StoryCatalogueScreen />);
+    openFully(underTest);
+
+    act(() => {
+      latestGlance().onCloseStart();
+    });
+    const whileClosing = inputLock(underTest).length;
+    act(() => {
+      latestGlance().onClose();
+    });
+
+    expect(whileClosing).toBe(1);
+    expect(inputLock(underTest)).toHaveLength(0);
+  });
+
+  it('does not reopen from a tap on the bar after it has come back but before the close ends', () => {
+    const underTest = render(<StoryCatalogueScreen />);
+    openFully(underTest);
+    act(() => {
+      latestGlance().onCloseStart();
+    });
+    act(() => {
+      jest.advanceTimersByTime(glanceCloseTimeline().splash.at);
+    });
+
+    press(underTest, 'screensafe');
+    act(() => {
+      latestGlance().onClose();
+    });
+    act(() => {
+      jest.advanceTimersByTime(CHILD_UI_MOTION.navCollapse.duration);
+    });
+
+    expect(latestGlance().visible).toBe(false);
+  });
+
+  it('opens again from a fresh tap once the close has ended', () => {
+    const underTest = render(<StoryCatalogueScreen />);
+    openFully(underTest);
+    act(() => {
+      latestGlance().onCloseStart();
+      latestGlance().onClose();
+    });
+
+    press(underTest, 'screensafe');
+    act(() => {
+      jest.advanceTimersByTime(CHILD_UI_MOTION.navCollapse.duration);
+    });
+
+    expect(latestGlance().visible).toBe(true);
+  });
+
+  describe('Android back before the window has appeared', () => {
+    function backBeforeTheWindow(tree: ReturnType<typeof render>) {
+      press(tree, 'screensafe');
+      let handled = false;
+      act(() => {
+        handled = backHandlers[backHandlers.length - 1]();
+      });
+      return handled;
+    }
+
+    it('is taken by the screen rather than passed on', () => {
+      const underTest = render(<StoryCatalogueScreen />);
+
+      expect(backBeforeTheWindow(underTest)).toBe(true);
+    });
+
+    it('lifts the layer', () => {
+      const underTest = render(<StoryCatalogueScreen />);
+
+      backBeforeTheWindow(underTest);
+
+      expect(inputLock(underTest)).toHaveLength(0);
+    });
+
+    it('never opens the window', () => {
+      const underTest = render(<StoryCatalogueScreen />);
+
+      backBeforeTheWindow(underTest);
+      act(() => {
+        jest.advanceTimersByTime(CHILD_UI_MOTION.navCollapse.duration);
+      });
+
+      expect(latestGlance().visible).toBe(false);
+    });
+
+    it('brings the bar back out', () => {
+      const underTest = render(<StoryCatalogueScreen />);
+
+      backBeforeTheWindow(underTest);
+
+      expect(byTestId(underTest, 'child-bottom-navigation')[0].props.pointerEvents).toBe('auto');
+    });
+
+    it('leaves back alone once the window is up, for the window to take', () => {
+      const underTest = render(<StoryCatalogueScreen />);
+      const before = backHandlers.length;
+
+      press(underTest, 'screensafe');
+      act(() => {
+        jest.advanceTimersByTime(CHILD_UI_MOTION.navCollapse.duration);
+      });
+
+      expect(backHandlers).toHaveLength(before);
+    });
+  });
+
+  describe('under Reduce Motion', () => {
+    let motion: jest.SpyInstance;
+
+    beforeEach(() => {
+      motion = jest.spyOn(reducedMotionModule, 'useReducedMotion').mockReturnValue(true);
+    });
+
+    afterEach(() => {
+      cleanup();
+      motion.mockRestore();
+    });
+
+    it('opens the window at once', () => {
+      const underTest = render(<StoryCatalogueScreen />);
+
+      press(underTest, 'screensafe');
+
+      expect(latestGlance().visible).toBe(true);
+    });
+
+    it('still holds the screen until the window says it is at rest', () => {
+      const underTest = render(<StoryCatalogueScreen />);
+      press(underTest, 'screensafe');
+      const beforeRest = inputLock(underTest).length;
+
+      act(() => {
+        latestGlance().onOpenSettled();
+      });
+
+      expect(beforeRest).toBe(1);
+      expect(inputLock(underTest)).toHaveLength(0);
+    });
+  });
+});
+
 /**
  * The saved shelf holds what the child chose to keep, laid out under the
  * themes those books belong to -- the library's own grouping, but of their

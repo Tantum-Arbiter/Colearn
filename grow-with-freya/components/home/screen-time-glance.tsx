@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, BackHandler, Pressable, ScrollView, StyleSheet, Dimensions } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -75,6 +75,7 @@ export interface ScreenTimeGlanceProps {
    *  the nav bar comes back out of the splash, which lands well before the
    *  window is finished with. */
   onCloseStart?: () => void;
+  onOpenSettled?: () => void;
   /** Centre of the ring this opened from, so the spinner rises there. Falls
    *  back to the middle of the screen when the host cannot say. */
   origin?: { x: number; y: number };
@@ -118,6 +119,7 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
   timeOfDay,
   onClose,
   onCloseStart,
+  onOpenSettled,
   origin,
   exceeded = false,
   usageSeconds = 0,
@@ -130,6 +132,8 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
 
   const [mounted, setMounted] = useState(visible);
   const [tipsOpen, setTipsOpen] = useState(false);
+  const onOpenSettledRef = useRef(onOpenSettled);
+  onOpenSettledRef.current = onOpenSettled;
 
   const { width, height } = Dimensions.get('window');
   // stable identity: the drop's flight home is memoised against it, and a
@@ -252,10 +256,12 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
   useEffect(() => {
     if (visible) {
       setMounted(true);
+      const settleOpen = () => onOpenSettledRef.current?.();
 
       if (reduceMotion) {
         // no travel: the window is simply there
         choreograph(atRest({ open: true }));
+        settleOpen();
         return;
       }
 
@@ -483,7 +489,7 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
         { on: dropReturnX, name: 'flight x', from: 0, beats: [] },
         { on: dropReturnY, name: 'flight y', from: 0, beats: [] },
         { on: splash, name: 'splash', from: 0, beats: [] },
-      ]);
+      ], { onFinished: settleOpen });
       return;
     }
 
@@ -1085,8 +1091,8 @@ export const ScreenTimeGlance = memo(function ScreenTimeGlance({
 const styles = StyleSheet.create({
   root: {
     ...StyleSheet.absoluteFill,
-    zIndex: 100,
-    elevation: 100,
+    zIndex: SCREEN_TIME_GLANCE.layer,
+    elevation: SCREEN_TIME_GLANCE.layer,
   },
   scrim: {
     ...StyleSheet.absoluteFill,

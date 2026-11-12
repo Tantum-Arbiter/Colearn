@@ -114,8 +114,9 @@ jest.mock('react-native-reanimated', () => {
   };
 });
 
+let mockReduceMotion = false;
 jest.mock('@/hooks/use-reduced-motion', () => ({
-  useReducedMotion: () => false,
+  useReducedMotion: () => mockReduceMotion,
 }));
 
 const ORIGIN = { x: 33, y: 760 };
@@ -576,6 +577,86 @@ describe('ScreenTimeGlance', () => {
     });
   });
 
+
+  describe('coming to rest', () => {
+    const reanimated = jest.requireMock('react-native-reanimated');
+    const landsEveryTiming = reanimated.withTiming.getMockImplementation();
+
+    afterEach(() => {
+      mockReduceMotion = false;
+      reanimated.withTiming.mockImplementation(landsEveryTiming);
+    });
+
+    it('says so once the open has landed', () => {
+      const onOpenSettled = jest.fn();
+
+      renderGlance({ onOpenSettled });
+
+      expect(onOpenSettled).toHaveBeenCalledTimes(1);
+    });
+
+    it('says so at once under Reduce Motion', () => {
+      mockReduceMotion = true;
+      const onOpenSettled = jest.fn();
+
+      renderGlance({ onOpenSettled });
+
+      expect(onOpenSettled).toHaveBeenCalledTimes(1);
+    });
+
+    it('says nothing for an open that something cut short', () => {
+      reanimated.withTiming.mockImplementation((value: unknown, _config: unknown, callback?: (finished: boolean) => void) => {
+        if (typeof callback === 'function') callback(false);
+        return value;
+      });
+      const onOpenSettled = jest.fn();
+
+      renderGlance({ onOpenSettled });
+
+      expect(onOpenSettled).not.toHaveBeenCalled();
+    });
+
+    it('says nothing while it is shut', () => {
+      const onOpenSettled = jest.fn();
+
+      renderGlance({ visible: false, onOpenSettled });
+
+      expect(onOpenSettled).not.toHaveBeenCalled();
+    });
+
+    it('says nothing when the close lands', () => {
+      const onOpenSettled = jest.fn();
+      const tree = renderGlance({ onOpenSettled });
+
+      act(() => {
+        fireEvent.press(findByTestId(tree, 'screen-time-glance-close')[0]);
+      });
+
+      expect(onOpenSettled).toHaveBeenCalledTimes(1);
+    });
+
+    it('is happy to open with nobody listening for the rest', () => {
+      expect(() => renderGlance()).not.toThrow();
+    });
+
+    it('closes from Android back while the open is still under way', () => {
+      const handlers: Array<() => boolean> = [];
+      const listen = jest.spyOn(RN.BackHandler, 'addEventListener').mockImplementation((...args: unknown[]) => {
+        const [, handler] = args as [string, () => boolean];
+        handlers.push(handler);
+        return { remove: jest.fn() };
+      });
+      const onClose = jest.fn();
+      renderGlance({ onClose });
+
+      act(() => {
+        handlers[handlers.length - 1]();
+      });
+
+      listen.mockRestore();
+      expect(onClose).toHaveBeenCalledTimes(1);
+    });
+  });
 
   it('shields the home screen behind it from touches', () => {
     // The Modal used to swallow taps that missed the card; as an overlay the

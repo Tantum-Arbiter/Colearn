@@ -14,6 +14,7 @@ import { BadgeDetailSheet } from '@/components/progress/badge-detail-sheet';
 import type { Badge } from '@/components/progress/progress-model';
 import type { DestinationFocus } from '@/constants/catalogue-destinations';
 import { ScreenTimeGlance } from './screen-time-glance';
+import { ScreenTimeInputLock, useScreenTimeLock } from './screen-time-input-lock';
 import type { HomeSceneProps } from './home-scene';
 import { HomeScene, type HomeSection, type HomeGuideTargets } from './home-scene';
 import { useChildHomeData } from './use-child-home-data';
@@ -67,9 +68,18 @@ export const HomeSceneContainer = memo(function HomeSceneContainer({
     onNavigate(HOME_DESTINATIONS.stories);
   }, [currentStoryId, onNavigate, requestStoryOpen]);
 
+  const {
+    held: screenTimeHeld,
+    isHeld: isScreenTimeHeld,
+    hold: holdScreenTime,
+    release: releaseScreenTime,
+  } = useScreenTimeLock();
   const handleSelectSection = useCallback(
-    (id: HomeSection) => onNavigate(id === 'home' ? HOME_DESTINATIONS.stories : HOME_DESTINATIONS[id]),
-    [onNavigate]
+    (id: HomeSection) => {
+      if (isScreenTimeHeld()) return;
+      onNavigate(id === 'home' ? HOME_DESTINATIONS.stories : HOME_DESTINATIONS[id]);
+    },
+    [onNavigate, isScreenTimeHeld]
   );
   const [shownBadge, setShownBadge] = useState<Badge | null>(null);
   const openBadge = useCallback(
@@ -96,10 +106,15 @@ export const HomeSceneContainer = memo(function HomeSceneContainer({
   // the parent actually pressed
   const [screenTimeOrigin, setScreenTimeOrigin] = useState<{ x: number; y: number } | undefined>();
   const openScreenTime = useCallback((origin: { x: number; y: number }) => {
+    if (isScreenTimeHeld()) return;
+    holdScreenTime();
     setScreenTimeOrigin(origin);
     setShowScreenTime(true);
-  }, []);
-  const closeScreenTime = useCallback(() => setShowScreenTime(false), []);
+  }, [isScreenTimeHeld, holdScreenTime]);
+  const closeScreenTime = useCallback(() => {
+    releaseScreenTime();
+    setShowScreenTime(false);
+  }, [releaseScreenTime]);
   const openPlans = useCallback(() => setShowPlans(true), []);
   const closePlans = useCallback(() => setShowPlans(false), []);
 
@@ -132,6 +147,8 @@ export const HomeSceneContainer = memo(function HomeSceneContainer({
         visible={showScreenTime}
         timeOfDay={timeOfDay}
         onClose={closeScreenTime}
+        onCloseStart={holdScreenTime}
+        onOpenSettled={releaseScreenTime}
         origin={screenTimeOrigin}
         exceeded={
           screenTime
@@ -141,6 +158,8 @@ export const HomeSceneContainer = memo(function HomeSceneContainer({
         usageSeconds={screenTime?.usageSeconds ?? 0}
         limitSeconds={screenTime?.limitSeconds ?? 0}
       />
+
+      <ScreenTimeInputLock held={screenTimeHeld} />
 
       <BadgeDetailSheet badge={shownBadge} onClose={closeBadge} onRecommend={followBadge} />
 

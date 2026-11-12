@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Alert,
   Animated,
+  BackHandler,
   Dimensions,
   InteractionManager,
   Pressable,
@@ -55,6 +56,7 @@ import { SectionHeading } from '@/components/child-ui/section-heading';
 import { JourneyShell } from '@/components/child-ui/journey-shell';
 import { ChildNavItemId, navClearance, navItemCentre } from '@/components/child-ui/child-bottom-navigation';
 import { ScreenTimeGlance } from '@/components/home/screen-time-glance';
+import { ScreenTimeInputLock, useScreenTimeLock } from '@/components/home/screen-time-input-lock';
 import { useScreenTimeAllowance } from '@/hooks/use-screen-time-allowance';
 import { useTimeOfDay } from '@/hooks/use-time-of-day';
 import { isScreenTimeExceeded } from '@/constants/screen-time-ring';
@@ -333,10 +335,19 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
   const afterDelay = useCallback((ms: number, run: () => void) => {
     if (ms <= 0) {
       run();
-      return;
+      return undefined;
     }
-    navTimers.current.push(setTimeout(run, ms));
+    const timer = setTimeout(run, ms);
+    navTimers.current.push(timer);
+    return timer;
   }, []);
+  const {
+    held: screenTimeHeld,
+    isHeld: isScreenTimeHeld,
+    hold: holdScreenTime,
+    release: releaseScreenTime,
+  } = useScreenTimeLock();
+  const screenTimeOpening = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => () => {
     navTimers.current.forEach(clearTimeout);
@@ -511,11 +522,16 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
    * the section they were browsing is deliberately left where it was.
    */
   const handleNavSelect = useCallback((id: ChildNavItemId) => {
+    if (isScreenTimeHeld()) return;
     if (id === 'screensafe') {
+      holdScreenTime();
       // the bar gathers into its own middle first, and the window opens out of
       // the space the ring leaves -- one movement rather than two overlapping
       setNavCollapsed(true);
-      afterDelay(motionDuration(CHILD_UI_MOTION.navCollapse, reduceMotion), () => setShowScreenTime(true));
+      screenTimeOpening.current = afterDelay(
+        motionDuration(CHILD_UI_MOTION.navCollapse, reduceMotion),
+        () => setShowScreenTime(true),
+      );
       return;
     }
     if (id === 'home' || id === 'search' || id === 'profile') {
@@ -529,17 +545,32 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
     }
     setSectionInstant(false);
     setNavSection(id);
-  }, [afterDelay, reduceMotion]);
+  }, [afterDelay, reduceMotion, isScreenTimeHeld, holdScreenTime]);
 
   /** The bar comes back out of the splash, which lands before the close ends. */
   const handleScreenTimeCloseStart = useCallback(() => {
+    holdScreenTime();
     afterDelay(reduceMotion ? 0 : glanceCloseTimeline().splash.at, () => setNavCollapsed(false));
-  }, [afterDelay, reduceMotion]);
+  }, [afterDelay, reduceMotion, holdScreenTime]);
 
   const handleScreenTimeClosed = useCallback(() => {
+    releaseScreenTime();
     setShowScreenTime(false);
     setNavCollapsed(false);
-  }, []);
+  }, [releaseScreenTime]);
+
+  const waitingForScreenTime = screenTimeHeld && !showScreenTime;
+  useEffect(() => {
+    if (!waitingForScreenTime) return undefined;
+    const back = BackHandler.addEventListener('hardwareBackPress', () => {
+      clearTimeout(screenTimeOpening.current);
+      screenTimeOpening.current = undefined;
+      setNavCollapsed(false);
+      releaseScreenTime();
+      return true;
+    });
+    return () => back.remove();
+  }, [waitingForScreenTime, releaseScreenTime]);
 
   const handleRecommend = useCallback((tag: StoryFilterTag | null) => {
     setNavSection('home');
@@ -1167,6 +1198,7 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
           timeOfDay={timeOfDay}
           onClose={handleScreenTimeClosed}
           onCloseStart={handleScreenTimeCloseStart}
+          onOpenSettled={releaseScreenTime}
           origin={navItemCentre('screensafe', windowWidth, windowHeight, insets.bottom, isTablet)}
           exceeded={
             screenTime
@@ -1231,6 +1263,7 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
       targets={profileTourTargets}
       scroller={pageScroller.scroller}
     />
+    <ScreenTimeInputLock held={screenTimeHeld} />
     </View>
   );
 }
