@@ -1227,6 +1227,8 @@ export default {
     masterVolume: 'مستوى الصوت الرئيسي',
     music: 'موسيقى',
     voiceOver: 'صوت',
+    mute: 'كتم الصوت',
+    unmute: 'إلغاء كتم الصوت',
   },
   subscription: {
     trialEnd: {

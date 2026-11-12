@@ -1227,6 +1227,8 @@ export default {
     masterVolume: 'Hoofdvolume',
     music: 'Muziek',
     voiceOver: 'Stem',
+    mute: 'Dempen',
+    unmute: 'Dempen opheffen',
   },
   subscription: {
     trialEnd: {

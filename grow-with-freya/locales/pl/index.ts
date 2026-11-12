@@ -1227,6 +1227,8 @@ export default {
     masterVolume: 'Głośność główna',
     music: 'Muzyka',
     voiceOver: 'Narracja',
+    mute: 'Wycisz',
+    unmute: 'Włącz dźwięk',
   },
   subscription: {
     trialEnd: {

@@ -674,6 +674,35 @@ describe('StoryBookReader: two lines at a time', () => {
       return StyleSheet.flatten(coin.props.style).opacity ?? 1;
     };
 
+    it('a long press on the sound coin opens the audio settings in the painted panel', () => {
+      const { Dimensions } = require('react-native');
+      const dimensions = jest.spyOn(Dimensions, 'get').mockReturnValue({ width: 874, height: 402, scale: 3, fontScale: 1 });
+      const view = render(<StoryBookReader story={stones} onExit={jest.fn()} skipCoverPage skipInitialFadeIn />);
+      const sound = all(view, (node) => node.props.testID === 'music-control-button' && typeof node.props.onLongPress === 'function')[0];
+
+      act(() => { sound.props.onLongPress(); });
+
+      expect(all(view, (node) => node.props.testID === 'audio-panel')).not.toHaveLength(0);
+      expect(all(view, (node) => node.props.testID === 'audio-panel-art')).not.toHaveLength(0);
+      expect(all(view, (node) => node.props.testID === 'audio-panel-button-master' && typeof node.props.onPress === 'function')[0].props.accessibilityLabel).toBe('audioSettings.mute audioSettings.masterVolume');
+      view.unmount();
+      dimensions.mockRestore();
+    });
+
+    it('Done on the audio settings puts them away', () => {
+      const { Dimensions } = require('react-native');
+      const dimensions = jest.spyOn(Dimensions, 'get').mockReturnValue({ width: 874, height: 402, scale: 3, fontScale: 1 });
+      const view = render(<StoryBookReader story={stones} onExit={jest.fn()} skipCoverPage skipInitialFadeIn />);
+      const sound = all(view, (node) => node.props.testID === 'music-control-button' && typeof node.props.onLongPress === 'function')[0];
+      act(() => { sound.props.onLongPress(); });
+
+      act(() => { fireEvent.press(all(view, (node) => node.props.testID === 'audio-panel-done' && typeof node.props.onPress === 'function')[0]); });
+
+      expect(all(view, (node) => node.props.testID === 'audio-panel')).toHaveLength(0);
+      view.unmount();
+      dimensions.mockRestore();
+    });
+
     it('menu, sound, back and next are the painted coins, each the size of the old button', () => {
       const view = render(<StoryBookReader story={stones} onExit={jest.fn()} skipCoverPage skipInitialFadeIn />);
       const size = (testID: string) => StyleSheet.flatten(all(view, (node) => node.props.testID === testID)[0].props.style);

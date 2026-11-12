@@ -1227,6 +1227,8 @@ export default {
     masterVolume: 'Hovedvolumen',
     music: 'Musik',
     voiceOver: 'Stemme',
+    mute: 'Slå lyden fra',
+    unmute: 'Slå lyden til',
   },
   subscription: {
     trialEnd: {

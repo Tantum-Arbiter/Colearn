@@ -1227,6 +1227,8 @@ export default {
     masterVolume: '主音量',
     music: '音乐',
     voiceOver: '语音',
+    mute: '静音',
+    unmute: '取消静音',
   },
   subscription: {
     trialEnd: {

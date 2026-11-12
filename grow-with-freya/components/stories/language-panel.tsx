@@ -69,6 +69,8 @@ const SWITCH = {
 const CLOSE = { rim: '#F3AA11', fill: '#FCE5B5', glyph: '#A84202' } as const;
 const DONE = { rim: '#EDBFFA', fill: ['#7E3AA5', '#65328E'], lip: '#340F4B', ink: '#FFFFFF' } as const;
 
+export const PANEL_COLOURS = { hint: HINT_INK, close: CLOSE, done: DONE } as const;
+
 const ART: Record<'top' | 'middle' | 'bottom' | 'fade' | 'fadeTop', ImageSource> = {
   top: require('@/assets/images/reader-languages/panel-top.webp'),
   middle: require('@/assets/images/reader-languages/panel-middle.webp'),
@@ -177,25 +179,7 @@ function LanguagePill({ language, mark, width, scale, text, onPick }: PillProps)
   );
 }
 
-interface LanguagePanelProps {
-  visible: boolean;
-  screen: Box;
-  insets: Insets;
-  textScale?: number;
-  reduceMotion: boolean;
-  title: string;
-  hint?: string;
-  doneLabel: string;
-  closeLabel: string;
-  toggle?: { on: boolean; label: string; onPress: () => void };
-  languages: readonly LanguageChoice[];
-  marks: Readonly<Record<string, LanguageMark | undefined>>;
-  onPick: (code: string) => void;
-  onDone: () => void;
-  onClose: () => void;
-}
-
-export function LanguagePanel({ visible, screen, insets, textScale, reduceMotion, title, hint, doneLabel, closeLabel, toggle, languages, marks, onPick, onDone, onClose }: LanguagePanelProps) {
+export function usePanelPresence(visible: boolean, reduceMotion: boolean) {
   const [mounted, setMounted] = useState(visible);
   if (visible && !mounted) setMounted(true);
   if (!visible && mounted && reduceMotion) setMounted(false);
@@ -219,6 +203,144 @@ export function LanguagePanel({ visible, screen, insets, textScale, reduceMotion
     opacity: shown.value,
     transform: [{ scale: LANGUAGE_PANEL_MOTION.from + (1 - LANGUAGE_PANEL_MOTION.from) * shown.value }],
   }));
+  return { mounted, dimStyle, panelStyle };
+}
+
+export interface PanelPlace {
+  scale: number;
+  width: number;
+  height: number;
+  left: number;
+  top: number;
+}
+
+interface PanelFrameProps {
+  id: string;
+  visible: boolean;
+  place: PanelPlace;
+  dimStyle: ReturnType<typeof usePanelPresence>['dimStyle'];
+  panelStyle: ReturnType<typeof usePanelPresence>['panelStyle'];
+  onBackdrop: () => void;
+  children: React.ReactNode;
+}
+
+export function PanelFrame({ id, visible, place, dimStyle, panelStyle, onBackdrop, children }: PanelFrameProps) {
+  return (
+    <View testID={`${id}-layer`} accessibilityViewIsModal={visible} pointerEvents={visible ? 'box-none' : 'none'} style={styles.layer}>
+      <Animated.View style={[styles.dim, dimStyle]}>
+        <Pressable testID={`${id}-backdrop`} accessible={false} importantForAccessibility="no" onPress={onBackdrop} style={styles.fill} />
+      </Animated.View>
+      <Animated.View testID={id} style={[styles.panel, { left: place.left, top: place.top, width: place.width, height: place.height }, panelStyle]}>
+        {children}
+      </Animated.View>
+    </View>
+  );
+}
+
+export interface PanelTitleSpot {
+  x: number;
+  y: number;
+  reach: number;
+  height: number;
+  size: number;
+}
+
+interface PanelTitleProps {
+  id: string;
+  title: string;
+  scale: number;
+  text: number;
+  spot: PanelTitleSpot;
+  drop?: number;
+}
+
+export function PanelTitle({ id, title, scale, text, spot, drop = 0 }: PanelTitleProps) {
+  const u = (units: number) => units * scale;
+  return (
+    <View testID={`${id}-heading`} style={[styles.titleBox, { left: u(spot.x - spot.reach), width: u(spot.reach * 2), top: u(spot.y - spot.height / 2) + drop, height: u(spot.height) }]}>
+      <Text testID={`${id}-title`} accessibilityRole="header" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6} allowFontScaling={false} style={[styles.title, { fontSize: u(spot.size) * text }]}>
+        {title}
+      </Text>
+    </View>
+  );
+}
+
+interface PanelCloseProps {
+  id: string;
+  label: string;
+  scale: number;
+  left: number;
+  top: number;
+  onPress: () => void;
+}
+
+export function PanelClose({ id, label, scale, left, top, onPress }: PanelCloseProps) {
+  const u = (units: number) => units * scale;
+  return (
+    <Pressable
+      testID={`${id}-close`}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      hitSlop={6}
+      onPress={onPress}
+      style={[styles.spot, styles.close, { left, top, width: u(P.close.size), height: u(P.close.size), borderRadius: u(P.close.size / 2), borderWidth: Math.max(2, u(P.close.rim)) }]}
+    >
+      <Ionicons name="close" size={u(P.close.glyph)} color={CLOSE.glyph} />
+    </Pressable>
+  );
+}
+
+interface PanelDoneProps {
+  id: string;
+  label: string;
+  scale: number;
+  text: number;
+  left: number;
+  top: number;
+  width: number;
+  onPress: () => void;
+}
+
+export function PanelDone({ id, label, scale, text, left, top, width, onPress }: PanelDoneProps) {
+  const u = (units: number) => units * scale;
+  return (
+    <Pressable
+      testID={`${id}-done`}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      onPress={onPress}
+      style={[styles.spot, styles.doneLip, { left, top, width, height: u(P.done.height), borderRadius: u(P.done.radius), paddingBottom: u(P.done.lip) }]}
+    >
+      <LinearGradient colors={DONE.fill} style={[styles.doneFace, { borderRadius: u(P.done.radius), borderWidth: Math.max(1, u(P.done.rim)), gap: u(18), paddingHorizontal: u(40) }]}>
+        <Ionicons name="checkmark-circle" size={u(P.done.icon)} color={DONE.ink} />
+        <Text testID={`${id}-done-label`} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7} allowFontScaling={false} style={[styles.doneLabel, { fontSize: u(P.done.size) * text }]}>
+          {label}
+        </Text>
+      </LinearGradient>
+    </Pressable>
+  );
+}
+
+interface LanguagePanelProps {
+  visible: boolean;
+  screen: Box;
+  insets: Insets;
+  textScale?: number;
+  reduceMotion: boolean;
+  title: string;
+  hint?: string;
+  doneLabel: string;
+  closeLabel: string;
+  toggle?: { on: boolean; label: string; onPress: () => void };
+  languages: readonly LanguageChoice[];
+  marks: Readonly<Record<string, LanguageMark | undefined>>;
+  onPick: (code: string) => void;
+  onDone: () => void;
+  onClose: () => void;
+}
+
+export function LanguagePanel({ visible, screen, insets, textScale, reduceMotion, title, hint, doneLabel, closeLabel, toggle, languages, marks, onPick, onDone, onClose }: LanguagePanelProps) {
+  const { mounted, dimStyle, panelStyle } = usePanelPresence(visible, reduceMotion);
 
   const place = languagePanelLayout(screen, insets, languages.length, textScale);
   if (!mounted || place.scale <= 0) return null;
@@ -235,102 +357,71 @@ export function LanguagePanel({ visible, screen, insets, textScale, reduceMotion
   );
 
   return (
-    <View testID="language-panel-layer" accessibilityViewIsModal={visible} pointerEvents={visible ? 'box-none' : 'none'} style={styles.layer}>
-      <Animated.View style={[styles.dim, dimStyle]}>
-        <Pressable testID="language-panel-backdrop" accessible={false} importantForAccessibility="no" onPress={onClose} style={styles.fill} />
-      </Animated.View>
-      <Animated.View testID="language-panel" style={[styles.panel, { left: place.left, top: place.top, width: place.width, height: place.height }, panelStyle]}>
-        <View style={[styles.face, { left: u(P.face.left), top: u(P.face.top), right: u(P.face.right), bottom: u(P.face.bottom), borderRadius: u(P.face.radius) }]} />
-        {art('top', { top: 0, height: listTop })}
-        {art('middle', { top: listTop - SLICE_OVERLAP, height: place.list + SLICE_OVERLAP * 2 })}
-        {art('bottom', { bottom: 0, height: u(P.bottom) })}
+    <PanelFrame id="language-panel" visible={visible} place={place} dimStyle={dimStyle} panelStyle={panelStyle} onBackdrop={onClose}>
+      <View style={[styles.face, { left: u(P.face.left), top: u(P.face.top), right: u(P.face.right), bottom: u(P.face.bottom), borderRadius: u(P.face.radius) }]} />
+      {art('top', { top: 0, height: listTop })}
+      {art('middle', { top: listTop - SLICE_OVERLAP, height: place.list + SLICE_OVERLAP * 2 })}
+      {art('bottom', { bottom: 0, height: u(P.bottom) })}
 
-        <View testID="language-panel-heading" style={[styles.titleBox, { left: u(P.width / 2 - P.title.reach), width: u(P.title.reach * 2), top: u(P.title.y - P.title.height / 2) + drop, height: u(P.title.height) }]}>
-          <Text testID="language-panel-title" accessibilityRole="header" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6} allowFontScaling={false} style={[styles.title, { fontSize: u(P.title.size) * place.text }]}>
-            {title}
-          </Text>
-        </View>
+      <PanelTitle id="language-panel" title={title} scale={scale} text={place.text} spot={{ x: P.width / 2, y: P.title.y, reach: P.title.reach, height: P.title.height, size: P.title.size }} drop={drop} />
 
-        {toggle ? (
-          <Pressable
-            testID="language-panel-toggle"
-            accessibilityRole="switch"
-            accessibilityLabel={title}
-            accessibilityState={{ checked: toggle.on }}
-            hitSlop={8}
-            onPress={toggle.onPress}
-            style={[styles.spot, { left: u(P.toggle.left), top: u(P.toggle.top) + drop, width: u(P.toggle.width), height: u(P.toggle.height) }]}
+      {toggle ? (
+        <Pressable
+          testID="language-panel-toggle"
+          accessibilityRole="switch"
+          accessibilityLabel={title}
+          accessibilityState={{ checked: toggle.on }}
+          hitSlop={8}
+          onPress={toggle.onPress}
+          style={[styles.spot, { left: u(P.toggle.left), top: u(P.toggle.top) + drop, width: u(P.toggle.width), height: u(P.toggle.height) }]}
+        >
+          <LinearGradient
+            testID="language-panel-toggle-face"
+            colors={look.fill}
+            style={[styles.toggleFace, { borderRadius: u(P.toggle.height / 2), borderWidth: Math.max(1, u(P.pill.rim)), borderColor: look.rim, paddingHorizontal: u(14) }]}
           >
-            <LinearGradient
-              testID="language-panel-toggle-face"
-              colors={look.fill}
-              style={[styles.toggleFace, { borderRadius: u(P.toggle.height / 2), borderWidth: Math.max(1, u(P.pill.rim)), borderColor: look.rim, paddingHorizontal: u(14) }]}
-            >
-              <Text testID="language-panel-toggle-label" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6} allowFontScaling={false} style={[styles.toggleLabel, { fontSize: u(P.toggle.size) * place.text, color: look.ink }]}>
-                {toggle.label}
-              </Text>
-            </LinearGradient>
-          </Pressable>
-        ) : null}
-
-        <Pressable
-          testID="language-panel-close"
-          accessibilityRole="button"
-          accessibilityLabel={closeLabel}
-          hitSlop={6}
-          onPress={onClose}
-          style={[styles.spot, styles.close, { left: u(P.close.left), top: u(P.close.top) + drop, width: u(P.close.size), height: u(P.close.size), borderRadius: u(P.close.size / 2), borderWidth: Math.max(2, u(P.close.rim)) }]}
-        >
-          <Ionicons name="close" size={u(P.close.glyph)} color={CLOSE.glyph} />
-        </Pressable>
-
-        {hint ? (
-          <View style={[styles.hintBox, { left: u(P.hint.left), right: u(P.hint.left), top: u(P.hint.y - P.hint.height / 2), height: u(P.hint.height) }]}>
-            <Text testID="language-panel-hint" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7} allowFontScaling={false} style={[styles.hint, { fontSize: u(P.hint.size) * place.text }]}>
-              {hint}
-            </Text>
-          </View>
-        ) : null}
-
-        <ScrollView
-          testID="language-panel-list"
-          scrollEnabled={place.scrolls}
-          showsVerticalScrollIndicator={place.scrolls}
-          bounces={false}
-          style={[styles.spot, { left: u(P.list.left), top: listTop, width: listWidth, height: place.list }]}
-          contentContainerStyle={[styles.listContent, { columnGap: u(P.pill.gap), rowGap: u(P.pill.rowGap), paddingTop: u(P.list.padTop), paddingBottom: u(place.scrolls ? P.peek : P.list.padBottom) }]}
-        >
-          {languages.map((language) => (
-            <LanguagePill key={language.code} language={language} mark={marks[language.code]} width={pillWidth} scale={scale} text={place.text} onPick={onPick} />
-          ))}
-        </ScrollView>
-        {place.scrolls ? (
-          <>
-            <View testID="language-panel-above" pointerEvents="none" style={[styles.spot, { left: u(P.list.left), width: listWidth, top: listTop, height: u(P.list.padTop) }]}>
-              <Image accessible={false} source={ART.fadeTop} contentFit="fill" transition={0} style={{ width: listWidth, height: u(P.list.padTop) }} />
-            </View>
-            <View testID="language-panel-more" pointerEvents="none" style={[styles.spot, { left: u(P.list.left), width: listWidth, top: listTop + place.list - u(P.peek), height: u(P.peek) }]}>
-              <Image accessible={false} source={ART.fade} contentFit="fill" transition={0} style={{ width: listWidth, height: u(P.peek) }} />
-            </View>
-          </>
-        ) : null}
-
-        <Pressable
-          testID="language-panel-done"
-          accessibilityRole="button"
-          accessibilityLabel={doneLabel}
-          onPress={onDone}
-          style={[styles.spot, styles.doneLip, { left: u(P.done.left), top: listTop + place.list + u(P.done.top), width: u(P.done.width), height: u(P.done.height), borderRadius: u(P.done.radius), paddingBottom: u(P.done.lip) }]}
-        >
-          <LinearGradient colors={DONE.fill} style={[styles.doneFace, { borderRadius: u(P.done.radius), borderWidth: Math.max(1, u(P.done.rim)), gap: u(18), paddingHorizontal: u(40) }]}>
-            <Ionicons name="checkmark-circle" size={u(P.done.icon)} color={DONE.ink} />
-            <Text testID="language-panel-done-label" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7} allowFontScaling={false} style={[styles.doneLabel, { fontSize: u(P.done.size) * place.text }]}>
-              {doneLabel}
+            <Text testID="language-panel-toggle-label" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6} allowFontScaling={false} style={[styles.toggleLabel, { fontSize: u(P.toggle.size) * place.text, color: look.ink }]}>
+              {toggle.label}
             </Text>
           </LinearGradient>
         </Pressable>
-      </Animated.View>
-    </View>
+      ) : null}
+
+      <PanelClose id="language-panel" label={closeLabel} scale={scale} left={u(P.close.left)} top={u(P.close.top) + drop} onPress={onClose} />
+
+      {hint ? (
+        <View style={[styles.hintBox, { left: u(P.hint.left), right: u(P.hint.left), top: u(P.hint.y - P.hint.height / 2), height: u(P.hint.height) }]}>
+          <Text testID="language-panel-hint" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7} allowFontScaling={false} style={[styles.hint, { fontSize: u(P.hint.size) * place.text }]}>
+            {hint}
+          </Text>
+        </View>
+      ) : null}
+
+      <ScrollView
+        testID="language-panel-list"
+        scrollEnabled={place.scrolls}
+        showsVerticalScrollIndicator={place.scrolls}
+        bounces={false}
+        style={[styles.spot, { left: u(P.list.left), top: listTop, width: listWidth, height: place.list }]}
+        contentContainerStyle={[styles.listContent, { columnGap: u(P.pill.gap), rowGap: u(P.pill.rowGap), paddingTop: u(P.list.padTop), paddingBottom: u(place.scrolls ? P.peek : P.list.padBottom) }]}
+      >
+        {languages.map((language) => (
+          <LanguagePill key={language.code} language={language} mark={marks[language.code]} width={pillWidth} scale={scale} text={place.text} onPick={onPick} />
+        ))}
+      </ScrollView>
+      {place.scrolls ? (
+        <>
+          <View testID="language-panel-above" pointerEvents="none" style={[styles.spot, { left: u(P.list.left), width: listWidth, top: listTop, height: u(P.list.padTop) }]}>
+            <Image accessible={false} source={ART.fadeTop} contentFit="fill" transition={0} style={{ width: listWidth, height: u(P.list.padTop) }} />
+          </View>
+          <View testID="language-panel-more" pointerEvents="none" style={[styles.spot, { left: u(P.list.left), width: listWidth, top: listTop + place.list - u(P.peek), height: u(P.peek) }]}>
+            <Image accessible={false} source={ART.fade} contentFit="fill" transition={0} style={{ width: listWidth, height: u(P.peek) }} />
+          </View>
+        </>
+      ) : null}
+
+      <PanelDone id="language-panel" label={doneLabel} scale={scale} text={place.text} left={u(P.done.left)} top={listTop + place.list + u(P.done.top)} width={u(P.done.width)} onPress={onDone} />
+    </PanelFrame>
   );
 }
 

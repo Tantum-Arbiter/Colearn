@@ -1227,6 +1227,8 @@ export default {
     masterVolume: 'Volume principale',
     music: 'Musica',
     voiceOver: 'Voce',
+    mute: 'Disattiva audio',
+    unmute: 'Riattiva audio',
   },
   subscription: {
     trialEnd: {

@@ -2094,6 +2094,20 @@ same panel (`ReaderMenuPanel`). Both are built with the book and kept mounted, m
 their pictures decoded; opening or closing fades the whole panel as one (`MENU_FADE_MS`, at once
 under Reduce Motion), and while closed it takes no touches and is hidden from the screen reader.
 
+**The reader's audio settings (operator, 2026-11-12).** A long press on the reader's sound coin opens
+`ReaderAudioPanel` (`components/stories/reader-audio-panel.tsx`, art in `assets/images/reader-audio/`,
+cut by `scripts/prepare-audio-panel.py`, §5k of the asset register). It is the operator's own painted
+frame, with three cards baked in and one image for the whole panel, in `AUDIO_PANEL` units taken from
+that picture. It shares the language panel's dimmed layer and fade (`usePanelPresence`, `PanelFrame`),
+heading, close coin and Done (`PanelTitle`, `PanelClose`, `PanelDone`, which take their places as
+arguments). The title sits in the band between the crest and the first card, with the close coin
+level with it. Each card holds the operator's icon in the frame's round slot, the name and level in
+the panel's ink, and a `PaintedSlider` (`painted-slider.tsx`): a thick purple track with a gold knob,
+dragged or tapped, and adjustable a tenth at a time with VoiceOver. Tapping the round button mutes its
+channel; tapping again brings back the last level it was heard at (full if it was never heard
+this time), and a muted button is dimmed with a stroke across it. Other screens keep the older
+`AudioControlModal`.
+
 **The reader's language panels (2026-11-12).** Compare Languages and Change Language both open
 `LanguagePanel` (`components/stories/language-panel.tsx`, art in `assets/images/reader-languages/`,
 sliced by `scripts/prepare-language-panel.py`, §5j), drawn to the operator's mock-up: a cream panel in

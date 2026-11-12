@@ -30,6 +30,7 @@ marked **⚠️ UNVERIFIED**.
 | The Play button on a book's music pages (the operator's picture, 2026-11-11) | Registered below, §5h — origin and licence ⚠️ UNVERIFIED |
 | The reader's menu: its painted panel, row icons and row arrow (the operator's pictures, 2026-11-11) | Registered below, §5i — origin and licence ⚠️ UNVERIFIED |
 | The reader's Compare Languages and Change Language panels: the painted frame (the operator's picture, 2026-11-12) | Registered below, §5j — origin and licence ⚠️ UNVERIFIED |
+| The reader's Audio Settings panel: its painted frame and the three button icons (the operator's pictures, 2026-11-12) | Registered below, §5k — origin and licence ⚠️ UNVERIFIED |
 | The lock on the island's learning-plan checkpoints | Registered below, §6 — the supplied picture is not drawn since 2026-10-03 (a padlock drawn in code replaced it); the file remains, origin ⚠️ UNVERIFIED |
 | Everything else — avatars, story illustrations, instrument art, music, fonts, voices (the feelings game's art and the spelling game's art left with those games on 2026-10-16; the nine bear and animal faces the badges draw stay in `assets/images/emotions/`) | **Not registered.** Origin is not recorded anywhere in the repository — ⚠️ UNVERIFIED |
 
@@ -294,6 +295,24 @@ sign-in sky, the owl and the badge art.
 | Terms for commercial use, and who owns it | ⚠️ UNVERIFIED — depends on the answer above |
 | Checked by eye against well-known games and films | **Not yet done by a person** |
 | Quality | The panel is 1544 pixels wide as stored. It is drawn about 580 points wide on a phone on its side (1740 pixels at 3×) and up to 780 points on a tablet (1560 at 2×, more with larger text), so it is enlarged about 1.1× on a phone and hardly at all on a tablet |
+
+## 5k. The reader's audio settings panel
+
+| File (under `grow-with-freya/assets/images/reader-audio/`) | Where from | What was changed |
+|---|---|---|
+| `source/frame.webp` (1448×1086, on a dark photograph, no clear ground; SHA-256 `d464c3bc85fd17ff92f148e018b8a6e695c7eb4f7399acbb0bea62eabbe3f244`) | Supplied by the operator, pasted into the working session on 2026-11-12: the empty audio panel (gold rim, leaf sprig, orange crest, mushrooms, three cards with an embossed round slot each and faint embossed marks) | Stored as sent. Not bundled |
+| `source/icons.png` (104×336; SHA-256 `d3c7eac0d37b15f4b68e0abe4bf79ca7da0c59fc90a9ec1ad97b69f74a82d7c4`) | Supplied by the operator the same day: three round buttons with a purple speaker, note and microphone | Stored as sent. Not bundled |
+| `source/mock.webp` (1471×1069; SHA-256 `c99d39ca625e443b4549c2770c7d19006b73966963ee238332c76b7fd6f56d96`) | Supplied by the operator the same day: a mock-up of the finished panel | Stored as sent. No picture in the app comes from it; the layout, the gold knob and the colours were taken from it. Not bundled |
+| `panel.webp` (1277×992) | `source/frame.webp`, cut by `grow-with-freya/scripts/prepare-audio-panel.py` | Lifted off the photograph: the largest bright shape (brighter than 100 of 255) with its holes filled, a two-pixel soft edge graded on brightness, and the edge's colour taken from the panel just inside, so no dark fringe is left. Trimmed to the panel. Nothing is redrawn, recoloured or added |
+| `icon-master.webp`, `icon-music.webp`, `icon-voice.webp` (168, 156, 168 pixels square) | `source/icons.png`, one third each, by the same script | Only the purple ink is kept, its soft edge taken from how far each pixel sits between the button's cream and the ink, and its colour unmixed from the cream; enlarged three times with a light sharpen. The round buttons themselves are the frame's own slots |
+| The heading, close coin, labels, levels, sliders and their gold knobs, the off stroke on a muted button, and Done | Drawn by the app (`components/stories/reader-audio-panel.tsx`, `painted-slider.tsx`, and the shared pieces in `language-panel.tsx`) | Made for the app |
+
+| Question | Answer |
+|---|---|
+| Who made it, and with what | ⚠️ UNVERIFIED — the pictures arrived with no record of their origin. They have the look of generated images; the operator to say which service and account, or which artist |
+| Terms for commercial use, and who owns it | ⚠️ UNVERIFIED — depends on the answer above |
+| Checked by eye against well-known games and films | **Not yet done by a person** |
+| Quality | The panel is drawn up to 780 points wide (about 1560 pixels at 2×), so it is enlarged up to 1.2×. The icons are the weak point: about 52 pixels of ink each in the operator's picture, drawn up to about 50 points (100–150 pixels), so they are enlarged two to three times and look soft up close; a larger export of the three icons would fix it |
 
 ## 7. Wombat's Picnic Count (the first game pack)
 

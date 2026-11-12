@@ -33,6 +33,7 @@ import { PagePill } from './page-pill';
 import { PlayPill } from './play-pill';
 import { MENU_INK, MENU_WIDTH, ReaderMenu, ReaderMenuPanel, menuPlacement } from './reader-menu';
 import { LanguagePanel, type LanguageChoice } from './language-panel';
+import { ReaderAudioPanel } from './reader-audio-panel';
 import { StoryCloud, cloudInset } from './story-cloud';
 import { bookTheme, storyHasMusic } from './catalogue/catalogue-story';
 import { COIN_RIM, ReaderCoin } from '@/components/child-ui/reader-coin';
@@ -56,7 +57,6 @@ import {
 import { Fonts } from '@/constants/theme';
 import { useStoryTransition } from '@/contexts/story-transition-context';
 import { MusicControl } from '../ui/music-control';
-import { AudioControlModal } from '../ui/audio-control-modal';
 import { ParentsOnlyModal } from '../ui/parents-only-modal';
 import { SubscriptionOverlay } from '../ui/subscription-overlay';
 import { useAppStore } from '@/store/app-store';
@@ -3273,18 +3273,26 @@ export function StoryBookReader({
         scaledFontSize={scaledFontSize}
       />
 
-      {/* Audio Control Modal - rendered at root level with absolute positioning
-           to prevent iOS crash from native Modal inside complex view hierarchy */}
-      <AudioControlModal
+      <ReaderAudioPanel
         visible={showAudioControlModal}
-        onClose={() => setShowAudioControlModal(false)}
-        masterVolume={globalSound.masterVolume}
-        musicVolume={globalSound.musicVolume}
-        voiceOverVolume={globalSound.voiceOverVolume}
-        onMasterVolumeChange={globalSound.setMasterVolume}
-        onMusicVolumeChange={globalSound.setMusicVolume}
-        onVoiceOverVolumeChange={globalSound.setVoiceOverVolume}
-        useAbsolutePositioning
+        screen={{ width: screenWidth, height: screenHeight }}
+        insets={insets}
+        textScale={textSizeScale}
+        reduceMotion={reduceMotion}
+        title={t('audioSettings.title')}
+        doneLabel={t('reader.done')}
+        closeLabel={t('common.close')}
+        muteLabel={t('audioSettings.mute')}
+        unmuteLabel={t('audioSettings.unmute')}
+        channels={[
+          { id: 'master', label: t('audioSettings.masterVolume'), value: globalSound.masterVolume, onChange: globalSound.setMasterVolume },
+          { id: 'music', label: t('audioSettings.music'), value: globalSound.musicVolume, onChange: globalSound.setMusicVolume },
+          { id: 'voice', label: t('audioSettings.voiceOver'), value: globalSound.voiceOverVolume, onChange: globalSound.setVoiceOverVolume },
+        ]}
+        onClose={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          setShowAudioControlModal(false);
+        }}
       />
 
       {/* Page Preview Modal */}

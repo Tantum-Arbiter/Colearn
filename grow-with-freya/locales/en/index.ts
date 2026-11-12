@@ -1435,6 +1435,8 @@ export default {
     masterVolume: 'Master Volume',
     music: 'Music',
     voiceOver: 'Voice Over',
+    mute: 'Mute',
+    unmute: 'Unmute',
   },
 
   // Learning activities

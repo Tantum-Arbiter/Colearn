@@ -1227,6 +1227,8 @@ export default {
     masterVolume: 'Ana Ses Seviyesi',
     music: 'Müzik',
     voiceOver: 'Ses',
+    mute: 'Sesi kapat',
+    unmute: 'Sesi aç',
   },
   subscription: {
     trialEnd: {

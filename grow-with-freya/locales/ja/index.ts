@@ -1227,6 +1227,8 @@ export default {
     masterVolume: 'マスターボリューム',
     music: '音楽',
     voiceOver: 'ボイス',
+    mute: 'ミュート',
+    unmute: 'ミュート解除',
   },
   subscription: {
     trialEnd: {

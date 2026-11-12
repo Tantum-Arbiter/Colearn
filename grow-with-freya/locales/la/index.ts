@@ -1227,6 +1227,8 @@ export default {
     masterVolume: 'Volumen Principale',
     music: 'Musica',
     voiceOver: 'Vox',
+    mute: 'Sile',
+    unmute: 'Sona',
   },
   subscription: {
     trialEnd: {
