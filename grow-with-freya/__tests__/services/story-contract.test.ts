@@ -103,12 +103,53 @@ describe('the CMS story little-fox-meets-a-friend', () => {
     expect(item.outcome?.storyText?.[band]?.en).toBe(text);
   });
 
-  it('page 4: every choice offered to a band has its own story text for that band', () => {
-    const page4 = load('little-fox-meets-a-friend').pages![3].learningChallenge!;
-    const offered = { '1-2': page4.byAge?.['1-2']?.items, '2-4': page4.byAge?.['2-4']?.items, '4-6': page4.byAge?.['4+']?.items } as const;
-    const missing = Object.entries(offered).flatMap(([band, ids]) => (ids ?? []).filter((id) => !page4.items.find((item) => item.id === id)?.outcome?.storyText?.[band as '1-2']?.en).map((id) => `${band} ${id}`));
+  const ownPages = [
+    [4, ['finn-says-sorry', 'finn-talks-softly', 'finn-stays-still']],
+    [8, ['finn-steps-back', 'finn-waits-nearby', 'finn-leaves-a-berry']],
+    [11, ['say-hello', 'ask-to-play', 'say-ill-wait']],
+  ] as const;
+
+  it.each(ownPages)('page %i: every choice turns to its own rendered page, a whole page of its own', (pageNumber, ids) => {
+    const challenge = load('little-fox-meets-a-friend').pages!.find((page) => page.pageNumber === pageNumber)!.learningChallenge!;
+
+    expect(challenge.items.map((item) => [item.id, item.outcome?.stateAfter])).toEqual(ids.map((id) => [id, {
+      image: `assets/stories/little-fox-meets-a-friend/page-${pageNumber}/outcomes/${id}.webp`,
+      position: { x: 0, y: 0 },
+      size: { width: 1, height: 1 },
+    }]));
+    expect(challenge.stateAfter).toBeUndefined();
+  });
+
+  it('the app ships every chosen page it names', () => {
+    const fs = jest.requireActual('fs');
+    const path = jest.requireActual('path');
+    const named = load('little-fox-meets-a-friend').pages!.flatMap((page) => page.learningChallenge?.items.map((item) => item.outcome?.stateAfter?.image) ?? []);
+
+    expect(named).toHaveLength(9);
+    expect(named.filter((image) => typeof image !== 'string' || !fs.existsSync(path.join(__dirname, '../..', image))).map(String)).toEqual([]);
+  });
+
+  it.each([4, 8, 11])('page %i: every choice offered to a band has its own story text for that band', (pageNumber) => {
+    const challenge = load('little-fox-meets-a-friend').pages!.find((page) => page.pageNumber === pageNumber)!.learningChallenge!;
+    const offered = { '1-2': challenge.byAge?.['1-2']?.items, '2-4': challenge.byAge?.['2-4']?.items, '4-6': challenge.byAge?.['4+']?.items } as const;
+    const missing = Object.entries(offered).flatMap(([band, ids]) => (ids ?? []).filter((id) => !challenge.items.find((item) => item.id === id)?.outcome?.storyText?.[band as '1-2']?.en).map((id) => `${band} ${id}`));
 
     expect(missing).toEqual([]);
+  });
+
+  const laterStory = [
+    [8, 'finn-steps-back', '2-4', 'Finn took one big step to the side,\nTo leave a path both clear and wide.\nHe did not call. He did not creep.\nAnd Bramble took another peep.'],
+    [8, 'finn-waits-nearby', '2-4', 'Finn sat down beside the way,\nAnd found some daisies there to play.\nHe did not stare. He did not shout.\nAnd Bramble\'s nose came peeping out.'],
+    [8, 'finn-leaves-a-berry', '2-4', 'Finn placed a pinecone on the track,\nA gift for her, then he stepped back.\nHe smiled and let the present be.\nWould Bramble come out now to see?'],
+    [11, 'say-hello', '2-4', '"Hello, Bramble," Finn said low,\nWith one small wave, so soft and slow.\nNo pinecone shout, no booming cheer,\nJust one kind fox, still standing here.'],
+    [11, 'ask-to-play', '2-4', '"Would you like to play with me?"\nFinn asked so softly by the tree.\n"If not, that\'s fine. It\'s still okay.\nWe can play another day."'],
+    [11, 'say-ill-wait', '2-4', '"I\'ll wait for you," Finn said with care,\n"I\'ll be right here, just over there."\nHe sat down with a little smile.\nHe could wait a little while.'],
+  ] as const;
+
+  it.each(laterStory)('page %i: %s tells its own story for the %s band', (pageNumber, id, band, text) => {
+    const item = load('little-fox-meets-a-friend').pages!.find((page) => page.pageNumber === pageNumber)!.learningChallenge!.items.find((each) => each.id === id)!;
+
+    expect(item.outcome?.storyText?.[band]?.en).toBe(text);
   });
 
   it('carries no song, so the reader never asks for an instrument', () => {

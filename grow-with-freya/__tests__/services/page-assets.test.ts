@@ -9,12 +9,15 @@ const challenge: LearningChallenge = {
 };
 
 describe('pageAssetPaths: every picture a page needs offline', () => {
-  it('lists the background, each choice cut-out and the after patch of a challenge page', () => {
+  it('lists the background, and each choice`s cut-out with the page it leads to', () => {
     expect(pageAssetPaths(fox)).toEqual([
       'assets/stories/little-fox-meets-a-friend/page-4/background.webp',
       'assets/stories/little-fox-meets-a-friend/page-4/challenge/finn-says-sorry.webp',
+      'assets/stories/little-fox-meets-a-friend/page-4/outcomes/finn-says-sorry.webp',
       'assets/stories/little-fox-meets-a-friend/page-4/challenge/finn-talks-softly.webp',
+      'assets/stories/little-fox-meets-a-friend/page-4/outcomes/finn-talks-softly.webp',
       'assets/stories/little-fox-meets-a-friend/page-4/challenge/finn-stays-still.webp',
+      'assets/stories/little-fox-meets-a-friend/page-4/outcomes/finn-stays-still.webp',
     ]);
   });
 
@@ -25,7 +28,8 @@ describe('pageAssetPaths: every picture a page needs offline', () => {
   });
 
   it('a challenge without an after patch lists its items alone', () => {
-    const { stateAfter: _none, ...bare } = challenge;
+    const { stateAfter: _none, ...shared } = challenge;
+    const bare = { ...shared, items: shared.items.map(({ outcome: _own, ...item }) => item) };
 
     expect(challengeAssetPaths(bare)).toHaveLength(3);
     expect(challengeAssetPaths(undefined)).toEqual([]);

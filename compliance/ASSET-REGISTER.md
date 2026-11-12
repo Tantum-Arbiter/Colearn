@@ -3,7 +3,7 @@ title: "Asset and licence register — Early Roots app"
 type: register
 status: started — the two island pictures (§5 tablets, §5a phones) are the only rows for something in the build; the plan's lock art (§6) is no longer drawn; the Otter Raft rows are for a game undone 2026-09-30
 covers: PHASE-4-PROD-READINESS.md §9.9 B (asset and licence register; generated art has a licence trail)
-updated: 2026-10-03
+updated: 2026-11-12
 ---
 
 # Asset and licence register
@@ -31,6 +31,7 @@ marked **⚠️ UNVERIFIED**.
 | The reader's menu: its painted panel, row icons and row arrow (the operator's pictures, 2026-11-11) | Registered below, §5i — origin and licence ⚠️ UNVERIFIED |
 | The reader's Compare Languages and Change Language panels: the painted frame (the operator's picture, 2026-11-12) | Registered below, §5j — origin and licence ⚠️ UNVERIFIED |
 | The Audio Settings panel, opened from every sound button: its painted frame and the three button icons (the operator's pictures, 2026-11-12) | Registered below, §5k — origin and licence ⚠️ UNVERIFIED |
+| The nine pages a Little Fox Meets a Friend choice leads to (pages 4, 8 and 11, rendered by ai-tools 2026-11-12) | Registered below, §5l — rendered by the operator's ai-tools story factory through ChatGPT; terms ⚠️ UNVERIFIED. The rest of the book's art (pages, covers, choice cards) is not yet registered |
 | The lock on the island's learning-plan checkpoints | Registered below, §6 — the supplied picture is not drawn since 2026-10-03 (a padlock drawn in code replaced it); the file remains, origin ⚠️ UNVERIFIED |
 | Everything else — avatars, story illustrations, instrument art, music, fonts, voices (the feelings game's art and the spelling game's art left with those games on 2026-10-16; the nine bear and animal faces the badges draw stay in `assets/images/emotions/`) | **Not registered.** Origin is not recorded anywhere in the repository — ⚠️ UNVERIFIED |
 
@@ -314,6 +315,32 @@ sign-in sky, the owl and the badge art.
 | Terms for commercial use, and who owns it | ⚠️ UNVERIFIED — depends on the answer above |
 | Checked by eye against well-known games and films | **Not yet done by a person** |
 | Quality | The panel is drawn up to 780 points wide (about 1560 pixels at 2×), so it is enlarged up to 1.1×. The icons are the weak point: about 52 pixels of ink each in the operator's picture, drawn up to about 50 points (100–150 pixels), so they are enlarged two to three times and look soft up close; a larger export of the three icons would fix it |
+
+## 5l. Little Fox Meets a Friend: the page each choice leads to
+
+Nine whole pages, one for each choice on the book's three Choose games, shown in place of the page's
+painting once the child has chosen, until the page is turned. Each is ai-tools' `final.webp` for that
+option, copied byte for byte, under `grow-with-freya/assets/stories/little-fox-meets-a-friend/` (4.4 MB
+in all).
+
+| File | What it shows |
+|---|---|
+| `page-4/outcomes/finn-says-sorry.webp` (1448×1086, SHA-256 `00eabea9d5a91a1900c38fe1f86ca934afbf9a59c6efeaa72c2aac793b05b285`) | Finn bows his head and says sorry; Bramble’s nose peeps out |
+| `page-4/outcomes/finn-talks-softly.webp` (1448×1086, SHA-256 `23888c198e4937d52c0ac1a2c7ad423e7283d4c0178fd171e6b2e0fcdd1a38dd`) | Finn crouches and whispers; Bramble’s nose peeps out |
+| `page-4/outcomes/finn-stays-still.webp` (1448×1086, SHA-256 `ec3ace6953da7f5d854b1a62e1c98817b2b01d93e03a4158ad20d31a890bd57d`) | Finn stands calm and still; Bramble’s nose peeps out |
+| `page-8/outcomes/finn-steps-back.webp` (1448×1086, SHA-256 `ad34f88657ba396fd163bd26593d4898223b9dc3546175871cf5140222d53c33`) | Finn has stepped off the track, leaving it clear |
+| `page-8/outcomes/finn-waits-nearby.webp` (1448×1086, SHA-256 `9f61c16aef272c63bd880c58dd5489d6d11f7ed9680e18d4aa1db2617b6791b9`) | Finn sits beside the track playing with a daisy |
+| `page-8/outcomes/finn-leaves-a-berry.webp` (1448×1086, SHA-256 `4dd35a07389aae1a05a9b76fc0cd0d9fe55b9eb9874ced75050cabed92ded364`) | Finn has left a pinecone on the track as a gift (the item id says berry; the card the child taps shows a pinecone, so the page does too) |
+| `page-11/outcomes/say-hello.webp` (1448×1086, SHA-256 `261b77cbc9b9d521a2e9f6acccd71a0d5b8ca320896ae70c89dd87da16178302`) | Finn gives a small wave and a soft hello |
+| `page-11/outcomes/ask-to-play.webp` (1448×1086, SHA-256 `f9fea11f76bc065b2fefb14f47ee1f69e152767bd661ceae3a7a5e25d0103986`) | Finn bends lower with open paws, asking softly |
+| `page-11/outcomes/say-ill-wait.webp` (1448×1086, SHA-256 `d819ac67abb4bd27c0691f6c1b03d503ba58343e1f699b8abc0070de99264f37`) | Finn sits by the willow to wait, smiling |
+
+| Question | Answer |
+|---|---|
+| Who made it, and with what | Rendered on 2026-11-12 by the operator's story factory (`~/Workspace/ai-tools/gpt-image-generator-browser`, stage `alternative_page_illustration`, provider `gpt`) driving ChatGPT's image generation in the operator's signed-in browser, from the scene written for each option in the book's brief (`stories/gwf-75/2-4/little-fox-meets-a-friend/book.json`, `choice.options[].scene`). Each was drawn from four references: Finn's and Bramble's character sheets, the location sheet and that page's own rendered master, all from the same book's render of 2026-11-09. Prompts, reference hashes and output hashes are in the factory's `output/little-fox-meets-a-friend/provenance/`. The first three page 11 renders carried page 8's dock leaf over and were drawn again; the rejected three are not shipped |
+| Terms for commercial use, and who owns it | ⚠️ UNVERIFIED — as for the rest of the book: depends on the ChatGPT plan and account used, which the repository does not record |
+| Checked by eye against well-known games and films | **Not yet done by a person.** The characters are the book's own Finn and Bramble |
+| Quality | 1448×1086, the book's own page size, drawn the same way as its pages |
 
 ## 7. Wombat's Picnic Count (the first game pack)
 
