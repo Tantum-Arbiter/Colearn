@@ -24,6 +24,7 @@ import { coverColumns, coverWidthFor } from '@/constants/catalogue-columns';
 import { Animated, Dimensions, StyleSheet } from 'react-native';
 import * as reanimatedModule from 'react-native-reanimated';
 import * as reducedMotionModule from '@/hooks/use-reduced-motion';
+import * as swapHoldModule from '@/components/stories/catalogue/use-swap-hold';
 import { useStoryTransition } from '@/contexts/story-transition-context';
 
 const mockStartTransition = jest.fn();
@@ -1921,6 +1922,26 @@ describe('the shelves and the planet', () => {
 
     expect(frame.position).toBe('absolute');
     expect(frame.top).toBe(0);
+  });
+
+  it('sends the page home with the theme when the theme it changes to has nothing in it', async () => {
+    const hold = jest.spyOn(swapHoldModule, 'useSwapHold');
+    const tree = await renderLibrary();
+    const before = hold.mock.calls[hold.mock.calls.length - 1][0].startAt;
+
+    fireEvent.press(byTestId(tree, 'story-theme-tile-music')[0]);
+
+    expect(before).toBeUndefined();
+    expect(hold.mock.calls[hold.mock.calls.length - 1][0].startAt).toBe(0);
+    hold.mockRestore();
+  });
+
+  it('measures the set of shelves on show, so a change of set can hold the page while it glides', async () => {
+    const tree = await renderLibrary();
+
+    const content = byTestId(tree, 'catalogue-collection-content').find((n: any) => typeof n.props.onLayout === 'function');
+
+    expect(content).toBeDefined();
   });
 
   it('fades the shelves into the sky where they meet the bar, rather than cutting them off', async () => {

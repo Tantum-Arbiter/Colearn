@@ -12,6 +12,8 @@ import {
   View,
   useWindowDimensions,
   type LayoutChangeEvent,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Reanimated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
@@ -111,6 +113,7 @@ import { SearchPanel } from './search-panel';
 import { StoryCoverCard } from './story-cover-card';
 import { StoryRow } from './story-row';
 import { SavedSongCard } from './saved-song-card';
+import { useSwapHold } from './use-swap-hold';
 import { getAllPracticeSongs, type PracticeSong } from '@/services/music-asset-registry';
 
 // The finer themes behind Filter. Learning and Music are tiles, not pills
@@ -310,13 +313,6 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
     () => skyBand(chooserFoot, chooserFoot + CATALOGUE_CHOOSER.fade, windowHeight),
     [chooserFoot, windowHeight]
   );
-  const onPageScroll = useMemo(
-    () => Animated.event([{ nativeEvent: { contentOffset: { y: pageOffset } } }], {
-      useNativeDriver: true,
-      listener: pageScroller.onScroll,
-    }),
-    [pageOffset, pageScroller.onScroll]
-  );
   const handleChooserLayout = useCallback((event: LayoutChangeEvent) => {
     setChooserHeight(Math.round(event.nativeEvent.layout.height));
   }, []);
@@ -466,6 +462,32 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
   // what the shelves are showing: the theme, and the filters narrowing it.
   // A change to either replaces every book on the page.
   const collectionKey = `${theme}:${[...selectedTags].sort().join(',')}`;
+  const swapHold = useSwapHold({
+    swapKey: collectionKey,
+    scrollRef: pageScroller.scrollRef,
+    reduceMotion,
+    startAt: catalogueStories.length === 0 ? 0 : undefined,
+  });
+  const { onScroll: followGuide, onLayout: layGuide, onContentSizeChange: sizeGuide } = pageScroller;
+  const { onScroll: followSwap, onLayout: laySwap, onContentSizeChange: sizeSwap } = swapHold;
+  const onPageScroll = useMemo(
+    () => Animated.event([{ nativeEvent: { contentOffset: { y: pageOffset } } }], {
+      useNativeDriver: true,
+      listener: (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+        followGuide(event);
+        followSwap(event);
+      },
+    }),
+    [pageOffset, followGuide, followSwap]
+  );
+  const onPageLayout = useCallback((event: LayoutChangeEvent) => {
+    layGuide(event);
+    laySwap(event);
+  }, [layGuide, laySwap]);
+  const onPageContentSize = useCallback((width: number, height: number) => {
+    sizeGuide(width, height);
+    sizeSwap(width, height);
+  }, [sizeGuide, sizeSwap]);
 
   // The shelves under the featured panel, laid out afresh each time the app opens
   const savedStories = useMemo(
@@ -1006,8 +1028,8 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
               testID="catalogue-scroll"
               ref={holdPageScroll}
               onScroll={onPageScroll}
-              onLayout={pageScroller.onLayout}
-              onContentSizeChange={pageScroller.onContentSizeChange}
+              onLayout={onPageLayout}
+              onContentSizeChange={onPageContentSize}
               scrollEventThrottle={16}
               style={[styles.scroll, { bottom: navClearance(insets.bottom) }]}
               scrollIndicatorInsets={{ top: coverHeight }}
@@ -1049,7 +1071,12 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
                 // the shelves change wholesale when a theme or a filter is
                 // tapped; without this they were replaced between one frame
                 // and the next, which read as the page glitching
-                <ContentSwap contentKey={collectionKey} testID="catalogue-collection">
+                <ContentSwap
+                  contentKey={collectionKey}
+                  testID="catalogue-collection"
+                  style={swapHold.holdHeight === undefined ? undefined : { minHeight: swapHold.holdHeight }}
+                >
+                  <View testID="catalogue-collection-content" onLayout={swapHold.measure(collectionKey)}>
                   {catalogueStories.length === 0 ? (
                     <View style={styles.noResultsContainer}>
                       <Text style={[styles.noResultsText, { fontSize: scaledFontSize(16) }]}>
@@ -1086,6 +1113,7 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
                       {shelvesView}
                     </>
                   )}
+                  </View>
                 </ContentSwap>
               )}
             </Animated.ScrollView>

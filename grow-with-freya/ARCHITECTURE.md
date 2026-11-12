@@ -356,6 +356,14 @@ things used to cut:
   still being built and they snapped into view part-way through it.
 - **"No stories found" is inside that fade.** It used to be a separate branch beside the
   shelves, so Stories to Music with no music installed was a hard cut in both directions.
+- **A change of shelves under a scrolled page glides; it never snaps** (`useSwapHold`,
+  `components/stories/catalogue/use-swap-hold.ts`, operator 2026-11-12). On a tall iPad the
+  empty Music page cannot scroll at all, so iOS clamped the page to the top in one frame. The
+  column is now held at its old height while the shelves change. When the new set is empty,
+  the page glides home on the tap, alongside the theme lamp. Otherwise, once the new set has
+  laid out, the page glides to the furthest the new set can reach, and only if it is past that
+  point. The hold is let go when the page arrives. Under Reduce Motion the page moves without a
+  glide.
 
 `ContentSwap` also brings the same collection back if the key returns to what is showing before
 the fade out has finished. A filter tapped on and straight off again used to leave the shelves
