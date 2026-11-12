@@ -9,6 +9,7 @@ import { StyleSheet, type View } from 'react-native';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { ProgressScreen } from '@/components/progress/progress-screen';
 import { PLANET_HEADER_ESTIMATE } from '@/components/child-ui/planet-cover';
+import { SHELF_FOOT_FADE } from '@/components/child-ui/shelf-foot';
 
 jest.mock('@/data/stories', () => ({
   ALL_STORIES: [],
@@ -77,6 +78,24 @@ describe('ProgressScreen', () => {
       expect(byTestId(tree, 'badge-category-bar').length).toBeGreaterThan(0);
       expect(byTestId(tree, 'badge-grid').length).toBeGreaterThan(0);
     });
+  });
+
+  it('fades the page into the sky where it meets the bar, rather than cutting it off', async () => {
+    const tree = render(<ProgressScreen onBack={jest.fn()} />);
+
+    await waitFor(() => expect(byTestId(tree, 'progress-scroll').length).toBeGreaterThan(0));
+    const order = tree.UNSAFE_root.findAll((n: any) => typeof n.props.testID === 'string').map((n: any) => n.props.testID);
+
+    expect(order.lastIndexOf('shelf-foot')).toBeGreaterThan(order.lastIndexOf('progress-scroll'));
+  });
+
+  it('leaves room under the last badge for it to scroll clear of the fade', async () => {
+    const tree = render(<ProgressScreen onBack={jest.fn()} />);
+
+    await waitFor(() => expect(byTestId(tree, 'progress-scroll').length).toBeGreaterThan(0));
+    const scroll = byTestId(tree, 'progress-scroll').find((n: any) => n.props.contentContainerStyle);
+
+    expect(StyleSheet.flatten(scroll.props.contentContainerStyle).paddingBottom).toBeGreaterThanOrEqual(SHELF_FOOT_FADE);
   });
 
   it('shows one weekly and one monthly adventure', async () => {

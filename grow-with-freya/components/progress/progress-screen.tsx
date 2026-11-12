@@ -11,6 +11,7 @@ import { CelestialBackground } from '@/components/child-ui/celestial-background'
 import { ContentSwap } from '@/components/child-ui/content-swap';
 import { PlanetHeaderArtwork } from '@/components/child-ui/planet-header-artwork';
 import { PlanetCover, usePlanetCover } from '@/components/child-ui/planet-cover';
+import { SHELF_FOOT_FADE, ShelfFoot } from '@/components/child-ui/shelf-foot';
 import { BalancedHeaderRow } from '@/components/child-ui/balanced-header-row';
 import { CircleActionButton } from '@/components/child-ui/circle-action-button';
 import { PageTitle } from '@/components/child-ui/page-title';
@@ -143,7 +144,7 @@ export function ProgressScreen({
         scrollIndicatorInsets={{ top: coverHeight }}
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingTop: coverHeight + SPACE_3, paddingHorizontal: margin, paddingBottom: scrollBinding?.reserve ?? 0 },
+          { paddingTop: coverHeight + SPACE_3, paddingHorizontal: margin, paddingBottom: SHELF_FOOT_FADE + (scrollBinding?.reserve ?? 0) },
         ]}
       >
         <View style={[styles.column, { maxWidth: CONTENT_MAX_WIDTH }]}>
@@ -194,6 +195,8 @@ export function ProgressScreen({
           </ContentSwap>
         </View>
       </ScrollView>
+
+      <ShelfFoot />
 
       <PlanetCover height={coverHeight} testID="progress-planet-over-cards" />
 

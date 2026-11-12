@@ -18,7 +18,8 @@ import { skyBand } from '@/constants/night-palette';
 import { THEME_BAR, filterDrawerDepth } from '@/components/stories/catalogue/story-filter-bar';
 import { taglineFontSize, taglineWordsDepth } from '@/components/child-ui/page-tagline';
 import * as catalogueStoryModule from '@/components/stories/catalogue/catalogue-story';
-import { COVER_GRID_GAP, SPACE_3 } from '@/components/child-ui/tokens';
+import { COVER_GRID_GAP, SPACE_3, SPACE_4 } from '@/components/child-ui/tokens';
+import { SHELF_FOOT_FADE } from '@/components/child-ui/shelf-foot';
 import { coverColumns, coverWidthFor } from '@/constants/catalogue-columns';
 import { Animated, Dimensions, StyleSheet } from 'react-native';
 import * as reanimatedModule from 'react-native-reanimated';
@@ -1920,6 +1921,23 @@ describe('the shelves and the planet', () => {
 
     expect(frame.position).toBe('absolute');
     expect(frame.top).toBe(0);
+  });
+
+  it('fades the shelves into the sky where they meet the bar, rather than cutting them off', async () => {
+    const tree = await renderLibrary();
+
+    const order = tree.UNSAFE_root.findAll((n: any) => typeof n.props.testID === 'string').map((n: any) => n.props.testID);
+
+    expect(order.lastIndexOf('shelf-foot')).toBeGreaterThan(order.lastIndexOf('catalogue-scroll'));
+  });
+
+  it('leaves room under the last shelf for it to scroll clear of the fade', async () => {
+    const tree = await renderLibrary();
+
+    const scroll = byTestId(tree, 'catalogue-scroll').find((n: any) => n.props.contentContainerStyle);
+    const content = StyleSheet.flatten(scroll.props.contentContainerStyle);
+
+    expect(content.paddingBottom).toBeGreaterThanOrEqual(SPACE_4 + SHELF_FOOT_FADE);
   });
 
   it('starts the shelves below the planet and the header, so nothing is hidden at rest', async () => {

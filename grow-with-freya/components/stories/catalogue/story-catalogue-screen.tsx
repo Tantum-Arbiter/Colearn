@@ -56,6 +56,7 @@ import { SectionHeading } from '@/components/child-ui/section-heading';
 import { JourneyShell } from '@/components/child-ui/journey-shell';
 import { ChildNavItemId, navClearance, navItemCentre } from '@/components/child-ui/child-bottom-navigation';
 import { ScreenTimeGlance } from '@/components/home/screen-time-glance';
+import { SHELF_FOOT_FADE, ShelfFoot } from '@/components/child-ui/shelf-foot';
 import { ScreenTimeInputLock, useScreenTimeLock } from '@/components/home/screen-time-input-lock';
 import { useScreenTimeAllowance } from '@/hooks/use-screen-time-allowance';
 import { useTimeOfDay } from '@/hooks/use-time-of-day';
@@ -1015,7 +1016,7 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
                 {
                   paddingTop: shelfTop,
                   paddingHorizontal: margin,
-                  paddingBottom: SPACE_4 + (textSizeScale - 1) * 40 + pageScroller.reserve,
+                  paddingBottom: SPACE_4 + SHELF_FOOT_FADE + (textSizeScale - 1) * 40 + pageScroller.reserve,
                 },
               ]}
               scrollEnabled={!interactionLocked}
@@ -1088,6 +1089,7 @@ export function StoryCatalogueScreen({ onStorySelect, initialMode, sectionReques
                 </ContentSwap>
               )}
             </Animated.ScrollView>
+            <ShelfFoot />
             {showsChooser && (
               <Animated.View
                 testID="catalogue-chooser-sky"

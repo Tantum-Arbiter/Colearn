@@ -548,6 +548,11 @@ content scroll up *behind* it rather than being cut off at an invisible line. Bo
 - The planet is drawn twice on purpose. The copy behind `SectionCrossfade` keeps the globe solid
   while sections fade; the copy in `PlanetCover` covers the content. `PinnedInSection` cancels
   the section's lift so the two never part.
+- At the foot, the library and Progress columns fade into the sky above the journey bar rather
+  than stopping on a hard line where the scroll ends (`ShelfFoot` in
+  `components/child-ui/shelf-foot.tsx`, `skyFoot` in `night-palette.ts`: 32 pt from clear to the
+  sky's own colour at that height). Each column ends 32 pt lower so its last row can scroll clear
+  of the fade (operator request 2026-11-12).
 
 ### Full-bleed backgrounds must not be sized in JS
 
