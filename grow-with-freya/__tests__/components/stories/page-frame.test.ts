@@ -1,4 +1,4 @@
-import { FOCUS_MARGIN, MASTER_ASPECT, challengeFocus, containFrame, coverFrame, focusFrame, patchFrame, readerArtFrame } from '@/components/stories/page-frame';
+import { FOCUS_MARGIN, MASTER_ASPECT, challengeFocus, containFrame, coverFrame, coversMaster, focusFrame, patchFrame, readerArtFrame } from '@/components/stories/page-frame';
 import type { LearningChallenge } from '@/types/story';
 
 describe('coverFrame: where a 4:3 master lands when it fills the screen from the centre', () => {
@@ -69,6 +69,19 @@ describe('patchFrame: a patch given in master coordinates lands on the master, n
     const patch = patchFrame({ position: { x: 0.5, y: 0.5 }, size: { width: 0.5, height: 0.5 } }, { left: 0, top: 0, width: 800, height: 400 });
 
     expect(patch).toEqual({ left: 400, top: 200, width: 400, height: 200 });
+  });
+});
+
+describe('coversMaster: a patch that is a whole page of its own', () => {
+  it.each([
+    ['the whole master', { x: 0, y: 0 }, { width: 1, height: 1 }, true],
+    ['a patch in the middle', { x: 0.3, y: 0.3 }, { width: 0.2, height: 0.2 }, false],
+    ['full width but not full height', { x: 0, y: 0 }, { width: 1, height: 0.5 }, false],
+    ['full height but not full width', { x: 0, y: 0 }, { width: 0.5, height: 1 }, false],
+    ['full size but pushed right', { x: 0.1, y: 0 }, { width: 1, height: 1 }, false],
+    ['full size but pushed down', { x: 0, y: 0.1 }, { width: 1, height: 1 }, false],
+  ])('%s: %s', (_name, position, size, expected) => {
+    expect(coversMaster({ position, size })).toBe(expected);
   });
 });
 

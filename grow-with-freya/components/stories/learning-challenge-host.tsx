@@ -1,8 +1,8 @@
 import React, { memo, useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { Image } from 'expo-image';
+import Animated, { FadeOut } from 'react-native-reanimated';
 import { RADIUS_CARD, SPACE_2, SPACE_3, SPACE_4 } from '@/components/child-ui/tokens';
-import { ChooseEngine, LEAVE_MS, pictureSource, type ChooseEvent } from '@/components/experience/engines/choose/choose-engine';
+import { ChooseEngine, LEAVE_MS, type ChooseEvent } from '@/components/experience/engines/choose/choose-engine';
 import { SAFE_ZONE, centredTray, trayFrame } from '@/components/experience/engines/choose/choose-layout';
 import { engineFor } from '@/components/experience/engines';
 import { SceneEngine, type SceneEvent } from '@/components/experience/engines/scene/scene-engine';
@@ -14,10 +14,9 @@ import { motionDuration } from '@/constants/child-ui-motion';
 import { Fonts } from '@/constants/theme';
 import type { SupportedLanguage } from '@/services/i18n';
 import type { PlanAgeRange } from '@/types/learning-plan';
-import type { AgeGroup, AgeGroupText, LearningChallenge } from '@/types/story';
+import type { AgeGroup, AgeGroupText, ChallengeStateAfter, LearningChallenge } from '@/types/story';
 import { challengeView } from './learning-challenge-view';
 import type { ChallengeTips } from './learning-tips';
-import { patchFrame } from './page-frame';
 
 export interface PageChrome {
   top: number;
@@ -33,6 +32,7 @@ export const PROMPT_HEIGHT = 48;
 export interface ChallengeResult {
   tips: ChallengeTips | null;
   storyText: AgeGroupText | null;
+  after: ChallengeStateAfter | null;
 }
 
 export interface LearningChallengeHostProps {
@@ -109,8 +109,9 @@ export const LearningChallengeHost = memo(function LearningChallengeHost({
     onDone({
       tips: chosen?.tips?.length ? { picture: chosen.image, label: chosen.label, heading: chosen.successLine ?? view.successLine, tips: chosen.tips } : null,
       storyText: challenge.items.find((item) => item.id === chosenId)?.outcome?.storyText ?? null,
+      after: outcome?.stateAfter ?? challenge.stateAfter ?? null,
     });
-  }, [phase, chosen, chosenId, challenge.items, view.successLine, onDone]);
+  }, [phase, chosen, chosenId, outcome, challenge.items, challenge.stateAfter, view.successLine, onDone]);
 
   const handleEngineEvent = useCallback((event: ChooseEvent | SceneEvent) => {
     if (event.type === 'first-action-shown') dispatch({ type: 'introDone', at: Date.now() });
@@ -122,23 +123,11 @@ export const LearningChallengeHost = memo(function LearningChallengeHost({
 
   const prompt = phase === 'celebrating' ? outcome?.successLine ?? view.successLine : view.instruction;
   const promptSize = isTablet ? 20 : 16;
-  const after = (phase === 'celebrating' && outcome?.stateAfter) || challenge.stateAfter;
   const showEngine = inPlay || phase === 'celebrating';
 
   return (
     <View testID={testID} style={StyleSheet.absoluteFill} pointerEvents="box-none">
-      <View style={[StyleSheet.absoluteFill, styles.veil]} pointerEvents="none" />
-
-      {after && resolving ? (
-        <Image
-          testID="learning-challenge-after"
-          source={pictureSource(after.image)}
-          style={{ position: 'absolute', ...patchFrame(after, frame) }}
-          contentFit="contain"
-          transition={reduceMotion ? 0 : 300}
-          accessible={false}
-        />
-      ) : null}
+      {inPlay ? <Animated.View testID="learning-challenge-veil" exiting={FadeOut.duration(reduceMotion ? 0 : LEAVE_MS)} style={[StyleSheet.absoluteFill, styles.veil]} pointerEvents="none" /> : null}
 
       {showEngine && scene ? <SceneEngine spots={spots} mode={view.mode} target={view.target} reduceMotion={reduceMotion} paused={phase !== 'playing' && phase !== 'intro'} onEvent={handleEngineEvent} /> : null}
       {showEngine && !scene ? <ChooseEngine choices={view.choices} target={view.target} tray={tray} reduceMotion={reduceMotion} paused={phase !== 'playing' && phase !== 'intro'} leaving={teaching} onEvent={handleEngineEvent} /> : null}

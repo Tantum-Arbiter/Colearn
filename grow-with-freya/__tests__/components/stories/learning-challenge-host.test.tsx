@@ -82,7 +82,7 @@ describe('LearningChallengeHost: choosing', () => {
   beforeEach(() => jest.useFakeTimers());
   afterEach(() => jest.useRealTimers());
 
-  it('a choice shows the story`s own result and the after picture, then turns the page', () => {
+  it('a choice shows the story`s own result and leaves the after picture to the page turn', () => {
     const { press, prompt, has, outcomes } = renderHost();
     act(() => jest.advanceTimersByTime(ENTRANCE_MS));
 
@@ -90,12 +90,23 @@ describe('LearningChallengeHost: choosing', () => {
 
     expect(has('learning-phase-celebrating')).toBe(true);
     expect(prompt()).toBe('Gentle words helped Bramble feel safe.');
-    expect(has('learning-challenge-after')).toBe(true);
+    expect(has('learning-challenge-after')).toBe(false);
     expect(outcomes).toEqual([]);
 
     act(() => jest.advanceTimersByTime(motionDuration(CELEBRATION, false)));
 
     expect(outcomes).toEqual(['completed']);
+  });
+
+  it('the veil over the page fades away with the cards once a choice is made, so the page turn starts from the page as it is', () => {
+    const { press, find } = renderHost();
+    act(() => jest.advanceTimersByTime(ENTRANCE_MS));
+    expect(find('learning-challenge-veil')).not.toHaveLength(0);
+    expect(find('learning-challenge-veil')[0].props.exiting).toBeDefined();
+
+    act(() => press('choose-card-ask-to-play'));
+
+    expect(find('learning-challenge-veil')).toHaveLength(0);
   });
 
   it('keeps the chosen card in view, ringed, while the others dim', () => {
@@ -118,14 +129,15 @@ describe('LearningChallengeHost: choosing', () => {
         { ...fox.items[1], outcome: { stateAfter: { image: 'file:///after-wave.webp', position: { x: 0.3, y: 0.3 }, size: { width: 0.2, height: 0.2 } } } },
       ],
     };
-    const { press, prompt, root } = renderHost({ challenge: withOutcomes });
+    const { press, prompt, has, handed } = renderHost({ challenge: withOutcomes });
     act(() => jest.advanceTimersByTime(ENTRANCE_MS));
 
     act(() => press('choose-card-say-hello'));
 
     expect(prompt()).toBe('A big hello can be a lot for a small hedgehog.');
-    const patch = root.findAll((node: ReactTestInstance) => node.props.testID === 'learning-challenge-after')[0];
-    expect(patch.props.source).toEqual({ uri: fox.stateAfter!.image });
+    expect(has('learning-challenge-after')).toBe(false);
+    act(() => jest.advanceTimersByTime(motionDuration(CELEBRATION, false)));
+    expect(handed.map((result) => result.after)).toEqual([fox.stateAfter]);
   });
 
   it('a choice with its own after picture shows that picture', () => {
@@ -133,14 +145,15 @@ describe('LearningChallengeHost: choosing', () => {
       ...fox,
       items: [fox.items[0], { ...fox.items[1], outcome: { stateAfter: { image: 'file:///after-wave.webp', position: { x: 0.3, y: 0.3 }, size: { width: 0.2, height: 0.2 } } } }],
     };
-    const { press, prompt, root } = renderHost({ challenge: withOutcomes });
+    const { press, prompt, has, handed } = renderHost({ challenge: withOutcomes });
     act(() => jest.advanceTimersByTime(ENTRANCE_MS));
 
     act(() => press('choose-card-ask-to-play'));
 
     expect(prompt()).toBe('Gentle words helped Bramble feel safe.');
-    const patch = root.findAll((node: ReactTestInstance) => node.props.testID === 'learning-challenge-after')[0];
-    expect(patch.props.source).toEqual({ uri: 'file:///after-wave.webp' });
+    expect(has('learning-challenge-after')).toBe(false);
+    act(() => jest.advanceTimersByTime(motionDuration(CELEBRATION, false)));
+    expect(handed.map((result) => result.after?.image)).toEqual(['file:///after-wave.webp']);
   });
 
   it('the celebration says nothing of stars or scores', () => {
@@ -195,26 +208,6 @@ describe('LearningChallengeHost: the page art`s frame', () => {
     expect(flat.top + flat.height / 2).toBeCloseTo((trayTop + (-126.75 + 655.5 * 0.6)) / 2);
     expect(flat.top + flat.height / 2).not.toBeCloseTo((trayTop + 402 * 0.6) / 2);
   });
-
-  it('a whole-master after patch covers the art, spilling above and below the screen', () => {
-    const { press, root } = renderHost({ screen, art });
-    act(() => jest.advanceTimersByTime(ENTRANCE_MS));
-
-    act(() => press('choose-card-say-hello'));
-
-    const patch = root.findAll((node: ReactTestInstance) => node.props.testID === 'learning-challenge-after')[0];
-    expect(patch.props.style).toMatchObject({ left: 0, top: -126.75, width: 874, height: 655.5 });
-  });
-
-  it('without an art frame the screen is the frame, as before', () => {
-    const { press, root } = renderHost({ screen });
-    act(() => jest.advanceTimersByTime(ENTRANCE_MS));
-
-    act(() => press('choose-card-say-hello'));
-
-    const patch = root.findAll((node: ReactTestInstance) => node.props.testID === 'learning-challenge-after')[0];
-    expect(patch.props.style).toMatchObject({ left: 0, top: 0, width: 874, height: 402 });
-  });
 });
 
 describe('LearningChallengeHost: a choice that teaches', () => {
@@ -250,7 +243,7 @@ describe('LearningChallengeHost: a choice that teaches', () => {
     act(() => jest.advanceTimersByTime(1));
 
     expect(outcomes).toEqual(['completed']);
-    expect(handed).toEqual([{ tips: { picture: fox.items[1].image, label: 'Shy', heading: 'When a friend feels shy, you can help:', tips }, storyText: null }]);
+    expect(handed).toEqual([{ tips: { picture: fox.items[1].image, label: 'Shy', heading: 'When a friend feels shy, you can help:', tips }, storyText: null, after: fox.stateAfter }]);
   });
 
   it('under Reduce Motion hands them over at once', () => {
@@ -271,7 +264,7 @@ describe('LearningChallengeHost: a choice that teaches', () => {
     act(() => jest.advanceTimersByTime(motionDuration(CELEBRATION, false)));
 
     expect(outcomes).toEqual(['completed']);
-    expect(handed).toEqual([{ tips: null, storyText: null }]);
+    expect(handed).toEqual([{ tips: null, storyText: null, after: fox.stateAfter }]);
   });
 
   it('a choice with its own story text hands that over too, with tips or without', () => {
@@ -290,8 +283,44 @@ describe('LearningChallengeHost: a choice that teaches', () => {
     act(() => teaching.press('choose-card-ask-to-play'));
     act(() => jest.advanceTimersByTime(LEAVE_MS));
 
-    expect(plain.handed).toEqual([{ tips: null, storyText: waved }]);
+    expect(plain.handed).toEqual([{ tips: null, storyText: waved, after: fox.stateAfter }]);
     expect(teaching.handed.map((result) => result.storyText)).toEqual([told]);
+  });
+});
+
+describe('LearningChallengeHost: the picture a choice leaves on the page', () => {
+  beforeEach(() => jest.useFakeTimers());
+  afterEach(() => jest.useRealTimers());
+  const ownPage = { image: 'file:///asked-to-play.webp', position: { x: 0, y: 0 }, size: { width: 1, height: 1 } };
+
+  function choose(challenge: LearningChallenge, card: string) {
+    const host = renderHost({ challenge });
+    act(() => jest.advanceTimersByTime(ENTRANCE_MS));
+    act(() => host.press(card));
+    act(() => jest.advanceTimersByTime(LEAVE_MS + motionDuration(CELEBRATION, false)));
+    return host;
+  }
+
+  it('hands over the chosen choice`s own page, so it can stay on screen', () => {
+    const own: LearningChallenge = { ...fox, items: [fox.items[0], { ...fox.items[1], outcome: { stateAfter: ownPage } }] };
+
+    const { handed } = choose(own, 'choose-card-ask-to-play');
+
+    expect(handed.map((result) => result.after)).toEqual([ownPage]);
+  });
+
+  it('a choice with no page of its own hands over the picture the whole challenge ends on', () => {
+    const own: LearningChallenge = { ...fox, items: [fox.items[0], { ...fox.items[1], outcome: { stateAfter: ownPage } }] };
+
+    const { handed } = choose(own, 'choose-card-say-hello');
+
+    expect(handed.map((result) => result.after)).toEqual([fox.stateAfter]);
+  });
+
+  it('with no picture anywhere, hands over none', () => {
+    const { handed } = choose({ ...fox, stateAfter: undefined }, 'choose-card-say-hello');
+
+    expect(handed.map((result) => result.after)).toEqual([null]);
   });
 });
 

@@ -22,6 +22,10 @@ export function patchFrame(patch: Pick<ChallengeStateAfter, 'position' | 'size'>
   };
 }
 
+export function coversMaster(patch: Pick<ChallengeStateAfter, 'position' | 'size'>): boolean {
+  return patch.position.x === 0 && patch.position.y === 0 && patch.size.width === 1 && patch.size.height === 1;
+}
+
 export interface ArtFocus {
   left: number;
   top: number;

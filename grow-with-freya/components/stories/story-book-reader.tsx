@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useMemo, useCallback, useRef } from 'react';
 import { View, Text, StyleSheet, Pressable, Dimensions, StatusBar, ImageBackground, ScrollView, TextInput, Alert, KeyboardAvoidingView, Platform, BackHandler, useWindowDimensions, Image as RNImage, AppState, type LayoutChangeEvent } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -16,7 +16,7 @@ import Animated, {
 import * as ScreenOrientation from 'expo-screen-orientation';
 import { applyDefaultOrientation, isTabletDevice } from '@/hooks/use-story-orientation';
 import { useTranslation } from 'react-i18next';
-import { Story, StoryPage, STORY_TAGS, InteractiveElement, getLocalizedText, resolveAgeGroup, MusicChallenge, type AgeGroupText } from '@/types/story';
+import { Story, StoryPage, STORY_TAGS, InteractiveElement, getLocalizedText, resolveAgeGroup, MusicChallenge, type AgeGroupText, type ChallengeStateAfter } from '@/types/story';
 import type { SupportedLanguage } from '@/services/i18n';
 import { SUPPORTED_LANGUAGES, setStoredLanguage } from '@/services/i18n';
 import { InteractiveElementComponent } from './interactive-element';
@@ -24,7 +24,7 @@ import { captionScale, narrationLayout, readerEdge } from './narration-layout';
 import { MusicChallengeUI } from './music-challenge-ui';
 import { LearningChallengeHost, type ChallengeResult } from './learning-challenge-host';
 import { TipsBadge, TipsPanel, tipsPanelLayout, type ChallengeTips } from './learning-tips';
-import { challengeFocus, focusFrame, readerArtFrame } from './page-frame';
+import { challengeFocus, coversMaster, focusFrame, patchFrame, readerArtFrame } from './page-frame';
 import { SOUND_WORD_COLOR, SOUND_WORD_SCALE, wordText, type StoryWord } from './sound-words';
 import { FADE_IN_MS, FADE_OUT_MS, paginate, ROWS_PER_PAGE, textLines, useTextPaging, type LineBreaks, type PageWord } from './text-pages';
 import { TextMeasure } from './text-measure';
@@ -157,6 +157,7 @@ export function StoryBookReader({
     startPage: startPageIndex,
   }));
   const [previousPageIndex, setPreviousPageIndex] = useState<number | null>(null); // For crossfade
+  const [previousOutcome, setPreviousOutcome] = useState<ChallengeStateAfter | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
   // Analytics: track time spent in story reader
@@ -234,6 +235,7 @@ export function StoryBookReader({
   const [learningTips, setLearningTips] = useState<ChallengeTips | null>(null);
   const [learningTipsOpen, setLearningTipsOpen] = useState(false);
   const [learningStoryText, setLearningStoryText] = useState<AgeGroupText | null>(null);
+  const [learningOutcome, setLearningOutcome] = useState<ChallengeStateAfter | null>(null);
   const reduceMotion = useReducedMotion();
   // Track the background music volume while preview/playing overlays are active.
   const preMusicChallengeVolumeRef = useRef<number | null>(null);
@@ -317,6 +319,7 @@ export function StoryBookReader({
   const learningChallengeOpen = learningChallengeOpenOn === currentPageIndex;
   const [learningChallengeVisitedPage, setLearningChallengeVisitedPage] = useState(currentPageIndex);
   if (learningChallengeVisitedPage !== currentPageIndex) {
+    setLearningOutcome(null);
     setLearningChallengeVisitedPage(currentPageIndex);
     setLearningChallengePlayedOn(null);
     setLearningTips(null);
@@ -1783,7 +1786,7 @@ export function StoryBookReader({
   const handleMeasuredBreaks = useCallback((breaks: LineBreaks) => setMeasuredBreaks((known) => ({ ...known, [liveText]: breaks })), [liveText]);
 
   // Function to render just the image layer (for background/previous page - no animation)
-  const renderPageImage = (page: any, withAnimation = true) => {
+  const renderPageImage = (page: any, withAnimation: boolean, outcome: ChallengeStateAfter | null) => {
     if (!page || !page.backgroundImage) return null;
 
     const isCoverPage = page.pageNumber === 0;
@@ -1793,6 +1796,7 @@ export function StoryBookReader({
     const coverFit = story.displayFit === 'cover';
     const art = coverFit ? readerArtFrame({ width: screenWidth, height: screenHeight }, challengeFocus(page.learningChallenge), isTablet) : null;
     const pageSource = typeof page.backgroundImage === 'string' ? { uri: page.backgroundImage } : page.backgroundImage;
+    const outcomeSource = outcome ? (typeof outcome.image === 'string' ? { uri: outcome.image } : outcome.image) : null;
 
     // All images are loaded from local cache after batch sync - no authenticated fetching needed
     const imageContent = (
@@ -1801,7 +1805,7 @@ export function StoryBookReader({
           <>
             <Image
               testID="story-page-scene-bands"
-              source={pageSource}
+              source={outcome && outcomeSource && coversMaster(outcome) ? outcomeSource : pageSource}
               style={StyleSheet.absoluteFill}
               contentFit="cover"
               blurRadius={SCENE_BAND_BLUR}
@@ -1825,6 +1829,17 @@ export function StoryBookReader({
             log.error(`Page ${page.pageNumber}: Background image error:`, JSON.stringify(error));
           }}
         />
+        {outcome && outcomeSource ? (
+          <Image
+            testID="learning-outcome-picture"
+            source={outcomeSource}
+            style={{ position: 'absolute', ...patchFrame(outcome, art ?? { left: 0, top: 0, width: screenWidth, height: screenHeight }) }}
+            contentFit="contain"
+            transition={0}
+            cachePolicy="memory-disk"
+            accessible={false}
+          />
+        ) : null}
         {/* Character overlay */}
         {page.characterImage && (
           <Image
@@ -1951,10 +1966,10 @@ export function StoryBookReader({
           ]}>
             {/* Previous page image - stays at full opacity during crossfade */}
             {previousPage && previousPage.backgroundImage && (
-              renderPageImage(previousPage, false)
+              renderPageImage(previousPage, false, previousOutcome)
             )}
             {/* Current page image - fades in on top */}
-            {renderPageImage(page, true)}
+            {renderPageImage(page, true, learningOutcome)}
 
             {/* Interactive Elements - Props that can be tapped to reveal */}
             {page.interactiveElements && page.interactiveElements.length > 0 && (
@@ -2075,12 +2090,13 @@ export function StoryBookReader({
     await leavePage();
   };
 
-  const crossFadeTo = (targetPageIndex: number) => {
+  const crossFade = (turn: () => void) => {
     setTextHold({ index: currentPageIndex, text: mainText });
     setPreviousPageIndex(currentPageIndex);
+    setPreviousOutcome(learningOutcome);
     requestAnimationFrame(() => {
       imageOpacity.value = 0;
-      setCurrentPageIndex(targetPageIndex);
+      turn();
       textOpacity.value = withTiming(0, { duration: PAGE_TEXT_FADE_MS, easing: Easing.out(Easing.quad) });
       imageOpacity.value = withTiming(1, { duration: PAGE_IMAGE_FADE_MS, easing: Easing.inOut(Easing.quad) });
       setTimeout(() => {
@@ -2093,6 +2109,11 @@ export function StoryBookReader({
       }, PAGE_IMAGE_FADE_MS);
     });
   };
+  const crossFadeTo = (targetPageIndex: number) => crossFade(() => setCurrentPageIndex(targetPageIndex));
+  const crossFadeRef = useRef(crossFade);
+  useLayoutEffect(() => {
+    crossFadeRef.current = crossFade;
+  });
 
   const turnToNextPage = async () => {
     if (isTransitioning) return;
@@ -2127,12 +2148,18 @@ export function StoryBookReader({
     crossFadeTo(targetPageIndex);
   };
 
-  const handleLearningChallengeDone = useCallback(({ tips, storyText }: ChallengeResult) => {
+  const handleLearningChallengeDone = useCallback(({ tips, storyText, after }: ChallengeResult) => {
     setLearningChallengeOpenOn(null);
     setLearningChallengePlayedOn(currentPageIndex);
     setLearningTips(tips);
-    setLearningStoryText(storyText);
     setLearningTipsOpen(false);
+    if (after || storyText) {
+      setIsTransitioning(true);
+      crossFadeRef.current(() => {
+        setLearningOutcome(after);
+        setLearningStoryText(storyText);
+      });
+    }
     if (currentPage) achievementEvents.challengeDone(currentPage.id, 'learning');
   }, [currentPage, currentPageIndex, achievementEvents]);
 

@@ -1404,6 +1404,270 @@ describe('StoryBookReader: a learning challenge page', () => {
     expect(view.UNSAFE_root.findAll((node) => typeof node.props.progress === 'number' && typeof node.props.size === 'number')[0].props.progress).toBe(1);
     view.unmount();
   });
+  const ownPages: Story = {
+    ...storyWithChallenge,
+    pages: storyWithChallenge.pages!.map((page, i) => (i === 1 ? {
+      ...page,
+      learningChallenge: {
+        ...page.learningChallenge!,
+        items: page.learningChallenge!.items.map((item) => ({ ...item, outcome: { ...item.outcome, stateAfter: { image: `file:///outcomes/${item.id}.webp`, position: { x: 0, y: 0 }, size: { width: 1, height: 1 } } } })),
+      },
+    } : page)),
+  };
+  const outcomePictures = (view: ReturnType<typeof render>) => view.UNSAFE_root.findAll((node) => node.props.testID === 'learning-outcome-picture' && node.props.source !== undefined && node.parent?.props.testID !== 'learning-outcome-picture');
+
+  it('once the game ends, the chosen choice`s own page takes the place of the painting', async () => {
+    const { Dimensions, StyleSheet } = require('react-native');
+    const view = render(<StoryBookReader story={ownPages} onExit={jest.fn()} skipCoverPage skipInitialFadeIn />);
+    expect(outcomePictures(view)).toHaveLength(0);
+
+    choose(view, 'choose-card-finn-talks-softly');
+    await act(async () => { jest.advanceTimersByTime(3000); });
+
+    const [picture] = outcomePictures(view);
+    expect(picture.props.source).toEqual({ uri: 'file:///outcomes/finn-talks-softly.webp' });
+    const { width, height } = Dimensions.get('window');
+    expect(StyleSheet.flatten(picture.props.style)).toMatchObject({ position: 'absolute', left: 0, top: 0, width, height });
+    view.unmount();
+  });
+
+  it('the chosen page stays while the page turns, then the next page has the screen', async () => {
+    const view = render(<StoryBookReader story={ownPages} onExit={jest.fn()} skipCoverPage skipInitialFadeIn />);
+    choose(view, 'choose-card-finn-stays-still');
+    await act(async () => { jest.advanceTimersByTime(3000); });
+
+    readOn(view);
+    act(() => press(view, 'right-touch-area'));
+    act(() => jest.advanceTimersByTime(50));
+    expect(outcomePictures(view).map((node) => node.props.source)).toEqual([{ uri: 'file:///outcomes/finn-stays-still.webp' }]);
+    await act(async () => { jest.advanceTimersByTime(3000); });
+
+    expect(narration(view)).toContain('The end.');
+    expect(outcomePictures(view)).toHaveLength(0);
+    view.unmount();
+  });
+
+  it('coming back to the page shows its own painting again, ready for another go', async () => {
+    const view = render(<StoryBookReader story={ownPages} onExit={jest.fn()} skipCoverPage skipInitialFadeIn />);
+    choose(view, 'choose-card-finn-stays-still');
+    await act(async () => { jest.advanceTimersByTime(3000); });
+    readOn(view);
+    act(() => press(view, 'right-touch-area'));
+    await act(async () => { jest.advanceTimersByTime(3000); });
+
+    act(() => press(view, 'left-touch-area'));
+    act(() => jest.advanceTimersByTime(50));
+    expect(outcomePictures(view)).toHaveLength(0);
+    await act(async () => { jest.advanceTimersByTime(3000); });
+
+    expect(narration(view)).toContain('She curled into a prickly ball');
+    expect(outcomePictures(view)).toHaveLength(0);
+    view.unmount();
+  });
+
+  it('going back from the chosen page holds it while the earlier page fades in', async () => {
+    const twoBefore: Story = { ...ownPages, pages: [ownPages.pages![0], { ...mockStory.pages![1], id: 'before', pageNumber: 1 }, { ...ownPages.pages![1], pageNumber: 2 }, ownPages.pages![2]] };
+    const view = render(<StoryBookReader story={twoBefore} onExit={jest.fn()} skipCoverPage skipInitialFadeIn />);
+    for (let presses = 0; presses < 6 && !has(view, 'learning-challenge-host'); presses += 1) {
+      act(() => press(view, 'right-touch-area'));
+      await act(async () => { jest.advanceTimersByTime(3000); });
+    }
+    act(() => jest.advanceTimersByTime(ENTRANCE_MS));
+    act(() => press(view, 'choose-card-finn-talks-softly'));
+    act(() => jest.advanceTimersByTime(LEAVE_MS));
+    await act(async () => { jest.advanceTimersByTime(3000); });
+    expect(outcomePictures(view)).toHaveLength(1);
+
+    act(() => press(view, 'left-touch-area'));
+    act(() => jest.advanceTimersByTime(50));
+    expect(outcomePictures(view)).toHaveLength(1);
+    await act(async () => { jest.advanceTimersByTime(3000); });
+
+    expect(outcomePictures(view)).toHaveLength(0);
+    view.unmount();
+  });
+
+  it('a choice with no page of its own leaves the painting as it is', async () => {
+    const plain: Story = { ...storyWithChallenge, pages: storyWithChallenge.pages!.map((page, i) => (i === 1 ? { ...page, learningChallenge: { ...page.learningChallenge!, items: page.learningChallenge!.items.map(({ outcome: _own, ...item }) => item) } } : page)) };
+    const view = render(<StoryBookReader story={plain} onExit={jest.fn()} skipCoverPage skipInitialFadeIn />);
+
+    choose(view, 'choose-card-finn-talks-softly');
+    act(() => jest.advanceTimersByTime(motionDuration(CELEBRATION, false)));
+    await act(async () => { jest.advanceTimersByTime(3000); });
+
+    expect(has(view, 'learning-challenge-host')).toBe(false);
+    expect(outcomePictures(view)).toHaveLength(0);
+    view.unmount();
+  });
+
+  const pickUntilDone = (view: ReturnType<typeof render>, card: string) => {
+    readOn(view);
+    act(() => press(view, 'right-touch-area'));
+    act(() => jest.advanceTimersByTime(ENTRANCE_MS));
+    act(() => press(view, `choose-card-${card}`));
+    act(() => jest.advanceTimersByTime(LEAVE_MS - 1));
+  };
+  const endGame = () => act(() => jest.advanceTimersByTime(1));
+  const firstFrame = () => act(() => jest.advanceTimersByTime(20));
+  const paintings = (view: ReturnType<typeof render>) => view.UNSAFE_root.findAll((node) => node.props.source?.uri === 'test-page1.jpg' && node.parent?.props.source?.uri !== 'test-page1.jpg');
+  const nextDisabled = (view: ReturnType<typeof render>) => view.UNSAFE_root.findAll((node) => node.props.testID === 'right-touch-area' && typeof node.props.onPress === 'function')[0].props.disabled;
+
+  it.each(['finn-says-sorry', 'finn-talks-softly', 'finn-stays-still'])('picking %s turns to its own page the way Next turns a page: the picture and the words fade together', (card) => {
+    const { PAGE_TEXT_FADE_MS, PAGE_IMAGE_FADE_MS } = require('@/components/stories/story-book-reader');
+    const reanimated = jest.requireMock('react-native-reanimated');
+    const view = render(<StoryBookReader story={ownPages} onExit={jest.fn()} skipCoverPage skipInitialFadeIn />);
+    pickUntilDone(view, card);
+    reanimated.withTiming.mockClear();
+
+    endGame();
+    firstFrame();
+
+    const fades = reanimated.withTiming.mock.calls.map((call: [number, { duration?: number }]) => `${call[0]}@${call[1]?.duration}`);
+    expect(fades).toEqual(expect.arrayContaining([`0@${PAGE_TEXT_FADE_MS}`, `1@${PAGE_IMAGE_FADE_MS}`]));
+    view.unmount();
+  });
+
+  it('while the chosen page fades in, the painting lies beneath it and the page`s own words fade out before the choice`s words come', () => {
+    const { PAGE_TEXT_FADE_MS, PAGE_IMAGE_FADE_MS } = require('@/components/stories/story-book-reader');
+    const view = render(<StoryBookReader story={ownPages} onExit={jest.fn()} skipCoverPage skipInitialFadeIn />);
+    pickUntilDone(view, 'finn-talks-softly');
+    expect(paintings(view)).toHaveLength(1);
+
+    endGame();
+
+    expect(outcomePictures(view)).toHaveLength(0);
+    expect(narration(view)).toContain('He did not want a game like that.');
+
+    firstFrame();
+
+    expect(outcomePictures(view).map((node) => node.props.source)).toEqual([{ uri: 'file:///outcomes/finn-talks-softly.webp' }]);
+    expect(paintings(view)).toHaveLength(2);
+    expect(narration(view)).toContain('He did not want a game like that.');
+    expect(narration(view)).not.toContain('Finn whispered low');
+
+    act(() => jest.advanceTimersByTime(PAGE_TEXT_FADE_MS));
+
+    expect(narration(view)).toContain('Finn whispered low');
+    expect(paintings(view)).toHaveLength(2);
+
+    act(() => jest.advanceTimersByTime(PAGE_IMAGE_FADE_MS - PAGE_TEXT_FADE_MS));
+
+    expect(paintings(view)).toHaveLength(1);
+    expect(outcomePictures(view)).toHaveLength(1);
+    view.unmount();
+  });
+
+  it('Next waits while the chosen page turns in, as it does for any page turn', () => {
+    const { PAGE_IMAGE_FADE_MS } = require('@/components/stories/story-book-reader');
+    const view = render(<StoryBookReader story={ownPages} onExit={jest.fn()} skipCoverPage skipInitialFadeIn />);
+    pickUntilDone(view, 'finn-stays-still');
+
+    endGame();
+    firstFrame();
+    expect(nextDisabled(view)).toBe(true);
+
+    act(() => jest.advanceTimersByTime(PAGE_IMAGE_FADE_MS));
+    expect(nextDisabled(view)).toBe(false);
+    view.unmount();
+  });
+
+  it('a choice with words but no page of its own still fades its words in', () => {
+    const { PAGE_TEXT_FADE_MS } = require('@/components/stories/story-book-reader');
+    const wordsOnly: Story = { ...storyWithChallenge, pages: storyWithChallenge.pages!.map((page, i) => (i === 1 ? { ...page, learningChallenge: { ...page.learningChallenge!, items: page.learningChallenge!.items.map((item) => ({ ...item, outcome: { ...item.outcome, stateAfter: undefined } })) } } : page)) };
+    const view = render(<StoryBookReader story={wordsOnly} onExit={jest.fn()} skipCoverPage skipInitialFadeIn />);
+    pickUntilDone(view, 'finn-talks-softly');
+    endGame();
+    firstFrame();
+
+    expect(narration(view)).toContain('He did not want a game like that.');
+    expect(outcomePictures(view)).toHaveLength(0);
+
+    act(() => jest.advanceTimersByTime(PAGE_TEXT_FADE_MS));
+
+    expect(narration(view)).toContain('Finn whispered low');
+    view.unmount();
+  });
+
+  it('a choice with a page but no words of its own still turns to its page, keeping the page`s words', () => {
+    const { PAGE_IMAGE_FADE_MS } = require('@/components/stories/story-book-reader');
+    const pageOnly: Story = { ...ownPages, pages: ownPages.pages!.map((page, i) => (i === 1 ? { ...page, learningChallenge: { ...page.learningChallenge!, items: page.learningChallenge!.items.map((item) => ({ ...item, outcome: { ...item.outcome, storyText: undefined } })) } } : page)) };
+    const view = render(<StoryBookReader story={pageOnly} onExit={jest.fn()} skipCoverPage skipInitialFadeIn />);
+    pickUntilDone(view, 'finn-talks-softly');
+    endGame();
+    firstFrame();
+
+    expect(paintings(view)).toHaveLength(2);
+    expect(outcomePictures(view).map((node) => node.props.source)).toEqual([{ uri: 'file:///outcomes/finn-talks-softly.webp' }]);
+
+    act(() => jest.advanceTimersByTime(PAGE_IMAGE_FADE_MS));
+
+    expect(paintings(view)).toHaveLength(1);
+    expect(narration(view)).toContain('He did not want a game like that.');
+    view.unmount();
+  });
+
+  it('on a later page the turn starts from that page, holding its own words', async () => {
+    const twoBefore: Story = { ...ownPages, pages: [ownPages.pages![0], { ...mockStory.pages![1], id: 'before', pageNumber: 1, text: 'A page before the game.' }, { ...ownPages.pages![1], pageNumber: 2 }, ownPages.pages![2]] };
+    const view = render(<StoryBookReader story={twoBefore} onExit={jest.fn()} skipCoverPage skipInitialFadeIn />);
+    for (let presses = 0; presses < 6 && !has(view, 'learning-challenge-host'); presses += 1) {
+      act(() => press(view, 'right-touch-area'));
+      await act(async () => { jest.advanceTimersByTime(3000); });
+    }
+    act(() => jest.advanceTimersByTime(ENTRANCE_MS));
+    act(() => press(view, 'choose-card-finn-talks-softly'));
+    act(() => jest.advanceTimersByTime(LEAVE_MS));
+    firstFrame();
+
+    expect(narration(view)).toContain('He did not want a game like that.');
+    expect(narration(view)).not.toContain('A page before the game.');
+    expect(outcomePictures(view)).toHaveLength(1);
+    view.unmount();
+  });
+
+  it('a choice with neither a page nor words of its own turns nothing', () => {
+    const { PAGE_TEXT_FADE_MS } = require('@/components/stories/story-book-reader');
+    const reanimated = jest.requireMock('react-native-reanimated');
+    const plain: Story = { ...storyWithChallenge, pages: storyWithChallenge.pages!.map((page, i) => (i === 1 ? { ...page, learningChallenge: { ...page.learningChallenge!, items: page.learningChallenge!.items.map(({ outcome: _own, ...item }) => item) } } : page)) };
+    const view = render(<StoryBookReader story={plain} onExit={jest.fn()} skipCoverPage skipInitialFadeIn />);
+    pickUntilDone(view, 'finn-talks-softly');
+    act(() => jest.advanceTimersByTime(motionDuration(CELEBRATION, false) - LEAVE_MS));
+    reanimated.withTiming.mockClear();
+
+    act(() => jest.advanceTimersByTime(LEAVE_MS));
+    firstFrame();
+
+    expect(has(view, 'learning-challenge-host')).toBe(false);
+    expect(reanimated.withTiming.mock.calls.some((call: [number, { duration?: number }]) => call[0] === 0 && call[1]?.duration === PAGE_TEXT_FADE_MS)).toBe(false);
+    expect(paintings(view)).toHaveLength(1);
+    expect(nextDisabled(view)).toBe(false);
+    view.unmount();
+  });
+
+  it.each([['Next', 'right-touch-area'], ['Back', 'left-touch-area']])('leaving the chosen page with %s fades it out like any page', async (_name, button) => {
+    const { PAGE_TEXT_FADE_MS, PAGE_IMAGE_FADE_MS } = require('@/components/stories/story-book-reader');
+    const reanimated = jest.requireMock('react-native-reanimated');
+    const twoBefore: Story = { ...ownPages, pages: [ownPages.pages![0], { ...mockStory.pages![1], id: 'before', pageNumber: 1 }, { ...ownPages.pages![1], pageNumber: 2 }, ownPages.pages![2]] };
+    const view = render(<StoryBookReader story={twoBefore} onExit={jest.fn()} skipCoverPage skipInitialFadeIn />);
+    for (let presses = 0; presses < 6 && !has(view, 'learning-challenge-host'); presses += 1) {
+      act(() => press(view, 'right-touch-area'));
+      await act(async () => { jest.advanceTimersByTime(3000); });
+    }
+    act(() => jest.advanceTimersByTime(ENTRANCE_MS));
+    act(() => press(view, 'choose-card-finn-talks-softly'));
+    act(() => jest.advanceTimersByTime(LEAVE_MS));
+    await act(async () => { jest.advanceTimersByTime(3000); });
+    if (button === 'right-touch-area') readOn(view);
+    reanimated.withTiming.mockClear();
+
+    act(() => press(view, button));
+    act(() => jest.advanceTimersByTime(21));
+
+    const fades = reanimated.withTiming.mock.calls.map((call: [number, { duration?: number }]) => `${call[0]}@${call[1]?.duration}`);
+    expect(fades).toEqual(expect.arrayContaining([`0@${PAGE_TEXT_FADE_MS}`, `1@${PAGE_IMAGE_FADE_MS}`]));
+    expect(outcomePictures(view)).toHaveLength(1);
+    view.unmount();
+  });
+
   it('the next-page button opens the challenge once the page has been read, instead of turning the page', async () => {
     const view = render(<StoryBookReader story={storyWithChallenge} onExit={jest.fn()} skipCoverPage skipInitialFadeIn />);
 
@@ -1626,6 +1890,70 @@ describe('StoryBookReader: a book drawn for cover fit', () => {
     const host = openChallenge(view);
     expect(host.props.art).toEqual(coverFrame(host.props.screen));
     view.unmount();
+  });
+
+  describe('once a choice with its own page is made', () => {
+    const { ENTRANCE_MS, LEAVE_MS } = require('@/components/experience/engines/choose/choose-engine');
+    const { Dimensions, StyleSheet } = require('react-native');
+    const chosenPage = { image: 'file:///outcomes/finn-talks-softly.webp', position: { x: 0, y: 0 }, size: { width: 1, height: 1 } };
+    const page = {
+      ...fox.pages[3],
+      id: 'fox-4',
+      pageNumber: 1,
+      backgroundImage: 'test-page1.jpg',
+      learningChallenge: { ...fox.pages[3].learningChallenge, items: fox.pages[3].learningChallenge.items.map((item: { id: string; outcome?: object }) => ({ ...item, outcome: { ...item.outcome, stateAfter: { ...chosenPage, image: `file:///outcomes/${item.id}.webp` } } })) },
+    };
+    const story: Story = { ...mockStory, displayFit: 'cover', pages: [mockStory.pages![0], page, mockStory.pages![2]] };
+    const play = (view: ReturnType<typeof render>) => {
+      const host = openChallenge(view);
+      const art = host.props.art;
+      act(() => jest.advanceTimersByTime(ENTRANCE_MS));
+      act(() => { fireEvent.press(view.UNSAFE_root.findAll((node) => node.props.testID === 'choose-card-finn-talks-softly' && typeof node.props.onPress === 'function')[0]); });
+      act(() => jest.advanceTimersByTime(LEAVE_MS));
+      act(() => jest.advanceTimersByTime(3000));
+      return art;
+    };
+    const chosen = (view: ReturnType<typeof render>) => view.UNSAFE_root.findAll((node) => node.props.testID === 'learning-outcome-picture' && node.props.source !== undefined && node.parent?.props.testID !== 'learning-outcome-picture');
+
+    it('lies exactly where the painting lies', () => {
+      const view = render(<StoryBookReader story={story} onExit={jest.fn()} skipCoverPage skipInitialFadeIn />);
+
+      const art = play(view);
+
+      expect(chosen(view)).toHaveLength(1);
+      expect(chosen(view)[0].props.contentFit).toBe('contain');
+      expect(StyleSheet.flatten(chosen(view)[0].props.style)).toMatchObject({ left: art.left, top: art.top, width: art.width, height: art.height });
+      view.unmount();
+    });
+
+    it('a choice whose after picture is a patch lays it on its own part of the painting, and leaves the bands alone', () => {
+      const { patchFrame } = require('@/components/stories/page-frame');
+      const patch = { image: 'file:///outcomes/patch.webp', position: { x: 0.25, y: 0.5 }, size: { width: 0.5, height: 0.25 } };
+      const patched: Story = { ...story, pages: story.pages!.map((each, i) => (i === 1 ? { ...each, learningChallenge: { ...each.learningChallenge!, items: each.learningChallenge!.items.map((item) => ({ ...item, outcome: { ...item.outcome, stateAfter: patch } })) } } : each)) };
+      const dimensions = jest.spyOn(Dimensions, 'get').mockReturnValue({ width: 834, height: 1210, scale: 2, fontScale: 1 });
+      const view = render(<StoryBookReader story={patched} onExit={jest.fn()} skipCoverPage skipInitialFadeIn />);
+
+      const art = play(view);
+
+      expect(StyleSheet.flatten(chosen(view)[0].props.style)).toMatchObject(patchFrame(patch, art));
+      const sources = view.UNSAFE_root.findAll((node) => node.props.testID === 'story-page-scene-bands').map((node) => node.props.source?.uri);
+      expect(sources).not.toContain('file:///outcomes/patch.webp');
+      expect(sources).toContain('test-page1.jpg');
+      view.unmount();
+      dimensions.mockRestore();
+    });
+
+    it('on an upright tablet, softens the chosen page into the bands above and below too', () => {
+      const dimensions = jest.spyOn(Dimensions, 'get').mockReturnValue({ width: 834, height: 1210, scale: 2, fontScale: 1 });
+      const view = render(<StoryBookReader story={story} onExit={jest.fn()} skipCoverPage skipInitialFadeIn />);
+
+      play(view);
+
+      const sources = view.UNSAFE_root.findAll((node) => node.props.testID === 'story-page-scene-bands').map((node) => node.props.source?.uri);
+      expect(sources).toContain('file:///outcomes/finn-talks-softly.webp');
+      view.unmount();
+      dimensions.mockRestore();
+    });
   });
 
   it('on an upright tablet, shows the challenge on the whole scene but sizes its cards from the cover fit, as before', () => {
