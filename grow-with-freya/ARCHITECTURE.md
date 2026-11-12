@@ -378,6 +378,78 @@ the screen, kept clear of the button on both sides, on one line that shrinks bef
 They had been two layers set 8 and 20 points below the safe area, so the title sat below the
 button's middle (operator, 2026-10-04).
 
+### Each book on one shelf; the big cards show covers (operator, 2026-11-12)
+
+`buildShelves` in `components/stories/catalogue/catalogue-story.ts` stands each book on one
+shelf, however many themes it carries. The fullest shelf is filled first (the theme that gathers
+the most books not yet shelved), then the next; equally full shelves take an order drawn from the
+launch seed. The books on the big cards (the featured / Continue reading panel and Today's pick)
+stay out of the rows unless that would leave the rows empty. A book still answers to every one of
+its themes through Filter and See all, which match any tag. Before, a book stood in a row for
+each of its themes, so a small catalogue showed the same few titles over and over.
+
+The featured panel and Today's pick show the book's cover (`featuredInsightImage`: the cover
+page's full-size picture, else the shelf thumbnail); Continue reading shows the page the child is
+on instead (`place.pageIndex`; a page with no picture falls back to the cover). The picture is sharp and never zoomed, centred in the
+panel's right 70% (`INSIGHT_INSET`). A blurred copy of the cover (`INSIGHT_BLUR`) fills the whole
+panel beneath it, so the shadow alone sets how dark the panel is; a bare strip left of the cover
+read as a dark vertical band. The sharp cover's left edge (`INSIGHT_FEATHER`) fades into the blur
+in `INSIGHT_FEATHER_STEPS` slices of rising opacity, each a clipped copy lined up with the cover,
+since there is no mask library to fade one image. The shadow over it is cast
+diagonally from the top-left corner (`featured-story-shadow`): solid for the first tenth of the
+way to the bottom-right corner, clearing evenly to halfway, the picture plain beyond. They used to show page 3 zoomed
+about 2.1x to crop a paper margin that only the old templated books have; on the edge-to-edge
+ai-tools pages the zoom left Little Fox's boots and cut the fox away.
+
+### The page before onboarding (operator, 2026-11-12) -- a placeholder
+
+`OnboardingFlow` opens on `OnboardingIntro` (`components/onboarding/onboarding-intro.tsx`) before
+its first step: a plain white page with the operator's note of what will stand there ("Sell what
+it is here, the moment a user opens - a short video showcasing functionality/value for kid and
+parent") and a Start onboarding button, which moves on to step 1. It is not one of the numbered
+steps, so the count still reads "1 of 6", and nothing is saved by it. Its two strings are a note
+to the team and a stand-in label, held in `ONBOARDING_INTRO`, not in the locale files; when the
+short film replaces the page its real copy must go through all 14 locales. The two Maestro
+journeys that start at onboarding (`auth/first-run.yaml`, `core/onboarding-goals.yaml`) tap
+`onboarding-intro-start` first.
+
+### The big panels' words (operator, 2026-11-12)
+
+On the featured / Continue reading panel and Today's pick, the title and the description are shown
+in full, with no line cap and no "..."; the panel grows with them (it has a `minHeight`, never a
+height). The description is white at weight 600 on a line height of 1.35, and both carry a soft
+night text shadow (`WORDS_SHADOW` in `featured-story-card.tsx`), because the diagonal shadow has
+cleared by the time the words reach the picture and thin grey type was hard to read over a bright
+page. They used to stop at two and three lines. The description wraps at three quarters of the text
+column (`DESCRIPTION_SPAN`), about where a title ends, so it stays short of the picture's subject;
+that is a rough guide, not measured from each title. Read Now rests at the bottom left of the
+panel whatever is written above it: a spring (`featured-story-spring`, `flexGrow: 1`) stands
+between the words and the button, so panels with different descriptions line their buttons up.
+
+Shelf covers show their titles whole too (`CoverTitle`, `COVER_TITLE`): three lines where there
+were two, the type shrinking to 60% (`adjustsFontSizeToFit`, no fixed line height) before any of
+it would be cut with dots, and a soft night text shadow since a third line can reach below the
+wash. The same title rides the seated and opening book.
+
+### The book progress bar (operator, 2026-11-12)
+
+How far into a book the child is shows as one small capsule on the Continue reading panel
+(`BookProgress` in `components/child-ui/book-progress.tsx`, `size="small"`), spanning 72%
+of the panel's text column (`PROGRESS_SPAN`). The story card carries no bar: it was tried there and
+taken off (operator, 2026-11-12), since the ringed page in its strip already says where they are. Built to the operator's reference: a gold book medallion as tall as the
+capsule starts it, its halo breathing; a purple bar runs from it; and the page they are on sits
+inside the capsule at its end, in words ("Page 4 of 15", `home.pagePosition`, which is also the
+accessibility label). The fill grows in from nothing once it has been laid out
+(`BOOK_PROGRESS.growMs`), a shimmer sweeps along it on a loop, a white star pulses at its tip, and up
+to three sparkles twinkle along it (more the further they have read: from 1%, 20% and 50%). With
+Reduce Motion on, the fill is simply there and nothing loops. Pages are counted as the reader
+counts them, the cover not among them (`readingCount` in `components/stories/reading-progress.ts`),
+so the panel and the home's Continue pill agree; the panel used to say "Page 2 of 16" where the
+pill said "1 of 15". The panel is handed the saved reading place itself
+(`place: ReadingPlace`). It replaced the panel's `CardProgressBar` with its line of text underneath; the
+story card's onboarding bar and percentage went with it. A first version put a medallion and a thin
+bar side by side with "1/15" after it; the operator wanted the reference's capsule and more life.
+
 ### The library on a tablet held sideways
 
 The featured book and Today's pick sit side by side across the top (`catalogueLayout` in
@@ -550,6 +622,14 @@ content scroll up *behind* it rather than being cut off at an invisible line. Bo
   `pointerEvents="box-none"`/`"none"` so a drag that starts on the globe still scrolls. On the
   library's Stories section the chooser's sky band sits between the column and the cover, and
   the chooser itself sits above the header (see "The library's theme chooser").
+- Profile is the exception (operator, 2026-11-12): the planet has no cover over the list, and
+  the face, name, Login and the Saved/Badges/Manage tabs (`ProfileTop` in
+  `components/profile/profile-view.tsx`) are pinned outside the `ScrollView`, absolute at
+  `shelfTop` inside the page margins. Only the open tab's list (`ProfileBody`) scrolls, in a
+  window that starts at the pinned top's measured foot (`top: shelfTop + profileTopHeight`,
+  content padded by `SPACE_4`), so the list slips out of sight under the tabs. Nothing is painted
+  behind the pinned top: an earlier sky block hid the stars and read as a blue strip. The
+  catalogue holds the open tab and puts it back to Saved whenever the child leaves Profile.
 - The veil is the sky itself (`headerSkyVeil`, colours sampled from `SKY_GRADIENT_WORLD`): solid
   over the upper part of the cover and clear at its lower edge. The night clouds are translucent,
   so without it text stays readable right up under the back button.
@@ -787,21 +867,23 @@ pill's edge in its own orb's colour:
   the book to continue") there was nothing left to swap, and the spiral went. A story with no
   cover keeps the bookmark alone. The page shown is counted as the reader counts it, the cover not
   among the pages ("3 of 10" where the reader shows 3/10).
-  **A tap on the cover, or anywhere on the pill, opens the story's own card** (operator: "when
-  clicking the book, it should take me to the story sub page and bring the page selection into
-  view"; first built for the cover alone, then "continue reading from main menu does not bring up
-  the selection" -- so the whole pill does it, and reading starts from the card): the card opens
-  through the same `startTransition` the library and the island use, handed a book-shaped
-  rectangle centred on the cover (measured in the window; the shelves' `COVER_ASPECT_RATIO`, 1.6:1),
-  so the book sketched, held on the turn-the-screen prompt, opened and closed back is the library's
-  own shape. Handed the round cover's square, it was a square book on the prompt (operator: "the
-  book animation looks very off compared to the books ... via story page"). It opens
-  with `focusPages`, so it opens scrolled to its page strip and ways to read
-  (`useScrollToEndOnce`). `_layout` sends a card opened from home back to `main` when it is
-  closed. The pill stays open under the card, and folds back into the row once the card has gone
-  -- closed, or read and come back from (`HomeScene`'s `storyOpen`, the transition context's
-  `isTransitioning` going from true to false; operator, 2026-10-05: "the pill expansion should reset
-  and go back to the ordinary ui view").
+  **A tap on the cover, or anywhere on the pill, opens the book straight to the child's page**
+  (operator, 2026-11-12: "slide the book into view, it opens and they go straight into it instead
+  of the selection menu appearing"). `_layout`'s `handleContinueFromHome` calls the transition
+  context's `openStoryStraight(story, from)`, handed a book-shaped rectangle centred on the cover
+  (measured in the window; the shelves' `COVER_ASPECT_RATIO`, 1.6:1). No story card rises: the
+  book glides from that rectangle to its seat in the middle of the screen over
+  `STORY_STRAIGHT_IN.glideMs` while the home goes dark behind it (phase `gliding`), then opens
+  through the same `beginStory` a card's Read does, or on a phone held upright waits on the
+  turn-the-screen prompt first. Back on that prompt puts the book away and lights the home again,
+  since there is no card to return to (`straightInRef`; `startTransition` clears it). The page it
+  opens on is the one the reader resumes at (`resumePageIndex` over `storyProgress`), and the
+  opening reveals that page under the lifting cover (`renderPageImage` defaults to the start
+  page). Before, the pill opened the story card with `focusPages`, scrolled to its page strip.
+  `_layout` sends a book opened from home back to `main` when it is closed. The pill stays open
+  under the book, and folds back into the row once the transition has ended (`HomeScene`'s
+  `storyOpen`, the transition context's `isTransitioning` going from true to false; operator,
+  2026-10-05: "the pill expansion should reset and go back to the ordinary ui view").
 - **Achievements** (violet edge, the trophy orb's): "Next: <badge>" with that badge's art in a
   violet medallion (`BadgeArtwork`, in progress); with every badge earned, "Every badge is yours".
   The orb at the end keeps its number. A tap opens that very badge in its own window over the home
@@ -871,7 +953,7 @@ to create a row from the position it is, covering the other orbs" -- the bubble 
 - **The screen-time glance** folds the pill when it opens.
 - **The owl tour's stories step** points at the middle orb (`guideTargets.stories`, handed to it).
 - **The page strip on the story card** (`story-card-sheet.tsx`, operator's choice of "Story card,
-  then pages"). Under the card's progress, "Start from a page" and the book's pages past its cover
+  then pages"). Under the card's chips, "Start from a page" and the book's pages past its cover
   as small pictures, the saved place (or the first page) ringed in gold and scrolled into view; only
   the card in front draws its strip. Tapping a page picks it, and the read button reads "Read from
   page N". The pick goes up to the transition context (`selectedStartPage`); when the book begins,
@@ -884,6 +966,10 @@ to create a row from the position it is, covering the other orbs" -- the bubble 
   rounded clip inside the ring, so the thicker ring cannot leave the picture's corners square. The
   strip pads 12 pt above and below, which is the glow's reach, because iOS draws a shadow out to
   about 1.5 times its radius and the scroll view's edge clipped it flat.
+  On a tablet the pages are much bigger, 136 x 102 rather than 64 x 48 (`STORY_CARD.pages.tablet`,
+  operator, 2026-11-12), so about three and a half show across the card instead of seven. The
+  strip's room grew by 24 pt (140 pt); the rest of the taller picture stands in the room the
+  progress bar left above the buttons when it came off the card (`barRoom`).
   The card's body makes room for the strip on top of everything else (`STORY_CARD.pages`, 116 pt,
   measured on an iPhone 16 Pro -- 98 left the body 17 pt over), so the card simply stands taller and
   nothing scrolls on a phone -- before that, Play Along and Record fell below the card in the
@@ -1536,7 +1622,7 @@ reader, a learning_challenge page → the next-page button (right-touch-area) op
 | The host: the shell's reducer with the `skip` event and `skipped` phase, the steady prompt, the after patch, one `onDone({ tips, storyText })` that hands a teaching choice's tips and any choice's own story text to the reader once the cards have gone; no Skip and no tips UI of its own. The catalogue's `copy.hints`, `setupLine` and `parentPrompt` stay in the data but are not shown (the operator found the changing prompt and the grown-up band confusing on device, 2026-11-09) | `components/stories/learning-challenge-host.tsx`, `components/experience/shell-state.ts` |
 | Copy and choices resolved for a band, language and reading level (English fallback, nearest level) | `components/stories/learning-challenge-view.ts` |
 | The reader: `isLearningChallengePage`, the next-page button as the way into the challenge (`learningChallengePlayedOn`, cleared on every page change), the text box sliding away while a challenge or its tips are open, the reader's chrome passed to the host so the prompt sits clear of it, no auto-advance in narrate mode, `challengeDone(pageId, 'learning')` when a challenge ends, which returns to the same page, the tips badge on the text box and the tips panel | `components/stories/story-book-reader.tsx` |
-| **Cover fit.** A book with `displayFit: 'cover'` (the Phase 12 books: full-screen 4:3 masters, narration at the bottom) is drawn at an explicit cover frame with none of the older books' 1.35/1.8 zoom: `focusFrame(screen, challengeFocus(page.learningChallenge))` is the centred `coverFrame(screen)` unless the page's challenge has hotspots that the centred crop would cut off, in which case the art moves just far enough to keep every spot shown in any age band `FOCUS_MARGIN` (24 pt) inside the screen (it never opens a gap at an edge, and centres on spots taller than the screen). The reading view and the challenge use that one frame, so the picture does not jump when the game opens, and it goes to the host as `art`, so the tray's safe zone and `patchFrame(stateAfter, art)` are placed in the master's own coordinates, as the ai-tools display contract asks. Every book, cover-fit or not, puts the narration along the bottom edge between the page-turn arrows (`narrationLayout(width, height, insets, isTablet)`, in both orientations; since 2026-11-11 for older books too). Older books keep contain-and-zoom and the screen as their frame. **Tablets (operator, 2026-11-12):** a tablet draws the phone's reader scaled up, by `readerScale` (its long side over the reference phone's 874 pt, about 1.38 on an 11-inch iPad, against `PHONE_READER`). The caption is the phone's box and the phone's 16 pt words times `captionScale`, which is that scale or less, so that the box fits between the arrows. Lines wrap as they do on the phone, and the text-size option scales the words as it does there. The tips panel is the phone's panel, with its words, padding and Close, times the scale `tipsPanelLayout` gives, centred; upright, it takes the width the side arrows leave and stays above the corner arrows. Upright, a cover-fit page shows the whole scene (`readerArtFrame` → `containFrame`) across the middle, with the same picture blurred and dimmed behind it in the bands above and below (`story-page-scene-bands`). The challenge plays on that whole scene, but its cards keep the size the cover fit gave them (`trayArt`). On its side, a tablet keeps the cover fit, and its choice cards are big and centred on the screen (`centredTray`: 62 % of the width, 36 % of the height). | `components/stories/page-frame.ts`, `narration-layout.ts`, `story-book-reader.tsx` (`renderPageImage`), `learning-challenge-host.tsx`, `choose-layout.ts` (`trayFrame(art, bounds)`) |
+| **Cover fit.** A book with `displayFit: 'cover'` (the Phase 12 books: full-screen 4:3 masters, narration at the bottom) is drawn at an explicit cover frame with none of the older books' 1.35/1.8 zoom: `focusFrame(screen, challengeFocus(page.learningChallenge))` is the centred `coverFrame(screen)` unless the page's challenge has hotspots that the centred crop would cut off, in which case the art moves just far enough to keep every spot shown in any age band `FOCUS_MARGIN` (24 pt) inside the screen (it never opens a gap at an edge, and centres on spots taller than the screen). The reading view and the challenge use that one frame, so the picture does not jump when the game opens, and it goes to the host as `art`, so the tray's safe zone and `patchFrame(stateAfter, art)` are placed in the master's own coordinates, as the ai-tools display contract asks. Every book, cover-fit or not, puts the narration along the bottom edge between the page-turn arrows (`narrationLayout(width, height, insets, isTablet)`, in both orientations; since 2026-11-11 for older books too). Older books keep contain-and-zoom and the screen as their frame. **Tablets (operator, 2026-11-12):** a tablet draws the phone's reader scaled up, by `readerScale` (its long side over the reference phone's 874 pt, about 1.38 on an 11-inch iPad, against `PHONE_READER`). The caption is the phone's box and the phone's 16 pt words times `captionScale`, which is that scale or less, so that the box fits between the arrows. Lines wrap as they do on the phone, and the text-size option scales the words as it does there. The tips panel is the phone's panel, with its words, padding and Close, times the scale `tipsPanelLayout` gives, centred; upright, it takes the width the side arrows leave and stays above the corner arrows. Upright, a cover-fit page shows the whole scene (`readerArtFrame` → `containFrame`) across the middle, with the same picture blurred and dimmed behind it in the bands above and below (`story-page-scene-bands`). An older, contained book keeps its own zoomed picture but gets the same blurred bands behind it (operator, 2026-11-12). The challenge plays on that whole scene, but its cards keep the size the cover fit gave them (`trayArt`). On its side, a tablet keeps the cover fit, and its choice cards are big and centred on the screen (`centredTray`: 62 % of the width, 36 % of the height). | `components/stories/page-frame.ts`, `narration-layout.ts`, `story-book-reader.tsx` (`renderPageImage`), `learning-challenge-host.tsx`, `choose-layout.ts` (`trayFrame(art, bounds)`) |
 | A challenge's pictures travel with the book: counted for download, resolved to the cache, checked for integrity | `services/page-assets.ts`, `asset-download-utils.ts`, `cache-manager.ts` |
 | Content checks a book must pass (cadence by band, each mechanic once and as the catalogue says, bands and targets (a counting mechanic, which asks for every item, names none), copy and labels, a picture for every choice and a hotspot on the picture for every scene item, art present), run by `cms-manager validate` | `scripts/lib/learning-challenges.js`, `scripts/learning/mechanics.json` (the ai-tools catalogue, version 2), `scripts/cms-manager/src/lib/schema-validator.js` |
 | App chrome strings (`experience.tips`, `common.close`) in all 14 locales; the story's own lines come from the book | `locales/*/index.ts` |
@@ -2094,19 +2180,24 @@ same panel (`ReaderMenuPanel`). Both are built with the book and kept mounted, m
 their pictures decoded; opening or closing fades the whole panel as one (`MENU_FADE_MS`, at once
 under Reduce Motion), and while closed it takes no touches and is hidden from the screen reader.
 
-**The reader's audio settings (operator, 2026-11-12).** A long press on the reader's sound coin opens
-`ReaderAudioPanel` (`components/stories/reader-audio-panel.tsx`, art in `assets/images/reader-audio/`,
-cut by `scripts/prepare-audio-panel.py`, §5k of the asset register). It is the operator's own painted
-frame, with three cards baked in and one image for the whole panel, in `AUDIO_PANEL` units taken from
-that picture. It shares the language panel's dimmed layer and fade (`usePanelPresence`, `PanelFrame`),
-heading, close coin and Done (`PanelTitle`, `PanelClose`, `PanelDone`, which take their places as
-arguments). The title sits in the band between the crest and the first card, with the close coin
-level with it. Each card holds the operator's icon in the frame's round slot, the name and level in
-the panel's ink, and a `PaintedSlider` (`painted-slider.tsx`): a thick purple track with a gold knob,
-dragged or tapped, and adjustable a tenth at a time with VoiceOver. Tapping the round button mutes its
-channel; tapping again brings back the last level it was heard at (full if it was never heard
-this time), and a muted button is dimmed with a stroke across it. Other screens keep the older
-`AudioControlModal`.
+**Audio settings (operator, 2026-11-12).** Every long press on a sound button opens the same
+painted panel, `AudioSettings` (`components/ui/audio-settings-panel.tsx`, art in
+`assets/images/reader-audio/`, put together by `scripts/prepare-audio-panel.py`, §5k of the asset
+register). That covers the reader's sound coin, the home's sound button and the shared `MusicControl` on every other page.
+It reads the app's own volumes, text size and Reduce Motion. In the reader it opens in place (`presentation="overlay"`, since the reader is one full-screen
+tree); everywhere else it opens in a full-screen `Modal` that fades in and is closed by Android back.
+The old blue `AudioControlModal` is gone (operator: "replace the old version and clean up old code").
+The panel itself, `AudioSettingsPanel`, is the operator's empty frame with the three cards of their first
+panel set into it exactly on its centre line, evenly spaced, in `AUDIO_PANEL` units taken from the
+composed picture. The title sits under the crest, which is a little right of the frame's centre, and
+there is no close coin (operator); Done (narrower, centred) and a tap outside close it. It shares the
+language panel's dimmed layer and fade (`usePanelPresence`, `PanelFrame`), heading and Done (`PanelTitle`,
+`PanelDone`). Done sinks into its lip and shrinks a touch while held, in both panels. Each card holds the
+operator's icon in the frame's round slot, the name and level in the panel's ink, and a `PaintedSlider`
+(`components/ui/painted-slider.tsx`): a thick purple track with a gold knob, dragged or tapped, and
+adjustable a tenth at a time with VoiceOver. Tapping the round button mutes its channel; tapping again
+brings back the last level it was heard at (full if it was never heard this time), and a muted button
+is dimmed with a stroke across it.
 
 **The reader's language panels (2026-11-12).** Compare Languages and Change Language both open
 `LanguagePanel` (`components/stories/language-panel.tsx`, art in `assets/images/reader-languages/`,
