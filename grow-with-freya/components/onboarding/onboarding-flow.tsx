@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, runOnJS } from 'react-native-reanimated';
 import { OnboardingScreen } from './onboarding-screen';
+import { OnboardingIntro } from './onboarding-intro';
 import { TogetherPage, TogetherBackdrop, SafetyPage, SafetyBackdrop, ReadyPage, ReadyBackdrop, ProfilePage, GoalsPage } from './onboarding-pages';
 import type { PlanGoal } from '@/types/learning-plan';
 import { MIN_NICKNAME_LENGTH } from '@/constants/profile';
@@ -35,6 +36,7 @@ const CONSENT_INDEX = STEP_ORDER.indexOf('consent');
 const DEFAULT_AGE_MONTHS = 36;
 
 export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
+  const [started, setStarted] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [consentPrivacy, setConsentPrivacy] = useState(false);
@@ -354,6 +356,8 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
       buttonLabel: t('onboardingV2.profile.continue'),
     },
   };
+
+  if (!started) return <OnboardingIntro onStart={() => setStarted(true)} />;
 
   const current = stepContent[stepId];
 

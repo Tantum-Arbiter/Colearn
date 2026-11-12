@@ -18,8 +18,14 @@ name: A family opening the app for the first time is met by onboarding
 - runFlow: ../../helpers/launch.yaml
 - extendedWaitUntil:
     visible:
-      id: "onboarding-next"
+      id: "onboarding-intro-start"
     timeout: 90000
+- tapOn:
+    id: "onboarding-intro-start"
+- extendedWaitUntil:
+    visible:
+      id: "onboarding-next"
+    timeout: 15000
 - assertVisible:
     id: "onboarding-step-counter"
 # Nothing of the app itself is reachable until the family has been through it.

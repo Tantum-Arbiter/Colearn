@@ -118,10 +118,17 @@ function nextIsDisabled(tree: ReturnType<typeof render>) {
   return btn.props.disabled === true || btn.props['aria-disabled'] === true;
 }
 
+/** Past the page that comes before onboarding, onto its first step. */
+function renderStarted(onComplete: jest.Mock) {
+  const utils = render(<OnboardingFlow onComplete={onComplete} />);
+  fireEvent.press(findByTestId(utils, 'onboarding-intro-start'));
+  return utils;
+}
+
 /** Step forward `count` times from the first intro screen. */
 function renderAtIntroStep(onComplete: jest.Mock, count: number) {
   jest.useFakeTimers();
-  const utils = render(<OnboardingFlow onComplete={onComplete} />);
+  const utils = renderStarted(onComplete);
   for (let i = 0; i < count; i += 1) {
     fireEvent.press(findByTestId(utils, 'next-btn'));
     advance();
@@ -132,7 +139,7 @@ function renderAtIntroStep(onComplete: jest.Mock, count: number) {
 /** Navigate to the consent step by pressing Skip on the intro. */
 function renderAtConsentStep(onComplete: jest.Mock) {
   jest.useFakeTimers();
-  const utils = render(<OnboardingFlow onComplete={onComplete} />);
+  const utils = renderStarted(onComplete);
   fireEvent.press(findByTestId(utils, 'skip-btn'));
   advance();
   return utils;
@@ -170,15 +177,34 @@ describe('OnboardingFlow', () => {
     jest.useRealTimers();
   });
 
+  describe('the page before onboarding', () => {
+    it('comes first, with no onboarding step behind it', () => {
+      const tree = render(<OnboardingFlow onComplete={mockOnComplete} />);
+
+      expect(tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'onboarding-intro').length).toBeGreaterThan(0);
+      expect(tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'mock-screen')).toHaveLength(0);
+      expect(toStr(tree)).not.toContain('Step 1');
+    });
+
+    it('leads to the first onboarding step from Start onboarding, and is not counted among the steps', () => {
+      const tree = renderStarted(mockOnComplete);
+
+      expect(tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'onboarding-intro')).toHaveLength(0);
+      expect(toStr(tree)).toContain(`Step 1 of ${TOTAL_STEPS}`);
+      expect(mockOnComplete).not.toHaveBeenCalled();
+      expect(mockSetOnboardingComplete).not.toHaveBeenCalled();
+    });
+  });
+
   describe('navigation', () => {
     it('renders the first screen with step 1 of 5', () => {
-      const tree = render(<OnboardingFlow onComplete={mockOnComplete} />);
+      const tree = renderStarted(mockOnComplete);
       expect(toStr(tree)).toContain(`Step 1 of ${TOTAL_STEPS}`);
     });
 
     it('advances through the intro screens one at a time', () => {
       jest.useFakeTimers();
-      const tree = render(<OnboardingFlow onComplete={mockOnComplete} />);
+      const tree = renderStarted(mockOnComplete);
 
       fireEvent.press(findByTestId(tree, 'next-btn'));
       advance();

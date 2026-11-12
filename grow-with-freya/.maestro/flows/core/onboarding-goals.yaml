@@ -16,8 +16,14 @@ name: A family who says they want to talk about feelings gets a week that starts
 - runFlow: ../../helpers/launch.yaml
 - extendedWaitUntil:
     visible:
-      id: "onboarding-next"
+      id: "onboarding-intro-start"
     timeout: 90000
+- tapOn:
+    id: "onboarding-intro-start"
+- extendedWaitUntil:
+    visible:
+      id: "onboarding-next"
+    timeout: 15000
 # Three intro steps, then consent.
 - tapOn:
     id: "onboarding-next"
