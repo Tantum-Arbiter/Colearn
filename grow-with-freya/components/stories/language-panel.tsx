@@ -395,6 +395,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.rounded,
     fontWeight: '600',
     color: HINT_INK,
+    textAlign: 'center',
   },
   toggleFace: {
     flex: 1,

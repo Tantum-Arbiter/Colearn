@@ -253,6 +253,15 @@ describe('LanguagePanel', () => {
     expect(said(UNSAFE_root, 'language-panel-done-label')).toBe('Done');
   });
 
+  it('centres the hint under the title, in a box as far from either side of the panel', () => {
+    const { UNSAFE_root } = render(<LanguagePanel {...props()} />);
+    const hint = find(UNSAFE_root, (node) => node.props.testID === 'language-panel-hint')[0];
+    const box = StyleSheet.flatten(hint.parent!.props.style);
+
+    expect(StyleSheet.flatten(hint.props.style).textAlign).toBe('center');
+    expect(box.left).toBe(box.right);
+  });
+
   it('leaves the hint out when there is none', () => {
     const { UNSAFE_root } = render(<LanguagePanel {...props({ hint: undefined })} />);
 
