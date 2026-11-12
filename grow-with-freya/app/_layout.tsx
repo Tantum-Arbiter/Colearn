@@ -145,6 +145,7 @@ function AppContent() {
     clearStoryOpen,
     readerRevealStyle,
     startTransition: openStoryCard,
+    openStoryStraight,
   } = useStoryTransition();
 
   const colorScheme = useColorScheme();
@@ -801,12 +802,12 @@ function AppContent() {
     setCurrentScreen('island');
   }, [setCurrentScreen]);
 
-  const handleOpenStoryCardFromHome = useCallback((storyId: string, from: PlanCardRect) => {
+  const handleContinueFromHome = useCallback((storyId: string, from: PlanCardRect) => {
     const story = ALL_STORIES.find((candidate) => candidate.id === storyId);
     if (!story) return;
     storyCardReturnRef.current = 'main';
-    openStoryCard(story.id, from, story, [story], { focusPages: true });
-  }, [openStoryCard]);
+    openStoryStraight(story, from);
+  }, [openStoryStraight]);
 
   const handlePreviewActivity = useCallback((launch: PlanLaunch, from: PlanCardRect) => {
     if (launch.kind === 'story') {
@@ -944,7 +945,7 @@ function AppContent() {
             main: (
               <MainMenu
                 onNavigate={handleMainMenuNavigate}
-                onOpenStoryCard={handleOpenStoryCardFromHome}
+                onOpenStoryCard={handleContinueFromHome}
                 isActive={currentPage === 'main'}
                 disableTutorial={!menuRevealed(currentView)}
                 returnToSubMenu={returnToSubMenu}
