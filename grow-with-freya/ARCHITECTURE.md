@@ -2072,10 +2072,12 @@ under Reduce Motion), and while closed it takes no touches and is hidden from th
 
 **The reader's language panels (2026-11-12).** Compare Languages and Change Language both open
 `LanguagePanel` (`components/stories/language-panel.tsx`, art in `assets/images/reader-languages/`,
-cut by `scripts/prepare-language-panel.py`, §5j), drawn to the operator's mock-up: a cream panel in
-a gold rim with a leaf sprig, an orange crest and mushrooms, over the dimmed page. The frame is
-three pictures (top, a middle stretched to the list, bottom); everything on it is drawn by the app
-from `LANGUAGE_PANEL`, in the mock-up's own units times one scale: the heading, the close coin, the
+sliced by `scripts/prepare-language-panel.py`, §5j), drawn to the operator's mock-up: a cream panel in
+a gold rim with a leaf sprig, an orange crest and mushrooms, over the dimmed page. The frame is the
+operator's own picture of the empty panel, with its own soft edge, in three slices (top, a middle
+stretched to the list, bottom); the script maps it onto the layout's 1248 units by its width, so a
+new frame picture needs only `PANEL` there to match `LANGUAGE_PANEL`. Everything on it is drawn by
+the app from `LANGUAGE_PANEL`, in the mock-up's own units times one scale: the heading, the close coin, the
 languages three to a line (flag emoji, own name, a tick when chosen) and Done. Compare Languages
 adds its ON/OFF switch and a hint; the language being read is gold (`reading`), the one beside it
 teal (`comparing`), and the rules for a press are unchanged and stay in the reader. Change
