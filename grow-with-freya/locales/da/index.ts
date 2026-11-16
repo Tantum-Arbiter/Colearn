@@ -1934,7 +1934,6 @@ export default {
   },
   storyDetail: {
     readTogether: 'Læs sammen',
-    pickPage: 'Start fra en side',
     readFromPage: 'Læs fra side {{page}}',
     continueReading: 'Læs videre',
     record: 'Optag',

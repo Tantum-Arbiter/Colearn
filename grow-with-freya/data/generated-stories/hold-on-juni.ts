@@ -9,7 +9,7 @@ export const holdOnJuni: Story = {
       "en": "Hold On, Juni",
     },
     "category": "growing",
-    "description": "Juni used to ride on Papa's tummy every evening, but now baby Bean sleeps there. When the water starts to pull, Juni learns that love can change shape: from being carried to holding on, side by side.",
+    "description": "Baby Bean sleeps on Papa's tummy now, and Juni the otter learns that love can change shape.",
     "ageRange": "2-4",
     "author": "Early Roots",
     "tags": [

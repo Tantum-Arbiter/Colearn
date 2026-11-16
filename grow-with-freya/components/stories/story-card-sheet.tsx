@@ -73,6 +73,9 @@ export const MODE_OPTIONS: ModeOption[] = [
 ];
 
 /** How far a card that is not the chosen one drops back, and how much it shrinks and darkens. */
+/** How many books either side of the one in front also draw their pages, so a swipe lands on them ready. */
+export const PAGES_DRAWN_AROUND = 1;
+
 export const CARD_REST = {
   drop: 26,
   scale: 0.94,
@@ -151,6 +154,7 @@ export function StoryCardSheet({
             scrollX={scrollX}
             layout={layout}
             isCurrent={i === index}
+            drawsPages={Math.abs(i - index) <= PAGES_DRAWN_AROUND}
             isLast={i === stories.length - 1}
             isFavorite={i === index ? isFavorite : false}
             currentLanguage={currentLanguage}
@@ -179,6 +183,7 @@ interface StoryCardProps {
   scrollX: { value: number };
   layout: StoryCardLayout;
   isCurrent: boolean;
+  drawsPages: boolean;
   isLast: boolean;
   isFavorite: boolean;
   currentLanguage: SupportedLanguage;
@@ -202,6 +207,7 @@ function StoryCard({
   scrollX,
   layout,
   isCurrent,
+  drawsPages,
   isLast,
   isFavorite,
   currentLanguage,
@@ -356,7 +362,7 @@ function StoryCard({
           </View>
 
           {displayDescription.length > 0 && (
-            <Text style={[styles.description, { fontSize: scaledFontSize(13) }]} numberOfLines={2}>{displayDescription}</Text>
+            <Text testID="story-card-description" style={[styles.description, { fontSize: scaledFontSize(13) }]}>{displayDescription}</Text>
           )}
 
           <View style={styles.chipRow}>
@@ -373,9 +379,8 @@ function StoryCard({
           </View>
         </Animated.View>
 
-        {isCurrent && pages.length > 0 && (
+        {drawsPages && pages.length > 0 && (
           <View ref={pagesRef} collapsable={false} style={styles.pages} testID="story-card-pages">
-            <Text style={[styles.pagesHeading, { fontSize: scaledFontSize(12) }]}>{t('storyDetail.pickPage')}</Text>
             <ScrollView
               horizontal
               testID="story-card-page-strip"
@@ -429,64 +434,65 @@ function StoryCard({
           </View>
         )}
 
-        <Animated.View
-          entering={FadeInDown.delay(STORY_DETAIL_OPENING.staggerMs * 2).duration(STORY_DETAIL_OPENING.contentMs)}
-          style={styles.actions}
-          testID="story-card-actions"
-        >
-          <View ref={modeRefs?.read} collapsable={false}>
-            <Pressable
-              style={[styles.primaryButton, { borderRadius: scaledButtonSize(24), paddingVertical: scaledPadding(14) }]}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                onChooseMode('read');
-              }}
-              accessibilityLabel={readLabel}
-              testID="story-card-mode-read"
-            >
-              <Ionicons name="book" size={scaledFontSize(18)} color="#FFFFFF" />
-              <Text style={[styles.primaryText, { fontSize: scaledFontSize(15) }]}>{readLabel}</Text>
-            </Pressable>
-          </View>
-
-          <View ref={modeRefs?.narrate} collapsable={false}>
-            <Pressable
-              style={[styles.secondaryButton, { borderRadius: scaledButtonSize(24), paddingVertical: scaledPadding(12) }]}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                onChooseMode('narrate');
-              }}
-              accessibilityLabel={t('storyDetail.playAlong')}
-              testID="story-card-mode-narrate"
-            >
-              <Ionicons name="volume-medium-outline" size={scaledFontSize(18)} color="#FFFFFF" />
-              <Text style={[styles.secondaryText, { fontSize: scaledFontSize(14) }]}>{t('storyDetail.playAlong')}</Text>
-            </Pressable>
-          </View>
-
-          <View ref={modeRefs?.record} collapsable={false}>
-            <Pressable
-              style={[styles.secondaryButton, { borderRadius: scaledButtonSize(24), paddingVertical: scaledPadding(12) }]}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                onChooseMode('record');
-              }}
-              accessibilityLabel={t('storyDetail.record')}
-              testID="story-card-mode-record"
-            >
-              <Ionicons name="mic-outline" size={scaledFontSize(18)} color="#FFFFFF" />
-              <Text style={[styles.secondaryText, { fontSize: scaledFontSize(14) }]}>{t('storyDetail.record')}</Text>
-            </Pressable>
-          </View>
-
-          {isSavedOffline && (
-            <View style={styles.offlineRow}>
-              <Ionicons name="checkmark-circle" size={scaledFontSize(14)} color="#7ED9A7" />
-              <Text style={[styles.offlineText, { fontSize: scaledFontSize(12) }]}>{t('storyDetail.savedOffline')}</Text>
-            </View>
-          )}
-        </Animated.View>
       </ScrollView>
+
+      <Animated.View
+        entering={FadeInDown.delay(STORY_DETAIL_OPENING.staggerMs * 2).duration(STORY_DETAIL_OPENING.contentMs)}
+        style={styles.actions}
+        testID="story-card-actions"
+      >
+        <View ref={modeRefs?.read} collapsable={false}>
+          <Pressable
+            style={[styles.primaryButton, { borderRadius: scaledButtonSize(24), paddingVertical: scaledPadding(14) }]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              onChooseMode('read');
+            }}
+            accessibilityLabel={readLabel}
+            testID="story-card-mode-read"
+          >
+            <Ionicons name="book" size={scaledFontSize(18)} color="#FFFFFF" />
+            <Text style={[styles.primaryText, { fontSize: scaledFontSize(15) }]}>{readLabel}</Text>
+          </Pressable>
+        </View>
+
+        <View ref={modeRefs?.narrate} collapsable={false}>
+          <Pressable
+            style={[styles.secondaryButton, { borderRadius: scaledButtonSize(24), paddingVertical: scaledPadding(12) }]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              onChooseMode('narrate');
+            }}
+            accessibilityLabel={t('storyDetail.playAlong')}
+            testID="story-card-mode-narrate"
+          >
+            <Ionicons name="volume-medium-outline" size={scaledFontSize(18)} color="#FFFFFF" />
+            <Text style={[styles.secondaryText, { fontSize: scaledFontSize(14) }]}>{t('storyDetail.playAlong')}</Text>
+          </Pressable>
+        </View>
+
+        <View ref={modeRefs?.record} collapsable={false}>
+          <Pressable
+            style={[styles.secondaryButton, { borderRadius: scaledButtonSize(24), paddingVertical: scaledPadding(12) }]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              onChooseMode('record');
+            }}
+            accessibilityLabel={t('storyDetail.record')}
+            testID="story-card-mode-record"
+          >
+            <Ionicons name="mic-outline" size={scaledFontSize(18)} color="#FFFFFF" />
+            <Text style={[styles.secondaryText, { fontSize: scaledFontSize(14) }]}>{t('storyDetail.record')}</Text>
+          </Pressable>
+        </View>
+
+        {isSavedOffline && (
+          <View style={styles.offlineRow}>
+            <Ionicons name="checkmark-circle" size={scaledFontSize(14)} color="#7ED9A7" />
+            <Text style={[styles.offlineText, { fontSize: scaledFontSize(12) }]}>{t('storyDetail.savedOffline')}</Text>
+          </View>
+        )}
+      </Animated.View>
 
       <Animated.View style={[styles.shade, shadeStyle]} pointerEvents="none" testID={`story-card-shade-${story.id}`} />
     </Animated.View>
@@ -544,7 +550,6 @@ const styles = StyleSheet.create({
   },
   bodyScrollContent: {
     flexGrow: 1,
-    paddingBottom: 16,
   },
   body: {
     paddingHorizontal: 18,
@@ -603,19 +608,13 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   actions: {
-    marginTop: 'auto',
+    paddingTop: 8,
+    paddingBottom: 16,
     paddingHorizontal: 18,
     gap: 8,
   },
   pages: {
     marginBottom: 12,
-  },
-  pagesHeading: {
-    color: 'rgba(255, 255, 255, 0.75)',
-    fontFamily: Fonts.primary,
-    fontWeight: '700',
-    paddingHorizontal: 18,
-    marginBottom: 6,
   },
   pagesRow: {
     paddingHorizontal: 18,

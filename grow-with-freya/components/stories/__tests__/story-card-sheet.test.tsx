@@ -11,7 +11,8 @@
  * 5. Close and favourite callbacks fire
  * 6. Record is offered as a button like the other ways to read
  * 7. A book the child is part-way through shows how far, and offers to carry on
- * 8. The card holds everything it shows: the ways to read sit at its foot and nothing scrolls
+ * 8. The ways to read are pinned at the card's foot, below its body, and never scroll out of view
+ * 10. A book's description shows whole: no description runs longer than Wombat's, so none needs See more
  * 9. The cover of the card in front turns through the book's pages; its neighbours wait on their covers
  */
 
@@ -161,14 +162,38 @@ describe('StoryCardSheet', () => {
     expect(body.props.showsVerticalScrollIndicator).toBe(false);
   });
 
-  it('should sit the ways to read at the foot of the card, whatever the book above them holds', () => {
+  it('should pin the ways to read below the body, outside it, so they never scroll out of view', () => {
     const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} />);
 
-    const underTest = StyleSheet.flatten(
-      UNSAFE_root.findAll((node: any) => node.props?.testID === 'story-card-actions')[0].props.style
-    );
+    const card = UNSAFE_root.findAll((node: any) => node.props?.testID === 'story-card-wombat')[0];
+    const body = card.findAll((node: any) => node.props?.testID === 'story-card-body')[0];
+    const ids = card.findAll((node: any) => typeof node.props?.testID === 'string').map((node: any) => node.props.testID);
 
-    expect(underTest.marginTop).toBe('auto');
+    expect(body.findAll((node: any) => node.props?.testID === 'story-card-actions')).toHaveLength(0);
+    expect(card.findAll((node: any) => node.props?.testID === 'story-card-actions').length).toBeGreaterThan(0);
+    expect(ids.indexOf('story-card-actions')).toBeGreaterThan(ids.lastIndexOf('story-card-page-strip'));
+    expect(StyleSheet.flatten(body.props.style).flex).toBe(1);
+  });
+
+  it('should lay out the pages with no heading above them', () => {
+    const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} />);
+
+    const pages = UNSAFE_root.findAll((node: any) => node.props?.testID === 'story-card-pages')[0];
+
+    expect(findByText(UNSAFE_root, 'storyDetail.pickPage')).toHaveLength(0);
+    expect(findByText(pages, 'Start from a page')).toHaveLength(0);
+    expect(pages.findAll((node: any) => node.props?.testID === 'story-card-page-strip').length).toBeGreaterThan(0);
+  });
+
+  it('should show the whole description, with no See more, and keep the page strip', () => {
+    const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} />);
+
+    const description = UNSAFE_root.findAll((node: any) => node.props?.testID === 'story-card-description')[0];
+
+    expect(description.props.children).toBe('Snuggle Little Wombat is a gentle story.');
+    expect(description.props.numberOfLines).toBeUndefined();
+    expect(UNSAFE_root.findAll((node: any) => node.props?.testID === 'story-card-description-toggle')).toHaveLength(0);
+    expect(UNSAFE_root.findAll((node: any) => node.props?.testID === 'story-card-pages').length).toBeGreaterThan(0);
   });
 
   it('should lay out a card for every book on the shelf, in order', () => {
@@ -355,14 +380,53 @@ describe('StoryCardSheet', () => {
       expect(picked(UNSAFE_root)).toEqual(['story-card-page-8']);
     });
 
-    it('should lay out the pages only on the book in front, not on its neighbours along the shelf', () => {
-      const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} stories={[LONG, { ...LONG, id: 'other' }]} />);
+    it.each([
+      ['the first book', 0, ['b0', 'b1']],
+      ['a book in the middle', 2, ['b1', 'b2', 'b3']],
+      ['the last book', 4, ['b3', 'b4']],
+    ])(
+      'should lay out the pages on the book in front and its neighbours either side, so a swipe lands on them ready: %s',
+      (_label, initialIndex, ready) => {
+        const shelf = ['b0', 'b1', 'b2', 'b3', 'b4'].map((id) => ({ ...LONG, id }));
+        const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} stories={shelf} initialIndex={initialIndex} />);
 
-      const strips = UNSAFE_root.findAll((node: any) => node.props?.testID === 'story-card-pages');
-      const inFront = UNSAFE_root.findAll((node: any) => node.props?.testID === 'story-card-long')[0];
+        const withPages = shelf
+          .map((book) => book.id)
+          .filter((id) =>
+            UNSAFE_root.findAll((node: any) => node.props?.testID === `story-card-${id}`)[0]
+              .findAll((node: any) => node.props?.testID === 'story-card-pages').length > 0
+          );
+
+        expect(withPages).toEqual(ready);
+      }
+    );
+
+    it('should lay out the pages on the new neighbours once the carousel settles on another book', () => {
+      const shelf = ['b0', 'b1', 'b2', 'b3', 'b4'].map((id) => ({ ...LONG, id }));
+      const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} stories={shelf} initialIndex={0} />);
+      const hasPages = (id: string) =>
+        UNSAFE_root.findAll((node: any) => node.props?.testID === `story-card-${id}`)[0]
+          .findAll((node: any) => node.props?.testID === 'story-card-pages').length > 0;
+
+      settleCarouselAt(UNSAFE_root, layout.step * 1);
+
+      expect(['b0', 'b1', 'b2', 'b3', 'b4'].filter(hasPages)).toEqual(['b0', 'b1', 'b2']);
+    });
+
+    it('should hand only the book in front its pages ref, so the tour rings the right strip', () => {
+      const pagesRef = { current: null };
+      const shelf = ['b0', 'b1', 'b2'].map((id) => ({ ...LONG, id }));
+      const { UNSAFE_root } = render(<StoryCardSheet {...defaultProps} stories={shelf} initialIndex={1} pagesRef={pagesRef} />);
+
+      const strips = UNSAFE_root.findAll((node: any) => node.props?.testID === 'story-card-pages' && node.props?.collapsable === false);
+      const holders = shelf.filter((book) =>
+        UNSAFE_root.findAll((node: any) => node.props?.testID === `story-card-${book.id}`)[0]
+          .findAll((node: any) => node.props?.testID === 'story-card-pages' && node.props?.collapsable === false)
+          .some((node: any) => node.props?.ref === pagesRef)
+      );
 
       expect(strips.length).toBeGreaterThan(0);
-      expect(inFront.findAll((node: any) => node.props?.testID === 'story-card-pages').length).toBe(strips.length);
+      expect(holders.map((book) => book.id)).toEqual(['b1']);
     });
 
     it('should hand the tour the strip of the book in front, in a host that can be measured', () => {

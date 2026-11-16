@@ -425,6 +425,18 @@ column (`DESCRIPTION_SPAN`), about where a title ends, so it stays short of the 
 that is a rough guide, not measured from each title. Read Now rests at the bottom left of the
 panel whatever is written above it: a spring (`featured-story-spring`, `flexGrow: 1`) stands
 between the words and the button, so panels with different descriptions line their buttons up.
+Those spans are a tablet's. On a phone the panel stands a fifth shorter (`PHONE_LAYOUT.height`, its
+minimum height 80% of the phone aspect ratio's), and since the panel grows with its words, the
+words stretch further right to make that true: the text column takes 80% of the panel
+(`PHONE_LAYOUT.text`) and the description and progress pill fill all of it (operator, 2026-11-13).
+On an iPhone 16 Pro, The Lantern Bridge's Continue reading panel went from about 346 pt to 262 pt:
+its title fits one line and its description three.
+Since the panel grows with its words, the words are kept short instead: no book's description runs
+longer than Snuggle Little Wombat's, whose panel is the size the operator wants (2026-11-13). That
+is 18 words in English, and in another language no longer than Wombat's in that language
+(characters for Japanese and Chinese). `__tests__/data/story-descriptions.test.ts` holds every
+shipped book to it, and the story factory in ai-tools sends back a manuscript whose description
+is longer (`DESCRIPTION_MAX_WORDS`).
 
 Shelf covers show their titles whole too (`CoverTitle`, `COVER_TITLE`): three lines where there
 were two, the type shrinking to 60% (`adjustsFontSizeToFit`, no fixed line height) before any of
@@ -434,8 +446,11 @@ wash. The same title rides the seated and opening book.
 ### The book progress bar (operator, 2026-11-12)
 
 How far into a book the child is shows as one small capsule on the Continue reading panel
-(`BookProgress` in `components/child-ui/book-progress.tsx`, `size="small"`), spanning 72%
-of the panel's text column (`PROGRESS_SPAN`). The story card carries no bar: it was tried there and
+(`BookProgress` in `components/child-ui/book-progress.tsx`, `size="small"`), spanning at least 72%
+of the panel's text column (`PROGRESS_SPAN`, a `minWidth`) and growing up to the whole column to fit.
+The bar never shrinks below about twice the capsule's height (`BOOK_PROGRESS.small.minBar`, 52 pt):
+on a phone the fixed 72% left it about 10 pt beside "Page 1 of 8", so it read as a stray white
+diamond next to the medallion (operator, 2026-11-13). The story card carries no bar: it was tried there and
 taken off (operator, 2026-11-12), since the ringed page in its strip already says where they are. Built to the operator's reference: a gold book medallion as tall as the
 capsule starts it, its halo breathing; a purple bar runs from it; and the page they are on sits
 inside the capsule at its end, in words ("Page 4 of 15", `home.pagePosition`, which is also the
@@ -953,9 +968,13 @@ to create a row from the position it is, covering the other orbs" -- the bubble 
 - **The screen-time glance** folds the pill when it opens.
 - **The owl tour's stories step** points at the middle orb (`guideTargets.stories`, handed to it).
 - **The page strip on the story card** (`story-card-sheet.tsx`, operator's choice of "Story card,
-  then pages"). Under the card's chips, "Start from a page" and the book's pages past its cover
-  as small pictures, the saved place (or the first page) ringed in gold and scrolled into view; only
-  the card in front draws its strip. Tapping a page picks it, and the read button reads "Read from
+  then pages"). Under the card's chips, the book's pages past its cover as small pictures, with no
+  heading above them (its "Start from a page" heading came off, operator, 2026-11-13), the saved place (or the first page) ringed in gold and scrolled into view. The card
+  in front and the one either side of it draw their strips (`PAGES_DRAWN_AROUND`), so a swipe lands
+  on a card whose pages are already there: before, only the card in front drew one, and it changes
+  only once the carousel stops, so the next card's pages popped in about a second after it landed
+  (operator, 2026-11-13). Cards further along draw none, and only the card in front holds the tour's
+  `pagesRef`. Tapping a page picks it, and the read button reads "Read from
   page N". The pick goes up to the transition context (`selectedStartPage`); when the book begins,
   `_layout` hands it to the reader as `startPageIndex` if it is for that book, and every other way
   of opening the reader clears it. `resumePageIndex` takes `startPage` before the saved place,
@@ -976,6 +995,12 @@ to create a row from the position it is, covering the other orbs" -- the bubble 
   library. On a screen too short even for a coverless card it stops under the status bar and its
   body scrolls; a card opened at its pages then scrolls to them (`useScrollToEndOnce`, which
   measures the body and its content and scrolls only when the content is taller, once).
+  The three ways to read are pinned below the body, outside its scroll view, so they never scroll
+  out of view whatever the body holds (operator, 2026-11-13: "i always want the 3 buttons fixed and
+  in view"). The card's height is unchanged: a 15% taller card on a phone was tried and undone the
+  same day, since the extra room only opened a gap above the buttons. The description shows whole, with
+  no line cap: no book's description runs longer than Snuggle Little Wombat's (see the featured
+  panel), so the See more the card briefly had came off again the same day.
   A pick turns the cover to that page at once (`story-page-slideshow.tsx`; operator, 2026-10-18:
   "when clicking a page, it should do it immediately and animate"). The cover keeps a leaf of 32
   strips standing ready under a still of the page: it is built `readyMs` (700 ms) after the card
@@ -1604,7 +1629,7 @@ reader, a learning_challenge page → the next-page button (right-touch-area) op
          → celebrating (the choice's successLine over the page's own painting)
               a choice with tips: the cards fade out and the band goes with them; once they have gone (at once under Reduce Motion) the host hands { tips: { picture, label, heading, tips } | null, storyText, after } to the reader in onDone. There is no Skip (removed 2026-11-11, operator decision) and no Next in the game
             → done → onDone({ tips, storyText, after }) → challengeDone(pageId, 'learning') → the text box slides back on the same page, telling the chosen item's own outcome.storyText (per band and language, through getLocalizedText) in place of the page's text when it has one; leaving the page forgets it, so coming back shows the page's own text; the reader's next arrow carries on with the story. A choice's story text has no narration audio yet
-            → the chosen page: `after` is the chosen item's outcome.stateAfter, else the challenge's stateAfter, else null. The reader turns to it the way Next turns a page (operator, 2026-11-12: "the page should turn like any other page"): `crossFade` holds the page's own words and its painting underneath, the page with the chosen picture (`learning-outcome-picture`, at patchFrame(after, art), the screen for a book that is not cover-fit) fades in over `PAGE_IMAGE_FADE_MS`, and the words fade out and the choice's own words fade in, with Next and Back waiting until the turn is done. A choice with words but no picture turns only its words; one with neither turns nothing. The host draws no after picture of its own, and its veil over the page fades out with the cards (`exiting={FadeOut}` over `LEAVE_MS`) the moment a choice is made, so the turn starts from the page as it is. The reader keeps it for that page (`learningOutcome`, by page id) and the leaving layer keeps what it showed (`previousOutcome`). A whole-master after (`coversMaster`: 0,0 and 1×1) is a page of its own: it also replaces the blurred bands on an upright tablet. It stays until the page is turned, is held in the leaving layer through the turn's cross-fade, and is gone when the page is visited again, so coming back shows the page's own painting and offers the game again (operator, 2026-11-12). Little Fox gives every choice on pages 4, 8 and 11 such a page (`page-N/outcomes/<item>.webp`, rendered by ai-tools as that page's choice alternatives) with words of its own in every band it is offered to
+            → the chosen page: `after` is the chosen item's outcome.stateAfter, else the challenge's stateAfter, else null. The reader turns to it the way Next turns a page (operator, 2026-11-12: "the page should turn like any other page"): `crossFade` holds the page's own words and its painting underneath, the page with the chosen picture (`learning-outcome-picture`, at patchFrame(after, art), the screen for a book that is not cover-fit) fades in over `PAGE_IMAGE_FADE_MS`, and the words fade out and the choice's own words fade in, with Next and Back waiting until the turn is done. A choice with words but no picture turns only its words; one with neither turns nothing. The host draws no after picture of its own, and its veil over the page fades out with the cards (`exiting={FadeOut}` over `LEAVE_MS`) the moment a choice is made, so the turn starts from the page as it is. The reader keeps it for that page (`learningOutcome`, by page id) and the leaving layer keeps what it showed (`previousOutcome`). A whole-master after (`coversMaster`: 0,0 and 1×1) is a page of its own: it also replaces the blurred bands on an upright tablet. It stays until the page is turned, is held in the leaving layer through the turn's cross-fade, and is gone when the page is visited again, so coming back shows the page's own painting and offers the game again (operator, 2026-11-12). Little Fox gives every choice on pages 4, 8 and 11 such a page (`page-N/outcomes/<item>.webp`, rendered by ai-tools as that page's choice alternatives) with words of its own in every band it is offered to; The Lantern Bridge does the same for its page 11 choices (offer a paw, share the lamp), while its two counting pages, 4 and 8, keep their painting (operator, 2026-11-12). To keep the bridge the same throughout, only page 5 happens on it: pages 6-10 were redrawn on the riverbank at its foot, page 8's three hooks now hang on three lamp posts by the river (tap spots measured again on the new painting), and the words of pages 6 and 10 were changed to match; page 11 was redrawn to fix Toby's paws, and its choice pages with it (operator, 2026-11-12). Since 2026-11-16 the book is told again from page 6 (a bag of lanterns on the last post lights the bridge): the counting games are on pages 4 and 7 and the choice with its two pages on page 10, all on the new paintings (`PHASE-12-LEARNING-LIBRARY.md`)
    the tips (components/stories/learning-tips.tsx), kept by the reader for this page only: a small golden star-dotted "i" (TipsBadge, 34 pt scaled, breathing gold halo, sparkle and a small wiggle while closed) sits on the text box's top-right corner; pressing it slides the text box away again and fades in TipsPanel (picture in a circle, named, the successLine as heading, up to three tips for the child) in tipsPanelFrame, clear of the corner buttons, the tips centred in their own block and Close at the panel's foot; Close fades the tips away and brings the text back. While open, the panel sits in a clear full-screen shield (`learning-tips-shield`, zIndex 30, above the corner coins' 20 and the controls layer's 10, modal to VoiceOver), so nothing but Close can be pressed, the badge included (operator, 2026-11-11). Closed, the panel and shield are out of reach and out of the screen reader. Turning the page forgets the tips
    engineFor(family): choose → ChooseEngine (a tray of 2–3 pictured cards inside the page's safe zone, 28–72 % across, 23–60 % down; tap only in every band)
       open mechanic (target ''): any card completes; guided: a non-target card wobbles ('repair') and stays live, the target completes; never a wrong sound or word
@@ -1957,7 +1982,7 @@ bookmark, achievements), then the bar left to right (Learn, Progress, Screensafe
 then the language flag and the sound -- twelve steps, one dot each (operator decisions 2026-09-18,
 2026-10-04). The library's `catalogue_tour` stays on the shelf: the theme capsule, Filter, the
 featured book (which opens its card) and the shelves. The story card's `book_mode_tour` starts on
-the page strip ("Start from a page") and then the three ways to read, named with their buttons'
+the page strip (its step still titled "Start from a page", from the tour's own words) and then the three ways to read, named with their buttons'
 words. `island_tour` (2026-10-04) welcomes the family to the island, then rings today's checkpoint,
 the plan card (Start activity / Preview) and the Home pill; it waits for the arrival to settle.
 The old carousel menu's steps (Stories, Instruments, Grown-ups) and its `story_modes_tour` were

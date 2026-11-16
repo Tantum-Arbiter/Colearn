@@ -162,7 +162,65 @@ describe('the CMS story little-fox-meets-a-friend', () => {
 describe('the CMS story the-lantern-bridge', () => {
   const challenges = () => load('the-lantern-bridge').pages!.filter((page) => page.interactionType === 'learning_challenge').map((page) => page.learningChallenge!);
 
-  it('teaches counting in the scene on pages 4 and 8, and helping a friend on page 11', () => {
+  const words = (page: Story['pages'] extends (infer P)[] | undefined ? P : never) => [page.text ?? '', ...Object.values(page.localizedText ?? {}).map((text) => text.en ?? '')];
+
+  it('tells its story on fifteen pages: a bag of lanterns on the last post lights the whole bridge', () => {
+    const pages = load('the-lantern-bridge').pages!;
+
+    expect(load('the-lantern-bridge').pageCount).toBe(15);
+    expect(pages.map((page) => page.pageNumber)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]);
+    expect(pages.map((page) => [page.id, page.backgroundImage])).toEqual(pages.map((page) => [`the-lantern-bridge-${page.pageNumber}`, `assets/stories/the-lantern-bridge/page-${page.pageNumber}/background.webp`]));
+    expect(pages.filter((page) => words(page).some((text) => /old tin|clink|scratched at his nose|blue|mud|broken|lanterns were out|too dark/i.test(text))).map((page) => page.pageNumber)).toEqual([]);
+    expect(pages.filter((page) => words(page).some((text) => /\bbag\b/i.test(text))).map((page) => page.pageNumber)).toEqual([7, 8]);
+  });
+
+  it('every page has its words for every band', () => {
+    const missing = load('the-lantern-bridge').pages!.flatMap((page) => (['1-2', '2-4', '4-6'] as const).filter((band) => !page.localizedText?.[band]?.en).map((band) => `${page.pageNumber} ${band}`));
+
+    expect(missing).toEqual([]);
+  });
+
+  it.each([
+    [6, '"One, two, and three," Nori counted the spots.\n"I need to put lights in these three empty pots."\nHe looked at the hooks where the lanterns should go.\n"But where will I find any lanterns to glow?"'],
+    [7, 'On the very last pole hung a bag, old and brown.\nNori stood on his tiptoes and lifted it down.\nInside there were lanterns, all cosy and bright!\n"One for each hook, to light up the night!"'],
+    [8, 'Now the path by the stream had a warm, golden glow,\nWith three little lanterns all hung in a row.\nNori peeked in the bag, and he gave a big grin:\nThere were still lots of lanterns tucked snugly within!'],
+    [9, 'Back on the bridge, Nori hung every light\nOn each little post, till the bridge glowed bright.\n"A glowing light, a little spark,\nTo guide a friend across the dark!"'],
+    [10, '"Toby is here!" came a voice from the trees.\nNori said, "Toby! Come walk with me, please!"\nHe offered a paw or a lamp for the stroll,\nTo welcome his neighbour, the lovely old mole.'],
+    [11, 'Toby held on and he gave a big smile.\nThey crossed the bright bridge, taking care all the while.\n"The dark isn\'t scary," said Toby with glee,\n"Because you are walking right next to me!"'],
+    [12, '"Your lights are so pretty!" the little mole said,\n"The yellow ones, too, and the twinkly red!"\nNori just giggled and gave a small bow:\n"The best part is having you here with me now."'],
+    [13, 'They followed the path where the three lanterns glowed,\nTwo friends side by side on the warm, twinkly road.\nThe windows of Nori\'s home shone up ahead.\n"We\'re nearly there now, little Toby!" he said.'],
+    [14, 'Nori felt warm, like a bug in a rug.\nHe gave his good neighbour a wonderful hug.\nThe lanterns were glowing, the welcome was grand.\nThey stepped on the mat, walking close, paw-in-hand.'],
+    [15, 'They sat at the table for crumpets and tea,\nAs happy as two little neighbours could be.\n"A glowing light, a little spark,\nTo guide a friend across the dark!"'],
+  ] as const)('page %i tells the new ending for the 2-4 band', (pageNumber, text) => {
+    const page = load('the-lantern-bridge').pages!.find((each) => each.pageNumber === pageNumber)!;
+
+    expect([page.text, page.localizedText?.['2-4']?.en]).toEqual([text, text]);
+  });
+
+  it.each([
+    [7, '1-2', 'A bag on the pole, old and brown.\nLanterns inside! Lift it down!'],
+    [10, '4-6', '"Toby is here!" came a friendly voice from the trees. Nori hurried over and said, "Toby! Come walk with me, please!" He offered a paw and a glowing lamp for the stroll, to welcome his neighbour, the lovely old mole.'],
+    [14, '4-6', 'Nori felt very warm inside, just like a bug in a rug. He gave his good neighbour a wonderful, happy hug. The lanterns were glowing, and the welcome was truly grand. They stepped on the mat, walking close, paw-in-hand.'],
+  ] as const)('page %i tells the new ending for the %s band', (pageNumber, band, text) => {
+    const page = load('the-lantern-bridge').pages!.find((each) => each.pageNumber === pageNumber)!;
+
+    expect(page.localizedText?.[band]?.en).toBe(text);
+  });
+
+  it('the app ships every page it names, and the same fifteen pages as the CMS story', () => {
+    const fs = jest.requireActual('fs');
+    const path = jest.requireActual('path');
+    const { theLanternBridge } = jest.requireActual('@/data/generated-stories/the-lantern-bridge');
+    const cms = load('the-lantern-bridge');
+
+    expect(cms.pages!.map((page) => page.backgroundImage).filter((image) => !fs.existsSync(path.join(__dirname, '../../', image!)))).toEqual([]);
+    expect(fs.existsSync(path.join(__dirname, '../../assets/stories/the-lantern-bridge/page-16'))).toBe(false);
+    expect(theLanternBridge.pageCount).toBe(15);
+    expect(theLanternBridge.pages.filter((page: { pageNumber: number }) => page.pageNumber > 0).map((page: { id: string; pageNumber: number; text: string; localizedText?: unknown }) => [page.id, page.pageNumber, page.text, page.localizedText])).toEqual(cms.pages!.map((page) => [page.id, page.pageNumber, page.text, page.localizedText]));
+  });
+
+  it('teaches counting in the scene on pages 4 and 7, and helping a friend on page 10', () => {
+    expect(load('the-lantern-bridge').pages!.filter((page) => page.interactionType === 'learning_challenge').map((page) => page.pageNumber)).toEqual([4, 7, 10]);
     expect(challenges().map((challenge) => [challenge.mechanicId, challenge.family, challenge.domain])).toEqual([
       ['M08', 'tap_scene', 'maths'],
       ['M01', 'tap_scene', 'maths'],
@@ -186,6 +244,98 @@ describe('the CMS story the-lantern-bridge', () => {
     expect(match.target).toBe('two-dots');
     expect(count.target).toBe('');
     expect(count.items).toHaveLength(3);
+  });
+
+  it('page 10: each way to help Toby turns to its own rendered page, a whole page of its own', () => {
+    const help = challenges()[2];
+
+    expect(help.items.map((item) => [item.id, item.outcome?.stateAfter])).toEqual(['offer-a-paw', 'share-the-lamp'].map((id) => [id, {
+      image: `assets/stories/the-lantern-bridge/page-10/outcomes/${id}.webp`,
+      position: { x: 0, y: 0 },
+      size: { width: 1, height: 1 },
+    }]));
+    expect(help.stateAfter).toBeUndefined();
+  });
+
+  it('the counting pages keep their own painting: no item on pages 4 or 7 leads to a page of its own', () => {
+    const [match, count] = challenges();
+
+    expect([...match.items, ...count.items].map((item) => item.outcome?.stateAfter).filter(Boolean)).toEqual([]);
+    expect([match.stateAfter, count.stateAfter]).toEqual([undefined, undefined]);
+  });
+
+  it('the app ships both pages Toby`s welcome leads to', () => {
+    const fs = jest.requireActual('fs');
+    const path = jest.requireActual('path');
+    const named = challenges()[2].items.map((item) => item.outcome?.stateAfter?.image);
+
+    expect(named).toHaveLength(2);
+    expect(named.filter((image) => typeof image !== 'string' || !fs.existsSync(path.join(__dirname, '../..', image))).map(String)).toEqual([]);
+  });
+
+  it('page 10: every way to help offered to a band has its own story text for that band', () => {
+    const help = challenges()[2];
+    const offered = { '1-2': help.byAge?.['1-2']?.items, '2-4': help.byAge?.['2-4']?.items, '4-6': help.byAge?.['4+']?.items } as const;
+    const missing = Object.entries(offered).flatMap(([band, ids]) => (ids ?? []).filter((id) => !help.items.find((item) => item.id === id)?.outcome?.storyText?.[band as '1-2']?.en).map((id) => `${band} ${id}`));
+
+    expect(missing).toEqual([]);
+  });
+
+  it.each([
+    ['offer-a-paw', 'Toby reached out and he held Nori\'s paw,\nThe warmest of welcomes a mole ever saw.\n"I\'m right here," said Nori. "We\'ll go nice and slow."\nAnd paw in paw, off down the path they did go.'],
+    ['share-the-lamp', 'Nori held up his lamp, it was warm and was bright,\nAnd Toby stepped close so he walked in its light.\n"I\'ll light up the way, every step that we take,"\nSaid Nori, "and go nice and slow for your sake."'],
+  ])('page 10: %s tells its own story for the 2-4 band', (id, text) => {
+    const item = challenges()[2].items.find((each) => each.id === id)!;
+
+    expect(item.outcome?.storyText?.['2-4']?.en).toBe(text);
+  });
+
+  it('page 4: each tap spot covers its own dot card on the grass, apart from the other', () => {
+    const match = challenges()[0];
+
+    expect(match.items.map((item) => [item.id, item.hotspot])).toEqual([
+      ['two-dots', { position: { x: 0.39, y: 0.725 }, size: { width: 0.165, height: 0.14 } }],
+      ['three-dots', { position: { x: 0.56, y: 0.74 }, size: { width: 0.155, height: 0.16 } }],
+    ]);
+  });
+
+  it('page 7: the child hangs a lantern from the bag on each of the three hooks', () => {
+    const count = challenges()[1];
+
+    expect(count.items.map((item) => [item.id, item.label?.en])).toEqual([['first-hook', 'first hook'], ['second-hook', 'second hook'], ['third-hook', 'third hook']]);
+    expect([
+      count.copy.title?.['2-4']?.en,
+      count.copy.setupLine?.['2-4']?.en,
+      count.copy.instruction?.['2-4']?.en,
+      count.copy.successLine?.['2-4']?.en,
+      count.copy.onSkip?.['2-4']?.en,
+      count.copy.parentPrompt?.['2-4']?.en,
+      count.copy.hints?.map((hint) => hint['2-4']?.en),
+    ]).toEqual([
+      'Hang the lanterns',
+      'Inside there were lanterns, all cosy and bright!',
+      'Tap each empty hook to hang a lantern, as we count one, two, three.',
+      '"One, two, three lanterns!" said Nori. "Now the path can glow!"',
+      'Nori hung a lantern on each of the three hooks himself.',
+      'How many lanterns did we hang altogether?',
+      ['Look for the empty hooks at the top of the little lamp posts.', 'Tap each empty hook, one at a time, as we count.'],
+    ]);
+  });
+
+  it('page 7: each tap spot sits on its own hook at the top of the three posts', () => {
+    const count = challenges()[1];
+
+    expect(count.items.map((item) => [item.id, item.hotspot])).toEqual([
+      ['first-hook', { position: { x: 0.245, y: 0.245 }, size: { width: 0.115, height: 0.125 } }],
+      ['second-hook', { position: { x: 0.42, y: 0.245 }, size: { width: 0.11, height: 0.125 } }],
+      ['third-hook', { position: { x: 0.615, y: 0.235 }, size: { width: 0.11, height: 0.13 } }],
+    ]);
+  });
+
+  it('page 6 tells the counting and leaves the game to page 7', () => {
+    const page = load('the-lantern-bridge').pages!.find((each) => each.pageNumber === 6)!;
+
+    expect([page.interactionType, page.learningChallenge]).toEqual(['none', undefined]);
   });
 
   it('every way to help Toby comes with three things a child can do', () => {
@@ -218,8 +368,6 @@ describe('sound words in the CMS stories', () => {
     ['little-fox-meets-a-friend', 15, '2-4', ['Smush!', 'Crunch!']],
     ['the-lantern-bridge', 3, '2-4', ['Whoosh!', 'pop']],
     ['the-lantern-bridge', 3, '4-6', ['whoosh!', 'pop!']],
-    ['the-lantern-bridge', 10, '1-2', ['Bump']],
-    ['the-lantern-bridge', 10, '4-6', ['wobble', 'bump!']],
   ])('%s page %i (%s) marks its sound effects', (slug, page, band, expected) => {
     expect(sounds(bands(slug).find((entry) => entry.page === page && entry.band === band)!.text)).toEqual(expected);
   });

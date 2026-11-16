@@ -1934,7 +1934,6 @@ export default {
   },
   storyDetail: {
     readTogether: 'Birlikte oku',
-    pickPage: 'Bir sayfadan başla',
     readFromPage: '{{page}}. sayfadan oku',
     continueReading: 'Okumaya devam et',
     record: 'Kaydet',

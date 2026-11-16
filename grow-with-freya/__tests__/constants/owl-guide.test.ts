@@ -219,10 +219,11 @@ describe('GUIDE_STEPS', () => {
     expect(title('record_button')).toBe(lookup('storyDetail.record'));
   });
 
-  it('heads the page step with the words the strip itself shows', () => {
+  it('heads the page step Start from a page, now the strip carries no heading of its own', () => {
     const step = GUIDE_STEPS.book_mode_tour.find((entry) => entry.target === 'pick_page');
 
-    expect(lookup(step!.titleKey)).toBe(lookup('storyDetail.pickPage'));
+    expect(lookup(step!.titleKey)).toBe('Start from a page');
+    expect(lookup('storyDetail.pickPage')).toBeUndefined();
     expect(step?.shape).toBe('rounded-rect');
   });
 

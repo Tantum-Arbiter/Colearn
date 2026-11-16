@@ -1934,7 +1934,6 @@ export default {
   },
   storyDetail: {
     readTogether: 'Simul legere',
-    pickPage: 'A pagina incipe',
     readFromPage: 'A pagina {{page}} lege',
     continueReading: 'Perge legere',
     record: 'Recorda',

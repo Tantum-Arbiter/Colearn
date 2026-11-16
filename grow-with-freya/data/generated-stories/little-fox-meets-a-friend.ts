@@ -17,9 +17,9 @@ export const littleFoxMeetsAFriend: Story = {
       "ageRange": "2-4",
       "pageCount": 15,
       "displayFit": "cover",
-      "description": "Finn the fox really wants to play with a shy new friend! But when running up fast doesn't work, Finn learns how to give space and wait. A sweet, interactive story about gentle greetings and making friends at their own pace.",
+      "description": "Finn the fox wants to play with a shy new friend, and learns to give space and wait.",
       "localizedDescription": {
-        "en": "Finn the fox really wants to play with a shy new friend! But when running up fast doesn't work, Finn learns how to give space and wait. A sweet, interactive story about gentle greetings and making friends at their own pace.",
+        "en": "Finn the fox wants to play with a shy new friend, and learns to give space and wait.",
       },
       "isPremium": true,
       "isFree": false,

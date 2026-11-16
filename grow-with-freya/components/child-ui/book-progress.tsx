@@ -8,8 +8,8 @@ import { useAccessibility } from '@/hooks/use-accessibility';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
 
 export const BOOK_PROGRESS = {
-  small: { height: 26, icon: 14, bar: 10, label: 12 },
-  regular: { height: 32, icon: 17, bar: 12, label: 13 },
+  small: { height: 26, icon: 14, bar: 10, label: 12, minBar: 52 },
+  regular: { height: 32, icon: 17, bar: 12, label: 13, minBar: 64 },
   sparkles: [
     { at: 0.5, from: 1 },
     { at: 0.25, from: 20 },
@@ -173,7 +173,7 @@ export function BookProgress({ fraction, label, accessibilityLabel, size = 'regu
 
       <View
         testID={`${testID}-track`}
-        style={[styles.track, { height: metrics.bar, borderRadius: metrics.bar / 2, marginRight: label === undefined ? 10 : 8 }]}
+        style={[styles.track, { height: metrics.bar, minWidth: metrics.minBar, borderRadius: metrics.bar / 2, marginRight: label === undefined ? 10 : 8 }]}
       >
         <View testID={`${testID}-fill`} onLayout={measureFill} style={[styles.fill, { width: `${percent}%` }]}>
           <Animated.View style={[styles.grown, !still && grownStyle]}>

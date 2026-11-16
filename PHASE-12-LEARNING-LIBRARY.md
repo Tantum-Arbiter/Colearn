@@ -393,6 +393,25 @@ Both repos. Exit: GWF-006 *Little Fox Meets a Friend* plays end to end on device
 > emit them yet. Like Little Fox it carries no song (operator decision, 2026-11-11): page 6 is a
 > plain story page and the brief's `music_gate` is null, so no instrument chooser opens with it.
 >
+> **Page 6 removed (2026-11-14).** The operator removed page 6 (Nori shaking his old tin on the
+> riverbank) with its words, for every band. The app's book is now 14 pages, an exception to the
+> 15-page plan above: what were pages 7 to 15 are pages 6 to 14, with their asset folders renamed to
+> match, so the counting games are on pages 4 and 7 and the Choose game on page 10. The challenge
+> cadence still validates. ai-tools' brief for the book still has 15 pages, so a fresh export would
+> bring the page back until the brief changes. Pinned by `grow-with-freya/__tests__/services/story-contract.test.ts`.
+>
+> **Told again from page 6, back to 15 pages (2026-11-16).** The operator removed the page where
+> Nori scratches his nose and asked for him to find a bag hanging on the last post, with the story
+> after it told again. The bag holds lanterns: page 6 is the three empty hooks, now a story page;
+> page 7 is the counting game (M01, hang a lantern from the bag on each of the three hooks, tap
+> spots measured on the new painting); pages 8 and 9 light the path and then the whole bridge;
+> page 10 keeps its Choose game (E02) with Toby arriving at the lit bridge; pages 11 to 15 cross it,
+> walk home and end at tea. The games are on pages 4, 7 and 10, the cadence validates, and the
+> ai-tools brief is changed to match (15 pages, 13 languages machine-drafted, not yet reviewed by a
+> native speaker), so a fresh export gives the same book. The app still ships English only for it.
+> Pages 7 to 14 and page 10's choice pages were drawn again (`compliance/ASSET-REGISTER.md` §5p).
+>
+
 > **Sound words (2026-11-11).** The reader draws a sound word wrapped in single asterisks
 > (`*Whoosh!*`) as a picture book would: heavy, rounded, a little larger, in warm ink, with no
 > asterisks shown (`grow-with-freya/ARCHITECTURE.md`, Production storybook presentation). Only

@@ -52,6 +52,11 @@ export const INSIGHT_BLUR = 24;
 export const TEXT_WIDTH = 0.6;
 export const PROGRESS_SPAN = 0.72;
 export const DESCRIPTION_SPAN = 0.75;
+/**
+ * On a phone the panel stands a fifth shorter, and the words, description and
+ * progress pill stretch further right to fit it (operator, 2026-11-13).
+ */
+export const PHONE_LAYOUT = { height: 0.8, text: 0.8, description: 1, progress: 1 } as const;
 export const READABILITY_WASH_LOCATIONS = [0, 0.1, 0.5] as const;
 const READABILITY_WASH = ['rgba(9, 20, 56, 1)', 'rgba(9, 20, 56, 1)', 'rgba(9, 20, 56, 0)'] as const;
 /**
@@ -106,7 +111,9 @@ export function FeaturedStoryCard({ story, width, language, onOpen, label, place
   const sharpWidth = width * (1 - INSIGHT_INSET);
   const featherWidth = width * INSIGHT_FEATHER;
   const featherStep = featherWidth / INSIGHT_FEATHER_STEPS;
-  const height = Math.round(width / (isTablet ? FEATURED_ASPECT_RATIO_TABLET : FEATURED_ASPECT_RATIO));
+  const height = Math.round(isTablet ? width / FEATURED_ASPECT_RATIO_TABLET : (width / FEATURED_ASPECT_RATIO) * PHONE_LAYOUT.height);
+  const spans = isTablet ? { text: TEXT_WIDTH, description: DESCRIPTION_SPAN, progress: PROGRESS_SPAN } : PHONE_LAYOUT;
+  const share = (fraction: number) => `${fraction * 100}%` as const;
 
   const duration = motionDuration(CHILD_UI_MOTION.cardTap, reduceMotion);
 
@@ -194,7 +201,7 @@ export function FeaturedStoryCard({ story, width, language, onOpen, label, place
           pointerEvents="none"
         />
 
-        <View testID="featured-story-body" style={styles.body} pointerEvents="box-none">
+        <View testID="featured-story-body" style={[styles.body, { width: share(spans.text) }]} pointerEvents="box-none">
           <View style={styles.labelRow}>
             <Ionicons name="sparkles" size={scaledFontSize(isTablet ? 15 : 13)} color={ACCENT_GOLD} />
             <Text testID={`${testID}-label`} style={[styles.label, { fontSize: scaledFontSize(isTablet ? 14 : 12) }]} numberOfLines={1}>
@@ -211,14 +218,14 @@ export function FeaturedStoryCard({ story, width, language, onOpen, label, place
           {description.length > 0 && (
             <Text
               testID="featured-story-description"
-              style={[styles.description, { fontSize: descriptionSize, lineHeight: Math.round(descriptionSize * 1.35) }]}
+              style={[styles.description, { width: share(spans.description), fontSize: descriptionSize, lineHeight: Math.round(descriptionSize * 1.35) }]}
             >
               {description}
             </Text>
           )}
 
           {place && count && (
-            <View testID="featured-story-progress-block" style={styles.progress}>
+            <View testID="featured-story-progress-block" style={[styles.progress, { minWidth: share(spans.progress) }]}>
               <BookProgress
                 size="small"
                 fraction={readingFraction(place)}
@@ -290,7 +297,6 @@ const styles = StyleSheet.create({
     paddingBottom: SPACE_5,
     paddingLeft: SPACE_5,
     paddingRight: SPACE_3,
-    width: `${TEXT_WIDTH * 100}%`,
     gap: SPACE_2,
   },
   labelRow: {
@@ -310,7 +316,6 @@ const styles = StyleSheet.create({
     ...WORDS_SHADOW,
   },
   description: {
-    width: `${DESCRIPTION_SPAN * 100}%`,
     color: TEXT_PRIMARY,
     fontFamily: Fonts.sans,
     fontWeight: '600',
@@ -318,7 +323,7 @@ const styles = StyleSheet.create({
   },
   progress: {
     alignSelf: 'flex-start',
-    width: `${PROGRESS_SPAN * 100}%`,
+    maxWidth: '100%',
     marginTop: SPACE_2,
   },
   spring: {

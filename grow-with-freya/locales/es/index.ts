@@ -1934,7 +1934,6 @@ export default {
   },
   storyDetail: {
     readTogether: 'Leer juntos',
-    pickPage: 'Empieza en una página',
     readFromPage: 'Leer desde la página {{page}}',
     continueReading: 'Seguir leyendo',
     record: 'Grabar',

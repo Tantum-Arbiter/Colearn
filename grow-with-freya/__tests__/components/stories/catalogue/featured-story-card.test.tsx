@@ -15,6 +15,7 @@ import {
   INSIGHT_FEATHER_STEPS,
   DESCRIPTION_SPAN,
   INSIGHT_INSET,
+  PHONE_LAYOUT,
   PROGRESS_SPAN,
   TEXT_WIDTH,
   READABILITY_WASH_LOCATIONS,
@@ -23,6 +24,16 @@ import { FEATURED_ASPECT_RATIO, FEATURED_ASPECT_RATIO_TABLET } from '@/component
 import { BOOK_PROGRESS } from '@/components/child-ui/book-progress';
 import { fromStory } from '@/components/stories/catalogue/catalogue-story';
 import { Story } from '@/types/story';
+
+let mockTablet = false;
+
+jest.mock('@/hooks/use-accessibility', () => ({
+  useAccessibility: () => ({ isTablet: mockTablet, scaledFontSize: (size: number) => size }),
+}));
+
+beforeEach(() => {
+  mockTablet = false;
+});
 
 const story = (overrides: Partial<Story> = {}): Story => ({
   id: 'featured-1',
@@ -86,13 +97,16 @@ describe('FeaturedStoryCard', () => {
       expect(order.indexOf('featured-story-progress-track')).toBeLessThan(order.lastIndexOf('featured-story-read-now'));
     });
 
-    it('should give the pill a little under three quarters of the text column, a set width since the column hugs its children', () => {
+    it('should give the pill at least a little under three quarters of the text column on a tablet, and let it grow to fit its bar and its words', () => {
+      mockTablet = true;
       const tree = render(<FeaturedStoryCard story={fromStory(story())} width={340} language="en" onOpen={jest.fn()} place={place} />);
 
       const block = StyleSheet.flatten(byTestId(tree, 'featured-story-progress-block').find((n: any) => n.props.style !== undefined)!.props.style);
 
       expect(PROGRESS_SPAN).toBe(0.72);
-      expect(block.width).toBe(`${PROGRESS_SPAN * 100}%`);
+      expect(block.minWidth).toBe(`${PROGRESS_SPAN * 100}%`);
+      expect(block.maxWidth).toBe('100%');
+      expect(block.width).toBeUndefined();
       expect(block.alignSelf).toBe('flex-start');
     });
 
@@ -145,7 +159,8 @@ describe('FeaturedStoryCard', () => {
     expect(style.lineHeight).toBeGreaterThanOrEqual(Math.round(style.fontSize * 1.3));
   });
 
-  it('should wrap those words at about where a title ends, short of the picture, not out to the column edge', () => {
+  it('should wrap those words on a tablet at about where a title ends, short of the picture, not out to the column edge', () => {
+    mockTablet = true;
     const model = fromStory(story({ description: 'A gentle story about finding the perfect place to rest.' }));
 
     const tree = render(<FeaturedStoryCard story={model} width={340} language="en" onOpen={jest.fn()} />);
@@ -334,20 +349,60 @@ describe('FeaturedStoryCard', () => {
     expect(wash.props.pointerEvents).toBe('none');
   });
 
-  it('should keep the words in the left three fifths', () => {
+  it('should keep the words in the left three fifths on a tablet', () => {
+    mockTablet = true;
     const tree = render(<FeaturedStoryCard story={fromStory(story())} width={340} language="en" onOpen={jest.fn()} />);
 
     expect(StyleSheet.flatten(byTestId(tree, 'featured-story-body')[0].props.style).width).toBe(`${TEXT_WIDTH * 100}%`);
   });
 
-  it('should stand at least at the phone aspect ratio for its width, and run wider on a tablet', () => {
-    const tree = render(<FeaturedStoryCard story={fromStory(story())} width={340} language="en" onOpen={jest.fn()} />);
+  it.each([
+    ['a phone, a fifth shorter than its aspect ratio', false, 340, Math.round((340 / FEATURED_ASPECT_RATIO) * 0.8)],
+    ['a tablet, at its own wider aspect ratio', true, 700, Math.round(700 / FEATURED_ASPECT_RATIO_TABLET)],
+  ])('should stand at least as tall as its width allows on %s', (_label, tablet, width, minHeight) => {
+    mockTablet = tablet;
+    const tree = render(<FeaturedStoryCard story={fromStory(story())} width={width} language="en" onOpen={jest.fn()} />);
 
     const underTest = StyleSheet.flatten(byTestId(tree, 'featured-story-card')[0].props.style);
 
-    expect(underTest.width).toBe(340);
-    expect(underTest.minHeight).toBe(Math.round(340 / FEATURED_ASPECT_RATIO));
+    expect(underTest.width).toBe(width);
+    expect(underTest.minHeight).toBe(minHeight);
     expect(FEATURED_ASPECT_RATIO_TABLET).toBeGreaterThan(FEATURED_ASPECT_RATIO);
+  });
+
+  describe('on a phone', () => {
+    const place = { pageIndex: 4, totalPages: 11 };
+    const phone = () =>
+      render(<FeaturedStoryCard story={fromStory(story({ description: 'A gentle story about a little wombat.' }))} width={370} language="en" onOpen={jest.fn()} place={place} />);
+    const styleOf = (tree: ReturnType<typeof render>, testID: string) =>
+      StyleSheet.flatten(byTestId(tree, testID).find((n: any) => n.props.style !== undefined)!.props.style);
+
+    it('should stand a fifth shorter than a tablet panel of the same shape', () => {
+      expect(PHONE_LAYOUT.height).toBe(0.8);
+    });
+
+    it('should stretch the words further to the right than on a tablet, short of the panel edge', () => {
+      const tree = phone();
+
+      expect(PHONE_LAYOUT.text).toBeGreaterThan(TEXT_WIDTH);
+      expect(PHONE_LAYOUT.text).toBeLessThan(1);
+      expect(styleOf(tree, 'featured-story-body').width).toBe(`${PHONE_LAYOUT.text * 100}%`);
+    });
+
+    it('should run the description across the whole of that wider column', () => {
+      const tree = phone();
+
+      expect(styleOf(tree, 'featured-story-description').width).toBe('100%');
+    });
+
+    it('should run the progress pill across the whole of that wider column too', () => {
+      const tree = phone();
+
+      const block = styleOf(tree, 'featured-story-progress-block');
+
+      expect(block.minWidth).toBe('100%');
+      expect(block.maxWidth).toBe('100%');
+    });
   });
 
   it('should grow with what it holds rather than clip Read Now when a progress block joins the words', () => {
@@ -357,7 +412,7 @@ describe('FeaturedStoryCard', () => {
     const body = StyleSheet.flatten(byTestId(tree, 'featured-story-body')[0].props.style);
 
     expect(card.height).toBeUndefined();
-    expect(card.minHeight).toBe(Math.round(340 / FEATURED_ASPECT_RATIO));
+    expect(card.minHeight).toBe(Math.round((340 / FEATURED_ASPECT_RATIO) * PHONE_LAYOUT.height));
     expect(body.paddingBottom).toBeGreaterThanOrEqual(16);
   });
 

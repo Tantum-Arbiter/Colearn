@@ -1934,7 +1934,6 @@ export default {
   },
   storyDetail: {
     readTogether: '一起阅读',
-    pickPage: '从某一页开始',
     readFromPage: '从第 {{page}} 页开始读',
     continueReading: '继续阅读',
     record: '录音',

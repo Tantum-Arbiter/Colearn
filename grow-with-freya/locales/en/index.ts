@@ -363,7 +363,6 @@ export default {
   // Story detail view (shown after tapping a book)
   storyDetail: {
     readTogether: 'Read Together',
-    pickPage: 'Start from a page',
     readFromPage: 'Read from page {{page}}',
     continueReading: 'Continue reading',
     record: 'Record',

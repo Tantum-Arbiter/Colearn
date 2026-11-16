@@ -218,6 +218,9 @@ When generating children's stories or content:
 - Calm pacing, positive reinforcement, encourage curiosity and empathy
 - Feel magical and emotionally warm with simple but meaningful lessons
 - **Avoid**: hyperstimulation, fast chaotic pacing, fear-heavy themes, excessive conflict
+- A book's description is never longer than Snuggle Little Wombat's (18 words in English; in
+  any other language, no longer than Wombat's in that language). That length fits the library's
+  featured tile. Enforced by `grow-with-freya/__tests__/data/story-descriptions.test.ts`.
 
 When generating image prompts:
 - Copyright-safe descriptions, consistent character design

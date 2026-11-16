@@ -1934,7 +1934,6 @@ export default {
   },
   storyDetail: {
     readTogether: 'いっしょに読む',
-    pickPage: 'すきな ページから',
     readFromPage: '{{page}}ページから よむ',
     continueReading: 'つづきをよむ',
     record: 'ろくおん',

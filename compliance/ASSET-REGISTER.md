@@ -32,6 +32,10 @@ marked **⚠️ UNVERIFIED**.
 | The reader's Compare Languages and Change Language panels: the painted frame (the operator's picture, 2026-11-12) | Registered below, §5j — origin and licence ⚠️ UNVERIFIED |
 | The Audio Settings panel, opened from every sound button: its painted frame and the three button icons (the operator's pictures, 2026-11-12) | Registered below, §5k — origin and licence ⚠️ UNVERIFIED |
 | The nine pages a Little Fox Meets a Friend choice leads to (pages 4, 8 and 11, rendered by ai-tools 2026-11-12) | Registered below, §5l — rendered by the operator's ai-tools story factory through ChatGPT; terms ⚠️ UNVERIFIED. The rest of the book's art (pages, covers, choice cards) is not yet registered |
+| The two pages a choice in The Lantern Bridge leads to (page 10, page 11 until 2026-11-14, rendered by ai-tools 2026-11-12) | Registered below, §5m — rendered by the operator's ai-tools story factory through ChatGPT; terms ⚠️ UNVERIFIED. The rest of the book's art (pages, covers, choice cards) is not yet registered |
+| The Lantern Bridge's pages 6 to 11, drawn again on 2026-11-12 so that only page 5 happens on the bridge, and page 11 to fix Toby's paws | Registered below, §5n — rendered by the operator's ai-tools story factory through ChatGPT; terms ⚠️ UNVERIFIED. The book's other pages and covers are not yet registered |
+| The Lantern Bridge without its old tin page, and pages 3, 4 and 6 to 9 drawn again (2026-11-14) | Registered below, §5o — rendered by the operator's ai-tools story factory through ChatGPT; terms ⚠️ UNVERIFIED |
+| The Lantern Bridge told again from page 6: a bag of lanterns on the last post, pages 7 to 14 and page 10's choice pages drawn (2026-11-16) | Registered below, §5p — rendered by the operator's ai-tools story factory through ChatGPT; terms ⚠️ UNVERIFIED |
 | The lock on the island's learning-plan checkpoints | Registered below, §6 — the supplied picture is not drawn since 2026-10-03 (a padlock drawn in code replaced it); the file remains, origin ⚠️ UNVERIFIED |
 | Everything else — avatars, story illustrations, instrument art, music, fonts, voices (the feelings game's art and the spelling game's art left with those games on 2026-10-16; the nine bear and animal faces the badges draw stay in `assets/images/emotions/`) | **Not registered.** Origin is not recorded anywhere in the repository — ⚠️ UNVERIFIED |
 
@@ -365,6 +369,126 @@ from outside the app is added. Everything ships under `grow-with-freya/assets/pa
 | Terms for commercial use, and who owns it | As for the book |
 | Checked by eye against well-known games | **Not yet done by a person.** Berries counted onto a leaf is a common nursery mechanic; the drawn shapes are generic |
 | Source hashes | `cover-large.webp` SHA-256 `2311c38d52395524b87320ab6a51da033582971f5a4ce293341d40982dd2bce4`; `page-4/background.webp` SHA-256 `544a086de47c7453f3d4f6140749e39c8c477f87a7d9dc4cb80be34caa768878`, as bundled on 2026-10-17 |
+
+## 5m. The Lantern Bridge: the page each choice leads to
+
+Two whole pages, one for each way Nori can welcome Toby in the book's Choose game on page 10 (page 11 until 2026-11-14, §5o), shown in
+place of the page's painting once the child has chosen, until the page is turned. Each is ai-tools'
+`final.webp` for that option, copied byte for byte, under
+`grow-with-freya/assets/stories/the-lantern-bridge/` (1.0 MB in all). The book's two counting games,
+pages 4 and 7, keep their painting (operator, 2026-11-12). Both pages were drawn again for the retold book on
+2026-11-15 (§5p); these two are no longer shipped.
+
+| File | What it shows |
+|---|---|
+| `page-10/outcomes/offer-a-paw.webp` (1448×1086, SHA-256 `32d5bb73bbb1ccd2a3f7bcd22d25d99090772ce4dcd231704a13393353fbbbd8`) | Toby has stepped in and holds Nori's paw; Nori still holds his one lantern low |
+| `page-10/outcomes/share-the-lamp.webp` (1448×1086, SHA-256 `397d8e6380292340f2b703112326017b94d2944658bbdf7bccd5647a62bcd25d`) | Nori holds his one lantern up between them, and Toby stands close in its light |
+
+| Question | Answer |
+|---|---|
+| Who made it, and with what | Rendered on 2026-11-12 by the operator's story factory (`~/Workspace/ai-tools/gpt-image-generator-browser`, stage `alternative_page_illustration`, provider `gpt`) driving ChatGPT's image generation in the operator's signed-in browser, from the scene written for each option in the book's brief (`stories/gwf-75/2-4/the-lantern-bridge/book.json`, `choice.options[].scene`). Each was drawn from the book's character sheets for Nori and Toby, its location sheet and page 11's own rendered master. Prompts, reference hashes and output hashes are in the factory's `output/the-lantern-bridge/provenance/`. Both were drawn again later on 2026-11-12 from the redrawn page 11 (§5n), because the first pair copied its mistake in Toby's paws; the first pair is kept in the factory's `output/the-lantern-bridge-superseded-2026-11-12/pages/page-11-alternatives/` and is not shipped |
+| Terms for commercial use, and who owns it | ⚠️ UNVERIFIED — as for the rest of the book: depends on the ChatGPT plan and account used, which the repository does not record |
+| Checked by eye against well-known games and films | **Not yet done by a person.** The characters are the book's own Nori and Toby |
+| Quality | 1448×1086, the book's own page size, drawn the same way as its pages |
+
+## 5n. The Lantern Bridge: pages 6 to 11 drawn again
+
+The operator found the bridge drawn differently from page to page and an arm growing from Toby's chest on page 11 (2026-11-12).
+They chose to have only page 5 happen on the bridge: pages 6 to 10 were drawn again on the riverbank at its foot, with page 8's
+three hooks on three lamp posts by the river, and the words of pages 6 and 10 changed to match. Page 11 was drawn again with
+Toby's two forepaws at his shoulders. Each file is ai-tools' `final.webp` for that page, copied byte for byte, under
+`grow-with-freya/assets/stories/the-lantern-bridge/` (3.8 MB in all, with §5m's two pages). The pictures they replace are kept in
+the factory's `output/the-lantern-bridge-superseded-2026-11-12/`, with every try that was not chosen; none of those ship.
+The table records these files as they shipped on 2026-11-12, under the page numbers of that day. On 2026-11-14 page 6 was
+removed and the pages after it moved up by one, and several were drawn again; §5o lists what ships now.
+
+| File | What it shows |
+|---|---|
+| `page-6/background.webp` (1448×1086, SHA-256 `60c15b97f2f7f328cabab005221c9dfd1b46d7436bb31082334d7ef37d38e006`) | Nori on the riverbank with his old tin, looking at the dark bridge beyond his two lanterns |
+| `page-7/background.webp` (1448×1086, SHA-256 `159f2432910688a56c717bfa272f9bb5c50fe030264394986b018858496a3d8f`) | Nori on the riverbank, a paw at his nose, looking up at the dark arch |
+| `page-8/background.webp` (1448×1086, SHA-256 `7f9c55146411d03b11f9f6ba7e44b7a506cfdf53bdc75ad72dc5787156829fcd`) | Nori pointing at three lamp posts by the river, each with one empty hook (the counting game's tap spots were measured again on this picture) |
+| `page-9/background.webp` (1448×1086, SHA-256 `76d937949a22f1c08448947ada2cf08bb81c379698e6c51e0011c082500bb1bc`) | Nori on tiptoe at the last lamp post, holding the blue lantern just below its hook |
+| `page-10/background.webp` (1448×1086, SHA-256 `5ff1686fcf253698903fa737d85a7eac17b37a95f365e606c17f3dc5f61c3f54`) | Nori on the path looking down at the broken, dark blue lantern in the mud by the stream; a few small pieces of glass lie beside it |
+| `page-11/background.webp` (1448×1086, SHA-256 `5403f1b25a75b0f94962e68643786703cfadc2bfce4e28e6173017a915a3389b`) | Nori offers his paw and his lantern to Toby, whose forepaws are at his sides |
+
+| Question | Answer |
+|---|---|
+| Who made it, and with what | Rendered on 2026-11-12 by the operator's story factory (`~/Workspace/ai-tools/gpt-image-generator-browser`, stage `final_page_illustration`, provider `gpt`) driving ChatGPT's image generation in the operator's signed-in browser, from each page's scene in the book's brief (`stories/gwf-75/2-4/the-lantern-bridge/book.json`), with Nori's and Toby's character and pose sheets, the bridge location sheet, the storyboard and page 1 as references. Prompts and hashes are in the factory's `output/the-lantern-bridge/provenance/`. No other page or cover was drawn again |
+| Terms for commercial use, and who owns it | ⚠️ UNVERIFIED — as for the rest of the book: depends on the ChatGPT plan and account used, which the repository does not record |
+| Checked by eye against well-known games and films | **Not yet done by a person.** The characters are the book's own Nori and Toby. The operator noted on 2026-11-12 that Nori is drawn a little differently from page to page; that is not yet addressed |
+| Quality | 1448×1086, the book's own page size, drawn the same way as its pages |
+
+## 5o. The Lantern Bridge: the old tin page removed, and pages drawn again (2026-11-14)
+
+The operator asked for page 6, Nori on the riverbank shaking his old tin, to be removed with its words
+(2026-11-14). The book now has 14 pages: what were pages 7 to 15 are pages 6 to 14, in folders renamed to
+match, so the counting games are on pages 4 and 7 and the Choose game on page 10. The removed picture is
+not shipped. The same day the operator's complaints about pages 3, 4 and 7 to 10 (old numbers) were
+redrawn with ai-tools' `image_gen_browser.regenerate_page`, one page per run, and each new `final.webp`
+copied byte for byte. The tap spots of both counting games were measured again on the new pictures. The
+earlier versions are kept in each page's `history/` folder in the factory's `output/the-lantern-bridge/pages/`.
+These redraws were put into the app for the operator to check; they have not yet been approved.
+Pages 12 and 14 (factory pages 13 and 15) were drawn again by the factory's renderer on 2026-11-13 and
+copied into the app on 2026-11-15; they too wait for the operator's approval.
+
+| File | What it shows |
+|---|---|
+| `page-3/background.webp` (1448×1086, SHA-256 `168facece30fa8eefaaa43cc589cd4a854f8e47c18bddc47b060fb4f6994adc7`) | Nori by a tall, narrow shed with logs stacked against its side, as on page 2 |
+| `page-4/background.webp` (1447×1087, SHA-256 `a813b3df9cd85fe3b7df878671ba75c77e8fe3482958af06430f385733a75f7b`) | Nori pointing at two dot cards on the grass beside one red and one yellow lantern at the foot of the bridge |
+| `page-6/background.webp` (1448×1086, SHA-256 `8eb4dbda2b6fff90020fb70ef7fb4659bd067ee2dc0cd7f003344843d3c31599`) | Page 6's old riverbank scene with no lantern hanging; Nori scratches his nose, his tin on the grass (page 7 until 2026-11-14) |
+| `page-7/background.webp` (1448×1086, SHA-256 `e390e6a844d8ca571d2516ebae7636e66ce4ccf65780b106b2cd7cac50f449f0`) | Nori on the stream path pointing at three posts, each with one empty hook; no bridge in view (page 8 until 2026-11-14) |
+| `page-8/background.webp` (1447×1087, SHA-256 `a74053d190cf99779c77c8494303f5702b3d76b21375a89bfb4ad1fb2b1744f8`) | Nori at the last post on the stream path, the lantern handle clear of its hook (page 9 until 2026-11-14) |
+| `page-9/background.webp` (1446×1087, SHA-256 `77eeda9cd60959e8ed89210af606ca3d68476723b0d730989673a48146ae58cc`) | The broken, dark lantern in the mud by the stream, the posts as tall as on pages 7 and 8 (page 10 until 2026-11-14) |
+| `page-10/background.webp` (1448×1086, SHA-256 `5403f1b25a75b0f94962e68643786703cfadc2bfce4e28e6173017a915a3389b`) | Unchanged from §5n's page 11: Nori offers his paw and his lantern to Toby |
+| `page-12/background.webp` (1448×1086, SHA-256 `e5a6a14acd9d51b2ec58e854f044b482d173bd738455af5f862fdbde6c92c224`) | Nori and Toby in the meadow, Toby waving towards the lit bridge (factory page 13, drawn 2026-11-13) |
+| `page-14/background.webp` (1448×1086, SHA-256 `da16fdb3507e51873c4c0981de79b25dcafa8ddbab864692c1165ff58292e575`) | Nori and Toby at the round table under the hanging lantern, with crumpets and tea (factory page 15, drawn 2026-11-13) |
+
+| Question | Answer |
+|---|---|
+| Who made it, and with what | Redrawn on 2026-11-14 by the operator's story factory (`~/Workspace/ai-tools/gpt-image-generator-browser`, `image_gen_browser.regenerate_page`, provider `gpt`) driving ChatGPT's image generation in the operator's signed-in debug Chrome, from each page's current picture, its brief in `output/the-lantern-bridge/book.json` and a written correction. Prompts and hashes are in the factory's `output/the-lantern-bridge/provenance/` |
+| Terms for commercial use, and who owns it | ⚠️ UNVERIFIED — as for the rest of the book: depends on the ChatGPT plan and account used, which the repository does not record |
+| Checked by eye against well-known games and films | **Not yet done by a person.** The characters are the book's own Nori and Toby |
+| Quality | About 1448×1086, the book's own page size, drawn the same way as its pages |
+
+The table records these files as they shipped on 2026-11-14 and 2026-11-15, under the page numbers of those days. On
+2026-11-16 the book was told again from page 6 and has 15 pages; §5p lists what ships now.
+
+## 5p. The Lantern Bridge: told again from page 6, a bag of lanterns lights the bridge (2026-11-16)
+
+The operator asked for the page where Nori scratches his nose to be removed, and for Nori to find a bag hanging on the
+last post, with the rest of the book told again to follow it (2026-11-15). In the new story the bag holds lanterns: the
+child helps Nori hang one on each of the three hooks (the counting game, now page 7), Nori hangs the rest along the
+bridge, and the whole bridge is lit when Toby arrives. The book has 15 pages again; the games are on pages 4, 7 and 10.
+The scratched-nose picture and the old pages 8, 9 and 11 to 13 are not shipped; they are kept outside the repository with
+the factory's earlier output in `output/the-lantern-bridge-superseded-2026-11-15/`. Pages 7 to 14 and page 10's two
+choice pages were drawn by the factory from the retold brief; pages 9, 11 and 12 (iron hooks left hanging off the bridge)
+and 13 (posts drawn as curved street lamps) were drawn once more with `image_gen_browser.regenerate_page`, the earlier
+versions kept in each page's `history/` folder. Each file is ai-tools' `final.webp` for that page or option, copied byte
+for byte, under `grow-with-freya/assets/stories/the-lantern-bridge/` (5.2 MB for the new files). Page 10's two choice
+cards (`page-10/challenge/`) are unchanged. These were put into the app for the operator to check; they have not yet been
+approved.
+
+| File | What it shows |
+|---|---|
+| `page-6/background.webp` (1448×1086, SHA-256 `e390e6a844d8ca571d2516ebae7636e66ce4ccf65780b106b2cd7cac50f449f0`) | Unchanged from §5o's page 7: Nori pointing at three posts on the stream path, each with one empty hook |
+| `page-7/background.webp` (1448×1086, SHA-256 `33289a1a73694e5a25ad1a3f06a48cd99cf3c0cc2ea592c7828781a299b741a4`) | Nori at the last post with the old brown bag he has lifted down, lanterns peeping out; the three hooks are empty (the counting game's tap spots were measured on this picture) |
+| `page-8/background.webp` (1448×1086, SHA-256 `3184fe687afe39a7116977b82938e7f2a1eaeb03896c1db81c3b700d1f731d8c`) | Three lanterns glowing on the three posts, Nori grinning into the bag, still full |
+| `page-9/background.webp` (1447×1087, SHA-256 `0a1703c9835c15c9a8506f5b7954ce62964a8ca62017041c6110eb444181f6cf`) | The whole bridge lit with lanterns on its posts, yellow and red flags along its rail |
+| `page-10/background.webp` (1448×1086, SHA-256 `1c374c851aa8706fc142334c27180bd88b28d1073732f9eaf4ef8d17f61211db`) | Toby arrives on the far bank, the lit bridge behind; the Choose game's page |
+| `page-10/outcomes/offer-a-paw.webp` (1448×1086, SHA-256 `ab6fd9d59df446007e9a36c51e6284ff1ba400ea2f0692cf11c2b88f42b3e2d2`) | Nori offers Toby his paw by the lit bridge (replaces §5m's) |
+| `page-10/outcomes/share-the-lamp.webp` (1448×1086, SHA-256 `f9be2442e8de88355ab2e8cfa444387c114e2de73f1cada8191d758d72ed9996`) | Nori holds a lantern up between them by the lit bridge (replaces §5m's) |
+| `page-11/background.webp` (1448×1086, SHA-256 `8eeaa5d699cfdbdeb9263b9e99b1641ebe3b52f013b9930040690df7957a50b9`) | Nori and Toby crossing the lit bridge, holding paws |
+| `page-12/background.webp` (1448×1086, SHA-256 `50597c9b147c7fd2e133b6fcd9d2b501b18a30123441e315f82c2e17cf1cff5b`) | Toby on the riverbank pointing up at the lights, Nori giggling |
+| `page-13/background.webp` (1448×1086, SHA-256 `b2b0b0432376c3c4bb5d9f3101161c44dd30ead8f9925e3d0e11a4e85ffa258a`) | The two friends walking past the three lit posts towards Nori's cottage |
+| `page-14/background.webp` (1448×1086, SHA-256 `2353ab5dffdc5457fc71d4dcaba1099cb40339eb21ff76642751fb9a38edcc5b`) | The hug on the welcome mat, the lit bridge far behind |
+| `page-15/background.webp` (1448×1086, SHA-256 `da16fdb3507e51873c4c0981de79b25dcafa8ddbab864692c1165ff58292e575`) | Unchanged from §5o's page 14: the round table with crumpets and tea |
+
+| Question | Answer |
+|---|---|
+| Who made it, and with what | Rendered on 2026-11-15 by the operator's story factory (`~/Workspace/ai-tools/gpt-image-generator-browser`, `render-book` stages `final_page_illustration` and `alternative_page_illustration`, then `image_gen_browser.regenerate_page` for pages 9, 11, 12 and 13, provider `gpt`) driving ChatGPT's image generation in the operator's signed-in debug Chrome, from the retold brief in `output/the-lantern-bridge/book.json`, with the book's character, pose and location sheets as references. Prompts and hashes are in the factory's `output/the-lantern-bridge/provenance/` |
+| Terms for commercial use, and who owns it | ⚠️ UNVERIFIED — as for the rest of the book: depends on the ChatGPT plan and account used, which the repository does not record |
+| Checked by eye against well-known games and films | **Not yet done by a person.** The characters are the book's own Nori and Toby |
+| Quality | About 1448×1086, the book's own page size, drawn the same way as its pages. Page 13's posts carry taller hook arms than those on pages 6 to 8 |
 
 ## 6. The lock on the learning-plan checkpoints
 

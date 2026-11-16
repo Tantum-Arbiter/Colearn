@@ -85,6 +85,16 @@ describe('BookProgress', () => {
     );
   });
 
+  it.each(['small', 'regular'] as const)(
+    'keeps the %s bar long enough to read as a bar, however long the words beside it',
+    (size) => {
+      const tree = render(<BookProgress fraction={1 / 8} size={size} label="Page 1 of 8" />);
+
+      expect(BOOK_PROGRESS[size].minBar).toBeGreaterThanOrEqual(BOOK_PROGRESS[size].height * 2);
+      expect(styled(tree, 'book-progress-track').minWidth).toBe(BOOK_PROGRESS[size].minBar);
+    },
+  );
+
   it('is smaller in its small size than its regular one', () => {
     expect(BOOK_PROGRESS.small.height).toBeLessThan(BOOK_PROGRESS.regular.height);
     expect(BOOK_PROGRESS.small.bar).toBeLessThan(BOOK_PROGRESS.regular.bar);
