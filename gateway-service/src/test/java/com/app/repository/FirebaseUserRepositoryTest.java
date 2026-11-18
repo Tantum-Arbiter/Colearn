@@ -1,8 +1,6 @@
 package com.app.repository;
 
-import com.app.model.ChildProfile;
 import com.app.model.User;
-import com.app.model.UserPreferences;
 import com.app.repository.impl.FirebaseUserRepository;
 import com.app.service.ApplicationMetricsService;
 import com.google.api.core.ApiFuture;
@@ -79,21 +77,6 @@ class FirebaseUserRepositoryTest {
         testUser.setUpdatedAt(Instant.now());
         testUser.setActive(true);
         testUser.setLastLoginAt(Instant.now());
-
-        // Setup preferences (constructor initializes nested objects)
-        UserPreferences preferences = new UserPreferences();
-        preferences.getNotifications().setPushEnabled(true);
-        preferences.getScreenTime().setDailyLimitMinutes(60);
-        testUser.setPreferences(preferences);
-
-        // Setup children
-        List<ChildProfile> children = new ArrayList<>();
-        ChildProfile child = new ChildProfile();
-        child.setId("child-1");
-        child.setName("Test Child");
-        child.setCreatedAt(Instant.now());
-        children.add(child);
-        testUser.setChildren(children);
     }
 
     @Test

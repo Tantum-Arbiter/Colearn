@@ -1,0 +1,109 @@
+name: App E2E Build - iOS
+
+# One E2E build of the iOS app per source, shared by every pipeline that tests
+# it. The app is a release build with its JavaScript inside and EXPO_PUBLIC_E2E=1
+# (seeding link on, over-the-air updates off, the gateway pinned to the stub on
+# localhost), so it must never ship: store builds come from EAS (deploy-eas.yml).
+# The cache key is the app's source, so the same source is built once and every
+# stage after it (smoke, the full suite, a rerun, the next night) reuses it.
+
+on:
+  workflow_call:
+    outputs:
+      app-key:
+        description: The cache key the built app is stored under
+        value: ${{ jobs.build.outputs.app-key }}
+
+env:
+  WORKING_DIRECTORY: grow-with-freya
+  NODE_VERSION: '20'
+  EXPO_PUBLIC_E2E: '1'
+  EXPO_PUBLIC_GATEWAY_URL: 'http://localhost:8080'
+
+jobs:
+  build:
+    name: Build or reuse
+    runs-on: macos-26
+    timeout-minutes: 90
+    outputs:
+      app-key: ${{ steps.app-cache.outputs.cache-primary-key }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Look for the app built from this source
+        id: app-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: grow-with-freya/e2e-build
+          lookup-only: true
+          key: e2e-ios-release-v1-${{ hashFiles('grow-with-freya/app/**', 'grow-with-freya/components/**', 'grow-with-freya/constants/**', 'grow-with-freya/contexts/**', 'grow-with-freya/data/**', 'grow-with-freya/hooks/**', 'grow-with-freya/services/**', 'grow-with-freya/store/**', 'grow-with-freya/types/**', 'grow-with-freya/utils/**', 'grow-with-freya/locales/**', 'grow-with-freya/assets/**', 'grow-with-freya/app.config.js', 'grow-with-freya/package.json', 'grow-with-freya/package-lock.json', 'grow-with-freya/babel.config.js', 'grow-with-freya/metro.config.js', 'grow-with-freya/tsconfig.json', '!grow-with-freya/**/__tests__/**', '.github/workflows/app-e2e-build-ios.yml') }}
+
+      - name: Setup Node.js
+        if: steps.app-cache.outputs.cache-hit != 'true'
+        uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install dependencies
+        if: steps.app-cache.outputs.cache-hit != 'true'
+        timeout-minutes: 10
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: npm ci --legacy-peer-deps
+
+      - name: Generate the iOS project
+        if: steps.app-cache.outputs.cache-hit != 'true'
+        timeout-minutes: 10
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: npx expo prebuild --platform ios --no-install
+
+      - name: Install pods
+        if: steps.app-cache.outputs.cache-hit != 'true'
+        timeout-minutes: 20
+        working-directory: ${{ env.WORKING_DIRECTORY }}/ios
+        run: |
+          export LANG=en_US.UTF-8
+          pod install
+
+      - name: Build the app, with its JavaScript inside
+        if: steps.app-cache.outputs.cache-hit != 'true'
+        timeout-minutes: 45
+        working-directory: ${{ env.WORKING_DIRECTORY }}/ios
+        run: |
+          set -o pipefail
+          workspace=$(ls -d *.xcworkspace | head -1)
+          xcodebuild \
+            -workspace "$workspace" \
+            -scheme "${workspace%.xcworkspace}" \
+            -configuration Release \
+            -sdk iphonesimulator \
+            -derivedDataPath build \
+            -destination 'generic/platform=iOS Simulator' \
+            ARCHS=arm64 \
+            CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM= | tail -40
+          mkdir -p ../e2e-build
+          cp -R "$(find build/Build/Products -name '*.app' -maxdepth 3 | head -1)" ../e2e-build/
+
+      - name: Keep the app for every stage that tests it
+        if: steps.app-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: grow-with-freya/e2e-build
+          key: ${{ steps.app-cache.outputs.cache-primary-key }}
+
+      - name: Say whether the app was built or reused
+        run: |
+          if [ "${{ steps.app-cache.outputs.cache-hit }}" = "true" ]; then
+            what="Reused the iOS E2E app already built from this source: nothing to build."
+          else
+            what="Built the iOS E2E app from this source and stored it for every stage that tests it."
+          fi
+          echo "$what"
+          echo "Cache key: ${{ steps.app-cache.outputs.cache-primary-key }}"
+          {
+            echo "### iOS E2E app"
+            echo "$what"
+            echo ""
+            echo "Cache key: \`${{ steps.app-cache.outputs.cache-primary-key }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -235,31 +235,5 @@ export class AuthService {
     return await AppleAuthentication.isAvailableAsync();
   }
 
-  static async refreshToken(refreshToken: string): Promise<AuthResponse> {
-    const response = await fetch(`${GATEWAY_URL}/auth/refresh`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ refreshToken }),
-    });
-
-    if (!response.ok) {
-      log.error('Token refresh failed');
-      throw new Error('Token refresh failed');
-    }
-
-    return await response.json();
-  }
-
-  static async signOut(refreshToken: string): Promise<void> {
-    await fetch(`${GATEWAY_URL}/auth/revoke`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ refreshToken }),
-    });
-  }
 }
 

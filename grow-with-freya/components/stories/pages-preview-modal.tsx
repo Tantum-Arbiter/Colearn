@@ -23,8 +23,12 @@ import { Fonts } from '@/constants/theme';
 import { useAccessibility } from '@/hooks/use-accessibility';
 // All story images are loaded from local cache after batch sync - no authenticated fetching needed
 import { useTranslation } from 'react-i18next';
+import { MENU_INK } from './reader-menu';
 
 const ANIMATION_DURATION = 300;
+export const PREVIEW_FACE = '#FDE9C9';
+export const PREVIEW_RIM = '#FBBA08';
+const PREVIEW_RIM_WIDTH = 4;
 
 interface PagePreviewModalProps {
   story: Story;
@@ -43,7 +47,7 @@ export function PagePreviewModal({
 }: PagePreviewModalProps) {
   const insets = useSafeAreaInsets();
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
-  const { scaledFontSize, scaledButtonSize } = useAccessibility();
+  const { scaledFontSize } = useAccessibility();
   const { t } = useTranslation();
 
   const isTablet = Math.max(screenWidth, screenHeight) >= 1024;
@@ -160,7 +164,7 @@ export function PagePreviewModal({
         style={[styles.thumbnailContainer, { width: thumbnailWidth, height: containerHeight }]}
         onPress={() => handlePageSelect(actualIndex)}
       >
-        <View style={[
+        <View testID={isCurrentPage ? 'page-preview-current' : undefined} style={[
           styles.thumbnail,
           { width: thumbnailWidth - gap, height: thumbnailHeight },
           isCurrentPage && styles.thumbnailCurrent,
@@ -191,21 +195,15 @@ export function PagePreviewModal({
   return (
     <View style={styles.container} pointerEvents="box-none">
       <Animated.View style={[styles.backdrop, backdropAnimatedStyle]}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={handleClose}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={handleClose} accessibilityRole="button" accessibilityLabel={t('common.close')}>
           <BlurView intensity={30} style={StyleSheet.absoluteFill} tint="dark" />
         </Pressable>
       </Animated.View>
 
-      <Animated.View style={[styles.modalContainer, modalAnimatedStyle, { paddingBottom: insets.bottom + 20 }]}>
+      <Animated.View testID="page-preview-sheet" style={[styles.modalContainer, modalAnimatedStyle, { paddingBottom: insets.bottom + 20 }]}>
         <View style={styles.handleBar} />
         <View style={styles.header}>
           <Text style={[styles.title, { fontSize: scaledFontSize(18) }]}>{t('reader.pagePreview')}</Text>
-          <Pressable
-            style={[styles.closeButton, { width: scaledButtonSize(36), height: scaledButtonSize(36), borderRadius: scaledButtonSize(18) }]}
-            onPress={handleClose}
-          >
-            <Text style={[styles.closeButtonText, { fontSize: scaledFontSize(18) }]}>×</Text>
-          </Pressable>
         </View>
         <FlatList
           ref={flatListRef}
@@ -228,11 +226,11 @@ export function PagePreviewModal({
 
 const styles = StyleSheet.create({
   container: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 1000, // Above all story content including interactive elements
   },
   backdrop: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContainer: {
@@ -240,7 +238,10 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(40, 40, 50, 0.95)',
+    backgroundColor: PREVIEW_FACE,
+    borderColor: PREVIEW_RIM,
+    borderWidth: PREVIEW_RIM_WIDTH,
+    borderBottomWidth: 0,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     maxHeight: '80%',
@@ -249,14 +250,14 @@ const styles = StyleSheet.create({
   handleBar: {
     width: 40,
     height: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    backgroundColor: PREVIEW_RIM,
     borderRadius: 2,
     alignSelf: 'center',
     marginBottom: 16,
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 20,
     marginBottom: 16,
@@ -264,23 +265,7 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: Fonts.rounded,
     fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  closeButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  closeButtonText: {
-    color: '#FFFFFF',
-    fontWeight: '600',
+    color: MENU_INK,
   },
   scrollView: {
     flex: 1,
@@ -297,13 +282,13 @@ const styles = StyleSheet.create({
   thumbnail: {
     borderRadius: 12,
     overflow: 'hidden',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderWidth: 2,
+    backgroundColor: 'rgba(90, 31, 74, 0.08)',
+    borderWidth: 3,
     borderColor: 'transparent',
   },
   thumbnailCurrent: {
-    borderColor: '#4ECDC4',
-    shadowColor: '#4ECDC4',
+    borderColor: PREVIEW_RIM,
+    shadowColor: PREVIEW_RIM,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.5,
     shadowRadius: 8,
@@ -316,7 +301,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(150, 150, 150, 0.3)',
+    backgroundColor: 'rgba(90, 31, 74, 0.12)',
   },
   placeholderEmoji: {
     fontSize: 32,
@@ -325,7 +310,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 4,
     left: 4,
-    backgroundColor: '#4ECDC4',
+    backgroundColor: PREVIEW_RIM,
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 8,
@@ -333,13 +318,13 @@ const styles = StyleSheet.create({
   currentPageText: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: MENU_INK,
   },
   pageNumber: {
     marginTop: 6,
     fontFamily: Fonts.sans,
     fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: MENU_INK,
     textAlign: 'center',
   },
 });

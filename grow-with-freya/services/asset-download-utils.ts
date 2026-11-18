@@ -2,6 +2,7 @@ import { CacheManager } from './cache-manager';
 import { ApiClient } from './api-client';
 import { Story } from '../types/story';
 import { Logger } from '@/utils/logger';
+import { challengeAssetPaths } from './page-assets';
 
 const log = Logger.create('AssetDownloadUtils');
 
@@ -58,6 +59,9 @@ export class AssetDownloadUtils {
               }
             }
           }
+          for (const path of challengeAssetPaths(page.learningChallenge)) {
+            if (!path.startsWith('local:')) assets.add(this.normalizePath(path));
+          }
         }
       }
     }
@@ -113,7 +117,12 @@ export class AssetDownloadUtils {
           body: JSON.stringify({ paths: batch }),
         });
         apiCalls++;
-        allUrls.push(...response.urls);
+        const requested = new Set(batch);
+        const known = response.urls.filter((entry) => requested.has(entry.path));
+        if (known.length < response.urls.length) {
+          log.warn(`Ignoring ${response.urls.length - known.length} signed URL(s) for paths this device did not ask for`);
+        }
+        allUrls.push(...known);
         allFailed.push(...response.failed);
       } catch (error) {
         log.error(`Batch ${i + 1} failed:`, error);

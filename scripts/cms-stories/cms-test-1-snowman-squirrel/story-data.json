@@ -21,7 +21,7 @@
   "coverImage": "assets/stories/cms-test-1-snowman-squirrel/cover/cms-test-1-snowman-squirrel-thumbnail.webp",
   "isAvailable": true,
   "ageRange": "2-5",
-  "duration": 11,
+  "pageCount": 11,
   "description": "CMS Test Story 1 - A delightful winter story about a squirrel who builds a snowman.",
   "localizedDescription": {
     "en": "A delightful winter story about a squirrel who builds a snowman.",

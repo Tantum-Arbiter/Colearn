@@ -10,7 +10,8 @@
     "upload-all-stories": "UPLOAD_MODE=all node upload-stories-to-firestore.js",
     "upload-assets": "node upload-assets-to-firestore.js",
     "generate-stories": "node generate-story-files.js",
-    "generate-bundled-ts": "node generate-bundled-stories-ts.js"
+    "generate-bundled-ts": "node generate-bundled-stories-ts.js",
+    "upload-achievements": "node upload-achievements-to-firestore.js"
   },
   "dependencies": {
     "@google-cloud/storage": "^7.0.0",
@@ -20,4 +21,3 @@
     "node": ">=18.0.0"
   }
 }
-

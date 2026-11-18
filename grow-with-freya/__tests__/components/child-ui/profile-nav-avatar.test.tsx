@@ -6,10 +6,11 @@
 
 import React from 'react';
 import { render } from '@testing-library/react-native';
+import { withRepeat } from 'react-native-reanimated';
 import { ProfileNavAvatar } from '@/components/child-ui/profile-nav-avatar';
 import { NAV_RING_SIZE } from '@/components/child-ui/child-bottom-navigation';
 import { AVATAR_OPTIONS } from '@/components/onboarding/onboarding-pages';
-import { TEXT_PRIMARY } from '@/constants/night-palette';
+import { ACCENT_GOLD, TEXT_PRIMARY } from '@/constants/night-palette';
 
 // Every .webp maps to the same image mock, so real AVATAR_OPTIONS art is
 // indistinguishable between avatars -- a test asserting on it proves nothing.
@@ -23,7 +24,7 @@ jest.mock('@/components/onboarding/onboarding-pages', () => ({
   ],
 }));
 
-const mockAppState: { userAvatarId: string | null } = { userAvatarId: null };
+const mockAppState: { userAvatarId: string | null; isGuestMode: boolean; sessionLapsed: boolean } = { userAvatarId: null, isGuestMode: false, sessionLapsed: false };
 jest.mock('@/store/app-store', () => ({
   useAppStore: (selector?: (state: any) => any) =>
     (selector ? selector(mockAppState) : mockAppState),
@@ -40,7 +41,10 @@ function ringStyle(tree: ReturnType<typeof render>) {
 
 describe('ProfileNavAvatar', () => {
   beforeEach(() => {
+    jest.clearAllMocks();
     mockAppState.userAvatarId = null;
+    mockAppState.isGuestMode = false;
+    mockAppState.sessionLapsed = false;
   });
 
   it('draws the avatar the child chose', () => {
@@ -81,6 +85,27 @@ describe('ProfileNavAvatar', () => {
     expect(ringStyle(underTest).width).toBe(NAV_RING_SIZE);
   });
 
+  it('pins a settings cog to the face, sized off it', () => {
+    const small = render(<ProfileNavAvatar selected={false} size={40} />);
+    const large = render(<ProfileNavAvatar selected={false} size={80} />);
+
+    const cog = (tree: ReturnType<typeof render>) => {
+      const node = tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'profile-nav-avatar-settings')[0];
+      return [node.props.style]
+        .flat(Infinity)
+        .filter(Boolean)
+        .reduce((merged: any, part: any) => ({ ...merged, ...part }), {});
+    };
+
+    // It travels with the avatar rather than sitting at a fixed size. Allowing
+    // a pixel for rounding still fails a fixed size, which would not grow at all.
+    expect(Math.abs(cog(large).width - cog(small).width * 2)).toBeLessThanOrEqual(1);
+    // Seated in the square's bottom-right corner, clear of the round ring.
+    expect(cog(small).right).toBe(0);
+    expect(cog(small).bottom).toBe(0);
+    expect(cog(small).borderRadius).toBe(cog(small).width / 2);
+  });
+
   it('stays a circle at whatever diameter it is given', () => {
     const underTest = render(<ProfileNavAvatar selected={false} size={40} />);
 
@@ -89,5 +114,80 @@ describe('ProfileNavAvatar', () => {
     expect(style.width).toBe(40);
     expect(style.height).toBe(40);
     expect(style.borderRadius).toBe(20);
+  });
+});
+
+/**
+ * A guest has a login page to find. Now and then the face warps into a gold
+ * login glyph, holds a few seconds and warps back, so the slot itself says
+ * where to go.
+ */
+describe('the login cue', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockAppState.isGuestMode = false;
+    mockAppState.sessionLapsed = false;
+  });
+
+  function loginGlyph(tree: ReturnType<typeof render>) {
+    return tree.UNSAFE_root.findAll((n: any) => n.props.name === 'log-in-outline');
+  }
+
+  it('carries a gold login glyph and highlight, and starts its slow loop, for a guest', () => {
+    mockAppState.isGuestMode = true;
+
+    const underTest = render(<ProfileNavAvatar selected={false} />);
+
+    expect(loginGlyph(underTest)).toHaveLength(1);
+    expect(loginGlyph(underTest)[0].props.color).toBe(ACCENT_GOLD);
+    expect(loginGlyph(underTest)[0].props.size).toBeGreaterThanOrEqual(38);
+    expect(underTest.UNSAFE_root.findAll((n: any) => n.props.testID === 'profile-nav-avatar-highlight').length).toBeGreaterThan(0);
+    expect(withRepeat).toHaveBeenCalledTimes(1);
+    expect((withRepeat as jest.Mock).mock.calls[0][1]).toBe(-1);
+  });
+
+  it('cues again once a signed-in session lapses and a login is needed', () => {
+    mockAppState.isGuestMode = false;
+    mockAppState.sessionLapsed = true;
+
+    const underTest = render(<ProfileNavAvatar selected={false} />);
+
+    expect(loginGlyph(underTest)).toHaveLength(1);
+    expect(withRepeat).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the face alone, with no loop, once the family has signed in', () => {
+    mockAppState.isGuestMode = false;
+
+    const underTest = render(<ProfileNavAvatar selected={false} />);
+
+    expect(loginGlyph(underTest)).toHaveLength(0);
+    expect(withRepeat).not.toHaveBeenCalled();
+  });
+});
+
+describe('held still for a picture', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockAppState.isGuestMode = false;
+    mockAppState.sessionLapsed = false;
+  });
+
+  it('shows the sign-in symbol on demand, with no loop, whoever is signed in', () => {
+    mockAppState.isGuestMode = false;
+
+    const underTest = render(<ProfileNavAvatar selected={false} hold="login" />);
+
+    expect(underTest.UNSAFE_root.findAll((n: any) => n.props.name === 'log-in-outline')).toHaveLength(1);
+    expect(withRepeat).not.toHaveBeenCalled();
+  });
+
+  it('shows the face alone on demand, with no loop, even for a guest', () => {
+    mockAppState.isGuestMode = true;
+
+    const underTest = render(<ProfileNavAvatar selected={false} hold="avatar" />);
+
+    expect(underTest.UNSAFE_root.findAll((n: any) => n.props.name === 'log-in-outline')).toHaveLength(0);
+    expect(withRepeat).not.toHaveBeenCalled();
   });
 });

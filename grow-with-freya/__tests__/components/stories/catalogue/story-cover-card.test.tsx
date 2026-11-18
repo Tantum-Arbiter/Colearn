@@ -7,6 +7,7 @@
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import { StoryCoverCard } from '@/components/stories/catalogue/story-cover-card';
+import { COVER_TITLE } from '@/components/stories/catalogue/cover-title';
 import { fromCatalogEntry, fromStory } from '@/components/stories/catalogue/catalogue-story';
 import { CatalogEntry, Story } from '@/types/story';
 
@@ -66,10 +67,12 @@ describe('StoryCoverCard', () => {
     expect(tree.UNSAFE_root.findAll((n: any) => n.props.testID === 'story-cover-play')).toHaveLength(0);
   });
 
-  it('caps the title at two lines', () => {
+  it('shows the whole title on the cover, its type shrinking before any of it is cut with dots', () => {
     const tree = render(<StoryCoverCard {...baseProps} story={fromStory(story())} />);
 
-    expect(byTestId(tree, 'story-cover-title')[0].props.numberOfLines).toBe(2);
+    const title = byTestId(tree, 'story-cover-title')[0];
+    expect(title.props.numberOfLines).toBe(COVER_TITLE.lines);
+    expect(title.props.adjustsFontSizeToFit).toBe(true);
   });
 
   it('opens a downloaded story on tap', () => {

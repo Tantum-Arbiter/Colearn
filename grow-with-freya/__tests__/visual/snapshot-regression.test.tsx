@@ -43,6 +43,8 @@ jest.mock('@/store/app-store', () => {
     childAgeInMonths: 36,
     setStoryProgress: jest.fn(),
     markStoryCompleted: jest.fn(),
+    recordChallengeCompleted: jest.fn(),
+    grantAchievements: jest.fn(),
     markStoryAsRead: jest.fn(),
     recordReadingSession: jest.fn(),
     textSizeScale: 1,
@@ -157,7 +159,6 @@ describe('Visual Regression Tests', () => {
         'main-menu-container',
         'menu-carousel',
         'menu-icon-instruments',
-        'menu-icon-learning',
         'menu-icon-stories',
         'mode-back-arrow',
         'music-control-button',
@@ -171,7 +172,6 @@ describe('Visual Regression Tests', () => {
       expect(labels(tree)).toEqual([
         'Mute background music. Long press for audio settings.',
         'menu.instruments button',
-        'menu.learning button',
         'menu.stories button',
       ]);
     });
@@ -192,14 +192,19 @@ describe('Visual Regression Tests', () => {
 
       expect(structure(tree)).toEqual([
         'earth-horizon',
-        'earth-horizon-clouds',
-        'earth-horizon-globe',
+        'earth-horizon-planet',
         'icon-Ionicons-arrow-back',
         'linear-gradient',
         'music-control-button',
         'music-icon-playing',
         'page-header-row',
         'page-header-title',
+        'page-header-title-halo',
+        'svg-Defs',
+        'svg-RadialGradient',
+        'svg-Rect',
+        'svg-Stop',
+        'svg-Svg',
       ]);
     });
 
@@ -221,15 +226,32 @@ describe('Visual Regression Tests', () => {
 
       expect(structure(tree)).toEqual([
         'cover-tap-overlay',
-        'icon-Ionicons-arrow-back',
         'icon-Ionicons-book-outline',
         'icon-Ionicons-headset-outline',
-        'icon-Ionicons-menu',
         'icon-Ionicons-mic-outline',
         'linear-gradient',
         'music-control-button',
         'music-icon-playing',
+        'reader-coin-exit',
+        'reader-coin-menu',
+        'reader-coin-sound',
+        'reader-menu',
+        'reader-menu-arrow',
+        'reader-menu-divider',
+        'reader-menu-font-size',
+        'reader-menu-icon-compare',
+        'reader-menu-icon-font-size',
+        'reader-menu-icon-language',
+        'reader-menu-icon-page-preview',
+        'reader-menu-icon-tips',
+        'reader-menu-scroll',
+        'reader-menu-size-0.85',
+        'reader-menu-size-1',
+        'reader-menu-size-1.15',
+        'reader-menu-size-1.3',
+        'reader-menu-size-options',
         'story-exit-button',
+        'story-menu-button',
       ]);
     });
 

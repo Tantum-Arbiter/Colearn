@@ -100,7 +100,7 @@ const styles = StyleSheet.create({
     transform: [{ rotate: '-90deg' }],
   },
   centre: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     justifyContent: 'center',
     alignItems: 'center',
   },

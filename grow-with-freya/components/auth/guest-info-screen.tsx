@@ -177,13 +177,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   screenArt: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     width: undefined,
     height: undefined,
     opacity: 0.35,
   },
   screenArtScrim: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(5, 5, 20, 0.45)',
   },
   // translucent over the full-bleed art, matching the login card's weight

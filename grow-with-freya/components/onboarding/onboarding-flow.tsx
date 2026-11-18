@@ -5,7 +5,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, runOnJS } from 'react-native-reanimated';
 import { OnboardingScreen } from './onboarding-screen';
-import { TogetherPage, TogetherBackdrop, SafetyPage, SafetyBackdrop, ReadyPage, ReadyBackdrop, ProfilePage } from './onboarding-pages';
+import { OnboardingIntro } from './onboarding-intro';
+import { TogetherPage, TogetherBackdrop, SafetyPage, SafetyBackdrop, ReadyPage, ReadyBackdrop, ProfilePage, GoalsPage } from './onboarding-pages';
+import type { PlanGoal } from '@/types/learning-plan';
 import { MIN_NICKNAME_LENGTH } from '@/constants/profile';
 import { GOLD, CARD_BG, CARD_BORDER, TEXT_MUTED, NIGHT_BASE } from './onboarding-theme';
 import { useAppStore } from '@/store/app-store';
@@ -18,9 +20,9 @@ interface OnboardingFlowProps {
   onComplete: () => void;
 }
 
-type StepId = 'together' | 'safe' | 'ready' | 'consent' | 'profile';
+type StepId = 'together' | 'safe' | 'ready' | 'consent' | 'profile' | 'goals';
 
-const STEP_ORDER: StepId[] = ['together', 'safe', 'ready', 'consent', 'profile'];
+const STEP_ORDER: StepId[] = ['together', 'safe', 'ready', 'consent', 'profile', 'goals'];
 
 // Every illustrated step hangs its hero on the shell's full-bleed backdrop layer
 // so the art fades in with the header rather than sliding up late with the
@@ -34,6 +36,7 @@ const CONSENT_INDEX = STEP_ORDER.indexOf('consent');
 const DEFAULT_AGE_MONTHS = 36;
 
 export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
+  const [started, setStarted] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [consentPrivacy, setConsentPrivacy] = useState(false);
@@ -48,12 +51,14 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
   const [avatarType] = useState<'boy' | 'girl'>('girl');
   const [avatarKey, setAvatarKey] = useState('bear');
   const [ageMonths, setAgeMonths] = useState(DEFAULT_AGE_MONTHS);
+  const [goals, setGoals] = useState<PlanGoal[]>([]);
   const {
     setOnboardingComplete,
     setCrashReportingEnabled,
     setConsent,
     setUserProfile,
     setChildAge,
+    setChildGoals,
   } = useAppStore();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
@@ -85,14 +90,20 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
   const stepId = STEP_ORDER[currentStep];
   const isConsentStep = stepId === 'consent';
   const isProfileStep = stepId === 'profile';
+  const isGoalsStep = stepId === 'goals';
   const allConsentsChecked = consentPrivacy && consentTerms && consentData;
   // Profile setup can no longer be skipped, so the nickname is required before
   // Continue will fire
   const hasNickname = nickname.trim().length >= MIN_NICKNAME_LENGTH;
 
-  const finishOnboarding = () => {
+  const toggleGoal = (goal: PlanGoal) => {
+    setGoals((current) => (current.includes(goal) ? current.filter((kept) => kept !== goal) : [...current, goal]));
+  };
+
+  const finishOnboarding = (withGoals: boolean) => {
     setUserProfile(nickname.trim(), avatarType, avatarKey);
     setChildAge(ageMonths);
+    if (withGoals && goals.length > 0) setChildGoals(goals);
     setOnboardingComplete(true);
     onComplete();
   };
@@ -109,8 +120,8 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
   };
 
   const proceedToNext = () => {
-    if (isProfileStep) {
-      finishOnboarding();
+    if (isGoalsStep) {
+      finishOnboarding(true);
       return;
     }
     if (isConsentStep) {
@@ -323,6 +334,11 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
       content: renderConsentContent(),
       buttonLabel: t('onboarding.screens.consent.button'),
     },
+    goals: {
+      title: t('onboardingV2.goals.title'),
+      content: <GoalsPage chosen={goals} onToggle={toggleGoal} />,
+      buttonLabel: t('onboardingV2.goals.continue'),
+    },
     profile: {
       title: t('onboardingV2.profile.title'),
       content: (
@@ -341,6 +357,8 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
     },
   };
 
+  if (!started) return <OnboardingIntro onStart={() => setStarted(true)} />;
+
   const current = stepContent[stepId];
 
   return (
@@ -351,7 +369,7 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
         buttonLabel={current.buttonLabel}
         onNext={handleNext}
         onPrevious={handlePrevious}
-        onSkip={isConsentStep || isProfileStep ? undefined : handleSkip}
+        onSkip={isConsentStep || isProfileStep ? undefined : isGoalsStep ? () => finishOnboarding(false) : handleSkip}
         currentStep={currentStep + 1}
         totalSteps={STEP_ORDER.length}
         isTransitioning={isTransitioning}
@@ -484,7 +502,7 @@ const consentStyles = StyleSheet.create({
     marginTop: 4,
   },
   legalOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 100,
   },
   legalOverlayInner: {

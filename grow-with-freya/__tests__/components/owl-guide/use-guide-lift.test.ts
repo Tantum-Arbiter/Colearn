@@ -46,6 +46,18 @@ describe('useGuideLift', () => {
     expect(glidedTo()).toBe(0);
   });
 
+  it('tells how far it has lifted the sheet, and that it is flat again once released', () => {
+    const underTest = renderHook(() => useGuideLift());
+    act(() => underTest.result.current.scroller.reveal(120));
+    act(() => underTest.result.current.scroller.reveal(-30));
+    const lifted = underTest.result.current.scroller.away();
+
+    act(() => underTest.result.current.scroller.release());
+
+    expect(lifted).toBe(90);
+    expect(underTest.result.current.scroller.away()).toBe(0);
+  });
+
   it('starts again from flat once it has been released', () => {
     const underTest = renderHook(() => useGuideLift());
     act(() => underTest.result.current.scroller.reveal(120));

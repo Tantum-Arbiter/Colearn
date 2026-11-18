@@ -11,9 +11,10 @@
     "cms": "node src/index.js",
     "validate": "node src/index.js validate",
     "format": "node src/index.js format",
-    "prepare": "node src/index.js prepare",
     "import": "node src/index.js import",
-    "list": "node src/index.js list"
+    "list": "node src/index.js list",
+    "prepare-upload": "node src/index.js prepare",
+    "test": "node --test src/lib/*.test.js"
   },
   "keywords": [
     "cms",
@@ -32,4 +33,3 @@
     "inquirer": "^9.2.12"
   }
 }
-

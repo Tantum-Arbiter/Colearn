@@ -84,11 +84,10 @@ describe('Stories Data', () => {
 
       expect(availableStories.map(story => story.id)).toEqual([
         'snuggle-little-wombat',
-        'wombat-jigsaw-adventure',
-        'wombat-spelling',
-        'wombat-word-placing',
         'hold-on-juni',
         'my-turn-to-ding',
+        'little-fox-meets-a-friend',
+        'the-lantern-bridge',
       ]);
       availableStories.forEach(story => {
         expect(story.isAvailable).toBe(true);

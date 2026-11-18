@@ -38,6 +38,9 @@ jest.mock('@/store/app-store', () => ({
 
 const hideAsync = SplashScreen.hideAsync as jest.Mock;
 const FRAMES_TO_DRAW_THE_PAGE_MS = 50;
+const A_PAGE_THAT_TAKES_AGES_TO_DRAW_MS = 5000;
+
+let fadeFinished: ((finished?: boolean) => void) | null = null;
 
 type Rendered = ReturnType<typeof render>;
 
@@ -65,6 +68,12 @@ function skyOf(rendered: Rendered) {
   )[0];
 }
 
+async function fadeEnds(finished = true) {
+  await act(async () => {
+    fadeFinished?.(finished);
+  });
+}
+
 function textsOf(rendered: Rendered): string[] {
   return rendered.UNSAFE_root
     .findAll((node: any) => typeof node.props.children === 'string')
@@ -79,6 +88,13 @@ describe('AppSplashScreen', () => {
     jest.clearAllMocks();
     hideAsync.mockResolvedValue(undefined);
     mockTimeOfDay.mockReturnValue('night');
+    fadeFinished = null;
+    (withTiming as jest.Mock).mockImplementation((value, config, callback) => {
+      if (value === 0 && config?.duration === SPLASH_TIMELINE.exitMs && typeof callback === 'function') {
+        fadeFinished = callback;
+      }
+      return value;
+    });
   });
 
   afterEach(() => {
@@ -140,9 +156,9 @@ describe('AppSplashScreen', () => {
 
     underTest.rerender(<AppSplashScreen leaving onGone={onGone} />);
     await settle();
-    await advance(SPLASH_TIMELINE.exitAtMs - READY_AT_MS + SPLASH_TIMELINE.exitMs - 50);
+    await advance(SPLASH_TIMELINE.exitAtMs - READY_AT_MS + SPLASH_TIMELINE.exitMs + FRAMES_TO_DRAW_THE_PAGE_MS);
     const earlyCalls = onGone.mock.calls.length;
-    await advance(50 + FRAMES_TO_DRAW_THE_PAGE_MS);
+    await fadeEnds();
 
     const fadeDelays = (withDelay as jest.Mock).mock.calls
       .filter(([, animation]) => animation === 0)
@@ -163,6 +179,7 @@ describe('AppSplashScreen', () => {
     underTest.rerender(<AppSplashScreen leaving onGone={onGone} />);
     await settle();
     await advance(SPLASH_TIMELINE.handoffMs + SPLASH_TIMELINE.exitMs + FRAMES_TO_DRAW_THE_PAGE_MS);
+    await fadeEnds();
 
     expect(withDelay).toHaveBeenCalledWith(SPLASH_TIMELINE.handoffMs, 0);
     expect(onGone).toHaveBeenCalledTimes(1);
@@ -187,11 +204,11 @@ describe('AppSplashScreen', () => {
 
     underTest.rerender(<AppSplashScreen leaving onGone={onGone} />);
     await settle();
-    await advance(SPLASH_TIMELINE.handoffMs + SPLASH_TIMELINE.exitMs - 1);
+    await advance(SPLASH_TIMELINE.handoffMs + SPLASH_TIMELINE.exitMs + FRAMES_TO_DRAW_THE_PAGE_MS);
     const earlyCalls = onGone.mock.calls.length;
-    await advance(FRAMES_TO_DRAW_THE_PAGE_MS);
+    await fadeEnds();
 
-    expect(withTiming).toHaveBeenCalledWith(0, expect.objectContaining({ duration: SPLASH_TIMELINE.exitMs }));
+    expect(withTiming).toHaveBeenCalledWith(0, expect.objectContaining({ duration: SPLASH_TIMELINE.exitMs }), expect.any(Function));
     expect(withDelay).toHaveBeenCalledWith(SPLASH_TIMELINE.handoffMs, expect.anything());
     expect(earlyCalls).toBe(0);
     expect(onGone).toHaveBeenCalledTimes(1);
@@ -203,8 +220,36 @@ describe('AppSplashScreen', () => {
     await settle();
 
     await advance(SPLASH_TIMELINE.handoffMs + SPLASH_TIMELINE.exitMs + FRAMES_TO_DRAW_THE_PAGE_MS);
+    await fadeEnds();
 
     expect(onGone).toHaveBeenCalledTimes(1);
+  });
+
+  it('should stay up until its fade has finished on screen, however long the page behind takes to draw', async () => {
+    const onGone = jest.fn();
+    const underTest = render(<AppSplashScreen leaving={false} onGone={onGone} />);
+    await settle();
+    await advance(SPLASH_TIMELINE.exitAtMs);
+
+    underTest.rerender(<AppSplashScreen leaving onGone={onGone} />);
+    await settle();
+    await advance(SPLASH_TIMELINE.handoffMs + SPLASH_TIMELINE.exitMs + A_PAGE_THAT_TAKES_AGES_TO_DRAW_MS);
+    const callsBeforeTheFadeEnds = onGone.mock.calls.length;
+    await fadeEnds();
+
+    expect(callsBeforeTheFadeEnds).toBe(0);
+    expect(onGone).toHaveBeenCalledTimes(1);
+  });
+
+  it('should stay up when its fade is cut short', async () => {
+    const onGone = jest.fn();
+    render(<AppSplashScreen leaving onGone={onGone} />);
+    await settle();
+    await advance(SPLASH_TIMELINE.handoffMs + SPLASH_TIMELINE.exitMs + FRAMES_TO_DRAW_THE_PAGE_MS);
+
+    await fadeEnds(false);
+
+    expect(onGone).not.toHaveBeenCalled();
   });
 
   it('should still open the app when the native launch image will not hide', async () => {
@@ -235,6 +280,7 @@ describe('AppSplashScreen', () => {
 
     underTest.unmount();
     await advance(SPLASH_TIMELINE.exitMs + FRAMES_TO_DRAW_THE_PAGE_MS);
+    await fadeEnds();
 
     expect(onGone).not.toHaveBeenCalled();
   });
@@ -246,6 +292,7 @@ describe('AppSplashScreen', () => {
 
     underTest.unmount();
     await advance(SPLASH_TIMELINE.handoffMs + SPLASH_TIMELINE.exitMs + FRAMES_TO_DRAW_THE_PAGE_MS);
+    await fadeEnds();
 
     expect(onGone).not.toHaveBeenCalled();
   });

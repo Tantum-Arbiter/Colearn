@@ -33,6 +33,7 @@ export function ContentSwap({ contentKey, children, style: outer, testID = 'cont
   const [shown, setShown] = useState({ key: contentKey, node: children });
   const latest = useRef<ReactNode>(children);
   latest.current = children;
+  const arriving = useRef(false);
 
   const opacity = useSharedValue(1);
   const lift = useSharedValue(0);
@@ -46,7 +47,17 @@ export function ContentSwap({ contentKey, children, style: outer, testID = 'cont
   }
 
   useEffect(() => {
-    if (shown.key === contentKey) return;
+    if (shown.key === contentKey) {
+      const duration = reduceMotion ? 0 : CONTENT_SWAP.inMs;
+
+      if (arriving.current) {
+        arriving.current = false;
+        lift.value = CONTENT_SWAP.lift;
+      }
+      opacity.value = withTiming(1, { duration, easing: Easing.out(Easing.cubic) });
+      lift.value = withTiming(0, { duration, easing: Easing.out(Easing.cubic) });
+      return;
+    }
 
     if (reduceMotion) {
       setShown({ key: contentKey, node: latest.current });
@@ -57,10 +68,8 @@ export function ContentSwap({ contentKey, children, style: outer, testID = 'cont
     lift.value = withTiming(-CONTENT_SWAP.lift, { duration: CONTENT_SWAP.outMs, easing: Easing.in(Easing.quad) });
 
     const swap = setTimeout(() => {
+      arriving.current = true;
       setShown({ key: contentKey, node: latest.current });
-      lift.value = CONTENT_SWAP.lift;
-      opacity.value = withTiming(1, { duration: CONTENT_SWAP.inMs, easing: Easing.out(Easing.cubic) });
-      lift.value = withTiming(0, { duration: CONTENT_SWAP.inMs, easing: Easing.out(Easing.cubic) });
     }, CONTENT_SWAP.outMs);
 
     return () => clearTimeout(swap);

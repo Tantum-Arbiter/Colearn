@@ -3,7 +3,10 @@ package com.app.controller;
 import com.app.exception.ErrorCode;
 import com.app.exception.GatewayException;
 import com.app.security.JwtAuthenticationFilter;
+import com.app.security.AuthenticatedUser;
 import com.app.service.AccountDeletionService;
+import com.app.service.AccountExportService;
+import org.springframework.http.HttpHeaders;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -26,9 +29,18 @@ public class AccountController {
     private static final Logger logger = LoggerFactory.getLogger(AccountController.class);
 
     private final AccountDeletionService accountDeletionService;
+    private final AccountExportService accountExportService;
 
-    public AccountController(AccountDeletionService accountDeletionService) {
+    public AccountController(AccountDeletionService accountDeletionService, AccountExportService accountExportService) {
         this.accountDeletionService = accountDeletionService;
+        this.accountExportService = accountExportService;
+    }
+
+    @GetMapping("/account/export")
+    public ResponseEntity<Map<String, Object>> exportAccount() {
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"early-roots-data.json\"")
+                .body(accountExportService.export(AuthenticatedUser.id()));
     }
 
     @DeleteMapping("/account")

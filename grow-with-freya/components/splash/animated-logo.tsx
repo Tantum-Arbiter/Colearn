@@ -1,8 +1,9 @@
 import React, { useEffect } from 'react';
-import { Image, StyleSheet } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
 import Animated, {
   cancelAnimation,
   Easing,
+  useAnimatedProps,
   useAnimatedStyle,
   useSharedValue,
   withDelay,
@@ -11,55 +12,124 @@ import Animated, {
   withTiming,
   type SharedValue,
 } from 'react-native-reanimated';
+import Svg, { Path } from 'react-native-svg';
 import {
   BOOK_HALVES,
+  OUTLINE_STROKES,
+  ROOT_STRAND_COUNT,
   SPLASH_LEAVES,
   SPLASH_TIMELINE,
   bookPose,
-  bookShiftX,
   bookSpineOffset,
+  coverSkewYDeg,
   growEase,
   layerFrame,
   leafPivotOffset,
   leafPose,
   leafUnfurlDelayMs,
   logoIntroScale,
+  outlineLength,
+  outlineOpacity,
+  outlinePath,
+  outlineStrokeDrawn,
+  outlineStrokeWidth,
+  penDashArray,
+  penDashOffset,
   revealHeight,
+  rootStrandDrawn,
+  rootStrandLength,
+  rootStrandPath,
+  rootsStrokeWidth,
   spineFrame,
   spineOpacity,
   type BookHalf,
+  type OutlineStroke,
   type SplashLeaf,
 } from '@/constants/splash-logo';
 import { SPLASH_LOGO_ART } from './splash-logo-art';
 
 const LEAF_OVERSHOOT = 1.6;
+const INK = '#FFFFFF';
+const AnimatedPath = Animated.createAnimatedComponent(Path);
 
-interface GrowingLayerProps {
-  layer: 'stem' | 'roots';
-  growsFrom: 'bottom' | 'top';
+interface StemLayerProps {
   size: number;
   progress: SharedValue<number>;
 }
 
-function GrowingLayer({ layer, growsFrom, size, progress }: GrowingLayerProps) {
-  const frame = layerFrame(layer, size);
-  const anchor = growsFrom === 'bottom' ? { bottom: size - (frame.top + frame.height) } : { top: frame.top };
-  const artAnchor = growsFrom === 'bottom' ? styles.artFromBottom : styles.artFromTop;
+function StemLayer({ size, progress }: StemLayerProps) {
+  const frame = layerFrame('stem', size);
   const fullHeight = frame.height;
 
   const reveal = useAnimatedStyle(() => ({ height: revealHeight(progress.value, fullHeight) }));
 
   return (
     <Animated.View
-      testID={`splash-logo-${layer}`}
-      style={[styles.reveal, anchor, { left: frame.left, width: frame.width }, reveal]}
+      testID="splash-logo-stem"
+      style={[styles.reveal, { bottom: size - (frame.top + frame.height), left: frame.left, width: frame.width }, reveal]}
     >
       <Image
-        source={SPLASH_LOGO_ART[layer]}
-        style={[styles.art, artAnchor, { width: frame.width, height: frame.height }]}
+        source={SPLASH_LOGO_ART.stem}
+        style={[styles.art, styles.artFromBottom, { width: frame.width, height: frame.height }]}
         fadeDuration={0}
       />
     </Animated.View>
+  );
+}
+
+interface RootStrandLayerProps {
+  index: number;
+  size: number;
+  clock: SharedValue<number>;
+}
+
+function RootStrandLayer({ index, size, clock }: RootStrandLayerProps) {
+  const path = rootStrandPath(index, size);
+  const length = rootStrandLength(index, size);
+  const width = rootsStrokeWidth(size);
+
+  const pen = useAnimatedProps(() => ({
+    strokeDashoffset: penDashOffset(length, width, rootStrandDrawn(index, clock.value)),
+  }));
+
+  return (
+    <AnimatedPath
+      d={path}
+      stroke={INK}
+      strokeWidth={width}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      fill="none"
+      strokeDasharray={penDashArray(length, width)}
+      animatedProps={pen}
+    />
+  );
+}
+
+interface RootsProps {
+  size: number;
+  clock: SharedValue<number>;
+  ink: SharedValue<number>;
+}
+
+function Roots({ size, clock, ink }: RootsProps) {
+  const frame = layerFrame('roots', size);
+  const inked = useAnimatedStyle(() => ({ opacity: ink.value }));
+  const drawn = useAnimatedStyle(() => ({ opacity: outlineOpacity(ink.value) }));
+
+  return (
+    <>
+      <Animated.View testID="splash-logo-roots" style={[styles.layer, frame, inked]}>
+        <Image source={SPLASH_LOGO_ART.roots} style={styles.fill} fadeDuration={0} />
+      </Animated.View>
+      <Animated.View testID="splash-logo-root-strands" style={[StyleSheet.absoluteFill, drawn]}>
+        <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+          {Array.from({ length: ROOT_STRAND_COUNT }, (_, index) => (
+            <RootStrandLayer key={index} index={index} size={size} clock={clock} />
+          ))}
+        </Svg>
+      </Animated.View>
+    </>
   );
 }
 
@@ -73,9 +143,18 @@ function BookHalfLayer({ half, size, open }: BookHalfLayerProps) {
   const frame = layerFrame(half, size);
   const spineX = bookSpineOffset(half, size);
 
-  const pose = useAnimatedStyle(() => ({
-    transform: [{ translateX: spineX }, { scaleX: bookPose(half, open.value).scaleX }, { translateX: -spineX }],
-  }));
+  const pose = useAnimatedStyle(() => {
+    const turned = bookPose(half, open.value);
+
+    return {
+      transform: [
+        { translateX: spineX },
+        { scaleX: turned.scaleX },
+        { skewY: `${coverSkewYDeg(turned)}deg` },
+        { translateX: -spineX },
+      ],
+    };
+  });
 
   return (
     <Animated.View testID={`splash-logo-${half}`} style={[styles.layer, frame, pose]}>
@@ -84,26 +163,80 @@ function BookHalfLayer({ half, size, open }: BookHalfLayerProps) {
   );
 }
 
+interface OutlineStrokeLayerProps {
+  stroke: OutlineStroke;
+  size: number;
+  drawn: SharedValue<number>;
+}
+
+function OutlineStrokeLayer({ stroke, size, drawn }: OutlineStrokeLayerProps) {
+  const path = outlinePath(stroke, size);
+  const length = outlineLength(stroke, size);
+  const width = outlineStrokeWidth(size);
+
+  const pen = useAnimatedProps(() => ({
+    strokeDashoffset: penDashOffset(length, width, outlineStrokeDrawn(stroke, drawn.value)),
+  }));
+
+  return (
+    <AnimatedPath
+      d={path}
+      stroke={INK}
+      strokeWidth={width}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      fill="none"
+      strokeDasharray={penDashArray(length, width)}
+      animatedProps={pen}
+    />
+  );
+}
+
+interface BookOutlineProps {
+  size: number;
+  drawn: SharedValue<number>;
+  ink: SharedValue<number>;
+}
+
+function BookOutline({ size, drawn, ink }: BookOutlineProps) {
+  const fade = useAnimatedStyle(() => ({ opacity: outlineOpacity(ink.value) }));
+
+  return (
+    <Animated.View testID="splash-logo-outline" style={[StyleSheet.absoluteFill, fade]}>
+      <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+        {OUTLINE_STROKES.map((stroke) => (
+          <OutlineStrokeLayer key={stroke} stroke={stroke} size={size} drawn={drawn} />
+        ))}
+      </Svg>
+    </Animated.View>
+  );
+}
+
 interface BookProps {
   size: number;
   open: SharedValue<number>;
+  drawn: SharedValue<number>;
+  ink: SharedValue<number>;
 }
 
-function Book({ size, open }: BookProps) {
-  const shift = useAnimatedStyle(() => ({ transform: [{ translateX: bookShiftX(open.value, size) }] }));
+function Book({ size, open, drawn, ink }: BookProps) {
   const spine = useAnimatedStyle(() => ({ opacity: spineOpacity(open.value) }));
+  const inked = useAnimatedStyle(() => ({ opacity: ink.value }));
   const spineShape = spineFrame(size);
 
   return (
-    <Animated.View testID="splash-logo-book" style={[StyleSheet.absoluteFill, shift]}>
-      <Animated.View
-        testID="splash-logo-spine"
-        style={[styles.layer, styles.spine, spineShape, { borderRadius: spineShape.width / 2 }, spine]}
-      />
-      {BOOK_HALVES.map((half) => (
-        <BookHalfLayer key={half} half={half} size={size} open={open} />
-      ))}
-    </Animated.View>
+    <View testID="splash-logo-book" style={StyleSheet.absoluteFill}>
+      <Animated.View testID="splash-logo-ink" style={[StyleSheet.absoluteFill, inked]}>
+        <Animated.View
+          testID="splash-logo-spine"
+          style={[styles.layer, styles.spine, spineShape, { borderRadius: spineShape.width / 2 }, spine]}
+        />
+        {BOOK_HALVES.map((half) => (
+          <BookHalfLayer key={half} half={half} size={size} open={open} />
+        ))}
+      </Animated.View>
+      <BookOutline size={size} drawn={drawn} ink={ink} />
+    </View>
   );
 }
 
@@ -153,9 +286,12 @@ export function AnimatedLogo({ size, playing, reduceMotion, testID = 'splash-log
   const introScale = logoIntroScale(size);
   const scale = useSharedValue(introScale);
   const plant = useSharedValue(1);
+  const drawn = useSharedValue(0);
+  const ink = useSharedValue(0);
   const book = useSharedValue(0);
   const stem = useSharedValue(0);
-  const roots = useSharedValue(0);
+  const rootsClock = useSharedValue(0);
+  const rootsInk = useSharedValue(0);
   const leafLeft = useSharedValue(0);
   const leafRight = useSharedValue(0);
   const leafTop = useSharedValue(0);
@@ -167,15 +303,18 @@ export function AnimatedLogo({ size, playing, reduceMotion, testID = 'splash-log
       return;
     }
     const unfurls: Record<SplashLeaf, SharedValue<number>> = { leafLeft, leafRight, leafTop };
-    const moving = [scale, plant, book, stem, roots, leafLeft, leafRight, leafTop, wordmark, sway];
+    const moving = [scale, plant, drawn, ink, book, stem, rootsClock, rootsInk, leafLeft, leafRight, leafTop, wordmark, sway];
 
     moving.forEach(cancelAnimation);
 
     if (reduceMotion) {
       scale.value = 1;
+      drawn.value = 1;
+      ink.value = 1;
       book.value = 1;
       stem.value = 1;
-      roots.value = 1;
+      rootsClock.value = SPLASH_TIMELINE.roots.drawMs;
+      rootsInk.value = 1;
       SPLASH_LEAVES.forEach((leaf) => {
         unfurls[leaf].value = 1;
       });
@@ -192,6 +331,14 @@ export function AnimatedLogo({ size, playing, reduceMotion, testID = 'splash-log
     const lastLeafOpenMs = Math.max(...SPLASH_LEAVES.map(leafUnfurlDelayMs)) + SPLASH_TIMELINE.leafUnfurlMs;
 
     plant.value = 1;
+    drawn.value = withDelay(
+      SPLASH_TIMELINE.outline.delayMs,
+      withTiming(1, { duration: SPLASH_TIMELINE.outline.durationMs, ...grow })
+    );
+    ink.value = withDelay(
+      SPLASH_TIMELINE.ink.delayMs,
+      withTiming(1, { duration: SPLASH_TIMELINE.ink.durationMs, easing: Easing.inOut(Easing.quad) })
+    );
     book.value = withDelay(
       SPLASH_TIMELINE.book.delayMs,
       withTiming(1, { duration: SPLASH_TIMELINE.book.durationMs, ...grow })
@@ -204,9 +351,13 @@ export function AnimatedLogo({ size, playing, reduceMotion, testID = 'splash-log
       SPLASH_TIMELINE.stem.delayMs,
       withTiming(1, { duration: SPLASH_TIMELINE.stem.durationMs, ...grow })
     );
-    roots.value = withDelay(
+    rootsClock.value = withDelay(
       SPLASH_TIMELINE.roots.delayMs,
-      withTiming(1, { duration: SPLASH_TIMELINE.roots.durationMs, ...grow })
+      withTiming(SPLASH_TIMELINE.roots.drawMs, { duration: SPLASH_TIMELINE.roots.drawMs, easing: Easing.linear })
+    );
+    rootsInk.value = withDelay(
+      SPLASH_TIMELINE.roots.delayMs + SPLASH_TIMELINE.roots.drawMs,
+      withTiming(1, { duration: SPLASH_TIMELINE.roots.inkMs, easing: Easing.inOut(Easing.quad) })
     );
     SPLASH_LEAVES.forEach((leaf) => {
       unfurls[leaf].value = withDelay(
@@ -229,7 +380,7 @@ export function AnimatedLogo({ size, playing, reduceMotion, testID = 'splash-log
     return () => {
       moving.forEach(cancelAnimation);
     };
-  }, [playing, reduceMotion, scale, plant, book, stem, roots, leafLeft, leafRight, leafTop, wordmark, sway]);
+  }, [playing, reduceMotion, scale, plant, drawn, ink, book, stem, rootsClock, rootsInk, leafLeft, leafRight, leafTop, wordmark, sway]);
 
   const wordmarkFrame = layerFrame('wordmark', size);
   const risePx = SPLASH_TIMELINE.wordmark.risePx;
@@ -243,11 +394,11 @@ export function AnimatedLogo({ size, playing, reduceMotion, testID = 'splash-log
 
   return (
     <Animated.View testID={testID} style={[{ width: size, height: size }, logoStyle]} pointerEvents="none">
-      <Book size={size} open={book} />
+      <Book size={size} open={book} drawn={drawn} ink={ink} />
 
       <Animated.View style={[StyleSheet.absoluteFill, plantStyle]}>
-        <GrowingLayer layer="roots" growsFrom="top" size={size} progress={roots} />
-        <GrowingLayer layer="stem" growsFrom="bottom" size={size} progress={stem} />
+        <Roots size={size} clock={rootsClock} ink={rootsInk} />
+        <StemLayer size={size} progress={stem} />
         <LeafLayer leaf="leafLeft" size={size} unfurl={leafLeft} sway={sway} />
         <LeafLayer leaf="leafRight" size={size} unfurl={leafRight} sway={sway} />
         <LeafLayer leaf="leafTop" size={size} unfurl={leafTop} sway={sway} />
@@ -274,9 +425,6 @@ const styles = StyleSheet.create({
   },
   artFromBottom: {
     bottom: 0,
-  },
-  artFromTop: {
-    top: 0,
   },
   spine: {
     backgroundColor: '#FFFFFF',

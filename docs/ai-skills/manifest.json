@@ -1,0 +1,15 @@
+{
+  "files": {
+    "docs/ai-skills/fv-authz-review/SKILL.md": "960ba96622ad92f22567a31e406a01c7ed76e53c127c1dcfaeda6e25b3466efd",
+    "docs/ai-skills/fv-authz-review/references/boundaries.md": "562275f69195ac096c853c14eab740702ba91e7f10933007689d5469a093d73b",
+    "docs/ai-skills/fv-authz-review/references/evidence.md": "36a526d53eb21001c0008be108e03e26ebfa81fd5e0d20da3e532d6ff373da31",
+    "docs/ai-skills/fv-child-privacy/SKILL.md": "dd6c62368379582ed472799ca7fc39ed3e218ddfc1b47ffbf6a88158b7579f61",
+    "docs/ai-skills/fv-child-privacy/references/boundaries.md": "562275f69195ac096c853c14eab740702ba91e7f10933007689d5469a093d73b",
+    "docs/ai-skills/fv-child-privacy/references/evidence.md": "36a526d53eb21001c0008be108e03e26ebfa81fd5e0d20da3e532d6ff373da31",
+    "docs/ai-skills/fv-security-audit/SKILL.md": "af1f470b11c9aa787f4761553bb231185c7433dc766a9032b7a0548bb7561155",
+    "docs/ai-skills/fv-security-audit/references/boundaries.md": "562275f69195ac096c853c14eab740702ba91e7f10933007689d5469a093d73b",
+    "docs/ai-skills/fv-security-audit/references/evidence.md": "36a526d53eb21001c0008be108e03e26ebfa81fd5e0d20da3e532d6ff373da31"
+  },
+  "policy_revision": "22d84f853874093fd0848a904be66ed6eed7b228",
+  "usage": "Project-local reference guides; explicit read, not registered slash commands. Hashes detect drift, not authority."
+}

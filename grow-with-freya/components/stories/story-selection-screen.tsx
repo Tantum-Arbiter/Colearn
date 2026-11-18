@@ -89,22 +89,21 @@ const FingerTapIcon = memo(function FingerTapIcon({ size = 16, color = '#FFFFFF'
 });
 
 // Story experience type filters -detect from page content, not tags
-type StoryTypeFilter = 'musical' | 'interactive' | 'jigsaw';
+type StoryTypeFilter = 'musical' | 'interactive';
 
-const ALL_TYPE_FILTERS: Set<StoryTypeFilter> = new Set(['musical', 'interactive', 'jigsaw']);
+const ALL_TYPE_FILTERS: Set<StoryTypeFilter> = new Set(['musical', 'interactive']);
 
 const TYPE_FILTER_ACTIVE_COLOR = 'rgba(100, 140, 255, 0.25)'; // Subtle blue tint when selected
 
 const STORY_TYPE_FILTERS: { id: StoryTypeFilter; icon: keyof typeof Ionicons.glyphMap; label: string }[] = [
   { id: 'musical',     icon: 'musical-notes-outline',   label: 'Musical' },
   { id: 'interactive', icon: 'finger-print-outline',     label: 'Interactive' }, // icon overridden in render
-  { id: 'jigsaw',      icon: 'grid-outline',            label: 'Jigsaw' },
 ];
 
 // ---------------------------------------------------------------------------
 // Story mode selection - first screen when entering Stories
 // ---------------------------------------------------------------------------
-export type StoryMode = 'interactive' | 'music' | 'jigsaw';
+export type StoryMode = 'interactive' | 'music';
 
 interface StoryModeInfo {
   id: StoryMode;
@@ -117,7 +116,6 @@ interface StoryModeInfo {
 export const STORY_MODES: StoryModeInfo[] = [
   { id: 'interactive', labelKey: 'storyModes.interactive', icon: 'game-controller-outline', color: 'rgba(78, 205, 196, 0.85)', descriptionKey: 'storyModes.interactiveDesc' },
   { id: 'music',       labelKey: 'storyModes.music',       icon: 'musical-notes-outline',   color: 'rgba(138, 100, 220, 0.85)', descriptionKey: 'storyModes.musicDesc' },
-  { id: 'jigsaw',      labelKey: 'storyModes.jigsaw',      icon: 'grid-outline',            color: 'rgba(59, 130, 246, 0.85)', descriptionKey: 'storyModes.jigsawDesc' },
 ];
 
 // Interactive sub-filters (shown when mode = 'interactive')
@@ -131,11 +129,6 @@ const INTERACTIVE_SUB_FILTERS: { id: InteractiveSubFilter; icon: keyof typeof Io
 /** Does this story have touch (tap-to-animate) interactive elements? */
 function storyHasTouch(story: Story): boolean {
   return !!story.pages?.some(p => p.interactiveElements && p.interactiveElements.length > 0);
-}
-
-/** Does this story have jigsaw puzzle pages? */
-function storyHasJigsaw(story: Story): boolean {
-  return !!story.pages?.some(p => p.interactionType === 'jigsaw_puzzle');
 }
 
 /** Does this story have a learning tag? */
@@ -162,8 +155,8 @@ const TAG_ICONS: Record<StoryFilterTag, keyof typeof Ionicons.glyphMap> = {
   adventure: 'compass-outline',
   learning: 'book-outline',
   music: 'musical-notes-outline',
-  family: 'people-outline',
-  creativity: 'color-palette-outline',
+  'family-exercises': 'people-outline',
+  'imagination-games': 'color-palette-outline',
   animals: 'paw-outline',
   friendship: 'heart-outline',
   nature: 'flower-outline',
@@ -172,6 +165,7 @@ const TAG_ICONS: Record<StoryFilterTag, keyof typeof Ionicons.glyphMap> = {
   emotions: 'happy-outline',
   silly: 'happy-outline',
   rhymes: 'chatbubble-ellipses-outline',
+  interactive: 'hand-left-outline',
 };
 
 // Constants for card dimensions - defined once, not on every render
@@ -481,18 +475,14 @@ export function StorySelectionScreen({ onStorySelect, initialMode }: StorySelect
       }
     } else if (storyMode === 'music') {
       result = result.filter(story => storyHasMusic(story));
-    } else if (storyMode === 'jigsaw') {
-      result = result.filter(story => storyHasJigsaw(story));
     } else {
       // No mode selected (mode picker visible) - apply legacy type filters
       if (storyTypeFilters.size < ALL_TYPE_FILTERS.size) {
         result = result.filter(story => {
           const hasMusic = storyHasMusic(story);
           const hasInteractive = storyHasInteractive(story);
-          const hasJigsaw = storyHasJigsaw(story);
           return (storyTypeFilters.has('musical') && hasMusic)
-            || (storyTypeFilters.has('interactive') && hasInteractive)
-            || (storyTypeFilters.has('jigsaw') && hasJigsaw);
+            || (storyTypeFilters.has('interactive') && hasInteractive);
         });
       }
     }
@@ -515,7 +505,7 @@ export function StorySelectionScreen({ onStorySelect, initialMode }: StorySelect
   // Available filter tags -children's storybook themes
   const filterTags: StoryFilterTag[] = [
     'calming', 'bedtime', 'adventure', 'learning', 'music',
-    'family', 'creativity', 'animals', 'friendship',
+    'family-exercises', 'imagination-games', 'animals', 'friendship',
     'nature', 'fantasy', 'counting', 'emotions', 'silly', 'rhymes'
   ];
 
@@ -732,7 +722,7 @@ export function StorySelectionScreen({ onStorySelect, initialMode }: StorySelect
   const handleShareToUnlock = useCallback(async (entry: CatalogEntry) => {
     try {
       const result = await Share.share({
-        message: `Check out "${entry.title}" on Grow with Freya! A magical story app for kids`,
+        message: `Check out "${entry.title}" on Early Roots! A magical story app for kids`,
       });
       if (result.action === Share.sharedAction) {
         // User completed the share -permanently unlock
@@ -878,9 +868,6 @@ export function StorySelectionScreen({ onStorySelect, initialMode }: StorySelect
         filteredCatalog = filteredCatalog.filter(entry =>
           entry.tags?.includes('music')
         );
-      } else if (storyMode === 'jigsaw') {
-        // No jigsaw tag exists in CMS — jigsaw stories are bundled locally
-        filteredCatalog = [];
       }
 
       // Apply gender filter to catalog entries too

@@ -9,7 +9,7 @@
 const admin = require('firebase-admin');
 const fs = require('fs');
 const path = require('path');
-const crypto = require('crypto');
+const { storyChecksum } = require('./lib/story-checksum');
 
 // Configuration
 const BUNDLED_STORIES_DIR = path.join(__dirname, '../grow-with-freya/assets/stories');
@@ -52,7 +52,8 @@ function getServiceAccountCredentials() {
       console.error(`❌ Error: Service account key file not found: ${SERVICE_ACCOUNT_PATH}`);
       process.exit(1);
     }
-    return require(SERVICE_ACCOUNT_PATH);
+    // Read as data, never require(): a .js path in the variable would otherwise run as code
+    return JSON.parse(fs.readFileSync(SERVICE_ACCOUNT_PATH, 'utf8'));
   }
 
   console.error('❌ Error: No service account credentials provided');
@@ -90,40 +91,6 @@ if (FIRESTORE_EMULATOR_HOST) {
 const db = admin.firestore();
 
 /**
- * Calculate SHA-256 checksum of story content
- * Includes localized text for i18n support
- */
-function calculateStoryChecksum(story) {
-  // Helper to serialize LocalizedText objects
-  const serializeLocalized = (obj) => obj ? JSON.stringify(obj) : '';
-
-  const content = [
-    story.id,
-    story.title,
-    serializeLocalized(story.localizedTitle),
-    story.category,
-    story.description || '',
-    serializeLocalized(story.localizedDescription),
-    story.version || 1,
-    ...story.pages.map(p => {
-      // Include interactive elements in checksum
-      const interactiveStr = p.interactiveElements
-        ? JSON.stringify(p.interactiveElements)
-        : '';
-      // Include music challenge in checksum
-      const musicStr = p.musicChallenge
-        ? JSON.stringify(p.musicChallenge)
-        : '';
-      // Include localized text in checksum
-      const localizedTextStr = serializeLocalized(p.localizedText);
-      return `${p.id}${p.text}${localizedTextStr}${p.pageNumber}${p.backgroundImage || ''}${interactiveStr}${p.interactionType || ''}${musicStr}`;
-    })
-  ].join('');
-
-  return crypto.createHash('sha256').update(content).digest('hex');
-}
-
-/**
  * Read all story-data.json files from a directory
  */
 function readStoryFilesFromDir(storiesDir) {
@@ -154,7 +121,7 @@ function readStoryFilesFromDir(storiesDir) {
         storyData.tags = storyData.tags || [];
         
         // Calculate checksum
-        storyData.checksum = calculateStoryChecksum(storyData);
+        storyData.checksum = storyChecksum(storyData);
         
         stories.push(storyData);
         console.log(`✅ Loaded story: ${storyData.id} (${storyData.pages.length} pages)`);

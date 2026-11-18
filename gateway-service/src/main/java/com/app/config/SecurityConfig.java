@@ -84,32 +84,33 @@ public class SecurityConfig {
         this.environment = environment;
     }
 
+    /** The profiles whose builds carry the private, actuator and health endpoints. Matched by exact name. */
+    static final java.util.Set<String> PROFILES_WITH_PRIVATE_ENDPOINTS = java.util.Set.of("test", "dev", "gcp-dev");
+
+    /**
+     * Whether this run opens /private, /actuator and /health. Exact names only: a profile called
+     * "development-lab" or "prod-devices" opens nothing because it happens to contain "dev", and
+     * any run with "prod" active, or with no profile at all, is production.
+     */
+    static boolean allowsPrivateEndpoints(String[] activeProfiles) {
+        java.util.List<String> active = java.util.Arrays.asList(activeProfiles);
+        if (active.isEmpty() || active.contains("prod")) {
+            return false;
+        }
+        return active.stream().anyMatch(PROFILES_WITH_PRIVATE_ENDPOINTS::contains);
+    }
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         String[] activeProfiles = environment.getActiveProfiles();
         String profilesStr = String.join(",", activeProfiles);
         logger.info("SecurityConfig initializing with activeProfiles=[{}]", profilesStr);
 
-        boolean isTestOrDevProfile = false;
-        boolean isProdProfile = false;
-        for (String profile : activeProfiles) {
-            String lowerProfile = profile.toLowerCase();
-            if (lowerProfile.contains("test") || lowerProfile.contains("dev")) {
-                isTestOrDevProfile = true;
-            }
-            if (lowerProfile.contains("prod")) {
-                isProdProfile = true;
-            }
-        }
-
         if (activeProfiles.length == 0) {
             logger.warn("No active profiles - defaulting to production security");
-            isProdProfile = true;
         }
 
-        logger.debug("Profile detection: isTestOrDev={}, isProd={}", isTestOrDevProfile, isProdProfile);
-
-        final boolean allowPrivateEndpoints = isTestOrDevProfile && !isProdProfile;
+        final boolean allowPrivateEndpoints = allowsPrivateEndpoints(activeProfiles);
         logger.info("allowPrivateEndpoints={}", allowPrivateEndpoints);
 
         http

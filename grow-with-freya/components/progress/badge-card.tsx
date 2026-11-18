@@ -9,7 +9,7 @@ import { CHILD_UI_MOTION, CHILD_UI_SCALE, motionDuration } from '@/constants/chi
 import { useAccessibility } from '@/hooks/use-accessibility';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { RADIUS_CARD, SPACE_2, SPACE_3 } from '@/components/child-ui/tokens';
-import { Badge } from './progress-model';
+import { Badge, badgeDescription, badgeTitle } from './progress-model';
 import { BadgeArtwork } from './badge-artwork';
 import { BadgeProgress } from './badge-progress';
 
@@ -50,7 +50,7 @@ export function BadgeCard({ badge, width, onPress }: BadgeCardProps) {
       <Pressable
         testID={`badge-card-${badge.id}`}
         accessibilityRole="button"
-        accessibilityLabel={t(badge.titleKey)}
+        accessibilityLabel={badgeTitle(badge, t)}
         accessibilityValue={{ text: t('progress.count', { current: badge.currentProgress, target: badge.targetProgress }) }}
         onPress={handlePress}
         onPressIn={handlePressIn}
@@ -59,10 +59,10 @@ export function BadgeCard({ badge, width, onPress }: BadgeCardProps) {
       >
         <BadgeArtwork artwork={badge.artwork} status={badge.status} />
         <Text style={[styles.title, { fontSize: scaledFontSize(13) }]} numberOfLines={2}>
-          {t(badge.titleKey)}
+          {badgeTitle(badge, t)}
         </Text>
         <Text style={[styles.description, { fontSize: scaledFontSize(11) }]} numberOfLines={3}>
-          {t(badge.descriptionKey)}
+          {badgeDescription(badge, t)}
         </Text>
         <BadgeProgress
           current={badge.currentProgress}

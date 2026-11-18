@@ -23,10 +23,6 @@ const ACTIVITY_ART = {
     night: require('../../assets/images/menu-icons/home-music-night.webp'),
     day: require('../../assets/images/menu-icons/home-music-day.webp'),
   },
-  jigsaw: {
-    night: require('../../assets/images/menu-icons/home-puzzles-night.webp'),
-    day: require('../../assets/images/menu-icons/home-puzzles-day.webp'),
-  },
 } as const;
 
 export interface ActivityCardProps {

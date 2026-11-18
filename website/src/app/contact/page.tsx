@@ -19,7 +19,7 @@ export default function ContactPage() {
           <div className="grid md:grid-cols-3 gap-4">
             {/* General Enquiries */}
             <a
-              href="mailto:hello@growwithfreya.com"
+              href="mailto:contact@earlyroots.co.uk"
               className="group bg-white rounded-2xl p-6 shadow-card hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
             >
               <div className="w-12 h-12 rounded-xl bg-gradient-brand flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
@@ -34,13 +34,13 @@ export default function ContactPage() {
                 Questions about Early Roots?
               </p>
               <span className="text-primary text-sm font-medium group-hover:underline">
-                hello@earlyroots.com
+                contact@earlyroots.co.uk
               </span>
             </a>
 
             {/* Support */}
             <a
-              href="mailto:support@growwithfreya.com"
+              href="mailto:contact@earlyroots.co.uk"
               className="group bg-white rounded-2xl p-6 shadow-card hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
             >
               <div className="w-12 h-12 rounded-xl bg-gradient-brand flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
@@ -55,13 +55,13 @@ export default function ContactPage() {
                 Need help with the app?
               </p>
               <span className="text-primary text-sm font-medium group-hover:underline">
-                support@growwithfreya.com
+                contact@earlyroots.co.uk
               </span>
             </a>
 
             {/* Partnerships */}
             <a
-              href="mailto:partnerships@growwithfreya.com"
+              href="mailto:contact@earlyroots.co.uk"
               className="group bg-white rounded-2xl p-6 shadow-card hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
             >
               <div className="w-12 h-12 rounded-xl bg-gradient-brand flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
@@ -76,7 +76,7 @@ export default function ContactPage() {
                 Interested in working together?
               </p>
               <span className="text-primary text-sm font-medium group-hover:underline">
-                partnerships@growwithfreya.com
+                contact@earlyroots.co.uk
               </span>
             </a>
           </div>
@@ -195,8 +195,8 @@ export default function ContactPage() {
                   <p className="text-sm font-medium text-brand-text">Email us</p>
                   <p className="text-xs text-gray-500">
                     Send an email to{' '}
-                    <a href="mailto:support@growwithfreya.com?subject=Delete%20My%20Account" className="text-primary font-medium hover:underline">
-                      support@growwithfreya.com
+                    <a href="mailto:contact@earlyroots.co.uk?subject=Delete%20My%20Account" className="text-primary font-medium hover:underline">
+                      contact@earlyroots.co.uk
                     </a>
                     {' '}with the subject &ldquo;Delete My Account&rdquo; and we&apos;ll process your request within 48 hours.
                   </p>

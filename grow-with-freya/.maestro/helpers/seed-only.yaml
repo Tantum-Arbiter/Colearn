@@ -6,7 +6,36 @@ name: Put the app in the state the calling flow asked for, without assuming wher
 - setOrientation: PORTRAIT
 # A flow starts from a stopped app, not from wherever the last one left it.
 - stopApp
-- launchApp
-- openLink: "com.growwithfreya.app://?e2e=1&${SEED}"
+- runFlow: launch.yaml
+# Each platform's development build answers a different scheme.
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - openLink: "com.growwithfreya.app://?e2e=1&${SEED}"
+      - extendedWaitUntil:
+          visible: "Open in .*"
+          timeout: 10000
+          optional: true
+      - retry:
+          maxRetries: 2
+          commands:
+            - runFlow:
+                when:
+                  visible: "Open in .*"
+                commands:
+                  - tapOn: "Open"
+            - extendedWaitUntil:
+                notVisible: "Open in .*"
+                timeout: 5000
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - openLink: "growwithfreya://?e2e=1&${SEED}"
+# iOS may ask "Open in <app>?" first; on CI nobody is there to answer it.
+- tapOn:
+    text: "Open"
+    optional: true
 - waitForAnimationToEnd:
     timeout: 5000

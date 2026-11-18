@@ -579,7 +579,7 @@ const styles = StyleSheet.create({
     transform: [{ scaleX: -1 }],
   },
   layerBox: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   layer: {
     position: 'absolute',

@@ -3,7 +3,7 @@ import {
   AudioPlayer,
 } from 'expo-audio';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Paths, Directory, File } from 'expo-file-system/next';
+import { Paths, Directory, File } from 'expo-file-system';
 import { Logger } from '@/utils/logger';
 
 const log = Logger.create('VoiceRecording');
@@ -72,7 +72,7 @@ class VoiceRecordingService {
       }
 
       // Use move instead of copy - move replaces existing files
-      tempFile.move(permanentFile);
+      await tempFile.move(permanentFile);
       log.debug('Recording saved');
       return permanentFile.uri;
     } catch (error) {

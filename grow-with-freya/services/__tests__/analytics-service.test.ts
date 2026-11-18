@@ -16,15 +16,26 @@ jest.mock('@/utils/logger', () => ({
   Logger: { create: () => ({ debug: jest.fn(), error: jest.fn(), warn: jest.fn() }) },
 }));
 
+const mockLiveToken = (() => {
+  const payload = Buffer.from(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 3600, sub: 'family' })).toString('base64');
+  return `header.${payload}.signature`;
+})();
+
 jest.mock('../secure-storage', () => ({
   SecureStorage: {
-    getAccessToken: jest.fn().mockResolvedValue('test-token'),
+    getAccessToken: jest.fn(() => Promise.resolve(mockLiveToken)),
+    getRefreshToken: jest.fn(() => Promise.resolve('refresh-token')),
+    saveAuthData: jest.fn(() => Promise.resolve()),
+    storeTokens: jest.fn(() => Promise.resolve()),
+    clearAuthData: jest.fn(() => Promise.resolve()),
   },
 }));
 
+jest.mock('../session-lapse', () => ({ reportSessionLapse: jest.fn() }));
+
 // Note: DeviceInfoService is NOT imported by analytics-service (privacy: no persistent device IDs)
 
-global.fetch = jest.fn().mockResolvedValue({ ok: true });
+global.fetch = jest.fn().mockResolvedValue({ ok: true, status: 200, json: () => Promise.resolve({ status: 'accepted' }) });
 
 describe('bucketDuration', () => {
   const cases: [number, DurationBucket][] = [
@@ -306,6 +317,53 @@ describe('AnalyticsService', () => {
       expect(completedEvent.properties.durationBucket).toBe('3-5min');
       expect(completedEvent.properties.durationSeconds).toBeUndefined();
       expect(completedEvent.properties.duration).toBeUndefined();
+    });
+  });
+
+  describe('an expired session', () => {
+    const accepted = { ok: true, status: 200, json: () => Promise.resolve({ status: 'accepted' }) };
+    const refused = { ok: false, status: 401, json: () => Promise.resolve({}) };
+
+    beforeEach(() => {
+      (global.fetch as jest.Mock).mockReset();
+      AnalyticsService.initialize('en', true);
+      AnalyticsService._getBuffer().length = 0;
+      AnalyticsService.trackStoryOpened('s1', 'cat', 'read');
+    });
+
+    it('refreshes the token and sends the batch again once', async () => {
+      (global.fetch as jest.Mock)
+        .mockResolvedValueOnce(refused)
+        .mockResolvedValueOnce({ ok: true, status: 200, json: () => Promise.resolve({ tokens: { accessToken: 'new', refreshToken: 'r', expiresIn: 900 } }) })
+        .mockResolvedValueOnce(accepted);
+
+      await AnalyticsService.flush();
+
+      const eventCalls = (global.fetch as jest.Mock).mock.calls.filter(([url]) => String(url).endsWith('/api/analytics/events'));
+      expect(eventCalls).toHaveLength(2);
+    });
+
+    it('sends no device identifier on the retry either', async () => {
+      (global.fetch as jest.Mock)
+        .mockResolvedValueOnce(refused)
+        .mockResolvedValueOnce({ ok: true, status: 200, json: () => Promise.resolve({ tokens: { accessToken: 'new', refreshToken: 'r', expiresIn: 900 } }) })
+        .mockResolvedValueOnce(accepted);
+
+      await AnalyticsService.flush();
+
+      const eventCalls = (global.fetch as jest.Mock).mock.calls.filter(([url]) => String(url).endsWith('/api/analytics/events'));
+      eventCalls.forEach(([, options]) => {
+        expect(Object.keys(options.headers).sort()).toEqual(['Authorization', 'Content-Type']);
+      });
+    });
+
+    it('drops the batch without throwing when the refresh fails', async () => {
+      (global.fetch as jest.Mock)
+        .mockResolvedValueOnce(refused)
+        .mockResolvedValueOnce(refused);
+
+      await expect(AnalyticsService.flush()).resolves.toBeUndefined();
+      expect(AnalyticsService._getBuffer()).toHaveLength(0);
     });
   });
 });

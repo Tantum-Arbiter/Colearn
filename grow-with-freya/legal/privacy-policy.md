@@ -84,7 +84,7 @@ Parents have the right to:
 - Contact us with questions about our privacy practices
 
 ### 6.2 How to Exercise Rights
-To exercise these rights, contact us at privacy@growwithfreya.com with:
+To exercise these rights, contact us at contact@earlyroots.co.uk with:
 - Your name and relationship to the child
 - The child's information you're inquiring about
 - Your specific request
@@ -149,12 +149,12 @@ We comply with the Children's Online Privacy Protection Act (COPPA):
 
 If you have questions about this Privacy Policy or our privacy practices:
 
-**Email:** privacy@growwithfreya.com
+**Email:** contact@earlyroots.co.uk
 **Subject Line:** Privacy Policy Inquiry
 **Address:** [Company Address]
 
 **For COPPA-related requests:**
-**Email:** coppa@growwithfreya.com
+**Email:** contact@earlyroots.co.uk
 
 ## 12. Effective Date
 

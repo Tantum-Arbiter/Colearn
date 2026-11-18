@@ -32,7 +32,7 @@ function generateStoryData(story, isCmsOnly = false) {
     coverImage: `assets/stories/${story.id}/cover/thumbnail.webp`,
     isAvailable: true,
     ageRange: story.ageRange,
-    duration: story.duration,
+    pageCount: story.duration,
     description: story.description,
     isPremium: story.isPremium || false,
     author: story.author || 'Freya Stories',

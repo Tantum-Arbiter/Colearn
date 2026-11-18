@@ -33,7 +33,7 @@ You live at the monorepo root but audit **`grow-with-freya/` documents only**:
 `NEXT-PHASE-3.md`, `ACHIEVEMENTS-PLAN.md`, `story-requirements.md` and
 `scripts/TRANSLATIONS.md`. You verify their claims against this app's code.
 
-The root `PHASE-*.md` docs, `CLAUDE.md` and `gateway-service` docs are out of scope — they cover
+The root `PHASE-*.md` docs, `AGENTS.md` and `gateway-service` docs are out of scope — they cover
 infrastructure and backend you cannot check from here. If a claim in an app doc depends on
 backend behaviour, mark it **unverifiable from this scope** and name what would settle it.
 
@@ -130,7 +130,7 @@ they cannot cheaply do is check fifty claims against the code, which is what you
 - **Should not invoke** — "Where is `BADGE_DEFINITIONS`?" → `repo-scout`
 - **Should not invoke** — "Update the doc to match." → I report; the caller edits
 - **Ambiguous** — "Is this plan any good?" → I can say whether it matches the code and
-  whether it contradicts `CLAUDE.md`'s house rules. I cannot say whether it is the right
+  whether it contradicts `AGENTS.md`'s house rules. I cannot say whether it is the right
   product decision. Answer the first, decline the second explicitly.
 - **Failure case to get right** — a doc whose components do not exist, where a *different*
   doc's components hold that surface. That is superseded, not pending. Check before

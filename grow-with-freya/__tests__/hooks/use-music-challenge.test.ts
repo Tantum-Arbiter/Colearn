@@ -85,6 +85,29 @@ function playAndHold(result: { current: MusicChallengeHookResult }, note: string
   act(() => { jest.advanceTimersByTime(holdMs + 1); });
 }
 
+describe('useMusicChallenge: skipping', () => {
+  it('a skip ends the challenge without completing it or crediting the child', () => {
+    const onComplete = jest.fn();
+    const { result } = renderHook(() => useMusicChallenge(createTestConfig({ allowSkip: true }), onComplete));
+    act(() => { result.current.start(); });
+
+    act(() => { result.current.skip(); });
+
+    expect(result.current.isComplete).toBe(false);
+    expect(result.current.state).toBe('idle');
+    expect(onComplete).not.toHaveBeenCalled();
+  });
+
+  it('a challenge that does not allow skipping ignores the request', () => {
+    const { result } = renderHook(() => useMusicChallenge(createTestConfig({ allowSkip: false })));
+    act(() => { result.current.start(); });
+
+    act(() => { result.current.skip(); });
+
+    expect(result.current.state).not.toBe('idle');
+  });
+});
+
 describe('useMusicChallenge', () => {
   beforeEach(() => {
     jest.useFakeTimers();

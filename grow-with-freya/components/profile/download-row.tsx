@@ -4,7 +4,7 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
-import { STORY_TAGS, getLocalizedText, type Story } from '@/types/story';
+import { STORY_TAGS, getLocalizedText, storyPageCount, type Story } from '@/types/story';
 import type { SupportedLanguage } from '@/services/i18n';
 import {
   BORDER_DEFAULT,
@@ -42,8 +42,7 @@ export function DownloadRow({ story, language, onOpen, onDelete }: DownloadRowPr
 
   const title = getLocalizedText(story.localizedTitle, story.title, language);
   const artwork = typeof story.coverImage === 'string' ? { uri: story.coverImage } : story.coverImage;
-  const pages = story.pages?.length ?? 0;
-  const hasMeta = !!story.duration || pages > 0;
+  const pageCount = storyPageCount(story);
 
   const handleOpen = useCallback(() => {
     if (!story.isAvailable) return;
@@ -89,13 +88,13 @@ export function DownloadRow({ story, language, onOpen, onDelete }: DownloadRowPr
           >
             {title}
           </Text>
-          {hasMeta && (
+          {pageCount !== undefined && (
             <Text
               testID={`download-row-meta-${story.id}`}
               style={[styles.meta, { fontSize: scaledFontSize(12) }]}
               numberOfLines={1}
             >
-              {t('profile.downloadMeta', { minutes: story.duration ?? 0, pages })}
+              {t('storyDetail.pages', { count: pageCount })}
             </Text>
           )}
         </View>

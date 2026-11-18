@@ -1,0 +1,67 @@
+{
+  "about": "Advisories the Security Scan workflow accepts (.github/scripts/audit-gate.py). A critical anywhere in the tree, or a high in the production tree, fails the scan unless it is listed here. Tooling that never reaches the app is accepted by package; code that ships is accepted one advisory id at a time, so a new advisory against it is judged afresh.",
+  "verify": "Whether a package ships is read from the release source maps, never from npm audit --omit=dev and never from the Hermes bundle: PHASE-4-PROD-READINESS.md section 12. Re-check at every Expo SDK upgrade and when an entry's package changes major version.",
+  "entries": [
+    {
+      "package": "shell-quote",
+      "shipped": false,
+      "verified": "2026-11-02",
+      "reason": "react-native > react-devtools-core, the DevTools bridge Metro leaves out of release bundles; absent from the iOS and Android source maps. A fix within react-devtools-core's range exists (1.9.0 and later), so a plain npm audit fix, never --force, would clear it."
+    },
+    {
+      "package": "@xmldom/xmldom",
+      "shipped": false,
+      "verified": "2026-11-02",
+      "reason": "expo-updates, @expo/cli and @expo/config-plugins reach it through @expo/plist, which edits Info.plist at prebuild; absent from both source maps."
+    },
+    {
+      "package": "brace-expansion",
+      "shipped": false,
+      "verified": "2026-11-02",
+      "reason": "expo-updates > glob > minimatch, file globbing in the config plugin at prebuild; absent from both source maps."
+    },
+    {
+      "package": "browserslist",
+      "shipped": false,
+      "verified": "2026-11-02",
+      "reason": "@babel/helper-compilation-targets and @expo/metro-config resolve compile targets with it; the transpiler's output ships, the transpiler does not. Absent from both source maps."
+    },
+    {
+      "package": "js-yaml",
+      "shipped": false,
+      "verified": "2026-11-02",
+      "reason": "@expo/cli > @expo/xcpretty and react-native-svg-transformer > cosmiconfig parse build logs and config files with it; absent from both source maps."
+    },
+    {
+      "package": "node-forge",
+      "shipped": false,
+      "verified": "2026-11-02",
+      "reason": "@expo/cli and expo-updates > @expo/code-signing-certificates use it for certificates on the build machine; absent from both source maps."
+    },
+    {
+      "package": "source-map-js",
+      "shipped": false,
+      "verified": "2026-11-02",
+      "reason": "@expo/metro-config > postcss and svgo > css-tree handle source maps at build time; absent from both source maps."
+    },
+    {
+      "package": "svgo",
+      "shipped": false,
+      "verified": "2026-11-02",
+      "reason": "react-native-svg-transformer > @svgr/plugin-svgo optimises SVG assets while Metro transforms them; absent from both source maps."
+    },
+    {
+      "package": "zod",
+      "shipped": false,
+      "verified": "2026-11-02",
+      "reason": "expo > @expo/cli validates its own config with it; absent from both source maps. The @expo/cli audit entry is this and other tooling rolled up: the one @expo/cli module that ships is the Metro require shim."
+    },
+    {
+      "package": "decode-uri-component",
+      "advisory": "GHSA-qr28-fpjm-wq7f",
+      "shipped": true,
+      "verified": "2026-11-02",
+      "reason": "expo-router > query-string 7 decodes deep-link query strings with it, so it is in both bundles. A crafted link can only stall the app that opens it; nothing is exposed. Every release up to 0.5.0 is affected, 0.5.1 is ESM-only and query-string 7 loads it with require(), and every expo-router 57.x pins query-string ^7.1.3. Clears with expo-router 58 (Expo SDK 58), which drops query-string; the --force route npm offers is the trap PHASE-4-PROD-READINESS.md section 12 describes."
+    }
+  ]
+}

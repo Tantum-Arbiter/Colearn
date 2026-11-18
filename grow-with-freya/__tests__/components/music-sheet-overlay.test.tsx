@@ -181,6 +181,24 @@ describe('MusicSheetOverlay', () => {
       const without = renderOverlay();
       expect(without.UNSAFE_queryAllByProps({ testID: 'ready-to-play-button' }).length).toBe(0);
     });
+
+    it('Ready to Play carries its words alone, with no note drawn in front of them', () => {
+      const view = renderOverlay({ onReadyToPlay: jest.fn() } as never);
+      const button = view.UNSAFE_queryAllByProps({ testID: 'ready-to-play-button' })[0];
+
+      expect(button.findAll((node: any) => typeof node.props.name === 'string' && /musical/.test(node.props.name))).toHaveLength(0);
+    });
+
+    it('no language starts Ready to Play with a stray space', () => {
+      const fs = require('fs');
+      const path = require('path');
+      const dir = path.join(__dirname, '..', '..', 'locales');
+      for (const lang of fs.readdirSync(dir)) {
+        const source: string = fs.readFileSync(path.join(dir, lang, 'index.ts'), 'utf8');
+        const match = source.match(/readyToPlay: '([^']*)'/);
+        expect([lang, match?.[1]?.startsWith(' ')]).toEqual([lang, false]);
+      }
+    });
   });
 
   describe('the preview', () => {

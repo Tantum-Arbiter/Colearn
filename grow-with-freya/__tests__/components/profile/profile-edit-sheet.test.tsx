@@ -7,6 +7,8 @@
 import React from 'react';
 import { render, fireEvent, act } from '@testing-library/react-native';
 import { ProfileEditSheet, PROFILE_EDIT_SHEET_EXIT_MS } from '@/components/profile/profile-edit-sheet';
+import { ChildBottomNavigation } from '@/components/child-ui/child-bottom-navigation';
+import { JourneyBarProvider, JourneyBarOutlet } from '@/components/child-ui/journey-bar-slot';
 
 const mockContent = jest.fn();
 jest.mock('@/components/account/edit-profile-screen', () => {
@@ -120,5 +122,48 @@ describe('leaving', () => {
 
     expect(byTestId(underTest, 'profile-edit-sheet').length).toBeGreaterThan(0);
     expect(byTestId(underTest, 'profile-edit-sheet')[0].props.pointerEvents).not.toBe('none');
+  });
+});
+
+/**
+ * The sheet rises over the page, and the shared bar sits above every page, so
+ * the sheet has to take the bar away itself -- from the first frame it is up
+ * until the last frame of its slide back down -- or the bar is drawn over it.
+ */
+describe('ProfileEditSheet over the journey bar', () => {
+  beforeEach(() => jest.useFakeTimers());
+  afterEach(() => jest.useRealTimers());
+
+  const screen = (visible: boolean) => (
+    <JourneyBarProvider>
+      <ChildBottomNavigation selected="profile" onSelect={jest.fn()} slotKey="stories" />
+      <ProfileEditSheet visible={visible} onClose={jest.fn()} />
+      <JourneyBarOutlet pageKey="stories" holdMs={800} />
+    </JourneyBarProvider>
+  );
+
+  function barShown(tree: ReturnType<typeof render>) {
+    return byTestId(tree, 'journey-bar-outlet').length > 0;
+  }
+
+  it('takes the bar away the moment it opens', () => {
+    const tree = render(screen(false));
+    expect(barShown(tree)).toBe(true);
+
+    tree.rerender(screen(true));
+
+    expect(barShown(tree)).toBe(false);
+  });
+
+  it('keeps the bar away while it slides back down, and gives it back once it has gone', () => {
+    const tree = render(screen(true));
+
+    tree.rerender(screen(false));
+    expect(barShown(tree)).toBe(false);
+
+    act(() => {
+      jest.advanceTimersByTime(PROFILE_EDIT_SHEET_EXIT_MS);
+    });
+    expect(barShown(tree)).toBe(true);
   });
 });

@@ -1,0 +1,723 @@
+{
+  "id": "wombat-picnic",
+  "version": 1,
+  "checksum": "55a76ee87d4b5f6f",
+  "engine": "place",
+  "world": "island",
+  "storyId": "snuggle-little-wombat",
+  "minAppVersion": "1.0.0",
+  "cover": "cover.webp",
+  "art": {
+    "tablet": {
+      "width": 1448,
+      "height": 1086,
+      "sky": "#2B2A5E",
+      "layers": [
+        {
+          "id": "sky",
+          "file": "art/tablet/sky.webp",
+          "frame": {
+            "x": 0,
+            "y": 0,
+            "w": 1448,
+            "h": 1086
+          },
+          "z": 0
+        },
+        {
+          "id": "stars-1",
+          "file": "art/tablet/stars-1.webp",
+          "frame": {
+            "x": 38,
+            "y": 7,
+            "w": 1399,
+            "h": 634
+          },
+          "z": 1,
+          "clock": "twinkle"
+        },
+        {
+          "id": "stars-2",
+          "file": "art/tablet/stars-2.webp",
+          "frame": {
+            "x": 112,
+            "y": 15,
+            "w": 1329,
+            "h": 656
+          },
+          "z": 1,
+          "clock": "twinkle"
+        },
+        {
+          "id": "leaf",
+          "file": "art/tablet/leaf.webp",
+          "frame": {
+            "x": 511,
+            "y": 847,
+            "w": 425,
+            "h": 204
+          },
+          "z": 2
+        },
+        {
+          "id": "leaf-glow",
+          "file": "art/tablet/leaf-glow.webp",
+          "frame": {
+            "x": 427,
+            "y": 763,
+            "w": 593,
+            "h": 372
+          },
+          "z": 2
+        },
+        {
+          "id": "wombat",
+          "file": "art/tablet/wombat.webp",
+          "frame": {
+            "x": 821,
+            "y": 774,
+            "w": 267,
+            "h": 212
+          },
+          "z": 5
+        },
+        {
+          "id": "berry",
+          "file": "art/tablet/berry.webp",
+          "frame": {
+            "x": 0,
+            "y": 0,
+            "w": 48,
+            "h": 48
+          },
+          "z": 4
+        },
+        {
+          "id": "nut",
+          "file": "art/tablet/nut.webp",
+          "frame": {
+            "x": 0,
+            "y": 0,
+            "w": 50,
+            "h": 46
+          },
+          "z": 4
+        },
+        {
+          "id": "petal",
+          "file": "art/tablet/petal.webp",
+          "frame": {
+            "x": 0,
+            "y": 0,
+            "w": 54,
+            "h": 45
+          },
+          "z": 4
+        }
+      ],
+      "starts": {
+        "berry-1": {
+          "x": 379,
+          "y": 896,
+          "w": 48,
+          "h": 48
+        },
+        "berry-2": {
+          "x": 453,
+          "y": 986,
+          "w": 48,
+          "h": 48
+        },
+        "berry-3": {
+          "x": 548,
+          "y": 1031,
+          "w": 48,
+          "h": 48
+        },
+        "berry-4": {
+          "x": 840,
+          "y": 1029,
+          "w": 48,
+          "h": 48
+        },
+        "berry-5": {
+          "x": 1041,
+          "y": 1002,
+          "w": 48,
+          "h": 48
+        },
+        "nut-1": {
+          "x": 346,
+          "y": 985,
+          "w": 50,
+          "h": 46
+        },
+        "nut-2": {
+          "x": 669,
+          "y": 1035,
+          "w": 50,
+          "h": 46
+        },
+        "nut-3": {
+          "x": 950,
+          "y": 1016,
+          "w": 50,
+          "h": 46
+        },
+        "petal-1": {
+          "x": 492,
+          "y": 823,
+          "w": 54,
+          "h": 45
+        },
+        "petal-2": {
+          "x": 901,
+          "y": 794,
+          "w": 54,
+          "h": 45
+        }
+      },
+      "zones": {
+        "leaf": {
+          "x": 564,
+          "y": 888,
+          "w": 321,
+          "h": 118
+        }
+      }
+    },
+    "phone": {
+      "width": 1086,
+      "height": 1448,
+      "sky": "#2B2A5E",
+      "layers": [
+        {
+          "id": "sky",
+          "file": "art/phone/sky.webp",
+          "frame": {
+            "x": 0,
+            "y": 0,
+            "w": 1086,
+            "h": 1448
+          },
+          "z": 0
+        },
+        {
+          "id": "stars-1",
+          "file": "art/phone/stars-1.webp",
+          "frame": {
+            "x": 0,
+            "y": 10,
+            "w": 1086,
+            "h": 845
+          },
+          "z": 1,
+          "clock": "twinkle"
+        },
+        {
+          "id": "stars-2",
+          "file": "art/phone/stars-2.webp",
+          "frame": {
+            "x": 0,
+            "y": 21,
+            "w": 1086,
+            "h": 875
+          },
+          "z": 1,
+          "clock": "twinkle"
+        },
+        {
+          "id": "leaf",
+          "file": "art/phone/leaf.webp",
+          "frame": {
+            "x": 258,
+            "y": 1129,
+            "w": 569,
+            "h": 273
+          },
+          "z": 2
+        },
+        {
+          "id": "leaf-glow",
+          "file": "art/phone/leaf-glow.webp",
+          "frame": {
+            "x": 146,
+            "y": 1017,
+            "w": 793,
+            "h": 497
+          },
+          "z": 2
+        },
+        {
+          "id": "wombat",
+          "file": "art/phone/wombat.webp",
+          "frame": {
+            "x": 672,
+            "y": 1032,
+            "w": 356,
+            "h": 283
+          },
+          "z": 5
+        },
+        {
+          "id": "berry",
+          "file": "art/phone/berry.webp",
+          "frame": {
+            "x": 0,
+            "y": 0,
+            "w": 65,
+            "h": 65
+          },
+          "z": 4
+        },
+        {
+          "id": "nut",
+          "file": "art/phone/nut.webp",
+          "frame": {
+            "x": 0,
+            "y": 0,
+            "w": 67,
+            "h": 62
+          },
+          "z": 4
+        },
+        {
+          "id": "petal",
+          "file": "art/phone/petal.webp",
+          "frame": {
+            "x": 0,
+            "y": 0,
+            "w": 72,
+            "h": 60
+          },
+          "z": 4
+        }
+      ],
+      "starts": {
+        "berry-1": {
+          "x": 82,
+          "y": 1194,
+          "w": 65,
+          "h": 65
+        },
+        "berry-2": {
+          "x": 181,
+          "y": 1314,
+          "w": 65,
+          "h": 65
+        },
+        "berry-3": {
+          "x": 308,
+          "y": 1374,
+          "w": 65,
+          "h": 65
+        },
+        "berry-4": {
+          "x": 697,
+          "y": 1371,
+          "w": 65,
+          "h": 65
+        },
+        "berry-5": {
+          "x": 966,
+          "y": 1336,
+          "w": 65,
+          "h": 65
+        },
+        "nut-1": {
+          "x": 39,
+          "y": 1312,
+          "w": 67,
+          "h": 62
+        },
+        "nut-2": {
+          "x": 470,
+          "y": 1380,
+          "w": 67,
+          "h": 62
+        },
+        "nut-3": {
+          "x": 845,
+          "y": 1355,
+          "w": 67,
+          "h": 62
+        },
+        "petal-1": {
+          "x": 234,
+          "y": 1098,
+          "w": 72,
+          "h": 60
+        },
+        "petal-2": {
+          "x": 778,
+          "y": 1059,
+          "w": 72,
+          "h": 60
+        }
+      },
+      "zones": {
+        "leaf": {
+          "x": 329,
+          "y": 1185,
+          "w": 428,
+          "h": 158
+        }
+      }
+    }
+  },
+  "host": {
+    "objectId": "wombat",
+    "reactions": {
+      "count": {
+        "move": "bob",
+        "ms": 420,
+        "sound": "pop"
+      },
+      "hum": {
+        "move": "hum",
+        "ms": 900,
+        "sound": "hum"
+      },
+      "wonder": {
+        "move": "turn",
+        "ms": 520,
+        "sound": "bloop"
+      },
+      "cheer": {
+        "move": "cheer",
+        "ms": 900,
+        "sound": "chime"
+      }
+    }
+  },
+  "objects": [
+    {
+      "id": "wombat",
+      "labelKey": "packs.wombatPicnic.objects.wombat",
+      "layerByState": {
+        "idle": "wombat"
+      },
+      "initial": "idle"
+    },
+    {
+      "id": "leaf",
+      "labelKey": "packs.wombatPicnic.objects.leaf",
+      "layerByState": {
+        "plain": "leaf",
+        "glowing": "leaf-glow"
+      },
+      "initial": "plain"
+    },
+    {
+      "id": "berry-1",
+      "kind": "berry",
+      "labelKey": "packs.wombatPicnic.objects.berry",
+      "layerByState": {
+        "idle": "berry"
+      },
+      "initial": "idle",
+      "placeable": {
+        "zones": [
+          "leaf"
+        ]
+      }
+    },
+    {
+      "id": "berry-2",
+      "kind": "berry",
+      "labelKey": "packs.wombatPicnic.objects.berry",
+      "layerByState": {
+        "idle": "berry"
+      },
+      "initial": "idle",
+      "placeable": {
+        "zones": [
+          "leaf"
+        ]
+      }
+    },
+    {
+      "id": "berry-3",
+      "kind": "berry",
+      "labelKey": "packs.wombatPicnic.objects.berry",
+      "layerByState": {
+        "idle": "berry"
+      },
+      "initial": "idle",
+      "placeable": {
+        "zones": [
+          "leaf"
+        ]
+      }
+    },
+    {
+      "id": "berry-4",
+      "kind": "berry",
+      "labelKey": "packs.wombatPicnic.objects.berry",
+      "layerByState": {
+        "idle": "berry"
+      },
+      "initial": "idle",
+      "placeable": {
+        "zones": [
+          "leaf"
+        ]
+      }
+    },
+    {
+      "id": "berry-5",
+      "kind": "berry",
+      "labelKey": "packs.wombatPicnic.objects.berry",
+      "layerByState": {
+        "idle": "berry"
+      },
+      "initial": "idle",
+      "placeable": {
+        "zones": [
+          "leaf"
+        ]
+      }
+    },
+    {
+      "id": "nut-1",
+      "kind": "nut",
+      "labelKey": "packs.wombatPicnic.objects.nut",
+      "layerByState": {
+        "idle": "nut"
+      },
+      "initial": "idle",
+      "placeable": {
+        "zones": [
+          "leaf"
+        ]
+      }
+    },
+    {
+      "id": "nut-2",
+      "kind": "nut",
+      "labelKey": "packs.wombatPicnic.objects.nut",
+      "layerByState": {
+        "idle": "nut"
+      },
+      "initial": "idle",
+      "placeable": {
+        "zones": [
+          "leaf"
+        ]
+      }
+    },
+    {
+      "id": "nut-3",
+      "kind": "nut",
+      "labelKey": "packs.wombatPicnic.objects.nut",
+      "layerByState": {
+        "idle": "nut"
+      },
+      "initial": "idle",
+      "placeable": {
+        "zones": [
+          "leaf"
+        ]
+      }
+    },
+    {
+      "id": "petal-1",
+      "kind": "petal",
+      "labelKey": "packs.wombatPicnic.objects.petal",
+      "layerByState": {
+        "idle": "petal"
+      },
+      "initial": "idle",
+      "placeable": {
+        "zones": [
+          "leaf"
+        ]
+      }
+    },
+    {
+      "id": "petal-2",
+      "kind": "petal",
+      "labelKey": "packs.wombatPicnic.objects.petal",
+      "layerByState": {
+        "idle": "petal"
+      },
+      "initial": "idle",
+      "placeable": {
+        "zones": [
+          "leaf"
+        ]
+      }
+    }
+  ],
+  "zones": [
+    {
+      "id": "leaf",
+      "labelKey": "packs.wombatPicnic.zones.leaf",
+      "accepts": [
+        "berry",
+        "nut"
+      ],
+      "capacity": 8
+    }
+  ],
+  "rules": [
+    {
+      "when": {
+        "tap": "wombat"
+      },
+      "then": [
+        {
+          "react": "hum"
+        }
+      ]
+    },
+    {
+      "when": {
+        "dropInto": {
+          "zone": "leaf"
+        }
+      },
+      "then": [
+        {
+          "react": "count"
+        }
+      ]
+    },
+    {
+      "when": {
+        "refused": true
+      },
+      "then": [
+        {
+          "react": "wonder"
+        }
+      ]
+    }
+  ],
+  "missions": [
+    {
+      "id": "picnic",
+      "titleKey": "packs.wombatPicnic.missions.picnic.title",
+      "aimKey": "packs.wombatPicnic.missions.picnic.aim",
+      "promptKey": "packs.wombatPicnic.missions.picnic.prompt",
+      "grownUpKey": "packs.wombatPicnic.missions.picnic.grownUp",
+      "byAge": {
+        "1-2": {
+          "gesture": "tap",
+          "stages": [
+            {
+              "goal": {
+                "berry": 1
+              },
+              "promptKey": "packs.wombatPicnic.missions.picnic.stages.one"
+            },
+            {
+              "goal": {
+                "berry": 2
+              },
+              "promptKey": "packs.wombatPicnic.missions.picnic.stages.two"
+            }
+          ]
+        },
+        "2-4": {
+          "gesture": "tap-place",
+          "stages": [
+            {
+              "goal": {
+                "berry": 3
+              },
+              "promptKey": "packs.wombatPicnic.missions.picnic.stages.three"
+            }
+          ]
+        },
+        "4+": {
+          "gesture": "drag",
+          "stages": [
+            {
+              "goal": {
+                "berry": 3,
+                "nut": 2
+              },
+              "promptKey": "packs.wombatPicnic.missions.picnic.stages.threeAndTwo"
+            },
+            {
+              "goal": {
+                "berry": 4,
+                "nut": 2
+              },
+              "promptKey": "packs.wombatPicnic.missions.picnic.stages.oneMore"
+            }
+          ]
+        }
+      },
+      "rules": [
+        {
+          "when": {
+            "stageMet": true
+          },
+          "then": [
+            {
+              "react": "cheer"
+            }
+          ]
+        },
+        {
+          "when": {
+            "missionMet": true
+          },
+          "then": [
+            {
+              "set": "leaf",
+              "state": "glowing"
+            },
+            {
+              "play": "tada"
+            },
+            {
+              "complete": true
+            }
+          ]
+        }
+      ],
+      "bridgeActivityId": "counting",
+      "minutes": [
+        4,
+        7
+      ]
+    }
+  ],
+  "sounds": {
+    "pop": {
+      "file": "sounds/pop.m4a"
+    },
+    "bloop": {
+      "file": "sounds/bloop.m4a"
+    },
+    "hum": {
+      "file": "sounds/hum.m4a"
+    },
+    "chime": {
+      "file": "sounds/chime.m4a"
+    },
+    "tada": {
+      "file": "sounds/tada.m4a"
+    }
+  },
+  "keys": [
+    "packs.wombatPicnic.objects.wombat",
+    "packs.wombatPicnic.objects.leaf",
+    "packs.wombatPicnic.objects.berry",
+    "packs.wombatPicnic.objects.nut",
+    "packs.wombatPicnic.objects.petal",
+    "packs.wombatPicnic.zones.leaf",
+    "packs.wombatPicnic.missions.picnic.title",
+    "packs.wombatPicnic.missions.picnic.aim",
+    "packs.wombatPicnic.missions.picnic.prompt",
+    "packs.wombatPicnic.missions.picnic.grownUp",
+    "packs.wombatPicnic.missions.picnic.stages.one",
+    "packs.wombatPicnic.missions.picnic.stages.two",
+    "packs.wombatPicnic.missions.picnic.stages.three",
+    "packs.wombatPicnic.missions.picnic.stages.threeAndTwo",
+    "packs.wombatPicnic.missions.picnic.stages.oneMore"
+  ]
+}

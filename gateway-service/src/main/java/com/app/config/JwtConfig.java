@@ -34,8 +34,46 @@ public class JwtConfig {
     private static final Logger logger = LoggerFactory.getLogger(JwtConfig.class);
     private final Environment environment;
 
-    @Value("${app.jwt.secret:default-secret-change-in-production}")
+    // Read under both names the deployments have used; verifySecret() refuses to start without a real one
+    @Value("${app.jwt.secret:${jwt.secret:}}")
     private String jwtSecret;
+
+    /** The placeholder that shipped in this file for a long time; a deployment still signing with it must not start. */
+    private static final String KNOWN_PLACEHOLDER_SECRET = "default-secret-change-in-production";
+    // The test profile signs in these tokens and no others: what the functional tests send, so that
+    // garbage, injection payloads and real-looking JWTs are refused there as they are everywhere else.
+    private static final java.util.regex.Pattern TEST_GOOGLE_TOKEN = java.util.regex.Pattern.compile("^(valid-google-[a-z0-9-]+|mock-id-token-[0-9]+)$");
+    private static final java.util.regex.Pattern TEST_APPLE_TOKEN = java.util.regex.Pattern.compile("^valid-apple-[a-z0-9-]+$");
+    private static final java.util.regex.Pattern TEST_FIREBASE_TOKEN = java.util.regex.Pattern.compile("^(test-)?firebase-id-token$");
+    private static final int MIN_SECRET_LENGTH = 32;
+
+    @jakarta.annotation.PostConstruct
+    public void verifyProfiles() {
+        if (environment == null || !environment.acceptsProfiles(Profiles.of("test"))) {
+            return;
+        }
+        for (String deployed : new String[] {"prod", "gcp-dev"}) {
+            if (environment.acceptsProfiles(Profiles.of(deployed))) {
+                throw new IllegalStateException(
+                        "The test profile signs in stub tokens and must never be active beside the " + deployed + " profile");
+            }
+        }
+    }
+
+    @jakarta.annotation.PostConstruct
+    public void verifySecret() {
+        String secret = jwtSecret == null ? "" : jwtSecret.trim();
+        if (secret.isEmpty()) {
+            throw new IllegalStateException("No JWT signing secret configured: set APP_JWT_SECRET (or JWT_SECRET) to at least "
+                    + MIN_SECRET_LENGTH + " random characters");
+        }
+        if (secret.equals(KNOWN_PLACEHOLDER_SECRET)) {
+            throw new IllegalStateException("The JWT signing secret is the committed placeholder; set a real APP_JWT_SECRET");
+        }
+        if (secret.length() < MIN_SECRET_LENGTH) {
+            throw new IllegalStateException("The JWT signing secret is too short: at least " + MIN_SECRET_LENGTH + " characters are required");
+        }
+    }
 
     @Value("${app.jwt.expiration:900}") // 15 minutes
     private int jwtExpirationInSeconds;
@@ -107,6 +145,9 @@ public class JwtConfig {
             if (lower.contains("invalid")) {
                 throw new JWTVerificationException("Invalid Google ID token");
             }
+            if (!TEST_GOOGLE_TOKEN.matcher(idToken).matches()) {
+                throw new JWTVerificationException("Invalid Google ID token");
+            }
             String subject = "test-google-user";
             if (idToken.startsWith("mock-id-token-")) {
                 String timestamp = idToken.substring("mock-id-token-".length());
@@ -176,6 +217,9 @@ public class JwtConfig {
             if (lower.contains("invalid")) {
                 throw new JWTVerificationException("Invalid Apple ID token");
             }
+            if (!TEST_APPLE_TOKEN.matcher(idToken).matches()) {
+                throw new JWTVerificationException("Invalid Apple ID token");
+            }
             String fake = JWT.create()
                     .withIssuer(APPLE_ISSUER)
                     .withSubject("test-apple-user")
@@ -227,6 +271,9 @@ public class JwtConfig {
                 throw new JWTVerificationException("Token has expired");
             }
             if (lower.contains("invalid")) {
+                throw new JWTVerificationException("Invalid Firebase ID token");
+            }
+            if (!TEST_FIREBASE_TOKEN.matcher(idToken).matches()) {
                 throw new JWTVerificationException("Invalid Firebase ID token");
             }
             String fake = JWT.create()
@@ -283,6 +330,16 @@ public class JwtConfig {
         DecodedJWT decodedJWT = jwtVerifier().verify(token);
         String tokenType = decodedJWT.getClaim("type").asString();
         if (!"access".equals(tokenType)) {
+            throw new JWTVerificationException("Invalid token type");
+        }
+        return decodedJWT;
+    }
+
+    /** A refresh token must be one we signed, unexpired, and of the refresh type, before any session is looked up for it. */
+    public DecodedJWT validateRefreshToken(String token) throws JWTVerificationException {
+        DecodedJWT decodedJWT = jwtVerifier().verify(token);
+        String tokenType = decodedJWT.getClaim("type").asString();
+        if (!"refresh".equals(tokenType)) {
             throw new JWTVerificationException("Invalid token type");
         }
         return decodedJWT;

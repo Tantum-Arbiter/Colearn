@@ -8,6 +8,18 @@ module.exports = defineConfig([
     ignores: ['dist/*', '.eslintrc.quality.js', 'scripts/*'],
   },
   {
+    rules: {
+      'react-hooks/immutability': 'warn',
+      'react-hooks/refs': 'warn',
+      'react-hooks/set-state-in-effect': 'warn',
+      'react-hooks/globals': 'warn',
+      'react-hooks/purity': 'warn',
+      'react-hooks/static-components': 'warn',
+      'react-hooks/use-memo': 'warn',
+      'react-hooks/preserve-manual-memoization': 'warn',
+    },
+  },
+  {
     files: ['jest.setup.js', 'jest.setup-after-env.js', '**/*.test.{js,ts,tsx}', '**/__tests__/**/*.{js,ts,tsx}', '__mocks__/**/*.{js,ts,tsx}', '*.config.js'],
     languageOptions: {
       globals: {

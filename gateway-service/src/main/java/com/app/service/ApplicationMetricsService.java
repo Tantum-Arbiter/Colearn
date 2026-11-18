@@ -335,15 +335,6 @@ public class ApplicationMetricsService {
         logger.debug("User login metric recorded: {} user via {}", safeUserType, safeProvider);
     }
 
-    public void recordUserPreferencesUpdate(String userId) {
-        String safeUserId = userId != null ? userId : "unknown";
-        Counter.builder("app.users.preferences.updates")
-                .tags("user_id", safeUserId)
-                .description("Number of user preference updates")
-                .register(meterRegistry)
-                .increment();
-        logger.debug("User preferences update metric recorded for user: {}", safeUserId);
-    }
 
     public void recordUserDeactivated(String userId) {
         String safeUserId = userId != null ? userId : "unknown";
@@ -835,6 +826,38 @@ public class ApplicationMetricsService {
 
         logger.debug("Profile retrieval metric recorded: user={} - {} ({}ms)",
                     safeUserId, found ? "found" : "not_found", processingTimeMs);
+    }
+
+    public void recordRevenueCatRequest(String outcome, long durationMs) {
+        String safeOutcome = outcome != null ? outcome : "unknown";
+        Counter.builder("app.revenuecat.requests")
+                .tag("outcome", safeOutcome)
+                .description("Subscription lookups sent to RevenueCat, by outcome")
+                .register(meterRegistry)
+                .increment();
+        Timer.builder("app.revenuecat.request.duration")
+                .tag("outcome", safeOutcome)
+                .description("Duration of subscription lookups sent to RevenueCat")
+                .register(meterRegistry)
+                .record(durationMs, TimeUnit.MILLISECONDS);
+    }
+
+    public void recordEntitlementRefresh(String source) {
+        Counter.builder("app.entitlements.refresh")
+                .tag("source", source != null ? source : "unknown")
+                .description("Subscription refreshes the app asked for, by where the answer came from")
+                .register(meterRegistry)
+                .increment();
+    }
+
+    public void recordEntitlementDecision(String decision, String source, boolean enforced) {
+        Counter.builder("app.entitlements.decisions")
+                .tags("decision", decision != null ? decision : "unknown",
+                        "source", source != null ? source : "unknown",
+                        "enforced", String.valueOf(enforced))
+                .description("Download entitlement decisions, by outcome and where the tier came from")
+                .register(meterRegistry)
+                .increment();
     }
 
     public void recordGcsOperation(String operation, boolean success, long durationMs) {

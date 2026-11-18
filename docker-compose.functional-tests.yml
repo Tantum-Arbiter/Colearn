@@ -114,6 +114,9 @@ services:
       - GCS_EMULATOR_HOST=http://fake-gcs:4443
       - GCS_BUCKET=colearnwithfreya-assets-test
       - GCS_PROJECT_ID=test-project
+      # RevenueCat is faked by WireMock (wiremock-server/mappings/revenuecat.json); a test value, not a credential
+      - REVENUECAT_API_URL=http://wiremock:8080
+      - REVENUECAT_SECRET_API_KEY=func-test-revenuecat-key
 
     depends_on:
       wiremock:

@@ -11,8 +11,9 @@
 
 import React from 'react';
 import { render, act } from '@testing-library/react-native';
+import { StyleSheet } from 'react-native';
 import { Accelerometer } from 'expo-sensors';
-import { RotatePromptOverlay, FALLBACK_DELAY_MS } from '@/components/stories/rotate-prompt-overlay';
+import { RotatePromptOverlay, FALLBACK_DELAY_MS, ROTATE_PROMPT_BACK } from '@/components/stories/rotate-prompt-overlay';
 import { TURN_SAMPLES_REQUIRED, TURN_SETTLE_MS } from '@/hooks/use-turn-to-landscape';
 
 const emitAccelerometer = (measurement: { x: number; y: number; z: number }) => {
@@ -97,6 +98,44 @@ describe('RotatePromptOverlay', () => {
     pressByLabel(UNSAFE_root, 'rotatePrompt.openForMe');
 
     expect(defaultProps.onOpenAnyway).toHaveBeenCalledTimes(1);
+  });
+
+  describe('the heading', () => {
+    function styleOf(root: any, testID: string) {
+      return StyleSheet.flatten(root.findAll((node: any) => node.props?.testID === testID && node.props?.style !== undefined)[0].props.style);
+    }
+
+    it('should stand the title on the back button\'s line, both centred in one row the button\'s height', () => {
+      const { UNSAFE_root } = render(<RotatePromptOverlay {...defaultProps} />);
+
+      const row = styleOf(UNSAFE_root, 'rotate-prompt-header');
+      const back = styleOf(UNSAFE_root, 'rotate-prompt-back');
+      const title = styleOf(UNSAFE_root, 'rotate-prompt-title');
+
+      expect(row.height).toBe(ROTATE_PROMPT_BACK);
+      expect(back).toEqual(expect.objectContaining({ width: ROTATE_PROMPT_BACK, height: ROTATE_PROMPT_BACK }));
+      expect(title).toEqual(expect.objectContaining({ top: 0, bottom: 0, justifyContent: 'center', alignItems: 'center' }));
+    });
+
+    it('should keep the title clear of the back button on both sides, so it stays centred', () => {
+      const { UNSAFE_root } = render(<RotatePromptOverlay {...defaultProps} />);
+
+      const title = styleOf(UNSAFE_root, 'rotate-prompt-title');
+      const back = styleOf(UNSAFE_root, 'rotate-prompt-back-wrap');
+
+      expect(title.left).toBe(title.right);
+      expect(title.left).toBeGreaterThanOrEqual((back.left as number) + ROTATE_PROMPT_BACK);
+    });
+
+    it('should hold the title to one line, shrinking a long one rather than wrapping it under the button', () => {
+      const { UNSAFE_root } = render(<RotatePromptOverlay {...defaultProps} />);
+
+      const text = UNSAFE_root.findAll((node: any) => node.props?.adjustsFontSizeToFit === true)[0];
+
+      expect(text.props.numberOfLines).toBe(1);
+      expect(text.props.minimumFontScale).toBeLessThanOrEqual(0.75);
+      expect(findByText(text, 'rotatePrompt.ready').length).toBeGreaterThan(0);
+    });
   });
 
   it('should fire onBack from the back button', () => {

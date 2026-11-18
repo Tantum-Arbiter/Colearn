@@ -2,14 +2,14 @@ package com.app.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.cloud.firestore.annotation.IgnoreExtraProperties;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
+@IgnoreExtraProperties
 public class User {
 
     @JsonProperty("id")
@@ -33,19 +33,12 @@ public class User {
     @JsonProperty("updatedAt")
     private Instant updatedAt;
 
-    @JsonProperty("preferences")
-    private UserPreferences preferences;
-
-    @JsonProperty("children")
-    private List<ChildProfile> children = new ArrayList<>();
-
     @JsonProperty("metadata")
     private Map<String, Object> metadata = new HashMap<>();
 
     public User() {
         this.createdAt = Instant.now();
         this.updatedAt = Instant.now();
-        this.preferences = new UserPreferences();
     }
 
     public User(String id, String provider, String providerId) {
@@ -112,22 +105,6 @@ public class User {
         this.updatedAt = updatedAt;
     }
 
-    public UserPreferences getPreferences() {
-        return preferences;
-    }
-
-    public void setPreferences(UserPreferences preferences) {
-        this.preferences = preferences;
-    }
-
-    public List<ChildProfile> getChildren() {
-        return children;
-    }
-
-    public void setChildren(List<ChildProfile> children) {
-        this.children = children;
-    }
-
     public Map<String, Object> getMetadata() {
         return metadata;
     }
@@ -139,35 +116,6 @@ public class User {
     public void updateLastLogin() {
         this.lastLoginAt = Instant.now();
         this.updatedAt = Instant.now();
-    }
-
-    public void addChild(ChildProfile child) {
-        if (this.children == null) {
-            this.children = new ArrayList<>();
-        }
-        this.children.add(child);
-        this.updatedAt = Instant.now();
-    }
-
-    public boolean removeChild(String childId) {
-        if (this.children != null) {
-            boolean removed = this.children.removeIf(child -> child.getId().equals(childId));
-            if (removed) {
-                this.updatedAt = Instant.now();
-            }
-            return removed;
-        }
-        return false;
-    }
-
-    public ChildProfile getChildById(String childId) {
-        if (this.children != null) {
-            return this.children.stream()
-                    .filter(child -> child.getId().equals(childId))
-                    .findFirst()
-                    .orElse(null);
-        }
-        return null;
     }
 
     public void addMetadata(String key, Object value) {
@@ -186,7 +134,6 @@ public class User {
                 ", isActive=" + isActive +
                 ", lastLoginAt=" + lastLoginAt +
                 ", createdAt=" + createdAt +
-                ", childrenCount=" + (children != null ? children.size() : 0) +
                 '}';
     }
 }

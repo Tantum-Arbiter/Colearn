@@ -197,6 +197,43 @@ describe('useGuideScroller', () => {
     expect(scrollTo).toHaveBeenLastCalledWith({ y: 350, animated: true });
   });
 
+  /**
+   * The guide asks before it rings furniture standing over the top of the
+   * page: a page the tour has moved has its own head slid in under it.
+   */
+  it('tells how far the tour has moved the page from where the child left it', () => {
+    const { hook } = withSpy();
+
+    act(() => hook.result.current.onScroll(scrolledTo(120)));
+    const before = hook.result.current.scroller.away();
+    act(() => hook.result.current.scroller.reveal(80));
+    act(() => hook.result.current.onScroll(scrolledTo(200)));
+
+    expect(before).toBe(0);
+    expect(hook.result.current.scroller.away()).toBe(80);
+  });
+
+  it('counts only what the tour did, not where the page has got to on the way', () => {
+    const { hook } = withSpy();
+
+    act(() => hook.result.current.onScroll(scrolledTo(120)));
+    act(() => hook.result.current.scroller.reveal(80));
+    act(() => hook.result.current.onScroll(scrolledTo(160)));
+
+    expect(hook.result.current.scroller.away()).toBe(40);
+  });
+
+  it('has the page home again once the tour lets go of it', () => {
+    const { hook } = withSpy();
+
+    act(() => hook.result.current.onScroll(scrolledTo(120)));
+    act(() => hook.result.current.scroller.reveal(80));
+    act(() => hook.result.current.onScroll(scrolledTo(200)));
+    act(() => hook.result.current.scroller.release());
+
+    expect(hook.result.current.scroller.away()).toBe(0);
+  });
+
   /** The guide watches it in an effect, so a new object every render would loop. */
   it('hands out the same scroller across renders', () => {
     const hook = renderHook(() => useGuideScroller());

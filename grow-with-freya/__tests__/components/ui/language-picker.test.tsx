@@ -60,6 +60,7 @@ describe('LanguagePicker', () => {
       expect(shown).toContain(language.flag);
     });
     expect(shown).toContain('account.selectLanguage');
+    expect(shown).toContain('account.chooseLanguage');
   });
 
   it('marks the language in use', () => {
@@ -88,6 +89,43 @@ describe('LanguagePicker', () => {
     expect(setStoredLanguage).toHaveBeenCalledWith('fr');
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(Haptics.impactAsync).toHaveBeenCalledWith(Haptics.ImpactFeedbackStyle.Medium);
+  });
+
+  it('marks the language in use with a white check badge, and every other row with a chevron', () => {
+    jest.spyOn(require('react-i18next'), 'useTranslation').mockReturnValue({
+      t: (key: string) => key,
+      i18n: { language: 'en' },
+    } as never);
+
+    const view = render(<LanguagePicker visible onClose={jest.fn()} />);
+
+    expect(view.UNSAFE_root.findAll((node: any) => node.props.testID === 'language-option-en-check').length).toBeGreaterThan(0);
+    expect(view.UNSAFE_root.findAll((node: any) => node.props.testID === 'language-option-de-check')).toHaveLength(0);
+    const chevrons = view.UNSAFE_root.findAll((node: any) => node.props.name === 'chevron-forward' && typeof node.type !== 'string');
+    expect(chevrons).toHaveLength(SUPPORTED_LANGUAGES.length - 1);
+  });
+
+  it('lights the chosen row with a bright rim and glow', () => {
+    jest.spyOn(require('react-i18next'), 'useTranslation').mockReturnValue({
+      t: (key: string) => key,
+      i18n: { language: 'en' },
+    } as never);
+
+    const view = render(<LanguagePicker visible onClose={jest.fn()} />);
+
+    const style = (label: string) => StyleSheet.flatten(options(view).find((node: any) => node.props.accessibilityLabel === label)!.props.style({ pressed: false }));
+    expect(style('English').shadowOpacity).toBeGreaterThan(0);
+    expect(style('English').borderColor).not.toBe(style('Polski').borderColor);
+    expect(style('Polski').shadowOpacity).toBeUndefined();
+  });
+
+  it('closes from its close button', () => {
+    const onClose = jest.fn();
+    const view = render(<LanguagePicker visible onClose={onClose} />);
+
+    press(view, 'language-picker-close');
+
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 
   it('closes on a tap outside the card', () => {

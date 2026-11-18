@@ -17,6 +17,8 @@ on:
         default: true
         type: boolean
 
+# Inputs reach the shell only through environment variables, never by interpolation into a
+# script, and only ids that pass .github/scripts/validate-story-ids.sh are used in a path.
 jobs:
   validate-deletion:
     name: Validate Deletion Request
@@ -25,23 +27,29 @@ jobs:
       stories_to_delete: ${{ steps.parse.outputs.stories }}
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Verify confirmation matches
+        env:
+          STORY_IDS: ${{ github.event.inputs.story_ids }}
+          CONFIRM_DELETE: ${{ github.event.inputs.confirm_delete }}
         run: |
-          if [ "${{ github.event.inputs.story_ids }}" != "${{ github.event.inputs.confirm_delete }}" ]; then
+          if [ "$STORY_IDS" != "$CONFIRM_DELETE" ]; then
             echo "ERROR: Confirmation does not match story IDs"
-            echo "Story IDs: ${{ github.event.inputs.story_ids }}"
-            echo "Confirmation: ${{ github.event.inputs.confirm_delete }}"
+            echo "Story IDs: $STORY_IDS"
+            echo "Confirmation: $CONFIRM_DELETE"
             exit 1
           fi
-          echo "Confirmation verified for stories: ${{ github.event.inputs.story_ids }}"
+          echo "Confirmation verified for stories: $STORY_IDS"
 
       - name: Parse and validate story IDs
         id: parse
+        env:
+          STORY_IDS: ${{ github.event.inputs.story_ids }}
         run: |
-          INPUT="${{ github.event.inputs.story_ids }}"
-          # Remove spaces around commas and trim
-          CLEANED=$(echo "$INPUT" | tr -d ' ')
-          echo "stories=$CLEANED" >> $GITHUB_OUTPUT
+          CLEANED=$(.github/scripts/validate-story-ids.sh "$STORY_IDS")
+          echo "stories=$CLEANED" >> "$GITHUB_OUTPUT"
           echo "Stories to process: $CLEANED"
 
           # Count stories
@@ -57,8 +65,9 @@ jobs:
         uses: google-github-actions/setup-gcloud@v2
 
       - name: Check which stories exist
+        env:
+          STORIES: ${{ steps.parse.outputs.stories }}
         run: |
-          STORIES="${{ steps.parse.outputs.stories }}"
           echo "Checking stories in GCS and preparing deletion list..."
           echo ""
 
@@ -102,8 +111,9 @@ jobs:
         run: npm install
 
       - name: Delete from GCS
+        env:
+          STORIES: ${{ needs.validate-deletion.outputs.stories_to_delete }}
         run: |
-          STORIES="${{ needs.validate-deletion.outputs.stories_to_delete }}"
           echo "Deleting stories from GCS..."
 
           IFS=',' read -ra STORY_ARRAY <<< "$STORIES"
@@ -127,7 +137,7 @@ jobs:
           const db = admin.firestore();
 
           async function deleteStories() {
-            const storyIds = '${{ needs.validate-deletion.outputs.stories_to_delete }}'.split(',');
+            const storyIds = process.env.STORIES.split(',');
 
             for (const storyId of storyIds) {
               const docRef = db.collection('stories').doc(storyId);
@@ -146,10 +156,12 @@ jobs:
           "
         env:
           GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+          STORIES: ${{ needs.validate-deletion.outputs.stories_to_delete }}
 
       - name: Create deletion summary
+        env:
+          STORIES: ${{ needs.validate-deletion.outputs.stories_to_delete }}
         run: |
-          STORIES="${{ needs.validate-deletion.outputs.stories_to_delete }}"
           COUNT=$(echo "$STORIES" | tr ',' '\n' | wc -l)
 
           echo "## Stories Deleted" >> $GITHUB_STEP_SUMMARY
@@ -167,4 +179,3 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Deleted by**: @${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
           echo "**Time**: $(date -u)" >> $GITHUB_STEP_SUMMARY
-

@@ -1,0 +1,72 @@
+name: CI Dashboard
+
+# One page on GitHub Pages: green, amber, red or grey for each watched pipeline on
+# mvp and main (.github/ci-dashboard.json says which). Rebuilt when any watched
+# workflow starts or finishes, hourly so stale nightlies show, and by hand.
+# workflow_run and schedule only fire from the default branch, so this file has to
+# be on main for the page to stay live; a push to mvp or main of the dashboard's own
+# files, and workflow_dispatch on any branch, rebuild it from that branch.
+on:
+  workflow_run:
+    workflows:
+      - "Gateway Build and Push"
+      - "Func Tests Build and Deploy"
+      - "Backend checks"
+      - "Grow with Freya - CI/CD Pipeline"
+      - "EAS Build (Manual)"
+      - "App Journeys - Nightly"
+      - "Security Scan"
+    types: [requested, completed]
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+  push:
+    branches: [main, mvp]
+    paths:
+      - '.github/workflows/ci-dashboard.yml'
+      - '.github/scripts/ci-dashboard.py'
+      - '.github/ci-dashboard.json'
+
+permissions:
+  contents: read
+  actions: read
+  pages: write
+  id-token: write
+
+# Deployments to Pages queue rather than cancel, so a burst of finished runs ends on the newest page.
+concurrency:
+  group: ci-dashboard
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Build and publish the dashboard
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Build the dashboard from the latest runs
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          python3 .github/scripts/ci-dashboard.py \
+            --config .github/ci-dashboard.json \
+            --fetch \
+            --out "$RUNNER_TEMP/site"
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v6
+
+      - name: Upload the page
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: ${{ runner.temp }}/site
+
+      - name: Deploy to Pages
+        id: deploy
+        uses: actions/deploy-pages@v5

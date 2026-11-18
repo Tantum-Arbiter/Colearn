@@ -28,12 +28,16 @@ public class ContentVersion {
     @JsonProperty("totalStories")
     private int totalStories;
 
+    @JsonProperty("achievementChecksums")
+    private Map<String, String> achievementChecksums;
+
     public ContentVersion() {
         this.id = "current";
         this.version = 1;
         this.lastUpdated = Timestamp.now();
         this.storyChecksums = new HashMap<>();
         this.totalStories = 0;
+        this.achievementChecksums = new HashMap<>();
     }
 
     public void incrementVersion() {
@@ -95,6 +99,14 @@ public class ContentVersion {
     public void setStoryChecksums(Map<String, String> storyChecksums) {
         this.storyChecksums = storyChecksums;
         this.totalStories = storyChecksums != null ? storyChecksums.size() : 0;
+    }
+
+    public Map<String, String> getAchievementChecksums() {
+        return achievementChecksums;
+    }
+
+    public void setAchievementChecksums(Map<String, String> achievementChecksums) {
+        this.achievementChecksums = achievementChecksums;
     }
 
     public int getTotalStories() {

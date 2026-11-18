@@ -26,3 +26,10 @@ name: Clear anything the app puts in front of the page
             visible: "Not Now"
           commands:
             - tapOn: "Not Now"
+      - runFlow:
+          when:
+            visible:
+              id: "android:id/aerr_wait"
+          commands:
+            - tapOn:
+                id: "android:id/aerr_wait"

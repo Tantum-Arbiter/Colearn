@@ -30,6 +30,8 @@ import * as Haptics from 'expo-haptics';
 import { STORY_MODES, type StoryMode } from '@/components/stories/story-selection-screen';
 import { Fonts } from '@/constants/theme';
 import { HomeSceneContainer } from '@/components/home';
+import type { HomeSceneContainerProps } from '@/components/home/home-scene-container';
+import type { DestinationFocus } from '@/constants/catalogue-destinations';
 import { spinStars, useAmbientLoop, type AmbientStarter } from '@/hooks/use-ambient-animation';
 
 
@@ -83,11 +85,10 @@ const MEMOIZED_STAR_POSITIONS = generateStarPositions();
 // for Image.prefetch (which only accepts URL strings, not numeric asset IDs).
 const MODE_CARD_IMAGES = {
   interactive: require('../assets/images/menu-icons/classic-button.webp'),
-  jigsaw: require('../assets/images/menu-icons/jigsaw-button.webp'),
   music: require('../assets/images/menu-icons/stories-strip.webp'),
 } as const;
 
-// Sub-menu item definitions for Instruments and Learning menus
+// Sub-menu item definitions for the Instruments menu
 interface SubMenuItem {
   id: string;
   labelKey: string;
@@ -99,13 +100,7 @@ const INSTRUMENT_ITEMS: SubMenuItem[] = [
   { id: 'freeplay', labelKey: 'menu.freeplay', image: require('../assets/images/menu-icons/instruments-button.webp') },
 ];
 
-const LEARNING_ITEMS: SubMenuItem[] = [
-  { id: 'spelling', labelKey: 'menu.spelling', image: require('../assets/images/menu-icons/spelling-button.webp') },
-  { id: 'numbers', labelKey: 'menu.numbers', image: require('../assets/images/menu-icons/numbers-button.webp') },
-  { id: 'feelings', labelKey: 'menu.feelings', image: require('../assets/images/menu-icons/feelings-button.webp') },
-];
-
-type SubMenuType = 'stories' | 'instruments' | 'learning' | null;
+type SubMenuType = 'stories' | 'instruments' | null;
 
 // Module-level flag to skip the container fade-in on the next mount.
 // Set by suppressNextContainerFadeIn() before a loading→app transition so the menu
@@ -118,7 +113,8 @@ export function suppressNextContainerFadeIn() {
 }
 
 interface MainMenuProps {
-  onNavigate: (destination: string) => void;
+  onNavigate: (destination: string, focus?: DestinationFocus) => void;
+  onOpenStoryCard?: HomeSceneContainerProps['onOpenStoryCard'];
   isActive?: boolean; // Kept for API compatibility with EnhancedPageTransition
   disableTutorial?: boolean; // When true, don't show the tutorial (used during login transition)
   /** Extra delay (ms) before carousel buttons slide in -used for loading screen reveal */
@@ -129,7 +125,7 @@ interface MainMenuProps {
 
 const HOME_GUIDE_DELAY_MS = 1200;
 
-function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entranceDelay = 0, returnToSubMenu = null }: MainMenuProps) {
+function MainMenuComponent({ onNavigate, onOpenStoryCard, isActive, disableTutorial = false, entranceDelay = 0, returnToSubMenu = null }: MainMenuProps) {
   const useHomeScene = useAppStore((state) => state.useHomeScene);
   const insets = useSafeAreaInsets();
   const { scaledButtonSize, scaledFontSize } = useAccessibility();
@@ -276,7 +272,7 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
   const guardedOnNavigate = useCallback((destination: string) => {
     if (isTutorialPendingRef.current) return; // Block navigation until tutorial completes/skips
     // Intercept buttons that have sub-menus
-    if (destination === 'stories' || destination === 'instruments' || destination === 'learning') {
+    if (destination === 'stories' || destination === 'instruments') {
       handleShowSubMenu(destination as SubMenuType);
       return;
     }
@@ -289,9 +285,13 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
   // is the whole catalogue -- so they never open the carousel's sub-menus.
   // Routing them through guardedOnNavigate swallowed 'stories' into a sub-menu
   // the home scene does not show, and the tile did nothing at all.
-  const navigateFromHome = useCallback((destination: string) => {
+  const navigateFromHome = useCallback((destination: string, focus?: DestinationFocus) => {
     if (isTutorialPendingRef.current) return;
     unlockSlideY.value = withTiming(100, { duration: 300, easing: ReanimatedEasing.in(ReanimatedEasing.ease) });
+    if (focus) {
+      onNavigate(destination, focus);
+      return;
+    }
     onNavigate(destination);
   }, [onNavigate, unlockSlideY]);
 
@@ -345,10 +345,12 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
   // Tutorial target refs - using refs that get populated when buttons render
   const storiesButtonRef = useRef<View>(null);
   const instrumentsButtonRef = useRef<View>(null);
-  const learningButtonRef = useRef<View>(null);
   const musicControlRef = useRef<View>(null);
   const settingsButtonRef = useRef<View>(null);
+  const languageButtonRef = useRef<View>(null);
   const achievementCardRef = useRef<View>(null);
+  const streakOrbRef = useRef<View>(null);
+  const badgesOrbRef = useRef<View>(null);
   const screenTimeRingRef = useRef<View>(null);
   const navLearnRef = useRef<View>(null);
   const navProgressRef = useRef<View>(null);
@@ -359,20 +361,17 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
   const carouselButtonRefs = useMemo(() => ({
     stories: storiesButtonRef,
     instruments: instrumentsButtonRef,
-    learning: learningButtonRef,
   }), []);
 
   // Build tutorial target refs map - maps step IDs to refs
   const tutorialTargetRefs = useMemo(() => ({
-    'stories_button': storiesButtonRef,
-    'instruments_button': instrumentsButtonRef,
-    'learning_button': learningButtonRef,
-    'settings_button': settingsButtonRef,
     'sound_control': musicControlRef,
   }), []);
 
   const homeGuideTargets = useMemo(() => ({
     stories: storiesButtonRef,
+    streak: streakOrbRef,
+    badges: badgesOrbRef,
     achievement: achievementCardRef,
     screenTime: screenTimeRingRef,
     learn: navLearnRef,
@@ -380,16 +379,20 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
     search: navSearchRef,
     profile: navProfileRef,
     sound: musicControlRef,
+    language: languageButtonRef,
   }), []);
 
   const homeTourTargets = useMemo(() => ({
-    'stories_button': storiesButtonRef,
     'achievement_card': achievementCardRef,
+    'streak_orb': streakOrbRef,
+    'continue_orb': storiesButtonRef,
+    'badges_orb': badgesOrbRef,
     'nav_learn': navLearnRef,
     'nav_progress': navProgressRef,
     'screen_time_ring': screenTimeRingRef,
     'nav_search': navSearchRef,
     'nav_profile': navProfileRef,
+    'language_control': languageButtonRef,
     'sound_control': musicControlRef,
   }), []);
 
@@ -504,6 +507,7 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
       <>
         <HomeSceneContainer
           onNavigate={navigateFromHome}
+          onOpenStoryCard={onOpenStoryCard}
           isActive={isActive !== false}
           guideTargets={homeGuideTargets}
           scrollBinding={homeScroller}
@@ -648,7 +652,7 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
               </Pressable>
             );
           })}
-          {(activeSubMenu === 'instruments' ? INSTRUMENT_ITEMS : activeSubMenu === 'learning' ? LEARNING_ITEMS : []).map((item) => (
+          {(activeSubMenu === 'instruments' ? INSTRUMENT_ITEMS : []).map((item) => (
             <Pressable
               key={item.id}
               onPress={() => handleSubMenuItemSelect(item.id)}
@@ -727,10 +731,6 @@ function MainMenuComponent({ onNavigate, isActive, disableTutorial = false, entr
           />
         )}
 
-        {/* Story Modes Tutorial - explains Interactive, Musical & Jigsaw on first view */}
-        {!disableTutorial && (
-          <OwlGuide id="story_modes_tour" active={activeSubMenu === 'stories'} />
-        )}
       </LinearGradient>
     </Animated.View>
   );
@@ -788,7 +788,7 @@ const legacyStyles = StyleSheet.create({
     elevation: 6,
   },
   menuContainer: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden' as const,
@@ -833,14 +833,14 @@ const legacyStyles = StyleSheet.create({
     textShadowRadius: 2,
   },
   unlockShimmer: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(255,255,255,1)',
     borderTopLeftRadius: getResponsiveSize(18),
     borderTopRightRadius: getResponsiveSize(18),
   },
   // Story mode cards (strip-button style, same art as carousel)
   modeCardsOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     justifyContent: 'center',
     alignItems: 'center',
     gap: 10,
@@ -860,12 +860,12 @@ const legacyStyles = StyleSheet.create({
     opacity: 0.85,
   },
   modeStripImage: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     width: '100%' as const,
     height: '100%' as const,
   },
   modeStripTextOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     justifyContent: 'center' as const,
     alignItems: 'center' as const,
     backgroundColor: 'rgba(0, 0, 0, 0.35)',

@@ -45,8 +45,8 @@ public class CatalogEntry {
     @JsonProperty("ageRange")
     private String ageRange;
 
-    @JsonProperty("duration")
-    private Integer duration;
+    @JsonProperty("pageCount")
+    private Integer pageCount;
 
     @JsonProperty("isPremium")
     private boolean premium;
@@ -73,7 +73,9 @@ public class CatalogEntry {
         entry.free = story.isFree();
         entry.referralReward = story.isReferralReward();
         entry.ageRange = story.getAgeRange();
-        entry.duration = story.getDuration();
+        entry.pageCount = story.getPageCount() != null
+                ? story.getPageCount()
+                : story.getPages() != null ? Integer.valueOf(story.getPages().size()) : null;
         entry.premium = story.isPremium();
         entry.gender = story.getGender();
         return entry;
@@ -114,8 +116,8 @@ public class CatalogEntry {
     public String getAgeRange() { return ageRange; }
     public void setAgeRange(String ageRange) { this.ageRange = ageRange; }
 
-    public Integer getDuration() { return duration; }
-    public void setDuration(Integer duration) { this.duration = duration; }
+    public Integer getPageCount() { return pageCount; }
+    public void setPageCount(Integer pageCount) { this.pageCount = pageCount; }
 
     public boolean isPremium() { return premium; }
     public void setPremium(boolean premium) { this.premium = premium; }

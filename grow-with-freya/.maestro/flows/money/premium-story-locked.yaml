@@ -15,10 +15,31 @@ name: A story beyond the free plan wears a lock
     timeout: 30000
 - tapOn: "Search for a story"
 - inputText: "Locked Lantern"
+- pressKey: Enter
 - extendedWaitUntil:
     visible: "The Locked Lantern"
     timeout: 30000
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - extendedWaitUntil:
+          visible:
+            id: "story-cover-lock"
+          timeout: 30000
+- retry:
+    maxRetries: 2
+    commands:
+      - tapOn: "The Locked Lantern"
+      - extendedWaitUntil:
+          visible:
+            id: "trial-scroller"
+          timeout: 15000
+- assertNotVisible:
+    id: "story-card-sheet"
+- tapOn:
+    id: "trial-close"
 - extendedWaitUntil:
-    visible:
-      id: "story-cover-lock"
+    notVisible:
+      id: "trial-scroller"
     timeout: 30000

@@ -1,6 +1,6 @@
 # Agent Operating Rules — `security` (Penetration / Security Tests)
 
-> Read this **after** the root `../CLAUDE.md`.
+> Read this **after** the root `../AGENTS.md`.
 > Python / pytest security test suite — auth bypass, JWT signature attacks, rate-limit probes.
 > **These tests target a running gateway. Treat every change with extreme care.**
 
@@ -8,7 +8,7 @@
 
 ## 1. Communication
 
-Communication & code-display rules: see root `../CLAUDE.md` → **Communication & Code Display**.
+Communication & code-display rules: see root `../AGENTS.md` → **Communication & Code Display**.
 
 ---
 
@@ -28,11 +28,12 @@ Communication & code-display rules: see root `../CLAUDE.md` → **Communication 
 
 ## 3. Safety Rails (read first)
 
-- **Never run against production.** Default target is local gateway / emulator. Production runs require explicit approval and a maintenance window.
+- **Use only a local gateway / emulator for this agent workflow.** Shared-environment security testing needs a separately authorized scope; this document grants no production access.
 - **Never commit real credentials.** `resources/credentials_test_data.json` contains *test* credentials only — verify before any change.
 - **Rate-limit tests are inherently disruptive** — running them against a shared environment will trip the rate limiter for other users. Use a dedicated env.
-- These tests **prove vulnerabilities**. If a test starts passing that was expected to fail (i.e. the bypass now works), **stop and report immediately** — don't "fix" the test to make CI green.
-- **No real PII** in test fixtures, ever. Synthetic data only (root CLAUDE.md: COPPA/UK-GDPR).
+- Every test here asserts that the attack is **denied** (a 400/401/403, or `pytest.fail` on a 200), so green means protected and red means a bypass worked. Read the assertion before interpreting a result all the same, and report the observed attack outcome separately from the pytest status. A successful bypass is a finding; never weaken an assertion to hide it.
+- **No real PII** in test fixtures, ever. Synthetic data only (root AGENTS.md: COPPA/UK-GDPR).
+- **The local stack signs in stub tokens.** With the `test` profile active the gateway accepts only `valid-google-*`, `mock-id-token-<digits>`, `valid-apple-*` and `firebase-id-token` / `test-firebase-id-token` as provider tokens (`JwtConfig`), refuses every other string, and refuses to start beside `prod` or `gcp-dev`. Its rate limits are 6000/min, so the rate-limit probes can only warn there; the hard assertions are the injection, forged-token, spoofed-IP and refresh ones.
 
 ---
 
@@ -49,6 +50,7 @@ Communication & code-display rules: see root `../CLAUDE.md` → **Communication 
 - **One vulnerability per test.** Don't bundle "auth bypass" and "JWT manipulation" into one test.
 - Variable name for the unit under test: **`underTest`** when meaningful (often the HTTP client / wrapper) — for behavioural probes, this may not apply.
 - Use `assertpy` or `pytest`-native assertions; don't introduce new assertion libraries without approval.
+- A `requests.Response` is falsy for every 4xx and 5xx. Test `response is not None`, never `if response:`, or denied answers vanish from the count and a protected gateway reads as unreachable.
 
 ---
 
@@ -70,8 +72,9 @@ For a security finding, capture:
 Test: security/auth-tests/test_<name>.py::test_<case>
 Marker: <auth | rate_limit | security>
 Target: <local | dev | staging>
-Expected: <test was expected to FAIL — bypass should be blocked>
-Actual: <test PASSED — bypass succeeded>
+Expected protection: <attack denied and protected state unchanged>
+Observed outcome: <attack denied | bypass succeeded | inconclusive>
+Assertion type and pytest result: <protection regression | exploit reproduction; PASS | FAIL | NOT RUN>
 Request: <method, path, redacted headers, redacted body>
 Response: <status, redacted body>
 Reproducibility: <every run | intermittent — N/M>
@@ -82,14 +85,14 @@ Reproducibility: <every run | intermittent — N/M>
 
 ## 7. Refactoring
 
-- Security tests **fail loudly when the system is fixed** — this is by design. When a vulnerability is patched in `../gateway-service/`, the corresponding test should be **inverted** (now asserting the bypass fails), not deleted.
+- When a vulnerability is fixed in `../gateway-service/`, the test that caught it keeps asserting denial and should now pass; keep the reproducer intact. Never invert or loosen a test because it started failing.
 - **Always ask** before deleting a test — security tests are evidence of past coverage.
 
 ---
 
 ## 8. Commits
 
-Commit rules: see root `../CLAUDE.md` → **Commits**. **Never include attack payloads in commit messages** — refer to them via test name only.
+Commit rules: see root `../AGENTS.md` → **Commits**. **Never include attack payloads in commit messages** — refer to them via test name only.
 
 ---
 
@@ -99,8 +102,15 @@ Commit rules: see root `../CLAUDE.md` → **Commits**. **Never include attack pa
 # Activate venv (from security/)
 source venv/bin/activate
 
+# Point the probes at a gateway (this is the default)
+export GATEWAY_BASE_URL=http://localhost:8080
+
 # Run all security tests
 pytest
+
+# What CI runs against the compose stack (backend-checks.yml, job security-probes):
+# everything but the 65-second rate-limit reset wait
+pytest --deselect auth-tests/test_rate_limiting.py::TestRateLimiting::test_rate_limit_recovery
 
 # Run by marker
 pytest -m security
@@ -120,5 +130,5 @@ pytest -v --tb=short
 ## 10. Out of Scope
 
 - **Don't add penetration-testing tools (Burp, sqlmap, etc.)** to this project's venv. Use them externally if needed.
-- **Don't add CI integration that runs these against staging on every commit** — they belong in scheduled, isolated security runs only.
+- **Don't add CI integration that runs these against a deployed environment on every commit** — those belong in scheduled, isolated security runs only. The throwaway compose stack is different: `backend-checks.yml` runs the probes against it on every backend change.
 - **Don't share findings outside the repo** — security issues are filed through the agreed disclosure channel, not in public PRs.

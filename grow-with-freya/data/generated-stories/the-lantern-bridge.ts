@@ -1,0 +1,813 @@
+// Phase 12 dev bundle of an ai-tools book, built from
+// contract-fixtures/stories/the-lantern-bridge.json with the ai-tools render of its pages and covers.
+// Retold on 2026-11-15: the tin and shadows pages are gone, Nori finds a bag of lanterns on the last post
+// (the counting game, now page 7) and lights the bridges he finds; pages 7-14 and page 10's choice pages redrawn.
+// 2026-11-17: each hook on page 7 leaves its own lantern (cut from page 8), then the page turns to page 8.
+// Replace with the export-for-app output when that lands.
+import { Story } from '@/types/story';
+
+export const theLanternBridge: Story = {
+      "id": "the-lantern-bridge",
+      "title": "The Lantern Bridge",
+      "localizedTitle": {
+        "en": "The Lantern Bridge",
+      },
+      "category": "learning",
+      "coverImage": require('../../assets/stories/the-lantern-bridge/cover/thumbnail.webp'),
+      "isAvailable": true,
+      "ageRange": "2-4",
+      "pageCount": 15,
+      "displayFit": "cover",
+      "description": "Nori the dormouse wants his lanterns to look perfect, but learns walking together with Toby matters more.",
+      "localizedDescription": {
+        "en": "Nori the dormouse wants his lanterns to look perfect, but learns walking together with Toby matters more.",
+      },
+      "isPremium": true,
+      "isFree": false,
+      "author": "Early Roots",
+      "tags": [
+        "counting",
+        "interactive",
+        "friendship",
+        "animals",
+      ],
+      "pages": [
+        {
+          "id": "the-lantern-bridge-cover",
+          "pageNumber": 0,
+          "type": "cover",
+          "text": "The Lantern Bridge",
+          "backgroundImage": require('../../assets/stories/the-lantern-bridge/cover/cover.webp'),
+        },
+        {
+          "id": "the-lantern-bridge-1",
+          "pageNumber": 1,
+          "type": "story",
+          "backgroundImage": require('../../assets/stories/the-lantern-bridge/page-1/background.webp'),
+          "text": "Nori the dormouse looked out at the park.\nHis best friend was coming to tea in the dark!\n\"A glowing light, a little spark,\nTo guide a friend across the dark!\"",
+          "interactionType": "none",
+          "localizedText": {
+            "1-2": {
+              "en": "Nori looks out at the park.\nA little spark across the dark!",
+            },
+            "2-4": {
+              "en": "Nori the dormouse looked out at the park.\nHis best friend was coming to tea in the dark!\n\"A glowing light, a little spark,\nTo guide a friend across the dark!\"",
+            },
+            "4-6": {
+              "en": "Nori the dormouse peeked out through his window at the shadowy park. His very best friend was coming to tea in the dark! He wanted to make everything bright. \"A glowing light, a little spark, to guide a friend across the dark!\"",
+            },
+          },
+        },
+        {
+          "id": "the-lantern-bridge-2",
+          "pageNumber": 2,
+          "type": "story",
+          "backgroundImage": require('../../assets/stories/the-lantern-bridge/page-2/background.webp'),
+          "text": "He carried his lanterns of yellow and red,\nAnd piled them up high on the porch by his shed.\nToby the mole would be here for his tea!\nAnd Nori was busy as busy could be.",
+          "interactionType": "none",
+          "localizedText": {
+            "1-2": {
+              "en": "Red and yellow lanterns glow.\nLook at Nori wobbling so!",
+            },
+            "2-4": {
+              "en": "He carried his lanterns of yellow and red,\nAnd piled them up high on the porch by his shed.\nToby the mole would be here for his tea!\nAnd Nori was busy as busy could be.",
+            },
+            "4-6": {
+              "en": "He carefully carried his lanterns of yellow and shiny bright red, piling them up high on the wooden porch by his shed. Toby the mole would be here soon for his tea, and Nori was busy as busy could be!",
+            },
+          },
+        },
+        {
+          "id": "the-lantern-bridge-3",
+          "pageNumber": 3,
+          "type": "story",
+          "backgroundImage": require('../../assets/stories/the-lantern-bridge/page-3/background.webp'),
+          "text": "*Whoosh!* went the wind with a terrible blow.\nIt knocked down the lanterns and ruined the glow.\nThe yellow ones rolled and the red ones went *pop*!\nNori ran after them, making them stop.",
+          "interactionType": "none",
+          "localizedText": {
+            "1-2": {
+              "en": "*Whoosh* goes the windy blow!\nThe lanterns roll and lose their glow.",
+            },
+            "2-4": {
+              "en": "*Whoosh!* went the wind with a terrible blow.\nIt knocked down the lanterns and ruined the glow.\nThe yellow ones rolled and the red ones went *pop*!\nNori ran after them, making them stop.",
+            },
+            "4-6": {
+              "en": "Suddenly, *whoosh!* went the autumn wind with a terrible blow. It knocked down his pile and completely ruined the glow. The yellow ones rolled away and the red ones went *pop!* Nori ran fast down the path, trying to make them stop.",
+            },
+          },
+        },
+        {
+          "id": "the-lantern-bridge-4",
+          "pageNumber": 4,
+          "type": "story",
+          "backgroundImage": require('../../assets/stories/the-lantern-bridge/page-4/background.webp'),
+          "text": "He saved just two lanterns that flickered and glowed.\nNori looked hard at the patches of light.\nHe matched up the dots for the start of the road.\n\"I'll carry these two, and I'll make it look right!\"",
+          "interactionType": "learning_challenge",
+          "localizedText": {
+            "1-2": {
+              "en": "Nori saves two little lights.\nHe will make the bridge look right.",
+            },
+            "2-4": {
+              "en": "He saved just two lanterns that flickered and glowed.\nNori looked hard at the patches of light.\nHe matched up the dots for the start of the road.\n\"I'll carry these two, and I'll make it look right!\"",
+            },
+            "4-6": {
+              "en": "He rescued just two little lanterns that flickered and glowed, then looked very hard at the dark patches on the road. He matched up the dots to make everything right. \"I'll carry these two, and I'll share my bright light!\"",
+            },
+          },
+          "learningChallenge": {
+            "challengeId": "the-lantern-bridge-4-challenge",
+            "briefInteractionId": "GWF-002-I01",
+            "mechanicId": "M08",
+            "family": "tap_scene",
+            "adapter": "small_set_choice",
+            "assessmentMode": "guided_observable",
+            "audioDependent": false,
+            "domain": "maths",
+            "skillId": "",
+            "copy": {
+              "title": {
+                "2-4": {
+                  "en": "Match the lights",
+                },
+              },
+              "setupLine": {
+                "2-4": {
+                  "en": "Nori looked hard at the patches of light.",
+                },
+              },
+              "instruction": {
+                "2-4": {
+                  "en": "Nori has two lanterns. Tap the dots that match.",
+                },
+              },
+              "successLine": {
+                "2-4": {
+                  "en": "\"I'll carry these two!\" Nori said with a smile.",
+                },
+              },
+              "onSkip": {
+                "2-4": {
+                  "en": "Nori quickly found the matching dot group on his map.",
+                },
+              },
+              "parentPrompt": {
+                "2-4": {
+                  "en": "Can you see anything else here that comes in twos?",
+                },
+              },
+              "hints": [
+                {
+                  "2-4": {
+                    "en": "Look closely at the two glowing lanterns.",
+                  },
+                },
+                {
+                  "2-4": {
+                    "en": "Now find the group of exactly two dots and tap it.",
+                  },
+                },
+              ],
+            },
+            "items": [
+              {
+                "id": "two-dots",
+                "label": {
+                  "en": "two dots",
+                },
+                "hotspot": {
+                  "position": {
+                    "x": 0.39,
+                    "y": 0.725,
+                  },
+                  "size": {
+                    "width": 0.165,
+                    "height": 0.14,
+                  },
+                },
+                "outcome": {
+                  "successLine": {
+                    "2-4": {
+                      "en": "Two lanterns, two dots! They match.",
+                    },
+                  },
+                },
+              },
+              {
+                "id": "three-dots",
+                "label": {
+                  "en": "three dots",
+                },
+                "hotspot": {
+                  "position": {
+                    "x": 0.56,
+                    "y": 0.74,
+                  },
+                  "size": {
+                    "width": 0.155,
+                    "height": 0.16,
+                  },
+                },
+              },
+            ],
+            "target": "two-dots",
+            "byAge": {
+              "1-2": {
+                "gesture": "tap",
+                "items": [
+                  "two-dots",
+                  "three-dots",
+                ],
+              },
+              "2-4": {
+                "gesture": "tap",
+                "items": [
+                  "two-dots",
+                  "three-dots",
+                ],
+              },
+              "4+": {
+                "gesture": "tap",
+                "items": [
+                  "two-dots",
+                  "three-dots",
+                ],
+              },
+            },
+            "allowSkip": true,
+            "isMusicGate": false,
+          },
+        },
+        {
+          "id": "the-lantern-bridge-5",
+          "pageNumber": 5,
+          "type": "story",
+          "backgroundImage": require('../../assets/stories/the-lantern-bridge/page-5/background.webp'),
+          "text": "He set the two lights on the old wooden floor.\nThe first little bridge wasn't dark anymore!\n\"A glowing light, a little spark,\nTo guide a friend across the dark!\"",
+          "interactionType": "none",
+          "localizedText": {
+            "1-2": {
+              "en": "Two lights shine upon the floor.\nIt is not dark anymore!",
+            },
+            "2-4": {
+              "en": "He set the two lights on the old wooden floor.\nThe first little bridge wasn't dark anymore!\n\"A glowing light, a little spark,\nTo guide a friend across the dark!\"",
+            },
+            "4-6": {
+              "en": "He proudly set the two lights on the old wooden floor. The first little bridge wasn't scary or dark anymore! He smiled as he sang out his favourite remark: \"A glowing light, a little spark, to guide a friend across the dark!\"",
+            },
+          },
+        },
+        {
+          "id": "the-lantern-bridge-6",
+          "pageNumber": 6,
+          "type": "story",
+          "backgroundImage": require('../../assets/stories/the-lantern-bridge/page-6/background.webp'),
+          "text": "The next little bridges were dark as could be.\n\"I need some more lanterns,\" said Nori. \"Let's see!\"\nHe walked down the path by the stream's gentle flow,\nPast three little posts standing all in a row.",
+          "interactionType": "none",
+          "localizedText": {
+            "1-2": {
+              "en": "Walk, walk, walk, by the stream we go.\nOne, two, three posts in a row.",
+            },
+            "2-4": {
+              "en": "The next little bridges were dark as could be.\n\"I need some more lanterns,\" said Nori. \"Let's see!\"\nHe walked down the path by the stream's gentle flow,\nPast three little posts standing all in a row.",
+            },
+            "4-6": {
+              "en": "But the next little bridges were still as dark as could be. \"I need some more lanterns,\" said Nori. \"Let's go and see!\" He walked down the path beside the stream's gentle flow, past three little lamp posts standing all in a row.",
+            },
+          },
+        },
+        {
+          "id": "the-lantern-bridge-7",
+          "pageNumber": 7,
+          "type": "story",
+          "backgroundImage": require('../../assets/stories/the-lantern-bridge/page-7/background.webp'),
+          "text": "On the very last pole hung a bag, old and brown.\nNori stood on his tiptoes and lifted it down.\nInside there were lanterns, all cosy and bright!\n\"One for each hook, to light up the night!\"",
+          "interactionType": "learning_challenge",
+          "localizedText": {
+            "1-2": {
+              "en": "A bag on the pole, old and brown.\nLanterns inside! Lift it down!",
+            },
+            "2-4": {
+              "en": "On the very last pole hung a bag, old and brown.\nNori stood on his tiptoes and lifted it down.\nInside there were lanterns, all cosy and bright!\n\"One for each hook, to light up the night!\"",
+            },
+            "4-6": {
+              "en": "On the very last pole hung a bag, old and brown. Nori stood up on his tiptoes and carefully lifted it down. He peeked inside, and there were lanterns, all cosy and bright! \"One for each hook,\" he whispered, \"to light up the night!\"",
+            },
+          },
+          "learningChallenge": {
+            "challengeId": "the-lantern-bridge-7-challenge",
+            "briefInteractionId": "GWF-002-I02",
+            "mechanicId": "M01",
+            "family": "tap_scene",
+            "adapter": "multi_tap_count",
+            "assessmentMode": "guided_observable",
+            "audioDependent": false,
+            "domain": "maths",
+            "skillId": "",
+            "copy": {
+              "title": {
+                "2-4": {
+                  "en": "Hang the lanterns",
+                },
+              },
+              "setupLine": {
+                "2-4": {
+                  "en": "Inside there were lanterns, all cosy and bright!",
+                },
+              },
+              "instruction": {
+                "2-4": {
+                  "en": "Tap each empty hook to hang a lantern, as we count one, two, three.",
+                },
+              },
+              "successLine": {
+                "2-4": {
+                  "en": "\"One, two, three lanterns!\" said Nori. \"Now the path can glow!\"",
+                },
+              },
+              "onSkip": {
+                "2-4": {
+                  "en": "Nori hung a lantern on each of the three hooks himself.",
+                },
+              },
+              "parentPrompt": {
+                "2-4": {
+                  "en": "How many lanterns did we hang altogether?",
+                },
+              },
+              "hints": [
+                {
+                  "2-4": {
+                    "en": "Look for the empty hooks at the top of the little lamp posts.",
+                  },
+                },
+                {
+                  "2-4": {
+                    "en": "Tap each empty hook, one at a time, as we count.",
+                  },
+                },
+              ],
+            },
+            "items": [
+              {
+                "id": "first-hook",
+                "label": {
+                  "en": "first hook",
+                },
+                "hotspot": {
+                  "position": {
+                    "x": 0.44,
+                    "y": 0.27,
+                  },
+                  "size": {
+                    "width": 0.11,
+                    "height": 0.11,
+                  },
+                },
+                "outcome": {
+                  "stateAfter": {
+                    "image": require('../../assets/stories/the-lantern-bridge/page-7/outcomes/first-hook.webp'),
+                    "position": {
+                      "x": 0.3826,
+                      "y": 0.2818,
+                    },
+                    "size": {
+                      "width": 0.1554,
+                      "height": 0.2219,
+                    },
+                  },
+                },
+              },
+              {
+                "id": "second-hook",
+                "label": {
+                  "en": "second hook",
+                },
+                "hotspot": {
+                  "position": {
+                    "x": 0.585,
+                    "y": 0.27,
+                  },
+                  "size": {
+                    "width": 0.11,
+                    "height": 0.11,
+                  },
+                },
+                "outcome": {
+                  "stateAfter": {
+                    "image": require('../../assets/stories/the-lantern-bridge/page-7/outcomes/second-hook.webp'),
+                    "position": {
+                      "x": 0.529,
+                      "y": 0.2808,
+                    },
+                    "size": {
+                      "width": 0.1526,
+                      "height": 0.2164,
+                    },
+                  },
+                },
+              },
+              {
+                "id": "third-hook",
+                "label": {
+                  "en": "third hook",
+                },
+                "hotspot": {
+                  "position": {
+                    "x": 0.73,
+                    "y": 0.27,
+                  },
+                  "size": {
+                    "width": 0.115,
+                    "height": 0.11,
+                  },
+                },
+                "outcome": {
+                  "stateAfter": {
+                    "image": require('../../assets/stories/the-lantern-bridge/page-7/outcomes/third-hook.webp'),
+                    "position": {
+                      "x": 0.73,
+                      "y": 0.2606,
+                    },
+                    "size": {
+                      "width": 0.105,
+                      "height": 0.1805,
+                    },
+                  },
+                },
+              },
+            ],
+            "target": "",
+            "byAge": {
+              "1-2": {
+                "gesture": "tap",
+                "items": [
+                  "first-hook",
+                  "second-hook",
+                  "third-hook",
+                ],
+              },
+              "2-4": {
+                "gesture": "tap",
+                "items": [
+                  "first-hook",
+                  "second-hook",
+                  "third-hook",
+                ],
+              },
+              "4+": {
+                "gesture": "tap",
+                "items": [
+                  "first-hook",
+                  "second-hook",
+                  "third-hook",
+                ],
+              },
+            },
+            "advanceOnComplete": true,
+            "allowSkip": true,
+            "isMusicGate": false,
+          },
+        },
+        {
+          "id": "the-lantern-bridge-8",
+          "pageNumber": 8,
+          "type": "story",
+          "backgroundImage": require('../../assets/stories/the-lantern-bridge/page-8/background.webp'),
+          "text": "Now the path by the stream had a warm, golden glow,\nWith three little lanterns all hung in a row.\nNori peeked in the bag, and he gave a big grin:\nThere were still lots of lanterns tucked snugly within!",
+          "interactionType": "none",
+          "localizedText": {
+            "1-2": {
+              "en": "Three little lights in a row.\nLook at the path! See it glow!",
+            },
+            "2-4": {
+              "en": "Now the path by the stream had a warm, golden glow,\nWith three little lanterns all hung in a row.\nNori peeked in the bag, and he gave a big grin:\nThere were still lots of lanterns tucked snugly within!",
+            },
+            "4-6": {
+              "en": "Now the path by the stream had a warm, golden glow, with three little lanterns all hung in a row. Nori peeked into the old brown bag and gave a big grin, because there were still lots more lanterns tucked snugly within!",
+            },
+          },
+        },
+        {
+          "id": "the-lantern-bridge-9",
+          "pageNumber": 9,
+          "type": "story",
+          "backgroundImage": require('../../assets/stories/the-lantern-bridge/page-9/background.webp'),
+          "text": "He found some new bridges and hung every light\nOn each little post, till the bridges glowed bright.\n\"A glowing light, a little spark,\nTo guide a friend across the dark!\"",
+          "interactionType": "none",
+          "localizedText": {
+            "1-2": {
+              "en": "Lights on the bridges, warm and bright.\nA little spark in the night!",
+            },
+            "2-4": {
+              "en": "He found some new bridges and hung every light\nOn each little post, till the bridges glowed bright.\n\"A glowing light, a little spark,\nTo guide a friend across the dark!\"",
+            },
+            "4-6": {
+              "en": "Nori found some new bridges, and he hung every single light on each little post, until every bridge glowed warm and bright. The flags shone yellow and red along the rails. \"A glowing light, a little spark, to guide a friend across the dark!\"",
+            },
+          },
+        },
+        {
+          "id": "the-lantern-bridge-10",
+          "pageNumber": 10,
+          "type": "story",
+          "backgroundImage": require('../../assets/stories/the-lantern-bridge/page-10/background.webp'),
+          "text": "\"Toby is here!\" came a voice from the trees.\nNori said, \"Toby! Come walk with me, please!\"\nHe offered a paw or a lamp for the stroll,\nTo welcome his neighbour, the lovely old mole.",
+          "interactionType": "learning_challenge",
+          "localizedText": {
+            "1-2": {
+              "en": "\"Toby is here!\" from the trees.\n\"Come walk with me, please!\"",
+            },
+            "2-4": {
+              "en": "\"Toby is here!\" came a voice from the trees.\nNori said, \"Toby! Come walk with me, please!\"\nHe offered a paw or a lamp for the stroll,\nTo welcome his neighbour, the lovely old mole.",
+            },
+            "4-6": {
+              "en": "\"Toby is here!\" came a friendly voice from the trees. Nori hurried over and said, \"Toby! Come walk with me, please!\" He offered a paw and a glowing lamp for the stroll, to welcome his neighbour, the lovely old mole.",
+            },
+          },
+          "learningChallenge": {
+            "challengeId": "the-lantern-bridge-10-challenge",
+            "briefInteractionId": "GWF-002-I03",
+            "mechanicId": "E02",
+            "family": "choose",
+            "adapter": "support_choice",
+            "assessmentMode": "exploratory_multiple_valid",
+            "audioDependent": false,
+            "domain": "social",
+            "skillId": "",
+            "copy": {
+              "title": {
+                "2-4": {
+                  "en": "Welcome Toby",
+                },
+              },
+              "setupLine": {
+                "2-4": {
+                  "en": "He offered a paw or a lamp for the stroll,",
+                },
+              },
+              "instruction": {
+                "2-4": {
+                  "en": "How could Nori help Toby walk in the dark?",
+                },
+              },
+              "successLine": {
+                "2-4": {
+                  "en": "Toby smiled a great big smile!",
+                },
+              },
+              "onSkip": {
+                "2-4": {
+                  "en": "Nori walked right beside his friend to help him along.",
+                },
+              },
+              "parentPrompt": {
+                "2-4": {
+                  "en": "Why do you think Toby is smiling so much?",
+                },
+              },
+              "hints": [
+                {
+                  "2-4": {
+                    "en": "Look at what Nori is holding out.",
+                  },
+                },
+                {
+                  "2-4": {
+                    "en": "Tap the paw or the little lamp to help.",
+                  },
+                },
+              ],
+            },
+            "items": [
+              {
+                "id": "offer-a-paw",
+                "label": {
+                  "en": "Offer a paw",
+                },
+                "image": require('../../assets/stories/the-lantern-bridge/page-10/challenge/offer-a-paw.webp'),
+                "outcome": {
+                  "successLine": {
+                    "2-4": {
+                      "en": "When a friend feels unsure, you can help:",
+                    },
+                  },
+                  "tips": [
+                    {
+                      "2-4": {
+                        "en": "Hold their hand gently.",
+                      },
+                    },
+                    {
+                      "2-4": {
+                        "en": "Walk at their speed.",
+                      },
+                    },
+                    {
+                      "2-4": {
+                        "en": "Say, “I’m right here.”",
+                      },
+                    },
+                  ],
+                  "storyText": {
+                    "1-2": {
+                      "en": "Paw in paw, nice and slow,\nOff the two good friends go.",
+                    },
+                    "2-4": {
+                      "en": "Toby reached out and he held Nori's paw,\nThe warmest of welcomes a mole ever saw.\n\"I'm right here,\" said Nori. \"We'll go nice and slow.\"\nAnd paw in paw, off down the path they did go.",
+                    },
+                    "4-6": {
+                      "en": "Toby smiled and reached out to hold Nori's paw. It was the warmest welcome a mole ever saw. \"I'm right here,\" said Nori softly. \"We'll go nice and slow.\" Then, paw in paw, off down the path the two friends did go.",
+                    },
+                  },
+                  "stateAfter": {
+                    "image": require('../../assets/stories/the-lantern-bridge/page-10/outcomes/offer-a-paw.webp'),
+                    "position": {
+                      "x": 0,
+                      "y": 0,
+                    },
+                    "size": {
+                      "width": 1,
+                      "height": 1,
+                    },
+                  },
+                },
+              },
+              {
+                "id": "share-the-lamp",
+                "label": {
+                  "en": "Share the lamp",
+                },
+                "image": require('../../assets/stories/the-lantern-bridge/page-10/challenge/share-the-lamp.webp'),
+                "outcome": {
+                  "successLine": {
+                    "2-4": {
+                      "en": "When it is dark, you can help a friend:",
+                    },
+                  },
+                  "tips": [
+                    {
+                      "2-4": {
+                        "en": "Share your light.",
+                      },
+                    },
+                    {
+                      "2-4": {
+                        "en": "Walk close beside them.",
+                      },
+                    },
+                    {
+                      "2-4": {
+                        "en": "Tell them about the steps ahead.",
+                      },
+                    },
+                  ],
+                  "storyText": {
+                    "1-2": {
+                      "en": "Nori's lamp is warm and bright.\nToby walks close in its light.",
+                    },
+                    "2-4": {
+                      "en": "Nori held up his lamp, it was warm and was bright,\nAnd Toby stepped close so he walked in its light.\n\"I'll light up the way, every step that we take,\"\nSaid Nori, \"and go nice and slow for your sake.\"",
+                    },
+                    "4-6": {
+                      "en": "Nori lifted his one working lamp, so warm and so bright, and Toby stepped close beside him to walk in its light. \"I'll light up the way for every step that we take,\" said Nori, \"and we'll go nice and slow, just for your sake.\"",
+                    },
+                  },
+                  "stateAfter": {
+                    "image": require('../../assets/stories/the-lantern-bridge/page-10/outcomes/share-the-lamp.webp'),
+                    "position": {
+                      "x": 0,
+                      "y": 0,
+                    },
+                    "size": {
+                      "width": 1,
+                      "height": 1,
+                    },
+                  },
+                },
+              },
+            ],
+            "target": "",
+            "byAge": {
+              "1-2": {
+                "gesture": "tap",
+                "items": [
+                  "offer-a-paw",
+                  "share-the-lamp",
+                ],
+              },
+              "2-4": {
+                "gesture": "tap",
+                "items": [
+                  "offer-a-paw",
+                  "share-the-lamp",
+                ],
+              },
+              "4+": {
+                "gesture": "tap",
+                "items": [
+                  "offer-a-paw",
+                  "share-the-lamp",
+                ],
+              },
+            },
+            "allowSkip": true,
+            "isMusicGate": false,
+          },
+        },
+        {
+          "id": "the-lantern-bridge-11",
+          "pageNumber": 11,
+          "type": "story",
+          "backgroundImage": require('../../assets/stories/the-lantern-bridge/page-11/background.webp'),
+          "text": "Toby held on and he gave a big smile.\nThey crossed a bright bridge, taking care all the while.\n\"The dark isn't scary,\" said Toby with glee,\n\"Because you are walking right next to me!\"",
+          "interactionType": "none",
+          "localizedText": {
+            "1-2": {
+              "en": "Toby holds on with a smile.\nOver a bridge, step by step, all the while.",
+            },
+            "2-4": {
+              "en": "Toby held on and he gave a big smile.\nThey crossed a bright bridge, taking care all the while.\n\"The dark isn't scary,\" said Toby with glee,\n\"Because you are walking right next to me!\"",
+            },
+            "4-6": {
+              "en": "Toby held on tightly and he gave a great big smile. They crossed a bright bridge together, taking care all the while. \"The dark isn't scary,\" said Toby with glee, \"because you are walking right next to me!\"",
+            },
+          },
+        },
+        {
+          "id": "the-lantern-bridge-12",
+          "pageNumber": 12,
+          "type": "story",
+          "backgroundImage": require('../../assets/stories/the-lantern-bridge/page-12/background.webp'),
+          "text": "\"Your lights are so pretty!\" the little mole said,\n\"On bridge after bridge, glowing yellow and red!\"\nNori just giggled and gave a small bow:\n\"The best part is having you here with me now.\"",
+          "interactionType": "none",
+          "localizedText": {
+            "1-2": {
+              "en": "\"Pretty lights!\" Toby said.\nYellow ones and twinkly red!",
+            },
+            "2-4": {
+              "en": "\"Your lights are so pretty!\" the little mole said,\n\"On bridge after bridge, glowing yellow and red!\"\nNori just giggled and gave a small bow:\n\"The best part is having you here with me now.\"",
+            },
+            "4-6": {
+              "en": "\"Your lights are so pretty!\" the little mole said, gazing at bridge after bridge glowing yellow and twinkly red. Nori just giggled and gave a small, happy bow. \"The very best part,\" he said, \"is having you here with me now.\"",
+            },
+          },
+        },
+        {
+          "id": "the-lantern-bridge-13",
+          "pageNumber": 13,
+          "type": "story",
+          "backgroundImage": require('../../assets/stories/the-lantern-bridge/page-13/background.webp'),
+          "text": "They followed the path where the three lanterns glowed,\nTwo friends side by side on the warm, twinkly road.\nThe windows of Nori's home shone up ahead.\n\"We're nearly there now, little Toby!\" he said.",
+          "interactionType": "none",
+          "localizedText": {
+            "1-2": {
+              "en": "Three little lights in a row.\nHome is near! Off they go!",
+            },
+            "2-4": {
+              "en": "They followed the path where the three lanterns glowed,\nTwo friends side by side on the warm, twinkly road.\nThe windows of Nori's home shone up ahead.\n\"We're nearly there now, little Toby!\" he said.",
+            },
+            "4-6": {
+              "en": "They followed the stream path where the three little lanterns glowed, two friends walking side by side along the warm, twinkly road. The cosy windows of Nori's home were shining just up ahead. \"We're nearly there now, little Toby!\" Nori happily said.",
+            },
+          },
+        },
+        {
+          "id": "the-lantern-bridge-14",
+          "pageNumber": 14,
+          "type": "story",
+          "backgroundImage": require('../../assets/stories/the-lantern-bridge/page-14/background.webp'),
+          "text": "Nori felt warm, like a bug in a rug.\nHe gave his good neighbour a wonderful hug.\nThe lanterns were glowing, the welcome was grand.\nThey stepped on the mat, walking close, paw-in-hand.",
+          "interactionType": "none",
+          "localizedText": {
+            "1-2": {
+              "en": "Nori gives a wonderful hug.\nWarm as a bug in a rug!",
+            },
+            "2-4": {
+              "en": "Nori felt warm, like a bug in a rug.\nHe gave his good neighbour a wonderful hug.\nThe lanterns were glowing, the welcome was grand.\nThey stepped on the mat, walking close, paw-in-hand.",
+            },
+            "4-6": {
+              "en": "Nori felt very warm inside, just like a bug in a rug. He gave his good neighbour a wonderful, happy hug. The lanterns were glowing, and the welcome was truly grand. They stepped on the mat, walking close, paw-in-hand.",
+            },
+          },
+        },
+        {
+          "id": "the-lantern-bridge-15",
+          "pageNumber": 15,
+          "type": "story",
+          "backgroundImage": require('../../assets/stories/the-lantern-bridge/page-15/background.webp'),
+          "text": "They sat at the table for crumpets and tea,\nAs happy as two little neighbours could be.\n\"A glowing light, a little spark,\nTo guide a friend across the dark!\"",
+          "interactionType": "none",
+          "localizedText": {
+            "1-2": {
+              "en": "Crumpets and tea in the dark!\nA glowing light, a little spark!",
+            },
+            "2-4": {
+              "en": "They sat at the table for crumpets and tea,\nAs happy as two little neighbours could be.\n\"A glowing light, a little spark,\nTo guide a friend across the dark!\"",
+            },
+            "4-6": {
+              "en": "They sat down at the table for hot crumpets and sweet tea, feeling as happy as two little neighbours could be. They smiled as they said, \"A glowing light, a little spark, to guide a friend across the dark!\"",
+            },
+          },
+        },
+      ],
+    };

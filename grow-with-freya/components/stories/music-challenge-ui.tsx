@@ -21,6 +21,7 @@ import Animated, {
   withSpring,
   Easing,
   type SharedValue,
+  type AnimatedStyle,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { Logger } from '@/utils/logger';
@@ -48,6 +49,7 @@ import {
 } from '@/services/sheet-flight';
 import { InstrumentBell } from '@/components/music/instrument-bell';
 import { MusicStaffStrip } from '@/components/music/music-staff-strip';
+import { rgba } from '@/utils/worklet-colour';
 
 const log = Logger.create('MusicChallengeUI');
 
@@ -142,7 +144,7 @@ const NoteButton = React.memo(function NoteButton({
   /** Incrementing counter to force re-trigger even when the same note repeats */
   playbackTick: number;
   /** Animated pose applied to just the letter */
-  rotationStyle?: StyleProp<TextStyle>;
+  rotationStyle?: StyleProp<AnimatedStyle<TextStyle>>;
   /** Scaled button size */
   size?: number;
   /** Scaled font size */
@@ -200,7 +202,7 @@ const NoteButton = React.memo(function NoteButton({
   // Animated border/shadow glow that fades in on press and out on release
   const glowStyle = useAnimatedStyle(() => ({
     borderWidth: 3 * glowIntensity.value,
-    borderColor: `rgba(255, 255, 255, ${glowIntensity.value})`,
+    borderColor: rgba(255, 255, 255, glowIntensity.value),
     shadowOpacity: 0.8 * glowIntensity.value,
     shadowRadius: 12 * glowIntensity.value,
   }));
@@ -544,7 +546,7 @@ export const MusicChallengeUI: React.FC<MusicChallengeUIProps> = ({
     item: NoteLayoutItem,
     size: number,
     fontSize: number,
-    labelStyle: StyleProp<TextStyle> = instrumentRotationStyle,
+    labelStyle: StyleProp<AnimatedStyle<TextStyle>> = instrumentRotationStyle,
     entryIndex = 0,
   ) => {
     // Disable next-note highlight during playback to avoid double-flash

@@ -1,8 +1,11 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { GUIDE_IDS, GUIDE_STORAGE_KEY } from '@/constants/owl-guide';
+import { GUIDE_IDS, GUIDE_STORAGE_KEY, currentGuideRevisions } from '@/constants/owl-guide';
 import ScreenTimeService from '@/services/screen-time-service';
 import { SecureStorage } from '@/services/secure-storage';
 import { SUPPORTED_LANGUAGES, setStoredLanguage, type SupportedLanguage } from '@/services/i18n';
+import { PLAN_STEPS_PER_WEEK, type LearningPlanProgress } from '@/constants/learning-plan';
+import { buildWeek, normaliseGoals } from '@/services/plan-builder';
+import type { PlanGoal } from '@/types/learning-plan';
 import { useAppStore, type SubscriptionTier } from '@/store/app-store';
 
 const TIERS: SubscriptionTier[] = ['free', 'basic', 'premium'];
@@ -39,12 +42,25 @@ export interface E2eState {
   tier?: SubscriptionTier;
   childAgeMonths?: number;
   nickname?: string;
+  planDone?: number;
+  goals?: PlanGoal[];
 }
 
-export function isE2eAllowed(isDevBuild: boolean, extra: unknown): boolean {
-  if (isDevBuild) return true;
+/** The gateways a development build may talk to while it also answers seed links; the same shape app.config.js enforces for E2E builds. */
+const LOCAL_GATEWAY = /^http:\/\/(localhost|127\.0\.0\.1|10\.0\.2\.2)(:\d+)?\/?$/;
 
-  return typeof extra === 'object' && extra !== null && (extra as { e2e?: unknown }).e2e === true;
+/**
+ * A seed link can sign a device in, wipe it or reshape its child record, so it is answered only
+ * where that cannot reach a real family: a build made for testing (which app.config.js keeps on
+ * a local gateway), or a development build whose gateway is local or not configured at all,
+ * as Metro's is. A development build pointed at a deployed gateway keeps the door shut.
+ */
+export function isE2eAllowed(isDevBuild: boolean, extra: unknown): boolean {
+  const config = typeof extra === 'object' && extra !== null ? (extra as { e2e?: unknown; gatewayUrl?: unknown }) : {};
+  if (config.e2e === true) return true;
+  if (!isDevBuild) return false;
+
+  return config.gatewayUrl === undefined || (typeof config.gatewayUrl === 'string' && LOCAL_GATEWAY.test(config.gatewayUrl));
 }
 
 function flag(value: string | null): boolean | undefined {
@@ -96,6 +112,14 @@ export function parseE2eLink(link: string): E2eState | null {
   const nickname = params.get('nickname');
   if (nickname) state.nickname = nickname;
 
+  const planDone = Number(params.get('planDone'));
+  if (params.get('planDone') !== null && Number.isInteger(planDone) && planDone >= 0 && planDone <= PLAN_STEPS_PER_WEEK) {
+    state.planDone = planDone;
+  }
+
+  const goals = params.get('goals');
+  if (goals !== null) state.goals = normaliseGoals(goals.split(',').filter(Boolean) as PlanGoal[]);
+
   return state;
 }
 
@@ -131,8 +155,10 @@ export async function applyE2eState(state: E2eState, allowed: boolean): Promise<
   }
 
   if (state.tutorials !== undefined) {
-    const completedGuides = state.tutorials === 'done' ? [...GUIDE_IDS] : [];
-    await AsyncStorage.setItem(GUIDE_STORAGE_KEY, JSON.stringify({ completedGuides, lastResetTimestamp: Date.now() }));
+    const done = state.tutorials === 'done';
+    const completedGuides = done ? [...GUIDE_IDS] : [];
+    const seenRevisions = done ? currentGuideRevisions() : {};
+    await AsyncStorage.setItem(GUIDE_STORAGE_KEY, JSON.stringify({ completedGuides, lastResetTimestamp: Date.now(), seenRevisions }));
   }
 
   if (state.screenTime === 'reset') {
@@ -158,6 +184,7 @@ export async function applyE2eState(state: E2eState, allowed: boolean): Promise<
 
   if (state.progress === 'clear') {
     Object.keys(store.storyProgress ?? {}).forEach((storyId) => store.clearStoryProgress(storyId));
+    store.clearAllGameSaves();
   }
 
   if (state.language) {
@@ -175,4 +202,25 @@ export async function applyE2eState(state: E2eState, allowed: boolean): Promise<
   if (state.childAgeMonths !== undefined) {
     store.setChildAge(state.childAgeMonths);
   }
+
+  if (state.goals !== undefined) {
+    store.setChildGoals(state.goals);
+  }
+
+  if (state.planDone !== undefined) {
+    store.setLearningPlanProgress(state.planDone === 0 ? null : daysDoneYesterday(state.planDone, store.childGoals ?? []));
+  }
+}
+
+function daysDoneYesterday(count: number, goals: readonly PlanGoal[]): LearningPlanProgress {
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  yesterday.setHours(10, 0, 0, 0);
+  const completed: Record<string, string> = {};
+  const week = buildWeek(goals);
+  week.steps.slice(0, count).forEach((step) => {
+    completed[step.id] = yesterday.toISOString();
+  });
+
+  return { planId: week.id, completed };
 }

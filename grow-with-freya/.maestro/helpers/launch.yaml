@@ -1,0 +1,46 @@
+appId: com.growwithfreya.app
+name: Launch the app and let it load the bundle
+# On a CI device neither development build reopens the bundler by itself after
+# a stop, and Android drops a link that arrives while the app is still
+# starting, so the bundler link itself starts the app.
+---
+- runFlow:
+    when:
+      true: ${typeof APP_BUILD !== 'undefined' && APP_BUILD == 'release'}
+    commands:
+      - launchApp
+      - extendedWaitUntil:
+          visible:
+            id: "nothing-waits-here"
+          timeout: 5000
+          optional: true
+- runFlow:
+    when:
+      true: ${typeof APP_BUILD === 'undefined' || APP_BUILD != 'release'}
+    commands:
+      - runFlow:
+          when:
+            platform: iOS
+          commands:
+            - openLink: "com.growwithfreya.app://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081&disableOnboarding=1"
+            - tapOn:
+                text: "Open"
+                optional: true
+      - runFlow:
+          when:
+            platform: Android
+          commands:
+            - openLink: "exp+grow-with-freya://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081&disableOnboarding=1"
+      # A link sent while the bundle is still loading is lost.
+      - extendedWaitUntil:
+          visible:
+            id: "nothing-waits-here"
+          timeout: 15000
+          optional: true
+# The development build introduces its developer menu once, over the app.
+- tapOn:
+    text: "Continue"
+    optional: true
+- tapOn:
+    id: "android:id/aerr_wait"
+    optional: true

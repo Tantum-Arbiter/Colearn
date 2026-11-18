@@ -52,10 +52,10 @@ export default function DeleteAccountPage() {
                   <p className="text-sm text-gray-600">
                     Send an email to{' '}
                     <a
-                      href="mailto:support@growwithfreya.com?subject=Delete%20My%20Account"
+                      href="mailto:contact@earlyroots.co.uk?subject=Delete%20My%20Account"
                       className="text-primary font-medium hover:underline"
                     >
-                      support@growwithfreya.com
+                      contact@earlyroots.co.uk
                     </a>
                     {' '}with the subject <strong>&ldquo;Delete My Account&rdquo;</strong>.
                   </p>

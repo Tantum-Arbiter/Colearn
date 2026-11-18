@@ -65,6 +65,32 @@ describe('CircleActionButton', () => {
     expect(style.height).toBe(56);
   });
 
+  it('fills the round language button with its drawn flag, clipped to the rim', () => {
+    const tree = render(
+      <CircleActionButton type="language" emoji="🇩🇪" language="de" onPress={jest.fn()} accessibilityLabel="account.language" />
+    );
+
+    const clip = tree.UNSAFE_queryAllByProps({ testID: 'circle-action-flag' })[0];
+    const clipStyle = StyleSheet.flatten(clip.props.style);
+    const flag = clip.findAll((n: any) => n.props.width === 53 && n.props.height === 53)[0];
+
+    expect(clipStyle.overflow).toBe('hidden');
+    expect(clipStyle.width).toBe(56 - 3);
+    expect(clipStyle.borderRadius).toBe(clipStyle.width / 2);
+    expect(flag).toBeDefined();
+    expect(tree.UNSAFE_root.findAll((n: any) => n.props.children === '🇩🇪')).toHaveLength(0);
+  });
+
+  it('falls back to the emoji, set larger, for a language with no drawn flag', () => {
+    const tree = render(
+      <CircleActionButton type="language" emoji="🏛️" language="la" onPress={jest.fn()} accessibilityLabel="account.language" />
+    );
+
+    const emoji = tree.UNSAFE_root.findAll((n: any) => n.props.children === '🏛️')[0];
+    expect(tree.UNSAFE_queryAllByProps({ testID: 'circle-action-flag' })).toHaveLength(0);
+    expect(StyleSheet.flatten(emoji.props.style).fontSize).toBeGreaterThan(56 * 0.5);
+  });
+
   it('shows a globe for the language button when it has no flag', () => {
     const tree = render(
       <CircleActionButton type="language" onPress={jest.fn()} accessibilityLabel="account.language" />
@@ -124,6 +150,31 @@ describe('CircleActionButton with a label', () => {
     return [resolved].flat(3).reduce((merged: any, part: any) => ({ ...merged, ...part }), {});
   }
 
+  it('lets a press through the glass sitting over the button', () => {
+    // The frosted layer covers the whole pill, so if it ever took touches the
+    // button would go dead without anything else looking wrong.
+    const tree = render(<CircleActionButton type="home" label="Home" onPress={jest.fn()} accessibilityLabel="Home" />);
+
+    const glass = tree.UNSAFE_queryAllByProps({ testID: 'circle-action-glass' });
+
+    expect(glass.length).toBeGreaterThan(0);
+    expect(glass[0].props.pointerEvents).toBe('none');
+  });
+
+  it('sets the word heavy enough to read over the globe behind it', () => {
+    const tree = render(<CircleActionButton type="home" label="Home" onPress={jest.fn()} accessibilityLabel="Home" />);
+
+    const word = buttonNode(tree, 'circle-action-home')
+      .findAll((n: any) => n.props.children === 'Home')[0];
+    const weight = [word.props.style].flat(Infinity)
+      .filter(Boolean)
+      .map((part: any) => part.fontWeight)
+      .filter(Boolean)
+      .at(-1);
+
+    expect(Number(weight)).toBeGreaterThanOrEqual(800);
+  });
+
   it('shows the word beside the icon', () => {
     const tree = render(<CircleActionButton type="home" label="Home" onPress={jest.fn()} accessibilityLabel="Home" />);
 
@@ -146,6 +197,20 @@ describe('CircleActionButton with a label', () => {
     expect(underTest.borderRadius).toBe(circle.height / 2);
     expect(underTest.width).toBeUndefined();
     expect(underTest.flexDirection).toBe('row');
+  });
+
+  it('fills a labelled pill with the same see-through surface as the round buttons, like the speaker on home', () => {
+    const pill = render(<CircleActionButton type="home" label="Home" onPress={jest.fn()} accessibilityLabel="Home" />);
+    const round = render(<CircleActionButton type="audio" onPress={jest.fn()} accessibilityLabel="Sound" />);
+
+    const pillStyle = StyleSheet.flatten(buttonNode(pill, 'circle-action-home').props.style({ pressed: false }));
+    const roundStyle = StyleSheet.flatten(buttonNode(round, 'circle-action-audio').props.style({ pressed: false }));
+
+    // Pinned to each other rather than to a palette token: the glass carries
+    // its own lighter fill now, and what matters is that the two agree and
+    // that the colour behind still shows through.
+    expect(pillStyle.backgroundColor).toBe(roundStyle.backgroundColor);
+    expect(pillStyle.backgroundColor).toMatch(/^rgba\(.*0?\.\d+\)$/);
   });
 
   it('stays a plain circle without a label', () => {

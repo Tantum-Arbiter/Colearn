@@ -105,7 +105,7 @@ We may update these Terms from time to time. We will notify you of significant c
 ## 12. Contact Information
 
 If you have questions about these Terms, please contact us at:
-- Email: legal@growwithfreya.com
+- Email: contact@earlyroots.co.uk
 - Address: [Company Address]
 
 ## 13. Governing Law

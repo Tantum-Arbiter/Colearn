@@ -4,8 +4,8 @@
  */
 
 import chalk from 'chalk';
-import crypto from 'crypto';
 import { loadStory, loadAllStories, saveStory } from '../lib/story-loader.js';
+import { formatStoryData } from '../lib/story-format.js';
 
 export async function formatCommand(storyId, options) {
   console.log(chalk.cyan.bold('\n🎨 CMS Story Formatter\n'));
@@ -92,78 +92,3 @@ async function formatAllStories(options) {
     console.log(chalk.cyan('[DRY RUN] No files were modified'));
   }
 }
-
-/**
- * Format and normalize story data
- */
-function formatStoryData(data) {
-  const changes = [];
-  const formatted = JSON.parse(JSON.stringify(data)); // Deep clone
-
-  // Ensure required fields
-  if (!formatted.isAvailable) {
-    formatted.isAvailable = true;
-    changes.push('Set isAvailable to true');
-  }
-
-  if (!formatted.isPremium) {
-    formatted.isPremium = false;
-    changes.push('Set isPremium to false');
-  }
-
-  if (!formatted.version) {
-    formatted.version = 1;
-    changes.push('Set version to 1');
-  }
-
-  if (!formatted.author) {
-    formatted.author = 'earlyroots';
-    changes.push('Set author to earlyroots');
-  }
-
-  if (!formatted.tags) {
-    formatted.tags = [];
-    changes.push('Added empty tags array');
-  }
-
-  // Update duration to match page count
-  if (formatted.pages && formatted.duration !== formatted.pages.length) {
-    formatted.duration = formatted.pages.length;
-    changes.push(`Updated duration to ${formatted.pages.length}`);
-  }
-
-  // Calculate and add checksum
-  const checksum = calculateChecksum(formatted);
-  if (formatted.checksum !== checksum) {
-    formatted.checksum = checksum;
-    changes.push('Updated checksum');
-  }
-
-  // Normalize page IDs
-  if (formatted.pages) {
-    formatted.pages.forEach((page, idx) => {
-      const expectedId = idx === 0 ? `${formatted.id}-cover` : `${formatted.id}-${idx}`;
-      if (page.id !== expectedId) {
-        page.id = expectedId;
-        changes.push(`Normalized page ${idx} ID to ${expectedId}`);
-      }
-    });
-  }
-
-  return { formatted, changes };
-}
-
-function calculateChecksum(story) {
-  const content = JSON.stringify({
-    title: story.title,
-    pages: story.pages?.map(p => ({
-      text: p.text,
-      type: p.type,
-      interactionType: p.interactionType,
-      interactiveElements: p.interactiveElements,
-      musicChallenge: p.musicChallenge,
-    })),
-  });
-  return crypto.createHash('sha256').update(content).digest('hex').substring(0, 16);
-}
-

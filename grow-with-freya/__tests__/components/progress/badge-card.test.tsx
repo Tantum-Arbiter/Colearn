@@ -51,6 +51,14 @@ describe('BadgeCard', () => {
     expect(counts.length).toBeGreaterThan(0);
   });
 
+  it('shows a CMS badge by its own copy', () => {
+    const cms = { ...badge(6, 10), titleKey: '', descriptionKey: '', title: 'Calm Collector', description: 'Finish two calming books' };
+    const tree = render(<BadgeCard badge={cms} width={140} onPress={jest.fn()} />);
+
+    expect(byTestId(tree, 'badge-card-story-adventurer')[0].props.accessibilityLabel).toBe('Calm Collector');
+    expect(tree.UNSAFE_root.findAll((n: any) => n.props.children === 'Finish two calming books').length).toBeGreaterThan(0);
+  });
+
   it('exposes its progress to assistive tech without relying on colour', () => {
     const tree = render(<BadgeCard badge={badge(6, 10)} width={140} onPress={jest.fn()} />);
 

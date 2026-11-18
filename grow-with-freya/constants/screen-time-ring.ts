@@ -67,6 +67,7 @@ const WATER = '#4FA8E0';
  */
 export const SCREEN_TIME_GLANCE = {
   fadeDuration: 200,
+  layer: 100,
   // deep water-ink rather than the old near-black red: the surface belongs
   // to the same water as the frame around it
   exceededSurface: '#071A2E',

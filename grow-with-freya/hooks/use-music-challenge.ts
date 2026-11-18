@@ -949,11 +949,10 @@ export function useMusicChallenge(
     if (config?.allowSkip) {
       cancelMelody();
       clearCueTimer();
-      updateState('completed');
-      onComplete?.();
+      updateState('idle');
       log.debug('Music challenge skipped');
     }
-  }, [config, onComplete, cancelMelody, updateState]);
+  }, [config, cancelMelody, updateState]);
 
   const cleanup = useCallback(() => {
     log.debug('cleanup() called');

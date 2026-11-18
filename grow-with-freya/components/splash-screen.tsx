@@ -6,6 +6,7 @@ import Animated, {
   useAnimatedStyle,
   withDelay,
   withTiming,
+  runOnJS,
   Easing
 } from 'react-native-reanimated';
 import * as SplashScreen from 'expo-splash-screen';
@@ -107,8 +108,13 @@ export function AppSplashScreen({ leaving, onGone }: AppSplashScreenProps) {
 
     // Mounting the page behind stalls the first frames after it; counting the
     // fade from then would spend most of it inside the stall.
+    let alive = true;
     let frame = 0;
-    let timer: ReturnType<typeof setTimeout> | undefined;
+    const finish = () => {
+      if (alive) {
+        onGoneRef.current();
+      }
+    };
     frame = requestAnimationFrame(() => {
       frame = requestAnimationFrame(() => {
         const holdLeftMs = holdEndsAtRef.current === null ? 0 : holdEndsAtRef.current - Date.now();
@@ -116,17 +122,16 @@ export function AppSplashScreen({ leaving, onGone }: AppSplashScreenProps) {
 
         opacity.value = withDelay(
           waitMs,
-          withTiming(0, { duration: SPLASH_TIMELINE.exitMs, easing: Easing.inOut(Easing.quad) })
+          withTiming(0, { duration: SPLASH_TIMELINE.exitMs, easing: Easing.inOut(Easing.quad) }, (finished) => {
+            if (finished) runOnJS(finish)();
+          })
         );
-        timer = setTimeout(() => onGoneRef.current(), waitMs + SPLASH_TIMELINE.exitMs);
       });
     });
 
     return () => {
+      alive = false;
       cancelAnimationFrame(frame);
-      if (timer) {
-        clearTimeout(timer);
-      }
     };
   }, [leaving, opacity]);
 

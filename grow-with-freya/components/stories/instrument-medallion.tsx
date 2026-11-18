@@ -16,7 +16,7 @@
 
 import React from 'react';
 import { Image, Pressable, StyleSheet, View, ViewStyle, StyleProp } from 'react-native';
-import Animated from 'react-native-reanimated';
+import Animated, { type AnimatedStyle } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 
 import type { InstrumentDefinition } from '@/services/music-asset-registry';
@@ -31,7 +31,7 @@ export interface InstrumentMedallionProps {
   /** Medallion diameter. */
   size: number;
   /** Animated style driving the focus glow's opacity. */
-  ringStyle?: StyleProp<ViewStyle>;
+  ringStyle?: StyleProp<AnimatedStyle<ViewStyle>>;
   /** Set false for carousels that never show a focus glow. */
   showRing?: boolean;
   isLocked?: boolean;
@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   lockOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.35)',
