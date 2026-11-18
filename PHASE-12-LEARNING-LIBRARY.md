@@ -233,6 +233,7 @@ export interface LearningChallenge {
   byAge: Record<PlanAgeRange, { gesture: MissionGesture; items: string[]; goal?: Record<string, number> }>;
   stateAfter: { image: string; position; size; hitArea? };   // the protected reveal patch
   fallbackElementId: string | null;
+  advanceOnComplete?: boolean;    // the reader turns to the next page by itself when the game is done (addendum, 2026-11-17)
   allowSkip: true;
   isMusicGate: boolean;
 }
@@ -402,7 +403,7 @@ Both repos. Exit: GWF-006 *Little Fox Meets a Friend* plays end to end on device
 >
 > **Told again from page 6, back to 15 pages (2026-11-16).** The operator removed the page where
 > Nori scratches his nose and asked for him to find a bag hanging on the last post, with the story
-> after it told again. The bag holds lanterns: page 6 is the three empty hooks, now a story page;
+> after it told again. The bag holds lanterns: page 6 was the three empty hooks, now a story page;
 > page 7 is the counting game (M01, hang a lantern from the bag on each of the three hooks, tap
 > spots measured on the new painting); pages 8 and 9 light the path and then the whole bridge;
 > page 10 keeps its Choose game (E02) with Toby arriving at the lit bridge; pages 11 to 15 cross it,
@@ -410,6 +411,48 @@ Both repos. Exit: GWF-006 *Little Fox Meets a Friend* plays end to end on device
 > ai-tools brief is changed to match (15 pages, 13 languages machine-drafted, not yet reviewed by a
 > native speaker), so a fresh export gives the same book. The app still ships English only for it.
 > Pages 7 to 14 and page 10's choice pages were drawn again (`compliance/ASSET-REGISTER.md` §5p).
+> Later the same day the operator replaced page 6's counting with a walk: Nori leaves his two
+> lanterns at the start of the bridge and walks along the stream path past the three empty posts,
+> so page 7 opens on the bag hanging from the last one. Page 6 stays a story page with no game,
+> drawn again, its words changed in all three bands and in the brief's 13 languages.
+> Pages 7 and 8 were then drawn again from page 6's picture, so the three posts stand at the
+> same places and angle on all three pages; page 7's tap spots were measured again on it.
+> The operator then had page 11 drawn again so the bridge runs on out of the picture instead of
+> stopping at a front edge, page 12 drawn again from page 9 so its bridge matches the earlier
+> pages, and page 14 drawn again without the bridge behind the cottage.
+> On 2026-11-17 page 9 was drawn again to show only the near half of the lit bridge, the
+> hold-paws picture of page 10 had its joined paws corrected, and its share-the-lamp picture had
+> Toby's raised arm lowered to his side; none of these changes the book's data.
+> On 2026-11-18 page 3 was drawn again without the cottage and the shed behind Nori, so the chase
+> along the garden path has only the tree, bushes and sky behind it; the book's data is unchanged.
+>
+> **New bridges from page 5 (2026-11-17).** The pictures show bridges that differ from page to
+> page, so the operator asked for the words from page 5 on to "talk about finding new bridges, not
+> going back to one". Page 5 lights "the first little bridge"; page 6 has "the next little bridges"
+> still dark; on page 9 Nori "found some new bridges" and lights them; page 11 crosses "a bright
+> bridge"; on page 12 Toby admires the lights "on bridge after bridge". Changed in all three bands
+> where the old words named one bridge, in `contract-fixtures/stories/the-lantern-bridge.json`
+> (checksum rewritten) and the app's copy. The ai-tools book was then changed to match
+> (`output/the-lantern-bridge/book.json`: the English in all three bands, word for word the app's,
+> and the same lines in its 13 drafted languages, still machine drafts), so a fresh export gives
+> the same words. Its source folder (`stories/gwf-75/2-4/the-lantern-bridge/`) got the same
+> change on pages 5, 9, 11 and 12, but its page 6 and its translation sidecars were already behind
+> the rendered book and were left as they were.
+>
+> **Page 7 hangs page 8's lanterns (2026-11-17).** The operator asked for page 7 "to actually add
+> the page 8 lanterns one by one (on button press) - then page 8 loads". Each hook on page 7 now
+> carries `outcome.stateAfter`: its own lantern, cut from page 8's painting with its glow
+> (`page-7/outcomes/<hook>.webp`, placed in master fractions), and the challenge carries the new
+> optional `advanceOnComplete: true`. Pressing a hook hangs its lantern on the painting and numbers
+> it; when the third is up the success line shows, then the reader turns to page 8 by itself, the
+> lanterns staying up through the turn. This is general: any counting scene (`multi_tap_count`,
+> `difference_find`) may give its items a patch and ask for the page to turn (the validator refuses
+> the flag on a game with one answer, or beside a challenge-level `stateAfter`);
+> the schema, the gateway model and the TypeScript type carry the flag, and `items[].outcome.stateAfter`
+> was already in all three. Pages 7 and 8 share their posts pixel for pixel, which is what makes the
+> cut-outs sit true; a redraw of either page means cutting them again. The third lantern hangs in
+> front of the tip of Nori's ear on page 7, because he stands taller there than on page 8. ai-tools
+> does not emit these patches or the flag yet, so a fresh export would drop them.
 >
 
 > **Sound words (2026-11-11).** The reader draws a sound word wrapped in single asterisks

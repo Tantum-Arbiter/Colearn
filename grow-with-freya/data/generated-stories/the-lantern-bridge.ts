@@ -1,7 +1,8 @@
 // Phase 12 dev bundle of an ai-tools book, built from
 // contract-fixtures/stories/the-lantern-bridge.json with the ai-tools render of its pages and covers.
 // Retold on 2026-11-15: the tin and shadows pages are gone, Nori finds a bag of lanterns on the last post
-// (the counting game, now page 7) and lights the whole bridge; pages 7-14 and page 10's choice pages redrawn.
+// (the counting game, now page 7) and lights the bridges he finds; pages 7-14 and page 10's choice pages redrawn.
+// 2026-11-17: each hook on page 7 leaves its own lantern (cut from page 8), then the page turns to page 8.
 // Replace with the export-for-app output when that lands.
 import { Story } from '@/types/story';
 
@@ -241,17 +242,17 @@ export const theLanternBridge: Story = {
           "pageNumber": 5,
           "type": "story",
           "backgroundImage": require('../../assets/stories/the-lantern-bridge/page-5/background.webp'),
-          "text": "He set the two lights on the old wooden floor.\nThe start of the bridge wasn't dark anymore!\n\"A glowing light, a little spark,\nTo guide a friend across the dark!\"",
+          "text": "He set the two lights on the old wooden floor.\nThe first little bridge wasn't dark anymore!\n\"A glowing light, a little spark,\nTo guide a friend across the dark!\"",
           "interactionType": "none",
           "localizedText": {
             "1-2": {
               "en": "Two lights shine upon the floor.\nIt is not dark anymore!",
             },
             "2-4": {
-              "en": "He set the two lights on the old wooden floor.\nThe start of the bridge wasn't dark anymore!\n\"A glowing light, a little spark,\nTo guide a friend across the dark!\"",
+              "en": "He set the two lights on the old wooden floor.\nThe first little bridge wasn't dark anymore!\n\"A glowing light, a little spark,\nTo guide a friend across the dark!\"",
             },
             "4-6": {
-              "en": "He proudly set the two lights on the old wooden floor. The start of the bridge wasn't scary or dark anymore! He smiled as he sang out his favourite remark: \"A glowing light, a little spark, to guide a friend across the dark!\"",
+              "en": "He proudly set the two lights on the old wooden floor. The first little bridge wasn't scary or dark anymore! He smiled as he sang out his favourite remark: \"A glowing light, a little spark, to guide a friend across the dark!\"",
             },
           },
         },
@@ -260,17 +261,17 @@ export const theLanternBridge: Story = {
           "pageNumber": 6,
           "type": "story",
           "backgroundImage": require('../../assets/stories/the-lantern-bridge/page-6/background.webp'),
-          "text": "\"One, two, and three,\" Nori counted the spots.\n\"I need to put lights in these three empty pots.\"\nHe looked at the hooks where the lanterns should go.\n\"But where will I find any lanterns to glow?\"",
+          "text": "The next little bridges were dark as could be.\n\"I need some more lanterns,\" said Nori. \"Let's see!\"\nHe walked down the path by the stream's gentle flow,\nPast three little posts standing all in a row.",
           "interactionType": "none",
           "localizedText": {
             "1-2": {
-              "en": "One, two, three empty spots.\nWhere are lights for all these pots?",
+              "en": "Walk, walk, walk, by the stream we go.\nOne, two, three posts in a row.",
             },
             "2-4": {
-              "en": "\"One, two, and three,\" Nori counted the spots.\n\"I need to put lights in these three empty pots.\"\nHe looked at the hooks where the lanterns should go.\n\"But where will I find any lanterns to glow?\"",
+              "en": "The next little bridges were dark as could be.\n\"I need some more lanterns,\" said Nori. \"Let's see!\"\nHe walked down the path by the stream's gentle flow,\nPast three little posts standing all in a row.",
             },
             "4-6": {
-              "en": "\"One, two, and three,\" Nori counted out the empty spots. \"I need to put lights in these three little pots.\" He looked up at the iron hooks where the lanterns should go. \"But where will I find any more lanterns to glow?\"",
+              "en": "But the next little bridges were still as dark as could be. \"I need some more lanterns,\" said Nori. \"Let's go and see!\" He walked down the path beside the stream's gentle flow, past three little lamp posts standing all in a row.",
             },
           },
         },
@@ -354,12 +355,25 @@ export const theLanternBridge: Story = {
                 },
                 "hotspot": {
                   "position": {
-                    "x": 0.245,
-                    "y": 0.245,
+                    "x": 0.44,
+                    "y": 0.27,
                   },
                   "size": {
-                    "width": 0.115,
-                    "height": 0.125,
+                    "width": 0.11,
+                    "height": 0.11,
+                  },
+                },
+                "outcome": {
+                  "stateAfter": {
+                    "image": require('../../assets/stories/the-lantern-bridge/page-7/outcomes/first-hook.webp'),
+                    "position": {
+                      "x": 0.3826,
+                      "y": 0.2818,
+                    },
+                    "size": {
+                      "width": 0.1554,
+                      "height": 0.2219,
+                    },
                   },
                 },
               },
@@ -370,12 +384,25 @@ export const theLanternBridge: Story = {
                 },
                 "hotspot": {
                   "position": {
-                    "x": 0.42,
-                    "y": 0.245,
+                    "x": 0.585,
+                    "y": 0.27,
                   },
                   "size": {
                     "width": 0.11,
-                    "height": 0.125,
+                    "height": 0.11,
+                  },
+                },
+                "outcome": {
+                  "stateAfter": {
+                    "image": require('../../assets/stories/the-lantern-bridge/page-7/outcomes/second-hook.webp'),
+                    "position": {
+                      "x": 0.529,
+                      "y": 0.2808,
+                    },
+                    "size": {
+                      "width": 0.1526,
+                      "height": 0.2164,
+                    },
                   },
                 },
               },
@@ -386,12 +413,25 @@ export const theLanternBridge: Story = {
                 },
                 "hotspot": {
                   "position": {
-                    "x": 0.615,
-                    "y": 0.235,
+                    "x": 0.73,
+                    "y": 0.27,
                   },
                   "size": {
-                    "width": 0.11,
-                    "height": 0.13,
+                    "width": 0.115,
+                    "height": 0.11,
+                  },
+                },
+                "outcome": {
+                  "stateAfter": {
+                    "image": require('../../assets/stories/the-lantern-bridge/page-7/outcomes/third-hook.webp'),
+                    "position": {
+                      "x": 0.73,
+                      "y": 0.2606,
+                    },
+                    "size": {
+                      "width": 0.105,
+                      "height": 0.1805,
+                    },
                   },
                 },
               },
@@ -423,6 +463,7 @@ export const theLanternBridge: Story = {
                 ],
               },
             },
+            "advanceOnComplete": true,
             "allowSkip": true,
             "isMusicGate": false,
           },
@@ -451,17 +492,17 @@ export const theLanternBridge: Story = {
           "pageNumber": 9,
           "type": "story",
           "backgroundImage": require('../../assets/stories/the-lantern-bridge/page-9/background.webp'),
-          "text": "Back on the bridge, Nori hung every light\nOn each little post, till the bridge glowed bright.\n\"A glowing light, a little spark,\nTo guide a friend across the dark!\"",
+          "text": "He found some new bridges and hung every light\nOn each little post, till the bridges glowed bright.\n\"A glowing light, a little spark,\nTo guide a friend across the dark!\"",
           "interactionType": "none",
           "localizedText": {
             "1-2": {
-              "en": "Lights on the bridge, warm and bright.\nA little spark in the night!",
+              "en": "Lights on the bridges, warm and bright.\nA little spark in the night!",
             },
             "2-4": {
-              "en": "Back on the bridge, Nori hung every light\nOn each little post, till the bridge glowed bright.\n\"A glowing light, a little spark,\nTo guide a friend across the dark!\"",
+              "en": "He found some new bridges and hung every light\nOn each little post, till the bridges glowed bright.\n\"A glowing light, a little spark,\nTo guide a friend across the dark!\"",
             },
             "4-6": {
-              "en": "Back on the bridge, Nori hung every single light on each little post, until the whole bridge glowed warm and bright. The flags shone yellow and red along the rail. \"A glowing light, a little spark, to guide a friend across the dark!\"",
+              "en": "Nori found some new bridges, and he hung every single light on each little post, until every bridge glowed warm and bright. The flags shone yellow and red along the rails. \"A glowing light, a little spark, to guide a friend across the dark!\"",
             },
           },
         },
@@ -678,17 +719,17 @@ export const theLanternBridge: Story = {
           "pageNumber": 11,
           "type": "story",
           "backgroundImage": require('../../assets/stories/the-lantern-bridge/page-11/background.webp'),
-          "text": "Toby held on and he gave a big smile.\nThey crossed the bright bridge, taking care all the while.\n\"The dark isn't scary,\" said Toby with glee,\n\"Because you are walking right next to me!\"",
+          "text": "Toby held on and he gave a big smile.\nThey crossed a bright bridge, taking care all the while.\n\"The dark isn't scary,\" said Toby with glee,\n\"Because you are walking right next to me!\"",
           "interactionType": "none",
           "localizedText": {
             "1-2": {
-              "en": "Toby holds on with a smile.\nOver the bridge, step by step, all the while.",
+              "en": "Toby holds on with a smile.\nOver a bridge, step by step, all the while.",
             },
             "2-4": {
-              "en": "Toby held on and he gave a big smile.\nThey crossed the bright bridge, taking care all the while.\n\"The dark isn't scary,\" said Toby with glee,\n\"Because you are walking right next to me!\"",
+              "en": "Toby held on and he gave a big smile.\nThey crossed a bright bridge, taking care all the while.\n\"The dark isn't scary,\" said Toby with glee,\n\"Because you are walking right next to me!\"",
             },
             "4-6": {
-              "en": "Toby held on tightly and he gave a great big smile. They crossed the bright bridge together, taking care all the while. \"The dark isn't scary,\" said Toby with glee, \"because you are walking right next to me!\"",
+              "en": "Toby held on tightly and he gave a great big smile. They crossed a bright bridge together, taking care all the while. \"The dark isn't scary,\" said Toby with glee, \"because you are walking right next to me!\"",
             },
           },
         },
@@ -697,17 +738,17 @@ export const theLanternBridge: Story = {
           "pageNumber": 12,
           "type": "story",
           "backgroundImage": require('../../assets/stories/the-lantern-bridge/page-12/background.webp'),
-          "text": "\"Your lights are so pretty!\" the little mole said,\n\"The yellow ones, too, and the twinkly red!\"\nNori just giggled and gave a small bow:\n\"The best part is having you here with me now.\"",
+          "text": "\"Your lights are so pretty!\" the little mole said,\n\"On bridge after bridge, glowing yellow and red!\"\nNori just giggled and gave a small bow:\n\"The best part is having you here with me now.\"",
           "interactionType": "none",
           "localizedText": {
             "1-2": {
               "en": "\"Pretty lights!\" Toby said.\nYellow ones and twinkly red!",
             },
             "2-4": {
-              "en": "\"Your lights are so pretty!\" the little mole said,\n\"The yellow ones, too, and the twinkly red!\"\nNori just giggled and gave a small bow:\n\"The best part is having you here with me now.\"",
+              "en": "\"Your lights are so pretty!\" the little mole said,\n\"On bridge after bridge, glowing yellow and red!\"\nNori just giggled and gave a small bow:\n\"The best part is having you here with me now.\"",
             },
             "4-6": {
-              "en": "\"Your lights are so pretty!\" the little mole said, gazing up at the yellow ones and the twinkly red. Nori just giggled and gave a small, happy bow. \"The very best part,\" he said, \"is having you here with me now.\"",
+              "en": "\"Your lights are so pretty!\" the little mole said, gazing at bridge after bridge glowing yellow and twinkly red. Nori just giggled and gave a small, happy bow. \"The very best part,\" he said, \"is having you here with me now.\"",
             },
           },
         },
