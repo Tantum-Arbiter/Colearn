@@ -5,10 +5,13 @@
  */
 
 import React from 'react';
-import { Dimensions, View } from 'react-native';
+import { Dimensions, StyleSheet, View } from 'react-native';
 import { act, render } from '@testing-library/react-native';
 import { StoryTransitionProvider, useStoryTransition } from '@/contexts/story-transition-context';
 import { STORY_STRAIGHT_IN, seatTransform } from '@/constants/story-opening';
+import { allowTurnForPrompt, applyDefaultOrientation, endTurnForPrompt } from '@/hooks/use-story-orientation';
+import { bookPagesGeometry, bookSpineWidth } from '@/components/stories/catalogue/book-frame';
+import { COVER_TITLE } from '@/components/stories/catalogue/cover-title';
 import type { Story } from '@/types/story';
 import * as reanimated from 'react-native-reanimated';
 
@@ -40,6 +43,7 @@ jest.mock('@/services/voice-recording-service', () => ({
 jest.mock('@/hooks/use-story-orientation', () => ({
   allowTurnForPrompt: jest.fn(() => Promise.resolve()),
   applyDefaultOrientation: jest.fn(() => Promise.resolve()),
+  endTurnForPrompt: jest.fn(),
 }));
 jest.mock('@/hooks/use-turn-to-landscape', () => ({ waitForWindowToSettle: jest.fn(() => Promise.resolve()) }));
 jest.mock('@/components/stories/story-card-sheet', () => {
@@ -129,6 +133,42 @@ describe('openStoryStraight', () => {
     expect(STORY_STRAIGHT_IN.glideMs).toBeLessThanOrEqual(800);
   });
 
+  it('keeps the title on the sliding book clear of its spine', () => {
+    screen(834, 1194, true);
+    const tree = open();
+
+    const [title] = byTestId(tree, 'transition-book-title').filter((node: any) => node.props.children === 'Little Fox');
+    const underTest = StyleSheet.flatten(title.props.style);
+
+    expect(underTest.left).toBe(bookSpineWidth(FROM.width) + COVER_TITLE.clearOfSpine);
+  });
+
+  it("shapes the sliding book's pages to the book and its corner, at the size it comes to rest", () => {
+    screen(834, 1194, true);
+    const tree = open();
+    const { scale } = seatTransform({ width: 834, height: 1194 }, FROM);
+    const expected = bookPagesGeometry(FROM.width * scale, 15);
+
+    const underTest = StyleSheet.flatten(byTestId(tree, 'transition-book-pages-block')[0].props.style);
+
+    expect(underTest.borderRightWidth).toBe(expected.block);
+    expect(underTest.top).toBe(expected.rim);
+    expect(underTest.borderTopRightRadius).toBe(expected.corner);
+    const [frame] = byTestId(tree, 'transition-book-pages').filter((node: any) => node.props.style !== undefined);
+    expect(StyleSheet.flatten(frame.props.style).transform).toEqual([{ scale: 1 / scale }]);
+  });
+
+  it("rounds the sliding book's spine to the corner the book is seen with, so no cover shows past it", () => {
+    screen(834, 1194, true);
+    const tree = open();
+    const { scale } = seatTransform({ width: 834, height: 1194 }, FROM);
+
+    const underTest = StyleSheet.flatten(byTestId(tree, 'transition-book-spine')[0].props.style);
+
+    expect(underTest.borderTopLeftRadius).toBeCloseTo(15 / scale, 5);
+    expect(underTest.borderBottomLeftRadius).toBeCloseTo(15 / scale, 5);
+  });
+
   it('opens on the page the child was on, inside the cover', () => {
     screen(834, 1194, true);
     const tree = open();
@@ -151,6 +191,28 @@ describe('openStoryStraight', () => {
     expect(byTestId(tree, 'story-card-sheet')).toHaveLength(0);
   });
 
+  it('hands the reader the book it slid in, though the app only learns which book once the slide has begun', async () => {
+    screen(834, 1194, true);
+    const opened = jest.fn();
+    function Layout() {
+      const value = useStoryTransition();
+      const { selectedStory, setOnBeginCallback } = value;
+      React.useEffect(() => keep(value));
+      React.useEffect(() => {
+        setOnBeginCallback(() => () => { if (selectedStory) opened(selectedStory.id); });
+        return () => setOnBeginCallback(null);
+      }, [selectedStory, setOnBeginCallback]);
+      return <View />;
+    }
+    render(<StoryTransitionProvider><Layout /></StoryTransitionProvider>);
+
+    act(() => { ctx.openStoryStraight(STORY, FROM); });
+    await act(async () => { await jest.advanceTimersByTimeAsync(10_000); });
+
+    expect(opened).toHaveBeenCalledTimes(1);
+    expect(opened).toHaveBeenCalledWith('little-fox');
+  });
+
   it('asks a phone held upright to turn, and Back from there puts the book away rather than raising a card', () => {
     screen(402, 874, false);
     const begin = jest.fn();
@@ -167,6 +229,61 @@ describe('openStoryStraight', () => {
     expect(byTestId(tree, 'story-card-sheet')).toHaveLength(0);
     expect(ctx.isTransitioning).toBe(false);
     expect(begin).not.toHaveBeenCalled();
+  });
+
+  describe('the freedom to turn while the prompt is up', () => {
+    const allow = allowTurnForPrompt as jest.Mock;
+    const restore = applyDefaultOrientation as jest.Mock;
+    const end = endTurnForPrompt as jest.Mock;
+    const toPrompt = () => {
+      screen(402, 874, false);
+      const tree = open(jest.fn());
+      act(() => { jest.advanceTimersByTime(STORY_STRAIGHT_IN.glideMs + 50); });
+      return tree;
+    };
+    beforeEach(() => {
+      allow.mockClear();
+      restore.mockClear();
+      end.mockClear();
+    });
+
+    it('frees the phone as the prompt comes up and keeps hold of it while the prompt waits', () => {
+      toPrompt();
+      act(() => { jest.advanceTimersByTime(20_000); });
+
+      expect(allow).toHaveBeenCalledTimes(1);
+      expect(end).not.toHaveBeenCalled();
+    });
+
+    it('gives the turn up before the portrait lock is asked back, when the child goes Back', () => {
+      const tree = toPrompt();
+
+      act(() => { byTestId(tree, 'rotate-prompt')[0].props.onBack(); });
+
+      expect(end).toHaveBeenCalledTimes(1);
+      expect(restore).toHaveBeenCalledTimes(1);
+      expect(end.mock.invocationCallOrder[0]).toBeLessThan(restore.mock.invocationCallOrder[0]);
+    });
+
+    it.each([
+      ['the phone is turned', 'onTurned'],
+      ['the book is opened for them', 'onOpenAnyway'],
+    ])('gives the turn up once %s, so the reader can have the screen', async (_how, answer) => {
+      const tree = toPrompt();
+
+      act(() => { byTestId(tree, 'rotate-prompt')[0].props[answer](); });
+
+      expect(end).toHaveBeenCalledTimes(1);
+      await act(async () => { await jest.advanceTimersByTimeAsync(10_000); });
+    });
+
+    it('never takes hold of a tablet, which is not asked to turn', () => {
+      screen(834, 1194, true);
+      open(jest.fn());
+      act(() => { jest.advanceTimersByTime(STORY_STRAIGHT_IN.glideMs + 50); });
+
+      expect(allow).not.toHaveBeenCalled();
+    });
   });
 
   it('lets a book opened the ordinary way afterwards go back to its card from the prompt', async () => {

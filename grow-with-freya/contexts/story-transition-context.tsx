@@ -43,7 +43,7 @@ import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppStore } from '@/store/app-store';
 import { STORY_DETAIL_OPENING, STORY_OPENING, STORY_SKETCH, STORY_STRAIGHT_IN, bookOutlinePath, coverFaceOpacity, needsGuidedTurn, openBookGrowScale, openingSeat, seatTransform, sketchDashOffset, storySketchTimeline } from '@/constants/story-opening';
-import { allowTurnForPrompt, applyDefaultOrientation } from '@/hooks/use-story-orientation';
+import { allowTurnForPrompt, applyDefaultOrientation, endTurnForPrompt } from '@/hooks/use-story-orientation';
 import { waitForWindowToSettle } from '@/hooks/use-turn-to-landscape';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { choreograph } from '@/utils/choreograph';
@@ -177,6 +177,8 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   const [targetBookPosition, setTargetBookPosition] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
   const [shouldShowStoryReader, setShouldShowStoryReader] = useState(false);
   const [onBeginCallback, setOnBeginCallback] = useState<(() => void) | null>(null);
+  const onBeginRef = useRef(onBeginCallback);
+  onBeginRef.current = onBeginCallback;
   const [onReturnToModeSelectionCallback, setOnReturnToModeSelectionCallback] = useState<(() => void) | null>(null);
   const [onCancelCallback, setOnCancelCallback] = useState<(() => void) | null>(null);
   const [isExitAnimating, setIsExitAnimating] = useState(false);
@@ -727,6 +729,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
     // The child changed their mind, so take the freedom to turn back away
+    endTurnForPrompt();
     applyDefaultOrientation().catch((error) => log.warn('Failed to restore orientation:', error));
 
     if (straightInRef.current) {
@@ -795,9 +798,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
 
       setTimeout(() => {
         readerReveal.value = 0;
-        if (onBeginCallback) {
-          onBeginCallback();
-        }
+        onBeginRef.current?.();
 
         setTimeout(() => {
           bookExpansion.value = withTiming(1, {
@@ -827,6 +828,7 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
   const beginStory = async () => {
     if (isOpeningRef.current) return;
     isOpeningRef.current = true;
+    endTurnForPrompt();
 
     log.info('Opening story, mode:', selectedMode);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -1885,6 +1887,8 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
     ? getLocalizedText(selectedStory.localizedTitle, selectedStory.title, i18n.language as SupportedLanguage)
     : undefined;
 
+  const seatScale = cardPosition ? openingSeat({ width: screenWidth, height: screenHeight }, cardPosition).scale : 1;
+
   // Note: No borderRadius on images - parent container handles clipping with overflow: hidden
   // All images are loaded from local cache after batch sync
   const renderCoverImage = () => {
@@ -2055,17 +2059,18 @@ export function StoryTransitionProvider({ children }: StoryTransitionProviderPro
                 coverFrontFaceStyle, // Always apply - style handles inactive case
               ]}>
                 {renderCoverImage()}
-                {coverTitle !== undefined && <CoverTitle title={coverTitle} testID="transition-book-title" />}
+                {coverTitle !== undefined && <CoverTitle title={coverTitle} inset={bookSpineWidth(cardPosition.width)} testID="transition-book-title" />}
                 <Animated.View pointerEvents="none" style={[styles.coverShade, coverShadeStyle]} />
                 {/* The same spine, hinge and pages the book wore on the shelf and the card */}
                 <View
-                  style={[styles.bookSpine, { width: bookSpineWidth(cardPosition.width), borderTopLeftRadius: bookBorderRadius, borderBottomLeftRadius: bookBorderRadius }]}
+                  testID="transition-book-spine"
+                  style={[styles.bookSpine, { width: bookSpineWidth(cardPosition.width), borderTopLeftRadius: bookBorderRadius / seatScale, borderBottomLeftRadius: bookBorderRadius / seatScale }]}
                   pointerEvents="none"
                 >
                   <BookSpineShade />
                 </View>
                 <BookHinge />
-                <BookPages testID="transition-book-pages" />
+                <BookPages width={cardPosition.width} radius={bookBorderRadius} scale={seatScale} testID="transition-book-pages" />
               </Animated.View>
 
               {/* Back of cover - white page (shown when rotation > 90deg) */}

@@ -19,6 +19,7 @@ import * as ScreenOrientation from 'expo-screen-orientation';
 import {
   allowTurnForPrompt,
   applyDefaultOrientation,
+  endTurnForPrompt,
   isTabletDevice,
   useStoryOrientation,
   ORIENTATION_SETTLE_TIMEOUT_MS,
@@ -255,6 +256,10 @@ describe('allowTurnForPrompt', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.restoreAllMocks();
+    mockedOrientation.lockAsync.mockResolvedValue(undefined);
+  });
+  afterEach(() => {
+    endTurnForPrompt();
   });
 
   it('should let the device follow the child while they are being asked to turn it', async () => {
@@ -273,13 +278,75 @@ describe('allowTurnForPrompt', () => {
     expect(mockedOrientation.lockAsync).not.toHaveBeenCalledWith(ScreenOrientation.OrientationLock.ALL);
   });
 
-  it('should be undone by the default orientation, which locks a phone back to portrait', async () => {
+  it('should keep a phone free to turn for as long as the prompt is asking, whatever else asks for the default', async () => {
     setWindowSize(390, 844);
     await allowTurnForPrompt();
     mockedOrientation.lockAsync.mockClear();
 
     await applyDefaultOrientation();
+    await applyDefaultOrientation();
 
+    expect(mockedOrientation.lockAsync).not.toHaveBeenCalled();
+  });
+
+  it('should hold the turn from the moment it is asked for, before the device has answered', async () => {
+    setWindowSize(390, 844);
+    let freed: () => void = () => undefined;
+    mockedOrientation.lockAsync.mockImplementationOnce(() => new Promise<void>((resolve) => { freed = resolve; }));
+    const asking = allowTurnForPrompt();
+
+    await applyDefaultOrientation();
+
+    expect(mockedOrientation.lockAsync).toHaveBeenCalledTimes(1);
+    expect(mockedOrientation.lockAsync).toHaveBeenCalledWith(ScreenOrientation.OrientationLock.DEFAULT);
+    freed();
+    await asking;
+  });
+
+  it('should be undone by the default orientation once the prompt has been answered', async () => {
+    setWindowSize(390, 844);
+    await allowTurnForPrompt();
+    mockedOrientation.lockAsync.mockClear();
+
+    endTurnForPrompt();
+    await applyDefaultOrientation();
+
+    expect(mockedOrientation.lockAsync).toHaveBeenCalledTimes(1);
     expect(mockedOrientation.lockAsync).toHaveBeenCalledWith(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+  });
+
+  it('should hold nothing when the device refused to be freed', async () => {
+    setWindowSize(390, 844);
+    mockedOrientation.lockAsync.mockRejectedValueOnce(new Error('no'));
+
+    await expect(allowTurnForPrompt()).rejects.toThrow('no');
+    await applyDefaultOrientation();
+
+    expect(mockedOrientation.lockAsync).toHaveBeenLastCalledWith(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+  });
+
+  it('should make no difference to a phone that was never asked to turn when the hold is ended', async () => {
+    setWindowSize(390, 844);
+
+    endTurnForPrompt();
+    await applyDefaultOrientation();
+
+    expect(mockedOrientation.lockAsync).toHaveBeenCalledTimes(1);
+    expect(mockedOrientation.lockAsync).toHaveBeenCalledWith(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+  });
+
+  it.each([
+    ['upright', 834, 1194],
+    ['sideways', 1194, 834],
+  ])('should never stand between a tablet held %s and its freedom to turn', async (_held, width, height) => {
+    setWindowSize(390, 844);
+    await allowTurnForPrompt();
+    mockedOrientation.lockAsync.mockClear();
+    setWindowSize(width, height);
+
+    await applyDefaultOrientation();
+
+    expect(mockedOrientation.unlockAsync).toHaveBeenCalledTimes(1);
+    expect(mockedOrientation.lockAsync).not.toHaveBeenCalled();
   });
 });

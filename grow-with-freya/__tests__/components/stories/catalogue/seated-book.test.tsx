@@ -22,7 +22,8 @@ import { render } from '@testing-library/react-native';
 import { StyleSheet, Text } from 'react-native';
 import { useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
 import { SeatedBook } from '@/components/stories/catalogue/seated-book';
-import { bookSpineWidth } from '@/components/stories/catalogue/book-frame';
+import { bookPagesGeometry, bookSpineWidth } from '@/components/stories/catalogue/book-frame';
+import { COVER_TITLE } from '@/components/stories/catalogue/cover-title';
 import { STORY_OPENING } from '@/constants/story-opening';
 
 const CARD = { width: 248, height: 155 };
@@ -127,5 +128,31 @@ describe('SeatedBook', () => {
     const underTest = StyleSheet.flatten(byTestId(UNSAFE_root, 'seated-book-spine')[0].props.style);
 
     expect(underTest.width).toBeCloseTo(bookSpineWidth(CARD.width) * (seatWidth / CARD.width), 5);
+  });
+
+  it('should start the title clear of the spine it is drawn beside', () => {
+    const { UNSAFE_root } = renderSeated({ title: 'The Lantern Bridge' });
+    const seatWidth = SCREEN_WIDTH * STORY_OPENING.seatWidthRatio;
+    const spine = bookSpineWidth(CARD.width) * (seatWidth / CARD.width);
+
+    const title = byTestId(UNSAFE_root, 'seated-book-title').find((node: any) => node.props.children === 'The Lantern Bridge');
+    const underTest = StyleSheet.flatten(title.props.style);
+
+    expect(underTest.left).toBeCloseTo(spine + COVER_TITLE.clearOfSpine, 5);
+    expect(underTest.left).toBeGreaterThan(spine);
+  });
+
+  it.each([
+    [402, 15],
+    [834, 22],
+  ])("should shape its pages to the seat on a %ipt screen, on the book's own corner", (screenWidth, radius) => {
+    const { UNSAFE_root } = renderSeated({ screenWidth, radius });
+    const expected = bookPagesGeometry(screenWidth * STORY_OPENING.seatWidthRatio, radius);
+
+    const underTest = StyleSheet.flatten(byTestId(UNSAFE_root, 'seated-book-pages-block')[0].props.style);
+
+    expect(underTest.borderRightWidth).toBe(expected.block);
+    expect(underTest.top).toBe(expected.rim);
+    expect(underTest.borderTopRightRadius).toBe(expected.corner);
   });
 });

@@ -73,7 +73,7 @@ export function SeatedBook({
     >
       <View testID={`${testID}-cover`} style={[styles.cover, { borderRadius: radius }]}>
         {children}
-        {title !== undefined && <CoverTitle title={title} testID={`${testID}-title`} />}
+        {title !== undefined && <CoverTitle title={title} inset={spineWidth} testID={`${testID}-title`} />}
         <View
           testID={`${testID}-spine`}
           style={[styles.spine, { width: spineWidth, backgroundColor: spineColor, borderTopLeftRadius: radius, borderBottomLeftRadius: radius }]}
@@ -82,7 +82,7 @@ export function SeatedBook({
           <BookSpineShade />
         </View>
         <BookHinge />
-        <BookPages testID={`${testID}-pages`} />
+        <BookPages width={seatWidth} radius={radius} boardColor={spineColor} testID={`${testID}-pages`} />
       </View>
     </Animated.View>
   );

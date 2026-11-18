@@ -8,6 +8,7 @@ import React from 'react';
 import { render } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
 import { COVER_TITLE, CoverTitle, TITLE_WASH_GRADIENT } from '@/components/stories/catalogue/cover-title';
+import { SPACE_3 } from '@/components/child-ui/tokens';
 
 function byTestId(root: any, id: string) {
   return root.findAll((node: any) => node.props?.testID === id);
@@ -59,5 +60,26 @@ describe('CoverTitle', () => {
     expect(wash.props.colors).toEqual(TITLE_WASH_GRADIENT);
     expect(underTest.left).toBe(0);
     expect(underTest.width).toBe('70%');
+  });
+
+  it('should start the words at the edge margin on a cover with no spine', () => {
+    const { UNSAFE_root } = render(<CoverTitle title="Wombat" />);
+
+    expect(StyleSheet.flatten(byTestId(UNSAFE_root, 'story-cover-title')[0].props.style).left).toBe(SPACE_3);
+  });
+
+  it.each([8, 14, 22, 31.5])('should start the words clear of a %ipt spine, with a gap between them', (spine) => {
+    const { UNSAFE_root } = render(<CoverTitle title="The Lantern Bridge" inset={spine} />);
+
+    const underTest = StyleSheet.flatten(byTestId(UNSAFE_root, 'story-cover-title')[0].props.style);
+
+    expect(underTest.left).toBe(spine + COVER_TITLE.clearOfSpine);
+    expect(COVER_TITLE.clearOfSpine).toBeGreaterThanOrEqual(6);
+  });
+
+  it('should never start the words nearer the edge than the margin, however thin the spine', () => {
+    const { UNSAFE_root } = render(<CoverTitle title="Wombat" inset={1} />);
+
+    expect(StyleSheet.flatten(byTestId(UNSAFE_root, 'story-cover-title')[0].props.style).left).toBe(SPACE_3);
   });
 });

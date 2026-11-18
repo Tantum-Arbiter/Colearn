@@ -4,7 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { TEXT_PRIMARY } from '@/constants/night-palette';
 import { Fonts } from '@/constants/theme';
 import { useAccessibility } from '@/hooks/use-accessibility';
-import { SPACE_3, TYPE_ROLES, typeSize } from '@/components/child-ui/tokens';
+import { SPACE_2, SPACE_3, TYPE_ROLES, typeSize } from '@/components/child-ui/tokens';
 
 /**
  * The title a book wears on its cover wherever it is shown -- on the shelf,
@@ -12,15 +12,16 @@ import { SPACE_3, TYPE_ROLES, typeSize } from '@/components/child-ui/tokens';
  * tapped is the book they see waiting. A wash of night carries in from the
  * left so the words read over any artwork.
  */
-export const COVER_TITLE = { lines: 3, smallest: 0.6 } as const;
+export const COVER_TITLE = { lines: 3, smallest: 0.6, clearOfSpine: SPACE_2 } as const;
 export const TITLE_WASH_GRADIENT = ['rgba(4, 16, 47, 0.62)', 'rgba(4, 16, 47, 0.0)'] as const;
 
 interface CoverTitleProps {
   title: string;
+  inset?: number;
   testID?: string;
 }
 
-export function CoverTitle({ title, testID = 'story-cover-title' }: CoverTitleProps) {
+export function CoverTitle({ title, inset = 0, testID = 'story-cover-title' }: CoverTitleProps) {
   const { isTablet, scaledFontSize } = useAccessibility();
 
   return (
@@ -34,7 +35,7 @@ export function CoverTitle({ title, testID = 'story-cover-title' }: CoverTitlePr
       />
       <Text
         testID={testID}
-        style={[styles.title, { fontSize: scaledFontSize(typeSize('cardTitle', isTablet)) }]}
+        style={[styles.title, { left: Math.max(SPACE_3, inset + COVER_TITLE.clearOfSpine), fontSize: scaledFontSize(typeSize('cardTitle', isTablet)) }]}
         numberOfLines={COVER_TITLE.lines}
         adjustsFontSizeToFit
         minimumFontScale={COVER_TITLE.smallest}

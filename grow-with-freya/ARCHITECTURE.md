@@ -241,6 +241,17 @@ built and then dropped by the operator on 2026-09-24 (PHASE-8 §8).
 `hooks/use-story-orientation.ts` owns this. `app/_layout.tsx` calls its
 `applyDefaultOrientation()` helper for the app-launch and view-change defaults.
 
+**The turn prompt holds the turn.** While "Turn the screen together" is up, a phone is freed to
+turn (`allowTurnForPrompt()`, `OrientationLock.DEFAULT`), and that freedom is the prompt's until it
+is answered: `applyDefaultOrientation()` leaves a phone alone while the hold is on, and
+`endTurnForPrompt()` gives it up -- called as the book starts to open (the turn, or "Open the book
+for me") and, on Back, before the portrait lock is asked for again. Without the hold, anything
+that re-ran the app's start-up defaults put the portrait lock back under a prompt still waiting:
+the screen stopped following the phone and only the fallback button worked. A live code refresh
+does exactly that, which is how it showed up -- on a simulator, where there is no accelerometer
+to notice the turn instead. Tablets are never held and never locked. "Open the book for me" is a
+fallback beside the turn, never instead of it.
+
 The hook's `lockLandscape()` / `lockPortrait()` resolve on the **emitted
 `orientationChange` event** (with a 1500 ms fallback), not on a fixed `setTimeout`.
 This matters: the Story Garden's book-opening bridge keeps one book rendered across
@@ -442,6 +453,26 @@ Shelf covers show their titles whole too (`CoverTitle`, `COVER_TITLE`): three li
 were two, the type shrinking to 60% (`adjustsFontSizeToFit`, no fixed line height) before any of
 it would be cut with dots, and a soft night text shadow since a third line can reach below the
 wash. The same title rides the seated and opening book.
+
+**The book that slides into view** (the seated book, `SeatedBook`, and the opening book in
+`story-transition-context`) is dressed by `book-frame.tsx`. Operator, 2026-11-16: the title "needs
+to not overlap with the spine", and the page lines "do not align or take the shape of a book".
+- The title starts clear of the spine: `CoverTitle` takes the spine's width as `inset` and begins
+  `COVER_TITLE.clearOfSpine` past it, never nearer the edge than the shelf's margin. Shelf covers
+  have no spine and pass nothing.
+- The fore-edge is drawn by `BookPages` from `bookPagesGeometry(width, radius)`: the back board in
+  the spine's colour on the cover's own edge, a block of cream pages set in from the top, bottom
+  and fore-edge by the same rim, two leaf lines ruled inside it, and a shade where the cover's lip
+  meets the paper. Each is a view with only a right border and right corners concentric with the
+  cover's, so every line bends round the corner with the book and thins away along it. Rim and
+  block scale with the book between `BOOK_FRAME` bounds. The three straight bars it replaces ran
+  top to bottom across the corner.
+- The opening book is laid out at the tapped card's size and carried up by a transform, while its
+  corner is held at the same radius on screen (`compensatedBorderRadius`). `BookPages` therefore
+  takes `scale`: it lays itself out at the size the book rests at, shrunk back by the same factor,
+  with `radius` the corner as seen. Drawing it at card size with the card's radius put curves of
+  several times the corner's radius on the resting book. The opening book's spine corner is
+  divided by the same seat scale for the same reason.
 
 ### The book progress bar (operator, 2026-11-12)
 
@@ -892,6 +923,10 @@ pill's edge in its own orb's colour:
   through the same `beginStory` a card's Read does, or on a phone held upright waits on the
   turn-the-screen prompt first. Back on that prompt puts the book away and lights the home again,
   since there is no card to return to (`straightInRef`; `startTransition` clears it). The page it
+  The opening calls the reader through `onBeginRef`, the latest begin callback, not the one in
+  scope when Continue was tapped: `_layout` registers that callback per selected story, so the
+  one captured at the tap still held no story and the book grew, then fell back to the home
+  without a reader (found on the iPad, 2026-11-16). The page it
   opens on is the one the reader resumes at (`resumePageIndex` over `storyProgress`), and the
   opening reveals that page under the lifting cover (`renderPageImage` defaults to the start
   page). Before, the pill opened the story card with `focusPages`, scrolled to its page strip.

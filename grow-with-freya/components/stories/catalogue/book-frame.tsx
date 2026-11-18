@@ -12,14 +12,50 @@ export const BOOK_FRAME = {
   spineRatio: 0.075,
   spineMin: 8,
   spineMax: 22,
-  pageLines: 3,
-  pageLineWidth: 2,
-  pageGap: 2,
-  pageInset: 5,
+  rimRatio: 0.014,
+  rimMin: 2,
+  rimMax: 5,
+  pagesRatio: 0.032,
+  pagesMin: 4,
+  pagesMax: 10,
+  leafLines: 2,
+  leafLineWidth: 1,
+  lipWidth: 1,
 } as const;
 
 export function bookSpineWidth(width: number): number {
   return Math.round(Math.min(BOOK_FRAME.spineMax, Math.max(BOOK_FRAME.spineMin, width * BOOK_FRAME.spineRatio)));
+}
+
+export interface BookPageCurve {
+  inset: number;
+  corner: number;
+}
+
+export interface BookPagesGeometry {
+  rim: number;
+  block: number;
+  corner: number;
+  leaves: BookPageCurve[];
+  lip: BookPageCurve;
+}
+
+function clampRound(value: number, min: number, max: number): number {
+  return Math.round(Math.min(max, Math.max(min, value)));
+}
+
+export function bookPagesGeometry(width: number, radius: number): BookPagesGeometry {
+  const rim = clampRound(width * BOOK_FRAME.rimRatio, BOOK_FRAME.rimMin, BOOK_FRAME.rimMax);
+  const block = clampRound(width * BOOK_FRAME.pagesRatio, BOOK_FRAME.pagesMin, BOOK_FRAME.pagesMax);
+  const curve = (inset: number): BookPageCurve => ({ inset, corner: Math.max(0, radius - inset) });
+
+  return {
+    rim,
+    block,
+    corner: Math.max(0, radius - rim),
+    leaves: Array.from({ length: BOOK_FRAME.leafLines }, (_, i) => curve(rim + (block * (i + 1)) / (BOOK_FRAME.leafLines + 1))),
+    lip: curve(rim + block),
+  };
 }
 
 export interface BookFrameProps {
@@ -37,14 +73,29 @@ const SPINE_SHADE = ['rgba(255,255,255,0.18)', 'rgba(255,255,255,0.02)', 'rgba(0
 const COVER_SHADE = ['rgba(0,0,0,0.22)', 'rgba(0,0,0,0)'] as const;
 
 /** The block of pages showing at the fore-edge; drawn over any cover. */
-export function BookPages({ testID = 'book-pages' }: { testID?: string }) {
-  const pagesWidth = BOOK_FRAME.pageLines * BOOK_FRAME.pageLineWidth + (BOOK_FRAME.pageLines - 1) * BOOK_FRAME.pageGap;
+export const BOOK_BOARD_COLOR = '#1D2657';
+
+export interface BookPagesProps {
+  width: number;
+  radius: number;
+  scale?: number;
+  boardColor?: string;
+  testID?: string;
+}
+
+export function BookPages({ width, radius, scale = 1, boardColor = BOOK_BOARD_COLOR, testID = 'book-pages' }: BookPagesProps) {
+  const { rim, block, corner, leaves, lip } = bookPagesGeometry(width * scale, radius);
+  const frame = scale === 1 ? styles.pagesFrame : [styles.pagesFrame, { width: `${scale * 100}%` as const, height: `${scale * 100}%` as const, transform: [{ scale: 1 / scale }], transformOrigin: 'left top' as const }];
+  const curved = ({ inset, corner: turn }: BookPageCurve) => ({ top: inset, bottom: inset, right: inset, borderTopRightRadius: turn, borderBottomRightRadius: turn });
 
   return (
-    <View style={[styles.pages, { width: pagesWidth, right: BOOK_FRAME.pageInset }]} pointerEvents="none" testID={testID}>
-      {Array.from({ length: BOOK_FRAME.pageLines }, (_, i) => (
-        <View key={i} style={[styles.pageLine, { width: BOOK_FRAME.pageLineWidth, marginLeft: i === 0 ? 0 : BOOK_FRAME.pageGap }]} />
+    <View style={frame} pointerEvents="none" testID={testID}>
+      <View testID={`${testID}-board`} style={[styles.pageEdge, curved({ inset: 0, corner: radius }), { borderRightWidth: rim, borderColor: boardColor }]} />
+      <View testID={`${testID}-block`} style={[styles.pageEdge, styles.paper, curved({ inset: rim, corner }), { borderRightWidth: block }]} />
+      {leaves.map((leaf, i) => (
+        <View key={i} testID={`${testID}-leaf`} style={[styles.pageEdge, styles.leaf, curved(leaf), { borderRightWidth: BOOK_FRAME.leafLineWidth }]} />
       ))}
+      <View testID={`${testID}-lip`} style={[styles.pageEdge, styles.lip, curved(lip), { borderRightWidth: BOOK_FRAME.lipWidth }]} />
     </View>
   );
 }
@@ -59,7 +110,7 @@ export function BookHinge() {
   return <LinearGradient colors={[...COVER_SHADE]} start={{ x: 0, y: 0.5 }} end={{ x: 0.35, y: 0.5 }} style={styles.hinge} pointerEvents="none" />;
 }
 
-export function BookFrame({ width, height, radius, spineColor = '#1D2657', children, style, testID = 'book-frame' }: BookFrameProps) {
+export function BookFrame({ width, height, radius, spineColor = BOOK_BOARD_COLOR, children, style, testID = 'book-frame' }: BookFrameProps) {
   const spineWidth = bookSpineWidth(width);
   const coverWidth = width - spineWidth;
 
@@ -72,7 +123,7 @@ export function BookFrame({ width, height, radius, spineColor = '#1D2657', child
       <View style={[styles.cover, { width: coverWidth, borderTopRightRadius: radius, borderBottomRightRadius: radius }]} testID={`${testID}-cover`}>
         {children}
         <BookHinge />
-        <BookPages testID={`${testID}-pages`} />
+        <BookPages width={width} radius={radius} boardColor={spineColor} testID={`${testID}-pages`} />
       </View>
     </View>
   );
@@ -104,15 +155,24 @@ const styles = StyleSheet.create({
     left: 0,
     width: '18%',
   },
-  pages: {
+  pagesFrame: {
     position: 'absolute',
-    top: 4,
-    bottom: 4,
-    flexDirection: 'row',
-  },
-  pageLine: {
+    top: 0,
+    left: 0,
+    width: '100%',
     height: '100%',
-    backgroundColor: 'rgba(246, 239, 226, 0.8)',
-    borderRadius: 1,
+  },
+  pageEdge: {
+    position: 'absolute',
+    left: '50%',
+  },
+  paper: {
+    borderColor: 'rgba(246, 239, 226, 0.94)',
+  },
+  leaf: {
+    borderColor: 'rgba(120, 96, 60, 0.45)',
+  },
+  lip: {
+    borderColor: 'rgba(4, 9, 31, 0.38)',
   },
 });
