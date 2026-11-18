@@ -1730,6 +1730,195 @@ describe('StoryBookReader: a learning challenge page', () => {
     expect(narration(view)).toContain('The end.');
     view.unmount();
   });
+
+  describe('a counting page whose spots each leave a picture', () => {
+    const lantern = JSON.parse(JSON.stringify(require('../../../../contract-fixtures/stories/the-lantern-bridge.json')));
+    const hooksPage = lantern.pages.find((page: { pageNumber: number }) => page.pageNumber === 7);
+    const { advanceOnComplete: _flag, ...counting } = hooksPage.learningChallenge;
+    const patchOf = (index: number) => ({ image: `file:///lanterns/${index}.webp`, position: { x: 0.25 + index * 0.2, y: 0.5 }, size: { width: 0.1, height: 0.25 } });
+    const hanging = (turns: boolean): Story => ({
+      ...mockStory,
+      id: 'lantern-slice',
+      pages: [
+        mockStory.pages![0],
+        {
+          ...hooksPage,
+          id: 'lantern-7',
+          pageNumber: 1,
+          backgroundImage: 'test-page1.jpg',
+          learningChallenge: {
+            ...counting,
+            ...(turns ? { advanceOnComplete: true } : {}),
+            items: counting.items.map((item: { id: string }, index: number) => ({ ...item, outcome: { stateAfter: patchOf(index) } })),
+          },
+        },
+        { ...mockStory.pages![2], text: 'The end.' },
+      ],
+    });
+    const hung = (view: ReturnType<typeof render>) =>
+      view.UNSAFE_root
+        .findAll((node) => node.props.testID === 'learning-revealed-picture' && node.props.source !== undefined && node.parent?.props.testID !== 'learning-revealed-picture')
+        .map((node) => node.props.source.uri);
+    const open = (view: ReturnType<typeof render>) => {
+      readOn(view);
+      act(() => press(view, 'right-touch-area'));
+    };
+    const hangAll = (view: ReturnType<typeof render>) => {
+      open(view);
+      for (const id of ['first-hook', 'second-hook', 'third-hook']) act(() => press(view, `scene-spot-${id}`));
+      act(() => jest.advanceTimersByTime(motionDuration(CELEBRATION, false) + 50));
+    };
+
+    it('hangs each picture on the page as its spot is tapped, where its patch sits in the art', () => {
+      const { Dimensions, StyleSheet } = require('react-native');
+      const dimensions = jest.spyOn(Dimensions, 'get').mockReturnValue({ width: 844, height: 390, scale: 1, fontScale: 1 });
+      const view = render(<StoryBookReader story={hanging(true)} onExit={jest.fn()} skipCoverPage skipInitialFadeIn />);
+      open(view);
+      expect(hung(view)).toEqual([]);
+
+      act(() => press(view, 'scene-spot-second-hook'));
+      expect(hung(view)).toEqual(['file:///lanterns/1.webp']);
+      act(() => press(view, 'scene-spot-first-hook'));
+
+      expect(hung(view)).toEqual(['file:///lanterns/1.webp', 'file:///lanterns/0.webp']);
+      const second = view.UNSAFE_root.findAll((node) => node.props.testID === 'learning-revealed-picture' && node.props.source?.uri === 'file:///lanterns/1.webp')[0];
+      expect(StyleSheet.flatten(second.props.style)).toMatchObject({ position: 'absolute', left: 0.45 * 844, top: 0.5 * 390, width: 0.1 * 844, height: 0.25 * 390 });
+      view.unmount();
+      dimensions.mockRestore();
+    });
+
+    it('in a book drawn for cover fit, hangs each picture on the page art where the reader has put it, not on the screen', () => {
+      const { Dimensions, StyleSheet } = require('react-native');
+      const { challengeFocus, patchFrame, readerArtFrame } = require('@/components/stories/page-frame');
+      const dimensions = jest.spyOn(Dimensions, 'get').mockReturnValue({ width: 874, height: 402, scale: 1, fontScale: 1 });
+      const story: Story = { ...hanging(true), displayFit: 'cover' };
+      const view = render(<StoryBookReader story={story} onExit={jest.fn()} skipCoverPage skipInitialFadeIn />);
+      open(view);
+
+      act(() => press(view, 'scene-spot-second-hook'));
+
+      const art = readerArtFrame({ width: 874, height: 402 }, challengeFocus(story.pages![1].learningChallenge), false);
+      const second = view.UNSAFE_root.findAll((node) => node.props.testID === 'learning-revealed-picture' && node.props.source?.uri === 'file:///lanterns/1.webp')[0];
+      expect(art.height).toBeGreaterThan(402);
+      expect(StyleSheet.flatten(second.props.style)).toMatchObject({ position: 'absolute', ...patchFrame(patchOf(1), art) });
+      view.unmount();
+      dimensions.mockRestore();
+    });
+
+    it('hangs three pictures even when every spot leaves the same picture file', () => {
+      const same: Story = { ...hanging(true), pages: hanging(true).pages!.map((page, i) => (i === 1 ? { ...page, learningChallenge: { ...page.learningChallenge!, items: page.learningChallenge!.items.map((item, index) => ({ ...item, outcome: { stateAfter: { ...patchOf(index), image: 'file:///lanterns/one.webp' } } })) } } : page)) };
+      const complaints = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const view = render(<StoryBookReader story={same} onExit={jest.fn()} skipCoverPage skipInitialFadeIn />);
+      open(view);
+
+      for (const id of ['first-hook', 'second-hook', 'third-hook']) act(() => press(view, `scene-spot-${id}`));
+
+      expect(hung(view)).toEqual(['file:///lanterns/one.webp', 'file:///lanterns/one.webp', 'file:///lanterns/one.webp']);
+      expect(complaints.mock.calls.filter((call) => /same key/.test(String(call[0])))).toEqual([]);
+      view.unmount();
+      complaints.mockRestore();
+    });
+
+    it.each([
+      ['fades each picture in', false, true],
+      ['shows each picture at once under Reduce Motion', true, false],
+    ])('%s', (_label, reduced, fades) => {
+      const motion = jest.spyOn(require('@/hooks/use-reduced-motion'), 'useReducedMotion').mockReturnValue(reduced);
+      const view = render(<StoryBookReader story={hanging(true)} onExit={jest.fn()} skipCoverPage skipInitialFadeIn />);
+      open(view);
+
+      act(() => press(view, 'scene-spot-first-hook'));
+
+      const picture = view.UNSAFE_root.findAll((node) => node.props.testID === 'learning-revealed-picture' && node.props.source !== undefined && node.parent?.props.testID !== 'learning-revealed-picture')[0];
+      let holder = picture.parent;
+      while (holder && !('entering' in holder.props)) holder = holder.parent;
+      expect(holder?.props.entering !== undefined).toBe(fades);
+      view.unmount();
+      motion.mockRestore();
+    });
+
+    it('a game told to turn the page still stays when it has tips to leave on the page', async () => {
+      const tipsOnly: Story = { ...storyWithChallenge, pages: storyWithChallenge.pages!.map((page, i) => (i === 1 ? { ...page, learningChallenge: { ...page.learningChallenge!, advanceOnComplete: true, items: page.learningChallenge!.items.map((item) => ({ ...item, outcome: { successLine: item.outcome!.successLine, tips: item.outcome!.tips } })) } } : page)) };
+      const view = render(<StoryBookReader story={tipsOnly} onExit={jest.fn()} skipCoverPage skipInitialFadeIn />);
+
+      choose(view, 'choose-card-finn-talks-softly');
+      await act(async () => { jest.advanceTimersByTime(3000); });
+
+      expect(narration(view)).not.toContain('The end.');
+      expect(has(view, 'learning-tips-badge')).toBe(true);
+      view.unmount();
+    });
+
+    it('a game told to turn the page still stays to show a page picture or words of its own', async () => {
+      const turning: Story = { ...ownPages, pages: ownPages.pages!.map((page, i) => (i === 1 ? { ...page, learningChallenge: { ...page.learningChallenge!, advanceOnComplete: true } } : page)) };
+      const view = render(<StoryBookReader story={turning} onExit={jest.fn()} skipCoverPage skipInitialFadeIn />);
+
+      choose(view, 'choose-card-finn-talks-softly');
+      await act(async () => { jest.advanceTimersByTime(3000); });
+
+      expect(narration(view)).not.toContain('The end.');
+      expect(outcomePictures(view).map((node) => node.props.source)).toEqual([{ uri: 'file:///outcomes/finn-talks-softly.webp' }]);
+      view.unmount();
+    });
+
+    it('turns the page by itself once the last picture is hung, and the pictures stay up through the turn', async () => {
+      const view = render(<StoryBookReader story={hanging(true)} onExit={jest.fn()} skipCoverPage skipInitialFadeIn />);
+
+      hangAll(view);
+      act(() => jest.advanceTimersByTime(50));
+      expect(has(view, 'learning-challenge-host')).toBe(false);
+      expect(hung(view)).toHaveLength(3);
+      await act(async () => { jest.advanceTimersByTime(3000); });
+
+      expect(narration(view)).toContain('The end.');
+      expect(hung(view)).toEqual([]);
+      expect(store.recordChallengeCompleted).toHaveBeenCalledTimes(1);
+      expect(store.recordChallengeCompleted).toHaveBeenCalledWith('learning');
+      view.unmount();
+    });
+
+    it('a page that is not told to turn keeps its pictures and waits for the next-page button', async () => {
+      const view = render(<StoryBookReader story={hanging(false)} onExit={jest.fn()} skipCoverPage skipInitialFadeIn />);
+
+      hangAll(view);
+      await act(async () => { jest.advanceTimersByTime(3000); });
+      expect(has(view, 'learning-challenge-host')).toBe(false);
+      expect(narration(view)).not.toContain('The end.');
+      expect(hung(view)).toHaveLength(3);
+
+      for (let presses = 0; presses < 4 && !narration(view).includes('The end.'); presses += 1) {
+        act(() => press(view, 'right-touch-area'));
+        await act(async () => { jest.advanceTimersByTime(3000); });
+      }
+
+      expect(has(view, 'learning-challenge-host')).toBe(false);
+      expect(narration(view)).toContain('The end.');
+      expect(hung(view)).toEqual([]);
+      view.unmount();
+    });
+
+    it('coming back to the page shows it bare again, ready for another go', async () => {
+      const view = render(<StoryBookReader story={hanging(true)} onExit={jest.fn()} skipCoverPage skipInitialFadeIn />);
+      hangAll(view);
+      await act(async () => { jest.advanceTimersByTime(3000); });
+
+      act(() => press(view, 'left-touch-area'));
+      await act(async () => { jest.advanceTimersByTime(3000); });
+
+      expect(narration(view)).not.toContain('The end.');
+      expect(hung(view)).toEqual([]);
+      expect(has(view, 'learning-challenge-host')).toBe(false);
+
+      for (let presses = 0; presses < 4 && !has(view, 'learning-challenge-host'); presses += 1) {
+        act(() => press(view, 'right-touch-area'));
+        act(() => jest.advanceTimersByTime(FADE_OUT_MS));
+      }
+      expect(has(view, 'learning-challenge-host')).toBe(true);
+      act(() => press(view, 'scene-spot-third-hook'));
+      expect(hung(view)).toEqual(['file:///lanterns/2.webp']);
+      view.unmount();
+    });
+  });
 });
 
 describe('StoryBookReader: a book drawn for cover fit', () => {

@@ -158,6 +158,7 @@ export interface LearningChallenge {
   byAge: Record<PlanAgeRange, ChallengeBand>;
   stateAfter?: ChallengeStateAfter;
   fallbackElementId?: string;
+  advanceOnComplete?: boolean;
   allowSkip: boolean;
   isMusicGate: boolean;
 }

@@ -73,6 +73,10 @@ public class LearningChallenge {
     @PropertyName("fallbackElementId")
     private String fallbackElementId;
 
+    @JsonProperty("advanceOnComplete")
+    @PropertyName("advanceOnComplete")
+    private Boolean advanceOnComplete;
+
     @JsonProperty("allowSkip")
     @PropertyName("allowSkip")
     private boolean allowSkip;
@@ -447,6 +451,10 @@ public class LearningChallenge {
     public String getFallbackElementId() { return fallbackElementId; }
     @PropertyName("fallbackElementId")
     public void setFallbackElementId(String fallbackElementId) { this.fallbackElementId = fallbackElementId; }
+    @PropertyName("advanceOnComplete")
+    public Boolean getAdvanceOnComplete() { return advanceOnComplete; }
+    @PropertyName("advanceOnComplete")
+    public void setAdvanceOnComplete(Boolean advanceOnComplete) { this.advanceOnComplete = advanceOnComplete; }
     @PropertyName("allowSkip")
     public boolean isAllowSkip() { return allowSkip; }
     @PropertyName("allowSkip")
@@ -467,12 +475,13 @@ public class LearningChallenge {
                 && Objects.equals(domain, that.domain) && Objects.equals(skillId, that.skillId)
                 && Objects.equals(copy, that.copy) && Objects.equals(items, that.items) && Objects.equals(target, that.target)
                 && Objects.equals(byAge, that.byAge) && Objects.equals(stateAfter, that.stateAfter)
-                && Objects.equals(fallbackElementId, that.fallbackElementId);
+                && Objects.equals(fallbackElementId, that.fallbackElementId)
+                && Objects.equals(advanceOnComplete, that.advanceOnComplete);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(challengeId, briefInteractionId, mechanicId, family, adapter, assessmentMode, audioDependent, domain,
-                skillId, copy, items, target, byAge, stateAfter, fallbackElementId, allowSkip, musicGate);
+                skillId, copy, items, target, byAge, stateAfter, fallbackElementId, advanceOnComplete, allowSkip, musicGate);
     }
 }

@@ -99,6 +99,10 @@ function checkChallenge(page, catalogue, languages, errors) {
   } else if (challenge.target) {
     errors.push(`${where}: an open mechanic has no target`);
   }
+  if (challenge.advanceOnComplete === true) {
+    if (!EVERY_ITEM_ADAPTERS.includes(challenge.adapter)) errors.push(`${where}: only a game that asks for every item may turn the page when it is done`);
+    if (challenge.stateAfter) errors.push(`${where}: a game that turns the page when it is done has no stateAfter of its own`);
+  }
   if (challenge.allowSkip !== true) errors.push(`${where}: allowSkip must be true; skipping is always offered`);
 
   const copy = challenge.copy || {};

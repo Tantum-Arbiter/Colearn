@@ -79,6 +79,25 @@ class LearningChallengeContractTest {
         assertEquals(item.hashCode(), stored.hashCode());
     }
 
+    @Test
+    void aGameThatTurnsThePageWhenDoneKeepsSayingSoAndOneThatDoesNotSaysNothing() throws Exception {
+        String turning = "{\"challengeId\":\"hooks\",\"advanceOnComplete\":true,\"allowSkip\":true,\"isMusicGate\":false,\"audioDependent\":false}";
+        String staying = "{\"challengeId\":\"hooks\",\"allowSkip\":true,\"isMusicGate\":false,\"audioDependent\":false}";
+        LearningChallenge turns = MAPPER.readValue(turning, LearningChallenge.class);
+        LearningChallenge stays = MAPPER.readValue(staying, LearningChallenge.class);
+
+        Map<String, Object> uploaded = MAPPER.convertValue(MAPPER.readTree(turning), new TypeReference<>() { });
+        LearningChallenge stored = CustomClassMapper.convertToCustomClass(CustomClassMapper.serialize(CustomClassMapper.convertToCustomClass(uploaded, LearningChallenge.class, null)), LearningChallenge.class, null);
+
+        assertEquals(Boolean.TRUE, turns.getAdvanceOnComplete());
+        assertTrue(MAPPER.readTree(MAPPER.writeValueAsString(turns)).get("advanceOnComplete").asBoolean());
+        assertNull(stays.getAdvanceOnComplete());
+        assertFalse(MAPPER.readTree(MAPPER.writeValueAsString(stays)).has("advanceOnComplete"));
+        assertEquals(turns, stored);
+        assertEquals(turns.hashCode(), stored.hashCode());
+        assertFalse(turns.equals(stays));
+    }
+
     @ParameterizedTest
     @MethodSource("stories")
     void aPageWithoutAChallengeSendsNone(String fixture) throws Exception {

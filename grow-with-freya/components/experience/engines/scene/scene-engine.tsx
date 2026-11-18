@@ -12,6 +12,7 @@ export interface Spot {
   id: string;
   label: string;
   frame: ScreenFrame;
+  leavesPicture?: boolean;
 }
 
 export interface SceneEngineProps {
@@ -83,7 +84,9 @@ const SceneSpot = memo(function SceneSpot({ spot, mark, enabled, wobble, reduceM
         accessibilityState={{ selected: found, disabled: !enabled }}
         style={StyleSheet.absoluteFill}
       >
-        <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.ring, { borderRadius: radius }, found ? styles.ringFound : null, ringStyle]} />
+        {found && spot.leavesPicture ? null : (
+          <Animated.View testID={`scene-spot-${spot.id}-ring`} pointerEvents="none" style={[StyleSheet.absoluteFill, styles.ring, { borderRadius: radius }, found ? styles.ringFound : null, ringStyle]} />
+        )}
       </Pressable>
       {found ? (
         <View pointerEvents="none" style={styles.markBadge}>

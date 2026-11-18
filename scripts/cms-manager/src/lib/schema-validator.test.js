@@ -208,3 +208,33 @@ test('learning challenges ride along: a hotspot carries only a position and a si
   assert.equal(result.valid, false);
   assert.ok(result.schemaErrors.length > 0);
 });
+
+test('learning challenges ride along: a game may say the page turns when it is done', async () => {
+  const story = counting();
+  story.pages[3].learningChallenge.advanceOnComplete = true;
+
+  const result = await fullValidation(story, { storiesDir: null });
+
+  assert.deepEqual(result.schemaErrors, []);
+  assert.equal(result.valid, true, result.customErrors.join('\n'));
+});
+
+test('learning challenges ride along: turning the page when done is yes or no, nothing else', async () => {
+  const story = counting();
+  story.pages[3].learningChallenge.advanceOnComplete = 'yes';
+
+  const result = await fullValidation(story, { storiesDir: null });
+
+  assert.equal(result.valid, false);
+  assert.ok(result.schemaErrors.length > 0);
+});
+
+test('learning challenges ride along: a counted spot may leave its own picture on the page', async () => {
+  const story = counting();
+  story.pages[3].learningChallenge.items[0].outcome = { stateAfter: { image: 'assets/stories/little-fox-meets-a-friend/page-4/outcomes/one.webp', position: { x: 0.28, y: 0.3 }, size: { width: 0.14, height: 0.2 } } };
+
+  const result = await fullValidation(story, { storiesDir: null });
+
+  assert.deepEqual(result.schemaErrors, []);
+  assert.equal(result.valid, true, result.customErrors.join('\n'));
+});

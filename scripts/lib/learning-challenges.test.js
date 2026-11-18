@@ -202,6 +202,38 @@ describe('pictures and hotspots by family', () => {
     assert.ok(errors.some((error) => /page 4: item "finn-stays-still" needs a hotspot/.test(error)), errors.join('\n'));
   });
 
+  test('a game that asks for every item may turn the page when it is done', () => {
+    const story = asCounting();
+    story.pages[3].learningChallenge.advanceOnComplete = true;
+
+    assert.deepEqual(check(story).errors, []);
+  });
+
+  test('a game with one answer shows what that answer leads to, so it does not turn the page by itself', () => {
+    const story = fox();
+    story.pages[3].learningChallenge.advanceOnComplete = true;
+
+    const { errors } = check(story);
+
+    assert.ok(errors.some((error) => /page 4: only a game that asks for every item may turn the page when it is done/.test(error)), errors.join('\n'));
+  });
+
+  test('a game that turns the page ends on the next page, so it has no closing picture of its own', () => {
+    const story = asCounting();
+    Object.assign(story.pages[3].learningChallenge, { advanceOnComplete: true, stateAfter: { image: 'assets/stories/little-fox-meets-a-friend/page-4/after.webp', position: { x: 0, y: 0 }, size: { width: 1, height: 1 } } });
+
+    const { errors } = check(story);
+
+    assert.ok(errors.some((error) => /page 4: a game that turns the page when it is done has no stateAfter of its own/.test(error)), errors.join('\n'));
+  });
+
+  test('a game that stays on its page is not held to those rules', () => {
+    const story = fox();
+    story.pages[3].learningChallenge.advanceOnComplete = false;
+
+    assert.deepEqual(check(story).errors, []);
+  });
+
   test('counting asks for every item, so it names no single target', () => {
     const story = asCounting();
     story.pages[3].learningChallenge.target = story.pages[3].learningChallenge.items[0].id;

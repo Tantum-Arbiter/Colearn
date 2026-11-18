@@ -16,6 +16,7 @@ import type { SupportedLanguage } from '@/services/i18n';
 import type { PlanAgeRange } from '@/types/learning-plan';
 import type { AgeGroup, AgeGroupText, ChallengeStateAfter, LearningChallenge } from '@/types/story';
 import { challengeView } from './learning-challenge-view';
+import { patchFrame } from './page-frame';
 import type { ChallengeTips } from './learning-tips';
 
 export interface PageChrome {
@@ -28,6 +29,8 @@ export interface PageChrome {
 const NO_CHROME: PageChrome = { top: 0, bottom: 0, left: 0, right: 0 };
 
 export const PROMPT_HEIGHT = 48;
+const PROMPT_LINES = 2;
+const PROMPT_LINE_HEIGHT = 1.35;
 
 export interface ChallengeResult {
   tips: ChallengeTips | null;
@@ -48,6 +51,7 @@ export interface LearningChallengeHostProps {
   isTablet: boolean;
   reduceMotion: boolean;
   onDone: (result: ChallengeResult) => void;
+  onReveal?: (pictures: ChallengeStateAfter[]) => void;
   testID?: string;
 }
 
@@ -63,11 +67,13 @@ export const LearningChallengeHost = memo(function LearningChallengeHost({
   isTablet,
   reduceMotion,
   onDone,
+  onReveal,
   testID = 'learning-challenge-host',
 }: LearningChallengeHostProps) {
   const [shell, dispatch] = useReducer(shellReducer, Date.now(), startingShell);
   const [chosenId, setChosenId] = useState<string | null>(null);
   const reported = useRef(false);
+  const counted = useRef<string[]>([]);
   const view = useMemo(() => challengeView(challenge, band, language, ageGroup), [challenge, band, language, ageGroup]);
   const promptTop = chrome.top + SPACE_2;
   const stageBottom = screen.height - chrome.bottom - SPACE_3;
@@ -82,7 +88,20 @@ export const LearningChallengeHost = memo(function LearningChallengeHost({
   const resolving = phase === 'celebrating';
   const inPlay = phase === 'intro' || phase === 'playing' || phase === 'paused';
   const scene = engineFor(challenge.family) === 'scene';
-  const spots = useMemo(() => view.spots.map((spot) => ({ id: spot.id, label: spot.label, frame: spotFrame(spot.hotspot, frame) })), [view.spots, frame]);
+  const leavesPictures = view.mode !== 'find';
+  const spots = useMemo(
+    () => view.spots.map((spot) => ({ id: spot.id, label: spot.label, frame: spotFrame(spot.hotspot, frame), leavesPicture: leavesPictures && spot.stateAfter !== undefined })),
+    [view.spots, frame, leavesPictures]
+  );
+  const sceneSpan = useMemo(() => {
+    if (spots.length === 0) return null;
+    const frames = [...spots.map((spot) => spot.frame), ...view.spots.flatMap((spot) => (leavesPictures && spot.stateAfter ? [patchFrame(spot.stateAfter, frame)] : []))];
+    return { top: Math.min(...frames.map((each) => each.top)), bottom: Math.max(...frames.map((each) => each.top + each.height)) };
+  }, [spots, view.spots, leavesPictures, frame]);
+  const promptSize = isTablet ? 20 : 16;
+  const promptReach = Math.max(PROMPT_HEIGHT, Math.ceil(PROMPT_LINES * promptSize * PROMPT_LINE_HEIGHT) + 2 * SPACE_2);
+  const covers = (top: number) => sceneSpan !== null && sceneSpan.top < top + promptReach && sceneSpan.bottom > top;
+  const promptAtBottom = covers(promptTop) && !covers(stageBottom - promptReach);
   const chosen = view.choices.find((choice) => choice.id === chosenId);
   const found = view.spots.find((spot) => spot.id === chosenId);
   const outcome = chosen ?? found;
@@ -113,16 +132,32 @@ export const LearningChallengeHost = memo(function LearningChallengeHost({
     });
   }, [phase, chosen, chosenId, outcome, challenge.items, challenge.stateAfter, view.successLine, onDone]);
 
-  const handleEngineEvent = useCallback((event: ChooseEvent | SceneEvent) => {
-    if (event.type === 'first-action-shown') dispatch({ type: 'introDone', at: Date.now() });
-    else if (event.type === 'complete') {
-      setChosenId(event.choice);
-      dispatch({ type: 'complete', at: Date.now() });
-    }
-  }, []);
+  const reveal = useCallback(
+    (ids: string[]) => {
+      if (!leavesPictures) return;
+      const pictures = (found: string[]) => found.flatMap((id) => view.spots.find((spot) => spot.id === id)?.stateAfter ?? []);
+      const shown = pictures(counted.current).length;
+      counted.current = [...counted.current, ...ids.filter((id) => !counted.current.includes(id))];
+      const next = pictures(counted.current);
+      if (next.length > shown) onReveal?.(next);
+    },
+    [leavesPictures, view.spots, onReveal]
+  );
+
+  const handleEngineEvent = useCallback(
+    (event: ChooseEvent | SceneEvent) => {
+      if (event.type === 'first-action-shown') dispatch({ type: 'introDone', at: Date.now() });
+      else if (event.type === 'counted') reveal([event.id]);
+      else if (event.type === 'complete') {
+        reveal(view.spots.map((spot) => spot.id));
+        setChosenId(event.choice);
+        dispatch({ type: 'complete', at: Date.now() });
+      }
+    },
+    [reveal, view.spots]
+  );
 
   const prompt = phase === 'celebrating' ? outcome?.successLine ?? view.successLine : view.instruction;
-  const promptSize = isTablet ? 20 : 16;
   const showEngine = inPlay || phase === 'celebrating';
 
   return (
@@ -132,8 +167,8 @@ export const LearningChallengeHost = memo(function LearningChallengeHost({
       {showEngine && scene ? <SceneEngine spots={spots} mode={view.mode} target={view.target} reduceMotion={reduceMotion} paused={phase !== 'playing' && phase !== 'intro'} onEvent={handleEngineEvent} /> : null}
       {showEngine && !scene ? <ChooseEngine choices={view.choices} target={view.target} tray={tray} reduceMotion={reduceMotion} paused={phase !== 'playing' && phase !== 'intro'} leaving={teaching} onEvent={handleEngineEvent} /> : null}
 
-      {teaching || !(inPlay || resolving) ? null : <View testID="learning-challenge-prompt" pointerEvents="none" style={[styles.prompt, { top: promptTop, minHeight: PROMPT_HEIGHT, left: chrome.left + SPACE_4, right: chrome.right + SPACE_4 }]}>
-        <Text style={[styles.promptText, { fontSize: promptSize }]} numberOfLines={2}>
+      {teaching || !(inPlay || resolving) ? null : <View testID="learning-challenge-prompt" pointerEvents="none" style={[styles.prompt, promptAtBottom ? { bottom: chrome.bottom + SPACE_3 } : { top: promptTop }, { minHeight: PROMPT_HEIGHT, left: chrome.left + SPACE_4, right: chrome.right + SPACE_4 }]}>
+        <Text style={[styles.promptText, { fontSize: promptSize }]} numberOfLines={PROMPT_LINES}>
           {prompt}
         </Text>
       </View>}

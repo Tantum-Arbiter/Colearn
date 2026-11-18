@@ -441,6 +441,7 @@
               },
               "stateAfter": { "$ref": "#/definitions/stateAfter" },
               "fallbackElementId": { "type": "string" },
+              "advanceOnComplete": { "type": "boolean", "description": "When true the reader turns to the next page by itself once the challenge is completed, for a game that ends on the next page's picture" },
               "allowSkip": { "type": "boolean", "const": true },
               "isMusicGate": { "type": "boolean" }
             },

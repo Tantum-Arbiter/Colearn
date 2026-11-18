@@ -12,6 +12,7 @@ import Animated, {
   withSequence,
   withSpring,
   Easing,
+  FadeIn,
 } from 'react-native-reanimated';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import { applyDefaultOrientation, isTabletDevice } from '@/hooks/use-story-orientation';
@@ -83,6 +84,8 @@ export const NARRATION_SLIDE_MS = 360;
 const NARRATION_SLIDE_SHARE = 0.5;
 const TIPS_BADGE = 34;
 const SCENE_BAND_BLUR = 24;
+export const REVEAL_MS = 320;
+const NOTHING_REVEALED: ChallengeStateAfter[] = [];
 export const PAGE_TEXT_FADE_MS = FADE_OUT_MS;
 export const PAGE_IMAGE_FADE_MS = PAGE_TEXT_FADE_MS + FADE_IN_MS;
 const PAGE_PILL_HEIGHT = 34;
@@ -158,6 +161,7 @@ export function StoryBookReader({
   }));
   const [previousPageIndex, setPreviousPageIndex] = useState<number | null>(null); // For crossfade
   const [previousOutcome, setPreviousOutcome] = useState<ChallengeStateAfter | null>(null);
+  const [previousRevealed, setPreviousRevealed] = useState<ChallengeStateAfter[]>(NOTHING_REVEALED);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
   // Analytics: track time spent in story reader
@@ -236,6 +240,7 @@ export function StoryBookReader({
   const [learningTipsOpen, setLearningTipsOpen] = useState(false);
   const [learningStoryText, setLearningStoryText] = useState<AgeGroupText | null>(null);
   const [learningOutcome, setLearningOutcome] = useState<ChallengeStateAfter | null>(null);
+  const [learningRevealed, setLearningRevealed] = useState<ChallengeStateAfter[]>(NOTHING_REVEALED);
   const reduceMotion = useReducedMotion();
   // Track the background music volume while preview/playing overlays are active.
   const preMusicChallengeVolumeRef = useRef<number | null>(null);
@@ -320,6 +325,7 @@ export function StoryBookReader({
   const [learningChallengeVisitedPage, setLearningChallengeVisitedPage] = useState(currentPageIndex);
   if (learningChallengeVisitedPage !== currentPageIndex) {
     setLearningOutcome(null);
+    setLearningRevealed(NOTHING_REVEALED);
     setLearningChallengeVisitedPage(currentPageIndex);
     setLearningChallengePlayedOn(null);
     setLearningTips(null);
@@ -1786,7 +1792,7 @@ export function StoryBookReader({
   const handleMeasuredBreaks = useCallback((breaks: LineBreaks) => setMeasuredBreaks((known) => ({ ...known, [liveText]: breaks })), [liveText]);
 
   // Function to render just the image layer (for background/previous page - no animation)
-  const renderPageImage = (page: any, withAnimation: boolean, outcome: ChallengeStateAfter | null) => {
+  const renderPageImage = (page: any, withAnimation: boolean, outcome: ChallengeStateAfter | null, revealed: readonly ChallengeStateAfter[]) => {
     if (!page || !page.backgroundImage) return null;
 
     const isCoverPage = page.pageNumber === 0;
@@ -1840,6 +1846,19 @@ export function StoryBookReader({
             accessible={false}
           />
         ) : null}
+        {revealed.map((picture, index) => (
+          <Animated.View key={`revealed-${index}`} entering={withAnimation && !reduceMotion ? FadeIn.duration(REVEAL_MS) : undefined} style={StyleSheet.absoluteFill} pointerEvents="none">
+            <Image
+              testID="learning-revealed-picture"
+              source={typeof picture.image === 'string' ? { uri: picture.image } : picture.image}
+              style={{ position: 'absolute', ...patchFrame(picture, art ?? { left: 0, top: 0, width: screenWidth, height: screenHeight }) }}
+              contentFit="fill"
+              transition={0}
+              cachePolicy="memory-disk"
+              accessible={false}
+            />
+          </Animated.View>
+        ))}
         {/* Character overlay */}
         {page.characterImage && (
           <Image
@@ -1966,10 +1985,10 @@ export function StoryBookReader({
           ]}>
             {/* Previous page image - stays at full opacity during crossfade */}
             {previousPage && previousPage.backgroundImage && (
-              renderPageImage(previousPage, false, previousOutcome)
+              renderPageImage(previousPage, false, previousOutcome, previousRevealed)
             )}
             {/* Current page image - fades in on top */}
-            {renderPageImage(page, true, learningOutcome)}
+            {renderPageImage(page, true, learningOutcome, learningRevealed)}
 
             {/* Interactive Elements - Props that can be tapped to reveal */}
             {page.interactiveElements && page.interactiveElements.length > 0 && (
@@ -2048,6 +2067,7 @@ export function StoryBookReader({
                   isTablet={isTablet}
                   reduceMotion={reduceMotion}
                   onDone={handleLearningChallengeDone}
+                  onReveal={setLearningRevealed}
                 />
               </View>
             )}
@@ -2094,6 +2114,7 @@ export function StoryBookReader({
     setTextHold({ index: currentPageIndex, text: mainText });
     setPreviousPageIndex(currentPageIndex);
     setPreviousOutcome(learningOutcome);
+    setPreviousRevealed(learningRevealed);
     requestAnimationFrame(() => {
       imageOpacity.value = 0;
       turn();
@@ -2148,19 +2169,26 @@ export function StoryBookReader({
     crossFadeTo(targetPageIndex);
   };
 
+  const turnToNextPageRef = useRef(turnToNextPage);
+  useLayoutEffect(() => {
+    turnToNextPageRef.current = turnToNextPage;
+  });
+
   const handleLearningChallengeDone = useCallback(({ tips, storyText, after }: ChallengeResult) => {
     setLearningChallengeOpenOn(null);
     setLearningChallengePlayedOn(currentPageIndex);
     setLearningTips(tips);
     setLearningTipsOpen(false);
+    if (currentPage) achievementEvents.challengeDone(currentPage.id, 'learning');
     if (after || storyText) {
       setIsTransitioning(true);
       crossFadeRef.current(() => {
         setLearningOutcome(after);
         setLearningStoryText(storyText);
       });
+    } else if (currentPage?.learningChallenge?.advanceOnComplete && !tips) {
+      turnToNextPageRef.current();
     }
-    if (currentPage) achievementEvents.challengeDone(currentPage.id, 'learning');
   }, [currentPage, currentPageIndex, achievementEvents]);
 
   const handleToggleLearningTips = useCallback(() => setLearningTipsOpen((open) => !open), []);

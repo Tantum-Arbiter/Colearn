@@ -391,6 +391,180 @@ describe('LearningChallengeHost: a scene played on the page itself', () => {
   });
 });
 
+describe('LearningChallengeHost: a scene whose spots each leave a picture', () => {
+  beforeEach(() => jest.useFakeTimers());
+  afterEach(() => jest.useRealTimers());
+
+  const ART = { left: -40, top: 0, width: 924, height: 693 };
+  const hooks: LearningChallenge = {
+    ...fox,
+    mechanicId: 'M01',
+    family: 'tap_scene',
+    adapter: 'multi_tap_count',
+    assessmentMode: 'guided_observable',
+    domain: 'maths',
+    target: '',
+    stateAfter: undefined,
+    items: ['hook-1', 'hook-2', 'hook-3'].map((id, index) => ({
+      id,
+      label: { en: id },
+      hotspot: { position: { x: 0.3 + index * 0.15, y: 0.3 }, size: { width: 0.1, height: 0.12 } },
+      outcome: { stateAfter: { image: `file:///lanterns/${id}.webp`, position: { x: 0.28 + index * 0.15, y: 0.3 }, size: { width: 0.14, height: 0.2 } } },
+    })),
+    byAge: {
+      '1-2': { gesture: 'tap', items: ['hook-1'] },
+      '2-4': { gesture: 'tap', items: ['hook-1', 'hook-2', 'hook-3'] },
+      '4+': { gesture: 'tap', items: ['hook-1', 'hook-2', 'hook-3'] },
+    },
+  };
+  const pictures = (...ids: string[]) => ids.map((id) => hooks.items.find((item) => item.id === id)!.outcome!.stateAfter);
+  const bare = (id: string): LearningChallenge => ({ ...hooks, items: hooks.items.map((item) => (item.id === id ? { id: item.id, label: item.label, hotspot: item.hotspot } : item)) });
+
+  it('hands each spot`s picture to the page as it is counted, in the order tapped', () => {
+    const onReveal = jest.fn();
+    const { press } = renderHost({ challenge: hooks, art: ART, onReveal });
+    expect(onReveal).not.toHaveBeenCalled();
+
+    press('scene-spot-hook-3');
+    expect(onReveal).toHaveBeenLastCalledWith(pictures('hook-3'));
+    press('scene-spot-hook-1');
+    expect(onReveal).toHaveBeenLastCalledWith(pictures('hook-3', 'hook-1'));
+    press('scene-spot-hook-2');
+
+    expect(onReveal).toHaveBeenLastCalledWith(pictures('hook-3', 'hook-1', 'hook-2'));
+    expect(onReveal).toHaveBeenCalledTimes(3);
+  });
+
+  it('a counted spot tapped again hands nothing new', () => {
+    const onReveal = jest.fn();
+    const { press } = renderHost({ challenge: hooks, art: ART, onReveal });
+
+    press('scene-spot-hook-1');
+    press('scene-spot-hook-1');
+
+    expect(onReveal).toHaveBeenCalledTimes(1);
+  });
+
+  it('a spot with no picture of its own hands nothing, and the others still hand theirs', () => {
+    const onReveal = jest.fn();
+    const { press } = renderHost({ challenge: bare('hook-2'), art: ART, onReveal });
+
+    press('scene-spot-hook-2');
+    expect(onReveal).not.toHaveBeenCalled();
+    press('scene-spot-hook-1');
+    press('scene-spot-hook-3');
+
+    expect(onReveal).toHaveBeenLastCalledWith(pictures('hook-1', 'hook-3'));
+    expect(onReveal).toHaveBeenCalledTimes(2);
+  });
+
+  it('a band offered one spot is handed that one picture as the game completes', () => {
+    const onReveal = jest.fn();
+    const { press, has } = renderHost({ challenge: hooks, art: ART, onReveal, band: '1-2' });
+
+    press('scene-spot-hook-1');
+
+    expect(has('learning-phase-celebrating')).toBe(true);
+    expect(onReveal.mock.calls).toEqual([[pictures('hook-1')]]);
+  });
+
+  it('takes the ring off a counted spot whose picture is on the page, and leaves it on one with none', () => {
+    const { press, has } = renderHost({ challenge: bare('hook-2'), art: ART });
+
+    press('scene-spot-hook-1');
+    press('scene-spot-hook-2');
+
+    expect(has('scene-spot-hook-1-ring')).toBe(false);
+    expect(has('scene-spot-hook-2-ring')).toBe(true);
+    expect(has('scene-spot-hook-3-ring')).toBe(true);
+  });
+
+  it('finding the one keeps its picture for the end of the game', () => {
+    const onReveal = jest.fn();
+    const find: LearningChallenge = { ...hooks, adapter: 'small_set_choice', mechanicId: 'M08', target: 'hook-2' };
+    const { press, handed, has } = renderHost({ challenge: find, art: ART, onReveal });
+
+    press('scene-spot-hook-2');
+    expect(has('scene-spot-hook-2-ring')).toBe(true);
+    act(() => jest.advanceTimersByTime(motionDuration(CELEBRATION, false) + 50));
+
+    expect(onReveal).not.toHaveBeenCalled();
+    expect(handed[0].after).toEqual(pictures('hook-2')[0]);
+  });
+
+  describe('where the instruction sits', () => {
+    const { StyleSheet } = require('react-native');
+    const promptStyle = (art: { left: number; top: number; width: number; height: number }, challenge: LearningChallenge = hooks) => {
+      const { find } = renderHost({ challenge, art });
+      return StyleSheet.flatten(find('learning-challenge-prompt')[0].props.style);
+    };
+
+    it('stays at the top while the spots and their pictures are clear of it', () => {
+      const style = promptStyle(ART);
+
+      expect(style.top).toBe(8);
+      expect(style.bottom).toBeUndefined();
+    });
+
+    it('moves to the bottom when it would lie over a spot', () => {
+      const style = promptStyle({ ...ART, top: -180 });
+
+      expect(style.top).toBeUndefined();
+      expect(style.bottom).toBe(12);
+    });
+
+    it('moves to the bottom when it would lie over a picture a spot leaves, even with the spot itself clear', () => {
+      const tall: LearningChallenge = { ...hooks, items: hooks.items.map((item) => ({ ...item, outcome: { stateAfter: { ...item.outcome!.stateAfter!, position: { x: item.outcome!.stateAfter!.position.x, y: 0.05 }, size: { width: 0.14, height: 0.4 } } } })) };
+
+      expect(promptStyle(ART, hooks).top).toBe(8);
+      expect(promptStyle(ART, tall).bottom).toBe(12);
+    });
+
+    it('allows for an instruction that runs to two lines when judging whether it would cover a spot', () => {
+      const justBelowOneLine = { ...ART, top: 62 - 0.3 * ART.height };
+
+      expect(promptStyle(justBelowOneLine).bottom).toBe(12);
+    });
+
+    it('keeps to the top when the bottom would cover them too', () => {
+      const everywhere: LearningChallenge = { ...hooks, items: hooks.items.map((item) => ({ ...item, hotspot: { position: { x: item.hotspot!.position.x, y: 0.02 }, size: { width: 0.1, height: 0.9 } } })) };
+      const style = promptStyle({ left: 0, top: 0, width: 844, height: 390 }, everywhere);
+
+      expect(style.top).toBe(8);
+      expect(style.bottom).toBeUndefined();
+    });
+
+    it('a choosing game keeps its question at the top', () => {
+      const { find } = renderHost({ art: { ...ART, top: -180 } });
+
+      expect(StyleSheet.flatten(find('learning-challenge-prompt')[0].props.style).top).toBe(8);
+    });
+  });
+
+  it('a choosing game hands no pictures over while it is played, whatever its choices lead to', () => {
+    const onReveal = jest.fn();
+    const pictured: LearningChallenge = { ...fox, items: fox.items.map((item) => ({ ...item, outcome: { stateAfter: { image: `file:///outcomes/${item.id}.webp`, position: { x: 0, y: 0 }, size: { width: 1, height: 1 } } } })) };
+    const { press } = renderHost({ challenge: pictured, onReveal });
+
+    act(() => jest.advanceTimersByTime(ENTRANCE_MS));
+    press(`choose-card-${pictured.items[0].id}`);
+    act(() => jest.advanceTimersByTime(LEAVE_MS + motionDuration(CELEBRATION, false) + 50));
+
+    expect(onReveal).not.toHaveBeenCalled();
+  });
+
+  it('plays without a page to hand its pictures to', () => {
+    const { press, outcomes } = renderHost({ challenge: hooks, art: ART });
+
+    press('scene-spot-hook-1');
+    press('scene-spot-hook-2');
+    press('scene-spot-hook-3');
+    act(() => jest.advanceTimersByTime(motionDuration(CELEBRATION, false) + 50));
+
+    expect(outcomes).toEqual(['completed']);
+  });
+});
+
 describe('LearningChallengeHost: cards on a tablet', () => {
   beforeEach(() => jest.useFakeTimers());
   afterEach(() => jest.useRealTimers());

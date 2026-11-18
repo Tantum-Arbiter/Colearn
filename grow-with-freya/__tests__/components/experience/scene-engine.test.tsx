@@ -161,3 +161,35 @@ describe('SceneEngine: finding the one', () => {
     ]);
   });
 });
+
+describe('SceneEngine: a spot that leaves its own picture on the page', () => {
+  beforeEach(() => jest.useFakeTimers());
+  afterEach(() => jest.useRealTimers());
+
+  const LANTERNS: Spot[] = HOOKS.map((hook) => (hook.id === 'hook-2' ? hook : { ...hook, leavesPicture: true }));
+  const ringed = (root: ReactTestInstance, id: string) => root.findAll((node: ReactTestInstance) => node.props.testID === `scene-spot-${id}-ring`).length > 0;
+
+  it('rings every spot while it waits to be tapped, picture or none', () => {
+    const { root } = renderEngine({ spots: LANTERNS });
+
+    expect(LANTERNS.map((spot) => ringed(root, spot.id))).toEqual([true, true, true]);
+  });
+
+  it('takes the ring off a counted spot that leaves a picture, so the picture is seen, and keeps its number', () => {
+    const { root, press, mark } = renderEngine({ spots: LANTERNS });
+
+    press('hook-1');
+
+    expect(ringed(root, 'hook-1')).toBe(false);
+    expect(mark('hook-1').props.children).toBe(1);
+    expect(ringed(root, 'hook-3')).toBe(true);
+  });
+
+  it('keeps the gold ring on a counted spot with no picture of its own', () => {
+    const { root, press } = renderEngine({ spots: LANTERNS });
+
+    press('hook-2');
+
+    expect(ringed(root, 'hook-2')).toBe(true);
+  });
+});
